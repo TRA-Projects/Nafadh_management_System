@@ -142,6 +142,19 @@ namespace Nafadh_Backend.Services
             };
         }
 
+        public async Task<List<string>> GetEffectivePermissionsAsync(int userId)
+        {
+            var user = await _repository.GetByIdAsync(userId)
+                ?? throw new NotFoundException($"User {userId} was not found.");
+
+            return await _repository.GetPermissionKeysForUserAsync(user.UserId);
+        }
+
+
+
+
+
+
         private static UserResponseDTO MapToResponseDTO(NFD_User user)
         {
             return new UserResponseDTO

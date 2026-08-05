@@ -28,6 +28,7 @@ namespace Nafadh_Backend.Services
             int page,
             int pageSize);
 
+        Task<List<string>> GetEffectivePermissionsAsync(int userId);
 
 
     }

@@ -100,6 +100,16 @@ namespace Nafadh_Backend.Controllers
         }
 
 
+        // Effective permissions for a user (via role).
+        [HttpGet("{id:int}/permissions")]
+        [Authorize]
+        [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<List<string>>> GetPermissions(int id)
+        {
+            var permissions = await _service.GetEffectivePermissionsAsync(id);
+            return Ok(permissions);
+        }
+
 
 
     }
