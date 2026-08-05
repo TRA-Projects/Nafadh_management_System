@@ -55,5 +55,20 @@ namespace Nafadh_Backend.Services
             });
         }
 
+        // Retrieves all open support tickets.
+        public async Task<IEnumerable<SupportTicketDTO>> GetOpenTicketsAsync()
+        {
+            IEnumerable<NFD_SupportTicket> tickets = await _repository.GetOpenTicketsAsync();
+
+            return tickets.Select(t => new SupportTicketDTO
+            {
+                TicketId = t.TicketId,
+                Subject = t.Subject,
+                Message = t.Message,
+                Status = t.Status,
+                CreatedAt = t.CreatedAt,
+                UserId = t.UserId
+            });
+        }
     }
 }

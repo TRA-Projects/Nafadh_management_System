@@ -45,5 +45,14 @@ namespace Nafadh_Backend.Controllers
             IEnumerable<SupportTicketDTO> tickets = await _service.GetTicketsByUserIdAsync(userId);
             return Ok(tickets);
         }
+
+        // GET: api/SupportTicket/open
+        // Returns all open support tickets.
+        [HttpGet("open")]
+        public async Task<IActionResult> GetOpenTickets()
+        {
+            IEnumerable<SupportTicketDTO> tickets = await _service.GetOpenTicketsAsync();
+            return Ok(tickets);
+        }
     }
 }
