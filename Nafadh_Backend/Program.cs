@@ -14,11 +14,15 @@ namespace Nafadh_Backend
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
             // Add services to the container.
 
-            builder.Services.AddControllers();
-
+            // تهيئة خيارات الجيسون لتحويل التعدادات إلى نصوص ولمنع التكرار الحلقي
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+                    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+                });
             // EF Core - SQL Server
             builder.Services.AddDbContext<Nafadhcontext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
