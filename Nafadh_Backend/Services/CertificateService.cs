@@ -91,5 +91,24 @@ namespace Nafadh_Backend.Services
             };
         }
 
+
+        // Download certificate file
+        public async Task<byte[]?> DownloadCertificateAsync(int id)
+        {
+            var certificate = await _repository.GetCertificateByIdAsync(id);
+
+            if (certificate == null)
+                return null;
+
+            if (string.IsNullOrEmpty(certificate.FileUrl))
+                return null;
+
+            // Convert PDF file into byte array
+            return await File.ReadAllBytesAsync(certificate.FileUrl);
+        }
+
+
+
+
     }
 }

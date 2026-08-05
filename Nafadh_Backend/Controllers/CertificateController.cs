@@ -21,6 +21,7 @@ namespace Nafadh_Backend.Controllers
         }
 
         // TODO: implement endpoints for this entity
+
         // GET certificate by enrollment
         [HttpGet("enrollment/{enrollmentId}")]
         public async Task<IActionResult> GetCertificateByEnrollment(int enrollmentId)
@@ -53,6 +54,24 @@ namespace Nafadh_Backend.Controllers
                 Certificate = result
             });
         }
+
+        // Download certificate file
+        [HttpGet("{id}/download")]
+        public async Task<IActionResult> DownloadCertificate(int id)
+        {
+            var file = await _service.DownloadCertificateAsync(id);
+
+            if (file == null)
+                return NotFound();
+
+            return File(
+                file,
+                "application/pdf",
+                "Certificate.pdf"
+            );
+        }
+
+
 
     }
 }
