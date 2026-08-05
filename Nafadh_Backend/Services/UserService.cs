@@ -91,6 +91,17 @@ namespace Nafadh_Backend.Services
         }
 
 
+        public async Task<UserResponseDTO> UpdateAsync(int userId, UserUpdateDTO dto)
+        {
+            var user = await _repository.GetByIdWithRoleAsync(userId)
+                ?? throw new NotFoundException($"User {userId} was not found.");
+
+            user.FullName = dto.FullName.Trim();
+            user.Phone = dto.Phone;
+
+            await _repository.UpdateAsync(user);
+            return MapToResponseDTO(user);
+        }
 
 
         private static UserResponseDTO MapToResponseDTO(NFD_User user)

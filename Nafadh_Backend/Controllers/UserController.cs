@@ -53,7 +53,15 @@ namespace Nafadh_Backend.Controllers
         }
 
 
-
+        //Update profile.
+        [HttpPut("{id:int}")]
+        [Authorize]
+        [ProducesResponseType(typeof(UserResponseDTO), StatusCodes.Status200OK)]
+        public async Task<ActionResult<UserResponseDTO>> Update(int id, [FromBody] UserUpdateDTO dto)
+        {
+            var updated = await _service.UpdateAsync(id, dto);
+            return Ok(updated);
+        }
 
 
 

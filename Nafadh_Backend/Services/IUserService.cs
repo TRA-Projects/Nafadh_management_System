@@ -15,6 +15,8 @@ namespace Nafadh_Backend.Services
 
         Task<UserResponseDTO?> GetByIdAsync(int userId);
 
+        Task<UserResponseDTO> UpdateAsync(int userId, UserUpdateDTO dto);
+
 
     }
 }
