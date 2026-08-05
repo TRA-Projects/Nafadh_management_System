@@ -71,6 +71,19 @@ namespace Nafadh_Backend.Services
             return new RoleDTO { RoleId = role.RoleId, RoleName = role.RoleName };
         }
 
+        public async Task DeleteAsync(int roleId)
+        {
+            var role = await _repository.GetByIdAsync(roleId)
+                ?? throw new NotFoundException($"Role {roleId} was not found.");
+
+            if (await _repository.IsInUseAsync(roleId))
+            {
+                throw new ConflictException(
+                    $"Role '{role.RoleName}' is currently assigned to one or more users and cannot be removed.");
+            }
+
+            await _repository.DeleteAsync(role);
+        }
 
     }
 }

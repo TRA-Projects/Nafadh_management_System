@@ -59,6 +59,14 @@ namespace Nafadh_Backend.Controllers
             return Ok(updated);
         }
 
-
+        //Remove a role.
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _service.DeleteAsync(id);
+            return NoContent();
+        }
     }
 }
