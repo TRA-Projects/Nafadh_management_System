@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -11,12 +12,120 @@ namespace Nafadh_Backend.Services
     public class EvaluationCriterionService : IEvaluationCriterionService
     {
         private readonly IEvaluationCriterionRepository _repository;
+        private readonly IEvaluationTemplateRepository _templateRepository;
 
-        public EvaluationCriterionService(IEvaluationCriterionRepository repository)
+        public EvaluationCriterionService(IEvaluationCriterionRepository repository, IEvaluationTemplateRepository templateRepository)
         {
             _repository = repository;
+            _templateRepository = templateRepository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        // ==========================================
+        // Get Criteria By Template Id
+        public async Task<List<EvaluationCriterionDTO.Output>> GetCriteriaByTemplateIdAsync(int templateId)
+        {
+            var criteria = await _repository.GetCriteriaByTemplateIdAsync(templateId);
+
+            var result = new List<EvaluationCriterionDTO.Output>();
+
+            foreach (var item in criteria)
+            {
+                result.Add(new EvaluationCriterionDTO.Output
+                {
+                    CriteriaId = item.CriteriaId,
+                    TemplateId = item.TemplateId,
+                    Name = item.Name,
+                    Weight = item.Weight
+                });
+            }
+
+            return result;
+        }
+
+        // ==========================================
+        // Get Criterion Details
+        public async Task<EvaluationCriterionDTO.Details?> GetCriterionByIdAsync(int criteriaId)
+        {
+            var criterion = await _repository.GetCriterionByIdAsync(criteriaId);
+
+            if (criterion == null)
+                return null;
+
+            var template = await _templateRepository.GetTemplateByIdAsync(criterion.TemplateId);
+
+            if (template == null)
+                return null;
+
+            return new EvaluationCriterionDTO.Details
+            {
+                CriteriaId = criterion.CriteriaId,
+                Name = criterion.Name,
+                Weight = criterion.Weight,
+
+                Template = new EvaluationTemplateDTO.Output
+                {
+                    TemplateId = template.TemplateId,
+                    Type = template.Type,
+                    CreatedByUserId = template.CreatedByUserId
+                }
+            };
+        }
+
+        // ==========================================
+        // Create Criterion
+        public async Task CreateCriterionAsync(EvaluationCriterionDTO.Input input)
+        {
+            var criterion = new NFD_EvaluationCriterion
+            {
+                TemplateId = input.TemplateId,
+                Name = input.Name,
+                Weight = input.Weight
+            };
+
+            await _repository.AddCriterionAsync(criterion);
+        }
+
+        // ==========================================
+        // Update Criterion
+        public async Task<bool> UpdateCriterionAsync(int criteriaId, EvaluationCriterionDTO.Input input)
+        {
+            var criterion = await _repository.GetCriterionByIdAsync(criteriaId);
+
+            if (criterion == null)
+                return false;
+
+            criterion.TemplateId = input.TemplateId;
+            criterion.Name = input.Name;
+            criterion.Weight = input.Weight;
+
+            await _repository.UpdateCriterionAsync(criterion);
+
+            return true;
+        }
+
+        // ==========================================
+        // Delete Criterion
+        public async Task<bool> DeleteCriterionAsync(int criteriaId)
+        {
+            var criterion = await _repository.GetCriterionByIdAsync(criteriaId);
+
+            if (criterion == null)
+                return false;
+
+            await _repository.DeleteCriterionAsync(criterion);
+
+            return true;
+        }
+
+        // ==========================================
+        // Check Total Weight
+        public async Task<bool> CheckTemplateWeightsAsync(int templateId)
+        {
+            var criteria = await _repository.GetCriteriaByTemplateIdAsync(templateId);
+
+            decimal totalWeight = criteria.Sum(c => c.Weight);
+
+            return totalWeight == 100;
+        }
     }
 }

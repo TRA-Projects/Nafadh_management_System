@@ -3,12 +3,29 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Services
 {
     public interface IEvaluationCriterionService
     {
-        // TODO: define business-logic contract methods for this entity
+        // Get all criteria for a template
+        Task<List<EvaluationCriterionDTO.Output>> GetCriteriaByTemplateIdAsync(int templateId);
+
+        // Get criterion details
+        Task<EvaluationCriterionDTO.Details?> GetCriterionByIdAsync(int criteriaId);
+
+        // Create criterion
+        Task CreateCriterionAsync(EvaluationCriterionDTO.Input input);
+
+        // Update criterion
+        Task<bool> UpdateCriterionAsync(int criteriaId, EvaluationCriterionDTO.Input input);
+
+        // Delete criterion
+        Task<bool> DeleteCriterionAsync(int criteriaId);
+
+        // Validate total weights
+        Task<bool> CheckTemplateWeightsAsync(int templateId);
     }
 }
