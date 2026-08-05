@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -17,5 +18,40 @@ namespace Nafadh_Backend.Repositories
         }
 
         // TODO: implement data-access contract methods for this entity
+
+        //Weighted criteria list for a template
+        public async Task<List<NFD_EvaluationCriterion>> GetCriteriaByTemplateIdAsync(int templateId)
+        {
+            return await _context.NFD_EvaluationCriteria
+                .Where(c => c.TemplateId == templateId)
+                .ToListAsync();
+        }
+
+        //weight-check 
+        public async Task<NFD_EvaluationCriterion?> GetCriterionByIdAsync(int criteriaId)
+        {
+            return await _context.NFD_EvaluationCriteria.FirstOrDefaultAsync(c => c.CriteriaId == criteriaId);
+        }
+
+        //Add a criterion to a template
+        public async Task AddCriterionAsync(NFD_EvaluationCriterion criterion)
+        {
+            await _context.NFD_EvaluationCriteria.AddAsync(criterion);
+            await _context.SaveChangesAsync();
+        }
+
+        //Update name/weight
+        public async Task UpdateCriterionAsync(NFD_EvaluationCriterion criterion)
+        {
+            _context.NFD_EvaluationCriteria.Update(criterion);
+            await _context.SaveChangesAsync();
+        }
+
+        //Remove a criterion
+        public async Task DeleteCriterionAsync(NFD_EvaluationCriterion criterion)
+        {
+            _context.NFD_EvaluationCriteria.Remove(criterion);
+            await _context.SaveChangesAsync();
+        }
     }
 }
