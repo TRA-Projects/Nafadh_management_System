@@ -81,6 +81,18 @@ namespace Nafadh_Backend.Services
             }
         }
 
+        public async Task BulkUpdateAsync(int roleId, BulkUpdateRolePermissionsDTO dto)
+        {
+            await EnsureRoleExistsAsync(roleId);
+
+            foreach (var permissionId in dto.PermissionIds.Distinct())
+            {
+                await EnsurePermissionExistsAsync(permissionId);
+            }
+
+            await _repository.ReplaceForRoleAsync(roleId, dto.PermissionIds);
+        }
+
 
     }
 }

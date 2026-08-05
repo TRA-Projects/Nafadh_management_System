@@ -48,7 +48,14 @@ namespace Nafadh_Backend.Controllers
             return NoContent();
         }
 
-
+        //Replace a role's full permission set.
+        [HttpPut("role/{roleId:int}/bulk-update")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> BulkUpdate(int roleId, [FromBody] BulkUpdateRolePermissionsDTO dto)
+        {
+            await _service.BulkUpdateAsync(roleId, dto);
+            return NoContent();
+        }
 
     }
 }
