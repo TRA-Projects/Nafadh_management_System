@@ -3,7 +3,9 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using LearnFromHome.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -14,11 +16,91 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly ICompanyBranchService _service;
 
+        // Constructor - inject Company Branch Service
         public CompanyBranchController(ICompanyBranchService service)
         {
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET: api/CompanyBranch
+        // Get all company branches
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<NFD_CompanyBranchOutputDTO>>>
+            GetAllCompanyBranches()
+        {
+            var branches = await _service.GetAllCompanyBranchesAsync();
+
+            return Ok(branches);
+        }
+
+        // GET: api/CompanyBranch/{branchId}
+        // Get a company branch by ID
+        [HttpGet("{branchId}")]
+        public async Task<ActionResult<NFD_CompanyBranchOutputDTO>>
+            GetCompanyBranchById(int branchId)
+        {
+            var branch = await _service.GetCompanyBranchByIdAsync(branchId);
+
+            if (branch == null)
+                return NotFound(new
+                {
+                    message = "Company branch not found."
+                });
+
+            return Ok(branch);
+        }
+
+        // POST: api/CompanyBranch
+        // Add a new company branch
+        [HttpPost]
+        public async Task<ActionResult<NFD_CompanyBranchOutputDTO>>
+            AddCompanyBranch([FromBody] NFD_CompanyBranchInputDTO dto)
+        {
+            var branch = await _service.AddCompanyBranchAsync(dto);
+
+            return CreatedAtAction(
+                nameof(GetCompanyBranchById),
+                new { branchId = branch.BranchId },
+                branch
+            );
+        }
+
+        // PUT: api/CompanyBranch/{branchId}
+        // Update an existing company branch
+        [HttpPut("{branchId}")]
+        public async Task<ActionResult<NFD_CompanyBranchOutputDTO>>
+            UpdateCompanyBranch(
+                int branchId,
+                [FromBody] NFD_CompanyBranchInputDTO dto)
+        {
+            var branch = await _service.UpdateCompanyBranchAsync(
+                branchId,
+                dto
+            );
+
+            if (branch == null)
+                return NotFound(new
+                {
+                    message = "Company branch not found."
+                });
+
+            return Ok(branch);
+        }
+
+        // DELETE: api/CompanyBranch/{branchId}
+        // Delete a company branch by ID
+        [HttpDelete("{branchId}")]
+        public async Task<IActionResult> DeleteCompanyBranch(int branchId)
+        {
+            var deleted = await _service.DeleteCompanyBranchAsync(branchId);
+
+            if (!deleted)
+                return NotFound(new
+                {
+                    message = "Company branch not found."
+                });
+
+            return NoContent();
+        }
     }
 }
