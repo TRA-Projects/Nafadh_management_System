@@ -64,7 +64,15 @@ namespace Nafadh_Backend.Controllers
         }
 
 
-
+        //Activate/suspend/deactivate a user.
+        [HttpPut("{id:int}/status")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(UserResponseDTO), StatusCodes.Status200OK)]
+        public async Task<ActionResult<UserResponseDTO>> UpdateStatus(int id, [FromBody] UserStatusUpdateDTO dto)
+        {
+            var updated = await _service.UpdateStatusAsync(id, dto);
+            return Ok(updated);
+        }
 
 
 

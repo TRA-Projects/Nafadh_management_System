@@ -118,5 +118,17 @@ namespace Nafadh_Backend.Services
                 CreatedAt = user.CreatedAt
             };
         }
+
+        public async Task<UserResponseDTO> UpdateStatusAsync(int userId, UserStatusUpdateDTO dto)
+        {
+            var user = await _repository.GetByIdWithRoleAsync(userId)
+                ?? throw new NotFoundException($"User {userId} was not found.");
+
+            user.Status = dto.Status;
+            await _repository.UpdateAsync(user);
+            return MapToResponseDTO(user);
+        }
+
+
     }
 }
