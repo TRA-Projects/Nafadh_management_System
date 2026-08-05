@@ -18,11 +18,38 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
+        //List programs (filter by track/status/category)
         public async Task<IEnumerable<ProgramDto>> GetAllProgramsAsync(ProgramFilterDto filter)
         {
             var programs = await _repository.GetAllAsync(filter.TrackId, filter.Status, filter.Category);
             return programs.Select(MapToDto);
         }
 
+        // Get program details
+        public async Task<ProgramDto?> GetProgramByIdAsync(int id)
+        {
+            var program = await _repository.GetByIdAsync(id);
+            return program is null ? null : MapToDto(program);
+        }
+
+        //Create a new program
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // Update program details
+        //Archive a program
+        //List batches running for a program
+        //Get the curriculum outline (modules)
+        //List companies eligible to host this program
     }
 }

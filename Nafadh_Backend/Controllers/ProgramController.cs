@@ -32,5 +32,16 @@ namespace Nafadh_Backend.Controllers
             var programs = await _service.GetAllProgramsAsync(filter);
             return Ok(programs);
         }
+
+        // GET /api/Program/{id}
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<ProgramDto>> GetById(int id)
+        {
+            var program = await _service.GetProgramByIdAsync(id);
+            if (program is null)
+                return NotFound(new { message = $"Program with ID {id} was not found." });
+
+            return Ok(program);
+        }
     }
 }
