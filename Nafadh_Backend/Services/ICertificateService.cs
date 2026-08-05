@@ -18,7 +18,7 @@ namespace Nafadh_Backend.Services
 
 
         Task<CertificateOutputDTO?> GetCertificateByEnrollmentIdAsync(int enrollmentId);
-
+        Task<CertificateOutputDTO> AddCertificateAsync(CertificateInputDTO dto);
 
     }
 }

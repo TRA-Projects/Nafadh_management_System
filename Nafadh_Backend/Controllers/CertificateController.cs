@@ -5,6 +5,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Services;
+using static Nafadh_Backend.DTOs.CertificateDTO;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -34,6 +35,23 @@ namespace Nafadh_Backend.Controllers
 
 
             return Ok(result);
+        }
+        // Create certificate
+        [HttpPost]
+        public async Task<IActionResult> AddCertificate(CertificateInputDTO dto)
+        {
+
+            var result = await _service.AddCertificateAsync(dto);
+            if (result == null)
+            {
+                return BadRequest("Unable to issue certificate.");
+            }
+
+            return Ok(new
+            {
+                Message = "Certificate issued successfully",
+                Certificate = result
+            });
         }
 
     }

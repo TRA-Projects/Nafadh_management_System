@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 using static Nafadh_Backend.DTOs.CertificateDTO;
@@ -60,6 +61,33 @@ namespace Nafadh_Backend.Services
                 IssueDate = certificate.IssueDate,
                 Type = certificate.Type,
                 FileUrl= certificate.FileUrl
+            };
+
+        }
+
+        // Create certificate
+        public async Task<CertificateOutputDTO> AddCertificateAsync(CertificateInputDTO dto)
+        {
+
+            NFD_Certificate certificate = new NFD_Certificate
+            {
+                Type = dto.Type,
+                IssueDate = dto.IssueDate,
+                FileUrl = dto.FileUrl,
+                EnrollmentId = dto.EnrollmentId
+            };
+
+
+            await _repository.AddCertificateAsync(certificate);
+
+
+            return new CertificateOutputDTO
+            {
+                CertificateId = certificate.CertificateId,
+                EnrollmentId = certificate.EnrollmentId,
+                IssueDate = certificate.IssueDate,
+                Type = certificate.Type,
+                FileUrl = certificate.FileUrl
             };
         }
 
