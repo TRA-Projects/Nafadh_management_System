@@ -28,20 +28,20 @@ namespace Nafadh_Backend.DTOs
     // Represents the data required to create a new support ticket.
     public class CreateSupportTicketDTO
     {
-        [Required]
-        [MaxLength(150)]
+        [Required(ErrorMessage = "Subject is required.")]
+        [MaxLength(150, ErrorMessage = "Subject cannot exceed 150 characters.")]
         public string Subject { get; set; } = string.Empty;
-        [Required]
+        [Required(ErrorMessage = "Message is required.")]
         public string Message { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "UserId is required.")]
         public int UserId { get; set; } // Identifier of the user creating the ticket.
     }
 
     // Represents the data required to update a ticket's status.
-    public class UpdateSupportTickerStatusDTO
+    public class UpdateSupportTicketStatusDTO
     {
-        [Required]
+        [Required(ErrorMessage = "Status is required.")]
         public NFD_SupportTicketStatus Status { get; set; }
     }
 
