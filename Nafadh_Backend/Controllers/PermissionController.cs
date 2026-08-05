@@ -38,6 +38,15 @@ namespace Nafadh_Backend.Controllers
             return CreatedAtAction(nameof(GetAll), created);
         }
 
+        //Update a permission's description.
+        [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(PermissionDTO), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PermissionDTO>> Update(int id, [FromBody] PermissionUpdateDTO dto)
+        {
+            var updated = await _service.UpdateAsync(id, dto);
+            return Ok(updated);
+        }
 
     }
 }

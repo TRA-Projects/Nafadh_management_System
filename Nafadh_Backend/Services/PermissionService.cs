@@ -41,6 +41,15 @@ namespace Nafadh_Backend.Services
             return MapToDTO(created);
         }
 
+        public async Task<PermissionDTO> UpdateAsync(int permissionId, PermissionUpdateDTO dto)
+        {
+            var permission = await _repository.GetByIdAsync(permissionId)
+                ?? throw new NotFoundException($"Permission {permissionId} was not found.");
+
+            permission.Description = dto.Description;
+            await _repository.UpdateAsync(permission);
+            return MapToDTO(permission);
+        }
 
 
         private static PermissionDTO MapToDTO(NFD_Permission permission)
