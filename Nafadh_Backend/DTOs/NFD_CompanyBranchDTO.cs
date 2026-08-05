@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace LearnFromHome.DTOs
+namespace Nafadh_Backend.DTOs
 {
     // Input DTO
     public class NFD_CompanyBranchInputDTO
@@ -15,7 +15,6 @@ namespace LearnFromHome.DTOs
         [Required]
         public int CompanyId { get; set; }
     }
-
 
     // Output DTO
     public class NFD_CompanyBranchOutputDTO

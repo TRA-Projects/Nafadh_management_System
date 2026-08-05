@@ -17,36 +17,42 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // Get Company Branch by ID
-        public async Task<NFD_CompanyBranch?> GetCompanyBranchByIdAsync(int branchId)
+        // Get all branches of a specific company
+        public async Task<IEnumerable<NFD_CompanyBranch>>
+            GetBranchesByCompanyIdAsync(int companyId)
+        {
+            return await _context.NFD_CompanyBranches
+                .Where(b => b.CompanyId == companyId)
+                .ToListAsync();
+        }
+
+        // Get branch by ID
+        public async Task<NFD_CompanyBranch?>
+            GetBranchByIdAsync(int branchId)
         {
             return await _context.NFD_CompanyBranches
                 .FindAsync(branchId);
         }
 
-        // Get All Company Branches
-        public async Task<IEnumerable<NFD_CompanyBranch>> GetAllCompanyBranchesAsync()
-        {
-            return await _context.NFD_CompanyBranches
-                .ToListAsync();
-        }
-
-        // Add Company Branch
-        public async Task AddCompanyBranchAsync(NFD_CompanyBranch branch)
+        // Add a new branch
+        public async Task AddBranchAsync(
+            NFD_CompanyBranch branch)
         {
             await _context.NFD_CompanyBranches.AddAsync(branch);
             await _context.SaveChangesAsync();
         }
 
-        // Update Company Branch
-        public async Task UpdateCompanyBranchAsync(NFD_CompanyBranch branch)
+        // Update an existing branch
+        public async Task UpdateBranchAsync(
+            NFD_CompanyBranch branch)
         {
             _context.NFD_CompanyBranches.Update(branch);
             await _context.SaveChangesAsync();
         }
 
-        // Delete Company Branch
-        public async Task DeleteCompanyBranchAsync(int branchId)
+        // Delete a branch
+        public async Task DeleteBranchAsync(
+            int branchId)
         {
             var branch = await _context.NFD_CompanyBranches
                 .FindAsync(branchId);
