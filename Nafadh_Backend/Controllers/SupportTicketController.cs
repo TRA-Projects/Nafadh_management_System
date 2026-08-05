@@ -54,5 +54,15 @@ namespace Nafadh_Backend.Controllers
             IEnumerable<SupportTicketDTO> tickets = await _service.GetOpenTicketsAsync();
             return Ok(tickets);
         }
+
+        // POST: api/SupportTicket
+        // Opens a new support ticket.
+        [HttpPost]
+        public async Task<IActionResult> CreateTicket([FromBody] CreateSupportTicketDTO ticketDto)
+        {
+            SupportTicketDTO ticket = await _service.CreateTicketAsync(ticketDto);
+
+            return CreatedAtAction(nameof(GetTicketById), new { id = ticket.TicketId }, ticket);
+        }
     }
 }

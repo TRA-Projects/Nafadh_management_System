@@ -3,9 +3,10 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
-using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Services
 {
@@ -69,6 +70,32 @@ namespace Nafadh_Backend.Services
                 CreatedAt = t.CreatedAt,
                 UserId = t.UserId
             });
+        }
+
+        // Creates a new support ticket.
+        public async Task<SupportTicketDTO> CreateTicketAsync(CreateSupportTicketDTO ticketDto)
+        {
+            NFD_SupportTicket ticket = new NFD_SupportTicket
+            {
+                Subject = ticketDto.Subject,
+                Message = ticketDto.Message,
+                UserId = ticketDto.UserId,
+                Status = NFD_SupportTicketStatus.Open,
+                CreatedAt = DateTime.Now
+            };
+
+            await _repository.AddAsync(ticket);
+            await _repository.SaveChangesAsync();
+
+            return new SupportTicketDTO
+            {
+                TicketId = ticket.TicketId,
+                Subject = ticket.Subject,
+                Message = ticket.Message,
+                Status = ticket.Status,
+                CreatedAt = ticket.CreatedAt,
+                UserId = ticket.UserId
+            };
         }
     }
 }
