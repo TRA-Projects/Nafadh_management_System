@@ -113,7 +113,7 @@ namespace Nafadh_Backend.Controllers
         {
             var companies = await _service.GetEligibleCompaniesByProgramIdAsync(id);
             if (companies is null)
-                return NotFound(new { message = $"Program بمعرف {id} غير موجود" });
+                return NotFound(new { message = $"Program with ID {id} was not found." });
 
             return Ok(companies);
         }

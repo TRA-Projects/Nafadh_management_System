@@ -133,5 +133,21 @@ namespace Nafadh_Backend.Services
             });
         }
 
+
+        private static ProgramDto MapToDto(NFD_Program program)
+        {
+            return new ProgramDto
+            {
+                ProgramId = program.ProgramId,
+                Title = program.Title,
+                Description = program.Description,
+                Category = program.Category,
+                DurationHours = program.DurationHours,
+                Price = program.Price,
+                Status = program.Status.ToString(),
+                TrackId = program.TrackId
+            };
+        }
+
     }
 }
