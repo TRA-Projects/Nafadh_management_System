@@ -19,7 +19,7 @@ namespace Nafadh_Backend.Services
         }
 
         // TODO: implement business-logic contract methods for this entity
-
+        //Get User Notifications
         public async Task<List<NotificationDTO>> GetByUserIdAsync(int userId)
         {
             var notifications = await _repository.GetByUserIdAsync(userId);
@@ -35,6 +35,23 @@ namespace Nafadh_Backend.Services
                 CreatedAt = n.CreatedAt
 
             }).ToList();
+
+        }
+
+        //Create Notification
+        public async Task CreateAsync(CreateNotificationDTO dto)
+        {
+            var notification = new NFD_Notification
+            {
+                UserId = dto.UserId,
+                Title = dto.Title,
+                Message = dto.Message,
+                RelatedEntity = dto.RelatedEntity,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _repository.AddAsync(notification);
         }
     }
 }

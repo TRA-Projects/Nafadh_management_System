@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.AspNetCore.Http.HttpResults;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 
@@ -11,6 +12,10 @@ namespace Nafadh_Backend.Services
     public interface INotificationService
     {
         // TODO: define business-logic contract methods for this entity
+
+        //Get User Notifications
         Task<List<NotificationDTO>> GetByUserIdAsync(int userId);
+        //Create Notification
+        Task CreateAsync(CreateNotificationDTO dto);
     }
 }

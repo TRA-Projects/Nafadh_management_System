@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -20,7 +21,7 @@ namespace Nafadh_Backend.Controllers
         }
 
         // TODO: implement endpoints for this entity
-
+        //Get User Notifications
         [HttpGet("user/{userId}")]
         public async Task<IActionResult> GetByUserId(int userId)
         {
@@ -28,5 +29,16 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(notifications);
         }
+
+        //Create Notification
+        [HttpPost]
+        public async Task<IActionResult> Create(CreateNotificationDTO dto)
+        {
+            await _service.CreateAsync(dto);
+
+            return Ok("Notification created successfully.");
+        }
+
+        //Mark Notification As Read
     }
 }
