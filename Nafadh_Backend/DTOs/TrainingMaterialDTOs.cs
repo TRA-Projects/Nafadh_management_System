@@ -4,24 +4,26 @@ namespace Nafadh_Backend.DTOs
 {
     public class CreateTrainingMaterialDto
     {
-        [Required]
-        [MaxLength(300)]
+        [Required(ErrorMessage = "File URL is required")]
+        [MaxLength(300, ErrorMessage = "File URL cannot exceed 300 characters")]
         public string FileUrl { get; set; } = string.Empty;
 
-        [Required]
-        public NFD_FileType FileType { get; set; }
-        [Required]
+        [Required(ErrorMessage = "File type is required")]
+        [EnumDataType(typeof(NFD_FileType), ErrorMessage = "Invalid file type")]
+        public NFD_FileType? FileType { get; set; }
+        [Required(ErrorMessage = "Lesson ID is required")]
         public int LessonId { get; set; }
        
     }
 
     public class UpdateTrainingMaterialDto
     {
-        [Required]
-        [MaxLength(300)]
+        [Required(ErrorMessage = "File URL is required")]
+        [MaxLength(300, ErrorMessage = "File URL cannot exceed 300 characters")]
         public string FileUrl { get; set; } = string.Empty;
-        [Required]
-        public NFD_FileType FileType { get; set; }
+        [Required(ErrorMessage = "File type is required")]
+        [EnumDataType(typeof(NFD_FileType), ErrorMessage = "Invalid file type")]
+        public NFD_FileType? FileType { get; set; }
     }
 
     public class TrainingMaterialDto

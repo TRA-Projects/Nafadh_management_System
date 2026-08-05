@@ -4,14 +4,14 @@ namespace Nafadh_Backend.DTOs
 {
     public class CompleteModuleDto
     {
-      
 
+        [Required(ErrorMessage = "Module ID is required")]
         public int ModuleId { get; set; }
     }
 
     public class UpdateTraineeModuleProgressDto
     {
-        [Required]
+        [Required(ErrorMessage = "Progress status is required")]
         public NFD_ModuleProgressStatus Status { get; set; }
 
         public DateTime? CompletedAt { get; set; }
