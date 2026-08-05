@@ -110,7 +110,15 @@ namespace Nafadh_Backend.Controllers
             return Ok(permissions);
         }
 
-
+        //Deactivate an account (soft-delete).
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> Deactivate(int id)
+        {
+            await _service.DeactivateAsync(id);
+            return NoContent();
+        }
 
     }
 }

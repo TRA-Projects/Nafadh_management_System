@@ -30,6 +30,10 @@ namespace Nafadh_Backend.Services
 
         Task<List<string>> GetEffectivePermissionsAsync(int userId);
 
+        // Soft-deletes a user by flipping Status to Inactive rather than removing the row,
+        // preserving referential history (audit logs, enrollments, etc.).
+        Task DeactivateAsync(int userId);
+
 
     }
 }

@@ -150,9 +150,14 @@ namespace Nafadh_Backend.Services
             return await _repository.GetPermissionKeysForUserAsync(user.UserId);
         }
 
+        public async Task DeactivateAsync(int userId)
+        {
+            var user = await _repository.GetByIdAsync(userId)
+                ?? throw new NotFoundException($"User {userId} was not found.");
 
-
-
+            user.Status = NFD_UserStatus.Inactive;
+            await _repository.UpdateAsync(user);
+        }
 
 
         private static UserResponseDTO MapToResponseDTO(NFD_User user)
