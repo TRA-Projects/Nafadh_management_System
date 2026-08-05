@@ -10,5 +10,6 @@ namespace Nafadh_Backend.Services
     public interface IProjectService
     {
         // TODO: define business-logic contract methods for this entity
+        Task<List<NFD_Project>> GetAllAsync();
     }
 }
