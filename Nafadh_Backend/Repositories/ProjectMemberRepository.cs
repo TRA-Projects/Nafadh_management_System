@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -16,6 +17,85 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        // GET PROJECT MEMBERS BY PROJECT ID
+        // Returns all trainees assigned to a specific project
+        public async Task<List<NFD_ProjectMember>> GetByProjectAsync(int projectId)
+        {
+            return await _context.NFD_ProjectMembers
+                .Include(x => x.Project)
+                .Include(x => x.Trainee)
+                .Where(x => x.ProjectId == projectId)
+                .ToListAsync();
+        }
+
+
+
+
+
+        // GET PROJECTS BY TRAINEE ID
+        // Returns all projects where a trainee is a member
+        public async Task<List<NFD_ProjectMember>> GetByTraineeAsync(int traineeId)
+        {
+            return await _context.NFD_ProjectMembers
+                .Include(x => x.Project)
+                .Include(x => x.Trainee)
+                .Where(x => x.TraineeId == traineeId)
+                .ToListAsync();
+        }
+
+
+
+
+
+        // GET PROJECT MEMBER DETAILS
+        // Returns a specific project member with project and trainee details
+        public async Task<NFD_ProjectMember?> GetByIdAsync(int id)
+        {
+            return await _context.NFD_ProjectMembers
+                .Include(x => x.Project)
+                .Include(x => x.Trainee)
+                .FirstOrDefaultAsync(
+                    x => x.MemberId == id
+                );
+        }
+
+
+
+
+
+        // ADD PROJECT MEMBER
+        // Assigns a trainee to a project with a specific role
+        public async Task AddAsync(NFD_ProjectMember member)
+        {
+            await _context.NFD_ProjectMembers.AddAsync(member);
+
+            await _context.SaveChangesAsync();
+        }
+
+
+
+
+
+        // UPDATE MEMBER ROLE
+        // Changes the role of an existing project member
+        public async Task UpdateAsync(NFD_ProjectMember member)
+        {
+            _context.NFD_ProjectMembers.Update(member);
+
+            await _context.SaveChangesAsync();
+        }
+
+
+
+
+
+        // DELETE MEMBER
+        // Removes a trainee from the project team
+        public async Task DeleteAsync(NFD_ProjectMember member)
+        {
+            _context.NFD_ProjectMembers.Remove(member);
+
+            await _context.SaveChangesAsync();
+        }
     }
 }
