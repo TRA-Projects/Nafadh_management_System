@@ -10,6 +10,7 @@ namespace Nafadh_Backend.Services
 
         Task<RoleDetailDTO> GetByIdAsync(int roleId);
 
+        Task<RoleDTO> CreateAsync(RoleCreateDTO dto);
 
     }
 }

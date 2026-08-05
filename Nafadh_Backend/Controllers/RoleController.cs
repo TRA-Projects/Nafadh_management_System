@@ -38,6 +38,17 @@ namespace Nafadh_Backend.Controllers
             return Ok(role);
         }
 
+        //Create a role.
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(RoleDTO), StatusCodes.Status201Created)]
+        public async Task<ActionResult<RoleDTO>> Create([FromBody] RoleCreateDTO dto)
+        {
+            var created = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.RoleId }, created);
+        }
+
+
 
 
     }
