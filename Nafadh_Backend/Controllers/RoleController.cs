@@ -49,6 +49,15 @@ namespace Nafadh_Backend.Controllers
         }
 
 
+        //Rename a role.
+        [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(RoleDTO), StatusCodes.Status200OK)]
+        public async Task<ActionResult<RoleDTO>> Update(int id, [FromBody] RoleUpdateDTO dto)
+        {
+            var updated = await _service.UpdateAsync(id, dto);
+            return Ok(updated);
+        }
 
 
     }

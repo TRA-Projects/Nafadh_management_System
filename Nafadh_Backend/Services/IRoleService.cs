@@ -12,5 +12,7 @@ namespace Nafadh_Backend.Services
 
         Task<RoleDTO> CreateAsync(RoleCreateDTO dto);
 
+        Task<RoleDTO> UpdateAsync(int roleId, RoleUpdateDTO dto);
+
     }
 }

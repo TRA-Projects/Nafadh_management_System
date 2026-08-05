@@ -56,6 +56,20 @@ namespace Nafadh_Backend.Services
             return new RoleDTO { RoleId = created.RoleId, RoleName = created.RoleName };
         }
 
+        public async Task<RoleDTO> UpdateAsync(int roleId, RoleUpdateDTO dto)
+        {
+            var role = await _repository.GetByIdAsync(roleId)
+                ?? throw new NotFoundException($"Role {roleId} was not found.");
+
+            if (await _repository.NameExistsAsync(dto.RoleName, roleId))
+            {
+                throw new ConflictException($"A role named '{dto.RoleName}' already exists.");
+            }
+
+            role.RoleName = dto.RoleName.Trim();
+            await _repository.UpdateAsync(role);
+            return new RoleDTO { RoleId = role.RoleId, RoleName = role.RoleName };
+        }
 
 
     }
