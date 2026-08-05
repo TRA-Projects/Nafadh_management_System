@@ -17,7 +17,7 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entit
+      
         //Ordered module list for a program (curriculum outline)
         public async Task<IEnumerable<NFD_Module>> GetModulesByProgramIdAsync(int programId)
         {

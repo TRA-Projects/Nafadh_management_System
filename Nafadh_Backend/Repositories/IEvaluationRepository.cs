@@ -9,6 +9,11 @@ namespace Nafadh_Backend.Repositories
 {
     public interface IEvaluationRepository
     {
-        // TODO: define data-access contract methods for this entity
+        Task<IEnumerable<NFD_Evaluation>> GetEvaluationsByEnrollmentIdAsync(int enrollmentId);
+        Task<IEnumerable<NFD_Evaluation>> GetEvaluationsByTrainerIdAsync(int trainerId);
+        Task<NFD_Evaluation?> GetEvaluationByIdAsync(int evaluationId);
+        Task<NFD_Evaluation> CreateEvaluationAsync(NFD_Evaluation evaluation);
+        Task UpdateEvaluationAsync(NFD_Evaluation evaluation);
+        Task<double> GetAverageScoreByEnrollmentIdAsync(int enrollmentId);
     }
 }

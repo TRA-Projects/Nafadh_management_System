@@ -17,7 +17,7 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        
 
         // get Lessons in order for a module
         public async Task<IEnumerable<NFD_Lesson>> GetLessonsByModuleIdAsync(int moduleId)

@@ -9,8 +9,7 @@ namespace Nafadh_Backend.Repositories
 {
     public interface ILessonRepository
     {
-        // TODO: define data-access contract methods for this entity
-
+       
         Task<IEnumerable<NFD_Lesson>> GetLessonsByModuleIdAsync(int moduleId);
         Task<NFD_Lesson?> GetLessonByIdAsync(int lessonId);
         Task<NFD_Lesson> CreateLessonAsync(NFD_Lesson lesson);

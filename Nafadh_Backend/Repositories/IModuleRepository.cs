@@ -9,7 +9,7 @@ namespace Nafadh_Backend.Repositories
 {
     public interface IModuleRepository
     {
-        // TODO: define data-access contract methods for this entity
+       
         Task<IEnumerable<NFD_Module>> GetModulesByProgramIdAsync(int programId);
         Task<NFD_Module?> GetModuleByIdAsync(int moduleId);
         Task<NFD_Module> CreateModuleAsync(NFD_Module module);
