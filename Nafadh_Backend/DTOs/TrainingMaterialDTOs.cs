@@ -2,6 +2,8 @@
 using System.ComponentModel.DataAnnotations;
 namespace Nafadh_Backend.DTOs
 {
+    // Input DTO
+    // Used when creating a new training material
     public class CreateTrainingMaterialDto
     {
         [Required(ErrorMessage = "File URL is required")]
@@ -15,7 +17,8 @@ namespace Nafadh_Backend.DTOs
         public int LessonId { get; set; }
        
     }
-
+    // Input DTO
+    // Used when updating existing training material
     public class UpdateTrainingMaterialDto
     {
         [Required(ErrorMessage = "File URL is required")]
@@ -25,7 +28,8 @@ namespace Nafadh_Backend.DTOs
         [EnumDataType(typeof(NFD_FileType), ErrorMessage = "Invalid file type")]
         public NFD_FileType? FileType { get; set; }
     }
-
+    // Output DTO
+    // Used when returning training material data to the client
     public class TrainingMaterialDto
     {
         public int MaterialId { get; set; }
