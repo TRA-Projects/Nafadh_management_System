@@ -27,6 +27,6 @@ namespace Nafadh_Backend.Repositories
         // Checks whether a material exists
         Task<bool> ExistsAsync(int id);
 
-        Task SaveChangesAsync();
+      
     }
 }
