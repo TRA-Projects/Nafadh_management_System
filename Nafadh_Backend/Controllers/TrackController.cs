@@ -27,5 +27,16 @@ namespace Nafadh_Backend.Controllers
             var tracks = await _service.GetAllTracksAsync();
             return Ok(tracks);
         }
+     
+        // GET /api/Track/{id}
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<TrackDto>> GetById(int id)
+        {
+            var track = await _service.GetTrackByIdAsync(id);
+            if (track is null)
+                return NotFound(new { message = $"Track with ID {id} was not found." });
+
+            return Ok(track);
+        }
     }
 }

@@ -18,10 +18,18 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
+        //List all tracks
         public async Task<IEnumerable<TrackDto>> GetAllTracksAsync()
         {
             var tracks = await _repository.GetAllAsync();
             return tracks.Select(MapToDto);
+        }
+
+        // Get track details
+        public async Task<TrackDto?> GetTrackByIdAsync(int id)
+        {
+            var track = await _repository.GetByIdAsync(id);
+            return track is null ? null : MapToDto(track);
         }
     }
 }
