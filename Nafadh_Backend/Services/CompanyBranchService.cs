@@ -3,20 +3,127 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using LearnFromHome.DTOs;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
 namespace Nafadh_Backend.Services
 {
+    // Service responsible for handling company branch business logic
     public class CompanyBranchService : ICompanyBranchService
     {
+        // Repository used to access company branch data
         private readonly ICompanyBranchRepository _repository;
 
+        // Constructor - injects the company branch repository
         public CompanyBranchService(ICompanyBranchRepository repository)
         {
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        // Get a company branch by its ID
+        public async Task<NFD_CompanyBranchOutputDTO?> GetCompanyBranchByIdAsync(
+            int branchId)
+        {
+            // Get branch from the database through the repository
+            var branch = await _repository.GetCompanyBranchByIdAsync(branchId);
+
+            // Return null if the branch does not exist
+            if (branch == null)
+                return null;
+
+            // Convert Model to Output DTO
+            return MapToOutputDTO(branch);
+        }
+
+        // Get all company branches
+        public async Task<IEnumerable<NFD_CompanyBranchOutputDTO>>
+            GetAllCompanyBranchesAsync()
+        {
+            // Get all branches from the database
+            var branches = await _repository.GetAllCompanyBranchesAsync();
+
+            // Convert each branch Model to Output DTO
+            return branches.Select(MapToOutputDTO);
+        }
+
+        // Add a new company branch
+        public async Task<NFD_CompanyBranchOutputDTO> AddCompanyBranchAsync(
+            NFD_CompanyBranchInputDTO dto)
+        {
+            // Create a new Company Branch Model from the Input DTO
+            var branch = new NFD_CompanyBranch
+            {
+                Location = dto.Location,
+                ContactPoint = dto.ContactPoint,
+                CompanyId = dto.CompanyId
+            };
+
+            // Save the new branch to the database
+            await _repository.AddCompanyBranchAsync(branch);
+
+            // Return the created branch as Output DTO
+            return MapToOutputDTO(branch);
+        }
+
+        // Update an existing company branch
+        public async Task<NFD_CompanyBranchOutputDTO?> UpdateCompanyBranchAsync(
+            int branchId,
+            NFD_CompanyBranchInputDTO dto)
+        {
+            // Find the existing branch by ID
+            var branch = await _repository.GetCompanyBranchByIdAsync(branchId);
+
+            // Return null if the branch does not exist
+            if (branch == null)
+                return null;
+
+            // Update branch properties using the Input DTO
+            branch.Location = dto.Location;
+            branch.ContactPoint = dto.ContactPoint;
+            branch.CompanyId = dto.CompanyId;
+
+            // Save the updated branch to the database
+            await _repository.UpdateCompanyBranchAsync(branch);
+
+            // Return the updated branch as Output DTO
+            return MapToOutputDTO(branch);
+        }
+
+        // Delete a company branch by its ID
+        public async Task<bool> DeleteCompanyBranchAsync(int branchId)
+        {
+            // Find the branch before deleting it
+            var branch = await _repository.GetCompanyBranchByIdAsync(branchId);
+
+            // Return false if the branch does not exist
+            if (branch == null)
+                return false;
+
+            // Delete the branch from the database
+            await _repository.DeleteCompanyBranchAsync(branchId);
+
+            // Return true to indicate successful deletion
+            return true;
+        }
+
+        // Mapping method: Convert Company Branch Model to Output DTO
+        private static NFD_CompanyBranchOutputDTO MapToOutputDTO(
+            NFD_CompanyBranch branch)
+        {
+            return new NFD_CompanyBranchOutputDTO
+            {
+                // Map branch ID
+                BranchId = branch.BranchId,
+
+                // Map branch information
+                Location = branch.Location,
+                ContactPoint = branch.ContactPoint,
+
+                // Map related company ID
+                CompanyId = branch.CompanyId
+            };
+        }
     }
 }
