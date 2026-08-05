@@ -4,10 +4,7 @@
 
 namespace Nafadh_Backend.DTOs
 {
-    /// <summary>
-    /// Outbound representation of a role together with the permissions granted to it.
-    /// Used by GET /api/Role/{id}.
-    /// </summary>
+  
     public class RoleDetailDTO
     {
         public int RoleId { get; set; }
