@@ -58,5 +58,18 @@ namespace Nafadh_Backend.Controllers
             return CreatedAtAction(nameof(GetById), new { id = result!.ProgramId }, result);
         }
 
+        // PUT /api/Program/{id}
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<ProgramDto>> Update(int id, [FromBody] UpdateProgramDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var (result, error) = await _service.UpdateProgramAsync(id, dto);
+            if (error == "not_found")
+                return NotFound(new { message = $"Program with ID {id} was not found." });
+
+            return Ok(result);
+        }
     }
 }

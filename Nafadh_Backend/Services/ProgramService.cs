@@ -56,19 +56,24 @@ namespace Nafadh_Backend.Services
             return (MapToDto(created), null);
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
         // Update program details
+        public async Task<(ProgramDto? result, string? error)> UpdateProgramAsync(int id, UpdateProgramDto dto)
+        {
+            var program = await _repository.GetByIdAsync(id);
+            if (program is null)
+                return (null, "not_found");
+
+            program.Title = dto.Title;
+            program.Description = dto.Description;
+            program.Category = dto.Category;
+            program.DurationHours = dto.DurationHours;
+            program.Price = dto.Price;
+            program.Status = dto.Status;
+
+            await _repository.UpdateAsync(program);
+            return (MapToDto(program), null);
+        }
+
         //Archive a program
         //List batches running for a program
         //Get the curriculum outline (modules)
