@@ -101,6 +101,21 @@ namespace Nafadh_Backend.Services
         }
 
         //Get the curriculum outline (modules)
+        public async Task<IEnumerable<ModuleSummaryDto>?> GetModulesByProgramIdAsync(int programId)
+        {
+            var exists = await _repository.ExistsAsync(programId);
+            if (!exists) return null;
+
+            var modules = await _repository.GetModulesByProgramIdAsync(programId);
+            return modules.Select(m => new ModuleSummaryDto
+            {
+                ModuleId = m.ModuleId,
+                Title = m.Title,
+                OrderIndex = m.OrderIndex,
+                PrerequisiteModuleId = m.PrerequisiteModuleId
+            });
+        }
+
         //List companies eligible to host this program
     }
 }

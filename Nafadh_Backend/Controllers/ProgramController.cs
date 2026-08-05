@@ -95,5 +95,16 @@ namespace Nafadh_Backend.Controllers
             return Ok(batches);
         }
 
+
+        // GET /api/Program/{id}/modules
+        [HttpGet("{id:int}/modules")]
+        public async Task<ActionResult<IEnumerable<ModuleSummaryDto>>> GetModules(int id)
+        {
+            var modules = await _service.GetModulesByProgramIdAsync(id);
+            if (modules is null)
+                return NotFound(new { message = $"Program with ID {id} was not found." });
+
+            return Ok(modules);
+        }
     }
 }
