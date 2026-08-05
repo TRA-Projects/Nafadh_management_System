@@ -3,12 +3,28 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Services
 {
     public interface ICompanyService
     {
-        // TODO: define business-logic contract methods for this entity
+        // Get a company by its ID
+        Task<NFD_CompanyOutputDTO?> GetCompanyByIdAsync(int companyId);
+
+        // Get all companies
+        Task<IEnumerable<NFD_CompanyOutputDTO>> GetAllCompaniesAsync();
+
+        // Add a new company
+        Task<NFD_CompanyOutputDTO> AddCompanyAsync(NFD_CompanyInputDTO dto);
+
+        // Update an existing company
+        Task<NFD_CompanyOutputDTO?> UpdateCompanyAsync(
+            int companyId,
+            NFD_CompanyInputDTO dto);
+
+        // Delete a company by its ID
+        Task<bool> DeleteCompanyAsync(int companyId);
     }
 }

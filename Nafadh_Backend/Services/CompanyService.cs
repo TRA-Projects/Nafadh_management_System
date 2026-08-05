@@ -3,20 +3,152 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
 namespace Nafadh_Backend.Services
 {
+    // Service responsible for handling company business logic
     public class CompanyService : ICompanyService
     {
+        // Repository used to access company data
         private readonly ICompanyRepository _repository;
 
+        // Constructor - injects the company repository
         public CompanyService(ICompanyRepository repository)
         {
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        // Get a company by its ID
+        public async Task<NFD_CompanyOutputDTO?> GetCompanyByIdAsync(int companyId)
+        {
+            // Get company from the database through the repository
+            var company = await _repository.GetCompanyByIdAsync(companyId);
+
+            // Return null if the company does not exist
+            if (company == null)
+                return null;
+
+            // Convert the Model to Output DTO
+            return MapToOutputDTO(company);
+        }
+
+        // Get all companies
+        public async Task<IEnumerable<NFD_CompanyOutputDTO>> GetAllCompaniesAsync()
+        {
+            // Get all companies from the database
+            var companies = await _repository.GetAllCompaniesAsync();
+
+            // Convert each company Model to Output DTO
+            return companies.Select(MapToOutputDTO);
+        }
+
+        // Add a new company
+        public async Task<NFD_CompanyOutputDTO> AddCompanyAsync(
+            NFD_CompanyInputDTO dto)
+        {
+            // Create a new Company Model from the Input DTO
+            var company = new NFD_Company
+            {
+                CompanyName = dto.CompanyName,
+                CommercialRegister = dto.CommercialRegister,
+                WorkField = dto.WorkField,
+                Address = dto.Address,
+                Phone = dto.Phone,
+                Email = dto.Email,
+                Logo = dto.Logo,
+                Capacity = dto.Capacity,
+                Status = dto.Status,
+                ApprovalDate = dto.ApprovalDate,
+                UserId = dto.UserId
+            };
+
+            // Save the new company to the database
+            await _repository.AddCompanyAsync(company);
+
+            // Return the created company as Output DTO
+            return MapToOutputDTO(company);
+        }
+
+        // Update an existing company
+        public async Task<NFD_CompanyOutputDTO?> UpdateCompanyAsync(
+            int companyId,
+            NFD_CompanyInputDTO dto)
+        {
+            // Find the existing company by ID
+            var company = await _repository.GetCompanyByIdAsync(companyId);
+
+            // Return null if the company does not exist
+            if (company == null)
+                return null;
+
+            // Update company properties using the Input DTO
+            company.CompanyName = dto.CompanyName;
+            company.CommercialRegister = dto.CommercialRegister;
+            company.WorkField = dto.WorkField;
+            company.Address = dto.Address;
+            company.Phone = dto.Phone;
+            company.Email = dto.Email;
+            company.Logo = dto.Logo;
+            company.Capacity = dto.Capacity;
+            company.Status = dto.Status;
+            company.ApprovalDate = dto.ApprovalDate;
+            company.UserId = dto.UserId;
+
+            // Save the updated company to the database
+            await _repository.UpdateCompanyAsync(company);
+
+            // Return the updated company as Output DTO
+            return MapToOutputDTO(company);
+        }
+
+        // Delete a company by its ID
+        public async Task<bool> DeleteCompanyAsync(int companyId)
+        {
+            // Find the company before deleting it
+            var company = await _repository.GetCompanyByIdAsync(companyId);
+
+            // Return false if the company does not exist
+            if (company == null)
+                return false;
+
+            // Delete the company from the database
+            await _repository.DeleteCompanyAsync(companyId);
+
+            // Return true to indicate successful deletion
+            return true;
+        }
+
+        // Mapping method: Convert Company Model to Output DTO
+        private static NFD_CompanyOutputDTO MapToOutputDTO(
+            NFD_Company company)
+        {
+            return new NFD_CompanyOutputDTO
+            {
+                // Map company ID
+                CompanyId = company.CompanyId,
+
+                // Map company information
+                CompanyName = company.CompanyName,
+                CommercialRegister = company.CommercialRegister,
+                WorkField = company.WorkField,
+                Address = company.Address,
+                Phone = company.Phone,
+                Email = company.Email,
+                Logo = company.Logo,
+
+                // Map company capacity and status
+                Capacity = company.Capacity,
+                Status = company.Status,
+
+                // Map approval information
+                ApprovalDate = company.ApprovalDate,
+
+                // Map the related user ID
+                UserId = company.UserId
+            };
+        }
     }
 }
