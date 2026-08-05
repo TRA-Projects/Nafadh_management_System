@@ -19,6 +19,7 @@ namespace Nafadh_Backend.Services
 
         Task<UserResponseDTO> UpdateStatusAsync(int userId, UserStatusUpdateDTO dto);
 
+        Task ResetPasswordAsync(int userId, AdminResetPasswordDTO dto);
 
 
     }

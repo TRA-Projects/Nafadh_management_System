@@ -74,7 +74,15 @@ namespace Nafadh_Backend.Controllers
             return Ok(updated);
         }
 
-
+        //Admin-triggered password reset.
+        [HttpPut("{id:int}/reset-password")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> ResetPassword(int id, [FromBody] AdminResetPasswordDTO dto)
+        {
+            await _service.ResetPasswordAsync(id, dto);
+            return NoContent();
+        }
 
     }
 }

@@ -129,6 +129,16 @@ namespace Nafadh_Backend.Services
             return MapToResponseDTO(user);
         }
 
+        public async Task ResetPasswordAsync(int userId, AdminResetPasswordDTO dto)
+        {
+            var user = await _repository.GetByIdAsync(userId)
+                ?? throw new NotFoundException($"User {userId} was not found.");
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            await _repository.UpdateAsync(user);
+        }
+
+
 
     }
 }
