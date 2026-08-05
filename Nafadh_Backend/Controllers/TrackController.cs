@@ -63,5 +63,16 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(updated);
         }
+
+        // DELETE /api/Track/{id}  (Archive/remove)
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var deleted = await _service.DeleteTrackAsync(id);
+            if (!deleted)
+                return NotFound(new { message = $"Track with ID {id} was not found." });
+
+            return NoContent();
+        }
     }
 }

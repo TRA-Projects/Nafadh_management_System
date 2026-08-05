@@ -60,5 +60,17 @@ namespace Nafadh_Backend.Services
             await _repository.UpdateAsync(track);
             return MapToDto(track);
         }
+
+        //Archive/remove a track
+        public async Task<bool> DeleteTrackAsync(int id)
+        {
+            var track = await _repository.GetByIdAsync(id);
+            if (track is null) return false;
+
+            await _repository.DeleteAsync(track);
+            return true;
+        }
+
+
     }
 }
