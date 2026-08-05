@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -16,6 +17,45 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        // Get Company Branch by ID
+        public async Task<NFD_CompanyBranch?> GetCompanyBranchByIdAsync(int branchId)
+        {
+            return await _context.NFD_CompanyBranches
+                .FindAsync(branchId);
+        }
+
+        // Get All Company Branches
+        public async Task<IEnumerable<NFD_CompanyBranch>> GetAllCompanyBranchesAsync()
+        {
+            return await _context.NFD_CompanyBranches
+                .ToListAsync();
+        }
+
+        // Add Company Branch
+        public async Task AddCompanyBranchAsync(NFD_CompanyBranch branch)
+        {
+            await _context.NFD_CompanyBranches.AddAsync(branch);
+            await _context.SaveChangesAsync();
+        }
+
+        // Update Company Branch
+        public async Task UpdateCompanyBranchAsync(NFD_CompanyBranch branch)
+        {
+            _context.NFD_CompanyBranches.Update(branch);
+            await _context.SaveChangesAsync();
+        }
+
+        // Delete Company Branch
+        public async Task DeleteCompanyBranchAsync(int branchId)
+        {
+            var branch = await _context.NFD_CompanyBranches
+                .FindAsync(branchId);
+
+            if (branch != null)
+            {
+                _context.NFD_CompanyBranches.Remove(branch);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }
