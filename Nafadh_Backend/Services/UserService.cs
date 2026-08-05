@@ -84,6 +84,11 @@ namespace Nafadh_Backend.Services
             };
         }
 
+        public async Task<UserResponseDTO?> GetByIdAsync(int userId)
+        {
+            var user = await _repository.GetByIdWithRoleAsync(userId);
+            return user is null ? null : MapToResponseDTO(user);
+        }
 
 
 

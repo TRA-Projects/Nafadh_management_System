@@ -13,6 +13,8 @@ namespace Nafadh_Backend.Services
 
         Task<UserLoginResponseDTO> LoginAsync(UserLoginDTO dto);
 
+        Task<UserResponseDTO?> GetByIdAsync(int userId);
+
 
     }
 }

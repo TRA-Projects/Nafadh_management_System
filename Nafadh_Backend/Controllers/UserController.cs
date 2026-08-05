@@ -41,6 +41,16 @@ namespace Nafadh_Backend.Controllers
         }
 
 
+        //Get user profile.
+        [HttpGet("{id:int}")]
+        [Authorize]
+        [ProducesResponseType(typeof(UserResponseDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<UserResponseDTO>> GetById(int id)
+        {
+            var user = await _service.GetByIdAsync(id);
+            return user is null ? NotFound() : Ok(user);
+        }
 
 
 
