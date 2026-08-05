@@ -84,5 +84,23 @@ namespace Nafadh_Backend.Controllers
             return NoContent();
         }
 
+
+        //>List/search users (filter by role/status).
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Search(
+            [FromQuery] int? roleId,
+            [FromQuery] NFD_UserStatus? status,
+            [FromQuery] string? search,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            var result = await _service.SearchAsync(roleId, status, search, page, pageSize);
+            return Ok(result);
+        }
+
+
+
+
     }
 }

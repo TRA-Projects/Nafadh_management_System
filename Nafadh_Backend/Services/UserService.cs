@@ -90,7 +90,6 @@ namespace Nafadh_Backend.Services
             return user is null ? null : MapToResponseDTO(user);
         }
 
-
         public async Task<UserResponseDTO> UpdateAsync(int userId, UserUpdateDTO dto)
         {
             var user = await _repository.GetByIdWithRoleAsync(userId)
@@ -101,22 +100,6 @@ namespace Nafadh_Backend.Services
 
             await _repository.UpdateAsync(user);
             return MapToResponseDTO(user);
-        }
-
-
-        private static UserResponseDTO MapToResponseDTO(NFD_User user)
-        {
-            return new UserResponseDTO
-            {
-                UserId = user.UserId,
-                FullName = user.FullName,
-                Email = user.Email,
-                Phone = user.Phone,
-                RoleId = user.RoleId,
-                RoleName = user.Role?.RoleName ?? string.Empty,
-                Status = user.Status,
-                CreatedAt = user.CreatedAt
-            };
         }
 
         public async Task<UserResponseDTO> UpdateStatusAsync(int userId, UserStatusUpdateDTO dto)
@@ -138,7 +121,40 @@ namespace Nafadh_Backend.Services
             await _repository.UpdateAsync(user);
         }
 
+        public async Task<PagedResult<UserResponseDTO>> SearchAsync(
+                                                                     int? roleId,
+                                                                     NFD_UserStatus? status,
+                                                                     string? search,
+                                                                     int page,
+                                                                     int pageSize)
+        {
+            page = page < 1 ? 1 : page;
+            pageSize = pageSize is < 1 or > 200 ? 20 : pageSize;
 
+            var (items, totalCount) = await _repository.SearchAsync(roleId, status, search, page, pageSize);
 
+            return new PagedResult<UserResponseDTO>
+            {
+                Items = items.Select(MapToResponseDTO).ToList(),
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
+
+        private static UserResponseDTO MapToResponseDTO(NFD_User user)
+        {
+            return new UserResponseDTO
+            {
+                UserId = user.UserId,
+                FullName = user.FullName,
+                Email = user.Email,
+                Phone = user.Phone,
+                RoleId = user.RoleId,
+                RoleName = user.Role?.RoleName ?? string.Empty,
+                Status = user.Status,
+                CreatedAt = user.CreatedAt
+            };
+        }
     }
 }

@@ -21,6 +21,14 @@ namespace Nafadh_Backend.Services
 
         Task ResetPasswordAsync(int userId, AdminResetPasswordDTO dto);
 
+        Task<PagedResult<UserResponseDTO>> SearchAsync(
+            int? roleId,
+            NFD_UserStatus? status,
+            string? search,
+            int page,
+            int pageSize);
+
+
 
     }
 }
