@@ -79,9 +79,20 @@ namespace Nafadh_Backend.Controllers
         {
             var deleted = await _service.DeleteProgramAsync(id);
             if (!deleted)
-                return NotFound(new { message = $"Program بمعرف {id} غير موجود" });
+                return NotFound(new { message = $"Program with ID {id} was not found." });
 
             return NoContent();
+        }
+
+        // GET /api/Program/{id}/batches
+        [HttpGet("{id:int}/batches")]
+        public async Task<ActionResult<IEnumerable<BatchSummaryDto>>> GetBatches(int id)
+        {
+            var batches = await _service.GetBatchesByProgramIdAsync(id);
+            if (batches is null)
+                return NotFound(new { message = $"Program with ID {id} was not found." });
+
+            return Ok(batches);
         }
 
     }

@@ -83,14 +83,23 @@ namespace Nafadh_Backend.Services
             await _repository.DeleteAsync(program);
             return true;
         }
-
-
-
-
-
-
-
         //List batches running for a program
+        public async Task<IEnumerable<BatchSummaryDto>?> GetBatchesByProgramIdAsync(int programId)
+        {
+            var exists = await _repository.ExistsAsync(programId);
+            if (!exists) return null; // null -> Controller returns 404
+
+            var batches = await _repository.GetBatchesByProgramIdAsync(programId);
+            return batches.Select(b => new BatchSummaryDto
+            {
+                BatchId = b.BatchId,
+                BatchName = b.BatchName,
+                StartDate = b.StartDate,
+                EndDate = b.EndDate,
+                Status = b.Status.ToString()
+            });
+        }
+
         //Get the curriculum outline (modules)
         //List companies eligible to host this program
     }
