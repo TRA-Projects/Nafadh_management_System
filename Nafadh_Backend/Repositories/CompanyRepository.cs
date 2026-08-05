@@ -37,8 +37,7 @@ namespace Nafadh_Backend.Repositories
             NFD_CompanyStatus? status,
             string? workField)
         {
-            var query = _context.NFD_Companies
-                .AsQueryable();
+            var query = _context.NFD_Companies.AsQueryable();
 
             // Filter by company status
             if (status.HasValue)

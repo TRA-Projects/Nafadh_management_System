@@ -1,12 +1,12 @@
-using LearnFromHome.DTOs;
 using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Services
 {
     public interface ICompanyBranchService
     {
-        // Get a company branch by its ID
-        Task<NFD_CompanyBranchOutputDTO?> GetCompanyBranchByIdAsync(int branchId);
+        // Get a company branch by ID
+        Task<NFD_CompanyBranchOutputDTO?> GetCompanyBranchByIdAsync(
+            int branchId);
 
         // Get all company branches
         Task<IEnumerable<NFD_CompanyBranchOutputDTO>> GetAllCompanyBranchesAsync();
@@ -20,7 +20,8 @@ namespace Nafadh_Backend.Services
             int branchId,
             NFD_CompanyBranchInputDTO dto);
 
-        // Delete a company branch by its ID
-        Task<bool> DeleteCompanyBranchAsync(int branchId);
+        // Delete a company branch
+        Task<bool> DeleteCompanyBranchAsync(
+            int branchId);
     }
 }

@@ -3,7 +3,7 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -11,19 +11,27 @@ namespace Nafadh_Backend.Repositories
     public interface ICompanyRepository
     {
         // Get Company by ID
-        Task<NFD_Company?> GetCompanyByIdAsync(int companyId);
+        Task<NFD_Company?> GetCompanyByIdAsync(
+            int companyId);
 
-        // Get All Companies
+        // Get all Companies
         Task<IEnumerable<NFD_Company>> GetAllCompaniesAsync();
 
+        // Get Companies filtered by Status and/or Work Field
+        Task<IEnumerable<NFD_Company>> GetCompaniesAsync(
+            NFD_CompanyStatus? status,
+            string? workField);
+
         // Add Company
-        Task AddCompanyAsync(NFD_Company company);
+        Task AddCompanyAsync(
+            NFD_Company company);
 
         // Update Company
-        Task UpdateCompanyAsync(NFD_Company company);
+        Task UpdateCompanyAsync(
+            NFD_Company company);
 
         // Delete Company
-        Task DeleteCompanyAsync(int companyId);
+        Task DeleteCompanyAsync(
+            int companyId);
     }
 }
-
