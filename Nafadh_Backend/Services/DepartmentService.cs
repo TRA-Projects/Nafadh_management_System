@@ -2,9 +2,12 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
+#nullable enable
 
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Nafadh_Backend.Models;
-using Nafadh_Backend.Repositories;
+using Nafadh_Backend.Interfaces;
 
 namespace Nafadh_Backend.Services
 {
@@ -17,6 +20,42 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+
+        
+        public async Task<IEnumerable<NFD_Department>> GetDepartmentsByCompanyAsync(int companyId)
+        {
+            return await _repository.GetByCompanyIdAsync(companyId);
+        }
+
+        public async Task<NFD_Department?> GetDepartmentByIdAsync(int id)
+        {
+            return await _repository.GetByIdAsync(id);
+        }
+
+        public async Task CreateDepartmentAsync(NFD_Department department)
+        {
+            // إضافة قواعد التحقق لمنطق الأعمال هنا إذا لزم الأمر (مثل التأكد من عدم تكرار اسم القسم)
+            await _repository.AddAsync(department);
+        }
+
+        public async Task UpdateDepartmentAsync(NFD_Department department)
+        {
+            await _repository.UpdateAsync(department);
+        }
+
+        public async Task DeleteDepartmentAsync(int id)
+        {
+            var department = await _repository.GetByIdAsync(id);
+            if (department != null)
+            {
+                await _repository.DeleteAsync(department);
+            }
+        }
+
+        public async Task<object> GetDepartmentPerformanceAsync(int departmentId)
+        {
+            // معالجة حسابات الأداء الخاصة بالقسم قبل إرجاعها
+            return await _repository.GetDepartmentPerformanceAsync(departmentId);
+        }
     }
 }

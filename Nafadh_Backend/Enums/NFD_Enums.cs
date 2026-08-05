@@ -155,4 +155,8 @@ namespace Nafadh_Backend.Enums
         Pdf, Video, Image, Document, Link, Other
     }
 
+    public enum NFD_SupervisorStatus
+    {
+        Active, Inactive, Suspended
+    }
 }
