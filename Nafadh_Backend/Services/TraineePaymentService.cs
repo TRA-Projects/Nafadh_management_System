@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +19,75 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public async Task<IEnumerable<TraineePaymentDTO>> GetAllAsync()
+        {
+            var payments = await _repository.GetAllAsync();
+
+            // Select هنا يحول كل NFD_TraineePayment (Model) إلى TraineePaymentDTO
+            // هذي العملية اسمها "Mapping"
+            return payments.Select(MapToDTO);
+        }
+
+        public async Task<TraineePaymentDTO?> GetByIdAsync(int id)
+        {
+            var payment = await _repository.GetByIdAsync(id);
+
+            // لو ما لقى شي، نرجع null بدل ما نكسر الكود
+            return payment is null ? null : MapToDTO(payment);
+        }
+
+        public async Task<TraineePaymentDTO?> GetByEnrollmentIdAsync(int enrollmentId)
+        {
+            var payment = await _repository.GetByEnrollmentIdAsync(enrollmentId);
+            return payment is null ? null : MapToDTO(payment);
+        }
+
+        public async Task<TraineePaymentDTO> CreateAsync(CreateTraineePaymentDTO dto)
+        {
+            // ---- Validation: تحقق قبل ما نسوي أي شي ----
+            if (dto.TotalAmount <= 0)
+                throw new ArgumentException("المبلغ الإجمالي يجب أن يكون أكبر من صفر.");
+
+            // ---- Business Rule: ما يصير أكثر من مكافأة لنفس الالتحاق ----
+            var existing = await _repository.GetByEnrollmentIdAsync(dto.EnrollmentId);
+            if (existing is not null)
+                throw new InvalidOperationException("يوجد بالفعل التزام مالي لهذا الالتحاق.");
+
+            // ---- نبني الـ Model من الـ DTO ----
+            var payment = new NFD_TraineePayment
+            {
+                EnrollmentId = dto.EnrollmentId,
+                TotalAmount = dto.TotalAmount,
+                Status = NFD_PaymentStatus.Pending // كل مكافأة جديدة تبدأ Pending
+            };
+
+           
+            await _repository.AddAsync(payment);
+            await _repository.SaveChangesAsync();
+
+            return MapToDTO(payment);
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var payment = await _repository.GetByIdAsync(id);
+
+       
+            if (payment is null) return false;
+
+            _repository.Remove(payment);
+            await _repository.SaveChangesAsync();
+            return true;
+        }
+
+        // ---------- Helper Method ----------
+
+        private static TraineePaymentDTO MapToDTO(NFD_TraineePayment payment) => new()
+        {
+            TraineePaymentId = payment.TraineePaymentId,
+            EnrollmentId = payment.EnrollmentId,
+            TotalAmount = payment.TotalAmount,
+            Status = payment.Status.ToString() // نحول الـ Enum لنص عشان يوصل واضح بالـ API
+        };
     }
 }

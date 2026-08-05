@@ -1,6 +1,6 @@
 ﻿namespace Nafadh_Backend.DTOs
 {
-    public class TraineePaymentDTOs
+    public class TraineePaymentDTO
     {
         public int TraineePaymentId { get; set; }
         public int EnrollmentId { get; set; }
