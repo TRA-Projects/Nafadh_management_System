@@ -106,5 +106,16 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(modules);
         }
+
+        // GET /api/Program/{id}/eligible-companies
+        [HttpGet("{id:int}/eligible-companies")]
+        public async Task<ActionResult<IEnumerable<EligibleCompanyDto>>> GetEligibleCompanies(int id)
+        {
+            var companies = await _service.GetEligibleCompaniesByProgramIdAsync(id);
+            if (companies is null)
+                return NotFound(new { message = $"Program بمعرف {id} غير موجود" });
+
+            return Ok(companies);
+        }
     }
 }

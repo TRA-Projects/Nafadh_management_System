@@ -117,5 +117,21 @@ namespace Nafadh_Backend.Services
         }
 
         //List companies eligible to host this program
+
+        public async Task<IEnumerable<EligibleCompanyDto>?> GetEligibleCompaniesByProgramIdAsync(int programId)
+        {
+            var exists = await _repository.ExistsAsync(programId);
+            if (!exists) return null;
+
+            var companyPrograms = await _repository.GetEligibleCompaniesByProgramIdAsync(programId);
+            return companyPrograms.Select(cp => new EligibleCompanyDto
+            {
+                CompanyId = cp.Company.CompanyId,
+                CompanyName = cp.Company.CompanyName,
+                WorkField = cp.Company.WorkField,
+                Status = cp.Company.Status.ToString()
+            });
+        }
+
     }
 }
