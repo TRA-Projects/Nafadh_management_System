@@ -4,7 +4,7 @@
 // </auto-generated>
 
 using Nafadh_Backend.Models;
-
+using Microsoft.EntityFrameworkCore;
 namespace Nafadh_Backend.Repositories
 {
     public class CertificateRepository : ICertificateRepository
@@ -18,6 +18,37 @@ namespace Nafadh_Backend.Repositories
 
         // TODO: implement data-access contract methods for this entity
 
+        //public async Task AddCertificateAsync(NFD_Certificate certificate)
+        //{
+        //    await _context.NFD_Certificates.AddAsync(certificate);
+        //    await _context.SaveChangesAsync();
+        //}
+
+        //public async Task<NFD_Certificate?> GetCertificateByIdAsync(int certificateId)
+        //{
+        //    return await _context.NFD_Certificates.FindAsync(certificateId);
+        //}
+
+        //public async Task UpdateCertificateAsync(NFD_Certificate certificate)
+        //{
+        //    _context.NFD_Certificates.Update(certificate);
+        //    await _context.SaveChangesAsync();
+        //}
+
+        //public async Task DeleteCertificateAsync(NFD_Certificate certificate)
+        //{
+        //    _context.NFD_Certificates.Remove(certificate);
+        //    await _context.SaveChangesAsync();
+        //}
+
+        //-------------------------------------------------------------------------
+
+        public async Task<NFD_Certificate?> GetCertificateByEnrollmentIdAsync(int enrollmentId)
+        {
+            return await _context.NFD_Certificates
+                .FirstOrDefaultAsync(c => c.EnrollmentId == enrollmentId);
+        }
+
         public async Task AddCertificateAsync(NFD_Certificate certificate)
         {
             await _context.NFD_Certificates.AddAsync(certificate);
@@ -26,21 +57,17 @@ namespace Nafadh_Backend.Repositories
 
         public async Task<NFD_Certificate?> GetCertificateByIdAsync(int certificateId)
         {
-            return await _context.NFD_Certificates.FindAsync(certificateId);
+            return await _context.NFD_Certificates
+                .FindAsync(certificateId);
         }
-
-        public async Task UpdateCertificateAsync(NFD_Certificate certificate)
+        public async Task<List<NFD_Certificate>> GetCertificatesByTraineeIdAsync(int traineeId)
         {
-            _context.NFD_Certificates.Update(certificate);
-            await _context.SaveChangesAsync();
+            return await _context.NFD_Certificates
+                .Include(c => c.Enrollment)
+                .Where(c => c.Enrollment.TraineeId == traineeId)
+                .ToListAsync();
         }
 
-        public async Task DeleteCertificateAsync(NFD_Certificate certificate)
-        {
-            _context.NFD_Certificates.Remove(certificate);
-            await _context.SaveChangesAsync();
-        }
 
-        
     }
 }
