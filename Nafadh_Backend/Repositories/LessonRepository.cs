@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Nafadh_Backend.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -17,5 +18,54 @@ namespace Nafadh_Backend.Repositories
         }
 
         // TODO: implement data-access contract methods for this entity
+
+        // get Lessons in order for a module
+        public async Task<IEnumerable<NFD_Lesson>> GetLessonsByModuleIdAsync(int moduleId)
+        {
+            return await _context.NFD_Lessons
+                .Where(l => l.ModuleId == moduleId)
+                .OrderBy(l => l.OrderIndex)
+                .ToListAsync();
+        }
+        //Get lesson content
+        public async Task<NFD_Lesson?> GetLessonByIdAsync(int lessonId)
+        {
+            return await _context.NFD_Lessons
+                .FirstOrDefaultAsync(l => l.LessonId == lessonId);
+        }
+        //Create a lesson
+        public async Task<NFD_Lesson> CreateLessonAsync(NFD_Lesson lesson)
+        {
+            _context.NFD_Lessons.Add(lesson);
+            await _context.SaveChangesAsync();
+            return lesson;
+        }
+        // Update lesson content/order
+        public async Task UpdateLessonAsync(NFD_Lesson lesson)
+        {
+            var existingLesson = await _context.NFD_Lessons.FindAsync(lesson.LessonId);
+            if (existingLesson == null)
+            {
+                throw new InvalidOperationException("The specified lesson does not exist.");
+            }
+
+            existingLesson.Title = lesson.Title;
+            existingLesson.ContentBody = lesson.ContentBody;
+            existingLesson.OrderIndex = lesson.OrderIndex;
+
+            await _context.SaveChangesAsync();
+        }
+
+        //Remove a lesson
+        public async Task DeleteLessonAsync(int lessonId)
+        {
+            var lesson = await _context.NFD_Lessons.FindAsync(lessonId);
+            if (lesson == null)
+            {
+                throw new InvalidOperationException("The specified lesson does not exist.");
+            }
+            _context.NFD_Lessons.Remove(lesson);
+            await _context.SaveChangesAsync();
+        }
     }
 }
