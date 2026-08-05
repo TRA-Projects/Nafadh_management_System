@@ -89,5 +89,15 @@ namespace Nafadh_Backend.Services
             });
         }
 
+        private static TrackDto MapToDto(NFD_Track track)
+        {
+            return new TrackDto
+            {
+                TrackId = track.TrackId,
+                Name = track.Name,
+                Description = track.Description,
+                Status = track.Status.ToString()
+            };
+        }
     }
 }
