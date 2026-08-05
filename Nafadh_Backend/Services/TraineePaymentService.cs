@@ -19,75 +19,75 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        public async Task<IEnumerable<TraineePaymentDTO>> GetAllAsync()
+        public async Task<TraineePaymentDTO?> GetByEnrollmentIdAsync(int enrollmentId)
         {
-            var payments = await _repository.GetAllAsync();
-
-            // Select هنا يحول كل NFD_TraineePayment (Model) إلى TraineePaymentDTO
-            // هذي العملية اسمها "Mapping"
-            return payments.Select(MapToDTO);
+            // GetByEnrollmentIdAsync بالـ Repository أصلاً بتجيب الـ Schedules معها (Include)
+            var payment = await _repository.GetByEnrollmentIdAsync(enrollmentId);
+            return payment is null ? null : MapToDTO(payment);
         }
 
         public async Task<TraineePaymentDTO?> GetByIdAsync(int id)
         {
-            var payment = await _repository.GetByIdAsync(id);
-
-            // لو ما لقى شي، نرجع null بدل ما نكسر الكود
-            return payment is null ? null : MapToDTO(payment);
-        }
-
-        public async Task<TraineePaymentDTO?> GetByEnrollmentIdAsync(int enrollmentId)
-        {
-            var payment = await _repository.GetByEnrollmentIdAsync(enrollmentId);
+            // هنا نستخدم النسخة اللي فيها Include للجدول الزمني (مطلوب بالأسايمنت: "with schedule")
+            var payment = await _repository.GetByIdWithSchedulesAsync(id);
             return payment is null ? null : MapToDTO(payment);
         }
 
         public async Task<TraineePaymentDTO> CreateAsync(CreateTraineePaymentDTO dto)
         {
-            // ---- Validation: تحقق قبل ما نسوي أي شي ----
             if (dto.TotalAmount <= 0)
-                throw new ArgumentException("المبلغ الإجمالي يجب أن يكون أكبر من صفر.");
+                throw new ArgumentException("Total amount must be greater than zero");
 
-            // ---- Business Rule: ما يصير أكثر من مكافأة لنفس الالتحاق ----
             var existing = await _repository.GetByEnrollmentIdAsync(dto.EnrollmentId);
             if (existing is not null)
-                throw new InvalidOperationException("يوجد بالفعل التزام مالي لهذا الالتحاق.");
+                throw new InvalidOperationException("A billing record already exists for this enrollment");
 
-            // ---- نبني الـ Model من الـ DTO ----
             var payment = new NFD_TraineePayment
             {
                 EnrollmentId = dto.EnrollmentId,
                 TotalAmount = dto.TotalAmount,
-                Status = NFD_PaymentStatus.Pending // كل مكافأة جديدة تبدأ Pending
+                Status = NFD_PaymentStatus.Pending
             };
 
-           
             await _repository.AddAsync(payment);
             await _repository.SaveChangesAsync();
 
             return MapToDTO(payment);
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> UpdateStatusAsync(int id, UpdateTraineePaymentStatusDTO dto)
         {
             var payment = await _repository.GetByIdAsync(id);
-
-       
             if (payment is null) return false;
 
-            _repository.Remove(payment);
+            // نحول النص المرسل (مثلاً "Paid") إلى قيمة Enum فعلية
+            if (!Enum.TryParse<NFD_PaymentStatus>(dto.Status, ignoreCase: true, out var parsedStatus))
+                throw new ArgumentException($"'{dto.Status}' is not a valid status value.");
+
+            payment.Status = parsedStatus;
+
+            _repository.Update(payment);
             await _repository.SaveChangesAsync();
             return true;
         }
 
         // ---------- Helper Method ----------
-
         private static TraineePaymentDTO MapToDTO(NFD_TraineePayment payment) => new()
         {
             TraineePaymentId = payment.TraineePaymentId,
             EnrollmentId = payment.EnrollmentId,
             TotalAmount = payment.TotalAmount,
-            Status = payment.Status.ToString() // نحول الـ Enum لنص عشان يوصل واضح بالـ API
+            Status = payment.Status.ToString(),
+            Schedules = payment.TraineePaymentSchedules.Select(s => new TraineePaymentScheduleSummaryDTO
+            {
+                ScheduleId = s.ScheduleId,
+                MonthNumber = s.MonthNumber,
+                MonthLabel = s.MonthLabel,
+                DueDate = s.DueDate,
+                Amount = s.Amount,
+                Status = s.Status.ToString(),
+                PaidDate = s.PaidDate
+            }).ToList()
         };
     }
 }

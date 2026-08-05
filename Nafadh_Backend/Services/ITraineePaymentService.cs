@@ -10,19 +10,17 @@ namespace Nafadh_Backend.Services
 {
     public interface ITraineePaymentService
     {
-       
-        Task<IEnumerable<TraineePaymentDTO>> GetAllAsync();
 
-        
-        Task<TraineePaymentDTO?> GetByIdAsync(int id);
-
-       
+        // GET /api/TraineePayment/enrollment/{enrollmentId}
         Task<TraineePaymentDTO?> GetByEnrollmentIdAsync(int enrollmentId);
 
-       
+        // GET /api/TraineePayment/{id}  -> مع الجدول الزمني
+        Task<TraineePaymentDTO?> GetByIdAsync(int id);
+
+        // POST /api/TraineePayment
         Task<TraineePaymentDTO> CreateAsync(CreateTraineePaymentDTO dto);
 
-       
-        Task<bool> DeleteAsync(int id);
+        // PUT /api/TraineePayment/{id}/status
+        Task<bool> UpdateStatusAsync(int id, UpdateTraineePaymentStatusDTO dto);
     }
 }
