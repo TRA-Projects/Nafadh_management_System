@@ -38,5 +38,16 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(track);
         }
+
+        // POST /api/Track
+        [HttpPost]
+        public async Task<ActionResult<TrackDto>> Create([FromBody] CreateTrackDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var created = await _service.CreateTrackAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.TrackId }, created);
+        }
     }
 }

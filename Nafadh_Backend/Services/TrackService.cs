@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -30,6 +31,20 @@ namespace Nafadh_Backend.Services
         {
             var track = await _repository.GetByIdAsync(id);
             return track is null ? null : MapToDto(track);
+        }
+
+        // Create a new track
+        public async Task<TrackDto> CreateTrackAsync(CreateTrackDto dto)
+        {
+            var track = new NFD_Track
+            {
+                Name = dto.Name,
+                Description = dto.Description,
+                Status = NFD_TrackStatus.Active
+            };
+
+            var created = await _repository.AddAsync(track);
+            return MapToDto(created);
         }
     }
 }
