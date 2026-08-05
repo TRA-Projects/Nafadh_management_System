@@ -4,7 +4,7 @@ namespace Nafadh_Backend.DTOs
 {
     public class CompleteModuleDto
     {
-        public int TraineeId { get; set; }
+      
 
         public int ModuleId { get; set; }
     }

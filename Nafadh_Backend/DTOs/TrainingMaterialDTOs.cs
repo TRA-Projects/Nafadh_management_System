@@ -12,8 +12,7 @@ namespace Nafadh_Backend.DTOs
         public NFD_FileType FileType { get; set; }
         [Required]
         public int LessonId { get; set; }
-        [Required]
-        public int UploadedByUserId { get; set; }
+       
     }
 
     public class UpdateTrainingMaterialDto
