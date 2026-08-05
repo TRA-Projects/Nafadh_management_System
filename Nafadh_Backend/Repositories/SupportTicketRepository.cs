@@ -3,7 +3,11 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
+
+
 
 namespace Nafadh_Backend.Repositories
 {
@@ -16,6 +20,49 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        // Add a new support ticket
+        public async Task AddAsync(NFD_SupportTicket ticket)
+        {
+            await _context.NFD_SupportTickets.AddAsync(ticket);
+        }
+
+
+        // Get a support ticket by ID
+        public async Task<NFD_SupportTicket?> GetByIdAsync(int id)
+        {
+            return await _context.NFD_SupportTickets
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.TicketId == id);
+        }
+
+        // Get all open support tickets
+        public async Task<IEnumerable<NFD_SupportTicket>> GetOpenTicketsAsync()
+        {
+            return await _context.NFD_SupportTickets
+                .Where(t => t.Status == NFD_SupportTicketStatus.Open)
+                .ToListAsync();
+        }
+
+        // Get all support tickets for a specific user
+        public async Task<IEnumerable<NFD_SupportTicket>> GetUserTicketsAsync(int userId)
+        {
+            return await _context.NFD_SupportTickets
+                .Where(t => t.UserId == userId)
+                .OrderByDescending(t => t.CreatedAt)
+                .ToListAsync();
+        }
+
+
+        // Update a support ticket
+        public Task UpdateAsync(NFD_SupportTicket ticket)
+        {
+            _context.NFD_SupportTickets.Update(ticket);
+            return Task.CompletedTask;
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 }

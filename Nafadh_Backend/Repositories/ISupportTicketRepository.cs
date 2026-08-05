@@ -9,6 +9,22 @@ namespace Nafadh_Backend.Repositories
 {
     public interface ISupportTicketRepository
     {
-        // TODO: define data-access contract methods for this entity
+        // Get all support tickets for a specific user
+        Task<IEnumerable<NFD_SupportTicket>> GetUserTicketsAsync(int userId);
+
+        // Get a support ticket by its ID
+        Task<NFD_SupportTicket?> GetByIdAsync(int id);
+
+        // Get all open support tickets
+        Task<IEnumerable<NFD_SupportTicket>> GetOpenTicketsAsync();
+
+
+        // Add a new support ticket
+        Task AddAsync(NFD_SupportTicket ticket);
+
+        // Update an existing support ticket
+        Task UpdateAsync(NFD_SupportTicket ticket);
+
+        Task SaveChangesAsync();
     }
 }
