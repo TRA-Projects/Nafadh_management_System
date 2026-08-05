@@ -64,5 +64,20 @@ namespace Nafadh_Backend.Controllers
 
             return CreatedAtAction(nameof(GetTicketById), new { id = ticket.TicketId }, ticket);
         }
+
+        // PUT: api/SupportTicket/{id}/status
+        // Updates the status of a support ticket.
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateTicketStatus(int id, [FromBody] UpdateSupportTicketStatusDTO ticketDto)
+        {
+            bool updated = await _service.UpdateTicketStatusAsync(id, ticketDto);
+
+            if (!updated)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
     }
 }

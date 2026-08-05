@@ -97,5 +97,23 @@ namespace Nafadh_Backend.Services
                 UserId = ticket.UserId
             };
         }
+
+        // Updates the status of a support ticket.
+        public async Task<bool> UpdateTicketStatusAsync(int id, UpdateSupportTicketStatusDTO ticketDto)
+        {
+            NFD_SupportTicket? ticket = await _repository.GetByIdAsync(id);
+
+            if (ticket == null)
+            {
+                return false;
+            }
+
+            ticket.Status = ticketDto.Status;
+
+            await _repository.UpdateAsync(ticket);
+            await _repository.SaveChangesAsync();
+
+            return true;
+        }
     }
 }

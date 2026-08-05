@@ -21,5 +21,8 @@ namespace Nafadh_Backend.Services
 
         // Creates a new support ticket.
         Task<SupportTicketDTO> CreateTicketAsync(CreateSupportTicketDTO ticketDto);
+
+        // Updates the status of a support ticket.
+        Task<bool> UpdateTicketStatusAsync(int id, UpdateSupportTicketStatusDTO ticketDto);
     }
 }
