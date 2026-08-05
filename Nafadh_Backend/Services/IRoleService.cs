@@ -7,6 +7,9 @@ namespace Nafadh_Backend.Services
     public interface IRoleService
     {
         Task<List<RoleDTO>> GetAllAsync();
-      
+
+        Task<RoleDetailDTO> GetByIdAsync(int roleId);
+
+
     }
 }

@@ -23,7 +23,29 @@ namespace Nafadh_Backend.Services
             return roles.Select(r => new RoleDTO { RoleId = r.RoleId, RoleName = r.RoleName }).ToList();
         }
 
-      
+        public async Task<RoleDetailDTO> GetByIdAsync(int roleId)
+        {
+            var role = await _repository.GetByIdWithPermissionsAsync(roleId)
+                ?? throw new NotFoundException($"Role {roleId} was not found.");
+
+            return new RoleDetailDTO
+            {
+                RoleId = role.RoleId,
+                RoleName = role.RoleName,
+                Permissions = role.RolePermissions
+                    .Select(rp => new PermissionDTO
+                    {
+                        PermissionId = rp.Permission.PermissionId,
+                        PermissionKey = rp.Permission.PermissionKey,
+                        Description = rp.Permission.Description
+                    })
+                    .OrderBy(p => p.PermissionKey)
+                    .ToList()
+            };
+        }
+
+
+
 
     }
 }

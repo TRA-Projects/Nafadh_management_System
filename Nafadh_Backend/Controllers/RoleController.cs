@@ -28,9 +28,17 @@ namespace Nafadh_Backend.Controllers
             return Ok(roles);
         }
 
+        //Role details with granted permissions.
+        [HttpGet("{id:int}")]
+        [ProducesResponseType(typeof(RoleDetailDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<RoleDetailDTO>> GetById(int id)
+        {
+            var role = await _service.GetByIdAsync(id);
+            return Ok(role);
+        }
 
 
-        
-        
+
     }
 }
