@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Nafadh_Backend.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -16,6 +17,98 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        // TODO: implement data-access contract methods for this entit
+        //Ordered module list for a program (curriculum outline)
+        public async Task<IEnumerable<NFD_Module>> GetModulesByProgramIdAsync(int programId)
+        {
+                 return await _context.NFD_Modules
+                .Where(m => m.ProgramId == programId)
+                .OrderBy(m => m.OrderIndex)
+                .ToListAsync();
+        }
+        //Get module details
+        public async Task<NFD_Module?> GetModuleByIdAsync(int moduleId)
+        {
+            return await _context.NFD_Modules
+                .Include(m => m.Lessons)
+                .FirstOrDefaultAsync(m => m.ModuleId == moduleId);
+        }
+        //Create a module (with prerequisite gating)
+        public async Task<NFD_Module> CreateModuleAsync(NFD_Module module)
+        {
+            // 1. Check if the module requires a prerequisite module
+            if (module.PrerequisiteModuleId.HasValue)
+            {
+                // Ensure the prerequisite module actually exists in the database
+                var prerequisiteModule = await _context.NFD_Modules
+                    .FindAsync(module.PrerequisiteModuleId.Value);
+
+                if (prerequisiteModule == null)
+                {
+                    throw new InvalidOperationException(" The specified prerequisite module does not exist. ");
+                }
+            }
+
+            // 2. Add and save the new module if validation passes
+            _context.NFD_Modules.Add(module);
+            await _context.SaveChangesAsync();
+
+            return module;
+        }
+        //Update order/availability window/archive flag
+        public async Task UpdateModuleAsync(NFD_Module module)
+        {
+            var existingModule = await _context.NFD_Modules.FindAsync(module.ModuleId);
+            if (existingModule == null)
+            {
+                throw new InvalidOperationException("The specified module does not exist.");
+            }
+            // Update properties
+            existingModule.Title = module.Title;
+            existingModule.OrderIndex = module.OrderIndex;
+            existingModule.AvailableFrom = module.AvailableFrom;
+            existingModule.AvailableTo = module.AvailableTo;
+            existingModule.IsArchived = module.IsArchived;
+            await _context.SaveChangesAsync();
+        }
+        //Remove a module
+        public async Task DeleteModuleAsync(int moduleId)
+        {
+            var module = await _context.NFD_Modules.FindAsync(moduleId);
+            if (module == null)
+            {
+                throw new InvalidOperationException("The specified module does not exist.");
+            }
+            _context.NFD_Modules.Remove(module);
+            await _context.SaveChangesAsync();
+        }
+        //Get Lessons inside a module
+        public async Task<IEnumerable<NFD_Lesson>> GetLessonsByModuleIdAsync(int moduleId)
+        {
+            return await _context.NFD_Lessons
+                .Where(l => l.ModuleId == moduleId)
+                .OrderBy(l => l.OrderIndex)
+                .ToListAsync();
+        }
+        //check prerequisite completion for a trainee
+
+      public async Task<bool> IsPrerequisiteCompletedAsync(int traineeId, int moduleId)
+        {
+            var module = await _context.NFD_Modules
+                .Include(m => m.PrerequisiteModule)
+                .FirstOrDefaultAsync(m => m.ModuleId == moduleId);
+            if (module?.PrerequisiteModuleId == null)
+            {
+                // No prerequisite, so it's considered completed
+                return true;
+            }
+            var prerequisiteModuleId = module.PrerequisiteModuleId.Value;
+            // Check if the trainee has completed the prerequisite module
+            var completionRecord = await _context.NFD_TraineeModuleProgresses
+                .FirstOrDefaultAsync(p => p.TraineeId == traineeId && p.ModuleId == prerequisiteModuleId && p.CompletedAt != null);
+            return completionRecord != null;
+        }
+
+       
     }
 }
