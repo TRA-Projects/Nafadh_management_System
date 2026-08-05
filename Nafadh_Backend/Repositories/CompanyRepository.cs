@@ -17,21 +17,45 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        // Get Company by ID
         public async Task<NFD_Company?> GetCompanyByIdAsync(int companyId)
         {
-            return await _context.NFD_Companies.FindAsync(companyId);
+            return await _context.NFD_Companies
+                .FindAsync(companyId);
         }
 
+        // Get All Companies
         public async Task<IEnumerable<NFD_Company>> GetAllCompaniesAsync()
         {
-            return await _context.NFD_Companies.ToListAsync();
+            return await _context.NFD_Companies
+                .ToListAsync();
         }
 
+        // Add Company
         public async Task AddCompanyAsync(NFD_Company company)
         {
             await _context.NFD_Companies.AddAsync(company);
             await _context.SaveChangesAsync();
+        }
+
+        // Update Company
+        public async Task UpdateCompanyAsync(NFD_Company company)
+        {
+            _context.NFD_Companies.Update(company);
+            await _context.SaveChangesAsync();
+        }
+
+        // Delete Company
+        public async Task DeleteCompanyAsync(int companyId)
+        {
+            var company = await _context.NFD_Companies
+                .FindAsync(companyId);
+
+            if (company != null)
+            {
+                _context.NFD_Companies.Remove(company);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }
