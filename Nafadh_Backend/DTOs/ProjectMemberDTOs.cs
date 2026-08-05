@@ -26,8 +26,8 @@ namespace Nafadh_Backend.DTOs
         public NFD_ProjectMemberRole Role { get; set; }
     }
 
-    public class UpdateProjectMemberDTO
-    {
+          public class UpdateProjectMemberDTO
+        {
         public NFD_ProjectMemberRole Role { get; set; }
     
     
