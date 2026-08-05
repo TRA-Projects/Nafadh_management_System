@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -24,11 +25,36 @@ namespace Nafadh_Backend.Repositories
                 .FindAsync(companyId);
         }
 
-        // Get All Companies
+        // Get all companies
         public async Task<IEnumerable<NFD_Company>> GetAllCompaniesAsync()
         {
             return await _context.NFD_Companies
                 .ToListAsync();
+        }
+
+        // Get companies with optional filters
+        public async Task<IEnumerable<NFD_Company>> GetCompaniesAsync(
+            NFD_CompanyStatus? status,
+            string? workField)
+        {
+            var query = _context.NFD_Companies
+                .AsQueryable();
+
+            // Filter by company status
+            if (status.HasValue)
+            {
+                query = query.Where(c => c.Status == status.Value);
+            }
+
+            // Filter by work field
+            if (!string.IsNullOrWhiteSpace(workField))
+            {
+                query = query.Where(c =>
+                    c.WorkField != null &&
+                    c.WorkField.Contains(workField));
+            }
+
+            return await query.ToListAsync();
         }
 
         // Add Company

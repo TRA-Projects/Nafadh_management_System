@@ -3,19 +3,31 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
 {
-    public interface ICertificateRepository
+    public interface ICompanyRepository
     {
-        // TODO: define data-access contract methods for this entity
-        Task AddCertificateAsync(NFD_Certificate certificate);
+        // Get Company by ID
+        Task<NFD_Company?> GetCompanyByIdAsync(int companyId);
 
-        Task<NFD_Certificate?> GetCertificateByIdAsync(int certificateId);
+        // Get all companies
+        Task<IEnumerable<NFD_Company>> GetAllCompaniesAsync();
 
-        Task UpdateCertificateAsync(NFD_Certificate certificate);
+        // Get companies filtered by status and/or work field
+        Task<IEnumerable<NFD_Company>> GetCompaniesAsync(
+            NFD_CompanyStatus? status,
+            string? workField);
 
-        Task DeleteCertificateAsync(NFD_Certificate certificate);
+        // Add a new company
+        Task AddCompanyAsync(NFD_Company company);
+
+        // Update an existing company
+        Task UpdateCompanyAsync(NFD_Company company);
+
+        // Delete a company by ID
+        Task DeleteCompanyAsync(int companyId);
     }
 }
