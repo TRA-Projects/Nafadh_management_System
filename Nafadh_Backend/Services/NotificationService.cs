@@ -53,5 +53,20 @@ namespace Nafadh_Backend.Services
 
             await _repository.AddAsync(notification);
         }
+
+        //Mark Notification As Read
+        public async Task MarkAsReadAsync(int id)
+        {
+            var notification = await _repository.GetByIdAsync(id);
+
+            if (notification == null)
+            {
+                throw new KeyNotFoundException("Notification not found");
+            }
+
+            notification.IsRead = true;
+
+            await _repository.UpdateAsync(notification);
+        }
     }
 }

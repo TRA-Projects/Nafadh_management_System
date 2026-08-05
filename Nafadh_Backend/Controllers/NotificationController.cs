@@ -40,5 +40,12 @@ namespace Nafadh_Backend.Controllers
         }
 
         //Mark Notification As Read
+        [HttpPut("{id}/read")]
+        public async Task<IActionResult> MarkAsRead(int id)
+        {
+            await _service.MarkAsReadAsync(id);
+
+            return Ok("Notification marked as read.");
+        }
     }
 }

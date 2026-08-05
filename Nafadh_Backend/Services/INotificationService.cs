@@ -17,5 +17,8 @@ namespace Nafadh_Backend.Services
         Task<List<NotificationDTO>> GetByUserIdAsync(int userId);
         //Create Notification
         Task CreateAsync(CreateNotificationDTO dto);
+
+        //Mark Notification As Read
+        Task MarkAsReadAsync(int id);
     }
 }
