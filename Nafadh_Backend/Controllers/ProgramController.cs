@@ -71,5 +71,18 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(result);
         }
+
+
+        // DELETE /api/Program/{id}  (Archive)
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var deleted = await _service.DeleteProgramAsync(id);
+            if (!deleted)
+                return NotFound(new { message = $"Program بمعرف {id} غير موجود" });
+
+            return NoContent();
+        }
+
     }
 }

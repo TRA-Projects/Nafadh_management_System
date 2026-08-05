@@ -75,6 +75,21 @@ namespace Nafadh_Backend.Services
         }
 
         //Archive a program
+        public async Task<bool> DeleteProgramAsync(int id)
+        {
+            var program = await _repository.GetByIdAsync(id);
+            if (program is null) return false;
+
+            await _repository.DeleteAsync(program);
+            return true;
+        }
+
+
+
+
+
+
+
         //List batches running for a program
         //Get the curriculum outline (modules)
         //List companies eligible to host this program
