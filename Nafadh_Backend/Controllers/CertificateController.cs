@@ -20,5 +20,21 @@ namespace Nafadh_Backend.Controllers
         }
 
         // TODO: implement endpoints for this entity
+        // GET certificate by enrollment
+        [HttpGet("enrollment/{enrollmentId}")]
+        public async Task<IActionResult> GetCertificateByEnrollment(int enrollmentId)
+        {
+
+            var result =
+                await _service.GetCertificateByEnrollmentIdAsync(enrollmentId);
+
+
+            if (result == null)
+                return NotFound();
+
+
+            return Ok(result);
+        }
+
     }
 }
