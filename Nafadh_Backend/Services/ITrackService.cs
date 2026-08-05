@@ -3,12 +3,18 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Services
 {
     public interface ITrackService
     {
-        // TODO: define business-logic contract methods for this entity
+        Task<IEnumerable<TrackDto>> GetAllTracksAsync();
+        Task<TrackDto?> GetTrackByIdAsync(int id);
+        Task<TrackDto> CreateTrackAsync(CreateTrackDto dto);
+        Task<TrackDto?> UpdateTrackAsync(int id, UpdateTrackDto dto);
+        Task<bool> DeleteTrackAsync(int id);
+        Task<IEnumerable<ProgramSummaryDto>> GetProgramsByTrackIdAsync(int trackId);
     }
 }

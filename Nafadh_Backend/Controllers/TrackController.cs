@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +20,12 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET /api/Track
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<TrackDto>>> GetAll()
+        {
+            var tracks = await _service.GetAllTracksAsync();
+            return Ok(tracks);
+        }
     }
 }
