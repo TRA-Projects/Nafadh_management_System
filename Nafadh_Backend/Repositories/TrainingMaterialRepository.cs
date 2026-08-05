@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -11,11 +12,65 @@ namespace Nafadh_Backend.Repositories
     {
         private readonly Nafadhcontext _context;
 
+        //Constructor
         public TrainingMaterialRepository(Nafadhcontext context)
         {
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        // Retrieves all materials for the specified lesson
+        public async Task<IEnumerable<NFD_TrainingMaterial>> GetByLessonIdAsync(int lessonId)
+        {
+            return await _context.NFD_TrainingMaterials
+                .Include(m => m.Lesson)
+                .Include(m => m.User)//بيانات المستخدم الذي رفع الملف
+                .Where(m => m.LessonId == lessonId)//لا تجلب إلا الملفات الخاصة بهذا الدرس
+                .OrderByDescending(m => m.UploadDate)
+                .ToListAsync();
+        }
+
+        // Retrieves a single material by its ID
+        public async Task<NFD_TrainingMaterial?> GetByIdAsync(int id)
+        {
+            return await _context.NFD_TrainingMaterials
+                .Include(m => m.Lesson)
+                .Include(m => m.User)
+                .FirstOrDefaultAsync(m => m.MaterialId == id);
+        }
+
+        // Creates a new training material record
+        public async Task<NFD_TrainingMaterial> CreateAsync(NFD_TrainingMaterial material)
+        {
+            await _context.NFD_TrainingMaterials.AddAsync(material);
+            await _context.SaveChangesAsync();
+            return material;
+        }
+
+        // Updates an existing training material 
+        public async Task UpdateAsync(NFD_TrainingMaterial material)
+        {
+            _context.NFD_TrainingMaterials.Update(material);
+            await _context.SaveChangesAsync();
+        }
+
+        // Deletes a training material from the database
+        public async Task DeleteAsync(NFD_TrainingMaterial material)
+        {
+            _context.NFD_TrainingMaterials.Remove(material);
+            await _context.SaveChangesAsync();
+        }
+
+        // Checks if the material exists
+        public async Task<bool> ExistsAsync(int id)
+        {
+            return await _context.NFD_TrainingMaterials
+                .AnyAsync(m => m.MaterialId == id);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
+
     }
 }
