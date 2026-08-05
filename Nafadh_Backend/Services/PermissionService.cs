@@ -51,6 +51,19 @@ namespace Nafadh_Backend.Services
             return MapToDTO(permission);
         }
 
+        public async Task DeleteAsync(int permissionId)
+        {
+            var permission = await _repository.GetByIdAsync(permissionId)
+                ?? throw new NotFoundException($"Permission {permissionId} was not found.");
+
+            if (await _repository.IsInUseAsync(permissionId))
+            {
+                throw new ConflictException(
+                    $"Permission '{permission.PermissionKey}' is currently granted to one or more roles and cannot be removed.");
+            }
+
+            await _repository.DeleteAsync(permission);
+        }
 
         private static PermissionDTO MapToDTO(NFD_Permission permission)
         {
