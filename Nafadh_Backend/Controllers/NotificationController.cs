@@ -47,5 +47,13 @@ namespace Nafadh_Backend.Controllers
 
             return Ok("Notification marked as read.");
         }
+        //Mark All Notifications As Read
+        [HttpPut("user/{userId}/read-all")]
+        public async Task<IActionResult> MarkAllAsRead(int userId)
+        {
+            await _service.MarkAllAsReadAsync(userId);
+
+            return Ok("All notifications marked as read.");
+        }
     }
 }

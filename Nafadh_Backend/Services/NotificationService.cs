@@ -68,5 +68,11 @@ namespace Nafadh_Backend.Services
 
             await _repository.UpdateAsync(notification);
         }
+
+        //Mark All Notifications As Read
+        public async Task MarkAllAsReadAsync(int userId)
+        {
+            await _repository.MarkAllAsReadAsync(userId);
+        }
     }
 }

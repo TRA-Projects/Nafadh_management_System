@@ -20,5 +20,8 @@ namespace Nafadh_Backend.Services
 
         //Mark Notification As Read
         Task MarkAsReadAsync(int id);
+
+        //Mark All Notifications As Read
+        Task MarkAllAsReadAsync(int userId);
     }
 }
