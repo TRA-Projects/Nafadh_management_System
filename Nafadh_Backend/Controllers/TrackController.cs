@@ -74,5 +74,16 @@ namespace Nafadh_Backend.Controllers
 
             return NoContent();
         }
+
+        // GET /api/Track/{id}/programs
+        [HttpGet("{id:int}/programs")]
+        public async Task<ActionResult<IEnumerable<ProgramSummaryDto>>> GetPrograms(int id)
+        {
+            var programs = await _service.GetProgramsByTrackIdAsync(id);
+            if (programs is null)
+                return NotFound(new { message = $"Track with ID {id} was not found." }); // Track not found -> 404
+
+            return Ok(programs); // Track found (with or without programs) -> 200
+        }
     }
 }

@@ -71,6 +71,23 @@ namespace Nafadh_Backend.Services
             return true;
         }
 
+        //List programs grouped under a track
+        public async Task<IEnumerable<ProgramSummaryDto>> GetProgramsByTrackIdAsync(int trackId)
+        {
+            // null = Track doesn't exist (Controller returns 404)
+            // empty list = Track exists but has no programs (Controller returns 200 + [])
+            var exists = await _repository.ExistsAsync(trackId);
+            if (!exists) return null;
+
+            var programs = await _repository.GetProgramsByTrackIdAsync(trackId);
+            return programs.Select(p => new ProgramSummaryDto
+            {
+                ProgramId = p.ProgramId,
+                Title = p.Title,
+                Description = p.Description,
+                Status = p.Status.ToString()
+            });
+        }
 
     }
 }
