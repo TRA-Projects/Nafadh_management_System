@@ -28,8 +28,16 @@ namespace Nafadh_Backend.Controllers
             return Ok(permissions);
         }
 
+        //Define a new permission key.
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(typeof(PermissionDTO), StatusCodes.Status201Created)]
+        public async Task<ActionResult<PermissionDTO>> Create([FromBody] PermissionCreateDTO dto)
+        {
+            var created = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetAll), created);
+        }
 
-        
-       
+
     }
 }

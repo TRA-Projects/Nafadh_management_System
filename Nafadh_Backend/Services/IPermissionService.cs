@@ -7,5 +7,7 @@ namespace Nafadh_Backend.Services
     public interface IPermissionService
     {
         Task<List<PermissionDTO>> GetAllAsync();
+        Task<PermissionDTO> CreateAsync(PermissionCreateDTO dto);
+
     }
 }

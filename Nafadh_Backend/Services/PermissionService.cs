@@ -24,6 +24,22 @@ namespace Nafadh_Backend.Services
             return permissions.Select(MapToDTO).ToList();
         }
 
+        public async Task<PermissionDTO> CreateAsync(PermissionCreateDTO dto)
+        {
+            if (await _repository.KeyExistsAsync(dto.PermissionKey))
+            {
+                throw new ConflictException($"A permission with key '{dto.PermissionKey}' already exists.");
+            }
+
+            var permission = new NFD_Permission
+            {
+                PermissionKey = dto.PermissionKey.Trim().ToLower(),
+                Description = dto.Description
+            };
+
+            var created = await _repository.AddAsync(permission);
+            return MapToDTO(created);
+        }
 
 
 
