@@ -3,8 +3,10 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using static Nafadh_Backend.DTOs.ProjectDTOs;
 
 namespace Nafadh_Backend.Services
 {
@@ -17,9 +19,94 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+       
+        public async Task<IEnumerable<ProjectDto>> GetAllAsync(int? programId, NFD_ProjectStatus? status)
+        {
+            var projects = await _repository.GetAllAsync(programId, status);
+            return projects.Select(MapToDto);
+        }
 
-        // Retrieves all projects
-        
+        public async Task<ProjectDto?> GetByIdAsync(int id)
+        {
+            var project = await _repository.GetByIdAsync(id);
+            return project is null ? null : MapToDto(project);
+        }
+
+        public async Task<IEnumerable<ProjectDto>> GetByProgramIdAsync(int programId)
+        {
+            var projects = await _repository.GetByProgramIdAsync(programId);
+            return projects.Select(MapToDto);
+        }
+
+        public async Task<ProjectDto> CreateAsync(CreateProjectDto dto)
+        {
+            ValidateDates(dto.StartDate, dto.EndDate);
+
+            var project = new NFD_Project
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                StartDate = dto.StartDate,
+                EndDate = dto.EndDate,
+                Status = dto.Status,
+                ProgramId = dto.ProgramId
+            };
+
+            await _repository.AddAsync(project);
+            await _repository.SaveChangesAsync();
+
+            var created = await _repository.GetByIdAsync(project.ProjectId);
+            return MapToDto(created!);
+        }
+
+        public async Task<bool> UpdateAsync(int id, UpdateProjectDto dto)
+        {
+            var project = await _repository.GetByIdAsync(id);
+            if (project is null)
+                return false;
+
+            ValidateDates(dto.StartDate, dto.EndDate);
+
+            project.Title = dto.Title;
+            project.Description = dto.Description;
+            project.StartDate = dto.StartDate;
+            project.EndDate = dto.EndDate;
+            project.Status = dto.Status;
+            project.ProgramId = dto.ProgramId;
+
+            _repository.Update(project);
+            return await _repository.SaveChangesAsync();
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var project = await _repository.GetByIdAsync(id);
+            if (project is null)
+                return false;
+
+            _repository.Delete(project);
+            return await _repository.SaveChangesAsync();
+        }
+
+        private static void ValidateDates(DateTime start, DateTime end)
+        {
+            if (end < start)
+                throw new ArgumentException("EndDate cannot be earlier than StartDate.");
+        }
+
+        private static ProjectDto MapToDto(NFD_Project project)
+        {
+            return new ProjectDto
+            {
+                ProjectId = project.ProjectId,
+                Title = project.Title,
+                Description = project.Description,
+                StartDate = project.StartDate,
+                EndDate = project.EndDate,
+                Status = project.Status,
+                ProgramId = project.ProgramId
+            };
+        }
+
     }
 }

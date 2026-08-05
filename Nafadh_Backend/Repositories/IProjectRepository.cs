@@ -10,7 +10,7 @@ namespace Nafadh_Backend.Repositories
 {
     public interface IProjectRepository
     {
-        // TODO: define data-access contract methods for this entity
+        
         Task<IEnumerable<NFD_Project>> GetAllAsync(int? programId = null, NFD_ProjectStatus? status = null);
         Task<NFD_Project?> GetByIdAsync(int id);
         Task<NFD_Project?> GetByIdWithMembersAsync(int id);

@@ -18,10 +18,10 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+       
 
 
-        
+
 
         // GET /api/Project - List projects (filter by program/status)
         public async Task<IEnumerable<NFD_Project>> GetAllAsync(int? programId = null, NFD_ProjectStatus? status = null)

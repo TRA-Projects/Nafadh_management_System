@@ -19,6 +19,7 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
+
         // TODO: implement endpoints for this entity
     }
 }
