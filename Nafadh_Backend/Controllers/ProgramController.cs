@@ -43,5 +43,20 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(program);
         }
+
+        // POST /api/Program
+        [HttpPost]
+        public async Task<ActionResult<ProgramDto>> Create([FromBody] CreateProgramDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var (result, error) = await _service.CreateProgramAsync(dto);
+            if (error is not null)
+                return BadRequest(new { message = error }); // e.g. TrackId doesn't exist
+
+            return CreatedAtAction(nameof(GetById), new { id = result!.ProgramId }, result);
+        }
+
     }
 }

@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -33,6 +34,27 @@ namespace Nafadh_Backend.Services
         }
 
         //Create a new program
+        public async Task<(ProgramDto? result, string? error)> CreateProgramAsync(CreateProgramDto dto)
+        {
+            // TrackId is a required FK, so we validate it exists before inserting
+            var trackExists = await _repository.TrackExistsAsync(dto.TrackId);
+            if (!trackExists)
+                return (null, $"Track with ID {dto.TrackId} was not found.");
+
+            var program = new NFD_Program
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                Category = dto.Category,
+                DurationHours = dto.DurationHours,
+                Price = dto.Price,
+                TrackId = dto.TrackId,
+                Status = NFD_ProgramStatus.Draft
+            };
+
+            var created = await _repository.AddAsync(program);
+            return (MapToDto(created), null);
+        }
 
 
 
