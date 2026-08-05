@@ -67,10 +67,6 @@ namespace Nafadh_Backend.Repositories
                 .AnyAsync(m => m.MaterialId == id);
         }
 
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
-
+      
     }
 }
