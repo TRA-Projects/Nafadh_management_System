@@ -18,5 +18,8 @@ namespace Nafadh_Backend.Services
         }
 
         // TODO: implement business-logic contract methods for this entity
+
+        // Retrieves all projects
+        
     }
 }
