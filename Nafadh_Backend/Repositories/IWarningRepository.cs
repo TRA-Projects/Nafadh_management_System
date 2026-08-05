@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -10,5 +11,31 @@ namespace Nafadh_Backend.Repositories
     public interface IWarningRepository
     {
         // TODO: define data-access contract methods for this entity
+
+
+        // Get all warnings related to a specific enrollment
+        // GET /api/Warning/enrollment/{enrollmentId}
+        Task<IEnumerable<NFD_Warning>> GetWarningsByEnrollmentAsync(int enrollmentId);
+
+        // Get warning details by warning ID
+        // GET /api/Warning/{id}
+        Task<NFD_Warning?> GetWarningByIdAsync(int warningId);
+
+        // Add a new warning
+        // POST /api/Warning
+        Task AddWarningAsync(NFD_Warning warning);
+
+        // Update warning status only
+        // PUT /api/Warning/{id}/status
+        Task UpdateWarningAsync(NFD_Warning warning);
+
+        // Close warning with resolution message
+        // PUT /api/Warning/{id}/resolve
+        Task<IEnumerable<NFD_Warning>> GetPendingWarningsAsync();
+
+        // Get all warnings that are not resolved
+        // GET /api/Warning/pending
+        Task<IEnumerable<NFD_Warning>> GetWarningsByLevelAsync(NFD_WarningLevel level);
+        Task UpdateWarningStatusAsync(int warningId, NFD_WarningStatus status);
     }
 }
