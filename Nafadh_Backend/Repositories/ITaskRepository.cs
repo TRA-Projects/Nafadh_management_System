@@ -9,6 +9,20 @@ namespace Nafadh_Backend.Repositories
 {
     public interface ITaskRepository
     {
-        // TODO: define data-access contract methods for this entity
+        Task<List<NFD_Task>> GetAllTasksAsync();
+
+        Task<NFD_Task?> GetTaskByIdAsync(int taskId);
+
+        Task AddTaskAsync(NFD_Task task);
+
+        Task UpdateTaskAsync(NFD_Task task);
+
+        Task DeleteTaskAsync(NFD_Task task);
+
+        Task<List<NFD_Task>> GetTasksByBatchIdAsync(int batchId);
+
+        Task<List<NFD_Rubric>> GetRubricsByTaskIdAsync(int taskId);
+
+        Task<List<NFD_Submission>> GetSubmissionsByTaskIdAsync(int taskId);
     }
 }
