@@ -18,7 +18,7 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        //
+       
         public async Task<SupportTicketDTO?> GetTicketByIdAsync(int id)
         {
             NFD_SupportTicket ticket = await _repository.GetByIdAsync(id);
@@ -40,6 +40,20 @@ namespace Nafadh_Backend.Services
             return supportTicket;
         }
 
+        public async Task<IEnumerable<SupportTicketDTO>> GetTicketsByUserIdAsync(int userId)
+        {
+            IEnumerable<NFD_SupportTicket> tickets = await _repository.GetUserTicketsAsync(userId);
+
+            return tickets.Select(t => new SupportTicketDTO
+            {
+                TicketId = t.TicketId,
+                Subject = t.Subject,
+                Message = t.Message,
+                Status = t.Status,
+                CreatedAt = t.CreatedAt,
+                UserId = t.UserId
+            });
+        }
 
     }
 }

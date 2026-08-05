@@ -12,5 +12,10 @@ namespace Nafadh_Backend.Services
     {
         // Retrieves a support ticket by its ID.
         Task<SupportTicketDTO?> GetTicketByIdAsync(int ticketId);
+
+        // Retrieves all support tickets created by a specific user.
+        Task<IEnumerable<SupportTicketDTO>> GetTicketsByUserIdAsync(int userId);
+
+
     }
 }

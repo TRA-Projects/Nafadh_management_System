@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -34,6 +35,15 @@ namespace Nafadh_Backend.Controllers
             }
 
             return Ok(ticket);
+        }
+        // GET: api/SupportTicket/user/{userId}
+        // Returns all support tickets created by a specific user.
+
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetUserTickets(int userId)
+        {
+            IEnumerable<SupportTicketDTO> tickets = await _service.GetTicketsByUserIdAsync(userId);
+            return Ok(tickets);
         }
     }
 }
