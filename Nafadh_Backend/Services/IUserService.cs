@@ -10,6 +10,9 @@ namespace Nafadh_Backend.Services
     public interface IUserService
     {
         Task<UserResponseDTO> RegisterAsync(UserRegisterationDTO dto);
-     
+
+        Task<UserLoginResponseDTO> LoginAsync(UserLoginDTO dto);
+
+
     }
 }

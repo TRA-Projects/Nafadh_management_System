@@ -20,7 +20,7 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        /// Create a new user account.</summary>
+        // Create a new user account.
         [HttpPost("register")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(UserResponseDTO), StatusCodes.Status201Created)]
@@ -30,15 +30,25 @@ namespace Nafadh_Backend.Controllers
             return CreatedAtAction(nameof(GetById), new { id = created.UserId }, created);
         }
 
-   
-     
+        //Authenticate and issue an access token.
+        [HttpPost("login")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(UserLoginResponseDTO), StatusCodes.Status200OK)]
+        public async Task<ActionResult<UserLoginResponseDTO>> Login([FromBody] UserLoginDTO dto)
+        {
+            var result = await _service.LoginAsync(dto);
+            return Ok(result);
+        }
 
 
-  
 
-   
 
-      
-        
+
+
+
+
+
+
+
     }
 }

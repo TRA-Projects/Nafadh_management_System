@@ -55,7 +55,38 @@ namespace Nafadh_Backend.Services
             return MapToResponseDTO(created);
         }
 
-       
+        public async Task<UserLoginResponseDTO> LoginAsync(UserLoginDTO dto)
+        {
+            var user = await _repository.GetByEmailAsync(dto.Email)
+                ?? throw new AuthenticationException("Invalid email or password.");
+
+            if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+            {
+                throw new AuthenticationException("Invalid email or password.");
+            }
+
+            if (user.Status != NFD_UserStatus.Active)
+            {
+                throw new AuthenticationException($"This account is {user.Status.ToString().ToLower()} and cannot sign in.");
+            }
+
+            var (token, expiresAtUtc) = _jwtTokenService.GenerateToken(user);
+
+            return new UserLoginResponseDTO
+            {
+                Token = token,
+                ExpiresAtUtc = expiresAtUtc,
+                UserId = user.UserId,
+                FullName = user.FullName,
+                Email = user.Email,
+                RoleId = user.RoleId,
+                RoleName = user.Role?.RoleName ?? string.Empty
+            };
+        }
+
+
+
+
 
         private static UserResponseDTO MapToResponseDTO(NFD_User user)
         {
