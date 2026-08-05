@@ -46,5 +46,19 @@ namespace Nafadh_Backend.Services
             var created = await _repository.AddAsync(track);
             return MapToDto(created);
         }
+
+        //Update track name/description/status
+        public async Task<TrackDto> UpdateTrackAsync(int id, UpdateTrackDto dto)
+        {
+            var track = await _repository.GetByIdAsync(id);
+            if (track is null) return null;
+
+            track.Name = dto.Name;
+            track.Description = dto.Description;
+            track.Status = dto.Status;
+
+            await _repository.UpdateAsync(track);
+            return MapToDto(track);
+        }
     }
 }

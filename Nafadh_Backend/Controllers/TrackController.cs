@@ -49,5 +49,19 @@ namespace Nafadh_Backend.Controllers
             var created = await _service.CreateTrackAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = created.TrackId }, created);
         }
+
+        // PUT /api/Track/{id}
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<TrackDto>> Update(int id, [FromBody] UpdateTrackDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var updated = await _service.UpdateTrackAsync(id, dto);
+            if (updated is null)
+                return NotFound(new { message = $"Track with ID {id} was not found." });
+
+            return Ok(updated);
+        }
     }
 }
