@@ -3,7 +3,12 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
+using Nafadh_Backend.Enums;
+using System.Linq;
+using System.Threading.Tasks;
+
 
 namespace Nafadh_Backend.Repositories
 {
@@ -16,6 +21,90 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        // Retrieves a paginated list of trainers based on optional filters: specialty, status, and search term.
+        public async Task<(List<NFD_Trainer> Items, int TotalCount)> GetAllAsync(
+                string? specialty,
+                NFD_TrainerStatus? status,
+                string? searchTerm,
+                int pageNumber, int pageSize)
+        {
+            var query = _context.NFD_Trainers
+                .Include(t => t.User)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(specialty))
+                query = query.Where(t => t.Specialty != null && t.Specialty.Contains(specialty));
+
+            if (status.HasValue)
+                query = query.Where(t => t.Status == status.Value);
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var s = searchTerm.Trim();
+                query = query.Where(t => (t.User.FullName != null && t.User.FullName.Contains(s))
+                                      || (t.Specialty != null && t.Specialty.Contains(s)));
+            }
+
+            var total = await query.CountAsync();
+
+            var items = await query
+                .OrderBy(t => t.TrainerId)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, total);
+        }
+
+        // Retrieves a trainer by ID, including the associated user information.
+        public async Task<NFD_Trainer?> GetByIdAsync(int id)
+        {
+            return await _context.NFD_Trainers
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.TrainerId == id);
+        }
+
+        // Retrieves a trainer by ID, including associated batches and user information.
+        public async Task<NFD_Trainer?> GetByIdWithBatchesAsync(int id)
+        {
+            return await _context.NFD_Trainers
+                .Include(t => t.BatchTrainers)
+                    .ThenInclude(bt => bt.Batch)
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.TrainerId == id);
+        }
+
+        // Retrieves a trainer by ID, including associated evaluations and user information.
+        public async Task<NFD_Trainer?> GetByIdWithEvaluationsAsync(int id)
+        {
+            return await _context.NFD_Trainers
+                .Include(t => t.Evaluations)
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.TrainerId == id);
+        }
+
+        // Checks if a user has an associated trainer profile.
+        public async Task<bool> UserHasTrainerProfileAsync(int userId)
+        {
+            return await _context.NFD_Trainers.AnyAsync(t => t.UserId == userId);
+        }
+
+        // Adds a new trainer to the database context.
+        public async Task AddAsync(NFD_Trainer trainer)
+        {
+            await _context.NFD_Trainers.AddAsync(trainer);
+        }
+
+        // Updates an existing trainer in the database context.
+        public void Update(NFD_Trainer trainer)
+        {
+            _context.NFD_Trainers.Update(trainer);
+        }
+
+        // Saves changes made in the database context to the database.
+        public async Task<bool> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
 }
