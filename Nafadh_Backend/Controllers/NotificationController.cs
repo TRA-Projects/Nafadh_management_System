@@ -20,5 +20,13 @@ namespace Nafadh_Backend.Controllers
         }
 
         // TODO: implement endpoints for this entity
+
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetByUserId(int userId)
+        {
+            var notifications = await _service.GetByUserIdAsync(userId);
+
+            return Ok(notifications);
+        }
     }
 }
