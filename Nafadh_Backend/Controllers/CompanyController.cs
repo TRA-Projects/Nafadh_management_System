@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -14,11 +15,88 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly ICompanyService _service;
 
+        // Constructor - inject Company Service
         public CompanyController(ICompanyService service)
         {
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET: api/Company
+        // Get all companies
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<NFD_CompanyOutputDTO>>>
+            GetAllCompanies()
+        {
+            var companies = await _service.GetAllCompaniesAsync();
+
+            return Ok(companies);
+        }
+
+        // GET: api/Company/{companyId}
+        // Get a company by ID
+        [HttpGet("{companyId}")]
+        public async Task<ActionResult<NFD_CompanyOutputDTO>>
+            GetCompanyById(int companyId)
+        {
+            var company = await _service.GetCompanyByIdAsync(companyId);
+
+            if (company == null)
+                return NotFound(new
+                {
+                    message = "Company not found."
+                });
+
+            return Ok(company);
+        }
+
+        // POST: api/Company
+        // Add a new company
+        [HttpPost]
+        public async Task<ActionResult<NFD_CompanyOutputDTO>>
+            AddCompany([FromBody] NFD_CompanyInputDTO dto)
+        {
+            var company = await _service.AddCompanyAsync(dto);
+
+            return CreatedAtAction(
+                nameof(GetCompanyById),
+                new { companyId = company.CompanyId },
+                company
+            );
+        }
+
+        // PUT: api/Company/{companyId}
+        // Update an existing company
+        [HttpPut("{companyId}")]
+        public async Task<ActionResult<NFD_CompanyOutputDTO>>
+            UpdateCompany(
+                int companyId,
+                [FromBody] NFD_CompanyInputDTO dto)
+        {
+            var company = await _service.UpdateCompanyAsync(companyId, dto);
+
+            if (company == null)
+                return NotFound(new
+                {
+                    message = "Company not found."
+                });
+
+            return Ok(company);
+        }
+
+        // DELETE: api/Company/{companyId}
+        // Delete a company by ID
+        [HttpDelete("{companyId}")]
+        public async Task<IActionResult> DeleteCompany(int companyId)
+        {
+            var deleted = await _service.DeleteCompanyAsync(companyId);
+
+            if (!deleted)
+                return NotFound(new
+                {
+                    message = "Company not found."
+                });
+
+            return NoContent();
+        }
     }
 }
