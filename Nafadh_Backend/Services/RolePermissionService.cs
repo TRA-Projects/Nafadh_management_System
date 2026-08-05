@@ -39,7 +39,6 @@ namespace Nafadh_Backend.Services
                 .ToList();
         }
 
-
         private async Task EnsureRoleExistsAsync(int roleId)
         {
             if (await _roleRepository.GetByIdAsync(roleId) is null)
@@ -47,5 +46,31 @@ namespace Nafadh_Backend.Services
                 throw new NotFoundException($"Role {roleId} was not found.");
             }
         }
+
+        public async Task GrantAsync(GrantPermissionDTO dto)
+        {
+            await EnsureRoleExistsAsync(dto.RoleId);
+            await EnsurePermissionExistsAsync(dto.PermissionId);
+
+            if (await _repository.ExistsAsync(dto.RoleId, dto.PermissionId))
+            {
+                throw new ConflictException("This role already has that permission.");
+            }
+
+            await _repository.AddAsync(new NFD_RolePermission
+            {
+                RoleId = dto.RoleId,
+                PermissionId = dto.PermissionId
+            });
+        }
+
+        private async Task EnsurePermissionExistsAsync(int permissionId)
+        {
+            if (await _permissionRepository.GetByIdAsync(permissionId) is null)
+            {
+                throw new NotFoundException($"Permission {permissionId} was not found.");
+            }
+        }
+
     }
 }

@@ -28,9 +28,20 @@ namespace Nafadh_Backend.Controllers
             return Ok(permissions);
         }
 
-  
 
-   
-     
+
+        //Grant a permission to a role.
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> Grant([FromBody] GrantPermissionDTO dto)
+        {
+            await _service.GrantAsync(dto);
+            return NoContent();
+        }
+
+
+
+
+
     }
 }
