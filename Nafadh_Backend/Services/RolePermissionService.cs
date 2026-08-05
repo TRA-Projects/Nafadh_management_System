@@ -72,5 +72,15 @@ namespace Nafadh_Backend.Services
             }
         }
 
+        public async Task RevokeAsync(GrantPermissionDTO dto)
+        {
+            var removed = await _repository.RemoveAsync(dto.RoleId, dto.PermissionId);
+            if (!removed)
+            {
+                throw new NotFoundException("That role does not have the specified permission granted.");
+            }
+        }
+
+
     }
 }

@@ -8,6 +8,7 @@ namespace Nafadh_Backend.Services
     {
         Task<List<PermissionDTO>> GetByRoleIdAsync(int roleId);
         Task GrantAsync(GrantPermissionDTO dto);
+        Task RevokeAsync(GrantPermissionDTO dto);
 
     }
 }

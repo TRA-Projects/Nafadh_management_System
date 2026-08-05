@@ -39,7 +39,14 @@ namespace Nafadh_Backend.Controllers
             return NoContent();
         }
 
-
+        //Revoke a permission from a role.
+        [HttpDelete]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> Revoke([FromBody] GrantPermissionDTO dto)
+        {
+            await _service.RevokeAsync(dto);
+            return NoContent();
+        }
 
 
 
