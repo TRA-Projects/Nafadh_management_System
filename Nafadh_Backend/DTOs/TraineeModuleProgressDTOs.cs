@@ -1,4 +1,5 @@
 ﻿using Nafadh_Backend.Enums;
+using System.ComponentModel.DataAnnotations;
 namespace Nafadh_Backend.DTOs
 {
     public class CompleteModuleDto
@@ -10,6 +11,7 @@ namespace Nafadh_Backend.DTOs
 
     public class UpdateTraineeModuleProgressDto
     {
+        [Required]
         public NFD_ModuleProgressStatus Status { get; set; }
 
         public DateTime? CompletedAt { get; set; }
