@@ -23,5 +23,8 @@ namespace Nafadh_Backend.Services
 
         //Mark All Notifications As Read
         Task MarkAllAsReadAsync(int userId);
+
+        //Get Unread Count
+        Task<UnreadCountDTO> GetUnreadCountAsync(int userId);
     }
 }

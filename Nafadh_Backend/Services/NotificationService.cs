@@ -74,5 +74,16 @@ namespace Nafadh_Backend.Services
         {
             await _repository.MarkAllAsReadAsync(userId);
         }
+
+        //Get Unread Count
+        public async Task<UnreadCountDTO> GetUnreadCountAsync(int userId)
+        {
+            var count = await _repository.GetUnreadCountAsync(userId);
+
+            return new UnreadCountDTO
+            {
+                Count = count
+            };
+        }
     }
 }

@@ -55,5 +55,14 @@ namespace Nafadh_Backend.Controllers
 
             return Ok("All notifications marked as read.");
         }
+
+        //Get Unread Count
+        [HttpGet("user/{userId}/unread-count")]
+        public async Task<IActionResult> GetUnreadCount(int userId)
+        {
+            var count = await _service.GetUnreadCountAsync(userId);
+
+            return Ok(count);
+        }
     }
 }
