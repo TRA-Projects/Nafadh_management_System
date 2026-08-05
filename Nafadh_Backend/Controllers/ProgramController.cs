@@ -4,6 +4,8 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +21,16 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET /api/Program?trackId=&status=&category=  (filters all optional)
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ProgramDto>>> GetAll(
+            [FromQuery] int? trackId,
+            [FromQuery] NFD_ProgramStatus? status,
+            [FromQuery] string? category)
+        {
+            var filter = new ProgramFilterDto { TrackId = trackId, Status = status, Category = category };
+            var programs = await _service.GetAllProgramsAsync(filter);
+            return Ok(programs);
+        }
     }
 }
