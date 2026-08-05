@@ -4,11 +4,13 @@
 // </auto-generated>
 
 using Nafadh_Backend.Models;
+using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Services
 {
     public interface ISupportTicketService
     {
-        // TODO: define business-logic contract methods for this entity
+        // Retrieves a support ticket by its ID.
+        Task<SupportTicketDTO?> GetTicketByIdAsync(int ticketId);
     }
 }

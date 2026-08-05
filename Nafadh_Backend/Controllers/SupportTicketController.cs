@@ -19,6 +19,21 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+
+        // GET: api/SupportTicket/{id}
+        // Returns a support ticket by its ID.
+        
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetTicketById(int id)
+        {
+            var ticket = await _service.GetTicketByIdAsync(id);
+
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(ticket);
+        }
     }
 }

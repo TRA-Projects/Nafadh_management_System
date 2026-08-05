@@ -5,6 +5,7 @@
 
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Services
 {
@@ -17,6 +18,28 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        //
+        public async Task<SupportTicketDTO?> GetTicketByIdAsync(int id)
+        {
+            NFD_SupportTicket ticket = await _repository.GetByIdAsync(id);
+
+            if (ticket == null)
+            {
+                return null;
+            }
+
+            SupportTicketDTO supportTicket = new SupportTicketDTO
+            {
+                TicketId = ticket.TicketId,
+                Subject = ticket.Subject,
+                Message = ticket.Message,
+                Status = ticket.Status,
+                CreatedAt = ticket.CreatedAt,
+                UserId = ticket.UserId
+            };
+            return supportTicket;
+        }
+
+
     }
 }
