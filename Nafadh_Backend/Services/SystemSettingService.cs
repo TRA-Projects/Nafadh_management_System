@@ -2,7 +2,7 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +17,77 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+
+        public async Task<List<SystemSettingOutputDTO>> GetAllSystemSettingsAsync()
+        {
+            var settings = await _repository.GetAllSystemSettingsAsync();
+
+            return settings.Select(s => new SystemSettingOutputDTO
+            {
+                SettingId = s.SettingId,
+                Key = s.Key,
+                Value = s.Value,
+                Description = s.Description
+            }).ToList();
+        }
+
+
+        public async Task<SystemSettingOutputDTO?> GetSystemSettingByKeyAsync(string key)
+        {
+            var setting = await _repository.GetSystemSettingByKeyAsync(key);
+
+            if (setting == null)
+                return null;
+
+            return new SystemSettingOutputDTO
+            {
+                SettingId = setting.SettingId,
+                Key = setting.Key,
+                Value = setting.Value,
+                Description = setting.Description
+            };
+        }
+
+
+        public async Task AddSystemSettingAsync(SystemSettingInputDTO input)
+        {
+            var setting = new NFD_SystemSetting
+            {
+                Key = input.Key,
+                Value = input.Value,
+                Description = input.Description
+            };
+
+            await _repository.AddSystemSettingAsync(setting);
+        }
+
+
+        public async Task<bool> UpdateSystemSettingAsync(string key, UpdateSystemSettingDTO input)
+        {
+            var setting = await _repository.GetSystemSettingByKeyAsync(key);
+
+            if (setting == null)
+                return false;
+
+            setting.Value = input.Value;
+            setting.Description = input.Description;
+
+            await _repository.UpdateSystemSettingAsync(setting);
+
+            return true;
+        }
+
+
+        public async Task<bool> DeleteSystemSettingAsync(string key)
+        {
+            var setting = await _repository.GetSystemSettingByKeyAsync(key);
+
+            if (setting == null)
+                return false;
+
+            await _repository.DeleteSystemSettingAsync(setting);
+
+            return true;
+        }
     }
 }

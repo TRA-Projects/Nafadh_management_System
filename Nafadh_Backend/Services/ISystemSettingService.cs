@@ -3,12 +3,20 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
-using Nafadh_Backend.Models;
+using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Services
 {
     public interface ISystemSettingService
     {
-        // TODO: define business-logic contract methods for this entity
+        Task<List<SystemSettingOutputDTO>> GetAllSystemSettingsAsync();
+
+        Task<SystemSettingOutputDTO?> GetSystemSettingByKeyAsync(string key);
+
+        Task AddSystemSettingAsync(SystemSettingInputDTO input);
+
+        Task<bool> UpdateSystemSettingAsync(string key, UpdateSystemSettingDTO input);
+
+        Task<bool> DeleteSystemSettingAsync(string key);
     }
 }
