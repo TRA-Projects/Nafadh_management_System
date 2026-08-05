@@ -106,8 +106,24 @@ namespace Nafadh_Backend.Services
             // Convert PDF file into byte array
             return await File.ReadAllBytesAsync(certificate.FileUrl);
         }
+        // Get all certificates for trainee
+        public async Task<List<CertificateOutputDTO>> GetCertificatesByTraineeIdAsync(int traineeId)
+        {
+
+            var certificates =await _repository.GetCertificatesByTraineeIdAsync(traineeId);
 
 
+            return certificates.Select(c => new CertificateOutputDTO
+            {
+                CertificateId = c.CertificateId,
+                EnrollmentId = c.EnrollmentId,
+                IssueDate = c.IssueDate,
+                Type = c.Type,
+                FileUrl = c.FileUrl
+
+            }).ToList();
+
+        }
 
 
     }

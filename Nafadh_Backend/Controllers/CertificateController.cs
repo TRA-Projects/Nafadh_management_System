@@ -71,6 +71,19 @@ namespace Nafadh_Backend.Controllers
             );
         }
 
+        // Get all certificates for trainee
+        [HttpGet("trainee/{traineeId}")]
+        public async Task<IActionResult> GetCertificatesByTrainee(int traineeId)
+        {
+
+            var result =await _service.GetCertificatesByTraineeIdAsync(traineeId);
+
+            if (result == null || !result.Any())
+                return NotFound();
+
+            return Ok(result);
+        }
+
 
 
     }
