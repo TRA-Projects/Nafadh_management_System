@@ -27,7 +27,7 @@ namespace Nafadh_Backend.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTicketById(int id)
         {
-            var ticket = await _service.GetTicketByIdAsync(id);
+            SupportTicketDTO ticket = await _service.GetTicketByIdAsync(id);
 
             if (ticket == null)
             {
