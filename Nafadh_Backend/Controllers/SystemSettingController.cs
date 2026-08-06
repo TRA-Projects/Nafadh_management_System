@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +20,57 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        [HttpGet]
+        public async Task<IActionResult> GetAllSystemSettings()
+        {
+            var settings = await _service.GetAllSystemSettingsAsync();
+
+            return Ok(settings);
+        }
+
+
+        [HttpGet("{key}")]
+        public async Task<IActionResult> GetSystemSettingByKey(string key)
+        {
+            var setting = await _service.GetSystemSettingByKeyAsync(key);
+
+            if (setting == null)
+                return NotFound();
+
+            return Ok(setting);
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> AddSystemSetting(SystemSettingInputDTO input)
+        {
+            await _service.AddSystemSettingAsync(input);
+
+            return Ok("System Setting added successfully");
+        }
+
+
+        [HttpPut("{key}")]
+        public async Task<IActionResult> UpdateSystemSetting(string key, UpdateSystemSettingDTO input)
+        {
+            var result = await _service.UpdateSystemSettingAsync(key, input);
+
+            if (!result)
+                return NotFound();
+
+            return Ok("System Setting updated successfully");
+        }
+
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteSystemSetting(int id)
+        {
+            var result = await _service.DeleteSystemSettingAsync(id);
+
+            if (!result)
+                return NotFound();
+
+            return Ok("System Setting deleted successfully");
+        }
     }
 }
