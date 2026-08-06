@@ -3,9 +3,15 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Nafadh_Backend.Filters;
 using Nafadh_Backend.Repositories;
 using Nafadh_Backend.Services;
+using System.Security.Claims;
+using System.Text;
 
 namespace Nafadh_Backend
 {
@@ -16,16 +22,72 @@ namespace Nafadh_Backend
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
-            builder.Services.AddControllers();
+            builder.Services.AddControllers(options =>
+            {
+                options.Filters.Add<ApiExceptionFilter>();
+            })
+            .AddJsonOptions(options =>
+            {
+                // Serialize enums as strings instead of numbers
+                options.JsonSerializerOptions.Converters.Add(
+                    new System.Text.Json.Serialization.JsonStringEnumConverter());
+            });
 
             // EF Core - SQL Server
             builder.Services.AddDbContext<Nafadhcontext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Swagger / OpenAPI
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            // ── JWT Authentication ─────────────────────────────────────────────
+            builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+
+            var jwtKey = builder.Configuration["Jwt:Key"];
+            var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+            var jwtAudience = builder.Configuration["Jwt:Audience"];
+
+            builder.Services
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.MapInboundClaims = false;
+
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = jwtIssuer,
+                        ValidAudience = jwtAudience,
+                        RoleClaimType = ClaimTypes.Role,
+                        ClockSkew = TimeSpan.Zero,
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                                                       Encoding.UTF8.GetBytes(jwtKey))
+                    };
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnAuthenticationFailed = context =>
+                        {
+                            var error = context.Exception.Message;
+                            return Task.CompletedTask;
+                        },
+                        OnTokenValidated = context =>
+                        {
+                            var claims = context.Principal.Claims.ToList();
+                            return Task.CompletedTask;
+                        },
+                        OnChallenge = context =>
+                        {
+                            var error = context.Error;
+                            var desc = context.ErrorDescription;
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
+
+            builder.Services.AddAuthorization();
+            // ── end JWT Authentication ─────────────────────────────────────────────
+
 
             // Repositories & Services (one pair per domain entity)
             builder.Services.AddScoped<IUserRepository, UserRepository>();
