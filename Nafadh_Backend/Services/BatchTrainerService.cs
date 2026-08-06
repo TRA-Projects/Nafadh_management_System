@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
@@ -13,11 +15,16 @@ namespace Nafadh_Backend.Services
     {
         private readonly IBatchTrainerRepository _repository;
         private readonly IBatchRepository _batchRepository;
+        private readonly ITrainerRepository _trainerRepository;
 
-        public BatchTrainerService(IBatchTrainerRepository repository, IBatchRepository batchRepository)
+        public BatchTrainerService(
+            IBatchTrainerRepository repository,
+            IBatchRepository batchRepository,
+            ITrainerRepository trainerRepository)
         {
             _repository = repository;
             _batchRepository = batchRepository;
+            _trainerRepository = trainerRepository;
         }
 
         public async Task<List<TrainerInBatchDto>> GetTrainersForBatchAsync(int batchId)
@@ -27,10 +34,13 @@ namespace Nafadh_Backend.Services
 
             foreach (var link in links)
             {
+                // جلب بيانات المدرب الحقيقية مع المستخدم التابع له لجلب الاسم الكامل
+                var trainer = await _trainerRepository.GetByIdAsync(link.TrainerId);
+
                 result.Add(new TrainerInBatchDto
                 {
                     TrainerId = link.TrainerId,
-                    TrainerName = string.Empty // Placeholder for external trainer scope
+                    TrainerName = trainer?.User?.FullName ?? string.Empty
                 });
             }
 
@@ -60,8 +70,16 @@ namespace Nafadh_Backend.Services
 
         public async Task<bool> AssignAsync(AssignTrainerDto dto)
         {
+            // 1. التحقق مما إذا كان المعرف مسنداً سابقاً
             if (await _repository.ExistsAsync(dto.BatchId, dto.TrainerId))
-                return false; // Already assigned
+                return false;
+
+            // 2. التحقق من وجود المدرب والدفعة في قاعدة البيانات لتجنب أخطاء Constraint الفجائية
+            var trainerExists = await _trainerRepository.GetByIdAsync(dto.TrainerId) != null;
+            var batchExists = await _batchRepository.GetByIdAsync(dto.BatchId) != null;
+
+            if (!trainerExists || !batchExists)
+                return false;
 
             await _repository.AddAsync(new NFD_BatchTrainer
             {
