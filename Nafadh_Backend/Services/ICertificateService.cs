@@ -11,10 +11,6 @@ namespace Nafadh_Backend.Services
     public interface ICertificateService
     {
         // TODO: define business-logic contract methods for this entity
-        //Task AddCertificateAsync(NFD_Certificate certificate);
-        //Task<NFD_Certificate?> GetCertificateByIdAsync(int certificateId);
-        //Task UpdateCertificateAsync(NFD_Certificate certificate);
-        //Task DeleteCertificateAsync(NFD_Certificate certificate);
 
 
         Task<CertificateOutputDTO?> GetCertificateByEnrollmentIdAsync(int enrollmentId);

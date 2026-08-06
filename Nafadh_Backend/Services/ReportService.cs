@@ -3,8 +3,10 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using static Nafadh_Backend.DTOs.ReportDTO;
 
 namespace Nafadh_Backend.Services
 {
@@ -18,5 +20,78 @@ namespace Nafadh_Backend.Services
         }
 
         // TODO: implement business-logic contract methods for this entity
+        // GET Report
+        public async Task<List<ReportOutputDTO>> GetReportsAsync(NFD_ReportType? type, int? userId)
+        {
+            var reports = await _repository.GetReportsAsync(type, userId);
+
+            return reports.Select(r => new ReportOutputDTO
+            {
+                ReportId = r.ReportId,
+                Type = r.Type,
+                FiltersJson = r.FiltersJson,
+                GeneratedAt = r.GeneratedAt,
+                FileUrl = r.FileUrl,
+                GeneratedByUserId = r.GeneratedByUserId
+
+            }).ToList();
+        }
+
+        // generate Report
+        public async Task<ReportOutputDTO> GenerateReportAsync(ReportInputDTO dto)
+        {
+            NFD_Report report = new NFD_Report
+            {
+                Type = dto.Type,
+                FiltersJson = dto.FiltersJson,
+                GeneratedAt = DateTime.Now,
+                FileUrl = dto.FileUrl,
+                GeneratedByUserId = dto.GeneratedByUserId
+            };
+
+            await _repository.AddReportAsync(report);
+
+            return new ReportOutputDTO
+            {
+                ReportId = report.ReportId,
+                Type = report.Type,
+                FiltersJson = report.FiltersJson,
+                GeneratedAt = report.GeneratedAt,
+                FileUrl = report.FileUrl,
+                GeneratedByUserId = report.GeneratedByUserId
+            };
+        }
+
+
+        // GET Report/{id}
+        public async Task<ReportOutputDTO?> GetReportByIdAsync(int reportId)
+        {
+            var report = await _repository.GetReportByIdAsync(reportId);
+
+            if (report == null)
+                return null;
+
+            return new ReportOutputDTO
+            {
+                ReportId = report.ReportId,
+                Type = report.Type,
+                FiltersJson = report.FiltersJson,
+                GeneratedAt = report.GeneratedAt,
+                FileUrl = report.FileUrl,
+                GeneratedByUserId = report.GeneratedByUserId
+            };
+        }
+        // GET Report/{id}/download
+        public async Task<string?> DownloadReportAsync(int reportId)
+        {
+            var report = await _repository.GetReportByIdAsync(reportId);
+
+            if (report == null)
+                return null;
+
+            return report.FileUrl;
+        }
+
+
     }
 }

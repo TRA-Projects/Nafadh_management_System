@@ -20,29 +20,7 @@ namespace Nafadh_Backend.Services
         }
 
         // TODO: implement business-logic contract methods for this entity
-        //public async Task AddCertificateAsync(NFD_Certificate certificate)
-        //{
-        //    // Business logic can be added here before adding the certificate
-        //    await _repository.AddCertificateAsync(certificate);
-        //}
 
-        //public async Task<NFD_Certificate?> GetCertificateByIdAsync(int certificateId)
-        //{
-        //    return await _repository.GetCertificateByIdAsync(certificateId);
-        //}
-
-        //public async Task UpdateCertificateAsync(NFD_Certificate certificate)
-        //{
-        //    // Business logic can be added here before updating the certificate
-        //    await _repository.UpdateCertificateAsync(certificate);
-        //}
-
-        //public async Task DeleteCertificateAsync(NFD_Certificate certificate)
-        //{
-        //    // Business logic can be added here before deleting the certificate
-        //    await _repository.DeleteCertificateAsync(certificate);
-        //}
-        //--------------------------------------------------------
         // GET certificate by enrollment
         public async Task<CertificateOutputDTO?> GetCertificateByEnrollmentIdAsync(int enrollmentId)
         {

@@ -18,30 +18,6 @@ namespace Nafadh_Backend.Repositories
 
         // TODO: implement data-access contract methods for this entity
 
-        //public async Task AddCertificateAsync(NFD_Certificate certificate)
-        //{
-        //    await _context.NFD_Certificates.AddAsync(certificate);
-        //    await _context.SaveChangesAsync();
-        //}
-
-        //public async Task<NFD_Certificate?> GetCertificateByIdAsync(int certificateId)
-        //{
-        //    return await _context.NFD_Certificates.FindAsync(certificateId);
-        //}
-
-        //public async Task UpdateCertificateAsync(NFD_Certificate certificate)
-        //{
-        //    _context.NFD_Certificates.Update(certificate);
-        //    await _context.SaveChangesAsync();
-        //}
-
-        //public async Task DeleteCertificateAsync(NFD_Certificate certificate)
-        //{
-        //    _context.NFD_Certificates.Remove(certificate);
-        //    await _context.SaveChangesAsync();
-        //}
-
-        //-------------------------------------------------------------------------
 
         public async Task<NFD_Certificate?> GetCertificateByEnrollmentIdAsync(int enrollmentId)
         {

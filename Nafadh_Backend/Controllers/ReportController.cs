@@ -4,7 +4,9 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
+using static Nafadh_Backend.DTOs.ReportDTO;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -20,5 +22,53 @@ namespace Nafadh_Backend.Controllers
         }
 
         // TODO: implement endpoints for this entity
+
+        // GET Report
+        [HttpGet]
+        public async Task<IActionResult> GetReports([FromQuery] NFD_ReportType? type,[FromQuery] int? userId)
+        {
+            var reports = await _service.GetReportsAsync(type, userId);
+
+            return Ok(reports);
+        }
+        //  generate report
+        [HttpPost("generate")]
+        public async Task<IActionResult> GenerateReport([FromBody] ReportInputDTO dto)
+        {
+            var report = await _service.GenerateReportAsync(dto);
+
+            return Ok(report);
+        }
+        // GET Report/{id}
+        [HttpGet("Report/{id}")]
+        public async Task<IActionResult> GetReportById(int id)
+        {
+            var report = await _service.GetReportByIdAsync(id);
+
+            if (report == null)
+                return NotFound();
+
+            return Ok(report);
+        }
+
+        // GET Report/{id}/download
+        [HttpGet("{id}/download")]
+        public async Task<IActionResult> DownloadReport(int id)
+        {
+            var fileUrl = await _service.DownloadReportAsync(id);
+
+            if (fileUrl == null)
+                return NotFound();
+
+
+            var fileBytes = System.IO.File.ReadAllBytes(fileUrl);
+
+            return File(
+                fileBytes,
+                "application/pdf",
+                "Report.pdf"
+            );
+        }
+
     }
 }
