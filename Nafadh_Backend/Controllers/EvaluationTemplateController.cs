@@ -10,8 +10,8 @@ using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
 {
-   // [ApiController]
-   // [Route("api/[controller]")]
+   [ApiController]
+   [Route("api/[controller]")]
     public class EvaluationTemplateController : ControllerBase
     {
         private readonly IEvaluationTemplateService _service;
@@ -53,7 +53,7 @@ namespace Nafadh_Backend.Controllers
         // Create template
 
         [HttpPost]
-        public async Task<IActionResult> CreateTemplate(EvaluationTemplateDTO.Input input)
+        public async Task<IActionResult> CreateTemplate(EvaluationTemplateInputDTO input)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -68,7 +68,7 @@ namespace Nafadh_Backend.Controllers
         // Update template
 
         [HttpPut("{templateId}")]
-        public async Task<IActionResult> UpdateTemplate(int templateId, EvaluationTemplateDTO.Input input)
+        public async Task<IActionResult> UpdateTemplate(int templateId, EvaluationTemplateInputDTO input)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

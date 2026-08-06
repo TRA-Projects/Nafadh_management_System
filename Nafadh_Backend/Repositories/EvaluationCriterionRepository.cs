@@ -17,8 +17,6 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
-
         //Weighted criteria list for a template
         public async Task<List<NFD_EvaluationCriterion>> GetCriteriaByTemplateIdAsync(int templateId)
         {
