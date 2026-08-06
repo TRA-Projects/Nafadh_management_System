@@ -33,6 +33,9 @@ namespace Nafadh_Backend.Services
             int id,
             UpdateAnnouncementDTO dto);
 
+        // =====================================================
+        // Delete announcement
+        Task DeleteAsync(int id);
 
     }
 }

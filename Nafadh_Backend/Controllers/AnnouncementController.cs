@@ -93,6 +93,20 @@ namespace Nafadh_Backend.Controllers
 
         }
 
+        // =====================================================
+        // Delete announcement
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+
+            await _service.DeleteAsync(id);
+
+
+
+            return Ok(
+                "Announcement deleted successfully.");
+
+        }
 
     }
 }

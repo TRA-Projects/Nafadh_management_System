@@ -147,6 +147,30 @@ namespace Nafadh_Backend.Services
 
         }
 
+
+        // =====================================================
+        // Delete announcement
+        public async Task DeleteAsync(int id)
+        {
+
+            var announcement =
+                await _repository.GetByIdAsync(id);
+
+
+
+            if (announcement == null)
+            {
+                throw new KeyNotFoundException(
+                    "Announcement not found");
+            }
+
+
+
+            await _repository
+                .DeleteAsync(announcement);
+
+        }
+
     }
 
 }
