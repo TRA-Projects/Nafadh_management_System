@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +18,37 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public async Task<IEnumerable<NFD_CompanyPayment>> GetCompanyPaymentsAsync(int companyId)
+        {
+            return await _repository.GetByCompanyIdAsync(companyId);
+        }
+
+        public async Task<NFD_CompanyPayment?> GetPaymentDetailsAsync(int id)
+        {
+            return await _repository.GetByIdAsync(id);
+        }
+
+        public async Task<NFD_CompanyPayment> CreatePaymentAsync(NFD_CompanyPayment payment)
+        {
+            payment.Status = NFD_PaymentStatus.Pending;
+
+            await _repository.AddAsync(payment);
+
+            return payment;
+        }
+
+        public async Task<bool> UpdatePaymentStatusAsync(int id, NFD_PaymentStatus status)
+        {
+            var payment = await _repository.GetByIdAsync(id);
+
+            if (payment == null)
+                return false;
+
+            payment.Status = status;
+
+            await _repository.UpdateAsync(payment);
+
+            return true;
+        }
     }
 }

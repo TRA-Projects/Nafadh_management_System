@@ -4,11 +4,33 @@
 // </auto-generated>
 
 using Nafadh_Backend.Models;
+using static Nafadh_Backend.DTOs.TraineePaymentSchedule;
 
 namespace Nafadh_Backend.Services
 {
     public interface ITraineePaymentScheduleService
     {
-        // TODO: define business-logic contract methods for this entity
+
+        Task<IEnumerable<NFD_TraineePaymentSchedule>>
+            GetPaymentScheduleAsync(
+                int traineePaymentId);
+
+
+
+        Task<IEnumerable<NFD_TraineePaymentSchedule>>
+            GenerateInstallmentsAsync(
+                int traineePaymentId,
+                decimal totalAmount,
+                int months);
+
+
+
+        Task<bool>
+            MarkAsPaidAsync(int id);
+
+
+
+        Task<IEnumerable<NFD_TraineePaymentSchedule>>
+            GetOverdueAsync();
     }
 }

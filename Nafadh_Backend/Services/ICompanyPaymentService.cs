@@ -3,12 +3,19 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Services
 {
     public interface ICompanyPaymentService
     {
-        // TODO: define business-logic contract methods for this entity
+        Task<IEnumerable<NFD_CompanyPayment>> GetCompanyPaymentsAsync(int companyId);
+
+        Task<NFD_CompanyPayment?> GetPaymentDetailsAsync(int id);
+
+        Task<NFD_CompanyPayment> CreatePaymentAsync(NFD_CompanyPayment payment);
+
+        Task<bool> UpdatePaymentStatusAsync(int id, NFD_PaymentStatus status);
     }
 }
