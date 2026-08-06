@@ -25,17 +25,19 @@ namespace Nafadh_Backend.Repositories
         // POST /api/Warning
         Task AddWarningAsync(NFD_Warning warning);
 
-        // Update warning status only
+        // Update warning status
         // PUT /api/Warning/{id}/status
-        Task UpdateWarningAsync(NFD_Warning warning);
+        Task UpdateWarningStatusAsync(int warningId, NFD_WarningStatus status);
 
         // Close warning with resolution message
         // PUT /api/Warning/{id}/resolve
-        Task<IEnumerable<NFD_Warning>> GetPendingWarningsAsync();
-
+        Task ResolveWarningAsync(int warningId, string resolution);
         // Get all warnings that are not resolved
         // GET /api/Warning/pending
+        Task<IEnumerable<NFD_Warning>> GetPendingWarningsAsync();
+        // Get warnings by severity level
+        // GET /api/Warning/level/{level}
         Task<IEnumerable<NFD_Warning>> GetWarningsByLevelAsync(NFD_WarningLevel level);
-        Task UpdateWarningStatusAsync(int warningId, NFD_WarningStatus status);
+       
     }
 }

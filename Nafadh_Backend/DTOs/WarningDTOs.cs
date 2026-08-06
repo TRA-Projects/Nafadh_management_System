@@ -88,28 +88,28 @@ namespace Nafadh_Backend.DTOs
             public int WarningId { get; set; }
 
 
-
             // Related enrollment
             public int EnrollmentId { get; set; }
-
 
 
             // Warning type
             public NFD_WarningType Type { get; set; }
 
-
-
             // Warning level
             public NFD_WarningLevel Level { get; set; }
 
 
+            // Evidence information
+            public string? Evidence { get; set; }
 
-            // Current warning status
+
+           // Current warning status
             public NFD_WarningStatus Status { get; set; }
 
+          // Resolution information
+            public string? Resolution { get; set; }
 
-
-            // Warning creation date
+           // Warning creation date
             public DateTime IssuedDate { get; set; }
 
         }
