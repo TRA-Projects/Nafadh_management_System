@@ -71,7 +71,7 @@ namespace Nafadh_Backend.Repositories
                 .Select(e => e.Trainee)
                 .ToListAsync();
         }
-
+        //
 
     }
 }
