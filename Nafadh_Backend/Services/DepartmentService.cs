@@ -57,5 +57,6 @@ namespace Nafadh_Backend.Services
             // معالجة حسابات الأداء الخاصة بالقسم قبل إرجاعها
             return await _repository.GetDepartmentPerformanceAsync(departmentId);
         }
+        //
     }
 }
