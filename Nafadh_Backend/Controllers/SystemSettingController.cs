@@ -62,10 +62,10 @@ namespace Nafadh_Backend.Controllers
         }
 
 
-        [HttpDelete("{key}")]
-        public async Task<IActionResult> DeleteSystemSetting(string key)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteSystemSetting(int id)
         {
-            var result = await _service.DeleteSystemSettingAsync(key);
+            var result = await _service.DeleteSystemSettingAsync(id);
 
             if (!result)
                 return NotFound();

@@ -28,6 +28,12 @@ namespace Nafadh_Backend.Repositories
                 .FirstOrDefaultAsync(s => s.Key == key);
         }
 
+        public async Task<NFD_SystemSetting?> GetSystemSettingByIdAsync(int id)
+        {
+            return await _context.NFD_SystemSettings
+                .FirstOrDefaultAsync(s => s.SettingId == id);
+        }
+
         public async Task AddSystemSettingAsync(NFD_SystemSetting systemSetting)
         {
             await _context.NFD_SystemSettings.AddAsync(systemSetting);

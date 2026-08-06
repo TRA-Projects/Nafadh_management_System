@@ -13,6 +13,8 @@ namespace Nafadh_Backend.Repositories
 
         Task<NFD_SystemSetting?> GetSystemSettingByKeyAsync(string key);
 
+        Task<NFD_SystemSetting?> GetSystemSettingByIdAsync(int id);
+
         Task AddSystemSettingAsync(NFD_SystemSetting systemSetting);
 
         Task UpdateSystemSettingAsync(NFD_SystemSetting systemSetting);

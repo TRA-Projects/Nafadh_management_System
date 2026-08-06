@@ -78,9 +78,9 @@ namespace Nafadh_Backend.Services
         }
 
 
-        public async Task<bool> DeleteSystemSettingAsync(string key)
+        public async Task<bool> DeleteSystemSettingAsync(int id)
         {
-            var setting = await _repository.GetSystemSettingByKeyAsync(key);
+            var setting = await _repository.GetSystemSettingByIdAsync(id);
 
             if (setting == null)
                 return false;

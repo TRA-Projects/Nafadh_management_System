@@ -17,6 +17,6 @@ namespace Nafadh_Backend.Services
 
         Task<bool> UpdateSystemSettingAsync(string key, UpdateSystemSettingDTO input);
 
-        Task<bool> DeleteSystemSettingAsync(string key);
+        Task<bool> DeleteSystemSettingAsync(int id);
     }
 }
