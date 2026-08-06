@@ -20,6 +20,7 @@ namespace Nafadh_Backend.Services
         }
 
         // TODO: implement business-logic contract methods for this entity
+
         // GET Report
         public async Task<List<ReportOutputDTO>> GetReportsAsync(NFD_ReportType? type, int? userId)
         {
@@ -81,6 +82,7 @@ namespace Nafadh_Backend.Services
                 GeneratedByUserId = report.GeneratedByUserId
             };
         }
+
         // GET Report/{id}/download
         public async Task<string?> DownloadReportAsync(int reportId)
         {

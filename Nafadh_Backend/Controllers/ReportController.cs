@@ -31,6 +31,7 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(reports);
         }
+
         //  generate report
         [HttpPost("generate")]
         public async Task<IActionResult> GenerateReport([FromBody] ReportInputDTO dto)
@@ -39,6 +40,7 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(report);
         }
+
         // GET Report/{id}
         [HttpGet("Report/{id}")]
         public async Task<IActionResult> GetReportById(int id)
