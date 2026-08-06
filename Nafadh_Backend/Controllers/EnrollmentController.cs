@@ -51,5 +51,21 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(enrollment);
         }
+
+
+        // POST /api/Enrollment  -> enroll a trainee into a batch/company/department
+        [HttpPost]
+        public async Task<ActionResult<EnrollmentDTO>> Create([FromBody] CreateEnrollmentDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var (result, error) = await _service.CreateEnrollmentAsync(dto);
+            if (error is not null)
+                return BadRequest(new { message = error });
+
+            return CreatedAtAction(nameof(GetById), new { id = result!.EnrollmentId }, result);
+        }
+
     }
 }

@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 using static Nafadh_Backend.DTOs.EnrollmentDTO;
@@ -34,13 +35,51 @@ namespace Nafadh_Backend.Services
             return enrollment is null ? null : MapToDto(enrollment);
         }
 
-
-
-
-
-
-
         //Create a new program
+
+
+        public async Task<(EnrollmentDTO? result, string? error)> CreateEnrollmentAsync(CreateEnrollmentDto dto)
+        {
+            // required FKs, checked up front so we return a clean 400 instead of a raw DB constraint error
+            if (!await _repository.BatchExistsAsync(dto.BatchId))
+                return (null, $"Batch with ID {dto.BatchId} was not found.");
+
+            if (!await _repository.TraineeExistsAsync(dto.TraineeId))
+                return (null, $"Trainee with ID {dto.TraineeId} was not found.");
+
+            if (!await _repository.CompanyExistsAsync(dto.CompanyId))
+                return (null, $"Company with ID {dto.CompanyId} was not found.");
+
+            // Optional foreign keys are validated only if provided.
+            if (dto.DepartmentId.HasValue && !await _repository.DepartmentExistsAsync(dto.DepartmentId.Value))
+                return (null, $"Department with ID {dto.DepartmentId} was not found.");
+
+            if (dto.SupervisorId.HasValue && !await _repository.SupervisorExistsAsync(dto.SupervisorId.Value))
+                return (null, $"Supervisor with ID {dto.SupervisorId} was not found.");
+
+            var enrollment = new NFD_Enrollment
+            {
+                BatchId = dto.BatchId,
+                TraineeId = dto.TraineeId,
+                CompanyId = dto.CompanyId,
+                DepartmentId = dto.DepartmentId,
+                SupervisorId = dto.SupervisorId,
+                EnrollmentDate = DateTime.UtcNow,
+                CompletionStatus = NFD_EnrollmentCompletionStatus.InProgress
+            };
+
+            var created = await _repository.AddAsync(enrollment);
+
+            // re-fetch with includes so the response has BatchName/TraineeName/CompanyName populated
+            var full = await _repository.GetByIdAsync(created.EnrollmentId);
+            return (MapToDto(full!), null);
+        }
+
+
+
+
+
+
         //Update program details
         //Archive a program
         //List batches running for a program
