@@ -30,4 +30,5 @@ namespace Nafadh_Backend.Interfaces
         //6
         Task<object> GetDepartmentPerformanceAsync(int departmentId);
     }
+    //
 }
