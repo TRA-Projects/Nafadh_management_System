@@ -4,11 +4,12 @@
 // </auto-generated>
 
 using Nafadh_Backend.Models;
+using static Nafadh_Backend.DTOs.ExcuseDto;
 
 namespace Nafadh_Backend.Services
 {
     public interface IExcuseService
     {
-        // TODO: define business-logic contract methods for this entity
+      
     }
 }
