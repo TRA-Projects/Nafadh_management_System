@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +18,85 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public async Task<IEnumerable<EvaluationDTO>> GetEvaluationsByEnrollmentIdAsync(int enrollmentId)
+        {
+            var evaluations = await _repository.GetEvaluationsByEnrollmentIdAsync(enrollmentId);
+
+            return evaluations.Select(e => new EvaluationDTO
+            {
+                EvaluationId = e.EvaluationId,
+                EnrollmentId = e.EnrollmentId ?? 0,
+                TrainerId = e.TrainerId,
+                Score = e.Score,
+                Notes = e.Notes
+            });
+        }
+
+        public async Task<IEnumerable<EvaluationDTO>> GetEvaluationsByTrainerIdAsync(int trainerId)
+        {
+            var evaluations = await _repository.GetEvaluationsByTrainerIdAsync(trainerId);
+
+            return evaluations.Select(e => new EvaluationDTO
+            {
+                EvaluationId = e.EvaluationId,
+                EnrollmentId = e.EnrollmentId ?? 0,
+                TrainerId = e.TrainerId,
+                Score = e.Score,
+                Notes = e.Notes
+            });
+        }
+        public async Task<EvaluationDTO?> GetEvaluationByIdAsync(int evaluationId)
+        {
+            var e = await _repository.GetEvaluationByIdAsync(evaluationId);
+            if (e == null) return null;
+
+            return new EvaluationDTO
+            {
+                EvaluationId = e.EvaluationId,
+                EnrollmentId = e.EnrollmentId ?? 0,
+                TrainerId = e.TrainerId,
+                Score = e.Score,
+                Notes = e.Notes
+            };
+        }
+        public async Task<EvaluationDTO> CreateEvaluationAsync(CreateEvaluationDTO createDto)
+        {
+            var evaluation = new NFD_Evaluation
+            {
+                EnrollmentId = createDto.EnrollmentId,
+                TrainerId = createDto.TrainerId,
+                Score = createDto.Score,
+                Notes = createDto.Notes,
+                EvaluationDate = DateTime.UtcNow
+            };
+
+            var created = await _repository.CreateEvaluationAsync(evaluation);
+
+            return new EvaluationDTO
+            {
+                EvaluationId = created.EvaluationId,
+                EnrollmentId = created.EnrollmentId ?? 0,
+                TrainerId = created.TrainerId,
+                Score = created.Score,
+                Notes = created.Notes
+            };
+        }
+
+        public async Task UpdateEvaluationAsync(int id, UpdateEvaluationDTO updateDto)
+        {
+            var evaluation = new NFD_Evaluation
+            {
+                EvaluationId = id,
+                Score = updateDto.Score,
+                Notes = updateDto.Notes
+            };
+
+            await _repository.UpdateEvaluationAsync(evaluation);
+        }
+
+        public async Task<double> GetAverageScoreByEnrollmentIdAsync(int enrollmentId)
+        {
+            return await _repository.GetAverageScoreByEnrollmentIdAsync(enrollmentId);
+        }
     }
 }
