@@ -25,11 +25,11 @@ namespace Nafadh_Backend.Repositories
             int? scopeId)
         {
             return await _context.NFD_Announcements
-                .Where(a =>
-                    a.ScopeType == scopeType &&
-                    a.ScopeId == scopeId)
-                .OrderByDescending(a => a.Date)
-                .ToListAsync();
+    .Where(a =>
+        a.ScopeType == scopeType &&
+        (scopeId == null || a.ScopeId == scopeId))
+    .OrderByDescending(a => a.Date)
+    .ToListAsync();
         }
 
 

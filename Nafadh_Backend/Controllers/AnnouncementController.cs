@@ -24,7 +24,7 @@ namespace Nafadh_Backend.Controllers
         // TODO: implement endpoints for this entity
 
         // Get announcements by scope
-        [HttpGet("scope/{scopeType}/{scopeId}")]
+        [HttpGet("scope/{scopeType}/{scopeId?}")]
         public async Task<IActionResult> GetByScope(
             NFD_AnnouncementScopeType scopeType,
             int? scopeId)
