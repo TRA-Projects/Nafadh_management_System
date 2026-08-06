@@ -17,7 +17,14 @@ namespace Nafadh_Backend
 
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+             .AddJsonOptions(options =>
+             {
+                 // تحويل الـ Enums إلى النصوص الخاصة بها تلقائياً في الـ JSON
+                 options.JsonSerializerOptions.Converters.Add(
+                        new System.Text.Json.Serialization.JsonStringEnumConverter()
+                    );
+             });
 
             // EF Core - SQL Server
             builder.Services.AddDbContext<Nafadhcontext>(options =>

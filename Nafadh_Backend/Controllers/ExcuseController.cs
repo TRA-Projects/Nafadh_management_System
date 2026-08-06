@@ -22,20 +22,12 @@ namespace Nafadh_Backend.Controllers
 
         // GET /api/Excuse/attendance/{dailyAttendanceId}
         [HttpGet("attendance/{dailyAttendanceId}")]
-        public async Task<IActionResult> GetByDailyAttendanceId(int dailyAttendanceId)
+        public async Task<IActionResult> GetByAttendanceId(int dailyAttendanceId)
         {
             ExcuseReadDto? result = await _service.GetByDailyAttendanceIdAsync(dailyAttendanceId);
             if (result == null)
                 return NotFound();
 
-            return Ok(result);
-        }
-
-        // GET /api/Excuse/pending
-        [HttpGet("pending")]
-        public async Task<IActionResult> GetPending()
-        {
-            List<ExcuseReadDto> result = await _service.GetPendingAsync();
             return Ok(result);
         }
 
@@ -46,7 +38,7 @@ namespace Nafadh_Backend.Controllers
             try
             {
                 ExcuseReadDto created = await _service.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetByDailyAttendanceId), new { dailyAttendanceId = created.DailyAttendanceId }, created);
+                return CreatedAtAction(nameof(GetByAttendanceId), new { dailyAttendanceId = created.DailyAttendanceId }, created);
             }
             catch (InvalidOperationException ex)
             {
@@ -70,6 +62,14 @@ namespace Nafadh_Backend.Controllers
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        // GET /api/Excuse/pending
+        [HttpGet("pending")]
+        public async Task<IActionResult> GetPending()
+        {
+            List<ExcuseReadDto> result = await _service.GetPendingAsync();
+            return Ok(result);
         }
     }
 }
