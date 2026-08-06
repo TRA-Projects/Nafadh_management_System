@@ -6,10 +6,12 @@ namespace Nafadh_Backend.Services
     public class TaskService : ITaskService
     {
         private readonly ITaskRepository _repository;
+        private readonly IBatchRepository _batchRepository;
 
         public TaskService(ITaskRepository repository)
         {
             _repository = repository;
+            IBatchRepository batchRepository;
         }
 
         // Get all tasks
@@ -27,21 +29,38 @@ namespace Nafadh_Backend.Services
         // Add task
         public async Task AddTaskAsync(NFD_Task task)
         {
-            // Business logic can be added here before adding the task
-            await _repository.AddTaskAsync(task);
+            // Check if Batch exists
+            var batch = await _batchRepository.GetByIdAsync(task.BatchId);
+
+            if (batch == null)
+            {
+                throw new Exception("Batch not found.");
+            }
+                await _repository.AddTaskAsync(task);
         }
 
         // Update task
         public async Task UpdateTaskAsync(NFD_Task task)
         {
-            // Business logic can be added here before updating the task
+            var batch = await _batchRepository.GetByIdAsync(task.BatchId);
+
+            if (batch == null)
+            {
+                throw new Exception("Batch not found.");
+            }
             await _repository.UpdateTaskAsync(task);
         }
 
         // Delete task
         public async Task DeleteTaskAsync(NFD_Task task)
         {
-            // Business logic can be added here before deleting the task
+            // Do not allow deleting a task that already has submissions.
+            var submissions = await _repository.GetSubmissionsByTaskIdAsync(task.TaskId);
+
+            if (submissions.Any())
+            {
+                throw new Exception("Cannot delete task because it has submissions.");
+            }
             await _repository.DeleteTaskAsync(task);
         }
 
