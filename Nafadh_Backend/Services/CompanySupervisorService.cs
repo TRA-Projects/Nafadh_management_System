@@ -67,6 +67,6 @@ namespace Nafadh_Backend.Services
             return await _repository.GetAssignedTraineesAsync(supervisorId);
         }
 
-
+        //
     }
 }
