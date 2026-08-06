@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -10,5 +11,24 @@ namespace Nafadh_Backend.Repositories
     public interface ITrainerRepository
     {
         // TODO: define data-access contract methods for this entity
+        Task<(List<NFD_Trainer> Items, int TotalCount)> GetAllAsync(
+                string? specialty, 
+                NFD_TrainerStatus? status, 
+                string? searchTerm,
+                int pageNumber, int pageSize);
+
+        Task<NFD_Trainer?> GetByIdAsync(int id);
+
+        Task<NFD_Trainer?> GetByIdWithBatchesAsync(int id);
+
+        Task<NFD_Trainer?> GetByIdWithEvaluationsAsync(int id);
+
+        Task<bool> UserHasTrainerProfileAsync(int userId);
+
+        Task AddAsync(NFD_Trainer trainer);
+
+        void Update(NFD_Trainer trainer);
+
+        Task<bool> SaveChangesAsync();
     }
 }
