@@ -5,6 +5,7 @@
 
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
+using static Nafadh_Backend.DTOs.ProgramDTO;
 
 namespace Nafadh_Backend.Services
 {

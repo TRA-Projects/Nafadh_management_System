@@ -4,15 +4,24 @@ using System.ComponentModel.DataAnnotations;
 namespace Nafadh_Backend.DTOs
 {
     public class ProgramDTO
-    {
+    {// Returned to the client
+        public class ProgramDto
+        {
+            public int ProgramId { get; set; }
+            public string Title { get; set; } = string.Empty;
+            public string? Description { get; set; }
+            public string? Category { get; set; }
+            public decimal DurationHours { get; set; }
+            public decimal Price { get; set; }
+            public string Status { get; set; } = string.Empty;
+            public int TrackId { get; set; }
+        }
+
         // POST /api/Program
         public class CreateProgramDto
         {
-            [Required]
-            [MaxLength(150)]
             public string Title { get; set; } = string.Empty;
             public string? Description { get; set; }
-            [MaxLength(100)]
             public string? Category { get; set; }
             public decimal DurationHours { get; set; }
             public decimal Price { get; set; }
