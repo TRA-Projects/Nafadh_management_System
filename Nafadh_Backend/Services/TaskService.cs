@@ -7,11 +7,16 @@ namespace Nafadh_Backend.Services
     {
         private readonly ITaskRepository _repository;
         private readonly IBatchRepository _batchRepository;
+        private readonly IUserRepository _userRepository;
 
-        public TaskService(ITaskRepository repository)
+        public TaskService(
+                 ITaskRepository repository,
+                 IBatchRepository batchRepository,
+                 IUserRepository userRepository)
         {
             _repository = repository;
-            IBatchRepository batchRepository;
+            _batchRepository = batchRepository;
+            _userRepository = userRepository;
         }
 
         // Get all tasks
@@ -36,7 +41,14 @@ namespace Nafadh_Backend.Services
             {
                 throw new Exception("Batch not found.");
             }
-                await _repository.AddTaskAsync(task);
+            // Check if User exists
+            var user = await _userRepository.GetByIdAsync(task.CreatedByUserId);
+
+            if (user == null)
+            {
+                throw new Exception("User not found.");
+            }
+            await _repository.AddTaskAsync(task);
         }
 
         // Update task
@@ -47,6 +59,13 @@ namespace Nafadh_Backend.Services
             if (batch == null)
             {
                 throw new Exception("Batch not found.");
+            }
+            // Check if User exists
+            var user = await _userRepository.GetByIdAsync(task.CreatedByUserId);
+
+            if (user == null)
+            {
+                throw new Exception("User not found.");
             }
             await _repository.UpdateTaskAsync(task);
         }
