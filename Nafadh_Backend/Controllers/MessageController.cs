@@ -4,6 +4,8 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.Enums;
+using Nafadh_Backend.Models;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +21,54 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // 1. GET: /api/Message/conversation/{userId1}/{userId2}:
+        [HttpGet("conversation/{userId1}/{userId2}")]
+        public async Task<ActionResult<List<NFD_Message>>> GetConversation([FromRoute] int userId1, [FromRoute] int userId2)
+        {
+            var conversation = await _service.GetConversationAsync(userId1, userId2);
+            return Ok(conversation);
+        }
+
+
+        // 2. GET: /api/Message/inbox/{userId}:
+        [HttpGet("inbox/{userId}")]
+        public async Task<ActionResult<List<NFD_Message>>> GetUserInbox([FromRoute] int userId)
+        {
+            var inbox = await _service.GetUserInboxAsync(userId);
+            return Ok(inbox);
+        }
+
+
+        // 3. POST: /api/Message:
+        [HttpPost]
+        public async Task<IActionResult> AddMessage([FromBody] NFD_Message message)
+        {
+            if (message == null)
+            {
+                return BadRequest("Invalid message data.");
+            }
+
+            await _service.AddMessageAsync(message);
+            return Ok(new { message = "Message sent successfully." });
+        }
+
+
+        // 4. PUT: /api/Message/{id}/status:
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateStatus([FromRoute] int id, [FromBody] NFD_MessageStatus status)
+        {
+            await _service.UpdateStatusAsync(id, status);
+            return Ok(new { message = "Status updated successfully." });
+        }
+
+
+        // 5. GET: /api/Message/user/{userId}/unread-count
+        [HttpGet("user/{userId}/unread-count")]
+        public async Task<ActionResult<int>> GetUnreadCount([FromRoute] int userId)
+        {
+            var count = await _service.GetUnreadCountAsync(userId);
+            return Ok(count);
+        }
+   
     }
 }
