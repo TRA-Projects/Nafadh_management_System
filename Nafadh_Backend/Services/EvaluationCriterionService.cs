@@ -22,15 +22,15 @@ namespace Nafadh_Backend.Services
 
         // ==========================================
         // Get Criteria By Template Id
-        public async Task<List<EvaluationCriterionDTO.Output>> GetCriteriaByTemplateIdAsync(int templateId)
+        public async Task<List<EvaluationCriterionOutputDTO>> GetCriteriaByTemplateIdAsync(int templateId)
         {
             var criteria = await _repository.GetCriteriaByTemplateIdAsync(templateId);
 
-            var result = new List<EvaluationCriterionDTO.Output>();
+            var result = new List<EvaluationCriterionOutputDTO>();
 
             foreach (var item in criteria)
             {
-                result.Add(new EvaluationCriterionDTO.Output
+                result.Add(new EvaluationCriterionOutputDTO
                 {
                     CriteriaId = item.CriteriaId,
                     TemplateId = item.TemplateId,
@@ -44,36 +44,25 @@ namespace Nafadh_Backend.Services
 
         // ==========================================
         // Get Criterion Details
-        public async Task<EvaluationCriterionDTO.Details?> GetCriterionByIdAsync(int criteriaId)
+        public async Task<EvaluationCriterionDetailsDTO?> GetCriterionByIdAsync(int criteriaId)
         {
             var criterion = await _repository.GetCriterionByIdAsync(criteriaId);
 
             if (criterion == null)
                 return null;
 
-            var template = await _templateRepository.GetTemplateByIdAsync(criterion.TemplateId);
-
-            if (template == null)
-                return null;
-
-            return new EvaluationCriterionDTO.Details
+            return new EvaluationCriterionDetailsDTO
             {
                 CriteriaId = criterion.CriteriaId,
+                TemplateId = criterion.TemplateId,
                 Name = criterion.Name,
-                Weight = criterion.Weight,
-
-                Template = new EvaluationTemplateDTO.Output
-                {
-                    TemplateId = template.TemplateId,
-                    Type = template.Type,
-                    CreatedByUserId = template.CreatedByUserId
-                }
+                Weight = criterion.Weight
             };
         }
 
         // ==========================================
         // Create Criterion
-        public async Task CreateCriterionAsync(EvaluationCriterionDTO.Input input)
+        public async Task CreateCriterionAsync(EvaluationCriterionInputDTO input)
         {
             // Check if the template exists
             var template = await _templateRepository.GetTemplateByIdAsync(input.TemplateId);
@@ -93,7 +82,7 @@ namespace Nafadh_Backend.Services
 
         // ==========================================
         // Update Criterion
-        public async Task<bool> UpdateCriterionAsync(int criteriaId, EvaluationCriterionDTO.Input input)
+        public async Task<bool> UpdateCriterionAsync(int criteriaId, EvaluationCriterionInputDTO input)
         {
             var criterion = await _repository.GetCriterionByIdAsync(criteriaId);
 

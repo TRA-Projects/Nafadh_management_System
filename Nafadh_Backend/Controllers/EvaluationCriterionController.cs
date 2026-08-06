@@ -9,8 +9,8 @@ using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
 {
-    //[ApiController]
-   // [Route("api/[controller]")]
+   [ApiController]
+   [Route("api/[controller]")]
     public class EvaluationCriterionController : ControllerBase
     {
         private readonly IEvaluationCriterionService _service;
@@ -68,7 +68,7 @@ namespace Nafadh_Backend.Controllers
         // Add criterion
 
         [HttpPost("CreateCriterion")]
-        public async Task<IActionResult> CreateCriterion(EvaluationCriterionDTO.Input input)
+        public async Task<IActionResult> CreateCriterion(EvaluationCriterionInputDTO input)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -83,7 +83,7 @@ namespace Nafadh_Backend.Controllers
         // Update criterion
 
         [HttpPut("UpdateCriterion/{criteriaId}")]
-        public async Task<IActionResult> UpdateCriterion(int criteriaId, EvaluationCriterionDTO.Input input)
+        public async Task<IActionResult> UpdateCriterion(int criteriaId, EvaluationCriterionInputDTO input)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

@@ -21,15 +21,15 @@ namespace Nafadh_Backend.Services
 
         // ==========================================
         // Get All Templates
-        public async Task<List<EvaluationTemplateDTO.Output>> GetTemplatesAsync(NFD_EvaluationType? type)
+        public async Task<List<EvaluationTemplateOutputDTO>> GetTemplatesAsync(NFD_EvaluationType? type)
         {
             var templates = await _repository.GetTemplatesAsync(type);
 
-            var result = new List<EvaluationTemplateDTO.Output>();
+            var result = new List<EvaluationTemplateOutputDTO>();
 
             foreach (var template in templates)
             {
-                result.Add(new EvaluationTemplateDTO.Output
+                result.Add(new EvaluationTemplateOutputDTO
                 {
                     TemplateId = template.TemplateId,
                     Type = template.Type,
@@ -42,14 +42,14 @@ namespace Nafadh_Backend.Services
 
         // ==========================================
         // Get Template Details
-        public async Task<EvaluationTemplateDTO.Details?> GetTemplateByIdAsync(int templateId)
+        public async Task<EvaluationTemplateDetailsDTO?> GetTemplateByIdAsync(int templateId)
         {
             var template = await _repository.GetTemplateByIdAsync(templateId);
 
             if (template == null)
                 return null;
 
-            var details = new EvaluationTemplateDTO.Details
+            var details = new EvaluationTemplateDetailsDTO
             {
                 TemplateId = template.TemplateId,
                 Type = template.Type,
@@ -58,7 +58,7 @@ namespace Nafadh_Backend.Services
 
             foreach (var criterion in template.EvaluationCriteria)
             {
-                details.Criteria.Add(new EvaluationCriterionDTO.Output
+                details.Criteria.Add(new EvaluationCriterionOutputDTO
                 {
                     CriteriaId = criterion.CriteriaId,
                     TemplateId = criterion.TemplateId,
@@ -72,7 +72,7 @@ namespace Nafadh_Backend.Services
 
         // ==========================================
         // Create Template
-        public async Task CreateTemplateAsync(EvaluationTemplateDTO.Input input)
+        public async Task CreateTemplateAsync(EvaluationTemplateInputDTO input)
         {
             var template = new NFD_EvaluationTemplate
             {
@@ -85,7 +85,7 @@ namespace Nafadh_Backend.Services
 
         // ==========================================
         // Update Template
-        public async Task<bool> UpdateTemplateAsync(int templateId, EvaluationTemplateDTO.Input input)
+        public async Task<bool> UpdateTemplateAsync(int templateId, EvaluationTemplateInputDTO input)
         {
             var template = await _repository.GetTemplateByIdAsync(templateId);
 

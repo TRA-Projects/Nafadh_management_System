@@ -18,8 +18,6 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
-
         //List templates (filter by type) 
         public async Task<List<NFD_EvaluationTemplate>> GetTemplatesAsync(NFD_EvaluationType? type)
         {

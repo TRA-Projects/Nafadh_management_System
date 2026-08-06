@@ -12,16 +12,16 @@ namespace Nafadh_Backend.Services
     public interface IEvaluationTemplateService
     {
         // List templates (optionally filter by type)
-        Task<List<EvaluationTemplateDTO.Output>> GetTemplatesAsync(NFD_EvaluationType? type);
+        Task<List<EvaluationTemplateOutputDTO>> GetTemplatesAsync(NFD_EvaluationType? type);
 
         // Get template details with criteria
-        Task<EvaluationTemplateDTO.Details?> GetTemplateByIdAsync(int templateId);
+        Task<EvaluationTemplateDetailsDTO?> GetTemplateByIdAsync(int templateId);
 
         // Create template
-        Task CreateTemplateAsync(EvaluationTemplateDTO.Input input);
+        Task CreateTemplateAsync(EvaluationTemplateInputDTO input);
 
         // Update template
-        Task<bool> UpdateTemplateAsync(int templateId, EvaluationTemplateDTO.Input input);
+        Task<bool> UpdateTemplateAsync(int templateId, EvaluationTemplateInputDTO input);
 
         // Delete template
         Task<bool> DeleteTemplateAsync(int templateId);

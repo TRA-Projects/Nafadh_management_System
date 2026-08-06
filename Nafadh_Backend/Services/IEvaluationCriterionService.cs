@@ -11,16 +11,16 @@ namespace Nafadh_Backend.Services
     public interface IEvaluationCriterionService
     {
         // Get all criteria for a template
-        Task<List<EvaluationCriterionDTO.Output>> GetCriteriaByTemplateIdAsync(int templateId);
+        Task<List<EvaluationCriterionOutputDTO>> GetCriteriaByTemplateIdAsync(int templateId);
 
         // Get criterion details
-        Task<EvaluationCriterionDTO.Details?> GetCriterionByIdAsync(int criteriaId);
+        Task<EvaluationCriterionDetailsDTO?> GetCriterionByIdAsync(int criteriaId);
 
         // Create criterion
-        Task CreateCriterionAsync(EvaluationCriterionDTO.Input input);
+        Task CreateCriterionAsync(EvaluationCriterionInputDTO input);
 
         // Update criterion
-        Task<bool> UpdateCriterionAsync(int criteriaId, EvaluationCriterionDTO.Input input);
+        Task<bool> UpdateCriterionAsync(int criteriaId, EvaluationCriterionInputDTO input);
 
         // Delete criterion
         Task<bool> DeleteCriterionAsync(int criteriaId);
