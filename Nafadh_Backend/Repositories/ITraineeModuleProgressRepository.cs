@@ -9,6 +9,27 @@ namespace Nafadh_Backend.Repositories
 {
     public interface ITraineeModuleProgressRepository
     {
-        // TODO: define data-access contract methods for this entity
+        // Returns all progress records for a specific trainee.
+        Task<IEnumerable<NFD_TraineeModuleProgress>> GetByTraineeIdAsync(int traineeId);
+
+        // Returns all trainee progress records for a specific module.
+        Task<IEnumerable<NFD_TraineeModuleProgress>> GetByModuleIdAsync(int moduleId);
+
+        // Returns a single progress record by its ID.
+        Task<NFD_TraineeModuleProgress?> GetByIdAsync(int id);
+
+        // Returns a progress record for a trainee in a specific module.
+        Task<NFD_TraineeModuleProgress?> GetByTraineeAndModuleAsync(int traineeId, int moduleId);
+
+        // Adds a new trainee progress record.
+        Task<NFD_TraineeModuleProgress> CreateAsync(NFD_TraineeModuleProgress progress);
+
+        // Updates an existing progress record.
+        Task UpdateAsync(NFD_TraineeModuleProgress progress);
+
+        // Checks whether a progress record exists.
+        Task<bool> ExistsAsync(int id);
+        // Calculates trainee completion percentage.
+        Task<double> GetCompletionPercentageAsync(int traineeId);
     }
 }

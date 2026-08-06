@@ -4,6 +4,8 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -20,5 +22,91 @@ namespace Nafadh_Backend.Controllers
         }
 
         // TODO: implement endpoints for this entity
+
+        // Get announcements by scope
+        [HttpGet("scope/{scopeType}/{scopeId?}")]
+        public async Task<IActionResult> GetByScope(
+            NFD_AnnouncementScopeType scopeType,
+            int? scopeId)
+        {
+
+            var result =
+                await _service.GetByScopeAsync(
+                    scopeType,
+                    scopeId);
+
+
+
+            return Ok(result);
+
+        }
+        // =====================================================
+        // Get announcement details
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+
+            var result =
+                await _service.GetByIdAsync(id);
+
+
+
+            return Ok(result);
+
+        }
+
+        // =====================================================
+        // Create announcement
+       
+        [HttpPost]
+        public async Task<IActionResult> Create(
+            CreateAnnouncementDTO dto)
+        {
+
+            await _service.CreateAsync(dto);
+
+
+
+            return Ok(
+                "Announcement created successfully.");
+
+        }
+
+        // =====================================================
+        // Update announcement
+       
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(
+            int id,
+            UpdateAnnouncementDTO dto)
+        {
+
+            await _service.UpdateAsync(
+                id,
+                dto);
+
+
+
+            return Ok(
+                "Announcement updated successfully.");
+
+        }
+
+        // =====================================================
+        // Delete announcement
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+
+            await _service.DeleteAsync(id);
+
+
+
+            return Ok(
+                "Announcement deleted successfully.");
+
+        }
+
     }
 }

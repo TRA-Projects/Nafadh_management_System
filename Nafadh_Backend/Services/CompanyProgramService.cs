@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -12,11 +13,76 @@ namespace Nafadh_Backend.Services
     {
         private readonly ICompanyProgramRepository _repository;
 
-        public CompanyProgramService(ICompanyProgramRepository repository)
+        public CompanyProgramService(
+            ICompanyProgramRepository repository)
         {
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        // Get programs a company is eligible to host
+        public async Task<IEnumerable<NFD_CompanyProgramOutputDTO>>
+            GetByCompanyIdAsync(int companyId)
+        {
+            var companyPrograms =
+                await _repository.GetByCompanyIdAsync(companyId);
+
+            return companyPrograms.Select(MapToOutputDTO);
+        }
+
+        // Get companies eligible to host a program
+        public async Task<IEnumerable<NFD_CompanyProgramOutputDTO>>
+            GetByProgramIdAsync(int programId)
+        {
+            var companyPrograms =
+                await _repository.GetByProgramIdAsync(programId);
+
+            return companyPrograms.Select(MapToOutputDTO);
+        }
+
+        // Qualify a company for a program
+        public async Task<NFD_CompanyProgramOutputDTO>
+            AddAsync(NFD_CompanyProgramInputDTO dto)
+        {
+            var companyProgram = new NFD_CompanyProgram
+            {
+                CompanyId = dto.CompanyId,
+                ProgramId = dto.ProgramId
+            };
+
+            await _repository.AddAsync(companyProgram);
+
+            return MapToOutputDTO(companyProgram);
+        }
+
+        // Remove company's eligibility for a program
+        public async Task<bool>
+            DeleteAsync(int companyId, int programId)
+        {
+            var existing =
+                await _repository.GetByCompanyIdAsync(companyId);
+
+            var companyProgram = existing.FirstOrDefault(
+                cp => cp.ProgramId == programId);
+
+            if (companyProgram == null)
+                return false;
+
+            await _repository.DeleteAsync(
+                companyId,
+                programId);
+
+            return true;
+        }
+
+        // Mapping Model → Output DTO
+        private static NFD_CompanyProgramOutputDTO
+            MapToOutputDTO(NFD_CompanyProgram companyProgram)
+        {
+            return new NFD_CompanyProgramOutputDTO
+            {
+                CompanyId = companyProgram.CompanyId,
+                ProgramId = companyProgram.ProgramId
+            };
+        }
     }
 }

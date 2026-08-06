@@ -3,8 +3,10 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using Nafadh_Backend.Enums;
 
 namespace Nafadh_Backend.Services
 {
@@ -17,6 +19,121 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public async Task<(List<TrainerListItemDto> Items, int TotalCount)> GetAllAsync(TrainerFilterDto filter)
+        {
+            var (items, total) = await _repository.GetAllAsync(filter.Specialty, filter.Status, filter.SearchTerm, filter.PageNumber, filter.PageSize);
+
+            var dtoItems = items.Select(t => new TrainerListItemDto
+            {
+                TrainerId = t.TrainerId,
+                FullName = t.User?.FullName,
+                Specialty = t.Specialty,
+                ExperienceYears = t.ExperienceYears,
+                Status = t.Status
+            }).ToList();
+
+            return (dtoItems, total);
+        }
+
+        public async Task<TrainerProfileDto?> GetByIdAsync(int id)
+        {
+            var t = await _repository.GetByIdAsync(id);
+            if (t == null) return null;
+
+            return new TrainerProfileDto
+            {
+                TrainerId = t.TrainerId,
+                FullName = t.User?.FullName,
+                Email = t.User?.Email,
+                Specialty = t.Specialty,
+                ExperienceYears = t.ExperienceYears,
+                Biography = t.Biography,
+                CVUrl = t.CVUrl,
+                Status = t.Status
+            };
+        }
+
+        public async Task<TrainerProfileDto?> CreateAsync(TrainerCreateDto dto)
+        {
+            // prevent duplicate trainer for same user
+            var exists = await _repository.UserHasTrainerProfileAsync(dto.UserId);
+            if (exists) return null;
+
+            var model = new NFD_Trainer
+            {
+                UserId = dto.UserId,
+                Specialty = dto.Specialty,
+                ExperienceYears = dto.ExperienceYears,
+                Biography = dto.Biography,
+                CVUrl = dto.CVUrl,
+                Status = NFD_TrainerStatus.Active
+            };
+
+            await _repository.AddAsync(model);
+            var saved = await _repository.SaveChangesAsync();
+            if (!saved) return null;
+
+            // reload with user
+            var created = await _repository.GetByIdAsync(model.TrainerId);
+            if (created == null) return null;
+
+            return await GetByIdAsync(created.TrainerId);
+        }
+
+        public async Task<bool> UpdateAsync(int id, TrainerUpdateDto dto)
+        {
+            var existing = await _repository.GetByIdAsync(id);
+            if (existing == null) return false;
+
+            existing.Specialty = dto.Specialty;
+            existing.ExperienceYears = dto.ExperienceYears;
+            existing.Biography = dto.Biography;
+            existing.CVUrl = dto.CVUrl;
+
+            _repository.Update(existing);
+            return await _repository.SaveChangesAsync();
+        }
+
+        public async Task<bool> UpdateStatusAsync(int id, TrainerStatusUpdateDto dto)
+        {
+            var existing = await _repository.GetByIdAsync(id);
+            if (existing == null) return false;
+
+            existing.Status = dto.Status;
+
+            _repository.Update(existing);
+            return await _repository.SaveChangesAsync();
+        }
+
+        public async Task<List<TrainerBatchDto>> GetBatchesAsync(int id)
+        {
+            var t = await _repository.GetByIdWithBatchesAsync(id);
+            if (t == null) return new List<TrainerBatchDto>();
+
+            return t.BatchTrainers.Select(bt => new TrainerBatchDto
+            {
+                BatchId = bt.Batch.BatchId,
+                BatchName = bt.Batch.BatchName,
+                StartDate = bt.Batch.StartDate,
+                EndDate = bt.Batch.EndDate,
+                Status = bt.Batch.Status
+            }).ToList();
+        }
+
+        public async Task<List<TrainerEvaluationDto>> GetEvaluationsAsync(int id)
+        {
+            var t = await _repository.GetByIdWithEvaluationsAsync(id);
+            if (t == null) return new List<TrainerEvaluationDto>();
+
+            return t.Evaluations.Select(e => new TrainerEvaluationDto
+            {
+                EvaluationId = e.EvaluationId,
+                EvaluatedByAdminName = e.User?.FullName,
+                Score = e.Score,
+                Comments = e.Notes,
+                EvaluationDate = e.EvaluationDate
+            }).ToList();
+        }
     }
+
 }

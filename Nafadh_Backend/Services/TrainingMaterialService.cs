@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -11,12 +12,140 @@ namespace Nafadh_Backend.Services
     public class TrainingMaterialService : ITrainingMaterialService
     {
         private readonly ITrainingMaterialRepository _repository;
+        private readonly ILessonRepository _lessonRepository;
 
-        public TrainingMaterialService(ITrainingMaterialRepository repository)
+        public TrainingMaterialService(
+            ITrainingMaterialRepository repository, ILessonRepository lessonRepository)
         {
             _repository = repository;
+            _lessonRepository = lessonRepository;
+        }
+        // Get all materials attached to a specific lesson.
+        // Endpoint: GET /api/TrainingMaterial/lesson/{lessonId}
+        public async Task<IEnumerable<TrainingMaterialDto>> GetByLessonIdAsync(int lessonId)
+        {
+
+            // Validate that Lesson exists.
+            var lesson = await _lessonRepository.GetLessonByIdAsync(lessonId);
+            if (lesson == null)
+            {
+                throw new KeyNotFoundException($"Lesson with ID {lessonId} was not found.");
+            }
+            var materials = await _repository.GetByLessonIdAsync(lessonId);
+
+            // Convert Model objects into DTO objects before returning.
+            return materials.Select(m => new TrainingMaterialDto
+            {
+                MaterialId = m.MaterialId,
+                FileUrl = m.FileUrl,
+                FileType = m.FileType,
+                UploadDate = m.UploadDate,
+                LessonId = m.LessonId,
+                UploadedByUserId = m.UploadedByUserId
+            });
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        // Create new training material.
+        // Endpoint: POST /api/TrainingMaterial
+        public async Task<TrainingMaterialDto> CreateAsync( CreateTrainingMaterialDto dto,int userId)
+        {
+
+            // Validate FileType before saving.
+            if (dto.FileType == null)
+            {
+                throw new ArgumentException("File type is required.");
+            }
+
+
+            // Validate that LessonId exists.
+            var lesson = await _lessonRepository.GetLessonByIdAsync(dto.LessonId);
+            if (lesson == null)
+            {
+                throw new KeyNotFoundException($"Cannot attach material. Lesson with ID {dto.LessonId} does not exist.");
+            }
+
+            // Create database model.
+            var material = new NFD_TrainingMaterial
+            {
+                FileUrl = dto.FileUrl,
+                FileType = dto.FileType.Value,// Convert nullable enum value to normal enum.
+                LessonId = dto.LessonId,
+                UploadedByUserId = userId,// UserId comes from JWT Token.
+                UploadDate = DateTime.UtcNow// Set upload date automatically.
+            };
+
+            // Save data through repository.
+            var createdMaterial = await _repository.CreateAsync(material);
+
+            // Return DTO response.
+            return new TrainingMaterialDto
+            {
+                MaterialId = createdMaterial.MaterialId,
+                FileUrl = createdMaterial.FileUrl,
+                FileType = createdMaterial.FileType,
+                UploadDate = createdMaterial.UploadDate,
+                LessonId = createdMaterial.LessonId,
+                UploadedByUserId = createdMaterial.UploadedByUserId
+            };
+        }
+
+
+        // Update existing training material.
+        // Endpoint: PUT /api/TrainingMaterial/{id}
+        public async Task<bool> UpdateAsync( int id, UpdateTrainingMaterialDto dto)
+        {
+            // Find material by ID.
+            var material = await _repository.GetByIdAsync(id);
+
+            if (material == null || dto.FileType == null)
+            {
+                return false;
+            }
+
+            // Update allowed fields only.
+            material.FileUrl = dto.FileUrl;
+            material.FileType = dto.FileType.Value;
+
+            // Save changes.
+            await _repository.UpdateAsync(material);
+              return true;
+        }
+
+        // Delete training material.
+        // Endpoint: DELETE /api/TrainingMaterial/{id}
+        public async Task<bool> DeleteAsync(int id)
+        {
+
+            // Get material from database.
+            var material = await _repository.GetByIdAsync(id);
+
+            // Material not found.
+            if (material == null)
+            {
+                return false;
+            }
+
+            // Delete record.
+            await _repository.DeleteAsync(material);
+
+            return true;
+        }
+
+        // Get file URL for download or streaming.
+        // Endpoint: GET /api/TrainingMaterial/{id}/download
+        public async Task<string?> GetDownloadUrlAsync(int id)
+        {
+            // Find material.
+            var material = await _repository.GetByIdAsync(id);
+
+            // Return null if not found.
+            if (material == null)
+            {
+                return null;
+            }
+
+            // Return file location.
+            return material.FileUrl;
+        }
     }
 }

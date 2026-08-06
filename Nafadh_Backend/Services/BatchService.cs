@@ -3,6 +3,10 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
@@ -13,10 +17,12 @@ namespace Nafadh_Backend.Services
     public class BatchService : IBatchService
     {
         private readonly IBatchRepository _repository;
+        private readonly IEnrollmentRepository _enrollmentRepository;
 
-        public BatchService(IBatchRepository repository)
+        public BatchService(IBatchRepository repository, IEnrollmentRepository enrollmentRepository)
         {
             _repository = repository;
+            _enrollmentRepository = enrollmentRepository;
         }
 
         public async Task<List<BatchDto>> GetAllAsync(int? programId, string? status, DateTime? from, DateTime? to)
@@ -74,8 +80,14 @@ namespace Nafadh_Backend.Services
 
         public async Task<List<BatchTraineeDto>> GetTraineesAsync(int batchId)
         {
-            // Placeholder: Roster comes from NFD_Enrollments (Widdad's scope)
-            return await Task.FromResult(new List<BatchTraineeDto>());
+            var enrollments = await _enrollmentRepository.GetAllAsync(batchId, null, null, null);
+
+            return enrollments.Select(e => new BatchTraineeDto
+            {
+                TraineeId = e.TraineeId,
+                FullName = e.Trainee?.User?.FullName ?? string.Empty,
+                CompletionStatus = e.CompletionStatus
+            }).ToList();
         }
 
         public async Task<BatchCapacityDto?> GetCapacityAsync(int batchId)
@@ -83,7 +95,9 @@ namespace Nafadh_Backend.Services
             var batch = await _repository.GetByIdAsync(batchId);
             if (batch == null) return null;
 
-            int enrolledCount = 0; // Placeholder until Enrollment repo is connected
+            var activeEnrollments = await _enrollmentRepository.GetAllAsync(
+                batchId, null, null, NFD_EnrollmentCompletionStatus.InProgress);
+            int enrolledCount = activeEnrollments.Count();
 
             return new BatchCapacityDto
             {

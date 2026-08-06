@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +20,85 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET: api/module/program/5
+        [HttpGet("program/{programId}")]
+        public async Task<ActionResult<IEnumerable<ModuleDTO>>> GetModulesByProgramId(int programId)
+        {
+            var modules = await _service.GetModulesByProgramIdAsync(programId);
+            return Ok(modules);
+        }
+
+        // GET: api/module/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ModuleDTO>> GetModuleById(int id)
+        {
+            var module = await _service.GetModuleByIdAsync(id);
+            if (module == null)
+            {
+                return NotFound(new { message = $"Module with ID {id} was not found." });
+            }
+            return Ok(module);
+        }
+
+        // POST: api/module
+        [HttpPost]
+        public async Task<ActionResult<ModuleDTO>> CreateModule([FromBody] CreateModuleDTO createDto)
+        {
+            try
+            {
+                var createdModule = await _service.CreateModuleAsync(createDto);
+                return CreatedAtAction(nameof(GetModuleById), new { id = createdModule.ModuleId }, createdModule);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // PUT: api/module/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateModule(int id, [FromBody] UpdateModuleDTO updateDto)
+        {
+            try
+            {
+                await _service.UpdateModuleAsync(id, updateDto);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        // DELETE: api/module/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteModule(int id)
+        {
+            try
+            {
+                await _service.DeleteModuleAsync(id);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        // GET: api/module/5/lessons
+        [HttpGet("{id}/lessons")]
+        public async Task<ActionResult<IEnumerable<object>>> GetLessonsByModuleId(int id)
+        {
+            var lessons = await _service.GetLessonsByModuleIdAsync(id);
+            return Ok(lessons);
+        }
+
+        // GET: api/module/5/check-prerequisite/1
+        [HttpGet("{moduleId}/check-prerequisite/{traineeId}")]
+        public async Task<ActionResult<bool>> IsPrerequisiteCompleted(int traineeId, int moduleId)
+        {
+            var isCompleted = await _service.IsPrerequisiteCompletedAsync(traineeId, moduleId);
+            return Ok(new { traineeId, moduleId, isPrerequisiteCompleted = isCompleted });
+        }
     }
 }

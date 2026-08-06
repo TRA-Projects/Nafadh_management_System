@@ -4,21 +4,83 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.Models;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     public class TraineePaymentScheduleController : ControllerBase
     {
+
         private readonly ITraineePaymentScheduleService _service;
 
-        public TraineePaymentScheduleController(ITraineePaymentScheduleService service)
+
+        public TraineePaymentScheduleController(
+            ITraineePaymentScheduleService service)
         {
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+
+
+        [HttpGet("payment/{traineePaymentId}")]
+        public async Task<IActionResult> GetSchedule(
+            int traineePaymentId)
+        {
+            return Ok(
+                await _service
+                .GetPaymentScheduleAsync(traineePaymentId));
+        }
+
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> Generate(
+            int traineePaymentId,
+            decimal totalAmount,
+            int months)
+        {
+
+            return Ok(
+                await _service
+                .GenerateInstallmentsAsync(
+                    traineePaymentId,
+                    totalAmount,
+                    months));
+        }
+
+
+
+
+        [HttpPut("{id}/mark-paid")]
+        public async Task<IActionResult> MarkPaid(int id)
+        {
+
+            var result =
+                await _service.MarkAsPaidAsync(id);
+
+
+            if (!result)
+                return NotFound();
+
+
+            return Ok(
+                new { message = "Payment marked as paid" });
+        }
+
+
+
+
+        [HttpGet("overdue")]
+        public async Task<IActionResult> Overdue()
+        {
+            return Ok(
+                await _service.GetOverdueAsync());
+        }
+
+
     }
 }

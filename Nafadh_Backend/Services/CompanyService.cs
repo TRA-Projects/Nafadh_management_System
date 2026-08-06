@@ -3,20 +3,206 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
 namespace Nafadh_Backend.Services
 {
+    // Service responsible for handling company business logic
     public class CompanyService : ICompanyService
     {
         private readonly ICompanyRepository _repository;
 
+        // Constructor - inject Company Repository
         public CompanyService(ICompanyRepository repository)
         {
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        // Get Company by ID
+        public async Task<NFD_CompanyOutputDTO?> GetCompanyByIdAsync(int companyId)
+        {
+            var company = await _repository.GetCompanyByIdAsync(companyId);
+
+            if (company == null)
+                return null;
+
+            return MapToOutputDTO(company);
+        }
+
+        // Get all Companies
+        public async Task<IEnumerable<NFD_CompanyOutputDTO>> GetAllCompaniesAsync()
+        {
+            var companies = await _repository.GetAllCompaniesAsync();
+
+            return companies.Select(MapToOutputDTO);
+        }
+
+        // Get Companies filtered by Status and/or Work Field
+        public async Task<IEnumerable<NFD_CompanyOutputDTO>> GetCompaniesAsync(
+            NFD_CompanyStatus? status,
+            string? workField)
+        {
+            var companies = await _repository.GetCompaniesAsync(
+                status,
+                workField);
+
+            return companies.Select(MapToOutputDTO);
+        }
+
+        // Add a new Company
+        public async Task<NFD_CompanyOutputDTO> AddCompanyAsync(
+            NFD_CompanyInputDTO dto)
+        {
+            var company = new NFD_Company
+            {
+                CompanyName = dto.CompanyName,
+                CommercialRegister = dto.CommercialRegister,
+                WorkField = dto.WorkField,
+                Address = dto.Address,
+                Phone = dto.Phone,
+                Email = dto.Email,
+                Logo = dto.Logo,
+                Capacity = dto.Capacity,
+                Status = dto.Status,
+                ApprovalDate = dto.ApprovalDate,
+                UserId = dto.UserId
+            };
+
+            await _repository.AddCompanyAsync(company);
+
+            return MapToOutputDTO(company);
+        }
+
+        // Update an existing Company
+        public async Task<NFD_CompanyOutputDTO?> UpdateCompanyAsync(
+            int companyId,
+            NFD_CompanyInputDTO dto)
+        {
+            var company = await _repository.GetCompanyByIdAsync(companyId);
+
+            if (company == null)
+                return null;
+
+            company.CompanyName = dto.CompanyName;
+            company.CommercialRegister = dto.CommercialRegister;
+            company.WorkField = dto.WorkField;
+            company.Address = dto.Address;
+            company.Phone = dto.Phone;
+            company.Email = dto.Email;
+            company.Logo = dto.Logo;
+            company.Capacity = dto.Capacity;
+            company.Status = dto.Status;
+            company.ApprovalDate = dto.ApprovalDate;
+            company.UserId = dto.UserId;
+
+            await _repository.UpdateCompanyAsync(company);
+
+            return MapToOutputDTO(company);
+        }
+
+        // Approve a Company
+        public async Task<NFD_CompanyOutputDTO?> ApproveCompanyAsync(
+            int companyId)
+        {
+            var company = await _repository.GetCompanyByIdAsync(companyId);
+
+            if (company == null)
+                return null;
+
+            // Change company status to Approved
+            company.Status = NFD_CompanyStatus.Approved;
+
+            // Set approval date
+            company.ApprovalDate = DateTime.UtcNow;
+
+            await _repository.UpdateCompanyAsync(company);
+
+            return MapToOutputDTO(company);
+        }
+
+        // Suspend or reactivate a Company
+        public async Task<NFD_CompanyOutputDTO?> SuspendCompanyAsync(
+            int companyId)
+        {
+            var company = await _repository.GetCompanyByIdAsync(companyId);
+
+            if (company == null)
+                return null;
+
+            // If company is currently suspended, reactivate it
+            if (company.Status == NFD_CompanyStatus.Suspended)
+            {
+                company.Status = NFD_CompanyStatus.Approved;
+            }
+            else
+            {
+                // Otherwise suspend the company
+                company.Status = NFD_CompanyStatus.Suspended;
+            }
+
+            await _repository.UpdateCompanyAsync(company);
+
+            return MapToOutputDTO(company);
+        }
+
+        // Get Company Capacity
+        public async Task<object?> GetCompanyCapacityAsync(
+            int companyId)
+        {
+            var company = await _repository.GetCompanyByIdAsync(companyId);
+
+            if (company == null)
+                return null;
+
+            // Get current number of trainees belonging to the company
+            var currentTraineeCount = company.Trainees?.Count ?? 0;
+
+            return new
+            {
+                CompanyId = company.CompanyId,
+                CompanyName = company.CompanyName,
+                Capacity = company.Capacity,
+                CurrentTraineeCount = currentTraineeCount,
+                RemainingCapacity =
+                    company.Capacity - currentTraineeCount
+            };
+        }
+
+        // Delete Company
+        public async Task<bool> DeleteCompanyAsync(int companyId)
+        {
+            var company = await _repository.GetCompanyByIdAsync(companyId);
+
+            if (company == null)
+                return false;
+
+            await _repository.DeleteCompanyAsync(companyId);
+
+            return true;
+        }
+
+        // Mapping Company Model to Output DTO
+        private static NFD_CompanyOutputDTO MapToOutputDTO(
+            NFD_Company company)
+        {
+            return new NFD_CompanyOutputDTO
+            {
+                CompanyId = company.CompanyId,
+                CompanyName = company.CompanyName,
+                CommercialRegister = company.CommercialRegister,
+                WorkField = company.WorkField,
+                Address = company.Address,
+                Phone = company.Phone,
+                Email = company.Email,
+                Logo = company.Logo,
+                Capacity = company.Capacity,
+                Status = company.Status,
+                ApprovalDate = company.ApprovalDate,
+                UserId = company.UserId
+            };
+        }
     }
 }

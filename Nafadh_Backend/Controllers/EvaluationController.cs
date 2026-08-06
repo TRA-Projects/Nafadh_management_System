@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +20,70 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET: api/evaluation/enrollment/5
+        [HttpGet("enrollment/{enrollmentId}")]
+        public async Task<ActionResult<IEnumerable<EvaluationDTO>>> GetEvaluationsByEnrollmentId(int enrollmentId)
+        {
+            var evaluations = await _service.GetEvaluationsByEnrollmentIdAsync(enrollmentId);
+            return Ok(evaluations);
+        }
+
+        // GET: api/evaluation/trainer/5
+        [HttpGet("trainer/{trainerId}")]
+        public async Task<ActionResult<IEnumerable<EvaluationDTO>>> GetEvaluationsByTrainerId(int trainerId)
+        {
+            var evaluations = await _service.GetEvaluationsByTrainerIdAsync(trainerId);
+            return Ok(evaluations);
+        }
+
+        // GET: api/evaluation/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<EvaluationDTO>> GetEvaluationById(int id)
+        {
+            var evaluation = await _service.GetEvaluationByIdAsync(id);
+            if (evaluation == null)
+            {
+                return NotFound(new { message = $"Evaluation with ID {id} was not found." });
+            }
+            return Ok(evaluation);
+        }
+
+        // GET: api/evaluation/enrollment/5/average
+        [HttpGet("enrollment/{enrollmentId}/average")]
+        public async Task<ActionResult<double>> GetAverageScoreByEnrollmentId(int enrollmentId)
+        {
+            var average = await _service.GetAverageScoreByEnrollmentIdAsync(enrollmentId);
+            return Ok(new { enrollmentId, averageScore = average });
+        }
+
+        // POST: api/evaluation
+        [HttpPost]
+        public async Task<ActionResult<EvaluationDTO>> CreateEvaluation([FromBody] CreateEvaluationDTO createDto)
+        {
+            try
+            {
+                var created = await _service.CreateEvaluationAsync(createDto);
+                return CreatedAtAction(nameof(GetEvaluationById), new { id = created.EvaluationId }, created);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // PUT: api/evaluation/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateEvaluation(int id, [FromBody] UpdateEvaluationDTO updateDto)
+        {
+            try
+            {
+                await _service.UpdateEvaluationAsync(id, updateDto);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
     }
 }

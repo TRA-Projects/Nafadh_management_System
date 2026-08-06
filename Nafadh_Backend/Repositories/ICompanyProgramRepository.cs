@@ -9,6 +9,18 @@ namespace Nafadh_Backend.Repositories
 {
     public interface ICompanyProgramRepository
     {
-        // TODO: define data-access contract methods for this entity
+        // Get all programs that a company is eligible to host
+        Task<IEnumerable<NFD_CompanyProgram>> GetByCompanyIdAsync(
+            int companyId);
+
+        // Get all companies eligible to host a specific program
+        Task<IEnumerable<NFD_CompanyProgram>> GetByProgramIdAsync(
+            int programId);
+
+        // Add company-program eligibility
+        Task AddAsync(NFD_CompanyProgram companyProgram);
+
+        // Delete company-program eligibility
+        Task DeleteAsync(int companyId, int programId);
     }
 }

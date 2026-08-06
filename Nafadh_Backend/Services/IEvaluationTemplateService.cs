@@ -3,12 +3,27 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Services
 {
     public interface IEvaluationTemplateService
     {
-        // TODO: define business-logic contract methods for this entity
+        // List templates (optionally filter by type)
+        Task<List<EvaluationTemplateDTO.Output>> GetTemplatesAsync(NFD_EvaluationType? type);
+
+        // Get template details with criteria
+        Task<EvaluationTemplateDTO.Details?> GetTemplateByIdAsync(int templateId);
+
+        // Create template
+        Task CreateTemplateAsync(EvaluationTemplateDTO.Input input);
+
+        // Update template
+        Task<bool> UpdateTemplateAsync(int templateId, EvaluationTemplateDTO.Input input);
+
+        // Delete template
+        Task<bool> DeleteTemplateAsync(int templateId);
     }
 }

@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +19,115 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        // Returns all module progress records for a trainee.
+        public async Task<IEnumerable<TraineeModuleProgressDto>> GetByTraineeIdAsync(int traineeId)
+        {
+            var progressList = await _repository.GetByTraineeIdAsync(traineeId);
+
+            return progressList.Select(p => new TraineeModuleProgressDto
+            {
+                ProgressId = p.ProgressId,
+                TraineeId = p.TraineeId,
+                ModuleId = p.ModuleId,
+                Status = p.Status,
+                CompletedAt = p.CompletedAt
+            });
+        }
+
+        // Marks a module as completed (Creates or Updates existing record).
+        public async Task<TraineeModuleProgressDto> CompleteModuleAsync(CompleteModuleDto dto, int traineeId)
+        {
+            // TODO: Validate ModuleId existence via IModuleRepository.
+
+            var existingProgress = await _repository.GetByTraineeAndModuleAsync(traineeId, dto.ModuleId);
+
+            if (existingProgress != null)
+            {
+                // If already completed, just return the existing record without creating duplicate
+                if (existingProgress.Status == NFD_ModuleProgressStatus.Completed)
+                {
+                    return MapToDto(existingProgress);
+                }
+
+                // If existed with another status, update it to Completed
+                existingProgress.Status = NFD_ModuleProgressStatus.Completed;
+                existingProgress.CompletedAt = DateTime.UtcNow;
+                await _repository.UpdateAsync(existingProgress);
+
+                return MapToDto(existingProgress);
+            }
+
+            // Create new record if it does not exist
+            var progress = new NFD_TraineeModuleProgress
+            {
+                TraineeId = traineeId,
+                ModuleId = dto.ModuleId,
+                Status = NFD_ModuleProgressStatus.Completed,
+                CompletedAt = DateTime.UtcNow
+            };
+
+            var created = await _repository.CreateAsync(progress);
+
+            return MapToDto(created);
+        }
+
+        // Updates an existing trainee module progress status.
+        public async Task<bool> UpdateAsync(int id, UpdateTraineeModuleProgressDto dto)
+        {
+            var progress = await _repository.GetByIdAsync(id);
+
+            if (progress == null)
+            {
+                return false;
+            }
+
+            progress.Status = dto.Status;
+
+            if (dto.CompletedAt.HasValue)
+            {
+                progress.CompletedAt = dto.CompletedAt;
+            }
+
+            if (dto.Status == NFD_ModuleProgressStatus.Completed && progress.CompletedAt == null)
+            {
+                progress.CompletedAt = DateTime.UtcNow;
+            }
+
+            await _repository.UpdateAsync(progress);
+            return true;
+        }
+
+        // Calculates overall completion percentage for a trainee.
+        public async Task<TraineeProgressPercentageDto> GetProgressPercentageAsync(int traineeId)
+        {
+            var percentage = await _repository.GetCompletionPercentageAsync(traineeId);
+
+            return new TraineeProgressPercentageDto
+            {
+                TraineeId = traineeId,
+                Percentage = Math.Round(percentage, 2) // Round to 2 decimal places
+            };
+        }
+
+        // Returns completion status of all trainees inside a specific module.
+        public async Task<IEnumerable<TraineeModuleProgressDto>> GetByModuleIdAsync(int moduleId)
+        {
+            var progressList = await _repository.GetByModuleIdAsync(moduleId);
+
+            return progressList.Select(MapToDto);
+        }
+
+        // Helper Method for DTO Mapping
+        private static TraineeModuleProgressDto MapToDto(NFD_TraineeModuleProgress progress)
+        {
+            return new TraineeModuleProgressDto
+            {
+                ProgressId = progress.ProgressId,
+                TraineeId = progress.TraineeId,
+                ModuleId = progress.ModuleId,
+                Status = progress.Status,
+                CompletedAt = progress.CompletedAt
+            };
+        }
     }
 }

@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -18,5 +19,71 @@ namespace Nafadh_Backend.Services
         }
 
         // TODO: implement business-logic contract methods for this entity
+        //Get User Notifications
+        public async Task<List<NotificationDTO>> GetByUserIdAsync(int userId)
+        {
+            var notifications = await _repository.GetByUserIdAsync(userId);
+
+            return notifications.Select(n => new NotificationDTO
+            {
+                NotificationId = n.NotificationId,
+                UserId = n.UserId,
+                Title = n.Title,
+                Message = n.Message,
+                RelatedEntity = n.RelatedEntity,
+                IsRead = n.IsRead,
+                CreatedAt = n.CreatedAt
+
+            }).ToList();
+
+        }
+
+        //Create Notification
+        public async Task CreateAsync(CreateNotificationDTO dto)
+        {
+            var notification = new NFD_Notification
+            {
+                UserId = dto.UserId,
+                Title = dto.Title,
+                Message = dto.Message,
+                RelatedEntity = dto.RelatedEntity,
+                IsRead = false,
+                CreatedAt = DateTime.Now
+            };
+
+            await _repository.AddAsync(notification);
+        }
+
+        //Mark Notification As Read
+        public async Task MarkAsReadAsync(int id)
+        {
+            var notification = await _repository.GetByIdAsync(id);
+
+            if (notification == null)
+            {
+                throw new KeyNotFoundException("Notification not found");
+            }
+
+            notification.IsRead = true;
+
+            await _repository.UpdateAsync(notification);
+        }
+
+        //Mark All Notifications As Read
+        public async Task MarkAllAsReadAsync(int userId)
+        {
+            await _repository.MarkAllAsReadAsync(userId);
+        }
+
+        //Get Unread Count
+        public async Task<UnreadCountDTO> GetUnreadCountAsync(int userId)
+        {
+            var count = await _repository.GetUnreadCountAsync(userId);
+
+            return new UnreadCountDTO
+            {
+                Count = count
+            };
+        }
     }
 }

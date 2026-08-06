@@ -3,20 +3,143 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
-
 namespace Nafadh_Backend.Services
 {
     public class WarningService : IWarningService
     {
-        private readonly IWarningRepository _repository;
+        private readonly IWarningRepository _WarningRepository;
 
         public WarningService(IWarningRepository repository)
         {
-            _repository = repository;
+            _WarningRepository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        // Get warnings by enrollment
+        public async Task<IEnumerable<WarningOutputDTO>> GetWarningsByEnrollmentAsync(int enrollmentId)
+        {
+
+            var warnings = await _WarningRepository
+                .GetWarningsByEnrollmentAsync(enrollmentId);
+
+
+            return warnings.Select(MapToDTO);
+
+        }
+
+        // Get warning details by ID
+        public async Task<WarningDetailsDTO?> GetWarningByIdAsync(int id)
+        {
+
+            var warning = await _WarningRepository
+                .GetWarningByIdAsync(id);
+
+
+            return warning == null ? null : MapToDetailsDTO(warning);
+
+        }
+
+        // Create warning
+        public async Task CreateWarningAsync(WarningInputDTO dto)
+        {
+
+            var warning = new NFD_Warning
+            {
+                EnrollmentId = dto.EnrollmentId,
+                Type = dto.Type,
+                Level = dto.Level,
+                Evidence = dto.Evidence,
+                Status = NFD_WarningStatus.Open,
+                IssuedDate = DateTime.UtcNow
+            };
+
+
+            await _WarningRepository.AddWarningAsync(warning);
+
+        }
+
+        // Update warning status
+        public async Task UpdateWarningStatusAsync(
+            int id,
+            WarningStatusInputDTO dto)
+        {
+
+            await _WarningRepository
+                .UpdateWarningStatusAsync(id, dto.Status);
+
+        }
+
+
+        // Resolve warning
+        public async Task ResolveWarningAsync(
+            int id,
+             WarningResolveInputDTO dto)
+        {
+
+            await _WarningRepository
+                .ResolveWarningAsync(id, dto.Resolution);
+
+        }
+
+        // Get pending warnings
+        public async Task<IEnumerable<WarningOutputDTO>> GetPendingWarningsAsync()
+        {
+
+            var warnings = await _WarningRepository
+                .GetPendingWarningsAsync();
+
+
+            return warnings.Select(MapToDTO);
+
+        }
+
+        // Get warnings by level
+        public async Task<IEnumerable<WarningOutputDTO>> GetWarningsByLevelAsync(
+            NFD_WarningLevel level)
+        {
+
+            var warnings = await _WarningRepository
+                .GetWarningsByLevelAsync(level);
+
+
+            return warnings.Select(MapToDTO);
+
+        }
+
+        // Convert Entity to DTO
+        private WarningOutputDTO MapToDTO(NFD_Warning warning)
+        {
+            return new WarningOutputDTO
+            {
+                WarningId = warning.WarningId,
+                EnrollmentId = warning.EnrollmentId,
+                Type = warning.Type,
+                Level = warning.Level,
+                Evidence = warning.Evidence,
+                Status = warning.Status,
+                Resolution = warning.Resolution,
+                IssuedDate = warning.IssuedDate
+            };
+        }
+        // Convert Entity to Details DTO
+        private WarningDetailsDTO MapToDetailsDTO(NFD_Warning warning)
+        {
+            return new WarningDetailsDTO
+            {
+                WarningId = warning.WarningId,
+                EnrollmentId = warning.EnrollmentId,
+                Type = warning.Type,
+                Level = warning.Level,
+                Evidence = warning.Evidence,
+                Status = warning.Status,
+                Resolution = warning.Resolution,
+                IssuedDate = warning.IssuedDate
+            };
+        }
+
+
     }
 }

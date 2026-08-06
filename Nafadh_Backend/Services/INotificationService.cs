@@ -3,12 +3,28 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
-using Nafadh_Backend.Models;
+
+using Nafadh_Backend.DTOs;
+
 
 namespace Nafadh_Backend.Services
 {
     public interface INotificationService
     {
         // TODO: define business-logic contract methods for this entity
+
+        //Get User Notifications
+        Task<List<NotificationDTO>> GetByUserIdAsync(int userId);
+        //Create Notification
+        Task CreateAsync(CreateNotificationDTO dto);
+
+        //Mark Notification As Read
+        Task MarkAsReadAsync(int id);
+
+        //Mark All Notifications As Read
+        Task MarkAllAsReadAsync(int userId);
+
+        //Get Unread Count
+        Task<UnreadCountDTO> GetUnreadCountAsync(int userId);
     }
 }

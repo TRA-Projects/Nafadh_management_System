@@ -3,6 +3,10 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
@@ -13,10 +17,17 @@ namespace Nafadh_Backend.Services
     public class SessionService : ISessionService
     {
         private readonly ISessionRepository _repository;
+        private readonly ITrainerRepository _trainerRepository;
+        private readonly IBatchRepository _batchRepository;
 
-        public SessionService(ISessionRepository repository)
+        public SessionService(
+            ISessionRepository repository,
+            ITrainerRepository trainerRepository,
+            IBatchRepository batchRepository)
         {
             _repository = repository;
+            _trainerRepository = trainerRepository;
+            _batchRepository = batchRepository;
         }
 
         public async Task<List<SessionDto>> GetAllAsync(int? batchId, int? trainerId, DateTime? date)
@@ -33,6 +44,24 @@ namespace Nafadh_Backend.Services
 
         public async Task<SessionDto> CreateAsync(CreateSessionDto dto)
         {
+            // 1. التحقق من وجود الدفعة
+            var batchExists = await _batchRepository.GetByIdAsync(dto.BatchId) != null;
+            if (!batchExists)
+            {
+                throw new InvalidOperationException($"Batch with ID {dto.BatchId} does not exist.");
+            }
+
+            // 2. التحقق من وجود المدرب (في حال كان المفهوم يتطلب وجود مدرب أكبر من 0)
+            if (dto.TrainerId > 0)
+            {
+                var trainerExists = await _trainerRepository.GetByIdAsync(dto.TrainerId) != null;
+                if (!trainerExists)
+                {
+                    throw new InvalidOperationException($"Trainer with ID {dto.TrainerId} does not exist.");
+                }
+            }
+
+            // 3. إنشاء الجلسة
             var entity = new NFD_Session
             {
                 BatchId = dto.BatchId,

@@ -3,12 +3,18 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Services
 {
     public interface IMessageService
     {
-        // TODO: define business-logic contract methods for this entity
+        Task<List<NFD_Message>> GetConversationAsync(int userId1, int userId2);
+        Task<List<NFD_Message>> GetUserInboxAsync(int userId);
+        Task AddMessageAsync(MessageDtos.CreateMessageDto dto);
+        Task UpdateStatusAsync(int messageId, NFD_MessageStatus status);
+        Task<int> GetUnreadCountAsync(int userId);
     }
 }

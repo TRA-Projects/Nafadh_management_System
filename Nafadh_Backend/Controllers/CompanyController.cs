@@ -4,6 +4,8 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -14,11 +16,158 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly ICompanyService _service;
 
+        // Constructor - inject Company Service
         public CompanyController(ICompanyService service)
         {
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET: api/Company
+        // Get all companies or filter by Status / WorkField
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<NFD_CompanyOutputDTO>>>
+            GetCompanies(
+                [FromQuery] NFD_CompanyStatus? status,
+                [FromQuery] string? workField)
+        {
+            var companies = await _service.GetCompaniesAsync(
+                status,
+                workField);
+
+            return Ok(companies);
+        }
+
+        // GET: api/Company/{companyId}
+        // Get a company by ID
+        [HttpGet("{companyId}")]
+        public async Task<ActionResult<NFD_CompanyOutputDTO>>
+            GetCompanyById(int companyId)
+        {
+            var company = await _service.GetCompanyByIdAsync(companyId);
+
+            if (company == null)
+            {
+                return NotFound(new
+                {
+                    message = "Company not found."
+                });
+            }
+
+            return Ok(company);
+        }
+
+        // POST: api/Company
+        // Add a new company
+        [HttpPost]
+        public async Task<ActionResult<NFD_CompanyOutputDTO>>
+            AddCompany([FromBody] NFD_CompanyInputDTO dto)
+        {
+            var company = await _service.AddCompanyAsync(dto);
+
+            return CreatedAtAction(
+                nameof(GetCompanyById),
+                new { companyId = company.CompanyId },
+                company
+            );
+        }
+
+        // PUT: api/Company/{companyId}
+        // Update an existing company
+        [HttpPut("{companyId}")]
+        public async Task<ActionResult<NFD_CompanyOutputDTO>>
+            UpdateCompany(
+                int companyId,
+                [FromBody] NFD_CompanyInputDTO dto)
+        {
+            var company = await _service.UpdateCompanyAsync(
+                companyId,
+                dto);
+
+            if (company == null)
+            {
+                return NotFound(new
+                {
+                    message = "Company not found."
+                });
+            }
+
+            return Ok(company);
+        }
+
+        // PUT: api/Company/{companyId}/approve
+        // Approve a company
+        [HttpPut("{companyId}/approve")]
+        public async Task<ActionResult<NFD_CompanyOutputDTO>>
+            ApproveCompany(int companyId)
+        {
+            var company = await _service.ApproveCompanyAsync(companyId);
+
+            if (company == null)
+            {
+                return NotFound(new
+                {
+                    message = "Company not found."
+                });
+            }
+
+            return Ok(company);
+        }
+
+        // PUT: api/Company/{companyId}/suspend
+        // Suspend or reactivate a company
+        [HttpPut("{companyId}/suspend")]
+        public async Task<ActionResult<NFD_CompanyOutputDTO>>
+            SuspendCompany(int companyId)
+        {
+            var company = await _service.SuspendCompanyAsync(companyId);
+
+            if (company == null)
+            {
+                return NotFound(new
+                {
+                    message = "Company not found."
+                });
+            }
+
+            return Ok(company);
+        }
+
+        // GET: api/Company/{companyId}/capacity
+        // Get company capacity information
+        [HttpGet("{companyId}/capacity")]
+        public async Task<ActionResult<object>>
+            GetCompanyCapacity(int companyId)
+        {
+            var capacity = await _service.GetCompanyCapacityAsync(companyId);
+
+            if (capacity == null)
+            {
+                return NotFound(new
+                {
+                    message = "Company not found."
+                });
+            }
+
+            return Ok(capacity);
+        }
+
+        // DELETE: api/Company/{companyId}
+        // Delete a company by ID
+        [HttpDelete("{companyId}")]
+        public async Task<IActionResult>
+            DeleteCompany(int companyId)
+        {
+            var deleted = await _service.DeleteCompanyAsync(companyId);
+
+            if (!deleted)
+            {
+                return NotFound(new
+                {
+                    message = "Company not found."
+                });
+            }
+
+            return NoContent();
+        }
     }
 }

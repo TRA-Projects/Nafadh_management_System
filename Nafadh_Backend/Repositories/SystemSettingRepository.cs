@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -16,6 +17,39 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        public async Task<List<NFD_SystemSetting>> GetAllSystemSettingsAsync()
+        {
+            return await _context.NFD_SystemSettings.ToListAsync();
+        }
+
+        public async Task<NFD_SystemSetting?> GetSystemSettingByKeyAsync(string key)
+        {
+            return await _context.NFD_SystemSettings
+                .FirstOrDefaultAsync(s => s.Key == key);
+        }
+
+        public async Task<NFD_SystemSetting?> GetSystemSettingByIdAsync(int id)
+        {
+            return await _context.NFD_SystemSettings
+                .FirstOrDefaultAsync(s => s.SettingId == id);
+        }
+
+        public async Task AddSystemSettingAsync(NFD_SystemSetting systemSetting)
+        {
+            await _context.NFD_SystemSettings.AddAsync(systemSetting);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateSystemSettingAsync(NFD_SystemSetting systemSetting)
+        {
+            _context.NFD_SystemSettings.Update(systemSetting);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteSystemSettingAsync(NFD_SystemSetting systemSetting)
+        {
+            _context.NFD_SystemSettings.Remove(systemSetting);
+            await _context.SaveChangesAsync();
+        }
     }
 }

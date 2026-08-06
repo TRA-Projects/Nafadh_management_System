@@ -5,6 +5,9 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Services;
+using Nafadh_Backend.DTOs;
+
+using System.Threading.Tasks;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -19,6 +22,64 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] TrainerFilterDto filter)
+        {
+            var (items, total) = await _service.GetAllAsync(filter);
+            return Ok(new { Items = items, TotalCount = total });
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var profile = await _service.GetByIdAsync(id);
+            if (profile == null) return NotFound();
+            return Ok(profile);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] TrainerCreateDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var created = await _service.CreateAsync(dto);
+            if (created == null) return Conflict(new { Message = "Trainer profile for this user already exists or could not be created." });
+
+            return CreatedAtAction(nameof(GetById), new { id = created.TrainerId }, created);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] TrainerUpdateDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var ok = await _service.UpdateAsync(id, dto);
+            if (!ok) return NotFound();
+            return NoContent();
+        }
+
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] TrainerStatusUpdateDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var ok = await _service.UpdateStatusAsync(id, dto);
+            if (!ok) return NotFound();
+            return NoContent();
+        }
+
+        [HttpGet("{id}/batches")]
+        public async Task<IActionResult> GetBatches(int id)
+        {
+            var items = await _service.GetBatchesAsync(id);
+            return Ok(items);
+        }
+
+        [HttpGet("{id}/evaluations")]
+        public async Task<IActionResult> GetEvaluations(int id)
+        {
+            var items = await _service.GetEvaluationsAsync(id);
+            return Ok(items);
+        }
     }
 }

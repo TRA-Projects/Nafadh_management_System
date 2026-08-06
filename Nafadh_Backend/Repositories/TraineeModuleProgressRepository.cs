@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -15,7 +16,84 @@ namespace Nafadh_Backend.Repositories
         {
             _context = context;
         }
+        // Retrieves all progress records for the specified trainee.
+        public async Task<IEnumerable<NFD_TraineeModuleProgress>> GetByTraineeIdAsync(int traineeId)
+        {
+            return await _context.NFD_TraineeModuleProgresses
+                .Include(p => p.Trainee)
+                .Include(p => p.Module)
+                .Where(p => p.TraineeId == traineeId)
+                .ToListAsync();
+        }
 
-        // TODO: implement data-access contract methods for this entity
+        // Retrieves all progress records for a specific module.
+        public async Task<IEnumerable<NFD_TraineeModuleProgress>> GetByModuleIdAsync(int moduleId)
+        {
+            return await _context.NFD_TraineeModuleProgresses
+                .Include(p => p.Trainee)
+                .Include(p => p.Module)
+                .Where(p => p.ModuleId == moduleId)
+                .ToListAsync();
+        }
+
+        // Retrieves a single progress record by its ID.
+        public async Task<NFD_TraineeModuleProgress?> GetByIdAsync(int id)
+        {
+            return await _context.NFD_TraineeModuleProgresses
+                .Include(p => p.Trainee)
+                .Include(p => p.Module)
+                .FirstOrDefaultAsync(p => p.ProgressId == id);
+        }
+
+        // Retrieves a trainee's progress for a specific module.
+        public async Task<NFD_TraineeModuleProgress?> GetByTraineeAndModuleAsync(int traineeId, int moduleId)
+        {
+            return await _context.NFD_TraineeModuleProgresses
+                .FirstOrDefaultAsync(p =>
+                    p.TraineeId == traineeId &&
+                    p.ModuleId == moduleId);
+        }
+
+        // Adds a new progress record.
+        public async Task<NFD_TraineeModuleProgress> CreateAsync(NFD_TraineeModuleProgress progress)
+        {
+            await _context.NFD_TraineeModuleProgresses.AddAsync(progress);
+            await _context.SaveChangesAsync();
+
+            return progress;
+        }
+
+        // Updates an existing progress record.
+        public async Task UpdateAsync(NFD_TraineeModuleProgress progress)
+        {
+            _context.NFD_TraineeModuleProgresses.Update(progress);
+            await _context.SaveChangesAsync();
+        }
+
+        // Checks whether the progress record exists.
+        public async Task<bool> ExistsAsync(int id)
+        {
+            return await _context.NFD_TraineeModuleProgresses
+                .AnyAsync(p => p.ProgressId == id);
+        }
+
+      
+        // Calculates completion percentage for a trainee.
+        public async Task<double> GetCompletionPercentageAsync(int traineeId)
+        {
+            var totalModules = await _context.NFD_Modules.CountAsync();
+
+            if (totalModules == 0)
+            {
+                return 0;
+            }
+
+            var completedModules = await _context.NFD_TraineeModuleProgresses
+                .CountAsync(p =>
+                    p.TraineeId == traineeId &&
+                    p.Status == Enums.NFD_ModuleProgressStatus.Completed);
+
+            return (double)completedModules / totalModules * 100;
+        }
     }
 }

@@ -3,12 +3,24 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Services
 {
     public interface ITraineePaymentService
     {
-        // TODO: define business-logic contract methods for this entity
+
+        // GET /api/TraineePayment/enrollment/{enrollmentId}
+        Task<TraineePaymentDTO?> GetByEnrollmentIdAsync(int enrollmentId);
+
+        // GET /api/TraineePayment/{id}  -> مع الجدول الزمني
+        Task<TraineePaymentDTO?> GetByIdAsync(int id);
+
+        // POST /api/TraineePayment
+        Task<TraineePaymentDTO> CreateAsync(CreateTraineePaymentDTO dto);
+
+        // PUT /api/TraineePayment/{id}/status
+        Task<bool> UpdateStatusAsync(int id, UpdateTraineePaymentStatusDTO dto);
     }
 }

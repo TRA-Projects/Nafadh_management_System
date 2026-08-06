@@ -3,7 +3,9 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -16,6 +18,59 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+
+
+        //get All evaluations for a trainee's enrollment
+        public async Task<IEnumerable<NFD_Evaluation>> GetEvaluationsByEnrollmentIdAsync(int enrollmentId)
+        {
+            return await _context.NFD_Evaluations
+                .Where(e => e.EnrollmentId == enrollmentId)
+                .ToListAsync();
+        }
+        //get All Admin evaluations of a trainer
+        public async Task<IEnumerable<NFD_Evaluation>> GetEvaluationsByTrainerIdAsync(int trainerId)
+        {
+            return await _context.NFD_Evaluations
+                .Where(e => e.TrainerId == trainerId)
+                .ToListAsync();
+        }
+
+        //Get evaluation details
+        public async Task<NFD_Evaluation?> GetEvaluationByIdAsync(int evaluationId)
+        {
+            return await _context.NFD_Evaluations
+                .FirstOrDefaultAsync(e => e.EvaluationId == evaluationId);
+        }
+        //Record a new evaluation (trainee or trainer, via a template)
+        public async Task<NFD_Evaluation> CreateEvaluationAsync(NFD_Evaluation evaluation)
+        {
+            _context.NFD_Evaluations.Add(evaluation);
+            await _context.SaveChangesAsync();
+            return evaluation;
+        }
+        //Update score/notes
+        public async Task UpdateEvaluationAsync(NFD_Evaluation evaluation)
+        {
+            var existingEvaluation = await _context.NFD_Evaluations.FindAsync(evaluation.EvaluationId);
+            if (existingEvaluation == null)
+            {
+                throw new InvalidOperationException("The specified evaluation does not exist.");
+            }
+            existingEvaluation.Score = evaluation.Score;
+            existingEvaluation.Notes = evaluation.Notes;
+            await _context.SaveChangesAsync();
+        }
+        //get Average score across periods
+        public async Task<double> GetAverageScoreByEnrollmentIdAsync(int enrollmentId)
+        {
+            var evaluations = await _context.NFD_Evaluations
+                .Where(e => e.EnrollmentId == enrollmentId)
+                .ToListAsync();
+            if (evaluations.Count == 0)
+            {
+                return 0.0; 
+            }
+            return (double)evaluations.Average(e => e.Score);
+        }
     }
 }

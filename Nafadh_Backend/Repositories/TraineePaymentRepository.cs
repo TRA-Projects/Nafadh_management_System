@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -16,6 +17,32 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        public async Task<IEnumerable<NFD_TraineePayment>> GetAllAsync()
+            => await _context.NFD_TraineePayments.ToListAsync();
+
+        public async Task<NFD_TraineePayment?> GetByIdAsync(int id)
+            => await _context.NFD_TraineePayments.FindAsync(id);
+
+        public async Task<NFD_TraineePayment?> GetByIdWithSchedulesAsync(int id)
+            => await _context.NFD_TraineePayments
+                .Include(p => p.TraineePaymentSchedules)
+                .FirstOrDefaultAsync(p => p.TraineePaymentId == id);
+
+        public async Task<NFD_TraineePayment?> GetByEnrollmentIdAsync(int enrollmentId)
+            => await _context.NFD_TraineePayments
+                .Include(p => p.TraineePaymentSchedules)
+                .FirstOrDefaultAsync(p => p.EnrollmentId == enrollmentId);
+
+        public async Task AddAsync(NFD_TraineePayment payment)
+            => await _context.NFD_TraineePayments.AddAsync(payment);
+
+        public void Update(NFD_TraineePayment payment)
+            => _context.NFD_TraineePayments.Update(payment);
+
+        public void Remove(NFD_TraineePayment payment)
+            => _context.NFD_TraineePayments.Remove(payment);
+
+        public async Task<bool> SaveChangesAsync()
+            => await _context.SaveChangesAsync() > 0;
     }
 }

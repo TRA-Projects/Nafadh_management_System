@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +20,57 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET /api/TraineePayment/enrollment/{enrollmentId}
+        [HttpGet("enrollment/{enrollmentId:int}")]
+        public async Task<ActionResult<TraineePaymentDTO>> GetByEnrollment(int enrollmentId)
+        {
+            var result = await _service.GetByEnrollmentIdAsync(enrollmentId);
+            if (result is null) return NotFound();
+            return Ok(result);
+        }
+
+        // GET /api/TraineePayment/{id}
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<TraineePaymentDTO>> GetById(int id)
+        {
+            var result = await _service.GetByIdAsync(id);
+            if (result is null) return NotFound();
+            return Ok(result);
+        }
+
+        // POST /api/TraineePayment
+        [HttpPost]
+        public async Task<ActionResult<TraineePaymentDTO>> Create([FromBody] CreateTraineePaymentDTO dto)
+        {
+            try
+            {
+                var created = await _service.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id = created.TraineePaymentId }, created);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+        }
+
+        // PUT /api/TraineePayment/{id}/status
+        [HttpPut("{id:int}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateTraineePaymentStatusDTO dto)
+        {
+            try
+            {
+                var updated = await _service.UpdateStatusAsync(id, dto);
+                if (!updated) return NotFound();
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

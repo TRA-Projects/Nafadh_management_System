@@ -2,9 +2,12 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
+#nullable enable
 
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Nafadh_Backend.Models;
-using Nafadh_Backend.Repositories;
+using Nafadh_Backend.Interfaces;
 
 namespace Nafadh_Backend.Services
 {
@@ -12,11 +15,58 @@ namespace Nafadh_Backend.Services
     {
         private readonly ICompanySupervisorRepository _repository;
 
+
         public CompanySupervisorService(ICompanySupervisorRepository repository)
         {
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+
+        //1-
+        public async Task<IEnumerable<NFD_CompanySupervisor>> GetSupervisorsByCompanyAsync(int companyId)
+        {
+            return await _repository.GetByCompanyIdAsync(companyId);
+        }
+
+
+        //2-
+        public async Task<NFD_CompanySupervisor?> GetSupervisorByIdAsync(int id)
+        {
+            return await _repository.GetByIdAsync(id);
+        }
+
+
+        //3-
+        public async Task CreateSupervisorAsync(NFD_CompanySupervisor supervisor)
+        {
+            await _repository.AddAsync(supervisor);
+        }
+
+
+        //4-
+        public async Task UpdateSupervisorAsync(NFD_CompanySupervisor supervisor)
+        {
+            await _repository.UpdateAsync(supervisor);
+        }
+
+
+        //5-
+        public async Task DeleteSupervisorAsync(int id)
+        {
+            var supervisor = await _repository.GetByIdAsync(id);
+            if (supervisor != null)
+            {
+                await _repository.DeleteAsync(supervisor);
+            }
+        }
+
+        //6-
+
+        public async Task<IEnumerable<NFD_Trainee>> GetAssignedTraineesAsync(int supervisorId)
+        {
+            return await _repository.GetAssignedTraineesAsync(supervisorId);
+        }
+
+        //
     }
 }

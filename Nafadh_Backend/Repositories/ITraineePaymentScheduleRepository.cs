@@ -9,6 +9,27 @@ namespace Nafadh_Backend.Repositories
 {
     public interface ITraineePaymentScheduleRepository
     {
-        // TODO: define data-access contract methods for this entity
+        Task<IEnumerable<NFD_TraineePaymentSchedule>>
+            GetByPaymentIdAsync(int traineePaymentId);
+
+
+
+        Task AddRangeAsync(
+            IEnumerable<NFD_TraineePaymentSchedule> schedules);
+
+
+
+        Task<NFD_TraineePaymentSchedule?>
+            GetByIdAsync(int id);
+
+
+
+        Task UpdateAsync(
+            NFD_TraineePaymentSchedule schedule);
+
+
+
+        Task<IEnumerable<NFD_TraineePaymentSchedule>>
+            GetOverdueAsync();
     }
 }

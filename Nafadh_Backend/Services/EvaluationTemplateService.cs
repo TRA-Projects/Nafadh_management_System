@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +19,99 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        // ==========================================
+        // Get All Templates
+        public async Task<List<EvaluationTemplateDTO.Output>> GetTemplatesAsync(NFD_EvaluationType? type)
+        {
+            var templates = await _repository.GetTemplatesAsync(type);
+
+            var result = new List<EvaluationTemplateDTO.Output>();
+
+            foreach (var template in templates)
+            {
+                result.Add(new EvaluationTemplateDTO.Output
+                {
+                    TemplateId = template.TemplateId,
+                    Type = template.Type,
+                    CreatedByUserId = template.CreatedByUserId
+                });
+            }
+
+            return result;
+        }
+
+        // ==========================================
+        // Get Template Details
+        public async Task<EvaluationTemplateDTO.Details?> GetTemplateByIdAsync(int templateId)
+        {
+            var template = await _repository.GetTemplateByIdAsync(templateId);
+
+            if (template == null)
+                return null;
+
+            var details = new EvaluationTemplateDTO.Details
+            {
+                TemplateId = template.TemplateId,
+                Type = template.Type,
+                CreatedByUserId = template.CreatedByUserId
+            };
+
+            foreach (var criterion in template.EvaluationCriteria)
+            {
+                details.Criteria.Add(new EvaluationCriterionDTO.Output
+                {
+                    CriteriaId = criterion.CriteriaId,
+                    TemplateId = criterion.TemplateId,
+                    Name = criterion.Name,
+                    Weight = criterion.Weight
+                });
+            }
+
+            return details;
+        }
+
+        // ==========================================
+        // Create Template
+        public async Task CreateTemplateAsync(EvaluationTemplateDTO.Input input)
+        {
+            var template = new NFD_EvaluationTemplate
+            {
+                Type = input.Type,
+                CreatedByUserId = input.CreatedByUserId
+            };
+
+            await _repository.AddTemplateAsync(template);
+        }
+
+        // ==========================================
+        // Update Template
+        public async Task<bool> UpdateTemplateAsync(int templateId, EvaluationTemplateDTO.Input input)
+        {
+            var template = await _repository.GetTemplateByIdAsync(templateId);
+
+            if (template == null)
+                return false;
+
+            template.Type = input.Type;
+            template.CreatedByUserId = input.CreatedByUserId;
+
+            await _repository.UpdateTemplateAsync(template);
+
+            return true;
+        }
+
+        // ==========================================
+        // Delete Template
+        public async Task<bool> DeleteTemplateAsync(int templateId)
+        {
+            var template = await _repository.GetTemplateByIdAsync(templateId);
+
+            if (template == null)
+                return false;
+
+            await _repository.DeleteTemplateAsync(template);
+
+            return true;
+        }
     }
 }

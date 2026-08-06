@@ -9,6 +9,16 @@ namespace Nafadh_Backend.Repositories
 {
     public interface ISystemSettingRepository
     {
-        // TODO: define data-access contract methods for this entity
+        Task<List<NFD_SystemSetting>> GetAllSystemSettingsAsync();
+
+        Task<NFD_SystemSetting?> GetSystemSettingByKeyAsync(string key);
+
+        Task<NFD_SystemSetting?> GetSystemSettingByIdAsync(int id);
+
+        Task AddSystemSettingAsync(NFD_SystemSetting systemSetting);
+
+        Task UpdateSystemSettingAsync(NFD_SystemSetting systemSetting);
+
+        Task DeleteSystemSettingAsync(NFD_SystemSetting systemSetting);
     }
 }
