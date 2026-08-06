@@ -17,5 +17,11 @@ namespace Nafadh_Backend.Services
         Task<List<AnnouncementDTO>> GetByScopeAsync(
             NFD_AnnouncementScopeType scopeType,
             int? scopeId);
+
+
+        // =====================================================
+        // Get announcement details
+        Task<AnnouncementDTO> GetByIdAsync(int id);
+
     }
 }

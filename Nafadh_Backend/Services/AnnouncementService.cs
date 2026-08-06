@@ -48,6 +48,39 @@ namespace Nafadh_Backend.Services
                 .ToList();
 
         }
+
+        // =====================================================
+        // Get announcement by id
+        public async Task<AnnouncementDTO> GetByIdAsync(int id)
+        {
+
+            var announcement =
+                await _repository.GetByIdAsync(id);
+
+
+
+            if (announcement == null)
+            {
+                throw new KeyNotFoundException(
+                    "Announcement not found");
+            }
+
+
+
+            return new AnnouncementDTO
+            {
+                AnnouncementId = announcement.AnnouncementId,
+                ScopeType = announcement.ScopeType,
+                ScopeId = announcement.ScopeId,
+                Message = announcement.Message,
+                Date = announcement.Date,
+                CreatedByUserId = announcement.CreatedByUserId
+            };
+
+        }
+
+
+
     }
 
 }
