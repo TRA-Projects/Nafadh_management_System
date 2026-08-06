@@ -3,12 +3,33 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Services
 {
     public interface IWarningService
     {
-        // TODO: define business-logic contract methods for this entity
+        // Get warnings by trainee enrollment
+        Task<IEnumerable<WarningOutputDTO>> GetWarningsByEnrollmentAsync(int enrollmentId);
+
+        // Get warning details
+        Task<WarningDetailsDTO?> GetWarningByIdAsync(int id);
+
+        // Create new warning
+        Task CreateWarningAsync(WarningInputDTO dto);
+
+        // Update warning status
+        Task UpdateWarningStatusAsync(int id, WarningStatusInputDTO dto);
+
+        // Resolve warning
+        Task ResolveWarningAsync(int id, WarningResolveInputDTO dto);
+
+        // Get pending warnings
+        Task<IEnumerable<WarningOutputDTO>> GetPendingWarningsAsync();
+
+        // Get warnings by severity level
+        Task<IEnumerable<WarningOutputDTO>> GetWarningsByLevelAsync(NFD_WarningLevel level);
     }
 }
