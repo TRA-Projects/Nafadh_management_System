@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -10,5 +11,26 @@ namespace Nafadh_Backend.Repositories
     public interface IAnnouncementRepository
     {
         // TODO: define data-access contract methods for this entity
+
+        // GET /api/Announcement/scope/{scopeType}/{scopeId}
+        Task<List<NFD_Announcement>> GetByScopeAsync(
+            NFD_AnnouncementScopeType scopeType,
+            int? scopeId);
+
+
+        // GET /api/Announcement/{id}
+        Task<NFD_Announcement?> GetByIdAsync(int id);
+
+
+        // POST /api/Announcement
+        Task AddAsync(NFD_Announcement announcement);
+
+
+        // PUT /api/Announcement/{id}
+        Task UpdateAsync(NFD_Announcement announcement);
+
+
+        // DELETE /api/Announcement/{id}
+        Task DeleteAsync(NFD_Announcement announcement);
     }
 }
