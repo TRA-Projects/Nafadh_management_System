@@ -20,6 +20,8 @@ namespace Nafadh_Backend.Repositories
         public async Task<List<NFD_SessionAttendance>> GetBySessionIdAsync(int sessionId)
         {
             return await _context.NFD_SessionAttendances
+                .Include(a => a.Trainee)
+                    .ThenInclude(t => t.User)
                 .Where(a => a.SessionId == sessionId)
                 .ToListAsync();
         }
@@ -27,6 +29,8 @@ namespace Nafadh_Backend.Repositories
         public async Task<List<NFD_SessionAttendance>> GetByTraineeIdAsync(int traineeId)
         {
             return await _context.NFD_SessionAttendances
+                .Include(a => a.Trainee)
+                    .ThenInclude(t => t.User)
                 .Where(a => a.TraineeId == traineeId)
                 .ToListAsync();
         }
@@ -34,6 +38,8 @@ namespace Nafadh_Backend.Repositories
         public async Task<NFD_SessionAttendance?> GetByIdAsync(int id)
         {
             return await _context.NFD_SessionAttendances
+                .Include(a => a.Trainee)
+                    .ThenInclude(t => t.User)
                 .FirstOrDefaultAsync(a => a.AttendanceId == id);
         }
 

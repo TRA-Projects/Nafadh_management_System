@@ -7,6 +7,7 @@ namespace Nafadh_Backend.DTOs
         public int AttendanceId { get; set; }
         public int SessionId { get; set; }
         public int TraineeId { get; set; }
+        public string TraineeName { get; set; } = string.Empty;
         public NFD_AttendanceStatus Status { get; set; }
         public string? Note { get; set; }
     }
