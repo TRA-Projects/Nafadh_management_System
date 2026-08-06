@@ -13,7 +13,7 @@ namespace Nafadh_Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+   
     public class TrainingMaterialController : ControllerBase
     {
         private readonly ITrainingMaterialService _service;
@@ -56,7 +56,6 @@ namespace Nafadh_Backend.Controllers
             }
 
             int userId = int.Parse(userIdClaim.Value);
-
             var result = await _service.CreateAsync(dto, userId);
 
             return CreatedAtAction(
@@ -71,9 +70,7 @@ namespace Nafadh_Backend.Controllers
         // -------------------------------------------------------
         [HttpPut("{id}")]
         [Authorize(Roles = "Trainer,Admin")]
-        public async Task<IActionResult> Update(
-            int id,
-            UpdateTrainingMaterialDto dto)
+        public async Task<IActionResult> Update(int id, UpdateTrainingMaterialDto dto)
         {
             if (!ModelState.IsValid)
             {
@@ -122,10 +119,7 @@ namespace Nafadh_Backend.Controllers
                 return NotFound();
             }
 
-            return Ok(new
-            {
-                DownloadUrl = url
-            });
+            return Ok(new {  DownloadUrl = url });
         }
     }
 }
