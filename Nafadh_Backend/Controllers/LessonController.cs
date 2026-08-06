@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +20,69 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET: api/lesson/module/5
+        [HttpGet("module/{moduleId}")]
+        public async Task<ActionResult<IEnumerable<LessonDTO>>> GetLessonsByModuleId(int moduleId)
+        {
+            var lessons = await _service.GetLessonsByModuleIdAsync(moduleId);
+            return Ok(lessons);
+        }
+
+        // GET: api/lesson/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<LessonDTO>> GetLessonById(int id)
+        {
+            var lesson = await _service.GetLessonByIdAsync(id);
+            if (lesson == null)
+            {
+                return NotFound(new { message = $"Lesson with ID {id} was not found." });
+            }
+            return Ok(lesson);
+        }
+
+        // POST: api/lesson
+        [HttpPost]
+        public async Task<ActionResult<LessonDTO>> CreateLesson([FromBody] CreateLessonDTO createDto)
+        {
+            try
+            {
+                var created = await _service.CreateLessonAsync(createDto);
+                return CreatedAtAction(nameof(GetLessonById), new { id = created.LessonId }, created);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // PUT: api/lesson/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateLesson(int id, [FromBody] UpdateLessonDTO updateDto)
+        {
+            try
+            {
+                await _service.UpdateLessonAsync(id, updateDto);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        // DELETE: api/lesson/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteLesson(int id)
+        {
+            try
+            {
+                await _service.DeleteLessonAsync(id);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
     }
 }

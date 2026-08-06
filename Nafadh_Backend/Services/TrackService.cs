@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +19,85 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        //List all tracks
+        public async Task<IEnumerable<TrackDto>> GetAllTracksAsync()
+        {
+            var tracks = await _repository.GetAllAsync();
+            return tracks.Select(MapToDto);
+        }
+
+        // Get track details
+        public async Task<TrackDto?> GetTrackByIdAsync(int id)
+        {
+            var track = await _repository.GetByIdAsync(id);
+            return track is null ? null : MapToDto(track);
+        }
+
+        // Create a new track
+        public async Task<TrackDto> CreateTrackAsync(CreateTrackDto dto)
+        {
+            var track = new NFD_Track
+            {
+                Name = dto.Name,
+                Description = dto.Description,
+                Status = NFD_TrackStatus.Active
+            };
+
+            var created = await _repository.AddAsync(track);
+            return MapToDto(created);
+        }
+
+        //Update track name/description/status
+        public async Task<TrackDto> UpdateTrackAsync(int id, UpdateTrackDto dto)
+        {
+            var track = await _repository.GetByIdAsync(id);
+            if (track is null) return null;
+
+            track.Name = dto.Name;
+            track.Description = dto.Description;
+            track.Status = dto.Status;
+
+            await _repository.UpdateAsync(track);
+            return MapToDto(track);
+        }
+
+        //Archive/remove a track
+        public async Task<bool> DeleteTrackAsync(int id)
+        {
+            var track = await _repository.GetByIdAsync(id);
+            if (track is null) return false;
+
+            await _repository.DeleteAsync(track);
+            return true;
+        }
+
+        //List programs grouped under a track
+        public async Task<IEnumerable<ProgramSummaryDto>> GetProgramsByTrackIdAsync(int trackId)
+        {
+            // null = Track doesn't exist (Controller returns 404)
+            // empty list = Track exists but has no programs (Controller returns 200 + [])
+            var exists = await _repository.ExistsAsync(trackId);
+            if (!exists) return null;
+
+            var programs = await _repository.GetProgramsByTrackIdAsync(trackId);
+            return programs.Select(p => new ProgramSummaryDto
+            {
+                ProgramId = p.ProgramId,
+                Title = p.Title,
+                Description = p.Description,
+                Status = p.Status.ToString()
+            });
+        }
+
+        private static TrackDto MapToDto(NFD_Track track)
+        {
+            return new TrackDto
+            {
+                TrackId = track.TrackId,
+                Name = track.Name,
+                Description = track.Description,
+                Status = track.Status.ToString()
+            };
+        }
     }
 }

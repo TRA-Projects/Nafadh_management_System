@@ -2,13 +2,34 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Services
 {
+    /// <summary>
+    /// Service Interface defining business logic for Audit Log domain
+    /// واجهة منطق العمل لخدمة سجلات التدقيق
+    /// </summary>
     public interface IAuditLogService
     {
-        // TODO: define business-logic contract methods for this entity
+        // 1. Get filtered audit logs
+        // جلب سجلات التدقيق مع إمكانية الفلترة
+        Task<IEnumerable<NFD_AuditLog>> GetAllLogsAsync(int? userId, string? entityName, DateTime? fromDate, DateTime? toDate);
+
+        // 2. Get specific log entry by ID
+        // جلب سجل تدقيق محدد عن طريق الرقم التعريفي
+        Task<NFD_AuditLog?> GetLogByIdAsync(int id);
+
+        // 3. Log a new sensitive operation
+        // تسجيل عملية جديدة في النظام
+        Task CreateLogAsync(NFD_AuditLog log);
+
+        // 4. Get history for a specific entity/record
+        // جلب تاريخ التعديلات لكيان أو سجل معين
+        Task<IEnumerable<NFD_AuditLog>> GetEntityHistoryAsync(string entityName, int entityId);
+
+        // 5. Get all activities by a specific user
+        // جلب كافة أنشطة مستخدم محدد
+        Task<IEnumerable<NFD_AuditLog>> GetUserHistoryAsync(int userId);
     }
 }

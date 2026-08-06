@@ -4,11 +4,18 @@
 // </auto-generated>
 
 using Nafadh_Backend.Models;
+using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Services
 {
     public interface IModuleService
     {
-        // TODO: define business-logic contract methods for this entity
+        Task<IEnumerable<ModuleDTO>> GetModulesByProgramIdAsync(int programId);
+        Task<ModuleDTO?> GetModuleByIdAsync(int moduleId);
+        Task<ModuleDTO> CreateModuleAsync(CreateModuleDTO createDto);
+        Task UpdateModuleAsync(int id, UpdateModuleDTO updateDto);
+        Task DeleteModuleAsync(int moduleId);
+        Task<IEnumerable<object>> GetLessonsByModuleIdAsync(int moduleId);
+        Task<bool> IsPrerequisiteCompletedAsync(int traineeId, int moduleId);
     }
 }

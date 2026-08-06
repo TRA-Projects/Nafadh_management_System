@@ -3,7 +3,9 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -16,6 +18,40 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        public async Task<NFD_Excuse?> GetByDailyAttendanceIdAsync(int dailyAttendanceId)
+        {
+            NFD_Excuse? result = await _context.NFD_Excuses
+                .FirstOrDefaultAsync(e => e.DailyAttendanceId == dailyAttendanceId);
+            return result;
+        }
+
+        public async Task<NFD_Excuse?> GetByIdAsync(int id)
+        {
+            NFD_Excuse? result = await _context.NFD_Excuses
+                .FirstOrDefaultAsync(e => e.ExcuseId == id);
+            return result;
+        }
+
+        public async Task<NFD_Excuse> AddAsync(NFD_Excuse entity)
+        {
+            await _context.NFD_Excuses.AddAsync(entity);
+            await _context.SaveChangesAsync();
+            return entity;
+        }
+
+        public async Task UpdateAsync(NFD_Excuse entity)
+        {
+            _context.NFD_Excuses.Update(entity);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<NFD_Excuse>> GetPendingAsync()
+        {
+            List<NFD_Excuse> result = await _context.NFD_Excuses
+                .Where(e => e.Status == NFD_ExcuseStatus.Pending)
+                .ToListAsync();
+            return result;
+        }
+
     }
 }

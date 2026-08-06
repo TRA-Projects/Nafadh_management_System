@@ -10,5 +10,14 @@ namespace Nafadh_Backend.Repositories
     public interface IEvaluationCriterionRepository
     {
         // TODO: define data-access contract methods for this entity
+        Task<List<NFD_EvaluationCriterion>> GetCriteriaByTemplateIdAsync(int templateId);
+
+        Task<NFD_EvaluationCriterion?> GetCriterionByIdAsync(int criteriaId);
+
+        Task AddCriterionAsync(NFD_EvaluationCriterion criterion);
+
+        Task UpdateCriterionAsync(NFD_EvaluationCriterion criterion);
+
+        Task DeleteCriterionAsync(NFD_EvaluationCriterion criterion);
     }
 }

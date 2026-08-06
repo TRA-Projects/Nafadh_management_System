@@ -4,11 +4,25 @@
 // </auto-generated>
 
 using Nafadh_Backend.Models;
+using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Services
 {
     public interface ISupportTicketService
     {
-        // TODO: define business-logic contract methods for this entity
+        // Retrieves a support ticket by its ID.
+        Task<SupportTicketDTO?> GetTicketByIdAsync(int ticketId);
+
+        // Retrieves all support tickets created by a specific user.
+        Task<IEnumerable<SupportTicketDTO>> GetUserTicketsAsync(int userId);
+
+        // Retrieves all open support tickets.
+        Task<IEnumerable<SupportTicketDTO>> GetOpenTicketsAsync();
+
+        // Creates a new support ticket.
+        Task<SupportTicketDTO> CreateTicketAsync(CreateSupportTicketDTO ticketDto);
+
+        // Updates the status of a support ticket.
+        Task<bool> UpdateTicketStatusAsync(int id, UpdateSupportTicketStatusDTO ticketDto);
     }
 }

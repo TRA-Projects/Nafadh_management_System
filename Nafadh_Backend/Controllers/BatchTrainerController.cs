@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +20,34 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        [HttpGet("batch/{batchId}")]
+        public async Task<IActionResult> GetTrainersByBatch(int batchId)
+        {
+            var result = await _service.GetTrainersForBatchAsync(batchId);
+            return Ok(result);
+        }
+
+        [HttpGet("trainer/{trainerId}")]
+        public async Task<IActionResult> GetBatchesByTrainer(int trainerId)
+        {
+            var result = await _service.GetBatchesForTrainerAsync(trainerId);
+            return Ok(result);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Assign([FromBody] AssignTrainerDto dto)
+        {
+            var success = await _service.AssignAsync(dto);
+            if (!success) return Conflict("Trainer already assigned to this batch.");
+            return Ok();
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> Unassign([FromBody] UnassignTrainerDto dto)
+        {
+            var success = await _service.UnassignAsync(dto);
+            if (!success) return NotFound();
+            return NoContent();
+        }
     }
 }

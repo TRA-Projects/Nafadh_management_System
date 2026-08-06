@@ -3,12 +3,40 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Services
 {
     public interface IProjectMemberService
     {
-        // TODO: define business-logic contract methods for this entity
+        // GET PROJECT MEMBERS BY PROJECT ID
+        // Returns all trainees assigned to a specific project
+        Task<List<ProjectMemberDTOs>> GetByProjectAsync(int projectId);
+
+
+
+        // GET PROJECTS BY TRAINEE ID
+        // Returns trainee project participation history
+        Task<List<ProjectMemberDTOs>> GetByTraineeAsync(int traineeId);
+
+
+
+        // ADD PROJECT MEMBER
+        // Adds a trainee to a project team and assigns a role
+        Task<ProjectMemberDTOs> AddAsync(CreateProjectMemberDTO dto);
+
+
+
+        // UPDATE MEMBER ROLE
+        // Changes the member role (Lead/Contributor)
+        Task<bool> UpdateAsync(int id, UpdateProjectMemberDTO dto);
+
+
+
+        // DELETE MEMBER
+        // Removes a trainee from the project team
+        Task<bool> DeleteAsync(int id);
+    
     }
 }

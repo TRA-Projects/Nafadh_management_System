@@ -2,12 +2,15 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
 namespace Nafadh_Backend.Services
 {
+    /// <summary>
+    /// Service implementation handling business logic for Audit Log domain
+    /// تطبيق خدمة سجلات التدقيق الذي يحتوي على منطق العمل ويستدعي الـ Repository
+    /// </summary>
     public class AuditLogService : IAuditLogService
     {
         private readonly IAuditLogRepository _repository;
@@ -17,6 +20,40 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        // 1. Fetch filtered logs via repository
+        public async Task<IEnumerable<NFD_AuditLog>> GetAllLogsAsync(int? userId, string? entityName, DateTime? fromDate, DateTime? toDate)
+        {
+            return await _repository.GetAllAsync(userId, entityName, fromDate, toDate);
+        }
+
+        // 2. Fetch specific log entry by ID
+        public async Task<NFD_AuditLog?> GetLogByIdAsync(int id)
+        {
+            return await _repository.GetByIdAsync(id);
+        }
+
+        // 3. Validate and record new audit log entry
+        public async Task CreateLogAsync(NFD_AuditLog log)
+        {
+            // Business rule: ensure timestamp is recorded accurately
+            if (log.Timestamp == default)
+            {
+                log.Timestamp = DateTime.UtcNow;
+            }
+
+            await _repository.AddAsync(log);
+        }
+
+        // 4. Fetch history for a specific entity
+        public async Task<IEnumerable<NFD_AuditLog>> GetEntityHistoryAsync(string entityName, int entityId)
+        {
+            return await _repository.GetByEntityAsync(entityName, entityId);
+        }
+
+        // 5. Fetch history for a specific user
+        public async Task<IEnumerable<NFD_AuditLog>> GetUserHistoryAsync(int userId)
+        {
+            return await _repository.GetByUserIdAsync(userId);
+        }
     }
 }

@@ -3,8 +3,9 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
-
+using Microsoft.EntityFrameworkCore;
 namespace Nafadh_Backend.Repositories
 {
     public class ReportRepository : IReportRepository
@@ -17,5 +18,41 @@ namespace Nafadh_Backend.Repositories
         }
 
         // TODO: implement data-access contract methods for this entity
+
+        // GET Report by user or type
+        public async Task<List<NFD_Report>> GetReportsAsync(NFD_ReportType? type, int? userId)
+        {
+            //query for filtering in DB 
+            var query = _context.NFD_Reports.AsQueryable();
+
+            if (type.HasValue)
+            {
+                query = query.Where(r => r.Type == type.Value);
+            }
+
+            if (userId.HasValue)
+            {
+                query = query.Where(r => r.GeneratedByUserId == userId.Value);
+            }
+
+            return await query.ToListAsync();
+        }
+
+        // generte report
+        public async Task AddReportAsync(NFD_Report report)
+        {
+            await _context.NFD_Reports.AddAsync(report);
+            await _context.SaveChangesAsync();
+        }
+
+
+        // GET Report/{id}
+        // GET Report/{id}/download
+        public async Task<NFD_Report?> GetReportByIdAsync(int reportId)
+        {
+            return await _context.NFD_Reports
+                .FirstOrDefaultAsync(r => r.ReportId == reportId);
+        }
+
     }
 }

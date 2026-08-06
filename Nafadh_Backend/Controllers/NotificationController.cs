@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -20,5 +21,48 @@ namespace Nafadh_Backend.Controllers
         }
 
         // TODO: implement endpoints for this entity
+        //Get User Notifications
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetByUserId(int userId)
+        {
+            var notifications = await _service.GetByUserIdAsync(userId);
+
+            return Ok(notifications);
+        }
+
+        //Create Notification
+        [HttpPost]
+        public async Task<IActionResult> Create(CreateNotificationDTO dto)
+        {
+            await _service.CreateAsync(dto);
+
+            return Ok("Notification created successfully.");
+        }
+
+        //Mark Notification As Read
+        [HttpPut("{id}/read")]
+        public async Task<IActionResult> MarkAsRead(int id)
+        {
+            await _service.MarkAsReadAsync(id);
+
+            return Ok("Notification marked as read.");
+        }
+        //Mark All Notifications As Read
+        [HttpPut("user/{userId}/read-all")]
+        public async Task<IActionResult> MarkAllAsRead(int userId)
+        {
+            await _service.MarkAllAsReadAsync(userId);
+
+            return Ok("All notifications marked as read.");
+        }
+
+        //Get Unread Count
+        [HttpGet("user/{userId}/unread-count")]
+        public async Task<IActionResult> GetUnreadCount(int userId)
+        {
+            var count = await _service.GetUnreadCountAsync(userId);
+
+            return Ok(count);
+        }
     }
 }

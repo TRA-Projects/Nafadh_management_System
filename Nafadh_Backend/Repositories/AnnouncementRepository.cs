@@ -3,8 +3,9 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
-
+using Microsoft.EntityFrameworkCore;
 namespace Nafadh_Backend.Repositories
 {
     public class AnnouncementRepository : IAnnouncementRepository
@@ -17,5 +18,68 @@ namespace Nafadh_Backend.Repositories
         }
 
         // TODO: implement data-access contract methods for this entity
+
+        // GET Announcements by Scope
+        public async Task<List<NFD_Announcement>> GetByScopeAsync(
+            NFD_AnnouncementScopeType scopeType,
+            int? scopeId)
+        {
+            return await _context.NFD_Announcements
+    .Where(a =>
+        a.ScopeType == scopeType &&
+        (scopeId == null || a.ScopeId == scopeId))
+    .OrderByDescending(a => a.Date)
+    .ToListAsync();
+        }
+
+
+
+
+        // GET Announcement By Id
+        public async Task<NFD_Announcement?> GetByIdAsync(int id)
+        {
+            return await _context.NFD_Announcements
+                .FirstOrDefaultAsync(a =>
+                    a.AnnouncementId == id);
+        }
+
+
+
+
+
+        // CREATE Announcement
+        public async Task AddAsync(NFD_Announcement announcement)
+        {
+            await _context.NFD_Announcements
+                .AddAsync(announcement);
+
+            await _context.SaveChangesAsync();
+        }
+
+
+
+
+
+        // UPDATE Announcement
+        public async Task UpdateAsync(NFD_Announcement announcement)
+        {
+            _context.NFD_Announcements
+                .Update(announcement);
+
+            await _context.SaveChangesAsync();
+        }
+
+
+
+
+
+        // DELETE Announcement
+        public async Task DeleteAsync(NFD_Announcement announcement)
+        {
+            _context.NFD_Announcements
+                .Remove(announcement);
+
+            await _context.SaveChangesAsync();
+        }
     }
 }

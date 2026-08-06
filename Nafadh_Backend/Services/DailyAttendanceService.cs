@@ -5,6 +5,7 @@
 
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using static Nafadh_Backend.DTOs.DailyAttendanceDto;
 
 namespace Nafadh_Backend.Services
 {
@@ -17,6 +18,126 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public async Task<DailyAttendanceReadDto?> GetByIdAsync(int id)
+        {
+            NFD_DailyAttendance? entity = await _repository.GetByIdAsync(id);
+            if (entity == null)
+                return null;
+
+            return MapToReadDto(entity);
+        }
+
+        public async Task<List<DailyAttendanceReadDto>> GetByEnrollmentIdAsync(int enrollmentId)
+        {
+            List<NFD_DailyAttendance> entities = await _repository.GetByEnrollmentIdAsync(enrollmentId);
+            List<DailyAttendanceReadDto> result = new List<DailyAttendanceReadDto>();
+
+            foreach (NFD_DailyAttendance entity in entities)
+            {
+                result.Add(MapToReadDto(entity));
+            }
+
+            return result;
+        }
+
+        public async Task<DailyAttendanceReadDto> CreateAsync(CreateDailyAttendanceDto dto)
+        {
+            // قاعدة عمل: لا يجوز تسجيل حضور مرتين لنفس المتدرب بنفس اليوم
+            List<NFD_DailyAttendance> existingRecords = await _repository.GetByEnrollmentIdAsync(dto.EnrollmentId);
+            bool alreadyCheckedIn = existingRecords.Any(r => r.Date.Date == dto.Date.Date);
+            if (alreadyCheckedIn)
+                throw new InvalidOperationException("Trainee already checked in for this date.");
+
+            NFD_DailyAttendance entity = new NFD_DailyAttendance
+            {
+                EnrollmentId = dto.EnrollmentId,
+                Date = dto.Date,
+                CheckInTime = dto.CheckInTime,
+                CheckOutTime = dto.CheckOutTime,
+                Status = dto.Status,
+                IsLate = dto.IsLate,
+                Note = dto.Note
+            };
+
+            NFD_DailyAttendance created = await _repository.AddAsync(entity);
+            return MapToReadDto(created);
+        }
+
+        public async Task<bool> CheckOutAsync(int id, CheckOutDailyAttendanceDto dto)
+        {
+            NFD_DailyAttendance? entity = await _repository.GetByIdAsync(id);
+            if (entity == null)
+                return false;
+
+            // قاعدة عمل: لا يجوز تسجيل انصراف قبل تسجيل حضور
+            if (string.IsNullOrEmpty(entity.CheckInTime))
+                throw new InvalidOperationException("Cannot check out before checking in.");
+
+            entity.CheckOutTime = dto.CheckOutTime;
+            await _repository.UpdateAsync(entity);
+            return true;
+        }
+
+        public async Task<bool> UpdateAsync(int id, UpdateDailyAttendanceDto dto)
+        {
+            NFD_DailyAttendance? entity = await _repository.GetByIdAsync(id);
+            if (entity == null)
+                return false;
+
+            entity.CheckInTime = dto.CheckInTime;
+            entity.CheckOutTime = dto.CheckOutTime;
+            entity.Status = dto.Status;
+            entity.IsLate = dto.IsLate;
+            entity.Note = dto.Note;
+
+            await _repository.UpdateAsync(entity);
+            return true;
+        }
+
+        public async Task<List<DailyAttendanceReadDto>> GetTodayByCompanyIdAsync(int companyId)
+        {
+            List<NFD_DailyAttendance> entities = await _repository.GetTodayByCompanyIdAsync(companyId, DateTime.Today);
+            List<DailyAttendanceReadDto> result = new List<DailyAttendanceReadDto>();
+
+            foreach (NFD_DailyAttendance entity in entities)
+            {
+                result.Add(MapToReadDto(entity));
+            }
+
+            return result;
+        }
+
+        public async Task<ComplianceRateDto> GetComplianceRateAsync(int enrollmentId)
+        {
+            List<NFD_DailyAttendance> records = await _repository.GetByEnrollmentIdAsync(enrollmentId);
+
+            int totalDays = records.Count;
+            int presentDays = records.Count(r => r.Status == Enums.NFD_AttendanceStatus.Present);
+            decimal percentage = totalDays == 0 ? 0 : Math.Round((decimal)presentDays / totalDays * 100, 2);
+
+            return new ComplianceRateDto
+            {
+                EnrollmentId = enrollmentId,
+                TotalDays = totalDays,
+                PresentDays = presentDays,
+                CompliancePercentage = percentage
+            };
+        }
+
+        // دالة مساعدة خاصة لتحويل الـ Entity إلى Dto (تفادي تكرار نفس الكود بكل دالة)
+        private DailyAttendanceReadDto MapToReadDto(NFD_DailyAttendance entity)
+        {
+            return new DailyAttendanceReadDto
+            {
+                DailyAttendanceId = entity.DailyAttendanceId,
+                EnrollmentId = entity.EnrollmentId,
+                Date = entity.Date,
+                CheckInTime = entity.CheckInTime,
+                CheckOutTime = entity.CheckOutTime,
+                Status = entity.Status,
+                IsLate = entity.IsLate,
+                Note = entity.Note
+            };
+        }
     }
 }

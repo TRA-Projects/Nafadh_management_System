@@ -3,12 +3,35 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Services
 {
     public interface ITraineeModuleProgressService
-    {
-        // TODO: define business-logic contract methods for this entity
+    { // Returns all module progress records for a specific trainee.
+       
+        Task<IEnumerable<TraineeModuleProgressDto>> GetByTraineeIdAsync(int traineeId);
+
+
+        // Marks a module as completed by the authenticated trainee.
+     
+        Task<TraineeModuleProgressDto> CompleteModuleAsync( CompleteModuleDto dto,
+            int traineeId);
+
+
+        // Updates the status of an existing progress record.
+  
+        Task<bool> UpdateAsync( int id,  UpdateTraineeModuleProgressDto dto);
+
+
+        // Calculates the trainee's overall completion percentage.
+    
+        Task<TraineeProgressPercentageDto> GetProgressPercentageAsync(int traineeId);
+
+
+        // Returns progress records for all trainees in a specific module.
+     
+        Task<IEnumerable<TraineeModuleProgressDto>> GetByModuleIdAsync(int moduleId);
     }
 }

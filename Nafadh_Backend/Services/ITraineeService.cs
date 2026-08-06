@@ -4,11 +4,32 @@
 // </auto-generated>
 
 using Nafadh_Backend.Models;
+using Nafadh_Backend.Enums;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Nafadh_Backend.Services
 {
     public interface ITraineeService
     {
-        // TODO: define business-logic contract methods for this entity
+        Task<(List<NFD_Trainee> Items, int TotalCount)> GetAllAsync(
+            int? companyId, NFD_TraineeStatus? status, string? university, string? searchTerm,
+            int pageNumber, int pageSize);
+
+        Task<NFD_Trainee?> GetByIdAsync(int id);
+
+        Task<NFD_Trainee?> GetByIdWithDashboardDataAsync(int id);
+
+        Task<bool> UserHasTraineeProfileAsync(int userId);
+
+        Task<bool> CompanyExistsAsync(int companyId);
+
+        Task AddAsync(NFD_Trainee trainee);
+
+        Task AddRangeAsync(IEnumerable<NFD_Trainee> trainees);
+
+        void Update(NFD_Trainee trainee);
+
+        Task<bool> SaveChangesAsync();
     }
 }

@@ -1,26 +1,31 @@
-﻿//using Nafadh_Backend.Enums;
 
-//namespace Nafadh_Backend.DTOs.CompanyPayment;
-////{
-////    //public class CreateCompanyPaymentDto
-////    //{
-////    //    public decimal TotalAmount { get; set; }
-////    //    public int CompanyId { get; set; }
-////    //    public int BatchId { get; set; }
-////    //}
+using System.ComponentModel.DataAnnotations;
 
-////    //public class UpdateCompanyPaymentStatusDto
-////    //{
-////    //    public NFD_PaymentStatus Status { get; set; }
-////    //}
+namespace Nafadh_Backend.DTOs
+{
+  
+    /// Payload for POST /api/User/register.
+   
+    public class UserRegisterationDTO
+    {
+        [Required]
+        [MaxLength(150)]
+        public string FullName { get; set; } = string.Empty;
 
-////    //public class CompanyPaymentResponseDto
-////    //{
-////    //    public int CompanyPaymentId { get; set; }
-////    //    public decimal TotalAmount { get; set; }
-////    //    public NFD_PaymentStatus Status { get; set; }
-////    //    public int CompanyId { get; set; }
-////    //    public string? CompanyName { get; set; }
-////    //    public int BatchId { get; set; }
-////    //}
-////}
+        [Required]
+        [EmailAddress]
+        [MaxLength(150)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [MinLength(8, ErrorMessage = "Password must be at least 8 characters long.")]
+        public string Password { get; set; } = string.Empty;
+
+        [MaxLength(20)]
+        public string? Phone { get; set; }
+
+       
+        [Required]
+        public int RoleId { get; set; }
+    }
+}

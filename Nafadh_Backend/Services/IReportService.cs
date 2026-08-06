@@ -3,12 +3,18 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
+using static Nafadh_Backend.DTOs.ReportDTO;
 
 namespace Nafadh_Backend.Services
 {
     public interface IReportService
     {
         // TODO: define business-logic contract methods for this entity
+        Task<List<ReportOutputDTO>> GetReportsAsync(NFD_ReportType? type, int? userId);
+        Task<ReportOutputDTO> GenerateReportAsync(ReportInputDTO dto);
+        Task<ReportOutputDTO?> GetReportByIdAsync(int reportId);
+        Task<string?> DownloadReportAsync(int reportId);
     }
 }

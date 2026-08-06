@@ -5,6 +5,12 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Services;
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Models;
+using Nafadh_Backend.Enums;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -19,6 +25,105 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET: api/trainee
+        [HttpGet]
+        public async Task<IActionResult> GetAll(
+            [FromQuery] int? companyId,
+            [FromQuery] NFD_TraineeStatus? status,
+            [FromQuery] string? university,
+            [FromQuery] string? searchTerm,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            var (items, total) = await _service.GetAllAsync(companyId, status, university, searchTerm, pageNumber, pageSize);
+
+            var dtos = items.Select(t => new TraineeListItemDto
+            {
+                TraineeId = t.TraineeId,
+                FullName = t.User?.FullName,
+                University = t.University,
+                Major = t.Major,
+                Status = t.Status,
+                CompanyId = t.CompanyId,
+                CompanyName = t.Company?.CompanyName
+            }).ToList();
+
+            return Ok(new { Items = dtos, TotalCount = total });
+        }
+
+        // GET: api/trainee/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var t = await _service.GetByIdWithDashboardDataAsync(id);
+            if (t == null) return NotFound();
+
+            var dto = new TraineeProfileDto
+            {
+                TraineeId = t.TraineeId,
+                FullName = t.User?.FullName,
+                Email = t.User?.Email,
+                NationalId = t.NationalId,
+                University = t.University,
+                Major = t.Major,
+                AcademicLevel = t.AcademicLevel,
+                Skills = t.Skills,
+                ResumeUrl = t.ResumeUrl,
+                Status = t.Status,
+                CompanyId = t.CompanyId,
+                CompanyName = t.Company?.CompanyName
+            };
+
+            return Ok(dto);
+        }
+
+        // PUT: api/trainee/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] TraineeProfileDto update)
+        {
+            if (id != update.TraineeId) return BadRequest("Id mismatch.");
+
+            var existing = await _service.GetByIdAsync(id);
+            if (existing == null) return NotFound();
+
+            // apply allowed updates
+            existing.NationalId = update.NationalId;
+            existing.University = update.University;
+            existing.Major = update.Major;
+            existing.AcademicLevel = update.AcademicLevel;
+            existing.Skills = update.Skills;
+            existing.ResumeUrl = update.ResumeUrl;
+            existing.Status = update.Status;
+            existing.CompanyId = update.CompanyId;
+
+            if (existing.CompanyId.HasValue)
+            {
+                var exists = await _service.CompanyExistsAsync(existing.CompanyId.Value);
+                if (!exists) return BadRequest("Company does not exist.");
+            }
+
+            _service.Update(existing);
+            var saved = await _service.SaveChangesAsync();
+            if (!saved) return StatusCode(500, "Failed to save updates.");
+
+            return NoContent();
+        }
+
+        // PATCH: api/trainee/{id}/status
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] TraineeStatusUpdateDto dto)
+        {
+            var existing = await _service.GetByIdAsync(id);
+            if (existing == null) return NotFound();
+
+            existing.Status = dto.Status;
+            // reason is not persisted in current model; can be logged or extended later
+
+            _service.Update(existing);
+            var saved = await _service.SaveChangesAsync();
+            if (!saved) return StatusCode(500, "Failed to update status.");
+
+            return NoContent();
+        }
     }
 }

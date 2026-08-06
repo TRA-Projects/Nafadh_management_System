@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +20,84 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET: api/ProjectMember/project/{projectId}
+        // Returns team roster for a specific project
+        [HttpGet("project/{projectId}")]
+        public async Task<IActionResult> GetByProject(int projectId)
+        {
+            var members = await _service.GetByProjectAsync(projectId);
+
+            return Ok(members);
+        }
+
+
+
+
+        // POST: api/ProjectMember
+        // Adds a trainee to a project team and assigns a role
+        [HttpPost]
+        public async Task<IActionResult> Add(
+            CreateProjectMemberDTO dto)
+        {
+            var member = await _service.AddAsync(dto);
+
+            return Ok(member);
+        }
+
+
+
+        // PUT: api/ProjectMember/{id}
+        // Changes the role of an existing project member
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(
+            int id,
+            UpdateProjectMemberDTO dto)
+        {
+            var result = await _service.UpdateAsync(id, dto);
+
+
+            if (!result)
+            {
+                return NotFound("Project member not found");
+            }
+
+
+            return Ok("Member role updated successfully");
+        }
+
+
+
+        // DELETE: api/ProjectMember/{id}
+        // Removes a trainee from the project team
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var result = await _service.DeleteAsync(id);
+
+
+            if (!result)
+            {
+                return NotFound("Project member not found");
+            }
+
+
+            return Ok("Member removed successfully");
+        }
+
+
+
+
+        // GET: api/ProjectMember/trainee/{traineeId}
+        // Returns trainee project participation history
+        [HttpGet("trainee/{traineeId}")]
+        public async Task<IActionResult> GetByTrainee(int traineeId)
+        {
+            var projects = await _service.GetByTraineeAsync(traineeId);
+
+            return Ok(projects);
+        }
+
     }
 }
+
+        

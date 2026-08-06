@@ -3,22 +3,123 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
+using System.Security.Claims;
 
 namespace Nafadh_Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+   
     public class TrainingMaterialController : ControllerBase
     {
         private readonly ITrainingMaterialService _service;
-
+        // Constructor
         public TrainingMaterialController(ITrainingMaterialService service)
         {
             _service = service;
         }
+        // -------------------------------------------------------
+        // GET: api/TrainingMaterial/lesson/{lessonId}
+        // Returns all materials attached to a lesson.
+        // -------------------------------------------------------
+        [HttpGet("lesson/{lessonId}")]
+        public async Task<IActionResult> GetByLesson(int lessonId)
+        {
+            var materials = await _service.GetByLessonIdAsync(lessonId);
 
-        // TODO: implement endpoints for this entity
+            return Ok(materials);
+        }
+
+        // -------------------------------------------------------
+        // POST: api/TrainingMaterial
+        // Creates a new training material.
+        // -------------------------------------------------------
+        [HttpPost]
+        [Authorize(Roles = "Trainer,Admin")]
+        public async Task<IActionResult> Create(CreateTrainingMaterialDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Get authenticated user ID from JWT token
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+            {
+                return Unauthorized();
+            }
+
+            int userId = int.Parse(userIdClaim.Value);
+            var result = await _service.CreateAsync(dto, userId);
+
+            return CreatedAtAction(
+                nameof(GetDownloadUrl),
+                new { id = result.MaterialId },
+                result);
+        }
+
+        // -------------------------------------------------------
+        // PUT: api/TrainingMaterial/{id}
+        // Updates training material information.
+        // -------------------------------------------------------
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Trainer,Admin")]
+        public async Task<IActionResult> Update(int id, UpdateTrainingMaterialDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var updated = await _service.UpdateAsync(id, dto);
+
+            if (!updated)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+
+        // -------------------------------------------------------
+        // DELETE: api/TrainingMaterial/{id}
+        // Deletes a training material.
+        // -------------------------------------------------------
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Trainer,Admin")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var deleted = await _service.DeleteAsync(id);
+
+            if (!deleted)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+
+        // -------------------------------------------------------
+        // GET: api/TrainingMaterial/{id}/download
+        // Returns file URL for download or streaming.
+        // -------------------------------------------------------
+        [HttpGet("{id}/download")]
+        public async Task<IActionResult> GetDownloadUrl(int id)
+        {
+            var url = await _service.GetDownloadUrlAsync(id);
+
+            if (url == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(new {  DownloadUrl = url });
+        }
     }
 }

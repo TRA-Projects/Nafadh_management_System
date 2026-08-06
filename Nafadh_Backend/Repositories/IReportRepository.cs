@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -10,5 +11,8 @@ namespace Nafadh_Backend.Repositories
     public interface IReportRepository
     {
         // TODO: define data-access contract methods for this entity
+        Task<List<NFD_Report>> GetReportsAsync(NFD_ReportType? type, int? userId);
+        Task AddReportAsync(NFD_Report report);
+        Task<NFD_Report?> GetReportByIdAsync(int reportId);
     }
 }

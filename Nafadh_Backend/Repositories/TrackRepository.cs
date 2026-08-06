@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -16,6 +18,49 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        public async Task<IEnumerable<NFD_Track>> GetAllAsync()
+        {
+            return await _context.NFD_Tracks
+                .AsNoTracking()
+                .ToListAsync();
+        }
+        public async Task<NFD_Track> GetByIdAsync(int id)
+        {
+            return await _context.NFD_Tracks
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.TrackId == id);
+        }
+
+        public async Task<NFD_Track> AddAsync(NFD_Track track)
+        {
+            _context.NFD_Tracks.Add(track);
+            await _context.SaveChangesAsync();
+            return track;
+        }
+
+        public async Task UpdateAsync(NFD_Track track)
+        {
+            _context.NFD_Tracks.Update(track);
+            await _context.SaveChangesAsync();
+        }
+        public async Task DeleteAsync(NFD_Track track)
+        {
+            // Soft delete: archive instead of removing the row, to keep Program/Enrollment relations intact
+            track.Status = NFD_TrackStatus.Archived;
+            _context.NFD_Tracks.Update(track);
+            await _context.SaveChangesAsync();
+        }
+        public async Task<bool> ExistsAsync(int id)
+        {
+            // AnyAsync only checks existence (SELECT 1 ... WHERE TrackId = @id), no columns fetched
+            return await _context.NFD_Tracks.AnyAsync(t => t.TrackId == id);
+        }
+        public async Task<IEnumerable<NFD_Program>> GetProgramsByTrackIdAsync(int trackId)
+        {
+            return await _context.NFD_Programs
+                .AsNoTracking()
+                .Where(p => p.TrackId == trackId)
+                .ToListAsync();
+        }
     }
 }

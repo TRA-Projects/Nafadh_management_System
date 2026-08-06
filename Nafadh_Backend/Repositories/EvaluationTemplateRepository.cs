@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -17,5 +19,49 @@ namespace Nafadh_Backend.Repositories
         }
 
         // TODO: implement data-access contract methods for this entity
+
+        //List templates (filter by type) 
+        public async Task<List<NFD_EvaluationTemplate>> GetTemplatesAsync(NFD_EvaluationType? type)
+        {
+            var query = _context.NFD_EvaluationTemplates
+                .Include(t => t.EvaluationCriteria)
+                .AsQueryable(); // filter inside DB not in program (faster and more efficient)
+
+            if (type.HasValue) //HasValue => return true or fale (null=> false) 
+            {
+                query = query.Where(t => t.Type == type.Value); // Value => which written 
+            }
+
+            return await query.ToListAsync();
+        }
+
+        //Template details with criteria => {id}
+        public async Task<NFD_EvaluationTemplate?> GetTemplateByIdAsync(int templateId)
+        {
+            return await _context.NFD_EvaluationTemplates
+                .Include(t => t.EvaluationCriteria)
+                .FirstOrDefaultAsync(t => t.TemplateId == templateId);
+        }
+
+        //Create a reusable scoring form 
+        public async Task AddTemplateAsync(NFD_EvaluationTemplate template)
+        {
+            await _context.NFD_EvaluationTemplates.AddAsync(template);
+            await _context.SaveChangesAsync();
+        }
+
+        //Update template
+        public async Task UpdateTemplateAsync(NFD_EvaluationTemplate template)
+        {
+            _context.NFD_EvaluationTemplates.Update(template);
+            await _context.SaveChangesAsync();
+        }
+
+        // Remove a template
+        public async Task DeleteTemplateAsync(NFD_EvaluationTemplate template)
+        {
+            _context.NFD_EvaluationTemplates.Remove(template);
+            await _context.SaveChangesAsync();
+        }
     }
 }

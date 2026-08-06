@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -18,5 +20,157 @@ namespace Nafadh_Backend.Services
         }
 
         // TODO: implement business-logic contract methods for this entity
+
+        // Get announcements by scope
+        public async Task<List<AnnouncementDTO>> GetByScopeAsync(
+            NFD_AnnouncementScopeType scopeType,
+            int? scopeId)
+        {
+
+            var announcements =
+                await _repository.GetByScopeAsync(
+                    scopeType,
+                    scopeId);
+
+
+
+            return announcements
+                .Select(a => new AnnouncementDTO
+                {
+                    AnnouncementId = a.AnnouncementId,
+                    ScopeType = a.ScopeType,
+                    ScopeId = a.ScopeId,
+                    Message = a.Message,
+                    Date = a.Date,
+                    CreatedByUserId = a.CreatedByUserId
+
+                })
+                .ToList();
+
+        }
+
+        // =====================================================
+        // Get announcement by id
+        public async Task<AnnouncementDTO> GetByIdAsync(int id)
+        {
+
+            var announcement =
+                await _repository.GetByIdAsync(id);
+
+
+
+            if (announcement == null)
+            {
+                throw new KeyNotFoundException(
+                    "Announcement not found");
+            }
+
+
+
+            return new AnnouncementDTO
+            {
+                AnnouncementId = announcement.AnnouncementId,
+                ScopeType = announcement.ScopeType,
+                ScopeId = announcement.ScopeId,
+                Message = announcement.Message,
+                Date = announcement.Date,
+                CreatedByUserId = announcement.CreatedByUserId
+            };
+
+        }
+
+       
+        // Create announcement
+        // =====================================================
+        public async Task CreateAsync(
+            CreateAnnouncementDTO dto)
+        {
+
+            var announcement = new NFD_Announcement
+            {
+
+                ScopeType = dto.ScopeType,
+
+                ScopeId = dto.ScopeId,
+
+                Message = dto.Message,
+
+                Date = DateTime.Now,
+
+                CreatedByUserId = dto.CreatedByUserId
+
+            };
+
+
+
+            await _repository
+                .AddAsync(announcement);
+
+        }
+
+        // =====================================================
+        // Update announcement
+        public async Task UpdateAsync(
+            int id,
+            UpdateAnnouncementDTO dto)
+        {
+
+            var announcement =
+                await _repository.GetByIdAsync(id);
+
+
+
+            if (announcement == null)
+            {
+                throw new KeyNotFoundException(
+                    "Announcement not found");
+            }
+
+
+
+            announcement.ScopeType =
+                dto.ScopeType;
+
+
+            announcement.ScopeId =
+                dto.ScopeId;
+
+
+            announcement.Message =
+                dto.Message;
+
+
+
+
+            await _repository
+                .UpdateAsync(announcement);
+
+        }
+
+
+        // =====================================================
+        // Delete announcement
+        public async Task DeleteAsync(int id)
+        {
+
+            var announcement =
+                await _repository.GetByIdAsync(id);
+
+
+
+            if (announcement == null)
+            {
+                throw new KeyNotFoundException(
+                    "Announcement not found");
+            }
+
+
+
+            await _repository
+                .DeleteAsync(announcement);
+
+        }
+
     }
+
 }

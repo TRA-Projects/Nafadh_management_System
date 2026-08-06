@@ -3,8 +3,10 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using static Nafadh_Backend.DTOs.CertificateDTO;
 
 namespace Nafadh_Backend.Services
 {
@@ -18,5 +20,89 @@ namespace Nafadh_Backend.Services
         }
 
         // TODO: implement business-logic contract methods for this entity
+
+        // GET certificate by enrollment
+        public async Task<CertificateOutputDTO?> GetCertificateByEnrollmentIdAsync(int enrollmentId)
+        {
+            var certificate =
+                await _repository.GetCertificateByEnrollmentIdAsync(enrollmentId);
+
+
+            if (certificate == null)
+                return null;
+
+
+            return new CertificateOutputDTO
+            {
+                CertificateId = certificate.CertificateId,
+                EnrollmentId = certificate.EnrollmentId,
+                IssueDate = certificate.IssueDate,
+                Type = certificate.Type,
+                FileUrl= certificate.FileUrl
+            };
+
+        }
+
+        // Create certificate
+        public async Task<CertificateOutputDTO> AddCertificateAsync(CertificateInputDTO dto)
+        {
+
+            NFD_Certificate certificate = new NFD_Certificate
+            {
+                Type = dto.Type,
+                IssueDate = dto.IssueDate,
+                FileUrl = dto.FileUrl,
+                EnrollmentId = dto.EnrollmentId
+            };
+
+
+            await _repository.AddCertificateAsync(certificate);
+
+
+            return new CertificateOutputDTO
+            {
+                CertificateId = certificate.CertificateId,
+                EnrollmentId = certificate.EnrollmentId,
+                IssueDate = certificate.IssueDate,
+                Type = certificate.Type,
+                FileUrl = certificate.FileUrl
+            };
+        }
+
+
+        // Download certificate file
+        public async Task<byte[]?> DownloadCertificateAsync(int id)
+        {
+            var certificate = await _repository.GetCertificateByIdAsync(id);
+
+            if (certificate == null)
+                return null;
+
+            if (string.IsNullOrEmpty(certificate.FileUrl))
+                return null;
+
+            // Convert PDF file into byte array
+            return await File.ReadAllBytesAsync(certificate.FileUrl);
+        }
+        // Get all certificates for trainee
+        public async Task<List<CertificateOutputDTO>> GetCertificatesByTraineeIdAsync(int traineeId)
+        {
+
+            var certificates =await _repository.GetCertificatesByTraineeIdAsync(traineeId);
+
+
+            return certificates.Select(c => new CertificateOutputDTO
+            {
+                CertificateId = c.CertificateId,
+                EnrollmentId = c.EnrollmentId,
+                IssueDate = c.IssueDate,
+                Type = c.Type,
+                FileUrl = c.FileUrl
+
+            }).ToList();
+
+        }
+
+
     }
 }

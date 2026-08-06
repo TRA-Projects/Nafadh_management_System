@@ -9,6 +9,24 @@ namespace Nafadh_Backend.Repositories
 {
     public interface ITrainingMaterialRepository
     {
-        // TODO: define data-access contract methods for this entity
+        // Returns all materials attached to a specific lesson
+        Task<IEnumerable<NFD_TrainingMaterial>> GetByLessonIdAsync(int lessonId);
+
+        // Returns a single training material by its ID
+        Task<NFD_TrainingMaterial?> GetByIdAsync(int id);
+
+        // Adds a new training material
+        Task<NFD_TrainingMaterial> CreateAsync(NFD_TrainingMaterial material);
+
+        // Updates an existing training material
+        Task UpdateAsync(NFD_TrainingMaterial material);
+
+        // Deletes a training material
+        Task DeleteAsync(NFD_TrainingMaterial material);
+
+        // Checks whether a material exists
+        Task<bool> ExistsAsync(int id);
+
+      
     }
 }

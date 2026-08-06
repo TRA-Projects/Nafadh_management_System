@@ -4,7 +4,7 @@
 // </auto-generated>
 
 using Nafadh_Backend.Models;
-
+using Microsoft.EntityFrameworkCore;
 namespace Nafadh_Backend.Repositories
 {
     public class CertificateRepository : ICertificateRepository
@@ -17,5 +17,33 @@ namespace Nafadh_Backend.Repositories
         }
 
         // TODO: implement data-access contract methods for this entity
+
+
+        public async Task<NFD_Certificate?> GetCertificateByEnrollmentIdAsync(int enrollmentId)
+        {
+            return await _context.NFD_Certificates
+                .FirstOrDefaultAsync(c => c.EnrollmentId == enrollmentId);
+        }
+
+        public async Task AddCertificateAsync(NFD_Certificate certificate)
+        {
+            await _context.NFD_Certificates.AddAsync(certificate);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<NFD_Certificate?> GetCertificateByIdAsync(int certificateId)
+        {
+            return await _context.NFD_Certificates
+                .FindAsync(certificateId);
+        }
+        public async Task<List<NFD_Certificate>> GetCertificatesByTraineeIdAsync(int traineeId)
+        {
+            return await _context.NFD_Certificates
+                .Include(c => c.Enrollment)
+                .Where(c => c.Enrollment.TraineeId == traineeId)
+                .ToListAsync();
+        }
+
+
     }
 }

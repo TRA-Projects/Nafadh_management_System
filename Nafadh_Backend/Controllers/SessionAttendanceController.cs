@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +20,41 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        [HttpGet("session/{sessionId}")]
+        public async Task<IActionResult> GetBySession(int sessionId)
+        {
+            var result = await _service.GetBySessionIdAsync(sessionId);
+            return Ok(result);
+        }
+
+        [HttpPost("mark")]
+        public async Task<IActionResult> MarkBulk([FromBody] MarkAttendanceBulkDto dto)
+        {
+            var success = await _service.MarkBulkAsync(dto);
+            if (!success) return BadRequest("No attendance records provided.");
+            return Ok();
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateSessionAttendanceDto dto)
+        {
+            var success = await _service.UpdateAsync(id, dto);
+            if (!success) return NotFound();
+            return NoContent();
+        }
+
+        [HttpGet("trainee/{traineeId}")]
+        public async Task<IActionResult> GetByTrainee(int traineeId)
+        {
+            var result = await _service.GetHistoryForTraineeAsync(traineeId);
+            return Ok(result);
+        }
+
+        [HttpGet("session/{sessionId}/rate")]
+        public async Task<IActionResult> GetRate(int sessionId)
+        {
+            var result = await _service.GetRateAsync(sessionId);
+            return Ok(result);
+        }
     }
 }

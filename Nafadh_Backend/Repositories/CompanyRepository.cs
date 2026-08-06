@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -17,5 +18,20 @@ namespace Nafadh_Backend.Repositories
         }
 
         // TODO: implement data-access contract methods for this entity
+        public async Task<NFD_Company?> GetCompanyByIdAsync(int companyId)
+        {
+            return await _context.NFD_Companies.FindAsync(companyId);
+        }
+
+        public async Task<IEnumerable<NFD_Company>> GetAllCompaniesAsync()
+        {
+            return await _context.NFD_Companies.ToListAsync();
+        }
+
+        public async Task AddCompanyAsync(NFD_Company company)
+        {
+            await _context.NFD_Companies.AddAsync(company);
+            await _context.SaveChangesAsync();
+        }
     }
 }
