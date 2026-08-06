@@ -77,10 +77,23 @@ namespace Nafadh_Backend.Repositories
                 .AnyAsync(p => p.ProgressId == id);
         }
 
-        // Saves all pending changes.
-        public async Task SaveChangesAsync()
+      
+        // Calculates completion percentage for a trainee.
+        public async Task<double> GetCompletionPercentageAsync(int traineeId)
         {
-            await _context.SaveChangesAsync();
+            var totalModules = await _context.NFD_Modules.CountAsync();
+
+            if (totalModules == 0)
+            {
+                return 0;
+            }
+
+            var completedModules = await _context.NFD_TraineeModuleProgresses
+                .CountAsync(p =>
+                    p.TraineeId == traineeId &&
+                    p.Status == Enums.NFD_ModuleProgressStatus.Completed);
+
+            return (double)completedModules / totalModules * 100;
         }
     }
 }

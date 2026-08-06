@@ -29,6 +29,7 @@ namespace Nafadh_Backend.Repositories
 
         // Checks whether a progress record exists.
         Task<bool> ExistsAsync(int id);
-
+        // Calculates trainee completion percentage.
+        Task<double> GetCompletionPercentageAsync(int traineeId);
     }
 }
