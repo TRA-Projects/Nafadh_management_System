@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -10,5 +11,14 @@ namespace Nafadh_Backend.Repositories
     public interface IEvaluationTemplateRepository
     {
         // TODO: define data-access contract methods for this entity
+        Task<List<NFD_EvaluationTemplate>> GetTemplatesAsync(NFD_EvaluationType? type);
+
+        Task<NFD_EvaluationTemplate?> GetTemplateByIdAsync(int templateId);
+
+        Task AddTemplateAsync(NFD_EvaluationTemplate template);
+
+        Task UpdateTemplateAsync(NFD_EvaluationTemplate template);
+
+        Task DeleteTemplateAsync(NFD_EvaluationTemplate template);
     }
 }
