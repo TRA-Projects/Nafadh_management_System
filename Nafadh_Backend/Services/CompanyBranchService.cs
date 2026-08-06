@@ -75,7 +75,7 @@ namespace Nafadh_Backend.Services
             return MapToOutputDTO(branch);
         }
 
-        // Delete company branch
+        /// Delete company branch
         public async Task<bool>
             DeleteCompanyBranchAsync(int branchId)
         {
