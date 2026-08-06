@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -14,11 +15,64 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly ICompanyProgramService _service;
 
-        public CompanyProgramController(ICompanyProgramService service)
+        public CompanyProgramController(
+            ICompanyProgramService service)
         {
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET: api/CompanyProgram/company/{companyId}
+        // Programs a company is eligible to host
+        [HttpGet("company/{companyId}")]
+        public async Task<IActionResult> GetByCompanyId(
+            int companyId)
+        {
+            var result =
+                await _service.GetByCompanyIdAsync(companyId);
+
+            return Ok(result);
+        }
+
+        // GET: api/CompanyProgram/program/{programId}
+        // Companies eligible to host a given program
+        [HttpGet("program/{programId}")]
+        public async Task<IActionResult> GetByProgramId(
+            int programId)
+        {
+            var result =
+                await _service.GetByProgramIdAsync(programId);
+
+            return Ok(result);
+        }
+
+        // POST: api/CompanyProgram
+        // Qualify a company for a program
+        [HttpPost]
+        public async Task<IActionResult> Add(
+            [FromBody] NFD_CompanyProgramInputDTO dto)
+        {
+            var result =
+                await _service.AddAsync(dto);
+
+            return Ok(result);
+        }
+
+        // DELETE: api/CompanyProgram?companyId=1&programId=2
+        // Remove a company's eligibility for a program
+        [HttpDelete]
+        public async Task<IActionResult> Delete(
+            [FromQuery] int companyId,
+            [FromQuery] int programId)
+        {
+            var deleted =
+                await _service.DeleteAsync(
+                    companyId,
+                    programId);
+
+            if (!deleted)
+                return NotFound();
+
+            return NoContent();
+        }
     }
 }
