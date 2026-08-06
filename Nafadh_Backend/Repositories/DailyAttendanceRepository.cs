@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -16,6 +17,42 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        
+        public async Task<List<NFD_DailyAttendance>> GetByEnrollmentIdAsync(int enrollmentId)
+        {
+            List<NFD_DailyAttendance> result = await _context.NFD_DailyAttendances
+                .Where(d => d.EnrollmentId == enrollmentId)
+                .ToListAsync();
+            return result;
+        }
+
+        public async Task<NFD_DailyAttendance?> GetByIdAsync(int id)
+        {
+            NFD_DailyAttendance? result = await _context.NFD_DailyAttendances
+                .FirstOrDefaultAsync(d => d.DailyAttendanceId == id);
+            return result;
+        }
+
+        public async Task<NFD_DailyAttendance> AddAsync(NFD_DailyAttendance entity)
+        {
+            await _context.NFD_DailyAttendances.AddAsync(entity);
+            await _context.SaveChangesAsync();
+            return entity;
+        }
+
+        public async Task UpdateAsync(NFD_DailyAttendance entity)
+        {
+            _context.NFD_DailyAttendances.Update(entity);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<NFD_DailyAttendance>> GetTodayByCompanyIdAsync(int companyId, DateTime today)
+        {
+            List<NFD_DailyAttendance> result = await _context.NFD_DailyAttendances
+                .Include(d => d.Enrollment)
+                .Where(d => d.Enrollment.CompanyId == companyId && d.Date.Date == today.Date)
+                .ToListAsync();
+            return result;
+        }
     }
 }

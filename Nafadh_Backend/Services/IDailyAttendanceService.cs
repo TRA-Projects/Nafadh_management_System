@@ -4,11 +4,20 @@
 // </auto-generated>
 
 using Nafadh_Backend.Models;
+using static Nafadh_Backend.DTOs.DailyAttendanceDto;
 
 namespace Nafadh_Backend.Services
 {
     public interface IDailyAttendanceService
     {
-        // TODO: define business-logic contract methods for this entity
+
+        Task<DailyAttendanceReadDto?> GetByIdAsync(int id);
+        Task<List<DailyAttendanceReadDto>> GetByEnrollmentIdAsync(int enrollmentId);
+        Task<DailyAttendanceReadDto> CreateAsync(CreateDailyAttendanceDto dto);
+        Task<bool> CheckOutAsync(int id, CheckOutDailyAttendanceDto dto);
+        Task<bool> UpdateAsync(int id, UpdateDailyAttendanceDto dto);
+        Task<List<DailyAttendanceReadDto>> GetTodayByCompanyIdAsync(int companyId);
+        Task<ComplianceRateDto> GetComplianceRateAsync(int enrollmentId);
+
     }
 }
