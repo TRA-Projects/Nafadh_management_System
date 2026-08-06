@@ -2,6 +2,7 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
+#nullable enable
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -19,8 +20,12 @@ namespace Nafadh_Backend.Models
 
         [MaxLength(100)]
         public string? Department { get; set; }
+
         [MaxLength(100)]
         public string? Position { get; set; }
+
+        // إضافة حالة المشرف هنا
+        public NFD_SupervisorStatus Status { get; set; }
 
         public int UserId { get; set; }
         public NFD_User User { get; set; } = null!;
@@ -29,6 +34,6 @@ namespace Nafadh_Backend.Models
         public NFD_Company Company { get; set; } = null!;
 
         public ICollection<NFD_Enrollment> Enrollments { get; set; } = new List<NFD_Enrollment>();
-
+        //
     }
 }
