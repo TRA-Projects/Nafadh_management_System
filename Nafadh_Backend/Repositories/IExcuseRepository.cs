@@ -7,8 +7,24 @@ using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
 {
+    /// <summary>
+    /// واجهة التعامل مع قاعدة البيانات لجدول الأعذار (Excuse)
+    /// </summary>
     public interface IExcuseRepository
     {
-        // TODO: define data-access contract methods for this entity
+        // جلب العذر المرتبط بسجل حضور يومي محدد (عبر رقم الـ DailyAttendanceId)
+        Task<NFD_Excuse?> GetByDailyAttendanceIdAsync(int dailyAttendanceId);
+
+        // جلب عذر واحد فقط باستخدام المعرف الفريد الخاص بالعذر (Excuse ID)
+        Task<NFD_Excuse?> GetByIdAsync(int id);
+
+        // إضافة طلب عذر جديد في قاعدة البيانات (رفع عذر من المتدرب)
+        Task<NFD_Excuse> AddAsync(NFD_Excuse entity);
+
+        // تحديث بيانات عذر (مثل اعتماده أو رفضه)
+        Task UpdateAsync(NFD_Excuse entity);
+
+        // جلب قائمة بجميع الأعذار المعلقة (Pending) التي تنتظر مراجعة واعتماد المشرف
+        Task<List<NFD_Excuse>> GetPendingAsync();
     }
 }

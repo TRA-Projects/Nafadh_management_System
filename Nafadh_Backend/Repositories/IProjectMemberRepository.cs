@@ -9,6 +9,39 @@ namespace Nafadh_Backend.Repositories
 {
     public interface IProjectMemberRepository
     {
-        // TODO: define data-access contract methods for this entity
+        // GET PROJECT MEMBERS BY PROJECT ID
+        // Returns all trainees assigned to a specific project
+        Task<List<NFD_ProjectMember>> GetByProjectAsync(int projectId);
+
+
+
+        // GET PROJECTS BY TRAINEE ID
+        // Returns all projects where a trainee is a member
+        Task<List<NFD_ProjectMember>> GetByTraineeAsync(int traineeId);
+
+
+
+        // GET PROJECT MEMBER DETAILS
+        // Returns a specific project member by ID
+        Task<NFD_ProjectMember?> GetByIdAsync(int id);
+
+
+
+        // ADD PROJECT MEMBER
+        // Assigns a trainee to a project with a specific role
+        Task AddAsync(NFD_ProjectMember member);
+
+
+
+        // UPDATE MEMBER ROLE
+        // Changes the role of an existing project member
+        Task UpdateAsync(NFD_ProjectMember member);
+
+
+
+        // DELETE MEMBER
+        // Removes a trainee from the project team
+        Task DeleteAsync(NFD_ProjectMember member);
+    
     }
 }

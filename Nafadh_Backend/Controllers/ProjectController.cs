@@ -4,7 +4,9 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
+using static Nafadh_Backend.DTOs.ProjectDTOs;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -19,6 +21,97 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET /api/Project?programId=1&status=InProgress
+        // List projects (filter by program/status)
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ProjectDto>>> GetAll(
+            [FromQuery] int? programId,
+            [FromQuery] NFD_ProjectStatus? status)
+        {
+            var projects = await _service.GetAllAsync(programId, status);
+            return Ok(projects);
+        }
+
+        // GET /api/Project/{id}
+        // Get project details
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<ProjectDto>> GetById(int id)
+        {
+            var project = await _service.GetByIdAsync(id);
+            if (project is null)
+                return NotFound($"Project with ID {id} was not found.");
+
+            return Ok(project);
+        }
+
+        
+        // POST /api/Project
+        // Define a new capstone/group project
+        [HttpPost]
+        public async Task<ActionResult<ProjectDto>> Create([FromBody] CreateProjectDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var created = await _service.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id = created.ProjectId }, created);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // PUT /api/Project/{id}
+        // Update project details
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateProjectDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var updated = await _service.UpdateAsync(id, dto);
+                if (!updated)
+                    return NotFound($"Project with ID {id} was not found.");
+
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // DELETE /api/Project/{id}
+        // Remove a project
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var deleted = await _service.DeleteAsync(id);
+            if (!deleted)
+                return NotFound($"Project with ID {id} was not found.");
+
+            return NoContent();
+        }
+
+        // GET /api/Project/program/{programId}
+        // Projects defined under a program
+        [HttpGet("program/{programId:int}")]
+        public async Task<ActionResult<IEnumerable<ProjectDto>>> GetByProgramId(int programId)
+        {
+            var projects = await _service.GetByProgramIdAsync(programId);
+            return Ok(projects);
+        }
+
+
+
     }
 }
+
+
+        
+    

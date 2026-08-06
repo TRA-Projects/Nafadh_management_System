@@ -4,7 +4,10 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
+using static Nafadh_Backend.DTOs.EnrollmentDTO;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -19,6 +22,117 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET /api/Enrollment?batchId=&traineeId=&companyId=&status=  (filters all optional)
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<EnrollmentDTO>>> GetAll(
+            [FromQuery] int? batchId,
+            [FromQuery] int? traineeId,
+            [FromQuery] int? companyId,
+            [FromQuery] NFD_EnrollmentCompletionStatus? status)
+        {
+            var filter = new EnrollmentFilterDto
+            {
+                BatchId = batchId,
+                TraineeId = traineeId,
+                CompanyId = companyId,
+                Status = status
+            };
+            var enrollments = await _service.GetAllEnrollmentsAsync(filter);
+            return Ok(enrollments);
+        }
+
+        // GET /api/Enrollment/{id}
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<EnrollmentDTO>> GetById(int id)
+        {
+            var enrollment = await _service.GetEnrollmentByIdAsync(id);
+            if (enrollment is null)
+                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+
+            return Ok(enrollment);
+        }
+
+
+        // POST /api/Enrollment  -> enroll a trainee into a batch/company/department
+        [HttpPost]
+        public async Task<ActionResult<EnrollmentDTO>> Create([FromBody] CreateEnrollmentDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var (result, error) = await _service.CreateEnrollmentAsync(dto);
+            if (error is not null)
+                return BadRequest(new { message = error });
+
+            return CreatedAtAction(nameof(GetById), new { id = result!.EnrollmentId }, result);
+        }
+
+        // PUT /api/Enrollment/{id}  -> update department/supervisor assignment
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<EnrollmentDTO>> UpdateAssignment(int id, [FromBody] UpdateEnrollmentAssignmentDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var (result, error) = await _service.UpdateAssignmentAsync(id, dto);
+            if (error == "not_found")
+                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+            if (error is not null)
+                return BadRequest(new { message = error });
+
+            return Ok(result);
+        }
+
+        // PUT /api/Enrollment/{id}/status  -> update completion status
+        [HttpPut("{id:int}/status")]
+        public async Task<ActionResult<EnrollmentDTO>> UpdateStatus(int id, [FromBody] UpdateEnrollmentStatusDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var (result, error) = await _service.UpdateStatusAsync(id, dto);
+            if (error == "not_found")
+                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+
+            return Ok(result);
+        }
+
+        // DELETE /api/Enrollment/{id}  -> cancel/withdraw
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Withdraw(int id)
+        {
+            var withdrawn = await _service.WithdrawEnrollmentAsync(id);
+            if (!withdrawn)
+                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+
+            return NoContent();
+        }
+
+        // GET /api/Enrollment/trainee/{traineeId}  -> "My Programs"
+        [HttpGet("trainee/{traineeId:int}")]
+        public async Task<ActionResult<IEnumerable<EnrollmentDTO>>> GetByTrainee(int traineeId)
+        {
+            var enrollments = await _service.GetByTraineeIdAsync(traineeId);
+            return Ok(enrollments);
+        }
+
+        // GET /api/Enrollment/company/{companyId}
+        [HttpGet("company/{companyId:int}")]
+        public async Task<ActionResult<IEnumerable<EnrollmentDTO>>> GetByCompany(int companyId)
+        {
+            var enrollments = await _service.GetByCompanyIdAsync(companyId);
+            return Ok(enrollments);
+        }
+
+        // GET /api/Enrollment/{id}/progress-summary
+        [HttpGet("{id:int}/progress-summary")]
+        public async Task<ActionResult<ProgressSummaryDto>> GetProgressSummary(int id)
+        {
+            var summary = await _service.GetProgressSummaryAsync(id);
+            if (summary is null)
+                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+
+            return Ok(summary);
+        }
     }
 }

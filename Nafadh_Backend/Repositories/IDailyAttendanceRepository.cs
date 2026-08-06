@@ -7,8 +7,37 @@ using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
 {
+    /// <summary>
+    /// واجهة التعامل مع قاعدة البيانات لجدول الحضور اليومي
+    /// Interface contract for Daily Attendance data access operations.
+    /// </summary>
     public interface IDailyAttendanceRepository
     {
-        // TODO: define data-access contract methods for this entity
+        
+
+        /// <summary>
+        /// جلب جميع سجّلات الحضور اليومية الخاصة بمتدرب معين عبر رقم التسجيل
+        /// Retrieves all daily attendance records associated with a specific enrollment ID.
+
+       
+        Task<List<NFD_DailyAttendance>> GetByEnrollmentIdAsync(int enrollmentId);
+
+        // جلب سجل حضور واحد فقط باستخدام الـ ID
+        // Retrieves a single daily attendance record by its primary key ID.
+        Task<NFD_DailyAttendance?> GetByIdAsync(int id);
+
+        // إضافة سجل حضور يومي جديد (مثل عملية الـ Check-In)
+        // Adds a new daily attendance record to the database.
+        Task<NFD_DailyAttendance> AddAsync(NFD_DailyAttendance entity);
+
+        // تحديث بيانات سجل حضور مسبق (مثل تسجيل الـ Check-Out أو تعديل الحالة)
+        // Updates an existing daily attendance record in the database.
+        Task UpdateAsync(NFD_DailyAttendance entity);
+
+        /// <summary>
+        /// جلب كشف الحضور اليومي الخاص بشركة معينة لتاريخ اليوم )خاص بواجهة مشرف الشركة)
+        /// Retrieves today's attendance roster for all trainees hosted under a specific company.
+        /// </summary>
+        Task<List<NFD_DailyAttendance>> GetTodayByCompanyIdAsync(int companyId, DateTime today);
     }
 }

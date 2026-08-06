@@ -4,7 +4,7 @@
 // </auto-generated>
 
 using Nafadh_Backend.Models;
-
+using Microsoft.EntityFrameworkCore;
 namespace Nafadh_Backend.Repositories
 {
     public class SessionRepository : ISessionRepository
@@ -16,6 +16,55 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        public async Task<List<NFD_Session>> GetAllAsync(int? batchId, int? trainerId, DateTime? date)
+        {
+            var query = _context.NFD_Sessions.AsQueryable();
+
+            if (batchId.HasValue)
+                query = query.Where(s => s.BatchId == batchId.Value);
+
+            if (trainerId.HasValue)
+                query = query.Where(s => s.TrainerId == trainerId.Value);
+
+            if (date.HasValue)
+                query = query.Where(s => s.SessionDate.Date == date.Value.Date);
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<NFD_Session?> GetByIdAsync(int id)
+        {
+            return await _context.NFD_Sessions.FirstOrDefaultAsync(s => s.SessionId == id);
+        }
+
+        public async Task<List<NFD_Session>> GetByBatchIdAsync(int batchId)
+        {
+            return await _context.NFD_Sessions
+                .Where(s => s.BatchId == batchId)
+                .OrderBy(s => s.SessionDate)
+                .ToListAsync();
+        }
+
+        public async Task<NFD_Session> AddAsync(NFD_Session session)
+        {
+            _context.NFD_Sessions.Add(session);
+            await _context.SaveChangesAsync();
+            return session;
+        }
+
+        public async Task UpdateAsync(NFD_Session session)
+        {
+            _context.NFD_Sessions.Update(session);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var session = await GetByIdAsync(id);
+            if (session == null) return;
+
+            _context.NFD_Sessions.Remove(session);
+            await _context.SaveChangesAsync();
+        }
     }
 }

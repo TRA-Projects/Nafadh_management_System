@@ -3,8 +3,11 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using static Nafadh_Backend.DTOs.ProgramDTO;
 
 namespace Nafadh_Backend.Services
 {
@@ -17,6 +20,135 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        //List programs (filter by track/status/category)
+        public async Task<IEnumerable<ProgramDto>> GetAllProgramsAsync(ProgramFilterDto filter)
+        {
+            var programs = await _repository.GetAllAsync(filter.TrackId, filter.Status, filter.Category);
+            return programs.Select(MapToDto);
+        }
+
+        // Get program details
+        public async Task<ProgramDto?> GetProgramByIdAsync(int id)
+        {
+            var program = await _repository.GetByIdAsync(id);
+            return program is null ? null : MapToDto(program);
+        }
+
+        //Create a new program
+        public async Task<(ProgramDto? result, string? error)> CreateProgramAsync(CreateProgramDto dto)
+        {
+            // TrackId is a required FK, so we validate it exists before inserting
+            var trackExists = await _repository.TrackExistsAsync(dto.TrackId);
+            if (!trackExists)
+                return (null, $"Track with ID {dto.TrackId} was not found.");
+
+            var program = new NFD_Program
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                Category = dto.Category,
+                DurationHours = dto.DurationHours,
+                Price = dto.Price,
+                TrackId = dto.TrackId,
+                Status = NFD_ProgramStatus.Draft
+            };
+
+            var created = await _repository.AddAsync(program);
+            return (MapToDto(created), null);
+        }
+
+        // Update program details
+        public async Task<(ProgramDto? result, string? error)> UpdateProgramAsync(int id, UpdateProgramDto dto)
+        {
+            var program = await _repository.GetByIdAsync(id);
+            if (program is null)
+                return (null, "not_found");
+
+            program.Title = dto.Title;
+            program.Description = dto.Description;
+            program.Category = dto.Category;
+            program.DurationHours = dto.DurationHours;
+            program.Price = dto.Price;
+            program.Status = dto.Status;
+
+            await _repository.UpdateAsync(program);
+            return (MapToDto(program), null);
+        }
+
+        //Archive a program
+        public async Task<bool> DeleteProgramAsync(int id)
+        {
+            var program = await _repository.GetByIdAsync(id);
+            if (program is null) return false;
+
+            await _repository.DeleteAsync(program);
+            return true;
+        }
+        //List batches running for a program
+        public async Task<IEnumerable<BatchSummaryDto>?> GetBatchesByProgramIdAsync(int programId)
+        {
+            var exists = await _repository.ExistsAsync(programId);
+            if (!exists) return null; // null -> Controller returns 404
+
+            var batches = await _repository.GetBatchesByProgramIdAsync(programId);
+            return batches.Select(b => new BatchSummaryDto
+            {
+                BatchId = b.BatchId,
+                BatchName = b.BatchName,
+                StartDate = b.StartDate,
+                EndDate = b.EndDate,
+                Status = b.Status.ToString()
+            });
+        }
+
+        //Get the curriculum outline (modules)
+        public async Task<IEnumerable<ModuleSummaryDto>?> GetModulesByProgramIdAsync(int programId)
+        {
+            var exists = await _repository.ExistsAsync(programId);
+            if (!exists) return null;
+
+            var modules = await _repository.GetModulesByProgramIdAsync(programId);
+            return modules.Select(m => new ModuleSummaryDto
+            {
+                ModuleId = m.ModuleId,
+                Title = m.Title,
+                OrderIndex = m.OrderIndex,
+                PrerequisiteModuleId = m.PrerequisiteModuleId
+            });
+        }
+
+        //List companies eligible to host this program
+
+        public async Task<IEnumerable<EligibleCompanyDto>?> GetEligibleCompaniesByProgramIdAsync(int programId)
+        {
+            var exists = await _repository.ExistsAsync(programId);
+            if (!exists) return null;
+
+            var companyPrograms = await _repository.GetEligibleCompaniesByProgramIdAsync(programId);
+            return companyPrograms.Select(cp => new EligibleCompanyDto
+            {
+                CompanyId = cp.Company.CompanyId,
+                CompanyName = cp.Company.CompanyName,
+                WorkField = cp.Company.WorkField,
+                Status = cp.Company.Status.ToString()
+            });
+        }
+
+
+        private static ProgramDto MapToDto(NFD_Program program)
+        {
+            return new ProgramDto
+            {
+                ProgramId = program.ProgramId,
+                Title = program.Title,
+                Description = program.Description,
+                Category = program.Category,
+                DurationHours = program.DurationHours,
+                Price = program.Price,
+                Status = program.Status.ToString(),
+                TrackId = program.TrackId
+            };
+        }
+
     }
 }

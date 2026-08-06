@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -16,6 +18,85 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        public async Task<IEnumerable<NFD_Program>> GetAllAsync(int? trackId, NFD_ProgramStatus? status, string? category)
+        {
+            var query = _context.NFD_Programs.AsNoTracking().AsQueryable();
+
+            // apply filters only when provided
+            if (trackId.HasValue)
+                query = query.Where(p => p.TrackId == trackId.Value);
+
+            if (status.HasValue)
+                query = query.Where(p => p.Status == status.Value);
+
+            if (!string.IsNullOrWhiteSpace(category))
+                query = query.Where(p => p.Category == category);
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<NFD_Program?> GetByIdAsync(int id)
+        {
+            return await _context.NFD_Programs
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.ProgramId == id);
+        }
+
+        public async Task<NFD_Program> AddAsync(NFD_Program program)
+        {
+            _context.NFD_Programs.Add(program);
+            await _context.SaveChangesAsync();
+            return program;
+        }
+
+        public async Task UpdateAsync(NFD_Program program)
+        {
+            _context.NFD_Programs.Update(program);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(NFD_Program program)
+        {
+            // Soft delete: archive instead of removing the row, to keep Batch/Module/Enrollment relations intact
+            program.Status = NFD_ProgramStatus.Archived;
+            _context.NFD_Programs.Update(program);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            return await _context.NFD_Programs.AnyAsync(p => p.ProgramId == id);
+        }
+
+        public async Task<bool> TrackExistsAsync(int trackId)
+        {
+            return await _context.NFD_Tracks.AnyAsync(t => t.TrackId == trackId);
+        }
+
+        public async Task<IEnumerable<NFD_Batch>> GetBatchesByProgramIdAsync(int programId)
+        {
+            return await _context.NFD_Batches
+                .AsNoTracking()
+                .Where(b => b.ProgramId == programId)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<NFD_Module>> GetModulesByProgramIdAsync(int programId)
+        {
+            return await _context.NFD_Modules
+                .AsNoTracking()
+                .Where(m => m.ProgramId == programId)
+                .OrderBy(m => m.OrderIndex)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<NFD_CompanyProgram>> GetEligibleCompaniesByProgramIdAsync(int programId)
+        {
+            return await _context.NFD_CompanyPrograms
+                .AsNoTracking()
+                .Include(cp => cp.Company)
+                .Where(cp => cp.ProgramId == programId)
+                .ToListAsync();
+        }
     }
 }

@@ -5,6 +5,9 @@
 
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using Nafadh_Backend.Enums;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Nafadh_Backend.Services
 {
@@ -17,6 +20,51 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public Task<(List<NFD_Trainee> Items, int TotalCount)> GetAllAsync(
+            int? companyId, NFD_TraineeStatus? status, string? university, string? searchTerm,
+            int pageNumber, int pageSize)
+        {
+            return _repository.GetAllAsync(companyId, status, university, searchTerm, pageNumber, pageSize);
+        }
+
+        public Task<NFD_Trainee?> GetByIdAsync(int id)
+        {
+            return _repository.GetByIdAsync(id);
+        }
+
+        public Task<NFD_Trainee?> GetByIdWithDashboardDataAsync(int id)
+        {
+            return _repository.GetByIdWithDashboardDataAsync(id);
+        }
+
+        public Task<bool> UserHasTraineeProfileAsync(int userId)
+        {
+            return _repository.UserHasTraineeProfileAsync(userId);
+        }
+
+        public Task<bool> CompanyExistsAsync(int companyId)
+        {
+            return _repository.CompanyExistsAsync(companyId);
+        }
+
+        public Task AddAsync(NFD_Trainee trainee)
+        {
+            return _repository.AddAsync(trainee);
+        }
+
+        public Task AddRangeAsync(IEnumerable<NFD_Trainee> trainees)
+        {
+            return _repository.AddRangeAsync(trainees);
+        }
+
+        public void Update(NFD_Trainee trainee)
+        {
+            _repository.Update(trainee);
+        }
+
+        public Task<bool> SaveChangesAsync()
+        {
+            return _repository.SaveChangesAsync();
+        }
     }
 }

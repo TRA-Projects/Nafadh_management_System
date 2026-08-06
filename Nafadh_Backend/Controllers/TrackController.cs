@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +20,70 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET /api/Track
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<TrackDto>>> GetAll()
+        {
+            var tracks = await _service.GetAllTracksAsync();
+            return Ok(tracks);
+        }
+     
+        // GET /api/Track/{id}
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<TrackDto>> GetById(int id)
+        {
+            var track = await _service.GetTrackByIdAsync(id);
+            if (track is null)
+                return NotFound(new { message = $"Track with ID {id} was not found." });
+
+            return Ok(track);
+        }
+
+        // POST /api/Track
+        [HttpPost]
+        public async Task<ActionResult<TrackDto>> Create([FromBody] CreateTrackDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var created = await _service.CreateTrackAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.TrackId }, created);
+        }
+
+        // PUT /api/Track/{id}
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<TrackDto>> Update(int id, [FromBody] UpdateTrackDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var updated = await _service.UpdateTrackAsync(id, dto);
+            if (updated is null)
+                return NotFound(new { message = $"Track with ID {id} was not found." });
+
+            return Ok(updated);
+        }
+
+        // DELETE /api/Track/{id}  (Archive/remove)
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var deleted = await _service.DeleteTrackAsync(id);
+            if (!deleted)
+                return NotFound(new { message = $"Track with ID {id} was not found." });
+
+            return NoContent();
+        }
+
+        // GET /api/Track/{id}/programs
+        [HttpGet("{id:int}/programs")]
+        public async Task<ActionResult<IEnumerable<ProgramSummaryDto>>> GetPrograms(int id)
+        {
+            var programs = await _service.GetProgramsByTrackIdAsync(id);
+            if (programs is null)
+                return NotFound(new { message = $"Track with ID {id} was not found." }); // Track not found -> 404
+
+            return Ok(programs); // Track found (with or without programs) -> 200
+        }
     }
 }

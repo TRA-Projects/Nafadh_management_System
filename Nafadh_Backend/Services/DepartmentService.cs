@@ -3,8 +3,10 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using static Nafadh_Backend.DTOs.DailyAttendanceDto;
 
 namespace Nafadh_Backend.Services
 {
@@ -17,6 +19,7 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        
+
     }
 }
