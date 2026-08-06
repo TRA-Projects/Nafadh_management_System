@@ -23,5 +23,10 @@ namespace Nafadh_Backend.Services
         // Get announcement details
         Task<AnnouncementDTO> GetByIdAsync(int id);
 
+        // =====================================================
+        // Create new announcement
+        Task CreateAsync(CreateAnnouncementDTO dto);
+
+
     }
 }

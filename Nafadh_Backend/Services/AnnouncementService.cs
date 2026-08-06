@@ -79,6 +79,35 @@ namespace Nafadh_Backend.Services
 
         }
 
+       
+        // Create announcement
+        // =====================================================
+        public async Task CreateAsync(
+            CreateAnnouncementDTO dto)
+        {
+
+            var announcement = new NFD_Announcement
+            {
+
+                ScopeType = dto.ScopeType,
+
+                ScopeId = dto.ScopeId,
+
+                Message = dto.Message,
+
+                Date = DateTime.Now,
+
+                CreatedByUserId = dto.CreatedByUserId
+
+            };
+
+
+
+            await _repository
+                .AddAsync(announcement);
+
+        }
+
 
 
     }

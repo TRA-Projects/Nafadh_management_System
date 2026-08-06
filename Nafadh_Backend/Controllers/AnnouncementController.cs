@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
 
@@ -54,5 +55,23 @@ namespace Nafadh_Backend.Controllers
             return Ok(result);
 
         }
+
+        // =====================================================
+        // Create announcement
+       
+        [HttpPost]
+        public async Task<IActionResult> Create(
+            CreateAnnouncementDTO dto)
+        {
+
+            await _service.CreateAsync(dto);
+
+
+
+            return Ok(
+                "Announcement created successfully.");
+
+        }
+
     }
 }
