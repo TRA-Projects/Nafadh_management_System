@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Nafadh_Backend.DTOs.CompanyPayment;
+
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
@@ -11,18 +12,18 @@ namespace Nafadh_Backend.Services
 {
     public interface ICompanyPaymentService
     {
-        Task<IEnumerable<CompanyPaymentResponseDto>>
-        GetCompanyPaymentsAsync(int companyId);
+        Task<IEnumerable<CompanyPaymentResponseDto>> GetCompanyPaymentsAsync(int companyId);
 
-        Task<CompanyPaymentResponseDto?>
-            GetPaymentDetailsAsync(int id);
 
-        Task<CompanyPaymentResponseDto>
-            CreatePaymentAsync(CreateCompanyPaymentDto dto);
+        Task<CompanyPaymentResponseDto?> GetPaymentDetailsAsync(int id);
 
-        Task<bool>
-            UpdatePaymentStatusAsync(
-                int id,
-                UpdateCompanyPaymentStatusDto dto);
+
+        Task<CompanyPaymentResponseDto> CreatePaymentAsync(CreateCompanyPaymentDto dto);
+
+
+        Task<bool> UpdatePaymentStatusAsync(
+            int id,
+            UpdateCompanyPaymentStatusDto dto
+        );
     }
 }

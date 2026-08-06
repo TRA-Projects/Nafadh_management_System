@@ -4,7 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
-using Nafadh_Backend.DTOs;
+using Nafadh_Backend.DTOs.CompanyPayment;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers

@@ -48,45 +48,50 @@ namespace Nafadh_Backend.Services
         }
 
 
-        public async Task<CompanyPaymentResponseDto?>
-            GetPaymentDetailsAsync(int id)
+        public async Task<CompanyPaymentResponseDto?> GetPaymentDetailsAsync(int id)
         {
-
-            var payment =
-                await _repository.GetByIdAsync(id);
-
+            var payment = await _repository.GetByIdAsync(id);
 
             if (payment == null)
                 return null;
 
 
-
             return new CompanyPaymentResponseDto
             {
-                CompanyPaymentId =
-                    payment.CompanyPaymentId,
+                CompanyPaymentId = payment.CompanyPaymentId,
 
-                TotalAmount =
-                    payment.TotalAmount,
+                TotalAmount = payment.TotalAmount,
 
-                Status =
-                    payment.Status,
+                Status = payment.Status,
 
-                CompanyId =
-                    payment.CompanyId,
+                CompanyId = payment.CompanyId,
 
-                CompanyName =
-                    payment.Company.CompanyName,
+                CompanyName = payment.Company.CompanyName,
 
-                BatchId =
-                    payment.BatchId,
+                BatchId = payment.BatchId,
 
-                PaymentSchedules =
-                    payment.CompanyPaymentSchedules
-                    .Cast<object>()
+
+                PaymentSchedules = payment.CompanyPaymentSchedules
+                    .Select(schedule => new CompanyPaymentScheduleResponseDto
+                    {
+                        ScheduleId = schedule.ScheduleId,
+
+                        MonthNumber = schedule.MonthNumber,
+
+                        MonthLabel = schedule.MonthLabel,
+
+                        DueDate = schedule.DueDate,
+
+                        Amount = schedule.Amount,
+
+                        Status = schedule.Status,
+
+                        PaidDate = schedule.PaidDate,
+
+                        CompanyPaymentId = schedule.CompanyPaymentId
+                    })
                     .ToList()
             };
-
         }
 
 

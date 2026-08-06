@@ -3,9 +3,9 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
-using Nafadh_Backend.DTOs;
-using Nafadh_Backend.Models;
 
+using Nafadh_Backend.Models;
+using Nafadh_Backend.DTOs.CompanyPayment;
 namespace Nafadh_Backend.Services
 {
     public interface ICompanyPaymentScheduleService
