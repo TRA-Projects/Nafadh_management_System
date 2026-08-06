@@ -28,5 +28,11 @@ namespace Nafadh_Backend.Services
         Task CreateAsync(CreateAnnouncementDTO dto);
 
 
+        // =====================================================
+        Task UpdateAsync(
+            int id,
+            UpdateAnnouncementDTO dto);
+
+
     }
 }

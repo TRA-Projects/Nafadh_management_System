@@ -73,5 +73,26 @@ namespace Nafadh_Backend.Controllers
 
         }
 
+        // =====================================================
+        // Update announcement
+       
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(
+            int id,
+            UpdateAnnouncementDTO dto)
+        {
+
+            await _service.UpdateAsync(
+                id,
+                dto);
+
+
+
+            return Ok(
+                "Announcement updated successfully.");
+
+        }
+
+
     }
 }

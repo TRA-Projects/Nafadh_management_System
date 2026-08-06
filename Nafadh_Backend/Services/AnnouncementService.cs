@@ -108,7 +108,44 @@ namespace Nafadh_Backend.Services
 
         }
 
+        // =====================================================
+        // Update announcement
+        public async Task UpdateAsync(
+            int id,
+            UpdateAnnouncementDTO dto)
+        {
 
+            var announcement =
+                await _repository.GetByIdAsync(id);
+
+
+
+            if (announcement == null)
+            {
+                throw new KeyNotFoundException(
+                    "Announcement not found");
+            }
+
+
+
+            announcement.ScopeType =
+                dto.ScopeType;
+
+
+            announcement.ScopeId =
+                dto.ScopeId;
+
+
+            announcement.Message =
+                dto.Message;
+
+
+
+
+            await _repository
+                .UpdateAsync(announcement);
+
+        }
 
     }
 
