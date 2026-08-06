@@ -9,6 +9,13 @@ namespace Nafadh_Backend.Repositories
 {
     public interface ITrackRepository
     {
-        // TODO: define data-access contract methods for this entity
+
+        Task<IEnumerable<NFD_Track>> GetAllAsync();
+        Task<NFD_Track?> GetByIdAsync(int id);
+        Task<NFD_Track> AddAsync(NFD_Track track);
+        Task UpdateAsync(NFD_Track track);
+        Task DeleteAsync(NFD_Track track);
+        Task<bool> ExistsAsync(int id); // lightweight check, used to return 404 without fetching the full entity
+        Task<IEnumerable<NFD_Program>> GetProgramsByTrackIdAsync(int trackId);
     }
 }
