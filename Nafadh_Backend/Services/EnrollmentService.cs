@@ -36,8 +36,6 @@ namespace Nafadh_Backend.Services
         }
 
         //Create a new program
-
-
         public async Task<(EnrollmentDTO? result, string? error)> CreateEnrollmentAsync(CreateEnrollmentDto dto)
         {
             // required FKs, checked up front so we return a clean 400 instead of a raw DB constraint error
@@ -75,12 +73,42 @@ namespace Nafadh_Backend.Services
             return (MapToDto(full!), null);
         }
 
-
-
-
-
-
         //Update program details
+        public async Task<(EnrollmentDTO? result, string? error)> UpdateAssignmentAsync(int id, UpdateEnrollmentAssignmentDto dto)
+        {
+            var enrollment = await _repository.GetByIdAsync(id);
+            if (enrollment is null)
+                return (null, "not_found");
+
+            if (dto.DepartmentId.HasValue && !await _repository.DepartmentExistsAsync(dto.DepartmentId.Value))
+                return (null, $"Department with ID {dto.DepartmentId} was not found.");
+
+            if (dto.SupervisorId.HasValue && !await _repository.SupervisorExistsAsync(dto.SupervisorId.Value))
+                return (null, $"Supervisor with ID {dto.SupervisorId} was not found.");
+
+            enrollment.DepartmentId = dto.DepartmentId;
+            enrollment.SupervisorId = dto.SupervisorId;
+
+            await _repository.UpdateAsync(enrollment);
+
+            var full = await _repository.GetByIdAsync(id);
+            return (MapToDto(full!), null);
+        }
+
+        public async Task<(EnrollmentDTO? result, string? error)> UpdateStatusAsync(int id, UpdateEnrollmentStatusDto dto)
+        {
+            var enrollment = await _repository.GetByIdAsync(id);
+            if (enrollment is null)
+                return (null, "not_found");
+
+            enrollment.CompletionStatus = dto.CompletionStatus;
+            await _repository.UpdateAsync(enrollment);
+
+            var full = await _repository.GetByIdAsync(id);
+            return (MapToDto(full!), null);
+        }
+
+
         //Archive a program
         //List batches running for a program
         // Get the curriculum outline (modules)

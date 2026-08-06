@@ -67,5 +67,35 @@ namespace Nafadh_Backend.Controllers
             return CreatedAtAction(nameof(GetById), new { id = result!.EnrollmentId }, result);
         }
 
+        // PUT /api/Enrollment/{id}  -> update department/supervisor assignment
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<EnrollmentDTO>> UpdateAssignment(int id, [FromBody] UpdateEnrollmentAssignmentDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var (result, error) = await _service.UpdateAssignmentAsync(id, dto);
+            if (error == "not_found")
+                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+            if (error is not null)
+                return BadRequest(new { message = error });
+
+            return Ok(result);
+        }
+
+        // PUT /api/Enrollment/{id}/status  -> update completion status
+        [HttpPut("{id:int}/status")]
+        public async Task<ActionResult<EnrollmentDTO>> UpdateStatus(int id, [FromBody] UpdateEnrollmentStatusDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var (result, error) = await _service.UpdateStatusAsync(id, dto);
+            if (error == "not_found")
+                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+
+            return Ok(result);
+        }
+
     }
 }
