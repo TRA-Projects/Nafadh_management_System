@@ -12,20 +12,25 @@ namespace Nafadh_Backend.Services
     public class TrainingMaterialService : ITrainingMaterialService
     {
         private readonly ITrainingMaterialRepository _repository;
+        private readonly ILessonRepository _lessonRepository;
 
-        public TrainingMaterialService(ITrainingMaterialRepository repository)
+        public TrainingMaterialService(
+            ITrainingMaterialRepository repository, ILessonRepository lessonRepository)
         {
             _repository = repository;
+            _lessonRepository = lessonRepository;
         }
         // Get all materials attached to a specific lesson.
-        // Endpoint:
-        // GET /api/TrainingMaterial/lesson/{lessonId}
+        // Endpoint: GET /api/TrainingMaterial/lesson/{lessonId}
         public async Task<IEnumerable<TrainingMaterialDto>> GetByLessonIdAsync(int lessonId)
         {
-            // TODO:
-            // Validate that Lesson exists.
-            // Lesson belongs to Lesson module owned by another developer.
 
+            // Validate that Lesson exists.
+            var lesson = await _lessonRepository.GetLessonByIdAsync(lessonId);
+            if (lesson == null)
+            {
+                throw new KeyNotFoundException($"Lesson with ID {lessonId} was not found.");
+            }
             var materials = await _repository.GetByLessonIdAsync(lessonId);
 
             // Convert Model objects into DTO objects before returning.
@@ -41,8 +46,7 @@ namespace Nafadh_Backend.Services
         }
 
         // Create new training material.
-        // Endpoint:
-        // POST /api/TrainingMaterial
+        // Endpoint: POST /api/TrainingMaterial
         public async Task<TrainingMaterialDto> CreateAsync( CreateTrainingMaterialDto dto,int userId)
         {
 
@@ -52,27 +56,22 @@ namespace Nafadh_Backend.Services
                 throw new ArgumentException("File type is required.");
             }
 
-            // TODO:
-            // Validate that LessonId exists.
-            // Lesson entity belongs to another developer.
 
+            // Validate that LessonId exists.
+            var lesson = await _lessonRepository.GetLessonByIdAsync(dto.LessonId);
+            if (lesson == null)
+            {
+                throw new KeyNotFoundException($"Cannot attach material. Lesson with ID {dto.LessonId} does not exist.");
+            }
 
             // Create database model.
             var material = new NFD_TrainingMaterial
             {
                 FileUrl = dto.FileUrl,
-
-                // Convert nullable enum value to normal enum.
-                FileType = dto.FileType.Value,
-
+                FileType = dto.FileType.Value,// Convert nullable enum value to normal enum.
                 LessonId = dto.LessonId,
-
-                // UserId comes from JWT Token.
-                // We do not trust UserId from client request.
-                UploadedByUserId = userId,
-
-                // Set upload date automatically.
-                UploadDate = DateTime.UtcNow
+                UploadedByUserId = userId,// UserId comes from JWT Token.
+                UploadDate = DateTime.UtcNow// Set upload date automatically.
             };
 
             // Save data through repository.
