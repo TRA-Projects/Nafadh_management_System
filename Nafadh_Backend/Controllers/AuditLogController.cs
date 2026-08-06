@@ -2,12 +2,16 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.Models;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
 {
+    /// <summary>
+    /// API Controller for managing and querying system Audit Logs
+    /// متحكم واجهة البرمجة لإدارة واستعلام سجلات التدقيق والعمليات
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class AuditLogController : ControllerBase
@@ -19,6 +23,58 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // 1. GET: api/AuditLog
+        // جلب قائمة سجلات التدقيق مع إمكانية الفلترة (حسب المستخدم، الكيان، أو التاريخ)
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] int? userId, [FromQuery] string? entityName, [FromQuery] DateTime? fromDate, [FromQuery] DateTime? toDate)
+        {
+            var logs = await _service.GetAllLogsAsync(userId, entityName, fromDate, toDate);
+            return Ok(logs);
+        }
+
+        // 2. GET: api/AuditLog/5
+        // جلب سجل تدقيق محدد عن طريق الرقم التعريفي (ID)
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var log = await _service.GetLogByIdAsync(id);
+            if (log == null)
+            {
+                return NotFound(new { message = $"Audit log with ID {id} not found." });
+            }
+            return Ok(log);
+        }
+
+        // 3. POST: api/AuditLog
+        // إضافة سجل تدقيق جديد لتوثيق حركة حساسة في النظام
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] NFD_AuditLog log)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            await _service.CreateLogAsync(log);
+            return CreatedAtAction(nameof(GetById), new { id = log.LogId }, log);
+        }
+
+        // 4. GET: api/AuditLog/entity/User/10
+        // جلب سجل التغييرات الكامل لكيان أو سجل محدد في جدول معين
+        [HttpGet("entity/{entityName}/{entityId:int}")]
+        public async Task<IActionResult> GetByEntity(string entityName, int entityId)
+        {
+            var logs = await _service.GetEntityHistoryAsync(entityName, entityId);
+            return Ok(logs);
+        }
+
+        // 5. GET: api/AuditLog/user/3
+        // جلب كافة الأنشطة والعمليات التي قام بها مستخدم محدد
+        [HttpGet("user/{userId:int}")]
+        public async Task<IActionResult> GetByUserId(int userId)
+        {
+            var logs = await _service.GetUserHistoryAsync(userId);
+            return Ok(logs);
+        }
     }
 }

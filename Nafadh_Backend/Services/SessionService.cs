@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +19,91 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public async Task<List<SessionDto>> GetAllAsync(int? batchId, int? trainerId, DateTime? date)
+        {
+            var sessions = await _repository.GetAllAsync(batchId, trainerId, date);
+            return sessions.Select(MapToDto).ToList();
+        }
+
+        public async Task<SessionDto?> GetByIdAsync(int id)
+        {
+            var session = await _repository.GetByIdAsync(id);
+            return session == null ? null : MapToDto(session);
+        }
+
+        public async Task<SessionDto> CreateAsync(CreateSessionDto dto)
+        {
+            var entity = new NFD_Session
+            {
+                BatchId = dto.BatchId,
+                TrainerId = dto.TrainerId,
+                SessionDate = dto.SessionDate,
+                StartTime = dto.StartTime,
+                EndTime = dto.EndTime,
+                MeetingLink = dto.MeetingLink,
+                Topic = dto.Topic,
+                LearningObjectives = dto.LearningObjectives,
+                Status = NFD_SessionStatus.Scheduled
+            };
+
+            var created = await _repository.AddAsync(entity);
+            return MapToDto(created);
+        }
+
+        public async Task<bool> UpdateAsync(int id, UpdateSessionDto dto)
+        {
+            var session = await _repository.GetByIdAsync(id);
+            if (session == null) return false;
+
+            session.Topic = dto.Topic;
+            session.MeetingLink = dto.MeetingLink;
+            session.RecordingUrl = dto.RecordingUrl;
+            session.LearningObjectives = dto.LearningObjectives;
+            session.Summary = dto.Summary;
+
+            await _repository.UpdateAsync(session);
+            return true;
+        }
+
+        public async Task<bool> UpdateStatusAsync(int id, UpdateSessionStatusDto dto)
+        {
+            var session = await _repository.GetByIdAsync(id);
+            if (session == null) return false;
+
+            session.Status = dto.Status;
+            await _repository.UpdateAsync(session);
+            return true;
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var session = await _repository.GetByIdAsync(id);
+            if (session == null) return false;
+
+            await _repository.DeleteAsync(id);
+            return true;
+        }
+
+        public async Task<List<SessionDto>> GetCalendarAsync(int batchId)
+        {
+            var sessions = await _repository.GetByBatchIdAsync(batchId);
+            return sessions.Select(MapToDto).ToList();
+        }
+
+        private static SessionDto MapToDto(NFD_Session s) => new SessionDto
+        {
+            SessionId = s.SessionId,
+            BatchId = s.BatchId,
+            TrainerId = s.TrainerId,
+            SessionDate = s.SessionDate,
+            StartTime = s.StartTime,
+            EndTime = s.EndTime,
+            MeetingLink = s.MeetingLink,
+            Topic = s.Topic,
+            LearningObjectives = s.LearningObjectives,
+            RecordingUrl = s.RecordingUrl,
+            Summary = s.Summary,
+            Status = s.Status
+        };
     }
 }

@@ -3,7 +3,9 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -16,6 +18,50 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        public async Task<IEnumerable<NFD_Batch>> GetAllAsync(int? programId, string? status, DateTime? from, DateTime? to)
+        {
+            var query = _context.NFD_Batches.AsQueryable();
+
+            if (programId.HasValue)
+                query = query.Where(b => b.ProgramId == programId.Value);
+
+            if (!string.IsNullOrEmpty(status) && Enum.TryParse<NFD_BatchStatus>(status, true, out var parsedStatus))
+                query = query.Where(b => b.Status == parsedStatus);
+
+            if (from.HasValue)
+                query = query.Where(b => b.StartDate >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(b => b.EndDate <= to.Value);
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<NFD_Batch?> GetByIdAsync(int id)
+        {
+            return await _context.NFD_Batches
+                .FirstOrDefaultAsync(b => b.BatchId == id);
+        }
+
+
+        //AddAsync: تضع الدفعة الجديدة في ذاكرة التتبع لـ Entity Framework.
+        public async Task<NFD_Batch> AddAsync(NFD_Batch batch)
+        {
+            await _context.NFD_Batches.AddAsync(batch);
+            await _context.SaveChangesAsync();
+            return batch;
+        }
+
+        public async Task UpdateAsync(NFD_Batch batch)
+        {
+            _context.NFD_Batches.Update(batch);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(NFD_Batch batch)
+        {
+            _context.NFD_Batches.Remove(batch);
+            await _context.SaveChangesAsync();
+        }
     }
-}
+}    

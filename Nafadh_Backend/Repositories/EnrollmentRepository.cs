@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -16,6 +18,105 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        // shared Include chain so list/detail responses always have the readable names (Batch, Trainee, Company, Department, Supervisor)
+        private IQueryable<NFD_Enrollment> Query() =>
+            _context.NFD_Enrollments
+                .AsNoTracking()
+                .Include(e => e.Batch)
+                .Include(e => e.Trainee).ThenInclude(t => t.User)
+                .Include(e => e.Company)
+                .Include(e => e.Department)
+                .Include(e => e.CompanySupervisor).ThenInclude(s => s!.User);
+
+        public async Task<IEnumerable<NFD_Enrollment>> GetAllAsync(int? batchId, int? traineeId, int? companyId, NFD_EnrollmentCompletionStatus? status)
+        {
+            var query = Query();
+
+            if (batchId.HasValue)
+                query = query.Where(e => e.BatchId == batchId.Value);
+
+            if (traineeId.HasValue)
+                query = query.Where(e => e.TraineeId == traineeId.Value);
+
+            if (companyId.HasValue)
+                query = query.Where(e => e.CompanyId == companyId.Value);
+
+            if (status.HasValue)
+                query = query.Where(e => e.CompletionStatus == status.Value);
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<NFD_Enrollment?> GetByIdAsync(int id)
+        {
+            return await Query().FirstOrDefaultAsync(e => e.EnrollmentId == id);
+        }
+
+        public async Task<NFD_Enrollment> AddAsync(NFD_Enrollment enrollment)
+        {
+            _context.NFD_Enrollments.Add(enrollment);
+            await _context.SaveChangesAsync();
+            return enrollment;
+        }
+
+        public async Task UpdateAsync(NFD_Enrollment enrollment)
+        {
+            _context.NFD_Enrollments.Update(enrollment);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            return await _context.NFD_Enrollments.AnyAsync(e => e.EnrollmentId == id);
+        }
+
+        public async Task<bool> BatchExistsAsync(int batchId) =>
+            await _context.NFD_Batches.AnyAsync(b => b.BatchId == batchId);
+
+        public async Task<bool> TraineeExistsAsync(int traineeId) =>
+            await _context.NFD_Trainees.AnyAsync(t => t.TraineeId == traineeId);
+
+        public async Task<bool> CompanyExistsAsync(int companyId) =>
+            await _context.NFD_Companies.AnyAsync(c => c.CompanyId == companyId);
+
+        public async Task<bool> DepartmentExistsAsync(int departmentId) =>
+            await _context.NFD_Departments.AnyAsync(d => d.DepartmentId == departmentId);
+
+        public async Task<bool> SupervisorExistsAsync(int supervisorId) =>
+            await _context.NFD_CompanySupervisors.AnyAsync(s => s.SupervisorId == supervisorId);
+
+        public async Task<IEnumerable<NFD_Enrollment>> GetByTraineeIdAsync(int traineeId)
+        {
+            return await Query().Where(e => e.TraineeId == traineeId).ToListAsync();
+        }
+
+        public async Task<IEnumerable<NFD_Enrollment>> GetByCompanyIdAsync(int companyId)
+        {
+            return await Query().Where(e => e.CompanyId == companyId).ToListAsync();
+        }
+
+        public async Task<(int totalModules, int completedModules)?> GetProgressDataAsync(int enrollmentId)
+        {
+            var enrollment = await _context.NFD_Enrollments
+                .AsNoTracking()
+                .Include(e => e.Batch)
+                .FirstOrDefaultAsync(e => e.EnrollmentId == enrollmentId);
+
+            if (enrollment is null) return null;
+
+            var moduleIds = await _context.NFD_Modules
+                .Where(m => m.ProgramId == enrollment.Batch.ProgramId)
+                .Select(m => m.ModuleId)
+                .ToListAsync();
+
+            var totalModules = moduleIds.Count;
+
+            var completedModules = await _context.NFD_TraineeModuleProgresses
+                .CountAsync(p => p.TraineeId == enrollment.TraineeId
+                                  && moduleIds.Contains(p.ModuleId)
+                                  && p.Status == NFD_ModuleProgressStatus.Completed);
+
+            return (totalModules, completedModules);
+        }
     }
 }

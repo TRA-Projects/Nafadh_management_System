@@ -3,12 +3,23 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
 {
     public interface IProjectRepository
     {
-        // TODO: define data-access contract methods for this entity
+        
+        Task<IEnumerable<NFD_Project>> GetAllAsync(int? programId = null, NFD_ProjectStatus? status = null);
+        Task<NFD_Project?> GetByIdAsync(int id);
+        Task<NFD_Project?> GetByIdWithMembersAsync(int id);
+        Task<IEnumerable<NFD_Project>> GetByProgramIdAsync(int programId);
+        Task AddAsync(NFD_Project project);
+        void Update(NFD_Project project);
+        void Delete(NFD_Project project);
+        Task<bool> ExistsAsync(int id);
+        Task<bool> SaveChangesAsync();
+
     }
 }

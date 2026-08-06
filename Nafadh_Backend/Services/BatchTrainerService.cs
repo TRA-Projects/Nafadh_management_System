@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -11,12 +12,69 @@ namespace Nafadh_Backend.Services
     public class BatchTrainerService : IBatchTrainerService
     {
         private readonly IBatchTrainerRepository _repository;
+        private readonly IBatchRepository _batchRepository;
 
-        public BatchTrainerService(IBatchTrainerRepository repository)
+        public BatchTrainerService(IBatchTrainerRepository repository, IBatchRepository batchRepository)
         {
             _repository = repository;
+            _batchRepository = batchRepository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public async Task<List<TrainerInBatchDto>> GetTrainersForBatchAsync(int batchId)
+        {
+            var links = await _repository.GetByBatchIdAsync(batchId);
+            var result = new List<TrainerInBatchDto>();
+
+            foreach (var link in links)
+            {
+                result.Add(new TrainerInBatchDto
+                {
+                    TrainerId = link.TrainerId,
+                    TrainerName = string.Empty // Placeholder for external trainer scope
+                });
+            }
+
+            return result;
+        }
+
+        public async Task<List<BatchForTrainerDto>> GetBatchesForTrainerAsync(int trainerId)
+        {
+            var links = await _repository.GetByTrainerIdAsync(trainerId);
+            var result = new List<BatchForTrainerDto>();
+
+            foreach (var link in links)
+            {
+                var batch = await _batchRepository.GetByIdAsync(link.BatchId);
+                if (batch != null)
+                {
+                    result.Add(new BatchForTrainerDto
+                    {
+                        BatchId = batch.BatchId,
+                        BatchName = batch.BatchName
+                    });
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<bool> AssignAsync(AssignTrainerDto dto)
+        {
+            if (await _repository.ExistsAsync(dto.BatchId, dto.TrainerId))
+                return false; // Already assigned
+
+            await _repository.AddAsync(new NFD_BatchTrainer
+            {
+                BatchId = dto.BatchId,
+                TrainerId = dto.TrainerId
+            });
+
+            return true;
+        }
+
+        public async Task<bool> UnassignAsync(UnassignTrainerDto dto)
+        {
+            return await _repository.DeleteAsync(dto.BatchId, dto.TrainerId);
+        }
     }
 }

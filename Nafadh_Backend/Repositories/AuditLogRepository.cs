@@ -2,11 +2,15 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
 {
+    /// <summary>
+    /// Repository implementation for NFD_AuditLog entity
+    /// كود التعامل المباشر مع قاعدة البيانات لجدول سجل العمليات والتدقيق
+    /// </summary>
     public class AuditLogRepository : IAuditLogRepository
     {
         private readonly Nafadhcontext _context;
@@ -16,6 +20,66 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        // 1. List audit entries (filter by user/entity/date range)
+        // جلب السجلات مع الفلترة حسب (المستخدم، الكيان المستهدف، أو الفترة الزمنية)
+        public async Task<IEnumerable<NFD_AuditLog>> GetAllAsync(int? userId, string? entityName, DateTime? fromDate, DateTime? toDate)
+        {
+            var query = _context.Set<NFD_AuditLog>()
+                .Include(x => x.User) // تضمين بيانات المستخدم
+                .AsQueryable();
+
+            if (userId.HasValue)
+                query = query.Where(x => x.UserId == userId.Value);
+
+            if (!string.IsNullOrEmpty(entityName))
+                query = query.Where(x => x.EntityName == entityName);
+
+            if (fromDate.HasValue)
+                query = query.Where(x => x.Timestamp >= fromDate.Value);
+
+            if (toDate.HasValue)
+                query = query.Where(x => x.Timestamp <= toDate.Value);
+
+            return await query.OrderByDescending(x => x.Timestamp).ToListAsync();
+        }
+
+        // 2. Get entry details by ID
+        // جلب تفاصيل سجل تدقيق محدد عن طريق الرقم التعريفي
+        public async Task<NFD_AuditLog?> GetByIdAsync(int id)
+        {
+            return await _context.Set<NFD_AuditLog>()
+                .Include(x => x.User)
+                .FirstOrDefaultAsync(x => x.LogId == id);
+        }
+
+        // 3. Record a sensitive action into the database
+        // إضافة سجل جديد في قاعدة البيانات لتوثيق حركة حساسة
+        public async Task AddAsync(NFD_AuditLog log)
+        {
+            await _context.Set<NFD_AuditLog>().AddAsync(log);
+            await _context.SaveChangesAsync();
+        }
+
+        // 4. Full change history for a specific record
+        // جلب سجل التغييرات الكامل لسجل محدد في جدول معين
+        public async Task<IEnumerable<NFD_AuditLog>> GetByEntityAsync(string entityName, int entityId)
+        {
+            return await _context.Set<NFD_AuditLog>()
+                .Include(x => x.User)
+                .Where(x => x.EntityName == entityName && x.EntityId == entityId)
+                .OrderByDescending(x => x.Timestamp)
+                .ToListAsync();
+        }
+
+        // 5. All actions performed by a specific user
+        // جلب كافة العمليات والأنشطة التي قام بها مستخدم محدد
+        public async Task<IEnumerable<NFD_AuditLog>> GetByUserIdAsync(int userId)
+        {
+            return await _context.Set<NFD_AuditLog>()
+                .Include(x => x.User)
+                .Where(x => x.UserId == userId)
+                .OrderByDescending(x => x.Timestamp)
+                .ToListAsync();
+        }
     }
 }

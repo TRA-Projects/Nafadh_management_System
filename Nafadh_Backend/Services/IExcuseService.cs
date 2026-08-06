@@ -4,11 +4,15 @@
 // </auto-generated>
 
 using Nafadh_Backend.Models;
+using static Nafadh_Backend.DTOs.ExcuseDto;
 
 namespace Nafadh_Backend.Services
 {
     public interface IExcuseService
     {
-        // TODO: define business-logic contract methods for this entity
+        Task<ExcuseReadDto?> GetByDailyAttendanceIdAsync(int dailyAttendanceId);
+        Task<ExcuseReadDto> CreateAsync(CreateExcuseDto dto);
+        Task<bool> ReviewAsync(int id, ReviewExcuseDto dto);
+        Task<List<ExcuseReadDto>> GetPendingAsync();
     }
 }
