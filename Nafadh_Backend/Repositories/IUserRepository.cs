@@ -2,6 +2,7 @@
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
+
 namespace Nafadh_Backend.Repositories
 {
     public interface IUserRepository
