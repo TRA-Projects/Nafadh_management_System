@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +20,59 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        [HttpGet("payment/{companyPaymentId}")]
+        public async Task<IActionResult> GetSchedule(int companyPaymentId)
+        {
+            return Ok(
+                await _service.GetPaymentScheduleAsync(companyPaymentId));
+        }
+
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> Generate(
+            CreateCompanyPaymentScheduleDto dto)
+        {
+            await _service.GenerateScheduleAsync(dto);
+
+            return Ok(new
+            {
+                message = "Payment schedule generated successfully"
+            });
+        }
+
+
+
+
+        [HttpPut("{id}/mark-paid")]
+        public async Task<IActionResult> MarkPaid(
+            int id,
+            MarkCompanyPaymentSchedulePaidDto dto)
+        {
+            var result =
+                await _service.MarkPaidAsync(id, dto);
+
+
+            if (!result)
+                return NotFound();
+
+
+            return Ok(new
+            {
+                message = "Installment marked as paid"
+            });
+        }
+
+
+
+
+        [HttpGet("overdue")]
+        public async Task<IActionResult> Overdue()
+        {
+            return Ok(
+                await _service.GetOverdueAsync());
+        }
+
     }
 }

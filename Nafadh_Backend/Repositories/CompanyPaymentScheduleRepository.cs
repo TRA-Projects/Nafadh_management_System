@@ -3,7 +3,9 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -16,6 +18,56 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        public async Task<IEnumerable<NFD_CompanyPaymentSchedule>>
+           GetByPaymentIdAsync(int companyPaymentId)
+        {
+            return await _context.NFD_CompanyPaymentSchedules
+                .Where(x => x.CompanyPaymentId == companyPaymentId)
+                .ToListAsync();
+        }
+
+
+
+        public async Task<IEnumerable<NFD_CompanyPaymentSchedule>>
+            GetOverdueAsync()
+        {
+            return await _context.NFD_CompanyPaymentSchedules
+                .Where(x =>
+                    x.DueDate < DateTime.Now &&
+                    x.Status != Enums.NFD_PaymentScheduleStatus.Paid)
+                .ToListAsync();
+        }
+
+
+
+        public async Task<NFD_CompanyPaymentSchedule?>
+            GetByIdAsync(int id)
+        {
+            return await _context.NFD_CompanyPaymentSchedules
+                .FirstOrDefaultAsync(x =>
+                    x.ScheduleId == id);
+        }
+
+
+
+        public async Task AddRangeAsync(
+            IEnumerable<NFD_CompanyPaymentSchedule> schedules)
+        {
+            await _context.NFD_CompanyPaymentSchedules
+                .AddRangeAsync(schedules);
+
+            await _context.SaveChangesAsync();
+        }
+
+
+
+        public async Task UpdateAsync(
+            NFD_CompanyPaymentSchedule schedule)
+        {
+            _context.NFD_CompanyPaymentSchedules
+                .Update(schedule);
+
+            await _context.SaveChangesAsync();
+        }
     }
 }

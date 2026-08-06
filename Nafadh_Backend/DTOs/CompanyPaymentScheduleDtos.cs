@@ -6,9 +6,9 @@ namespace Nafadh_Backend.DTOs
     {
         public int CompanyPaymentId { get; set; }
 
-        public int NumberOfMonths { get; set; }
-
         public decimal TotalAmount { get; set; }
+
+        public int NumberOfMonths { get; set; }
 
         public DateTime StartDate { get; set; }
     }
@@ -24,7 +24,7 @@ namespace Nafadh_Backend.DTOs
     {
         public int ScheduleId { get; set; }
 
-        public int MonthNumber { get; set; }
+        public decimal MonthNumber { get; set; }
 
         public string? MonthLabel { get; set; }
 
