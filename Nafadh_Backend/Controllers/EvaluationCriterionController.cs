@@ -24,7 +24,7 @@ namespace Nafadh_Backend.Controllers
         // GET: api/EvaluationCriterion/template/{templateId}
         // Weighted criteria list for a template
 
-        [HttpGet("template/{templateId}")]
+        [HttpGet("GetCriteriaByTemplate/{templateId}")]
         public async Task<IActionResult> GetCriteriaByTemplate(int templateId)
         {
             var criteria = await _service.GetCriteriaByTemplateIdAsync(templateId);
@@ -36,7 +36,7 @@ namespace Nafadh_Backend.Controllers
         // GET: api/EvaluationCriterion/{criteriaId}
         // Criterion details
 
-        [HttpGet("{criteriaId}")]
+        [HttpGet("GetCriterionById/{criteriaId}")]
         public async Task<IActionResult> GetCriterionById(int criteriaId)
         {
             var criterion = await _service.GetCriterionByIdAsync(criteriaId);
@@ -51,7 +51,7 @@ namespace Nafadh_Backend.Controllers
         // GET: api/EvaluationCriterion/template/{templateId}/weight-check
         // Validate weights sum to 100%
 
-        [HttpGet("template/{templateId}/weight-check")]
+        [HttpGet("CheckWeights/{templateId}")]
         public async Task<IActionResult> CheckWeights(int templateId)
         {
             var valid = await _service.CheckTemplateWeightsAsync(templateId);
@@ -67,7 +67,7 @@ namespace Nafadh_Backend.Controllers
         // POST: api/EvaluationCriterion
         // Add criterion
 
-        [HttpPost]
+        [HttpPost("CreateCriterion")]
         public async Task<IActionResult> CreateCriterion(EvaluationCriterionDTO.Input input)
         {
             if (!ModelState.IsValid)
@@ -82,7 +82,7 @@ namespace Nafadh_Backend.Controllers
         // PUT: api/EvaluationCriterion/{criteriaId}
         // Update criterion
 
-        [HttpPut("{criteriaId}")]
+        [HttpPut("UpdateCriterion/{criteriaId}")]
         public async Task<IActionResult> UpdateCriterion(int criteriaId, EvaluationCriterionDTO.Input input)
         {
             if (!ModelState.IsValid)
@@ -100,7 +100,7 @@ namespace Nafadh_Backend.Controllers
         // DELETE: api/EvaluationCriterion/{criteriaId}
         // Delete criterion
 
-        [HttpDelete("{criteriaId}")]
+        [HttpDelete("DeleteCriterion/{criteriaId}")]
         public async Task<IActionResult> DeleteCriterion(int criteriaId)
         {
             var deleted = await _service.DeleteCriterionAsync(criteriaId);

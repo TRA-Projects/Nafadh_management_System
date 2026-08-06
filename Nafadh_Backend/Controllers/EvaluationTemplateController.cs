@@ -25,7 +25,7 @@ namespace Nafadh_Backend.Controllers
         // GET: api/EvaluationTemplate?type=Technical
         // List templates (optionally filter by type)
 
-        [HttpGet]
+        [HttpGet("GetTemplates")]
         public async Task<IActionResult> GetTemplates([FromQuery] NFD_EvaluationType? type)
         {
             var templates = await _service.GetTemplatesAsync(type);
@@ -37,7 +37,7 @@ namespace Nafadh_Backend.Controllers
         // GET: api/EvaluationTemplate/{id}
         // Template details with criteria
 
-        [HttpGet("{templateId}")]
+        [HttpGet("GetTemplateById/{templateId}")]
         public async Task<IActionResult> GetTemplateById(int templateId)
         {
             var template = await _service.GetTemplateByIdAsync(templateId);
@@ -52,7 +52,7 @@ namespace Nafadh_Backend.Controllers
         // POST: api/EvaluationTemplate
         // Create template
 
-        [HttpPost]
+        [HttpPost("CreateTemplate")]
         public async Task<IActionResult> CreateTemplate(EvaluationTemplateDTO.Input input)
         {
             if (!ModelState.IsValid)
@@ -67,7 +67,7 @@ namespace Nafadh_Backend.Controllers
         // PUT: api/EvaluationTemplate/{id}
         // Update template
 
-        [HttpPut("{templateId}")]
+        [HttpPut("UpdateTemplate/{templateId}")]
         public async Task<IActionResult> UpdateTemplate(int templateId, EvaluationTemplateDTO.Input input)
         {
             if (!ModelState.IsValid)
@@ -85,7 +85,7 @@ namespace Nafadh_Backend.Controllers
         // DELETE: api/EvaluationTemplate/{id}
         // Delete template
 
-        [HttpDelete("{templateId}")]
+        [HttpDelete("DeleteTemplate/{templateId}")]
         public async Task<IActionResult> DeleteTemplate(int templateId)
         {
             var deleted = await _service.DeleteTemplateAsync(templateId);
