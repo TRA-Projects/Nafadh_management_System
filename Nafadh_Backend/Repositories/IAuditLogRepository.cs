@@ -2,13 +2,34 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
 {
+    /// <summary>
+    /// Contract interface for Audit Log Repository
+    /// واجهة عقد التعامل مع قاعدة البيانات لسجل العمليات والتدقيق
+    /// </summary>
     public interface IAuditLogRepository
     {
-        // TODO: define data-access contract methods for this entity
+        // 1. Fetch filtered audit logs
+        // جلب قائمة سجلات التدقيق مع الفلترة (حسب المستخدم، الكيان، أو الفترة الزمنية)
+        Task<IEnumerable<NFD_AuditLog>> GetAllAsync(int? userId, string? entityName, DateTime? fromDate, DateTime? toDate);
+
+        // 2. Fetch specific audit log by ID
+        // جلب تفاصيل سجل محدد بواسطة الرقم التعريفي
+        Task<NFD_AuditLog?> GetByIdAsync(int id);
+
+        // 3. Add a new audit log entry
+        // إضافة سجل تدقيق جديد لتوثيق حركة حساسة
+        Task AddAsync(NFD_AuditLog log);
+
+        // 4. Fetch full change history for a specific entity record
+        // جلب سجل التغييرات الكامل لسجل محدد في جدول معين
+        Task<IEnumerable<NFD_AuditLog>> GetByEntityAsync(string entityName, int entityId);
+
+        // 5. Fetch all actions performed by a specific user
+        // جلب كافة العمليات والأنشطة التي قام بها مستخدم معين
+        Task<IEnumerable<NFD_AuditLog>> GetByUserIdAsync(int userId);
     }
 }
