@@ -3,27 +3,19 @@
 //// Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 //// </auto-generated>
 
-//using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Models;
+using static Nafadh_Backend.DTOs.CertificateDTO;
 
-//namespace Nafadh_Backend.Services
-//{
-//    public interface ICertificateService
-//    {
-//        // Get certificate by ID
-//        Task<NFD_CertificateOutputDTO?> GetCertificateByIdAsync(
-//            int certificateId);
+namespace Nafadh_Backend.Services
+{
+    public interface ICertificateService
+    {
+        // TODO: define business-logic contract methods for this entity
 
-//        // Add a new certificate
-//        Task<NFD_CertificateOutputDTO> AddCertificateAsync(
-//            NFD_CertificateInputDTO dto);
 
-//        // Update an existing certificate
-//        Task<NFD_CertificateOutputDTO?> UpdateCertificateAsync(
-//            int certificateId,
-//            NFD_CertificateInputDTO dto);
-
-//        // Delete certificate
-//        Task<bool> DeleteCertificateAsync(
-//            int certificateId);
-//    }
-//}
+        Task<CertificateOutputDTO?> GetCertificateByEnrollmentIdAsync(int enrollmentId);
+        Task<CertificateOutputDTO> AddCertificateAsync(CertificateInputDTO dto);
+        Task<byte[]?> DownloadCertificateAsync(int id);
+        Task<List<CertificateOutputDTO>> GetCertificatesByTraineeIdAsync(int traineeId);
+    }
+}

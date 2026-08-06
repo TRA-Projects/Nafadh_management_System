@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +20,95 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // =====================================================
+        // GET: api/EvaluationCriterion/template/{templateId}
+        // Weighted criteria list for a template
+
+        [HttpGet("template/{templateId}")]
+        public async Task<IActionResult> GetCriteriaByTemplate(int templateId)
+        {
+            var criteria = await _service.GetCriteriaByTemplateIdAsync(templateId);
+
+            return Ok(criteria);
+        }
+
+        // =====================================================
+        // GET: api/EvaluationCriterion/{criteriaId}
+        // Criterion details
+
+        [HttpGet("{criteriaId}")]
+        public async Task<IActionResult> GetCriterionById(int criteriaId)
+        {
+            var criterion = await _service.GetCriterionByIdAsync(criteriaId);
+
+            if (criterion == null)
+                return NotFound("Criterion not found.");
+
+            return Ok(criterion);
+        }
+
+        // =====================================================
+        // GET: api/EvaluationCriterion/template/{templateId}/weight-check
+        // Validate weights sum to 100%
+
+        [HttpGet("template/{templateId}/weight-check")]
+        public async Task<IActionResult> CheckWeights(int templateId)
+        {
+            var valid = await _service.CheckTemplateWeightsAsync(templateId);
+
+            return Ok(new
+            {
+                TemplateId = templateId,
+                IsValid = valid
+            });
+        }
+
+        // =====================================================
+        // POST: api/EvaluationCriterion
+        // Add criterion
+
+        [HttpPost]
+        public async Task<IActionResult> CreateCriterion(EvaluationCriterionDTO.Input input)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            await _service.CreateCriterionAsync(input);
+
+            return Ok("Criterion created successfully.");
+        }
+
+        // =====================================================
+        // PUT: api/EvaluationCriterion/{criteriaId}
+        // Update criterion
+
+        [HttpPut("{criteriaId}")]
+        public async Task<IActionResult> UpdateCriterion(int criteriaId, EvaluationCriterionDTO.Input input)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var updated = await _service.UpdateCriterionAsync(criteriaId, input);
+
+            if (!updated)
+                return NotFound("Criterion not found.");
+
+            return Ok("Criterion updated successfully.");
+        }
+
+        // =====================================================
+        // DELETE: api/EvaluationCriterion/{criteriaId}
+        // Delete criterion
+
+        [HttpDelete("{criteriaId}")]
+        public async Task<IActionResult> DeleteCriterion(int criteriaId)
+        {
+            var deleted = await _service.DeleteCriterionAsync(criteriaId);
+
+            if (!deleted)
+                return NotFound("Criterion not found.");
+
+            return Ok("Criterion deleted successfully.");
+        }
     }
 }

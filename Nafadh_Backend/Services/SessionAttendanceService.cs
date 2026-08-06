@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -11,12 +13,90 @@ namespace Nafadh_Backend.Services
     public class SessionAttendanceService : ISessionAttendanceService
     {
         private readonly ISessionAttendanceRepository _repository;
+        private readonly ISessionRepository _sessionRepository; 
+        private readonly IEnrollmentRepository _enrollmentRepository; 
 
-        public SessionAttendanceService(ISessionAttendanceRepository repository)
+        public SessionAttendanceService(ISessionAttendanceRepository repository, ISessionRepository sessionRepository, IEnrollmentRepository enrollmentRepository)
         {
             _repository = repository;
+            _sessionRepository = sessionRepository;
+            _enrollmentRepository = enrollmentRepository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public async Task<List<SessionAttendanceDto>> GetBySessionIdAsync(int sessionId)
+        {
+            var records = await _repository.GetBySessionIdAsync(sessionId);
+            return records.Select(MapToDto).ToList();
+        }
+
+        public async Task<bool> MarkBulkAsync(MarkAttendanceBulkDto dto)
+        {
+            if (dto.Records == null || dto.Records.Count == 0) return false;
+
+            var entities = dto.Records.Select(r => new NFD_SessionAttendance
+            {
+                SessionId = dto.SessionId,
+                TraineeId = r.TraineeId,
+                Status = r.Status,
+                Note = r.Note
+            }).ToList();
+
+            await _repository.AddRangeAsync(entities);
+            return true;
+        }
+
+        public async Task<bool> UpdateAsync(int id, UpdateSessionAttendanceDto dto)
+        {
+            var record = await _repository.GetByIdAsync(id);
+            if (record == null) return false;
+
+            record.Status = dto.Status;
+            record.Note = dto.Note;
+
+            await _repository.UpdateAsync(record);
+            return true;
+        }
+
+        public async Task<List<SessionAttendanceDto>> GetHistoryForTraineeAsync(int traineeId)
+        {
+            var records = await _repository.GetByTraineeIdAsync(traineeId);
+            return records.Select(MapToDto).ToList();
+        }
+
+        public async Task<SessionAttendanceRateDto> GetRateAsync(int sessionId)
+        {
+            var records = await _repository.GetBySessionIdAsync(sessionId);
+            var presentCount = records.Count(r => r.Status == NFD_AttendanceStatus.Present);
+
+            int totalExpected = 0;
+
+            // 1. جلب بيانات الجلسة لمعرفة الـ BatchId
+            var session = await _sessionRepository.GetByIdAsync(sessionId);
+            if (session != null)
+            {
+                // 2. جلب قائمة المسجلين في هذا الـ Batch لحساب العدد الكلي المتوقع
+                var enrollments = await _enrollmentRepository.GetAllAsync(session.BatchId, null, null, null);
+                totalExpected = enrollments.Count();
+            }
+
+
+
+            return new SessionAttendanceRateDto
+            {
+                SessionId = sessionId,
+                TotalExpected = totalExpected,
+                PresentCount = presentCount,
+                RatePercentage = totalExpected == 0 ? 0 : (double)presentCount / totalExpected * 100
+            };
+        }
+
+        private static SessionAttendanceDto MapToDto(NFD_SessionAttendance a) => new SessionAttendanceDto
+        {
+            AttendanceId = a.AttendanceId,
+            SessionId = a.SessionId,
+            TraineeId = a.TraineeId,
+            Status = a.Status,
+            Note = a.Note
+        };
     }
 }

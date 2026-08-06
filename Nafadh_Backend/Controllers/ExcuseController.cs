@@ -5,6 +5,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Services;
+using static Nafadh_Backend.DTOs.ExcuseDto;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -19,6 +20,56 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET /api/Excuse/attendance/{dailyAttendanceId}
+        [HttpGet("attendance/{dailyAttendanceId}")]
+        public async Task<IActionResult> GetByAttendanceId(int dailyAttendanceId)
+        {
+            ExcuseReadDto? result = await _service.GetByDailyAttendanceIdAsync(dailyAttendanceId);
+            if (result == null)
+                return NotFound();
+
+            return Ok(result);
+        }
+
+        // POST /api/Excuse
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateExcuseDto dto)
+        {
+            try
+            {
+                ExcuseReadDto created = await _service.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetByAttendanceId), new { dailyAttendanceId = created.DailyAttendanceId }, created);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // PUT /api/Excuse/{id}/review
+        [HttpPut("{id}/review")]
+        public async Task<IActionResult> Review(int id, [FromBody] ReviewExcuseDto dto)
+        {
+            try
+            {
+                bool success = await _service.ReviewAsync(id, dto);
+                if (!success)
+                    return NotFound();
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // GET /api/Excuse/pending
+        [HttpGet("pending")]
+        public async Task<IActionResult> GetPending()
+        {
+            List<ExcuseReadDto> result = await _service.GetPendingAsync();
+            return Ok(result);
+        }
     }
 }

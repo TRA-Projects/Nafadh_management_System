@@ -3,12 +3,22 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
-using Nafadh_Backend.Models;
+using Nafadh_Backend.DTOs;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using static Nafadh_Backend.DTOs.BatchDTO;
 
 namespace Nafadh_Backend.Services
 {
     public interface IBatchService
     {
-        // TODO: define business-logic contract methods for this entity
+        Task<List<BatchDto>> GetAllAsync(int? programId, string? status, DateTime? from, DateTime? to);
+        Task<BatchDto?> GetByIdAsync(int id);
+        Task<BatchDto> CreateAsync(CreateBatchDto dto);
+        Task<bool> UpdateAsync(int id, UpdateBatchDto dto);
+        Task<bool> DeleteAsync(int id);
+        Task<List<BatchTraineeDto>> GetTraineesAsync(int batchId);
+        Task<BatchCapacityDto?> GetCapacityAsync(int batchId);
     }
 }

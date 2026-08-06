@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +18,103 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public async Task<IEnumerable<NFD_TraineePaymentSchedule>>
+          GetPaymentScheduleAsync(
+          int traineePaymentId)
+        {
+            return await _repository
+                .GetByPaymentIdAsync(traineePaymentId);
+        }
+
+
+
+
+        public async Task<IEnumerable<NFD_TraineePaymentSchedule>>
+            GenerateInstallmentsAsync(
+            int traineePaymentId,
+            decimal totalAmount,
+            int months)
+        {
+
+            var installmentAmount =
+                totalAmount / months;
+
+
+            var schedules =
+                new List<NFD_TraineePaymentSchedule>();
+
+
+            for (int i = 1; i <= months; i++)
+            {
+
+                schedules.Add(
+                    new NFD_TraineePaymentSchedule
+                    {
+                        MonthNumber = i,
+
+                        MonthLabel = $"Month {i}",
+
+                        DueDate =
+                            DateTime.Now.AddMonths(i),
+
+                        Amount = installmentAmount,
+
+                        Status =
+                        NFD_PaymentScheduleStatus.Pending,
+
+                        TraineePaymentId =
+                            traineePaymentId
+                    });
+            }
+
+
+            await _repository
+                .AddRangeAsync(schedules);
+
+
+            return schedules;
+        }
+
+
+
+
+
+        public async Task<bool>
+            MarkAsPaidAsync(int id)
+        {
+
+            var schedule =
+                await _repository.GetByIdAsync(id);
+
+
+            if (schedule == null)
+                return false;
+
+
+            schedule.Status =
+                NFD_PaymentScheduleStatus.Paid;
+
+
+            schedule.PaidDate =
+                DateTime.Now;
+
+
+            await _repository.UpdateAsync(schedule);
+
+
+            return true;
+        }
+
+
+
+
+
+        public async Task<IEnumerable<NFD_TraineePaymentSchedule>>
+            GetOverdueAsync()
+        {
+            return await _repository
+                .GetOverdueAsync();
+        }
+
     }
 }

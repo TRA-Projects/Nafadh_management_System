@@ -4,7 +4,10 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
+using static Nafadh_Backend.DTOs.ProgramDTO;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -19,6 +22,101 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET /api/Program?trackId=&status=&category=  (filters all optional)
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ProgramDto>>> GetAll(
+            [FromQuery] int? trackId,
+            [FromQuery] NFD_ProgramStatus? status,
+            [FromQuery] string? category)
+        {
+            var filter = new ProgramFilterDto { TrackId = trackId, Status = status, Category = category };
+            var programs = await _service.GetAllProgramsAsync(filter);
+            return Ok(programs);
+        }
+
+        // GET /api/Program/{id}
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<ProgramDto>> GetById(int id)
+        {
+            var program = await _service.GetProgramByIdAsync(id);
+            if (program is null)
+                return NotFound(new { message = $"Program with ID {id} was not found." });
+
+            return Ok(program);
+        }
+
+        // POST /api/Program
+        [HttpPost]
+        public async Task<ActionResult<ProgramDto>> Create([FromBody] CreateProgramDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var (result, error) = await _service.CreateProgramAsync(dto);
+            if (error is not null)
+                return BadRequest(new { message = error }); // e.g. TrackId doesn't exist
+
+            return CreatedAtAction(nameof(GetById), new { id = result!.ProgramId }, result);
+        }
+
+        // PUT /api/Program/{id}
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult<ProgramDto>> Update(int id, [FromBody] UpdateProgramDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var (result, error) = await _service.UpdateProgramAsync(id, dto);
+            if (error == "not_found")
+                return NotFound(new { message = $"Program with ID {id} was not found." });
+
+            return Ok(result);
+        }
+
+
+        // DELETE /api/Program/{id}  (Archive)
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var deleted = await _service.DeleteProgramAsync(id);
+            if (!deleted)
+                return NotFound(new { message = $"Program with ID {id} was not found." });
+
+            return NoContent();
+        }
+
+        // GET /api/Program/{id}/batches
+        [HttpGet("{id:int}/batches")]
+        public async Task<ActionResult<IEnumerable<BatchSummaryDto>>> GetBatches(int id)
+        {
+            var batches = await _service.GetBatchesByProgramIdAsync(id);
+            if (batches is null)
+                return NotFound(new { message = $"Program with ID {id} was not found." });
+
+            return Ok(batches);
+        }
+
+
+        // GET /api/Program/{id}/modules
+        [HttpGet("{id:int}/modules")]
+        public async Task<ActionResult<IEnumerable<ModuleSummaryDto>>> GetModules(int id)
+        {
+            var modules = await _service.GetModulesByProgramIdAsync(id);
+            if (modules is null)
+                return NotFound(new { message = $"Program with ID {id} was not found." });
+
+            return Ok(modules);
+        }
+
+        // GET /api/Program/{id}/eligible-companies
+        [HttpGet("{id:int}/eligible-companies")]
+        public async Task<ActionResult<IEnumerable<EligibleCompanyDto>>> GetEligibleCompanies(int id)
+        {
+            var companies = await _service.GetEligibleCompaniesByProgramIdAsync(id);
+            if (companies is null)
+                return NotFound(new { message = $"Program with ID {id} was not found." });
+
+            return Ok(companies);
+        }
     }
 }

@@ -5,6 +5,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Services;
+using static Nafadh_Backend.DTOs.DailyAttendanceDto;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -19,6 +20,72 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET /api/DailyAttendance/enrollment/{enrollmentId}
+        [HttpGet("enrollment/{enrollmentId}")]
+        public async Task<IActionResult> GetByEnrollmentId(int enrollmentId)
+        {
+            List<DailyAttendanceReadDto> result = await _service.GetByEnrollmentIdAsync(enrollmentId);
+            return Ok(result);
+        }
+
+        // POST /api/DailyAttendance/check-in
+        [HttpPost("check-in")]
+        public async Task<IActionResult> CheckIn([FromBody] CreateDailyAttendanceDto dto)
+        {
+            try
+            {
+                DailyAttendanceReadDto created = await _service.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetByEnrollmentId), new { enrollmentId = created.EnrollmentId }, created);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // PUT /api/DailyAttendance/{id}/check-out
+        [HttpPut("{id}/check-out")]
+        public async Task<IActionResult> CheckOut(int id, [FromBody] CheckOutDailyAttendanceDto dto)
+        {
+            try
+            {
+                bool success = await _service.CheckOutAsync(id, dto);
+                if (!success)
+                    return NotFound();
+
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // PUT /api/DailyAttendance/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateDailyAttendanceDto dto)
+        {
+            bool success = await _service.UpdateAsync(id, dto);
+            if (!success)
+                return NotFound();
+
+            return NoContent();
+        }
+
+        // GET /api/DailyAttendance/company/{companyId}/today
+        [HttpGet("company/{companyId}/today")]
+        public async Task<IActionResult> GetTodayByCompany(int companyId)
+        {
+            List<DailyAttendanceReadDto> result = await _service.GetTodayByCompanyIdAsync(companyId);
+            return Ok(result);
+        }
+
+        // GET /api/DailyAttendance/enrollment/{enrollmentId}/compliance-rate
+        [HttpGet("enrollment/{enrollmentId}/compliance-rate")]
+        public async Task<IActionResult> GetComplianceRate(int enrollmentId)
+        {
+            ComplianceRateDto result = await _service.GetComplianceRateAsync(enrollmentId);
+            return Ok(result);
+        }
     }
 }

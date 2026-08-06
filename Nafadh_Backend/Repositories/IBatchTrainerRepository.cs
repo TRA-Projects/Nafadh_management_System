@@ -9,6 +9,10 @@ namespace Nafadh_Backend.Repositories
 {
     public interface IBatchTrainerRepository
     {
-        // TODO: define data-access contract methods for this entity
+        Task<List<NFD_BatchTrainer>> GetByBatchIdAsync(int batchId);
+        Task<List<NFD_BatchTrainer>> GetByTrainerIdAsync(int trainerId);
+        Task<bool> ExistsAsync(int batchId, int trainerId);
+        Task<NFD_BatchTrainer> AddAsync(NFD_BatchTrainer entity);
+        Task<bool> DeleteAsync(int batchId, int trainerId);
     }
 }

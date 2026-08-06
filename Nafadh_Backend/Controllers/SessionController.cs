@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +20,58 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] int? batchId, [FromQuery] int? trainerId, [FromQuery] DateTime? date)
+        {
+            var result = await _service.GetAllAsync(batchId, trainerId, date);
+            return Ok(result);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var result = await _service.GetByIdAsync(id);
+            if (result == null) return NotFound();
+            return Ok(result);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateSessionDto dto)
+        {
+            var result = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = result.SessionId }, result);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateSessionDto dto)
+        {
+            var success = await _service.UpdateAsync(id, dto);
+            if (!success) return NotFound();
+            return NoContent();
+        }
+
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateSessionStatusDto dto)
+        {
+            var success = await _service.UpdateStatusAsync(id, dto);
+            if (!success) return NotFound();
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var success = await _service.DeleteAsync(id);
+            if (!success) return NotFound();
+            return NoContent();
+        }
+
+        [HttpGet("batch/{batchId}/calendar")]
+        public async Task<IActionResult> GetCalendar(int batchId)
+        {
+            var result = await _service.GetCalendarAsync(batchId);
+            return Ok(result);
+        }
     }
+
 }

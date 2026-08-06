@@ -3,12 +3,40 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Services
 {
     public interface ITrainingMaterialService
     {
-        // TODO: define business-logic contract methods for this entity
+        // Get all materials attached to a specific lesson.
+        // Endpoint:
+        // GET /api/TrainingMaterial/lesson/{lessonId}
+        Task<IEnumerable<TrainingMaterialDto>> GetByLessonIdAsync(int lessonId);
+
+
+        // Create a new training material (file/video/link).
+        // Endpoint:
+        // POST /api/TrainingMaterial
+        Task<TrainingMaterialDto> CreateAsync(CreateTrainingMaterialDto dto, int userId);
+
+
+        // Update material metadata such as FileUrl and FileType.
+        // Endpoint:
+        // PUT /api/TrainingMaterial/{id}
+        Task<bool> UpdateAsync(int id, UpdateTrainingMaterialDto dto);
+
+
+        // Delete a training material.
+        // Endpoint:
+        // DELETE /api/TrainingMaterial/{id}
+        Task<bool> DeleteAsync(int id);
+
+
+        // Retrieve the file URL for downloading/streaming.
+        // Endpoint:
+        // GET /api/TrainingMaterial/{id}/download
+        Task<string?> GetDownloadUrlAsync(int id);
     }
 }

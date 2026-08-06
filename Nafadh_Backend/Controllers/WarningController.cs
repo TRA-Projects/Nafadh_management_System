@@ -4,6 +4,8 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +21,124 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // ==========================================
+        // GET: api/Warning/enrollment/{enrollmentId}
+        // Get all warnings related to an enrollment
+        // ==========================================
+        [HttpGet("enrollment/{enrollmentId}")]
+        public async Task<ActionResult<IEnumerable<WarningOutputDTO>>> GetWarningsByEnrollment(
+            int enrollmentId)
+        {
+            var warnings = await _service
+                .GetWarningsByEnrollmentAsync(enrollmentId);
+
+            return Ok(warnings);
+        }
+
+        // ==========================================
+        // GET: api/Warning/{id}
+        // Get warning details
+        // ==========================================
+        [HttpGet("{id}")]
+        public async Task<ActionResult<WarningDetailsDTO>> GetWarningById(int id)
+        {
+            var warning = await _service
+                .GetWarningByIdAsync(id);
+
+
+            if (warning == null)
+                return NotFound("Warning not found");
+
+
+            return Ok(warning);
+        }
+
+
+        // ==========================================
+        // POST: api/Warning
+        // Create new warning
+        // ==========================================
+        [HttpPost]
+        public async Task<IActionResult> CreateWarning(
+            [FromBody] WarningInputDTO dto)
+        {
+            await _service
+                .CreateWarningAsync(dto);
+
+
+            return Ok(new
+            {
+                message = "Warning created successfully"
+            });
+        }
+
+        // ==========================================
+        // PUT: api/Warning/{id}/status
+        // Update warning status
+        // ==========================================
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateWarningStatus(
+            int id,
+            [FromBody] WarningStatusInputDTO dto)
+        {
+            await _service
+                .UpdateWarningStatusAsync(id, dto);
+
+
+            return Ok(new
+            {
+                message = "Warning status updated successfully"
+            });
+        }
+
+        // ==========================================
+        // PUT: api/Warning/{id}/resolve
+        // Resolve warning
+        // ==========================================
+        [HttpPut("{id}/resolve")]
+        public async Task<IActionResult> ResolveWarning(
+            int id,
+            [FromBody] WarningResolveInputDTO dto)
+        {
+            await _service
+                .ResolveWarningAsync(id, dto);
+
+
+            return Ok(new
+            {
+                message = "Warning resolved successfully"
+            });
+        }
+
+
+        // ==========================================
+        // GET: api/Warning/pending
+        // Get pending warnings
+        // ==========================================
+        [HttpGet("pending")]
+        public async Task<ActionResult<IEnumerable<WarningOutputDTO>>> GetPendingWarnings()
+        {
+            var warnings = await _service
+                .GetPendingWarningsAsync();
+
+
+            return Ok(warnings);
+        }
+
+
+        // ==========================================
+        // GET: api/Warning/level/{level}
+        // Get warnings by level
+        // ==========================================
+        [HttpGet("level/{level}")]
+        public async Task<ActionResult<IEnumerable<WarningOutputDTO>>> GetWarningsByLevel(
+            NFD_WarningLevel level)
+        {
+            var warnings = await _service
+                .GetWarningsByLevelAsync(level);
+
+
+            return Ok(warnings);
+        }
     }
 }

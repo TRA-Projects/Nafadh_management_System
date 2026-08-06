@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +19,75 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public async Task<TraineePaymentDTO?> GetByEnrollmentIdAsync(int enrollmentId)
+        {
+            // GetByEnrollmentIdAsync بالـ Repository أصلاً بتجيب الـ Schedules معها (Include)
+            var payment = await _repository.GetByEnrollmentIdAsync(enrollmentId);
+            return payment is null ? null : MapToDTO(payment);
+        }
+
+        public async Task<TraineePaymentDTO?> GetByIdAsync(int id)
+        {
+            // هنا نستخدم النسخة اللي فيها Include للجدول الزمني (مطلوب بالأسايمنت: "with schedule")
+            var payment = await _repository.GetByIdWithSchedulesAsync(id);
+            return payment is null ? null : MapToDTO(payment);
+        }
+
+        public async Task<TraineePaymentDTO> CreateAsync(CreateTraineePaymentDTO dto)
+        {
+            if (dto.TotalAmount <= 0)
+                throw new ArgumentException("Total amount must be greater than zero");
+
+            var existing = await _repository.GetByEnrollmentIdAsync(dto.EnrollmentId);
+            if (existing is not null)
+                throw new InvalidOperationException("A billing record already exists for this enrollment");
+
+            var payment = new NFD_TraineePayment
+            {
+                EnrollmentId = dto.EnrollmentId,
+                TotalAmount = dto.TotalAmount,
+                Status = NFD_PaymentStatus.Pending
+            };
+
+            await _repository.AddAsync(payment);
+            await _repository.SaveChangesAsync();
+
+            return MapToDTO(payment);
+        }
+
+        public async Task<bool> UpdateStatusAsync(int id, UpdateTraineePaymentStatusDTO dto)
+        {
+            var payment = await _repository.GetByIdAsync(id);
+            if (payment is null) return false;
+
+            // نحول النص المرسل (مثلاً "Paid") إلى قيمة Enum فعلية
+            if (!Enum.TryParse<NFD_PaymentStatus>(dto.Status, ignoreCase: true, out var parsedStatus))
+                throw new ArgumentException($"'{dto.Status}' is not a valid status value.");
+
+            payment.Status = parsedStatus;
+
+            _repository.Update(payment);
+            await _repository.SaveChangesAsync();
+            return true;
+        }
+
+        // ---------- Helper Method ----------
+        private static TraineePaymentDTO MapToDTO(NFD_TraineePayment payment) => new()
+        {
+            TraineePaymentId = payment.TraineePaymentId,
+            EnrollmentId = payment.EnrollmentId,
+            TotalAmount = payment.TotalAmount,
+            Status = payment.Status.ToString(),
+            Schedules = payment.TraineePaymentSchedules.Select(s => new TraineePaymentScheduleSummaryDTO
+            {
+                ScheduleId = s.ScheduleId,
+                MonthNumber = s.MonthNumber,
+                MonthLabel = s.MonthLabel,
+                DueDate = s.DueDate,
+                Amount = s.Amount,
+                Status = s.Status.ToString(),
+                PaidDate = s.PaidDate
+            }).ToList()
+        };
     }
 }

@@ -9,6 +9,21 @@ namespace Nafadh_Backend.Repositories
 {
     public interface ICompanyPaymentRepository
     {
-        // TODO: define data-access contract methods for this entity
+        Task<IEnumerable<NFD_CompanyPayment>>
+           GetByCompanyIdAsync(int companyId);
+
+
+        Task<NFD_CompanyPayment?>
+            GetByIdAsync(int id);
+
+
+        Task AddAsync(
+            NFD_CompanyPayment payment);
+
+
+        Task UpdateAsync(
+            NFD_CompanyPayment payment);
+
+
     }
 }

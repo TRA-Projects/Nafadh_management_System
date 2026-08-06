@@ -3,7 +3,9 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -16,6 +18,100 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+
+        // Get all warnings for a specific enrollment
+        // GET /api/Warning/enrollment/{enrollmentId}
+        public async Task<IEnumerable<NFD_Warning>> GetWarningsByEnrollmentAsync(int enrollmentId)
+        {
+            return await _context.NFD_Warnings
+                .Where(w => w.EnrollmentId == enrollmentId)
+                .ToListAsync();
+        }
+
+
+        // Get warning details by ID
+        // GET /api/Warning/{id}
+        public async Task<NFD_Warning?> GetWarningByIdAsync(int warningId)
+        {
+            return await _context.NFD_Warnings
+                .FindAsync(warningId);
+        }
+
+
+        // Create a new warning
+        // POST /api/Warning
+        public async Task AddWarningAsync(NFD_Warning warning)
+        {
+            await _context.NFD_Warnings.AddAsync(warning);
+            await _context.SaveChangesAsync();
+        }
+
+
+        // Update warning status
+        // PUT /api/Warning/{id}/status
+        public async Task UpdateWarningStatusAsync(
+            int warningId,
+            NFD_WarningStatus status)
+        {
+            var warning = await _context.NFD_Warnings
+                .FindAsync(warningId);
+
+            if (warning == null)
+                throw new Exception("Warning not found");
+
+
+            warning.Status = status;
+
+            await _context.SaveChangesAsync();
+        }
+
+
+        // Resolve warning
+        // PUT /api/Warning/{id}/resolve
+        public async Task ResolveWarningAsync(
+            int warningId,
+            string resolution)
+        {
+            var warning = await _context.NFD_Warnings
+                .FindAsync(warningId);
+
+            if (warning == null)
+                throw new Exception("Warning not found");
+
+
+            warning.Resolution = resolution;
+            warning.Status = NFD_WarningStatus.Resolved;
+
+            await _context.SaveChangesAsync();
+        }
+
+
+        // Update warning entity
+        public async Task UpdateWarningAsync(NFD_Warning warning)
+        {
+            _context.NFD_Warnings.Update(warning);
+            await _context.SaveChangesAsync();
+        }
+
+
+        // Get warnings that are not resolved
+        // GET /api/Warning/pending
+        public async Task<IEnumerable<NFD_Warning>> GetPendingWarningsAsync()
+        {
+            return await _context.NFD_Warnings
+                .Where(w => w.Status != NFD_WarningStatus.Resolved)
+                .ToListAsync();
+        }
+
+
+        // Get warnings by level
+        // GET /api/Warning/level/{level}
+        public async Task<IEnumerable<NFD_Warning>> GetWarningsByLevelAsync(
+            NFD_WarningLevel level)
+        {
+            return await _context.NFD_Warnings
+                .Where(w => w.Level == level)
+                .ToListAsync();
+        }
     }
 }

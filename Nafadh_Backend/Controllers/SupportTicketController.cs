@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +20,67 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+
+        // GET: api/SupportTicket/{id}
+        // Returns a support ticket by its ID.
+        
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetTicketById(int id)
+        {
+            SupportTicketDTO? ticket = await _service.GetTicketByIdAsync(id);
+
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(ticket);
+        }
+        // GET: api/SupportTicket/user/{userId}
+        // Returns all support tickets created by a specific user.
+
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetUserTickets(int userId)
+        {
+            IEnumerable<SupportTicketDTO> tickets = await _service.GetUserTicketsAsync(userId);
+            return Ok(tickets);
+        }
+
+        // GET: api/SupportTicket/open
+        // Returns all open support tickets.
+        [HttpGet("open")]
+        public async Task<IActionResult> GetOpenTickets()
+        {
+            IEnumerable<SupportTicketDTO> tickets = await _service.GetOpenTicketsAsync();
+            return Ok(tickets);
+        }
+
+        // POST: api/SupportTicket
+        // Opens a new support ticket.
+        [HttpPost]
+        public async Task<IActionResult> CreateTicket([FromBody] CreateSupportTicketDTO ticketDto)
+        {
+           
+            SupportTicketDTO ticket = await _service.CreateTicketAsync(ticketDto);
+
+            return CreatedAtAction(nameof(GetTicketById), new { id = ticket.TicketId }, ticket);
+        }
+
+        // PUT: api/SupportTicket/{id}/status
+        // Updates the status of a support ticket.
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateTicketStatus(int id, [FromBody] UpdateSupportTicketStatusDTO ticketDto)
+        {
+
+
+            bool updated = await _service.UpdateTicketStatusAsync(id, ticketDto);
+
+            if (!updated)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
     }
 }

@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -11,11 +12,79 @@ namespace Nafadh_Backend.Repositories
     {
         private readonly Nafadhcontext _context;
 
+
         public NotificationRepository(Nafadhcontext context)
         {
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+
+        public async Task<List<NFD_Notification>> GetByUserIdAsync(int userId)
+        {
+            return await _context.NFD_Notifications
+                .Where(n => n.UserId == userId)
+                .OrderBy(n => n.IsRead)
+                .ThenByDescending(n => n.CreatedAt)
+                .ToListAsync();
+        }
+
+
+
+        public async Task<NFD_Notification?> GetByIdAsync(int id)
+        {
+            return await _context.NFD_Notifications
+                .FirstOrDefaultAsync(n => n.NotificationId == id);
+        }
+
+
+
+        public async Task AddAsync(NFD_Notification notification)
+        {
+            await _context.NFD_Notifications.AddAsync(notification);
+
+            await _context.SaveChangesAsync();
+        }
+
+
+
+        public async Task UpdateAsync(NFD_Notification notification)
+        {
+            _context.NFD_Notifications.Update(notification);
+
+            await _context.SaveChangesAsync();
+        }
+
+
+
+        public async Task<int> GetUnreadCountAsync(int userId)
+        {
+            return await _context.NFD_Notifications
+                .CountAsync(n =>
+                    n.UserId == userId &&
+                    !n.IsRead);
+        }
+
+
+
+        public async Task MarkAllAsReadAsync(int userId)
+        {
+            var notifications = await _context.NFD_Notifications
+                .Where(n => n.UserId == userId && !n.IsRead)
+                .ToListAsync();
+
+
+            if (notifications.Any())
+            {
+                foreach (var notification in notifications)
+                {
+                    notification.IsRead = true;
+                }
+
+
+                _context.NFD_Notifications.UpdateRange(notifications);
+
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

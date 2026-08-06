@@ -3,12 +3,30 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
 {
     public interface IEnrollmentRepository
     {
-        // TODO: define data-access contract methods for this entity
+        Task<IEnumerable<NFD_Enrollment>> GetAllAsync(int? batchId, int? traineeId, int? companyId, NFD_EnrollmentCompletionStatus? status);
+        Task<NFD_Enrollment?> GetByIdAsync(int id);
+        Task<NFD_Enrollment> AddAsync(NFD_Enrollment enrollment);
+        Task UpdateAsync(NFD_Enrollment enrollment);
+        Task<bool> ExistsAsync(int id);
+
+        // FK validation, used before insert/update to avoid raw DB constraint exceptions
+        Task<bool> BatchExistsAsync(int batchId);
+        Task<bool> TraineeExistsAsync(int traineeId);
+        Task<bool> CompanyExistsAsync(int companyId);
+        Task<bool> DepartmentExistsAsync(int departmentId);
+        Task<bool> SupervisorExistsAsync(int supervisorId);
+
+        Task<IEnumerable<NFD_Enrollment>> GetByTraineeIdAsync(int traineeId);
+        Task<IEnumerable<NFD_Enrollment>> GetByCompanyIdAsync(int companyId);
+
+        // total modules in the enrollment's program vs. modules the trainee completed
+        Task<(int totalModules, int completedModules)?> GetProgressDataAsync(int enrollmentId);
     }
 }

@@ -4,6 +4,9 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs.CompanyPayment;
+using Nafadh_Backend.Enums;
+using Nafadh_Backend.Models;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +22,104 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+
+        // GET
+        // /api/CompanyPayment/company/{companyId}
+
+        [HttpGet("company/{companyId}")]
+        public async Task<IActionResult>
+            GetCompanyPayments(int companyId)
+        {
+
+            var result =
+                await _service
+                .GetCompanyPaymentsAsync(companyId);
+
+
+            return Ok(result);
+        }
+
+
+
+
+
+        // GET
+        // /api/CompanyPayment/{id}
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult>
+            GetById(int id)
+        {
+
+            var result =
+                await _service
+                .GetPaymentDetailsAsync(id);
+
+
+
+            if (result == null)
+                return NotFound();
+
+
+
+            return Ok(result);
+        }
+
+
+
+
+
+        // POST
+        // /api/CompanyPayment
+
+        [HttpPost]
+        public async Task<IActionResult>
+            Create(CreateCompanyPaymentDto dto)
+        {
+
+            var result =
+                await _service
+                .CreatePaymentAsync(dto);
+
+
+
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = result.CompanyPaymentId },
+                result);
+        }
+
+
+
+
+
+
+        // PUT
+        // /api/CompanyPayment/{id}/status
+
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult>
+            UpdateStatus(
+                int id,
+                UpdateCompanyPaymentStatusDto dto)
+        {
+
+            var result =
+  await _service.UpdatePaymentStatusAsync(id, dto);
+
+
+
+            if (!result)
+                return NotFound();
+
+
+
+            return Ok(new
+            {
+                message =
+                "Payment status updated successfully"
+            });
+
+        }
     }
 }

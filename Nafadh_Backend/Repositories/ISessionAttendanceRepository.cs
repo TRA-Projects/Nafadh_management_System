@@ -9,6 +9,10 @@ namespace Nafadh_Backend.Repositories
 {
     public interface ISessionAttendanceRepository
     {
-        // TODO: define data-access contract methods for this entity
+        Task<List<NFD_SessionAttendance>> GetBySessionIdAsync(int sessionId);
+        Task<List<NFD_SessionAttendance>> GetByTraineeIdAsync(int traineeId);
+        Task<NFD_SessionAttendance?> GetByIdAsync(int id);
+        Task AddRangeAsync(List<NFD_SessionAttendance> records);
+        Task UpdateAsync(NFD_SessionAttendance record);
     }
 }

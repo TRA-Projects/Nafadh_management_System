@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +19,48 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        // 1. GET: /api/Message/conversation/{userId1}/{userId2}:
+        public async Task<List<NFD_Message>> GetConversationAsync(int userId1, int userId2)
+        {
+            return await _repository.GetConversationAsync(userId1, userId2);
+        }
+
+
+        // 2. GET: /api/Message/inbox/{userId}:
+        public async Task<List<NFD_Message>> GetUserInboxAsync(int userId)
+        {
+            return await _repository.GetUserInboxAsync(userId);
+        }
+
+
+        // 3. POST: /api/Message:
+        public async Task AddMessageAsync(MessageDtos.CreateMessageDto dto)
+        {
+            var message = new NFD_Message
+            {
+                SenderId = dto.SenderId,
+                ReceiverId = dto.ReceiverId,
+                Content = dto.Content,
+                SentDate = DateTime.UtcNow,        
+                Status = NFD_MessageStatus.Sent   
+            };
+
+            await _repository.AddAsync(message);
+        }
+
+
+        // 4. PUT: /api/Message/{id}/status:
+        public async Task UpdateStatusAsync(int id, NFD_MessageStatus status)
+        {
+            await _repository.UpdateStatusAsync(id, status);
+        }
+
+
+        // 5. GET: /api/Message/user/{userId}/unread-count:
+        public async Task<int> GetUnreadCountAsync(int userId)
+        {
+            return await _repository.GetUnreadCountAsync(userId);
+        }
+
     }
 }

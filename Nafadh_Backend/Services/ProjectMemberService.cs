@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +18,119 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        // GET PROJECT MEMBERS BY PROJECT ID
+        // Returns team roster for a project
+        public async Task<List<ProjectMemberDTOs>> GetByProjectAsync(int projectId)
+        {
+            var members = await _repository.GetByProjectAsync(projectId);
+
+
+            return members.Select(x => new ProjectMemberDTOs
+            {
+                MemberId = x.MemberId,
+                ProjectId = x.ProjectId,
+                TraineeId = x.TraineeId,
+                Role = x.Role
+
+            }).ToList();
+        }
+
+
+
+        // GET PROJECTS BY TRAINEE ID
+        // Returns all projects where trainee participated
+        public async Task<List<ProjectMemberDTOs>> GetByTraineeAsync(int traineeId)
+        {
+            var members = await _repository.GetByTraineeAsync(traineeId);
+
+
+            return members.Select(x => new ProjectMemberDTOs
+            {
+                MemberId = x.MemberId,
+                ProjectId = x.ProjectId,
+                TraineeId = x.TraineeId,
+                Role = x.Role
+
+            }).ToList();
+        }
+
+
+
+
+        // ADD PROJECT MEMBER
+        // Assign trainee to project with a specific role
+        public async Task<ProjectMemberDTOs> AddAsync(
+            CreateProjectMemberDTO dto)
+        {
+            var member = new NFD_ProjectMember
+            {
+                ProjectId = dto.ProjectId,
+                TraineeId = dto.TraineeId,
+                Role = dto.Role
+            };
+
+
+            await _repository.AddAsync(member);
+
+
+            return new ProjectMemberDTOs
+            {
+                MemberId = member.MemberId,
+                ProjectId = member.ProjectId,
+                TraineeId = member.TraineeId,
+                Role = member.Role
+            };
+        }
+
+
+
+        // UPDATE MEMBER ROLE
+        // Changes role of existing project member
+        public async Task<bool> UpdateAsync(
+            int id,
+            UpdateProjectMemberDTO dto)
+        {
+            var member = await _repository.GetByIdAsync(id);
+
+
+            if (member == null)
+            {
+                return false;
+            }
+
+
+            member.Role = dto.Role;
+
+
+            await _repository.UpdateAsync(member);
+
+
+            return true;
+        }
+
+
+
+        // DELETE MEMBER
+        // Removes trainee from project team
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var member = await _repository.GetByIdAsync(id);
+
+
+            if (member == null)
+            {
+                return false;
+            }
+
+
+            await _repository.DeleteAsync(member);
+
+
+            return true;
+        }
+
+
+
+        
     }
 }
