@@ -42,7 +42,7 @@ namespace Nafadh_Backend.Controllers
         [HttpGet("user/{userId}")]
         public async Task<IActionResult> GetUserTickets(int userId)
         {
-            IEnumerable<SupportTicketDTO> tickets = await _service.GetTicketsByUserIdAsync(userId);
+            IEnumerable<SupportTicketDTO> tickets = await _service.GetUserTicketsAsync(userId);
             return Ok(tickets);
         }
 
@@ -60,6 +60,7 @@ namespace Nafadh_Backend.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateTicket([FromBody] CreateSupportTicketDTO ticketDto)
         {
+           
             SupportTicketDTO ticket = await _service.CreateTicketAsync(ticketDto);
 
             return CreatedAtAction(nameof(GetTicketById), new { id = ticket.TicketId }, ticket);
@@ -70,6 +71,8 @@ namespace Nafadh_Backend.Controllers
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateTicketStatus(int id, [FromBody] UpdateSupportTicketStatusDTO ticketDto)
         {
+
+
             bool updated = await _service.UpdateTicketStatusAsync(id, ticketDto);
 
             if (!updated)
