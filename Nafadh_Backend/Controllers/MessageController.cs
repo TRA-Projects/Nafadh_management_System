@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Services;
@@ -41,14 +42,14 @@ namespace Nafadh_Backend.Controllers
 
         // 3. POST: /api/Message:
         [HttpPost]
-        public async Task<IActionResult> AddMessage([FromBody] NFD_Message message)
+        public async Task<IActionResult> AddMessage([FromBody] MessageDtos.CreateMessageDto dto)
         {
-            if (message == null)
+            if (dto == null)
             {
                 return BadRequest("Invalid message data.");
             }
 
-            await _service.AddMessageAsync(message);
+            await _service.AddMessageAsync(dto);
             return Ok(new { message = "Message sent successfully." });
         }
 

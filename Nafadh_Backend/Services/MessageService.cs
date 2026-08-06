@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
@@ -33,17 +34,25 @@ namespace Nafadh_Backend.Services
 
 
         // 3. POST: /api/Message:
-        public async Task AddMessageAsync(NFD_Message message)
+        public async Task AddMessageAsync(MessageDtos.CreateMessageDto dto)
         {
-            message.Status = NFD_MessageStatus.Sent;
+            var message = new NFD_Message
+            {
+                SenderId = dto.SenderId,
+                ReceiverId = dto.ReceiverId,
+                Content = dto.Content,
+                SentDate = DateTime.UtcNow,        
+                Status = NFD_MessageStatus.Sent   
+            };
+
             await _repository.AddAsync(message);
         }
 
 
         // 4. PUT: /api/Message/{id}/status:
-        public async Task UpdateStatusAsync(int messageId, NFD_MessageStatus status)
+        public async Task UpdateStatusAsync(int id, NFD_MessageStatus status)
         {
-            await _repository.UpdateStatusAsync(messageId, status);
+            await _repository.UpdateStatusAsync(id, status);
         }
 
 
