@@ -4,6 +4,8 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -19,6 +21,79 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // =====================================================
+        // GET: api/EvaluationTemplate?type=Technical
+        // List templates (optionally filter by type)
+
+        [HttpGet]
+        public async Task<IActionResult> GetTemplates([FromQuery] NFD_EvaluationType? type)
+        {
+            var templates = await _service.GetTemplatesAsync(type);
+
+            return Ok(templates);
+        }
+
+        // =====================================================
+        // GET: api/EvaluationTemplate/{id}
+        // Template details with criteria
+
+        [HttpGet("{templateId}")]
+        public async Task<IActionResult> GetTemplateById(int templateId)
+        {
+            var template = await _service.GetTemplateByIdAsync(templateId);
+
+            if (template == null)
+                return NotFound("Template not found.");
+
+            return Ok(template);
+        }
+
+        // =====================================================
+        // POST: api/EvaluationTemplate
+        // Create template
+
+        [HttpPost]
+        public async Task<IActionResult> CreateTemplate(EvaluationTemplateDTO.Input input)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            await _service.CreateTemplateAsync(input);
+
+            return Ok("Evaluation Template created successfully.");
+        }
+
+        // =====================================================
+        // PUT: api/EvaluationTemplate/{id}
+        // Update template
+
+        [HttpPut("{templateId}")]
+        public async Task<IActionResult> UpdateTemplate(int templateId, EvaluationTemplateDTO.Input input)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var updated = await _service.UpdateTemplateAsync(templateId, input);
+
+            if (!updated)
+                return NotFound("Template not found.");
+
+            return Ok("Evaluation Template updated successfully.");
+        }
+
+        // =====================================================
+        // DELETE: api/EvaluationTemplate/{id}
+        // Delete template
+
+        [HttpDelete("{templateId}")]
+        public async Task<IActionResult> DeleteTemplate(int templateId)
+        {
+            var deleted = await _service.DeleteTemplateAsync(templateId);
+
+            if (!deleted)
+                return NotFound("Template not found.");
+
+            return Ok("Evaluation Template deleted successfully.");
+        }
     }
 }
