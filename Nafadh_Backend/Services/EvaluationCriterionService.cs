@@ -75,6 +75,12 @@ namespace Nafadh_Backend.Services
         // Create Criterion
         public async Task CreateCriterionAsync(EvaluationCriterionDTO.Input input)
         {
+            // Check if the template exists
+            var template = await _templateRepository.GetTemplateByIdAsync(input.TemplateId);
+
+            if (template == null)
+                throw new Exception("Evaluation Template not found.");
+
             var criterion = new NFD_EvaluationCriterion
             {
                 TemplateId = input.TemplateId,
@@ -93,6 +99,12 @@ namespace Nafadh_Backend.Services
 
             if (criterion == null)
                 return false;
+
+            // Check if the template exists
+            var template = await _templateRepository.GetTemplateByIdAsync(input.TemplateId);
+
+            if (template == null)
+                throw new Exception("Evaluation Template not found.");
 
             criterion.TemplateId = input.TemplateId;
             criterion.Name = input.Name;
