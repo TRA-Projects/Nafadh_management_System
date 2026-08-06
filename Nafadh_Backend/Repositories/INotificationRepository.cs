@@ -9,6 +9,23 @@ namespace Nafadh_Backend.Repositories
 {
     public interface INotificationRepository
     {
-        // TODO: define data-access contract methods for this entity
+
+        Task<List<NFD_Notification>> GetByUserIdAsync(int userId);
+
+
+        Task<NFD_Notification?> GetByIdAsync(int id);
+
+
+        Task AddAsync(NFD_Notification notification);
+
+
+        Task UpdateAsync(NFD_Notification notification);
+
+
+        Task<int> GetUnreadCountAsync(int userId);
+
+
+        Task MarkAllAsReadAsync(int userId);
+
     }
 }
