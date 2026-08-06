@@ -34,5 +34,6 @@ namespace Nafadh_Backend.Models
         public NFD_Company Company { get; set; } = null!;
 
         public ICollection<NFD_Enrollment> Enrollments { get; set; } = new List<NFD_Enrollment>();
+        //
     }
 }
