@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -11,12 +13,142 @@ namespace Nafadh_Backend.Services
     public class TraineeModuleProgressService : ITraineeModuleProgressService
     {
         private readonly ITraineeModuleProgressRepository _repository;
-
+        // Constructor
         public TraineeModuleProgressService(ITraineeModuleProgressRepository repository)
         {
             _repository = repository;
         }
+        // Returns all module progress records for a trainee.
+        public async Task<IEnumerable<TraineeModuleProgressDto>>
+            GetByTraineeIdAsync(int traineeId)
+        {
+            var progressList = await _repository.GetByTraineeIdAsync(traineeId);
 
-        // TODO: implement business-logic contract methods for this entity
+            return progressList.Select(p =>
+                new TraineeModuleProgressDto
+                {
+                    ProgressId = p.ProgressId,
+                    TraineeId = p.TraineeId,
+                    ModuleId = p.ModuleId,
+                    Status = p.Status,
+                    CompletedAt = p.CompletedAt
+                });
+        }
+
+        // Marks a module as completed.
+        public async Task<TraineeModuleProgressDto>
+            CompleteModuleAsync( CompleteModuleDto dto,  int traineeId)
+        {
+            // TODO:
+            // Validate ModuleId.
+            // Module belongs to another developer.
+
+            var existingProgress = await _repository.GetByTraineeAndModuleAsync(
+                    traineeId, dto.ModuleId);
+
+            if (existingProgress != null)
+            {
+                throw new Exception( "This module has already been completed.");
+            }
+
+            var progress = new NFD_TraineeModuleProgress
+                {
+                    TraineeId = traineeId,
+                    ModuleId = dto.ModuleId,
+                    Status = NFD_ModuleProgressStatus.Completed,
+                    CompletedAt = DateTime.UtcNow
+                };
+
+            var created = await _repository.CreateAsync(progress);
+
+            return new TraineeModuleProgressDto
+            {
+                ProgressId = created.ProgressId,
+                TraineeId = created.TraineeId,
+                ModuleId = created.ModuleId,
+                Status = created.Status,
+                CompletedAt = created.CompletedAt
+            };
+        }
+        // Updates an existing trainee module progress status.
+        // Endpoint:
+        // PUT /api/TraineeModuleProgress/{id}
+        public async Task<bool> UpdateAsync( int id, UpdateTraineeModuleProgressDto dto)
+        {
+            // Get existing progress record
+            var progress = await _repository.GetByIdAsync(id);
+
+            // If record does not exist
+            if (progress == null)
+            {
+                return false;
+            }
+
+
+            // Update status
+            progress.Status = dto.Status;
+
+
+            // Update completion date if provided
+            if (dto.CompletedAt.HasValue)
+            {
+                progress.CompletedAt = dto.CompletedAt;
+            }
+
+
+            // Automatically set completion date
+            // when status becomes Completed
+            if (dto.Status == NFD_ModuleProgressStatus.Completed &&
+                progress.CompletedAt == null)
+            {
+                progress.CompletedAt = DateTime.UtcNow;
+            }
+
+
+            await _repository.UpdateAsync(progress);
+
+            return true;
+        }
+
+
+
+        // Calculates overall completion percentage for a trainee.
+        // Endpoint:
+        // GET /api/TraineeModuleProgress/trainee/{traineeId}/percentage
+        public async Task<TraineeProgressPercentageDto>
+            GetProgressPercentageAsync(int traineeId)
+        {
+            var percentage =await _repository.GetCompletionPercentageAsync(traineeId);
+
+
+            return new TraineeProgressPercentageDto
+            {
+                TraineeId = traineeId,
+                Percentage = percentage
+            };
+        }
+
+
+
+
+        // Returns completion status of all trainees
+        // inside a specific module.
+        // Endpoint:
+        // GET /api/TraineeModuleProgress/module/{moduleId}
+        public async Task<IEnumerable<TraineeModuleProgressDto>>
+            GetByModuleIdAsync(int moduleId)
+        {
+            var progressList = await _repository.GetByModuleIdAsync(moduleId);
+
+
+            return progressList.Select(p =>  new TraineeModuleProgressDto
+                {
+                    ProgressId = p.ProgressId,
+                    TraineeId = p.TraineeId,
+                    ModuleId = p.ModuleId,
+                    Status = p.Status,
+                    CompletedAt = p.CompletedAt
+                });
+        }
     }
 }
