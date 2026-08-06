@@ -66,14 +66,7 @@ namespace Nafadh_Backend.Repositories
         {
             return await _context.NFD_Messages
                 .CountAsync(m => m.ReceiverId == userId && m.Status == NFD_MessageStatus.Sent);
-        }
-        // Helper Method:
-        public async Task<NFD_Message?> GetByIdAsync(int id)
-        {
-            return await _context.NFD_Messages.FirstOrDefaultAsync(m => m.MessageId == id);
-        }
-
-
+        }   
 
     }
 }

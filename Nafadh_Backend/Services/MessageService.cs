@@ -33,29 +33,19 @@ namespace Nafadh_Backend.Services
 
 
         // 3. POST: /api/Message:
-        public async Task AddAsync(NFD_Message message)
+        public async Task AddMessageAsync(NFD_Message message)
         {
-            if (message.Status == 0)
-            {
-                message.Status = NFD_MessageStatus.Sent;
-            }
-
+            message.Status = NFD_MessageStatus.Sent;
             await _repository.AddAsync(message);
         }
 
 
         // 4. PUT: /api/Message/{id}/status:
-        public async Task<bool> UpdateStatusAsync(int messageId, NFD_MessageStatus status)
+        public async Task UpdateStatusAsync(int messageId, NFD_MessageStatus status)
         {
-            var message = await _repository.GetByIdAsync(messageId);
-            if (message == null)
-            {
-                return false;
-            }
-
             await _repository.UpdateStatusAsync(messageId, status);
-            return true;
         }
+
 
         // 5. GET: /api/Message/user/{userId}/unread-count:
         public async Task<int> GetUnreadCountAsync(int userId)
