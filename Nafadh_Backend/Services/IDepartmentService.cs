@@ -18,4 +18,5 @@ namespace Nafadh_Backend.Services
         Task DeleteDepartmentAsync(int id);
         Task<object> GetDepartmentPerformanceAsync(int departmentId);
     }
+    //
 }
