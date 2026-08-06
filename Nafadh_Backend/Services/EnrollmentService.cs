@@ -120,11 +120,44 @@ namespace Nafadh_Backend.Services
             return true;
         }
 
+        //GetByTraineeIdAsync by traineeId
+        public async Task<IEnumerable<EnrollmentDTO>> GetByTraineeIdAsync(int traineeId)
+        {
+            var enrollments = await _repository.GetByTraineeIdAsync(traineeId);
+            return enrollments.Select(MapToDto);
+        }
 
+        //GetByCompanyIdAsync by companyId
+        public async Task<IEnumerable<EnrollmentDTO>> GetByCompanyIdAsync(int companyId)
+        {
+            var enrollments = await _repository.GetByCompanyIdAsync(companyId);
+            return enrollments.Select(MapToDto);
+        }
 
+        //GetProgressSummaryAsync by enrollmentId
+        public async Task<ProgressSummaryDto?> GetProgressSummaryAsync(int enrollmentId)
+        {
+            var data = await _repository.GetProgressDataAsync(enrollmentId);
+            if (data is null) return null;
 
+            var (totalModules, completedModules) = data.Value;
+            var percentage = totalModules == 0 ? 0 : Math.Round((double)completedModules / totalModules * 100, 1);
+
+            return new ProgressSummaryDto
+            {
+                EnrollmentId = enrollmentId,
+                TotalModules = totalModules,
+                CompletedModules = completedModules,
+                ProgressPercentage = percentage
+            };
+        }
 
         //List batches running for a program
+
+
+
+
+
         // Get the curriculum outline (modules)
         //List companies eligible to host this program
     }

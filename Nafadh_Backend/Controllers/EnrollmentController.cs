@@ -107,5 +107,32 @@ namespace Nafadh_Backend.Controllers
 
             return NoContent();
         }
+
+        // GET /api/Enrollment/trainee/{traineeId}  -> "My Programs"
+        [HttpGet("trainee/{traineeId:int}")]
+        public async Task<ActionResult<IEnumerable<EnrollmentDTO>>> GetByTrainee(int traineeId)
+        {
+            var enrollments = await _service.GetByTraineeIdAsync(traineeId);
+            return Ok(enrollments);
+        }
+
+        // GET /api/Enrollment/company/{companyId}
+        [HttpGet("company/{companyId:int}")]
+        public async Task<ActionResult<IEnumerable<EnrollmentDTO>>> GetByCompany(int companyId)
+        {
+            var enrollments = await _service.GetByCompanyIdAsync(companyId);
+            return Ok(enrollments);
+        }
+
+        // GET /api/Enrollment/{id}/progress-summary
+        [HttpGet("{id:int}/progress-summary")]
+        public async Task<ActionResult<ProgressSummaryDto>> GetProgressSummary(int id)
+        {
+            var summary = await _service.GetProgressSummaryAsync(id);
+            if (summary is null)
+                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+
+            return Ok(summary);
+        }
     }
 }
