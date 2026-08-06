@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +18,98 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public async Task<IEnumerable<ModuleDTO>> GetModulesByProgramIdAsync(int programId)
+        {
+            var modules = await _repository.GetModulesByProgramIdAsync(programId);
+
+            return modules.Select(m => new ModuleDTO
+            {
+                ModuleId = m.ModuleId,
+                ProgramId = m.ProgramId,
+                Title = m.Title,
+                OrderIndex = m.OrderIndex,
+                AvailableFrom = m.AvailableFrom,
+                AvailableTo = m.AvailableTo,
+                IsArchived = m.IsArchived,
+                PrerequisiteModuleId = m.PrerequisiteModuleId
+            });
+        }
+        public async Task<ModuleDTO?> GetModuleByIdAsync(int moduleId)
+        {
+            var m = await _repository.GetModuleByIdAsync(moduleId);
+            if (m == null) return null;
+
+            return new ModuleDTO
+            {
+                ModuleId = m.ModuleId,
+                ProgramId = m.ProgramId,
+                Title = m.Title,
+                OrderIndex = m.OrderIndex,
+                AvailableFrom = m.AvailableFrom,
+                AvailableTo = m.AvailableTo,
+                IsArchived = m.IsArchived,
+                PrerequisiteModuleId = m.PrerequisiteModuleId
+            };
+
+        }
+
+        public async Task<ModuleDTO> CreateModuleAsync(CreateModuleDTO createDto)
+        {
+            var module = new NFD_Module
+            {
+                ProgramId = createDto.ProgramId,
+                Title = createDto.Title,
+                OrderIndex = createDto.OrderIndex,
+                AvailableFrom = createDto.AvailableFrom,
+                AvailableTo = createDto.AvailableTo,
+                PrerequisiteModuleId = createDto.PrerequisiteModuleId,
+                IsArchived = false
+            };
+            var createdModule = await _repository.CreateModuleAsync(module);
+
+            return new ModuleDTO
+            {
+                ModuleId = createdModule.ModuleId,
+                ProgramId = createdModule.ProgramId,
+                Title = createdModule.Title,
+                OrderIndex = createdModule.OrderIndex,
+                AvailableFrom = createdModule.AvailableFrom,
+                AvailableTo = createdModule.AvailableTo,
+                IsArchived = createdModule.IsArchived,
+                PrerequisiteModuleId = createdModule.PrerequisiteModuleId
+            };
+        }
+
+        public async Task UpdateModuleAsync(int id, UpdateModuleDTO updateDto)
+        {
+            var module = new NFD_Module
+            {
+                ModuleId = id,
+                Title = updateDto.Title,
+                OrderIndex = updateDto.OrderIndex,
+                AvailableFrom = updateDto.AvailableFrom,
+                AvailableTo = updateDto.AvailableTo,
+                IsArchived = updateDto.IsArchived,
+                PrerequisiteModuleId = updateDto.PrerequisiteModuleId
+            };
+
+            await _repository.UpdateModuleAsync(module);
+        }
+
+        public async Task DeleteModuleAsync(int moduleId)
+        {
+            await _repository.DeleteModuleAsync(moduleId);
+        }
+
+        public async Task<IEnumerable<object>> GetLessonsByModuleIdAsync(int moduleId)
+        {
+            var lessons = await _repository.GetLessonsByModuleIdAsync(moduleId);
+            return lessons;
+        }
+
+        public async Task<bool> IsPrerequisiteCompletedAsync(int traineeId, int moduleId)
+        {
+            return await _repository.IsPrerequisiteCompletedAsync(traineeId, moduleId);
+        }
     }
 }

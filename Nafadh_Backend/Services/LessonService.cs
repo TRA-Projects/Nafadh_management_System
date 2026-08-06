@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +18,72 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public async Task<IEnumerable<LessonDTO>> GetLessonsByModuleIdAsync(int moduleId)
+        {
+            var lessons = await _repository.GetLessonsByModuleIdAsync(moduleId);
+
+            return lessons.Select(l => new LessonDTO
+            {
+                LessonId = l.LessonId,
+                ModuleId = l.ModuleId,
+                Title = l.Title,
+                ContentBody = l.ContentBody,
+                OrderIndex = l.OrderIndex
+            });
+        }
+
+        public async Task<LessonDTO?> GetLessonByIdAsync(int lessonId)
+        {
+            var l = await _repository.GetLessonByIdAsync(lessonId);
+            if (l == null) return null;
+
+            return new LessonDTO
+            {
+                LessonId = l.LessonId,
+                ModuleId = l.ModuleId,
+                Title = l.Title,
+                ContentBody = l.ContentBody,
+                OrderIndex = l.OrderIndex
+            };
+        }
+
+        public async Task<LessonDTO> CreateLessonAsync(CreateLessonDTO createDto)
+        {
+            var lesson = new NFD_Lesson
+            {
+                ModuleId = createDto.ModuleId,
+                Title = createDto.Title,
+                ContentBody = createDto.ContentBody,
+                OrderIndex = createDto.OrderIndex
+            };
+
+            var created = await _repository.CreateLessonAsync(lesson);
+
+            return new LessonDTO
+            {
+                LessonId = created.LessonId,
+                ModuleId = created.ModuleId,
+                Title = created.Title,
+                ContentBody = created.ContentBody,
+                OrderIndex = created.OrderIndex
+            };
+        }
+
+        public async Task UpdateLessonAsync(int id, UpdateLessonDTO updateDto)
+        {
+            var lesson = new NFD_Lesson
+            {
+                LessonId = id,
+                Title = updateDto.Title,
+                ContentBody = updateDto.ContentBody,
+                OrderIndex = updateDto.OrderIndex
+            };
+
+            await _repository.UpdateLessonAsync(lesson);
+        }
+        public async Task DeleteLessonAsync(int lessonId)
+        {
+            await _repository.DeleteLessonAsync(lessonId);
+        }
     }
 }
