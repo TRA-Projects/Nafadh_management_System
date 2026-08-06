@@ -3,8 +3,11 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
+using System.Security.Claims;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -13,12 +16,104 @@ namespace Nafadh_Backend.Controllers
     public class TraineeModuleProgressController : ControllerBase
     {
         private readonly ITraineeModuleProgressService _service;
-
+        // Constructor
         public TraineeModuleProgressController(ITraineeModuleProgressService service)
         {
             _service = service;
         }
+        // GET:
+        // /api/TraineeModuleProgress/trainee/{traineeId}
+        //
+        // Returns all progress records for a trainee.
+        [HttpGet("trainee/{traineeId}")]
+        public async Task<IActionResult> GetByTraineeId(int traineeId)
+        {
+            var result = await _service.GetByTraineeIdAsync(traineeId);
 
-        // TODO: implement endpoints for this entity
+            return Ok(result);
+        }
+
+
+
+        // POST:
+        // /api/TraineeModuleProgress/complete
+        //
+        // Trainee marks a module as completed.
+        //
+        // TraineeId comes from JWT Token.
+        // We do not accept it from the client.
+        [Authorize]
+        [HttpPost("complete")]
+        public async Task<IActionResult> CompleteModule(
+            CompleteModuleDto dto)
+        {
+            var traineeIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+
+            if (traineeIdClaim == null)
+            {
+                return Unauthorized("Trainee ID not found in token.");
+            }
+
+
+            int traineeId = int.Parse(traineeIdClaim.Value);
+
+
+            var result = await _service.CompleteModuleAsync( dto,traineeId);
+
+
+            return Ok(result);
+        }
+
+
+
+        // PUT:
+        // /api/TraineeModuleProgress/{id}
+        //
+        // Updates progress status.
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, UpdateTraineeModuleProgressDto dto)
+        {
+            var updated = await _service.UpdateAsync(id, dto);
+
+
+            if (!updated)
+            {
+                return NotFound(  "Progress record not found.");
+            }
+
+
+            return Ok( "Progress updated successfully.");
+        }
+
+
+
+        // GET:
+        // /api/TraineeModuleProgress/trainee/{traineeId}/percentage
+        //
+        // Returns trainee overall completion percentage.
+        [HttpGet("trainee/{traineeId}/percentage")]
+        public async Task<IActionResult> GetPercentage(int traineeId)
+        {
+            var result = await _service.GetProgressPercentageAsync( traineeId);
+
+
+            return Ok(result);
+        }
+
+
+        // GET:
+        // /api/TraineeModuleProgress/module/{moduleId}
+        //
+        // Returns completion status of all trainees
+        // inside a specific module.
+        [HttpGet("module/{moduleId}")]
+        public async Task<IActionResult> GetByModuleId(int moduleId)
+        {
+            var result = await _service.GetByModuleIdAsync(moduleId);
+
+
+            return Ok(result);
+        }
     }
 }
