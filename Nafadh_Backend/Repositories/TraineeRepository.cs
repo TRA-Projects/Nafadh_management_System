@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -16,6 +18,96 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        // Get all trainees with optional filters and pagination
+        public async Task<(List<NFD_Trainee> Items, int TotalCount)> GetAllAsync(
+            int? companyId, NFD_TraineeStatus? status, string? university, string? searchTerm,
+            int pageNumber, int pageSize)
+        {
+            var query = _context.NFD_Trainees
+                .Include(t => t.User)
+                .Include(t => t.Company)
+                .AsQueryable();
+
+            if (companyId.HasValue)
+                query = query.Where(t => t.CompanyId == companyId.Value);
+
+            if (status.HasValue)
+                query = query.Where(t => t.Status == status.Value);
+
+            if (!string.IsNullOrWhiteSpace(university))
+                query = query.Where(t => t.University != null && t.University.Contains(university));
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+                query = query.Where(t =>
+                    (t.Major != null && t.Major.Contains(searchTerm)));
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .OrderBy(t => t.TraineeId)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
+        // Get a trainee by ID with related data
+        public async Task<NFD_Trainee?> GetByIdAsync(int id)
+        {
+            return await _context.NFD_Trainees
+                .Include(t => t.User)
+                .Include(t => t.Company)
+                .FirstOrDefaultAsync(t => t.TraineeId == id);
+        }
+
+        // Get a trainee by ID with all related data for dashboard
+        public async Task<NFD_Trainee?> GetByIdWithDashboardDataAsync(int id)
+        {
+            return await _context.NFD_Trainees
+                .Include(t => t.User)
+                .Include(t => t.Company)
+                .Include(t => t.Enrollments)
+                .Include(t => t.TraineeModuleProgresses)
+                .Include(t => t.SessionAttendances)
+                .Include(t => t.Submissions)
+                .Include(t => t.ProjectMembers)
+                .FirstOrDefaultAsync(t => t.TraineeId == id);
+        }
+
+        // Check if a user already has a trainee profile
+        public async Task<bool> UserHasTraineeProfileAsync(int userId)
+        {
+            return await _context.NFD_Trainees.AnyAsync(t => t.UserId == userId);
+        }
+
+        // Check if a company exists by ID
+        public async Task<bool> CompanyExistsAsync(int companyId)
+        {
+            return await _context.NFD_Companies.AnyAsync(c => c.CompanyId == companyId);
+        }
+
+        // Add a new trainee to the context
+        public async Task AddAsync(NFD_Trainee trainee)
+        {
+            await _context.NFD_Trainees.AddAsync(trainee);
+        }
+
+        // Add multiple trainees to the context
+        public async Task AddRangeAsync(IEnumerable<NFD_Trainee> trainees)
+        {
+            await _context.NFD_Trainees.AddRangeAsync(trainees);
+        }
+
+        //update an existing trainee in the context
+        public void Update(NFD_Trainee trainee)
+        {
+            _context.NFD_Trainees.Update(trainee);
+        }
+
+        public async Task<bool> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
 }
