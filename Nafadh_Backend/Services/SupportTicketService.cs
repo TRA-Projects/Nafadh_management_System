@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +19,101 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+       
+        public async Task<SupportTicketDTO?> GetTicketByIdAsync(int id)
+        {
+            NFD_SupportTicket? ticket = await _repository.GetByIdAsync(id);
+
+            if (ticket == null)
+            {
+                return null;
+            }
+
+            SupportTicketDTO supportTicket = new SupportTicketDTO
+            {
+                TicketId = ticket.TicketId,
+                Subject = ticket.Subject,
+                Message = ticket.Message,
+                Status = ticket.Status,
+                CreatedAt = ticket.CreatedAt,
+                UserId = ticket.UserId
+            };
+            return supportTicket;
+        }
+
+        public async Task<IEnumerable<SupportTicketDTO>> GetUserTicketsAsync(int userId)
+        {
+            IEnumerable<NFD_SupportTicket> tickets = await _repository.GetUserTicketsAsync(userId);
+
+            return tickets.Select(t => new SupportTicketDTO
+            {
+                TicketId = t.TicketId,
+                Subject = t.Subject,
+                Message = t.Message,
+                Status = t.Status,
+                CreatedAt = t.CreatedAt,
+                UserId = t.UserId
+            });
+        }
+
+        // Retrieves all open support tickets.
+        public async Task<IEnumerable<SupportTicketDTO>> GetOpenTicketsAsync()
+        {
+            IEnumerable<NFD_SupportTicket> tickets = await _repository.GetOpenTicketsAsync();
+
+            return tickets.Select(t => new SupportTicketDTO
+            {
+                TicketId = t.TicketId,
+                Subject = t.Subject,
+                Message = t.Message,
+                Status = t.Status,
+                CreatedAt = t.CreatedAt,
+                UserId = t.UserId
+            });
+        }
+
+        // Creates a new support ticket.
+        public async Task<SupportTicketDTO> CreateTicketAsync(CreateSupportTicketDTO ticketDto)
+        {
+            NFD_SupportTicket ticket = new NFD_SupportTicket
+            {
+                Subject = ticketDto.Subject,
+                Message = ticketDto.Message,
+                UserId = ticketDto.UserId,
+                Status = NFD_SupportTicketStatus.Open,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _repository.AddAsync(ticket);
+            await _repository.SaveChangesAsync();
+
+            return new SupportTicketDTO
+            {
+                TicketId = ticket.TicketId,
+                Subject = ticket.Subject,
+                Message = ticket.Message,
+                Status = ticket.Status,
+                CreatedAt = ticket.CreatedAt,
+                UserId = ticket.UserId
+            };
+        }
+
+        // Updates the status of a support ticket.
+        public async Task<bool> UpdateTicketStatusAsync(int id, UpdateSupportTicketStatusDTO ticketDto)
+        {
+            NFD_SupportTicket? ticket = await _repository.GetByIdAsync(id);
+
+            if (ticket == null)
+            {
+                return false;
+            }
+
+            ticket.Status = ticketDto.Status;
+
+            await _repository.UpdateAsync(ticket);
+            await _repository.SaveChangesAsync();
+
+            return true;
+        }
     }
 }
