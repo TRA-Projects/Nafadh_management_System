@@ -112,5 +112,6 @@ namespace Nafadh_Backend.Controllers
             var trainees = await _supervisorRepo.GetAssignedTraineesAsync(id);
             return Ok(trainees);
         }
+        //
     }
 }
