@@ -7,6 +7,9 @@
     <UserSecretsId>b376275b-50a8-4553-8a7b-96acdfef8338</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>.</DockerfileContext>
+	  <!-- Ignore the Swashbuckle vulnerability warning -->
+	  <NoWarn>NU1902</NoWarn>
+
   </PropertyGroup>
 
   <ItemGroup>

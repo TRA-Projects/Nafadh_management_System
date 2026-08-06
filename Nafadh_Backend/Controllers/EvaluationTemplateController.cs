@@ -10,8 +10,8 @@ using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
+   // [ApiController]
+   // [Route("api/[controller]")]
     public class EvaluationTemplateController : ControllerBase
     {
         private readonly IEvaluationTemplateService _service;
