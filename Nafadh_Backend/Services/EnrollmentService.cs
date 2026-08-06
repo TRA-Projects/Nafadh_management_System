@@ -27,14 +27,12 @@ namespace Nafadh_Backend.Services
             return enrollments.Select(MapToDto);
         }
 
+        //Get program details
         public async Task<EnrollmentDTO?> GetEnrollmentByIdAsync(int id)
         {
             var enrollment = await _repository.GetByIdAsync(id);
             return enrollment is null ? null : MapToDto(enrollment);
         }
-
-        //Get program details
-
 
 
 

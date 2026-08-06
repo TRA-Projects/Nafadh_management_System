@@ -40,5 +40,16 @@ namespace Nafadh_Backend.Controllers
             var enrollments = await _service.GetAllEnrollmentsAsync(filter);
             return Ok(enrollments);
         }
+
+        // GET /api/Enrollment/{id}
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<EnrollmentDTO>> GetById(int id)
+        {
+            var enrollment = await _service.GetEnrollmentByIdAsync(id);
+            if (enrollment is null)
+                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+
+            return Ok(enrollment);
+        }
     }
 }
