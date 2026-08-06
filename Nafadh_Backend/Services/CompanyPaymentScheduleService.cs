@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs.CompanyPayment;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +19,118 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public async Task<IEnumerable<CompanyPaymentScheduleResponseDto>>
+           GetPaymentScheduleAsync(int companyPaymentId)
+        {
+            var schedules =
+                await _repository.GetByPaymentIdAsync(companyPaymentId);
+
+
+            return schedules.Select(x => new CompanyPaymentScheduleResponseDto
+            {
+                ScheduleId = x.ScheduleId,
+                MonthNumber = x.MonthNumber,
+                MonthLabel = x.MonthLabel,
+                DueDate = x.DueDate,
+                Amount = x.Amount,
+                Status = x.Status,
+                PaidDate = x.PaidDate,
+                CompanyPaymentId = x.CompanyPaymentId
+            });
+        }
+
+
+
+
+
+        public async Task GenerateScheduleAsync(
+            CreateCompanyPaymentScheduleDto dto)
+        {
+            var amountPerMonth =
+                dto.TotalAmount / dto.NumberOfMonths;
+
+
+            var schedules = new List<NFD_CompanyPaymentSchedule>();
+
+
+            for (int i = 1; i <= dto.NumberOfMonths; i++)
+            {
+                schedules.Add(new NFD_CompanyPaymentSchedule
+                {
+                    MonthNumber = i,
+
+                    MonthLabel = $"Month {i}",
+
+                    DueDate =
+                    dto.StartDate.AddMonths(i),
+
+                    Amount =
+                    amountPerMonth,
+
+                    Status =
+                    NFD_PaymentScheduleStatus.Pending,
+
+                    CompanyPaymentId =
+                    dto.CompanyPaymentId
+                });
+            }
+
+
+            await _repository.AddRangeAsync(schedules);
+        }
+
+
+
+
+
+        public async Task<bool> MarkPaidAsync(
+            int id,
+            MarkCompanyPaymentSchedulePaidDto dto)
+        {
+            var schedule =
+                await _repository.GetByIdAsync(id);
+
+
+            if (schedule == null)
+                return false;
+
+
+            schedule.Status =
+                NFD_PaymentScheduleStatus.Paid;
+
+
+            schedule.PaidDate =
+                dto.PaidDate;
+
+
+            await _repository.UpdateAsync(schedule);
+
+
+            return true;
+        }
+
+
+
+
+
+        public async Task<IEnumerable<CompanyPaymentScheduleResponseDto>>
+            GetOverdueAsync()
+        {
+            var schedules =
+                await _repository.GetOverdueAsync();
+
+
+            return schedules.Select(x => new CompanyPaymentScheduleResponseDto
+            {
+                ScheduleId = x.ScheduleId,
+                MonthNumber = (int)x.MonthNumber,
+                MonthLabel = x.MonthLabel,
+                DueDate = x.DueDate,
+                Amount = x.Amount,
+                Status = x.Status,
+                PaidDate = x.PaidDate,
+                CompanyPaymentId = x.CompanyPaymentId
+            });
+        }
     }
 }

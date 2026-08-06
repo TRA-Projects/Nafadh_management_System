@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs.CompanyPayment;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -17,6 +19,153 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        public async Task<IEnumerable<CompanyPaymentResponseDto>>
+           GetCompanyPaymentsAsync(int companyId)
+        {
+
+            var payments =
+                await _repository
+                .GetByCompanyIdAsync(companyId);
+
+
+
+            return payments.Select(p => new CompanyPaymentResponseDto
+            {
+                CompanyPaymentId = p.CompanyPaymentId,
+
+                TotalAmount = p.TotalAmount,
+
+                Status = p.Status,
+
+                CompanyId = p.CompanyId,
+
+                CompanyName = p.Company.CompanyName,
+
+                BatchId = p.BatchId
+
+            });
+
+        }
+
+
+        public async Task<CompanyPaymentResponseDto?> GetPaymentDetailsAsync(int id)
+        {
+            var payment = await _repository.GetByIdAsync(id);
+
+            if (payment == null)
+                return null;
+
+
+            return new CompanyPaymentResponseDto
+            {
+                CompanyPaymentId = payment.CompanyPaymentId,
+
+                TotalAmount = payment.TotalAmount,
+
+                Status = payment.Status,
+
+                CompanyId = payment.CompanyId,
+
+                CompanyName = payment.Company.CompanyName,
+
+                BatchId = payment.BatchId,
+
+
+                PaymentSchedules = payment.CompanyPaymentSchedules
+                    .Select(schedule => new CompanyPaymentScheduleResponseDto
+                    {
+                        ScheduleId = schedule.ScheduleId,
+
+                        MonthNumber = schedule.MonthNumber,
+
+                        MonthLabel = schedule.MonthLabel,
+
+                        DueDate = schedule.DueDate,
+
+                        Amount = schedule.Amount,
+
+                        Status = schedule.Status,
+
+                        PaidDate = schedule.PaidDate,
+
+                        CompanyPaymentId = schedule.CompanyPaymentId
+                    })
+                    .ToList()
+            };
+        }
+
+
+
+        public async Task<CompanyPaymentResponseDto>
+            CreatePaymentAsync(
+                CreateCompanyPaymentDto dto)
+        {
+
+            var payment =
+                new NFD_CompanyPayment
+                {
+                    TotalAmount = dto.TotalAmount,
+
+                    CompanyId = dto.CompanyId,
+
+                    BatchId = dto.BatchId,
+
+                    Status =
+                    NFD_PaymentStatus.Pending
+                };
+
+
+
+            await _repository.AddAsync(payment);
+
+
+
+            return new CompanyPaymentResponseDto
+            {
+                CompanyPaymentId =
+                    payment.CompanyPaymentId,
+
+                TotalAmount =
+                    payment.TotalAmount,
+
+                Status =
+                    payment.Status,
+
+                CompanyId =
+                    payment.CompanyId,
+
+                BatchId =
+                    payment.BatchId
+            };
+
+        }
+
+
+        public async Task<bool> UpdatePaymentStatusAsync(
+                 int id,
+                UpdateCompanyPaymentStatusDto dto)
+        {
+
+            var payment =
+                await _repository.GetByIdAsync(id);
+
+
+
+            if (payment == null)
+                return false;
+
+
+
+            payment.Status =
+                dto.Status;
+
+
+
+            await _repository.UpdateAsync(payment);
+
+
+
+            return true;
+        }
     }
 }
