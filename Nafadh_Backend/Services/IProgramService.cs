@@ -3,12 +3,22 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
+using static Nafadh_Backend.DTOs.ProgramDTO;
 
 namespace Nafadh_Backend.Services
 {
     public interface IProgramService
     {
-        // TODO: define business-logic contract methods for this entity
+        Task<IEnumerable<ProgramDto>> GetAllProgramsAsync(ProgramFilterDto filter);
+        Task<ProgramDto?> GetProgramByIdAsync(int id);
+        Task<(ProgramDto? result, string? error)> CreateProgramAsync(CreateProgramDto dto);
+        Task<(ProgramDto? result, string? error)> UpdateProgramAsync(int id, UpdateProgramDto dto);
+        Task<bool> DeleteProgramAsync(int id);
+
+        Task<IEnumerable<BatchSummaryDto>?> GetBatchesByProgramIdAsync(int programId);
+        Task<IEnumerable<ModuleSummaryDto>?> GetModulesByProgramIdAsync(int programId);
+        Task<IEnumerable<EligibleCompanyDto>?> GetEligibleCompaniesByProgramIdAsync(int programId);
     }
 }

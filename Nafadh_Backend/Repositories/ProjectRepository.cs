@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -16,6 +18,93 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+       
+
+
+
+
+        // GET /api/Project - List projects (filter by program/status)
+        public async Task<IEnumerable<NFD_Project>> GetAllAsync(int? programId = null, NFD_ProjectStatus? status = null)
+        {
+            var query = _context.NFD_Projects
+                .Include(p => p.Program)
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (programId.HasValue)
+            {
+                query = query.Where(p => p.ProgramId == programId.Value);
+            }
+
+            if (status.HasValue)
+            {
+                query = query.Where(p => p.Status == status.Value);
+            }
+
+            return await query.ToListAsync();
+        }
+
+        // GET /api/Project/{id} - Get project details
+        public async Task<NFD_Project?> GetByIdAsync(int id)
+        {
+            return await _context.NFD_Projects
+                .Include(p => p.Program)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.ProjectId == id);
+        }
+
+        public async Task<NFD_Project?> GetByIdWithMembersAsync(int id)
+        {
+            return await _context.NFD_Projects
+                .Include(p => p.Program)
+                .Include(p => p.ProjectMembers)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.ProjectId == id);
+        }
+
+       
+
+        // POST /api/Project - Define a new capstone/group project
+        public async Task AddAsync(NFD_Project project)
+        {
+            await _context.NFD_Projects.AddAsync(project);
+        }
+
+        // PUT /api/Project/{id} - Update project details
+        public void Update(NFD_Project project)
+        {
+            _context.NFD_Projects.Update(project);
+        }
+
+        // DELETE /api/Project/{id} - Remove a project
+        public void Delete(NFD_Project project)
+        {
+            _context.NFD_Projects.Remove(project);
+        }
+
+        public async Task<bool> ExistsAsync(int id)
+        {
+            return await _context.NFD_Projects.AnyAsync(p => p.ProjectId == id);
+        }
+
+        public async Task<bool> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
+
+        }
+
+             // GET /api/Project/program/{programId} - Projects defined under a program
+        public async Task<IEnumerable<NFD_Project>> GetByProgramIdAsync(int programId)
+        {
+            return await _context.NFD_Projects
+                .Include(p => p.Program)
+                .Where(p => p.ProgramId == programId)
+                .AsNoTracking()
+                .ToListAsync();
+        
+
+
+    }
+
     }
 }

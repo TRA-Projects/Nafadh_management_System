@@ -3,8 +3,10 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using static Nafadh_Backend.DTOs.ExcuseDto;
 
 namespace Nafadh_Backend.Services
 {
@@ -16,7 +18,76 @@ namespace Nafadh_Backend.Services
         {
             _repository = repository;
         }
+        public async Task<ExcuseReadDto?> GetByDailyAttendanceIdAsync(int dailyAttendanceId)
+        {
+            NFD_Excuse? entity = await _repository.GetByDailyAttendanceIdAsync(dailyAttendanceId);
+            if (entity == null)
+                return null;
 
-        // TODO: implement business-logic contract methods for this entity
+            return MapToReadDto(entity);
+        }
+
+        public async Task<ExcuseReadDto> CreateAsync(CreateExcuseDto dto)
+        {
+            // قاعدة عمل: لا يجوز تقديم أكثر من عذر واحد لنفس سجل الغياب
+            NFD_Excuse? existing = await _repository.GetByDailyAttendanceIdAsync(dto.DailyAttendanceId);
+            if (existing != null)
+                throw new InvalidOperationException("An excuse already exists for this attendance record.");
+
+            NFD_Excuse entity = new NFD_Excuse
+            {
+                Reason = dto.Reason,
+                ProofUrl = dto.ProofUrl,
+                DailyAttendanceId = dto.DailyAttendanceId,
+                Status = NFD_ExcuseStatus.Pending
+            };
+
+            NFD_Excuse created = await _repository.AddAsync(entity);
+            return MapToReadDto(created);
+        }
+
+        public async Task<bool> ReviewAsync(int id, ReviewExcuseDto dto)
+        {
+            NFD_Excuse? entity = await _repository.GetByIdAsync(id);
+            if (entity == null)
+                return false;
+
+            // قاعدة عمل: لا يجوز مراجعة عذر تمت مراجعته مسبقًا
+            if (entity.Status != NFD_ExcuseStatus.Pending)
+                throw new InvalidOperationException("This excuse has already been reviewed.");
+
+            entity.Status = dto.IsApproved ? NFD_ExcuseStatus.Approved : NFD_ExcuseStatus.Rejected;
+            entity.ReviewedByUserId = dto.ReviewedByUserId;
+
+            await _repository.UpdateAsync(entity);
+            return true;
+        }
+
+        public async Task<List<ExcuseReadDto>> GetPendingAsync()
+        {
+            List<NFD_Excuse> entities = await _repository.GetPendingAsync();
+            List<ExcuseReadDto> result = new List<ExcuseReadDto>();
+
+            foreach (NFD_Excuse entity in entities)
+            {
+                result.Add(MapToReadDto(entity));
+            }
+
+            return result;
+        }
+
+        // دالة مساعدة خاصة لتحويل الـ Entity إلى Dto
+        private ExcuseReadDto MapToReadDto(NFD_Excuse entity)
+        {
+            return new ExcuseReadDto
+            {
+                ExcuseId = entity.ExcuseId,
+                Reason = entity.Reason,
+                ProofUrl = entity.ProofUrl,
+                Status = entity.Status,
+                DailyAttendanceId = entity.DailyAttendanceId,
+                ReviewedByUserId = entity.ReviewedByUserId
+            };
+        }
     }
 }
