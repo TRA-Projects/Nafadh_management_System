@@ -7,7 +7,11 @@ using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using System.Net.NetworkInformation;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using static Nafadh_Backend.DTOs.EnrollmentDTO;
+using static System.Net.WebRequestMethods;
 
 namespace Nafadh_Backend.Services
 {
@@ -20,7 +24,7 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // List programs (filter by track/status/category)
+       // List enrollments(filter by batch/trainee/company/status)
 
         public async Task<IEnumerable<EnrollmentDTO>> GetAllEnrollmentsAsync(EnrollmentFilterDto filter)
         {
@@ -28,14 +32,14 @@ namespace Nafadh_Backend.Services
             return enrollments.Select(MapToDto);
         }
 
-        //Get program details
+        //Get enrollment details
         public async Task<EnrollmentDTO?> GetEnrollmentByIdAsync(int id)
         {
             var enrollment = await _repository.GetByIdAsync(id);
             return enrollment is null ? null : MapToDto(enrollment);
         }
 
-        //Create a new program
+        //Enroll a trainee into a batch/company/department
         public async Task<(EnrollmentDTO? result, string? error)> CreateEnrollmentAsync(CreateEnrollmentDto dto)
         {
             // required FKs, checked up front so we return a clean 400 instead of a raw DB constraint error
@@ -73,7 +77,7 @@ namespace Nafadh_Backend.Services
             return (MapToDto(full!), null);
         }
 
-        //Update program details
+        //Update department/supervisor assignment
         public async Task<(EnrollmentDTO? result, string? error)> UpdateAssignmentAsync(int id, UpdateEnrollmentAssignmentDto dto)
         {
             var enrollment = await _repository.GetByIdAsync(id);
@@ -95,6 +99,7 @@ namespace Nafadh_Backend.Services
             return (MapToDto(full!), null);
         }
 
+        //Update completion status(InProgress / Completed / Dropped / Failed)
         public async Task<(EnrollmentDTO? result, string? error)> UpdateStatusAsync(int id, UpdateEnrollmentStatusDto dto)
         {
             var enrollment = await _repository.GetByIdAsync(id);
@@ -107,8 +112,9 @@ namespace Nafadh_Backend.Services
             var full = await _repository.GetByIdAsync(id);
             return (MapToDto(full!), null);
         }
-        //Archive a program
-        public async Task<bool> DeleteEnrollmentAsync(int id)
+
+        //Cancel/withdraw an enrollment
+        public async Task<bool> WithdrawEnrollmentAsync(int id)
         {
             var enrollment = await _repository.GetByIdAsync(id);
             if (enrollment is null) return false;
@@ -120,21 +126,21 @@ namespace Nafadh_Backend.Services
             return true;
         }
 
-        //GetByTraineeIdAsync by traineeId
+        //All enrollments for a trainee ("My Programs")
         public async Task<IEnumerable<EnrollmentDTO>> GetByTraineeIdAsync(int traineeId)
         {
             var enrollments = await _repository.GetByTraineeIdAsync(traineeId);
             return enrollments.Select(MapToDto);
         }
 
-        //GetByCompanyIdAsync by companyId
+        //All enrollments hosted by a company
         public async Task<IEnumerable<EnrollmentDTO>> GetByCompanyIdAsync(int companyId)
         {
             var enrollments = await _repository.GetByCompanyIdAsync(companyId);
             return enrollments.Select(MapToDto);
         }
 
-        //GetProgressSummaryAsync by enrollmentId
+        //Aggregated progress % for dashboards
         public async Task<ProgressSummaryDto?> GetProgressSummaryAsync(int enrollmentId)
         {
             var data = await _repository.GetProgressDataAsync(enrollmentId);
@@ -151,14 +157,24 @@ namespace Nafadh_Backend.Services
                 ProgressPercentage = percentage
             };
         }
-
-        //List batches running for a program
-
-
-
-
-
-        // Get the curriculum outline (modules)
-        //List companies eligible to host this program
+        private static EnrollmentDTO MapToDto(NFD_Enrollment e)
+        {
+            return new EnrollmentDTO
+            {
+                EnrollmentId = e.EnrollmentId,
+                EnrollmentDate = e.EnrollmentDate,
+                CompletionStatus = e.CompletionStatus.ToString(),
+                BatchId = e.BatchId,
+                BatchName = e.Batch.BatchName,
+                TraineeId = e.TraineeId,
+                TraineeName = e.Trainee.User.FullName,
+                CompanyId = e.CompanyId,
+                CompanyName = e.Company.CompanyName,
+                DepartmentId = e.DepartmentId,
+                DepartmentName = e.Department?.Name,
+                SupervisorId = e.SupervisorId,
+                SupervisorName = e.CompanySupervisor?.User.FullName
+            };
+        }
     }
 }
