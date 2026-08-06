@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Nafadh_Backend.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -16,6 +17,36 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // TODO: implement data-access contract methods for this entity
+        public async Task<List<NFD_SessionAttendance>> GetBySessionIdAsync(int sessionId)
+        {
+            return await _context.NFD_SessionAttendances
+                .Where(a => a.SessionId == sessionId)
+                .ToListAsync();
+        }
+
+        public async Task<List<NFD_SessionAttendance>> GetByTraineeIdAsync(int traineeId)
+        {
+            return await _context.NFD_SessionAttendances
+                .Where(a => a.TraineeId == traineeId)
+                .ToListAsync();
+        }
+
+        public async Task<NFD_SessionAttendance?> GetByIdAsync(int id)
+        {
+            return await _context.NFD_SessionAttendances
+                .FirstOrDefaultAsync(a => a.AttendanceId == id);
+        }
+
+        public async Task AddRangeAsync(List<NFD_SessionAttendance> records)
+        {
+            _context.NFD_SessionAttendances.AddRange(records);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(NFD_SessionAttendance record)
+        {
+            _context.NFD_SessionAttendances.Update(record);
+            await _context.SaveChangesAsync();
+        }
     }
 }
