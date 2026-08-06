@@ -22,4 +22,5 @@ namespace Nafadh_Backend.DTOs
     {
         public string Name { get; set; } = null!;
     }
+    //
 }
