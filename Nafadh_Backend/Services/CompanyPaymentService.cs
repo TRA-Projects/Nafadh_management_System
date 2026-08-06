@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs.CompanyPayment;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
@@ -18,35 +19,146 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        public async Task<IEnumerable<NFD_CompanyPayment>> GetCompanyPaymentsAsync(int companyId)
+        public async Task<IEnumerable<CompanyPaymentResponseDto>>
+           GetCompanyPaymentsAsync(int companyId)
         {
-            return await _repository.GetByCompanyIdAsync(companyId);
+
+            var payments =
+                await _repository
+                .GetByCompanyIdAsync(companyId);
+
+
+
+            return payments.Select(p => new CompanyPaymentResponseDto
+            {
+                CompanyPaymentId = p.CompanyPaymentId,
+
+                TotalAmount = p.TotalAmount,
+
+                Status = p.Status,
+
+                CompanyId = p.CompanyId,
+
+                CompanyName = p.Company.CompanyName,
+
+                BatchId = p.BatchId
+
+            });
+
         }
 
-        public async Task<NFD_CompanyPayment?> GetPaymentDetailsAsync(int id)
+
+        public async Task<CompanyPaymentResponseDto?>
+            GetPaymentDetailsAsync(int id)
         {
-            return await _repository.GetByIdAsync(id);
+
+            var payment =
+                await _repository.GetByIdAsync(id);
+
+
+            if (payment == null)
+                return null;
+
+
+
+            return new CompanyPaymentResponseDto
+            {
+                CompanyPaymentId =
+                    payment.CompanyPaymentId,
+
+                TotalAmount =
+                    payment.TotalAmount,
+
+                Status =
+                    payment.Status,
+
+                CompanyId =
+                    payment.CompanyId,
+
+                CompanyName =
+                    payment.Company.CompanyName,
+
+                BatchId =
+                    payment.BatchId,
+
+                PaymentSchedules =
+                    payment.CompanyPaymentSchedules
+                    .Cast<object>()
+                    .ToList()
+            };
+
         }
 
-        public async Task<NFD_CompanyPayment> CreatePaymentAsync(NFD_CompanyPayment payment)
+
+
+        public async Task<CompanyPaymentResponseDto>
+            CreatePaymentAsync(
+                CreateCompanyPaymentDto dto)
         {
-            payment.Status = NFD_PaymentStatus.Pending;
+
+            var payment =
+                new NFD_CompanyPayment
+                {
+                    TotalAmount = dto.TotalAmount,
+
+                    CompanyId = dto.CompanyId,
+
+                    BatchId = dto.BatchId,
+
+                    Status =
+                    NFD_PaymentStatus.Pending
+                };
+
+
 
             await _repository.AddAsync(payment);
 
-            return payment;
+
+
+            return new CompanyPaymentResponseDto
+            {
+                CompanyPaymentId =
+                    payment.CompanyPaymentId,
+
+                TotalAmount =
+                    payment.TotalAmount,
+
+                Status =
+                    payment.Status,
+
+                CompanyId =
+                    payment.CompanyId,
+
+                BatchId =
+                    payment.BatchId
+            };
+
         }
 
-        public async Task<bool> UpdatePaymentStatusAsync(int id, NFD_PaymentStatus status)
+
+        public async Task<bool> UpdatePaymentStatusAsync(
+                 int id,
+                UpdateCompanyPaymentStatusDto dto)
         {
-            var payment = await _repository.GetByIdAsync(id);
+
+            var payment =
+                await _repository.GetByIdAsync(id);
+
+
 
             if (payment == null)
                 return false;
 
-            payment.Status = status;
+
+
+            payment.Status =
+                dto.Status;
+
+
 
             await _repository.UpdateAsync(payment);
+
+
 
             return true;
         }

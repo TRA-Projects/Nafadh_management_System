@@ -9,14 +9,21 @@ namespace Nafadh_Backend.Repositories
 {
     public interface ICompanyPaymentRepository
     {
-        Task<IEnumerable<NFD_CompanyPayment>> GetByCompanyIdAsync(int companyId);
+        Task<IEnumerable<NFD_CompanyPayment>>
+           GetByCompanyIdAsync(int companyId);
 
-        Task<NFD_CompanyPayment?> GetByIdAsync(int id);
 
-        Task AddAsync(NFD_CompanyPayment payment);
+        Task<NFD_CompanyPayment?>
+            GetByIdAsync(int id);
 
-        Task UpdateAsync(NFD_CompanyPayment payment);
 
-      
+        Task AddAsync(
+            NFD_CompanyPayment payment);
+
+
+        Task UpdateAsync(
+            NFD_CompanyPayment payment);
+
+
     }
 }

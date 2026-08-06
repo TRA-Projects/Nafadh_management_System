@@ -17,32 +17,55 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<NFD_CompanyPayment>> GetByCompanyIdAsync(int companyId)
+        public async Task<IEnumerable<NFD_CompanyPayment>>
+              GetByCompanyIdAsync(int companyId)
         {
             return await _context.NFD_CompanyPayments
                 .Where(x => x.CompanyId == companyId)
+                .Include(x => x.Company)
                 .Include(x => x.Batch)
                 .ToListAsync();
         }
 
-        public async Task<NFD_CompanyPayment?> GetByIdAsync(int id)
+
+
+        public async Task<NFD_CompanyPayment?>
+            GetByIdAsync(int id)
         {
             return await _context.NFD_CompanyPayments
-                .Include(x => x.CompanyPaymentSchedules)
+
                 .Include(x => x.Company)
+
                 .Include(x => x.Batch)
-                .FirstOrDefaultAsync(x => x.CompanyPaymentId == id);
+
+                .Include(x => x.CompanyPaymentSchedules)
+
+                .FirstOrDefaultAsync(
+                    x => x.CompanyPaymentId == id);
         }
 
-        public async Task AddAsync(NFD_CompanyPayment payment)
+
+
+
+        public async Task AddAsync(
+            NFD_CompanyPayment payment)
         {
-            await _context.NFD_CompanyPayments.AddAsync(payment);
+            await _context.NFD_CompanyPayments
+                .AddAsync(payment);
+
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(NFD_CompanyPayment payment)
+
+
+
+
+        public async Task UpdateAsync(
+            NFD_CompanyPayment payment)
         {
-            _context.NFD_CompanyPayments.Update(payment);
+            _context.NFD_CompanyPayments
+                .Update(payment);
+
             await _context.SaveChangesAsync();
         }
     }
