@@ -48,7 +48,7 @@ namespace Nafadh_Backend.Services
                 Message = dto.Message,
                 RelatedEntity = dto.RelatedEntity,
                 IsRead = false,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             await _repository.AddAsync(notification);
