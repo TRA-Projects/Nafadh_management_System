@@ -10,6 +10,9 @@ namespace Nafadh_Backend.Services
 {
     public interface IExcuseService
     {
-      
+        Task<ExcuseReadDto?> GetByDailyAttendanceIdAsync(int dailyAttendanceId);
+        Task<ExcuseReadDto> CreateAsync(CreateExcuseDto dto);
+        Task<bool> ReviewAsync(int id, ReviewExcuseDto dto);
+        Task<List<ExcuseReadDto>> GetPendingAsync();
     }
 }
