@@ -97,5 +97,15 @@ namespace Nafadh_Backend.Controllers
             return Ok(result);
         }
 
+        // DELETE /api/Enrollment/{id}  -> cancel/withdraw
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Withdraw(int id)
+        {
+            var withdrawn = await _service.WithdrawEnrollmentAsync(id);
+            if (!withdrawn)
+                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+
+            return NoContent();
+        }
     }
 }

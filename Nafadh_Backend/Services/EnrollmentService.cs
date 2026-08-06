@@ -107,9 +107,23 @@ namespace Nafadh_Backend.Services
             var full = await _repository.GetByIdAsync(id);
             return (MapToDto(full!), null);
         }
-
-
         //Archive a program
+        public async Task<bool> DeleteEnrollmentAsync(int id)
+        {
+            var enrollment = await _repository.GetByIdAsync(id);
+            if (enrollment is null) return false;
+
+            // Soft delete: mark as Dropped instead of removing the row, since attendance/evaluations/
+            // certificates/payments all reference this enrollment and must stay intact for history
+            enrollment.CompletionStatus = NFD_EnrollmentCompletionStatus.Dropped;
+            await _repository.UpdateAsync(enrollment);
+            return true;
+        }
+
+
+
+
+
         //List batches running for a program
         // Get the curriculum outline (modules)
         //List companies eligible to host this program
