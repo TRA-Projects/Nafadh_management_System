@@ -13,10 +13,14 @@ namespace Nafadh_Backend.Services
     public class SessionAttendanceService : ISessionAttendanceService
     {
         private readonly ISessionAttendanceRepository _repository;
+        private readonly ISessionRepository _sessionRepository; 
+        private readonly IEnrollmentRepository _enrollmentRepository; 
 
-        public SessionAttendanceService(ISessionAttendanceRepository repository)
+        public SessionAttendanceService(ISessionAttendanceRepository repository, ISessionRepository sessionRepository, IEnrollmentRepository enrollmentRepository)
         {
             _repository = repository;
+            _sessionRepository = sessionRepository;
+            _enrollmentRepository = enrollmentRepository;
         }
 
         public async Task<List<SessionAttendanceDto>> GetBySessionIdAsync(int sessionId)
@@ -64,7 +68,18 @@ namespace Nafadh_Backend.Services
             var records = await _repository.GetBySessionIdAsync(sessionId);
             var presentCount = records.Count(r => r.Status == NFD_AttendanceStatus.Present);
 
-            int totalExpected = 0; // placeholder for cross-team batch enrollment integration
+            int totalExpected = 0;
+
+            // 1. جلب بيانات الجلسة لمعرفة الـ BatchId
+            var session = await _sessionRepository.GetByIdAsync(sessionId);
+            if (session != null)
+            {
+                // 2. جلب قائمة المسجلين في هذا الـ Batch لحساب العدد الكلي المتوقع
+                var enrollments = await _enrollmentRepository.GetAllAsync(session.BatchId, null, null, null);
+                totalExpected = enrollments.Count();
+            }
+
+
 
             return new SessionAttendanceRateDto
             {
