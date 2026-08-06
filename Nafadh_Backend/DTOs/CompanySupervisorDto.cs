@@ -21,7 +21,7 @@ namespace Nafadh_Backend.DTOs
         public int UserId { get; set; }
         public int CompanyId { get; set; }
     }
-
+    //
     public class UpdateCompanySupervisorDto
     {
         public string? Department { get; set; }
