@@ -4,7 +4,10 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
+using static Nafadh_Backend.DTOs.EnrollmentDTO;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -19,6 +22,23 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // TODO: implement endpoints for this entity
+        // GET /api/Enrollment?batchId=&traineeId=&companyId=&status=  (filters all optional)
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<EnrollmentDTO>>> GetAll(
+            [FromQuery] int? batchId,
+            [FromQuery] int? traineeId,
+            [FromQuery] int? companyId,
+            [FromQuery] NFD_EnrollmentCompletionStatus? status)
+        {
+            var filter = new EnrollmentFilterDto
+            {
+                BatchId = batchId,
+                TraineeId = traineeId,
+                CompanyId = companyId,
+                Status = status
+            };
+            var enrollments = await _service.GetAllEnrollmentsAsync(filter);
+            return Ok(enrollments);
+        }
     }
 }
