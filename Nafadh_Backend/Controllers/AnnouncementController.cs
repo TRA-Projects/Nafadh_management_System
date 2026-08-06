@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -20,5 +21,23 @@ namespace Nafadh_Backend.Controllers
         }
 
         // TODO: implement endpoints for this entity
+
+        // Get announcements by scope
+        [HttpGet("scope/{scopeType}/{scopeId}")]
+        public async Task<IActionResult> GetByScope(
+            NFD_AnnouncementScopeType scopeType,
+            int? scopeId)
+        {
+
+            var result =
+                await _service.GetByScopeAsync(
+                    scopeType,
+                    scopeId);
+
+
+
+            return Ok(result);
+
+        }
     }
 }

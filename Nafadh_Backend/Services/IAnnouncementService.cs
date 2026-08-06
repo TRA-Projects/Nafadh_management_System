@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Services
@@ -10,5 +12,10 @@ namespace Nafadh_Backend.Services
     public interface IAnnouncementService
     {
         // TODO: define business-logic contract methods for this entity
+
+        // Get announcements by scope
+        Task<List<AnnouncementDTO>> GetByScopeAsync(
+            NFD_AnnouncementScopeType scopeType,
+            int? scopeId);
     }
 }

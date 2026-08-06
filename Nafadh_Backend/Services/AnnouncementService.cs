@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -18,5 +20,34 @@ namespace Nafadh_Backend.Services
         }
 
         // TODO: implement business-logic contract methods for this entity
+
+        // Get announcements by scope
+        public async Task<List<AnnouncementDTO>> GetByScopeAsync(
+            NFD_AnnouncementScopeType scopeType,
+            int? scopeId)
+        {
+
+            var announcements =
+                await _repository.GetByScopeAsync(
+                    scopeType,
+                    scopeId);
+
+
+
+            return announcements
+                .Select(a => new AnnouncementDTO
+                {
+                    AnnouncementId = a.AnnouncementId,
+                    ScopeType = a.ScopeType,
+                    ScopeId = a.ScopeId,
+                    Message = a.Message,
+                    Date = a.Date,
+                    CreatedByUserId = a.CreatedByUserId
+
+                })
+                .ToList();
+
+        }
     }
+
 }
