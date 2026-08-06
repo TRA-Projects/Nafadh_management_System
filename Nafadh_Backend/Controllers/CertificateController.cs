@@ -5,6 +5,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Services;
+using static Nafadh_Backend.DTOs.CertificateDTO;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -20,5 +21,70 @@ namespace Nafadh_Backend.Controllers
         }
 
         // TODO: implement endpoints for this entity
+
+        // GET certificate by enrollment
+        [HttpGet("enrollment/{enrollmentId}")]
+        public async Task<IActionResult> GetCertificateByEnrollment(int enrollmentId)
+        {
+
+            var result =
+                await _service.GetCertificateByEnrollmentIdAsync(enrollmentId);
+
+
+            if (result == null)
+                return NotFound();
+
+
+            return Ok(result);
+        }
+        // Create certificate
+        [HttpPost]
+        public async Task<IActionResult> AddCertificate(CertificateInputDTO dto)
+        {
+
+            var result = await _service.AddCertificateAsync(dto);
+            if (result == null)
+            {
+                return BadRequest("Unable to issue certificate.");
+            }
+
+            return Ok(new
+            {
+                Message = "Certificate issued successfully",
+                Certificate = result
+            });
+        }
+
+        // Download certificate file
+        [HttpGet("{id}/download")]
+        public async Task<IActionResult> DownloadCertificate(int id)
+        {
+            var file = await _service.DownloadCertificateAsync(id);
+
+            if (file == null)
+                return NotFound();
+
+            return File(
+                file,
+                "application/pdf",
+                "Certificate.pdf"
+            );
+        }
+
+        // Get all certificates for trainee
+        [HttpGet("trainee/{traineeId}")]
+        public async Task<IActionResult> GetCertificatesByTrainee(int traineeId)
+        {
+
+            var result =await _service.GetCertificatesByTraineeIdAsync(traineeId);
+
+            if (result == null || !result.Any())
+                return NotFound();
+
+            return Ok(result);
+        }
+
+
+
     }
 }
