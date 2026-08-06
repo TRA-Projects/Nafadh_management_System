@@ -35,7 +35,6 @@ namespace Nafadh_Backend.DTOs
         }
 
         //Shape of response for GET /api/Batch/{id}/trainees.
-        // PLACEHOLDER: Real data comes from NFD_Enrollments (Widdad's domain model) — kept decoupled to avoid domain overlap.
         public class BatchTraineeDto
         {
             public int TraineeId { get; set; }
@@ -50,7 +49,6 @@ namespace Nafadh_Backend.DTOs
             public int BatchId { get; set; }
             public decimal Capacity { get; set; }
 
-            // PLACEHOLDER: EnrolledCount will be dynamically queried from the Enrollment Repository once integrated.
          public int EnrolledCount { get; set; }
 
             // Computed property calculating remaining seats
