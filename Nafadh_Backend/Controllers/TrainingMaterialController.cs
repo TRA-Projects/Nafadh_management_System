@@ -13,7 +13,7 @@ namespace Nafadh_Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-   
+    [AllowAnonymous]
     public class TrainingMaterialController : ControllerBase
     {
         private readonly ITrainingMaterialService _service;
@@ -39,7 +39,7 @@ namespace Nafadh_Backend.Controllers
         // Creates a new training material.
         // -------------------------------------------------------
         [HttpPost]
-        [Authorize(Roles = "Trainer,Admin")]
+        //[Authorize(Roles = "Trainer,Admin")]
         public async Task<IActionResult> Create(CreateTrainingMaterialDto dto)
         {
             if (!ModelState.IsValid)
@@ -69,7 +69,7 @@ namespace Nafadh_Backend.Controllers
         // Updates training material information.
         // -------------------------------------------------------
         [HttpPut("{id}")]
-        [Authorize(Roles = "Trainer,Admin")]
+        //[Authorize(Roles = "Trainer,Admin")]
         public async Task<IActionResult> Update(int id, UpdateTrainingMaterialDto dto)
         {
             if (!ModelState.IsValid)
@@ -92,7 +92,7 @@ namespace Nafadh_Backend.Controllers
         // Deletes a training material.
         // -------------------------------------------------------
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Trainer,Admin")]
+       // [Authorize(Roles = "Trainer,Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var deleted = await _service.DeleteAsync(id);

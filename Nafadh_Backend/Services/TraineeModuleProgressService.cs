@@ -13,10 +13,14 @@ namespace Nafadh_Backend.Services
     public class TraineeModuleProgressService : ITraineeModuleProgressService
     {
         private readonly ITraineeModuleProgressRepository _repository;
+        private readonly IModuleRepository _moduleRepository;
 
-        public TraineeModuleProgressService(ITraineeModuleProgressRepository repository)
+        public TraineeModuleProgressService(
+            ITraineeModuleProgressRepository repository,
+            IModuleRepository moduleRepository)
         {
             _repository = repository;
+            _moduleRepository = moduleRepository;
         }
 
         // Returns all module progress records for a trainee.
@@ -38,6 +42,11 @@ namespace Nafadh_Backend.Services
         public async Task<TraineeModuleProgressDto> CompleteModuleAsync(CompleteModuleDto dto, int traineeId)
         {
             // TODO: Validate ModuleId existence via IModuleRepository.
+            var module = await _moduleRepository.GetModuleByIdAsync(dto.ModuleId);
+            if (module == null)
+            {
+                throw new KeyNotFoundException($"Module with ID {dto.ModuleId} was not found.");
+            }
 
             var existingProgress = await _repository.GetByTraineeAndModuleAsync(traineeId, dto.ModuleId);
 
@@ -112,6 +121,13 @@ namespace Nafadh_Backend.Services
         // Returns completion status of all trainees inside a specific module.
         public async Task<IEnumerable<TraineeModuleProgressDto>> GetByModuleIdAsync(int moduleId)
         {
+            // 4. التحقق من وجود الوحدة الدراسية قبل الاستعلام عن تقدم المتدربين فيها
+            var module = await _moduleRepository.GetModuleByIdAsync(moduleId);
+            if (module == null)
+            {
+                throw new KeyNotFoundException($"Module with ID {moduleId} was not found.");
+            }
+
             var progressList = await _repository.GetByModuleIdAsync(moduleId);
 
             return progressList.Select(MapToDto);
