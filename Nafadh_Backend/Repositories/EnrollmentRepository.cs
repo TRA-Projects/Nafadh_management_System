@@ -118,5 +118,11 @@ namespace Nafadh_Backend.Repositories
 
             return (totalModules, completedModules);
         }
+
+        public async Task<NFD_Enrollment?> GetByIdForTrackingAsync(int id)
+        {
+            return await _context.NFD_Enrollments
+                .FirstOrDefaultAsync(e => e.EnrollmentId == id);
+        }
     }
 }
