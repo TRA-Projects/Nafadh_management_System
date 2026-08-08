@@ -3,9 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Nafadh_Backend.DTOs
 {
-    public class ProgramDTO
-    {// Returned to the client
-        public class ProgramDto
+    // Returned to the client
+        public class ProgramDTO
         {
             public int ProgramId { get; set; }
             public string Title { get; set; } = string.Empty;
@@ -75,4 +74,3 @@ namespace Nafadh_Backend.DTOs
             public string Status { get; set; } = string.Empty;
         }
     }
-}

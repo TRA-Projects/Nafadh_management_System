@@ -7,11 +7,7 @@ using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
-using System.Net.NetworkInformation;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using static Nafadh_Backend.DTOs.EnrollmentDTO;
-using static System.Net.WebRequestMethods;
 
 namespace Nafadh_Backend.Services
 {

@@ -21,21 +21,21 @@ namespace Nafadh_Backend.Services
         }
 
         //List programs (filter by track/status/category)
-        public async Task<IEnumerable<ProgramDto>> GetAllProgramsAsync(ProgramFilterDto filter)
+        public async Task<IEnumerable<ProgramDTO>> GetAllProgramsAsync(ProgramFilterDto filter)
         {
             var programs = await _repository.GetAllAsync(filter.TrackId, filter.Status, filter.Category);
             return programs.Select(MapToDto);
         }
 
         // Get program details
-        public async Task<ProgramDto?> GetProgramByIdAsync(int id)
+        public async Task<ProgramDTO?> GetProgramByIdAsync(int id)
         {
             var program = await _repository.GetByIdAsync(id);
             return program is null ? null : MapToDto(program);
         }
 
         //Create a new program
-        public async Task<(ProgramDto? result, string? error)> CreateProgramAsync(CreateProgramDto dto)
+        public async Task<(ProgramDTO? result, string? error)> CreateProgramAsync(CreateProgramDto dto)
         {
             // TrackId is a required FK, so we validate it exists before inserting
             var trackExists = await _repository.TrackExistsAsync(dto.TrackId);
@@ -58,7 +58,7 @@ namespace Nafadh_Backend.Services
         }
 
         // Update program details
-        public async Task<(ProgramDto? result, string? error)> UpdateProgramAsync(int id, UpdateProgramDto dto)
+        public async Task<(ProgramDTO? result, string? error)> UpdateProgramAsync(int id, UpdateProgramDto dto)
         {
             var program = await _repository.GetByIdAsync(id);
             if (program is null)
@@ -135,9 +135,9 @@ namespace Nafadh_Backend.Services
         }
 
 
-        private static ProgramDto MapToDto(NFD_Program program)
+        private static ProgramDTO MapToDto(NFD_Program program)
         {
-            return new ProgramDto
+            return new ProgramDTO
             {
                 ProgramId = program.ProgramId,
                 Title = program.Title,
