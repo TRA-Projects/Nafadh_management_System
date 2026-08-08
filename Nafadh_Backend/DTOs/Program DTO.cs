@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Nafadh_Backend.DTOs
 {
     // Returned to the client
-        public class ProgramDto
+        public class ProgramDTO
         {
             public int ProgramId { get; set; }
             public string Title { get; set; } = string.Empty;

@@ -11,10 +11,10 @@ namespace Nafadh_Backend.Services
 {
     public interface IProgramService
     {
-        Task<IEnumerable<ProgramDto>> GetAllProgramsAsync(ProgramFilterDto filter);
-        Task<ProgramDto?> GetProgramByIdAsync(int id);
-        Task<(ProgramDto? result, string? error)> CreateProgramAsync(CreateProgramDto dto);
-        Task<(ProgramDto? result, string? error)> UpdateProgramAsync(int id, UpdateProgramDto dto);
+        Task<IEnumerable<ProgramDTO>> GetAllProgramsAsync(ProgramFilterDto filter);
+        Task<ProgramDTO?> GetProgramByIdAsync(int id);
+        Task<(ProgramDTO? result, string? error)> CreateProgramAsync(CreateProgramDto dto);
+        Task<(ProgramDTO? result, string? error)> UpdateProgramAsync(int id, UpdateProgramDto dto);
         Task<bool> DeleteProgramAsync(int id);
 
         Task<IEnumerable<BatchSummaryDto>?> GetBatchesByProgramIdAsync(int programId);
