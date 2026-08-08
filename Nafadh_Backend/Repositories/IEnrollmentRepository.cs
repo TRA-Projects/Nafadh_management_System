@@ -26,6 +26,8 @@ namespace Nafadh_Backend.Repositories
         Task<IEnumerable<NFD_Enrollment>> GetByTraineeIdAsync(int traineeId);
         Task<IEnumerable<NFD_Enrollment>> GetByCompanyIdAsync(int companyId);
 
+        Task<NFD_Enrollment?> GetByIdForTrackingAsync(int id);
+
         // total modules in the enrollment's program vs. modules the trainee completed
         Task<(int totalModules, int completedModules)?> GetProgressDataAsync(int enrollmentId);
     }

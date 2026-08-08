@@ -76,7 +76,7 @@ namespace Nafadh_Backend.Services
         //Update department/supervisor assignment
         public async Task<(EnrollmentDTO? result, string? error)> UpdateAssignmentAsync(int id, UpdateEnrollmentAssignmentDto dto)
         {
-            var enrollment = await _repository.GetByIdAsync(id);
+            var enrollment = await _repository.GetByIdForTrackingAsync(id);
             if (enrollment is null)
                 return (null, "not_found");
 
