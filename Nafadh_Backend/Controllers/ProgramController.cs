@@ -24,7 +24,7 @@ namespace Nafadh_Backend.Controllers
 
         // GET /api/Program?trackId=&status=&category=  (filters all optional)
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProgramDto>>> GetAll(
+        public async Task<ActionResult<IEnumerable<ProgramDTO>>> GetAll(
             [FromQuery] int? trackId,
             [FromQuery] NFD_ProgramStatus? status,
             [FromQuery] string? category)
@@ -36,7 +36,7 @@ namespace Nafadh_Backend.Controllers
 
         // GET /api/Program/{id}
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<ProgramDto>> GetById(int id)
+        public async Task<ActionResult<ProgramDTO>> GetById(int id)
         {
             var program = await _service.GetProgramByIdAsync(id);
             if (program is null)
@@ -47,7 +47,7 @@ namespace Nafadh_Backend.Controllers
 
         // POST /api/Program
         [HttpPost]
-        public async Task<ActionResult<ProgramDto>> Create([FromBody] CreateProgramDto dto)
+        public async Task<ActionResult<ProgramDTO>> Create([FromBody] CreateProgramDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -61,7 +61,7 @@ namespace Nafadh_Backend.Controllers
 
         // PUT /api/Program/{id}
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<ProgramDto>> Update(int id, [FromBody] UpdateProgramDto dto)
+        public async Task<ActionResult<ProgramDTO>> Update(int id, [FromBody] UpdateProgramDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
