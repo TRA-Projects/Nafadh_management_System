@@ -13,7 +13,7 @@
     }
 
     // Shape of GET /api/BatchTrainer/batch/{batchId}
-    // TrainerName is a placeholder (belongs to NFD_Trainers / External Scope)
+    // TrainerName is populated for real via ITrainerRepository (integration complete).
     public class TrainerInBatchDto
     {
         public int TrainerId { get; set; }
@@ -21,7 +21,7 @@
     }
 
     // Shape of GET /api/BatchTrainer/trainer/{trainerId}
-    // BatchName is populated directly from NFD_Batch
+    // BatchName is populated directly from NFD_Batch (own domain)
     public class BatchForTrainerDto
     {
         public int BatchId { get; set; }

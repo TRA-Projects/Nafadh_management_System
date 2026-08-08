@@ -7,10 +7,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
-using static Nafadh_Backend.DTOs.BatchDTO;
 
 namespace Nafadh_Backend.Services
 {
@@ -72,7 +72,7 @@ namespace Nafadh_Backend.Services
             var batch = await _repository.GetByIdAsync(id);
             if (batch == null) return false;
 
-            // Soft-cancel instead of hard delete
+            // Soft-cancel instead of hard delete (keeps FK-linked sessions/tasks intact)
             batch.Status = NFD_BatchStatus.Cancelled;
             await _repository.UpdateAsync(batch);
             return true;
@@ -81,7 +81,6 @@ namespace Nafadh_Backend.Services
         public async Task<List<BatchTraineeDto>> GetTraineesAsync(int batchId)
         {
             var enrollments = await _enrollmentRepository.GetAllAsync(batchId, null, null, null);
-
             return enrollments.Select(e => new BatchTraineeDto
             {
                 TraineeId = e.TraineeId,
@@ -97,6 +96,7 @@ namespace Nafadh_Backend.Services
 
             var activeEnrollments = await _enrollmentRepository.GetAllAsync(
                 batchId, null, null, NFD_EnrollmentCompletionStatus.InProgress);
+
             int enrolledCount = activeEnrollments.Count();
 
             return new BatchCapacityDto

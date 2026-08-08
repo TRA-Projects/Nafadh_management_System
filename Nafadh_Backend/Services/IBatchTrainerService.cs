@@ -3,16 +3,17 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Nafadh_Backend.DTOs;
-using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Services
 {
-        public interface IBatchTrainerService
-        {
-            Task<List<TrainerInBatchDto>> GetTrainersForBatchAsync(int batchId);
-            Task<List<BatchForTrainerDto>> GetBatchesForTrainerAsync(int trainerId);
-            Task<bool> AssignAsync(AssignTrainerDto dto);
-            Task<bool> UnassignAsync(UnassignTrainerDto dto);
-        }
+    public interface IBatchTrainerService
+    {
+        Task<List<TrainerInBatchDto>> GetTrainersForBatchAsync(int batchId);
+        Task<List<BatchForTrainerDto>> GetBatchesForTrainerAsync(int trainerId);
+        Task<bool> AssignAsync(AssignTrainerDto dto);
+        Task<bool> UnassignAsync(UnassignTrainerDto dto);
     }
+}

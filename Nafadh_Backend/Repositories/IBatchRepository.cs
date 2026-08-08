@@ -3,17 +3,19 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
 {
     public interface IBatchRepository
     {
-        Task<IEnumerable<NFD_Batch>> GetAllAsync(int? programId, string? status, DateTime? from, DateTime? to);
+        Task<List<NFD_Batch>> GetAllAsync(int? programId, string? status, DateTime? from, DateTime? to);
         Task<NFD_Batch?> GetByIdAsync(int id);
         Task<NFD_Batch> AddAsync(NFD_Batch batch);
         Task UpdateAsync(NFD_Batch batch);
         Task DeleteAsync(NFD_Batch batch);
-
     }
 }
