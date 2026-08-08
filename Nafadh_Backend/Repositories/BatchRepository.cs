@@ -3,9 +3,13 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -18,7 +22,7 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<NFD_Batch>> GetAllAsync(int? programId, string? status, DateTime? from, DateTime? to)
+        public async Task<List<NFD_Batch>> GetAllAsync(int? programId, string? status, DateTime? from, DateTime? to)
         {
             var query = _context.NFD_Batches.AsQueryable();
 
@@ -43,8 +47,6 @@ namespace Nafadh_Backend.Repositories
                 .FirstOrDefaultAsync(b => b.BatchId == id);
         }
 
-
-        //AddAsync: تضع الدفعة الجديدة في ذاكرة التتبع لـ Entity Framework.
         public async Task<NFD_Batch> AddAsync(NFD_Batch batch)
         {
             await _context.NFD_Batches.AddAsync(batch);
@@ -64,4 +66,4 @@ namespace Nafadh_Backend.Repositories
             await _context.SaveChangesAsync();
         }
     }
-}    
+}

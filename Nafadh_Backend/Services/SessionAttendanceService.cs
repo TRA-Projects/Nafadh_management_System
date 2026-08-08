@@ -3,6 +3,10 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
@@ -13,10 +17,13 @@ namespace Nafadh_Backend.Services
     public class SessionAttendanceService : ISessionAttendanceService
     {
         private readonly ISessionAttendanceRepository _repository;
-        private readonly ISessionRepository _sessionRepository; 
-        private readonly IEnrollmentRepository _enrollmentRepository; 
+        private readonly ISessionRepository _sessionRepository;
+        private readonly IEnrollmentRepository _enrollmentRepository;
 
-        public SessionAttendanceService(ISessionAttendanceRepository repository, ISessionRepository sessionRepository, IEnrollmentRepository enrollmentRepository)
+        public SessionAttendanceService(
+            ISessionAttendanceRepository repository,
+            ISessionRepository sessionRepository,
+            IEnrollmentRepository enrollmentRepository)
         {
             _repository = repository;
             _sessionRepository = sessionRepository;
@@ -79,8 +86,6 @@ namespace Nafadh_Backend.Services
                 totalExpected = enrollments.Count();
             }
 
-
-
             return new SessionAttendanceRateDto
             {
                 SessionId = sessionId,
@@ -90,11 +95,13 @@ namespace Nafadh_Backend.Services
             };
         }
 
+        // FIX: TraineeName mapping mapping issue resolved
         private static SessionAttendanceDto MapToDto(NFD_SessionAttendance a) => new SessionAttendanceDto
         {
             AttendanceId = a.AttendanceId,
             SessionId = a.SessionId,
             TraineeId = a.TraineeId,
+            TraineeName = a.Trainee?.User?.FullName ?? string.Empty,
             Status = a.Status,
             Note = a.Note
         };

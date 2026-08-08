@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
-using static Nafadh_Backend.DTOs.BatchDTO;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -17,8 +16,11 @@ namespace Nafadh_Backend.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] int? programId, [FromQuery] string? status,
-            [FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        public async Task<IActionResult> GetAll(
+            [FromQuery] int? programId,
+            [FromQuery] string? status,
+            [FromQuery] DateTime? from,
+            [FromQuery] DateTime? to)
         {
             var result = await _service.GetAllAsync(programId, status, from, to);
             return Ok(result);
