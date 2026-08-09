@@ -34,6 +34,7 @@ namespace Nafadh_Backend.Repositories
             return result;
         }
 
+        // إضافة عذر جديد وإعادة الكائن المُضاف بعد حفظ التغييرات في قاعدة البيانات.
         public async Task<NFD_Excuse> AddAsync(NFD_Excuse entity)
         {
             await _context.NFD_Excuses.AddAsync(entity);
