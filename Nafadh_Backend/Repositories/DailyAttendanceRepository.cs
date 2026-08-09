@@ -25,6 +25,7 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
             return result;
         }
+
         // جلب سجل حضور يومي واحد عن طريق معرف السجل (Primary Key).
         public async Task<NFD_DailyAttendance?> GetByIdAsync(int id)
         {
@@ -32,6 +33,7 @@ namespace Nafadh_Backend.Repositories
                 .FirstOrDefaultAsync(d => d.DailyAttendanceId == id);
             return result;
         }
+
         // إضافة سجل حضور يومي جديد وإعادة الكائن المُضاف بعد حفظ التغييرات في قاعدة البيانات.
         public async Task<NFD_DailyAttendance> AddAsync(NFD_DailyAttendance entity)
         {
@@ -40,6 +42,7 @@ namespace Nafadh_Backend.Repositories
             return entity;
         }
 
+        // تحديث بيانات سجل حضور يومي موجود سابقاً وحفظ التغييرات.
         public async Task UpdateAsync(NFD_DailyAttendance entity)
         {
             _context.NFD_DailyAttendances.Update(entity);
