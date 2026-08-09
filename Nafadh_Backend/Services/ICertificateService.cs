@@ -4,7 +4,7 @@
 //// </auto-generated>
 
 using Nafadh_Backend.Models;
-using static Nafadh_Backend.DTOs.CertificateDTO;
+using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Services
 {

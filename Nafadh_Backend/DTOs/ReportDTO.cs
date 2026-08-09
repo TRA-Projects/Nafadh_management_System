@@ -3,8 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Nafadh_Backend.DTOs
 {
-    public class ReportDTO
-    {
+  
         public class ReportInputDTO
         {
             public NFD_ReportType Type { get; set; }
@@ -31,4 +30,4 @@ namespace Nafadh_Backend.DTOs
         }
 
     }
-}
+
