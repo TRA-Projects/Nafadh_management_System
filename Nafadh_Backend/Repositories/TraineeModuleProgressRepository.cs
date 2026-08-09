@@ -2,7 +2,6 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
@@ -16,6 +15,7 @@ namespace Nafadh_Backend.Repositories
         {
             _context = context;
         }
+
         // Retrieves all progress records for the specified trainee.
         public async Task<IEnumerable<NFD_TraineeModuleProgress>> GetByTraineeIdAsync(int traineeId)
         {
@@ -77,7 +77,6 @@ namespace Nafadh_Backend.Repositories
                 .AnyAsync(p => p.ProgressId == id);
         }
 
-      
         // Calculates completion percentage for a trainee.
         public async Task<double> GetCompletionPercentageAsync(int traineeId)
         {
