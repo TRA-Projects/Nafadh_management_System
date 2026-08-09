@@ -26,6 +26,7 @@ namespace Nafadh_Backend.Repositories
             return result;
         }
 
+        // جلب عذر محدد عن طريق معرف العذر (Primary Key).
         public async Task<NFD_Excuse?> GetByIdAsync(int id)
         {
             NFD_Excuse? result = await _context.NFD_Excuses
