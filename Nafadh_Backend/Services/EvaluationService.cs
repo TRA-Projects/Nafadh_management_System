@@ -61,13 +61,16 @@ namespace Nafadh_Backend.Services
         }
         public async Task<EvaluationDTO> CreateEvaluationAsync(CreateEvaluationDTO createDto)
         {
+            
             var evaluation = new NFD_Evaluation
             {
                 EnrollmentId = createDto.EnrollmentId,
                 TrainerId = createDto.TrainerId,
+                TemplateId = createDto.TemplateId,
                 Score = createDto.Score,
                 Notes = createDto.Notes,
-                EvaluationDate = DateTime.UtcNow
+                EvaluationDate = DateTime.UtcNow,
+                EvaluatorUserId = createDto.EvaluatorUserId
             };
 
             var created = await _repository.CreateEvaluationAsync(evaluation);
@@ -77,6 +80,7 @@ namespace Nafadh_Backend.Services
                 EvaluationId = created.EvaluationId,
                 EnrollmentId = created.EnrollmentId ?? 0,
                 TrainerId = created.TrainerId,
+                TemplateId = created.TemplateId,
                 Score = created.Score,
                 Notes = created.Notes
             };
