@@ -109,8 +109,37 @@ namespace Nafadh_Backend.Controllers
             return NoContent();
         }
 
-        // PATCH: api/trainee/{id}/status
-        [HttpPatch("{id}/status")]
+        // POST: api/trainee
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] TraineeCreateDTO create)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            // prevent duplicate profile for same user
+            var hasProfile = await _service.UserHasTraineeProfileAsync(create.UserId);
+            if (hasProfile) return BadRequest("User already has a trainee profile.");
+
+            var model = new NFD_Trainee
+            {
+                UserId = create.UserId,
+                NationalId = create.NationalId,
+                University = create.University,
+                Major = create.Major,
+                AcademicLevel = create.AcademicLevel,
+                Skills = create.Skills,
+                ResumeUrl = create.ResumeUrl,
+                Status = Enums.NFD_TraineeStatus.Active
+            };
+
+            await _service.AddAsync(model);
+            var saved = await _service.SaveChangesAsync();
+            if (!saved) return StatusCode(500, "Failed to create trainee profile.");
+
+            return CreatedAtAction(nameof(GetById), new { id = model.TraineeId }, null);
+        }
+
+        // PUT: api/trainee/{id}/status
+        [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] TraineeStatusUpdateDto dto)
         {
             var existing = await _service.GetByIdAsync(id);
@@ -124,6 +153,83 @@ namespace Nafadh_Backend.Controllers
             if (!saved) return StatusCode(500, "Failed to update status.");
 
             return NoContent();
+        }
+
+        // PUT: api/trainee/{id}/assign-company
+        [HttpPut("{id}/assign-company")]
+        public async Task<IActionResult> AssignCompany(int id, [FromBody] TraineeAssignCompanyDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var existing = await _service.GetByIdAsync(id);
+            if (existing == null) return NotFound();
+
+            var companyExists = await _service.CompanyExistsAsync(dto.CompanyId);
+            if (!companyExists) return BadRequest("Company does not exist.");
+
+            existing.CompanyId = dto.CompanyId;
+            _service.Update(existing);
+            var saved = await _service.SaveChangesAsync();
+            if (!saved) return StatusCode(500, "Failed to assign company.");
+
+            return NoContent();
+        }
+
+        // GET: api/trainee/{id}/dashboard-summary
+        [HttpGet("{id}/dashboard-summary")]
+        public async Task<IActionResult> GetDashboardSummary(int id)
+        {
+            var t = await _service.GetByIdWithDashboardDataAsync(id);
+            if (t == null) return NotFound();
+
+            var dto = new TraineeDashboardSummaryDto
+            {
+                TraineeId = t.TraineeId,
+                FullName = t.User?.FullName,
+                Status = t.Status,
+                CompanyName = t.Company?.CompanyName,
+                EnrollmentsCount = t.Enrollments?.Count ?? 0,
+                CompletedModulesCount = t.TraineeModuleProgresses?.Count(pm => pm.Status == Enums.NFD_ModuleProgressStatus.Completed) ?? 0,
+                TotalModulesCount = t.TraineeModuleProgresses?.Count ?? 0,
+                ModuleProgressPercentage = t.TraineeModuleProgresses?.Count > 0
+                    ? (t.TraineeModuleProgresses.Count(pm => pm.Status == Enums.NFD_ModuleProgressStatus.Completed) * 100.0 / t.TraineeModuleProgresses.Count)
+                    : 0,
+                TotalSessionsCount = t.SessionAttendances?.Count ?? 0,
+                AttendedSessionsCount = t.SessionAttendances?.Count(sa => sa.Status == Enums.NFD_AttendanceStatus.Present) ?? 0,
+                AttendanceRate = t.SessionAttendances?.Count > 0
+                    ? (t.SessionAttendances.Count(sa => sa.Status == Enums.NFD_AttendanceStatus.Present) * 100.0 / t.SessionAttendances.Count)
+                    : 0,
+                SubmissionsCount = t.Submissions?.Count ?? 0,
+                PendingSubmissionsCount = t.Submissions?.Count(s => s.Status != Enums.NFD_SubmissionStatus.Graded) ?? 0,
+                ActiveProjectsCount = t.ProjectMembers?.Count ?? 0
+            };
+
+            return Ok(dto);
+        }
+
+        // POST: api/trainee/import
+        [HttpPost("import")]
+        public async Task<IActionResult> Import([FromBody] List<TraineeCreateDTO> items)
+        {
+            if (items == null || items.Count == 0) return BadRequest("No items provided.");
+
+            var models = items.Select(i => new NFD_Trainee
+            {
+                UserId = i.UserId,
+                NationalId = i.NationalId,
+                University = i.University,
+                Major = i.Major,
+                AcademicLevel = i.AcademicLevel,
+                Skills = i.Skills,
+                ResumeUrl = i.ResumeUrl,
+                Status = Enums.NFD_TraineeStatus.Active
+            }).ToList();
+
+            await _service.AddRangeAsync(models);
+            var saved = await _service.SaveChangesAsync();
+            if (!saved) return StatusCode(500, "Failed to import trainees.");
+
+            return Ok(new { Imported = models.Count });
         }
     }
 }
