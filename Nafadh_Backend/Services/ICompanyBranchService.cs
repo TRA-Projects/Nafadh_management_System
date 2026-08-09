@@ -15,6 +15,10 @@ namespace Nafadh_Backend.Services
         Task<NFD_CompanyBranchOutputDTO> AddCompanyBranchAsync(
             NFD_CompanyBranchInputDTO dto);
 
+        
+        Task<IEnumerable<NFD_CompanyBranchOutputDTO>> GetByCompanyIdAsync(             
+            int companyId);
+
         // Update an existing company branch
         Task<NFD_CompanyBranchOutputDTO?> UpdateCompanyBranchAsync(
             int branchId,

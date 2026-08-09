@@ -18,8 +18,7 @@ namespace Nafadh_Backend.Services
             string? workField);
 
         // Add Company
-        Task<NFD_CompanyOutputDTO> AddCompanyAsync(
-            NFD_CompanyInputDTO dto);
+        Task<(NFD_CompanyOutputDTO? result, string? error)> AddCompanyAsync(NFD_CompanyInputDTO dto);
 
         // Update Company
         Task<NFD_CompanyOutputDTO?> UpdateCompanyAsync(

@@ -37,6 +37,19 @@ namespace Nafadh_Backend.Services
             return branches.Select(MapToOutputDTO);
         }
 
+        // Get branches of a specific company
+        public async Task<IEnumerable<NFD_CompanyBranchOutputDTO>>
+        GetByCompanyIdAsync(int companyId)
+        {
+            var branches =
+            await _repository.GetByCompanyIdAsync(companyId);
+
+            return branches.Select(MapToOutputDTO);
+        }
+
+
+
+
         // Add company branch
         public async Task<NFD_CompanyBranchOutputDTO>
             AddCompanyBranchAsync(
