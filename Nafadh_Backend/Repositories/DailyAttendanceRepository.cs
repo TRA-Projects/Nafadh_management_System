@@ -17,7 +17,7 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        
+        // جلب جميع سجلات الحضور والغياب اليومية الخاصة برقم تسجيل معين.
         public async Task<List<NFD_DailyAttendance>> GetByEnrollmentIdAsync(int enrollmentId)
         {
             List<NFD_DailyAttendance> result = await _context.NFD_DailyAttendances
@@ -26,6 +26,7 @@ namespace Nafadh_Backend.Repositories
             return result;
         }
 
+        // جلب سجل حضور يومي واحد عن طريق معرف السجل (Primary Key).
         public async Task<NFD_DailyAttendance?> GetByIdAsync(int id)
         {
             NFD_DailyAttendance? result = await _context.NFD_DailyAttendances
@@ -33,6 +34,7 @@ namespace Nafadh_Backend.Repositories
             return result;
         }
 
+        // إضافة سجل حضور يومي جديد وإعادة الكائن المُضاف بعد حفظ التغييرات في قاعدة البيانات.
         public async Task<NFD_DailyAttendance> AddAsync(NFD_DailyAttendance entity)
         {
             await _context.NFD_DailyAttendances.AddAsync(entity);
@@ -40,12 +42,14 @@ namespace Nafadh_Backend.Repositories
             return entity;
         }
 
+        // تحديث بيانات سجل حضور يومي موجود سابقاً وحفظ التغييرات.
         public async Task UpdateAsync(NFD_DailyAttendance entity)
         {
             _context.NFD_DailyAttendances.Update(entity);
             await _context.SaveChangesAsync();
         }
 
+        // جلب جميع سجلات الحضور لليوم الحالي الخاصة بشركة معينة (مع تضمين بيانات التسجيل Associated Enrollment).
         public async Task<List<NFD_DailyAttendance>> GetTodayByCompanyIdAsync(int companyId, DateTime today)
         {
             List<NFD_DailyAttendance> result = await _context.NFD_DailyAttendances
