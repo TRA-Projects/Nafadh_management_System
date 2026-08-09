@@ -48,11 +48,12 @@ namespace Nafadh_Backend.Controllers
         // POST: api/CompanyProgram
         // Qualify a company for a program
         [HttpPost]
-        public async Task<IActionResult> Add(
-            [FromBody] NFD_CompanyProgramInputDTO dto)
+        public async Task<IActionResult> Add([FromBody] NFD_CompanyProgramInputDTO dto)
         {
-            var result =
-                await _service.AddAsync(dto);
+            var (result, error) = await _service.AddAsync(dto);
+
+            if (error is not null)
+                return BadRequest(new { message = error });
 
             return Ok(result);
         }

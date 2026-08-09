@@ -33,5 +33,8 @@ namespace Nafadh_Backend.Repositories
         // Delete Company
         Task DeleteCompanyAsync(
             int companyId);
+
+        //used to validate FK before insert
+        Task<bool> UserExistsAsync(int userId);
     }
 }

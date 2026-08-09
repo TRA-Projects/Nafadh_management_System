@@ -18,63 +18,70 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // Get Company by ID
-        public async Task<NFD_Company?> GetCompanyByIdAsync(int companyId)
+        // Get Company by ID
+        // added .Include(c => c.Trainees) so capacity calc has real data to count
+        public async Task<NFD_Company?> GetCompanyByIdAsync(int companyId)
         {
             return await _context.NFD_Companies
-                .FindAsync(companyId);
+            .Include(c => c.Trainees)
+            .FirstOrDefaultAsync(c => c.CompanyId == companyId);
         }
 
-        // Get all companies
-        public async Task<IEnumerable<NFD_Company>> GetAllCompaniesAsync()
+        // Get all companies
+        public async Task<IEnumerable<NFD_Company>> GetAllCompaniesAsync()
         {
             return await _context.NFD_Companies
-                .ToListAsync();
+            .ToListAsync();
         }
 
-        // Get companies with optional filters
-        public async Task<IEnumerable<NFD_Company>> GetCompaniesAsync(
-            NFD_CompanyStatus? status,
-            string? workField)
-        {
+        // Get companies with optional filters
+         public async Task<IEnumerable<NFD_Company>> GetCompaniesAsync(
+          NFD_CompanyStatus? status,
+          string? workField)
+         {
             var query = _context.NFD_Companies.AsQueryable();
 
-            // Filter by company status
             if (status.HasValue)
             {
                 query = query.Where(c => c.Status == status.Value);
             }
 
-            // Filter by work field
             if (!string.IsNullOrWhiteSpace(workField))
             {
                 query = query.Where(c =>
-                    c.WorkField != null &&
-                    c.WorkField.Contains(workField));
+                c.WorkField != null &&
+                c.WorkField.Contains(workField));
             }
 
             return await query.ToListAsync();
-        }
+          }
 
-        // Add Company
-        public async Task AddCompanyAsync(NFD_Company company)
+         // check the UserId exists before we let AddCompanyAsync use it
+          public async Task<bool> UserExistsAsync(int userId)
         {
+            return await _context.NFD_Users.AnyAsync(u => u.UserId == userId);
+          }
+
+        // Add Company
+          public async Task AddCompanyAsync(NFD_Company company)
+         {
             await _context.NFD_Companies.AddAsync(company);
             await _context.SaveChangesAsync();
-        }
+          }
 
-        // Update Company
-        public async Task UpdateCompanyAsync(NFD_Company company)
+        // Update Company
+        public async Task UpdateCompanyAsync(NFD_Company company)
         {
             _context.NFD_Companies.Update(company);
             await _context.SaveChangesAsync();
         }
 
-        // Delete Company
-        public async Task DeleteCompanyAsync(int companyId)
+        // Delete Company
+        // NOTE: kept as a real delete here for completeness, but Service layer
+        public async Task DeleteCompanyAsync(int companyId)
         {
             var company = await _context.NFD_Companies
-                .FindAsync(companyId);
+            .FindAsync(companyId);
 
             if (company != null)
             {

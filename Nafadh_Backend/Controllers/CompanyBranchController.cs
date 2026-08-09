@@ -21,13 +21,13 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // GET: api/CompanyBranch
-        // Get all company branches
-        [HttpGet]
+        // GET: api/CompanyBranch/company/{companyId}
+        // Branches of a specific company (matches the spec document)
+        [HttpGet("company/{companyId}")]
         public async Task<ActionResult<IEnumerable<NFD_CompanyBranchOutputDTO>>>
-            GetAllCompanyBranches()
+        GetByCompanyId(int companyId)
         {
-            var branches = await _service.GetAllCompanyBranchesAsync();
+            var branches = await _service.GetByCompanyIdAsync(companyId);
 
             return Ok(branches);
         }

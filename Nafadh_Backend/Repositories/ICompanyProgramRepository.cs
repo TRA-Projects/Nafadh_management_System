@@ -19,6 +19,8 @@ namespace Nafadh_Backend.Repositories
 
         // Add company-program eligibility
         Task AddAsync(NFD_CompanyProgram companyProgram);
+        Task<bool> CompanyExistsAsync(int companyId);   
+        Task<bool> ProgramExistsAsync(int programId);
 
         // Delete company-program eligibility
         Task DeleteAsync(int companyId, int programId);

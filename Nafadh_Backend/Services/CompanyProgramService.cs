@@ -39,10 +39,15 @@ namespace Nafadh_Backend.Services
             return companyPrograms.Select(MapToOutputDTO);
         }
 
-        // Qualify a company for a program
-        public async Task<NFD_CompanyProgramOutputDTO>
-            AddAsync(NFD_CompanyProgramInputDTO dto)
+        public async Task<(NFD_CompanyProgramOutputDTO? result, string? error)>
+         AddAsync(NFD_CompanyProgramInputDTO dto)
         {
+            if (!await _repository.CompanyExistsAsync(dto.CompanyId))
+                return (null, $"Company with ID {dto.CompanyId} not found");
+
+            if (!await _repository.ProgramExistsAsync(dto.ProgramId))
+                return (null, $"Program with ID {dto.ProgramId} not found");
+
             var companyProgram = new NFD_CompanyProgram
             {
                 CompanyId = dto.CompanyId,
@@ -51,7 +56,7 @@ namespace Nafadh_Backend.Services
 
             await _repository.AddAsync(companyProgram);
 
-            return MapToOutputDTO(companyProgram);
+            return (MapToOutputDTO(companyProgram), null);
         }
 
         // Remove company's eligibility for a program
