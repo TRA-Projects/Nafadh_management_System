@@ -2,7 +2,7 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
@@ -14,51 +14,56 @@ namespace Nafadh_Backend.Services
     {
         private readonly ITraineeModuleProgressRepository _repository;
         private readonly IModuleRepository _moduleRepository;
+        private readonly Nafadhcontext _context;
 
         public TraineeModuleProgressService(
             ITraineeModuleProgressRepository repository,
-            IModuleRepository moduleRepository)
+            IModuleRepository moduleRepository,
+            Nafadhcontext context)
         {
             _repository = repository;
             _moduleRepository = moduleRepository;
+            _context = context;
         }
 
         // Returns all module progress records for a trainee.
         public async Task<IEnumerable<TraineeModuleProgressDto>> GetByTraineeIdAsync(int traineeId)
         {
             var progressList = await _repository.GetByTraineeIdAsync(traineeId);
-
-            return progressList.Select(p => new TraineeModuleProgressDto
-            {
-                ProgressId = p.ProgressId,
-                TraineeId = p.TraineeId,
-                ModuleId = p.ModuleId,
-                Status = p.Status,
-                CompletedAt = p.CompletedAt
-            });
+            return progressList.Select(MapToDto);
         }
 
-        // Marks a module as completed (Creates or Updates existing record).
-        public async Task<TraineeModuleProgressDto> CompleteModuleAsync(CompleteModuleDto dto, int traineeId)
+        // Marks a module as completed using userId from token mapped to actual TraineeId.
+        public async Task<TraineeModuleProgressDto> CompleteModuleAsync(CompleteModuleDto dto, int userId)
         {
-            // TODO: Validate ModuleId existence via IModuleRepository.
+            // 1. التحقق من وجود الموديول
             var module = await _moduleRepository.GetModuleByIdAsync(dto.ModuleId);
             if (module == null)
             {
                 throw new KeyNotFoundException($"Module with ID {dto.ModuleId} was not found.");
             }
 
-            var existingProgress = await _repository.GetByTraineeAndModuleAsync(traineeId, dto.ModuleId);
+            // 2. تحويل الـ UserId القادم من التوكن إلى TraineeId من جدول المتدربين مباشرة
+            var trainee = await _context.NFD_Trainees
+                .FirstOrDefaultAsync(t => t.UserId == userId);
+
+            if (trainee == null)
+            {
+                throw new KeyNotFoundException($"Trainee record for User ID {userId} was not found.");
+            }
+
+            int actualTraineeId = trainee.TraineeId;
+
+            // 3. التحقق من وجود سجل سابق لتقدم المتدرب
+            var existingProgress = await _repository.GetByTraineeAndModuleAsync(actualTraineeId, dto.ModuleId);
 
             if (existingProgress != null)
             {
-                // If already completed, just return the existing record without creating duplicate
                 if (existingProgress.Status == NFD_ModuleProgressStatus.Completed)
                 {
                     return MapToDto(existingProgress);
                 }
 
-                // If existed with another status, update it to Completed
                 existingProgress.Status = NFD_ModuleProgressStatus.Completed;
                 existingProgress.CompletedAt = DateTime.UtcNow;
                 await _repository.UpdateAsync(existingProgress);
@@ -66,10 +71,10 @@ namespace Nafadh_Backend.Services
                 return MapToDto(existingProgress);
             }
 
-            // Create new record if it does not exist
+            // 4. إنشاء سجل جديد بـ TraineeId الصحيح
             var progress = new NFD_TraineeModuleProgress
             {
-                TraineeId = traineeId,
+                TraineeId = actualTraineeId,
                 ModuleId = dto.ModuleId,
                 Status = NFD_ModuleProgressStatus.Completed,
                 CompletedAt = DateTime.UtcNow
@@ -114,14 +119,13 @@ namespace Nafadh_Backend.Services
             return new TraineeProgressPercentageDto
             {
                 TraineeId = traineeId,
-                Percentage = Math.Round(percentage, 2) // Round to 2 decimal places
+                Percentage = Math.Round(percentage, 2)
             };
         }
 
         // Returns completion status of all trainees inside a specific module.
         public async Task<IEnumerable<TraineeModuleProgressDto>> GetByModuleIdAsync(int moduleId)
         {
-            // 4. التحقق من وجود الوحدة الدراسية قبل الاستعلام عن تقدم المتدربين فيها
             var module = await _moduleRepository.GetModuleByIdAsync(moduleId);
             if (module == null)
             {

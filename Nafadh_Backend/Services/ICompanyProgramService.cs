@@ -18,8 +18,7 @@ namespace Nafadh_Backend.Services
             GetByProgramIdAsync(int programId);
 
         // Qualify a company for a program
-        Task<NFD_CompanyProgramOutputDTO>
-            AddAsync(NFD_CompanyProgramInputDTO dto);
+        Task<(NFD_CompanyProgramOutputDTO? result, string? error)> AddAsync(NFD_CompanyProgramInputDTO dto);
 
         // Remove company's eligibility for a program
         Task<bool>

@@ -10,6 +10,9 @@ namespace Nafadh_Backend.Repositories
 
         Task AddCompanyBranchAsync(NFD_CompanyBranch branch);
 
+        //branches belonging to one specific company
+        Task<IEnumerable<NFD_CompanyBranch>> GetByCompanyIdAsync(int companyId);
+
         Task UpdateCompanyBranchAsync(NFD_CompanyBranch branch);
 
         Task DeleteCompanyBranchAsync(int branchId);

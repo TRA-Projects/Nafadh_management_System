@@ -3,8 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Nafadh_Backend.DTOs
 {
-    public class CertificateDTO
-    {
+  
         public class CertificateInputDTO
         {
             public NFD_CertificateType Type { get; set; }
@@ -30,4 +29,4 @@ namespace Nafadh_Backend.DTOs
         }
 
     }
-}
+

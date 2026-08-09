@@ -18,6 +18,7 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
+        // جلب عذر واحد مرتبط بسجل حضور يومي معين.
         public async Task<NFD_Excuse?> GetByDailyAttendanceIdAsync(int dailyAttendanceId)
         {
             NFD_Excuse? result = await _context.NFD_Excuses
@@ -25,6 +26,7 @@ namespace Nafadh_Backend.Repositories
             return result;
         }
 
+        // جلب عذر محدد عن طريق معرف العذر (Primary Key).
         public async Task<NFD_Excuse?> GetByIdAsync(int id)
         {
             NFD_Excuse? result = await _context.NFD_Excuses
@@ -32,6 +34,7 @@ namespace Nafadh_Backend.Repositories
             return result;
         }
 
+        // إضافة عذر جديد وإعادة الكائن المُضاف بعد حفظ التغييرات في قاعدة البيانات.
         public async Task<NFD_Excuse> AddAsync(NFD_Excuse entity)
         {
             await _context.NFD_Excuses.AddAsync(entity);
@@ -39,12 +42,14 @@ namespace Nafadh_Backend.Repositories
             return entity;
         }
 
+        // تحديث بيانات عذر موجود سابقاً (مثل تغيير حالته أو تفاصيله) وحفظ التغييرات.
         public async Task UpdateAsync(NFD_Excuse entity)
         {
             _context.NFD_Excuses.Update(entity);
             await _context.SaveChangesAsync();
         }
 
+        // جلب قائمة بجميع الأعذار التي ما زالت قيد الانتظار (Pending) ولم يتم البت فيها بعد.
         public async Task<List<NFD_Excuse>> GetPendingAsync()
         {
             List<NFD_Excuse> result = await _context.NFD_Excuses

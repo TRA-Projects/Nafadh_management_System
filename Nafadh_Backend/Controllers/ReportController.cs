@@ -6,7 +6,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
-using static Nafadh_Backend.DTOs.ReportDTO;
+using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -53,17 +53,26 @@ namespace Nafadh_Backend.Controllers
             return Ok(report);
         }
 
-        // GET Report/{id}/download
-        [HttpGet("{id}/download")]
-        public async Task<IActionResult> DownloadReport(int id)
+
+// GET Report/{id}/download
+[HttpGet("{id}/download")]
+public async Task<IActionResult> DownloadReport(int id)
         {
             var fileUrl = await _service.DownloadReportAsync(id);
 
             if (fileUrl == null)
                 return NotFound();
 
+            var filePath = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                fileUrl
+            );
 
-            var fileBytes = System.IO.File.ReadAllBytes(fileUrl);
+            if (!System.IO.File.Exists(filePath))
+                return NotFound("Report file not found.");
+
+            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
 
             return File(
                 fileBytes,
@@ -71,6 +80,8 @@ namespace Nafadh_Backend.Controllers
                 "Report.pdf"
             );
         }
+
+
 
     }
 }

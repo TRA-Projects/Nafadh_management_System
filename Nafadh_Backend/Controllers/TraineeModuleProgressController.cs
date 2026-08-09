@@ -2,7 +2,6 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
@@ -13,8 +12,7 @@ namespace Nafadh_Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // Ensure all endpoints are protected by default
-    [AllowAnonymous]
+    [Authorize]
     public class TraineeModuleProgressController : ControllerBase
     {
         private readonly ITraineeModuleProgressService _service;
@@ -40,20 +38,30 @@ namespace Nafadh_Backend.Controllers
         // Trainee marks a module as completed.
         // -------------------------------------------------------
         [HttpPost("complete")]
-        //[Authorize(Roles = "Trainee")]
+        [Authorize(Roles = "Trainee,CompanySupervisor,Admin")]
         public async Task<IActionResult> CompleteModule(CompleteModuleDto dto)
         {
-            var traineeIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var traineeIdClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");
 
-            if (traineeIdClaim == null)
+            if (traineeIdClaim == null || string.IsNullOrEmpty(traineeIdClaim.Value))
             {
                 return Unauthorized("Trainee ID not found in token.");
             }
 
-            int traineeId = int.Parse(traineeIdClaim.Value);
+            if (!int.TryParse(traineeIdClaim.Value, out int traineeId))
+            {
+                return BadRequest("Invalid Trainee ID format in token.");
+            }
 
-            var result = await _service.CompleteModuleAsync(dto, traineeId);
-            return Ok(result);
+            try
+            {
+                var result = await _service.CompleteModuleAsync(dto, traineeId);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         // -------------------------------------------------------
@@ -61,7 +69,7 @@ namespace Nafadh_Backend.Controllers
         // Updates progress status (Trainer / Admin).
         // -------------------------------------------------------
         [HttpPut("{id}")]
-        //[Authorize(Roles = "Trainer,Admin")]
+        [Authorize(Roles = "Trainer,Admin,CompanySupervisor")]
         public async Task<IActionResult> Update(int id, UpdateTraineeModuleProgressDto dto)
         {
             if (!ModelState.IsValid)
@@ -76,7 +84,7 @@ namespace Nafadh_Backend.Controllers
                 return NotFound("Progress record not found.");
             }
 
-            return NoContent(); // Standard REST response for successful update
+            return NoContent();
         }
 
         // -------------------------------------------------------
@@ -92,14 +100,20 @@ namespace Nafadh_Backend.Controllers
 
         // -------------------------------------------------------
         // GET: /api/TraineeModuleProgress/module/{moduleId}
-        // Returns completion status of all trainees inside a specific module (Trainer view).
+        // Returns completion status of all trainees inside a specific module.
         // -------------------------------------------------------
         [HttpGet("module/{moduleId}")]
-        //[Authorize(Roles = "Trainer,Admin")]
         public async Task<IActionResult> GetByModuleId(int moduleId)
         {
-            var result = await _service.GetByModuleIdAsync(moduleId);
-            return Ok(result);
+            try
+            {
+                var result = await _service.GetByModuleIdAsync(moduleId);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }

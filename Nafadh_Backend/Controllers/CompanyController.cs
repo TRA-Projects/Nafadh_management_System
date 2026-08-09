@@ -55,19 +55,20 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(company);
         }
-
         // POST: api/Company
-        // Add a new company
         [HttpPost]
         public async Task<ActionResult<NFD_CompanyOutputDTO>>
-            AddCompany([FromBody] NFD_CompanyInputDTO dto)
+        AddCompany([FromBody] NFD_CompanyInputDTO dto)
         {
-            var company = await _service.AddCompanyAsync(dto);
+            var (company, error) = await _service.AddCompanyAsync(dto);
+
+            if (error is not null)
+                return BadRequest(new { message = error });
 
             return CreatedAtAction(
-                nameof(GetCompanyById),
-                new { companyId = company.CompanyId },
-                company
+            nameof(GetCompanyById),
+            new { companyId = company!.CompanyId },
+            company
             );
         }
 

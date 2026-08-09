@@ -38,6 +38,13 @@ namespace Nafadh_Backend.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task<bool> CompanyExistsAsync(int companyId) =>
+        await _context.NFD_Companies.AnyAsync(c => c.CompanyId == companyId);
+
+        public async Task<bool> ProgramExistsAsync(int programId) =>
+        await _context.NFD_Programs.AnyAsync(p => p.ProgramId == programId);
+
+
         // Delete company-program relationship
         public async Task DeleteAsync(
             int companyId,

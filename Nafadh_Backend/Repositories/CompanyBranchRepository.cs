@@ -28,6 +28,16 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
         }
 
+        // Get branches of a specific company
+        public async Task<IEnumerable<NFD_CompanyBranch>>
+        GetByCompanyIdAsync(int companyId)
+        {
+            return await _context.NFD_CompanyBranches
+            .Where(b => b.CompanyId == companyId)
+            .ToListAsync();
+        }
+
+
         // Add company branch
         public async Task AddCompanyBranchAsync(
             NFD_CompanyBranch branch)
