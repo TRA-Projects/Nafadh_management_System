@@ -49,6 +49,7 @@ namespace Nafadh_Backend.Repositories
             await _context.SaveChangesAsync();
         }
 
+        // جلب قائمة بجميع الأعذار التي ما زالت قيد الانتظار (Pending) ولم يتم البت فيها بعد.
         public async Task<List<NFD_Excuse>> GetPendingAsync()
         {
             List<NFD_Excuse> result = await _context.NFD_Excuses
