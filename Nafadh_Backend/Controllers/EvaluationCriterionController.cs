@@ -36,7 +36,7 @@ namespace Nafadh_Backend.Controllers
         // GET: api/EvaluationCriterion/{criteriaId}
         // Criterion details
 
-        [HttpGet("{criteriaId}")]
+        [HttpGet("GetCriterionById/{criteriaId}")]
         public async Task<IActionResult> GetCriterionById(int criteriaId)
         {
             var criterion = await _service.GetCriterionByIdAsync(criteriaId);

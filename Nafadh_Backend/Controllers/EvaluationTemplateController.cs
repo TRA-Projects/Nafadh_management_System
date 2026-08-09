@@ -37,7 +37,7 @@ namespace Nafadh_Backend.Controllers
         // GET: api/EvaluationTemplate/{id}
         // Template details with criteria
 
-        [HttpGet("{templateId}")]
+        [HttpGet("GetTemplateById/{templateId}")]
         public async Task<IActionResult> GetTemplateById(int templateId)
         {
             var template = await _service.GetTemplateByIdAsync(templateId);
