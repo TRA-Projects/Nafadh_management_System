@@ -18,7 +18,7 @@ namespace Nafadh_Backend.DTOs
         public int EnrollmentId { get; set; }
         public int? TrainerId { get; set; }
 
-        [Required(ErrorMessage = "Template ID is required.")] // أضيفي هذا الحقل مع التحقق
+        [Required(ErrorMessage = "Template ID is required.")] 
         public int TemplateId { get; set; }
 
         [Required(ErrorMessage = "Score is required.")]
