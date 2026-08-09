@@ -49,6 +49,7 @@ namespace Nafadh_Backend.Repositories
             await _context.SaveChangesAsync();
         }
 
+        // جلب جميع سجلات الحضور لليوم الحالي الخاصة بشركة معينة (مع تضمين بيانات التسجيل Associated Enrollment).
         public async Task<List<NFD_DailyAttendance>> GetTodayByCompanyIdAsync(int companyId, DateTime today)
         {
             List<NFD_DailyAttendance> result = await _context.NFD_DailyAttendances
