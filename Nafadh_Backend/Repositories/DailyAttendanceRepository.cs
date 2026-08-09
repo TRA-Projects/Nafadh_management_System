@@ -32,7 +32,7 @@ namespace Nafadh_Backend.Repositories
                 .FirstOrDefaultAsync(d => d.DailyAttendanceId == id);
             return result;
         }
-
+        // إضافة سجل حضور يومي جديد وإعادة الكائن المُضاف بعد حفظ التغييرات في قاعدة البيانات.
         public async Task<NFD_DailyAttendance> AddAsync(NFD_DailyAttendance entity)
         {
             await _context.NFD_DailyAttendances.AddAsync(entity);
