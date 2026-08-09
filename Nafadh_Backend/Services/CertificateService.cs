@@ -6,7 +6,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
-using static Nafadh_Backend.DTOs.CertificateDTO;
+using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Services
 {
@@ -71,6 +71,7 @@ namespace Nafadh_Backend.Services
 
 
         // Download certificate file
+        // Download certificate file
         public async Task<byte[]?> DownloadCertificateAsync(int id)
         {
             var certificate = await _repository.GetCertificateByIdAsync(id);
@@ -81,8 +82,16 @@ namespace Nafadh_Backend.Services
             if (string.IsNullOrEmpty(certificate.FileUrl))
                 return null;
 
-            // Convert PDF file into byte array
-            return await File.ReadAllBytesAsync(certificate.FileUrl);
+            var filePath = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                certificate.FileUrl
+            );
+
+            if (!System.IO.File.Exists(filePath))
+                return null;
+
+            return await System.IO.File.ReadAllBytesAsync(filePath);
         }
         // Get all certificates for trainee
         public async Task<List<CertificateOutputDTO>> GetCertificatesByTraineeIdAsync(int traineeId)

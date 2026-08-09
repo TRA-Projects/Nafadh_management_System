@@ -6,7 +6,7 @@
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
-using static Nafadh_Backend.DTOs.ReportDTO;
+using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Services
 {

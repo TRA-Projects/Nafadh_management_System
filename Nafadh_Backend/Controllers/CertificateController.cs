@@ -5,7 +5,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.Services;
-using static Nafadh_Backend.DTOs.CertificateDTO;
+using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Controllers
 {
