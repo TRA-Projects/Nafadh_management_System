@@ -17,7 +17,7 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        
+        // جلب جميع سجلات الحضور والغياب اليومية الخاصة برقم تسجيل معين.
         public async Task<List<NFD_DailyAttendance>> GetByEnrollmentIdAsync(int enrollmentId)
         {
             List<NFD_DailyAttendance> result = await _context.NFD_DailyAttendances
