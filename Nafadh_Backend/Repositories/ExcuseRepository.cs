@@ -42,6 +42,7 @@ namespace Nafadh_Backend.Repositories
             return entity;
         }
 
+        // تحديث بيانات عذر موجود سابقاً (مثل تغيير حالته أو تفاصيله) وحفظ التغييرات.
         public async Task UpdateAsync(NFD_Excuse entity)
         {
             _context.NFD_Excuses.Update(entity);
