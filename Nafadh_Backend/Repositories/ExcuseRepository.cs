@@ -18,6 +18,7 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
+        // جلب عذر واحد مرتبط بسجل حضور يومي معين.
         public async Task<NFD_Excuse?> GetByDailyAttendanceIdAsync(int dailyAttendanceId)
         {
             NFD_Excuse? result = await _context.NFD_Excuses
