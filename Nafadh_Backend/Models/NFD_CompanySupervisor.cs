@@ -11,7 +11,7 @@ using Nafadh_Backend.Enums;
 namespace Nafadh_Backend.Models
 {
     /// <summary>
-    /// Maps to the [NFD_CompanySupervisors] table.
+    /// Maps to the [NFD_CompanySupervisors] 
     /// </summary>
     public class NFD_CompanySupervisor
     {
