@@ -25,7 +25,7 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
             return result;
         }
-
+        // جلب سجل حضور يومي واحد عن طريق معرف السجل (Primary Key).
         public async Task<NFD_DailyAttendance?> GetByIdAsync(int id)
         {
             NFD_DailyAttendance? result = await _context.NFD_DailyAttendances
