@@ -42,7 +42,7 @@ namespace Nafadh_Backend.Controllers
         }
 
         // GET Report/{id}
-        [HttpGet("Report/{id}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetReportById(int id)
         {
             var report = await _service.GetReportByIdAsync(id);
@@ -74,10 +74,12 @@ public async Task<IActionResult> DownloadReport(int id)
 
             var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
 
+            var fileName = Path.GetFileName(filePath);
+
             return File(
                 fileBytes,
                 "application/pdf",
-                "Report.pdf"
+                fileName
             );
         }
 
