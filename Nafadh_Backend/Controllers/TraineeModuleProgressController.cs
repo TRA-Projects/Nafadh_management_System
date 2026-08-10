@@ -41,21 +41,21 @@ namespace Nafadh_Backend.Controllers
       //  [Authorize(Roles = "Trainee,CompanySupervisor,Admin")]
         public async Task<IActionResult> CompleteModule(CompleteModuleDto dto)
         {
-            var traineeIdClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");
+            //var traineeIdClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");
 
-            if (traineeIdClaim == null || string.IsNullOrEmpty(traineeIdClaim.Value))
-            {
-                return Unauthorized("Trainee ID not found in token.");
-            }
+            //if (traineeIdClaim == null || string.IsNullOrEmpty(traineeIdClaim.Value))
+            //{
+            //    return Unauthorized("Trainee ID not found in token.");
+            //}
 
-            if (!int.TryParse(traineeIdClaim.Value, out int traineeId))
-            {
-                return BadRequest("Invalid Trainee ID format in token.");
-            }
+            //if (!int.TryParse(traineeIdClaim.Value, out int traineeId))
+            //{
+            //    return BadRequest("Invalid Trainee ID format in token.");
+            //}
 
             try
             {
-                var result = await _service.CompleteModuleAsync(dto, traineeId);
+                var result = await _service.CompleteModuleAsync(dto, dto.TraineeId);
                 return Ok(result);
             }
             catch (KeyNotFoundException ex)
