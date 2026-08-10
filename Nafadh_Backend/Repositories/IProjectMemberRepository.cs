@@ -9,7 +9,7 @@ namespace Nafadh_Backend.Repositories
 {
     public interface IProjectMemberRepository
     {
-        // GET PROJECT MEMBERS BY PROJECT ID
+        // GET PROJECT MEMBERS BY PROJECT ID//
         // Returns all trainees assigned to a specific project
         Task<List<NFD_ProjectMember>> GetByProjectAsync(int projectId);
 
@@ -21,7 +21,7 @@ namespace Nafadh_Backend.Repositories
 
 
 
-        // GET PROJECT MEMBER DETAILS
+       // // GET PROJECT MEMBER DETAILS
         // Returns a specific project member by ID
         Task<NFD_ProjectMember?> GetByIdAsync(int id);
 
