@@ -71,8 +71,7 @@ namespace Nafadh_Backend.Services
 
 
         // Download certificate file
-        // Download certificate file
-        public async Task<byte[]?> DownloadCertificateAsync(int id)
+        public async Task<string?> DownloadCertificateAsync(int id)
         {
             var certificate = await _repository.GetCertificateByIdAsync(id);
 
@@ -82,17 +81,9 @@ namespace Nafadh_Backend.Services
             if (string.IsNullOrEmpty(certificate.FileUrl))
                 return null;
 
-            var filePath = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "wwwroot",
-                certificate.FileUrl
-            );
-
-            if (!System.IO.File.Exists(filePath))
-                return null;
-
-            return await System.IO.File.ReadAllBytesAsync(filePath);
+            return certificate.FileUrl;
         }
+
         // Get all certificates for trainee
         public async Task<List<CertificateOutputDTO>> GetCertificatesByTraineeIdAsync(int traineeId)
         {

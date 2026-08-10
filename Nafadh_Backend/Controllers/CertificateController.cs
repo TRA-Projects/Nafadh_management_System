@@ -55,19 +55,32 @@ namespace Nafadh_Backend.Controllers
             });
         }
 
-        // Download certificate file
+        // GET Certificate/{id}/download
         [HttpGet("{id}/download")]
         public async Task<IActionResult> DownloadCertificate(int id)
         {
-            var file = await _service.DownloadCertificateAsync(id);
+            var fileUrl = await _service.DownloadCertificateAsync(id);
 
-            if (file == null)
+            if (fileUrl == null)
                 return NotFound();
 
+            var filePath = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                fileUrl
+            );
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound("Certificate file not found.");
+
+            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+
+            var fileName = Path.GetFileName(filePath);
+
             return File(
-                file,
+                fileBytes,
                 "application/pdf",
-                "Certificate.pdf"
+                fileName
             );
         }
 
