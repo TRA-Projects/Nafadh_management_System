@@ -12,7 +12,7 @@ namespace Nafadh_Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+   // [Authorize]
     public class TraineeModuleProgressController : ControllerBase
     {
         private readonly ITraineeModuleProgressService _service;
@@ -38,7 +38,7 @@ namespace Nafadh_Backend.Controllers
         // Trainee marks a module as completed.
         // -------------------------------------------------------
         [HttpPost("complete")]
-        [Authorize(Roles = "Trainee,CompanySupervisor,Admin")]
+      //  [Authorize(Roles = "Trainee,CompanySupervisor,Admin")]
         public async Task<IActionResult> CompleteModule(CompleteModuleDto dto)
         {
             var traineeIdClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");
@@ -69,7 +69,7 @@ namespace Nafadh_Backend.Controllers
         // Updates progress status (Trainer / Admin).
         // -------------------------------------------------------
         [HttpPut("{id}")]
-        [Authorize(Roles = "Trainer,Admin,CompanySupervisor")]
+       // [Authorize(Roles = "Trainer,Admin,CompanySupervisor")]
         public async Task<IActionResult> Update(int id, UpdateTraineeModuleProgressDto dto)
         {
             if (!ModelState.IsValid)
