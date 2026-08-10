@@ -13,7 +13,7 @@ namespace Nafadh_Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [AllowAnonymous]
+  
     public class TrainingMaterialController : ControllerBase
     {
         private readonly ITrainingMaterialService _service;
