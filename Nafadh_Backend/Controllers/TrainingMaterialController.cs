@@ -47,15 +47,16 @@ namespace Nafadh_Backend.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Get authenticated user ID from JWT token
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            //// Get authenticated user ID from JWT token
+            //var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
 
-            if (userIdClaim == null)
-            {
-                return Unauthorized();
-            }
+            //if (userIdClaim == null)
+            //{
+            //    return Unauthorized();
+            //}
 
-            int userId = int.Parse(userIdClaim.Value);
+            //int userId = int.Parse(userIdClaim.Value);
+            int userId = 1;
             var result = await _service.CreateAsync(dto, userId);
 
             return CreatedAtAction(
