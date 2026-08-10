@@ -6,7 +6,8 @@ namespace Nafadh_Backend.DTOs
     // Used when trainee completes a module
     public class CompleteModuleDto
     {
-
+        [Required(ErrorMessage = "Trainee ID is required")]
+        public int TraineeId { get; set; }
         [Required(ErrorMessage = "Module ID is required")]
         public int ModuleId { get; set; }
     }

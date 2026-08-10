@@ -12,7 +12,7 @@ namespace Nafadh_Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    //[Authorize]
     public class TraineeModuleProgressController : ControllerBase
     {
         private readonly ITraineeModuleProgressService _service;
@@ -38,24 +38,24 @@ namespace Nafadh_Backend.Controllers
         // Trainee marks a module as completed.
         // -------------------------------------------------------
         [HttpPost("complete")]
-        [Authorize(Roles = "Trainee,CompanySupervisor,Admin")]
+        //[Authorize(Roles = "Trainee,CompanySupervisor,Admin")]
         public async Task<IActionResult> CompleteModule(CompleteModuleDto dto)
         {
-            var traineeIdClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");
+            //var traineeIdClaim = User.FindFirst(ClaimTypes.NameIdentifier) ?? User.FindFirst("sub");
 
-            if (traineeIdClaim == null || string.IsNullOrEmpty(traineeIdClaim.Value))
-            {
-                return Unauthorized("Trainee ID not found in token.");
-            }
+            //if (traineeIdClaim == null || string.IsNullOrEmpty(traineeIdClaim.Value))
+            //{
+            //    return Unauthorized("Trainee ID not found in token.");
+            //}
 
-            if (!int.TryParse(traineeIdClaim.Value, out int traineeId))
-            {
-                return BadRequest("Invalid Trainee ID format in token.");
-            }
+            //if (!int.TryParse(traineeIdClaim.Value, out int traineeId))
+            //{
+            //    return BadRequest("Invalid Trainee ID format in token.");
+            //}
 
             try
             {
-                var result = await _service.CompleteModuleAsync(dto, traineeId);
+                var result = await _service.CompleteModuleAsync(dto, dto.TraineeId);
                 return Ok(result);
             }
             catch (KeyNotFoundException ex)
@@ -69,7 +69,7 @@ namespace Nafadh_Backend.Controllers
         // Updates progress status (Trainer / Admin).
         // -------------------------------------------------------
         [HttpPut("{id}")]
-        [Authorize(Roles = "Trainer,Admin,CompanySupervisor")]
+        //[Authorize(Roles = "Trainer,Admin,CompanySupervisor")]
         public async Task<IActionResult> Update(int id, UpdateTraineeModuleProgressDto dto)
         {
             if (!ModelState.IsValid)
