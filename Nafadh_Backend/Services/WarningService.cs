@@ -32,6 +32,16 @@ namespace Nafadh_Backend.Services
             return warnings.Select(MapToDTO);
         }
 
+        // NEW: generic filtered query — GET /api/Warning
+        public async Task<IEnumerable<WarningOutputDTO>> GetWarningsAsync(
+            NFD_WarningScope? scope, int? companyId, int? enrollmentId, NFD_WarningStatus? status, NFD_WarningLevel? level)
+        {
+            var warnings = await _warningRepository
+                .GetWarningsAsync(scope, companyId, enrollmentId, status, level);
+
+            return warnings.Select(MapToDTO);
+        }
+
         // Get warning details by ID
         // GET /api/Warning/{id}
         public async Task<WarningDetailsDTO?> GetWarningByIdAsync(
@@ -47,20 +57,26 @@ namespace Nafadh_Backend.Services
 
         // Create warning
         // POST /api/Warning
+        // EDITED: now polymorphic — validates exactly one of EnrollmentId/CompanyId
+        // is supplied, matching the requested Scope.
         public async Task CreateWarningAsync(
             WarningInputDTO dto)
         {
+            if (dto.Scope == NFD_WarningScope.Trainee && !dto.EnrollmentId.HasValue)
+                throw new Exception("EnrollmentId is required when Scope is Trainee.");
+
+            if (dto.Scope == NFD_WarningScope.Company && !dto.CompanyId.HasValue)
+                throw new Exception("CompanyId is required when Scope is Company.");
+
             var warning = new NFD_Warning
             {
-                EnrollmentId = dto.EnrollmentId,
+                Scope = dto.Scope,
+                EnrollmentId = dto.Scope == NFD_WarningScope.Trainee ? dto.EnrollmentId : null,
+                CompanyId = dto.Scope == NFD_WarningScope.Company ? dto.CompanyId : null,
                 Type = dto.Type,
                 Level = dto.Level,
                 Evidence = dto.Evidence,
-
-                // Temporary value for testing.
-                // Later this should come from the logged-in user.
-                RaisedByUserId = 8,
-
+                RaisedByUserId = dto.RaisedByUserId,
                 Status = NFD_WarningStatus.Open,
                 IssuedDate = DateTime.UtcNow
             };
@@ -109,6 +125,16 @@ namespace Nafadh_Backend.Services
             return warnings.Select(MapToDTO);
         }
 
+        // Resolve a display name for the warning's target — trainee name for
+        // Trainee-scope, company name for Company-scope.
+        private static string? ResolveTargetName(NFD_Warning warning)
+        {
+            if (warning.Scope == NFD_WarningScope.Company)
+                return warning.Company?.CompanyName;
+
+            return warning.Enrollment?.Trainee?.User?.FullName;
+        }
+
         // Convert Entity to Output DTO
         private WarningOutputDTO MapToDTO(
             NFD_Warning warning)
@@ -116,13 +142,18 @@ namespace Nafadh_Backend.Services
             return new WarningOutputDTO
             {
                 WarningId = warning.WarningId,
+                Scope = warning.Scope,
                 EnrollmentId = warning.EnrollmentId,
+                CompanyId = warning.CompanyId,
+                TargetName = ResolveTargetName(warning),
                 Type = warning.Type,
                 Level = warning.Level,
                 Evidence = warning.Evidence,
                 Status = warning.Status,
                 Resolution = warning.Resolution,
-                IssuedDate = warning.IssuedDate
+                IssuedDate = warning.IssuedDate,
+                RaisedByUserId = warning.RaisedByUserId,
+                RaisedByName = warning.User?.FullName
             };
         }
 
@@ -133,13 +164,18 @@ namespace Nafadh_Backend.Services
             return new WarningDetailsDTO
             {
                 WarningId = warning.WarningId,
+                Scope = warning.Scope,
                 EnrollmentId = warning.EnrollmentId,
+                CompanyId = warning.CompanyId,
+                TargetName = ResolveTargetName(warning),
                 Type = warning.Type,
                 Level = warning.Level,
                 Evidence = warning.Evidence,
                 Status = warning.Status,
                 Resolution = warning.Resolution,
-                IssuedDate = warning.IssuedDate
+                IssuedDate = warning.IssuedDate,
+                RaisedByUserId = warning.RaisedByUserId,
+                RaisedByName = warning.User?.FullName
             };
         }
     }

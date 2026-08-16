@@ -34,6 +34,8 @@ namespace Nafadh_Backend.Models
         public ICollection<NFD_Session> Sessions { get; set; } = new List<NFD_Session>();
         public ICollection<NFD_Task> Tasks { get; set; } = new List<NFD_Task>();
         public ICollection<NFD_CompanyPayment> CompanyPayments { get; set; } = new List<NFD_CompanyPayment>();
+        // NEW: BatchExperienceRating feedback received for this batch.
+        public ICollection<NFD_Feedback> Feedbacks { get; set; } = new List<NFD_Feedback>();
 
     }
 }

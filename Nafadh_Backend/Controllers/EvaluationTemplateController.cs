@@ -26,9 +26,12 @@ namespace Nafadh_Backend.Controllers
         // List templates (optionally filter by type)
 
         [HttpGet("GetTemplates")]
-        public async Task<IActionResult> GetTemplates([FromQuery] NFD_EvaluationType? type)
+        public async Task<IActionResult> GetTemplates(
+            [FromQuery] NFD_EvaluationType? type,
+            [FromQuery] int? moduleId,
+            [FromQuery] int? stage)
         {
-            var templates = await _service.GetTemplatesAsync(type);
+            var templates = await _service.GetTemplatesAsync(type, moduleId, stage);
 
             return Ok(templates);
         }

@@ -12,11 +12,13 @@ namespace Nafadh_Backend.Controllers
     {
 
         private readonly ISubmissionService _service;
+        private readonly IBadgeEvaluationService _badgeEvaluationService;
 
 
-        public SubmissionController(ISubmissionService service)
+        public SubmissionController(ISubmissionService service, IBadgeEvaluationService badgeEvaluationService)
         {
             _service = service;
+            _badgeEvaluationService = badgeEvaluationService;
         }
 
 
@@ -205,7 +207,8 @@ namespace Nafadh_Backend.Controllers
 
             await _service.UpdateSubmissionAsync(submission);
 
-
+            // NEW: grading may push this trainee over a HighScoreCount badge threshold.
+            await _badgeEvaluationService.EvaluateTraineeAsync(submission.TraineeId);
 
             return NoContent();
 

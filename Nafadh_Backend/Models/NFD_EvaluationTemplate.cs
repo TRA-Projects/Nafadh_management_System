@@ -11,6 +11,10 @@ namespace Nafadh_Backend.Models
 {
     /// <summary>
     /// Maps to the [NFD_EvaluationTemplates] table.
+    /// EDITED: added optional ModuleId/Stage so a template can be scoped to
+    /// "Module X, Stage N" (trainer-authored, flexible evaluation criteria per
+    /// finalized decision). Null for template types not tied to a module
+    /// (e.g. TrainerPerformance).
     /// </summary>
     public class NFD_EvaluationTemplate
     {
@@ -18,6 +22,13 @@ namespace Nafadh_Backend.Models
         public int TemplateId { get; set; }
 
         public NFD_EvaluationType Type { get; set; }
+
+        // NEW: nullable module scoping
+        public int? ModuleId { get; set; }
+        public NFD_Module? Module { get; set; }
+
+        // NEW: nullable stage number (1-4), only meaningful when ModuleId is set
+        public int? Stage { get; set; }
 
         public int CreatedByUserId { get; set; }
         public NFD_User User { get; set; } = null!;

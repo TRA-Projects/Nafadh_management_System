@@ -15,5 +15,13 @@ namespace Nafadh_Backend.Repositories
         Task<NFD_Evaluation> CreateEvaluationAsync(NFD_Evaluation evaluation);
         Task UpdateEvaluationAsync(NFD_Evaluation evaluation);
         Task<double> GetAverageScoreByEnrollmentIdAsync(int enrollmentId);
+
+        // NEW: fetch an evaluation together with its per-criterion score breakdown
+        // and template (needed to recompute the rollup on update).
+        Task<NFD_Evaluation?> GetEvaluationWithScoresAsync(int evaluationId);
+
+        // NEW: replace all NFD_EvaluationCriterionScore rows for an evaluation
+        // (used by UpdateEvaluationAsync's re-scoring flow).
+        Task ReplaceCriterionScoresAsync(int evaluationId, List<NFD_EvaluationCriterionScore> scores);
     }
 }

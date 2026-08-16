@@ -14,6 +14,9 @@ namespace Nafadh_Backend.Services
         // List templates (optionally filter by type)
         Task<List<EvaluationTemplateOutputDTO>> GetTemplatesAsync(NFD_EvaluationType? type);
 
+        // NEW: filter by module/stage too
+        Task<List<EvaluationTemplateOutputDTO>> GetTemplatesAsync(NFD_EvaluationType? type, int? moduleId, int? stage);
+
         // Get template details with criteria
         Task<EvaluationTemplateDetailsDTO?> GetTemplateByIdAsync(int templateId);
 

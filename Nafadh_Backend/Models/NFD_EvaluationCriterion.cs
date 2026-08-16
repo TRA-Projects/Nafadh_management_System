@@ -22,9 +22,15 @@ namespace Nafadh_Backend.Models
         public string Name { get; set; } = string.Empty;
         [Column(TypeName = "decimal(18,2)")]
         public decimal Weight { get; set; }
+        // NEW: point-sum-to-total support, alongside Weight (both fields required
+        // per finalized decision — exact rollup formula chosen at scoring time).
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal MaxPoints { get; set; }
 
         public int TemplateId { get; set; }
         public NFD_EvaluationTemplate EvaluationTemplate { get; set; } = null!;
+        // NEW: per-criterion scores recorded against this criterion (see NFD_EvaluationCriterionScore).
+        public ICollection<NFD_EvaluationCriterionScore> CriterionScores { get; set; } = new List<NFD_EvaluationCriterionScore>();
 
     }
 }

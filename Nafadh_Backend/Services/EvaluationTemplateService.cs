@@ -23,7 +23,13 @@ namespace Nafadh_Backend.Services
         // Get All Templates
         public async Task<List<EvaluationTemplateOutputDTO>> GetTemplatesAsync(NFD_EvaluationType? type)
         {
-            var templates = await _repository.GetTemplatesAsync(type);
+            return await GetTemplatesAsync(type, null, null);
+        }
+
+        // NEW: filter by module/stage
+        public async Task<List<EvaluationTemplateOutputDTO>> GetTemplatesAsync(NFD_EvaluationType? type, int? moduleId, int? stage)
+        {
+            var templates = await _repository.GetTemplatesAsync(type, moduleId, stage);
 
             var result = new List<EvaluationTemplateOutputDTO>();
 
@@ -33,6 +39,8 @@ namespace Nafadh_Backend.Services
                 {
                     TemplateId = template.TemplateId,
                     Type = template.Type,
+                    ModuleId = template.ModuleId,
+                    Stage = template.Stage,
                     CreatedByUserId = template.CreatedByUserId
                 });
             }
@@ -53,6 +61,8 @@ namespace Nafadh_Backend.Services
             {
                 TemplateId = template.TemplateId,
                 Type = template.Type,
+                ModuleId = template.ModuleId,
+                Stage = template.Stage,
                 CreatedByUserId = template.CreatedByUserId
             };
 
@@ -63,7 +73,8 @@ namespace Nafadh_Backend.Services
                     CriteriaId = criterion.CriteriaId,
                     TemplateId = criterion.TemplateId,
                     Name = criterion.Name,
-                    Weight = criterion.Weight
+                    Weight = criterion.Weight,
+                    MaxPoints = criterion.MaxPoints
                 });
             }
 
@@ -77,6 +88,8 @@ namespace Nafadh_Backend.Services
             var template = new NFD_EvaluationTemplate
             {
                 Type = input.Type,
+                ModuleId = input.ModuleId,
+                Stage = input.Stage,
                 CreatedByUserId = input.CreatedByUserId
             };
 
@@ -93,6 +106,8 @@ namespace Nafadh_Backend.Services
                 return false;
 
             template.Type = input.Type;
+            template.ModuleId = input.ModuleId;
+            template.Stage = input.Stage;
             template.CreatedByUserId = input.CreatedByUserId;
 
             await _repository.UpdateTemplateAsync(template);

@@ -35,5 +35,9 @@ namespace Nafadh_Backend.Models
         public int EvaluatorUserId { get; set; }
         public NFD_User User { get; set; } = null!;
 
+        // NEW: per-criterion score breakdown (Score above becomes a computed
+        // rollup from these, rather than the only number entered/stored).
+        public ICollection<NFD_EvaluationCriterionScore> CriterionScores { get; set; } = new List<NFD_EvaluationCriterionScore>();
+
     }
 }

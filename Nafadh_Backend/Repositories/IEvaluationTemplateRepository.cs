@@ -13,6 +13,10 @@ namespace Nafadh_Backend.Repositories
         // TODO: define data-access contract methods for this entity
         Task<List<NFD_EvaluationTemplate>> GetTemplatesAsync(NFD_EvaluationType? type);
 
+        // NEW: filter by module/stage — lets a trainer fetch "the criteria set
+        // for Module X, Stage N" directly.
+        Task<List<NFD_EvaluationTemplate>> GetTemplatesAsync(NFD_EvaluationType? type, int? moduleId, int? stage);
+
         Task<NFD_EvaluationTemplate?> GetTemplateByIdAsync(int templateId);
 
         Task AddTemplateAsync(NFD_EvaluationTemplate template);

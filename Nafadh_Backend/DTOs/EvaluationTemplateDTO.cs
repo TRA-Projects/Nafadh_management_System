@@ -1,4 +1,4 @@
-﻿using Nafadh_Backend.Enums;
+using Nafadh_Backend.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace Nafadh_Backend.DTOs
@@ -10,6 +10,11 @@ namespace Nafadh_Backend.DTOs
         [Required(ErrorMessage = "Template type is required")]
         public NFD_EvaluationType Type { get; set; }
 
+        // NEW: optional module/stage scoping — lets a trainer define criteria for
+        // "Module X, Stage N" specifically (flexible evaluation, per finalized decision).
+        public int? ModuleId { get; set; }
+        public int? Stage { get; set; }
+
         [Range(1, int.MaxValue, ErrorMessage = "CreatedByUserId must be greater than 0")]
         public int CreatedByUserId { get; set; }
     }
@@ -20,6 +25,8 @@ namespace Nafadh_Backend.DTOs
     {
         public int TemplateId { get; set; }
         public NFD_EvaluationType Type { get; set; }
+        public int? ModuleId { get; set; }
+        public int? Stage { get; set; }
         public int CreatedByUserId { get; set; }
     }
 
@@ -30,6 +37,8 @@ namespace Nafadh_Backend.DTOs
     {
         public int TemplateId { get; set; }
         public NFD_EvaluationType Type { get; set; }
+        public int? ModuleId { get; set; }
+        public int? Stage { get; set; }
         public int CreatedByUserId { get; set; }
 
         public List<EvaluationCriterionOutputDTO> Criteria { get; set; }

@@ -1,4 +1,4 @@
-﻿using Nafadh_Backend.Enums;
+using Nafadh_Backend.Enums;
 
 namespace Nafadh_Backend.DTOs
 {
@@ -31,8 +31,15 @@ namespace Nafadh_Backend.DTOs
         // Link to the trainee's resume file
         public string? ResumeUrl { get; set; }
 
+        // NEW: professional profile links
+        public string? GitHubUrl { get; set; }
+        public string? LinkedInUrl { get; set; }
+
         // Current trainee status
         public NFD_TraineeStatus Status { get; set; }
+
+        // NEW: identity verification status
+        public NFD_VerificationStatus VerificationStatus { get; set; }
 
         // Id of the host company the trainee is placed with, if any
         public int? CompanyId { get; set; }

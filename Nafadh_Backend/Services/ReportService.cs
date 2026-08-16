@@ -94,6 +94,25 @@ namespace Nafadh_Backend.Services
             return report.FileUrl;
         }
 
+        // ==========================================================
+        // NEW analytics/aggregation pass-throughs (backend upgrade - Phase 2)
+        // ==========================================================
+
+        public Task<DashboardChartsDTO> GetDashboardChartsAsync() => _repository.GetDashboardChartsAsync();
+
+        public Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(int batchId) => _repository.GetBatchPerformanceAsync(batchId);
+
+        public Task<AttendanceReportDTO?> GetCompanyAttendanceReportAsync(int companyId) => _repository.GetCompanyAttendanceReportAsync(companyId);
+
+        public Task<List<ChartPointDTO>> GetCompanyAttendanceChartAsync(int companyId) => _repository.GetCompanyAttendanceChartAsync(companyId);
+
+        public Task<List<ChartPointDTO>> GetCompanyProgramDistributionAsync(int companyId) => _repository.GetCompanyProgramDistributionAsync(companyId);
+
+        public Task<List<int>> GetCompanyTopPerformerTraineeIdsAsync(int companyId, int take) => _repository.GetCompanyTopPerformerTraineeIdsAsync(companyId, take);
+
+        public Task<List<int>> GetCompanyAtRiskTraineeIdsAsync(int companyId, int take) => _repository.GetCompanyAtRiskTraineeIdsAsync(companyId, take);
+
+        public Task<TrainerKpisDTO> GetTrainerKpisAsync(int trainerId) => _repository.GetTrainerKpisAsync(trainerId);
 
     }
 }

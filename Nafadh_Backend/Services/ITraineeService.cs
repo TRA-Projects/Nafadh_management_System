@@ -24,6 +24,9 @@ namespace Nafadh_Backend.Services
 
         Task<bool> CompanyExistsAsync(int companyId);
 
+        // NEW: trainees pending identity verification
+        Task<List<NFD_Trainee>> GetPendingVerificationAsync();
+
         Task AddAsync(NFD_Trainee trainee);
 
         Task AddRangeAsync(IEnumerable<NFD_Trainee> trainees);

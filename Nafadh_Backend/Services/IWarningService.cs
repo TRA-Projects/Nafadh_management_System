@@ -14,6 +14,9 @@ namespace Nafadh_Backend.Services
         // Get warnings by trainee enrollment
         Task<IEnumerable<WarningOutputDTO>> GetWarningsByEnrollmentAsync(int enrollmentId);
 
+        // NEW: generic filtered query
+        Task<IEnumerable<WarningOutputDTO>> GetWarningsAsync(NFD_WarningScope? scope, int? companyId, int? enrollmentId, NFD_WarningStatus? status, NFD_WarningLevel? level);
+
         // Get warning details
         Task<WarningDetailsDTO?> GetWarningByIdAsync(int id);
 

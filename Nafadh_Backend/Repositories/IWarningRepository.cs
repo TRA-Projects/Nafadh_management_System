@@ -10,34 +10,28 @@ namespace Nafadh_Backend.Repositories
 {
     public interface IWarningRepository
     {
-        // TODO: define data-access contract methods for this entity
-
-
         // Get all warnings related to a specific enrollment
         // GET /api/Warning/enrollment/{enrollmentId}
         Task<IEnumerable<NFD_Warning>> GetWarningsByEnrollmentAsync(int enrollmentId);
 
+        // NEW: generic filtered query — GET /api/Warning?scope=&companyId=&enrollmentId=&status=&level=
+        Task<IEnumerable<NFD_Warning>> GetWarningsAsync(NFD_WarningScope? scope, int? companyId, int? enrollmentId, NFD_WarningStatus? status, NFD_WarningLevel? level);
+
         // Get warning details by warning ID
-        // GET /api/Warning/{id}
         Task<NFD_Warning?> GetWarningByIdAsync(int warningId);
 
         // Add a new warning
-        // POST /api/Warning
         Task AddWarningAsync(NFD_Warning warning);
 
         // Update warning status
-        // PUT /api/Warning/{id}/status
         Task UpdateWarningStatusAsync(int warningId, NFD_WarningStatus status);
 
         // Close warning with resolution message
-        // PUT /api/Warning/{id}/resolve
         Task ResolveWarningAsync(int warningId, string resolution);
         // Get all warnings that are not resolved
-        // GET /api/Warning/pending
         Task<IEnumerable<NFD_Warning>> GetPendingWarningsAsync();
         // Get warnings by severity level
-        // GET /api/Warning/level/{level}
         Task<IEnumerable<NFD_Warning>> GetWarningsByLevelAsync(NFD_WarningLevel level);
-       
+
     }
 }

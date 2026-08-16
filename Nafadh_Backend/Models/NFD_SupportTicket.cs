@@ -11,11 +11,25 @@ namespace Nafadh_Backend.Models
 {
     /// <summary>
     /// Maps to the [NFD_SupportTickets] table.
+    /// EDITED: this entity now also serves as the "Conversation" container behind
+    /// the new ConversationController — Type/Category added so it can represent
+    /// either a Company thread or a Trainee complaint thread, with NFD_Message rows
+    /// (via TicketId) threaded underneath it as replies. Original ticket-only usage
+    /// (SupportTicketController) is unaffected.
     /// </summary>
     public class NFD_SupportTicket
     {
         [Key]
         public int TicketId { get; set; }
+
+        // NEW: discriminates Company vs Trainee conversation, for the Admin
+        // Communications hub's two tabs.
+        public NFD_ConversationType Type { get; set; }
+
+        // NEW: topic category — populated for company threads (6 presets in the
+        // original Company portal demo); optional/free-text for trainee complaints.
+        [MaxLength(150)]
+        public string? Category { get; set; }
 
         [Required]
         [MaxLength(150)]
@@ -27,6 +41,9 @@ namespace Nafadh_Backend.Models
 
         public int UserId { get; set; }
         public NFD_User User { get; set; } = null!;
+
+        // NEW: threaded replies to this conversation (see NFD_Message.TicketId).
+        public ICollection<NFD_Message> Messages { get; set; } = new List<NFD_Message>();
 
     }
 }

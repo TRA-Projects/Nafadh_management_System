@@ -22,6 +22,25 @@ namespace Nafadh_Backend.Controllers
         }
 
         // ==========================================
+        // GET: api/Warning?scope=&companyId=&enrollmentId=&status=&level=
+        // NEW: generic filtered query — used by the Admin Communications hub,
+        // Company portal's warning views, and Trainee portal's warning visibility.
+        // ==========================================
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<WarningOutputDTO>>> GetWarnings(
+            [FromQuery] NFD_WarningScope? scope,
+            [FromQuery] int? companyId,
+            [FromQuery] int? enrollmentId,
+            [FromQuery] NFD_WarningStatus? status,
+            [FromQuery] NFD_WarningLevel? level)
+        {
+            var warnings = await _service
+                .GetWarningsAsync(scope, companyId, enrollmentId, status, level);
+
+            return Ok(warnings);
+        }
+
+        // ==========================================
         // GET: api/Warning/enrollment/{enrollmentId}
         // Get all warnings related to an enrollment
         // ==========================================

@@ -16,5 +16,15 @@ namespace Nafadh_Backend.Services
         Task<ReportOutputDTO> GenerateReportAsync(ReportInputDTO dto);
         Task<ReportOutputDTO?> GetReportByIdAsync(int reportId);
         Task<string?> DownloadReportAsync(int reportId);
+
+        // NEW: analytics/aggregation endpoints — see DTOs/ReportAnalyticsDTOs.cs
+        Task<DashboardChartsDTO> GetDashboardChartsAsync();
+        Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(int batchId);
+        Task<AttendanceReportDTO?> GetCompanyAttendanceReportAsync(int companyId);
+        Task<List<ChartPointDTO>> GetCompanyAttendanceChartAsync(int companyId);
+        Task<List<ChartPointDTO>> GetCompanyProgramDistributionAsync(int companyId);
+        Task<List<int>> GetCompanyTopPerformerTraineeIdsAsync(int companyId, int take);
+        Task<List<int>> GetCompanyAtRiskTraineeIdsAsync(int companyId, int take);
+        Task<TrainerKpisDTO> GetTrainerKpisAsync(int trainerId);
     }
 }

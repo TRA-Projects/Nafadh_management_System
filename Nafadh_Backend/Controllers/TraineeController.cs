@@ -19,10 +19,12 @@ namespace Nafadh_Backend.Controllers
     public class TraineeController : ControllerBase
     {
         private readonly ITraineeService _service;
+        private readonly IBadgeEvaluationService _badgeEvaluationService;
 
-        public TraineeController(ITraineeService service)
+        public TraineeController(ITraineeService service, IBadgeEvaluationService badgeEvaluationService)
         {
             _service = service;
+            _badgeEvaluationService = badgeEvaluationService;
         }
 
         // GET: api/trainee
@@ -44,6 +46,7 @@ namespace Nafadh_Backend.Controllers
                 University = t.University,
                 Major = t.Major,
                 Status = t.Status,
+                VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
                 CompanyName = t.Company?.CompanyName
             }).ToList();
@@ -69,7 +72,10 @@ namespace Nafadh_Backend.Controllers
                 AcademicLevel = t.AcademicLevel,
                 Skills = t.Skills,
                 ResumeUrl = t.ResumeUrl,
+                GitHubUrl = t.GitHubUrl,
+                LinkedInUrl = t.LinkedInUrl,
                 Status = t.Status,
+                VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
                 CompanyName = t.Company?.CompanyName
             };
@@ -93,6 +99,8 @@ namespace Nafadh_Backend.Controllers
             existing.AcademicLevel = update.AcademicLevel;
             existing.Skills = update.Skills;
             existing.ResumeUrl = update.ResumeUrl;
+            existing.GitHubUrl = update.GitHubUrl;
+            existing.LinkedInUrl = update.LinkedInUrl;
             existing.Status = update.Status;
             existing.CompanyId = update.CompanyId;
 
@@ -128,7 +136,12 @@ namespace Nafadh_Backend.Controllers
                 AcademicLevel = create.AcademicLevel,
                 Skills = create.Skills,
                 ResumeUrl = create.ResumeUrl,
-                Status = Enums.NFD_TraineeStatus.Active
+                GitHubUrl = create.GitHubUrl,
+                LinkedInUrl = create.LinkedInUrl,
+                // EDITED: canonical 3-value status — a freshly created trainee has
+                // no company yet, so NotAssigned (was "Active" under the old enum).
+                Status = Enums.NFD_TraineeStatus.NotAssigned,
+                VerificationStatus = Enums.NFD_VerificationStatus.Pending
             };
 
             await _service.AddAsync(model);
@@ -151,6 +164,12 @@ namespace Nafadh_Backend.Controllers
             _service.Update(existing);
             var saved = await _service.SaveChangesAsync();
             if (!saved) return StatusCode(500, "Failed to update status.");
+
+            // NEW: a status change to Completed may satisfy the ProgramCompletion badge.
+            if (dto.Status == Enums.NFD_TraineeStatus.Completed)
+            {
+                await _badgeEvaluationService.EvaluateTraineeAsync(id);
+            }
 
             return NoContent();
         }
@@ -222,7 +241,10 @@ namespace Nafadh_Backend.Controllers
                 AcademicLevel = i.AcademicLevel,
                 Skills = i.Skills,
                 ResumeUrl = i.ResumeUrl,
-                Status = Enums.NFD_TraineeStatus.Active
+                GitHubUrl = i.GitHubUrl,
+                LinkedInUrl = i.LinkedInUrl,
+                Status = Enums.NFD_TraineeStatus.NotAssigned,
+                VerificationStatus = Enums.NFD_VerificationStatus.Pending
             }).ToList();
 
             await _service.AddRangeAsync(models);
@@ -230,6 +252,51 @@ namespace Nafadh_Backend.Controllers
             if (!saved) return StatusCode(500, "Failed to import trainees.");
 
             return Ok(new { Imported = models.Count });
+        }
+
+        // ==========================================
+        // GET: api/trainee/pending-verification
+        // NEW: trainees awaiting identity verification review
+        // ==========================================
+        [HttpGet("pending-verification")]
+        public async Task<IActionResult> GetPendingVerification()
+        {
+            var trainees = await _service.GetPendingVerificationAsync();
+
+            var dtos = trainees.Select(t => new TraineeListItemDto
+            {
+                TraineeId = t.TraineeId,
+                FullName = t.User?.FullName,
+                University = t.University,
+                Major = t.Major,
+                Status = t.Status,
+                VerificationStatus = t.VerificationStatus,
+                CompanyId = t.CompanyId,
+                CompanyName = t.Company?.CompanyName
+            }).ToList();
+
+            return Ok(dtos);
+        }
+
+        // ==========================================
+        // PUT: api/trainee/{id}/verification
+        // NEW: approve/reject a trainee's identity verification
+        // ==========================================
+        [HttpPut("{id}/verification")]
+        public async Task<IActionResult> UpdateVerification(int id, [FromBody] TraineeVerificationInputDTO dto)
+        {
+            var existing = await _service.GetByIdAsync(id);
+            if (existing == null) return NotFound();
+
+            existing.VerificationStatus = dto.Status;
+            // ReviewedByUserId is accepted for audit/logging purposes; not persisted
+            // on the Trainee model itself (no dedicated column for reviewer yet).
+
+            _service.Update(existing);
+            var saved = await _service.SaveChangesAsync();
+            if (!saved) return StatusCode(500, "Failed to update verification status.");
+
+            return NoContent();
         }
     }
 }

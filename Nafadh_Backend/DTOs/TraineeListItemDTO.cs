@@ -1,4 +1,4 @@
-﻿using Nafadh_Backend.Enums;
+using Nafadh_Backend.Enums;
 
 namespace Nafadh_Backend.DTOs
 {
@@ -18,6 +18,9 @@ namespace Nafadh_Backend.DTOs
 
         // Current trainee status
         public NFD_TraineeStatus Status { get; set; }
+
+        // NEW: identity verification status
+        public NFD_VerificationStatus VerificationStatus { get; set; }
 
         // Id of the host company the trainee is placed with, if any
         public int? CompanyId { get; set; }

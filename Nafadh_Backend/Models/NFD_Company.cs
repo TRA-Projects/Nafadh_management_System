@@ -46,6 +46,8 @@ namespace Nafadh_Backend.Models
         public ICollection<NFD_Trainee> Trainees { get; set; } = new List<NFD_Trainee>();
         public ICollection<NFD_CompanyProgram> CompanyPrograms { get; set; } = new List<NFD_CompanyProgram>();
         public ICollection<NFD_CompanyPayment> CompanyPayments { get; set; } = new List<NFD_CompanyPayment>();
+        // NEW: company-scoped Warnings (Scope == Company) — see NFD_Warning.
+        public ICollection<NFD_Warning> Warnings { get; set; } = new List<NFD_Warning>();
 
     }
 }

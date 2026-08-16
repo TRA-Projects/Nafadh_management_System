@@ -87,6 +87,17 @@ namespace Nafadh_Backend.Repositories
             return await _context.NFD_Companies.AnyAsync(c => c.CompanyId == companyId);
         }
 
+        // NEW: Get trainees whose identity verification is still pending review.
+        // GET /api/Trainee/pending-verification
+        public async Task<List<NFD_Trainee>> GetPendingVerificationAsync()
+        {
+            return await _context.NFD_Trainees
+                .Include(t => t.User)
+                .Include(t => t.Company)
+                .Where(t => t.VerificationStatus == NFD_VerificationStatus.Pending)
+                .ToListAsync();
+        }
+
         // Add a new trainee to the context
         public async Task AddAsync(NFD_Trainee trainee)
         {

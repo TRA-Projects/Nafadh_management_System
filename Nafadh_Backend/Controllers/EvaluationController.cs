@@ -56,6 +56,15 @@ namespace Nafadh_Backend.Controllers
             return Ok(new { enrollmentId, averageScore = average });
         }
 
+        // NEW: GET: api/evaluation/enrollment/5/by-bucket
+        // Fixed-bucket rollup for Admin Reports (technical/behavioral/final/...).
+        [HttpGet("enrollment/{enrollmentId}/by-bucket")]
+        public async Task<ActionResult<Nafadh_Backend.DTOs.EvaluationBucketRollupDTO>> GetBucketRollupByEnrollmentId(int enrollmentId)
+        {
+            var rollup = await _service.GetBucketRollupByEnrollmentIdAsync(enrollmentId);
+            return Ok(rollup);
+        }
+
         // POST: api/evaluation
         [HttpPost]
         public async Task<ActionResult<EvaluationDTO>> CreateEvaluation([FromBody] CreateEvaluationDTO createDto)

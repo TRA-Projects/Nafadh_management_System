@@ -47,6 +47,12 @@ namespace Nafadh_Backend.Services
             return _repository.CompanyExistsAsync(companyId);
         }
 
+        // NEW: trainees pending identity verification
+        public Task<List<NFD_Trainee>> GetPendingVerificationAsync()
+        {
+            return _repository.GetPendingVerificationAsync();
+        }
+
         public Task AddAsync(NFD_Trainee trainee)
         {
             return _repository.AddAsync(trainee);

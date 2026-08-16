@@ -26,8 +26,39 @@ namespace Nafadh_Backend.Repositories
             int enrollmentId)
         {
             return await _context.NFD_Warnings
+                .Include(w => w.Enrollment).ThenInclude(e => e!.Trainee).ThenInclude(t => t!.User)
+                .Include(w => w.User)
                 .Where(w => w.EnrollmentId == enrollmentId)
                 .ToListAsync();
+        }
+
+        // NEW: generic filtered query, used by the Admin Communications hub and
+        // by both Company and Trainee portals' warning views.
+        public async Task<IEnumerable<NFD_Warning>> GetWarningsAsync(
+            NFD_WarningScope? scope, int? companyId, int? enrollmentId, NFD_WarningStatus? status, NFD_WarningLevel? level)
+        {
+            var query = _context.NFD_Warnings
+                .Include(w => w.Company)
+                .Include(w => w.Enrollment).ThenInclude(e => e!.Trainee).ThenInclude(t => t!.User)
+                .Include(w => w.User)
+                .AsQueryable();
+
+            if (scope.HasValue)
+                query = query.Where(w => w.Scope == scope.Value);
+
+            if (companyId.HasValue)
+                query = query.Where(w => w.CompanyId == companyId.Value);
+
+            if (enrollmentId.HasValue)
+                query = query.Where(w => w.EnrollmentId == enrollmentId.Value);
+
+            if (status.HasValue)
+                query = query.Where(w => w.Status == status.Value);
+
+            if (level.HasValue)
+                query = query.Where(w => w.Level == level.Value);
+
+            return await query.OrderByDescending(w => w.IssuedDate).ToListAsync();
         }
 
         // Get warning details by ID
@@ -36,7 +67,10 @@ namespace Nafadh_Backend.Repositories
             int warningId)
         {
             return await _context.NFD_Warnings
-                .FindAsync(warningId);
+                .Include(w => w.Company)
+                .Include(w => w.Enrollment).ThenInclude(e => e!.Trainee).ThenInclude(t => t!.User)
+                .Include(w => w.User)
+                .FirstOrDefaultAsync(w => w.WarningId == warningId);
         }
 
         // Create a new warning

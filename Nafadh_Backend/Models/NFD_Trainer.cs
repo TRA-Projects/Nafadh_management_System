@@ -32,6 +32,8 @@ namespace Nafadh_Backend.Models
         public ICollection<NFD_BatchTrainer> BatchTrainers { get; set; } = new List<NFD_BatchTrainer>();
         public ICollection<NFD_Session> Sessions { get; set; } = new List<NFD_Session>();
         public ICollection<NFD_Evaluation> Evaluations { get; set; } = new List<NFD_Evaluation>();
+        // NEW: TrainerRating feedback received by this trainer.
+        public ICollection<NFD_Feedback> Feedbacks { get; set; } = new List<NFD_Feedback>();
 
     }
 }

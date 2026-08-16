@@ -11,6 +11,11 @@ namespace Nafadh_Backend.Models
 {
     /// <summary>
     /// Maps to the [NFD_Messages] table.
+    /// EDITED: ReceiverId is now nullable and TicketId added — a ticket-threaded
+    /// reply (e.g. "the Authority" replying to a Company/Trainee conversation)
+    /// isn't from one specific pre-known receiver, so it's posted with TicketId set
+    /// and ReceiverId null. Original direct user-to-user usage (ReceiverId set,
+    /// TicketId null) is unaffected.
     /// </summary>
     public class NFD_Message
     {
@@ -25,8 +30,14 @@ namespace Nafadh_Backend.Models
         public int SenderId { get; set; }
         public NFD_User Sender { get; set; } = null!;
 
-        public int ReceiverId { get; set; }
-        public NFD_User Receiver { get; set; } = null!;
+        // EDITED: now nullable
+        public int? ReceiverId { get; set; }
+        public NFD_User? Receiver { get; set; }
+
+        // NEW: set when this message is a threaded reply within a Conversation
+        // (NFD_SupportTicket); null for legacy direct messages.
+        public int? TicketId { get; set; }
+        public NFD_SupportTicket? Ticket { get; set; }
 
     }
 }

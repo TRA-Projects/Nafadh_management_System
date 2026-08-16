@@ -194,6 +194,15 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ICompanyPaymentScheduleRepository, CompanyPaymentScheduleRepository>();
             builder.Services.AddScoped<ICompanyPaymentScheduleService, CompanyPaymentScheduleService>();
 
+            // ── NEW registrations (backend upgrade - Phase 2 Contract Alignment) ──
+            builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
+            builder.Services.AddScoped<IConversationService, ConversationService>();
+            builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+            builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+            builder.Services.AddScoped<IBadgeRepository, BadgeRepository>();
+            builder.Services.AddScoped<IBadgeService, BadgeService>();
+            builder.Services.AddScoped<IBadgeEvaluationService, BadgeEvaluationService>();
+
             // ── Swagger with JWT support ───────────────────────────────────────
             builder.Services.AddEndpointsApiExplorer();
 

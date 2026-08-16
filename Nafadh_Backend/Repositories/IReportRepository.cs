@@ -14,5 +14,15 @@ namespace Nafadh_Backend.Repositories
         Task<List<NFD_Report>> GetReportsAsync(NFD_ReportType? type, int? userId);
         Task AddReportAsync(NFD_Report report);
         Task<NFD_Report?> GetReportByIdAsync(int reportId);
+
+        // NEW: analytics/aggregation queries — see DTOs/ReportAnalyticsDTOs.cs
+        Task<DTOs.DashboardChartsDTO> GetDashboardChartsAsync();
+        Task<DTOs.BatchPerformanceReportDTO?> GetBatchPerformanceAsync(int batchId);
+        Task<DTOs.AttendanceReportDTO?> GetCompanyAttendanceReportAsync(int companyId);
+        Task<List<DTOs.ChartPointDTO>> GetCompanyAttendanceChartAsync(int companyId);
+        Task<List<DTOs.ChartPointDTO>> GetCompanyProgramDistributionAsync(int companyId);
+        Task<List<int>> GetCompanyTopPerformerTraineeIdsAsync(int companyId, int take);
+        Task<List<int>> GetCompanyAtRiskTraineeIdsAsync(int companyId, int take);
+        Task<DTOs.TrainerKpisDTO> GetTrainerKpisAsync(int trainerId);
     }
 }

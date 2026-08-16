@@ -5,7 +5,6 @@
 
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -21,9 +20,14 @@ namespace Nafadh_Backend.Repositories
 
 
         //get All evaluations for a trainee's enrollment
+        // EDITED: now includes per-criterion score breakdown + template, needed
+        // for the DTO's CriteriaBreakdown and the Admin bucket-rollup report.
         public async Task<IEnumerable<NFD_Evaluation>> GetEvaluationsByEnrollmentIdAsync(int enrollmentId)
         {
             return await _context.NFD_Evaluations
+                .Include(e => e.EvaluationTemplate)
+                .Include(e => e.CriterionScores)
+                    .ThenInclude(cs => cs.Criterion)
                 .Where(e => e.EnrollmentId == enrollmentId)
                 .ToListAsync();
         }
@@ -31,6 +35,9 @@ namespace Nafadh_Backend.Repositories
         public async Task<IEnumerable<NFD_Evaluation>> GetEvaluationsByTrainerIdAsync(int trainerId)
         {
             return await _context.NFD_Evaluations
+                .Include(e => e.EvaluationTemplate)
+                .Include(e => e.CriterionScores)
+                    .ThenInclude(cs => cs.Criterion)
                 .Where(e => e.TrainerId == trainerId)
                 .ToListAsync();
         }
@@ -39,9 +46,27 @@ namespace Nafadh_Backend.Repositories
         public async Task<NFD_Evaluation?> GetEvaluationByIdAsync(int evaluationId)
         {
             return await _context.NFD_Evaluations
+                .Include(e => e.EvaluationTemplate)
+                .Include(e => e.CriterionScores)
+                    .ThenInclude(cs => cs.Criterion)
                 .FirstOrDefaultAsync(e => e.EvaluationId == evaluationId);
         }
+
+        // NEW: same as GetEvaluationByIdAsync — kept as a distinctly-named method
+        // so the service layer's intent (re-scoring on update) is explicit.
+        public async Task<NFD_Evaluation?> GetEvaluationWithScoresAsync(int evaluationId)
+        {
+            return await _context.NFD_Evaluations
+                .Include(e => e.EvaluationTemplate)
+                .Include(e => e.CriterionScores)
+                .FirstOrDefaultAsync(e => e.EvaluationId == evaluationId);
+        }
+
         //Record a new evaluation (trainee or trainer, via a template)
+        // Any NFD_EvaluationCriterionScore rows already attached to
+        // evaluation.CriterionScores are inserted automatically by EF's
+        // relationship-fixup — the service is responsible for populating them
+        // and computing evaluation.Score before calling this.
         public async Task<NFD_Evaluation> CreateEvaluationAsync(NFD_Evaluation evaluation)
         {
             _context.NFD_Evaluations.Add(evaluation);
@@ -60,6 +85,19 @@ namespace Nafadh_Backend.Repositories
             existingEvaluation.Notes = evaluation.Notes;
             await _context.SaveChangesAsync();
         }
+
+        // NEW: deletes all existing per-criterion scores for an evaluation and
+        // inserts the replacement set — used when a trainer resubmits scores.
+        public async Task ReplaceCriterionScoresAsync(int evaluationId, List<NFD_EvaluationCriterionScore> scores)
+        {
+            var existing = _context.NFD_EvaluationCriterionScores
+                .Where(s => s.EvaluationId == evaluationId);
+            _context.NFD_EvaluationCriterionScores.RemoveRange(existing);
+
+            await _context.NFD_EvaluationCriterionScores.AddRangeAsync(scores);
+            await _context.SaveChangesAsync();
+        }
+
         //get Average score across periods
         public async Task<double> GetAverageScoreByEnrollmentIdAsync(int enrollmentId)
         {
@@ -68,7 +106,7 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
             if (evaluations.Count == 0)
             {
-                return 0.0; 
+                return 0.0;
             }
             return (double)evaluations.Average(e => e.Score);
         }

@@ -19,7 +19,18 @@ namespace Nafadh_Backend.Enums
 
     public enum NFD_TraineeStatus
     {
-        Active, Graduated, Dropped, Suspended
+        // Finalized canonical status (3 stored values) — "تأخر متكرر" (repeated lateness)
+        // is a computed/derived flag, not a stored status, per project decision.
+        // NOTE: this replaces the previous Active/Graduated/Dropped/Suspended set.
+        // Existing seeded rows are corrected by DataFix_TraineeStatusAndExtras.sql.
+        NotAssigned, InTraining, Completed
+    }
+
+    public enum NFD_VerificationStatus
+    {
+        // Bundled verification of national ID + phone + email as one status,
+        // rather than three separate flags (per finalized decision).
+        Pending, Verified, Rejected
     }
 
     public enum NFD_TrackStatus
@@ -117,6 +128,23 @@ namespace Nafadh_Backend.Enums
         Open, InProgress, Resolved, Closed
     }
 
+    public enum NFD_ConversationType
+    {
+        // Discriminates the two conversation kinds surfaced in the Admin
+        // Communications hub. "Other" is a fallback bucket for legacy/edge-case
+        // tickets that don't cleanly fit either (e.g. pre-existing seed data),
+        // so nothing is force-miscategorized into the wrong tab.
+        CompanyThread, TraineeComplaint, Other
+    }
+
+    public enum NFD_WarningScope
+    {
+        // Discriminates whether a Warning targets a Company (compliance-style,
+        // CompanyId set, EnrollmentId null) or a Trainee (EnrollmentId set,
+        // CompanyId null) — one polymorphic entity per finalized decision.
+        Company, Trainee
+    }
+
     public enum NFD_AnnouncementScopeType
     {
         Platform, Company, Batch
@@ -155,6 +183,20 @@ namespace Nafadh_Backend.Enums
     public enum NFD_SupervisorStatus
     {
         Active, Inactive, Suspended
+    }
+
+    public enum NFD_FeedbackType
+    {
+        // Two separate rating flows, each with its own fixed criteria set and
+        // its own view — never combined into one score, per finalized decision.
+        TrainerRating, BatchExperienceRating
+    }
+
+    public enum NFD_BadgeConditionType
+    {
+        // Fixed, system-wide badge catalog — automatically evaluated and granted
+        // server-side (see BadgeEvaluationService), never manually awarded.
+        ModulesCompletedInPeriod, AttendanceStreak, HighScoreCount, ProjectCompletion, ProgramCompletion
     }
     //
 }

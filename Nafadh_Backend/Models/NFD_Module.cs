@@ -34,6 +34,10 @@ namespace Nafadh_Backend.Models
 
         public ICollection<NFD_Lesson> Lessons { get; set; } = new List<NFD_Lesson>();
         public ICollection<NFD_TraineeModuleProgress> TraineeModuleProgresses { get; set; } = new List<NFD_TraineeModuleProgress>();
+        // NEW: evaluation templates scoped to this module (see NFD_EvaluationTemplate).
+        public ICollection<NFD_EvaluationTemplate> EvaluationTemplates { get; set; } = new List<NFD_EvaluationTemplate>();
+        // NEW: feedback submitted at completion of this module.
+        public ICollection<NFD_Feedback> Feedbacks { get; set; } = new List<NFD_Feedback>();
 
     }
 }

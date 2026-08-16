@@ -27,7 +27,12 @@ namespace Nafadh_Backend.Models
         public string? Skills { get; set; }
         [MaxLength(300)]
         public string? ResumeUrl { get; set; }
+        [MaxLength(300)]
+        public string? GitHubUrl { get; set; }
+        [MaxLength(300)]
+        public string? LinkedInUrl { get; set; }
         public NFD_TraineeStatus Status { get; set; }
+        public NFD_VerificationStatus VerificationStatus { get; set; }
 
         public int UserId { get; set; }
         public NFD_User User { get; set; } = null!;
@@ -40,6 +45,9 @@ namespace Nafadh_Backend.Models
         public ICollection<NFD_SessionAttendance> SessionAttendances { get; set; } = new List<NFD_SessionAttendance>();
         public ICollection<NFD_Submission> Submissions { get; set; } = new List<NFD_Submission>();
         public ICollection<NFD_ProjectMember> ProjectMembers { get; set; } = new List<NFD_ProjectMember>();
+        // NEW: feedback submitted by this trainee, and badges earned by this trainee.
+        public ICollection<NFD_Feedback> Feedbacks { get; set; } = new List<NFD_Feedback>();
+        public ICollection<NFD_TraineeBadge> TraineeBadges { get; set; } = new List<NFD_TraineeBadge>();
 
     }
 }

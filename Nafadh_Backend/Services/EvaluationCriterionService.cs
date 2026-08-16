@@ -35,7 +35,8 @@ namespace Nafadh_Backend.Services
                     CriteriaId = item.CriteriaId,
                     TemplateId = item.TemplateId,
                     Name = item.Name,
-                    Weight = item.Weight
+                    Weight = item.Weight,
+                    MaxPoints = item.MaxPoints
                 });
             }
 
@@ -56,7 +57,8 @@ namespace Nafadh_Backend.Services
                 CriteriaId = criterion.CriteriaId,
                 TemplateId = criterion.TemplateId,
                 Name = criterion.Name,
-                Weight = criterion.Weight
+                Weight = criterion.Weight,
+                MaxPoints = criterion.MaxPoints
             };
         }
 
@@ -74,7 +76,8 @@ namespace Nafadh_Backend.Services
             {
                 TemplateId = input.TemplateId,
                 Name = input.Name,
-                Weight = input.Weight
+                Weight = input.Weight,
+                MaxPoints = input.MaxPoints
             };
 
             await _repository.AddCriterionAsync(criterion);
@@ -98,6 +101,7 @@ namespace Nafadh_Backend.Services
             criterion.TemplateId = input.TemplateId;
             criterion.Name = input.Name;
             criterion.Weight = input.Weight;
+            criterion.MaxPoints = input.MaxPoints;
 
             await _repository.UpdateCriterionAsync(criterion);
 

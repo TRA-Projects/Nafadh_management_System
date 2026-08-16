@@ -15,10 +15,14 @@ namespace Nafadh_Backend.Controllers
     public class ReportController : ControllerBase
     {
         private readonly IReportService _service;
+        // NEW: used to resolve trainee IDs into full list-item DTOs for the
+        // top-performers/at-risk endpoints below.
+        private readonly ITraineeService _traineeService;
 
-        public ReportController(IReportService service)
+        public ReportController(IReportService service, ITraineeService traineeService)
         {
             _service = service;
+            _traineeService = traineeService;
         }
 
         // TODO: implement endpoints for this entity
@@ -83,7 +87,97 @@ public async Task<IActionResult> DownloadReport(int id)
             );
         }
 
+        // ==========================================================
+        // NEW analytics/aggregation endpoints (backend upgrade - Phase 2)
+        // ==========================================================
 
+        // GET: api/Report/dashboard-charts (Admin dashboard)
+        [HttpGet("dashboard-charts")]
+        public async Task<IActionResult> GetDashboardCharts()
+        {
+            return Ok(await _service.GetDashboardChartsAsync());
+        }
+
+        // GET: api/Report/batch-performance/{batchId} (Admin Reports drill-down)
+        [HttpGet("batch-performance/{batchId}")]
+        public async Task<IActionResult> GetBatchPerformance(int batchId)
+        {
+            var report = await _service.GetBatchPerformanceAsync(batchId);
+            if (report == null) return NotFound();
+            return Ok(report);
+        }
+
+        // GET: api/Report/company-attendance/{companyId} (Company Reports tab)
+        [HttpGet("company-attendance/{companyId}")]
+        public async Task<IActionResult> GetCompanyAttendanceReport(int companyId)
+        {
+            var report = await _service.GetCompanyAttendanceReportAsync(companyId);
+            if (report == null) return NotFound();
+            return Ok(report);
+        }
+
+        // GET: api/Report/company-attendance-chart/{companyId} (Company Dashboard)
+        [HttpGet("company-attendance-chart/{companyId}")]
+        public async Task<IActionResult> GetCompanyAttendanceChart(int companyId)
+        {
+            var weeks = await _service.GetCompanyAttendanceChartAsync(companyId);
+            return Ok(new { weeks });
+        }
+
+        // GET: api/Report/company-program-distribution/{companyId} (Company Dashboard)
+        [HttpGet("company-program-distribution/{companyId}")]
+        public async Task<IActionResult> GetCompanyProgramDistribution(int companyId)
+        {
+            return Ok(await _service.GetCompanyProgramDistributionAsync(companyId));
+        }
+
+        // GET: api/Report/company-top-performers/{companyId} (Company Dashboard)
+        [HttpGet("company-top-performers/{companyId}")]
+        public async Task<IActionResult> GetCompanyTopPerformers(int companyId, [FromQuery] int take = 5)
+        {
+            var ids = await _service.GetCompanyTopPerformerTraineeIdsAsync(companyId, take);
+            var trainees = await ResolveTraineesAsync(ids);
+            return Ok(trainees);
+        }
+
+        // GET: api/Report/company-at-risk-trainees/{companyId} (Company Dashboard)
+        [HttpGet("company-at-risk-trainees/{companyId}")]
+        public async Task<IActionResult> GetCompanyAtRiskTrainees(int companyId, [FromQuery] int take = 5)
+        {
+            var ids = await _service.GetCompanyAtRiskTraineeIdsAsync(companyId, take);
+            var trainees = await ResolveTraineesAsync(ids);
+            return Ok(trainees);
+        }
+
+        // GET: api/Report/trainer-kpis/{trainerId} (Trainer Reports)
+        [HttpGet("trainer-kpis/{trainerId}")]
+        public async Task<IActionResult> GetTrainerKpis(int trainerId)
+        {
+            return Ok(await _service.GetTrainerKpisAsync(trainerId));
+        }
+
+        private async Task<List<DTOs.TraineeListItemDto>> ResolveTraineesAsync(List<int> traineeIds)
+        {
+            var result = new List<DTOs.TraineeListItemDto>();
+            foreach (var id in traineeIds)
+            {
+                var t = await _traineeService.GetByIdAsync(id);
+                if (t == null) continue;
+
+                result.Add(new DTOs.TraineeListItemDto
+                {
+                    TraineeId = t.TraineeId,
+                    FullName = t.User?.FullName,
+                    University = t.University,
+                    Major = t.Major,
+                    Status = t.Status,
+                    VerificationStatus = t.VerificationStatus,
+                    CompanyId = t.CompanyId,
+                    CompanyName = t.Company?.CompanyName
+                });
+            }
+            return result;
+        }
 
     }
 }

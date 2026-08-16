@@ -11,11 +11,16 @@ namespace Nafadh_Backend.Models
 {
     /// <summary>
     /// Maps to the [NFD_Warnings] table.
+    /// EDITED: now polymorphic — a warning targets either a Company (compliance,
+    /// CompanyId set / EnrollmentId null) or a Trainee (EnrollmentId set / CompanyId
+    /// null), discriminated by Scope. Previously always Enrollment-scoped only.
     /// </summary>
     public class NFD_Warning
     {
         [Key]
         public int WarningId { get; set; }
+
+        public NFD_WarningScope Scope { get; set; }
 
         public NFD_WarningType Type { get; set; }
         public NFD_WarningLevel Level { get; set; }
@@ -24,8 +29,13 @@ namespace Nafadh_Backend.Models
         public string? Resolution { get; set; }
         public DateTime IssuedDate { get; set; }
 
-        public int EnrollmentId { get; set; }
-        public NFD_Enrollment Enrollment { get; set; } = null!;
+        // EDITED: now nullable — only set when Scope == Trainee
+        public int? EnrollmentId { get; set; }
+        public NFD_Enrollment? Enrollment { get; set; }
+
+        // NEW: only set when Scope == Company
+        public int? CompanyId { get; set; }
+        public NFD_Company? Company { get; set; }
 
         public int RaisedByUserId { get; set; }
         public NFD_User User { get; set; } = null!;

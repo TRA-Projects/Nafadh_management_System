@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -12,95 +13,181 @@ namespace Nafadh_Backend.Services
     public class EvaluationService : IEvaluationService
     {
         private readonly IEvaluationRepository _repository;
+        // NEW: needed to look up a template's criteria (weight/max points) so the
+        // rolled-up Score can be computed server-side from per-criterion input.
+        private readonly IEvaluationTemplateRepository _templateRepository;
+        // NEW: needed so newly-graded evaluations can trigger badge evaluation
+        // (e.g. "HighScoreCount" badges) without the controller knowing about badges.
+        private readonly IBadgeEvaluationService _badgeEvaluationService;
 
-        public EvaluationService(IEvaluationRepository repository)
+        public EvaluationService(
+            IEvaluationRepository repository,
+            IEvaluationTemplateRepository templateRepository,
+            IBadgeEvaluationService badgeEvaluationService)
         {
             _repository = repository;
+            _templateRepository = templateRepository;
+            _badgeEvaluationService = badgeEvaluationService;
         }
 
         public async Task<IEnumerable<EvaluationDTO>> GetEvaluationsByEnrollmentIdAsync(int enrollmentId)
         {
             var evaluations = await _repository.GetEvaluationsByEnrollmentIdAsync(enrollmentId);
-
-            return evaluations.Select(e => new EvaluationDTO
-            {
-                EvaluationId = e.EvaluationId,
-                EnrollmentId = e.EnrollmentId ?? 0,
-                TrainerId = e.TrainerId,
-                Score = e.Score,
-                Notes = e.Notes
-            });
+            return evaluations.Select(MapToDTO);
         }
 
         public async Task<IEnumerable<EvaluationDTO>> GetEvaluationsByTrainerIdAsync(int trainerId)
         {
             var evaluations = await _repository.GetEvaluationsByTrainerIdAsync(trainerId);
-
-            return evaluations.Select(e => new EvaluationDTO
-            {
-                EvaluationId = e.EvaluationId,
-                EnrollmentId = e.EnrollmentId ?? 0,
-                TrainerId = e.TrainerId,
-                Score = e.Score,
-                Notes = e.Notes
-            });
+            return evaluations.Select(MapToDTO);
         }
+
         public async Task<EvaluationDTO?> GetEvaluationByIdAsync(int evaluationId)
         {
             var e = await _repository.GetEvaluationByIdAsync(evaluationId);
             if (e == null) return null;
-
-            return new EvaluationDTO
-            {
-                EvaluationId = e.EvaluationId,
-                EnrollmentId = e.EnrollmentId ?? 0,
-                TrainerId = e.TrainerId,
-                Score = e.Score,
-                Notes = e.Notes
-            };
+            return MapToDTO(e);
         }
+
         public async Task<EvaluationDTO> CreateEvaluationAsync(CreateEvaluationDTO createDto)
         {
-            
+            var template = await _templateRepository.GetTemplateByIdAsync(createDto.TemplateId);
+            if (template == null)
+                throw new Exception("Evaluation Template not found.");
+
+            var computedScore = ComputeWeightedScore(template.EvaluationCriteria, createDto.CriteriaScores);
+
             var evaluation = new NFD_Evaluation
             {
                 EnrollmentId = createDto.EnrollmentId,
                 TrainerId = createDto.TrainerId,
                 TemplateId = createDto.TemplateId,
-                Score = createDto.Score,
+                Score = computedScore,
                 Notes = createDto.Notes,
                 EvaluationDate = DateTime.UtcNow,
-                EvaluatorUserId = createDto.EvaluatorUserId
+                EvaluatorUserId = createDto.EvaluatorUserId,
+                CriterionScores = createDto.CriteriaScores.Select(cs => new NFD_EvaluationCriterionScore
+                {
+                    CriteriaId = cs.CriteriaId,
+                    Score = cs.Score
+                }).ToList()
             };
 
             var created = await _repository.CreateEvaluationAsync(evaluation);
 
-            return new EvaluationDTO
+            // Fire-and-check badge conditions that depend on evaluation scores
+            // (e.g. "score >90% on N assignments"). Never blocks the response.
+            if (created.EnrollmentId.HasValue)
             {
-                EvaluationId = created.EvaluationId,
-                EnrollmentId = created.EnrollmentId ?? 0,
-                TrainerId = created.TrainerId,
-                TemplateId = created.TemplateId,
-                Score = created.Score,
-                Notes = created.Notes
-            };
+                await _badgeEvaluationService.EvaluateEnrollmentEvaluationAsync(created.EnrollmentId.Value);
+            }
+
+            return MapToDTO(await _repository.GetEvaluationByIdAsync(created.EvaluationId) ?? created);
         }
 
         public async Task UpdateEvaluationAsync(int id, UpdateEvaluationDTO updateDto)
         {
-            var evaluation = new NFD_Evaluation
+            var existing = await _repository.GetEvaluationWithScoresAsync(id);
+            if (existing == null)
+                throw new InvalidOperationException("The specified evaluation does not exist.");
+
+            var template = await _templateRepository.GetTemplateByIdAsync(existing.TemplateId);
+            if (template == null)
+                throw new Exception("Evaluation Template not found.");
+
+            var computedScore = ComputeWeightedScore(template.EvaluationCriteria, updateDto.CriteriaScores);
+
+            await _repository.ReplaceCriterionScoresAsync(id, updateDto.CriteriaScores.Select(cs => new NFD_EvaluationCriterionScore
             {
                 EvaluationId = id,
-                Score = updateDto.Score,
+                CriteriaId = cs.CriteriaId,
+                Score = cs.Score
+            }).ToList());
+
+            var updated = new NFD_Evaluation
+            {
+                EvaluationId = id,
+                Score = computedScore,
                 Notes = updateDto.Notes
             };
-
-            await _repository.UpdateEvaluationAsync(evaluation);
+            await _repository.UpdateEvaluationAsync(updated);
         }
 
         public async Task<double> GetAverageScoreByEnrollmentIdAsync(int enrollmentId)
         {
             return await _repository.GetAverageScoreByEnrollmentIdAsync(enrollmentId);
+        }
+
+        // NEW: fixed-bucket rollup — groups by the evaluation's template Type and
+        // averages Score per bucket, matching the buckets Admin Reports expects.
+        public async Task<EvaluationBucketRollupDTO> GetBucketRollupByEnrollmentIdAsync(int enrollmentId)
+        {
+            var evaluations = (await _repository.GetEvaluationsByEnrollmentIdAsync(enrollmentId)).ToList();
+
+            decimal? Average(NFD_EvaluationType type)
+            {
+                var scores = evaluations
+                    .Where(e => e.EvaluationTemplate != null && e.EvaluationTemplate.Type == type)
+                    .Select(e => e.Score)
+                    .ToList();
+                return scores.Count > 0 ? scores.Average() : (decimal?)null;
+            }
+
+            return new EvaluationBucketRollupDTO
+            {
+                Technical = Average(NFD_EvaluationType.Technical),
+                Behavioral = Average(NFD_EvaluationType.Behavioral),
+                Final = Average(NFD_EvaluationType.Final),
+                CompanyEvaluation = Average(NFD_EvaluationType.CompanyEvaluation),
+                TrainerPerformance = Average(NFD_EvaluationType.TrainerPerformance)
+            };
+        }
+
+        // Weighted rollup: for each submitted criterion score, contribute
+        // (score / criterion.MaxPoints) * criterion.Weight toward the total.
+        // Criteria weights are validated elsewhere (CheckTemplateWeightsAsync) to
+        // sum to 100, so the result lands on a 0-100 scale.
+        private decimal ComputeWeightedScore(
+            ICollection<NFD_EvaluationCriterion> templateCriteria,
+            List<CriterionScoreInputDTO> submittedScores)
+        {
+            decimal total = 0;
+
+            foreach (var submitted in submittedScores)
+            {
+                var criterion = templateCriteria.FirstOrDefault(c => c.CriteriaId == submitted.CriteriaId);
+                if (criterion == null)
+                    throw new Exception($"Criterion {submitted.CriteriaId} does not belong to the selected template.");
+
+                if (criterion.MaxPoints > 0)
+                {
+                    total += (submitted.Score / criterion.MaxPoints) * criterion.Weight;
+                }
+            }
+
+            return Math.Round(total, 2);
+        }
+
+        // Convert Entity to DTO, including the per-criterion breakdown.
+        private EvaluationDTO MapToDTO(NFD_Evaluation e)
+        {
+            return new EvaluationDTO
+            {
+                EvaluationId = e.EvaluationId,
+                EnrollmentId = e.EnrollmentId ?? 0,
+                TrainerId = e.TrainerId,
+                TemplateId = e.TemplateId,
+                Score = e.Score,
+                Notes = e.Notes,
+                CriteriaBreakdown = e.CriterionScores?.Select(cs => new EvaluationCriterionScoreDTO
+                {
+                    CriteriaId = cs.CriteriaId,
+                    CriterionName = cs.Criterion?.Name,
+                    Score = cs.Score,
+                    MaxPoints = cs.Criterion?.MaxPoints ?? 0,
+                    Weight = cs.Criterion?.Weight ?? 0
+                }).ToList() ?? new List<EvaluationCriterionScoreDTO>()
+            };
         }
     }
 }

@@ -21,6 +21,12 @@ namespace Nafadh_Backend.Repositories
         //List templates (filter by type) 
         public async Task<List<NFD_EvaluationTemplate>> GetTemplatesAsync(NFD_EvaluationType? type)
         {
+            return await GetTemplatesAsync(type, null, null);
+        }
+
+        // NEW: filter by module/stage as well
+        public async Task<List<NFD_EvaluationTemplate>> GetTemplatesAsync(NFD_EvaluationType? type, int? moduleId, int? stage)
+        {
             var query = _context.NFD_EvaluationTemplates
                 .Include(t => t.EvaluationCriteria)
                 .AsQueryable(); // filter inside DB not in program (faster and more efficient)
@@ -28,6 +34,16 @@ namespace Nafadh_Backend.Repositories
             if (type.HasValue) //HasValue => return true or fale (null=> false) 
             {
                 query = query.Where(t => t.Type == type.Value); // Value => which written 
+            }
+
+            if (moduleId.HasValue)
+            {
+                query = query.Where(t => t.ModuleId == moduleId.Value);
+            }
+
+            if (stage.HasValue)
+            {
+                query = query.Where(t => t.Stage == stage.Value);
             }
 
             return await query.ToListAsync();
