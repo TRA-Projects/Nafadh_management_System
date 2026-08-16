@@ -1,0 +1,33 @@
+<div class="nfd-card" style="background:linear-gradient(135deg,var(--color-navy),var(--color-navy-light));color:#fff;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:20px">
+  <div>
+    <span style="font-size:11px;opacity:.8">✓ لوحة المدرب · اليوم</span>
+    <h2 style="margin:6px 0;font-size:22px;color:#fff">مرحباً {{ auth.session()?.fullName }}</h2>
+    <p style="font-size:13px;opacity:.8;max-width:420px">كل ما تحتاجه لمتابعة دفعاتك، أداء المتدربين والحضور اليومي في مكان واحد.</p>
+  </div>
+  <div style="display:flex;gap:10px">
+    <a routerLink="/trainer/attendance" class="nfd-btn primary" style="background:var(--color-cyan)">📅 تسجيل الحضور اليومي</a>
+    <a routerLink="/trainer/trainees" class="nfd-btn secondary" style="color:#fff;border-color:#fff">👥 تقييم ومتابعة المتدربين</a>
+  </div>
+</div>
+
+<div class="nfd-stat-grid" style="--cols:3">
+  <div class="nfd-stat"><span>الدفعات المسندة</span><strong>{{ batches().length }}</strong></div>
+  <div class="nfd-stat"><span>عدد المتدربين</span><strong>—</strong></div>
+  <div class="nfd-stat"><span>الجلسات القادمة</span><strong>—</strong></div>
+</div>
+
+<div class="nfd-card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h3 style="margin:0">الدفعات المسندة</h3>
+    <a routerLink="/trainer/batches" class="nfd-btn ghost">عرض الكل</a>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+    @for (b of batches(); track b.batchId) {
+      <div style="padding:12px;border-radius:var(--radius-lg);background:var(--color-tint-indigo)">
+        <strong style="display:block;font-size:13px">{{ b.batchName }}</strong>
+        <small class="nfd-muted">{{ b.status }}</small>
+      </div>
+    }
+    @empty { <p class="nfd-muted">لا توجد دفعات مسندة حالياً</p> }
+  </div>
+</div>

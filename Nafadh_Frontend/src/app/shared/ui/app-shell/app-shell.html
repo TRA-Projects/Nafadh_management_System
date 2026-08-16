@@ -1,0 +1,76 @@
+<div class="shell" [class.dark]="dark()" [style.fontSize.px]="fontSize()">
+  <header class="topbar">
+    <!-- Logo (right / RTL start) -->
+    <div class="logo" [routerLink]="navItems()[0]?.path">
+      <img src="assets/logo.png" alt="نفاذ" class="logo-img" />
+      <div class="logo-sub">{{ portalTitle() }}</div>
+    </div>
+
+    <!-- Search (center) -->
+    <div class="search-wrap">
+      <nfd-icon name="search" size="sm" />
+      <input class="search-input" placeholder="ابحث..." />
+    </div>
+
+    <!-- Actions (left / RTL end) -->
+    <div class="actions">
+      <button class="icon-btn" (click)="toggleDark()" title="الوضع الداكن"><nfd-icon [name]="dark() ? 'sun' : 'moon'" /></button>
+      <button class="lang-btn" (click)="toggleLang()">{{ lang() === 'ar' ? 'EN' : 'عربي' }}</button>
+      <button class="icon-btn" (click)="accessOpen.set(!accessOpen())" title="أدوات التسهيل"><nfd-icon name="access" /></button>
+
+      <div class="notif-wrap">
+        <button class="icon-btn" (click)="notifOpen.set(!notifOpen())" title="الإشعارات">
+          <nfd-icon name="bell" />
+          <span class="notif-dot"></span>
+        </button>
+        @if (notifOpen()) {
+          <div class="notif-panel">
+            <div class="notif-head"><span>الإشعارات</span></div>
+            <div class="notif-empty">لا توجد إشعارات جديدة</div>
+          </div>
+        }
+      </div>
+
+      <div class="profile-chip">
+        <div class="avatar">{{ auth.session()?.fullName?.charAt(0) }}</div>
+        <div class="who">
+          <div class="name">{{ auth.session()?.fullName }}</div>
+          <div class="role">{{ accountLabel() }}</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <nav>
+      @for (item of navItems(); track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active" class="nav-item">
+          <nfd-icon [name]="item.icon" />
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+    <div class="sidebar-foot">
+      <button class="nav-item logout" (click)="auth.logout()">
+        <nfd-icon name="logout" />
+        <span>تسجيل الخروج</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+
+  @if (accessOpen()) {
+    <div class="access-panel">
+      <div class="access-head"><strong>أدوات التسهيل</strong><button (click)="accessOpen.set(false)">✕</button></div>
+      <p class="access-label">حجم الخط</p>
+      <div class="access-row">
+        @for (s of [14,16,18]; track s) {
+          <button [class.active]="fontSize() === s" (click)="fontSize.set(s)">{{ s === 14 ? 'A-' : s === 16 ? 'A' : 'A+' }}</button>
+        }
+      </div>
+    </div>
+  }
+</div>

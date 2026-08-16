@@ -1,0 +1,41 @@
+<h2 class="nfd-page-title">لوحة تشغيل الاستضافة والتدريب</h2>
+<p class="nfd-page-sub">استقبال متدربي الهيئة، مطابقتهم بالتخصصات المعتمدة، ثم متابعة التدريب والأداء</p>
+
+@if (announcements().length) {
+  <div class="nfd-card" style="margin-bottom:16px;border-inline-start:4px solid var(--color-cyan)">
+    @for (a of announcements(); track a.announcementId) {
+      <div style="padding:8px 0">
+        <span style="font-size:10px;font-weight:700;color:var(--color-cyan);text-transform:uppercase">إعلان من الهيئة</span>
+        <p style="margin:4px 0;font-size:13px">{{ a.message }}</p>
+        <small class="nfd-muted">{{ a.date | date:'mediumDate' }}</small>
+      </div>
+    }
+  </div>
+}
+
+@if (capacity(); as cap) {
+  <div class="nfd-card" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+      <strong>الطاقة الاستيعابية</strong><span class="nfd-muted">المستخدم: {{ cap.used }} من {{ cap.total }}</span>
+    </div>
+    <div class="nfd-bar"><div class="fill" [style.width.%]="((cap.used||0)/(cap.total||1))*100"></div></div>
+  </div>
+}
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+  <div class="nfd-card">
+    <h3>⭐ المتدربون المتميزون</h3>
+    @for (t of topPerformers(); track t.traineeId) { <div class="nfd-row"><span>{{ t.fullName }}</span></div> }
+    @empty { <p class="nfd-muted">لا بيانات كافية بعد</p> }
+  </div>
+  <div class="nfd-card">
+    <h3>⚠️ متعثرون بحاجة إلى متابعة</h3>
+    @for (t of atRisk(); track t.traineeId) { <div class="nfd-row"><span>{{ t.fullName }}</span></div> }
+    @empty { <p class="nfd-muted">لا يوجد متعثرون حالياً</p> }
+  </div>
+  <div class="nfd-card">
+    <h3>🔔 أحدث الإنذارات</h3>
+    @for (w of warnings(); track w.warningId) { <div class="nfd-row"><span>{{ w.type }} — {{ w.level }}</span></div> }
+    @empty { <p class="nfd-muted">لا توجد إنذارات</p> }
+  </div>
+</div>

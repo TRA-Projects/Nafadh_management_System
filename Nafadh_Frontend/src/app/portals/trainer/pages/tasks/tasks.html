@@ -1,0 +1,25 @@
+<h2 class="nfd-page-title">المهام والمشروعات</h2>
+<p class="nfd-page-sub">إنشاء الواجبات والمشاريع الميدانية ومتابعة التسليم والدرجات</p>
+
+<button class="nfd-btn primary" style="margin-bottom:16px">+ إنشاء واجب / مشروع</button>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="margin:0;font-size:13px;color:var(--color-navy)">📅 مفتوحة</h3><span class="nfd-badge" style="background:var(--color-tint-indigo);color:var(--color-navy)">{{ col('Open').length }}</span></div>
+    @for (t of col('Open'); track t.taskId) {
+      <div class="nfd-card" style="margin-bottom:10px"><strong style="display:block;font-size:13px;margin-bottom:4px">{{ t.title }}</strong><p style="margin:0 0 8px;font-size:12px;color:var(--color-text-secondary)">موعد التسليم: {{ t.dueDate | date:'mediumDate' }}</p></div>
+    }
+  </div>
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="margin:0;font-size:13px;color:var(--color-navy)">👥 مغلقة</h3><span class="nfd-badge" style="background:var(--status-review-bg);color:var(--status-review-fg)">{{ col('Closed').length }}</span></div>
+    @for (t of col('Closed'); track t.taskId) {
+      <div class="nfd-card" style="margin-bottom:10px"><strong style="display:block;font-size:13px;margin-bottom:4px">{{ t.title }}</strong></div>
+    }
+  </div>
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="margin:0;font-size:13px;color:var(--color-navy)">⏰ متأخرة</h3><span class="nfd-badge" style="background:var(--status-cancelled-bg);color:var(--status-cancelled-fg)">{{ col('Overdue').length }}</span></div>
+    @for (t of col('Overdue'); track t.taskId) {
+      <div class="nfd-card" style="margin-bottom:10px"><strong style="display:block;font-size:13px;margin-bottom:4px">{{ t.title }}</strong></div>
+    }
+  </div>
+</div>

@@ -1,0 +1,130 @@
+// Matches the reference Trainee demo's Header/Sidebar exactly.
+// IMPORTANT: uses explicit physical right/left everywhere (not CSS logical
+// inline-start/end properties) — the reference source itself hardcodes
+// right/left directly rather than relying on logical properties, and doing
+// the same here avoids the direction:rtl auto-flip that put the sidebar on
+// the wrong side in the previous build.
+
+.shell {
+  min-height: 100vh;
+  background: var(--color-bg);
+  position: relative;
+}
+
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  height: var(--header-height);
+  background: #F1F3F6;
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; gap: 16px;
+}
+
+.logo {
+  display: flex; align-items: center; gap: 10px; cursor: pointer; flex-shrink: 0;
+  .logo-img { height: 30px; width: auto; display: block; }
+  .logo-sub { font-size: 12px; color: var(--color-text-tertiary); }
+}
+
+.search-wrap {
+  flex: 1; max-width: 380px; position: relative; display: flex; align-items: center;
+  color: var(--color-text-tertiary);
+  nfd-icon { position: absolute; right: 12px; pointer-events: none; }
+}
+.search-input {
+  width: 100%; height: 36px; border-radius: var(--radius-lg); border: 1px solid var(--color-border);
+  background: #F8FAFF; outline: none; font-size: 13px;
+  padding-right: 36px; padding-left: 12px;
+  &:focus { border-color: var(--color-brand); box-shadow: 0 0 0 3px rgba(0,102,196,0.1); }
+}
+
+.actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.icon-btn {
+  width: 36px; height: 36px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-secondary); position: relative;
+  &:hover { background: rgba(0,0,0,0.05); }
+}
+.lang-btn {
+  height: 32px; padding: 0 12px; border-radius: var(--radius-lg); border: 1px solid var(--color-border);
+  font-size: 12px; font-weight: 500; color: var(--color-text-secondary);
+  &:hover { background: #fff; }
+}
+.notif-wrap { position: relative; }
+.notif-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-cyan); }
+.notif-panel {
+  position: absolute; top: 48px; left: 0; width: 300px; background: #fff;
+  border-radius: 16px; box-shadow: var(--shadow-card-hover); border: 1px solid var(--color-border-light);
+  overflow: hidden; z-index: 60;
+  .notif-head { padding: 14px 16px; border-bottom: 1px solid var(--color-border-light); font-size: 13px; font-weight: 600; }
+  .notif-empty { padding: 24px 16px; text-align: center; font-size: 12px; color: var(--color-text-tertiary); }
+}
+
+.profile-chip {
+  display: flex; align-items: center; gap: 8px; cursor: pointer; border-radius: var(--radius-lg); padding: 4px 8px;
+  &:hover { background: rgba(0,0,0,0.04); }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--color-cyan);
+    background: linear-gradient(135deg, var(--color-navy), var(--color-brand));
+    color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+  }
+  .who { text-align: right; }
+  .name { font-size: 12px; font-weight: 600; color: var(--color-text); }
+  .role { font-size: 11px; color: var(--color-text-tertiary); }
+}
+
+// Sidebar sits on the physical RIGHT (matching the reference exactly), with
+// the logo directly above it — content flows to its left.
+.sidebar {
+  position: fixed; top: var(--header-height); bottom: 0; right: 0; z-index: 40;
+  width: var(--sidebar-width);
+  background: var(--color-navy);
+  display: flex; flex-direction: column; padding: 16px 0; overflow-y: auto;
+  border-left: 1px solid rgba(255,255,255,0.06);
+}
+.dark .sidebar { background: #0a0e2a; }
+
+nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 4px; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 10px 12px; border-radius: var(--radius-lg);
+  font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.65);
+  text-align: right;
+  nfd-icon { color: rgba(255,255,255,0.5); flex-shrink: 0; }
+
+  &:hover { background: rgba(255,255,255,0.07); }
+  &.active {
+    background: rgba(0,196,204,0.15); color: var(--color-cyan);
+    border-right: 3px solid var(--color-cyan);
+    nfd-icon { color: var(--color-cyan); }
+  }
+}
+
+.sidebar-foot { padding: 16px 12px 0; margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
+.logout { color: rgba(255,255,255,0.5); nfd-icon { color: rgba(255,255,255,0.5); } }
+
+.content {
+  margin-top: var(--header-height);
+  margin-right: var(--sidebar-width);
+  padding: 24px;
+  min-height: calc(100vh - var(--header-height));
+}
+
+.dark .content { background: #080c24; color: #E8EEFF; }
+.dark { ::ng-deep .nfd-card { background: #111640; border: 1px solid rgba(255,255,255,0.06); } }
+
+.access-panel {
+  position: fixed; top: 74px; left: 20px; width: 260px; background: #fff; border-radius: 14px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.15); z-index: 60; overflow: hidden;
+  .access-head { display: flex; justify-content: space-between; padding: 12px 16px; background: var(--color-navy); color: #fff;
+    button { color: rgba(255,255,255,.7); } }
+  .access-label { font-size: 11px; color: var(--color-text-secondary); padding: 12px 16px 4px; }
+  .access-row { display: flex; gap: 6px; padding: 0 16px 16px;
+    button { flex: 1; padding: 8px; border-radius: 8px; border: 2px solid var(--color-border); font-weight: 700; font-size: 12px;
+      &.active { background: var(--color-navy); color: #fff; border-color: var(--color-navy); } } }
+}
+
+@media (max-width: 900px) {
+  .search-wrap { display: none; }
+}

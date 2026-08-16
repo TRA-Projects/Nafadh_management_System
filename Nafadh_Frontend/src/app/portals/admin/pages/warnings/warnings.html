@@ -1,0 +1,51 @@
+<h2 class="nfd-page-title">إنذارات الشركات</h2>
+<p class="nfd-page-sub">إدارة إنذارات الشركات المستضيفة المتعلقة بالامتثال</p>
+
+<div class="nfd-card">
+  <div class="nfd-toolbar"><span></span><button class="nfd-btn danger" (click)="showIssue.set(true)">⚠ إصدار إنذار</button></div>
+  <table class="nfd-table">
+    <thead><tr><th>الشركة</th><th>النوع</th><th>المستوى</th><th>الحالة</th><th>تاريخ الإصدار</th></tr></thead>
+    <tbody>
+      @for (w of warnings(); track w.warningId) {
+        <tr>
+          <td>{{ w.targetName }}</td>
+          <td>{{ w.type }}</td>
+          <td><span class="nfd-badge" style="background:var(--status-review-bg);color:var(--status-review-fg)">{{ w.level }}</span></td>
+          <td>{{ w.status }}</td>
+          <td>{{ w.issuedDate | date:'shortDate' }}</td>
+        </tr>
+      }
+      @empty { <tr><td colspan="5">لا توجد إنذارات</td></tr> }
+    </tbody>
+  </table>
+</div>
+
+@if (showIssue()) {
+  <div class="nfd-modal-bg" (click)="showIssue.set(false)">
+    <div class="nfd-modal" (click)="$event.stopPropagation()">
+      <h3>إصدار إنذار لشركة</h3>
+      <label>معرف الشركة</label>
+      <input class="nfd-input" type="number" [(ngModel)]="newWarning.companyId" />
+      <label>نوع المخالفة</label>
+      <select class="nfd-input" [(ngModel)]="newWarning.type">
+        <option value="Attendance">التزامات الحضور</option>
+        <option value="Performance">الأداء</option>
+        <option value="Behavioral">سلوكي</option>
+        <option value="Other">أخرى</option>
+      </select>
+      <label>مستوى الإنذار</label>
+      <select class="nfd-input" [(ngModel)]="newWarning.level">
+        <option value="Low">منخفض</option>
+        <option value="Medium">متوسط</option>
+        <option value="High">مرتفع</option>
+        <option value="Critical">حرج</option>
+      </select>
+      <label>الأدلة والملاحظات</label>
+      <input class="nfd-input" [(ngModel)]="newWarning.evidence" />
+      <div class="nfd-modal-actions">
+        <button class="nfd-btn secondary" (click)="showIssue.set(false)">إلغاء</button>
+        <button class="nfd-btn danger" (click)="issue()">إصدار الإنذار</button>
+      </div>
+    </div>
+  </div>
+}

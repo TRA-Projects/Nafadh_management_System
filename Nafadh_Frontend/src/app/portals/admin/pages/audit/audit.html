@@ -1,0 +1,15 @@
+<h2 class="nfd-page-title">سجل التدقيق</h2>
+<p class="nfd-page-sub">سجل العمليات والأنشطة في النظام</p>
+
+<div class="nfd-card">
+  <input class="nfd-input" style="max-width:280px;margin-bottom:14px" [(ngModel)]="search" placeholder="بحث في السجل..." />
+  <table class="nfd-table">
+    <thead><tr><th>الإجراء</th><th>المستخدم</th><th>الكيان المتأثر</th><th>التوقيت</th></tr></thead>
+    <tbody>
+      @for (l of filtered(); track (l.logId ?? l.id ?? $index)) {
+        <tr><td>{{ l.action }}</td><td>{{ l.userName }}</td><td>{{ l.entityName }} #{{ l.entityId }}</td><td>{{ (l.timestamp || l.createdAt) | date:'short' }}</td></tr>
+      }
+      @empty { <tr><td colspan="4">لا يوجد سجل</td></tr> }
+    </tbody>
+  </table>
+</div>

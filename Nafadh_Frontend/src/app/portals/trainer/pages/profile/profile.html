@@ -1,0 +1,22 @@
+<h2 class="nfd-page-title">الملف الشخصي والإعدادات</h2>
+<p class="nfd-page-sub">إدارة بيانات المدرب، التخصص، وتفضيلات الحساب</p>
+
+@if (trainer(); as t) {
+  <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start">
+    <div class="nfd-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <strong style="color:var(--color-navy);font-size:15px">{{ t.fullName }}</strong>
+        <button class="nfd-btn secondary" (click)="save()">حفظ التعديلات</button>
+      </div>
+      <label style="display:block;font-size:12px;font-weight:600;margin:10px 0 4px">التخصص التدريبي</label>
+      <input class="nfd-input" [(ngModel)]="t.specialty" />
+      <label style="display:block;font-size:12px;font-weight:600;margin:10px 0 4px">نبذة مهنية</label>
+      <textarea class="nfd-input" rows="4" [(ngModel)]="t.biography"></textarea>
+    </div>
+    <div class="nfd-card">
+      <h3>ملخص الحساب</h3>
+      <div class="nfd-row"><span>الحالة</span><strong>{{ t.status }}</strong></div>
+      <div class="nfd-row"><span>سنوات الخبرة</span><strong>{{ t.experienceYears }}</strong></div>
+    </div>
+  </div>
+}

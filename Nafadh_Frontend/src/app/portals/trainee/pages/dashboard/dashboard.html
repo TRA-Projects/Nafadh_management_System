@@ -1,0 +1,56 @@
+<div class="nfd-hero">
+  <div class="nfd-hero-greeting">
+    <h1>مرحباً، {{ auth.session()?.fullName }} 👋</h1>
+    <p>{{ summary()?.companyName ? ('برنامج تدريبي — ' + summary()?.companyName) : 'برنامجك التدريبي' }}</p>
+    <span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ summary()?.status || 'مستمر' }}</span>
+  </div>
+  <div class="nfd-hero-progress">
+    <div>
+      <div class="label">نسبة الإنجاز الإجمالية</div>
+      <div class="sub">أنت على الطريق الصحيح!</div>
+      <button class="nfd-btn" style="background:var(--color-cyan);color:#fff;height:32px">عرض التفاصيل</button>
+    </div>
+    <div class="nfd-ring" [style.--p]="summary()?.moduleProgressPercentage ?? 0" style="background:rgba(255,255,255,.12)">
+      <span>{{ (summary()?.moduleProgressPercentage ?? 0) | number:'1.0-0' }}%</span>
+    </div>
+  </div>
+</div>
+
+<div class="nfd-stat-pill-row" style="--cols:4">
+  <div class="nfd-stat-pill-card"><span class="label">الإنذارات</span><span class="pill" style="background:var(--status-absent-bg);color:var(--status-absent-fg)">1</span></div>
+  <div class="nfd-stat-pill-card"><span class="label">نسبة الحضور</span><span class="pill" style="background:var(--status-completed-bg);color:var(--status-completed-fg)">{{ (summary()?.attendanceRate ?? 0) | number:'1.0-0' }}%</span></div>
+  <div class="nfd-stat-pill-card"><span class="label">المهام المسلّمة</span><span class="pill" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ summary()?.submissionsCount ?? 0 }}/{{ (summary()?.submissionsCount ?? 0) + (summary()?.pendingSubmissionsCount ?? 0) }}</span></div>
+  <div class="nfd-stat-pill-card"><span class="label">الوحدات المكتملة</span><span class="pill" style="background:var(--status-new-bg);color:var(--status-new-fg)">{{ summary()?.completedModulesCount ?? 0 }}/{{ summary()?.totalModulesCount ?? 0 }}</span></div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 2fr;gap:16px">
+  <div class="nfd-card">
+    <h3>فريق الإشراف</h3>
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--color-border-light)">
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--color-navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">م</div>
+      <div><small class="nfd-muted" style="display:block">المدرب</small><strong style="font-size:13px">—</strong></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0">
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--color-cyan);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">س</div>
+      <div><small class="nfd-muted" style="display:block">المشرف</small><strong style="font-size:13px">—</strong></div>
+    </div>
+  </div>
+
+  <div class="nfd-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin:0">المهام القريبة من موعد التسليم</h3>
+      <button class="nfd-btn ghost">عرض الكل</button>
+    </div>
+    @for (t of tasks(); track t.taskId) {
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--color-border-light)">
+        <div>
+          <span class="nfd-badge" style="background:var(--status-new-bg);color:var(--status-new-fg);margin-bottom:4px;display:inline-block">جديد</span>
+          <strong style="display:block;font-size:13px">{{ t.title }}</strong>
+          <small class="nfd-muted">الموعد النهائي: {{ t.dueDate | date:'mediumDate' }}</small>
+        </div>
+        <nfd-icon name="clip" />
+      </div>
+    }
+    @empty { <p class="nfd-muted">لا توجد مهام قريبة</p> }
+  </div>
+</div>

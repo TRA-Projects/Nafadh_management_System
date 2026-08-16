@@ -1,0 +1,35 @@
+<h2 class="nfd-page-title">لوحة التحكم التنفيذية</h2>
+<p class="nfd-page-sub">نظرة شاملة على أداء منظومة التدريب</p>
+
+<div class="nfd-stat-grid" style="--cols:3">
+  <div class="nfd-stat"><span>إجمالي المتدربين</span><strong>{{ traineeCount() }}</strong></div>
+  <div class="nfd-stat"><span>الشركات المستضيفة</span><strong>{{ companyCount() }}</strong></div>
+  <div class="nfd-stat"><span>إجمالي الدفعات</span><strong>{{ batchCount() }}</strong></div>
+</div>
+
+@if (charts(); as c) {
+  <div class="nfd-card" style="margin-bottom:16px">
+    <h3>الدفعات حسب السنة</h3>
+    @for (p of c.batchesByYear; track p.label) {
+      <div class="nfd-row"><span>{{ p.label }}</span><strong>{{ p.value }}</strong></div>
+    }
+  </div>
+}
+
+<div class="nfd-card">
+  <h3>سجل الأنشطة الأخيرة</h3>
+  <table class="nfd-table">
+    <thead><tr><th>الإجراء</th><th>المستخدم</th><th>الكيان</th><th>التوقيت</th></tr></thead>
+    <tbody>
+      @for (item of recentActivity(); track item.logId ?? item.id ?? $index) {
+        <tr>
+          <td>{{ item.action }}</td>
+          <td>{{ item.userName }}</td>
+          <td>{{ item.entityName }}</td>
+          <td>{{ (item.timestamp || item.createdAt) | date:'short' }}</td>
+        </tr>
+      }
+      @empty { <tr><td colspan="4">لا يوجد نشاط بعد</td></tr> }
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,36 @@
+<div class="login-shell">
+  <div class="login-panel">
+    <div class="brand">
+      <img src="assets/logo.png" alt="نفاذ" class="brand-logo" />
+      <div>
+        <p>منظومة التدريب الموحدة</p>
+      </div>
+    </div>
+
+    <h2>تسجيل الدخول</h2>
+    <p class="sub">أدخل بيانات حسابك للمتابعة إلى بوابتك</p>
+
+    <form (ngSubmit)="submit()" #f="ngForm">
+      <label>البريد الإلكتروني</label>
+      <input class="nfd-input" type="email" name="email" [(ngModel)]="email" required placeholder="name@nafadh.om" />
+
+      <label>كلمة المرور</label>
+      <input class="nfd-input" type="password" name="password" [(ngModel)]="password" required placeholder="••••••••" />
+
+      @if (error()) {
+        <div class="error">{{ error() }}</div>
+      }
+
+      <button class="nfd-btn primary submit-btn" type="submit" [disabled]="loading() || !f.valid">
+        {{ loading() ? 'جاري الدخول...' : 'تسجيل الدخول' }}
+      </button>
+    </form>
+  </div>
+
+  <div class="login-hero">
+    <div class="hero-overlay">
+      <h2>بوابة موحدة لإدارة منظومة التدريب</h2>
+      <p>الإدارة المركزية · الشركات المستضيفة · المدربون · المتدربون</p>
+    </div>
+  </div>
+</div>

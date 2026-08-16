@@ -1,0 +1,41 @@
+<h2 class="nfd-page-title">الحضور</h2>
+<p class="nfd-page-sub">سجل الحضور والالتزام والأعذار</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+  <div class="nfd-card">
+    <h3>ملخص الحضور</h3>
+    <div class="nfd-row"><span>أيام الحضور</span><strong style="color:var(--status-active-fg)">{{ rows().length }}</strong></div>
+  </div>
+  <div class="nfd-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
+    <div class="nfd-ring" [style.--p]="rate()"><span>{{ rate() | number:'1.0-0' }}%</span></div>
+    <p style="margin:10px 0 0;font-size:12px;font-weight:600">نسبة الالتزام</p>
+  </div>
+</div>
+
+<div class="nfd-card" style="margin-top:16px">
+  <h3>سجل الحضور</h3>
+  <table class="nfd-table">
+    <thead><tr><th>التاريخ</th><th>الدخول</th><th>الخروج</th><th>الحالة</th><th>العذر</th></tr></thead>
+    <tbody>
+      @for (r of rows(); track r.dailyAttendanceId) {
+        <tr>
+          <td>{{ r.date | date:'mediumDate' }}</td>
+          <td>{{ r.checkInTime || '—' }}</td>
+          <td>{{ r.checkOutTime || '—' }}</td>
+          <td><span class="nfd-badge" [style.background]="r.status==='Present' ? 'var(--status-active-bg)' : r.status==='Late' ? 'var(--status-late-bg)' : 'var(--status-absent-bg)'" [style.color]="r.status==='Present' ? 'var(--status-active-fg)' : r.status==='Late' ? 'var(--status-late-fg)' : 'var(--status-absent-fg)'">{{ labels[r.status] }}</span></td>
+          <td>
+            @if (r.status !== 'Present') {
+              @if (excuseOpenFor() === r.dailyAttendanceId) {
+                <input class="nfd-input" [(ngModel)]="excuseReason" placeholder="سبب الغياب..." />
+                <button class="nfd-btn primary" (click)="submitExcuse(r)">إرسال</button>
+              } @else {
+                <button class="nfd-btn ghost" (click)="excuseOpenFor.set(r.dailyAttendanceId)">إرفاق عذر</button>
+              }
+            }
+          </td>
+        </tr>
+      }
+      @empty { <tr><td colspan="5">لا يوجد سجل حضور بعد</td></tr> }
+    </tbody>
+  </table>
+</div>

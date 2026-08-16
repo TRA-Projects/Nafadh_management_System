@@ -1,0 +1,19 @@
+<h2 class="nfd-page-title">إصدار الشهادات</h2>
+<p class="nfd-page-sub">إصدار شهادات الإتمام للمتدربين حسب الدفعة</p>
+
+<div class="nfd-card">
+  <table class="nfd-table">
+    <thead><tr><th>المتدرب</th><th>البرنامج</th><th>النوع</th><th>تاريخ الإصدار</th></tr></thead>
+    <tbody>
+      @for (c of certificates(); track c.certificateId) {
+        <tr>
+          <td>{{ c.traineeName }}</td>
+          <td>{{ c.programName }}</td>
+          <td><span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ c.type }}</span></td>
+          <td>{{ c.issueDate | date:'shortDate' }}</td>
+        </tr>
+      }
+      @empty { <tr><td colspan="4">لا توجد شهادات صادرة بعد لهذا المتدرب</td></tr> }
+    </tbody>
+  </table>
+</div>

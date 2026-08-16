@@ -1,0 +1,66 @@
+<h2 class="nfd-page-title">الإنجازات والشهادات</h2>
+
+<div class="nfd-card" style="margin-bottom:16px;border-inline-start:4px solid var(--color-cyan)">
+  <strong style="display:block;margin-bottom:10px;font-size:13px">أكملت وحدة مؤخراً — شاركنا رأيك!</strong>
+  <div style="display:flex;gap:8px">
+    <button class="nfd-btn secondary" (click)="openFeedback('TrainerRating')">تقييم المدرب</button>
+    <button class="nfd-btn secondary" (click)="openFeedback('BatchExperienceRating')">تقييم تجربة الدفعة</button>
+  </div>
+</div>
+
+<div class="nfd-card">
+  <h3>نتائج الوحدات</h3>
+  @for (m of moduleResults(); track m.progressId) {
+    <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
+      <span style="width:160px;font-size:12px;flex-shrink:0">{{ m.moduleTitle }}</span>
+      <div class="nfd-bar" style="flex:1"><div class="fill" [style.width.%]="m.status === 'Completed' ? 100 : m.status === 'InProgress' ? 55 : 0"></div></div>
+    </div>
+  }
+  @empty { <p class="nfd-muted">لا توجد بيانات وحدات بعد</p> }
+</div>
+
+<div class="nfd-card" style="margin-top:16px">
+  <h3>الأوسمة والإنجازات</h3>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+    @for (b of allBadges(); track b.badgeId) {
+      <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid var(--color-border)" [style.opacity]="isEarned(b.badgeId) ? 1 : 0.5" [style.border-color]="isEarned(b.badgeId) ? '#F59E0B' : 'var(--color-border)'" [style.background]="isEarned(b.badgeId) ? '#FFFBF0' : 'transparent'">
+        <div style="font-size:26px;margin-bottom:6px">{{ b.icon }}</div>
+        <strong style="display:block;font-size:12px">{{ b.name }}</strong>
+        <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">{{ b.description }}</p>
+        @if (isEarned(b.badgeId)) { <span style="font-size:10px;font-weight:700;color:#D97706">✓ محقق</span> }
+      </div>
+    }
+  </div>
+</div>
+
+<div class="nfd-card" style="margin-top:16px">
+  <h3>الشهادات</h3>
+  @for (c of certificates(); track c.certificateId) {
+    <div class="nfd-row"><span>{{ c.programName }}</span><span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ c.type }}</span></div>
+  }
+  @empty { <p class="nfd-muted">ستصدر الشهادة عند إتمام البرنامج التدريبي بالكامل.</p> }
+</div>
+
+@if (showFeedback()) {
+  <div class="nfd-modal-bg" (click)="showFeedback.set(false)">
+    <div class="nfd-modal" (click)="$event.stopPropagation()">
+      <h3>{{ feedbackType() === 'TrainerRating' ? 'تقييم المدرب' : 'تقييم تجربة الدفعة' }}</h3>
+      @for (c of criteria(); track c.criterionId) {
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <label style="font-size:12px">{{ c.name }}</label>
+          <div style="display:flex;gap:2px">
+            @for (s of [1,2,3,4,5]; track s) {
+              <button style="font-size:18px" [style.color]="(scores[c.criterionId] || 0) >= s ? '#F59E0B' : 'var(--color-border)'" (click)="scores[c.criterionId] = s">★</button>
+            }
+          </div>
+        </div>
+      }
+      <label style="display:block;font-size:12px;font-weight:600;margin-top:8px">تعليق إضافي</label>
+      <textarea class="nfd-input" rows="3" [(ngModel)]="comment"></textarea>
+      <div class="nfd-modal-actions">
+        <button class="nfd-btn secondary" (click)="showFeedback.set(false)">إلغاء</button>
+        <button class="nfd-btn primary" (click)="submitFeedback()">إرسال التقييم</button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,59 @@
+<h2 class="nfd-page-title">المستخدمون والصلاحيات</h2>
+<p class="nfd-page-sub">إدارة الحسابات والأدوار وصلاحيات الوصول</p>
+
+<div class="nfd-card">
+  <div class="nfd-toolbar">
+    <div class="nfd-chips">
+      @for (r of ['الكل','Admin','CompanySupervisor','Trainer','Trainee']; track r) {
+        <button class="nfd-chip" [class.active]="roleFilter() === r" (click)="roleFilter.set(r)">{{ r }}</button>
+      }
+    </div>
+    <button class="nfd-btn primary" (click)="showCreate.set(true)">+ إنشاء حساب جديد</button>
+  </div>
+
+  <table class="nfd-table">
+    <thead><tr><th>المستخدم</th><th>الدور</th><th>الحالة</th><th>تاريخ الإنشاء</th><th></th></tr></thead>
+    <tbody>
+      @for (u of filtered(); track u.userId) {
+        <tr>
+          <td><strong>{{ u.fullName }}</strong><br><small class="nfd-muted">{{ u.email }}</small></td>
+          <td><span class="nfd-badge" style="background:var(--color-tint-indigo);color:var(--color-navy)">{{ u.roleName }}</span></td>
+          <td>
+            <span class="nfd-badge" [style.background]="u.status === 'Active' ? 'var(--status-active-bg)' : 'var(--status-cancelled-bg)'" [style.color]="u.status === 'Active' ? 'var(--status-active-fg)' : 'var(--status-cancelled-fg)'">
+              {{ u.status === 'Active' ? 'نشط' : 'موقوف' }}
+            </span>
+          </td>
+          <td>{{ u.createdAt | date:'shortDate' }}</td>
+          <td><button class="nfd-btn ghost" (click)="toggleStatus(u)">{{ u.status === 'Active' ? 'إيقاف' : 'تفعيل' }}</button></td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (showCreate()) {
+  <div class="nfd-modal-bg" (click)="showCreate.set(false)">
+    <div class="nfd-modal" (click)="$event.stopPropagation()">
+      <h3>إنشاء حساب جديد</h3>
+      <label>الاسم الكامل</label>
+      <input class="nfd-input" [(ngModel)]="newUser.fullName" />
+      <label>البريد الإلكتروني</label>
+      <input class="nfd-input" [(ngModel)]="newUser.email" />
+      <label>رقم الجوال</label>
+      <input class="nfd-input" [(ngModel)]="newUser.phone" />
+      <label>الدور</label>
+      <select class="nfd-input" [(ngModel)]="newUser.roleId">
+        <option [ngValue]="1">Admin</option>
+        <option [ngValue]="2">Company Supervisor</option>
+        <option [ngValue]="3">Trainer</option>
+        <option [ngValue]="4">Trainee</option>
+      </select>
+      <label>كلمة المرور</label>
+      <input class="nfd-input" type="password" [(ngModel)]="newUser.password" />
+      <div class="nfd-modal-actions">
+        <button class="nfd-btn secondary" (click)="showCreate.set(false)">إلغاء</button>
+        <button class="nfd-btn primary" (click)="createUser()">حفظ</button>
+      </div>
+    </div>
+  </div>
+}

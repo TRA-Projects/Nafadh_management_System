@@ -1,0 +1,21 @@
+<h2 class="nfd-page-title">حساب المستخدم الحالي</h2>
+<p class="nfd-page-sub">بيانات المسؤول الحالي المسجل في بوابة الشركة المستضيفة</p>
+
+<div class="nfd-card" style="display:flex;align-items:center;gap:14px">
+  <div style="width:52px;height:52px;border-radius:50%;background:var(--color-navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px">{{ auth.session()?.fullName?.charAt(0) }}</div>
+  <div><strong>{{ auth.session()?.fullName }}</strong><p class="nfd-muted" style="margin:2px 0 0">{{ profile()?.position || 'مسؤول التدريب والتطوير' }}</p></div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px">
+  <div class="nfd-card">
+    <h3>الصلاحيات</h3>
+    @for (perm of ['إدارة المتدربين','التقارير','التواصل مع الهيئة']; track perm) {
+      <div class="nfd-row"><span>{{ perm }}</span><span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">مفعّل</span></div>
+    }
+  </div>
+  <div class="nfd-card">
+    <h3>بيانات الحساب</h3>
+    <div class="nfd-row"><span>البريد الإلكتروني</span><strong>{{ auth.session()?.email }}</strong></div>
+    <div class="nfd-row"><span>القسم</span><strong>{{ profile()?.department }}</strong></div>
+  </div>
+</div>

@@ -1,0 +1,39 @@
+<h2 class="nfd-page-title">التقارير والتحليلات</h2>
+<p class="nfd-page-sub">تقارير الأداء لكل دفعة — أدخل رقم الدفعة لعرض تقريرها</p>
+
+<div class="nfd-card" style="margin-bottom:16px">
+  <div style="display:flex;gap:10px;align-items:flex-end">
+    <div style="flex:1"><label style="font-size:12px;font-weight:600">رقم الدفعة</label><input class="nfd-input" type="number" [(ngModel)]="batchIdInput" /></div>
+    <button class="nfd-btn primary" (click)="viewBatchReport()">عرض التقرير</button>
+  </div>
+</div>
+
+@if (report(); as r) {
+  <div class="nfd-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+      <div>
+        <h3 style="margin:0">تقرير نهاية الدفعة — {{ r.batchName }}</h3>
+        <p class="nfd-muted">{{ r.programName }} · {{ r.companyName }}</p>
+      </div>
+    </div>
+    <div class="nfd-stat-grid" style="--cols:3">
+      <div class="nfd-stat"><span>عدد المتدربين</span><strong>{{ r.rows.length }}</strong></div>
+      <div class="nfd-stat"><span>متوسط الحضور</span><strong>{{ r.avgAttendance }}%</strong></div>
+      <div class="nfd-stat"><span>نسبة النجاح</span><strong>{{ r.successRate }}%</strong></div>
+    </div>
+    <table class="nfd-table">
+      <thead><tr><th>المتدرب</th><th>الحضور</th><th>التقني</th><th>السلوكي</th><th>المستوى</th></tr></thead>
+      <tbody>
+        @for (row of r.rows; track row.traineeId) {
+          <tr>
+            <td>{{ row.traineeName }}</td>
+            <td>{{ row.attendanceRate }}%</td>
+            <td>{{ row.technicalScore }}%</td>
+            <td>{{ row.behavioralScore }}%</td>
+            <td><span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ row.level }}</span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

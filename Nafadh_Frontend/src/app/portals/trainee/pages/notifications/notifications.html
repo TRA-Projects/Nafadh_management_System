@@ -1,0 +1,27 @@
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+  <h2 class="nfd-page-title" style="margin-bottom:0">التنبيهات والإنذارات</h2>
+  <div style="display:flex;gap:4px">
+    <button class="nfd-chip" [class.active]="filter()==='all'" (click)="filter.set('all')">الكل</button>
+    <button class="nfd-chip" [class.active]="filter()==='unread'" (click)="filter.set('unread')">غير مقروء</button>
+  </div>
+</div>
+
+@if (warnings().length) {
+  <div class="nfd-card" style="border-inline-start:4px solid var(--status-absent-fg);margin-bottom:14px">
+    <strong style="color:var(--status-absent-fg);font-size:13px">⚠ إنذارات موجهة إليك</strong>
+    @for (w of warnings(); track w.warningId) {
+      <div class="nfd-row"><span>{{ w.type }} — {{ w.level }}</span><small class="nfd-muted">من: {{ w.raisedByName }}</small></div>
+    }
+  </div>
+}
+
+<div style="display:flex;flex-direction:column;gap:8px">
+  @for (n of filtered(); track n.notificationId) {
+    <div class="nfd-card" style="cursor:pointer" [style.border-inline-start]="!n.isRead ? '3px solid var(--color-cyan)' : 'none'" (click)="markRead(n)">
+      <strong style="display:block;font-size:13px">{{ n.title }}</strong>
+      <p style="margin:4px 0;font-size:12px;color:var(--color-text-secondary)">{{ n.message }}</p>
+      <small class="nfd-muted">{{ n.createdAt | date:'short' }}</small>
+    </div>
+  }
+  @empty { <p class="nfd-muted">لا توجد إشعارات</p> }
+</div>

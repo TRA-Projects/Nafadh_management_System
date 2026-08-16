@@ -1,0 +1,36 @@
+<h2 class="nfd-page-title">الإشعارات</h2>
+<p class="nfd-page-sub">مركز الإشعارات والتنبيهات</p>
+
+<div class="nfd-card" style="margin-bottom:16px">
+  <div class="nfd-toolbar">
+    <p class="nfd-muted">إعلانات نظام الإدارة تصل تلقائياً لكل الشركات والمتدربين (نطاق النظام بالكامل)</p>
+    <button class="nfd-btn primary" (click)="showAnnounce.set(true)">+ إعلان جديد لكل النظام</button>
+  </div>
+</div>
+
+<div class="nfd-card">
+  @for (n of notifications(); track n.notificationId) {
+    <div class="nfd-row" style="cursor:pointer;align-items:flex-start" (click)="markRead(n)">
+      <div>
+        <strong style="display:block">{{ n.title }}</strong>
+        <p style="margin:2px 0 0;font-size:12px;color:var(--color-text-secondary)">{{ n.message }}</p>
+      </div>
+      <small class="nfd-muted">{{ n.createdAt | date:'short' }}</small>
+    </div>
+  }
+  @empty { <p class="nfd-muted">لا توجد إشعارات</p> }
+</div>
+
+@if (showAnnounce()) {
+  <div class="nfd-modal-bg" (click)="showAnnounce.set(false)">
+    <div class="nfd-modal" (click)="$event.stopPropagation()">
+      <h3>إعلان نطاق النظام</h3>
+      <p class="nfd-muted">يصل هذا الإعلان لجميع الشركات والمتدربين فور نشره.</p>
+      <textarea class="nfd-input" rows="4" [(ngModel)]="announceMsg" placeholder="نص الإعلان..."></textarea>
+      <div class="nfd-modal-actions">
+        <button class="nfd-btn secondary" (click)="showAnnounce.set(false)">إلغاء</button>
+        <button class="nfd-btn primary" (click)="postAnnouncement()">نشر الإعلان</button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,40 @@
+<h2 class="nfd-page-title">الحضور اليومي</h2>
+<p class="nfd-page-sub">تسجيل حضور المتدربين لليوم الحالي — اضغط على حالة كل متدرب لتغييرها</p>
+
+<div class="nfd-card">
+  <table class="nfd-table">
+    <thead><tr><th>المتدرب</th><th>حالة اليوم</th><th></th></tr></thead>
+    <tbody>
+      @for (r of rows(); track r.dailyAttendanceId) {
+        <tr>
+          <td>{{ r.traineeName }}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              @for (s of pickable; track s) {
+                <button class="nfd-chip" [class.active]="r.status === s" (click)="setStatus(r, s)">{{ labels[s] }}</button>
+              }
+            </div>
+          </td>
+          <td>
+            @if (r.status === 'Absent') { <button class="nfd-btn danger" (click)="reportAbsence(r)">إبلاغ الهيئة</button> }
+          </td>
+        </tr>
+      }
+      @empty { <tr><td colspan="3">لا توجد سجلات حضور لعرضها اليوم</td></tr> }
+    </tbody>
+  </table>
+</div>
+
+<div class="nfd-card" style="margin-top:16px">
+  <h3>أعذار بانتظار المراجعة</h3>
+  @for (ex of excuses(); track ex.excuseId) {
+    <div class="nfd-row">
+      <span>{{ ex.reason }}</span>
+      <div>
+        <button class="nfd-btn secondary" (click)="reviewExcuse(ex, true)">✓ قبول</button>
+        <button class="nfd-btn ghost" (click)="reviewExcuse(ex, false)">✕ رفض</button>
+      </div>
+    </div>
+  }
+  @empty { <p class="nfd-muted">لا توجد أعذار بانتظار المراجعة</p> }
+</div>

@@ -1,0 +1,70 @@
+<h2 class="nfd-page-title">المتدربون</h2>
+<p class="nfd-page-sub">المتدربون المقبولون والمربوطون بتخصص معتمد وخطة تدريب وقسم عمل داخل الشركة</p>
+
+<div class="nfd-card">
+  <div class="nfd-toolbar">
+    <input class="nfd-input search" [(ngModel)]="search" placeholder="بحث بالاسم..." />
+    <div style="display:flex;gap:8px">
+      <button class="nfd-btn secondary" (click)="showAnnounce.set(true)">📢 إرسال إعلان</button>
+      <button class="nfd-btn primary">+ تسجيل متدرب</button>
+    </div>
+  </div>
+  <table class="nfd-table">
+    <thead><tr><th>المتدرب</th><th>الدفعة</th><th>الحالة</th><th></th></tr></thead>
+    <tbody>
+      @for (e of filtered(); track e.enrollmentId) {
+        <tr>
+          <td>{{ e.traineeName }}</td>
+          <td>{{ e.batchName }}</td>
+          <td><span class="nfd-badge" style="background:var(--color-tint-indigo);color:var(--color-navy)">{{ e.completionStatus }}</span></td>
+          <td>
+            <a [routerLink]="['/company/trainees', e.traineeId, 'progress']" class="nfd-btn ghost">التقدم</a>
+            <button class="nfd-btn ghost" (click)="openWarn(e)">إنذار</button>
+          </td>
+        </tr>
+      }
+      @empty { <tr><td colspan="4">لا يوجد متدربون بعد</td></tr> }
+    </tbody>
+  </table>
+</div>
+
+@if (showAnnounce()) {
+  <div class="nfd-modal-bg" (click)="showAnnounce.set(false)">
+    <div class="nfd-modal" (click)="$event.stopPropagation()">
+      <h3>إرسال إعلان</h3>
+      <label>النطاق</label>
+      <select class="nfd-input" [(ngModel)]="announceScope">
+        <option value="Company">جميع المتدربين (كل الدفعات)</option>
+        <option value="Batch">دفعة محددة</option>
+      </select>
+      <label>نص الإعلان</label>
+      <textarea class="nfd-input" rows="4" [(ngModel)]="announceMsg"></textarea>
+      <div class="nfd-modal-actions">
+        <button class="nfd-btn secondary" (click)="showAnnounce.set(false)">إلغاء</button>
+        <button class="nfd-btn primary" (click)="postAnnouncement()">نشر</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showWarn()) {
+  <div class="nfd-modal-bg" (click)="showWarn.set(false)">
+    <div class="nfd-modal" (click)="$event.stopPropagation()">
+      <h3>إصدار إنذار — {{ warnTarget?.traineeName }}</h3>
+      <label>نوع المخالفة</label>
+      <select class="nfd-input" [(ngModel)]="warnForm.type">
+        <option value="Attendance">الحضور</option><option value="Performance">الأداء</option><option value="Behavioral">سلوكي</option>
+      </select>
+      <label>المستوى</label>
+      <select class="nfd-input" [(ngModel)]="warnForm.level">
+        <option value="Low">منخفض</option><option value="Medium">متوسط</option><option value="High">مرتفع</option>
+      </select>
+      <label>الأدلة</label>
+      <input class="nfd-input" [(ngModel)]="warnForm.evidence" />
+      <div class="nfd-modal-actions">
+        <button class="nfd-btn secondary" (click)="showWarn.set(false)">إلغاء</button>
+        <button class="nfd-btn danger" (click)="issueWarning()">إصدار الإنذار</button>
+      </div>
+    </div>
+  </div>
+}

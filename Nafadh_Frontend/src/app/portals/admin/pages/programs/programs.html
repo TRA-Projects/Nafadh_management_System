@@ -1,0 +1,36 @@
+<h2 class="nfd-page-title">البرامج والدفعات</h2>
+<p class="nfd-page-sub">المسارات التدريبية والدفعات والمواد</p>
+
+<div class="nfd-card">
+  <div class="nfd-chips">
+    @for (s of ['الكل','Ongoing','Upcoming','Completed']; track s) {
+      <button class="nfd-chip" [class.active]="statusFilter() === s" (click)="statusFilter.set(s)">{{ s }}</button>
+    }
+  </div>
+  <table class="nfd-table">
+    <thead><tr><th>الدفعة</th><th>البرنامج</th><th>البداية</th><th>النهاية</th><th>الحالة</th></tr></thead>
+    <tbody>
+      @for (b of filtered(); track b.batchId) {
+        <tr>
+          <td><strong>{{ b.batchName }}</strong></td>
+          <td>{{ b.programId }}</td>
+          <td>{{ b.startDate | date:'mediumDate' }}</td>
+          <td>{{ b.endDate | date:'mediumDate' }}</td>
+          <td><span class="nfd-badge" style="background:var(--color-tint-indigo);color:var(--color-navy)">{{ b.status }}</span></td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+<div class="nfd-card" style="margin-top:16px">
+  <h3>البرامج</h3>
+  <table class="nfd-table">
+    <thead><tr><th>البرنامج</th><th>الحالة</th></tr></thead>
+    <tbody>
+      @for (p of programs(); track p.programId) {
+        <tr><td>{{ p.title || p.name }}</td><td>{{ p.status }}</td></tr>
+      }
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,51 @@
+:host { display: block; height: 100vh; }
+
+.login-shell {
+  display: grid;
+  grid-template-columns: 440px 1fr;
+  height: 100vh;
+  @media (max-width: 860px) { grid-template-columns: 1fr; }
+}
+
+.login-panel {
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--color-surface);
+}
+
+.brand {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 40px;
+  .brand-logo { height: 34px; width: auto; }
+  p { margin: 0; font-size: 12px; color: var(--color-text-secondary); }
+}
+
+h2 { font-size: 22px; color: var(--color-navy); margin: 0 0 4px; }
+.sub { color: var(--color-text-secondary); font-size: 13px; margin: 0 0 24px; }
+
+form { display: flex; flex-direction: column; gap: 6px;
+  label { font-size: 13px; font-weight: 600; margin-top: 12px; } }
+
+.submit-btn { margin-top: 24px; justify-content: center; height: 44px; }
+
+.error {
+  margin-top: 12px; padding: 10px 14px;
+  background: var(--status-cancelled-bg); color: var(--status-cancelled-fg);
+  border-radius: var(--radius-md); font-size: 13px;
+}
+
+.login-hero {
+  position: relative;
+  background:
+    radial-gradient(circle, rgba(0,196,204,0.25) 1.2px, transparent 1.2px),
+    linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-light) 55%, #093A7A 100%);
+  background-size: 28px 28px, cover;
+  display: flex; align-items: center; justify-content: center; padding: 40px;
+  @media (max-width: 860px) { display: none; }
+}
+.hero-overlay {
+  max-width: 420px; text-align: center; color: #fff;
+  h2 { color: #fff; font-size: 26px; margin-bottom: 12px; }
+  p { color: rgba(255,255,255,0.7); font-size: 14px; }
+}

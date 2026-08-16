@@ -1,0 +1,27 @@
+<h2 class="nfd-page-title">الشركات المستضيفة</h2>
+<p class="nfd-page-sub">الشركات المعتمدة والطاقة الاستيعابية والأداء</p>
+
+<div class="nfd-card">
+  <div class="nfd-chips">
+    @for (s of ['الكل','PendingApproval','Approved','Suspended']; track s) {
+      <button class="nfd-chip" [class.active]="statusFilter() === s" (click)="statusFilter.set(s)">{{ s }}</button>
+    }
+  </div>
+  <table class="nfd-table">
+    <thead><tr><th>الشركة</th><th>المجال</th><th>الطاقة</th><th>الحالة</th><th></th></tr></thead>
+    <tbody>
+      @for (c of filtered(); track c.companyId) {
+        <tr>
+          <td><strong>{{ c.companyName }}</strong></td>
+          <td>{{ c.workField }}</td>
+          <td>{{ c.capacity }}</td>
+          <td><span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ c.status }}</span></td>
+          <td>
+            @if (c.status === 'PendingApproval') { <button class="nfd-btn secondary" (click)="approve(c)">اعتماد</button> }
+            @if (c.status === 'Approved') { <button class="nfd-btn ghost" (click)="suspend(c)">إيقاف</button> }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

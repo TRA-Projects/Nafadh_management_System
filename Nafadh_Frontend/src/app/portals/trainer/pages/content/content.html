@@ -1,0 +1,39 @@
+<h2 class="nfd-page-title">إدارة المحتوى</h2>
+<p class="nfd-page-sub">إنشاء الوحدات والدروس ورفع الملفات والفيديوهات ومشاركة الروابط والمراجع</p>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+  <div class="nfd-card">
+    <div style="font-size:26px;margin-bottom:8px">📗</div>
+    <strong style="display:block;margin-bottom:8px;color:var(--color-navy)">الوحدات والدروس</strong>
+    <ul style="margin:0 0 12px;padding-inline-start:18px;font-size:12px;color:var(--color-text-secondary)"><li>إنشاء الوحدات والدروس</li><li>تحديد متطلبات كل وحدة</li></ul>
+    <button class="nfd-btn ghost" (click)="showModal.set(true)">+ إنشاء محتوى</button>
+  </div>
+  <div class="nfd-card">
+    <div style="font-size:26px;margin-bottom:8px">🎬</div>
+    <strong style="display:block;margin-bottom:8px;color:var(--color-navy)">الملفات والفيديوهات</strong>
+    <ul style="margin:0 0 12px;padding-inline-start:18px;font-size:12px;color:var(--color-text-secondary)"><li>رفع الملفات والفيديوهات</li><li>إدارة مواد الدرس</li></ul>
+    <button class="nfd-btn ghost">⬆ رفع مادة</button>
+  </div>
+  <div class="nfd-card">
+    <div style="font-size:26px;margin-bottom:8px">🔗</div>
+    <strong style="display:block;margin-bottom:8px;color:var(--color-navy)">الروابط والمراجع</strong>
+    <ul style="margin:0 0 12px;padding-inline-start:18px;font-size:12px;color:var(--color-text-secondary)"><li>مشاركة الروابط والمراجع</li><li>إضافة مصادر تعليمية</li></ul>
+    <button class="nfd-btn ghost">+ إضافة مرجع</button>
+  </div>
+</div>
+
+@if (showModal()) {
+  <div class="nfd-modal-bg" (click)="showModal.set(false)">
+    <div class="nfd-modal" (click)="$event.stopPropagation()">
+      <h3>إنشاء وحدة / درس</h3>
+      <label>معرف البرنامج</label>
+      <input class="nfd-input" type="number" [(ngModel)]="programIdInput" />
+      <label>عنوان المحتوى</label>
+      <input class="nfd-input" [(ngModel)]="title" placeholder="اسم الوحدة أو الدرس" />
+      <div class="nfd-modal-actions">
+        <button class="nfd-btn secondary" (click)="showModal.set(false)">إلغاء</button>
+        <button class="nfd-btn primary" (click)="create()">حفظ</button>
+      </div>
+    </div>
+  </div>
+}

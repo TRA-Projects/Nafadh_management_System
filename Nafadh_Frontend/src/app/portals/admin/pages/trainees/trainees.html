@@ -1,0 +1,45 @@
+<h2 class="nfd-page-title">إدارة المتدربين</h2>
+<p class="nfd-page-sub">قائمة المتدربين وتفاصيل التسجيل والمتابعة</p>
+
+<div class="nfd-card" style="margin-bottom:16px">
+  <div class="nfd-chips">
+    @for (s of ['الكل','NotAssigned','InTraining','Completed']; track s) {
+      <button class="nfd-chip" [class.active]="statusFilter() === s" (click)="statusFilter.set(s)">{{ s === 'الكل' ? s : labelFor(s) }}</button>
+    }
+  </div>
+  <table class="nfd-table">
+    <thead><tr><th>المتدرب</th><th>الجامعة</th><th>الشركة</th><th>الحالة</th><th></th></tr></thead>
+    <tbody>
+      @for (t of filtered(); track t.traineeId) {
+        <tr>
+          <td><strong>{{ t.fullName }}</strong></td>
+          <td>{{ t.university }}</td>
+          <td>{{ t.companyName || '—' }}</td>
+          <td><span class="nfd-badge" style="background:var(--color-tint-indigo);color:var(--color-navy)">{{ statusLabels[t.status] }}</span></td>
+          <td><a [routerLink]="['/admin/trainees', t.traineeId]" class="nfd-btn ghost">عرض الملف</a></td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+<div class="nfd-card">
+  <h3>مراجعة بيانات الهوية والتواصل</h3>
+  <p class="nfd-muted" style="margin-top:-6px">للتحقق من صحة البيانات قبل الاعتماد النهائي للتسجيل</p>
+  <table class="nfd-table">
+    <thead><tr><th>المتدرب</th><th>الجامعة</th><th></th></tr></thead>
+    <tbody>
+      @for (t of pendingVerification(); track t.traineeId) {
+        <tr>
+          <td>{{ t.fullName }}</td>
+          <td>{{ t.university }}</td>
+          <td>
+            <button class="nfd-btn secondary" (click)="verify(t, true)">اعتماد</button>
+            <button class="nfd-btn ghost" (click)="verify(t, false)">رفض</button>
+          </td>
+        </tr>
+      }
+      @empty { <tr><td colspan="3">لا يوجد سجلات بانتظار المراجعة</td></tr> }
+    </tbody>
+  </table>
+</div>

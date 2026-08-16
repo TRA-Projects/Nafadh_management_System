@@ -1,0 +1,30 @@
+<a routerLink="/company/trainees" class="nfd-muted" style="display:inline-block;margin-bottom:14px">← العودة إلى قائمة المتدربين</a>
+
+<div class="nfd-card">
+  <h3>متوسط التقييم عبر فترات التدريب الأربع</h3>
+  <div style="display:flex;gap:20px">
+    @for (s of stages; track s) {
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--color-text-secondary)">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--color-border);display:flex;align-items:center;justify-content:center;font-weight:700" [style.background]="s <= 2 ? 'var(--color-cyan)' : 'var(--color-border)'" [style.color]="s <= 2 ? '#fff' : 'inherit'">{{ s }}</div>
+        <span>فترة {{ s }}</span>
+      </div>
+    }
+  </div>
+</div>
+
+<div class="nfd-card" style="margin-top:16px">
+  <h3>تفاصيل التقييم</h3>
+  @for (ev of evaluations(); track ev.evaluationId) {
+    <div style="margin-bottom:16px">
+      <div class="nfd-row" style="font-weight:700"><strong>القالب {{ ev.templateId }}</strong><span>{{ ev.score }}%</span></div>
+      @for (c of ev.criteriaBreakdown; track c.criteriaId) {
+        <div style="display:grid;grid-template-columns:160px 1fr 70px;align-items:center;gap:10px;padding:6px 0;font-size:12px">
+          <span>{{ c.criterionName }}</span>
+          <div class="nfd-bar"><div class="fill" [style.width.%]="(c.score / (c.maxPoints || 1)) * 100"></div></div>
+          <span>{{ c.score }} / {{ c.maxPoints }}</span>
+        </div>
+      }
+    </div>
+  }
+  @empty { <p class="nfd-muted">لا توجد تقييمات لهذا المتدرب بعد</p> }
+</div>

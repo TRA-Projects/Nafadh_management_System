@@ -1,0 +1,23 @@
+<h2 class="nfd-page-title">مركز التقارير والإحصائيات</h2>
+<p class="nfd-page-sub">استخراج تقارير الأداء الفني والحضور وتقييمات المتدربين</p>
+
+@if (kpis(); as k) {
+  <div class="nfd-stat-grid" style="--cols:4">
+    <div class="nfd-stat"><span>نسبة الحضور العامة</span><strong>{{ k.attendanceRate }}%</strong></div>
+    <div class="nfd-stat"><span>معدل إنجاز المهام</span><strong>{{ k.taskCompletionRate }}%</strong></div>
+    <div class="nfd-stat"><span>متوسط الدرجات الفنية</span><strong>{{ k.avgTechnicalGrade }}</strong></div>
+    @if (feedback(); as f) { <div class="nfd-stat"><span>رضا المتدربين عن المدرب</span><strong>{{ f.averageOverall | number:'1.1-1' }} / 5</strong></div> }
+  </div>
+}
+
+@if (feedback(); as f) {
+  <div class="nfd-card">
+    <h3>تفاصيل تقييم المدرب</h3>
+    @for (c of f.perCriterion; track c.criterionId) {
+      <div class="nfd-row"><span>{{ c.name }}</span><strong>{{ c.average | number:'1.1-1' }} / 5</strong></div>
+    }
+    <div style="margin-top:12px">
+      @for (c of f.comments; track c.date) { <p style="font-size:12px;color:var(--color-text-secondary);font-style:italic">"{{ c.comment }}"</p> }
+    </div>
+  </div>
+}

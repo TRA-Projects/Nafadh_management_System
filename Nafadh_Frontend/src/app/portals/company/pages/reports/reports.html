@@ -1,0 +1,24 @@
+<h2 class="nfd-page-title">التقارير</h2>
+<p class="nfd-page-sub">تقارير حضور الشركة وإنجاز المتدربين والطاقة الاستيعابية</p>
+
+<div style="display:flex;gap:4px;background:var(--color-tint-indigo);padding:4px;border-radius:var(--radius-lg);width:fit-content;margin-bottom:16px">
+  <button class="nfd-btn" [class.primary]="tab()==='attendance'" [class.ghost]="tab()!=='attendance'" (click)="tab.set('attendance')">حضور الشركة</button>
+  <button class="nfd-btn" [class.primary]="tab()==='achievement'" [class.ghost]="tab()!=='achievement'" (click)="tab.set('achievement')">إنجاز المتدربين</button>
+  <button class="nfd-btn" [class.primary]="tab()==='capacity'" [class.ghost]="tab()!=='capacity'" (click)="tab.set('capacity')">الطاقة الاستيعابية</button>
+</div>
+
+<div class="nfd-card">
+  @if (tab() === 'attendance' && attendance(); as r) {
+    <div class="nfd-stat-grid" style="--cols:1;margin-bottom:16px"><div class="nfd-stat"><span>معدل الحضور العام</span><strong>{{ r.overallAttendanceRate }}%</strong></div></div>
+    <table class="nfd-table">
+      <thead><tr><th>المتدرب</th><th>أيام الحضور</th><th>التأخير</th><th>الغياب</th><th>النسبة</th></tr></thead>
+      <tbody>
+        @for (row of r.rows; track row.traineeId) {
+          <tr><td>{{ row.traineeName }}</td><td>{{ row.presentDays }}</td><td>{{ row.lateDays }}</td><td>{{ row.absentDays }}</td><td>{{ row.attendanceRate }}%</td></tr>
+        }
+      </tbody>
+    </table>
+  } @else {
+    <p class="nfd-muted">اختر التبويب لعرض بيانات التقرير</p>
+  }
+</div>
