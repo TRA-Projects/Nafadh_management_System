@@ -1,3 +1,4 @@
+
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,9 +16,6 @@ export class TraineeProfile implements OnInit {
   trainee = signal<TraineeProfileDto | null>(null);
   editing = signal(false);
 
-  // متغير للفيو المؤقت للصورة الشخصية
-  avatarUrl = signal<string | null>(null);
-
   constructor(private api: TraineeApi) {}
 
   ngOnInit() {
@@ -30,30 +28,6 @@ export class TraineeProfile implements OnInit {
       if (t) this.api.updateTrainee(t.traineeId, t).subscribe();
     }
     this.editing.update((v) => !v);
-  }
-
-  // معالجة رفع الصورة الشخصية وعرضها مباشرة
-  onAvatarUpload(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-
-      // تحويل الصورة لرابط معاينة
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.avatarUrl.set(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-
-      // تحديث بيانات المتدرب بحقل الصورة إذا لزم الأمر
-      this.trainee.update((current) => {
-        if (!current) return current;
-        return {
-          ...current,
-          avatar: file.name
-        } as any;
-      });
-    }
   }
 
   // تحويل نص المهارات القادم من الـ DTO إلى مصفوفة للعرض
@@ -73,7 +47,7 @@ export class TraineeProfile implements OnInit {
       if (!current) return current;
       const skillsArr = this.getSkillsList(current.skills);
       skillsArr.push(newSkill.trim());
-
+      
       return {
         ...current,
         skills: skillsArr.join(', ')
@@ -93,21 +67,5 @@ export class TraineeProfile implements OnInit {
         skills: skillsArr.join(', ')
       };
     });
-  }
-
-  // معالجة رفع ملف السيرة الذاتية وتحديث اسمها في الـ Signal
-  onCvUpload(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-
-      this.trainee.update((current) => {
-        if (!current) return current;
-        return {
-          ...current,
-          cvFileName: file.name
-        } as any;
-      });
-    }
   }
 }
