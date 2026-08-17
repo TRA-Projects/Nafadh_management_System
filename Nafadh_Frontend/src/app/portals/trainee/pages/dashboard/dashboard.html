@@ -12,7 +12,9 @@
     <div>
       <div class="label">نسبة الإنجاز الإجمالية</div>
       <div class="sub">أنت على الطريق الصحيح!</div>
-      <button class="nfd-btn" style="background:var(--color-cyan);color:#fff;height:32px">عرض التفاصيل</button>
+<button class="nfd-btn" routerLink="/trainee/program" style="background:var(--color-cyan);color:#fff;height:32px">
+  عرض التفاصيل
+</button>
     </div>
     <div class="nfd-ring" [style.--p]="summary()?.moduleProgressPercentage ?? 75" style="background:rgba(255,255,255,.12)">
       <span>{{ (summary()?.moduleProgressPercentage ?? 75) | number:'1.0-0' }}%</span>
