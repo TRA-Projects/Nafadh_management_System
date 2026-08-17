@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router'; // 1. استيراد RouterLink
 import { TraineeApi } from '../../services/trainee-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AnnouncementDto, TaskDto, TraineeDashboardSummaryDto } from '../../../../core/models/dtos';
@@ -7,7 +8,7 @@ import { NfdIcon } from '../../../../shared/ui/icon/icon';
 
 @Component({
   selector: 'app-trainee-dashboard',
-  imports: [CommonModule, NfdIcon],
+  imports: [CommonModule, NfdIcon, RouterLink], // 2. إضافة RouterLink هنا
   templateUrl: './dashboard.html',
 })
 export class TraineeDashboard implements OnInit {
@@ -24,8 +25,6 @@ export class TraineeDashboard implements OnInit {
     this.api.getDashboardSummary(this.traineeId).subscribe((d) => this.summary.set(d));
     this.api.getTasks(this.batchId).subscribe((d) => this.tasks.set((d ?? []).slice(0, 3)));
 
-    // Three independent sources, same endpoint shape each — merged with a
-    // source tag for display.
     this.api.getPlatformAnnouncements().subscribe((d) => this.mergeAnnouncements(d, 'الهيئة'));
     this.api.getCompanyAnnouncements(this.companyId).subscribe((d) => this.mergeAnnouncements(d, 'الشركة'));
     this.api.getBatchAnnouncements(this.batchId).subscribe((d) => this.mergeAnnouncements(d, 'المدرب'));
