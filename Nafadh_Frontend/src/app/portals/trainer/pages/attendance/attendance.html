@@ -1,40 +1,217 @@
-<h2 class="nfd-page-title">الحضور اليومي</h2>
-<p class="nfd-page-sub">تسجيل حضور المتدربين لليوم الحالي — اضغط على حالة كل متدرب لتغييرها</p>
+<section class="att-page" dir="rtl">
 
-<div class="nfd-card">
-  <table class="nfd-table">
-    <thead><tr><th>المتدرب</th><th>حالة اليوم</th><th></th></tr></thead>
-    <tbody>
-      @for (r of rows(); track r.dailyAttendanceId) {
-        <tr>
-          <td>{{ r.traineeName }}</td>
-          <td>
-            <div style="display:flex;gap:6px">
-              @for (s of pickable; track s) {
-                <button class="nfd-chip" [class.active]="r.status === s" (click)="setStatus(r, s)">{{ labels[s] }}</button>
-              }
-            </div>
-          </td>
-          <td>
-            @if (r.status === 'Absent') { <button class="nfd-btn danger" (click)="reportAbsence(r)">إبلاغ الهيئة</button> }
-          </td>
-        </tr>
+  <!-- ═══ الترويسة ═══ -->
+  <header class="att-head">
+    <div class="att-head-txt">
+      <h2 class="nfd-page-title att-title">الحضور اليومي</h2>
+      <p class="nfd-page-sub att-sub">اضغط على حالة المتدرب لتسجيلها. يُحفظ التغيير مباشرة.</p>
+    </div>
+
+    <div class="att-head-tools">
+      <span class="att-date">{{ todayLabel }}</span>
+      <button type="button" class="att-ghost-btn" (click)="reload()" [disabled]="loading()">
+        <span class="att-refresh" [class.is-spinning]="loading()" aria-hidden="true">⟳</span>
+        تحديث
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══ شريط النداء: توزيع الحالات وما تبقّى ═══ -->
+  <div class="att-rollcall" [class.is-done]="total() > 0 && unmarked() === 0">
+    <div class="att-rollcall-top">
+      <p class="att-rollcall-line" aria-live="polite">
+        @if (loading()) {
+          <span class="att-muted">جارٍ تحميل كشف اليوم…</span>
+        } @else if (total() === 0) {
+          <span class="att-muted">لا يوجد كشف حضور لهذا اليوم</span>
+        } @else if (unmarked() === 0) {
+          <b class="att-done-txt">اكتمل تسجيل الحضور — {{ total() }} متدرب</b>
+        } @else {
+          <b>{{ marked() }}</b> <span class="att-muted">من</span> <b>{{ total() }}</b>
+          <span class="att-muted">مسجّل، وبقي</span> <b class="att-rest">{{ unmarked() }}</b>
+        }
+      </p>
+
+      @if (unmarked() > 0) {
+        <button type="button" class="att-bulk-btn" (click)="askMarkAllPresent()">
+          تعيين الباقين حاضرين
+        </button>
       }
-      @empty { <tr><td colspan="3">لا توجد سجلات حضور لعرضها اليوم</td></tr> }
-    </tbody>
-  </table>
-</div>
+    </div>
 
-<div class="nfd-card" style="margin-top:16px">
-  <h3>أعذار بانتظار المراجعة</h3>
-  @for (ex of excuses(); track ex.excuseId) {
-    <div class="nfd-row">
-      <span>{{ ex.reason }}</span>
-      <div>
-        <button class="nfd-btn secondary" (click)="reviewExcuse(ex, true)">✓ قبول</button>
-        <button class="nfd-btn ghost" (click)="reviewExcuse(ex, false)">✕ رفض</button>
+    <div class="att-rail" role="img" [attr.aria-label]="railAria()">
+      @for (s of segments(); track s.key) {
+        @if (s.count > 0) {
+          <span class="att-rail-seg" [ngClass]="'is-' + s.key"
+                [style.width.%]="s.pct" [attr.title]="s.label + ': ' + s.count"></span>
+        }
+      }
+    </div>
+
+    <ul class="att-legend">
+      @for (s of segments(); track s.key) {
+        <li class="att-legend-item" [ngClass]="'is-' + s.key" [class.is-zero]="s.count === 0">
+          <span class="att-dot" aria-hidden="true"></span>
+          <span>{{ s.label }}</span>
+          <b class="att-num">{{ s.count }}</b>
+        </li>
+      }
+    </ul>
+  </div>
+
+  <!-- ═══ كشف اليوم ═══ -->
+  <div class="att-card">
+    <div class="att-toolbar">
+      <div class="att-search">
+        <span class="att-search-icon" aria-hidden="true">⌕</span>
+        <input type="search" class="att-search-input" placeholder="ابحث باسم المتدرب…"
+               [value]="query()" (input)="onSearch($event)" aria-label="بحث باسم المتدرب" />
+      </div>
+
+      <div class="att-filters" role="group" aria-label="تصفية الكشف">
+        @for (f of filters; track f.key) {
+          <button type="button" class="att-filter" [class.active]="filter() === f.key"
+                  [attr.aria-pressed]="filter() === f.key" (click)="filter.set(f.key)">
+            {{ f.label }}
+            @if (f.key !== 'all') { <span class="att-filter-num">{{ filterCount(f.key) }}</span> }
+          </button>
+        }
+      </div>
+    </div>
+
+    <table class="att-table">
+      <thead>
+        <tr>
+          <th scope="col">المتدرب</th>
+          <th scope="col">حالة اليوم</th>
+          <th scope="col" class="att-col-action">إجراء</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          @for (i of skeleton; track i) {
+            <tr class="att-skeleton-row">
+              <td><span class="att-sk att-sk-avatar"></span><span class="att-sk att-sk-line"></span></td>
+              <td><span class="att-sk att-sk-seg"></span></td>
+              <td><span class="att-sk att-sk-mini"></span></td>
+            </tr>
+          }
+        } @else {
+          @for (r of visibleRows(); track r.dailyAttendanceId) {
+            <tr [class.is-saving]="savingId() === r.dailyAttendanceId">
+              <td data-th="المتدرب">
+                <div class="att-person">
+                  <span class="att-avatar" [ngClass]="'is-' + statusKey(r.status)" aria-hidden="true">{{ initials(r.traineeName) }}</span>
+                  <span class="att-person-txt">
+                    <b>{{ r.traineeName || 'متدرب' }}</b>
+                    <small>{{ rowMeta(r) }}</small>
+                  </span>
+                </div>
+              </td>
+
+              <td data-th="حالة اليوم">
+                <div class="att-seg" role="group" [attr.aria-label]="'حالة ' + (r.traineeName || 'المتدرب')">
+                  @for (s of statuses; track s.code) {
+                    <button type="button" class="att-seg-btn" [ngClass]="'is-' + s.key"
+                            [class.active]="isActive(r, s)"
+                            [attr.aria-pressed]="isActive(r, s)"
+                            [disabled]="savingId() === r.dailyAttendanceId"
+                            (click)="setStatus(r, s)">{{ s.label }}</button>
+                  }
+                </div>
+              </td>
+
+              <td data-th="إجراء" class="att-col-action">
+                @if (statusKey(r.status) === 'absent') {
+                  @if (reportedIds().has(r.dailyAttendanceId)) {
+                    <span class="att-reported">✓ أُبلغت الهيئة</span>
+                  } @else {
+                    <button type="button" class="att-report-btn" (click)="askReportAbsence(r)">إبلاغ الهيئة</button>
+                  }
+                } @else {
+                  <span class="att-dash" aria-hidden="true">—</span>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3">
+                <div class="att-empty">
+                  @if (loadError()) {
+                    <b>تعذّر تحميل كشف الحضور</b>
+                    <p>{{ loadError() }}</p>
+                    <button type="button" class="att-ghost-btn" (click)="reload()">إعادة المحاولة</button>
+                  } @else if (rows().length) {
+                    <b>لا نتائج مطابقة</b>
+                    <p>غيّر كلمة البحث أو التصفية لعرض بقية المتدربين.</p>
+                    <button type="button" class="att-ghost-btn" (click)="clearFilters()">عرض الكشف كاملاً</button>
+                  } @else {
+                    <b>لا يوجد كشف حضور اليوم</b>
+                    <p>يظهر الكشف تلقائياً عند بدء يوم تدريبي للدفعات المسندة إليك.</p>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══ الأعذار ═══ -->
+  <div class="att-card att-excuses">
+    <div class="att-card-head">
+      <h3 class="att-card-title">أعذار بانتظار المراجعة</h3>
+      @if (excuses().length) { <span class="att-badge">{{ excuses().length }}</span> }
+    </div>
+
+    @for (ex of visibleExcuses(); track ex.excuseId) {
+      <article class="att-excuse" [class.is-busy]="reviewingId() === ex.excuseId">
+        <span class="att-avatar is-excused" aria-hidden="true">{{ initials(ex.traineeName) }}</span>
+
+        <div class="att-excuse-body">
+          <b class="att-excuse-name">{{ ex.traineeName || 'طلب عذر' }}</b>
+          <p class="att-excuse-reason">{{ ex.reason }}</p>
+          @if (ex.proofUrl) {
+            <a class="att-proof" [href]="ex.proofUrl" target="_blank" rel="noopener">عرض المرفق</a>
+          }
+        </div>
+
+        <div class="att-excuse-actions">
+          <button type="button" class="att-approve" [disabled]="reviewingId() === ex.excuseId"
+                  (click)="reviewExcuse(ex, true)">✓ قبول</button>
+          <button type="button" class="att-reject" [disabled]="reviewingId() === ex.excuseId"
+                  (click)="reviewExcuse(ex, false)">✕ رفض</button>
+        </div>
+      </article>
+    } @empty {
+      <p class="att-empty-inline">لا توجد أعذار بانتظار المراجعة.</p>
+    }
+
+    @if (hiddenExcuses() > 0) {
+      <button type="button" class="att-more-btn" (click)="showAllExcuses()">
+        عرض بقية الأعذار ({{ hiddenExcuses() }})
+      </button>
+    }
+  </div>
+
+  <!-- ═══ تأكيد الإجراءات الحسّاسة ═══ -->
+  @if (pending(); as p) {
+    <div class="att-overlay" (click)="pending.set(null)">
+      <div class="att-modal" role="dialog" aria-modal="true" [attr.aria-label]="p.title" (click)="$event.stopPropagation()">
+        <b class="att-modal-title">{{ p.title }}</b>
+        <p class="att-modal-text">{{ p.text }}</p>
+        <div class="att-modal-actions">
+          <button type="button" class="att-ghost-btn" (click)="pending.set(null)">إلغاء</button>
+          <button type="button" class="att-confirm-btn" [ngClass]="'is-' + p.tone" (click)="runPending()">{{ p.confirmLabel }}</button>
+        </div>
       </div>
     </div>
   }
-  @empty { <p class="nfd-muted">لا توجد أعذار بانتظار المراجعة</p> }
-</div>
+
+  <!-- ═══ التنبيهات ═══ -->
+  @if (toast(); as t) {
+    <div class="att-toast" [ngClass]="'is-' + t.kind" role="status">{{ t.text }}</div>
+  }
+
+</section>
