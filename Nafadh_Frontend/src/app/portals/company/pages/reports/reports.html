@@ -1,24 +1,463 @@
-<h2 class="nfd-page-title">التقارير</h2>
-<p class="nfd-page-sub">تقارير حضور الشركة وإنجاز المتدربين والطاقة الاستيعابية</p>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 
-<div style="display:flex;gap:4px;background:var(--color-tint-indigo);padding:4px;border-radius:var(--radius-lg);width:fit-content;margin-bottom:16px">
-  <button class="nfd-btn" [class.primary]="tab()==='attendance'" [class.ghost]="tab()!=='attendance'" (click)="tab.set('attendance')">حضور الشركة</button>
-  <button class="nfd-btn" [class.primary]="tab()==='achievement'" [class.ghost]="tab()!=='achievement'" (click)="tab.set('achievement')">إنجاز المتدربين</button>
-  <button class="nfd-btn" [class.primary]="tab()==='capacity'" [class.ghost]="tab()!=='capacity'" (click)="tab.set('capacity')">الطاقة الاستيعابية</button>
-</div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صفحة التقارير</title>
 
-<div class="nfd-card">
-  @if (tab() === 'attendance' && attendance(); as r) {
-    <div class="nfd-stat-grid" style="--cols:1;margin-bottom:16px"><div class="nfd-stat"><span>معدل الحضور العام</span><strong>{{ r.overallAttendanceRate }}%</strong></div></div>
-    <table class="nfd-table">
-      <thead><tr><th>المتدرب</th><th>أيام الحضور</th><th>التأخير</th><th>الغياب</th><th>النسبة</th></tr></thead>
-      <tbody>
-        @for (row of r.rows; track row.traineeId) {
-          <tr><td>{{ row.traineeName }}</td><td>{{ row.presentDays }}</td><td>{{ row.lateDays }}</td><td>{{ row.absentDays }}</td><td>{{ row.attendanceRate }}%</td></tr>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
         }
-      </tbody>
-    </table>
-  } @else {
-    <p class="nfd-muted">اختر التبويب لعرض بيانات التقرير</p>
-  }
-</div>
+
+        body {
+            margin: 0;
+            background-color: #f4f7fc;
+            color: #1a2b49;
+            padding: 30px;
+        }
+
+        /* ==========================================
+           الهيدر العلوي (العنوان يمين والأزرار يسار)
+        ========================================== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
+
+        /* القسم الأيمن: العنوان + الوصف + التبويبات */
+        .header-right {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .header-info h1 {
+            margin: 0 0 4px 0;
+            font-size: 24px;
+            font-weight: 800;
+            color: #0c2340;
+        }
+
+        .header-info p {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        /* شريط أزرار التنقل (Tabs) تحت العنوان في اليمين */
+        .tabs {
+            display: inline-flex;
+            background-color: white;
+            padding: 4px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            width: fit-content;
+        }
+
+        .tab-btn {
+            border: none;
+            background: transparent;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background-color: #003366;
+            color: white;
+        }
+
+        /* القسم الأيسر: أزرار التصدير فقط */
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .export-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-export {
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .btn-pdf {
+            background-color: #003366;
+            color: white;
+        }
+
+        .btn-excel {
+            background-color: white;
+            color: #003366;
+            border-color: #d1d5db;
+        }
+
+        /* ==========================================
+           إخفاء وإظهار الصفحات (Tabs Switching)
+        ========================================== */
+        .tab-page {
+            display: none !important;
+        }
+
+        .tab-page.active {
+            display: block !important;
+        }
+
+        /* تنسيقات البطاقات والجداول */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            text-align: right;
+        }
+
+        .card-title {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #003366;
+        }
+
+        .card-value.orange { color: #f59e0b; }
+        .card-value.red { color: #ef4444; }
+
+        .card-sub {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .content-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+
+        .box-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #0c2340;
+            margin-bottom: 15px;
+        }
+
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+
+        .bar-label {
+            width: 120px;
+            font-size: 12px;
+            color: #334155;
+            font-weight: 600;
+        }
+
+        .bar-bg {
+            flex: 1;
+            height: 18px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: #0284c7;
+            border-radius: 10px;
+        }
+
+        .bar-val {
+            width: 45px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: #64748b;
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        th:first-child, td:first-child { text-align: right; }
+    </style>
+</head>
+
+<body>
+
+    <!-- الهيدر المعدل -->
+    <div class="header">
+        <!-- اليمين: العنوان والوصف والتنقلات -->
+        <div class="header-right">
+            <div class="header-info">
+                <h1>التقارير</h1>
+                <p>تقارير حضور الشركة وإنجاز المتدربين والطاقة الاستيعابية — جاهزة للتصدير</p>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="tab-company">حضور الشركة</button>
+                <button class="tab-btn" data-tab="tab-trainees">إنجاز المتدربين</button>
+                <button class="tab-btn" data-tab="tab-capacity">الطاقة الاستيعابية</button>
+            </div>
+        </div>
+
+        <!-- اليسار: أزرار التصدير -->
+        <div class="header-left">
+            <div class="export-actions">
+                <button class="btn-export btn-pdf">تصدير PDF</button>
+                <button class="btn-export btn-excel">تصدير Excel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- الصفحات الثلاث -->
+    <div id="tab-company" class="tab-page active">
+        <div class="cards-grid">
+            <div class="card">
+                <div class="card-title">متوسط حضور الشركة</div>
+                <div class="card-value">94.2%</div>
+                <div class="card-sub">▲ 1.2% عن الشهر الماضي</div>
+            </div>
+            <div class="card">
+                <div class="card-title">أيام الغياب (30 يوماً)</div>
+                <div class="card-value red">17</div>
+                <div class="card-sub">6 متدربين</div>
+            </div>
+            <div class="card">
+                <div class="card-title">حالات التأخر</div>
+                <div class="card-value orange">27</div>
+                <div class="card-sub">أغلبها في الدفعة 1</div>
+            </div>
+            <div class="card">
+                <div class="card-title">الانصراف المبكر</div>
+                <div class="card-value">6</div>
+                <div class="card-sub">حالة مسجلة</div>
+            </div>
+        </div>
+
+        <div class="content-box">
+            <div class="box-title">تقرير حضور الشركة — آخر 6 أسابيع</div>
+            <div class="bar-item">
+                <span class="bar-label">الأسبوع 27</span>
+                <div class="bar-bg"><div class="bar-fill" style="width: 95.1%;"></div></div>
+                <span class="bar-val">95.1%</span>
+            </div>
+            <div class="bar-item">
+                <span class="bar-label">الأسبوع 28</span>
+                <div class="bar-bg"><div class="bar-fill" style="width: 93.4%;"></div></div>
+                <span class="bar-val">93.4%</span>
+            </div>
+            <div class="bar-item">
+                <span class="bar-label">الأسبوع 29</span>
+                <div class="bar-bg"><div class="bar-fill" style="width: 96.8%;"></div></div>
+                <span class="bar-val">96.8%</span>
+            </div>
+        </div>
+
+        <div class="content-box">
+            <div class="box-title">الحضور حسب القسم</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>القسم</th>
+                        <th>عدد المتدربين</th>
+                        <th>معدل الحضور</th>
+                        <th>الغياب</th>
+                        <th>التأخر</th>
+                        <th>التقييم</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>تقنية المعلومات</td>
+                        <td>46</td>
+                        <td>96%</td>
+                        <td>4</td>
+                        <td>8</td>
+                        <td>ممتاز</td>
+                    </tr>
+                    <tr>
+                        <td>الموارد البشرية</td>
+                        <td>12</td>
+                        <td>95%</td>
+                        <td>2</td>
+                        <td>3</td>
+                        <td>ممتاز</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-trainees" class="tab-page">
+        <div class="cards-grid">
+            <div class="card">
+                <div class="card-title">متوسط الإنجاز العام</div>
+                <div class="card-value">86%</div>
+                <div class="card-sub">لكل البرامج</div>
+            </div>
+            <div class="card">
+                <div class="card-title">مشروعات مكتملة</div>
+                <div class="card-value">74</div>
+                <div class="card-sub">من أصل 92</div>
+            </div>
+            <div class="card">
+                <div class="card-title">متدربون متميزون</div>
+                <div class="card-value">22</div>
+                <div class="card-sub">أداء &ge; 90%</div>
+            </div>
+            <div class="card">
+                <div class="card-title">متعثرون</div>
+                <div class="card-value red">6</div>
+                <div class="card-sub">خطة تحسين</div>
+            </div>
+        </div>
+
+        <div class="content-box">
+            <div class="box-title">نسبة إنجاز المتدربين حسب البرنامج</div>
+            <div class="bar-item">
+                <span class="bar-label">تطوير تطبيقات الويب</span>
+                <div class="bar-bg"><div class="bar-fill" style="width: 88%; background-color: #0a4b94;"></div></div>
+                <span class="bar-val">88%</span>
+            </div>
+            <div class="bar-item">
+                <span class="bar-label">تحليل البيانات</span>
+                <div class="bar-bg"><div class="bar-fill" style="width: 84%; background-color: #0284c7;"></div></div>
+                <span class="bar-val">84%</span>
+            </div>
+            <div class="bar-item">
+                <span class="bar-label">الأمن السيبراني</span>
+                <div class="bar-bg"><div class="bar-fill" style="width: 82%; background-color: #032b69;"></div></div>
+                <span class="bar-val">82%</span>
+            </div>
+            <div class="bar-item">
+                <span class="bar-label">الدعم الفني</span>
+                <div class="bar-bg"><div class="bar-fill" style="width: 79%; background-color: #eab308;"></div></div>
+                <span class="bar-val">79%</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-capacity" class="tab-page">
+        <div class="content-box" style="text-align: center;">
+            <div class="box-title" style="text-align: right;">الطاقة الاستيعابية — الحصة المخصصة للشركة: 150 مقعداً</div>
+            <div style="padding: 20px 0;">
+                <h2 style="font-size: 36px; color: #003366; margin: 0;">85%</h2>
+                <p style="color: #64748b; margin: 5px 0;">مستخدمة</p>
+                <div style="font-size: 13px; color: #334155;">مشغول: <b>128</b> | متبقي: <b>22</b> | الحصة: <b>150</b></div>
+            </div>
+        </div>
+
+        <div class="content-box">
+            <div class="box-title">الطاقة حسب البرنامج</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>البرنامج</th>
+                        <th>الحصة المخصصة</th>
+                        <th>المستخدم</th>
+                        <th>المتبقي</th>
+                        <th>الاستغلال</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>تطوير تطبيقات الويب</td>
+                        <td>60</td>
+                        <td>54</td>
+                        <td>6</td>
+                        <td>90%</td>
+                    </tr>
+                    <tr>
+                        <td>تحليل البيانات</td>
+                        <td>40</td>
+                        <td>38</td>
+                        <td>2</td>
+                        <td>95%</td>
+                    </tr>
+                    <tr>
+                        <td>الأمن السيبراني</td>
+                        <td>25</td>
+                        <td>24</td>
+                        <td>1</td>
+                        <td>96%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- سكربت التنقل المعدل والمحمي -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabPages = document.querySelectorAll('.tab-page');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const targetTabId = this.getAttribute('data-tab');
+
+                    // إزالة active من الأزرار والصفحات
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabPages.forEach(page => page.classList.remove('active'));
+
+                    // تفعيل الزر المكبوس والصفحة المستهدفة
+                    this.classList.add('active');
+                    const targetPage = document.getElementById(targetTabId);
+                    if (targetPage) {
+                        targetPage.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+
+</html>
