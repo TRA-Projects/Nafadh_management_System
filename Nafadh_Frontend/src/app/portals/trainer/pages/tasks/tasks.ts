@@ -26,45 +26,80 @@ export class TrainerTasks implements OnInit {
     this.loadTasks();
   }
 
+
+  // =====================================================
+  // LOAD TASKS
+  // =====================================================
+
   loadTasks(): void {
 
+    // ---------------------------------------------------
+    // API remains active.
+    // We call it and keep the response in the console
+    // for later integration.
+    // ---------------------------------------------------
+
     this.api.getTasksByBatch(this.batchIdInput).subscribe({
+
       next: (data) => {
 
-        console.log('Tasks API response:', data);
+        console.log(
+          'Tasks API response:',
+          data
+        );
 
-        /*
-         * إذا الـ API عنده بيانات استخدمها.
-         * إذا رجع [] نستخدم بيانات تجريبية فقط لعرض الـ UI.
-         */
-        if (data && data.length > 0) {
-          this.tasks.set(data);
-        } else {
-          this.tasks.set(this.demoTasks());
-        }
+        // -------------------------------------------------
+        // TEMPORARY UI MODE
+        //
+        // The real API response is NOT used for the cards
+        // yet.
+        //
+        // This keeps all three columns populated while
+        // the UI is being completed.
+        // -------------------------------------------------
+
+        this.tasks.set(
+          this.demoTasks()
+        );
 
       },
 
       error: (error) => {
 
-        console.error('Failed to load tasks:', error);
+        console.error(
+          'Failed to load tasks:',
+          error
+        );
 
-        // مؤقتًا حتى تظهر الصفحة مثل البروتوتايب
-        this.tasks.set(this.demoTasks());
+        // -------------------------------------------------
+        // If API fails, keep the UI working using demo data.
+        // -------------------------------------------------
+
+        this.tasks.set(
+          this.demoTasks()
+        );
 
       }
+
     });
 
   }
 
 
+  // =====================================================
+  // COLUMN FILTER
+  // =====================================================
+
   /**
-   * Tasks grouped according to the real TaskStatus enum:
+   * Uses the REAL backend TaskStatus values.
    *
    * Open    -> مجدولة
    * Closed  -> قيد المراجعة
    * Overdue -> مكتملة التقييم
+   *
+   * No status meaning is changed here.
    */
+
   col(status: TaskDto['status']): TaskDto[] {
 
     return this.tasks().filter(
@@ -74,12 +109,24 @@ export class TrainerTasks implements OnInit {
   }
 
 
+  // =====================================================
+  // DEMO DATA
+  // =====================================================
+
   /**
-   * Demo data used only when the API returns no tasks.
+   * Temporary data for UI development only.
+   *
+   * The statuses are the real backend statuses.
    */
+
   private demoTasks(): TaskDto[] {
 
     return [
+
+      // -------------------------------------------------
+      // OPEN
+      // مجدولة
+      // -------------------------------------------------
 
       {
         taskId: 1,
@@ -92,6 +139,12 @@ export class TrainerTasks implements OnInit {
         createdByUserId: 1
       },
 
+
+      // -------------------------------------------------
+      // CLOSED
+      // قيد المراجعة
+      // -------------------------------------------------
+
       {
         taskId: 2,
         title: 'تطبيق إدارة المتدربين',
@@ -103,6 +156,12 @@ export class TrainerTasks implements OnInit {
         createdByUserId: 1
       },
 
+
+      // -------------------------------------------------
+      // OVERDUE
+      // مكتملة التقييم
+      // -------------------------------------------------
+
       {
         taskId: 3,
         title: 'ربط قواعد البيانات بإطار العمل',
@@ -112,12 +171,33 @@ export class TrainerTasks implements OnInit {
         status: 'Overdue',
         batchId: this.batchIdInput,
         createdByUserId: 1
+      },
+
+
+      // -------------------------------------------------
+      // EXTRA OPEN TASK
+      // مثال مشابه للمهمة التي ظهرت من الـ API
+      // -------------------------------------------------
+
+      {
+        taskId: 4,
+        title: 'توثيق النظام الفني',
+        description: 'إعداد وتوثيق النظام الفني للمشروع',
+        dueDate: '2026-08-25',
+        priority: 'Medium',
+        status: 'Open',
+        batchId: this.batchIdInput,
+        createdByUserId: 1
       }
 
     ];
 
   }
 
+
+  // =====================================================
+  // CREATE TASK MODAL
+  // =====================================================
 
   openCreateModal(): void {
 
@@ -137,6 +217,10 @@ export class TrainerTasks implements OnInit {
   }
 
 
+  // =====================================================
+  // SAVE TASK
+  // =====================================================
+
   saveTask(): void {
 
     const title = this.newTaskTitle.trim();
@@ -153,6 +237,12 @@ export class TrainerTasks implements OnInit {
       next: () => {
 
         this.closeCreateModal();
+
+        // -------------------------------------------------
+        // Reload API.
+        // The UI will continue displaying demo data
+        // until we switch to real API mode.
+        // -------------------------------------------------
 
         this.loadTasks();
 
