@@ -10,15 +10,60 @@ import { TRAINEE_STATUS_LABELS } from '../../../../core/models/enums';
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './trainees.html',
   styleUrls: ['./trainees.css'],
-  encapsulation: ViewEncapsulation.None // لفك عزل التنسيق وتمكين fixed من تغطية الشاشة بالكامل
+  encapsulation: ViewEncapsulation.None
 })
 export class AdminTrainees implements OnInit {
   trainees = signal<any[]>([]);
   statusFilter = signal<string>('الكل');
 
-  // إدارة حالة النوافذ بـ Signals
   showImportModal = signal<boolean>(false);
   showRegisterModal = signal<boolean>(false);
+
+  // إدارة مراحل نافذة الاستيراد
+  importStep = signal<number>(1); // 1 = اختيار الملف, 2 = المعاينة
+  selectedFileName = signal<string>('trainees_batch15.xlsx');
+  
+  // بيانات نموذجية للعرض في جدول المعاينة
+  importedRecords = signal([
+    { name: 'Nasser Al-Hinai', university: 'جامعة التقنية', major: 'علوم حاسوب', status: 'جاهز' },
+    { name: 'Mariam Al-Balushi', university: 'جامعة نزوى', major: 'هندسة برمجيات', status: 'جاهز' },
+    { name: 'Yousef Al-Zaabi', university: 'جامعة صحار', major: 'نظم معلومات', status: 'تحذير: بريد مكرر' }
+  ]);
+
+  newTrainee = signal({
+    fullName: '',
+    nationalId: '',
+    phone: '',
+    email: '',
+    university: '',
+    major: '',
+    companyId: '',
+    programId: '',
+    batch: ''
+  });
+
+  companies = signal([
+    { id: '1', name: 'مؤسسة القمة للتكنولوجيا' },
+    { id: '2', name: 'مجموعة التمكين الرقمي' },
+    { id: '3', name: 'مؤسسة النخبة للتكنولوجيا' },
+    { id: '4', name: 'شركة الريادة للبرمجيات' },
+    { id: '5', name: 'شركة نفاذ للحلول الذكية' }
+  ]);
+
+  programs = signal([
+    { id: '101', name: 'برنامج تطوير تطبيقات الويب (Full-Stack)' },
+    { id: '102', name: 'برنامج الأمن السيبراني والحماية' },
+    { id: '103', name: 'برنامج تحليل البيانات والذكاء الاصطناعي' },
+    { id: '104', name: 'برنامج إدارة الشبكات والحوسبة السحابية' },
+    { id: '105', name: 'برنامج تصميم واجهات المستخدم (UI/UX)' }
+  ]);
+
+  batches = signal([
+    'دفعة خريف 2026',
+    'دفعة صيف 2026',
+    'دفعة الربيع 2026',
+    'دفعة شتاء 2025'
+  ]);
 
   statusLabels: Record<string, string> = {
     ...TRAINEE_STATUS_LABELS,
@@ -69,14 +114,41 @@ export class AdminTrainees implements OnInit {
     }
   }
 
+  // عند اختيار ملف انتقال تلقائي للمرحلة الثانية
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
-      this.showImportModal.set(false);
+      this.selectedFileName.set(input.files[0].name);
+      this.importStep.set(2);
     }
+  }
+
+  confirmImport() {
+    // تنفيذ عملية الحفظ وإغلاق النافذة
+    this.closeImportModal();
+  }
+
+  closeImportModal() {
+    this.showImportModal.set(false);
+    this.importStep.set(1); // إعادة الضبط للمرحلة الأولى عند الإغلاق
   }
 
   submitNewTrainee() {
     this.showRegisterModal.set(false);
+    this.resetForm();
+  }
+
+  private resetForm() {
+    this.newTrainee.set({
+      fullName: '',
+      nationalId: '',
+      phone: '',
+      email: '',
+      university: '',
+      major: '',
+      companyId: '',
+      programId: '',
+      batch: ''
+    });
   }
 }
