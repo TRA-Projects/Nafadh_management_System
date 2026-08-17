@@ -1,79 +1,107 @@
-<h2 class="nfd-page-title">الملف الشخصي والإعدادات</h2>
-<p class="nfd-page-sub">إدارة بيانات المدرب والتخصص المهني وتفضيلات الحساب</p>
-
-@if (trainer(); as t) {
-  <div class="nfd-card profile-card">
-    
-    <!-- Header -->
-    <div class="profile-header">
-      <div class="trainer-info">
-        <div class="trainer-avatar">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28">
-            <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-3.31 0-6 2.24-6 5v1h12v-1c0-2.76-2.69-5-6-5Z"/>
-          </svg>
-        </div>
-        <div>
-          <strong class="trainer-name">{{ t.fullName || 'فاطمة المدربة' }}</strong>
-          <span class="trainer-role">مدربة · نفاذ</span>
-        </div>
-      </div>
-
-      <button 
-        class="nfd-btn primary" 
-        [disabled]="isSaving()" 
-        (click)="save()">
-        {{ isSaving() ? 'جاري الحفظ...' : 'حفظ التغيرات' }}
-      </button>
+<div class="profile-container">
+  
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">الملف الشخصي والإعدادات</h2>
+      <p class="page-sub">إدارة بيانات المدرب، التخصص، وتفضيلات الحساب.</p>
     </div>
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="24" height="24">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    </div>
+  </div>
 
-    <!-- Notification Toast -->
-    @if (showToast()) {
-      <div class="nfd-toast-msg">
-        ✓ تم حفظ التغيرات بنجاح
+  @if (trainer(); as t) {
+    <!-- Main Card -->
+    <div class="nfd-card main-card">
+      
+      <!-- Card Header: Profile Info & Save Button -->
+      <div class="card-header-top">
+        <div class="user-meta">
+          <div class="avatar-box">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="36" height="36">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+          </div>
+          <div class="user-titles">
+            <h3 class="user-name">{{ t.fullName || 'فاطمة المدربة' }}</h3>
+            <span class="user-subtitle">مدرب - {{ t.specialty || 'تطوير البرمجيات وتطبيقات الويب' }}</span>
+          </div>
+        </div>
+
+        <button class="save-outline-btn" [disabled]="isSaving()" (click)="save()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>{{ isSaving() ? 'جاري الحفظ...' : 'حفظ التعديلات' }}</span>
+        </button>
       </div>
-    }
 
-    <!-- Form -->
-    <div class="profile-form">
-      <div class="form-row">
+      <!-- Toast Message -->
+      @if (showToast()) {
+        <div class="toast-success">
+          ✓ تم حفظ التغيرات بنجاح
+        </div>
+      }
+
+      <!-- Form Grid (2x2) -->
+      <div class="form-grid">
         <div class="form-group">
           <label>الاسم الكامل</label>
-          <input 
-            class="nfd-input" 
-            type="text" 
-            [(ngModel)]="t.fullName" 
-            placeholder="أدخل الاسم الكامل" />
+          <input type="text" class="nfd-input" [(ngModel)]="t.fullName" placeholder="فاطمة المدربة" />
         </div>
 
         <div class="form-group">
           <label>البريد الإلكتروني</label>
-          <input 
-            class="nfd-input" 
-            type="email" 
-            [(ngModel)]="t.email" 
-            placeholder="example@domain.com" />
+          <input type="email" class="nfd-input text-ltr" [(ngModel)]="t.email" placeholder="fatima.trainer@nafadh.om" />
+        </div>
+
+        <div class="form-group">
+          <label>رقم الهاتف</label>
+          <input type="tel" class="nfd-input text-ltr" [(ngModel)]="t.phone" placeholder="+968 9123 4567" />
+        </div>
+
+        <div class="form-group">
+          <label>التخصص التدريبي</label>
+          <input type="text" class="nfd-input" [(ngModel)]="t.specialty" placeholder="تطوير البرمجيات وتطبيقات الويب" />
+        </div>
+
+        <div class="form-group full-width">
+          <label>نبذة مهنية</label>
+          <textarea class="nfd-input" rows="3" [(ngModel)]="t.biography" placeholder="مدربة برمجيات معتمدة بخبرة تتجاوز 7 سنوات..."></textarea>
         </div>
       </div>
 
-      <div class="form-group">
-        <label>التخصص التدريبي</label>
-        <input 
-          class="nfd-input" 
-          type="text" 
-          [(ngModel)]="t.specialty" 
-          placeholder="أدخل التخصص التدريبي" />
-      </div>
-
-      <div class="form-group">
-        <label>نبذة مهنية</label>
-        <textarea 
-          class="nfd-input" 
-          rows="4" 
-          [(ngModel)]="t.biography" 
-          placeholder="اكتب نبذة مهنية مختصرة...">
-        </textarea>
-      </div>
     </div>
 
-  </div>
-}
+    <!-- Summary Card (ملخص الحساب) -->
+    <div class="nfd-card summary-card">
+      <div class="summary-header">
+        <h3 class="summary-title">ملخص الحساب</h3>
+        <p class="summary-sub">حالة الحساب والدفعات الموكلة</p>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="item-label">الصفة التدريبية</span>
+          <div class="item-box">
+            <strong class="item-value">مدرب رئيسي معتمد</strong>
+            <span class="badge active-badge">نشط</span>
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <span class="item-label">الدفعات الموكلة</span>
+          <div class="item-box">
+            <strong class="item-value">4 دفعات نشطة</strong>
+            <span class="badge count-badge">36 متدرب</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>
