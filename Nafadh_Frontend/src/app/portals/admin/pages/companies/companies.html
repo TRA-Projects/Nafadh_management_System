@@ -1,27 +1,137 @@
-<h2 class="nfd-page-title">الشركات المستضيفة</h2>
-<p class="nfd-page-sub">الشركات المعتمدة والطاقة الاستيعابية والأداء</p>
-
-<div class="nfd-card">
-  <div class="nfd-chips">
-    @for (s of ['الكل','PendingApproval','Approved','Suspended']; track s) {
-      <button class="nfd-chip" [class.active]="statusFilter() === s" (click)="statusFilter.set(s)">{{ s }}</button>
-    }
+<div class="companies-container">
+  <!-- رأس الصفحة وأزرار التحكم والتصفية -->
+  <div class="header-section">
+    <div class="title-group">
+      <h2>الشركات المستضيفة</h2>
+      <p>إدارة الشركات وتفاصيل الاستضافة والطلبات المقدمة</p>
+    </div>
+    <button class="btn-add" (click)="addNewCompany()">
+      <i class="fa-solid fa-plus"></i> إضافة شركة مستضيفة
+    </button>
   </div>
-  <table class="nfd-table">
-    <thead><tr><th>الشركة</th><th>المجال</th><th>الطاقة</th><th>الحالة</th><th></th></tr></thead>
-    <tbody>
-      @for (c of filtered(); track c.companyId) {
+
+  <!-- تصفية حسب الحالة -->
+  <div class="filters-bar">
+    <button [class.active]="currentFilter === 'all'" (click)="filterStatus('all')">الكل</button>
+    <button [class.active]="currentFilter === 'approved'" (click)="filterStatus('approved')">المعتمدة</button>
+    <button [class.active]="currentFilter === 'pending'" (click)="filterStatus('pending')">قيد المراجعة</button>
+    <button [class.active]="currentFilter === 'rejected'" (click)="filterStatus('rejected')">الموقوفة</button>
+  </div>
+
+  <!-- جدول عرض الشركات -->
+  <div class="table-responsive">
+    <table class="companies-table">
+      <thead>
         <tr>
-          <td><strong>{{ c.companyName }}</strong></td>
-          <td>{{ c.workField }}</td>
-          <td>{{ c.capacity }}</td>
-          <td><span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ c.status }}</span></td>
+          <th>اسم الشركة</th>
+          <th>المجال</th>
+          <th>المدينة</th>
+          <th>الطاقة / الحاليون</th>
+          <th>التقييم</th>
+          <th>الحالة</th>
+          <th style="text-align: center;">الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let company of companiesList">
           <td>
-            @if (c.status === 'PendingApproval') { <button class="nfd-btn secondary" (click)="approve(c)">اعتماد</button> }
-            @if (c.status === 'Approved') { <button class="nfd-btn ghost" (click)="suspend(c)">إيقاف</button> }
+            <div class="company-info">
+              <div class="company-avatar">{{ company.initials }}</div>
+              <span class="company-name">{{ company.companyName }}</span>
+            </div>
+          </td>
+          <td>{{ company.workField }}</td>
+          <td>{{ company.address }}</td>
+          <td>
+            <div class="capacity-cell">
+              <span class="capacity-text">{{ company.currentLoad }}/{{ company.capacity }}</span>
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" [style.width.%]="(company.currentLoad / company.capacity) * 100"></div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="rating-cell" *ngIf="company.rating; else noRating">
+              <i class="fa-solid fa-star"></i> {{ company.rating }}
+            </div>
+            <ng-template #noRating><span class="no-rating">-</span></ng-template>
+          </td>
+          <td>
+            <span class="status-badge" [ngClass]="company.status">{{ company.statusText }}</span>
+          </td>
+          <td style="text-align: center;">
+            <button class="action-btn" (click)="viewCompany(company)" title="عرض التفاصيل"><i class="fa-solid fa-eye"></i></button>
+            <button class="action-btn" (click)="editCompany(company)" title="تعديل"><i class="fa-solid fa-pen"></i></button>
           </td>
         </tr>
-      }
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- نافذة إضافة شركة جديدة (Modal) -->
+  <div class="modal-overlay" *ngIf="isAddModalOpen">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>إضافة شركة مستضيفة</h3>
+        <button class="close-btn" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>اسم الشركة *</label>
+          <input type="text" [(ngModel)]="newCompany.name" placeholder="أدخل اسم الشركة">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>المجال *</label>
+            <select [(ngModel)]="newCompany.field">
+              <option *ngFor="let field of availableFields" [value]="field">{{ field }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>المدينة *</label>
+            <input type="text" [(ngModel)]="newCompany.city" placeholder="مسقط، صلالة، ...">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>الطاقة الاستيعابية *</label>
+            <input type="number" [(ngModel)]="newCompany.maxCapacity" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>الحالة *</label>
+            <select [(ngModel)]="newCompany.statusText">
+              <option value="معتمدة">معتمدة</option>
+              <option value="قيد المراجعة">قيد المراجعة</option>
+              <option value="موقوفة">موقوفة</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>اسم جهة الاتصال</label>
+          <input type="text" [(ngModel)]="newCompany.contactName" placeholder="اسم المسؤول">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>البريد الإلكتروني</label>
+            <input type="email" [(ngModel)]="newCompany.email" placeholder="example@company.om">
+            <small class="error-text" *ngIf="emailError">البريد الإلكتروني غير صالح</small>
+          </div>
+          <div class="form-group">
+            <label>رقم الجوال</label>
+            <input type="text" [(ngModel)]="newCompany.phone" placeholder="9xxxxxxx">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeModal()">إلغاء</button>
+        <button class="btn-submit" (click)="submitNewCompany()">إضافة الشركة</button>
+      </div>
+    </div>
+  </div>
 </div>
