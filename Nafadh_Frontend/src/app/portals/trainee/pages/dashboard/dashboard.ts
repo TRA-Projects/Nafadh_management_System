@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router'; // 1. استيراد RouterLink
+import { RouterLink } from '@angular/router';
 import { TraineeApi } from '../../services/trainee-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AnnouncementDto, TaskDto, TraineeDashboardSummaryDto } from '../../../../core/models/dtos';
@@ -8,13 +8,18 @@ import { NfdIcon } from '../../../../shared/ui/icon/icon';
 
 @Component({
   selector: 'app-trainee-dashboard',
-  imports: [CommonModule, NfdIcon, RouterLink], // 2. إضافة RouterLink هنا
+  imports: [CommonModule, NfdIcon, RouterLink],
   templateUrl: './dashboard.html',
 })
 export class TraineeDashboard implements OnInit {
   traineeId = 1;
   companyId = 1;
   batchId = 1;
+
+  // معرفات اسم البرنامج والدفعة في الفرونت إند
+  programName = signal<string>('برنامج تطوير مهارات الذكاء الاصطناعي');
+  batchName = signal<string>('الدفعة الثالثة');
+
   summary = signal<TraineeDashboardSummaryDto | null>(null);
   tasks = signal<TaskDto[]>([]);
   announcements = signal<(AnnouncementDto & { source: string })[]>([]);

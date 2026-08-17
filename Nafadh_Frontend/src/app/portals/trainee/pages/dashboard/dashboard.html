@@ -1,184 +1,393 @@
-<!-- Hero Header -->
-<div class="nfd-hero">
-  <div class="nfd-hero-greeting">
-    <h1>مرحباً، {{ auth.session()?.fullName || 'أحمد محمد' }} 👋</h1>
-    <p>{{ summary()?.companyName ? ('برنامج تدريبي — ' + summary()?.companyName) : 'برنامج تطوير مهارات الذكاء الاصطناعي — الدفعة الثالثة' }}</p>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
-      <span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ summary()?.status || 'مستمر' }}</span>
-      <small style="color:rgba(255,255,255,0.7);font-size:12px">تاريخ الانتهاء: ديسمبر 2026</small>
-    </div>
-  </div>
-  <div class="nfd-hero-progress">
-    <div>
-      <div class="label">نسبة الإنجاز الإجمالية</div>
-      <div class="sub">أنت على الطريق الصحيح!</div>
-<button class="nfd-btn" routerLink="/trainee/program" style="background:var(--color-cyan);color:#fff;height:32px">
-  عرض التفاصيل
-</button>
-    </div>
-    <div class="nfd-ring" [style.--p]="summary()?.moduleProgressPercentage ?? 75" style="background:rgba(255,255,255,.12)">
-      <span>{{ (summary()?.moduleProgressPercentage ?? 75) | number:'1.0-0' }}%</span>
-    </div>
-  </div>
-</div>
-
-<!-- Stat Pills Row (ترتيب الكروت من اليمين للشمال مثل الصورة) -->
-<div class="nfd-stat-pill-row" style="--cols:4;margin-bottom:16px">
-  <div class="nfd-stat-pill-card">
-    <span class="label">الوحدات المكتملة</span>
-    <span class="pill" style="background:var(--status-new-bg);color:var(--status-new-fg)">{{ summary()?.completedModulesCount ?? 6 }}/{{ summary()?.totalModulesCount ?? 10 }}</span>
-  </div>
-  <div class="nfd-stat-pill-card">
-    <span class="label">المهام المسلّمة</span>
-    <span class="pill" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ summary()?.submissionsCount ?? 12 }}/{{ (summary()?.submissionsCount ?? 12) + (summary()?.pendingSubmissionsCount ?? 3) }}</span>
-  </div>
-  <div class="nfd-stat-pill-card">
-    <span class="label">نسبة الحضور</span>
-    <span class="pill" style="background:var(--status-completed-bg);color:var(--status-completed-fg)">{{ (summary()?.attendanceRate ?? 92) | number:'1.0-0' }}%</span>
-  </div>
-  <div class="nfd-stat-pill-card">
-    <span class="label">الإنذارات</span>
-    <span class="pill" style="background:var(--status-absent-bg);color:var(--status-absent-fg)">1</span>
-  </div>
-</div>
-
-<!-- Middle Section: (فريق الإشراف يمين | المهام القريبة يسار) -->
-<div style="display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:16px">
-  
-  <!-- فريق الإشراف -->
-  <div class="nfd-card">
-    <h3 style="margin-bottom:16px">فريق الإشراف</h3>
-    <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--color-bg-light, #f8f9fa);border-radius:8px;margin-bottom:12px">
-      <div style="width:40px;height:40px;border-radius:50%;background:var(--color-navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">خ</div>
-      <div>
-        <small class="nfd-muted" style="display:block;font-size:11px">المدرب</small>
-        <strong style="font-size:13px;display:block">د. خالد الأحمدي</strong>
-        <small class="nfd-muted" style="font-size:11px">تقنية المعلومات</small>
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--color-bg-light, #f8f9fa);border-radius:8px">
-      <div style="width:40px;height:40px;border-radius:50%;background:var(--color-cyan);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">س</div>
-      <div>
-        <small class="nfd-muted" style="display:block;font-size:11px">المشرف</small>
-        <strong style="font-size:13px;display:block">م. سارة العمري</strong>
-        <small class="nfd-muted" style="font-size:11px">مشرفة التدريب</small>
-      </div>
-    </div>
-  </div>
-
-<!-- المهام القريبة من موعد التسليم -->
-<div class="nfd-card">
-  <!-- الهيدر: العنوان يميناً وزر العرض يساراً -->
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-  <h3 style="margin:0">المهام القريبة من موعد التسليم</h3>
-  <button class="nfd-btn ghost" routerLink="/trainee/tasks" style="padding:0">عرض الكل</button>
-</div>
-  
-  @for (t of tasks(); track t.taskId) {
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border-light)">
-      <!-- جهة اليمين: مربع الأيقونة + النصوص -->
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:36px;height:36px;border-radius:8px;background:rgba(99, 102, 241, 0.08);display:flex;align-items:center;justify-content:center;color:var(--color-navy)">
-          <nfd-icon name="clip" />
-        </div>
-        <div>
-          <strong style="display:block;font-size:13px">{{ t.title }}</strong>
-          <small class="nfd-muted">الموعد النهائي: {{ t.dueDate | date:'mediumDate' }}</small>
-        </div>
-      </div>
-
-      <!-- جهة اليسار: شارة الحالة -->
-      <span class="nfd-badge" style="background:var(--status-new-bg);color:var(--status-new-fg)">جديد</span>
-    </div>
+<style>
+  /* الحاوية الرئيسية للوحة التحكم بدون Scroll خارجي */
+  .dashboard-viewport-container {
+    height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 12px;
+    gap: 10px;
+    font-family: system-ui, -apple-system, sans-serif;
   }
-  @empty {
-    <!-- مهمة 1 -->
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border-light)">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:36px;height:36px;border-radius:8px;background:rgba(99, 102, 241, 0.08);display:flex;align-items:center;justify-content:center;color:var(--color-navy)">
-          <nfd-icon name="clip" />
-        </div>
-        <div>
-          <strong style="display:block;font-size:13px">تحليل بيانات مشروع الذكاء الاصطناعي</strong>
-          <small class="nfd-muted">الموعد النهائي: غداً، 11:59 م</small>
-        </div>
-      </div>
-      <span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">قيد المراجعة</span>
-    </div>
 
-    <!-- مهمة 2 -->
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border-light)">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:36px;height:36px;border-radius:8px;background:rgba(99, 102, 241, 0.08);display:flex;align-items:center;justify-content:center;color:var(--color-navy)">
-          <nfd-icon name="clip" />
-        </div>
-        <div>
-          <strong style="display:block;font-size:13px">تقرير التقدم الأسبوعي</strong>
-          <small class="nfd-muted">الموعد النهائي: بعد 3 أيام</small>
-        </div>
-      </div>
-      <span class="nfd-badge" style="background:var(--status-new-bg);color:var(--status-new-fg)">جديد</span>
-    </div>
-
-    <!-- مهمة 3 -->
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:36px;height:36px;border-radius:8px;background:rgba(99, 102, 241, 0.08);display:flex;align-items:center;justify-content:center;color:var(--color-navy)">
-          <nfd-icon name="clip" />
-        </div>
-        <div>
-          <strong style="display:block;font-size:13px">اختبار وحدة JavaScript المتقدم</strong>
-          <small class="nfd-muted">الموعد النهائي: بعد 5 أيام</small>
-        </div>
-      </div>
-      <span class="nfd-badge" style="background:var(--status-new-bg);color:var(--status-new-fg)">جديد</span>
-    </div>
+  /* تصميم الـ Hero Banner */
+  .nfd-hero {
+    background: linear-gradient(90deg, #091242 0%, #0d1e78 100%);
+    border-radius: 16px;
+    padding: 16px 24px;
+    color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
   }
+
+  .nfd-hero-greeting h2 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+
+  .nfd-hero-greeting p {
+    margin: 6px 0 10px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .nfd-hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nfd-badge-status {
+    background: rgba(52, 211, 153, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.3);
+    padding: 2px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  .nfd-hero-date {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.78rem;
+  }
+
+  /* بطاقة نسبة الإنجاز الجانبية */
+  .nfd-progress-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .nfd-progress-info .label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: 2px;
+  }
+
+  .nfd-progress-info .sub {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 8px;
+  }
+
+  .nfd-btn-cyan {
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .nfd-btn-cyan:hover {
+    background: #1d4ed8;
+  }
+
+  /* الحلقة الدائرية لنسبة الإنجاز باستخدام CSS Variable */
+  .nfd-ring {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+    background: conic-gradient(#2563eb var(--progress, 50%), rgba(255, 255, 255, 0.15) 0);
+  }
+
+  .nfd-ring::before {
+    content: '';
+    position: absolute;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #111b58;
+  }
+
+  .nfd-ring span {
+    position: relative;
+    z-index: 1;
+    font-size: 0.82rem;
+    font-weight: bold;
+    color: #250fec;
+  }
+
+  /* باقي شبكة العناصر 2x2 */
+  .dashboard-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .compact-card {
+    display: flex;
+    flex-direction: column;
+    padding: 12px !important;
+    margin: 0 !important;
+    min-height: 0;
+    box-sizing: border-box;
+  }
+
+  .compact-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 0.95rem;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .scrollable-content {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .team-member-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    background: var(--color-bg-light, #f8f9fa);
+    border-radius: 6px;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--color-navy);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.85rem;
+  }
+  .avatar.cyan { background: var(--color-cyan); }
+
+  .list-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--color-border-light);
+    font-size: 0.85rem;
+  }
+
+  .row-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .announcement-item {
+    padding: 8px 10px;
+    background: var(--status-active-bg);
+    border-right: 3px solid var(--color-cyan);
+    border-radius: 6px;
+    font-size: 0.85rem;
+  }
+
+  .notification-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--color-border-light);
+    font-size: 0.85rem;
+  }
+</style>
+
+<div class="dashboard-viewport-container">
+
+  <!-- Hero Header -->
+  <div class="nfd-hero">
+    <div class="nfd-hero-greeting">
+  <h2>مرحباً، {{ summary()?.fullName || auth.session()?.fullName || 'أحمد محمد' }} 👋</h2>
+<p class="nfd-program-name">
+  {{ programName() }} — {{ batchName() }}
+</p>
+  <div class="nfd-hero-meta">
+    <span class="nfd-badge-status">{{ summary()?.status || 'مستمر' }}</span>
+    <span class="nfd-hero-date">تاريخ الانتهاء: ديسمبر 2026</span>
+  </div>
 </div>
 
-<!-- Bottom Section: (الإعلانات يمين | التنبيهات الأخيرة يسار) -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-  
-  <!-- الإعلانات -->
-  <div class="nfd-card">
-    <h3 style="margin-bottom:16px">الإعلانات</h3>
-    <div style="padding:12px;background:var(--status-active-bg);border-right:4px solid var(--color-cyan);border-radius:4px;margin-bottom:12px">
-      <strong style="display:block;font-size:13px">تحديث جدول الحضور للأسبوع القادم</strong>
-      <small class="nfd-muted">12 أغسطس 2026</small>
-    </div>
-    <div style="padding:12px;background:var(--status-active-bg);border-right:4px solid var(--color-cyan);border-radius:4px">
-      <strong style="display:block;font-size:13px">رسالة من المشرف: مراجعة أهداف الشهر</strong>
-      <small class="nfd-muted">10 أغسطس 2026</small>
+    <!-- بطاقة نسبة الإنجاز الجانبية باستخدام تمرير المتغير --progress -->
+    <div class="nfd-progress-card">
+      <div class="nfd-progress-info">
+        <div class="label">نسبة الإنجاز الإجمالية</div>
+        <div class="sub">أنت على الطريق الصحيح!</div>
+        <button class="nfd-btn-cyan" routerLink="/trainee/program">عرض التفاصيل</button>
+      </div>
+      <div 
+        class="nfd-ring" 
+        [style.--progress.%]="summary()?.moduleProgressPercentage ?? 50">
+        <span>{{ (summary()?.moduleProgressPercentage ?? 50) | number:'1.0-0' }}%</span>
+      </div>
     </div>
   </div>
 
-  <!-- التنبيهات الأخيرة -->
-  <div class="nfd-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="margin:0">التنبيهات الأخيرة</h3>
-      <button class="nfd-btn ghost">عرض الكل</button>
+  <!-- Stat Pills Row -->
+  <div class="nfd-stat-pill-row" style="--cols:4;margin:0;gap:8px">
+    <div class="nfd-stat-pill-card" style="padding:6px 12px">
+      <span class="label" style="font-size:0.75rem">الوحدات المكتملة</span>
+      <span class="pill" style="background:var(--status-new-bg);color:var(--status-new-fg)">{{ summary()?.completedModulesCount ?? 5 }}/{{ summary()?.totalModulesCount ?? 10 }}</span>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--color-border-light)">
-      <div>
-        <strong style="display:block;font-size:13px">تحديث حالة طلب رقم #REQ-2024-1258</strong>
-        <small class="nfd-muted">منذ 30 دقيقة</small>
-      </div>
-      <nfd-icon name="warning" />
+    <div class="nfd-stat-pill-card" style="padding:6px 12px">
+      <span class="label" style="font-size:0.75rem">المهام المسلّمة</span>
+      <span class="pill" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ summary()?.submissionsCount ?? 12 }}/{{ (summary()?.submissionsCount ?? 12) + (summary()?.pendingSubmissionsCount ?? 3) }}</span>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--color-border-light)">
-      <div>
-        <strong style="display:block;font-size:13px">موعد اجتماع افتراضي غداً الساعة 10:00 ص</strong>
-        <small class="nfd-muted">منذ ساعة</small>
-      </div>
-      <nfd-icon name="calendar" />
+    <div class="nfd-stat-pill-card" style="padding:6px 12px">
+      <span class="label" style="font-size:0.75rem">نسبة الحضور</span>
+      <span class="pill" style="background:var(--status-completed-bg);color:var(--status-completed-fg)">{{ (summary()?.attendanceRate ?? 92) | number:'1.0-0' }}%</span>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0">
-      <div>
-        <strong style="display:block;font-size:13px">تمت إضافة فاتورة جديدة INV-2024-889</strong>
-        <small class="nfd-muted">منذ 5 دقائق</small>
-      </div>
-      <nfd-icon name="file" />
+    <div class="nfd-stat-pill-card" style="padding:6px 12px">
+      <span class="label" style="font-size:0.75rem">الإنذارات</span>
+      <span class="pill" style="background:var(--status-absent-bg);color:var(--status-absent-fg)">1</span>
     </div>
   </div>
 
+  <!-- Main Grid (تقسيم 2x2) -->
+  <div class="dashboard-main-grid">
+    
+    <!-- 1. فريق الإشراف -->
+    <div class="nfd-card compact-card">
+      <h3>فريق الإشراف</h3>
+      <div class="scrollable-content">
+        <div class="team-member-item">
+          <div class="avatar">خ</div>
+          <div>
+            <small class="nfd-muted" style="display:block;font-size:10px">المدرب</small>
+            <strong style="font-size:12px">د. خالد الأحمدي</strong>
+          </div>
+        </div>
+        <div class="team-member-item">
+          <div class="avatar cyan">س</div>
+          <div>
+            <small class="nfd-muted" style="display:block;font-size:10px">المشرف</small>
+            <strong style="font-size:12px">م. سارة العمري</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. المهام القريبة -->
+    <div class="nfd-card compact-card">
+      <div class="card-header">
+        <h3>المهام القريبة من التسليم</h3>
+        <button class="nfd-btn ghost" routerLink="/trainee/tasks" style="padding:0;font-size:0.8rem">عرض الكل</button>
+      </div>
+      <div class="scrollable-content">
+        @for (t of tasks(); track t.taskId) {
+          <div class="list-row">
+            <div class="row-info">
+              <nfd-icon name="clip" />
+              <div>
+                <strong style="display:block">{{ t.title }}</strong>
+                <small class="nfd-muted">{{ t.dueDate | date:'mediumDate' }}</small>
+              </div>
+            </div>
+            <span class="nfd-badge new">جديد</span>
+          </div>
+        }
+        @empty {
+          <div class="list-row">
+            <div class="row-info">
+              <nfd-icon name="clip" />
+              <div>
+                <strong style="display:block">تحليل بيانات مشروع الذكاء الاصطناعي</strong>
+                <small class="nfd-muted">غداً، 11:59 م</small>
+              </div>
+            </div>
+            <span class="nfd-badge active">قيد المراجعة</span>
+          </div>
+          <div class="list-row">
+            <div class="row-info">
+              <nfd-icon name="clip" />
+              <div>
+                <strong style="display:block">تقرير التقدم الأسبوعي</strong>
+                <small class="nfd-muted">بعد 3 أيام</small>
+              </div>
+            </div>
+            <span class="nfd-badge new">جديد</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- 3. الإعلانات -->
+    <div class="nfd-card compact-card">
+      <h3>الإعلانات</h3>
+      <div class="scrollable-content">
+        @for (ann of announcements(); track $index) {
+          <div class="announcement-item">
+            <strong style="display:block">{{ ann.message }}</strong>
+            <small class="nfd-muted">{{ ann.date | date:'mediumDate' }}</small>
+          </div>
+        }
+        @empty {
+          <div class="announcement-item">
+            <strong style="display:block">تحديث جدول الحضور للأسبوع القادم</strong>
+            <small class="nfd-muted">12 أغسطس 2026</small>
+          </div>
+          <div class="announcement-item">
+            <strong style="display:block">رسالة من المشرف: مراجعة أهداف الشهر</strong>
+            <small class="nfd-muted">10 أغسطس 2026</small>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- 4. التنبيهات الأخيرة -->
+    <div class="nfd-card compact-card">
+      <div class="card-header">
+        <h3>التنبيهات الأخيرة</h3>
+        <button class="nfd-btn ghost" routerLink="/trainee/notifications" style="padding:0;font-size:0.8rem">عرض الكل</button>
+      </div>
+      <div class="scrollable-content">
+        <div class="notification-item">
+          <span>⚠️</span>
+          <div>
+            <strong style="display:block">تحديث حالة طلب رقم #REQ-2024-1258</strong>
+            <small class="nfd-muted">منذ 30 دقيقة</small>
+          </div>
+        </div>
+        <div class="notification-item">
+          <span>📅</span>
+          <div>
+            <strong style="display:block">موعد اجتماع افتراضي غداً الساعة 10:00 ص</strong>
+            <small class="nfd-muted">منذ ساعة</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>

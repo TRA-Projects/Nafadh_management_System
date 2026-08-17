@@ -10,6 +10,7 @@ import { authInterceptor } from './core/auth/auth.interceptor';
 // exactly what zoneless change detection requires to work correctly.
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideHttpClient(),
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(routes),
