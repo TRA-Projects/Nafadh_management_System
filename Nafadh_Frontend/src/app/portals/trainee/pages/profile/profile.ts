@@ -1,30 +1,3 @@
-// import { Component, OnInit, signal } from '@angular/core';
-// import { CommonModule } from '@angular/common';
-// import { FormsModule } from '@angular/forms';
-// import { TraineeApi } from '../../services/trainee-api';
-// import { TraineeProfileDto } from '../../../../core/models/dtos';
-
-// @Component({
-//   selector: 'app-trainee-profile',
-//   imports: [CommonModule, FormsModule],
-//   templateUrl: './profile.html',
-// })
-// export class TraineeProfile implements OnInit {
-//   traineeId = 1;
-//   trainee = signal<TraineeProfileDto | null>(null);
-//   editing = signal(false);
-
-//   constructor(private api: TraineeApi) {}
-//   ngOnInit() { this.api.getTrainee(this.traineeId).subscribe((t) => this.trainee.set(t)); }
-
-//   toggleEdit() {
-//     if (this.editing()) {
-//       const t = this.trainee();
-//       if (t) this.api.updateTrainee(t.traineeId, t).subscribe();
-//     }
-//     this.editing.update((v) => !v);
-//   }
-// }
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -93,5 +66,21 @@ export class TraineeProfile implements OnInit {
         skills: skillsArr.join(', ')
       };
     });
+  }
+
+  // معالجة رفع ملف السيرة الذاتية وتحديث اسمها في الـ Signal
+  onCvUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      
+      this.trainee.update((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          cvFileName: file.name
+        } as any;
+      });
+    }
   }
 }
