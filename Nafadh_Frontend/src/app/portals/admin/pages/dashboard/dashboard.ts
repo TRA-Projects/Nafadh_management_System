@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
 import { AuditLogDto, DashboardChartsDto } from '../../../../core/models/dtos';
-import Chart from 'chart.js/auto';
+import Chart, { TooltipItem } from 'chart.js/auto';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -50,22 +50,18 @@ export class AdminDashboard implements OnInit, AfterViewInit {
     this.updateDonutChartData(val);
   }
 
-  // 1. الانتقال المباشر لصفحة إدارة المتدربين
   goToTraineesList() {
     this.router.navigate(['/admin/trainees']);
   }
 
-  // 2. الانتقال المباشر لصفحة الشركات المستضيفة
   goToCompaniesList() {
     this.router.navigate(['/admin/companies']);
   }
 
-  // 3. الانتقال المباشر لصفحة البرامج والدفعات
   goToProgramsList() {
     this.router.navigate(['/admin/programs']);
   }
 
-  // التوجيه لصفحة سجل الأنشطة الكامل عند الضغط على "عرض الكل"
   viewAllActivities() {
     this.router.navigate(['/admin/activities']);
   }
@@ -74,7 +70,6 @@ export class AdminDashboard implements OnInit, AfterViewInit {
     const ctx = document.getElementById('batchesBarChart') as HTMLCanvasElement;
     if (!ctx) return;
 
-    // إضافة Plugin لرسم المربع الرمادي خلف العمود المختار عند الهوفر
     const hoverBlockPlugin = {
       id: 'hoverBlockPlugin',
       beforeDraw: (chart: any) => {
@@ -131,10 +126,12 @@ export class AdminDashboard implements OnInit, AfterViewInit {
             cornerRadius: 10,
             displayColors: false,
             callbacks: {
-              title: (tooltipItems) => {
+              // إضافة النوع TooltipItem<'bar'>[] هنا
+              title: (tooltipItems: TooltipItem<'bar'>[]) => {
                 return tooltipItems[0].label;
               },
-              label: (context) => {
+              // إضافة النوع TooltipItem<'bar'> هنا
+              label: (context: TooltipItem<'bar'>) => {
                 const value = context.raw || 0;
                 return `عدد الدفعات : ${value}`;
               }
@@ -176,7 +173,8 @@ export class AdminDashboard implements OnInit, AfterViewInit {
           legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16 } },
           tooltip: {
             callbacks: {
-              label: (context) => {
+              // إضافة النوع TooltipItem<'doughnut'> هنا
+              label: (context: TooltipItem<'doughnut'>) => {
                 const label = context.label || '';
                 const value = context.raw || 0;
                 return ` ${label} : ${value} متدرب`;
