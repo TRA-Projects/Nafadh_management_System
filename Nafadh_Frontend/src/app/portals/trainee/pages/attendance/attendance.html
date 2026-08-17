@@ -1,41 +1,195 @@
-<h2 class="nfd-page-title">الحضور</h2>
-<p class="nfd-page-sub">سجل الحضور والالتزام والأعذار</p>
+<!-- العنوان الرئيسي والفرعي -->
+<h2 class="nfd-page-title" style="font-size: 28px; font-weight: 700; margin-bottom: 4px;">الحضور</h2>
+<p class="nfd-page-sub" style="font-size: 15px; color: #8c98a5; margin-top: 0;">سجل الحضور والالتزام والأعذار</p>
 
+<!-- قسم البطاقات العلوية -->
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+  
+  <!-- 1. بطاقة ملخص الحضور (تظهر على اليمين) -->
   <div class="nfd-card">
-    <h3>ملخص الحضور</h3>
-    <div class="nfd-row"><span>أيام الحضور</span><strong style="color:var(--status-active-fg)">{{ rows().length }}</strong></div>
+    <h3 style="margin-bottom:16px">ملخص الحضور</h3>
+    
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <!-- أيام الحضور -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid #f1f5f9;border-radius:10px;background:#fff">
+        <span style="color:#94a3b8;font-size:14px">أيام الحضور</span>
+        <strong style="color:var(--status-active-fg, #10b981);font-size:18px">{{ rows().length }}</strong>
+      </div>
+
+      <!-- الغياب -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid #f1f5f9;border-radius:10px;background:#fff">
+        <span style="color:#94a3b8;font-size:14px">الغياب</span>
+        <strong style="color:var(--status-absent-fg, #ef4444);font-size:18px">0</strong>
+      </div>
+
+      <!-- التأخير -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid #f1f5f9;border-radius:10px;background:#fff">
+        <span style="color:#94a3b8;font-size:14px">التأخير</span>
+        <strong style="color:var(--status-late-fg, #f59e0b);font-size:18px">0</strong>
+      </div>
+
+      <!-- الأعذار المقبولة -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid #f1f5f9;border-radius:10px;background:#fff">
+        <span style="color:#94a3b8;font-size:14px">الأعذار المقبولة</span>
+        <strong style="color:var(--status-active-fg, #10b981);font-size:18px">0</strong>
+      </div>
+    </div>
   </div>
-  <div class="nfd-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
-    <div class="nfd-ring" [style.--p]="rate()"><span>{{ rate() | number:'1.0-0' }}%</span></div>
-    <p style="margin:10px 0 0;font-size:12px;font-weight:600">نسبة الالتزام</p>
+
+  <!-- 2. بطاقة نسبة الالتزام (تظهر على اليسار) -->
+  <div class="nfd-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px">
+    
+    <div class="nfd-ring" [style.--p]="rate()" style="width: 140px; height: 140px; border-radius: 50%; background: conic-gradient(#0d9488 calc(var(--p, 0) * 1%), #e2e8f0 0); display: flex; align-items: center; justify-content: center;">
+      <div style="width: 110px; height: 110px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+        <span style="font-size: 28px; font-weight: 700;">{{ rate() | number:'1.0-0' }}%</span>
+      </div>
+    </div>
+
+    <p style="margin: 16px 0 4px; font-size: 16px; font-weight: 700;">نسبة الالتزام</p>
+    <span style="font-size: 12px; color: #8c98a5;">وفق إجمالي أيام التدريب المسجلة</span>
+
   </div>
+
 </div>
 
+<!-- جدول سجل الحضور -->
 <div class="nfd-card" style="margin-top:16px">
-  <h3>سجل الحضور</h3>
-  <table class="nfd-table">
-    <thead><tr><th>التاريخ</th><th>الدخول</th><th>الخروج</th><th>الحالة</th><th>العذر</th></tr></thead>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h3 style="margin:0">سجل الحضور</h3>
+    <span style="font-size:12px;color:var(--status-active-fg, #0d9488);cursor:pointer">آخر السجلات</span>
+  </div>
+
+  <table class="nfd-table" style="width: 100%;">
+    <thead style="background-color: #f8fafc;">
+      <tr>
+        <th>التاريخ</th>
+        <th>وقت الدخول</th>
+        <th>وقت الخروج</th>
+        <th>الحالة</th>
+        <th>العذر</th>
+        <th>حالة العذر</th>
+        <th>ملاحظات</th>
+      </tr>
+    </thead>
     <tbody>
       @for (r of rows(); track r.dailyAttendanceId) {
         <tr>
-          <td>{{ r.date | date:'mediumDate' }}</td>
+          <!-- التاريخ -->
+          <td>{{ r.date | date:'MMMM dd yyyy' }}</td>
+          
+          <!-- وقت الدخول والخروج -->
           <td>{{ r.checkInTime || '—' }}</td>
           <td>{{ r.checkOutTime || '—' }}</td>
-          <td><span class="nfd-badge" [style.background]="r.status==='Present' ? 'var(--status-active-bg)' : r.status==='Late' ? 'var(--status-late-bg)' : 'var(--status-absent-bg)'" [style.color]="r.status==='Present' ? 'var(--status-active-fg)' : r.status==='Late' ? 'var(--status-late-fg)' : 'var(--status-absent-fg)'">{{ labels[r.status] }}</span></td>
+          
+          <!-- الحالة -->
           <td>
-            @if (r.status !== 'Present') {
-              @if (excuseOpenFor() === r.dailyAttendanceId) {
-                <input class="nfd-input" [(ngModel)]="excuseReason" placeholder="سبب الغياب..." />
-                <button class="nfd-btn primary" (click)="submitExcuse(r)">إرسال</button>
-              } @else {
-                <button class="nfd-btn ghost" (click)="excuseOpenFor.set(r.dailyAttendanceId)">إرفاق عذر</button>
-              }
+            <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;"
+                  [style.background]="r.status==='Present' ? '#e6f7f2' : r.status==='Late' ? '#fef3c7' : '#fee2e2'" 
+                  [style.color]="r.status==='Present' ? '#0d9488' : r.status==='Late' ? '#d97706' : '#dc2626'">
+              • {{ $any(labels)[r.status] || r.status }}
+            </span>
+          </td>
+
+          <!-- العذر (للحالات: الغائب والمتأخر) -->
+          <td>
+            @if ($any(r).excuseStatus === 'Approved' || $any(r).excuseStatus === 'Pending' || $any(r).excuse) {
+              <button style="border-radius: 20px; padding: 5px 18px; border: 1px solid #d1d5db; background: #fff; color: #4b5563; font-size: 13px; cursor: pointer;">
+                عرض العذر
+              </button>
+            } @else if ((r.status === 'Absent' || r.status === 'Late') && !$any(r).excuseStatus) {
+              <button style="background: #0d9488; color: #fff; border-radius: 20px; padding: 6px 18px; border: none; font-size: 13px; cursor: pointer;" 
+                      (click)="excuseOpenFor.set(r.dailyAttendanceId)">
+                إرفاق العذر
+              </button>
+            } @else {
+              <span style="color:#9ca3af">—</span>
+            }
+          </td>
+
+          <!-- حالة العذر -->
+          <td>
+            @if ($any(r).excuseStatus === 'Approved' || r.status === 'Excused') {
+              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #e6f7f2; color: #0d9488;">
+                • مقبول
+              </span>
+            } @else if ($any(r).excuseStatus === 'Pending' || $any(r).excuse || $any(r).note === 'بانتظار المراجعة') {
+              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #fef3c7; color: #d97706;">
+                • قيد المراجعة
+              </span>
+            } @else if ($any(r).excuseStatus === 'Rejected') {
+              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #fee2e2; color: #dc2626;">
+                • مرفوض
+              </span>
+            } @else {
+              <span style="color:#9ca3af">—</span>
+            }
+          </td>
+
+          <!-- ملاحظات -->
+          <td>
+            @if (r.status === 'Present') {
+              <span style="color:#64748b">التزام ممتاز</span>
+            } @else if ($any(r).excuseStatus === 'Approved' || r.status === 'Excused') {
+              <span style="color:#64748b">عذر مقبول</span>
+            } @else if ($any(r).excuseStatus === 'Pending' || $any(r).excuse || $any(r).note === 'بانتظار المراجعة') {
+              <span style="color:#64748b">بانتظار المراجعة</span>
+            } @else {
+              <span style="color:#9ca3af">{{ r.note || '—' }}</span>
             }
           </td>
         </tr>
+
+        <!-- نموذج إرفاق العذر الممتد -->
+        @if (excuseOpenFor() === r.dailyAttendanceId) {
+          <tr>
+            <td colspan="7" style="padding: 12px;">
+              <div style="border: 1.5px dashed #0d9488; border-radius: 8px; padding: 16px; background-color: #ffffff; text-align: right; box-sizing: border-box;">
+                
+                <p style="font-size: 13px; font-weight: 700; color: #1e293b; margin: 0 0 10px 0;">إرفاق العذر</p>
+
+                <textarea 
+                  [(ngModel)]="excuseReason" 
+                  placeholder="اكتب وصفاً للعذر..." 
+                  rows="3" 
+                  style="width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; font-size: 13px; outline: none; resize: vertical; box-sizing: border-box; margin-bottom: 10px; color: #334155; font-family: inherit;">
+                </textarea>
+
+                <div style="position: relative; margin-bottom: 16px;">
+                  <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none;" />
+                  <div (click)="fileInput.click()" style="display: flex; align-items: center; justify-content: space-between; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; background: #fff; cursor: pointer;">
+                    <span style="font-size: 13px; color: #94a3b8;">
+                      {{ selectedFileName() || 'اختر ملف الإرفاق (PDF, صورة...)' }}
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                  </div>
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                  <button 
+                    (click)="submitExcuse(r)" 
+                    style="background-color: #0d9488; color: #ffffff; border: none; border-radius: 20px; padding: 8px 20px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                    إرسال العذر
+                  </button>
+                  
+                  <button 
+                    (click)="excuseOpenFor.set(null)" 
+                    style="background-color: #ffffff; color: #64748b; border: 1px solid #e2e8f0; border-radius: 20px; padding: 8px 20px; font-size: 13px; cursor: pointer;">
+                    إلغاء
+                  </button>
+                </div>
+
+              </div>
+            </td>
+          </tr>
+        }
       }
-      @empty { <tr><td colspan="5">لا يوجد سجل حضور بعد</td></tr> }
+      @empty { 
+        <tr><td colspan="7" style="text-align:center">لا يوجد سجل حضور بعد</td></tr> 
+      }
     </tbody>
   </table>
 </div>
