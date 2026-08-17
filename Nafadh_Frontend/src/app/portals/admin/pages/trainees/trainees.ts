@@ -9,7 +9,7 @@ import { TRAINEE_STATUS_LABELS } from '../../../../core/models/enums';
   selector: 'app-admin-trainees',
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './trainees.html',
-  styleUrls: ['./trainees.scss'],
+  styleUrls: ['./trainees.css'],
   encapsulation: ViewEncapsulation.None // لفك عزل التنسيق وتمكين fixed من تغطية الشاشة بالكامل
 })
 export class AdminTrainees implements OnInit {
