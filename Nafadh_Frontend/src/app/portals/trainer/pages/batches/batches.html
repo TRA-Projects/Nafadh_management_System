@@ -1,38 +1,118 @@
 @if (!selected()) {
-  <h2 class="nfd-page-title">إدارة الدفعات</h2>
-  <p class="nfd-page-sub">اختر الدفعة للانتقال إلى صفحة الإجراءات والتفاصيل الخاصة بها</p>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
-    @for (b of batches(); track b.batchId) {
-      <button class="nfd-card" (click)="select(b)" style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:right">
-        <strong>{{ b.batchName }}</strong>
-        <div style="display:flex;justify-content:space-between;width:100%;margin-top:8px">
-          <span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ b.status }}</span>
+  <div style="padding: 24px; max-width: 1200px; margin: 0 auto; box-sizing: border-box;">
+    <div style="margin-bottom: 24px;">
+      <h2 style="font-size: 24px; font-weight: 700; color: #0b192c; margin: 0 0 6px 0;">إدارة الدفعات</h2>
+      <p style="font-size: 14px; color: #64748b; margin: 0;">اختر الدفعة للانتقال إلى صفحة الإجراءات والتفاصيل الخاصة بها</p>
+    </div>
+
+    <div style="display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 20px !important; width: 100% !important;">
+      @for (b of batches(); track b.batchId) {
+        <div style="background: #ffffff !important; border: 1px solid #e2e8f0 !important; border-radius: 16px !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;">
+          
+          <!-- بانر الكارد العلوي مع الشارة -->
+          <div style="position: relative; width: 100%; height: 130px; background: #e2e8f0;">
+            <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80" alt="Batch Banner" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+            
+            <span style="position: absolute; top: 12px; right: 12px; background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+              {{ b.status || 'نشطة' }}
+            </span>
+          </div>
+
+          <!-- تفاصيل الدفعة -->
+          <div style="padding: 20px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;">
+            <div>
+              <h3 style="font-size: 18px; font-weight: 700; color: #0b192c; margin: 0 0 6px 0;">{{ b.batchName }}</h3>
+              <p style="font-size: 13px; color: #64748b; margin: 0 0 12px 0;">تطوير البرمجيات وتقنية المعلومات</p>
+              <div style="font-size: 12px; color: #64748b; margin-bottom: 20px;">📅 01 مايو - 31 يوليو</div>
+            </div>
+
+            <!-- الإحصائيات مع الدائرة البيانية -->
+            <div style="display: flex; align-items: center; justify-content: space-around; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; padding: 12px 0; margin-bottom: 20px;">
+              
+              <!-- الدائرة البيانية (Progress Circle) -->
+              <div style="width: 50px; height: 50px; border-radius: 50%; background: conic-gradient(#0891b2 72%, #f1f5f9 0deg); display: flex; align-items: center; justify-content: center; position: relative;">
+                <div style="width: 38px; height: 38px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #0b192c;">
+                  72%
+                </div>
+              </div>
+
+              <div style="text-align: center;">
+                <strong style="display: block; font-size: 14px; color: #0b192c;">95%</strong>
+                <span style="font-size: 11px; color: #64748b;">نسبة الحضور</span>
+              </div>
+              <div style="text-align: center;">
+                <strong style="display: block; font-size: 14px; color: #0b192c;">28</strong>
+                <span style="font-size: 11px; color: #64748b;">متدرب</span>
+              </div>
+            </div>
+
+            <button (click)="select(b)" style="width: 100%; background: #0891b2 !important; color: #fff !important; border-radius: 10px; padding: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; text-align: center;">
+              اختيار الدفعة وفتح الإجراءات
+            </button>
+          </div>
         </div>
-      </button>
-    }
-    @empty { <p class="nfd-muted">لا توجد دفعات مسندة</p> }
+      }
+      @empty { 
+        <p style="grid-column: span 3; text-align: center; padding: 40px; color: #64748b;">لا توجد دفعات مسندة</p> 
+      }
+    </div>
   </div>
 } @else {
-  <button class="nfd-muted" style="display:inline-block;margin-bottom:14px" (click)="back()">← العودة إلى قائمة الدفعات</button>
-  <h2 class="nfd-page-title">صفحة إجراءات: {{ selected()!.batchName }}</h2>
-
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:16px">
-    <a routerLink="/trainer/trainees" class="nfd-card" style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:right;font-size:24px">👥<strong style="font-size:14px;color:var(--color-navy)">عرض المتدربين</strong><p class="nfd-muted">متابعة أداء المتدربين، الحضور، وتفاصيل تقدمهم</p></a>
-    <a routerLink="/trainer/content" class="nfd-card" style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:right;font-size:24px">📁<strong style="font-size:14px;color:var(--color-navy)">إدارة المحتوى</strong><p class="nfd-muted">رفع وتعديل الدروس والملفات والروابط</p></a>
-    <a routerLink="/trainer/tasks" class="nfd-card" style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:right;font-size:24px">📋<strong style="font-size:14px;color:var(--color-navy)">المهام والمشروعات</strong><p class="nfd-muted">إنشاء الواجبات ومراجعة التسليمات</p></a>
-    <button class="nfd-card" (click)="showAnnounce.set(true)" style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:right;font-size:24px">📢<strong style="font-size:14px;color:var(--color-navy)">إرسال إعلان للدفعة</strong><p class="nfd-muted">بث رسالة لكل متدربي هذه الدفعة</p></button>
-  </div>
-}
-
-@if (showAnnounce()) {
-  <div class="nfd-modal-bg" (click)="showAnnounce.set(false)">
-    <div class="nfd-modal" (click)="$event.stopPropagation()">
-      <h3>إعلان لدفعة {{ selected()?.batchName }}</h3>
-      <textarea class="nfd-input" rows="4" [(ngModel)]="announceMsg" placeholder="نص الإعلان..."></textarea>
-      <div class="nfd-modal-actions">
-        <button class="nfd-btn secondary" (click)="showAnnounce.set(false)">إلغاء</button>
-        <button class="nfd-btn primary" (click)="postAnnouncement()">إرسال</button>
+  <!-- شاشة الإجراءات والصفحة الفرعية -->
+  <div style="padding: 24px; max-width: 1200px; margin: 0 auto; box-sizing: border-box;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; background: #fff; padding: 16px 24px; border-radius: 12px; border: 1px solid #e2e8f0;">
+      <div>
+        <h2 style="font-size: 20px; font-weight: 700; color: #0b192c; margin: 0 0 4px 0;">صفحة إجراءات: {{ selected()!.batchName }}</h2>
+        <p style="font-size: 13px; color: #64748b; margin: 0;">اختر الإجراء الذي تريد القيام به للدفعة المحددة.</p>
       </div>
+      <button (click)="back()" style="background: #f1f5f9; color: #0b192c; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px;">
+        ← العودة إلى قائمة الدفعات
+      </button>
+    </div>
+
+    <div style="display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 16px !important; width: 100% !important;">
+      
+      <!-- 1. عرض المتدربين -->
+      <a routerLink="/trainer/trainees" style="background: #fff !important; border: 1px solid #e2e8f0 !important; border-radius: 12px !important; padding: 20px !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; text-decoration: none !important; cursor: pointer !important; min-height: 180px !important; box-sizing: border-box !important;">
+        <div>
+          <div style="font-size: 24px; margin-bottom: 12px; background: #eff6ff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 10px;">👥</div>
+          <strong style="font-size: 15px; color: #0b192c; display: block; margin-bottom: 6px;">عرض المتدربين</strong>
+          <p style="font-size: 12px; color: #64748b; margin: 0; line-height: 1.5;">متابعة أداء المتدربين للحضور، وتفاصيل تقدمهم الفني.</p>
+        </div>
+        <div style="margin-top: 14px; color: #0891b2; font-weight: bold;">←</div>
+      </a>
+      
+      <!-- 2. إدارة المحتوى -->
+      <a routerLink="/trainer/content" style="background: #fff !important; border: 1px solid #e2e8f0 !important; border-radius: 12px !important; padding: 20px !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; text-decoration: none !important; cursor: pointer !important; min-height: 180px !important; box-sizing: border-box !important;">
+        <div>
+          <div style="font-size: 24px; margin-bottom: 12px; background: #eff6ff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 10px;">📁</div>
+          <strong style="font-size: 15px; color: #0b192c; display: block; margin-bottom: 6px;">إدارة المحتوى</strong>
+          <p style="font-size: 12px; color: #64748b; margin: 0; line-height: 1.5;">رفع وتعديل الدروس، الملفات، الروابط وتحديد تواريخ إتاحة المحتوى.</p>
+        </div>
+        <div style="margin-top: 14px; color: #0891b2; font-weight: bold;">←</div>
+      </a>
+      
+      <!-- 3. المهام والمشروعات -->
+      <a routerLink="/trainer/tasks" style="background: #fff !important; border: 1px solid #e2e8f0 !important; border-radius: 12px !important; padding: 20px !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; text-decoration: none !important; cursor: pointer !important; min-height: 180px !important; box-sizing: border-box !important;">
+        <div>
+          <div style="font-size: 24px; margin-bottom: 12px; background: #eff6ff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 10px;">📋</div>
+          <strong style="font-size: 15px; color: #0b192c; display: block; margin-bottom: 6px;">المهام والمشروعات</strong>
+          <p style="font-size: 12px; color: #64748b; margin: 0; line-height: 1.5;">إنشاء الواجبات والمشاريع، تحديد معايير التقييم ومراجعة التسليمات.</p>
+        </div>
+        <div style="margin-top: 14px; color: #0891b2; font-weight: bold;">←</div>
+      </a>
+
+      <!-- 4. التقييمات -->
+      <a routerLink="/trainer/evaluations" style="background: #fff !important; border: 1px solid #e2e8f0 !important; border-radius: 12px !important; padding: 20px !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; text-decoration: none !important; cursor: pointer !important; min-height: 180px !important; box-sizing: border-box !important;">
+        <div>
+          <div style="font-size: 24px; margin-bottom: 12px; background: #eff6ff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 10px;">📌</div>
+          <strong style="font-size: 15px; color: #0b192c; display: block; margin-bottom: 6px;">التقييمات</strong>
+          <p style="font-size: 12px; color: #64748b; margin: 0; line-height: 1.5;">إجراء التقييمات المرحلية والنهائية واعتماد درجات المتدربين.</p>
+        </div>
+        <div style="margin-top: 14px; color: #0891b2; font-weight: bold;">←</div>
+      </a>
+
     </div>
   </div>
 }

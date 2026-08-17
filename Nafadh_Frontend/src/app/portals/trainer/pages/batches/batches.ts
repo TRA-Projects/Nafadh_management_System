@@ -8,7 +8,7 @@ import { TrainerBatchDto } from '../../../../core/models/dtos';
 @Component({
   selector: 'app-trainer-batches',
   imports: [CommonModule, FormsModule, RouterLink],
-  templateUrl: './batches.html',
+  templateUrl: './batches.html'
 })
 export class TrainerBatches implements OnInit {
   trainerId = 1;

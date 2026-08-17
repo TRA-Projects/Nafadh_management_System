@@ -12,6 +12,12 @@ namespace Nafadh_Backend.DTOs
         public DateTime EndDate { get; set; }
         public decimal Capacity { get; set; }
         public NFD_BatchStatus Status { get; set; }
+
+
+        public string Department { get; set; } = "تطوير البرمجيات وتقنية المعلومات";
+        public int EnrolledTraineesCount { get; set; }
+        public int AttendanceRate { get; set; } = 95; 
+        public int ProgressPercentage { get; set; }   
     }
 
     public class CreateBatchDto
