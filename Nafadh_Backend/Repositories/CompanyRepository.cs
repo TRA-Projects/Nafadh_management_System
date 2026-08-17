@@ -76,6 +76,12 @@ namespace Nafadh_Backend.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task<int> GetEnrollmentCountAsync(int companyId)
+        {
+            return await _context.NFD_Enrollments
+                .CountAsync(e => e.CompanyId == companyId);
+        }
+
         // Delete Company
         // NOTE: kept as a real delete here for completeness, but Service layer
         public async Task DeleteCompanyAsync(int companyId)
