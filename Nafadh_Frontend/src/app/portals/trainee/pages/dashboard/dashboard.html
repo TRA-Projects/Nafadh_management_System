@@ -66,51 +66,74 @@
     </div>
   </div>
 
-  <!-- المهام القريبة من موعد التسليم -->
-  <div class="nfd-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="margin:0">المهام القريبة من موعد التسليم</h3>
-      <button class="nfd-btn ghost">عرض الكل</button>
-    </div>
-    
-    @for (t of tasks(); track t.taskId) {
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border-light)">
+<!-- المهام القريبة من موعد التسليم -->
+<div class="nfd-card">
+  <!-- الهيدر: العنوان يميناً وزر العرض يساراً -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+  <h3 style="margin:0">المهام القريبة من موعد التسليم</h3>
+  <button class="nfd-btn ghost" routerLink="/trainee/tasks" style="padding:0">عرض الكل</button>
+</div>
+  
+  @for (t of tasks(); track t.taskId) {
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border-light)">
+      <!-- جهة اليمين: مربع الأيقونة + النصوص -->
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(99, 102, 241, 0.08);display:flex;align-items:center;justify-content:center;color:var(--color-navy)">
+          <nfd-icon name="clip" />
+        </div>
         <div>
-          <span class="nfd-badge" style="background:var(--status-new-bg);color:var(--status-new-fg);margin-bottom:4px;display:inline-block">جديد</span>
           <strong style="display:block;font-size:13px">{{ t.title }}</strong>
           <small class="nfd-muted">الموعد النهائي: {{ t.dueDate | date:'mediumDate' }}</small>
         </div>
-        <nfd-icon name="clip" />
       </div>
-    }
-    @empty {
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border-light)">
+
+      <!-- جهة اليسار: شارة الحالة -->
+      <span class="nfd-badge" style="background:var(--status-new-bg);color:var(--status-new-fg)">جديد</span>
+    </div>
+  }
+  @empty {
+    <!-- مهمة 1 -->
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border-light)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(99, 102, 241, 0.08);display:flex;align-items:center;justify-content:center;color:var(--color-navy)">
+          <nfd-icon name="clip" />
+        </div>
         <div>
-          <span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg);margin-bottom:4px;display:inline-block">قيد المراجعة</span>
           <strong style="display:block;font-size:13px">تحليل بيانات مشروع الذكاء الاصطناعي</strong>
           <small class="nfd-muted">الموعد النهائي: غداً، 11:59 م</small>
         </div>
-        <nfd-icon name="clip" />
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border-light)">
+      <span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">قيد المراجعة</span>
+    </div>
+
+    <!-- مهمة 2 -->
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--color-border-light)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(99, 102, 241, 0.08);display:flex;align-items:center;justify-content:center;color:var(--color-navy)">
+          <nfd-icon name="clip" />
+        </div>
         <div>
-          <span class="nfd-badge" style="background:var(--status-new-bg);color:var(--status-new-fg);margin-bottom:4px;display:inline-block">جديد</span>
           <strong style="display:block;font-size:13px">تقرير التقدم الأسبوعي</strong>
           <small class="nfd-muted">الموعد النهائي: بعد 3 أيام</small>
         </div>
-        <nfd-icon name="clip" />
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0">
+      <span class="nfd-badge" style="background:var(--status-new-bg);color:var(--status-new-fg)">جديد</span>
+    </div>
+
+    <!-- مهمة 3 -->
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:36px;height:36px;border-radius:8px;background:rgba(99, 102, 241, 0.08);display:flex;align-items:center;justify-content:center;color:var(--color-navy)">
+          <nfd-icon name="clip" />
+        </div>
         <div>
-          <span class="nfd-badge" style="background:var(--status-new-bg);color:var(--status-new-fg);margin-bottom:4px;display:inline-block">جديد</span>
           <strong style="display:block;font-size:13px">اختبار وحدة JavaScript المتقدم</strong>
           <small class="nfd-muted">الموعد النهائي: بعد 5 أيام</small>
         </div>
-        <nfd-icon name="clip" />
       </div>
-    }
-  </div>
-
+      <span class="nfd-badge" style="background:var(--status-new-bg);color:var(--status-new-fg)">جديد</span>
+    </div>
+  }
 </div>
 
 <!-- Bottom Section: (الإعلانات يمين | التنبيهات الأخيرة يسار) -->
