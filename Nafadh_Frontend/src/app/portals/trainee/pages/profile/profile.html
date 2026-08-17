@@ -36,7 +36,7 @@
         <strong style="font-size: 17px; color: #0f172a; font-weight: 700;">{{ t.fullName }}</strong>
         
         <!-- شارة الحالة مكيّفة مع ألوان الصورة تماماً -->
-        <span style="background: #e6f7f0; color: #0d9488; font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 20px; display: inline-block;">مستمر</span>
+        <span style="background: #e6f7f0; color: rgb(52, 211, 153); font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 20px; display: inline-block;">مستمر</span>
       </div>
       <p style="margin: 0; font-size: 13px; color: #64748b; font-weight: 500;">
         متدرب — {{ t.major || 'برنامج الذكاء الاصطناعي' }}
@@ -48,12 +48,16 @@
 
   </div>
 
-  <!-- الجهة اليسرى: زر تعديل الملف  -->
-  <div>
-    <button class="nfd-btn" (click)="toggleEdit()" style="background: #0A1172; color: #ffffff; border: none; padding: 8px 22px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
-      {{ editing() ? 'حفظ التعديلات' : 'تعديل الملف' }}
-    </button>
-  </div>
+<!-- الجهة اليسرى: زر تعديل/حفظ الملف -->
+<div>
+  <button 
+    class="nfd-btn" 
+    (click)="toggleEdit()" 
+    [style.background]="editing() ? '#10b981' : '#0A1172'" 
+    style="color: #ffffff; border: none; padding: 8px 22px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+    {{ editing() ? 'حفظ التعديلات' : 'تعديل الملف' }}
+  </button>
+</div>
 
 </div>
 <!-- شبكة البيانات (عمودين متوازيين) -->
