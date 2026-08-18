@@ -11,7 +11,9 @@ import { DailyAttendanceDto } from '../../../../core/models/dtos';
   templateUrl: './attendance.html',
 })
 export class TraineeAttendance implements OnInit {
-  enrollmentId = 1;
+  // جلب معرف المتدرب ديناميكياً بناءً على الحساب المسجل حالياً
+  enrollmentId: number = this.getCurrentEnrollmentId();
+
   rows = signal<any[]>([]);
   rate = signal(0);
   excuseOpenFor = signal<number | null>(null);
@@ -23,8 +25,36 @@ export class TraineeAttendance implements OnInit {
   constructor(private api: TraineeApi) {}
 
   ngOnInit() {
-    this.api.getAttendance(this.enrollmentId).subscribe((d) => this.rows.set(d ?? []));
-    this.api.getComplianceRate(this.enrollmentId).subscribe({ next: (r) => this.rate.set(r), error: () => {} });
+    this.loadAttendanceData();
+  }
+
+  // دالة لجلب الـ ID الحقيقي للمتدرب من التخزين المحلي
+  getCurrentEnrollmentId(): number {
+    const storedUser = localStorage.getItem('currentUser') || localStorage.getItem('enrollmentId') || localStorage.getItem('traineeId');
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        return parsed.enrollmentId || parsed.id || Number(storedUser) || 1;
+      } catch {
+        return Number(storedUser) || 1;
+      }
+    }
+    return 1;
+  }
+
+  loadAttendanceData() {
+    if (!this.enrollmentId) return;
+
+    // جلب سجل الحضور والالتزام الخاص بالمتدرب الحالي فقط عبر الـ API
+    this.api.getAttendance(this.enrollmentId).subscribe({
+      next: (d) => this.rows.set(d ?? []),
+      error: () => this.rows.set([])
+    });
+
+    this.api.getComplianceRate(this.enrollmentId).subscribe({
+      next: (r) => this.rate.set(r),
+      error: () => {}
+    });
   }
 
   // دوال الحساب الديناميكية لملخص الحضور
@@ -61,7 +91,6 @@ export class TraineeAttendance implements OnInit {
   submitExcuse(row: DailyAttendanceDto) {
     if (!this.excuseReason.trim()) return;
 
-    // تحديث تجريبي فوري للواجهة دون انتظار الـ API (لتجربة ظهور قيد المراجعة مباشرة)
     this.rows.update((items) =>
       items.map((item) =>
         item.dailyAttendanceId === row.dailyAttendanceId
@@ -74,7 +103,6 @@ export class TraineeAttendance implements OnInit {
     this.excuseReason = '';
     this.selectedFileName.set('');
 
-    // إرسال البيانات للـ API في الخلفية
     this.api.submitExcuse({ dailyAttendanceId: row.dailyAttendanceId, reason: this.excuseReason }).subscribe({
       error: (err) => console.error('Error submitting excuse:', err)
     });
