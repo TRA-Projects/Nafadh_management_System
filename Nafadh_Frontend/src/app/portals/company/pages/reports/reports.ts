@@ -13,14 +13,12 @@ type ReportTab = 'attendance' | 'achievement' | 'capacity';
 
 @Component({
   selector: 'app-company-reports',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './reports.html',
   styleUrl: './reports.scss',
 })
 export class CompanyReports implements OnInit {
-  // This follows the same placeholder convention already used by the
-  // Company portal pages. It can later be resolved from the logged-in
-  // CompanySupervisor profile.
   companyId = 1;
 
   tab = signal<ReportTab>('attendance');
@@ -114,16 +112,19 @@ export class CompanyReports implements OnInit {
       },
     });
 
-    this.api.getCapacity(this.companyId).subscribe({
-      next: (data) => {
-        this.capacity.set(data);
-        complete();
-      },
-      error: () => {
-        this.capacity.set(null);
-        complete();
-      },
-    });
+   this.api.getCapacity(this.companyId).subscribe({
+  next: (data: any) => {
+    this.capacity.set(data ? {
+      ...data,
+      programs: data.programs ?? []
+    } : null);
+    complete();
+  },
+  error: () => {
+    this.capacity.set(null);
+    complete();
+  }
+});
   }
 
   totalAbsentDays(): number {

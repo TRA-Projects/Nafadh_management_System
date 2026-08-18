@@ -378,7 +378,7 @@ tr:hover td {
 }
 
 /* ==========================================
-   قسم الطاقة الاستيعابية (تحديث ومواءمة)
+   قسم الطاقة الاستيعابية
    ========================================== */
 
 .capacity-overview {
@@ -410,9 +410,9 @@ tr:hover td {
   border-radius: 50%;
 }
 
-.dot-blue { background: var(--color-navy); }
-.dot-light { background: #e6ecf5; }
-.dot-yellow { background: #eab308; }
+.dot-blue { background-color: #0c3285 !important; }
+.dot-light { background-color: #e2e8f0 !important; }
+.dot-yellow { background-color: #f59e0b !important; }
 
 .legend-val {
   margin-right: auto;
@@ -420,175 +420,90 @@ tr:hover td {
   color: #0f172a;
 }
 
+/* المخطط الدائري */
 .donut-container {
   position: relative;
-  width: 160px;
-  height: 160px;
+  width: 150px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.donut-chart {
+.svg-donut {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
-  background: conic-gradient(
-    var(--color-navy) 0% calc(var(--used) * 1%),
-    #e6ecf5 calc(var(--used) * 1%) 100%
-  );
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .donut-inner {
-  width: 110px;
-  height: 110px;
-  background: #fff;
-  border-radius: 50%;
+  position: absolute;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 }
 
 .donut-value {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 900;
-  color: var(--color-navy);
+  color: #0c3285;
+  line-height: 1;
 }
 
 .donut-label {
-  font-size: 10px;
-  color: #64748b;
-}
-
-.capacity-progress {
-  margin-bottom: 22px;
-}
-
-.capacity-progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-  margin-bottom: 8px;
-}
-
-.progress-bar-bg {
-  width: 100%;
-  height: 9px;
-  background: #e2e8f0;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.progress-bar-fill {
-  height: 100%;
-  border-radius: 8px;
-  transition: width .3s ease;
-}
-
-.fill-teal {
-  background: #00a8a8;
-}
-
-/* ألوان وأشرطة تقدم جدول البرامج */
-.table-wrapper table .progress-bar-bg {
-  width: 100px;
-  height: 8px;
-  background: #f1f5f9;
-  border-radius: 9999px;
-  overflow: hidden;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-.table-wrapper table .progress-bar-fill {
-  height: 100%;
-  border-radius: 9999px;
-  transition: width 0.4s ease;
-}
-
-.capacity-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-}
-
-.capacity-card {
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 16px;
-  background: #f8fafc;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.capacity-card span {
-  color: var(--color-text-secondary);
   font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
 }
 
-.capacity-card strong {
-  color: var(--color-navy);
-  font-size: 20px;
+/* أشرطة تقارير البرامج */
+.program-utilization-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  direction: ltr;
+  padding: 0 10px;
+}
+
+.utilization-num {
+  font-size: 11px;
+  font-weight: 800;
+  color: #1e293b;
+  min-width: 32px;
+}
+
+.prog-bar-bg {
+  width: 110px;
+  height: 8px;
+  background-color: #e2e8f0;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.prog-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.5s ease-in-out;
 }
 
 @media print {
-  .reports-page {
-    padding: 0;
-  }
-
-  .tabs,
-  .export-group {
-    display: none !important;
-  }
-
-  .section,
-  .summary-card {
-    box-shadow: none;
-    border: 1px solid #ccc;
-  }
+  .reports-page { padding: 0; }
+  .tabs, .export-group { display: none !important; }
+  .section, .summary-card { box-shadow: none; border: 1px solid #ccc; }
 }
 
 @media (max-width: 900px) {
-  .summary {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .two-columns {
-    grid-template-columns: 1fr;
-  }
-
-  .capacity-overview {
-    gap: 30px;
-  }
+  .summary { grid-template-columns: repeat(2, 1fr); }
+  .two-columns { grid-template-columns: 1fr; }
+  .capacity-overview { gap: 30px; }
 }
 
 @media (max-width: 640px) {
-  .reports-header {
-    flex-direction: column;
-  }
-
-  .summary,
-  .capacity-cards {
-    grid-template-columns: 1fr;
-  }
-
-  .tabs {
-    width: 100%;
-  }
-
-  .tab {
-    flex: 1;
-    padding: 0 8px;
-  }
-
-  .chart-row {
-    grid-template-columns: 48px 1fr 72px;
-  }
-
-  .capacity-overview {
-    flex-direction: column-reverse;
-  }
+  .reports-header { flex-direction: column; }
+  .summary { grid-template-columns: 1fr; }
+  .tabs { width: 100%; }
+  .tab { flex: 1; padding: 0 8px; }
+  .chart-row { grid-template-columns: 48px 1fr 72px; }
+  .capacity-overview { flex-direction: column-reverse; }
 }
