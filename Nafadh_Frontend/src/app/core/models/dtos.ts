@@ -118,12 +118,14 @@ export interface CompanyBranchDto {
 }
 
 export interface CompanySupervisorDto {
-  id: number;
+  supervisorId: number;
+  id?: number;
   fullName?: string;
   email?: string;
+  phone?: string;
   department?: string;
   position?: string;
-  status: string;
+  status?: string;
   userId: number;
   companyId: number;
 }

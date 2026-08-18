@@ -1,17 +1,30 @@
 <div class="reports-page">
+    <!-- Header Section -->
     <header class="reports-header">
         <div class="header-right">
             <h1>التقارير والإحصائيات</h1>
             <p class="description">استعراض شامل لبيانات الحضور والإنجاز والطاقة الاستيعابية</p>
 
-            <div class="tabs">
-                <button class="tab" [class.active]="tab() === 'attendance'" (click)="selectTab('attendance')">
+            <div class="tabs" role="tablist">
+                <button class="tab" 
+                        role="tab"
+                        [attr.aria-selected]="tab() === 'attendance'"
+                        [class.active]="tab() === 'attendance'" 
+                        (click)="selectTab('attendance')">
                     تقارير الحضور
                 </button>
-                <button class="tab" [class.active]="tab() === 'achievement'" (click)="selectTab('achievement')">
+                <button class="tab" 
+                        role="tab"
+                        [attr.aria-selected]="tab() === 'achievement'"
+                        [class.active]="tab() === 'achievement'" 
+                        (click)="selectTab('achievement')">
                     نسبة الإنجاز
                 </button>
-                <button class="tab" [class.active]="tab() === 'capacity'" (click)="selectTab('capacity')">
+                <button class="tab" 
+                        role="tab"
+                        [attr.aria-selected]="tab() === 'capacity'"
+                        [class.active]="tab() === 'capacity'" 
+                        (click)="selectTab('capacity')">
                     الطاقة الاستيعابية
                 </button>
             </div>
@@ -25,287 +38,291 @@
         </div>
     </header>
 
+    <!-- Main Content States -->
     @if (loading()) {
-    <div class="loading-card">جاري تحميل البيانات...</div>
-    }
+        <div class="loading-card">جاري تحميل البيانات...</div>
+    } @else if (errorMessage()) {
+        <div class="error-card">{{ errorMessage() }}</div>
+    } @else {
 
-    @if (errorMessage()) {
-    <div class="error-card">{{ errorMessage() }}</div>
-    }
+        <!-- =========================
+             1 - ATTENDANCE TAB
+        ========================== -->
+        @if (tab() === 'attendance') {
+            @if (attendance(); as att) {
+                <div class="summary">
+                    <div class="summary-card">
+                        <div class="card-title">إجمالي المتدربين</div>
+                        <div class="card-value blue">{{ att.totalTrainees }}</div>
+                        <div class="card-sub">متدرب نشط في الشركة</div>
+                    </div>
 
-    <!-- =========================
-       1 - ATTENDANCE TAB
-  ========================== -->
-    @if (tab() === 'attendance') {
-    @if (attendance(); as att) {
-    <div class="summary">
-        <div class="summary-card">
-            <div class="card-title">إجمالي المتدربين</div>
-            <div class="card-value blue">{{ $any(att).totalTrainees }}</div>
-            <div class="card-sub">متدرب نشط في الشركة</div>
-        </div>
+                    <div class="summary-card">
+                        <div class="card-title">متوسط نسب الحضور</div>
+                        <div class="card-value blue">{{ att.overallAttendanceRate ?? att.averageAttendanceRate }}%</div>
+                        <div class="card-sub">عبر كل البرامج</div>
+                    </div>
 
-        <div class="summary-card">
-            <div class="card-title">متوسط نسب الحضور</div>
-            <div class="card-value blue">{{ $any(att).overallAttendanceRate ?? $any(att).averageAttendanceRate }}%</div>
-            <div class="card-sub">عبر كل البرامج</div>
-        </div>
+                    <div class="summary-card">
+                        <div class="card-title">إجمالي أيام الغياب</div>
+                        <div class="card-value red">{{ totalAbsentDays() }}</div>
+                        <div class="card-sub">أيام غياب مسجلة</div>
+                    </div>
 
-        <div class="summary-card">
-            <div class="card-title">إجمالي الأيام المتبقية</div>
-            <div class="card-value red">{{ totalAbsentDays() }}</div>
-            <div class="card-sub">أيام غياب مسجلة</div>
-        </div>
-
-        <div class="summary-card">
-            <div class="card-title">حالات التأخير والمعذور</div>
-            <div class="card-value orange">{{ totalLateDays() + totalExcusedDays() }}</div>
-            <div class="card-sub">تأخر: {{ totalLateDays() }} | معذور: {{ totalExcusedDays() }}</div>
-        </div>
-    </div>
-
-    <section class="section">
-        <h2 class="section-title">اتجاه الحضور الأسبوعي</h2>
-        @for (item of attendanceChart(); track item.label) {
-        <div class="chart-row">
-            <div class="percent">{{ item.value }}%</div>
-            <div class="bar-container">
-                <div class="bar" [style.width.%]="clampPercentage(item.value)">
-                    <span>{{ item.value }}%</span>
-                </div>
-            </div>
-            <div class="week">{{ item.label }}</div>
-        </div>
-        } @empty {
-        <div class="empty-state small">لا توجد بيانات مخطط حضور</div>
-        }
-    </section>
-
-    <section class="section">
-        <h2 class="section-title">تفاصيل حضور المتدربين</h2>
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>المتدرب</th>
-                        <th>أيام الحضور</th>
-                        <th>الغياب</th>
-                        <th>التأخر</th>
-                        <th>المعذور</th>
-                        <th>معدل الحضور</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (row of att.rows; track row.traineeId) {
-                    <tr>
-                        <td>{{ row.traineeName || ('متدرب #' + row.traineeId) }}</td>
-                        <td>{{ row.presentDays }}</td>
-                        <td>{{ row.absentDays }}</td>
-                        <td>{{ row.lateDays }}</td>
-                        <td>{{ row.excusedDays }}</td>
-                        <td>
-                            <span class="rate" [class.rate-blue]="row.attendanceRate >= 85"
-                                [class.rate-yellow]="row.attendanceRate >= 70 && row.attendanceRate < 85"
-                                [class.rate-red]="row.attendanceRate < 70">
-                                <span class="dot"></span>
-                                {{ row.attendanceRate }}%
-                            </span>
-                        </td>
-                    </tr>
-                    } @empty {
-                    <tr>
-                        <td colspan="6" class="empty-cell">لا توجد تفاصيل حضور متاحة</td>
-                    </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </section>
-    }
-    }
-
-    <!-- =========================
-       2 - ACHIEVEMENT TAB
-  ========================== -->
-    @if (tab() === 'achievement') {
-    <div class="summary">
-        <div class="summary-card">
-            <div class="card-title">إجمالي المسجلين</div>
-            <div class="card-value blue">{{ achievementTotal() }}</div>
-            <div class="card-sub">إجمالي تسجيلات الشركة</div>
-        </div>
-
-        <div class="summary-card">
-            <div class="card-title">المكتملون</div>
-            <div class="card-value blue">{{ achievementCompleted() }}</div>
-            <div class="card-sub">أنهوا التدريب بنجاح</div>
-        </div>
-
-        <div class="summary-card">
-            <div class="card-title">نسبة الإنجاز الكلية</div>
-            <div class="card-value blue">{{ achievementRate() }}%</div>
-            <div class="card-sub">نسبة الاكمال العامة</div>
-        </div>
-
-        <div class="summary-card">
-            <div class="card-title">المعرضون للتعثر</div>
-            <div class="card-value red">{{ atRisk().length }}</div>
-            <div class="card-sub">يحتاجون إلى متابعة</div>
-        </div>
-    </div>
-
-    <div class="two-columns">
-        <section class="section">
-            <h2 class="section-title">أعلى المتدربين أداءً</h2>
-            @for (item of topPerformers(); track ($any(item).id ?? $any(item).traineeId ?? $index)) {
-            <div class="list-row">
-                <span>{{ item.fullName }}</span>
-                <span class="mini-badge success">{{ $any(item).attendanceRate ?? $any(item).gpa ?? 0 }}% حضور</span>
-            </div>
-            } @empty {
-            <div class="empty-state small">لا يوجد متدربون في هذه الفئة</div>
-            }
-        </section>
-
-        <section class="section">
-            <h2 class="section-title">المتدربون المعرضون للتعثر</h2>
-            @for (item of atRisk(); track ($any(item).id ?? $any(item).traineeId ?? $index)) {
-            <div class="list-row">
-                <span>{{ item.fullName }}</span>
-                <span class="mini-badge warning">{{ $any(item).attendanceRate ?? $any(item).gpa ?? 0 }}% حضور</span>
-            </div>
-            } @empty {
-            <div class="empty-state small">لا يوجد متدربون معرضون للتعثر</div>
-            }
-        </section>
-    </div>
-
-    <section class="section" style="margin-top: 18px;">
-        <h2 class="section-title">قائمة التسجيلات والإنجاز</h2>
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>المتدرب</th>
-                        <th>الدفعة</th>
-                        <th>تاريخ التسجيل</th>
-                        <th>حالة الإنجاز</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (item of enrollments(); track ($any(item).id ?? $any(item).enrollmentId ?? $index)) {
-                    <tr>
-                        <td>{{ item.traineeName }}</td>
-                        <td>{{ item.batchName }}</td>
-                        <td>{{ item.enrollmentDate }}</td>
-                        <td>
-                            <span class="status-badge" [class.status-completed]="item.completionStatus === 'Completed'"
-                                [class.status-active]="item.completionStatus === 'InProgress'"
-                                [class.status-pending]="item.completionStatus === 'Dropped' || item.completionStatus === 'Failed'">
-                                {{ completionLabel(item.completionStatus) }}
-                            </span>
-                        </td>
-                    </tr>
-                    } @empty {
-                    <tr>
-                        <td colspan="4" class="empty-cell">لا توجد تسجيلات للعرض</td>
-                    </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </section>
-    }
-
-    <!-- =========================
-       3 - CAPACITY TAB
-  ========================== -->
-    @if (tab() === 'capacity') {
-    @if (capacity(); as cap) {
-    <section class="section">
-        <h2 class="section-title">
-            الطاقة الاستيعابية — الحصة المخصصة للشركة: {{ cap.total ?? 0 }} مقعداً
-        </h2>
-
-        <div class="capacity-overview">
-            <div class="capacity-legend">
-                <div class="legend-item">
-                    <span class="legend-dot dot-blue"></span>
-                    <span>مشغول</span>
-                    <span class="legend-val">{{ cap.used ?? 0 }}</span>
+                    <div class="summary-card">
+                        <div class="card-title">حالات التأخير والمعذور</div>
+                        <div class="card-value orange">{{ totalLateDays() + totalExcusedDays() }}</div>
+                        <div class="card-sub">تأخر: {{ totalLateDays() }} | معذور: {{ totalExcusedDays() }}</div>
+                    </div>
                 </div>
 
-                <div class="legend-item">
-                    <span class="legend-dot dot-light"></span>
-                    <span>متبقي</span>
-                    <span class="legend-val">{{ cap.remaining ?? 0 }}</span>
-                </div>
-
-                <div class="legend-item">
-                    <span class="legend-dot dot-yellow"></span>
-                    <span>الحصة</span>
-                    <span class="legend-val">{{ cap.total ?? 0 }}</span>
-                </div>
-            </div>
-
-            <div class="donut-container">
-                <svg viewBox="0 0 100 100" class="svg-donut">
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#e2e8f0" stroke-width="12" />
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#0c3285" stroke-width="12"
-                        stroke-linecap="round" [attr.stroke-dasharray]="251.2"
-                        [attr.stroke-dashoffset]="251.2 - (251.2 * capacityPercentage()) / 100"
-                        style="transition: stroke-dashoffset 0.6s ease; transform: rotate(-90deg); transform-origin: 50% 50%;" />
-                </svg>
-                <div class="donut-inner">
-                    <span class="donut-value">{{ capacityPercentage() }}%</span>
-                    <span class="donut-label">مستخدمة</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section">
-        <h2 class="section-title">الطاقة حسب البرنامج</h2>
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>البرنامج</th>
-                        <th style="text-align: center;">الحصة المخصصة</th>
-                        <th style="text-align: center;">المستخدم</th>
-                        <th style="text-align: center;">المتبقي</th>
-                        <th style="text-align: center;">الاستغلال</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (prog of ($any(cap).programs ?? []); track prog.programName) {
-                    <tr>
-                        <td>{{ prog.programName }}</td>
-                        <td style="text-align: center;">{{ prog.allocatedQuota }}</td>
-                        <td style="text-align: center;">{{ prog.usedQuota }}</td>
-                        <td style="text-align: center;">{{ prog.remainingQuota }}</td>
-                        <td style="text-align: center;">
-                            <div class="program-utilization-container">
-                                <span class="utilization-num">{{ prog.utilizationPercentage }}%</span>
-                                <div class="prog-bar-bg">
-                                    <div class="prog-bar-fill" [style.width.%]="prog.utilizationPercentage"
-                                        [style.background-color]="prog.utilizationPercentage >= 80 ? '#0284c7' : '#f59e0b'">
-                                    </div>
+                <section class="section">
+                    <h2 class="section-title">اتجاه الحضور الأسبوعي</h2>
+                    @for (item of attendanceChart(); track item.label) {
+                        <div class="chart-row">
+                            <div class="percent">{{ item.value }}%</div>
+                            <div class="bar-container">
+                                <div class="bar" [style.width.%]="clampPercentage(item.value)">
+                                    <span>{{ item.value }}%</span>
                                 </div>
                             </div>
-                        </td>
-                    </tr>
+                            <div class="week">{{ item.label }}</div>
+                        </div>
                     } @empty {
-                    <tr>
-                        <td colspan="5" class="empty-cell">لا توجد بيانات برامج للعرض</td>
-                    </tr>
+                        <div class="empty-state small">لا توجد بيانات مخطط حضور</div>
                     }
-                </tbody>
-            </table>
-        </div>
-    </section>
-    } @else if (!loading()) {
-    <div class="empty-state">لا توجد بيانات للطاقة الاستيعابية حالياً</div>
-    }
+                </section>
+
+                <section class="section">
+                    <h2 class="section-title">تفاصيل حضور المتدربين</h2>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>المتدرب</th>
+                                    <th>أيام الحضور</th>
+                                    <th>الغياب</th>
+                                    <th>التأخر</th>
+                                    <th>المعذور</th>
+                                    <th>معدل الحضور</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (row of att.rows; track row.traineeId) {
+                                    <tr>
+                                        <td>{{ row.traineeName || ('متدرب #' + row.traineeId) }}</td>
+                                        <td>{{ row.presentDays }}</td>
+                                        <td>{{ row.absentDays }}</td>
+                                        <td>{{ row.lateDays }}</td>
+                                        <td>{{ row.excusedDays }}</td>
+                                        <td>
+                                            <span class="rate" 
+                                                  [class.rate-blue]="row.attendanceRate >= 85"
+                                                  [class.rate-yellow]="row.attendanceRate >= 70 && row.attendanceRate < 85"
+                                                  [class.rate-red]="row.attendanceRate < 70">
+                                                <span class="dot"></span>
+                                                {{ row.attendanceRate }}%
+                                            </span>
+                                        </td>
+                                    </tr>
+                                } @empty {
+                                    <tr>
+                                        <td colspan="6" class="empty-cell">لا توجد تفاصيل حضور متاحة</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            }
+        }
+
+        <!-- =========================
+             2 - ACHIEVEMENT TAB
+        ========================== -->
+        @if (tab() === 'achievement') {
+            <div class="summary">
+                <div class="summary-card">
+                    <div class="card-title">إجمالي المسجلين</div>
+                    <div class="card-value blue">{{ achievementTotal() }}</div>
+                    <div class="card-sub">إجمالي تسجيلات الشركة</div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="card-title">المكتملون</div>
+                    <div class="card-value blue">{{ achievementCompleted() }}</div>
+                    <div class="card-sub">أنهوا التدريب بنجاح</div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="card-title">نسبة الإنجاز الكلية</div>
+                    <div class="card-value blue">{{ achievementRate() }}%</div>
+                    <div class="card-sub">نسبة الاكمال العامة</div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="card-title">المعرضون للتعثر</div>
+                    <div class="card-value red">{{ atRisk().length }}</div>
+                    <div class="card-sub">يحتاجون إلى متابعة</div>
+                </div>
+            </div>
+
+            <div class="two-columns">
+                <section class="section">
+                    <h2 class="section-title">أعلى المتدربين أداءً</h2>
+                    @for (item of topPerformers(); track (item.id ?? item.traineeId ?? $index)) {
+                        <div class="list-row">
+                            <span>{{ item.fullName }}</span>
+                            <span class="mini-badge success">{{ item.attendanceRate ?? item.gpa ?? 0 }}% حضور</span>
+                        </div>
+                    } @empty {
+                        <div class="empty-state small">لا يوجد متدربون في هذه الفئة</div>
+                    }
+                </section>
+
+                <section class="section">
+                    <h2 class="section-title">المتدربون المعرضون للتعثر</h2>
+                    @for (item of atRisk(); track (item.id ?? item.traineeId ?? $index)) {
+                        <div class="list-row">
+                            <span>{{ item.fullName }}</span>
+                            <span class="mini-badge warning">{{ item.attendanceRate ?? item.gpa ?? 0 }}% حضور</span>
+                        </div>
+                    } @empty {
+                        <div class="empty-state small">لا يوجد متدربون معرضون للتعثر</div>
+                    }
+                </section>
+            </div>
+
+            <section class="section section-spaced">
+                <h2 class="section-title">قائمة التسجيلات والإنجاز</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>المتدرب</th>
+                                <th>الدفعة</th>
+                                <th>تاريخ التسجيل</th>
+                                <th>حالة الإنجاز</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (item of enrollments(); track (item.id ?? item.enrollmentId ?? $index)) {
+                                <tr>
+                                    <td>{{ item.traineeName }}</td>
+                                    <td>{{ item.batchName }}</td>
+                                    <td>{{ item.enrollmentDate }}</td>
+                                    <td>
+                                        <span class="status-badge" 
+                                              [class.status-completed]="item.completionStatus === 'Completed'"
+                                              [class.status-active]="item.completionStatus === 'InProgress'"
+                                              [class.status-pending]="item.completionStatus === 'Dropped' || item.completionStatus === 'Failed'">
+                                            {{ completionLabel(item.completionStatus) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            } @empty {
+                                <tr>
+                                    <td colspan="4" class="empty-cell">لا توجد تسجيلات للعرض</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
+
+        <!-- =========================
+             3 - CAPACITY TAB
+        ========================== -->
+        @if (tab() === 'capacity') {
+            @if (capacity(); as cap) {
+                <section class="section">
+                    <h2 class="section-title">
+                        الطاقة الاستيعابية — الحصة المخصصة للشركة: {{ cap.total ?? 0 }} مقعداً
+                    </h2>
+
+                    <div class="capacity-overview">
+                        <div class="capacity-legend">
+                            <div class="legend-item">
+                                <span class="legend-dot dot-blue"></span>
+                                <span>مشغول</span>
+                                <span class="legend-val">{{ cap.used ?? 0 }}</span>
+                            </div>
+
+                            <div class="legend-item">
+                                <span class="legend-dot dot-light"></span>
+                                <span>متبقي</span>
+                                <span class="legend-val">{{ cap.remaining ?? 0 }}</span>
+                            </div>
+
+                            <div class="legend-item">
+                                <span class="legend-dot dot-yellow"></span>
+                                <span>الحصة</span>
+                                <span class="legend-val">{{ cap.total ?? 0 }}</span>
+                            </div>
+                        </div>
+
+                        <div class="donut-container">
+                            <svg viewBox="0 0 100 100" class="svg-donut" role="img" aria-label="مخطط نسبة استغلال الطاقة الاستيعابية">
+                                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#e2e8f0" stroke-width="12" />
+                                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#0c3285" stroke-width="12"
+                                        stroke-linecap="round" 
+                                        [attr.stroke-dasharray]="251.2"
+                                        [attr.stroke-dashoffset]="251.2 - (251.2 * capacityPercentage()) / 100" />
+                            </svg>
+                            <div class="donut-inner">
+                                <span class="donut-value">{{ capacityPercentage() }}%</span>
+                                <span class="donut-label">مستخدمة</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2 class="section-title">الطاقة حسب البرنامج</h2>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>البرنامج</th>
+                                    <th class="text-center">الحصة المخصصة</th>
+                                    <th class="text-center">المستخدم</th>
+                                    <th class="text-center">المتبقي</th>
+                                    <th class="text-center">الاستغلال</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (prog of (cap.programs ?? []); track prog.programName) {
+                                    <tr>
+                                        <td>{{ prog.programName }}</td>
+                                        <td class="text-center">{{ prog.allocatedQuota }}</td>
+                                        <td class="text-center">{{ prog.usedQuota }}</td>
+                                        <td class="text-center">{{ prog.remainingQuota }}</td>
+                                        <td class="text-center">
+                                            <div class="program-utilization-container">
+                                                <span class="utilization-num">{{ prog.utilizationPercentage }}%</span>
+                                                <div class="prog-bar-bg">
+                                                    <div class="prog-bar-fill" 
+                                                         [style.width.%]="prog.utilizationPercentage"
+                                                         [class.high]="prog.utilizationPercentage >= 80"
+                                                         [class.medium]="prog.utilizationPercentage < 80">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                } @empty {
+                                    <tr>
+                                        <td colspan="5" class="empty-cell">لا توجد بيانات برامج للعرض</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            } @else {
+                <div class="empty-state">لا توجد بيانات للطاقة الاستيعابية حالياً</div>
+            }
+        }
     }
 </div>

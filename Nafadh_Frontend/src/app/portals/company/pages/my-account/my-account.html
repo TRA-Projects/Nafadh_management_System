@@ -45,7 +45,7 @@
     </div>
     <div class="nfd-card" style="padding: 12px 16px;">
       <span class="nfd-muted" style="font-size: 11px; display: block;">رقم الموظف</span>
-      <strong>EMP-2024-{{ profile()?.supervisorId || '1842' }}</strong>
+      <strong>EMP-2024-{{ profile()?.supervisorId || profile()?.id || '1842' }}</strong>
     </div>
     <div class="nfd-card" style="padding: 12px 16px;">
       <span class="nfd-muted" style="font-size: 11px; display: block;">البريد الإلكتروني</span>
