@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   DailyAttendanceDto, EnrollmentDto, EvaluationTemplateDto, EvaluationTemplateDetailDto, ExcuseDto,
-  FeedbackSummaryDto, SubmissionDto, TaskDto, TrainerBatchDto, TrainerDto, TrainerKpisDto,
+  FeedbackSummaryDto,   SessionDto,SubmissionDto, TaskDto, TrainerBatchDto, TrainerDto, TrainerKpisDto,
 } from '../../../core/models/dtos';
 
 @Injectable({ providedIn: 'root' })
@@ -13,11 +13,37 @@ export class TrainerApi {
   constructor(private http: HttpClient) {}
 
   // Dashboard / Batches
-  getMyBatches(trainerId: number): Observable<TrainerBatchDto[]> {
-    return this.http.get<TrainerBatchDto[]>(`${this.base}/BatchTrainer/trainer/${trainerId}`);
-  }
-  getBatchTrainees(batchId: number) { return this.http.get<unknown[]>(`${this.base}/Batch/${batchId}/trainees`); }
-  postAnnouncement(dto: unknown) { return this.http.post(`${this.base}/Announcement`, dto); }
+
+getMyBatches(trainerId: number): Observable<TrainerBatchDto[]> {
+  return this.http.get<TrainerBatchDto[]>(
+    `${this.base}/BatchTrainer/trainer/${trainerId}`
+  );
+}
+
+getTrainerSessions(trainerId: number): Observable<SessionDto[]> {
+  const params = new HttpParams()
+    .set('trainerId', trainerId.toString());
+
+  return this.http.get<SessionDto[]>(
+    `${this.base}/Session`,
+    { params }
+  );
+}
+
+getBatchTrainees(batchId: number) {
+  return this.http.get<unknown[]>(
+    `${this.base}/Batch/${batchId}/trainees`
+  );
+}
+
+postAnnouncement(dto: unknown) {
+  return this.http.post(
+    `${this.base}/Announcement`,
+    dto
+  );
+}
+
+ 
 
   // Content
   createModule(dto: unknown) { return this.http.post(`${this.base}/Module`, dto); }
@@ -68,10 +94,39 @@ export class TrainerApi {
   }
 
   // Reports
-  getTrainerKpis(trainerId: number): Observable<TrainerKpisDto> {
-    return this.http.get<TrainerKpisDto>(`${this.base}/Report/trainer-kpis/${trainerId}`);
-  }
+getTrainerKpis(trainerId: number): Observable<TrainerKpisDto> {
+  return this.http.get<TrainerKpisDto>(
+    `${this.base}/Report/trainer-kpis/${trainerId}`
+  );
+}
 
+generateReport(dto: {
+  type: 'Attendance' | 'Performance' | 'Financial' | 'Enrollment' | 'Custom';
+  filtersJson?: string;
+  generatedByUserId: number;
+  trainerId?: number;
+}) {
+  return this.http.post<{
+    reportId: number;
+    type: string;
+    filtersJson?: string;
+    generatedAt: string;
+    fileUrl?: string;
+    generatedByUserId: number;
+  }>(
+    `${this.base}/Report/generate`,
+    dto
+  );
+}
+
+downloadReport(reportId: number): Observable<Blob> {
+  return this.http.get(
+    `${this.base}/Report/${reportId}/download`,
+    {
+      responseType: 'blob'
+    }
+  );
+}
   // Profile
   getTrainer(id: number): Observable<TrainerDto> { return this.http.get<TrainerDto>(`${this.base}/Trainer/${id}`); }
   updateTrainer(id: number, dto: unknown) { return this.http.put(`${this.base}/Trainer/${id}`, dto); }

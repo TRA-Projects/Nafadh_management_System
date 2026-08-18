@@ -4,6 +4,15 @@ namespace Nafadh_Backend.DTOs
 {
     public class TrainerUpdateDto
     {
+        [MaxLength(150)]
+        public string? FullName { get; set; }
+
+        [EmailAddress]
+        [MaxLength(150)]
+        public string? Email { get; set; }
+
+        [MaxLength(20)]
+        public string? Phone { get; set; }
         // Updated area of expertise
         [MaxLength(150, ErrorMessage = "Specialty cannot exceed 150 characters.")]
         public string? Specialty { get; set; }

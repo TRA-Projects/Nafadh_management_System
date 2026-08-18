@@ -152,8 +152,8 @@ export interface TrainerDto {
 export interface TrainerBatchDto {
   batchId: number;
   batchName?: string;
-  startDate?: string;
-  endDate?: string;
+  startDate?: string | null;
+  endDate?: string | null;
   status: BatchStatus;
 
   department?: string;
@@ -238,12 +238,17 @@ export interface TraineeModuleProgressDto {
 
 export interface SessionDto {
   sessionId: number;
-  title?: string;
-  topic?: string;
-  meetingLink?: string;
-  scheduledAt?: string;
-  status?: string;
-  batchId?: number;
+  batchId: number;
+  trainerId: number;
+  sessionDate: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  meetingLink?: string | null;
+  topic?: string | null;
+  learningObjectives?: string | null;
+  recordingUrl?: string | null;
+  summary?: string | null;
+  status: 'Scheduled' | 'Completed' | 'Cancelled' | 'Postponed';
 }
 
 // ---- Enrollment ----
