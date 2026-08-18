@@ -3,7 +3,6 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TraineeApi } from '../../services/trainee-api';
-import { TraineeProfileDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-trainee-profile',
@@ -13,24 +12,76 @@ import { TraineeProfileDto } from '../../../../core/models/dtos';
 })
 export class TraineeProfile implements OnInit {
   traineeId = 1;
-  trainee = signal<TraineeProfileDto | null>(null);
+  trainee = signal<any>(null);
   editing = signal(false);
+
+  // الخواص التي يطلبها الـ HTML
+  avatarUrl = signal<string | null>(null);
 
   constructor(private api: TraineeApi) {}
 
   ngOnInit() {
-    this.api.getTrainee(this.traineeId).subscribe((t) => this.trainee.set(t));
+    this.loadTraineeData();
+  }
+
+  loadTraineeData() {
+    this.api.getTrainee(this.traineeId).subscribe({
+      next: (t) => this.trainee.set(t),
+      error: (err) => console.error('خطأ في جلب البيانات:', err)
+    });
   }
 
   toggleEdit() {
     if (this.editing()) {
       const t = this.trainee();
-      if (t) this.api.updateTrainee(t.traineeId, t).subscribe();
+      if (t) {
+        const payload = {
+          ...t,
+          nationalId: Number(t.nationalId) || 0,
+        };
+
+        const targetId = t.traineeId || t.id || this.traineeId;
+
+        this.api.updateTrainee(targetId, payload).subscribe({
+          next: () => {
+            this.editing.set(false);
+            this.loadTraineeData();
+          },
+          error: (err) => {
+            console.error('فشل التحديث:', err);
+            this.editing.set(false);
+          }
+        });
+      } else {
+        this.editing.set(false);
+      }
+    } else {
+      this.editing.set(true);
     }
-    this.editing.update((v) => !v);
   }
 
-  // تحويل نص المهارات القادم من الـ DTO إلى مصفوفة للعرض
+  // الدالة الأولى المطلوبة في الـ HTML
+  onAvatarUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = () => this.avatarUrl.set(reader.result as string);
+      reader.readAsDataURL(file);
+
+      this.trainee.update((current) => ({ ...current, avatar: file.name }));
+    }
+  }
+
+  // الدالة الثانية المطلوبة في الـ HTML
+  onCvUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      this.trainee.update((current) => ({ ...current, cvFileName: file.name, resumeUrl: file.name }));
+    }
+  }
+
   getSkillsList(skills: any): string[] {
     if (!skills) return ['Python', 'Machine Learning', 'React', 'SQL'];
     if (Array.isArray(skills)) return skills;
@@ -38,7 +89,6 @@ export class TraineeProfile implements OnInit {
     return [];
   }
 
-  // إضافة مهارة جديدة وتحديث الـ Signal
   addSkill() {
     const newSkill = prompt('أدخل اسم المهارة الجديدة:');
     if (!newSkill || !newSkill.trim()) return;
@@ -47,25 +97,16 @@ export class TraineeProfile implements OnInit {
       if (!current) return current;
       const skillsArr = this.getSkillsList(current.skills);
       skillsArr.push(newSkill.trim());
-      
-      return {
-        ...current,
-        skills: skillsArr.join(', ')
-      };
+      return { ...current, skills: skillsArr.join(', ') };
     });
   }
 
-  // حذف مهارة بناءً على المقطع المحدد وتحديث الـ Signal
   removeSkill(index: number) {
     this.trainee.update((current) => {
       if (!current) return current;
       const skillsArr = this.getSkillsList(current.skills);
       skillsArr.splice(index, 1);
-
-      return {
-        ...current,
-        skills: skillsArr.join(', ')
-      };
+      return { ...current, skills: skillsArr.join(', ') };
     });
   }
 }
