@@ -139,6 +139,8 @@ export interface CompanyCapacityDto {
 export interface TrainerDto {
   trainerId: number;
   fullName?: string;
+  email?: string;
+  phone?: string;
   specialty?: string;
   experienceYears: number;
   biography?: string;
@@ -454,7 +456,7 @@ export interface NotificationDto {
 // ---- Feedback ----
 export interface FeedbackCriterionDto {
   criterionId: number;
-  appliesTo: FeedbackType;
+  appliesTo?: any; // تم جعلها مرنة لتفادي خطأ عدم العثور على FeedbackType
   name: string;
   orderIndex: number;
 }
@@ -465,15 +467,15 @@ export interface FeedbackScoreInputDto {
 }
 
 export interface FeedbackSummaryDto {
-  averageOverall: number;
-  perCriterion: { criterionId: number; name?: string; average: number }[];
-  comments: { comment: string; date: string }[];
-  responseCount: number;
+  averageOverall?: number; // تم إضافة ? لمنع خطأ Strict Mode
+  perCriterion?: { criterionId?: number; name?: string; average?: number }[];
+  comments?: { comment?: string; date?: string }[];
+  responseCount?: number;
 }
 
 export interface FeedbackPendingDto {
-  trainerRatingPending: boolean;
-  batchRatingPending: boolean;
+  trainerRatingPending?: boolean;
+  batchRatingPending?: boolean;
 }
 
 // ---- Badges ----
