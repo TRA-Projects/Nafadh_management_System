@@ -5,7 +5,7 @@ import { environment } from '../../../../environments/environment';
 import {
   AnnouncementDto, BadgeDto, CertificateDto, ConversationDetailDto, ConversationListItemDto,
   ConversationMessageDto, DailyAttendanceDto, ExcuseDto, FeedbackCriterionDto, FeedbackPendingDto,
-  LessonDto, ModuleDto, NotificationDto, ProjectDto, SubmissionDto, TaskDto,
+  LessonDto, ModuleDto, NotificationDto, ProjectDto, SubmissionDto, TaskDto,EnrollmentDto, BatchDto,
   TraineeBadgeDto, TraineeDashboardSummaryDto, TraineeModuleProgressDto, TraineeProfileDto, WarningDto,
 } from '../../../core/models/dtos';
 
@@ -62,7 +62,15 @@ export class TraineeApi {
   getProjectsByProgram(programId: number): Observable<ProjectDto[]> {
     return this.http.get<ProjectDto[]>(`${this.base}/Project/program/${programId}`);
   }
+// أضف هذه الدوال في TraineeApi service
 
+getEnrollmentsByTrainee(traineeId: number): Observable<EnrollmentDto[]> {
+  return this.http.get<EnrollmentDto[]>(`${this.base}/Enrollment/trainee/${traineeId}`);
+}
+
+getBatch(id: number): Observable<BatchDto> {
+  return this.http.get<BatchDto>(`${this.base}/Batch/${id}`);
+}
   // Attendance
   getAttendance(enrollmentId: number): Observable<DailyAttendanceDto[]> {
     return this.http.get<DailyAttendanceDto[]>(`${this.base}/DailyAttendance/enrollment/${enrollmentId}`);
