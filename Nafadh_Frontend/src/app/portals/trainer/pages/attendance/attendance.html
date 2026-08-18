@@ -72,12 +72,13 @@
     </button>
   </section>
 
-  <!-- أدوات الكشف -->
+  @if (registerView() === 'today') {
+      <!-- أدوات الكشف -->
   <div class="section-toolbar">
     <strong>سجل حضور اليوم — {{ todayLabel }}</strong>
     <small>تم افتراض الجميع حاضرين — عدّل فقط الغائب أو بعذر</small>
   </div>
-
+  
   <section class="attendance-card">
     <div class="table-tools">
       <div class="search-box">
@@ -308,6 +309,145 @@
       </table>
     </div>
   </section>
+  } @else if (registerView() === 'weekly') {
+
+  <div class="section-toolbar">
+    <strong>السجل الأسبوعي</strong>
+    <small>ملخص حضور المتدربين للأسبوع الحالي</small>
+  </div>
+
+  <section class="attendance-card">
+    <div class="table-wrap">
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>المتدرب</th>
+            <th>المسار</th>
+            <th>حاضر</th>
+            <th>متأخر</th>
+            <th>غائب</th>
+            <th>بعذر</th>
+            <th>إجمالي الأيام</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @if (historyLoading()) {
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">
+                  <b>جاري تحميل السجل الأسبوعي...</b>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (r of weeklyRows(); track r.enrollmentId) {
+              <tr>
+                <td>
+                  <div class="person">
+                    <span class="avatar">
+                      {{ initials(r.traineeName) }}
+                    </span>
+
+                    <span>
+                      <b>{{ r.traineeName || 'متدرب' }}</b>
+                    </span>
+                  </div>
+                </td>
+
+                <td>{{ r.batchName || '—' }}</td>
+                <td>{{ r.present }}</td>
+                <td>{{ r.late }}</td>
+                <td>{{ r.absent }}</td>
+                <td>{{ r.excused }}</td>
+                <td>{{ r.total }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7">
+                  <div class="empty-state">
+                    <b>لا توجد سجلات لهذا الأسبوع</b>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+} @else if (registerView() === 'monthly') {
+
+  <div class="section-toolbar">
+    <strong>السجل الشهري</strong>
+    <small>ملخص حضور المتدربين للشهر الحالي</small>
+  </div>
+
+  <section class="attendance-card">
+    <div class="table-wrap">
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>المتدرب</th>
+            <th>المسار</th>
+            <th>حاضر</th>
+            <th>متأخر</th>
+            <th>غائب</th>
+            <th>بعذر</th>
+            <th>إجمالي الأيام</th>
+            <th>نسبة الالتزام</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @if (historyLoading()) {
+            <tr>
+              <td colspan="8">
+                <div class="empty-state">
+                  <b>جاري تحميل السجل الشهري...</b>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (r of monthlyRows(); track r.enrollmentId) {
+              <tr>
+                <td>
+                  <div class="person">
+                    <span class="avatar">
+                      {{ initials(r.traineeName) }}
+                    </span>
+
+                    <span>
+                      <b>{{ r.traineeName || 'متدرب' }}</b>
+                    </span>
+                  </div>
+                </td>
+
+                <td>{{ r.batchName || '—' }}</td>
+                <td>{{ r.present }}</td>
+                <td>{{ r.late }}</td>
+                <td>{{ r.absent }}</td>
+                <td>{{ r.excused }}</td>
+                <td>{{ r.total }}</td>
+                <td>{{ r.commitment }}%</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">
+                    <b>لا توجد سجلات لهذا الشهر</b>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+}
 
   @if (pending(); as p) {
     <div class="overlay" (click)="pending.set(null)">
