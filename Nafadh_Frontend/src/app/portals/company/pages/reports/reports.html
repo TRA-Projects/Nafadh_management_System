@@ -32,3 +32,16 @@
     @if (errorMessage()) {
     <div class="error-card">{{ errorMessage() }}</div>
     }
+<!-- =========================
+       1 - ATTENDANCE TAB
+  ========================== -->
+    @if (tab() === 'attendance') {
+    @if (attendance(); as att) {
+    <div class="summary">
+        <div class="summary-card">
+            <div class="card-title">إجمالي المتدربين</div>
+            <div class="card-value blue">{{ $any(att).totalTrainees }}</div>
+            <div class="card-sub">متدرب نشط في الشركة</div>
+        </div>
+
+    }}
