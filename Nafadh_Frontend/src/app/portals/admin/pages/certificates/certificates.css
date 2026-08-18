@@ -1,0 +1,198 @@
+.certificates-container {
+  padding: 24px;
+  direction: rtl;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* شبكة الكاردات */
+.batches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+/* الكارد الرئيسي */
+.batch-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.batch-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* الهيدر العلوي للكارد */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status-badge.ongoing {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #dbeafe;
+}
+
+.status-badge.not-started {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.calendar-icon-box {
+  width: 44px;
+  height: 44px;
+  background-color: #e6f4f1; /* نفس درجة الأخضر الفاتح في الصورة */
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* محتوى الكارد */
+.batch-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: center;
+  margin: 0 0 4px 0;
+}
+
+.company-name {
+  font-size: 14px;
+  color: #0d9488; /* درجة الأخضر المعين للشركة */
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.track-name {
+  font-size: 13px;
+  color: #64748b;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* شريط التقدم */
+.progress-section {
+  margin-bottom: 12px;
+}
+
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.issued-count {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.progress-title {
+  color: #94a3b8;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background-color: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+  direction: ltr; /* لجعل شريط التعبئة يبدأ من اليمين بشكل متناسق مع RTL */
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #0d9488; /* لون الأخضر للتقدم */
+  border-radius: 999px;
+  transition: width 0.3s ease;
+  float: right;
+}
+
+/* التواريخ */
+.dates-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 16px;
+}
+
+/* الخط الفاصل */
+.card-divider {
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.08); /* خط أسود رقيق شفاف */
+  margin: 0 0 12px 0;
+}
+
+/* الفوتر */
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.view-btn {
+  background: none;
+  border: none;
+  color: #0d9488;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.view-btn:hover {
+  text-decoration: underline;
+}
+
+.trainees-count {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  color: #94a3b8;
+  background: #fff;
+  border-radius: 12px;
+}
