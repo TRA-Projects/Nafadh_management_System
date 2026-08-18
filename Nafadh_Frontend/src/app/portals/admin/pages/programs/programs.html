@@ -1,36 +1,443 @@
 <h2 class="nfd-page-title">البرامج والدفعات</h2>
 <p class="nfd-page-sub">المسارات التدريبية والدفعات والمواد</p>
 
-<div class="nfd-card">
-  <div class="nfd-chips">
-    @for (s of ['الكل','Ongoing','Upcoming','Completed']; track s) {
-      <button class="nfd-chip" [class.active]="statusFilter() === s" (click)="statusFilter.set(s)">{{ s }}</button>
-    }
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; width: 100%; box-sizing: border-box;" dir="rtl">
+  
+  <!-- أزرار الإجراءات (اليمين) -->
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <button 
+      type="button"
+      (click)="onCreateBatch()" 
+      style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: #0d9488; border: 1px solid #0d9488; color: #ffffff; outline: none;">
+      <span style="font-size: 16px; line-height: 1;">+</span>
+      <span>إنشاء دفعة</span>
+    </button>
+
+    <button 
+      type="button"
+      (click)="onCreateProgram()" 
+      style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background-color: #ffffff; border: 1px solid #cbd5e1; color: #1e293b; outline: none;">
+      <span style="font-size: 16px; line-height: 1;">+</span>
+      <span>إنشاء برنامج</span>
+    </button>
   </div>
-  <table class="nfd-table">
-    <thead><tr><th>الدفعة</th><th>البرنامج</th><th>البداية</th><th>النهاية</th><th>الحالة</th></tr></thead>
-    <tbody>
-      @for (b of filtered(); track b.batchId) {
-        <tr>
-          <td><strong>{{ b.batchName }}</strong></td>
-          <td>{{ b.programId }}</td>
-          <td>{{ b.startDate | date:'mediumDate' }}</td>
-          <td>{{ b.endDate | date:'mediumDate' }}</td>
-          <td><span class="nfd-badge" style="background:var(--color-tint-indigo);color:var(--color-navy)">{{ b.status }}</span></td>
-        </tr>
-      }
-    </tbody>
-  </table>
+
+ 
+  <div style="display: flex; align-items: center; gap: 8px;">
+    
+    <!-- الدفعات (الكل) -->
+    <button 
+      type="button"
+      (click)="statusFilter.set('الكل')"
+      [style.background-color]="statusFilter() === 'الكل' ? '#111827' : '#ffffff'"
+      [style.color]="statusFilter() === 'الكل' ? '#ffffff' : '#64748b'"
+      [style.border-color]="statusFilter() === 'الكل' ? '#111827' : '#e2e8f0'"
+      style="display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px; border-style: solid; border-width: 1px; font-size: 14px; font-weight: 600; cursor: pointer; outline: none;">
+      <span 
+        [style.background-color]="statusFilter() === 'الكل' ? 'rgba(255,255,255,0.2)' : '#f1f5f9'"
+        [style.color]="statusFilter() === 'الكل' ? '#ffffff' : '#64748b'"
+        style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; font-weight: 700;">
+        {{ batches().length }}
+      </span>
+      <span>الدفعات</span>
+    </button>
+
+    <!-- جارية -->
+    <button 
+      type="button"
+      (click)="statusFilter.set('جارية')"
+      [style.background-color]="statusFilter() === 'جارية' ? '#111827' : '#ffffff'"
+      [style.color]="statusFilter() === 'جارية' ? '#ffffff' : '#64748b'"
+      [style.border-color]="statusFilter() === 'جارية' ? '#111827' : '#e2e8f0'"
+      style="display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px; border-style: solid; border-width: 1px; font-size: 14px; font-weight: 600; cursor: pointer; outline: none;">
+      <span 
+        [style.background-color]="statusFilter() === 'جارية' ? 'rgba(255,255,255,0.2)' : '#f1f5f9'"
+        [style.color]="statusFilter() === 'جارية' ? '#ffffff' : '#64748b'"
+        style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; font-weight: 700;">
+        {{ getCountByStatus('جارية') }}
+      </span>
+      <span>جارية</span>
+    </button>
+
+    <!-- قادمة -->
+    <button 
+      type="button"
+      (click)="statusFilter.set('قادمة')"
+      [style.background-color]="statusFilter() === 'قادمة' ? '#111827' : '#ffffff'"
+      [style.color]="statusFilter() === 'قادمة' ? '#ffffff' : '#64748b'"
+      [style.border-color]="statusFilter() === 'قادمة' ? '#111827' : '#e2e8f0'"
+      style="display: flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 20px; border-style: solid; border-width: 1px; font-size: 14px; font-weight: 600; cursor: pointer; outline: none;">
+      <span 
+        [style.background-color]="statusFilter() === 'قادمة' ? 'rgba(255,255,255,0.2)' : '#f1f5f9'"
+        [style.color]="statusFilter() === 'قادمة' ? '#ffffff' : '#64748b'"
+        style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; font-weight: 700;">
+        {{ getCountByStatus('قادمة') }}
+      </span>
+      <span>قادمة</span>
+    </button>
+
+  </div>
+
 </div>
 
-<div class="nfd-card" style="margin-top:16px">
-  <h3>البرامج</h3>
-  <table class="nfd-table">
-    <thead><tr><th>البرنامج</th><th>الحالة</th></tr></thead>
-    <tbody>
-      @for (p of programs(); track p.programId) {
-        <tr><td>{{ p.title || p.name }}</td><td>{{ p.status }}</td></tr>
-      }
-    </tbody>
-  </table>
+<!-- Modal Overlay -->
+<div 
+  *ngIf="isBatchModalOpen" 
+  (click)="onCancel()"
+  dir="rtl"
+  style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(15, 23, 42, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(2px);
+    font-family: 'Cairo', sans-serif;
+  ">
+
+  <!-- Modal Container -->
+  <div 
+    (click)="$event.stopPropagation()"
+    style="
+      background-color: #ffffff;
+      width: 100%;
+      max-width: 450px;
+      border-radius: 16px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+      padding: 24px;
+      box-sizing: border-box;
+    ">
+    
+    <!-- Modal Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #0f172a;">إنشاء دفعة جديدة</h3>
+      <button 
+        type="button" 
+        (click)="onCancel()"
+        style="
+          background: none;
+          border: none;
+          font-size: 22px;
+          color: #94a3b8;
+          cursor: pointer;
+          padding: 4px;
+          line-height: 1;
+        ">&times;</button>
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="batchForm" (ngSubmit)="onSubmit()" style="display: flex; flex-direction: column; gap: 16px;">
+      
+      <!-- اسم الدفعة -->
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 13.5px; font-weight: 600; color: #334155; margin: 0;">
+          اسم الدفعة <span style="color: #ef4444; margin-right: 2px;">*</span>
+        </label>
+        <input 
+          type="text" 
+          formControlName="batchName" 
+          placeholder="e.g. ASP.NET Core Bootcamp"
+          style="
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #1e293b;
+            outline: none;
+            box-sizing: border-box;
+          ">
+      </div>
+
+      <!-- البرنامج -->
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 13.5px; font-weight: 600; color: #334155; margin: 0;">
+          البرنامج <span style="color: #ef4444; margin-right: 2px;">*</span>
+        </label>
+        <select 
+          formControlName="programId" 
+          style="
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #475569;
+            outline: none;
+            background-color: #ffffff;
+            box-sizing: border-box;
+          ">
+          <option value="" disabled selected>– اختر برنامجاً –</option>
+          <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title }}</option>
+        </select>
+      </div>
+
+      <!-- الشركة المستضيفة -->
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 13.5px; font-weight: 600; color: #334155; margin: 0;">الشركة المستضيفة</label>
+        <select 
+          formControlName="companyId" 
+          style="
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #475569;
+            outline: none;
+            background-color: #ffffff;
+            box-sizing: border-box;
+          ">
+          <option value="" disabled selected>– اختر شركة –</option>
+          <option *ngFor="let comp of companies" [value]="comp.id">{{ comp.name }}</option>
+        </select>
+      </div>
+
+      <!-- المدرب -->
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 13.5px; font-weight: 600; color: #334155; margin: 0;">المدرب</label>
+        <input 
+          type="text" 
+          formControlName="instructorName" 
+          placeholder="اسم المدرب"
+          style="
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #1e293b;
+            outline: none;
+            box-sizing: border-box;
+          ">
+      </div>
+
+      <!-- التواريخ (بداية ونهاية) -->
+      <div style="display: flex; gap: 12px;">
+        
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 13.5px; font-weight: 600; color: #334155; margin: 0;">
+            تاريخ البداية <span style="color: #ef4444; margin-right: 2px;">*</span>
+          </label>
+          <input 
+            type="date" 
+            formControlName="startDate" 
+            style="
+              width: 100%;
+              padding: 11px 14px;
+              border: 1px solid #e2e8f0;
+              border-radius: 10px;
+              font-size: 14px;
+              color: #334155;
+              outline: none;
+              box-sizing: border-box;
+            ">
+        </div>
+
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 13.5px; font-weight: 600; color: #334155; margin: 0;">
+            تاريخ النهاية <span style="color: #ef4444; margin-right: 2px;">*</span>
+          </label>
+          <input 
+            type="date" 
+            formControlName="endDate" 
+            style="
+              width: 100%;
+              padding: 11px 14px;
+              border: 1px solid #e2e8f0;
+              border-radius: 10px;
+              font-size: 14px;
+              color: #334155;
+              outline: none;
+              box-sizing: border-box;
+            ">
+        </div>
+
+      </div>
+
+      <!-- الطاقة الاستيعابية -->
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <label style="font-size: 13.5px; font-weight: 600; color: #334155; margin: 0;">
+          الطاقة الاستيعابية <span style="color: #ef4444; margin-right: 2px;">*</span>
+        </label>
+        <input 
+          type="number" 
+          formControlName="capacity" 
+          placeholder="15"
+          style="
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #1e293b;
+            outline: none;
+            box-sizing: border-box;
+          ">
+      </div>
+
+      <!-- Footer Buttons -->
+      <div style="display: flex; gap: 12px; margin-top: 10px;">
+        
+        <!-- زر إنشاء الدفعة (أخضر مفعل دائماً + هوفر) -->
+        <button 
+          #btnSubmit
+          type="submit" 
+          (mouseenter)="btnSubmit.style.backgroundColor='#0d8b74'"
+          (mouseleave)="btnSubmit.style.backgroundColor='#0f9f85'"
+          style="
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+            background-color: #0f9f85;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          ">
+          إنشاء الدفعة
+        </button>
+
+        <!-- زر إلغاء (أبيض بحدود رمادية + هوفر) -->
+        <button 
+          #btnCancel
+          type="button" 
+          (click)="onCancel()"
+          (mouseenter)="btnCancel.style.backgroundColor='#f8fafc'; btnCancel.style.borderColor='#cbd5e1'"
+          (mouseleave)="btnCancel.style.backgroundColor='#ffffff'; btnCancel.style.borderColor='#e2e8f0'"
+          style="
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #64748b;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          ">
+          إلغاء
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<!-- Main Header / Top Actions -->
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center gap-3">
+    <!-- زر إنشاء دفعة -->
+    <button 
+      type="button" 
+      (click)="onCreateBatch()" 
+      class="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+      <span>+</span> إنشاء دفعة
+    </button>
+
+    <!-- زر إنشاء برنامج -->
+    <button 
+      type="button" 
+      (click)="onCreateProgram()" 
+      class="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium border border-slate-300 transition-colors">
+      <span>+</span> إنشاء برنامج
+    </button>
+  </div>
+</div>
+
+<!-- Modal: إنشاء برنامج جديد -->
+<div *ngIf="isProgramModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden dir-rtl text-right">
+    
+    <!-- Modal Header -->
+    <div class="relative px-6 pt-6 pb-4 border-b border-slate-100">
+      <button 
+        type="button" 
+        (click)="onCloseProgramModal()" 
+        class="absolute left-6 top-6 text-slate-400 hover:text-slate-600 text-xl font-light">
+        ✕
+      </button>
+      <h3 class="text-lg font-bold text-slate-800 text-center">إنشاء برنامج جديد</h3>
+    </div>
+
+    <!-- Modal Body / Form -->
+    <form [formGroup]="programForm" (ngSubmit)="onSubmitProgram()" class="p-6 space-y-4">
+      
+      <!-- اسم البرنامج -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+          اسم البرنامج <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="text" 
+          formControlName="title"
+          placeholder="e.g. .NET Track"
+          class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm placeholder:text-slate-400" />
+      </div>
+
+      <!-- المسار -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+          المسار <span class="text-red-500">*</span>
+        </label>
+        <select 
+          formControlName="trackId"
+          class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm text-slate-700 bg-white">
+          <option value="" disabled selected>– اختر مساراً –</option>
+          <option *ngFor="let track of tracks()" [value]="track.id">
+            {{ track.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- مدة البرنامج بالأسابيع -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+          مدة البرنامج (بالأسابيع) <span class="text-red-500">*</span>
+        </label>
+        <input 
+          type="number" 
+          formControlName="durationWeeks"
+          class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm text-slate-700" />
+      </div>
+
+      <!-- وصف البرنامج -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+          وصف البرنامج
+        </label>
+        <textarea 
+          formControlName="description"
+          rows="3"
+          placeholder="وصف مختصر عن محتوى البرنامج وأهدافه..."
+          class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm placeholder:text-slate-400 resize-none"></textarea>
+      </div>
+
+      <!-- Modal Footer Actions -->
+      <div class="flex items-center gap-3 pt-4">
+        <button 
+          type="submit" 
+          class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition-colors">
+          إنشاء البرنامج
+        </button>
+        <button 
+          type="button" 
+          (click)="onCloseProgramModal()" 
+          class="flex-1 bg-white hover:bg-slate-50 text-slate-600 font-medium py-2.5 px-4 rounded-lg text-sm border border-slate-200 transition-colors">
+          إلغاء
+        </button>
+      </div>
+
+    </form>
+  </div>
 </div>
