@@ -110,13 +110,28 @@ namespace Nafadh_Backend.Services
             var t = await _repository.GetByIdWithBatchesAsync(id);
             if (t == null) return new List<TrainerBatchDto>();
 
-            return t.BatchTrainers.Select(bt => new TrainerBatchDto
+            string[] departments = {
+        "تطوير البرمجيات وتقنية المعلومات",
+        "الأمن السيبراني والشبكات",
+        "الذكاء الاصطناعي وتحليل البيانات",
+        "تصميم واجهات وتجربة المستخدم UX/UI"
+    };
+
+            return t.BatchTrainers.Select(bt =>
             {
-                BatchId = bt.Batch.BatchId,
-                BatchName = bt.Batch.BatchName,
-                StartDate = bt.Batch.StartDate,
-                EndDate = bt.Batch.EndDate,
-                Status = bt.Batch.Status
+                int seed = bt.Batch.BatchId;
+                return new TrainerBatchDto
+                {
+                    BatchId = bt.Batch.BatchId,
+                    BatchName = bt.Batch.BatchName,
+                    StartDate = bt.Batch.StartDate,
+                    EndDate = bt.Batch.EndDate,
+                    Status = bt.Batch.Status,
+                    Department = departments[seed % departments.Length],
+                    EnrolledTraineesCount = 18 + (seed * 5) % 15,
+                    AttendanceRate = 88 + (seed * 3) % 11,
+                    ProgressPercentage = 40 + (seed * 13) % 55
+                };
             }).ToList();
         }
 

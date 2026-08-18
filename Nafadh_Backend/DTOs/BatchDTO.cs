@@ -14,7 +14,7 @@ namespace Nafadh_Backend.DTOs
         public NFD_BatchStatus Status { get; set; }
 
 
-        public string Department { get; set; } = "تطوير البرمجيات وتقنية المعلومات";
+        public string Department { get; set; } = string.Empty;
         public int EnrolledTraineesCount { get; set; }
         public int AttendanceRate { get; set; } = 95; 
         public int ProgressPercentage { get; set; }   

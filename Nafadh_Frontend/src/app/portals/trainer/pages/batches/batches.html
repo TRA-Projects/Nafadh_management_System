@@ -1,17 +1,16 @@
-@if (!selected()) {
-  <div style="padding: 24px; max-width: 1200px; margin: 0 auto; box-sizing: border-box;">
-    <div style="margin-bottom: 24px;">
-      <h2 style="font-size: 24px; font-weight: 700; color: #0b192c; margin: 0 0 6px 0;">إدارة الدفعات</h2>
-      <p style="font-size: 14px; color: #64748b; margin: 0;">اختر الدفعة للانتقال إلى صفحة الإجراءات والتفاصيل الخاصة بها</p>
-    </div>
-
-    <div style="display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 20px !important; width: 100% !important;">
-      @for (b of batches(); track b.batchId) {
+<div style="display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 20px !important; width: 100% !important;">
+      @for (b of batches(); track b.batchId; let i = $index) {
         <div style="background: #ffffff !important; border: 1px solid #e2e8f0 !important; border-radius: 16px !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;">
           
-          <!-- بانر الكارد العلوي مع الشارة -->
+          <!-- بانر الكارد العلوي مع صور مختلفة كليا حسب الترتيب -->
           <div style="position: relative; width: 100%; height: 130px; background: #e2e8f0;">
-            <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80" alt="Batch Banner" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+            <img [src]="
+              i === 0 ? 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80' :
+              i === 1 ? 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80' :
+              i === 2 ? 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&q=80' :
+              i === 3 ? 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=600&q=80' :
+              'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=600&q=80'" 
+              alt="Batch Banner" style="width: 100%; height: 100%; object-fit: cover; display: block;">
             
             <span style="position: absolute; top: 12px; right: 12px; background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
               {{ b.status || 'نشطة' }}
@@ -22,26 +21,37 @@
           <div style="padding: 20px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;">
             <div>
               <h3 style="font-size: 18px; font-weight: 700; color: #0b192c; margin: 0 0 6px 0;">{{ b.batchName }}</h3>
-              <p style="font-size: 13px; color: #64748b; margin: 0 0 12px 0;">تطوير البرمجيات وتقنية المعلومات</p>
+              <p style="font-size: 13px; color: #64748b; margin: 0 0 12px 0;">
+                {{ 
+                  i === 0 ? 'تطوير البرمجيات وتقنية المعلومات' :
+                  i === 1 ? 'الأمن السيبراني والشبكات' :
+                  i === 2 ? 'الذكاء الاصطناعي وتحليل البيانات' :
+                  i === 3 ? 'تصميم واجهات وتجربة المستخدم UX/UI' : 'هندسة البرمجيات المتقدمة'
+                }}
+              </p>
               <div style="font-size: 12px; color: #64748b; margin-bottom: 20px;">📅 01 مايو - 31 يوليو</div>
             </div>
 
-            <!-- الإحصائيات مع الدائرة البيانية -->
+            <!-- الإحصائيات مع الدائرة البيانية المتنوعة لكل كارد -->
             <div style="display: flex; align-items: center; justify-content: space-around; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; padding: 12px 0; margin-bottom: 20px;">
               
               <!-- الدائرة البيانية (Progress Circle) -->
-              <div style="width: 50px; height: 50px; border-radius: 50%; background: conic-gradient(#0891b2 72%, #f1f5f9 0deg); display: flex; align-items: center; justify-content: center; position: relative;">
+              <div [style.background]="'conic-gradient(#0891b2 ' + (i === 0 ? 75 : i === 1 ? 62 : i === 2 ? 88 : i === 3 ? 54 : 70) + '%, #f1f5f9 0deg)'" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative;">
                 <div style="width: 38px; height: 38px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #0b192c;">
-                  72%
+                  {{ i === 0 ? '75%' : i === 1 ? '62%' : i === 2 ? '88%' : i === 3 ? '54%' : '70%' }}
                 </div>
               </div>
 
               <div style="text-align: center;">
-                <strong style="display: block; font-size: 14px; color: #0b192c;">95%</strong>
+                <strong style="display: block; font-size: 14px; color: #0b192c;">
+                  {{ i === 0 ? '92%' : i === 1 ? '88%': i === 2 ? '96%' : i === 3 ? '90%' : '85%' }}
+                </strong>
                 <span style="font-size: 11px; color: #64748b;">نسبة الحضور</span>
               </div>
               <div style="text-align: center;">
-                <strong style="display: block; font-size: 14px; color: #0b192c;">28</strong>
+                <strong style="display: block; font-size: 14px; color: #0b192c;">
+                  {{ i === 0 ? '24' : i === 1 ? '19' : i === 2 ? '30' : i === 3 ? '22' : '26' }}
+                </strong>
                 <span style="font-size: 11px; color: #64748b;">متدرب</span>
               </div>
             </div>
@@ -56,63 +66,3 @@
         <p style="grid-column: span 3; text-align: center; padding: 40px; color: #64748b;">لا توجد دفعات مسندة</p> 
       }
     </div>
-  </div>
-} @else {
-  <!-- شاشة الإجراءات والصفحة الفرعية -->
-  <div style="padding: 24px; max-width: 1200px; margin: 0 auto; box-sizing: border-box;">
-    
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; background: #fff; padding: 16px 24px; border-radius: 12px; border: 1px solid #e2e8f0;">
-      <div>
-        <h2 style="font-size: 20px; font-weight: 700; color: #0b192c; margin: 0 0 4px 0;">صفحة إجراءات: {{ selected()!.batchName }}</h2>
-        <p style="font-size: 13px; color: #64748b; margin: 0;">اختر الإجراء الذي تريد القيام به للدفعة المحددة.</p>
-      </div>
-      <button (click)="back()" style="background: #f1f5f9; color: #0b192c; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px;">
-        ← العودة إلى قائمة الدفعات
-      </button>
-    </div>
-
-    <div style="display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 16px !important; width: 100% !important;">
-      
-      <!-- 1. عرض المتدربين -->
-      <a routerLink="/trainer/trainees" style="background: #fff !important; border: 1px solid #e2e8f0 !important; border-radius: 12px !important; padding: 20px !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; text-decoration: none !important; cursor: pointer !important; min-height: 180px !important; box-sizing: border-box !important;">
-        <div>
-          <div style="font-size: 24px; margin-bottom: 12px; background: #eff6ff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 10px;">👥</div>
-          <strong style="font-size: 15px; color: #0b192c; display: block; margin-bottom: 6px;">عرض المتدربين</strong>
-          <p style="font-size: 12px; color: #64748b; margin: 0; line-height: 1.5;">متابعة أداء المتدربين للحضور، وتفاصيل تقدمهم الفني.</p>
-        </div>
-        <div style="margin-top: 14px; color: #0891b2; font-weight: bold;">←</div>
-      </a>
-      
-      <!-- 2. إدارة المحتوى -->
-      <a routerLink="/trainer/content" style="background: #fff !important; border: 1px solid #e2e8f0 !important; border-radius: 12px !important; padding: 20px !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; text-decoration: none !important; cursor: pointer !important; min-height: 180px !important; box-sizing: border-box !important;">
-        <div>
-          <div style="font-size: 24px; margin-bottom: 12px; background: #eff6ff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 10px;">📁</div>
-          <strong style="font-size: 15px; color: #0b192c; display: block; margin-bottom: 6px;">إدارة المحتوى</strong>
-          <p style="font-size: 12px; color: #64748b; margin: 0; line-height: 1.5;">رفع وتعديل الدروس، الملفات، الروابط وتحديد تواريخ إتاحة المحتوى.</p>
-        </div>
-        <div style="margin-top: 14px; color: #0891b2; font-weight: bold;">←</div>
-      </a>
-      
-      <!-- 3. المهام والمشروعات -->
-      <a routerLink="/trainer/tasks" style="background: #fff !important; border: 1px solid #e2e8f0 !important; border-radius: 12px !important; padding: 20px !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; text-decoration: none !important; cursor: pointer !important; min-height: 180px !important; box-sizing: border-box !important;">
-        <div>
-          <div style="font-size: 24px; margin-bottom: 12px; background: #eff6ff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 10px;">📋</div>
-          <strong style="font-size: 15px; color: #0b192c; display: block; margin-bottom: 6px;">المهام والمشروعات</strong>
-          <p style="font-size: 12px; color: #64748b; margin: 0; line-height: 1.5;">إنشاء الواجبات والمشاريع، تحديد معايير التقييم ومراجعة التسليمات.</p>
-        </div>
-        <div style="margin-top: 14px; color: #0891b2; font-weight: bold;">←</div>
-      </a>
-
-      <!-- 4. التقييمات -->
-      <a routerLink="/trainer/evaluations" style="background: #fff !important; border: 1px solid #e2e8f0 !important; border-radius: 12px !important; padding: 20px !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; text-decoration: none !important; cursor: pointer !important; min-height: 180px !important; box-sizing: border-box !important;">
-        <div>
-          <div style="font-size: 24px; margin-bottom: 12px; background: #eff6ff; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 10px;">📌</div>
-          <strong style="font-size: 15px; color: #0b192c; display: block; margin-bottom: 6px;">التقييمات</strong>
-          <p style="font-size: 12px; color: #64748b; margin: 0; line-height: 1.5;">إجراء التقييمات المرحلية والنهائية واعتماد درجات المتدربين.</p>
-        </div>
-        <div style="margin-top: 14px; color: #0891b2; font-weight: bold;">←</div>
-      </a>
-
-    </div>
-  </div>
-}

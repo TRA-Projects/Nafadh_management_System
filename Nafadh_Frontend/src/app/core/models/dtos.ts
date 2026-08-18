@@ -155,6 +155,11 @@ export interface TrainerBatchDto {
   startDate?: string;
   endDate?: string;
   status: BatchStatus;
+
+  department?: string;
+  enrolledTraineesCount?: number;
+  attendanceRate?: number;
+  progressPercentage?: number;
 }
 
 // ---- Academic structure ----
