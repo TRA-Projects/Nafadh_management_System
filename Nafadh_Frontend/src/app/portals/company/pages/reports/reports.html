@@ -1,4 +1,5 @@
 <div class="reports-page">
+    <!-- Header Section -->
     <header class="reports-header">
         <div class="header-right">
             <h1>التقارير والإحصائيات</h1>
@@ -37,6 +38,7 @@
         </div>
     </header>
 
+    <!-- Main Content States -->
     @if (loading()) {
         <div class="loading-card">جاري تحميل البيانات...</div>
     } @else if (errorMessage()) {
