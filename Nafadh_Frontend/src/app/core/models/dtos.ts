@@ -12,7 +12,7 @@ import {
   SubmissionStatus, SupportTicketStatus, TaskPriority, TaskStatus, TraineeStatus, TrainerStatus,
   VerificationStatus, WarningLevel, WarningScope, WarningStatus, WarningType,
 } from './enums';
-
+// ---- DTOs ----
 // ---- Auth ----
 export interface LoginResponseDto {
   token: string;
