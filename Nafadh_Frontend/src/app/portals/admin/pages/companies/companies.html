@@ -1,137 +1,205 @@
-<div class="companies-container">
-  <!-- رأس الصفحة وأزرار التحكم والتصفية -->
-  <div class="header-section">
-    <div class="title-group">
-      <h2>الشركات المستضيفة</h2>
-      <p>إدارة الشركات وتفاصيل الاستضافة والطلبات المقدمة</p>
+<div class="container-fluid py-3" dir="rtl">
+
+  <!-- رأس الصفحة وزر الإضافة في أقصى اليسار -->
+  <div class="header-container mb-4">
+    <div class="title-section">
+      <h2 class="nfd-page-title mb-1">الشركات المستضيفة</h2>
+      <p class="nfd-page-sub text-muted m-0">الشركات المعتمدة والطاقة الاستيعابية والأداء</p>
     </div>
-    <button class="btn-add" (click)="addNewCompany()">
-      <i class="fa-solid fa-plus"></i> إضافة شركة مستضيفة
+
+    <!-- open the add-company modal -->
+    <button class="btn add-company-btn shadow-sm" (click)="openAddModal()">
+      <span class="plus-icon">+</span>
+      <span>إضافة شركة</span>
     </button>
   </div>
 
-  <!-- تصفية حسب الحالة -->
-  <div class="filters-bar">
-    <button [class.active]="currentFilter === 'all'" (click)="filterStatus('all')">الكل</button>
-    <button [class.active]="currentFilter === 'approved'" (click)="filterStatus('approved')">المعتمدة</button>
-    <button [class.active]="currentFilter === 'pending'" (click)="filterStatus('pending')">قيد المراجعة</button>
-    <button [class.active]="currentFilter === 'rejected'" (click)="filterStatus('rejected')">الموقوفة</button>
-  </div>
+  <div class="nfd-card card border-0 shadow-sm rounded-4 p-3 bg-white">
+    <!-- أزرار الفلتر -->
+    <div class="nfd-chips d-flex gap-2 mb-3 flex-wrap">
+      @for (s of ['الكل','PendingApproval','Approved','Suspended']; track s) {
+        <button class="filter-btn"
+                [class.active]="statusFilter() === s"
+                (click)="setFilter(s)">
+          @if (s === 'الكل') { الكل }
+          @else if (s === 'PendingApproval') { قيد المراجعة }
+          @else if (s === 'Approved') { معتمدة }
+          @else if (s === 'Suspended') { موقوفة }
+        </button>
+      }
+    </div>
 
-  <!-- جدول عرض الشركات -->
-  <div class="table-responsive">
-    <table class="companies-table">
-      <thead>
-        <tr>
-          <th>اسم الشركة</th>
-          <th>المجال</th>
-          <th>المدينة</th>
-          <th>الطاقة / الحاليون</th>
-          <th>التقييم</th>
-          <th>الحالة</th>
-          <th style="text-align: center;">الإجراءات</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let company of companiesList">
-          <td>
-            <div class="company-info">
-              <div class="company-avatar">{{ company.initials }}</div>
-              <span class="company-name">{{ company.companyName }}</span>
-            </div>
-          </td>
-          <td>{{ company.workField }}</td>
-          <td>{{ company.address }}</td>
-          <td>
-            <div class="capacity-cell">
-              <span class="capacity-text">{{ company.currentLoad }}/{{ company.capacity }}</span>
-              <div class="progress-bar-container">
-                <div class="progress-bar-fill" [style.width.%]="(company.currentLoad / company.capacity) * 100"></div>
-              </div>
-            </div>
-          </td>
-          <td>
-            <div class="rating-cell" *ngIf="company.rating; else noRating">
-              <i class="fa-solid fa-star"></i> {{ company.rating }}
-            </div>
-            <ng-template #noRating><span class="no-rating">-</span></ng-template>
-          </td>
-          <td>
-            <span class="status-badge" [ngClass]="company.status">{{ company.statusText }}</span>
-          </td>
-          <td style="text-align: center;">
-            <button class="action-btn" (click)="viewCompany(company)" title="عرض التفاصيل"><i class="fa-solid fa-eye"></i></button>
-            <button class="action-btn" (click)="editCompany(company)" title="تعديل"><i class="fa-solid fa-pen"></i></button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- نافذة إضافة شركة جديدة (Modal) -->
-  <div class="modal-overlay" *ngIf="isAddModalOpen">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>إضافة شركة مستضيفة</h3>
-        <button class="close-btn" (click)="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-
-      <div class="modal-body">
-        <div class="form-group">
-          <label>اسم الشركة *</label>
-          <input type="text" [(ngModel)]="newCompany.name" placeholder="أدخل اسم الشركة">
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>المجال *</label>
-            <select [(ngModel)]="newCompany.field">
-              <option *ngFor="let field of availableFields" [value]="field">{{ field }}</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>المدينة *</label>
-            <input type="text" [(ngModel)]="newCompany.city" placeholder="مسقط، صلالة، ...">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>الطاقة الاستيعابية *</label>
-            <input type="number" [(ngModel)]="newCompany.maxCapacity" placeholder="0">
-          </div>
-          <div class="form-group">
-            <label>الحالة *</label>
-            <select [(ngModel)]="newCompany.statusText">
-              <option value="معتمدة">معتمدة</option>
-              <option value="قيد المراجعة">قيد المراجعة</option>
-              <option value="موقوفة">موقوفة</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>اسم جهة الاتصال</label>
-          <input type="text" [(ngModel)]="newCompany.contactName" placeholder="اسم المسؤول">
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>البريد الإلكتروني</label>
-            <input type="email" [(ngModel)]="newCompany.email" placeholder="example@company.om">
-            <small class="error-text" *ngIf="emailError">البريد الإلكتروني غير صالح</small>
-          </div>
-          <div class="form-group">
-            <label>رقم الجوال</label>
-            <input type="text" [(ngModel)]="newCompany.phone" placeholder="9xxxxxxx">
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn-cancel" (click)="closeModal()">إلغاء</button>
-        <button class="btn-submit" (click)="submitNewCompany()">إضافة الشركة</button>
-      </div>
+    <!-- الجدول -->
+    <div class="table-responsive">
+      <table class="nfd-table table align-middle mb-0 text-end">
+        <thead class="table-light text-muted small border-bottom">
+          <tr>
+            <th class="py-3 px-3">الشركة</th>
+            <th class="py-3">المجال</th>
+            <th class="py-3">الطاقة</th>
+            <th class="py-3">الحالة</th>
+            <th class="py-3 text-center">الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of filtered(); track c.companyId) {
+            <tr class="border-bottom">
+              <td class="py-3 px-3"><strong>{{ c.companyName }}</strong></td>
+              <td class="text-secondary">{{ c.workField }}</td>
+              <td class="text-secondary">{{ c.capacity }}</td>
+              <td>
+                <span class="nfd-badge px-3 py-2 rounded-pill fw-normal"
+                      [ngStyle]="{
+                        'background': c.status === 'Approved' ? 'var(--status-active-bg, #e8f5e9)' : c.status === 'PendingApproval' ? 'var(--status-pending-bg, #fff8e1)' : 'var(--status-danger-bg, #ffebee)',
+                        'color': c.status === 'Approved' ? 'var(--status-active-fg, #2e7d32)' : c.status === 'PendingApproval' ? 'var(--status-pending-fg, #f57c00)' : 'var(--status-danger-fg, #c62828)'
+                      }">
+                  @if (c.status === 'Approved') { معتمدة }
+                  @else if (c.status === 'PendingApproval') { قيد المراجعة }
+                  @else if (c.status === 'Suspended') { موقوفة }
+                  @else { {{ c.status }} }
+                </span>
+              </td>
+              <td class="text-center">
+                <div class="d-flex justify-content-center gap-2">
+                  @if (c.status === 'PendingApproval') {
+                    <button class="nfd-btn secondary btn btn-sm btn-outline-success px-3" (click)="approve(c)">اعتماد</button>
+                  }
+                  @if (c.status === 'Approved') {
+                    <button class="nfd-btn ghost btn btn-sm btn-outline-danger px-3" (click)="suspend(c)">إيقاف</button>
+                  }
+                  <button class="btn btn-sm btn-light text-primary border-0 shadow-sm" title="عرض" (click)="viewCompany(c)">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-light text-secondary border-0 shadow-sm" title="تعديل" (click)="editCompany(c)">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   </div>
+
+  <!-- ===== Add Company Modal ===== -->
+  @if (showAddModal()) {
+    <div class="nfd-modal-overlay" (click)="closeAddModal()">
+      <!-- stop click from bubbling to overlay so clicking inside doesn't close it -->
+      <div class="nfd-modal-card" (click)="$event.stopPropagation()">
+
+        <div class="nfd-modal-header">
+          <h5 class="m-0">إضافة شركة مستضيفة</h5>
+          <button type="button" class="nfd-modal-close" (click)="closeAddModal()">&times;</button>
+        </div>
+
+        <form (ngSubmit)="submitAddCompany()" #addForm="ngForm" (click)="closeAllDropdowns()">
+
+          <div class="nfd-modal-section-title">بيانات الشركة</div>
+
+          <div class="nfd-field">
+            <label>اسم الشركة <span class="req">*</span></label>
+            <input type="text" class="form-control" placeholder="اسم الشركة الكامل"
+                   name="companyName" [(ngModel)]="newCompany.companyName" required />
+          </div>
+
+          <div class="nfd-field-row">
+            <!-- custom dropdown for المجال instead of free text -->
+            <div class="nfd-field nfd-dropdown-wrap">
+              <label>المجال <span class="req">*</span></label>
+              <div class="nfd-select-input" [class.open]="workFieldDropdownOpen()"
+                   (click)="toggleWorkFieldDropdown($event)">
+                <span [class.placeholder]="!newCompany.workField">
+                  {{ newCompany.workField || 'اختر المجال' }}
+                </span>
+                <i class="bi bi-chevron-down nfd-select-caret"></i>
+              </div>
+
+              @if (workFieldDropdownOpen()) {
+                <div class="nfd-select-list">
+                  @for (opt of workFieldOptions; track opt) {
+                    <div class="nfd-select-item" [class.selected]="opt === newCompany.workField"
+                         (click)="selectWorkField(opt, $event)">
+                      {{ opt }}
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- keeps the value tracked by ngForm for required validation -->
+              <input type="hidden" name="workField" [(ngModel)]="newCompany.workField" required />
+            </div>
+
+            <div class="nfd-field">
+              <label>الطاقة الاستيعابية <span class="req">*</span></label>
+              <input type="number" class="form-control" min="0" placeholder="0"
+                     name="capacity" [(ngModel)]="newCompany.capacity" required />
+            </div>
+          </div>
+
+          <div class="nfd-field nfd-dropdown-wrap">
+            <label>الحالة</label>
+            <div class="nfd-select-input" [class.open]="statusDropdownOpen()"
+                 (click)="toggleStatusDropdown($event)">
+              <span>{{ statusLabel(newCompany.status) }}</span>
+              <i class="bi bi-chevron-down nfd-select-caret"></i>
+            </div>
+
+            @if (statusDropdownOpen()) {
+              <div class="nfd-select-list">
+                @for (opt of statusOptions; track opt.value) {
+                  <div class="nfd-select-item" [class.selected]="opt.value === newCompany.status"
+                       (click)="selectStatus(opt.value, $event)">
+                    {{ opt.label }}
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- keeps the value tracked by ngForm -->
+            <input type="hidden" name="status" [(ngModel)]="newCompany.status" required />
+          </div>
+
+          <div class="nfd-modal-section-title">بيانات التواصل</div>
+
+          <!-- optional free-text field, not tied to any backend validation -->
+          <div class="nfd-field">
+            <label>اسم جهة الاتصال</label>
+            <input type="text" class="form-control" placeholder="الاسم الكامل"
+                   name="contactName" [(ngModel)]="newCompany.contactName" />
+          </div>
+
+          <div class="nfd-field-row">
+            <div class="nfd-field">
+              <label>البريد الإلكتروني</label>
+              <input type="email" class="form-control" placeholder="name@company.om"
+                     [class.is-invalid]="emailModel.invalid && (emailModel.dirty || emailModel.touched)"
+                     name="email" email [(ngModel)]="newCompany.email" #emailModel="ngModel" />
+              @if (emailModel.invalid && (emailModel.dirty || emailModel.touched)) {
+                <div class="nfd-field-error">صيغة البريد الإلكتروني غير صحيحة</div>
+              }
+            </div>
+            <div class="nfd-field">
+              <label>رقم الجوال</label>
+              <input type="text" class="form-control" placeholder="+968 XXXX XXXX"
+                     name="phone" [(ngModel)]="newCompany.phone" />
+            </div>
+          </div>
+
+          @if (addError()) {
+            <div class="nfd-modal-error">{{ addError() }}</div>
+          }
+
+          <div class="nfd-modal-actions">
+            <button type="submit" class="btn nfd-submit-btn" [disabled]="!addForm.valid || isSaving()">
+              {{ isSaving() ? 'جارٍ الإضافة...' : 'إضافة الشركة' }}
+            </button>
+            <button type="button" class="btn nfd-cancel-btn" (click)="closeAddModal()">إلغاء</button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  }
+
 </div>
