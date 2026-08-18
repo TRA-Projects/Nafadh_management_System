@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, signal } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
@@ -12,7 +12,7 @@ import Chart, { TooltipItem } from 'chart.js/auto';
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
-export class AdminDashboard implements OnInit, AfterViewInit {
+export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   recentActivity = signal<AuditLogDto[]>([]);
   charts = signal<DashboardChartsDto | null>(null);
   traineeCount = signal(3891);
@@ -29,11 +29,20 @@ export class AdminDashboard implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit() {
-    this.api.getRecentAudit().subscribe((data) => this.recentActivity.set((data || []).slice(0, 10)));
+    this.api.getRecentAudit().subscribe((data) => {
+      const sorted = (data || []).sort((a: any, b: any) => {
+        const timeA = new Date(a.timestamp ?? a.createdAt ?? 0).getTime();
+        const timeB = new Date(b.timestamp ?? b.createdAt ?? 0).getTime();
+        return timeB - timeA;
+      });
+      this.recentActivity.set(sorted.slice(0, 10));
+    });
+
     this.api.getDashboardCharts().subscribe((c) => {
       this.charts.set(c);
       this.updateBarChartData(c);
     });
+
     this.api.getTrainees({ pageSize: 1 }).subscribe((r) => this.traineeCount.set(r.totalCount ?? 3891));
     this.api.getCompanies().subscribe((c) => this.companyCount.set(c.length || 94));
     this.api.getBatches().subscribe((b) => this.batchCount.set(b.length || 32));
@@ -42,6 +51,11 @@ export class AdminDashboard implements OnInit, AfterViewInit {
   ngAfterViewInit() {
     this.initBarChart();
     this.initDonutChart();
+  }
+
+  ngOnDestroy() {
+    if (this.barChartInstance) this.barChartInstance.destroy();
+    if (this.donutChartInstance) this.donutChartInstance.destroy();
   }
 
   onBatchChange(event: Event) {
@@ -60,10 +74,6 @@ export class AdminDashboard implements OnInit, AfterViewInit {
 
   goToProgramsList() {
     this.router.navigate(['/admin/programs']);
-  }
-
-  viewAllActivities() {
-    this.router.navigate(['/admin/activities']);
   }
 
   private initBarChart() {
@@ -126,15 +136,8 @@ export class AdminDashboard implements OnInit, AfterViewInit {
             cornerRadius: 10,
             displayColors: false,
             callbacks: {
-              // إضافة النوع TooltipItem<'bar'>[] هنا
-              title: (tooltipItems: TooltipItem<'bar'>[]) => {
-                return tooltipItems[0].label;
-              },
-              // إضافة النوع TooltipItem<'bar'> هنا
-              label: (context: TooltipItem<'bar'>) => {
-                const value = context.raw || 0;
-                return `عدد الدفعات : ${value}`;
-              }
+              title: (tooltipItems: TooltipItem<'bar'>[]) => tooltipItems[0].label,
+              label: (context: TooltipItem<'bar'>) => `عدد الدفعات : ${context.raw || 0}`
             }
           }
         },
@@ -172,12 +175,19 @@ export class AdminDashboard implements OnInit, AfterViewInit {
         plugins: {
           legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16 } },
           tooltip: {
+            enabled: true,
+            backgroundColor: '#ffffff',
+            borderColor: '#e2e8f0',
+            borderWidth: 1,
+            cornerRadius: 8,
+            padding: { top: 8, bottom: 8, left: 12, right: 12 },
+            displayColors: false,
             callbacks: {
-              // إضافة النوع TooltipItem<'doughnut'> هنا
-              label: (context: TooltipItem<'doughnut'>) => {
-                const label = context.label || '';
-                const value = context.raw || 0;
-                return ` ${label} : ${value} متدرب`;
+              title: () => '',
+              label: (context: TooltipItem<'doughnut'>) => `${context.label || ''} : ${context.raw || 0} متدرب`,
+              labelTextColor: (context: TooltipItem<'doughnut'>) => {
+                const colors = context.dataset.backgroundColor as string[];
+                return colors[context.dataIndex];
               }
             }
           }
@@ -203,5 +213,24 @@ export class AdminDashboard implements OnInit, AfterViewInit {
     };
     this.donutChartInstance.data.datasets[0].data = dummyData[batchId] || [20, 20, 20, 20, 20];
     this.donutChartInstance.update();
+  }
+
+  getActivityClass(action?: string, entityName?: string): string {
+    const act = (action || '').toLowerCase();
+    const entity = (entityName || '').toLowerCase();
+
+    if (act.includes('إنذار') || act.includes('انذار') || entity.includes('warning')) {
+      return 'warning';
+    }
+    if (act.includes('حضور') || act.includes('غياب') || entity.includes('attendance')) {
+      return 'attendance';
+    }
+    if (act.includes('شهادة') || entity.includes('certificate')) {
+      return 'certificate';
+    }
+    if (act.includes('شركة') || entity.includes('company')) {
+      return 'company';
+    }
+    return 'account';
   }
 }

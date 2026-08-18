@@ -11,7 +11,12 @@
   position: relative;
   height: 200px;
   border-radius: 12px;
-  background-image: url('../../../../../assets/images/hero-bg.jpg.jpg'); 
+  background-image: linear-gradient(
+      135deg,
+      rgba(15, 23, 42, 0.70) 0%,
+      rgba(15, 23, 42, 0.35) 100%
+    ), 
+    url('../../../../../assets/images/hero-bg.jpg.jpg');
   background-size: cover;
   background-position: center 40%;
   background-repeat: no-repeat;
@@ -22,13 +27,6 @@
   justify-content: flex-start;
   padding: 24px 32px;
   border: 1px solid #e2e8f0;
-}
-
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.35);
-  z-index: 1;
 }
 
 .hero-content {
@@ -85,7 +83,6 @@
   direction: rtl;
 }
 
-/* التفاعل لكارد المتدربين القابل للضغط */
 .clickable-card {
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -221,38 +218,22 @@
   margin-bottom: 16px;
 }
 
-.btn-link {
-  background: none;
-  border: none;
-  color: #2563eb;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: none;
-  padding: 0;
-  transition: color 0.2s ease;
-}
-
-.btn-link:hover {
-  color: #1d4ed8;
-  text-decoration: underline;
-}
-
 .activity-list {
   display: flex;
   flex-direction: column;
 }
 
+/* 1. الخط الفاصل بأسود صريح غامق */
 .activity-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px 0;
-  border-bottom: 1px solid #000000;
+  border-bottom: 1px solid #000000 !important;
 }
 
 .activity-item:last-child {
-  border-bottom: none;
+  border-bottom: none !important;
 }
 
 .activity-content {
@@ -271,20 +252,27 @@
   gap: 8px;
 }
 
+/* 2. النقاط الملونة وتحديد الألوان بحسب نوع النشاط */
 .status-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background-color: #10b981;
+  background-color: #64748b; /* لون افتراضي */
   display: inline-block;
   flex-shrink: 0;
 }
+
+.status-dot.warning     { background-color: #ef4444 !important; } /* أحمر: إنذار */
+.status-dot.attendance  { background-color: #3b82f6 !important; } /* أزرق: حضور/غياب */
+.status-dot.certificate { background-color: #10b981 !important; } /* أخضر: شهادات */
+.status-dot.company     { background-color: #8b5cf6 !important; } /* بنفسجي: شركات */
+.status-dot.account     { background-color: #f59e0b !important; } /* برتقالي: حسابات وتقييمات */
 
 .activity-meta {
   font-size: 12px;
   color: #94a3b8;
   margin-top: 3px;
-  padding-right: 15px;
+  padding-right: 16px;
 }
 
 .activity-time {

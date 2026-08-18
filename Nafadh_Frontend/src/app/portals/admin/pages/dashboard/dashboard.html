@@ -106,7 +106,6 @@
   <div class="activity-card"> 
     <div class="activity-header"> 
       <h3 class="chart-title">سجل الأنشطة الأخيرة</h3> 
-      <button type="button" class="btn-link" (click)="viewAllActivities()">عرض الكل</button> 
     </div> 
 
     <div class="activity-list"> 
@@ -115,7 +114,8 @@
           <!-- جهة اليمين: النقطة الملونة، العنوان والوصف -->
           <div class="activity-content"> 
             <div class="activity-action-title"> 
-              <span class="status-dot"></span> 
+              <!-- ربط كلاس النقطة الملونة ديناميكياً بناءً على نوع الحدث -->
+              <span class="status-dot" [ngClass]="getActivityClass(item.action, item.entityName)"></span> 
               <span>{{ item.action }}</span> 
             </div> 
             <div class="activity-meta"> 
@@ -129,6 +129,7 @@
           </div> 
         </div> 
       } 
+      
       @empty { 
         <div class="empty-state">لا يوجد نشاط بعد</div> 
       } 
