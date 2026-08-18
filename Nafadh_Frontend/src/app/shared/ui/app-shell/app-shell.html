@@ -12,11 +12,8 @@
       <input class="search-input" placeholder="ابحث..." />
     </div>
 
-    // Actions (left / RTL end) -->
     <!-- Actions (left / RTL end) -->
     <div class="actions">
-      <button class="icon-btn" (click)="toggleDark()" title="الوضع الداكن"><nfd-icon [name]="dark() ? 'sun' : 'moon'" /></button>
-      <button class="lang-btn" (click)="toggleLang()">{{ lang() === 'ar' ? 'EN' : 'عربي' }}</button>
       <button class="icon-btn" (click)="accessOpen.set(!accessOpen())" title="أدوات التسهيل"><nfd-icon name="access" /></button>
 
       <div class="notif-wrap">
@@ -62,6 +59,12 @@
   <main class="content">
     <router-outlet />
   </main>
+
+  @if (showBackToTop()) {
+    <button class="back-to-top" (click)="scrollToTop()" title="الرجوع لأعلى الصفحة" aria-label="الرجوع لأعلى الصفحة">
+      <nfd-icon name="arrow-up" size="sm" />
+    </button>
+  }
 
   @if (accessOpen()) {
     <div class="access-panel">

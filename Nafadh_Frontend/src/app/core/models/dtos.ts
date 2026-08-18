@@ -12,7 +12,7 @@ import {
   SubmissionStatus, SupportTicketStatus, TaskPriority, TaskStatus, TraineeStatus, TrainerStatus,
   VerificationStatus, WarningLevel, WarningScope, WarningStatus, WarningType,
 } from './enums';
-// ---- DTOs ----
+
 // ---- Auth ----
 export interface LoginResponseDto {
   token: string;
@@ -118,14 +118,12 @@ export interface CompanyBranchDto {
 }
 
 export interface CompanySupervisorDto {
-  supervisorId: number;
-  id?: number;
+  id: number;
   fullName?: string;
   email?: string;
-  phone?: string;
   department?: string;
   position?: string;
-  status?: string;
+  status: string;
   userId: number;
   companyId: number;
 }
@@ -252,6 +250,12 @@ export interface EnrollmentDto {
   departmentName?: string;
   supervisorId?: number;
   supervisorName?: string;
+
+  traineeGitHubUrl?: string;
+  programTitle?: string;
+  programDescription?: string;
+  trackName?: string;
+  trackDescription?: string;
 }
 
 export interface ProgressSummaryDto {

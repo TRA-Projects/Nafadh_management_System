@@ -10,7 +10,7 @@
   background: var(--color-bg);
   position: relative;
 }
-// The header sits on the physical TOP (matching the reference exactly), with
+
 .topbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 50;
   height: var(--header-height);
@@ -125,6 +125,33 @@ nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 4px;
       &.active { background: var(--color-navy); color: #fff; border-color: var(--color-navy); } } }
 }
 
+// Back-to-top button — fixed to the bottom-left of the viewport (content
+// side, not the sidebar side) so it's reachable no matter how far the
+// page has been scrolled, no mouse-drag on the scrollbar required.
+.back-to-top {
+  position: fixed;
+  bottom: 28px;
+  left: 28px;
+  z-index: 55;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--color-navy);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.22);
+  animation: back-to-top-in .18s ease-out;
+  transition: background .15s, transform .15s;
+
+  &:hover { background: var(--color-brand); transform: translateY(-2px); }
+  &:active { transform: translateY(0); }
+}
+
+@keyframes back-to-top-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @media (max-width: 900px) {
   .search-wrap { display: none; }
+  .back-to-top { left: 16px; bottom: 16px; }
 }

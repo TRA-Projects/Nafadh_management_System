@@ -16,7 +16,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 input, select, textarea { font-family: inherit; }
 
 // ===== Unified component classes — used identically by all 4 portals =====
-//
+
 .nfd-card {
   @include card;
   padding: 20px;
@@ -165,3 +165,4 @@ input, select, textarea { font-family: inherit; }
 }
 .nfd-hero-greeting h1 { font-size: 22px; margin: 0 0 6px; color: #fff; }
 .nfd-hero-greeting p { font-size: 13px; opacity: .85; margin: 0 0 10px; }
+
