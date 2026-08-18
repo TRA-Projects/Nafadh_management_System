@@ -57,4 +57,5 @@ export class TrainerContent {
     this.showRefModal.set(false);
     this.refLink = '';
   }
+  showArchiveModal = signal(false);
 }

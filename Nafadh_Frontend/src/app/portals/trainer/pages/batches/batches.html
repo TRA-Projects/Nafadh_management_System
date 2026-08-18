@@ -1,68 +1,235 @@
-<div style="display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 20px !important; width: 100% !important;">
-      @for (b of batches(); track b.batchId; let i = $index) {
-        <div style="background: #ffffff !important; border: 1px solid #e2e8f0 !important; border-radius: 16px !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;">
-          
-          <!-- بانر الكارد العلوي مع صور مختلفة كليا حسب الترتيب -->
-          <div style="position: relative; width: 100%; height: 130px; background: #e2e8f0;">
-            <img [src]="
-              i === 0 ? 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80' :
-              i === 1 ? 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80' :
-              i === 2 ? 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&q=80' :
-              i === 3 ? 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=600&q=80' :
-              'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=600&q=80'" 
-              alt="Batch Banner" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-            
-            <span style="position: absolute; top: 12px; right: 12px; background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
-              {{ b.status || 'نشطة' }}
-            </span>
+@if (selected() === null) {
+  <!-- 🌟 قسم العنوان العلوي لإدارة الدفعات -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 0 4px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 800; color: #0b192c; margin: 0 0 4px 0; display: flex; align-items: center; gap: 10px;">
+        <span>إدارة الدفعات</span>
+        <span style="background: #eff6ff; color: #1e40af; padding: 4px 10px; border-radius: 10px; font-size: 14px;">📅</span>
+      </h1>
+      <p style="font-size: 13px; color: #64748b; margin: 0;">اختر الدفعة للانتقال إلى صفحة الإجراءات والتفاصيل الخاصة بها.</p>
+    </div>
+  </div>
+
+  <!-- 1. شاشة عرض الدفعات الرئيسية -->
+  <div style="display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 20px !important; width: 100% !important;">
+    @for (b of batches(); track b.batchId; let i = $index) {
+      <div style="background: #ffffff !important; border: 1px solid #e2e8f0 !important; border-radius: 16px !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;">
+        
+        <div style="position: relative; width: 100%; height: 130px; background: #e2e8f0;">
+          <img [src]="getBatchImage(i)" alt="Batch Banner" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+          <span style="position: absolute; top: 12px; right: 12px; background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+            {{ b.status || 'نشطة' }}
+          </span>
+        </div>
+
+        <div style="padding: 20px; text-align: center; display: flex; flex-direction: column; flex-grow: 1;">
+          <div style="flex-grow: 1;">
+            <h3 style="font-size: 18px; font-weight: 700; color: #0b192c; margin: 0 0 6px 0;">{{ b.batchName }}</h3>
+            <p style="font-size: 13px; color: #64748b; margin: 0 0 12px 0;">
+              {{ i === 0 ? 'تطوير البرمجيات وتقنية المعلومات' : i === 1 ? 'الأمن السيبراني والشبكات' : i === 2 ? 'الذكاء الاصطناعي وتحليل البيانات' : i === 3 ? 'تصميم واجهات وتجربة المستخدم UX/UI' : 'هندسة البرمجيات المتقدمة' }}
+            </p>
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 20px;">
+              📅 {{ i === 0 ? '01 مايو - 31 يوليو' : i === 1 ? '15 يونيو - 15 سبتمبر' : i === 2 ? '01 أغسطس - 30 أكتوبر' : i === 3 ? '10 مارس - 10 يونيو' : '01 سبتمبر - 30 نوفمبر' }}
+            </div>
           </div>
 
-          <!-- تفاصيل الدفعة -->
-          <div style="padding: 20px; text-align: center; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;">
-            <div>
-              <h3 style="font-size: 18px; font-weight: 700; color: #0b192c; margin: 0 0 6px 0;">{{ b.batchName }}</h3>
-              <p style="font-size: 13px; color: #64748b; margin: 0 0 12px 0;">
-                {{ 
-                  i === 0 ? 'تطوير البرمجيات وتقنية المعلومات' :
-                  i === 1 ? 'الأمن السيبراني والشبكات' :
-                  i === 2 ? 'الذكاء الاصطناعي وتحليل البيانات' :
-                  i === 3 ? 'تصميم واجهات وتجربة المستخدم UX/UI' : 'هندسة البرمجيات المتقدمة'
-                }}
-              </p>
-              <div style="font-size: 12px; color: #64748b; margin-bottom: 20px;">📅 01 مايو - 31 يوليو</div>
-            </div>
-
-            <!-- الإحصائيات مع الدائرة البيانية المتنوعة لكل كارد -->
-            <div style="display: flex; align-items: center; justify-content: space-around; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; padding: 12px 0; margin-bottom: 20px;">
-              
-              <!-- الدائرة البيانية (Progress Circle) -->
-              <div [style.background]="'conic-gradient(#0891b2 ' + (i === 0 ? 75 : i === 1 ? 62 : i === 2 ? 88 : i === 3 ? 54 : 70) + '%, #f1f5f9 0deg)'" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative;">
-                <div style="width: 38px; height: 38px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #0b192c;">
-                  {{ i === 0 ? '75%' : i === 1 ? '62%' : i === 2 ? '88%' : i === 3 ? '54%' : '70%' }}
-                </div>
-              </div>
-
-              <div style="text-align: center;">
-                <strong style="display: block; font-size: 14px; color: #0b192c;">
-                  {{ i === 0 ? '92%' : i === 1 ? '88%': i === 2 ? '96%' : i === 3 ? '90%' : '85%' }}
-                </strong>
-                <span style="font-size: 11px; color: #64748b;">نسبة الحضور</span>
-              </div>
-              <div style="text-align: center;">
-                <strong style="display: block; font-size: 14px; color: #0b192c;">
-                  {{ i === 0 ? '24' : i === 1 ? '19' : i === 2 ? '30' : i === 3 ? '22' : '26' }}
-                </strong>
-                <span style="font-size: 11px; color: #64748b;">متدرب</span>
+          <div style="display: flex; align-items: center; justify-content: space-around; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; padding: 12px 0; margin-bottom: 20px;">
+            <div [style.background]="'conic-gradient(#0891b2 ' + (i === 0 ? 75 : i === 1 ? 62 : i === 2 ? 88 : i === 3 ? 54 : 70) + '%, #f1f5f9 0deg)'" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative;">
+              <div style="width: 38px; height: 38px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #0b192c;">
+                {{ i === 0 ? '75%' : i === 1 ? '62%' : i === 2 ? '88%' : i === 3 ? '54%' : '70%' }}
               </div>
             </div>
+            <div style="text-align: center;">
+              <strong style="display: block; font-size: 14px; color: #0b192c;">{{ i === 0 ? '92%' : i === 1 ? '88%': i === 2 ? '96%' : i === 3 ? '90%' : '85%' }}</strong>
+              <span style="font-size: 11px; color: #64748b;">نسبة الحضور</span>
+            </div>
+            <div style="text-align: center;">
+              <strong style="display: block; font-size: 14px; color: #0b192c;">{{ i === 0 ? '24' : i === 1 ? '19' : i === 2 ? '30' : i === 3 ? '22' : '26' }}</strong>
+              <span style="font-size: 11px; color: #64748b;">متدرب</span>
+            </div>
+          </div>
 
-            <button (click)="select(b)" style="width: 100%; background: #0891b2 !important; color: #fff !important; border-radius: 10px; padding: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; text-align: center;">
-              اختيار الدفعة وفتح الإجراءات
+          <button type="button" (click)="select(b)" style="width: 100%; background: #0891b2 !important; color: #fff !important; border-radius: 10px; padding: 10px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; text-align: center; margin-top: auto;">
+            اختيار الدفعة وفتح الإجراءات
+          </button>
+        </div>
+      </div>
+    }
+    @empty { 
+      <p style="grid-column: span 3; text-align: center; padding: 40px; color: #64748b;">لا توجد دفعات مسندة</p> 
+    }
+  </div>
+} @else {
+  
+  @if (activeSection() === null) {
+    <!-- 2. صفحة إجراءات الدفعة (الكروت الأربعة بالتنسيق المطلوب والـ Hover) -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 30px; box-shadow: 0 4px 16px rgba(0,0,0,0.04);">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px;">
+        <div>
+          <h2 style="font-size: 22px; font-weight: bold; color: #0b192c; margin: 0 0 6px 0;">
+            صفحة إجراءات: {{ selected()?.batchName }}
+          </h2>
+          <p style="font-size: 13px; color: #64748b; margin: 0;">اختر الإجراء الذي تريد القيام به للدفعة المحددة.</p>
+        </div>
+        
+        <button type="button" (click)="back()" style="background: #ffffff; color: #0b192c; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 12px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+          ← العودة إلى قائمة الدفعات
+        </button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px;">
+        
+        <!-- 1. التقييمات (يمين) -->
+        <div (click)="openSection('evaluations')" 
+             style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; transition: all 0.2s ease;"
+             onmouseover="this.style.borderColor='#0284c7'; this.style.boxShadow='0 8px 20px rgba(2, 132, 199, 0.08)';"
+             onmouseout="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+          <div>
+            <div style="width: 44px; height: 44px; background: #faf5ff; color: #7e22ce; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 20px;">📌</div>
+            <h3 style="font-size: 17px; font-weight: 700; color: #0b192c; margin: 0 0 8px 0;">التقييمات</h3>
+            <p style="font-size: 13px; color: #64748b; margin: 0 0 20px 0; line-height: 1.5;">إجراء التقييمات المرحلية والنهائية واعتتماد درجات المتدربين.</p>
+          </div>
+          <div style="color: #0284c7; font-weight: 600; font-size: 16px;">←</div>
+        </div>
+
+        <!-- 2. المهام والمشروعات -->
+        <div (click)="openSection('tasks')" 
+             style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; transition: all 0.2s ease;"
+             onmouseover="this.style.borderColor='#0284c7'; this.style.boxShadow='0 8px 20px rgba(2, 132, 199, 0.08)';"
+             onmouseout="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+          <div>
+            <div style="width: 44px; height: 44px; background: #fff7ed; color: #c2410c; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 20px;">📋</div>
+            <h3 style="font-size: 17px; font-weight: 700; color: #0b192c; margin: 0 0 8px 0;">المهام والمشروعات</h3>
+            <p style="font-size: 13px; color: #64748b; margin: 0 0 20px 0; line-height: 1.5;">إنشاء الواجبات والمشاريع، تحديد معايير التقييم ومراجعة التسليمات.</p>
+          </div>
+          <div style="color: #0284c7; font-weight: 600; font-size: 16px;">←</div>
+        </div>
+
+   <!-- 3. إدارة المحتوى -->
+        <div (click)="openSection('content')" 
+             style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; transition: all 0.2s ease;"
+             onmouseover="this.style.borderColor='#0284c7'; this.style.boxShadow='0 8px 20px rgba(2, 132, 199, 0.08)';"
+             onmouseout="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+          <div>
+            <div style="width: 44px; height: 44px; background: #eff6ff; color: #2563eb; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 20px;">📁</div>
+            <h3 style="font-size: 17px; font-weight: 700; color: #0b192c; margin: 0 0 8px 0;">إدارة المحتوى</h3>
+            <p style="font-size: 13px; color: #64748b; margin: 0 0 20px 0; line-height: 1.5;">رفع وتعديل الدروس، الملفات، الروابط وتحديد تواريخ إتاحة المحتوى.</p>
+          </div>
+          <div style="color: #0284c7; font-weight: 600; font-size: 16px;">←</div>
+        </div>
+
+        <!-- 4. عرض المتدربين (يسار) -->
+        <div (click)="openSection('trainees')" 
+             style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; transition: all 0.2s ease;"
+             onmouseover="this.style.borderColor='#0284c7'; this.style.boxShadow='0 8px 20px rgba(2, 132, 199, 0.08)';"
+             onmouseout="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+          <div>
+            <div style="width: 44px; height: 44px; background: #f0fdf4; color: #16a34a; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 20px;">👥</div>
+            <h3 style="font-size: 17px; font-weight: 700; color: #0b192c; margin: 0 0 8px 0;">عرض المتدربين</h3>
+            <p style="font-size: 13px; color: #64748b; margin: 0 0 20px 0; line-height: 1.5;">متابعة أداء المتدربين للدفعة، الحضور، وتفاصيل تقدمهم الفني.</p>
+          </div>
+          <div style="color: #0284c7; font-weight: 600; font-size: 16px;">←</div>
+        </div>
+
+      </div>
+    </div>
+  } @else {
+    
+    <!-- 3. شاشة القسم الفرعي -->
+    @if (activeSection() === 'content') {
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 30px; box-shadow: 0 4px 16px rgba(0,0,0,0.04);">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px;">
+          <div style="display: flex; gap: 12px;">
+            <button type="button" style="background: #0284c7; color: #fff; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              + إنشاء وحدة / درس
+            </button>
+            <button type="button" style="background: #ffffff; color: #334155; border: 1px solid #cbd5e1; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              📁 أرشيف المواد
             </button>
           </div>
+          
+          <div style="text-align: right;">
+            <h2 style="font-size: 22px; font-weight: bold; color: #0b192c; margin: 0 0 4px 0; display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+              <span>إدارة المحتوى</span> 📁
+            </h2>
+            <p style="font-size: 13px; color: #64748b; margin: 0;">إنشاء الوحدات والدروس ورفع الملفات والفيديوهات ومشاركة الروابط والمراجع.</p>
+          </div>
         </div>
-      }
-      @empty { 
-        <p style="grid-column: span 3; text-align: center; padding: 40px; color: #64748b;">لا توجد دفعات مسندة</p> 
-      }
-    </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px;">
+          
+          <!-- الكارت 1: الروابط والمراجع -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="height: 140px; background: #e2e8f0;">
+              <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80" alt="Links" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div style="padding: 20px; text-align: right;">
+              <div style="display: flex; justify-content: flex-end; margin-bottom: 10px; color: #0284c7; font-size: 20px;">🔗</div>
+              <h3 style="font-size: 18px; font-weight: 700; color: #0b192c; margin: 0 0 8px 0;">الروابط والمراجع</h3>
+              <p style="font-size: 12px; color: #64748b; margin: 0 0 4px 0;">• مشاركة الروابط والمراجع</p>
+              <p style="font-size: 12px; color: #64748b; margin: 0 0 20px 0;">• إضافة مصادر تعليمية</p>
+              <button type="button" style="width: 100%; background: #ffffff; color: #0284c7; border: 1px solid #bae6fd; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer;">
+                + إضافة مرجع
+              </button>
+            </div>
+          </div>
+
+          <!-- الكارت 2: الملفات والفيديوهات -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="height: 140px; background: #e2e8f0;">
+              <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80" alt="Files" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div style="padding: 20px; text-align: right;">
+              <div style="display: flex; justify-content: flex-end; margin-bottom: 10px; color: #0284c7; font-size: 20px;">💻</div>
+              <h3 style="font-size: 18px; font-weight: 700; color: #0b192c; margin: 0 0 8px 0;">الملفات والفيديوهات</h3>
+              <p style="font-size: 12px; color: #64748b; margin: 0 0 4px 0;">• رفع الملفات والفيديوهات</p>
+              <p style="font-size: 12px; color: #64748b; margin: 0 0 20px 0;">• إدارة مواد الدرس</p>
+              <button type="button" style="width: 100%; background: #ffffff; color: #0284c7; border: 1px solid #bae6fd; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer;">
+                ⬆️ رفع ماده
+              </button>
+            </div>
+          </div>
+
+          <!-- الكارت 3: الوحدات والدروس -->
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="height: 140px; background: #e2e8f0;">
+              <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&q=80" alt="Units" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div style="padding: 20px; text-align: right;">
+              <div style="display: flex; justify-content: flex-end; margin-bottom: 10px; color: #0284c7; font-size: 20px;">📖</div>
+              <h3 style="font-size: 18px; font-weight: 700; color: #0b192c; margin: 0 0 8px 0;">الوحدات والدروس</h3>
+              <p style="font-size: 12px; color: #64748b; margin: 0 0 4px 0;">• إنشاء الوحدات والدروس</p>
+              <p style="font-size: 12px; color: #64748b; margin: 0 0 20px 0;">• تحديد متطلبات كل وحدة</p>
+              <button type="button" style="width: 100%; background: #ffffff; color: #0284c7; border: 1px solid #bae6fd; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer;">
+                + إنشاء محتوى
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="margin-top: 30px; text-align: left;">
+          <button type="button" (click)="back()" style="background: #e2e8f0; color: #1e293b; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600;">
+            ← العودة لصفحة الإجراءات
+          </button>
+        </div>
+
+      </div>
+    } @else {
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 30px; box-shadow: 0 4px 16px rgba(0,0,0,0.04);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
+          <h2 style="font-size: 20px; font-weight: bold; color: #0b192c; margin: 0;">
+            {{ activeSection() === 'trainees' ? 'عرض المتدربين' : activeSection() === 'tasks' ? 'المهام والمشروعات' : 'التقييمات' }}
+            - {{ selected()?.batchName }}
+          </h2>
+          <button type="button" (click)="back()" style="background: #e2e8f0; color: #1e293b; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+            ← العودة لصفحة الإجراءات
+          </button>
+        </div>
+        <p style="color: #64748b;">جاري عرض محتوى هذا القسم...</p>
+      </div>
+    }
+  }
+}

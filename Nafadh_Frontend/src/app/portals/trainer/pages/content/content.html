@@ -1,39 +1,122 @@
-<h2 class="nfd-page-title">إدارة المحتوى</h2>
-<p class="nfd-page-sub">إنشاء الوحدات والدروس ورفع الملفات والفيديوهات ومشاركة الروابط والمراجع</p>
+<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 30px; box-shadow: 0 4px 16px rgba(0,0,0,0.04);">
+        
+  <!-- الهيدر العلوي -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px;">
+    
+    <!-- الجهة اليمنى: عنوان الصفحة والشرح -->
+    <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+      <div>
+        <h2 style="font-size: 22px; font-weight: bold; color: #0b192c; margin: 0 0 4px 300px; display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+          <span>إدارة المحتوى📁</span> 
+        </h2>
+        <p style="font-size: 13px; color: #64748b; margin: 0;">إنشاء الوحدات والدروس ورفع الملفات والفيديوهات ومشاركة الروابط والمراجع.</p>
+      </div>
+    </div>
 
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
-  <div class="nfd-card">
-    <div style="font-size:26px;margin-bottom:8px">📗</div>
-    <strong style="display:block;margin-bottom:8px;color:var(--color-navy)">الوحدات والدروس</strong>
-    <ul style="margin:0 0 12px;padding-inline-start:18px;font-size:12px;color:var(--color-text-secondary)"><li>إنشاء الوحدات والدروس</li><li>تحديد متطلبات كل وحدة</li></ul>
-    <button class="nfd-btn ghost" (click)="showModal.set(true)">+ إنشاء محتوى</button>
+    <!-- الجهة اليسرى: الأزرار -->
+    <div style="display: flex; gap: 12px;">
+      <button type="button" class="nfd-btn primary" (click)="showModal.set(true)" style="background: #0284c7; color: #fff; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s;">
+        + إنشاء وحدة / درس
+      </button>
+      <!-- زر أرشيف المواد مع ربطه بفتح النافذة -->
+      <button type="button" (click)="showArchiveModal.set(true)" style="background: #ffffff; color: #334155; border: 1px solid #cbd5e1; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s;">
+        📁 أرشيف المواد
+      </button>
+    </div>
+
   </div>
-  <div class="nfd-card">
-    <div style="font-size:26px;margin-bottom:8px">🎬</div>
-    <strong style="display:block;margin-bottom:8px;color:var(--color-navy)">الملفات والفيديوهات</strong>
-    <ul style="margin:0 0 12px;padding-inline-start:18px;font-size:12px;color:var(--color-text-secondary)"><li>رفع الملفات والفيديوهات</li><li>إدارة مواد الدرس</li></ul>
-    <button class="nfd-btn ghost" (click)="showFileModal.set(true)">⬆ رفع مادة</button>
+
+  <!-- شبكة الكروت الثلاثة -->
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px;">
+    
+    <!-- 1. الوحدات والدروس -->
+    <div class="content-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease;">
+      <div style="height: 140px; background: #e2e8f0; overflow: hidden;">
+        <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&q=80" alt="Units" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
+      </div>
+      <div style="padding: 20px; text-align: right;">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px; color: #0284c7; font-size: 20px;">📖</div>
+        <h3 style="font-size: 18px; font-weight: 700; color: #0b192c; margin: 0 0 8px 0;">الوحدات والدروس</h3>
+        <ul style="margin: 0 0 20px 0; padding-inline-start: 18px; font-size: 12px; color: #64748b;">
+          <li>إنشاء الوحدات والدروس</li>
+          <li>تحديد متطلبات كل وحدة</li>
+        </ul>
+        <button type="button" class="nfd-btn ghost card-btn" (click)="showModal.set(true)" style="width: 100%; background: #ffffff; color: #0284c7; border: 1px solid #bae6fd; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+          + إنشاء محتوى
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. الملفات والفيديوهات -->
+    <div class="content-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease;">
+      <div style="height: 140px; background: #e2e8f0; overflow: hidden;">
+        <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80" alt="Files" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
+      </div>
+      <div style="padding: 20px; text-align: right;">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px; color: #0284c7; font-size: 20px;">🎬</div>
+        <h3 style="font-size: 18px; font-weight: 700; color: #0b192c; margin: 0 0 8px 0;">الملفات والفيديوهات</h3>
+        <ul style="margin: 0 0 20px 0; padding-inline-start: 18px; font-size: 12px; color: #64748b;">
+          <li>رفع الملفات والفيديوهات</li>
+          <li>إدارة مواد الدرس</li>
+        </ul>
+        <button type="button" class="nfd-btn ghost card-btn" (click)="showFileModal.set(true)" style="width: 100%; background: #ffffff; color: #0284c7; border: 1px solid #bae6fd; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+          ⬆ رفع مادة
+        </button>
+      </div>
+    </div>
+
+    <!-- 3. الروابط والمراجع -->
+    <div class="content-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease;">
+      <div style="height: 140px; background: #e2e8f0; overflow: hidden;">
+        <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80" alt="Links" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
+      </div>
+      <div style="padding: 20px; text-align: right;">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px; color: #0284c7; font-size: 20px;">🔗</div>
+        <h3 style="font-size: 18px; font-weight: 700; color: #0b192c; margin: 0 0 8px 0;">الروابط والمراجع</h3>
+        <ul style="margin: 0 0 20px 0; padding-inline-start: 18px; font-size: 12px; color: #64748b;">
+          <li>مشاركة الروابط والمراجع</li>
+          <li>إضافة مصادر تعليمية</li>
+        </ul>
+        <button type="button" class="nfd-btn ghost card-btn" (click)="showRefModal.set(true)" style="width: 100%; background: #ffffff; color: #0284c7; border: 1px solid #bae6fd; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+          + إضافة مرجع
+        </button>
+      </div>
+    </div>
+
   </div>
-  <div class="nfd-card">
-    <div style="font-size:26px;margin-bottom:8px">🔗</div>
-    <strong style="display:block;margin-bottom:8px;color:var(--color-navy)">الروابط والمراجع</strong>
-    <ul style="margin:0 0 12px;padding-inline-start:18px;font-size:12px;color:var(--color-text-secondary)"><li>مشاركة الروابط والمراجع</li><li>إضافة مصادر تعليمية</li></ul>
-    <button class="nfd-btn ghost" (click)="showRefModal.set(true)">+ إضافة مرجع</button>
-  </div>
+
 </div>
+
+<!-- CSS الخاص بالحركات وتأثيرات الهوفر -->
+<style>
+  .content-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 24px rgba(2, 132, 199, 0.12);
+    border-color: #bae6fd;
+  }
+  .content-card:hover img {
+    transform: scale(1.05);
+  }
+  .card-btn:hover {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+  }
+</style>
 
 <!-- Modal 1: إنشاء وحدة / درس -->
 @if (showModal()) {
-  <div class="nfd-modal-bg" (click)="showModal.set(false)">
-    <div class="nfd-modal" (click)="$event.stopPropagation()">
-      <h3>إنشاء وحدة / درس</h3>
-      <label>معرف البرنامج</label>
-      <input class="nfd-input" type="number" [(ngModel)]="programIdInput" />
-      <label>عنوان المحتوى</label>
-      <input class="nfd-input" [(ngModel)]="title" placeholder="اسم الوحدة أو الدرس" />
-      <div class="nfd-modal-actions">
-        <button class="nfd-btn secondary" (click)="showModal.set(false)">إلغاء</button>
-        <button class="nfd-btn primary" (click)="create()">حفظ</button>
+  <div class="nfd-modal-bg" (click)="showModal.set(false)" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+    <div class="nfd-modal" (click)="$event.stopPropagation()" style="background: #fff; padding: 25px; border-radius: 16px; width: 400px; text-align: right;">
+      <h3 style="margin-top: 0; color: #0b192c;">إنشاء وحدة / درس</h3>
+      <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">معرف البرنامج</label>
+      <input class="nfd-input" type="number" [(ngModel)]="programIdInput" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px;" />
+      
+      <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">عنوان المحتوى</label>
+      <input class="nfd-input" [(ngModel)]="title" placeholder="اسم الوحدة أو الدرس" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 20px;" />
+      
+      <div class="nfd-modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="nfd-btn secondary" (click)="showModal.set(false)" style="background: #e2e8f0; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">إلغاء</button>
+        <button class="nfd-btn primary" (click)="create()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">حفظ</button>
       </div>
     </div>
   </div>
@@ -41,33 +124,65 @@
 
 <!-- Modal 2: رفع مادة (ملفات وفيديوهات) -->
 @if (showFileModal()) {
-  <div class="nfd-modal-bg" (click)="showFileModal.set(false)">
-    <div class="nfd-modal" (click)="$event.stopPropagation()">
-      <h3>رفع ملف أو فيديو</h3>
+  <div class="nfd-modal-bg" (click)="showFileModal.set(false)" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+    <div class="nfd-modal" (click)="$event.stopPropagation()" style="background: #fff; padding: 25px; border-radius: 16px; width: 400px; text-align: right;">
+      <h3 style="margin-top: 0; color: #0b192c;">رفع ملف أو فيديو</h3>
       
-      <label>عنوان المادة</label>
-      <input class="nfd-input" [(ngModel)]="fileTitle" placeholder="عنوان المادة التعليمية" />
+      <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">عنوان المادة</label>
+      <input class="nfd-input" [(ngModel)]="fileTitle" placeholder="عنوان المادة التعليمية" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px;" />
       
-      <label style="margin-top: 10px; display: block;">اختر الملف أو الفيديو</label>
-      <input class="nfd-input" type="file" (change)="onFileSelected($event)" style="padding: 6px;" />
+      <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">اختر الملف أو الفيديو</label>
+      <input class="nfd-input" type="file" (change)="onFileSelected($event)" style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 20px;" />
 
-      <div class="nfd-modal-actions" style="margin-top: 15px;">
-        <button class="nfd-btn secondary" (click)="showFileModal.set(false)">إلغاء</button>
-        <button class="nfd-btn primary" (click)="uploadFile()">رفع</button>
+      <div class="nfd-modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="nfd-btn secondary" (click)="showFileModal.set(false)" style="background: #e2e8f0; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">إلغاء</button>
+        <button class="nfd-btn primary" (click)="uploadFile()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">رفع</button>
       </div>
     </div>
   </div>
 }
+
 <!-- Modal 3: إضافة مرجع (روابط ومراجع) -->
 @if (showRefModal()) {
-  <div class="nfd-modal-bg" (click)="showRefModal.set(false)">
-    <div class="nfd-modal" (click)="$event.stopPropagation()">
-      <h3>إضافة مرجع أو رابط</h3>
-      <label>رابط المرجع</label>
-      <input class="nfd-input" [(ngModel)]="refLink" placeholder="https://..." />
-      <div class="nfd-modal-actions">
-        <button class="nfd-btn secondary" (click)="showRefModal.set(false)">إلغاء</button>
-        <button class="nfd-btn primary" (click)="addReference()">حفظ</button>
+  <div class="nfd-modal-bg" (click)="showRefModal.set(false)" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+    <div class="nfd-modal" (click)="$event.stopPropagation()" style="background: #fff; padding: 25px; border-radius: 16px; width: 400px; text-align: right;">
+      <h3 style="margin-top: 0; color: #0b192c;">إضافة مرجع أو رابط</h3>
+      
+      <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">رابط المرجع</label>
+      <input class="nfd-input" [(ngModel)]="refLink" placeholder="https://..." style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 20px;" />
+      
+      <div class="nfd-modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="nfd-btn secondary" (click)="showRefModal.set(false)" style="background: #e2e8f0; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">إلغاء</button>
+        <button class="nfd-btn primary" (click)="addReference()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">حفظ</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal 4: أرشيف المواد / مكتبة المواد السابقة (المضافة حديثاً لتطابق البروتوتايب) -->
+@if (showArchiveModal()) {
+  <div class="nfd-modal-bg" (click)="showArchiveModal.set(false)" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+    <div class="nfd-modal" (click)="$event.stopPropagation()" style="background: #fff; padding: 25px; border-radius: 16px; width: 480px; text-align: right;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <span style="background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600;">✓ تم فتح مكتبة المواد السابقة</span>
+        <h3 style="margin: 0; color: #0b192c;">أرشيف المواد</h3>
+      </div>
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">استعراض المواد والملفات المؤرشفة من الفصول والبرامج السابقة لاسترجاعها أو الاستفادة منها.</p>
+      
+      <!-- قائمة افتراضية للمواد المؤرشفة -->
+      <div style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+        <div style="padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 12px; color: #0284c7; cursor: pointer; font-weight: 600;">استرجاع</span>
+          <span style="font-size: 13px; font-weight: 600; color: #334155;">مقرر أساسيات البرمجة (أرشيف 2025)</span>
+        </div>
+        <div style="padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 12px; color: #0284c7; cursor: pointer; font-weight: 600;">استرجاع</span>
+          <span style="font-size: 13px; font-weight: 600; color: #334155;">قواعد البيانات المتقدمة SQL (أرشيف 2025)</span>
+        </div>
+      </div>
+
+      <div class="nfd-modal-actions" style="display: flex; justify-content: flex-end;">
+        <button class="nfd-btn secondary" (click)="showArchiveModal.set(false)" style="background: #e2e8f0; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">إغلاق</button>
       </div>
     </div>
   </div>
