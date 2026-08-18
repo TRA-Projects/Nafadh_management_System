@@ -15,6 +15,11 @@ export class AdminCompanies implements OnInit {
   // حالة الفلتر
   statusFilter = signal<string>('الكل');
 
+  // دالة تغيير الفلتر للأزرار
+  setFilter(status: string) {
+    this.statusFilter.set(status);
+  }
+
   // بيانات تجريبية للشركات
   companies = signal<CompanyDto[]>([
     { companyId: 54, companyName: 'مؤسسة القمة للتكنولوجيا', workField: 'الاستشارات الإدارية', capacity: 200, status: 'Approved' },
@@ -59,12 +64,6 @@ export class AdminCompanies implements OnInit {
   ];
   statusDropdownOpen = signal<boolean>(false);
 
-  // NOTE (2026-08-18): "المستخدم المرتبط" dropdown was removed per request.
-  // NFD_Companies.userId is required + UNIQUE on the backend, so submitting
-  // without it WILL fail again with "User with ID 0 not found" until this
-  // is revisited (either backend makes userId optional, or the dropdown
-  // is added back — see chat history for the getUsers()/allUsers() logic
-  // that was removed here).
 
   // form model, only fields that actually exist on CompanyDto/backend
   newCompany: {
@@ -185,10 +184,6 @@ export class AdminCompanies implements OnInit {
     this.isSaving.set(true);
     this.addError.set('');
 
-    // only send fields that exist in CompanyDto/backend, plus contactName
-    // as an optional extra — backend will ignore it if the DTO doesn't have it.
-    // NOTE: userId is NOT sent — backend currently requires it (see comment
-    // above on allUsers removal), so this call will fail until that's resolved.
     const dto = {
       companyName: this.newCompany.companyName,
       workField: this.newCompany.workField,
@@ -201,11 +196,10 @@ export class AdminCompanies implements OnInit {
 
     this.adminApi.createCompany(dto).subscribe({
       next: (created: any) => {
-        // fall back to a locally-built row if backend doesn't echo full object
         const newRow: CompanyDto = created && created.companyId
           ? created
           : {
-              companyId: Date.now(), // temp id until list is refreshed from backend
+              companyId: Date.now(),
               companyName: dto.companyName,
               workField: dto.workField,
               capacity: dto.capacity as number,
