@@ -5,6 +5,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TrainerApi } from '../../services/trainer-api';
 import { DailyAttendanceDto, EnrollmentDto, ExcuseDto } from '../../../../core/models/dtos';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment';
 
 /* ══════════════════════════════════════════════════════════════
    ترميز الحالات كما هو مخزَّن فعلياً في NFD_DailyAttendances.Status
@@ -58,6 +60,8 @@ type Shape = 'number' | 'numeric-text' | 'name';
 })
 export class TrainerAttendance implements OnInit {
   companyId = 1;
+  private base = environment.apiBaseUrl;
+  private readonly repeatedAbsenceThreshold = 3;
 
   // ── الحالة ──────────────────────────────────────────────
   rows = signal<Row[]>([]);
@@ -67,6 +71,7 @@ export class TrainerAttendance implements OnInit {
   savingId = signal<number | null>(null);
   reviewingId = signal<number | null>(null);
   reportedIds = signal<Set<number>>(new Set<number>());
+  repeatedAbsenceIds = signal<Set<number>>(new Set<number>());
   query = signal('');
   filter = signal<FilterKey>('all');
   excuseLimit = signal(8);
@@ -102,7 +107,10 @@ export class TrainerAttendance implements OnInit {
   private excuseShape: Shape = 'number';
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private api: TrainerApi) {}
+  constructor(
+    private api: TrainerApi,
+    private http: HttpClient
+  ) {}
 
   ngOnInit() { this.reload(); }
 
@@ -163,23 +171,117 @@ export class TrainerAttendance implements OnInit {
         }
 
         this.rows.set(merged);
+        this.loadExcusesForRows(merged);
+        this.loadRepeatedAbsenceForRows(merged);
         this.loading.set(false);
       },
       error: () => {
         this.rows.set([]);
+        this.excuses.set([]);
         this.loading.set(false);
         this.loadError.set('تعذّر تحميل تسجيلات المتدربين. تحقق من طلب Enrollment ثم أعد المحاولة.');
       },
     });
+  }
 
-    this.api.getPendingExcuses().subscribe({
-      next: (d) => {
-        const list = (d ?? []) as Excuse[];
-        this.excuseShape = this.detectShape(list.map((e) => (e as any).status));
-        this.excuses.set(list);
-      },
-      error: () => this.excuses.set([]),
+  private loadExcusesForRows(rows: Row[]): void {
+    this.excuses.set([]);
+
+    const attendanceIds = Array.from(
+      new Set(
+        rows
+          .map((r) => r.dailyAttendanceId)
+          .filter((id): id is number => id !== null && id !== undefined)
+      )
+    );
+
+    if (!attendanceIds.length) return;
+
+    attendanceIds.forEach((dailyAttendanceId) => {
+      this.http
+        .get<ExcuseDto | ExcuseDto[]>(
+          `${this.base}/Excuse/attendance/${dailyAttendanceId}`
+        )
+        .subscribe({
+          next: (response) => {
+            const list = (Array.isArray(response)
+              ? response
+              : response
+                ? [response]
+                : []) as Excuse[];
+
+            if (!list.length) return;
+
+            this.excuseShape = this.detectShape(
+              list.map((e) => (e as any).status)
+            );
+
+            this.excuses.update((current) => {
+              const byId = new Map<number, Excuse>(
+                current.map((e) => [e.excuseId, e])
+              );
+
+              for (const ex of list) {
+                byId.set(ex.excuseId, ex);
+              }
+
+              return Array.from(byId.values());
+            });
+          },
+          error: (error) => {
+            if (error?.status !== 404 && error?.status !== 204) {
+              console.error(
+                'تعذر تحميل عذر سجل الحضور:',
+                dailyAttendanceId,
+                error
+              );
+            }
+          },
+        });
     });
+  }
+
+  private loadRepeatedAbsenceForRows(rows: Row[]): void {
+    this.repeatedAbsenceIds.set(new Set<number>());
+
+    const absentRows = rows.filter(
+      (row) => this.statusKey(row.status) === 'absent'
+    );
+
+    absentRows.forEach((row) => this.checkRepeatedAbsence(row));
+  }
+
+  private checkRepeatedAbsence(row: Row): void {
+    this.http
+      .get<DailyAttendanceDto[]>(
+        `${this.base}/DailyAttendance/enrollment/${row.enrollmentId}`
+      )
+      .subscribe({
+        next: (records) => {
+          const absences = (records ?? []).filter(
+            (record) => this.statusKey(record.status) === 'absent'
+          ).length;
+
+          this.repeatedAbsenceIds.update((current) => {
+            const next = new Set(current);
+
+            if (absences >= this.repeatedAbsenceThreshold) {
+              next.add(row.enrollmentId);
+            } else {
+              next.delete(row.enrollmentId);
+            }
+
+            return next;
+          });
+        },
+        error: (error) => {
+          console.error(
+            'تعذر التحقق من الغياب المتكرر للمتدرب:',
+            row.enrollmentId,
+            error
+          );
+        },
+      });
   }
 
   private detectShape(values: unknown[]): Shape {
@@ -258,11 +360,8 @@ export class TrainerAttendance implements OnInit {
     return Math.round((committed / total) * 100);
   });
 
-  showRegister(view: RegisterView) {
+  showRegister(view: RegisterView): void {
     this.registerView.set(view);
-    if (view !== 'today') {
-      this.notify(view === 'weekly' ? 'تم اختيار السجل الأسبوعي.' : 'تم اختيار السجل الشهري.', 'ok');
-    }
   }
 
   confirmToday() {
@@ -284,14 +383,21 @@ export class TrainerAttendance implements OnInit {
   }
 
   askReportAllRepeatedAbsence() {
-    const absent = this.absentRows().filter((r) => r.dailyAttendanceId != null && !this.reportedIds().has(r.dailyAttendanceId));
+    const absent = this.absentRows().filter(
+      (r) =>
+        this.repeatedAbsenceIds().has(r.enrollmentId) &&
+        r.dailyAttendanceId != null &&
+        !this.reportedIds().has(r.dailyAttendanceId)
+    );
+
     if (!absent.length) {
-      this.notify('لا توجد حالات غياب جديدة لإرسالها.', 'ok');
+      this.notify('لا توجد حالات غياب متكرر جديدة لإرسالها.', 'ok');
       return;
     }
+
     this.pending.set({
       title: 'إرسال الغياب المتكرر للهيئة',
-      text: `سيتم رفع إنذار للحالات الغائبة غير المبلّغ عنها وعددها ${absent.length}.`,
+      text: `سيتم رفع إنذار للحالات التي بلغ غيابها ${this.repeatedAbsenceThreshold} مرات أو أكثر، وعددها ${absent.length}.`,
       confirmLabel: 'إرسال البلاغات',
       tone: 'danger',
       run: () => absent.forEach((row) => this.reportAbsence(row)),
@@ -360,6 +466,17 @@ export class TrainerAttendance implements OnInit {
           };
           this.replaceRow(saved);
           this.savingId.set(null);
+
+          if (this.statusKey(saved.status) === 'absent') {
+            this.checkRepeatedAbsence(saved);
+          } else {
+            this.repeatedAbsenceIds.update((current) => {
+              const next = new Set(current);
+              next.delete(saved.enrollmentId);
+              return next;
+            });
+          }
+
           if (saved.dailyAttendanceId == null) this.reload();
         },
         error: () => {
@@ -380,7 +497,19 @@ export class TrainerAttendance implements OnInit {
     };
 
     this.api.updateAttendance(row.dailyAttendanceId, updateDto).subscribe({
-      next: () => this.savingId.set(null),
+      next: () => {
+        this.savingId.set(null);
+
+        if (this.statusKey(after.status) === 'absent') {
+          this.checkRepeatedAbsence(after);
+        } else {
+          this.repeatedAbsenceIds.update((current) => {
+            const next = new Set(current);
+            next.delete(after.enrollmentId);
+            return next;
+          });
+        }
+      },
       error: () => {
         this.replaceRow(before);
         this.savingId.set(null);
@@ -535,9 +664,17 @@ export class TrainerAttendance implements OnInit {
 
   // ── الإبلاغ عن الغياب ───────────────────────────────────
   askReportAbsence(row: Row) {
+    if (!this.repeatedAbsenceIds().has(row.enrollmentId)) {
+      this.notify(
+        `لم يصل غياب ${row.traineeName || 'المتدرب'} إلى حد الغياب المتكرر (${this.repeatedAbsenceThreshold} مرات).`,
+        'ok'
+      );
+      return;
+    }
+
     this.pending.set({
       title: 'إبلاغ الهيئة بغياب متكرر',
-      text: `سيُرفع إنذار عن ${row.traineeName || 'المتدرب'} بسبب غياب متكرر بدون عذر. لا يمكن التراجع عنه من هنا.`,
+      text: `سيُرفع إنذار عن ${row.traineeName || 'المتدرب'} بعد تحقق تكرار الغياب ${this.repeatedAbsenceThreshold} مرات أو أكثر بدون عذر. لا يمكن التراجع عنه من هنا.`,
       confirmLabel: 'رفع الإنذار',
       tone: 'danger',
       run: () => this.reportAbsence(row),
@@ -545,6 +682,11 @@ export class TrainerAttendance implements OnInit {
   }
 
   private reportAbsence(row: Row) {
+    if (!this.repeatedAbsenceIds().has(row.enrollmentId)) {
+      this.notify('لا يمكن رفع إنذار قبل تحقق شرط الغياب المتكرر.', 'err');
+      return;
+    }
+
     this.api.reportRepeatedAbsence({
       scope: WARNING.scopeTrainee,
       enrollmentId: row.enrollmentId,
