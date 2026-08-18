@@ -1,27 +1,277 @@
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-  <h2 class="nfd-page-title" style="margin-bottom:0">التنبيهات والإنذارات</h2>
+
+  <h2 class="nfd-page-title" style="margin-bottom:0;color:#000">
+    التنبيهات والإنذارات
+  </h2>
+
   <div style="display:flex;gap:4px">
-    <button class="nfd-chip" [class.active]="filter()==='all'" (click)="filter.set('all')">الكل</button>
-    <button class="nfd-chip" [class.active]="filter()==='unread'" (click)="filter.set('unread')">غير مقروء</button>
+    <button
+      class="nfd-chip"
+      [class.active]="filter()==='all'"
+      (click)="filter.set('all')">
+      الكل
+    </button>
+
+    <button
+      class="nfd-chip"
+      [class.active]="filter()==='unread'"
+      (click)="filter.set('unread')">
+      غير مقروء
+    </button>
   </div>
+
 </div>
 
+
 @if (warnings().length) {
-  <div class="nfd-card" style="border-inline-start:4px solid var(--status-absent-fg);margin-bottom:14px">
-    <strong style="color:var(--status-absent-fg);font-size:13px">⚠ إنذارات موجهة إليك</strong>
+
+  <div
+    class="nfd-card"
+    style="
+      border-inline-start:4px solid var(--status-absent-fg);
+      margin-bottom:14px;
+    "
+  >
+
+    <strong
+      style="
+        color:#000;
+        font-size:13px;
+      "
+    >
+      ⚠ إنذارات موجهة إليك
+    </strong>
+
     @for (w of warnings(); track w.warningId) {
-      <div class="nfd-row"><span>{{ w.type }} — {{ w.level }}</span><small class="nfd-muted">من: {{ w.raisedByName }}</small></div>
+
+      <div class="nfd-row">
+
+        <span style="color:#000">
+          {{ w.type }} — {{ w.level }}
+        </span>
+
+        <small class="nfd-muted">
+          من: {{ w.raisedByName }}
+        </small>
+
+      </div>
+
     }
+
   </div>
+
 }
 
+
 <div style="display:flex;flex-direction:column;gap:8px">
+
   @for (n of filtered(); track n.notificationId) {
-    <div class="nfd-card" style="cursor:pointer" [style.border-inline-start]="!n.isRead ? '3px solid var(--color-cyan)' : 'none'" (click)="markRead(n)">
-      <strong style="display:block;font-size:13px">{{ n.title }}</strong>
-      <p style="margin:4px 0;font-size:12px;color:var(--color-text-secondary)">{{ n.message }}</p>
-      <small class="nfd-muted">{{ n.createdAt | date:'short' }}</small>
+
+    <!-- حاوية التنبيه -->
+    <div style="position:relative">
+
+      <!-- المثلث الدقيق المطابق للبروتوتايب بدون قص أو اختفاء -->
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        style="
+          position:absolute;
+          top:0;
+          left:0;
+          z-index:30;
+          pointer-events:none;
+        "
+      >
+        <path
+          d="M 0 0 L 14 0 L 0 14 Z"
+          [attr.fill]="
+            n.relatedEntity === 'Task' || n.relatedEntity === 'Appointment'
+              ? '#ef4444'
+              : '#22c55e'
+          "
+        />
+      </svg>
+
+
+      <!-- البطاقة -->
+      <details
+        #detailsRef
+        class="nfd-card"
+        style="
+          position:relative;
+          margin:0;
+        "
+        [style.border-inline-start]="
+          !n.isRead
+            ? '3px solid var(--color-cyan)'
+            : 'none'
+        "
+      >
+
+        <summary
+          style="
+            cursor:pointer;
+            list-style:none;
+            padding:14px;
+          "
+        >
+
+          <div
+            style="
+              display:flex;
+              align-items:center;
+              justify-content:space-between;
+              gap:12px;
+            "
+          >
+
+            <div
+              style="
+                display:flex;
+                align-items:center;
+                gap:10px;
+                min-width:0;
+              "
+            >
+
+              <!-- أيقونة التنبيه -->
+              <span
+                style="
+                  width:34px;
+                  height:34px;
+                  border-radius:50%;
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                  flex-shrink:0;
+                "
+                [style.background]="
+                  n.relatedEntity === 'Task' || n.relatedEntity === 'Appointment'
+                    ? '#fee2e2'
+                    : '#dcfce7'
+                "
+              >
+
+                @if (n.relatedEntity === 'Task') {
+                  📋
+                } @else if (n.relatedEntity === 'Attendance') {
+                  🕒
+                } @else if (n.relatedEntity === 'Announcement') {
+                  📢
+                } @else {
+                  🔔
+                }
+
+              </span>
+
+
+              <div style="min-width:0">
+
+                <div
+                  style="
+                    font-weight:600;
+                    color:#000;
+                    margin-bottom:4px;
+                  "
+                >
+                  {{ n.title }}
+                </div>
+
+                <small class="nfd-muted">
+                  {{ n.createdAt | date:'yyyy-MM-dd HH:mm' }}
+                </small>
+
+              </div>
+
+            </div>
+
+
+            <!-- نقطة غير مقروء -->
+            @if (!n.isRead) {
+
+              <span
+                style="
+                  width:8px;
+                  height:8px;
+                  border-radius:50%;
+                  background:var(--color-cyan);
+                  flex-shrink:0;
+                "
+              ></span>
+
+            }
+
+          </div>
+
+        </summary>
+
+
+        <!-- تفاصيل التنبيه -->
+        <div
+          style="
+            padding:0 14px 14px 14px;
+            color:#000;
+          "
+        >
+
+          <div
+            style="
+              border-top:1px solid #eee;
+              padding-top:12px;
+            "
+          >
+
+            {{ n.message }}
+
+          </div>
+
+
+          @if (n.relatedEntity) {
+
+            <small
+              class="nfd-muted"
+              style="
+                display:block;
+                margin-top:10px;
+              "
+            >
+              النوع: {{ n.relatedEntity }}
+            </small>
+
+          }
+
+
+          <!-- زر الإغلاق -->
+          <div
+            style="
+              display:flex;
+              justify-content:flex-start;
+              margin-top:12px;
+            "
+          >
+
+            <button
+              type="button"
+              class="nfd-chip"
+              (click)="
+                detailsRef.open = false;
+                markRead(n);
+                $event.preventDefault();
+                $event.stopPropagation()
+              "
+            >
+              إغلاق
+            </button>
+
+          </div>
+
+        </div>
+
+      </details>
+
     </div>
+
   }
-  @empty { <p class="nfd-muted">لا توجد إشعارات</p> }
+
 </div>
