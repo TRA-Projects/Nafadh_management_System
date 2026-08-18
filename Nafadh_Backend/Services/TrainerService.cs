@@ -43,12 +43,23 @@ namespace Nafadh_Backend.Services
             return new TrainerProfileDto
             {
                 TrainerId = t.TrainerId,
+
+                UserId = t.UserId,
+
                 FullName = t.User?.FullName,
+
                 Email = t.User?.Email,
+
+                Phone = t.User?.Phone,
+
                 Specialty = t.Specialty,
+
                 ExperienceYears = t.ExperienceYears,
+
                 Biography = t.Biography,
+
                 CVUrl = t.CVUrl,
+
                 Status = t.Status
             };
         }
@@ -83,14 +94,33 @@ namespace Nafadh_Backend.Services
         public async Task<bool> UpdateAsync(int id, TrainerUpdateDto dto)
         {
             var existing = await _repository.GetByIdAsync(id);
-            if (existing == null) return false;
 
+            if (existing == null)
+                return false;
+
+            // تحديث بيانات المدرب
             existing.Specialty = dto.Specialty;
             existing.ExperienceYears = dto.ExperienceYears;
             existing.Biography = dto.Biography;
             existing.CVUrl = dto.CVUrl;
 
+            // تحديث بيانات المستخدم المرتبط بالمدرب
+            if (existing.User != null)
+            {
+                if (!string.IsNullOrWhiteSpace(dto.FullName))
+                    existing.User.FullName = dto.FullName.Trim();
+
+                if (!string.IsNullOrWhiteSpace(dto.Email))
+                    existing.User.Email = dto.Email.Trim();
+
+                existing.User.Phone =
+                    string.IsNullOrWhiteSpace(dto.Phone)
+                        ? null
+                        : dto.Phone.Trim();
+            }
+
             _repository.Update(existing);
+
             return await _repository.SaveChangesAsync();
         }
 
