@@ -204,7 +204,7 @@
     </div>
 
     <!-- النصوص متراصفة تحت بعضها -->
-    <p style="margin: 0 0 4px 0; font-size: 13px; color: #475569; font-weight: 500;">اسحب وأفلت ملف PDF هنا أو</p>
+    <p style="margin: 0 0 4px 0; font-size: 13px; color: #475569; font-weight: 500;">اسحب وأرفق ملف PDF هنا أو</p>
     <span style="color: #0284c7; font-weight: 600; font-size: 13px; margin-bottom: 6px;">انقر للاختيار</span>
     <small style="color: #94a3b8; font-size: 11px;">PDF, DOCX — الحجم الأقصى 5 ميغا</small>
     
@@ -214,7 +214,9 @@
 
   <!-- الملف المرفوع -->
   <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">
-    <span style="color: #166534; font-size: 12px; font-weight: 500;" dir="ltr">📄 {{ $any(t).cvFileName || 'CV_Ahmed_Zahrani_2024.pdf' }}</span>
+<span style="color: #166534; font-size: 12px; font-weight: 500;" dir="ltr">
+  📄 {{ $any(t).cvFileName || $any(t).resumeUrl || 'لا يوجد ملف مرفق' }}
+</span>
     <span style="cursor: pointer; color: #166534; display: flex; align-items: center;" title="تحميل">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
