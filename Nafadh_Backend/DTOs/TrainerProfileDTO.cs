@@ -6,12 +6,14 @@ namespace Nafadh_Backend.DTOs
     {
         // Unique identifier of the trainer profile
         public int TrainerId { get; set; }
+        public int UserId { get; set; }
 
         // Trainer's display name
         public string? FullName { get; set; } = string.Empty;
 
         // Trainer's email address
         public string? Email { get; set; } = string.Empty;
+        public string? Phone { get; set; }
 
         // Trainer's area of expertise
         public string? Specialty { get; set; }
