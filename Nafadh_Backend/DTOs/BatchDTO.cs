@@ -8,9 +8,13 @@ namespace Nafadh_Backend.DTOs
         public int BatchId { get; set; }
         public int ProgramId { get; set; }
         public string BatchName { get; set; } = string.Empty;
+        public string CompanyName { get; set; } = string.Empty; // لحل مشكلة "غير محدد"
+        public string TrackName { get; set; } = string.Empty;   // لحل مشكلة "عام"
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public decimal Capacity { get; set; }
+        public int TotalTraineesCount { get; set; }            // عدد المتدربين
+        public int IssuedCertificatesCount { get; set; }        // الشهادات الصادرة (لحل مشكلة 0/0)
         public NFD_BatchStatus Status { get; set; }
     }
 
@@ -32,7 +36,6 @@ namespace Nafadh_Backend.DTOs
     }
 
     // Shape of response for GET /api/Batch/{id}/trainees.
-    // Populated for real via IEnrollmentRepository — integration confirmed complete.
     public class BatchTraineeDto
     {
         public int TraineeId { get; set; }
@@ -41,8 +44,6 @@ namespace Nafadh_Backend.DTOs
     }
 
     // Shape of response for GET /api/Batch/{id}/capacity.
-    // Computes seat availability dynamically based on total capacity and active enrollments
-    // (EnrolledCount comes from IEnrollmentRepository, filtered to InProgress).
     public class BatchCapacityDto
     {
         public int BatchId { get; set; }
