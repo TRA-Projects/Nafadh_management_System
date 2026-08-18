@@ -12,7 +12,7 @@ import { EvaluationDto } from '../../../../core/models/dtos';
 export class CompanyTraineeProgress implements OnInit {
   evaluations = signal<EvaluationDto[]>([]);
   stages = [1, 2, 3, 4];
-
+//
   constructor(private route: ActivatedRoute, private api: CompanyApi) {}
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
