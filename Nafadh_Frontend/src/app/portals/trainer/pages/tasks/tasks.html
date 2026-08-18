@@ -1,25 +1,928 @@
-<h2 class="nfd-page-title">المهام والمشروعات</h2>
-<p class="nfd-page-sub">إنشاء الواجبات والمشاريع الميدانية ومتابعة التسليم والدرجات</p>
+<div class="tasks-page">
 
-<button class="nfd-btn primary" style="margin-bottom:16px">+ إنشاء واجب / مشروع</button>
+  <!-- ================= HEADER ================= -->
 
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
-  <div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="margin:0;font-size:13px;color:var(--color-navy)">📅 مفتوحة</h3><span class="nfd-badge" style="background:var(--color-tint-indigo);color:var(--color-navy)">{{ col('Open').length }}</span></div>
-    @for (t of col('Open'); track t.taskId) {
-      <div class="nfd-card" style="margin-bottom:10px"><strong style="display:block;font-size:13px;margin-bottom:4px">{{ t.title }}</strong><p style="margin:0 0 8px;font-size:12px;color:var(--color-text-secondary)">موعد التسليم: {{ t.dueDate | date:'mediumDate' }}</p></div>
-    }
+  <div
+    style="
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      margin-bottom:24px;
+    "
+  >
+
+    <div>
+      <h2 class="nfd-page-title">
+        المهام والمشروعات
+      </h2>
+
+      <p class="nfd-page-sub">
+        إنشاء الواجبات والمشاريع الميدانية ومتابعة التسليم والدرجات
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="nfd-btn primary"
+      (click)="openCreateModal()"
+      style="
+        display:flex;
+        align-items:center;
+        gap:7px;
+      "
+    >
+      <span
+        style="
+          font-size:18px;
+          line-height:1;
+        "
+      >
+        +
+      </span>
+
+      إنشاء واجب / مشروع
+    </button>
+
   </div>
-  <div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="margin:0;font-size:13px;color:var(--color-navy)">👥 مغلقة</h3><span class="nfd-badge" style="background:var(--status-review-bg);color:var(--status-review-fg)">{{ col('Closed').length }}</span></div>
-    @for (t of col('Closed'); track t.taskId) {
-      <div class="nfd-card" style="margin-bottom:10px"><strong style="display:block;font-size:13px;margin-bottom:4px">{{ t.title }}</strong></div>
-    }
+
+
+  <!-- ================= TASK COLUMNS ================= -->
+
+  <div
+    style="
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:18px;
+      align-items:stretch;
+    "
+  >
+
+
+    <!-- ================================================= -->
+    <!--                    مجدولة                         -->
+    <!-- ================================================= -->
+
+    <div
+      style="
+        display:flex;
+        flex-direction:column;
+        gap:14px;
+        min-width:0;
+      "
+    >
+
+      @for (t of col('Open'); track t.taskId) {
+
+        <!-- ================= SCHEDULED CARD ================= -->
+
+        <div
+          style="
+            height:390px;
+            min-height:390px;
+            display:flex;
+            flex-direction:column;
+            background:#fff;
+            border:1px solid #dce5f0;
+            border-radius:16px;
+            overflow:hidden;
+            box-shadow:0 8px 22px rgba(20,45,90,0.05);
+            box-sizing:border-box;
+          "
+        >
+
+          <!-- IMAGE -->
+
+          <div
+            style="
+              position:relative;
+              height:142px;
+              min-height:142px;
+              overflow:hidden;
+              background:#edf2f7;
+            "
+          >
+
+            <img
+              src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80"
+              alt="مهمة مجدولة"
+              style="
+                width:100%;
+                height:100%;
+                object-fit:cover;
+                display:block;
+              "
+            />
+
+          </div>
+
+
+          <!-- CONTENT -->
+
+          <div
+            style="
+              flex:1;
+              display:flex;
+              flex-direction:column;
+              padding:15px 16px 10px;
+              box-sizing:border-box;
+            "
+          >
+
+            <!-- STATUS -->
+
+            <div
+              style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:12px;
+              "
+            >
+
+              <span
+                style="
+                  display:inline-flex;
+                  align-items:center;
+                  gap:5px;
+                  padding:5px 9px;
+                  border-radius:999px;
+                  background:#e9f8fb;
+                  color:#0b8fa5;
+                  font-size:10px;
+                  font-weight:600;
+                "
+              >
+                📅 مجدولة
+              </span>
+
+              <span
+                style="
+                  min-width:28px;
+                  height:28px;
+                  padding:0 7px;
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                  border-radius:50%;
+                  background:#e9f8fb;
+                  color:#0b8fa5;
+                  font-size:11px;
+                  font-weight:700;
+                  box-sizing:border-box;
+                "
+              >
+                {{ col('Open').length }}
+              </span>
+
+            </div>
+
+
+            <!-- TITLE -->
+
+            <strong
+              style="
+                display:-webkit-box;
+                -webkit-line-clamp:2;
+                -webkit-box-orient:vertical;
+                overflow:hidden;
+                font-size:15px;
+                font-weight:700;
+                color:var(--color-navy);
+                line-height:1.6;
+                min-height:48px;
+                margin-bottom:8px;
+              "
+            >
+              {{ t.title }}
+            </strong>
+
+
+            <!-- DETAILS -->
+
+            <p
+              style="
+                margin:0;
+                font-size:11px;
+                color:var(--color-text-secondary);
+                line-height:1.8;
+              "
+            >
+              موعد التسليم:
+              {{ t.dueDate | date:'dd MMMM, yyyy' }}
+            </p>
+
+          </div>
+
+
+          <!-- FOOTER -->
+
+          <div
+            style="
+              margin:0 14px;
+              padding:11px 0;
+              border-top:1px solid #e3e9f1;
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
+            "
+          >
+
+            <span
+              style="
+                font-size:10px;
+                color:var(--color-text-secondary);
+              "
+            >
+              دفعة يوليو
+            </span>
+
+            <span
+              class="nfd-badge"
+              style="
+                background:#e8f8fb;
+                color:#0b8fa5;
+                font-size:10px;
+              "
+            >
+              نشطة
+            </span>
+
+          </div>
+
+        </div>
+
+      }
+
+
+      @if (col('Open').length === 0) {
+
+        <div
+          class="nfd-card"
+          style="
+            min-height:390px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            text-align:center;
+            padding:35px 15px;
+            box-sizing:border-box;
+          "
+        >
+
+          <span
+            style="
+              font-size:12px;
+              color:var(--color-text-secondary);
+            "
+          >
+            لا توجد مهام مجدولة
+          </span>
+
+        </div>
+
+      }
+
+    </div>
+
+
+
+    <!-- ================================================= -->
+    <!--                  قيد المراجعة                     -->
+    <!-- ================================================= -->
+
+    <div
+      style="
+        display:flex;
+        flex-direction:column;
+        gap:14px;
+        min-width:0;
+      "
+    >
+
+      @for (t of col('Closed'); track t.taskId) {
+
+        <!-- ================= REVIEW CARD ================= -->
+
+        <div
+          style="
+            height:390px;
+            min-height:390px;
+            display:flex;
+            flex-direction:column;
+            background:#fff;
+            border:1px solid #dce5f0;
+            border-radius:16px;
+            overflow:hidden;
+            box-shadow:0 8px 22px rgba(20,45,90,0.05);
+            box-sizing:border-box;
+          "
+        >
+
+          <!-- IMAGE -->
+
+          <div
+            style="
+              position:relative;
+              height:142px;
+              min-height:142px;
+              overflow:hidden;
+              background:#edf2f7;
+            "
+          >
+
+            <img
+              src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80"
+              alt="مهمة قيد المراجعة"
+              style="
+                width:100%;
+                height:100%;
+                object-fit:cover;
+                display:block;
+              "
+            />
+
+          </div>
+
+
+          <!-- CONTENT -->
+
+          <div
+            style="
+              flex:1;
+              display:flex;
+              flex-direction:column;
+              padding:15px 16px 10px;
+              box-sizing:border-box;
+            "
+          >
+
+            <!-- STATUS -->
+
+            <div
+              style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:12px;
+              "
+            >
+
+              <span
+                style="
+                  display:inline-flex;
+                  align-items:center;
+                  gap:5px;
+                  padding:5px 9px;
+                  border-radius:999px;
+                  background:#fff2d9;
+                  color:#d58b00;
+                  font-size:10px;
+                  font-weight:600;
+                "
+              >
+                👥 قيد المراجعة
+              </span>
+
+              <span
+                style="
+                  min-width:28px;
+                  height:28px;
+                  padding:0 7px;
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                  border-radius:50%;
+                  background:#fff2d9;
+                  color:#d58b00;
+                  font-size:11px;
+                  font-weight:700;
+                  box-sizing:border-box;
+                "
+              >
+                {{ col('Closed').length }}
+              </span>
+
+            </div>
+
+
+            <!-- TITLE -->
+
+            <strong
+              style="
+                display:-webkit-box;
+                -webkit-line-clamp:2;
+                -webkit-box-orient:vertical;
+                overflow:hidden;
+                font-size:15px;
+                font-weight:700;
+                color:var(--color-navy);
+                line-height:1.6;
+                min-height:48px;
+                margin-bottom:8px;
+              "
+            >
+              {{ t.title }}
+            </strong>
+
+
+            <!-- DETAILS -->
+
+            <p
+              style="
+                margin:0;
+                font-size:11px;
+                color:var(--color-text-secondary);
+                line-height:1.8;
+              "
+            >
+              12 تسليمًا جديدًا بحاجة للتقييم
+            </p>
+
+          </div>
+
+
+          <!-- FOOTER -->
+
+          <div
+            style="
+              margin:0 14px;
+              padding:11px 0;
+              border-top:1px solid #e3e9f1;
+            "
+          >
+
+            <div
+              style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:10px;
+              "
+            >
+
+              <span
+                style="
+                  font-size:10px;
+                  color:var(--color-text-secondary);
+                "
+              >
+                دفعة يوليو
+              </span>
+
+              <span
+                style="
+                  font-size:10px;
+                  color:var(--color-text-secondary);
+                "
+              >
+                بحاجة للتقييم
+              </span>
+
+            </div>
+
+
+            <button
+              type="button"
+              class="nfd-btn primary"
+              style="
+                width:100%;
+                height:38px;
+                border-radius:11px;
+                font-size:11px;
+              "
+            >
+              👥 مراجعة والتقييم
+            </button>
+
+          </div>
+
+        </div>
+
+      }
+
+
+      @if (col('Closed').length === 0) {
+
+        <div
+          class="nfd-card"
+          style="
+            min-height:390px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            text-align:center;
+            padding:35px 15px;
+            box-sizing:border-box;
+          "
+        >
+
+          <span
+            style="
+              font-size:12px;
+              color:var(--color-text-secondary);
+            "
+          >
+            لا توجد مهام قيد المراجعة
+          </span>
+
+        </div>
+
+      }
+
+    </div>
+
+
+
+    <!-- ================================================= -->
+    <!--                 مكتملة التقييم                    -->
+    <!-- ================================================= -->
+
+    <div
+      style="
+        display:flex;
+        flex-direction:column;
+        gap:14px;
+        min-width:0;
+      "
+    >
+
+      @for (t of col('Overdue'); track t.taskId) {
+
+        <!-- ================= COMPLETED CARD ================= -->
+
+        <div
+          style="
+            height:390px;
+            min-height:390px;
+            display:flex;
+            flex-direction:column;
+            background:#fff;
+            border:1px solid #dce5f0;
+            border-radius:16px;
+            overflow:hidden;
+            box-shadow:0 8px 22px rgba(20,45,90,0.05);
+            box-sizing:border-box;
+          "
+        >
+
+          <!-- IMAGE -->
+
+          <div
+            style="
+              position:relative;
+              height:142px;
+              min-height:142px;
+              overflow:hidden;
+              background:#edf2f7;
+            "
+          >
+
+            <img
+              src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=900&q=80"
+              alt="مهمة مكتملة التقييم"
+              style="
+                width:100%;
+                height:100%;
+                object-fit:cover;
+                display:block;
+              "
+            />
+
+          </div>
+
+
+          <!-- CONTENT -->
+
+          <div
+            style="
+              flex:1;
+              display:flex;
+              flex-direction:column;
+              padding:15px 16px 10px;
+              box-sizing:border-box;
+            "
+          >
+
+            <!-- STATUS -->
+
+            <div
+              style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:12px;
+              "
+            >
+
+              <span
+                style="
+                  display:inline-flex;
+                  align-items:center;
+                  gap:5px;
+                  padding:5px 9px;
+                  border-radius:999px;
+                  background:#e4f7ed;
+                  color:#15945a;
+                  font-size:10px;
+                  font-weight:600;
+                "
+              >
+                ✓ مكتملة التقييم
+              </span>
+
+              <span
+                style="
+                  min-width:28px;
+                  height:28px;
+                  padding:0 7px;
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                  border-radius:50%;
+                  background:#e4f7ed;
+                  color:#15945a;
+                  font-size:11px;
+                  font-weight:700;
+                  box-sizing:border-box;
+                "
+              >
+                {{ col('Overdue').length }}
+              </span>
+
+            </div>
+
+
+            <!-- TITLE -->
+
+            <strong
+              style="
+                display:-webkit-box;
+                -webkit-line-clamp:2;
+                -webkit-box-orient:vertical;
+                overflow:hidden;
+                font-size:15px;
+                font-weight:700;
+                color:var(--color-navy);
+                line-height:1.6;
+                min-height:48px;
+                margin-bottom:8px;
+              "
+            >
+              {{ t.title }}
+            </strong>
+
+
+            <!-- DETAILS -->
+
+            <p
+              style="
+                margin:0;
+                font-size:11px;
+                color:var(--color-text-secondary);
+                line-height:1.8;
+              "
+            >
+              تم تقييم جميع المتدربين
+            </p>
+
+          </div>
+
+
+          <!-- FOOTER -->
+
+          <div
+            style="
+              margin:0 14px;
+              padding:11px 0;
+              border-top:1px solid #e3e9f1;
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
+            "
+          >
+
+            <span
+              style="
+                font-size:10px;
+                color:var(--color-text-secondary);
+              "
+            >
+              دفعة يوليو
+            </span>
+
+            <span
+              class="nfd-badge"
+              style="
+                background:#e4f7ed;
+                color:#15945a;
+                font-size:10px;
+              "
+            >
+              تم التقييم
+            </span>
+
+          </div>
+
+        </div>
+
+      }
+
+
+      @if (col('Overdue').length === 0) {
+
+        <div
+          class="nfd-card"
+          style="
+            min-height:390px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            text-align:center;
+            padding:35px 15px;
+            box-sizing:border-box;
+          "
+        >
+
+          <span
+            style="
+              font-size:12px;
+              color:var(--color-text-secondary);
+            "
+          >
+            لا توجد مهام مكتملة التقييم
+          </span>
+
+        </div>
+
+      }
+
+    </div>
+
   </div>
-  <div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="margin:0;font-size:13px;color:var(--color-navy)">⏰ متأخرة</h3><span class="nfd-badge" style="background:var(--status-cancelled-bg);color:var(--status-cancelled-fg)">{{ col('Overdue').length }}</span></div>
-    @for (t of col('Overdue'); track t.taskId) {
-      <div class="nfd-card" style="margin-bottom:10px"><strong style="display:block;font-size:13px;margin-bottom:4px">{{ t.title }}</strong></div>
-    }
-  </div>
+
+
+
+  <!-- ================================================= -->
+  <!--                CREATE TASK MODAL                   -->
+  <!-- ================================================= -->
+
+  @if (showCreateModal()) {
+
+    <div
+      (click)="closeCreateModal()"
+      style="
+        position:fixed;
+        inset:0;
+        z-index:1000;
+        background:rgba(15,35,70,0.35);
+        display:flex;
+        align-items:flex-start;
+        justify-content:center;
+        padding-top:80px;
+      "
+    >
+
+      <div
+        (click)="$event.stopPropagation()"
+        style="
+          width:min(660px,calc(100vw - 40px));
+          background:#fff;
+          border-radius:20px;
+          overflow:hidden;
+          box-shadow:0 20px 60px rgba(0,30,80,0.20);
+        "
+      >
+
+        <!-- Modal Header -->
+
+        <div
+          style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:20px 24px;
+            border-bottom:1px solid #e5eaf1;
+          "
+        >
+
+          <h3
+            style="
+              margin:0;
+              font-size:18px;
+              color:var(--color-navy);
+            "
+          >
+            إنشاء واجب / مشروع
+          </h3>
+
+
+          <button
+            type="button"
+            (click)="closeCreateModal()"
+            style="
+              width:38px;
+              height:38px;
+              border:0;
+              border-radius:50%;
+              background:#f1f5f9;
+              color:var(--color-navy);
+              font-size:22px;
+              cursor:pointer;
+            "
+          >
+            ×
+          </button>
+
+        </div>
+
+
+        <!-- Form -->
+
+        <form
+          (ngSubmit)="saveTask()"
+        >
+
+          <div
+            style="
+              padding:24px;
+            "
+          >
+
+            <label
+              for="taskTitle"
+              style="
+                display:block;
+                margin-bottom:8px;
+                font-size:12px;
+                font-weight:600;
+                color:var(--color-navy);
+              "
+            >
+              عنوان المهمة
+            </label>
+
+
+            <input
+              id="taskTitle"
+              type="text"
+              name="taskTitle"
+              [(ngModel)]="newTaskTitle"
+              placeholder="اسم الواجب"
+              required
+              autocomplete="off"
+              style="
+                width:100%;
+                height:44px;
+                box-sizing:border-box;
+                padding:0 14px;
+                border:1px solid #d9e2ef;
+                border-radius:10px;
+                outline:none;
+                font-family:inherit;
+                font-size:13px;
+              "
+            />
+
+          </div>
+
+
+          <!-- Footer -->
+
+          <div
+            style="
+              display:flex;
+              justify-content:flex-start;
+              gap:10px;
+              padding:14px 24px;
+              border-top:1px solid #e5eaf1;
+            "
+          >
+
+            <button
+              type="button"
+              class="nfd-btn"
+              (click)="closeCreateModal()"
+            >
+              إلغاء
+            </button>
+
+
+            <button
+              type="submit"
+              class="nfd-btn primary"
+              [disabled]="!newTaskTitle.trim()"
+            >
+              حفظ
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+
+  }
+
 </div>

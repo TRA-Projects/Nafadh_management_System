@@ -1,23 +1,172 @@
-<h2 class="nfd-page-title">مركز التقارير والإحصائيات</h2>
-<p class="nfd-page-sub">استخراج تقارير الأداء الفني والحضور وتقييمات المتدربين</p>
+<div class="reports-wrapper">
 
-@if (kpis(); as k) {
-  <div class="nfd-stat-grid" style="--cols:4">
-    <div class="nfd-stat"><span>نسبة الحضور العامة</span><strong>{{ k.attendanceRate }}%</strong></div>
-    <div class="nfd-stat"><span>معدل إنجاز المهام</span><strong>{{ k.taskCompletionRate }}%</strong></div>
-    <div class="nfd-stat"><span>متوسط الدرجات الفنية</span><strong>{{ k.avgTechnicalGrade }}</strong></div>
-    @if (feedback(); as f) { <div class="nfd-stat"><span>رضا المتدربين عن المدرب</span><strong>{{ f.averageOverall | number:'1.1-1' }} / 5</strong></div> }
-  </div>
-}
-
-@if (feedback(); as f) {
-  <div class="nfd-card">
-    <h3>تفاصيل تقييم المدرب</h3>
-    @for (c of f.perCriterion; track c.criterionId) {
-      <div class="nfd-row"><span>{{ c.name }}</span><strong>{{ c.average | number:'1.1-1' }} / 5</strong></div>
-    }
-    <div style="margin-top:12px">
-      @for (c of f.comments; track c.date) { <p style="font-size:12px;color:var(--color-text-secondary);font-style:italic">"{{ c.comment }}"</p> }
+  <!-- الهيدر العلوي -->
+  <div class="reports-header">
+    <div class="header-info">
+      <h1>مركز التقارير والإحصائيات</h1>
+      <p>استخراج تقارير الأداء الفني، الحضور والغياب، وإنجاز الدفعات بكل سهولة.</p>
+    </div>
+    <div class="header-buttons">
+      <button class="btn btn-solid">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <line x1="9" y1="21" x2="9" y2="9"></line>
+        </svg>
+        تصدير جدول
+      </button>
+      <button class="btn btn-outline">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        تصدير تقرير
+      </button>
     </div>
   </div>
-}
+
+  <!-- الصف الأول: المؤشرات الأربعة (KPIs) -->
+  <div class="kpis-grid">
+
+    <!-- KPI 1 -->
+    <div class="kpi-card">
+      <div class="kpi-details">
+        <span class="kpi-title">نسبة الحضور العامة</span>
+        <div class="kpi-number">{{ kpis()?.attendanceRate ?? 78.8 }}%</div>
+      </div>
+      <div class="kpi-icon-box icon-blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+        </svg>
+      </div>
+    </div>
+
+    <!-- KPI 2 -->
+    <div class="kpi-card">
+      <div class="kpi-details">
+        <span class="kpi-title">معدل إنجاز المهام</span>
+        <div class="kpi-number">{{ kpis()?.taskCompletionRate ?? 33.3 }}%</div>
+      </div>
+      <div class="kpi-icon-box icon-blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 11 12 14 22 4"></polyline>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- KPI 3 -->
+    <div class="kpi-card">
+      <div class="kpi-details">
+        <span class="kpi-title">متوسط الدرجات الفنية</span>
+        <div class="kpi-number">{{ kpis()?.avgTechnicalGrade ?? 80.4 }} / 100</div>
+      </div>
+      <div class="kpi-icon-box icon-blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="8" r="7"></circle>
+          <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+        </svg>
+      </div>
+    </div>
+
+    <!-- KPI 4 -->
+    <div class="kpi-card">
+      <div class="kpi-details">
+        <span class="kpi-title">نسبة رضا المتدربين</span>
+        <div class="kpi-number">{{ (feedback()?.averageOverall ?? 3.91) | number:'1.1-2' }} / 5</div>
+      </div>
+      <div class="kpi-icon-box icon-blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+        </svg>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- الصف الثاني: كروت توليد التقارير الثلاثة -->
+  <div class="actions-grid">
+
+    <!-- Card 1 -->
+    <div class="action-card">
+      <div class="action-body">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+        </div>
+        <div class="action-text">
+          <h3>تقرير الحضور والغياب التفصيلي</h3>
+          <p>يتضمن كشوف الحضور، الأعذار المقبولة والغياب بدون عذر مفصلاً بالدفعات.</p>
+        </div>
+      </div>
+      <div class="action-footer">
+        <button class="btn-gen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          توليد التقرير
+        </button>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="action-card">
+      <div class="action-body">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+        </div>
+        <div class="action-text">
+          <h3>تقرير أداء الدفعات والمهام</h3>
+          <p>مقارنة نتائج الدفعات ونسب التسليم في الأوقات المحددة للواجبات.</p>
+        </div>
+      </div>
+      <div class="action-footer">
+        <button class="btn-gen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          توليد التقرير
+        </button>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="action-card">
+      <div class="action-body">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="6"></circle>
+            <circle cx="12" cy="12" r="2"></circle>
+          </svg>
+        </div>
+        <div class="action-text">
+          <h3>تقرير التقييم المفهومي والمهارات</h3>
+          <p>تقرير تحليلي لمهارات المتدربين ومستوى استيعاب المفاهيم البرمجية.</p>
+        </div>
+      </div>
+      <div class="action-footer">
+        <button class="btn-gen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          توليد التقرير
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
