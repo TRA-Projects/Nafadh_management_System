@@ -32,7 +32,8 @@
     @if (errorMessage()) {
     <div class="error-card">{{ errorMessage() }}</div>
     }
-<!-- =========================
+
+    <!-- =========================
        1 - ATTENDANCE TAB
   ========================== -->
     @if (tab() === 'attendance') {
@@ -44,7 +45,7 @@
             <div class="card-sub">متدرب نشط في الشركة</div>
         </div>
 
-<div class="summary-card">
+        <div class="summary-card">
             <div class="card-title">متوسط نسب الحضور</div>
             <div class="card-value blue">{{ $any(att).overallAttendanceRate ?? $any(att).averageAttendanceRate }}%</div>
             <div class="card-sub">عبر كل البرامج</div>
@@ -78,9 +79,6 @@
         } @empty {
         <div class="empty-state small">لا توجد بيانات مخطط حضور</div>
         }
-
-
-    }}
     </section>
 
     <section class="section">
@@ -123,7 +121,10 @@
             </table>
         </div>
     </section>
-      <!-- =========================
+    }
+    }
+
+    <!-- =========================
        2 - ACHIEVEMENT TAB
   ========================== -->
     @if (tab() === 'achievement') {
@@ -215,7 +216,8 @@
         </div>
     </section>
     }
-   <!-- =========================
+
+    <!-- =========================
        3 - CAPACITY TAB
   ========================== -->
     @if (tab() === 'capacity') {
