@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TraineeApi } from '../../services/trainee-api';
@@ -26,6 +26,30 @@ export class TraineeAttendance implements OnInit {
     this.api.getAttendance(this.enrollmentId).subscribe((d) => this.rows.set(d ?? []));
     this.api.getComplianceRate(this.enrollmentId).subscribe({ next: (r) => this.rate.set(r), error: () => {} });
   }
+
+  // دوال الحساب الديناميكية لملخص الحضور
+  totalPresent = computed(() => 
+    this.rows().filter(r => r.status === 'Present' || r.status === 'Late').length
+  );
+
+  totalAbsent = computed(() => 
+    this.rows().filter(r => r.status === 'Absent').length
+  );
+
+  totalLate = computed(() => 
+    this.rows().filter(r => r.status === 'Late').length
+  );
+
+  totalExcused = computed(() => 
+    this.rows().filter(r => r.status === 'Excused' || r.excuseStatus === 'Approved' || r.note === 'بانتظار المراجعة').length
+  );
+
+  commitmentPercentage = computed(() => {
+    const total = this.rows().length;
+    if (total === 0) return 0;
+    const presentCount = this.rows().filter(r => r.status === 'Present').length;
+    return Math.round((presentCount / total) * 100);
+  });
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
