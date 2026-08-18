@@ -379,17 +379,18 @@
     }
 
 
-    <!-- =========================
+   <!-- =========================
          3 - CAPACITY
     ========================== -->
     @if (tab() === 'capacity') {
 
       @if (capacity(); as cap) {
 
+        <!-- البطاقة العلوية: المخطط الدائري والإحصائيات -->
         <section class="section">
 
           <h2 class="section-title">
-            الطاقة الاستيعابية للشركة
+            الطاقة الاستيعابية — الحصة المخصصة للشركة: {{ cap.total ?? 0 }} مقعداً
           </h2>
 
           <div class="capacity-overview">
@@ -437,44 +438,78 @@
 
         </section>
 
+        <!-- البطاقة السفلية: جدول الطاقة حسب البرنامج (تطابق النظام الأصلي) -->
         <section class="section">
 
           <h2 class="section-title">
-            ملخص الطاقة الاستيعابية
+            الطاقة حسب البرنامج
           </h2>
 
-          <div class="capacity-progress">
+          <div class="table-wrapper">
 
-            <div class="capacity-progress-header">
-              <strong>نسبة الاستغلال</strong>
-              <span>{{ capacityPercentage() }}%</span>
-            </div>
+            <table>
 
-            <div class="progress-bar-bg">
-              <div
-                class="progress-bar-fill fill-teal"
-                [style.width.%]="capacityPercentage()">
-              </div>
-            </div>
+              <thead>
+                <tr>
+                  <th>البرنامج</th>
+                  <th style="text-align: center;">الحصة المخصصة</th>
+                  <th style="text-align: center;">المستخدم</th>
+                  <th style="text-align: center;">المتبقي</th>
+                  <th style="text-align: center;">الاستغلال</th>
+                </tr>
+              </thead>
 
-          </div>
+              <tbody>
 
-          <div class="capacity-cards">
+                @for (prog of cap.programs; track prog.programName) {
 
-            <div class="capacity-card">
-              <span>الحصة الكلية</span>
-              <strong>{{ cap.total ?? 0 }}</strong>
-            </div>
+                  <tr>
 
-            <div class="capacity-card">
-              <span>المستخدم</span>
-              <strong>{{ cap.used ?? 0 }}</strong>
-            </div>
+                    <td>
+                      {{ prog.programName }}
+                    </td>
 
-            <div class="capacity-card">
-              <span>المتبقي</span>
-              <strong>{{ cap.remaining ?? 0 }}</strong>
-            </div>
+                    <td style="text-align: center;">
+                      {{ prog.allocatedQuota }}
+                    </td>
+
+                    <td style="text-align: center;">
+                      {{ prog.usedQuota }}
+                    </td>
+
+                    <td style="text-align: center;">
+                      {{ prog.remainingQuota }}
+                    </td>
+
+                    <td>
+                      <div class="flex items-center justify-end gap-3" style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem;">
+                        <span class="rate-val" style="font-weight: bold; font-size: 0.85rem;">{{ prog.utilizationPercentage }}%</span>
+                        <div class="progress-bar-bg" style="width: 100px; height: 8px; background-color: #f1f5f9; border-radius: 9999px; overflow: hidden;">
+                          <div
+                            class="progress-bar-fill"
+                            [style.width.%]="prog.utilizationPercentage"
+                            [style.background-color]="prog.utilizationPercentage >= 80 ? '#06b6d4' : '#f59e0b'"
+                            style="height: 100%; border-radius: 9999px; transition: width 0.3s ease;">
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                  </tr>
+
+                } @empty {
+
+                  <tr>
+                    <td colspan="5" class="empty-cell">
+                      لا توجد بيانات برامج للعرض
+                    </td>
+                  </tr>
+
+                }
+
+              </tbody>
+
+            </table>
 
           </div>
 

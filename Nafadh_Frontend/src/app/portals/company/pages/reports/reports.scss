@@ -1,4 +1,3 @@
-
 :host {
   display: block;
 }
@@ -378,6 +377,10 @@ tr:hover td {
   color: #92400e;
 }
 
+/* ==========================================
+   قسم الطاقة الاستيعابية (تحديث ومواءمة)
+   ========================================== */
+
 .capacity-overview {
   display: flex;
   justify-content: center;
@@ -419,8 +422,8 @@ tr:hover td {
 
 .donut-container {
   position: relative;
-  width: 140px;
-  height: 140px;
+  width: 160px;
+  height: 160px;
 }
 
 .donut-chart {
@@ -437,8 +440,8 @@ tr:hover td {
 }
 
 .donut-inner {
-  width: 95px;
-  height: 95px;
+  width: 110px;
+  height: 110px;
   background: #fff;
   border-radius: 50%;
   display: flex;
@@ -448,7 +451,7 @@ tr:hover td {
 }
 
 .donut-value {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 900;
   color: var(--color-navy);
 }
@@ -486,6 +489,23 @@ tr:hover td {
 
 .fill-teal {
   background: #00a8a8;
+}
+
+/* ألوان وأشرطة تقدم جدول البرامج */
+.table-wrapper table .progress-bar-bg {
+  width: 100px;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 9999px;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.table-wrapper table .progress-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
 }
 
 .capacity-cards {
