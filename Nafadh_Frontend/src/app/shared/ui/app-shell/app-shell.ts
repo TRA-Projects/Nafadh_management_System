@@ -9,7 +9,7 @@ export interface ShellNavItem {
   label: string;
   icon: string; // matches an <nfd-icon name="..."> case
 }
-
+//
 // THE single shared layout shell — rebuilt to match the reference Trainee
 // demo pixel-for-pixel: header with logo on the RTL-start side, centered
 // search bar, and a left-side action cluster (dark mode → language →
