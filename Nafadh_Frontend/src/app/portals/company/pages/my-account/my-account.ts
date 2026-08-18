@@ -27,7 +27,6 @@ export class CompanyMyAccount implements OnInit {
     const element = document.getElementById('account-pdf-content');
     if (!element) return;
 
-    // تحميل مكتبة html2pdf ديناميكياً لتنزيل الملف مباشرة دون شاشة طباعة
     if (typeof (window as any).html2pdf === 'undefined') {
       await this.loadPdfScript();
     }
