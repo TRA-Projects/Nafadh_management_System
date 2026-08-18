@@ -1,8 +1,10 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
+// v9 SYNCED: contains excuseTypeFilter, rowExcuseType, setRowExcuseType.
+import { forkJoin } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TrainerApi } from '../../services/trainer-api';
-import { DailyAttendanceDto, ExcuseDto } from '../../../../core/models/dtos';
+import { DailyAttendanceDto, EnrollmentDto, ExcuseDto } from '../../../../core/models/dtos';
 
 /* ══════════════════════════════════════════════════════════════
    ترميز الحالات كما هو مخزَّن فعلياً في NFD_DailyAttendances.Status
@@ -27,14 +29,23 @@ const EXCUSE_STATUS = { pending: 0, approved: 1, rejected: 2 };
  *  ⚠ راجعي enum الـ backend لتأكيد ترميز Type و Level قبل الاعتماد عليهما. */
 const WARNING = { scopeTrainee: 1, typeAttendance: 0, levelMedium: 1 };
 
-type Row = DailyAttendanceDto & {
-  batchName?: string; traineeCode?: string;
-  isLate?: boolean; checkInTime?: string | null; checkOutTime?: string | null;
+type Row = {
+  dailyAttendanceId: number | null;
+  enrollmentId: number;
+  traineeName?: string;
+  batchName?: string;
+  traineeCode?: string;
+  date?: string;
+  checkInTime?: string | null;
+  checkOutTime?: string | null;
+  status?: unknown;
+  isLate: boolean;
+  note?: string | null;
 };
 type Excuse = ExcuseDto & { traineeName?: string; proofUrl?: string; dailyAttendanceId?: number };
 
-type TabKey = 'daily' | 'weekly' | 'monthly';
 type FilterKey = 'all' | 'unmarked' | 'absent';
+type RegisterView = 'today' | 'weekly' | 'monthly';
 type Toast = { text: string; kind: 'ok' | 'err' };
 type Pending = { title: string; text: string; confirmLabel: string; tone: 'primary' | 'danger'; run: () => void };
 type Shape = 'number' | 'numeric-text' | 'name';
@@ -59,27 +70,28 @@ export class TrainerAttendance implements OnInit {
   query = signal('');
   filter = signal<FilterKey>('all');
   excuseLimit = signal(8);
+  excuseTypeFilter = signal('all');
+  private selectedRowExcuseTypes = signal<Record<number, string>>({});
   toast = signal<Toast | null>(null);
   pending = signal<Pending | null>(null);
-
-  // ── التبويبات (من فرع الزميل) ───────────────────────────
-  activeTab = signal<TabKey>('daily');
-  tabs: { key: TabKey; label: string }[] = [
-    { key: 'daily', label: 'اليومي' },
-    { key: 'weekly', label: 'الأسبوعي' },
-    { key: 'monthly', label: 'الشهري' },
-  ];
-
-  /** الأسبوعي والشهري بلا endpoint بعد — القالب يعرض بها رسالة بدل جدول فارغ */
-  tabNotReady = computed(() => this.activeTab() !== 'daily');
+  registerView = signal<RegisterView>('today');
 
   statuses = ATTENDANCE_STATUSES;
   filters: { key: FilterKey; label: string }[] = [
     { key: 'all', label: 'الكل' },
-    { key: 'unmarked', label: 'لم يُسجَّل' },
+    { key: 'unmarked', label: 'غير محفوظ' },
     { key: 'absent', label: 'الغائبون' },
   ];
   skeleton = [1, 2, 3, 4];
+  readonly excuseTypes = [
+    'عذر طبي',
+    'موعد / مراجعة مستشفى',
+    'ظرف عائلي طارئ',
+    'وفاة قريب',
+    'مهمة رسمية',
+    'تعطل المواصلات',
+    'أخرى',
+  ];
 
   todayLabel = new Intl.DateTimeFormat('ar', {
     calendar: 'gregory', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -94,37 +106,69 @@ export class TrainerAttendance implements OnInit {
 
   ngOnInit() { this.reload(); }
 
-  switchTab(tab: TabKey) {
-    if (this.activeTab() === tab) return;
-    this.activeTab.set(tab);
-    this.clearFilters();
-    this.reload();
-  }
-
   // ── التحميل ─────────────────────────────────────────────
   reload() {
     this.loading.set(true);
     this.loadError.set(null);
 
-    /* الأسبوعي والشهري ينتظران endpoint في الـ API */
-    if (this.activeTab() !== 'daily') {
-      this.rows.set([]);
-      this.excuses.set([]);
-      this.loading.set(false);
-      return;
-    }
+    // مهم: API حضور اليوم يرجع فقط من لديهم سجل حضور موجود بالفعل.
+    // لذلك نبدأ من Enrollment لعرض جميع المتدربين، ثم ندمج سجل اليوم إن وُجد.
+    forkJoin({
+      enrollments: this.api.getEnrollments(this.companyId),
+      attendance: this.api.getTodayAttendanceForCompany(this.companyId),
+    }).subscribe({
+      next: ({ enrollments, attendance }) => {
+        const attendanceList = (attendance ?? []) as DailyAttendanceDto[];
+        this.attShape = this.detectShape(attendanceList.map((r) => r.status));
 
-    this.api.getTodayAttendanceForCompany(this.companyId).subscribe({
-      next: (d) => {
-        const list = (d ?? []) as Row[];
-        this.attShape = this.detectShape(list.map((r) => r.status));
-        this.rows.set(list);
+        const byEnrollment = new Map<number, DailyAttendanceDto>(
+          attendanceList.map((a) => [a.enrollmentId, a])
+        );
+
+        const merged: Row[] = (enrollments ?? []).map((e: EnrollmentDto) => {
+          const a = byEnrollment.get(e.enrollmentId);
+          return {
+            dailyAttendanceId: a?.dailyAttendanceId ?? null,
+            enrollmentId: e.enrollmentId,
+            traineeName: e.traineeName || a?.traineeName || `متدرب #${e.traineeId}`,
+            batchName: e.batchName || '—',
+            date: a?.date,
+            checkInTime: a?.checkInTime ?? null,
+            checkOutTime: a?.checkOutTime ?? null,
+            // افتراض الواجهة: كل متدرب حاضر ما لم يغيّره المدرب إلى غائب/بعذر/متأخر.
+            // لا ننشئ السجل في الباك هنا؛ يتم الحفظ عند تغيير الحالة أو عند تأكيد سجل اليوم.
+            status: a ? a.status : this.toApi(this.presentStatus(), this.attShape),
+            isLate: a?.isLate ?? false,
+            note: a?.note ?? null,
+          };
+        });
+
+        // احتياط: لا نفقد أي سجل حضور رجعه الخادم حتى لو لم يظهر في Enrollment.
+        const enrollmentIds = new Set(merged.map((r) => r.enrollmentId));
+        for (const a of attendanceList) {
+          if (!enrollmentIds.has(a.enrollmentId)) {
+            merged.push({
+              dailyAttendanceId: a.dailyAttendanceId,
+              enrollmentId: a.enrollmentId,
+              traineeName: a.traineeName || `متدرب #${a.enrollmentId}`,
+              batchName: '—',
+              date: a.date,
+              checkInTime: a.checkInTime ?? null,
+              checkOutTime: a.checkOutTime ?? null,
+              status: a.status,
+              isLate: a.isLate,
+              note: a.note ?? null,
+            });
+          }
+        }
+
+        this.rows.set(merged);
         this.loading.set(false);
       },
       error: () => {
         this.rows.set([]);
         this.loading.set(false);
-        this.loadError.set('تعذّر الوصول إلى الخادم. تحقق من الاتصال ثم أعد المحاولة.');
+        this.loadError.set('تعذّر تحميل تسجيلات المتدربين. تحقق من طلب Enrollment ثم أعد المحاولة.');
       },
     });
 
@@ -169,7 +213,8 @@ export class TrainerAttendance implements OnInit {
   // ── الإحصاءات وشريط النداء ──────────────────────────────
   total = computed(() => this.rows().length);
   marked = computed(() => this.rows().filter((r) => !!this.statusOf(r.status)).length);
-  unmarked = computed(() => this.total() - this.marked());
+  // غير المحفوظين = من يظهرون حاضرين افتراضياً لكن لم يُنشأ لهم سجل في الباك بعد.
+  unmarked = computed(() => this.rows().filter((r) => r.dailyAttendanceId == null).length);
 
   segments = computed(() => {
     const total = this.total() || 1;
@@ -191,12 +236,80 @@ export class TrainerAttendance implements OnInit {
     const f = this.filter();
     return this.rows().filter((r) => {
       const key = this.statusKey(r.status);
-      if (f === 'unmarked' && key !== 'unmarked') return false;
+      if (f === 'unmarked' && r.dailyAttendanceId != null) return false;
       if (f === 'absent' && key !== 'absent') return false;
       if (q && !this.normalize(String(r.traineeName ?? '')).includes(q)) return false;
+      const excuseType = this.excuseTypeFilter();
+      if (excuseType !== 'all' && this.rowExcuseType(r) !== excuseType) return false;
       return true;
     });
   });
+
+  statusCount(key: string): number {
+    return this.rows().filter((r) => this.statusKey(r.status) === key).length;
+  }
+
+  absentRows = computed(() => this.rows().filter((r) => this.statusKey(r.status) === 'absent'));
+
+  commitmentRate = computed(() => {
+    const total = this.total();
+    if (!total) return 0;
+    const committed = this.statusCount('present') + this.statusCount('late') + this.statusCount('excused');
+    return Math.round((committed / total) * 100);
+  });
+
+  showRegister(view: RegisterView) {
+    this.registerView.set(view);
+    if (view !== 'today') {
+      this.notify(view === 'weekly' ? 'تم اختيار السجل الأسبوعي.' : 'تم اختيار السجل الشهري.', 'ok');
+    }
+  }
+
+  confirmToday() {
+    const unsavedPresent = this.rows().filter(
+      (r) => r.dailyAttendanceId == null && this.statusKey(r.status) === 'present'
+    );
+
+    if (unsavedPresent.length > 0) {
+      this.pending.set({
+        title: 'تأكيد سجل اليوم',
+        text: `سيتم حفظ ${unsavedPresent.length} متدرباً كحاضرين. الحالات التي عدّلتها إلى غائب أو بعذر تم حفظها عند التعديل.`,
+        confirmLabel: 'تأكيد وحفظ الحضور',
+        tone: 'primary',
+        run: () => this.markAllPresent(unsavedPresent),
+      });
+      return;
+    }
+    this.notify('تم تأكيد سجل اليوم بنجاح.', 'ok');
+  }
+
+  askReportAllRepeatedAbsence() {
+    const absent = this.absentRows().filter((r) => r.dailyAttendanceId != null && !this.reportedIds().has(r.dailyAttendanceId));
+    if (!absent.length) {
+      this.notify('لا توجد حالات غياب جديدة لإرسالها.', 'ok');
+      return;
+    }
+    this.pending.set({
+      title: 'إرسال الغياب المتكرر للهيئة',
+      text: `سيتم رفع إنذار للحالات الغائبة غير المبلّغ عنها وعددها ${absent.length}.`,
+      confirmLabel: 'إرسال البلاغات',
+      tone: 'danger',
+      run: () => absent.forEach((row) => this.reportAbsence(row)),
+    });
+  }
+
+  statusButtonClass(key: string): string { return `status-${key}`; }
+
+  avatarClass(r: Row): string {
+    const classes = ['av-blue', 'av-purple', 'av-sky', 'av-teal', 'av-slate', 'av-amber'];
+    return classes[Math.abs(Number(r.dailyAttendanceId ?? r.enrollmentId ?? 0)) % classes.length];
+  }
+
+  traineeSubtitle(r: Row): string {
+    if (r.traineeCode) return r.traineeCode;
+    if (r.enrollmentId != null) return `رقم التسجيل ${r.enrollmentId}`;
+    return 'متدرب';
+  }
 
   filterCount(key: FilterKey): number {
     if (key === 'unmarked') return this.unmarked();
@@ -205,7 +318,7 @@ export class TrainerAttendance implements OnInit {
   }
 
   onSearch(e: Event) { this.query.set((e.target as HTMLInputElement).value ?? ''); }
-  clearFilters() { this.query.set(''); this.filter.set('all'); }
+  clearFilters() { this.query.set(''); this.filter.set('all'); this.excuseTypeFilter.set('all'); }
 
   /** يوحّد الهمزات والتاء المربوطة والتشكيل حتى يعمل البحث العربي كما يتوقعه المستخدم */
   private normalize(v: string): string {
@@ -219,12 +332,54 @@ export class TrainerAttendance implements OnInit {
   setStatus(row: Row, def: StatusDef) {
     if (this.isActive(row, def) || this.savingId() !== null) return;
 
-    const before = row;
+    const before = { ...row };
     const after = this.withDerivedFields(row, def);
     this.replaceRow(after);
-    this.savingId.set(row.dailyAttendanceId);
+    this.savingId.set(row.enrollmentId);
 
-    this.api.updateAttendance(row.dailyAttendanceId, after as any).subscribe({
+    // لا يوجد DailyAttendance بعد: ننشئه لأول مرة باستخدام checkIn الموجود في TrainerApi.
+    if (row.dailyAttendanceId == null) {
+      const createDto = {
+        enrollmentId: row.enrollmentId,
+        date: new Date().toISOString(),
+        checkInTime: after.checkInTime ?? null,
+        checkOutTime: after.checkOutTime ?? null,
+        status: after.status,
+        isLate: after.isLate,
+        note: after.note ?? null,
+      };
+
+      this.api.checkIn(createDto).subscribe({
+        next: (created: any) => {
+          const saved: Row = {
+            ...after,
+            ...created,
+            dailyAttendanceId: created?.dailyAttendanceId ?? after.dailyAttendanceId,
+            traineeName: after.traineeName,
+            batchName: after.batchName,
+          };
+          this.replaceRow(saved);
+          this.savingId.set(null);
+          if (saved.dailyAttendanceId == null) this.reload();
+        },
+        error: () => {
+          this.replaceRow(before);
+          this.savingId.set(null);
+          this.notify('لم يُنشأ سجل الحضور. أُعيدت الحالة كما كانت.', 'err');
+        },
+      });
+      return;
+    }
+
+    const updateDto = {
+      checkInTime: after.checkInTime ?? null,
+      checkOutTime: after.checkOutTime ?? null,
+      status: after.status,
+      isLate: after.isLate,
+      note: after.note ?? null,
+    };
+
+    this.api.updateAttendance(row.dailyAttendanceId, updateDto).subscribe({
       next: () => this.savingId.set(null),
       error: () => {
         this.replaceRow(before);
@@ -252,11 +407,10 @@ export class TrainerAttendance implements OnInit {
   }
 
   private replaceRow(row: Row) {
-    this.rows.update((list) => list.map((r) => (r.dailyAttendanceId === row.dailyAttendanceId ? row : r)));
+    this.rows.update((list) => list.map((r) => (r.enrollmentId === row.enrollmentId ? row : r)));
   }
 
   presentStatus(): StatusDef { return this.statuses[0]; }
-  excusedStatus(): StatusDef { return this.statuses[3]; }
 
   askMarkAllPresent() {
     const target = this.rows().filter((r) => !this.statusOf(r.status));
@@ -275,50 +429,84 @@ export class TrainerAttendance implements OnInit {
     let done = 0, failed = 0;
     const finish = () => {
       if (done + failed < target.length) return;
+      this.savingId.set(null);
       if (failed) this.notify(`تعذّر حفظ ${failed} من ${target.length}. أعد المحاولة لمن بقي.`, 'err');
       else this.notify(`سُجِّل ${done} متدرباً كحاضرين.`, 'ok');
+      this.reload();
     };
 
+    this.savingId.set(-1);
     for (const row of target) {
       const after = this.withDerivedFields(row, def);
-      this.replaceRow(after);
-      this.api.updateAttendance(row.dailyAttendanceId, after as any).subscribe({
-        next: () => { done++; finish(); },
-        error: () => { failed++; this.replaceRow(row); finish(); },
-      });
+      const ok = () => { done++; finish(); };
+      const bad = () => { failed++; finish(); };
+
+      if (row.dailyAttendanceId == null) {
+        this.api.checkIn({
+          enrollmentId: row.enrollmentId,
+          date: new Date().toISOString(),
+          checkInTime: after.checkInTime ?? this.nowHHmm(),
+          checkOutTime: null,
+          status: after.status,
+          isLate: false,
+          note: after.note ?? null,
+        }).subscribe({ next: ok, error: bad });
+      } else {
+        this.api.updateAttendance(row.dailyAttendanceId, {
+          checkInTime: after.checkInTime ?? this.nowHHmm(),
+          checkOutTime: after.checkOutTime ?? null,
+          status: after.status,
+          isLate: false,
+          note: after.note ?? null,
+        }).subscribe({ next: ok, error: bad });
+      }
     }
+  }
+
+  // نوع العذر المختار في واجهة الكشف فقط؛ لا نضيف أي حقل إلى DTO المشترك.
+  rowExcuseType(row: Row): string {
+    const selected = this.selectedRowExcuseTypes()[row.enrollmentId];
+    if (selected) return selected;
+    const reason = this.excuseFor(row)?.reason ?? '';
+    return this.excuseTypes.includes(reason) ? reason : '';
+  }
+
+  setRowExcuseType(row: Row, value: string) {
+    this.selectedRowExcuseTypes.update((current) => ({ ...current, [row.enrollmentId]: value }));
+  }
+
+  excuseReasonFor(row: Row): string {
+    const ex = this.excuseFor(row);
+    if (ex?.reason && !this.excuseTypes.includes(ex.reason)) return ex.reason;
+    return row.note?.trim() || 'لا توجد ملاحظة إضافية';
+  }
+
+  isExcusePending(ex: Excuse): boolean {
+    const v: any = (ex as any).status;
+    if (typeof v === 'number') return v === EXCUSE_STATUS.pending;
+    const raw = String(v ?? '').trim().toLowerCase();
+    return raw === '0' || raw === 'pending' || raw === 'معلق' || raw === 'معلّق';
   }
 
   // ── الأعذار ─────────────────────────────────────────────
-  /* الربط بين العذر وصف الحضور عبر NFD_Excuses.DailyAttendanceId.
-     خريطة محسوبة مرة واحدة بدل بحث خطّي لكل صف في كل دورة تغيير. */
-  private excuseByAttendance = computed(() => {
-    const map = new Map<number, Excuse>();
-    for (const e of this.excuses()) {
-      const id = e.dailyAttendanceId;
-      if (id != null && !map.has(id)) map.set(id, e);
-    }
-    return map;
-  });
-
-  /** العذر المعروض داخل صف المتدرب */
+  /** العذر المرتبط بصف الحضور — الربط عبر NFD_Excuses.DailyAttendanceId */
   excuseFor(row: Row): Excuse | undefined {
-    return this.excuseByAttendance().get(row.dailyAttendanceId);
+    return this.excuses().find((e) => e.dailyAttendanceId === row.dailyAttendanceId);
   }
-
-  /** كم عذراً من أعذار اليوم بانتظار المراجعة داخل الكشف */
-  todayExcuseCount = computed(() => {
-    const map = this.excuseByAttendance();
-    return this.rows().filter((r) => map.has(r.dailyAttendanceId)).length;
-  });
 
   /** أعذار لا تخص كشف اليوم (أيام سابقة) — تبقى في القسم السفلي */
   otherExcuses = computed(() => {
-    const todayIds = new Set(this.rows().map((r) => r.dailyAttendanceId));
-    return this.excuses().filter((e) => e.dailyAttendanceId == null || !todayIds.has(e.dailyAttendanceId));
+    const todayIds = new Set(this.rows().map((r) => r.dailyAttendanceId).filter((id): id is number => id != null));
+    return this.excuses().filter((e) => !todayIds.has(e.dailyAttendanceId as number));
   });
 
-  visibleExcuses = computed(() => this.otherExcuses().slice(0, this.excuseLimit()));
+  visibleExcuses = computed(() => {
+    const selected = this.excuseTypeFilter();
+    const list = selected === 'all'
+      ? this.otherExcuses()
+      : this.otherExcuses().filter((e) => e.reason === selected);
+    return list.slice(0, this.excuseLimit());
+  });
   hiddenExcuses = computed(() => Math.max(0, this.otherExcuses().length - this.excuseLimit()));
   showAllExcuses() { this.excuseLimit.set(this.otherExcuses().length); }
 
@@ -335,18 +523,7 @@ export class TrainerAttendance implements OnInit {
       next: () => {
         this.excuses.update((list) => list.filter((e) => e.excuseId !== ex.excuseId));
         this.reviewingId.set(null);
-
-        /* قبول العذر يعني أن الحالة «بعذر» — وإلا بقي المتدرب غائباً رغم قبول عذره */
-        const row = ex.dailyAttendanceId == null ? undefined
-                  : this.rows().find((r) => r.dailyAttendanceId === ex.dailyAttendanceId);
-
-        if (approve && row) {
-          const excused = this.excusedStatus();
-          if (!this.isActive(row, excused)) this.setStatus(row, excused);
-          this.notify(`قُبل العذر — حالة ${row.traineeName || 'المتدرب'} الآن «بعذر».`, 'ok');
-        } else {
-          this.notify(approve ? 'قُبل العذر.' : 'رُفض العذر.', 'ok');
-        }
+        this.notify(approve ? 'قُبل العذر.' : 'رُفض العذر.', 'ok');
       },
       error: () => {
         this.excuses.set(snapshot);
@@ -378,7 +555,14 @@ export class TrainerAttendance implements OnInit {
       raisedByUserId: 3,
     } as any).subscribe({
       next: () => {
-        this.reportedIds.update((set) => new Set(set).add(row.dailyAttendanceId));
+        const attendanceId = row.dailyAttendanceId;
+        if (attendanceId !== null) {
+          this.reportedIds.update((set) => {
+            const next = new Set(set);
+            next.add(attendanceId);
+            return next;
+          });
+        }
         this.notify('رُفع الإنذار إلى الهيئة.', 'ok');
       },
       error: () => this.notify('لم يُرفع الإنذار. حاول مرة أخرى.', 'err'),
