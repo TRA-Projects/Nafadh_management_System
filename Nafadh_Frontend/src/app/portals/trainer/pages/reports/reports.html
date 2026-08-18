@@ -18,7 +18,11 @@
 
     <div class="reports-header-actions">
 
-      <button class="nfd-btn primary">
+      <!-- تصدير الجدول مؤقتاً غير مفعل -->
+      <button
+        class="nfd-btn primary"
+        disabled>
+
         <svg
           viewBox="0 0 24 24"
           width="18"
@@ -34,7 +38,12 @@
         <span>تصدير جدول</span>
       </button>
 
-      <button class="nfd-btn secondary">
+
+      <!-- تصدير تقرير عام -->
+      <button
+        class="nfd-btn secondary"
+        (click)="exportReport('Performance')">
+
         <svg
           viewBox="0 0 24 24"
           width="18"
@@ -70,7 +79,7 @@
         </span>
 
         <strong class="number">
-          {{ kpis()?.attendanceRate ?? 94 }}%
+          {{ kpis()?.attendanceRate ?? 0 }}%
         </strong>
 
       </div>
@@ -108,7 +117,7 @@
         </span>
 
         <strong class="number">
-          {{ kpis()?.taskCompletionRate ?? 91.2 }}%
+          {{ kpis()?.taskCompletionRate ?? 0 }}%
         </strong>
 
       </div>
@@ -144,7 +153,7 @@
         </span>
 
         <strong class="number">
-          100 / {{ kpis()?.avgTechnicalGrade ?? 86.4 }}
+          {{ kpis()?.avgTechnicalGrade ?? 0 }} / 100
         </strong>
 
       </div>
@@ -180,8 +189,7 @@
         </span>
 
         <strong class="number">
-          5 /
-          {{ (feedback()?.averageOverall ?? 4.8) | number:'1.1-2' }}
+          {{ (feedback()?.averageOverall ?? 0) | number:'1.1-2' }} / 5
         </strong>
 
       </div>
@@ -250,7 +258,9 @@
 
         <div class="report-footer">
 
-          <button class="report-button">
+          <button
+            class="report-button"
+            (click)="exportReport('Attendance')">
 
             <span>توليد التقرير</span>
 
@@ -315,7 +325,9 @@
 
         <div class="report-footer">
 
-          <button class="report-button">
+          <button
+            class="report-button"
+            (click)="exportReport('Performance')">
 
             <span>توليد التقرير</span>
 
@@ -380,7 +392,9 @@
 
         <div class="report-footer">
 
-          <button class="report-button">
+          <button
+            class="report-button"
+            (click)="exportReport('Custom')">
 
             <span>توليد التقرير</span>
 

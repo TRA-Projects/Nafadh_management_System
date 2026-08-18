@@ -68,10 +68,39 @@ export class TrainerApi {
   }
 
   // Reports
-  getTrainerKpis(trainerId: number): Observable<TrainerKpisDto> {
-    return this.http.get<TrainerKpisDto>(`${this.base}/Report/trainer-kpis/${trainerId}`);
-  }
+getTrainerKpis(trainerId: number): Observable<TrainerKpisDto> {
+  return this.http.get<TrainerKpisDto>(
+    `${this.base}/Report/trainer-kpis/${trainerId}`
+  );
+}
 
+generateReport(dto: {
+  type: 'Attendance' | 'Performance' | 'Financial' | 'Enrollment' | 'Custom';
+  filtersJson?: string;
+  generatedByUserId: number;
+  trainerId?: number;
+}) {
+  return this.http.post<{
+    reportId: number;
+    type: string;
+    filtersJson?: string;
+    generatedAt: string;
+    fileUrl?: string;
+    generatedByUserId: number;
+  }>(
+    `${this.base}/Report/generate`,
+    dto
+  );
+}
+
+downloadReport(reportId: number): Observable<Blob> {
+  return this.http.get(
+    `${this.base}/Report/${reportId}/download`,
+    {
+      responseType: 'blob'
+    }
+  );
+}
   // Profile
   getTrainer(id: number): Observable<TrainerDto> { return this.http.get<TrainerDto>(`${this.base}/Trainer/${id}`); }
   updateTrainer(id: number, dto: unknown) { return this.http.put(`${this.base}/Trainer/${id}`, dto); }
