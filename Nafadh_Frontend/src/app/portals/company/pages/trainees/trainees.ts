@@ -20,7 +20,7 @@ export class CompanyTrainees implements OnInit {
   announceScope: 'Company' | 'Batch' = 'Company';
   warnTarget: EnrollmentDto | null = null;
   warnForm = { type: 'Attendance', level: 'Low', evidence: '' };
-
+//
   constructor(private api: CompanyApi) {}
   ngOnInit() { this.api.getEnrollmentsByCompany(this.companyId).subscribe((d) => this.enrollments.set(d ?? [])); }
 
