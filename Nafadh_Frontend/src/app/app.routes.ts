@@ -22,5 +22,7 @@ export const routes: Routes = [
     path: 'trainee',
     loadChildren: () => import('./portals/trainee/trainee.routes').then((m) => m.TRAINEE_ROUTES),
   },
+
+  
   { path: '**', redirectTo: 'login' },
 ];
