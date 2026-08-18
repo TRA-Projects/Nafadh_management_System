@@ -67,6 +67,20 @@
 .att-refresh.is-spinning { animation: att-spin 1s linear infinite; }
 @keyframes att-spin { to { transform: rotate(-360deg); } }
 
+/* ── التبويبات: يومي / أسبوعي / شهري ──────────────────── */
+.att-tabs {
+  display: flex; gap: 4px; padding: 4px; margin-bottom: 16px;
+  background: var(--att-tint); border: 1px solid var(--att-line);
+  border-radius: 999px; width: fit-content;
+}
+.att-tab {
+  padding: 8px 20px; border: 0; border-radius: 999px;
+  background: transparent; color: var(--att-muted);
+  font-size: 13.5px; transition: .16s ease;
+}
+.att-tab:hover:not(.active) { background: var(--att-surface); color: var(--att-ink); }
+.att-tab.active { background: var(--att-navy); color: #fff; box-shadow: 0 3px 10px rgba(10, 17, 114, .22); }
+
 /* ── شريط النداء (العنصر المميّز) ─────────────────────── */
 .att-rollcall {
   background: var(--att-surface); border: 1px solid var(--att-line);
@@ -85,6 +99,15 @@
 .att-muted { color: var(--att-muted); font-size: 14px; }
 .att-rest { color: var(--att-late) !important; }
 .att-done-txt { color: var(--att-present) !important; font-size: 16px !important; }
+
+.att-rollcall-btns { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.att-pending-pill {
+  padding: 6px 14px; border-radius: 999px;
+  border: 1px solid rgba(42, 98, 221, .28);
+  background: rgba(42, 98, 221, .08);
+  color: var(--att-excused); font-size: 12.5px; white-space: nowrap;
+}
 
 .att-bulk-btn {
   padding: 8px 16px; border-radius: 999px; border: 1px solid var(--att-navy);
@@ -215,7 +238,48 @@
 }
 .att-report-btn:hover { background: var(--att-absent); color: #fff; border-color: var(--att-absent); }
 .att-reported { font-size: 13px; color: var(--att-present); }
+.att-await { font-size: 12.5px; color: var(--att-excused); white-space: nowrap; }
 .att-dash { color: var(--att-unmarked); }
+
+/* ── العذر داخل صف المتدرب ────────────────────────────── */
+/* صف المتدرب وعذره يقرآن كوحدة واحدة: نحذف الفاصل بينهما */
+.att-table tbody tr.has-excuse > td { border-bottom: 0; padding-bottom: 4px; }
+
+.att-excuse-row > td {
+  padding: 0 18px 14px;
+  border-bottom: 1px solid var(--att-line);
+}
+.att-table tbody tr.att-excuse-row:hover { background: transparent; }
+.att-excuse-row.is-busy { opacity: .55; pointer-events: none; }
+
+.att-inline-excuse {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px;
+  /* إزاحة من جهة البداية لتحاذي اسم المتدرب لا صورته */
+  margin-inline-start: 50px;
+  padding: 11px 14px;
+  border: 1px solid rgba(42, 98, 221, .18);
+  border-inline-start: 3px solid var(--att-excused);
+  border-radius: 10px;
+  background: rgba(42, 98, 221, .06);
+}
+
+.att-inline-tag {
+  flex: none; padding: 3px 10px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 700; white-space: nowrap;
+  color: var(--att-excused); background: rgba(42, 98, 221, .13);
+}
+
+.att-inline-body {
+  flex: 1 1 200px; display: flex; align-items: baseline;
+  flex-wrap: wrap; gap: 4px 12px; min-width: 0;
+}
+.att-inline-reason { font-size: 13.5px; font-weight: 600; color: var(--att-ink); }
+.att-inline-noproof { font-size: 12px; color: var(--att-muted); }
+.att-inline-body .att-proof { margin-top: 0; }
+
+.att-inline-actions { flex: none; display: flex; gap: 8px; }
+.att-inline-actions .att-approve,
+.att-inline-actions .att-reject { padding: 7px 14px; font-size: 12.5px; }
 
 /* ── الحالات الفارغة والتحميل ─────────────────────────── */
 .att-empty { text-align: center; padding: 34px 20px; }
@@ -267,6 +331,22 @@
 .att-approve:hover:not(:disabled) { background: var(--att-present); color: #fff; }
 .att-reject { border: 1px solid var(--att-line); background: transparent; color: var(--att-muted); }
 .att-reject:hover:not(:disabled) { border-color: var(--att-absent); color: var(--att-absent); background: rgba(210, 58, 78, .06); }
+
+/* ── رابط المرفق وزر عرض المزيد ───────────────────────── */
+.att-proof {
+  display: inline-block; margin-top: 5px; font-size: 12.5px;
+  color: var(--att-blue); text-decoration: none;
+  border-bottom: 1px solid rgba(0, 102, 196, .35); padding-bottom: 1px;
+}
+.att-proof:hover { border-bottom-color: currentColor; }
+
+.att-more-btn {
+  display: block; width: 100%; padding: 12px;
+  border: 0; border-top: 1px solid var(--att-line);
+  background: var(--att-tint); color: var(--att-navy); font-size: 13px;
+  transition: background .18s ease;
+}
+.att-more-btn:hover { background: var(--att-track); }
 
 /* ── نافذة التأكيد ────────────────────────────────────── */
 .att-overlay {
@@ -325,24 +405,31 @@
 :host-context(.dark-mode) .att-page .att-seg-btn.active,
 :host-context(body.dark) .att-page .att-seg-btn.active { color: #0b1030; }
 :host-context(.dark) .att-page .att-filter.active,
+:host-context(.dark) .att-page .att-tab.active,
 :host-context(.dark) .att-page .att-bulk-btn,
 :host-context(.dark) .att-page .att-confirm-btn.is-primary,
 :host-context(.dark) .att-page .att-toast.is-ok,
 :host-context([data-theme='dark']) .att-page .att-filter.active,
+:host-context([data-theme='dark']) .att-page .att-tab.active,
 :host-context([data-theme='dark']) .att-page .att-bulk-btn,
 :host-context([data-theme='dark']) .att-page .att-confirm-btn.is-primary,
 :host-context([data-theme='dark']) .att-page .att-toast.is-ok,
 :host-context(.dark-mode) .att-page .att-filter.active,
+:host-context(.dark-mode) .att-page .att-tab.active,
 :host-context(.dark-mode) .att-page .att-bulk-btn,
 :host-context(.dark-mode) .att-page .att-confirm-btn.is-primary,
 :host-context(.dark-mode) .att-page .att-toast.is-ok,
 :host-context(body.dark) .att-page .att-filter.active,
+:host-context(body.dark) .att-page .att-tab.active,
 :host-context(body.dark) .att-page .att-bulk-btn,
 :host-context(body.dark) .att-page .att-confirm-btn.is-primary,
 :host-context(body.dark) .att-page .att-toast.is-ok { color: #0b1030; }
 
 /* ── الشاشات الصغيرة ──────────────────────────────────── */
 @media (max-width: 900px) {
+  .att-tabs { width: 100%; }
+  .att-tab { flex: 1; padding: 9px 8px; }
+
   .att-table thead { display: none; }
   .att-table tbody tr {
     display: block; padding: 14px 16px; border-bottom: 1px solid var(--att-line);
@@ -358,6 +445,16 @@
   .att-search { max-width: none; }
   .att-toolbar { padding: 12px 14px; }
   .att-toast { inset-inline: 16px; max-width: none; }
+
+  /* صف العذر داخل البطاقة على الجوال */
+  .att-table tbody tr.has-excuse { border-bottom: 0; padding-bottom: 4px; }
+  .att-table tbody tr.att-excuse-row { padding: 0 16px 14px; }
+  .att-excuse-row > td { padding: 0; border-bottom: 0; }
+  .att-inline-excuse { margin-inline-start: 0; align-items: stretch; }
+  .att-inline-actions { width: 100%; }
+  .att-inline-actions .att-approve,
+  .att-inline-actions .att-reject { flex: 1; }
+  .att-pending-pill { white-space: normal; }
 }
 
 /* ── تقليل الحركة ─────────────────────────────────────── */
@@ -367,19 +464,3 @@
     transition-duration: .01ms !important;
   }
 }
-
-/* ── رابط المرفق وزر عرض المزيد ───────────────────────── */
-.att-proof {
-  display: inline-block; margin-top: 5px; font-size: 12.5px;
-  color: var(--att-blue); text-decoration: none;
-  border-bottom: 1px solid rgba(0, 102, 196, .35); padding-bottom: 1px;
-}
-.att-proof:hover { border-bottom-color: currentColor; }
-
-.att-more-btn {
-  display: block; width: 100%; padding: 12px;
-  border: 0; border-top: 1px solid var(--att-line);
-  background: var(--att-tint); color: var(--att-navy); font-size: 13px;
-  transition: background .18s ease;
-}
-.att-more-btn:hover { background: var(--att-track); }
