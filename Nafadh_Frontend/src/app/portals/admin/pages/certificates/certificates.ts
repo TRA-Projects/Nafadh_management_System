@@ -1,9 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
 
-// نموذج بطاقة الدفعة الخاص بصفحة الشهادات
 export interface BatchCertificateCardDto {
   id: number;
   batchName: string;
@@ -17,6 +15,12 @@ export interface BatchCertificateCardDto {
   endDate: string | Date;
 }
 
+export interface TraineeDto {
+  traineeId: number;
+  fullName: string;
+  completionStatus?: number | string;
+}
+
 @Component({
   selector: 'app-admin-certificates',
   standalone: true,
@@ -27,10 +31,13 @@ export interface BatchCertificateCardDto {
 export class AdminCertificates implements OnInit {
   batches = signal<BatchCertificateCardDto[]>([]);
 
-  constructor(
-    private api: AdminApi,
-    private router: Router
-  ) {}
+  // حالة التحكم بالعرض: 'list' لعرض بطاقات الدفعات، 'details' لعرض صفحة المتدربين الكاملة
+  viewMode = signal<'list' | 'details'>('list');
+  selectedBatch = signal<BatchCertificateCardDto | null>(null);
+  selectedBatchTrainees = signal<TraineeDto[]>([]);
+  loadingTrainees = signal<boolean>(false);
+
+  constructor(private api: AdminApi) {}
 
   ngOnInit() {
     this.loadBatchesData();
@@ -39,20 +46,12 @@ export class AdminCertificates implements OnInit {
   loadBatchesData() {
     this.api.getBatches().subscribe({
       next: (data: any[]) => {
-        // طباعة البيانات القادمة من الـ API لمعرفة أسماء الحقول بدقة في Console المتصفح (F12)
-        console.log('بيانات الدفعات القادمة من الـ API:', data);
-
         if (data && data.length > 0) {
           const mappedBatches: BatchCertificateCardDto[] = data.map((b) => ({
             id: b.batchId || b.id,
             batchName: b.batchName || b.name || `الدفعة ${b.batchId || b.id}`,
-
-            // البحث عن اسم الشركة في عدة مسميات محتملة
             companyName: b.companyName || b.company || b.hostCompany || b.organizationName || b.companyNameAr || 'غير محدد',
-
-            // البحث عن المسار/البرنامج في عدة مسميات محتملة
             trackName: b.trackName || b.programName || b.track || b.program || b.trackNameAr || 'عام',
-
             status: b.status || 'Ongoing',
             statusText: this.formatStatusText(b.status),
             issuedCertificatesCount: b.issuedCertificatesCount ?? 0,
@@ -116,7 +115,49 @@ export class AdminCertificates implements OnInit {
     return 'not-started';
   }
 
+  // عند الضغط على عرض المتدربين: تحويل الواجهة لصفحة التفاصيل الكاملة
   onViewTrainees(batch: BatchCertificateCardDto) {
-    this.router.navigate(['/admin/trainees'], { queryParams: { batchId: batch.id } });
+    this.selectedBatch.set(batch);
+    this.viewMode.set('details');
+    this.loadingTrainees.set(true);
+
+    this.api.getTrainees({ batchId: batch.id } as any).subscribe({
+      next: (res: any) => {
+        const list = res?.items || res || [];
+        this.selectedBatchTrainees.set(list);
+        this.loadingTrainees.set(false);
+      },
+      error: (err: any) => {
+        console.error('حدث خطأ أثناء جلب المتدربين:', err);
+        this.selectedBatchTrainees.set([]);
+        this.loadingTrainees.set(false);
+      }
+    });
+  }
+
+  // إصدار الشهادات لجميع المتدربين في الدفعة
+  issueAllCertificates() {
+    const batch = this.selectedBatch();
+    if (!batch) return;
+
+    console.log(`جاري إصدار جميع الشهادات للدفعة رقم: ${batch.id}`);
+
+    // في حال توفر endpoint بالخدمة يمكن ربطه هنا مباشرة:
+    /*
+    this.api.issueBatchCertificates(batch.id).subscribe({
+      next: () => {
+        alert('تم إصدار الشهادات لجميع المتدربين بنجاح');
+        this.onViewTrainees(batch); // إعادة تحميل القائمة بعد التحديث
+      },
+      error: (err) => console.error('حدث خطأ أثناء إصدار الشهادات:', err)
+    });
+    */
+  }
+
+  // العودة إلى قائمة الدفعات
+  backToBatches() {
+    this.viewMode.set('list');
+    this.selectedBatch.set(null);
+    this.selectedBatchTrainees.set([]);
   }
 }

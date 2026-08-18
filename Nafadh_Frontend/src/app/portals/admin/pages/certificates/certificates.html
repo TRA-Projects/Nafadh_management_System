@@ -1,80 +1,213 @@
-  <!-- رأس الصفحة -->
-   <div class="certificates-container">
+<div class="certificates-container">
 
-<h2 class="nfd-page-title">إصدار الشهادات</h2>
-<p class="nfd-page-sub">إصدار شهادات الإتمام للمتدربين حسب الدفعة</p>
+  <!-- ==================== 1. الشاشة الأولى: قائمة بطاقات الدفعات ==================== -->
+  @if (viewMode() === 'list') {
+    <h2 class="nfd-page-title">إصدار الشهادات</h2>
+    <p class="nfd-page-sub">إصدار شهادات الإتمام للمتدربين حسب الدفعة</p>
 
-
-  
-
-
-
-  <!-- شبكة الكاردات (تصميم شبكي يتكرر حسب البيانات) -->
-  <div class="batches-grid">
-    @for (batch of batches(); track batch.id ?? $index) {
-      <div class="batch-card">
-        
-        <!-- الجزء العلوي: شارة الحالة + أيقونة التقويم -->
-        <div class="card-header">
-          <span class="status-badge" [ngClass]="getBatchStatusClass(batch.status)">
-            {{ batch.statusText || batch.status }}
-          </span>
-          <div class="calendar-icon-box">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
-              <line x1="16" x2="16" y1="2" y2="6"/>
-              <line x1="8" x2="8" y1="2" y2="6"/>
-              <line x1="3" x2="21" y1="10" y2="10"/>
-            </svg>
-          </div>
-        </div>
-
-        <!-- عنوان الدفعة والشركة والمسار -->
-        <div class="card-body">
-          <h3 class="batch-title">{{ batch.batchName }}</h3>
-          <div class="company-name">{{ batch.companyName }}</div>
-          <div class="track-name">{{ batch.trackName }}</div>
-
-          <!-- قسم الشهادات الصادرة وشريط التقدم -->
-          <div class="progress-section">
-            <div class="progress-labels">
-              <span class="issued-count">{{ batch.issuedCertificatesCount }}/{{ batch.totalTraineesCount }}</span>
-              <span class="progress-title">الشهادات الصادرة</span>
+    <!-- شبكة الكاردات -->
+    <div class="batches-grid">
+      @for (batch of batches(); track batch.id ?? $index) {
+        <div class="batch-card">
+          
+          <!-- الجزء العلوي -->
+          <div class="card-header">
+            <div class="calendar-icon-box">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                <line x1="16" x2="16" y1="2" y2="6"/>
+                <line x1="8" x2="8" y1="2" y2="6"/>
+                <line x1="3" x2="21" y1="10" y2="10"/>
+              </svg>
             </div>
-            <div class="progress-bar-bg">
-              <div 
-                class="progress-bar-fill" 
-                [style.width.%]="(batch.issuedCertificatesCount / (batch.totalTraineesCount || 1)) * 100">
+            <span class="status-badge-pill" [ngClass]="getBatchStatusClass(batch.status)">
+              {{ batch.statusText || batch.status }}
+            </span>
+          </div>
+
+          <!-- عنوان الدفعة والشركة والمسار -->
+          <div class="card-body">
+            <h3 class="batch-title">{{ batch.batchName }}</h3>
+            <div class="company-name">{{ batch.companyName }}</div>
+            <div class="track-name">{{ batch.trackName }}</div>
+
+            <!-- قسم الشهادات الصادرة -->
+            <div class="progress-section">
+              <div class="progress-labels">
+                <span class="progress-title">الشهادات الصادرة</span>
+                <span class="issued-count">{{ batch.issuedCertificatesCount }}/{{ batch.totalTraineesCount }}</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div 
+                  class="progress-bar-fill" 
+                  [style.width.%]="(batch.issuedCertificatesCount / (batch.totalTraineesCount || 1)) * 100">
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- تواريخ بداية ونهاية الدفعة -->
-          <div class="dates-row">
-            <span>{{ batch.startDate | date:'dd/MM/yyyy' }}</span>
-            <span>{{ batch.endDate | date:'dd/MM/yyyy' }}</span>
-          </div>
+            <!-- التواريخ -->
+            <div class="dates-row">
+              <span>{{ batch.startDate | date:'dd/MM/yyyy' }}</span>
+              <span>{{ batch.endDate | date:'dd/MM/yyyy' }}</span>
+            </div>
 
-          <!-- خط فاصل رقيق شفاف -->
-          <hr class="card-divider" />
+            <hr class="card-divider" />
 
-          <!-- الجزء السفلي: عدد المتدربين وزر عرض المتدربين -->
-          <div class="card-footer">
-            <button class="view-btn" (click)="onViewTrainees(batch)">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m15 18-6-6 6-6"/>
-              </svg>
-              <span>عرض المتدربين</span>
-            </button>
-            <span class="trainees-count">{{ batch.totalTraineesCount }} متدرب</span>
+            <!-- الجزء السفلي -->
+            <div class="card-footer">
+              <span class="trainees-count">{{ batch.totalTraineesCount }} متدرب</span>
+              <button class="view-btn" (click)="onViewTrainees(batch)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m15 18-6-6 6-6"/>
+                </svg>
+                <span>عرض المتدربين</span>
+              </button>
+            </div>
+
           </div>
 
         </div>
+      } @empty {
+        <div class="empty-state">لا توجد دفعات متاحة حالياً</div>
+      }
+    </div>
+  }
 
+  <!-- ==================== 2. الشاشة الثانية: تفاصيل الدفعة والمتدربين ==================== -->
+  @if (viewMode() === 'details' && selectedBatch()) {
+    
+    <!-- زر العودة -->
+    <div class="back-link-row">
+      <button class="back-btn" (click)="backToBatches()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m15 18-6-6 6-6"/>
+        </svg>
+        <span>العودة إلى قائمة الدفعات</span>
+      </button>
+    </div>
+
+    <!-- 1. المستطيل العلوي: بيانات الدفعة والإحصائيات -->
+    <div class="top-info-card">
+      
+      <!-- جهة اليمين: تفاصيل الدفعة -->
+      <div class="right-details-side">
+        <div class="calendar-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+            <line x1="16" x2="16" y1="2" y2="6"/>
+            <line x1="8" x2="8" y1="2" y2="6"/>
+            <line x1="3" x2="21" y1="10" y2="10"/>
+          </svg>
+        </div>
+
+        <div class="batch-main-info">
+          <div class="title-with-badge">
+            <h3 class="batch-name-heading">{{ selectedBatch()?.batchName }}</h3>
+            <span class="status-badge-pill" [ngClass]="getBatchStatusClass(selectedBatch()?.status)">
+              {{ selectedBatch()?.statusText || selectedBatch()?.status }}
+            </span>
+          </div>
+
+          <div class="company-text-highlight">{{ selectedBatch()?.companyName }}</div>
+
+          <div class="meta-dates-row">
+            <span>{{ selectedBatch()?.trackName }}</span>
+            <span class="dot-separator">•</span>
+            <span>{{ selectedBatch()?.startDate | date:'dd/MM/yyyy' }} – {{ selectedBatch()?.endDate | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
       </div>
-    } @empty {
-      <div class="empty-state">لا توجد دفعات متاحة حالياً</div>
-    }
-  </div>
+
+      <!-- جهة اليسار: الإحصائيات -->
+      <div class="left-stats-side">
+        <div class="stat-item">
+          <span class="stat-num dark-text">{{ selectedBatch()?.totalTraineesCount }}</span>
+          <span class="stat-lbl">إجمالي المتدربين</span>
+        </div>
+
+        <div class="stat-v-divider"></div>
+
+        <div class="stat-item">
+          <span class="stat-num green-text">{{ selectedBatch()?.issuedCertificatesCount }}</span>
+          <span class="stat-lbl">شهادة صادرة</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 2. صندوق العنوان وزر الإصدار العام -->
+    <div class="header-action-box">
+      <div class="header-titles">
+        <h3 class="trainees-section-title">المتدربون في هذه الدفعة</h3>
+        <p class="trainees-section-sub">{{ selectedBatch()?.companyName }} • {{ selectedBatch()?.trackName }}</p>
+      </div>
+
+      <!-- زر إصدار جميع الشهادات -->
+      <button class="btn-issue-all solid-style" (click)="issueAllCertificates()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <span>إصدار الشهادات</span>
+      </button>
+    </div>
+
+    <!-- 3. صندوق الجدول -->
+    <div class="table-card-container">
+
+      @if (loadingTrainees()) {
+        <div class="loading-state">جاري تحميل المتدربين...</div>
+      } @else if (selectedBatchTrainees().length > 0) {
+        <div class="table-responsive">
+          <table class="trainees-data-table">
+            <thead>
+              <tr>
+                <th>المتدرب</th>
+                <th>التخصص</th>
+                <th>التقدير</th>
+                <th>الشهادة</th>
+                <th>الإجراء</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (trainee of selectedBatchTrainees(); track trainee.traineeId) {
+                <tr>
+                  <td class="trainee-name-cell">
+                    {{ trainee.fullName || 'متدرب بدون اسم' }}
+                  </td>
+                  <td>{{ selectedBatch()?.trackName }}</td>
+                  <td><span class="grade-badge">--%</span></td>
+
+                  <!-- حالة الشهادة -->
+                  <td>
+                    @if (trainee.completionStatus === 'Issued') {
+                      <span class="status-issued">تم الإصدار</span>
+                    } @else {
+                      <span class="status-not-issued">لم تُصدر</span>
+                    }
+                  </td>
+
+                  <!-- أزرار الإجراء حسب حالة الإصدار -->
+                  <td>
+                    @if (trainee.completionStatus === 'Issued') {
+                      <!-- تم الإصدار: زر عرض الشهادة (أبيض شفاف) -->
+                      <button class="btn-action-cert view-cert">عرض الشهادة</button>
+                    } @else {
+                      <!-- لم تُصدر: زر إصدار الشهادة (لون 0A1172) -->
+                      <button class="btn-action-cert issue-cert">إصدار الشهادة</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="empty-state-inside">لا يوجد متدربون مسجلون في هذه الدفعة حالياً</div>
+      }
+
+    </div>
+
+  }
 
 </div>
