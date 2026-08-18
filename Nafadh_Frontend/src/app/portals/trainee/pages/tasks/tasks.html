@@ -8,7 +8,16 @@
 @if (!selected() && !selectedProject()) {
 
   <div
-    style="display:flex;gap:4px;background:var(--color-tint-indigo);padding:4px;border-radius:var(--radius-lg);width:fit-content;margin-bottom:16px"
+    style="
+      display:flex;
+      gap:4px;
+      background:var(--color-tint-indigo);
+      padding:4px;
+      border-radius:var(--radius-lg);
+      width:fit-content;
+      max-width:100%;
+      margin-bottom:16px;
+    "
   >
 
     <button
@@ -43,7 +52,12 @@
 
   <div
     class="nfd-card"
-    style="margin-bottom:12px;background:var(--status-new-bg);color:var(--status-new-fg)"
+    style="
+      margin-bottom:12px;
+      background:var(--status-new-bg);
+      color:var(--status-new-fg);
+      overflow-wrap:anywhere;
+    "
   >
     {{ errorMessage() }}
   </div>
@@ -69,18 +83,45 @@
 
       <div
         class="nfd-card"
-        style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;cursor:pointer"
+        style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          gap:12px;
+          margin-bottom:10px;
+          cursor:pointer;
+          min-width:0;
+          overflow:hidden;
+        "
         (click)="selectTask(t)"
       >
 
+        <!-- بيانات المهمة -->
+
         <div
-          style="display:flex;align-items:center;gap:12px;direction:rtl"
+          style="
+            display:flex;
+            align-items:center;
+            gap:12px;
+            direction:rtl;
+            min-width:0;
+            flex:1;
+          "
         >
 
           <!-- أيقونة المهمة -->
 
           <div
-            style="width:42px;height:42px;border-radius:10px;background:var(--color-tint-indigo);display:flex;align-items:center;justify-content:center;flex-shrink:0"
+            style="
+              width:42px;
+              height:42px;
+              border-radius:10px;
+              background:var(--color-tint-indigo);
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              flex-shrink:0;
+            "
           >
 
             <svg
@@ -111,17 +152,32 @@
           </div>
 
 
-          <div>
+          <div
+            style="
+              min-width:0;
+              overflow:hidden;
+            "
+          >
 
             <strong
-              style="display:block;font-size:13px"
+              style="
+                display:block;
+                font-size:13px;
+                overflow-wrap:anywhere;
+                word-break:break-word;
+              "
             >
               {{ t.title }}
             </strong>
 
 
             <p
-              style="margin:3px 0 0;font-size:11px;color:var(--color-text-secondary)"
+              style="
+                margin:3px 0 0;
+                font-size:11px;
+                color:var(--color-text-secondary);
+                overflow-wrap:anywhere;
+              "
             >
               الموعد:
               {{ t.dueDate | date:'dd-MM-yyyy' }}
@@ -133,7 +189,12 @@
               @if (s.grade !== null && s.grade !== undefined) {
 
                 <p
-                  style="margin:3px 0 0;font-size:10px;color:var(--status-active-fg);font-weight:600"
+                  style="
+                    margin:3px 0 0;
+                    font-size:10px;
+                    color:var(--status-active-fg);
+                    font-weight:600;
+                  "
                 >
                   الدرجة:
                   {{ s.grade }}/100
@@ -154,6 +215,10 @@
 
           <span
             class="nfd-badge"
+            style="
+              flex-shrink:0;
+              white-space:nowrap;
+            "
             [style.background]="statusBackground(s.status)"
             [style.color]="statusForeground(s.status)"
           >
@@ -164,7 +229,12 @@
 
           <span
             class="nfd-badge"
-            style="background:var(--status-new-bg);color:var(--status-new-fg)"
+            style="
+              background:var(--status-new-bg);
+              color:var(--status-new-fg);
+              flex-shrink:0;
+              white-space:nowrap;
+            "
           >
             جديد
           </span>
@@ -197,7 +267,10 @@
 
   <button
     class="nfd-muted"
-    style="display:inline-block;margin-bottom:12px"
+    style="
+      display:inline-block;
+      margin-bottom:12px;
+    "
     (click)="backToTasks()"
   >
     ← العودة
@@ -208,24 +281,51 @@
 
   <div
     class="nfd-card"
-    style="margin-bottom:12px"
+    style="
+      margin-bottom:12px;
+      overflow:hidden;
+    "
   >
 
     <div
-      style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;direction:rtl"
+      style="
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        gap:20px;
+        direction:rtl;
+        min-width:0;
+      "
     >
 
-      <div>
+      <div
+        style="
+          min-width:0;
+          flex:1;
+        "
+      >
 
         <h3
-          style="margin:0 0 8px;color:var(--color-navy);font-size:15px"
+          style="
+            margin:0 0 8px;
+            color:var(--color-navy);
+            font-size:15px;
+            overflow-wrap:anywhere;
+            word-break:break-word;
+          "
         >
           {{ t.title }}
         </h3>
 
 
         <p
-          style="font-size:13px;margin:0 0 14px;color:var(--color-text-secondary)"
+          style="
+            font-size:13px;
+            margin:0 0 14px;
+            color:var(--color-text-secondary);
+            overflow-wrap:anywhere;
+            word-break:break-word;
+          "
         >
           {{ t.description }}
         </p>
@@ -237,6 +337,10 @@
 
         <span
           class="nfd-badge"
+          style="
+            flex-shrink:0;
+            white-space:nowrap;
+          "
           [style.background]="statusBackground(s.status)"
           [style.color]="statusForeground(s.status)"
         >
@@ -247,7 +351,12 @@
 
         <span
           class="nfd-badge"
-          style="background:var(--status-new-bg);color:var(--status-new-fg)"
+          style="
+            background:var(--status-new-bg);
+            color:var(--status-new-fg);
+            flex-shrink:0;
+            white-space:nowrap;
+          "
         >
           جديد
         </span>
@@ -260,22 +369,41 @@
     <!-- معلومات المهمة -->
 
     <div
-      style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px"
+      style="
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:12px;
+        margin-top:12px;
+      "
     >
 
       <div
-        style="background:var(--color-tint-indigo);border-radius:10px;padding:12px"
+        style="
+          background:var(--color-tint-indigo);
+          border-radius:10px;
+          padding:12px;
+          min-width:0;
+        "
       >
 
         <span
-          style="display:block;font-size:10px;color:var(--color-text-secondary);margin-bottom:4px"
+          style="
+            display:block;
+            font-size:10px;
+            color:var(--color-text-secondary);
+            margin-bottom:4px;
+          "
         >
           الموعد النهائي
         </span>
 
 
         <strong
-          style="font-size:12px;color:var(--color-navy)"
+          style="
+            font-size:12px;
+            color:var(--color-navy);
+            overflow-wrap:anywhere;
+          "
         >
           {{ t.dueDate | date:'yyyy-MM-dd' }}
         </strong>
@@ -284,11 +412,21 @@
 
 
       <div
-        style="background:var(--color-tint-indigo);border-radius:10px;padding:12px"
+        style="
+          background:var(--color-tint-indigo);
+          border-radius:10px;
+          padding:12px;
+          min-width:0;
+        "
       >
 
         <span
-          style="display:block;font-size:10px;color:var(--color-text-secondary);margin-bottom:4px"
+          style="
+            display:block;
+            font-size:10px;
+            color:var(--color-text-secondary);
+            margin-bottom:4px;
+          "
         >
           الحالة
         </span>
@@ -298,6 +436,7 @@
 
           <span
             class="nfd-badge"
+            style="max-width:100%;"
             [style.background]="statusBackground(s.status)"
             [style.color]="statusForeground(s.status)"
           >
@@ -308,7 +447,10 @@
 
           <span
             class="nfd-badge"
-            style="background:var(--status-new-bg);color:var(--status-new-fg)"
+            style="
+              background:var(--status-new-bg);
+              color:var(--status-new-fg);
+            "
           >
             جديد
           </span>
@@ -326,42 +468,77 @@
   <!-- تسليم المهمة -->
   <!-- ======================================================= -->
 
-  <div class="nfd-card">
+  <div
+    class="nfd-card"
+    style="
+      overflow:hidden;
+    "
+  >
 
     <h3
-      style="margin:0 0 6px;color:var(--color-navy);font-size:15px"
+      style="
+        margin:0 0 6px;
+        color:var(--color-navy);
+        font-size:15px;
+      "
     >
       تسليم المهمة
     </h3>
 
 
     <p
-      style="margin:0 0 12px;font-size:11px;color:var(--color-text-secondary)"
+      style="
+        margin:0 0 12px;
+        font-size:11px;
+        color:var(--color-text-secondary);
+        overflow-wrap:anywhere;
+      "
     >
       الصق رابط التسليم GitHub أو Google Drive أو أي رابط خارجي
     </p>
 
 
     <label
-      style="display:block;font-size:12px;font-weight:600;margin:12px 0 4px"
+      style="
+        display:block;
+        font-size:12px;
+        font-weight:600;
+        margin:12px 0 4px;
+      "
     >
       رابط تسليم المهمة
     </label>
 
 
-    <div style="position:relative">
+    <div
+      style="
+        position:relative;
+        width:100%;
+      "
+    >
 
       <input
         class="nfd-input"
         dir="ltr"
         [(ngModel)]="submissionLink"
         placeholder="https://github.com/..."
-        style="padding-right:36px"
+        style="
+          width:100%;
+          max-width:100%;
+          box-sizing:border-box;
+          padding-right:36px;
+        "
       />
 
 
       <svg
-        style="position:absolute;right:12px;top:50%;transform:translateY(-50%)"
+        style="
+          position:absolute;
+          right:12px;
+          top:50%;
+          transform:translateY(-50%);
+          pointer-events:none;
+        "
         width="16"
         height="16"
         viewBox="0 0 24 24"
@@ -392,11 +569,20 @@
       @if (s.grade !== null && s.grade !== undefined) {
 
         <div
-          style="background:var(--status-active-bg);border-radius:10px;padding:12px;margin:12px 0"
+          style="
+            background:var(--status-active-bg);
+            border-radius:10px;
+            padding:12px;
+            margin:12px 0;
+            overflow:hidden;
+          "
         >
 
           <strong
-            style="color:var(--status-active-fg);font-size:18px"
+            style="
+              color:var(--status-active-fg);
+              font-size:18px;
+            "
           >
             {{ s.grade }}/100
           </strong>
@@ -405,7 +591,12 @@
           @if (s.feedback) {
 
             <p
-              style="margin:4px 0 0;font-size:12px"
+              style="
+                margin:4px 0 0;
+                font-size:12px;
+                overflow-wrap:anywhere;
+                word-break:break-word;
+              "
             >
               {{ s.feedback }}
             </p>
@@ -421,24 +612,42 @@
 
     <!-- زر التسليم -->
 
-    <button
-      class="nfd-btn primary"
-      style="width:100%;margin-top:12px"
-      (click)="submit()"
-      [disabled]="!submissionLink.trim() || submitting()"
+    <div
+      style="
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        width:100%;
+        margin-top:12px;
+      "
     >
 
-      @if (submitting()) {
+      <button
+        class="nfd-btn primary"
+        style="
+          width:auto;
+          min-width:140px;
+          max-width:100%;
+          padding:7px 20px;
+          font-size:12px;
+        "
+        (click)="submit()"
+        [disabled]="!submissionLink.trim() || submitting()"
+      >
 
-        جاري التسليم...
+        @if (submitting()) {
 
-      } @else {
+          جاري التسليم...
 
-        {{ submissionFor(t.taskId) ? 'تم التسليم' : 'تسليم المهمة' }}
+        } @else {
 
-      }
+          {{ submissionFor(t.taskId) ? 'تم التسليم' : 'تسليم المهمة' }}
 
-    </button>
+        }
+
+      </button>
+
+    </div>
 
   </div>
 
@@ -463,27 +672,64 @@
 
       <div
         class="nfd-card"
-        style="margin-bottom:12px;position:relative;cursor:pointer"
+        style="
+          margin-bottom:12px;
+          position:relative;
+          cursor:pointer;
+          min-width:0;
+          overflow:hidden;
+          box-sizing:border-box;
+        "
         (click)="selectProject(p)"
       >
 
+        <!-- محتوى المشروع -->
+
         <div
-          style="display:flex;align-items:center;gap:20px;direction:ltr"
+          style="
+            display:flex;
+            align-items:flex-start;
+            gap:16px;
+            direction:ltr;
+            min-width:0;
+            width:100%;
+          "
         >
 
           <!-- نسبة الإنجاز -->
 
           <div
-            style="width:64px;height:64px;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0"
+            style="
+              width:64px;
+              height:64px;
+              min-width:64px;
+              border-radius:50%;
+              position:relative;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              flex-shrink:0;
+            "
             [style.background]="projectProgressBackground(projectProgress(p))"
           >
 
             <div
-              style="width:52px;height:52px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center"
+              style="
+                width:52px;
+                height:52px;
+                background:#fff;
+                border-radius:50%;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+              "
             >
 
               <strong
-                style="font-size:11px;color:var(--color-navy)"
+                style="
+                  font-size:11px;
+                  color:var(--color-navy);
+                "
               >
                 {{ projectProgress(p) }}%
               </strong>
@@ -496,15 +742,36 @@
           <!-- بيانات المشروع -->
 
           <div
-            style="flex:1;direction:rtl"
+            style="
+              flex:1;
+              min-width:0;
+              direction:rtl;
+              overflow:hidden;
+            "
           >
 
+            <!-- العنوان والحالة -->
+
             <div
-              style="display:flex;justify-content:space-between;align-items:center;gap:10px"
+              style="
+                display:flex;
+                justify-content:space-between;
+                align-items:flex-start;
+                gap:10px;
+                min-width:0;
+                flex-wrap:wrap;
+              "
             >
 
               <strong
-                style="font-size:14px"
+                style="
+                  font-size:14px;
+                  flex:1 1 150px;
+                  min-width:0;
+                  overflow-wrap:anywhere;
+                  word-break:break-word;
+                  line-height:1.5;
+                "
               >
                 {{ p.title }}
               </strong>
@@ -512,6 +779,12 @@
 
               <span
                 class="nfd-badge"
+                style="
+                  flex-shrink:0;
+                  max-width:100%;
+                  white-space:normal;
+                  text-align:center;
+                "
                 [style.background]="projectStatusBackground(p)"
                 [style.color]="projectStatusForeground(p)"
               >
@@ -521,24 +794,53 @@
             </div>
 
 
+            <!-- الوصف -->
+
             <p
-              style="font-size:12px;color:var(--color-text-secondary);margin:5px 0"
+              style="
+                font-size:12px;
+                color:var(--color-text-secondary);
+                margin:5px 0;
+                overflow-wrap:anywhere;
+                word-break:break-word;
+                line-height:1.6;
+              "
             >
               {{ p.description }}
             </p>
 
 
+            <!-- التواريخ -->
+
             <div
-              style="display:flex;gap:12px;font-size:10px;color:var(--color-text-secondary);margin-top:6px"
+              style="
+                display:flex;
+                gap:12px;
+                flex-wrap:wrap;
+                font-size:10px;
+                color:var(--color-text-secondary);
+                margin-top:6px;
+                min-width:0;
+              "
             >
 
-              <span>
+              <span
+                style="
+                  overflow-wrap:anywhere;
+                  white-space:normal;
+                "
+              >
                 البداية:
                 {{ projectStartDate(p) | date:'dd-MM-yyyy' }}
               </span>
 
 
-              <span>
+              <span
+                style="
+                  overflow-wrap:anywhere;
+                  white-space:normal;
+                "
+              >
                 النهاية:
                 {{ projectEndDate(p) | date:'dd-MM-yyyy' }}
               </span>
@@ -549,7 +851,15 @@
             <!-- المراحل -->
 
             <div
-              style="display:flex;align-items:center;direction:rtl;margin-top:16px"
+              style="
+                display:flex;
+                align-items:center;
+                direction:rtl;
+                margin-top:16px;
+                width:100%;
+                min-width:0;
+                overflow:hidden;
+              "
             >
 
               @for (
@@ -559,17 +869,40 @@
               ) {
 
                 <div
-                  style="display:flex;align-items:center;flex:1"
+                  style="
+                    display:flex;
+                    align-items:center;
+                    flex:1;
+                    min-width:0;
+                  "
                 >
 
                   <div
-                    style="display:flex;flex-direction:column;align-items:center;min-width:44px"
+                    style="
+                      display:flex;
+                      flex-direction:column;
+                      align-items:center;
+                      min-width:40px;
+                      max-width:100%;
+                    "
                   >
 
                     @if (step.completed) {
 
                       <div
-                        style="width:24px;height:24px;border-radius:50%;background:#06b6d4;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700"
+                        style="
+                          width:24px;
+                          height:24px;
+                          min-width:24px;
+                          border-radius:50%;
+                          background:#06b6d4;
+                          color:#fff;
+                          display:flex;
+                          align-items:center;
+                          justify-content:center;
+                          font-size:12px;
+                          font-weight:700;
+                        "
                       >
                         ✓
                       </div>
@@ -577,7 +910,19 @@
                     } @else {
 
                       <div
-                        style="width:24px;height:24px;border-radius:50%;background:#e2e8f0;color:#64748b;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600"
+                        style="
+                          width:24px;
+                          height:24px;
+                          min-width:24px;
+                          border-radius:50%;
+                          background:#e2e8f0;
+                          color:#64748b;
+                          display:flex;
+                          align-items:center;
+                          justify-content:center;
+                          font-size:10px;
+                          font-weight:600;
+                        "
                       >
                         {{ step.number }}
                       </div>
@@ -586,7 +931,15 @@
 
 
                     <span
-                      style="font-size:10px;color:var(--color-text-secondary);margin-top:4px;white-space:nowrap"
+                      style="
+                        font-size:10px;
+                        color:var(--color-text-secondary);
+                        margin-top:4px;
+                        white-space:normal;
+                        text-align:center;
+                        line-height:1.3;
+                        overflow-wrap:anywhere;
+                      "
                     >
                       {{ step.name }}
                     </span>
@@ -597,7 +950,12 @@
                   @if (!last) {
 
                     <div
-                      style="height:1px;flex:1;margin:0 8px"
+                      style="
+                        height:1px;
+                        flex:1;
+                        min-width:8px;
+                        margin:0 6px;
+                      "
                       [style.background]="step.completed ? '#06b6d4' : '#e2e8f0'"
                     ></div>
 
@@ -617,11 +975,20 @@
         <!-- زر التفاصيل -->
 
         <div
-          style="display:flex;justify-content:flex-start;margin-top:12px"
+          style="
+            display:flex;
+            justify-content:flex-start;
+            margin-top:12px;
+            width:100%;
+          "
         >
 
           <button
             class="nfd-btn ghost"
+            style="
+              max-width:100%;
+              white-space:normal;
+            "
             (click)="$event.stopPropagation();selectProject(p)"
           >
             عرض تفاصيل المشروع
@@ -655,30 +1022,69 @@
 
   <button
     class="nfd-muted"
-    style="display:inline-block;margin-bottom:12px"
+    style="
+      display:inline-block;
+      margin-bottom:12px;
+    "
     (click)="backToProjects()"
   >
     ← العودة إلى المشاريع
   </button>
 
 
-  <div class="nfd-card">
+  <div
+    class="nfd-card"
+    style="
+      overflow:hidden;
+      min-width:0;
+      box-sizing:border-box;
+    "
+  >
+
+    <!-- عنوان المشروع -->
 
     <div
-      style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;direction:rtl"
+      style="
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        gap:15px;
+        direction:rtl;
+        min-width:0;
+        flex-wrap:wrap;
+      "
     >
 
-      <div>
+      <div
+        style="
+          min-width:0;
+          flex:1 1 200px;
+        "
+      >
 
         <h3
-          style="margin:0 0 8px;color:var(--color-navy);font-size:17px"
+          style="
+            margin:0 0 8px;
+            color:var(--color-navy);
+            font-size:17px;
+            overflow-wrap:anywhere;
+            word-break:break-word;
+            line-height:1.5;
+          "
         >
           {{ p.title }}
         </h3>
 
 
         <p
-          style="font-size:13px;color:var(--color-text-secondary);margin:0"
+          style="
+            font-size:13px;
+            color:var(--color-text-secondary);
+            margin:0;
+            overflow-wrap:anywhere;
+            word-break:break-word;
+            line-height:1.6;
+          "
         >
           {{ p.description }}
         </p>
@@ -688,6 +1094,12 @@
 
       <span
         class="nfd-badge"
+        style="
+          flex-shrink:0;
+          max-width:100%;
+          white-space:normal;
+          text-align:center;
+        "
         [style.background]="projectStatusBackground(p)"
         [style.color]="projectStatusForeground(p)"
       >
@@ -700,20 +1112,49 @@
     <!-- نسبة الإنجاز -->
 
     <div
-      style="display:flex;align-items:center;gap:18px;margin-top:20px;direction:rtl"
+      style="
+        display:flex;
+        align-items:center;
+        gap:18px;
+        margin-top:20px;
+        direction:rtl;
+        min-width:0;
+        flex-wrap:wrap;
+      "
     >
 
       <div
-        style="width:80px;height:80px;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center"
+        style="
+          width:80px;
+          height:80px;
+          min-width:80px;
+          border-radius:50%;
+          position:relative;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          flex-shrink:0;
+        "
         [style.background]="projectProgressBackground(projectProgress(p))"
       >
 
         <div
-          style="width:66px;height:66px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center"
+          style="
+            width:66px;
+            height:66px;
+            background:#fff;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+          "
         >
 
           <strong
-            style="font-size:14px;color:var(--color-navy)"
+            style="
+              font-size:14px;
+              color:var(--color-navy);
+            "
           >
             {{ projectProgress(p) }}%
           </strong>
@@ -723,17 +1164,32 @@
       </div>
 
 
-      <div>
+      <div
+        style="
+          min-width:0;
+          flex:1;
+        "
+      >
 
         <strong
-          style="display:block;color:var(--color-navy);font-size:14px"
+          style="
+            display:block;
+            color:var(--color-navy);
+            font-size:14px;
+            overflow-wrap:anywhere;
+          "
         >
           نسبة إنجاز المشروع
         </strong>
 
 
         <span
-          style="font-size:11px;color:var(--color-text-secondary)"
+          style="
+            font-size:11px;
+            color:var(--color-text-secondary);
+            overflow-wrap:anywhere;
+            line-height:1.5;
+          "
         >
           يتم تحديث النسبة حسب بيانات المشروع في النظام
         </span>
@@ -746,22 +1202,41 @@
     <!-- التواريخ -->
 
     <div
-      style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px"
+      style="
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:12px;
+        margin-top:20px;
+      "
     >
 
       <div
-        style="background:var(--color-tint-indigo);border-radius:10px;padding:12px"
+        style="
+          background:var(--color-tint-indigo);
+          border-radius:10px;
+          padding:12px;
+          min-width:0;
+        "
       >
 
         <span
-          style="display:block;font-size:10px;color:var(--color-text-secondary);margin-bottom:4px"
+          style="
+            display:block;
+            font-size:10px;
+            color:var(--color-text-secondary);
+            margin-bottom:4px;
+          "
         >
           تاريخ البداية
         </span>
 
 
         <strong
-          style="font-size:12px;color:var(--color-navy)"
+          style="
+            font-size:12px;
+            color:var(--color-navy);
+            overflow-wrap:anywhere;
+          "
         >
           {{ projectStartDate(p) | date:'yyyy-MM-dd' }}
         </strong>
@@ -770,18 +1245,32 @@
 
 
       <div
-        style="background:var(--color-tint-indigo);border-radius:10px;padding:12px"
+        style="
+          background:var(--color-tint-indigo);
+          border-radius:10px;
+          padding:12px;
+          min-width:0;
+        "
       >
 
         <span
-          style="display:block;font-size:10px;color:var(--color-text-secondary);margin-bottom:4px"
+          style="
+            display:block;
+            font-size:10px;
+            color:var(--color-text-secondary);
+            margin-bottom:4px;
+          "
         >
           تاريخ النهاية
         </span>
 
 
         <strong
-          style="font-size:12px;color:var(--color-navy)"
+          style="
+            font-size:12px;
+            color:var(--color-navy);
+            overflow-wrap:anywhere;
+          "
         >
           {{ projectEndDate(p) | date:'yyyy-MM-dd' }}
         </strong>
@@ -793,17 +1282,34 @@
 
     <!-- مراحل المشروع -->
 
-    <div style="margin-top:24px">
+    <div
+      style="
+        margin-top:24px;
+        min-width:0;
+        overflow:hidden;
+      "
+    >
 
       <strong
-        style="display:block;font-size:13px;color:var(--color-navy);margin-bottom:12px"
+        style="
+          display:block;
+          font-size:13px;
+          color:var(--color-navy);
+          margin-bottom:12px;
+        "
       >
         مراحل المشروع
       </strong>
 
 
       <div
-        style="display:flex;align-items:center;direction:rtl"
+        style="
+          display:flex;
+          align-items:center;
+          direction:rtl;
+          width:100%;
+          min-width:0;
+        "
       >
 
         @for (
@@ -813,17 +1319,40 @@
         ) {
 
           <div
-            style="display:flex;align-items:center;flex:1"
+            style="
+              display:flex;
+              align-items:center;
+              flex:1;
+              min-width:0;
+            "
           >
 
             <div
-              style="display:flex;flex-direction:column;align-items:center;min-width:44px"
+              style="
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                min-width:40px;
+                max-width:100%;
+              "
             >
 
               @if (step.completed) {
 
                 <div
-                  style="width:26px;height:26px;border-radius:50%;background:#06b6d4;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700"
+                  style="
+                    width:26px;
+                    height:26px;
+                    min-width:26px;
+                    border-radius:50%;
+                    background:#06b6d4;
+                    color:#fff;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:13px;
+                    font-weight:700;
+                  "
                 >
                   ✓
                 </div>
@@ -831,7 +1360,19 @@
               } @else {
 
                 <div
-                  style="width:26px;height:26px;border-radius:50%;background:#e2e8f0;color:#64748b;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600"
+                  style="
+                    width:26px;
+                    height:26px;
+                    min-width:26px;
+                    border-radius:50%;
+                    background:#e2e8f0;
+                    color:#64748b;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:10px;
+                    font-weight:600;
+                  "
                 >
                   {{ step.number }}
                 </div>
@@ -840,7 +1381,15 @@
 
 
               <span
-                style="font-size:10px;color:var(--color-text-secondary);margin-top:4px;white-space:nowrap"
+                style="
+                  font-size:10px;
+                  color:var(--color-text-secondary);
+                  margin-top:4px;
+                  white-space:normal;
+                  text-align:center;
+                  line-height:1.3;
+                  overflow-wrap:anywhere;
+                "
               >
                 {{ step.name }}
               </span>
@@ -851,7 +1400,12 @@
             @if (!last) {
 
               <div
-                style="height:1px;flex:1;margin:0 8px"
+                style="
+                  height:1px;
+                  flex:1;
+                  min-width:8px;
+                  margin:0 6px;
+                "
                 [style.background]="step.completed ? '#06b6d4' : '#e2e8f0'"
               ></div>
 
