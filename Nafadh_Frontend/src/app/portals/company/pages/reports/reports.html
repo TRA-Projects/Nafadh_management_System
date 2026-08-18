@@ -16,3 +16,19 @@
                 </button>
             </div>
         </div>
+
+        <div class="header-left">
+            <div class="export-group">
+                <button class="export-btn" (click)="exportPdf()">تصدير PDF</button>
+                <button class="export-btn excel" (click)="exportExcel()">تصدير Excel</button>
+            </div>
+        </div>
+    </header>
+
+    @if (loading()) {
+    <div class="loading-card">جاري تحميل البيانات...</div>
+    }
+
+    @if (errorMessage()) {
+    <div class="error-card">{{ errorMessage() }}</div>
+    }
