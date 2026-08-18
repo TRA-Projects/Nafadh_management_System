@@ -1,56 +1,684 @@
-<h2 class="nfd-page-title">تقييم ومتابعة المتدربين</h2>
-<p class="nfd-page-sub">متابعة مستويات المتدربين وتحديد نقاط القوة والاحتياجات التدريبية</p>
+<div class="trainees-page">
 
-<div class="nfd-card">
-  <table class="nfd-table">
-    <thead><tr><th>المتدرب</th><th>الدفعة</th><th></th></tr></thead>
-    <tbody>
-      @for (e of enrollments(); track e.enrollmentId) {
-        <tr>
-          <td>{{ e.traineeName }}</td>
-          <td>{{ e.batchName }}</td>
-          <td><button class="nfd-btn ghost" (click)="openEval(e.enrollmentId)">تقييم</button></td>
-        </tr>
-      }
-      @empty { <tr><td colspan="3">لا يوجد متدربون بعد</td></tr> }
-    </tbody>
-  </table>
-</div>
+  <!-- =====================================================
+       PAGE HEADER
+  ====================================================== -->
 
-@if (showEvalModal()) {
-  <div class="nfd-modal-bg" (click)="showEvalModal.set(false)">
-    <div class="nfd-modal" (click)="$event.stopPropagation()" style="width:460px">
-      <h3>التقييم الفني للمتدرب</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div><label>الوحدة</label><input class="nfd-input" type="number" [(ngModel)]="selectedModuleId" (change)="loadTemplates()" /></div>
-        <div><label>الفترة</label><input class="nfd-input" type="number" [(ngModel)]="selectedStage" (change)="loadTemplates()" /></div>
+  <section class="trainees-header">
+
+    <div class="header-title-group">
+
+      <div class="header-icon">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2">
+
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+
+        </svg>
       </div>
 
-      @for (c of criteria(); track c.criteriaId) {
-        <div style="margin-bottom:12px">
-          <label style="display:block;margin-bottom:4px">{{ c.name }} <small class="nfd-muted">(وزن {{ c.weight }}% — من {{ c.maxPoints }})</small></label>
-          <input class="nfd-input" type="number" [max]="c.maxPoints" min="0" [(ngModel)]="criteriaScores[c.criteriaId]" [name]="'crit'+c.criteriaId" />
-        </div>
-      }
-      @if (!criteria().length) { <p class="nfd-muted">لا توجد معايير معرّفة لهذه الوحدة/الفترة بعد — أضف معياراً جديداً.</p> }
 
-      <button class="nfd-btn ghost" style="width:100%;justify-content:center;margin:8px 0 16px;border:1px dashed var(--color-border)" (click)="showAddCriterion.set(true)">+ إضافة معيار تقييم جديد</button>
+      <div>
+        <h1>
+          تقييم ومتابعة المتدربين
+        </h1>
 
-      @if (showAddCriterion()) {
-        <div style="background:var(--color-tint-indigo);padding:12px;border-radius:var(--radius-lg);margin-bottom:16px;display:flex;flex-direction:column;gap:8px">
-          <input class="nfd-input" placeholder="اسم المعيار" [(ngModel)]="newCriterion.name" name="ncName" />
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <input class="nfd-input" type="number" placeholder="الوزن %" [(ngModel)]="newCriterion.weight" name="ncWeight" />
-            <input class="nfd-input" type="number" placeholder="الحد الأقصى" [(ngModel)]="newCriterion.maxPoints" name="ncMax" />
-          </div>
-          <button class="nfd-btn secondary" (click)="addCriterion()">إضافة المعيار</button>
-        </div>
-      }
-
-      <div class="nfd-modal-actions">
-        <button class="nfd-btn secondary" (click)="showEvalModal.set(false)">إلغاء</button>
-        <button class="nfd-btn primary" (click)="submitEvaluation()">حفظ التقييم</button>
+        <p>
+          متابعة مستويات المتدربين وتحديد نقاط القوة والاحتياجات التدريبية.
+        </p>
       </div>
+
     </div>
-  </div>
-}
+
+
+    <div class="header-actions">
+
+      <button class="action-btn secondary">
+
+        <svg
+          viewBox="0 0 24 24"
+          width="17"
+          height="17"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2">
+
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+
+        </svg>
+
+        <span>
+          تصدير الكشف
+        </span>
+
+      </button>
+
+
+      <button class="action-btn primary">
+
+        <svg
+          viewBox="0 0 24 24"
+          width="17"
+          height="17"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2">
+
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+
+        </svg>
+
+        <span>
+          بدء تقييم جديد
+        </span>
+
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       KPI CARDS
+  ====================================================== -->
+
+  <section class="trainees-kpis">
+
+    <!-- Total Trainees -->
+
+    <article class="trainee-kpi">
+
+      <div class="kpi-info">
+
+        <span>
+          إجمالي المتدربين
+        </span>
+
+        <strong>
+          {{ enrollments().length }}
+        </strong>
+
+      </div>
+
+
+      <div class="kpi-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2">
+
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+
+        </svg>
+
+      </div>
+
+    </article>
+
+
+    <!-- Average Technical -->
+
+    <article class="trainee-kpi">
+
+      <div class="kpi-info">
+
+        <span>
+          متوسط الأداء الفني
+        </span>
+
+        <strong>
+          —
+        </strong>
+
+      </div>
+
+
+      <div class="kpi-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2">
+
+          <line x1="4" y1="20" x2="4" y2="10"></line>
+          <line x1="10" y1="20" x2="10" y2="4"></line>
+          <line x1="16" y1="20" x2="16" y2="7"></line>
+          <line x1="22" y1="20" x2="22" y2="2"></line>
+
+        </svg>
+
+      </div>
+
+    </article>
+
+
+    <!-- High Performers -->
+
+    <article class="trainee-kpi">
+
+      <div class="kpi-info">
+
+        <span>
+          متدربون متميزون
+        </span>
+
+        <strong>
+          —
+        </strong>
+
+      </div>
+
+
+      <div class="kpi-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2">
+
+          <circle cx="12" cy="8" r="7"></circle>
+          <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+
+        </svg>
+
+      </div>
+
+    </article>
+
+
+    <!-- Needs Support -->
+
+    <article class="trainee-kpi danger">
+
+      <div class="kpi-info">
+
+        <span>
+          بحاجة إلى دعم ومتابعة
+        </span>
+
+        <strong>
+          —
+        </strong>
+
+      </div>
+
+
+      <div class="kpi-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2">
+
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+
+        </svg>
+
+      </div>
+
+    </article>
+
+  </section>
+
+
+  <!-- =====================================================
+       TRAINEES TABLE
+  ====================================================== -->
+
+  <section class="trainees-table-card">
+
+    <div class="table-wrapper">
+
+      <table class="trainees-table">
+
+        <thead>
+
+          <tr>
+
+            <th>
+              المتدرب
+            </th>
+
+            <th>
+              الدفعة
+            </th>
+
+            <th>
+              المستوى التقني
+            </th>
+
+            <th>
+              نسبة الحضور
+            </th>
+
+            <th>
+              متوسط التقييم
+            </th>
+
+            <th>
+              الحالة
+            </th>
+
+            <th>
+              الإجراءات
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          @for (e of enrollments(); track e.enrollmentId; let i = $index) {
+
+            <tr>
+
+              <!-- Trainee -->
+
+              <td>
+
+                <div class="trainee-person">
+
+                  <div
+                    class="trainee-avatar"
+                    [class.avatar-alt]="i % 3 === 1"
+                    [class.avatar-third]="i % 3 === 2">
+
+                    {{
+                      (e.traineeName || 'م').charAt(0)
+                    }}
+
+                  </div>
+
+
+                  <div class="trainee-details">
+
+                    <strong>
+                      {{ e.traineeName || 'متدرب' }}
+                    </strong>
+
+                    <span>
+                      رقم التسجيل: {{ e.enrollmentId }}
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </td>
+
+
+              <!-- Batch -->
+
+              <td>
+
+                <span class="batch-name">
+                  {{ e.batchName || '—' }}
+                </span>
+
+              </td>
+
+
+              <!-- Technical -->
+
+              <td>
+
+                <div class="progress-cell">
+
+                  <div class="progress-track">
+
+                    <div
+                      class="progress-fill placeholder-progress">
+                    </div>
+
+                  </div>
+
+                  <span>
+                    —
+                  </span>
+
+                </div>
+
+              </td>
+
+
+              <!-- Attendance -->
+
+              <td>
+
+                <span class="metric-value">
+                  —
+                </span>
+
+              </td>
+
+
+              <!-- Evaluation -->
+
+              <td>
+
+                <span class="metric-value">
+                  —
+                </span>
+
+              </td>
+
+
+              <!-- Status -->
+
+              <td>
+
+                <span class="status-chip neutral">
+                  قيد المتابعة
+                </span>
+
+              </td>
+
+
+              <!-- Actions -->
+
+              <td>
+
+                <div class="table-actions">
+
+                  <button
+                    type="button"
+                    class="small-action-btn"
+                    (click)="openEval(e.enrollmentId)">
+
+                    تقييم
+
+                  </button>
+
+
+                  <button
+                    type="button"
+                    class="small-action-btn">
+
+                    الملف
+
+                  </button>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          } @empty {
+
+            <tr>
+
+              <td colspan="7">
+
+                <div class="table-empty">
+
+                  <div class="empty-icon">
+
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="26"
+                      height="26"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2">
+
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+
+                    </svg>
+
+                  </div>
+
+                  <strong>
+                    لا يوجد متدربون بعد
+                  </strong>
+
+                  <span>
+                    سيظهر المتدربون هنا بعد إضافتهم إلى الدفعات.
+                  </span>
+
+                </div>
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       EVALUATION MODAL
+  ====================================================== -->
+
+  @if (showEvalModal()) {
+
+    <div
+      class="nfd-modal-bg"
+      (click)="showEvalModal.set(false)">
+
+      <div
+        class="nfd-modal evaluation-modal"
+        (click)="$event.stopPropagation()">
+
+        <div class="eval-modal-header">
+
+          <div>
+
+            <h3>
+              التقييم الفني للمتدرب
+            </h3>
+
+            <p>
+              أدخل درجات معايير التقييم ثم احفظ النتيجة.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            class="modal-close"
+            (click)="showEvalModal.set(false)">
+
+            ×
+
+          </button>
+
+        </div>
+
+
+        <div class="eval-config-grid">
+
+          <div class="modal-field">
+
+            <label>
+              الوحدة
+            </label>
+
+            <input
+              class="nfd-input"
+              type="number"
+              [(ngModel)]="selectedModuleId"
+              (change)="loadTemplates()"
+            />
+
+          </div>
+
+
+          <div class="modal-field">
+
+            <label>
+              الفترة
+            </label>
+
+            <input
+              class="nfd-input"
+              type="number"
+              [(ngModel)]="selectedStage"
+              (change)="loadTemplates()"
+            />
+
+          </div>
+
+        </div>
+
+
+        <div class="criteria-section">
+
+          @for (c of criteria(); track c.criteriaId) {
+
+            <div class="criterion-card">
+
+              <div class="criterion-heading">
+
+                <label>
+                  {{ c.name }}
+                </label>
+
+                <span>
+                  وزن {{ c.weight }}%
+                  ·
+                  من {{ c.maxPoints }}
+                </span>
+
+              </div>
+
+
+              <input
+                class="nfd-input"
+                type="number"
+                [max]="c.maxPoints"
+                min="0"
+                [(ngModel)]="criteriaScores[c.criteriaId]"
+                [name]="'crit' + c.criteriaId"
+              />
+
+            </div>
+
+          }
+
+
+          @if (!criteria().length) {
+
+            <div class="criteria-empty">
+              لا توجد معايير معرّفة لهذه الوحدة أو الفترة بعد.
+            </div>
+
+          }
+
+        </div>
+
+
+        <button
+          type="button"
+          class="add-criterion-btn"
+          (click)="showAddCriterion.set(true)">
+
+          + إضافة معيار تقييم جديد
+
+        </button>
+
+
+        @if (showAddCriterion()) {
+
+          <div class="new-criterion-box">
+
+            <input
+              class="nfd-input"
+              placeholder="اسم المعيار"
+              [(ngModel)]="newCriterion.name"
+              name="ncName"
+            />
+
+
+            <div class="new-criterion-grid">
+
+              <input
+                class="nfd-input"
+                type="number"
+                placeholder="الوزن %"
+                [(ngModel)]="newCriterion.weight"
+                name="ncWeight"
+              />
+
+              <input
+                class="nfd-input"
+                type="number"
+                placeholder="الحد الأقصى"
+                [(ngModel)]="newCriterion.maxPoints"
+                name="ncMax"
+              />
+
+            </div>
+
+
+            <button
+              type="button"
+              class="nfd-btn secondary"
+              (click)="addCriterion()">
+
+              إضافة المعيار
+
+            </button>
+
+          </div>
+
+        }
+
+
+        <div class="nfd-modal-actions">
+
+          <button
+            class="nfd-btn secondary"
+            (click)="showEvalModal.set(false)">
+
+            إلغاء
+
+          </button>
+
+
+          <button
+            class="nfd-btn primary"
+            (click)="submitEvaluation()">
+
+            حفظ التقييم
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+</div>

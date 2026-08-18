@@ -6,8 +6,10 @@ import { EvaluationCriterionDto, EvaluationTemplateDetailDto } from '../../../..
 
 @Component({
   selector: 'app-trainer-trainees',
+   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './trainees.html',
+  styleUrl: './trainees.scss',
 })
 export class TrainerTrainees implements OnInit {
   companyId = 1;
