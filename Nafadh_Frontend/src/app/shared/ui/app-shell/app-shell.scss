@@ -10,7 +10,7 @@
   background: var(--color-bg);
   position: relative;
 }
-
+// The header sits on the physical TOP (matching the reference exactly), with
 .topbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 50;
   height: var(--header-height);
