@@ -275,3 +275,21 @@
 .nfd-cancel-btn:hover {
   background: #f3f4f6;
 }
+/* تنسيق الأزرار بشكل عام (إذا لم تكن مستخدمة Bootstrap بالكامل هنا) */
+.filter-btn {
+  background-color: transparent;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  padding: 6px 16px;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+/* تأثير الـ Hover وتأثير العنصر المفعل (Active) */
+.filter-btn:hover,
+.filter-btn.active {
+  background-color: #0d1b52; /* لون أزرق غامق مشابه للصورة الثانية */
+  color: #ffffff;
+  border-color: #0d1b52;
+}
