@@ -215,5 +215,95 @@
         </div>
     </section>
     }
+   <!-- =========================
+       3 - CAPACITY TAB
+  ========================== -->
+    @if (tab() === 'capacity') {
+    @if (capacity(); as cap) {
+    <section class="section">
+        <h2 class="section-title">
+            الطاقة الاستيعابية — الحصة المخصصة للشركة: {{ cap.total ?? 0 }} مقعداً
+        </h2>
 
+        <div class="capacity-overview">
+            <div class="capacity-legend">
+                <div class="legend-item">
+                    <span class="legend-dot dot-blue"></span>
+                    <span>مشغول</span>
+                    <span class="legend-val">{{ cap.used ?? 0 }}</span>
+                </div>
 
+                <div class="legend-item">
+                    <span class="legend-dot dot-light"></span>
+                    <span>متبقي</span>
+                    <span class="legend-val">{{ cap.remaining ?? 0 }}</span>
+                </div>
+
+                <div class="legend-item">
+                    <span class="legend-dot dot-yellow"></span>
+                    <span>الحصة</span>
+                    <span class="legend-val">{{ cap.total ?? 0 }}</span>
+                </div>
+            </div>
+
+            <div class="donut-container">
+                <svg viewBox="0 0 100 100" class="svg-donut">
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#e2e8f0" stroke-width="12" />
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#0c3285" stroke-width="12"
+                        stroke-linecap="round" [attr.stroke-dasharray]="251.2"
+                        [attr.stroke-dashoffset]="251.2 - (251.2 * capacityPercentage()) / 100"
+                        style="transition: stroke-dashoffset 0.6s ease; transform: rotate(-90deg); transform-origin: 50% 50%;" />
+                </svg>
+                <div class="donut-inner">
+                    <span class="donut-value">{{ capacityPercentage() }}%</span>
+                    <span class="donut-label">مستخدمة</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">الطاقة حسب البرنامج</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>البرنامج</th>
+                        <th style="text-align: center;">الحصة المخصصة</th>
+                        <th style="text-align: center;">المستخدم</th>
+                        <th style="text-align: center;">المتبقي</th>
+                        <th style="text-align: center;">الاستغلال</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (prog of ($any(cap).programs ?? []); track prog.programName) {
+                    <tr>
+                        <td>{{ prog.programName }}</td>
+                        <td style="text-align: center;">{{ prog.allocatedQuota }}</td>
+                        <td style="text-align: center;">{{ prog.usedQuota }}</td>
+                        <td style="text-align: center;">{{ prog.remainingQuota }}</td>
+                        <td style="text-align: center;">
+                            <div class="program-utilization-container">
+                                <span class="utilization-num">{{ prog.utilizationPercentage }}%</span>
+                                <div class="prog-bar-bg">
+                                    <div class="prog-bar-fill" [style.width.%]="prog.utilizationPercentage"
+                                        [style.background-color]="prog.utilizationPercentage >= 80 ? '#0284c7' : '#f59e0b'">
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    } @empty {
+                    <tr>
+                        <td colspan="5" class="empty-cell">لا توجد بيانات برامج للعرض</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+    } @else if (!loading()) {
+    <div class="empty-state">لا توجد بيانات للطاقة الاستيعابية حالياً</div>
+    }
+    }
+</div>
