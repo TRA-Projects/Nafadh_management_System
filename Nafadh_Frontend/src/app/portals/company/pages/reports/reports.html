@@ -81,3 +81,46 @@
 
 
     }}
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">تفاصيل حضور المتدربين</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>المتدرب</th>
+                        <th>أيام الحضور</th>
+                        <th>الغياب</th>
+                        <th>التأخر</th>
+                        <th>المعذور</th>
+                        <th>معدل الحضور</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (row of att.rows; track row.traineeId) {
+                    <tr>
+                        <td>{{ row.traineeName || ('متدرب #' + row.traineeId) }}</td>
+                        <td>{{ row.presentDays }}</td>
+                        <td>{{ row.absentDays }}</td>
+                        <td>{{ row.lateDays }}</td>
+                        <td>{{ row.excusedDays }}</td>
+                        <td>
+                            <span class="rate" [class.rate-blue]="row.attendanceRate >= 85"
+                                [class.rate-yellow]="row.attendanceRate >= 70 && row.attendanceRate < 85"
+                                [class.rate-red]="row.attendanceRate < 70">
+                                <span class="dot"></span>
+                                {{ row.attendanceRate }}%
+                            </span>
+                        </td>
+                    </tr>
+                    } @empty {
+                    <tr>
+                        <td colspan="6" class="empty-cell">لا توجد تفاصيل حضور متاحة</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+    
