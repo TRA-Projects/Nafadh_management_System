@@ -1,21 +1,112 @@
-<h2 class="nfd-page-title">حساب المستخدم الحالي</h2>
-<p class="nfd-page-sub">بيانات المسؤول الحالي المسجل في بوابة الشركة المستضيفة</p>
-
-<div class="nfd-card" style="display:flex;align-items:center;gap:14px">
-  <div style="width:52px;height:52px;border-radius:50%;background:var(--color-navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px">{{ auth.session()?.fullName?.charAt(0) }}</div>
-  <div><strong>{{ auth.session()?.fullName }}</strong><p class="nfd-muted" style="margin:2px 0 0">{{ profile()?.position || 'مسؤول التدريب والتطوير' }}</p></div>
-</div>
-
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px">
-  <div class="nfd-card">
-    <h3>الصلاحيات</h3>
-    @for (perm of ['إدارة المتدربين','التقارير','التواصل مع الهيئة']; track perm) {
-      <div class="nfd-row"><span>{{ perm }}</span><span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">مفعّل</span></div>
-    }
+<div class="account-page" id="account-page-content">
+  <!-- Header Action Bar -->
+  <div class="page-header">
+    <div class="title-wrap">
+      <h2>حساب المستخدم الحالي</h2>
+      <p class="subtitle">بيانات المسؤول الحالي المسجل في بوابة الشركة المستضيفة</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary">تغيير كلمة المرور</button>
+      <!-- إعادة زر الحفظ الأصلي -->
+      <button class="btn btn-primary">حفظ</button>
+    </div>
   </div>
-  <div class="nfd-card">
-    <h3>بيانات الحساب</h3>
-    <div class="nfd-row"><span>البريد الإلكتروني</span><strong>{{ auth.session()?.email }}</strong></div>
-    <div class="nfd-row"><span>القسم</span><strong>{{ profile()?.department }}</strong></div>
+
+  <!-- Profile Card Container -->
+  <div class="profile-card">
+    <div class="profile-banner"></div>
+    <div class="profile-info-header">
+      <div class="avatar-large">
+        <span>{{ (profile()?.fullName || auth.session()?.fullName)?.charAt(0) || 'ن' }}</span>
+      </div>
+      <div class="user-main-details">
+        <h3 class="user-name">{{ profile()?.fullName || auth.session()?.fullName || 'غير محدد' }}</h3>
+        <div class="user-tags">
+          <span class="tag tag-role">{{ profile()?.specialty || 'التخصص غير محدد' }}</span>
+          <span class="tag tag-status">• {{ profile()?.status ?? 'نشط' }}</span>
+          <span class="tag tag-badge">مستخدم حالي</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Grid -->
+    <div class="data-grid">
+      <div class="data-item">
+        <label>الاسم الكامل</label>
+        <div class="value">{{ profile()?.fullName || auth.session()?.fullName || '—' }}</div>
+      </div>
+      <div class="data-item">
+        <label>البريد الإلكتروني</label>
+        <div class="value ltr">{{ profile()?.email || auth.session()?.email || '—' }}</div>
+      </div>
+      <div class="data-item">
+        <label>التخصص</label>
+        <div class="value">{{ profile()?.specialty || '—' }}</div>
+      </div>
+      <div class="data-item">
+        <label>سنوات الخبرة</label>
+        <div class="value">{{ profile()?.experienceYears ?? 0 }} سنوات</div>
+      </div>
+      <div class="data-item full-width">
+        <label>السيرة الذاتية (Biography)</label>
+        <div class="value">{{ profile()?.biography || 'لا توجد نبذة تعريفية مضافة.' }}</div>
+      </div>
+      <div class="data-item full-width" *ngIf="profile()?.cvUrl">
+        <label>رابط السيرة الذاتية (CV)</label>
+        <div class="value">
+          <a [href]="profile()?.cvUrl" target="_blank" class="cv-link">عرض الملف / CV</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Grid -->
+  <div class="bottom-grid">
+    <div class="section-card">
+      <h4 class="section-title">الصلاحيات</h4>
+      <div class="permission-list">
+        <div class="permission-item">
+          <div class="perm-info">
+            <div>
+              <strong>إدارة المتدربين</strong>
+              <p>عرض ومتابعة وتقييم</p>
+            </div>
+          </div>
+          <span class="status-pill">مفعّل</span>
+        </div>
+        <div class="permission-item">
+          <div class="perm-info">
+            <div>
+              <strong>التقارير</strong>
+              <p>تصدير ومتابعة</p>
+            </div>
+          </div>
+          <span class="status-pill">مفعّل</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h4 class="section-title">النشاط الأخير</h4>
+      <div class="activity-list">
+        <div class="activity-item">
+          <div>
+            <strong>تحديث بيانات متدرب</strong>
+            <p>قبل ساعتين</p>
+          </div>
+          <span class="chip-status">تم</span>
+        </div>
+        <div class="activity-item">
+          <div>
+            <strong>تصدير تقرير الحضور</strong>
+            <p>قبل 3 أيام</p>
+          </div>
+          <!-- الشارة الزرقاء في الأسفل أصبحت زراً تفاعلياً يحمل الـ PDF عند النقر -->
+          <button class="pdf-btn" (click)="exportToPDF()" type="button">
+            PDF
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
