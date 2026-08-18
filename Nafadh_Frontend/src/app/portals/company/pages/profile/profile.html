@@ -1,46 +1,324 @@
-<h2 class="nfd-page-title">إدارة ملف الشركة</h2>
-<p class="nfd-page-sub">بيانات الشركة والبرامج المستضافة والفروع والطاقة الاستيعابية</p>
+<h2 class="nfd-page-title">ملف الشركة</h2>
+<p class="nfd-page-sub">بيانات الشركة، الفروع، نقاط الاتصال، البرامج المعتمدة والطاقة الاستيعابية</p>
+
+@if (companyLoadError()) {
+  <div class="nfd-card" style="margin-top:16px;border:1px solid var(--status-cancelled-fg);background:var(--status-cancelled-bg);color:var(--status-cancelled-fg);padding:14px 18px;">
+    تعذر تحميل بيانات الشركة من الخادم. تحقق من الاتصال أو من صلاحيات الحساب، وراجع الـ console لمعرفة تفاصيل الخطأ.
+  </div>
+}
 
 @if (company(); as c) {
-  <div class="nfd-card" style="display:flex;align-items:center;gap:16px">
-    <div style="width:56px;height:56px;border-radius:14px;background:var(--color-navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700">{{ c.companyName.charAt(0) }}</div>
-    <div>
-      <strong style="font-size:16px">{{ c.companyName }}</strong>
-      <p class="nfd-muted" style="display:flex;align-items:center;gap:8px;margin:4px 0 0">{{ c.workField }} <span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ c.status }}</span></p>
-    </div>
-  </div>
+  <div class="company-profile-page">
+    <div class="nfd-card company-profile-hero-card" style="padding:0;overflow:hidden;margin-top:16px;border-radius:22px">
+      <div class="company-profile-cover">
+        @if (c.coverImageUrl) {
+          <img [src]="c.coverImageUrl" alt="غلاف {{ c.companyName }}" style="width:100%;height:100%;object-fit:cover;display:block" />
+        }
+        <div class="company-profile-cover-overlay"></div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px">
-    <div class="nfd-card">
-      <h3>بيانات الشركة</h3>
-      <div class="nfd-row"><span>السجل التجاري</span><strong>{{ c.commercialRegister }}</strong></div>
-      <div class="nfd-row"><span>العنوان</span><strong>{{ c.address }}</strong></div>
-      <div class="nfd-row"><span>الهاتف</span><strong>{{ c.phone }}</strong></div>
-      <div class="nfd-row"><span>البريد الإلكتروني</span><strong>{{ c.email }}</strong></div>
-    </div>
-
-    <div class="nfd-card">
-      <h3>الطاقة الاستيعابية (تعديل ذاتي)</h3>
-      @if (!editing()) {
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-weight:700">{{ c.capacity }}</span>
-          <button class="nfd-btn ghost" (click)="editing.set(true)">تعديل</button>
+        <div class="company-profile-cover-actions">
+          <input [id]="coverInputId" type="file" accept="image/*" hidden (change)="onCoverSelected($event)" />
+          <label [for]="coverInputId" class="nfd-btn secondary company-profile-upload-btn" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z"/><circle cx="12" cy="13" r="3.5"/></svg>
+            تغيير الغلاف
+          </label>
         </div>
-      } @else {
-        <input class="nfd-input" type="range" min="50" max="300" step="5" [(ngModel)]="capacityDraft" />
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-          <span style="font-weight:700">{{ capacityDraft }}</span>
-          <button class="nfd-btn primary" (click)="saveCapacity()">حفظ</button>
+      </div>
+
+      <div class="company-profile-header">
+        <div class="company-profile-logo-wrap">
+          <div class="company-profile-logo">
+            @if (c.logoUrl) {
+              <img [src]="c.logoUrl" alt="شعار {{ c.companyName }}" style="width:100%;height:100%;object-fit:cover" />
+            } @else {
+              <span>{{ companyInitial() }}</span>
+            }
+
+            <input [id]="logoInputId" type="file" accept="image/*" hidden (change)="onLogoSelected($event)" />
+            <label [for]="logoInputId" class="company-profile-logo-button" aria-label="إضافة شعار الشركة">+</label>
+          </div>
+        </div>
+
+        <div class="company-profile-title-wrap">
+          <h3 class="company-profile-name">{{ c.companyName }}</h3>
+          <div class="company-profile-badges">
+            <span class="nfd-badge company-profile-badge" [style.background]="c.status === 'Approved' ? '#e8f9ee' : '#edf3ff'" [style.color]="c.status === 'Approved' ? '#1d8f4a' : 'var(--color-navy)'" [style.border]="c.status === 'Approved' ? '1px solid #cfeedc' : '1px solid #dfeaff'">{{ statusLabel(c.status) }}</span>
+            @if (c.accreditationNumber) {
+              <span class="nfd-badge company-profile-badge" style="background:#f6f9ff;color:var(--color-text-secondary);border:1px solid var(--color-border);">اعتماد رقم {{ c.accreditationNumber }}</span>
+            }
+            @for (field of workFieldList(c); track field) {
+              <span class="nfd-badge company-profile-badge" style="background:#eef5ff;color:var(--color-navy);border:1px solid #dfeaff;">{{ field }}</span>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="company-profile-kpis">
+      <div class="nfd-card" style="padding:16px;">
+        <span class="nfd-muted" style="display:block;margin-bottom:8px;">المتدربين</span>
+        @if (traineesLoadError()) {
+          <span class="nfd-muted" style="color:var(--status-cancelled-fg);font-size:12px;">تعذر التحميل</span>
+        } @else {
+          <strong style="font-size:24px;color:var(--color-navy);">{{ trainees().length }}</strong>
+        }
+      </div>
+      <div class="nfd-card" style="padding:16px;">
+        <span class="nfd-muted" style="display:block;margin-bottom:8px;">الفروع</span>
+        @if (branchesLoadError()) {
+          <span class="nfd-muted" style="color:var(--status-cancelled-fg);font-size:12px;">تعذر التحميل</span>
+        } @else {
+          <strong style="font-size:24px;color:var(--color-navy);">{{ branches().length }}</strong>
+        }
+      </div>
+      <div class="nfd-card" style="padding:16px;">
+        <span class="nfd-muted" style="display:block;margin-bottom:8px;">نقاط الاتصال</span>
+        @if (supervisorsLoadError()) {
+          <span class="nfd-muted" style="color:var(--status-cancelled-fg);font-size:12px;">تعذر التحميل</span>
+        } @else {
+          <strong style="font-size:24px;color:var(--color-navy);">{{ supervisors().length }}</strong>
+        }
+      </div>
+      <div class="nfd-card" style="padding:16px;">
+        <span class="nfd-muted" style="display:block;margin-bottom:8px;">التخصصات</span>
+        @if (specialtiesLoadError()) {
+          <span class="nfd-muted" style="color:var(--status-cancelled-fg);font-size:12px;">تعذر التحميل</span>
+        } @else {
+          <strong style="font-size:24px;color:var(--color-navy);">{{ specialties().length }}</strong>
+        }
+      </div>
+      <div class="nfd-card" style="padding:16px;">
+        <span class="nfd-muted" style="display:block;margin-bottom:8px;">الطاقة المستخدمة</span>
+        <strong style="font-size:24px;color:var(--color-navy);">{{ usedCapacityValue() }}/{{ c.capacity }}</strong>
+      </div>
+    </div>
+
+    <div class="company-profile-info-wrap" style="margin-top:16px;">
+      <div class="nfd-card company-profile-info-card" style="padding:18px 20px;">
+        <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <span>معلومات الشركة</span>
+          <button class="nfd-btn ghost" type="button" (click)="startCompanyEdit()">تعديل بيانات الشركة</button>
+        </h3>
+
+        @if (companyEditOpen()) {
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px;padding:12px;border:1px solid var(--color-border);border-radius:12px;background:#f8faff;">
+            <input class="nfd-input" placeholder="السجل التجاري" [(ngModel)]="companyEditDraft.commercialRegister" />
+            <input class="nfd-input" placeholder="الرقم الضريبي" [(ngModel)]="companyEditDraft.taxNumber" />
+            <input class="nfd-input" placeholder="الهاتف" [(ngModel)]="companyEditDraft.phone" />
+            <input class="nfd-input" placeholder="البريد" [(ngModel)]="companyEditDraft.email" />
+            <input class="nfd-input" placeholder="الموقع" [(ngModel)]="companyEditDraft.website" />
+            <input class="nfd-input" placeholder="تاريخ الاعتماد" [(ngModel)]="companyEditDraft.accreditationValidUntil" />
+            <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;">
+              <button class="nfd-btn ghost" type="button" (click)="companyEditOpen.set(false)">إلغاء</button>
+              <button class="nfd-btn primary" type="button" (click)="saveCompanyEdit()">حفظ</button>
+            </div>
+          </div>
+        }
+
+        <div class="company-profile-info-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;">
+          <div class="nfd-row company-profile-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
+            <span>السجل التجاري</span><strong style="text-align:left;word-break:break-word;">{{ c.commercialRegister || '—' }}</strong>
+          </div>
+          <div class="nfd-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
+            <span>الرقم الضريبي</span><strong style="text-align:left;word-break:break-word;">{{ c.taxNumber || '—' }}</strong>
+          </div>
+          <div class="nfd-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
+            <span>الهاتف</span><strong style="text-align:left;word-break:break-word;">{{ c.phone || '—' }}</strong>
+          </div>
+          <div class="nfd-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
+            <span>البريد</span><strong style="text-align:left;word-break:break-word;">{{ c.email || '—' }}</strong>
+          </div>
+          <div class="nfd-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
+            <span>الموقع</span><strong style="text-align:left;word-break:break-word;">{{ c.website || '—' }}</strong>
+          </div>
+          <div class="nfd-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
+            <span>العنوان</span><strong style="text-align:left;word-break:break-word;">{{ c.address || 'لا يوجد عنوان مسجل' }}</strong>
+          </div>
+          <div class="nfd-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
+            <span>تاريخ الاعتماد</span><strong style="text-align:left;word-break:break-word;">{{ c.accreditationValidUntil || '—' }}</strong>
+          </div>
+          <div class="nfd-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
+            <span>الحالة</span><strong>{{ statusLabel(c.status) }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="company-profile-sections">
+      <div class="nfd-card">
+        <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <span>مجالات العمل</span>
+          <span style="display:flex;align-items:center;gap:6px;">
+            <input class="nfd-input" style="width:140px;height:34px;font-size:12px;padding:0 10px;" placeholder="مجال جديد" [(ngModel)]="newFieldDraft" (keyup.enter)="addWorkField()" />
+            <button class="nfd-btn ghost" type="button" (click)="addWorkField()">إضافة</button>
+          </span>
+        </h3>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;min-height:52px;">
+          @for (field of workFieldList(c); track field) {
+            <span class="nfd-badge" style="background:#eef4ff;color:var(--color-navy);display:inline-flex;align-items:center;gap:8px;border:1px solid #d8e4ff;">
+              {{ field }}
+              <button type="button" (click)="removeWorkField(field)" style="border:0;background:none;cursor:pointer;color:var(--color-text-tertiary);display:flex;padding:0;">✕</button>
+            </span>
+          } @empty {
+            <p class="nfd-muted">لا توجد مجالات مسجلة</p>
+          }
+        </div>
+      </div>
+
+      <div class="nfd-card">
+        <h3 style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span>الفروع</span>
+          <button class="nfd-btn ghost" type="button" (click)="addBranch()">+ إضافة فرع</button>
+        </h3>
+
+        @if (branchFormOpen()) {
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;padding:12px;border:1px solid var(--color-border);border-radius:12px;background:#f8faff;">
+            <input class="nfd-input" placeholder="اسم الفرع أو الموقع" [(ngModel)]="branchDraft.location" />
+            <input class="nfd-input" placeholder="نقطة الاتصال / العنوان" [(ngModel)]="branchDraft.contactPoint" />
+            <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;">
+              <button class="nfd-btn ghost" type="button" (click)="branchFormOpen.set(false)">إلغاء</button>
+              <button class="nfd-btn primary" type="button" (click)="saveBranch()">حفظ</button>
+            </div>
+          </div>
+        }
+
+        @if (branchesLoadError()) {
+          <p class="nfd-muted" style="color:var(--status-cancelled-fg);">تعذر تحميل الفروع من الخادم — راجع الـ console.</p>
+        }
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          @for (branch of branches(); track branch.branchId) {
+            <div style="padding:12px 14px;border:1px solid var(--color-border);border-radius:12px;background:#fafbff;">
+              <strong style="display:block;font-size:13.5px;color:var(--color-navy);">{{ branch.location }}</strong>
+              <span class="nfd-muted" style="display:block;margin-top:4px;">{{ branch.contactPoint || 'لا يوجد عنوان مرفق' }}</span>
+            </div>
+          } @empty {
+            @if (!branchesLoadError()) {
+              <p class="nfd-muted">لا توجد فروع مسجلة</p>
+            }
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="company-profile-sections">
+      <div class="nfd-card">
+        <h3>التخصصات المعتمدة</h3>
+        @if (specialtiesLoadError()) {
+          <p class="nfd-muted" style="color:var(--status-cancelled-fg);">تعذر تحميل التخصصات من الخادم — راجع الـ console.</p>
+        }
+        <div style="display:grid;grid-template-columns:1fr;gap:10px;">
+          @for (program of specialties(); track program.programId) {
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--color-border);border-radius:12px;background:#fafbff;">
+              <div>
+                <strong style="display:block;font-size:14px;color:var(--color-navy);">{{ program.name }}</strong>
+                <span class="nfd-muted">الطاقة: {{ program.seatsAllocated }} مقعد</span>
+              </div>
+              <span class="nfd-badge" [style.background]="program.status === 'معتمد' ? 'var(--status-completed-bg)' : 'var(--status-review-bg)'" [style.color]="program.status === 'معتمد' ? 'var(--status-completed-fg)' : 'var(--status-review-fg)'">{{ program.status }}</span>
+            </div>
+          } @empty {
+            @if (!specialtiesLoadError()) {
+              <p class="nfd-muted">لا توجد تخصصات معتمدة بعد</p>
+            }
+          }
+        </div>
+      </div>
+
+      <div class="nfd-card">
+        <h3 style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span>الطاقة الاستيعابية</span>
+          <span class="nfd-muted">المستخدم: {{ usedCapacityValue() }} متدرب</span>
+        </h3>
+
+        <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;margin-top:8px;">
+          <div style="position:relative;width:150px;height:150px;flex-shrink:0;">
+            <svg width="150" height="150" viewBox="0 0 150 150" style="transform:rotate(-90deg);display:block;">
+              <circle cx="75" cy="75" r="62" fill="none" stroke="var(--color-border-light)" stroke-width="15" />
+              <circle cx="75" cy="75" r="62" fill="none" stroke="var(--color-navy)" stroke-width="15" stroke-linecap="round" [attr.stroke-dasharray]="ringCircumference" [attr.stroke-dashoffset]="ringDashoffset()" />
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <strong style="font-size:24px;color:var(--color-navy);">{{ capacityPercent() }}%</strong>
+              <span class="nfd-muted">مستخدمة</span>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:12px;min-width:160px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+              <span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:12px;height:12px;border-radius:4px;background:var(--color-navy);display:inline-block;"></span> مشغول</span>
+              <strong>{{ usedCapacityValue() }}</strong>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+              <span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:12px;height:12px;border-radius:4px;background:var(--color-border-light);display:inline-block;"></span> متبقٍ</span>
+              <strong>{{ ((c.capacity || 0) - usedCapacityValue()) }}</strong>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+              <span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:12px;height:12px;border-radius:4px;background:var(--color-cyan);display:inline-block;"></span> الإجمالي</span>
+              <strong>{{ c.capacity || 0 }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:18px;">
+          @if (!editingCapacity()) {
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+              <span style="font-weight:700;color:var(--color-navy);">إجمالي الطاقة: {{ c.capacity || 0 }}</span>
+              <button class="nfd-btn ghost" type="button" (click)="editingCapacity.set(true)">تعديل</button>
+            </div>
+          } @else {
+            <div style="padding-top:4px;">
+              <input class="nfd-input" type="range" min="50" max="300" step="5" [(ngModel)]="capacityDraft" style="width:100%;" />
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;">
+                <strong style="font-size:16px;color:var(--color-navy);">{{ capacityDraft }}</strong>
+                <button class="nfd-btn primary" type="button" (click)="saveCapacity()">حفظ</button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="nfd-card" style="margin-top:16px;">
+      <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span>نقاط الاتصال</span>
+        <button class="nfd-btn ghost" type="button" (click)="addSupervisor()">+ إضافة</button>
+      </h3>
+
+      @if (supervisorFormOpen()) {
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px;padding:12px;border:1px solid var(--color-border);border-radius:12px;background:#f8faff;">
+          <input class="nfd-input" placeholder="اسم جهة الاتصال" [(ngModel)]="supervisorDraft.name" />
+          <input class="nfd-input" placeholder="المسمى الوظيفي" [(ngModel)]="supervisorDraft.role" />
+          <input class="nfd-input" placeholder="رقم الهاتف" [(ngModel)]="supervisorDraft.phone" />
+          <input class="nfd-input" placeholder="البريد الإلكتروني" [(ngModel)]="supervisorDraft.email" />
+          <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;">
+            <button class="nfd-btn ghost" type="button" (click)="supervisorFormOpen.set(false)">إلغاء</button>
+            <button class="nfd-btn primary" type="button" (click)="saveSupervisor()">حفظ</button>
+          </div>
         </div>
       }
-    </div>
-  </div>
 
-  <div class="nfd-card" style="margin-top:16px">
-    <h3>الفروع والمواقع</h3>
-    @for (b of branches(); track b.branchId) {
-      <div class="nfd-row"><span>{{ b.location }}</span><small class="nfd-muted">{{ b.contactPoint }}</small></div>
-    }
-    @empty { <p class="nfd-muted">لا توجد فروع مسجلة</p> }
+      @if (supervisorsLoadError()) {
+        <p class="nfd-muted" style="color:var(--status-cancelled-fg);">تعذر تحميل نقاط الاتصال من الخادم — راجع الـ console.</p>
+      }
+
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+        @for (person of supervisors(); track person.id) {
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid var(--color-border);border-radius:12px;background:#fafbff;">
+            <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--color-navy),#4976f3);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;">{{ (person.fullName || person.name || 'ش').charAt(0) }}</div>
+            <div style="flex:1;min-width:0;">
+              <strong style="display:block;font-size:14px;color:var(--color-navy);">{{ person.fullName || person.name || 'جهة اتصال' }}</strong>
+              <span class="nfd-muted" style="display:block;margin-top:4px;">{{ person.position || person.role || 'مدير الحساب' }}</span>
+            </div>
+            <div style="text-align:left;font-size:12px;color:var(--color-text-secondary);line-height:1.7;">
+              <div>{{ person.phone || '—' }}</div>
+              <div>{{ person.email || '—' }}</div>
+            </div>
+          </div>
+        } @empty {
+          @if (!supervisorsLoadError()) {
+            <p class="nfd-muted">لا توجد نقاط اتصال مسجلة</p>
+          }
+        }
+      </div>
+    </div>
   </div>
 }

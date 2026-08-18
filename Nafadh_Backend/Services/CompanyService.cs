@@ -158,16 +158,17 @@ namespace Nafadh_Backend.Services
             if (company == null)
                 return null;
 
-            var currentTraineeCount = company.Trainees?.Count ?? 0;
+            // Use enrollments count as the authoritative 'used' value because
+            // trainees may not have CompanyId set even when enrollments exist.
+            var used = await _repository.GetEnrollmentCountAsync(companyId);
+            var total = Convert.ToDecimal(company.Capacity);
+            var remaining = total - used;
 
             return new
             {
-                CompanyId = company.CompanyId,
-                CompanyName = company.CompanyName,
-                Capacity = company.Capacity,
-                CurrentTraineeCount = currentTraineeCount,
-                RemainingCapacity =
-            company.Capacity - currentTraineeCount
+                total,
+                used,
+                remaining
             };
         }
 
