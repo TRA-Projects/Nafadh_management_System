@@ -81,6 +81,10 @@ export class TrainerAttendance implements OnInit {
   pending = signal<Pending | null>(null);
   registerView = signal<RegisterView>('today');
 
+  weeklyRows = signal<any[]>([]);
+monthlyRows = signal<any[]>([]);
+historyLoading = signal(false);
+
   statuses = ATTENDANCE_STATUSES;
   filters: { key: FilterKey; label: string }[] = [
     { key: 'all', label: 'الكل' },
@@ -360,10 +364,164 @@ export class TrainerAttendance implements OnInit {
     return Math.round((committed / total) * 100);
   });
 
-  showRegister(view: RegisterView): void {
-    this.registerView.set(view);
+showRegister(view: RegisterView): void {
+  this.registerView.set(view);
+
+  if (view === 'weekly') {
+    this.loadWeeklyRegister();
   }
 
+  if (view === 'monthly') {
+    this.loadMonthlyRegister();
+  }
+}
+private loadWeeklyRegister(): void {
+  this.historyLoading.set(true);
+
+  const requests = this.rows().map((row) =>
+    this.http.get<DailyAttendanceDto[]>(
+      `${this.base}/DailyAttendance/enrollment/${row.enrollmentId}`
+    )
+  );
+
+  if (!requests.length) {
+    this.weeklyRows.set([]);
+    this.historyLoading.set(false);
+    return;
+  }
+
+  forkJoin(requests).subscribe({
+    next: (histories) => {
+      const now = new Date();
+
+      const startOfWeek = new Date(now);
+      startOfWeek.setHours(0, 0, 0, 0);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      const result = this.rows().map((row, index) => {
+        const history = histories[index] ?? [];
+
+        const weekRecords = history.filter((record) => {
+          const date = new Date(record.date);
+          return date >= startOfWeek && date <= endOfWeek;
+        });
+
+        return {
+          enrollmentId: row.enrollmentId,
+          traineeName: row.traineeName,
+          batchName: row.batchName,
+          present: weekRecords.filter(
+            (r) => this.statusKey(r.status) === 'present'
+          ).length,
+          late: weekRecords.filter(
+            (r) => this.statusKey(r.status) === 'late'
+          ).length,
+          absent: weekRecords.filter(
+            (r) => this.statusKey(r.status) === 'absent'
+          ).length,
+          excused: weekRecords.filter(
+            (r) => this.statusKey(r.status) === 'excused'
+          ).length,
+          total: weekRecords.length,
+        };
+      });
+
+      this.weeklyRows.set(result);
+      this.historyLoading.set(false);
+    },
+
+    error: () => {
+      this.weeklyRows.set([]);
+      this.historyLoading.set(false);
+      this.notify('تعذر تحميل السجل الأسبوعي.', 'err');
+    },
+  });
+}
+
+private loadMonthlyRegister(): void {
+  this.historyLoading.set(true);
+
+  const requests = this.rows().map((row) =>
+    this.http.get<DailyAttendanceDto[]>(
+      `${this.base}/DailyAttendance/enrollment/${row.enrollmentId}`
+    )
+  );
+
+  if (!requests.length) {
+    this.monthlyRows.set([]);
+    this.historyLoading.set(false);
+    return;
+  }
+
+  forkJoin(requests).subscribe({
+    next: (histories) => {
+      const now = new Date();
+      const month = now.getMonth();
+      const year = now.getFullYear();
+
+      const result = this.rows().map((row, index) => {
+        const history = histories[index] ?? [];
+
+        const monthRecords = history.filter((record) => {
+          const date = new Date(record.date);
+
+          return (
+            date.getMonth() === month &&
+            date.getFullYear() === year
+          );
+        });
+
+        const present = monthRecords.filter(
+          (r) => this.statusKey(r.status) === 'present'
+        ).length;
+
+        const late = monthRecords.filter(
+          (r) => this.statusKey(r.status) === 'late'
+        ).length;
+
+        const absent = monthRecords.filter(
+          (r) => this.statusKey(r.status) === 'absent'
+        ).length;
+
+        const excused = monthRecords.filter(
+          (r) => this.statusKey(r.status) === 'excused'
+        ).length;
+
+        const total = monthRecords.length;
+
+        const commitment =
+          total === 0
+            ? 0
+            : Math.round(((present + late + excused) / total) * 100);
+
+        return {
+          enrollmentId: row.enrollmentId,
+          traineeName: row.traineeName,
+          batchName: row.batchName,
+          present,
+          late,
+          absent,
+          excused,
+          total,
+          commitment,
+        };
+      });
+
+      this.monthlyRows.set(result);
+      this.historyLoading.set(false);
+    },
+
+    error: () => {
+      this.monthlyRows.set([]);
+      this.historyLoading.set(false);
+      this.notify('تعذر تحميل السجل الشهري.', 'err');
+    },
+  });
+}
   confirmToday() {
     const unsavedPresent = this.rows().filter(
       (r) => r.dailyAttendanceId == null && this.statusKey(r.status) === 'present'
