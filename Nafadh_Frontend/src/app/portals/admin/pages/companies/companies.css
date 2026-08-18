@@ -275,3 +275,22 @@
 .nfd-cancel-btn:hover {
   background: #f3f4f6;
 }
+/* التصميم الافتراضي للزر */
+.filter-btn {
+  background-color: transparent;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  padding: 6px 20px;
+  border-radius: 50px;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* تأثير عند المرور بالفأرة أو عندما يكون الزر مفعلاً (Active) */
+.filter-btn:hover,
+.filter-btn.active {
+  background-color: #0D1C8C !important;
+  color: #ffffff !important;
+  border-color: #0D1C8C !important;
+}
