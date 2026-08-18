@@ -1,49 +1,563 @@
+
 <h2 class="nfd-page-title">المهام والمشاريع</h2>
 
-<div style="display:flex;gap:4px;background:var(--color-tint-indigo);padding:4px;border-radius:var(--radius-lg);width:fit-content;margin-bottom:16px">
-  <button class="nfd-btn" [class.primary]="tab()==='assignments'" [class.ghost]="tab()!=='assignments'" (click)="tab.set('assignments'); selected.set(null)">المهام</button>
-  <button class="nfd-btn" [class.primary]="tab()==='projects'" [class.ghost]="tab()!=='projects'" (click)="tab.set('projects')">المشاريع</button>
+<!-- التبويبات -->
+<div
+  style="display:flex;gap:4px;background:var(--color-tint-indigo);padding:4px;border-radius:var(--radius-lg);width:fit-content;margin-bottom:16px"
+>
+  <button
+    class="nfd-btn"
+    [class.primary]="tab()==='assignments'"
+    [class.ghost]="tab()!=='assignments'"
+    (click)="tab.set('assignments'); selected.set(null)"
+  >
+    المهام
+  </button>
+
+  <button
+    class="nfd-btn"
+    [class.primary]="tab()==='projects'"
+    [class.ghost]="tab()!=='projects'"
+    (click)="tab.set('projects')"
+  >
+    المشاريع
+  </button>
 </div>
 
+
+<!-- ========================================================= -->
+<!-- قائمة المهام -->
+<!-- ========================================================= -->
+
 @if (tab() === 'assignments' && !selected()) {
+
   @for (t of tasks(); track t.taskId) {
-    <div class="nfd-card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;cursor:pointer" (click)="selected.set(t)">
-      <div><strong style="display:block;font-size:13px">{{ t.title }}</strong><p style="margin:2px 0 0;font-size:11px;color:var(--color-text-secondary)">الموعد: {{ t.dueDate | date:'mediumDate' }}</p></div>
-      @if (submissionFor(t.taskId); as s) {
-        <span class="nfd-badge" style="background:var(--status-completed-bg);color:var(--status-completed-fg)">{{ s.status }}</span>
-      } @else {
-        <span class="nfd-badge" style="background:var(--status-new-bg);color:var(--status-new-fg)">جديد</span>
-      }
+
+    <div
+      class="nfd-card"
+      style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;cursor:pointer"
+      (click)="selected.set(t)"
+    >
+
+      <!-- بيانات المهمة -->
+      <div style="display:flex;align-items:center;gap:12px;direction:rtl">
+
+        <!-- أيقونة المهمة -->
+        <div
+          style="width:42px;height:42px;border-radius:10px;background:var(--color-tint-indigo);display:flex;align-items:center;justify-content:center;flex-shrink:0"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--color-navy)"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+            <path d="M8 12l2.5 2.5L16 9"></path>
+          </svg>
+        </div>
+
+        <div>
+          <strong
+            style="display:block;font-size:13px"
+          >
+            {{ t.title }}
+          </strong>
+
+          <p
+            style="margin:3px 0 0;font-size:11px;color:var(--color-text-secondary)"
+          >
+            الموعد:
+            {{ t.dueDate | date:'dd-MM-yyyy' }}
+          </p>
+
+          @if (submissionFor(t.taskId); as s) {
+
+            @if (s.grade !== null && s.grade !== undefined) {
+
+              <p
+                style="margin:3px 0 0;font-size:10px;color:var(--status-active-fg);font-weight:600"
+              >
+                الدرجة:
+                {{ s.grade }}/100
+              </p>
+
+            }
+
+          }
+
+        </div>
+
+      </div>
+
+
+      <!-- حالة المهمة -->
+      <div>
+
+        @if (submissionFor(t.taskId); as s) {
+
+          <span
+            class="nfd-badge"
+            [style.background]="statusBackground(s.status)"
+            [style.color]="statusForeground(s.status)"
+          >
+            {{ displayStatus(s.status) }}
+          </span>
+
+        } @else {
+
+          <span
+            class="nfd-badge"
+            style="background:var(--status-new-bg);color:var(--status-new-fg)"
+          >
+            جديد
+          </span>
+
+        }
+
+      </div>
+
     </div>
+
   }
-  @empty { <p class="nfd-muted">لا توجد مهام بعد</p> }
+
+  @empty {
+
+    <p class="nfd-muted">
+      لا توجد مهام بعد
+    </p>
+
+  }
+
 }
+
+
+<!-- ========================================================= -->
+<!-- تفاصيل المهمة -->
+<!-- ========================================================= -->
 
 @if (tab() === 'assignments' && selected(); as t) {
-  <button class="nfd-muted" style="display:inline-block;margin-bottom:12px" (click)="selected.set(null)">← العودة</button>
-  <div class="nfd-card">
-    <h3 style="margin:0 0 8px;color:var(--color-navy);font-size:15px">{{ t.title }}</h3>
-    <p style="font-size:13px">{{ t.description }}</p>
-    @if (submissionFor(t.taskId); as s) {
-      @if (s.grade) {
-        <div style="background:var(--status-active-bg);border-radius:10px;padding:12px;margin:12px 0">
-          <strong style="color:var(--status-active-fg);font-size:18px">{{ s.grade }}/100</strong>
-          <p style="margin:4px 0 0;font-size:12px">{{ s.feedback }}</p>
-        </div>
-      }
-    }
-    <label style="display:block;font-size:12px;font-weight:600;margin:12px 0 4px">رابط تسليم المهمة</label>
-    <input class="nfd-input" dir="ltr" [(ngModel)]="submissionLink" placeholder="https://drive.google.com/..." />
-    <button class="nfd-btn primary" style="margin-top:12px" (click)="submit()">تسليم المهمة</button>
+
+  <!-- العودة -->
+  <button
+    class="nfd-muted"
+    style="display:inline-block;margin-bottom:12px"
+    (click)="selected.set(null)"
+  >
+    ← العودة
+  </button>
+
+
+  <!-- بيانات المهمة -->
+  <div
+    class="nfd-card"
+    style="margin-bottom:12px"
+  >
+
+    <div
+      style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;direction:rtl"
+    >
+
+      <div>
+
+        <h3
+          style="margin:0 0 8px;color:var(--color-navy);font-size:15px"
+        >
+          {{ t.title }}
+        </h3>
+
+        <p
+          style="font-size:13px;margin:0 0 14px;color:var(--color-text-secondary)"
+        >
+          {{ t.description }}
+        </p>
+
+      </div>
+
+
+      <!-- حالة المهمة -->
+      <div style="flex-shrink:0">
+
+        @if (submissionFor(t.taskId); as s) {
+
+          <span
+            class="nfd-badge"
+            [style.background]="statusBackground(s.status)"
+            [style.color]="statusForeground(s.status)"
+          >
+            {{ displayStatus(s.status) }}
+          </span>
+
+        } @else {
+
+          <span
+            class="nfd-badge"
+            style="background:var(--status-new-bg);color:var(--status-new-fg)"
+          >
+            جديد
+          </span>
+
+        }
+
+      </div>
+
+    </div>
+
+
+    <!-- معلومات الموعد والحالة -->
+    <div
+      style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px"
+    >
+
+      <div
+        style="background:var(--color-tint-indigo);border-radius:10px;padding:12px"
+      >
+
+        <span
+          style="display:block;font-size:10px;color:var(--color-text-secondary);margin-bottom:4px"
+        >
+          الموعد النهائي
+        </span>
+
+        <strong
+          style="font-size:12px;color:var(--color-navy)"
+        >
+          {{ t.dueDate | date:'yyyy-MM-dd' }}
+        </strong>
+
+      </div>
+
+
+      <div
+        style="background:var(--color-tint-indigo);border-radius:10px;padding:12px"
+      >
+
+        <span
+          style="display:block;font-size:10px;color:var(--color-text-secondary);margin-bottom:4px"
+        >
+          الحالة
+        </span>
+
+        @if (submissionFor(t.taskId); as s) {
+
+          <span
+            class="nfd-badge"
+            [style.background]="statusBackground(s.status)"
+            [style.color]="statusForeground(s.status)"
+          >
+            {{ displayStatus(s.status) }}
+          </span>
+
+        } @else {
+
+          <span
+            class="nfd-badge"
+            style="background:var(--status-new-bg);color:var(--status-new-fg)"
+          >
+            جديد
+          </span>
+
+        }
+
+      </div>
+
+    </div>
+
   </div>
+
+
+  <!-- ======================================================= -->
+  <!-- تسليم المهمة -->
+  <!-- ======================================================= -->
+
+  <div class="nfd-card">
+
+    <h3
+      style="margin:0 0 6px;color:var(--color-navy);font-size:15px"
+    >
+      تسليم المهمة
+    </h3>
+
+    <p
+      style="margin:0 0 12px;font-size:11px;color:var(--color-text-secondary)"
+    >
+      الصق رابط التسليم (GitHub أو Google Drive أو أي رابط خارجي)
+    </p>
+
+
+    <label
+      style="display:block;font-size:12px;font-weight:600;margin:12px 0 4px"
+    >
+      رابط تسليم المهمة
+    </label>
+
+
+    <div style="position:relative">
+
+      <input
+        class="nfd-input"
+        dir="ltr"
+        [(ngModel)]="submissionLink"
+        placeholder="https://drive.google.com/..."
+        style="padding-right:36px"
+      />
+
+      <!-- أيقونة الرابط -->
+      <svg
+        style="position:absolute;right:12px;top:50%;transform:translateY(-50%)"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="var(--color-text-secondary)"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M10 13a5 5 0 0 0 7.07.07l2-2a5 5 0 0 0-7.07-7.07l-1.14 1.14"></path>
+        <path d="M14 11a5 5 0 0 0-7.07-.07l-2 2A5 5 0 0 0 7 20l1.14-1.14"></path>
+      </svg>
+
+    </div>
+
+
+    <!-- الدرجة والتعليق -->
+    @if (submissionFor(t.taskId); as s) {
+
+      @if (s.grade !== null && s.grade !== undefined) {
+
+        <div
+          style="background:var(--status-active-bg);border-radius:10px;padding:12px;margin:12px 0"
+        >
+
+          <strong
+            style="color:var(--status-active-fg);font-size:18px"
+          >
+            {{ s.grade }}/100
+          </strong>
+
+          @if (s.feedback) {
+
+            <p
+              style="margin:4px 0 0;font-size:12px"
+            >
+              {{ s.feedback }}
+            </p>
+
+          }
+
+        </div>
+
+      }
+
+    }
+
+
+    <!-- الأزرار -->
+    <div
+      style="display:flex;gap:10px;align-items:center;margin-top:12px;direction:rtl"
+    >
+
+      <button
+        class="nfd-btn primary"
+        style="flex:1"
+        (click)="submit()"
+        [disabled]="!submissionLink.trim()"
+      >
+        {{ submissionFor(t.taskId) ? 'تعديل التسليم' : 'تسليم المهمة' }}
+      </button>
+
+      @if (submissionFor(t.taskId)) {
+
+        <button
+          class="nfd-btn"
+          style="border:1px solid var(--color-navy);background:#fff;color:var(--color-navy)"
+          (click)="loadExistingSubmission()"
+        >
+          تعديل التسليم
+        </button>
+
+      }
+
+    </div>
+
+  </div>
+
 }
 
+
+<!-- ========================================================= -->
+<!-- المشاريع -->
+<!-- ========================================================= -->
+
 @if (tab() === 'projects') {
+
   @for (p of projects(); track p.projectId) {
-    <div class="nfd-card" style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between"><strong style="font-size:14px">{{ p.title }}</strong><span class="nfd-badge" style="background:var(--color-tint-indigo);color:var(--color-navy)">{{ p.status }}</span></div>
-      <p style="font-size:12px;color:var(--color-text-secondary)">{{ p.description }}</p>
+
+    <div
+      class="nfd-card"
+      style="margin-bottom:12px;position:relative"
+    >
+
+      <div
+        style="display:flex;align-items:center;gap:20px;direction:ltr"
+      >
+
+        <!-- نسبة الإنجاز -->
+        <div
+          style="width:64px;height:64px;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0"
+          [style.background]="projectProgressBackground(projectProgress(p))"
+        >
+
+          <div
+            style="width:52px;height:52px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center"
+          >
+
+            <strong
+              style="font-size:11px;color:var(--color-navy)"
+            >
+              {{ projectProgress(p) }}%
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <!-- بيانات المشروع -->
+        <div
+          style="flex:1;direction:rtl"
+        >
+
+          <div
+            style="display:flex;justify-content:space-between;align-items:center;gap:10px"
+          >
+
+            <strong
+              style="font-size:14px"
+            >
+              {{ p.title }}
+            </strong>
+
+            <span
+              class="nfd-badge"
+              [style.background]="projectStatusBackground(p)"
+              [style.color]="projectStatusForeground(p)"
+            >
+              {{ displayProjectStatus(p) }}
+            </span>
+
+          </div>
+
+
+          <p
+            style="font-size:12px;color:var(--color-text-secondary);margin:5px 0"
+          >
+            {{ p.description }}
+          </p>
+
+
+          <!-- التواريخ -->
+          <div
+            style="display:flex;justify-content:flex-start;gap:12px;font-size:10px;color:var(--color-text-secondary);margin-top:6px"
+          >
+
+            <span>
+              البداية:
+              {{ projectStartDate(p) | date:'dd-MM-yyyy' }}
+            </span>
+
+            <span>
+              النهاية:
+              {{ projectEndDate(p) | date:'dd-MM-yyyy' }}
+            </span>
+
+          </div>
+
+
+          <!-- مراحل المشروع -->
+          <div
+            style="display:flex;align-items:center;direction:rtl;margin-top:16px"
+          >
+
+            @for (step of projectSteps(p); track step.number; let last = $last) {
+
+              <div
+                style="display:flex;align-items:center;flex:1"
+              >
+
+                <div
+                  style="display:flex;flex-direction:column;align-items:center;min-width:44px"
+                >
+
+                  @if (step.completed) {
+
+                    <div
+                      style="width:24px;height:24px;border-radius:50%;background:#06b6d4;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700"
+                    >
+                      ✓
+                    </div>
+
+                  } @else if (step.current) {
+
+                    <div
+                      style="width:24px;height:24px;border-radius:50%;background:#e2e8f0;color:#64748b;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600"
+                    >
+                      {{ step.number }}
+                    </div>
+
+                  } @else {
+
+                    <div
+                      style="width:24px;height:24px;border-radius:50%;background:#e2e8f0;color:#64748b;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600"
+                    >
+                      {{ step.number }}
+                    </div>
+
+                  }
+
+                  <span
+                    style="font-size:10px;color:var(--color-text-secondary);margin-top:4px;white-space:nowrap"
+                  >
+                    {{ step.name }}
+                  </span>
+
+                </div>
+
+
+                @if (!last) {
+
+                  <div
+                    style="height:1px;flex:1;margin:0 8px"
+                    [style.background]="step.completed ? '#06b6d4' : '#e2e8f0'"
+                  ></div>
+
+                }
+
+              </div>
+
+            }
+
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
+
   }
-  @empty { <p class="nfd-muted">لا توجد مشاريع بعد</p> }
+
+  @empty {
+
+    <p class="nfd-muted">
+      لا توجد مشاريع بعد
+    </p>
+
+  }
+
 }
