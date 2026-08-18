@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AdminApi } from '../../services/admin-api';
-import { BatchDto, ProgramDto, TrackDto } from '../../../../core/models/dtos';
+import { BatchDto, ProgramDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-admin-programs',
@@ -20,14 +20,11 @@ export class AdminPrograms implements OnInit {
   // State Management (Signals)
   readonly batches = signal<BatchDto[]>([]);
   readonly programs = signal<ProgramDto[]>([]);
-  readonly tracks = signal<TrackDto[]>([]);
   readonly statusFilter = signal<string>('الكل');
 
   // UI Modal & Form State
   isBatchModalOpen = false;
-  isProgramModalOpen = false;
   batchForm!: FormGroup;
-  programForm!: FormGroup;
 
   // Static Data
   readonly companies = [
@@ -44,46 +41,25 @@ export class AdminPrograms implements OnInit {
 
   ngOnInit(): void {
     this.initBatchForm();
-    this.initProgramForm();
     this.loadInitialData();
   }
 
   // --- Data Fetching ---
   private loadInitialData(): void {
     this.fetchBatches();
-    this.fetchPrograms();
-    this.fetchTracks();
-    // this.api.getPrograms()
-    //   .pipe(takeUntilDestroyed(this.destroyRef))
-    //   .subscribe({
-    //     next: (data) => this.programs.set(data)
-    //   });
+    
+    this.api.getPrograms()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => this.programs.set(data)
+      });
   }
 
   private fetchBatches(): void {
     this.api.getBatches()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (data) => this.batches.set(data),
-        error: (err: unknown) => console.error('Error fetching batches:', err)
-      });
-  }
-
-  private fetchPrograms(): void {
-    this.api.getPrograms()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (data: ProgramDto[]) => this.programs.set(data),
-        error: (err: unknown) => console.error('Error fetching programs:', err)
-      });
-  }
-
-  private fetchTracks(): void {
-    this.api.getTracks()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (data: TrackDto[]) => this.tracks.set(data),
-        error: (err: unknown) => console.error('Error fetching tracks:', err)
+        next: (data) => this.batches.set(data)
       });
   }
 
@@ -100,27 +76,13 @@ export class AdminPrograms implements OnInit {
     });
   }
 
-  private initProgramForm(): void {
-    this.programForm = this.fb.group({
-      title: ['', Validators.required],
-      trackId: ['', Validators.required],
-      durationWeeks: [10, [Validators.required, Validators.min(1)]],
-      description: ['']
-    });
-  }
-
   // --- UI Actions ---
   getCountByStatus(status: string): number {
     return this.batches().filter((b) => b.status === status).length;
   }
 
   onCreateProgram(): void {
-    this.isProgramModalOpen = true;
-  }
-
-  onCloseProgramModal(): void {
-    this.isProgramModalOpen = false;
-    this.programForm.reset({ durationWeeks: 10, trackId: '' });
+    // Logic for creating a program
   }
 
   onCreateBatch(): void {
@@ -136,30 +98,7 @@ export class AdminPrograms implements OnInit {
     this.onCloseBatchModal();
   }
 
- // --- Form Submissions ---
-  onSubmitProgram(): void {
-    if (this.programForm.invalid) {
-      this.programForm.markAllAsTouched();
-      return;
-    }
-
-    const payload = {
-      ...this.programForm.value,
-      trackId: Number(this.programForm.value.trackId),
-      durationWeeks: Number(this.programForm.value.durationWeeks)
-    };
-
-    this.api.createProgram(payload)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.fetchPrograms();
-          this.onCloseProgramModal();
-        },
-        error: (err: unknown) => console.error('Error creating program:', err)
-      });
-  }
-
+  // --- Form Submission ---
   onSubmit(): void {
     if (this.batchForm.invalid) {
       this.batchForm.markAllAsTouched();
@@ -174,8 +113,7 @@ export class AdminPrograms implements OnInit {
         next: () => {
           this.fetchBatches();
           this.onCloseBatchModal();
-        },
-        error: (err: unknown) => console.error('Error creating batch:', err)
+        }
       });
   }
 
