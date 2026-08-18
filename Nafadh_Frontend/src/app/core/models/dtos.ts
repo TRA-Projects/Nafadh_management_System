@@ -92,6 +92,10 @@ export interface TraineeDashboardSummaryDto {
   submissionsCount: number;
   pendingSubmissionsCount: number;
   activeProjectsCount: number;
+  warningsCount?: number;
+  trainerName?: string;
+  supervisorName?: string;
+  latestNotifications?: { message: string; date: string }[];
 }
 
 // ---- Company ----
