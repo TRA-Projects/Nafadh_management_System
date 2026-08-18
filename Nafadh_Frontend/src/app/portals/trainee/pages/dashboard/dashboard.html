@@ -229,7 +229,7 @@
   <!-- Hero Header -->
   <div class="nfd-hero">
     <div class="nfd-hero-greeting">
-  <h2>مرحباً، {{ summary()?.fullName || auth.session()?.fullName || 'أحمد محمد' }} 👋</h2>
+<h2>مرحباً، {{ auth.session()?.fullName || summary()?.fullName || 'زائر' }} 👋</h2>
 <p class="nfd-program-name">
   {{ programName() }} — {{ batchName() }}
 </p>
