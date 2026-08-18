@@ -12,10 +12,15 @@ import { TrainerDto } from '../../../../core/models/dtos';
   styleUrl: './profile.scss',
 })
 export class TrainerProfile implements OnInit {
+
   trainerId = 1;
+
   trainer = signal<TrainerDto | null>(null);
+
   isSaving = signal(false);
-  showToast = signal(false);
+
+  showSuccessToast = signal(false);
+  showErrorToast = signal(false);
 
   private toastTimer?: ReturnType<typeof setTimeout>;
 
@@ -25,35 +30,127 @@ export class TrainerProfile implements OnInit {
     this.loadTrainer();
   }
 
+  // =========================================================
+  // Load trainer profile
+  // =========================================================
+
   loadTrainer(): void {
+
     this.api.getTrainer(this.trainerId).subscribe({
-      next: (data) => this.trainer.set(data),
-      error: (err) => console.error('خطأ في تحميل البيانات:', err)
+
+      next: (data) => {
+        this.trainer.set(data);
+      },
+
+      error: (err) => {
+        console.error('خطأ في تحميل بيانات المدرب:', err);
+      }
+
     });
   }
 
+
+  // =========================================================
+  // Save trainer profile
+  // =========================================================
+
   save(): void {
+
     const t = this.trainer();
-    if (!t) return;
+
+    if (!t || this.isSaving()) {
+      return;
+    }
 
     this.isSaving.set(true);
 
-    this.api.updateTrainer(t.trainerId, t).subscribe({
+    const payload = {
+
+      fullName: t.fullName ?? '',
+
+      email: t.email ?? '',
+
+      phone: t.phone ?? '',
+
+      specialty: t.specialty ?? '',
+
+      experienceYears: t.experienceYears ?? 0,
+
+      biography: t.biography ?? '',
+
+      cvUrl: t.cvUrl ?? ''
+
+    };
+
+
+    this.api.updateTrainer(t.trainerId, payload).subscribe({
+
       next: () => {
+
         this.isSaving.set(false);
-        this.triggerToast();
+
+        this.showSuccess();
+
+        // نعيد تحميل البيانات من الباك إند
+        // للتأكد أن المعروض هو ما تم حفظه فعلياً
+        this.loadTrainer();
+
       },
+
       error: (err) => {
+
         this.isSaving.set(false);
-        console.error('خطأ في الحفظ:', err);
-        this.triggerToast();
+
+        console.error('خطأ في حفظ بيانات المدرب:', err);
+
+        this.showError();
+
       }
+
     });
   }
 
-  private triggerToast(): void {
-    this.showToast.set(true);
-    if (this.toastTimer) clearTimeout(this.toastTimer);
-    this.toastTimer = setTimeout(() => this.showToast.set(false), 3000);
+
+  // =========================================================
+  // Toasts
+  // =========================================================
+
+  private showSuccess(): void {
+
+    this.clearToastTimer();
+
+    this.showErrorToast.set(false);
+
+    this.showSuccessToast.set(true);
+
+    this.toastTimer = setTimeout(() => {
+
+      this.showSuccessToast.set(false);
+
+    }, 3000);
+  }
+
+
+  private showError(): void {
+
+    this.clearToastTimer();
+
+    this.showSuccessToast.set(false);
+
+    this.showErrorToast.set(true);
+
+    this.toastTimer = setTimeout(() => {
+
+      this.showErrorToast.set(false);
+
+    }, 3000);
+  }
+
+
+  private clearToastTimer(): void {
+
+    if (this.toastTimer) {
+      clearTimeout(this.toastTimer);
+    }
   }
 }

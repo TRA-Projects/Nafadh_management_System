@@ -7,7 +7,10 @@
   <div class="page-header">
 
     <div class="page-header-content">
-      <span class="page-kicker">حساب المدرب</span>
+
+      <span class="page-kicker">
+        حساب المدرب
+      </span>
 
       <h2 class="page-title">
         الملف الشخصي والإعدادات
@@ -16,9 +19,12 @@
       <p class="page-sub">
         إدارة بياناتك المهنية ومعلومات الحساب والدفعات التدريبية.
       </p>
+
     </div>
 
+
     <div class="header-icon">
+
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -26,9 +32,13 @@
         stroke-width="1.8"
         width="25"
         height="25">
+
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+
         <circle cx="12" cy="7" r="4"></circle>
+
       </svg>
+
     </div>
 
   </div>
@@ -42,7 +52,11 @@
 
     <div class="profile-card">
 
-      <!-- Profile Header -->
+
+      <!-- =========================================
+           PROFILE HEADER
+      ========================================== -->
+
       <div class="profile-hero">
 
         <div class="user-meta">
@@ -50,6 +64,7 @@
           <div class="avatar-wrapper">
 
             <div class="avatar-box">
+
               <svg
                 viewBox="0 0 24 24"
                 fill="currentColor"
@@ -63,6 +78,7 @@
                 </path>
 
               </svg>
+
             </div>
 
             <span class="status-dot"></span>
@@ -93,7 +109,10 @@
         </div>
 
 
+        <!-- SAVE BUTTON -->
+
         <button
+          type="button"
           class="save-btn"
           [disabled]="isSaving()"
           (click)="save()">
@@ -123,9 +142,12 @@
       </div>
 
 
-      <!-- Toast -->
+      <!-- =========================================
+           SUCCESS TOAST
+      ========================================== -->
 
-      @if (showToast()) {
+      @if (showSuccessToast()) {
+
         <div class="toast-success">
 
           <div class="toast-icon">
@@ -133,21 +155,59 @@
           </div>
 
           <div>
-            <strong>تم حفظ التعديلات</strong>
-            <span>تم تحديث بيانات الملف الشخصي بنجاح.</span>
+
+            <strong>
+              تم حفظ التعديلات
+            </strong>
+
+            <span>
+              تم تحديث بيانات الملف الشخصي بنجاح.
+            </span>
+
           </div>
 
         </div>
+
       }
 
 
       <!-- =========================================
-           FORM
+           ERROR TOAST
+      ========================================== -->
+
+      @if (showErrorToast()) {
+
+        <div class="toast-error">
+
+          <div class="toast-icon">
+            !
+          </div>
+
+          <div>
+
+            <strong>
+              تعذر حفظ التعديلات
+            </strong>
+
+            <span>
+              حدث خطأ أثناء تحديث البيانات. حاول مرة أخرى.
+            </span>
+
+          </div>
+
+        </div>
+
+      }
+
+
+      <!-- =========================================
+           SECTION HEADER
       ========================================== -->
 
       <div class="section-heading">
 
         <div class="section-icon">
+
           <svg
             viewBox="0 0 24 24"
             width="19"
@@ -157,22 +217,37 @@
             stroke-width="2">
 
             <path d="M12 20h9"></path>
+
             <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
 
           </svg>
+
         </div>
 
         <div>
-          <h4>المعلومات الشخصية</h4>
-          <p>يمكنك تحديث بياناتك المهنية من هنا.</p>
+
+          <h4>
+            المعلومات الشخصية
+          </h4>
+
+          <p>
+            يمكنك تحديث بياناتك المهنية من هنا.
+          </p>
+
         </div>
 
       </div>
 
 
+      <!-- =========================================
+           FORM
+      ========================================== -->
+
       <div class="form-grid">
 
-        <!-- Name -->
+
+        <!-- الاسم -->
+
         <div class="form-group">
 
           <label>
@@ -182,6 +257,7 @@
           <div class="input-wrapper">
 
             <span class="input-icon">
+
               <svg
                 viewBox="0 0 24 24"
                 width="17"
@@ -191,9 +267,11 @@
                 stroke-width="2">
 
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+
                 <circle cx="12" cy="7" r="4"></circle>
 
               </svg>
+
             </span>
 
             <input
@@ -208,7 +286,8 @@
         </div>
 
 
-        <!-- Email -->
+        <!-- البريد الإلكتروني -->
+
         <div class="form-group">
 
           <label>
@@ -218,6 +297,7 @@
           <div class="input-wrapper">
 
             <span class="input-icon">
+
               <svg
                 viewBox="0 0 24 24"
                 width="17"
@@ -226,10 +306,18 @@
                 stroke="currentColor"
                 stroke-width="2">
 
-                <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                <rect
+                  x="3"
+                  y="5"
+                  width="18"
+                  height="14"
+                  rx="2">
+                </rect>
+
                 <polyline points="3 7 12 13 21 7"></polyline>
 
               </svg>
+
             </span>
 
             <input
@@ -244,7 +332,8 @@
         </div>
 
 
-        <!-- Phone -->
+        <!-- رقم الهاتف -->
+
         <div class="form-group">
 
           <label>
@@ -254,6 +343,7 @@
           <div class="input-wrapper">
 
             <span class="input-icon">
+
               <svg
                 viewBox="0 0 24 24"
                 width="17"
@@ -278,6 +368,7 @@
                 </path>
 
               </svg>
+
             </span>
 
             <input
@@ -292,7 +383,8 @@
         </div>
 
 
-        <!-- Specialty -->
+        <!-- التخصص -->
+
         <div class="form-group">
 
           <label>
@@ -302,6 +394,7 @@
           <div class="input-wrapper">
 
             <span class="input-icon">
+
               <svg
                 viewBox="0 0 24 24"
                 width="17"
@@ -311,9 +404,11 @@
                 stroke-width="2">
 
                 <path d="M22 10v6M2 10l10-5 10 5-10 5Z"></path>
+
                 <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
 
               </svg>
+
             </span>
 
             <input
@@ -328,7 +423,88 @@
         </div>
 
 
-        <!-- Biography -->
+        <!-- سنوات الخبرة -->
+
+        <div class="form-group">
+
+          <label>
+            سنوات الخبرة
+          </label>
+
+          <div class="input-wrapper">
+
+            <span class="input-icon">
+
+              <svg
+                viewBox="0 0 24 24"
+                width="17"
+                height="17"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2">
+
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9">
+                </circle>
+
+                <path d="M12 7v5l3 2"></path>
+
+              </svg>
+
+            </span>
+
+            <input
+              type="number"
+              min="0"
+              max="100"
+              class="profile-input"
+              [(ngModel)]="t.experienceYears"
+              placeholder="7"
+            />
+
+          </div>
+
+        </div>
+
+
+        <!-- حالة الحساب -->
+
+        <div class="form-group">
+
+          <label>
+            حالة الحساب
+          </label>
+
+          <div class="readonly-status">
+
+            <span
+              class="status-indicator"
+              [class.active]="t.status === 'Active'">
+            </span>
+
+            <strong>
+
+              @if (t.status === 'Active') {
+                نشط
+              } @else if (t.status === 'Inactive') {
+                غير نشط
+              } @else if (t.status === 'Suspended') {
+                موقوف
+              } @else {
+                {{ t.status }}
+              }
+
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <!-- النبذة -->
+
         <div class="form-group full-width">
 
           <label>
@@ -362,6 +538,7 @@
       <div class="summary-header">
 
         <div>
+
           <h3 class="summary-title">
             ملخص الحساب
           </h3>
@@ -369,6 +546,7 @@
           <p class="summary-sub">
             نظرة سريعة على حالة الحساب والنشاط التدريبي.
           </p>
+
         </div>
 
       </div>
@@ -376,7 +554,9 @@
 
       <div class="summary-grid">
 
-        <!-- Account Status -->
+
+        <!-- ACCOUNT STATUS -->
+
         <div class="summary-stat">
 
           <div class="summary-stat-icon green">
@@ -404,12 +584,22 @@
             <div class="stat-value-row">
 
               <strong>
-                حساب مدرب معتمد
+                حساب مدرب
               </strong>
 
-              <span class="badge active-badge">
-                نشط
-              </span>
+              @if (t.status === 'Active') {
+
+                <span class="badge active-badge">
+                  نشط
+                </span>
+
+              } @else {
+
+                <span class="badge inactive-badge">
+                  {{ t.status }}
+                </span>
+
+              }
 
             </div>
 
@@ -418,7 +608,8 @@
         </div>
 
 
-        <!-- Batches -->
+        <!-- EXPERIENCE -->
+
         <div class="summary-stat">
 
           <div class="summary-stat-icon blue">
@@ -431,10 +622,9 @@
               stroke="currentColor"
               stroke-width="2">
 
-              <rect x="3" y="4" width="18" height="17" rx="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
+              <circle cx="12" cy="12" r="9"></circle>
+
+              <path d="M12 7v5l3 2"></path>
 
             </svg>
 
@@ -443,18 +633,14 @@
           <div class="summary-stat-content">
 
             <span class="stat-label">
-              الدفعات الموكلة
+              سنوات الخبرة
             </span>
 
             <div class="stat-value-row">
 
               <strong>
-                4 دفعات نشطة
+                {{ t.experienceYears || 0 }} سنوات
               </strong>
-
-              <span class="badge count-badge">
-                36 متدرب
-              </span>
 
             </div>
 
@@ -463,7 +649,8 @@
         </div>
 
 
-        <!-- Specialty -->
+        <!-- SPECIALTY -->
+
         <div class="summary-stat">
 
           <div class="summary-stat-icon cyan">
@@ -477,7 +664,9 @@
               stroke-width="2">
 
               <path d="M12 2 2 7l10 5 10-5-10-5Z"></path>
+
               <path d="m2 17 10 5 10-5"></path>
+
               <path d="m2 12 10 5 10-5"></path>
 
             </svg>

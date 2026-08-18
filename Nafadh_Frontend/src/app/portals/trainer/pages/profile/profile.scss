@@ -55,6 +55,11 @@
 }
 
 
+.page-header-content {
+  min-width: 0;
+}
+
+
 .page-kicker {
   display: inline-block;
 
@@ -85,6 +90,8 @@
   color: #708196;
 
   font-size: 12px;
+
+  line-height: 1.7;
 }
 
 
@@ -107,7 +114,7 @@
 
 
 /* =========================================================
-   PROFILE CARD
+   PROFILE / SUMMARY CARDS
 ========================================================= */
 
 .profile-card,
@@ -155,11 +162,15 @@
   align-items: center;
 
   gap: 15px;
+
+  min-width: 0;
 }
 
 
 .avatar-wrapper {
   position: relative;
+
+  flex-shrink: 0;
 }
 
 
@@ -251,6 +262,8 @@
   color: #6f7f92;
 
   font-size: 12px;
+
+  line-height: 1.6;
 }
 
 
@@ -304,12 +317,14 @@
     opacity: 0.6;
 
     cursor: not-allowed;
+
+    transform: none;
   }
 }
 
 
 /* =========================================================
-   TOAST
+   SUCCESS TOAST
 ========================================================= */
 
 .toast-success {
@@ -363,6 +378,65 @@
     font-size: 11px;
 
     color: #438560;
+  }
+}
+
+
+/* =========================================================
+   ERROR TOAST
+========================================================= */
+
+.toast-error {
+  margin-bottom: 20px;
+
+  padding: 12px 14px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  border: 1px solid #fecaca;
+  border-radius: 11px;
+
+  background: #fff1f2;
+
+  color: #b91c1c;
+
+
+  .toast-icon {
+    width: 28px;
+    height: 28px;
+
+    flex: 0 0 28px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #fee2e2;
+
+    font-weight: 800;
+  }
+
+
+  strong {
+    display: block;
+
+    margin-bottom: 2px;
+
+    font-size: 12px;
+  }
+
+
+  span {
+    display: block;
+
+    font-size: 11px;
+
+    color: #b45353;
   }
 }
 
@@ -475,6 +549,8 @@
   color: #8292a6;
 
   pointer-events: none;
+
+  z-index: 1;
 }
 
 
@@ -511,6 +587,11 @@
     box-shadow:
       0 0 0 3px rgba(0, 106, 190, 0.07);
   }
+
+
+  &::placeholder {
+    color: #a2adba;
+  }
 }
 
 
@@ -518,6 +599,11 @@
   height: 43px;
 
   padding: 0 42px 0 13px;
+}
+
+
+.profile-input[type='number'] {
+  appearance: auto;
 }
 
 
@@ -543,6 +629,60 @@
   color: #98a4b3;
 
   font-size: 10px;
+
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   READONLY STATUS
+========================================================= */
+
+.readonly-status {
+  width: 100%;
+  height: 43px;
+
+  padding: 0 14px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #dbe4ee;
+  border-radius: 10px;
+
+  background: #f9fbfd;
+
+  color: #334155;
+
+
+  strong {
+    font-size: 12px;
+    font-weight: 700;
+  }
+}
+
+
+.status-indicator {
+  width: 9px;
+  height: 9px;
+
+  flex: 0 0 9px;
+
+  border-radius: 50%;
+
+  background: #94a3b8;
+
+
+  &.active {
+    background: #22c55e;
+
+    box-shadow:
+      0 0 0 4px rgba(34, 197, 94, 0.1);
+  }
 }
 
 
@@ -605,6 +745,21 @@
   border-radius: 13px;
 
   background: #fbfcfe;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+
+  &:hover {
+    transform: translateY(-2px);
+
+    border-color: #cdddeb;
+
+    box-shadow:
+      0 7px 17px rgba(0, 59, 130, 0.05);
+  }
 }
 
 
@@ -686,6 +841,10 @@
 }
 
 
+/* =========================================================
+   BADGES
+========================================================= */
+
 .badge {
   flex-shrink: 0;
 
@@ -702,6 +861,13 @@
   background: #dcfce7;
 
   color: #15803d;
+}
+
+
+.inactive-badge {
+  background: #f1f5f9;
+
+  color: #64748b;
 }
 
 
@@ -764,6 +930,11 @@
   }
 
 
+  .user-meta {
+    align-items: flex-start;
+  }
+
+
   .save-btn {
     width: 100%;
   }
@@ -782,8 +953,15 @@
 
 @media (max-width: 480px) {
 
+  .profile-container {
+    padding: 12px;
+  }
+
+
   .page-header {
     align-items: flex-start;
+
+    padding: 16px;
   }
 
 
@@ -803,5 +981,24 @@
 
   .user-name {
     font-size: 16px;
+  }
+
+
+  .profile-card,
+  .summary-card {
+    padding: 15px;
+  }
+
+
+  .summary-stat {
+    padding: 12px;
+  }
+
+
+  .summary-stat-icon {
+    width: 40px;
+    height: 40px;
+
+    flex-basis: 40px;
   }
 }
