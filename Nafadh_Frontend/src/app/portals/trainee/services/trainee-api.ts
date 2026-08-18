@@ -7,7 +7,7 @@ import {
   ConversationMessageDto, DailyAttendanceDto, ExcuseDto, FeedbackCriterionDto, FeedbackPendingDto,
   LessonDto, ModuleDto, NotificationDto, ProjectDto, SubmissionDto, TaskDto,
   TraineeBadgeDto, TraineeDashboardSummaryDto, TraineeModuleProgressDto, TraineeProfileDto, WarningDto,
-  EnrollmentDto, BatchDto, ProgramDto
+  EnrollmentDto, BatchDto, ProgramDto, TrainerDto, CompanySupervisorDto
 } from '../../../core/models/dtos';
 
 @Injectable({ providedIn: 'root' })
@@ -61,6 +61,32 @@ export class TraineeApi {
 
   getBatch(id: number): Observable<BatchDto> {
     return this.http.get<BatchDto>(`${this.base}/Batch/${id}`);
+  }
+
+ // =========================================================
+// BatchTrainer - جلب مدرب الدفعة
+// GET /api/BatchTrainer/batch/{batchId}
+// =========================================================
+
+getBatchTrainers(batchId: number): Observable<TrainerDto[]> {
+  return this.http.get<TrainerDto[]>(`${this.base}/BatchTrainer/batch/${batchId}`);
+}
+
+// =========================================================
+// Trainer - جلب بيانات مدرب معين
+// GET /api/Trainer/{id}
+// =========================================================
+
+getTrainer(id: number): Observable<TrainerDto> {
+  return this.http.get<TrainerDto>(`${this.base}/Trainer/${id}`);
+}
+  // =========================================================
+  // CompanySupervisor - جلب بيانات المشرف
+  // GET /api/CompanySupervisor/{id}
+  // =========================================================
+
+  getCompanySupervisor(id: number): Observable<CompanySupervisorDto> {
+    return this.http.get<CompanySupervisorDto>(`${this.base}/CompanySupervisor/${id}`);
   }
 
   // =========================================================
