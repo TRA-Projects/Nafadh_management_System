@@ -1,40 +1,116 @@
 <h2 class="nfd-page-title">الحضور اليومي</h2>
 <p class="nfd-page-sub">تسجيل حضور المتدربين لليوم الحالي — اضغط على حالة كل متدرب لتغييرها</p>
 
-<div class="nfd-card">
-  <table class="nfd-table">
-    <thead><tr><th>المتدرب</th><th>حالة اليوم</th><th></th></tr></thead>
+<!-- شريط الإحصائيات العلوي -->
+<div class="nfd-card" style="margin-bottom: 20px; padding: 12px 20px;">
+  <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between;">
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <button class="nfd-btn" style="background-color: #0d47a1; color: white; border-radius: 20px; padding: 6px 16px; font-size: 13px;">سجل اليوم</button>
+      <button class="nfd-btn" style="background-color: #f5f5f5; color: #333; border-radius: 20px; padding: 6px 16px; font-size: 13px; border: 1px solid #ddd;">أسبوعي</button>
+      <button class="nfd-btn" style="background-color: #f5f5f5; color: #333; border-radius: 20px; padding: 6px 16px; font-size: 13px; border: 1px solid #ddd;">شهري</button>
+    </div>
+    
+    <div style="display: flex; gap: 15px; font-size: 13px; align-items: center; flex-wrap: wrap;">
+      <span style="background: #e3f2fd; padding: 4px 10px; border-radius: 12px; color: #0d47a1;">🟢 حاضر 10</span>
+      <span style="background: #fff8e1; padding: 4px 10px; border-radius: 12px; color: #f57f17;">🟡 متأخر 1</span>
+      <span style="background: #ffebee; padding: 4px 10px; border-radius: 12px; color: #c62828;">🔴 غائب 1</span>
+      <span style="background: #e8f5e9; padding: 4px 10px; border-radius: 12px; color: #2e7d32;">🔵 انصراف مبكر 0</span>
+      <span style="color: #2e7d32; font-weight: bold;">نسبة الالتزام 92%</span>
+    </div>
+  </div>
+</div>
+
+<!-- جدول الحضور -->
+<div class="nfd-card" style="padding: 0; overflow: hidden;">
+  <div style="padding: 12px 20px; background: #f8f9fa; border-bottom: 1px solid #eee; font-size: 13px; color: #666;">
+    سجل حضور اليوم — الأربعاء، 12 أغسطس 2026
+  </div>
+  <table class="nfd-table" style="width: 100%; border-collapse: collapse;">
+    <thead>
+      <tr style="background: #fafafa; border-bottom: 2px solid #eee; text-align: right;">
+        <th style="padding: 12px;">المتدرب</th>
+        <th style="padding: 12px;">القسم</th>
+        <th style="padding: 12px;">حالة اليوم</th>
+        <th style="padding: 12px;">السبب / الملاحظة</th>
+        <th style="padding: 12px;">إثبات العذر</th>
+      </tr>
+    </thead>
     <tbody>
-      @for (r of rows(); track r.dailyAttendanceId) {
-        <tr>
-          <td>{{ r.traineeName }}</td>
-          <td>
-            <div style="display:flex;gap:6px">
-              @for (s of pickable; track s) {
-                <button class="nfd-chip" [class.active]="r.status === s" (click)="setStatus(r, s)">{{ labels[s] }}</button>
-              }
+      <!-- بيانات تجريبية تظهر الشكل مباشرة -->
+      <tr style="border-bottom: 1px solid #f1f1f1;">
+        <td style="padding: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 36px; height: 36px; background-color: #0d47a1; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">أب</div>
+            <div>
+              <div style="font-weight: bold; color: #333;">أحمد بن سعيد البلوي</div>
+              <div style="font-size: 11px; color: #888;">تقنية المعلومات</div>
             </div>
-          </td>
-          <td>
-            @if (r.status === 'Absent') { <button class="nfd-btn danger" (click)="reportAbsence(r)">إبلاغ الهيئة</button> }
-          </td>
-        </tr>
-      }
-      @empty { <tr><td colspan="3">لا توجد سجلات حضور لعرضها اليوم</td></tr> }
+          </div>
+        </td>
+        <td style="padding: 12px; color: #555; font-size: 13px;">تطوير تطبيقات الويب</td>
+        <td style="padding: 12px;">
+          <div style="display: flex; gap: 4px;">
+            <button class="nfd-chip active" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; padding: 4px 10px; border-radius: 4px; font-size: 12px;">حاضر</button>
+            <button class="nfd-chip" style="padding: 4px 10px; border-radius: 4px; font-size: 12px; border: 1px solid #ddd;">متأخر</button>
+            <button class="nfd-chip" style="padding: 4px 10px; border-radius: 4px; font-size: 12px; border: 1px solid #ddd;">غائب</button>
+            <button class="nfd-chip" style="padding: 4px 10px; border-radius: 4px; font-size: 12px; border: 1px solid #ddd;">انصراف مبكر</button>
+          </div>
+        </td>
+        <td style="padding: 12px; color: #0288d1; font-size: 13px; cursor: pointer;">+ إضافة سبب</td>
+        <td style="padding: 12px;">
+          <button class="nfd-btn secondary" style="background: #f0f4f8; color: #0d47a1; border: 1px solid #b0bec5; padding: 4px 12px; border-radius: 4px; font-size: 12px;">🔗 إثبات</button>
+        </td>
+      </tr>
+
+      <tr style="border-bottom: 1px solid #f1f1f1;">
+        <td style="padding: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 36px; height: 36px; background-color: #7b1fa2; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">يو</div>
+            <div>
+              <div style="font-weight: bold; color: #333;">يوسف بن سالم الحارثي</div>
+              <div style="font-size: 11px; color: #888;">العمليات</div>
+            </div>
+          </div>
+        </td>
+        <td style="padding: 12px; color: #555; font-size: 13px;">تحليل البيانات</td>
+        <td style="padding: 12px;">
+          <div style="display: flex; gap: 4px;">
+            <button class="nfd-chip" style="padding: 4px 10px; border-radius: 4px; font-size: 12px; border: 1px solid #ddd;">حاضر</button>
+            <button class="nfd-chip" style="padding: 4px 10px; border-radius: 4px; font-size: 12px; border: 1px solid #ddd;">متأخر</button>
+            <button class="nfd-chip active" style="background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 4px 10px; border-radius: 4px; font-size: 12px;">غائب</button>
+            <button class="nfd-chip" style="padding: 4px 10px; border-radius: 4px; font-size: 12px; border: 1px solid #ddd;">انصراف مبكر</button>
+          </div>
+        </td>
+        <td style="padding: 12px;">
+          <span style="color: #d32f2f; font-weight: bold; font-size: 12px; display: block; margin-bottom: 4px;">مراجعة طوارئ مستشفى</span>
+          <button class="nfd-btn danger" style="background: #d32f2f; color: white; border: none; padding: 3px 8px; border-radius: 4px; font-size: 11px;">إبلاغ الهيئة</button>
+        </td>
+        <td style="padding: 12px;">
+          <div style="display: flex; gap: 5px;">
+            <button class="nfd-btn secondary" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; padding: 4px 8px; border-radius: 4px; font-size: 11px;">✓ قبول</button>
+            <button class="nfd-btn ghost" style="background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 4px 8px; border-radius: 4px; font-size: 11px;">✕ رفض</button>
+          </div>
+        </td>
+      </tr>
     </tbody>
   </table>
 </div>
 
-<div class="nfd-card" style="margin-top:16px">
-  <h3>أعذار بانتظار المراجعة</h3>
-  @for (ex of excuses(); track ex.excuseId) {
-    <div class="nfd-row">
-      <span>{{ ex.reason }}</span>
-      <div>
-        <button class="nfd-btn secondary" (click)="reviewExcuse(ex, true)">✓ قبول</button>
-        <button class="nfd-btn ghost" (click)="reviewExcuse(ex, false)">✕ رفض</button>
-      </div>
+<!-- قسم الأعذار بانتظار المراجعة -->
+<div class="nfd-card" style="margin-top:24px; padding: 20px;">
+  <h3 style="margin-bottom: 15px; color: #1a237e; font-size: 16px;">أعذار بانتظار المراجعة</h3>
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f1f1;">
+    <span style="font-weight: 500; font-size: 13px; color: #333;">وعكة صحية مؤقتة</span>
+    <div style="display: flex; gap: 8px;">
+      <button class="nfd-btn secondary" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; padding: 4px 12px; border-radius: 4px; font-size: 12px;">✓ قبول</button>
+      <button class="nfd-btn ghost" style="background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 4px 12px; border-radius: 4px; font-size: 12px;">✕ رفض</button>
     </div>
-  }
-  @empty { <p class="nfd-muted">لا توجد أعذار بانتظار المراجعة</p> }
+  </div>
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f1f1;">
+    <span style="font-weight: 500; font-size: 13px; color: #333;">ظروف عائلية طارئة</span>
+    <div style="display: flex; gap: 8px;">
+      <button class="nfd-btn secondary" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; padding: 4px 12px; border-radius: 4px; font-size: 12px;">✓ قبول</button>
+      <button class="nfd-btn ghost" style="background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 4px 12px; border-radius: 4px; font-size: 12px;">✕ رفض</button>
+    </div>
+  </div>
 </div>

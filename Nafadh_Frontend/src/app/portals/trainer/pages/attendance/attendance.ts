@@ -17,10 +17,32 @@ export class TrainerAttendance implements OnInit {
   pickable = ATTENDANCE_PICKABLE_STATUSES;
   labels = ATTENDANCE_STATUS_LABELS;
 
+  // متغير لتتبع التبويب النشط (اليومي، الأسبوعي، الشهري)
+  activeTab = signal<'daily' | 'weekly' | 'monthly'>('daily');
+
   constructor(private api: TrainerApi) {}
+
   ngOnInit() {
-    this.api.getTodayAttendanceForCompany(this.companyId).subscribe({ next: (d) => this.rows.set(d ?? []), error: () => this.rows.set([]) });
+    this.loadAttendanceData('daily');
     this.api.getPendingExcuses().subscribe((d) => this.excuses.set(d ?? []));
+  }
+
+  // دالة لتغيير التبويب وجلب البيانات المناسبة
+  switchTab(tab: 'daily' | 'weekly' | 'monthly') {
+    this.activeTab.set(tab);
+    this.loadAttendanceData(tab);
+  }
+
+  loadAttendanceData(tab: 'daily' | 'weekly' | 'monthly') {
+    if (tab === 'daily') {
+      this.api.getTodayAttendanceForCompany(this.companyId).subscribe({
+        next: (d) => this.rows.set(d ?? []),
+        error: () => this.rows.set([])
+      });
+    } else {
+      // يمكنك هنا لاحقاً ربط دوال الأسبوعي أو الشهري الخاصة بالـ API عند توفرها
+      this.rows.set([]); 
+    }
   }
 
   setStatus(row: DailyAttendanceDto, status: string) {

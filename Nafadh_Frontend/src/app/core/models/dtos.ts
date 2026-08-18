@@ -182,6 +182,10 @@ export interface BatchDto {
   endDate: string;
   capacity: number;
   status: BatchStatus;
+  department?: string;
+  enrolledTraineesCount?: number;
+  attendanceRate?: number;
+  progressPercentage?: number;
 }
 
 export interface BatchTraineeDto {
