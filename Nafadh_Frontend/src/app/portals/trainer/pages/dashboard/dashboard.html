@@ -1,7 +1,12 @@
 <div class="dashboard-page">
 
-  <!-- HERO -->
+  <!-- =====================================================
+       HERO
+  ====================================================== -->
+
   <section class="dashboard-hero">
+
+    <div class="hero-decoration"></div>
 
     <div class="hero-content">
 
@@ -19,20 +24,32 @@
 
     </div>
 
+
     <div class="hero-actions">
 
       <a
         routerLink="/trainer/attendance"
         class="hero-btn primary">
-        📅
-        <span>تسجيل الحضور اليومي</span>
+
+        <span class="btn-icon">📅</span>
+
+        <span>
+          تسجيل الحضور اليومي
+        </span>
+
       </a>
+
 
       <a
         routerLink="/trainer/trainees"
         class="hero-btn secondary">
-        👥
-        <span>تقييم ومتابعة المتدربين</span>
+
+        <span class="btn-icon">👥</span>
+
+        <span>
+          تقييم ومتابعة المتدربين
+        </span>
+
       </a>
 
     </div>
@@ -40,61 +57,149 @@
   </section>
 
 
-  <!-- KPI CARDS -->
+  <!-- =====================================================
+       KPI CARDS
+  ====================================================== -->
+
   <section class="dashboard-kpis">
 
+    <!-- Assigned Batches -->
+
     <article class="kpi-card">
 
       <div class="kpi-content">
-        <span>الدفعات المسندة</span>
-        <strong>{{ batches().length }}</strong>
-        <small>دفعات مرتبطة بحسابك</small>
+
+        <span class="kpi-label">
+          الدفعات المسندة
+        </span>
+
+        <strong>
+          {{ batches().length }}
+        </strong>
+
+        <small>
+          دفعات مرتبطة بحسابك
+        </small>
+
       </div>
 
+
       <div class="kpi-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2">
+
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path>
+
+          <path
+            d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1
+            4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z">
+          </path>
+
         </svg>
+
       </div>
 
     </article>
 
 
+    <!-- Trainees -->
+
     <article class="kpi-card">
 
       <div class="kpi-content">
-        <span>عدد المتدربين</span>
-        <strong>{{ totalTrainees }}</strong>
-        <small>ضمن الدفعات المسندة</small>
+
+        <span class="kpi-label">
+          عدد المتدربين
+        </span>
+
+        <strong>
+          —
+        </strong>
+
+        <small>
+          ضمن الدفعات المسندة
+        </small>
+
       </div>
 
+
       <div class="kpi-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2">
+
+          <path
+            d="M17 21v-2a4 4 0 0 0-4-4H5
+            a4 4 0 0 0-4 4v2">
+          </path>
+
           <circle cx="9" cy="7" r="4"></circle>
+
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+
         </svg>
+
       </div>
 
     </article>
 
 
+    <!-- Upcoming Sessions -->
+
     <article class="kpi-card">
 
       <div class="kpi-content">
-        <span>الجلسات القادمة</span>
-        <strong>—</strong>
-        <small>سيتم ربطها من الباك إند</small>
+
+        <span class="kpi-label">
+          الجلسات القادمة
+        </span>
+
+        <strong>
+          {{ upcomingSessions().length }}
+        </strong>
+
+        <small>
+          {{
+            upcomingSessions().length > 0
+              ? 'جلسات مجدولة قادمة'
+              : 'لا توجد جلسات قادمة'
+          }}
+        </small>
+
       </div>
 
+
       <div class="kpi-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="4" width="18" height="17" rx="2"></rect>
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2">
+
+          <rect
+            x="3"
+            y="4"
+            width="18"
+            height="17"
+            rx="2">
+          </rect>
+
           <line x1="16" y1="2" x2="16" y2="6"></line>
+
           <line x1="8" y1="2" x2="8" y2="6"></line>
+
           <line x1="3" y1="10" x2="21" y2="10"></line>
+
         </svg>
+
       </div>
 
     </article>
@@ -102,20 +207,39 @@
   </section>
 
 
-  <!-- CONTENT -->
+  <!-- =====================================================
+       CONTENT
+  ====================================================== -->
+
   <section class="dashboard-content-grid">
 
-    <div class="dashboard-card">
+    <!-- ===================================================
+         ASSIGNED BATCHES
+    ==================================================== -->
+
+    <div class="dashboard-card batches-card">
 
       <div class="card-heading">
 
         <div>
-          <h3>الدفعات المسندة</h3>
-          <p>متابعة الدفعات الحالية والتقدم التدريبي.</p>
+
+          <h3>
+            الدفعات المسندة
+          </h3>
+
+          <p>
+            متابعة الدفعات الحالية والتقدم التدريبي.
+          </p>
+
         </div>
 
-        <a routerLink="/trainer/batches" class="view-all-btn">
+
+        <a
+          routerLink="/trainer/batches"
+          class="view-all-btn">
+
           عرض الكل
+
         </a>
 
       </div>
@@ -123,41 +247,88 @@
 
       <div class="batch-grid">
 
-        @for (b of batches(); track b.batchId) {
+        @for (b of dashboardBatches(); track b.batchId; let i = $index) {
 
           <article class="batch-card">
 
-            <div class="batch-card-top">
+            <!-- IMAGE -->
 
-              <div>
-                <span class="batch-label">
-                  دفعة تدريبية
-                </span>
+            <div class="batch-image-wrapper">
 
-                <h4>
-                  {{ b.batchName }}
-                </h4>
-              </div>
+              <img
+                class="batch-image"
+                [src]="
+                  i === 0
+                    ? 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=900&q=85'
+                    : 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=85'
+                "
+                [alt]="b.batchName || 'دفعة تدريبية'"
+              />
+
 
               <span
-                class="status-badge"
-                [class.active]="b.status === 'Ongoing'">
+                class="status-badge image-status"
+                [class.active]="b.status === 'Ongoing'"
+                [class.upcoming]="b.status === 'Upcoming'"
+                [class.completed]="b.status === 'Completed'"
+                [class.cancelled]="b.status === 'Cancelled'">
+
                 {{ getBatchStatusLabel(b.status) }}
+
               </span>
 
             </div>
 
-            <div class="batch-meta">
 
-              <span>
-                البداية:
-                {{ b.startDate ? (b.startDate | date:'yyyy/MM/dd') : '—' }}
+            <!-- CONTENT -->
+
+            <div class="batch-card-content">
+
+              <span class="batch-label">
+                دفعة تدريبية
               </span>
 
-              <span>
-                النهاية:
-                {{ b.endDate ? (b.endDate | date:'yyyy/MM/dd') : '—' }}
-              </span>
+              <h4>
+                {{ b.batchName || 'دفعة بدون اسم' }}
+              </h4>
+
+
+              <div class="batch-meta">
+
+                <div class="meta-item">
+
+                  <span class="meta-label">
+                    البداية
+                  </span>
+
+                  <strong>
+                    {{
+                      b.startDate
+                        ? (b.startDate | date:'yyyy/MM/dd')
+                        : '—'
+                    }}
+                  </strong>
+
+                </div>
+
+
+                <div class="meta-item">
+
+                  <span class="meta-label">
+                    النهاية
+                  </span>
+
+                  <strong>
+                    {{
+                      b.endDate
+                        ? (b.endDate | date:'yyyy/MM/dd')
+                        : '—'
+                    }}
+                  </strong>
+
+                </div>
+
+              </div>
 
             </div>
 
@@ -166,7 +337,37 @@
         } @empty {
 
           <div class="empty-state">
-            لا توجد دفعات مسندة حالياً
+
+            <div class="empty-icon">
+
+              <svg
+                viewBox="0 0 24 24"
+                width="26"
+                height="26"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2">
+
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+
+                <path
+                  d="M6.5 2H20v20H6.5A2.5 2.5
+                  0 0 1 4 19.5v-15A2.5
+                  2.5 0 0 1 6.5 2Z">
+                </path>
+
+              </svg>
+
+            </div>
+
+            <strong>
+              لا توجد دفعات مسندة حالياً
+            </strong>
+
+            <span>
+              ستظهر الدفعات هنا عند إسنادها لحساب المدرب.
+            </span>
+
           </div>
 
         }
@@ -176,19 +377,139 @@
     </div>
 
 
-    <div class="dashboard-card">
+    <!-- ===================================================
+         UPCOMING SESSIONS
+    ==================================================== -->
+
+    <div class="dashboard-card sessions-card">
 
       <div class="card-heading">
 
         <div>
-          <h3>الجلسات القادمة</h3>
-          <p>مواعيد الجلسات التدريبية القادمة.</p>
+
+          <h3>
+            الجلسات القادمة
+          </h3>
+
+          <p>
+            مواعيد الجلسات التدريبية القادمة.
+          </p>
+
         </div>
+
+        @if (upcomingSessions().length > 0) {
+
+          <span class="sessions-count">
+            {{ upcomingSessions().length }} جلسات
+          </span>
+
+        }
 
       </div>
 
-      <div class="empty-state">
-        سيتم ربط الجلسات القادمة من الباك إند.
+
+      <div class="sessions-list">
+
+        @for (
+          session of upcomingSessions().slice(0, 3);
+          track session.sessionId
+        ) {
+
+          <div class="session-row">
+
+            <div class="session-time-box">
+
+              <strong>
+                {{ session.startTime || '—' }}
+              </strong>
+
+              <span>
+                {{ session.sessionDate | date:'MM/dd' }}
+              </span>
+
+            </div>
+
+
+            <div class="session-info">
+
+              <strong>
+                {{ session.topic || 'جلسة تدريبية' }}
+              </strong>
+
+              <span>
+                {{ session.sessionDate | date:'yyyy/MM/dd' }}
+              </span>
+
+              @if (session.endTime) {
+
+                <small>
+                  من {{ session.startTime || '—' }}
+                  إلى {{ session.endTime }}
+                </small>
+
+              }
+
+            </div>
+
+
+            <span
+              class="session-status"
+              [class.postponed]="session.status === 'Postponed'">
+
+              {{
+                session.status === 'Postponed'
+                  ? 'مؤجلة'
+                  : 'قادمة'
+              }}
+
+            </span>
+
+          </div>
+
+        } @empty {
+
+          <div class="empty-state sessions-empty">
+
+            <div class="empty-icon">
+
+              <svg
+                viewBox="0 0 24 24"
+                width="27"
+                height="27"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2">
+
+                <rect
+                  x="3"
+                  y="4"
+                  width="18"
+                  height="17"
+                  rx="2">
+                </rect>
+
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+
+              </svg>
+
+            </div>
+
+            <strong>
+              لا توجد جلسات قادمة
+            </strong>
+
+            <span>
+              ستظهر هنا الجلسات المجدولة القادمة تلقائياً.
+            </span>
+
+          </div>
+
+        }
+
       </div>
 
     </div>
