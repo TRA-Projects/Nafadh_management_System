@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   DailyAttendanceDto, EnrollmentDto, EvaluationTemplateDto, EvaluationTemplateDetailDto, ExcuseDto,
-  FeedbackSummaryDto, SubmissionDto, TaskDto, TrainerBatchDto, TrainerDto, TrainerKpisDto,
+  FeedbackSummaryDto,   SessionDto,SubmissionDto, TaskDto, TrainerBatchDto, TrainerDto, TrainerKpisDto,
 } from '../../../core/models/dtos';
 
 @Injectable({ providedIn: 'root' })
@@ -13,11 +13,37 @@ export class TrainerApi {
   constructor(private http: HttpClient) {}
 
   // Dashboard / Batches
-  getMyBatches(trainerId: number): Observable<TrainerBatchDto[]> {
-    return this.http.get<TrainerBatchDto[]>(`${this.base}/BatchTrainer/trainer/${trainerId}`);
-  }
-  getBatchTrainees(batchId: number) { return this.http.get<unknown[]>(`${this.base}/Batch/${batchId}/trainees`); }
-  postAnnouncement(dto: unknown) { return this.http.post(`${this.base}/Announcement`, dto); }
+
+getMyBatches(trainerId: number): Observable<TrainerBatchDto[]> {
+  return this.http.get<TrainerBatchDto[]>(
+    `${this.base}/BatchTrainer/trainer/${trainerId}`
+  );
+}
+
+getTrainerSessions(trainerId: number): Observable<SessionDto[]> {
+  const params = new HttpParams()
+    .set('trainerId', trainerId.toString());
+
+  return this.http.get<SessionDto[]>(
+    `${this.base}/Session`,
+    { params }
+  );
+}
+
+getBatchTrainees(batchId: number) {
+  return this.http.get<unknown[]>(
+    `${this.base}/Batch/${batchId}/trainees`
+  );
+}
+
+postAnnouncement(dto: unknown) {
+  return this.http.post(
+    `${this.base}/Announcement`,
+    dto
+  );
+}
+
+ 
 
   // Content
   createModule(dto: unknown) { return this.http.post(`${this.base}/Module`, dto); }

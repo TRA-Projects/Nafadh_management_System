@@ -3,11 +3,12 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Nafadh_Backend.DTOs;
+
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Nafadh_Backend.Services
 {
@@ -27,72 +28,117 @@ namespace Nafadh_Backend.Services
             _trainerRepository = trainerRepository;
         }
 
+        // =========================================================
+        // Get trainers assigned to a batch
+        // =========================================================
+
         public async Task<List<TrainerInBatchDto>> GetTrainersForBatchAsync(int batchId)
         {
             var links = await _repository.GetByBatchIdAsync(batchId);
+
             var result = new List<TrainerInBatchDto>();
 
             foreach (var link in links)
             {
-                // جلب بيانات المدرب الحقيقية مع المستخدم التابع له لجلب الاسم الكامل
+                // جلب بيانات المدرب الحقيقية
                 var trainer = await _trainerRepository.GetByIdAsync(link.TrainerId);
 
                 result.Add(new TrainerInBatchDto
                 {
                     TrainerId = link.TrainerId,
-                    TrainerName = trainer?.User?.FullName ?? string.Empty
+
+                    TrainerName =
+                        trainer?.User?.FullName
+                        ?? string.Empty
                 });
             }
 
             return result;
         }
 
+
+        // =========================================================
+        // Get batches assigned to a trainer
+        // =========================================================
+
         public async Task<List<BatchForTrainerDto>> GetBatchesForTrainerAsync(int trainerId)
         {
+            // جلب روابط المدرب بالدفعات
             var links = await _repository.GetByTrainerIdAsync(trainerId);
+
             var result = new List<BatchForTrainerDto>();
 
             foreach (var link in links)
             {
+                // جلب بيانات الدفعة الحقيقية من قاعدة البيانات
                 var batch = await _batchRepository.GetByIdAsync(link.BatchId);
-                if (batch != null)
+
+                if (batch == null)
+                    continue;
+
+                result.Add(new BatchForTrainerDto
                 {
-                    result.Add(new BatchForTrainerDto
-                    {
-                        BatchId = batch.BatchId,
-                        BatchName = batch.BatchName
-                    });
-                }
+                    BatchId = batch.BatchId,
+
+                    BatchName =
+                        batch.BatchName
+                        ?? string.Empty,
+
+                    StartDate = batch.StartDate,
+
+                    EndDate = batch.EndDate,
+
+                    Status = batch.Status
+                });
             }
 
             return result;
         }
 
+
+        // =========================================================
+        // Assign trainer to batch
+        // =========================================================
+
         public async Task<bool> AssignAsync(AssignTrainerDto dto)
         {
-            // 1. التحقق مما إذا كان المعرف مسنداً سابقاً
+            // منع تكرار إسناد نفس المدرب لنفس الدفعة
             if (await _repository.ExistsAsync(dto.BatchId, dto.TrainerId))
                 return false;
 
-            // 2. التحقق من وجود المدرب والدفعة في قاعدة البيانات لتجنب أخطاء Constraint الفجائية
-            var trainerExists = await _trainerRepository.GetByIdAsync(dto.TrainerId) != null;
-            var batchExists = await _batchRepository.GetByIdAsync(dto.BatchId) != null;
+            // التأكد من وجود المدرب
+            var trainerExists =
+                await _trainerRepository.GetByIdAsync(dto.TrainerId) != null;
+
+            // التأكد من وجود الدفعة
+            var batchExists =
+                await _batchRepository.GetByIdAsync(dto.BatchId) != null;
 
             if (!trainerExists || !batchExists)
                 return false;
 
-            await _repository.AddAsync(new NFD_BatchTrainer
-            {
-                BatchId = dto.BatchId,
-                TrainerId = dto.TrainerId
-            });
+            await _repository.AddAsync(
+                new NFD_BatchTrainer
+                {
+                    BatchId = dto.BatchId,
+                    TrainerId = dto.TrainerId
+                }
+            );
 
             return true;
         }
 
+
+        // =========================================================
+        // Unassign trainer from batch
+        // =========================================================
+
         public async Task<bool> UnassignAsync(UnassignTrainerDto dto)
         {
-            return await _repository.DeleteAsync(dto.BatchId, dto.TrainerId);
+            return await _repository.DeleteAsync(
+                dto.BatchId,
+                dto.TrainerId
+            );
         }
     }
 }
