@@ -8,7 +8,7 @@ import { TrainerKpisDto, FeedbackSummaryDto } from '../../../../core/models/dtos
   standalone: true,
   imports: [CommonModule],
   templateUrl: './reports.html',
-  styleUrls: ['./report.scss']
+  styleUrl: './report.scss'
 })
 export class TrainerReports implements OnInit {
   trainerId = 1;

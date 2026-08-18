@@ -3,18 +3,18 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Nafadh_Backend.DTOs
 {
-  
-        public class ReportInputDTO
-        {
-            public NFD_ReportType Type { get; set; }
 
-            public string? FiltersJson { get; set; }
-            [MaxLength(300)]
-            public string? FileUrl { get; set; }
+    public class ReportInputDTO
+    {
+        public NFD_ReportType Type { get; set; }
 
-            public int GeneratedByUserId { get; set; }
-        }
-        public class ReportOutputDTO
+        public string? FiltersJson { get; set; }
+
+        public int GeneratedByUserId { get; set; }
+
+        public int? TrainerId { get; set; }
+    }
+    public class ReportOutputDTO
         {
             public int ReportId { get; set; }
 
