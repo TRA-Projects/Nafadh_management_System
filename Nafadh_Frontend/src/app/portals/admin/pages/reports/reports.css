@@ -1,0 +1,411 @@
+/* إعدادات الشاشة والسكرول لتملأ المساحة بالكامل وتدعم اللغة العربية */
+:host {
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+.reports-container {
+  width: 100%;
+  min-height: 100vh;
+  padding: 30px;
+  background-color: #f8fafc;
+  direction: rtl;
+  text-align: right;
+  box-sizing: border-box;
+  overflow-y: auto;
+  font-family: 'Cairo', sans-serif;
+}
+
+/* تنسيق العناوين والترويسات الرئيسية جهة اليمين وباللون المطلوب */
+.reports-container h2,
+.reports-container h3,
+.reports-container h4,
+.header-section h2,
+.report-title-right h2,
+.table-header-title h3,
+.company-text-group h3,
+.banner-info h3 {
+  color: #0D1C8C !important;
+  text-align: right;
+}
+
+.header-section p,
+.report-title-right p,
+.report-title-right small,
+.table-header-title span,
+.banner-info span {
+  text-align: right;
+}
+
+/* شبكة الكروت مع مسافات مريحة وتفعيل التمرير */
+.companies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+/* تصميم الكارت الخارجي مع شريط علوي ملون متناسق */
+.company-card, 
+.program-item-card, 
+.metric-card, 
+.table-card, 
+.selected-company-banner, 
+.report-header-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  text-align: right;
+}
+
+/* الشريط الملون العلوي لكل كارت */
+.company-card::before,
+.program-item-card::before,
+.report-header-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #0D1C8C 0%, #0ea5e9 50%, #10b981 100%);
+}
+
+.company-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+  border-color: #cbd5e1;
+}
+
+/* معلومات الشركة والشعار */
+.company-info {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.logo-box, .company-logo-large {
+  background: #0D1C8C !important;
+  color: #ffffff !important;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo-box {
+  width: 50px;
+  height: 50px;
+}
+
+.company-logo-large {
+  width: 60px;
+  height: 60px;
+}
+
+/* صف الإحصائيات داخل الكروت */
+.stats-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-box {
+  flex: 1;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+
+.stat-box strong {
+  display: block;
+  font-size: 18px;
+  font-weight: bold;
+  color: #0D1C8C !important;
+  margin-bottom: 2px;
+}
+
+.stat-box span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* تذييل الكارت */
+.card-footer {
+  font-size: 13px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0D1C8C;
+  font-weight: 600;
+}
+
+/* صفوف الدفعات والبرامج */
+.batch-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* بطاقات الإحصائيات في صفحة التقرير التفصيلي */
+.summary-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.metric-card {
+  text-align: right;
+}
+
+.metric-value {
+  display: block;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: #0D1C8C;
+}
+
+.metric-label {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* الجدول وتنسيقاته */
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+  margin-top: 12px;
+}
+
+.custom-table th {
+  background: #f8fafc;
+  color: #0D1C8C !important;
+  padding: 12px;
+  font-size: 14px;
+  border-bottom: 2px solid #e2e8f0;
+  text-align: right;
+}
+
+.custom-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+  color: #334155;
+  text-align: right;
+}
+
+/* شريط التقدم (Progress Bar) */
+.progress-bar {
+  background: #e2e8f0;
+  height: 6px;
+  border-radius: 3px;
+  margin-top: 6px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.progress-bar .fill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.progress-bar .fill.green {
+  background: #10b981;
+}
+
+.progress-bar .fill.blue {
+  background: #0D1C8C;
+}
+
+/* الأزرار والتنقل */
+.top-nav-bar {
+  text-align: right;
+  margin-bottom: 16px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #0D1C8C;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.view-report-btn {
+  background: #0D1C8C;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.view-report-btn:hover {
+  background: #09125e;
+}
+
+.btn-pdf {
+  background: #0D1C8C;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-excel {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.badge-btn, .badge-tag, .track-tag {
+  background: #eef2ff;
+  color: #0D1C8C;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  border: 1px solid #cbd5e1;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* بانر الشركة المحددة */
+.selected-company-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  direction: rtl;
+}
+
+.banner-info {
+  text-align: right;
+}
+
+.banner-info h3 {
+  color: #0D1C8C !important;
+  font-size: 20px;
+  margin: 0 0 4px 0;
+}
+
+.banner-info span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+/* ترويسة بطاقة البرنامج */
+.program-item-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+  direction: rtl;
+}
+
+.program-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 14px;
+}
+
+.program-header h4 {
+  color: #0D1C8C !important;
+  font-size: 16px;
+  margin: 0;
+  text-align: right;
+}
+
+/* صف الدفعة (توزيع الأزرار يسار والبيانات يمين) */
+.batch-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.batch-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* جهة اليمين للدفعة (الاسم، التواريخ، النقطة) */
+.batch-info-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: right;
+}
+
+.batch-info-right strong {
+  color: #0D1C8C;
+  font-size: 14px;
+}
+
+.batch-info-right .dates {
+  color: #64748b;
+  font-size: 12px;
+}
+
+/* جهة اليسار للأزرار والإجراءات (عرض التقرير، الحالة) */
+.batch-info-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trainees-count {
+  color: #64748b;
+  font-size: 13px;
+  margin-left: 8px;
+}
