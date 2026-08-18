@@ -10,35 +10,109 @@
 
 <div class="nfd-card">
   <h3>نتائج الوحدات</h3>
-  @for (m of moduleResults(); track m.progressId) {
-    <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
-      <span style="width:160px;font-size:12px;flex-shrink:0">{{ m.moduleTitle }}</span>
-      <div class="nfd-bar" style="flex:1"><div class="fill" [style.width.%]="m.status === 'Completed' ? 100 : m.status === 'InProgress' ? 55 : 0"></div></div>
+  
+  <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
+    <span style="width:180px;font-size:13px;font-weight:600;color:#1e293b;flex-shrink:0;text-align:right">مقدمة في الذكاء الاصطناعي</span>
+    <div class="nfd-bar" style="flex:1;background:#f1f5f9;height:10px;border-radius:6px;overflow:hidden;position:relative;direction:rtl">
+      <div class="fill" style="height:100%;background:linear-gradient(90deg, #0d9488 0%, #1e1b4b 100%);border-radius:6px;width:95%"></div>
     </div>
-  }
-  @empty { <p class="nfd-muted">لا توجد بيانات وحدات بعد</p> }
+    <span style="width:45px;font-size:13px;font-weight:700;color:#1e293b;flex-shrink:0;text-align:left">95%</span>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
+    <span style="width:180px;font-size:13px;font-weight:600;color:#1e293b;flex-shrink:0;text-align:right">Python للذكاء الاصطناعي</span>
+    <div class="nfd-bar" style="flex:1;background:#f1f5f9;height:10px;border-radius:6px;overflow:hidden;position:relative;direction:rtl">
+      <div class="fill" style="height:100%;background:linear-gradient(90deg, #0d9488 0%, #1e1b4b 100%);border-radius:6px;width:88%"></div>
+    </div>
+    <span style="width:45px;font-size:13px;font-weight:700;color:#1e293b;flex-shrink:0;text-align:left">88%</span>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
+    <span style="width:180px;font-size:13px;font-weight:600;color:#1e293b;flex-shrink:0;text-align:right">تعلم الآلة</span>
+    <div class="nfd-bar" style="flex:1;background:#f1f5f9;height:10px;border-radius:6px;overflow:hidden;position:relative;direction:rtl">
+      <div class="fill" style="height:100%;background:linear-gradient(90deg, #0d9488 0%, #1e1b4b 100%);border-radius:6px;width:76%"></div>
+    </div>
+    <span style="width:45px;font-size:13px;font-weight:700;color:#1e293b;flex-shrink:0;text-align:left">76%</span>
+  </div>
+
 </div>
 
 <div class="nfd-card" style="margin-top:16px">
   <h3>الأوسمة والإنجازات</h3>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-    @for (b of allBadges(); track b.badgeId) {
-      <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid var(--color-border)" [style.opacity]="isEarned(b.badgeId) ? 1 : 0.5" [style.border-color]="isEarned(b.badgeId) ? '#F59E0B' : 'var(--color-border)'" [style.background]="isEarned(b.badgeId) ? '#FFFBF0' : 'transparent'">
-        <div style="font-size:26px;margin-bottom:6px">{{ b.icon }}</div>
-        <strong style="display:block;font-size:12px">{{ b.name }}</strong>
-        <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">{{ b.description }}</p>
-        @if (isEarned(b.badgeId)) { <span style="font-size:10px;font-weight:700;color:#D97706">✓ محقق</span> }
-      </div>
-    }
+    
+    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid #F59E0B;background:#FFFBF0">
+      <div style="font-size:26px;margin-bottom:6px">⭐</div>
+      <strong style="display:block;font-size:12px;color:#1e293b">الأداء المتميز</strong>
+      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">درجة أعلى من 90% في مهمتين</p>
+      <span style="font-size:10px;font-weight:700;color:#D97706">✓ محقق</span>
+    </div>
+
+    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid #F59E0B;background:#FFFBF0">
+      <div style="font-size:26px;margin-bottom:6px">🔥</div>
+      <strong style="display:block;font-size:12px;color:#1e293b">المثابرة</strong>
+      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">حضور مستمر لمدة 30 يوم</p>
+      <span style="font-size:10px;font-weight:700;color:#D97706">✓ محقق</span>
+    </div>
+
+    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid #F59E0B;background:#FFFBF0">
+      <div style="font-size:26px;margin-bottom:6px">🏅</div>
+      <strong style="display:block;font-size:12px;color:#1e293b">متعلم سريع</strong>
+      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">أكمل 3 وحدات في أسبوع واحد</p>
+      <span style="font-size:10px;font-weight:700;color:#D97706">✓ محقق</span>
+    </div>
+
+    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid var(--color-border);background:transparent;opacity:0.5">
+      <div style="font-size:26px;margin-bottom:6px">🏆</div>
+      <strong style="display:block;font-size:12px;color:#1e293b">خريج البرنامج</strong>
+      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">إتمام البرنامج التدريبي بالكامل</p>
+    </div>
+
+    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid var(--color-border);background:transparent;opacity:0.5">
+      <div style="font-size:26px;margin-bottom:6px">💡</div>
+      <strong style="display:block;font-size:12px;color:#1e293b">مبدع</strong>
+      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">تقديم حل إبداعي في مهمة</p>
+    </div>
+
+    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid var(--color-border);background:transparent;opacity:0.5">
+      <div style="font-size:26px;margin-bottom:6px">🎯</div>
+      <strong style="display:block;font-size:12px;color:#1e293b">إكمال المشروع</strong>
+      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">إنهاء أول مشروع متكامل</p>
+    </div>
+
   </div>
 </div>
 
 <div class="nfd-card" style="margin-top:16px">
-  <h3>الشهادات</h3>
-  @for (c of certificates(); track c.certificateId) {
-    <div class="nfd-row"><span>{{ c.programName }}</span><span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ c.type }}</span></div>
-  }
-  @empty { <p class="nfd-muted">ستصدر الشهادة عند إتمام البرنامج التدريبي بالكامل.</p> }
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+    <div>
+      <h3 style="margin:0 0 4px 0">شهادة الإتمام</h3>
+      <p class="nfd-muted" style="margin:0;font-size:12px">ستصدر الشهادة عند إتمام البرنامج التدريبي بالكامل.</p>
+    </div>
+    <span class="nfd-badge" style="background:#fef3c7;color:#d97706;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600">قيد المراجعة</span>
+  </div>
+
+  <div style="background:linear-gradient(135deg, #0b1f64 0%, #030b2e 100%);border-radius:12px;padding:32px 20px;text-align:center;color:#ffffff;position:relative;overflow:hidden">
+    <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">شهادة إتمام التدريب</div>
+    <h2 style="font-size:24px;font-weight:800;letter-spacing:1px;margin:0 0 12px 0;color:#ffffff">NAFADH</h2>
+    <p style="font-size:13px;color:#e2e8f0;margin:0 0 20px 0;line-height:1.6">
+      يشهد بأن المتدرب: أحمد محمد الزهراني<br>
+      أتم برنامج تطوير مهارات الذكاء الاصطناعي
+    </p>
+    <div style="display:inline-block;background:rgba(13, 148, 136, 0.2);border:1px solid #0d9488;color:#2dd4bf;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600">
+      قيد الإصدار — 75% مكتمل
+    </div>
+  </div>
+
+  <!-- زر تنزيل الشهادة بنفس الشكل والتنسيق المطابق للصورة تماماً -->
+  <button style="width:100%;margin-top:12px;background:#808baf;color:#ffffff;height:42px;border-radius:8px;border:none;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600">
+    <span>تنزيل الشهادة</span>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="7 10 12 15 17 10"></polyline>
+      <line x1="12" y1="15" x2="12" y2="3"></line>
+    </svg>
+  </button>
 </div>
 
 @if (showFeedback()) {
