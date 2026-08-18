@@ -13,45 +13,45 @@
       <!-- أيام الحضور -->
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid #f1f5f9;border-radius:10px;background:#fff">
         <span style="color:#94a3b8;font-size:14px">أيام الحضور</span>
-        <strong style="color:var(--status-active-fg, #10b981);font-size:18px">{{ rows().length }}</strong>
+        <strong style="color:var(--status-active-fg, #10b981);font-size:18px">{{ totalPresent() }}</strong>
       </div>
 
       <!-- الغياب -->
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid #f1f5f9;border-radius:10px;background:#fff">
         <span style="color:#94a3b8;font-size:14px">الغياب</span>
-        <strong style="color:var(--status-absent-fg, #ef4444);font-size:18px">0</strong>
+        <strong style="color:var(--status-absent-fg, #ef4444);font-size:18px">{{ totalAbsent() }}</strong>
       </div>
 
       <!-- التأخير -->
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid #f1f5f9;border-radius:10px;background:#fff">
         <span style="color:#94a3b8;font-size:14px">التأخير</span>
-        <strong style="color:var(--status-late-fg, #f59e0b);font-size:18px">0</strong>
+        <strong style="color:var(--status-late-fg, #f59e0b);font-size:18px">{{ totalLate() }}</strong>
       </div>
 
       <!-- الأعذار المقبولة -->
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid #f1f5f9;border-radius:10px;background:#fff">
         <span style="color:#94a3b8;font-size:14px">الأعذار المقبولة</span>
-        <strong style="color:var(--status-active-fg, #10b981);font-size:18px">0</strong>
+        <strong style="color:var(--status-active-fg, #10b981);font-size:18px">{{ totalExcused() }}</strong>
       </div>
     </div>
   </div>
 
-<!-- 2. بطاقة نسبة الالتزام -->
-<div class="nfd-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px">
-  
-  <!-- استبدل الرقم 90 بـ rate() عندما تقم بربط البيانات -->
-  <div style="width: 140px; height: 140px; border-radius: 50%; background: conic-gradient(#0d9488 90%, #e2e8f0 0); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+  <!-- 2. بطاقة نسبة الالتزام الديناميكية -->
+  <div class="nfd-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px">
     
-    <div style="width: 110px; height: 110px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-      <span style="font-size: 28px; font-weight: 700; color: #1e293b;">90%</span>
+    <div [style.background]="'conic-gradient(#0d9488 ' + commitmentPercentage() + '%, #e2e8f0 0)'" 
+         style="width: 140px; height: 140px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+      
+      <div style="width: 110px; height: 110px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+        <span style="font-size: 28px; font-weight: 700; color: #1e293b;">{{ commitmentPercentage() }}%</span>
+      </div>
+      
     </div>
-    
+
+    <p style="margin: 16px 0 4px; font-size: 16px; font-weight: 700; color: #1e293b;">نسبة الالتزام</p>
+    <span style="font-size: 12px; color: #8c98a5;">وفق إجمالي أيام التدريب المسجلة</span>
+
   </div>
-
-  <p style="margin: 16px 0 4px; font-size: 16px; font-weight: 700; color: #1e293b;">نسبة الالتزام</p>
-  <span style="font-size: 12px; color: #8c98a5;">وفق إجمالي أيام التدريب المسجلة</span>
-
-</div>
 
 </div>
 

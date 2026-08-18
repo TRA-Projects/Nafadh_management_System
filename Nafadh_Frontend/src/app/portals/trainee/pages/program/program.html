@@ -1,29 +1,37 @@
-<div class="nfd-card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-  <div>
-    <h2 class="nfd-page-title" style="margin-bottom:0">البرنامج التدريبي</h2>
-    <p class="nfd-page-sub" style="margin-bottom:0">مسار الوحدات والدروس الخاص بك</p>
-  </div>
-  <div class="nfd-ring" [style.--p]="progress()"><span>{{ progress() | number:'1.0-0' }}%</span></div>
+<div class="nfd-card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
+  <div>
+    <h2 class="nfd-page-title" style="margin-bottom: 0">البرنامج التدريبي</h2>
+    <p class="nfd-page-sub" style="margin-bottom: 0">مسار الوحدات والدروس الخاص بك</p>
+  </div>
+  <div class="nfd-ring" [style.--p]="progress()"><span>{{ progress() | number:'1.0-0' }}%</span></div>
 </div>
 
 <div class="nfd-card">
-  <h3>وحدات البرنامج التدريبي</h3>
-  @for (m of modules(); track m.moduleId) {
-    <div style="border:1px solid var(--color-border);border-radius:12px;margin-bottom:10px;overflow:hidden">
-      <button (click)="toggle(m)" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px;text-align:right">
-        <span style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px" [style.background]="m.isArchived ? 'var(--color-cyan)' : 'var(--color-border)'" [style.color]="m.isArchived ? '#fff' : 'inherit'">{{ m.orderIndex }}</span>
-        <strong style="flex:1;font-size:13px">{{ m.title }}</strong>
-        <span [style.transform]="openModule() === m.moduleId ? 'rotate(180deg)' : 'none'" style="transition:transform .2s">⌄</span>
-      </button>
-      @if (openModule() === m.moduleId) {
-        <div style="padding:14px;background:#F8FAFF;border-top:1px solid var(--color-border)">
-          @for (l of lessonsByModule()[m.moduleId]; track l.lessonId) {
-            <div class="nfd-row"><span>{{ l.title }}</span></div>
-          }
-          @empty { <p class="nfd-muted">لا توجد دروس بعد لهذه الوحدة</p> }
-        </div>
-      }
-    </div>
-  }
-  @empty { <p class="nfd-muted">لا توجد وحدات لهذا البرنامج بعد</p> }
+  <h3>وحدات البرنامج التدريبي</h3>
+  
+  @for (m of modules(); track m.moduleId) {
+    <div style="border: 1px solid var(--color-border); border-radius: 12px; margin-bottom: 10px; overflow: hidden">
+      <button (click)="toggle(m)" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; text-align: right; background: none; border: none; cursor: pointer;">
+        <span style="width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px" [style.background]="m.isArchived ? 'var(--color-cyan)' : 'var(--color-border)'" [style.color]="m.isArchived ? '#fff' : 'inherit'">
+          {{ m.orderIndex }}
+        </span>
+        <strong style="flex: 1; font-size: 13px">{{ m.title }}</strong>
+        <span [style.transform]="openModule() === m.moduleId ? 'rotate(180deg)' : 'none'" style="transition: transform .2s">⌄</span>
+      </button>
+      
+      @if (openModule() === m.moduleId) {
+        <div style="padding: 14px; background: #F8FAFF; border-top: 1px solid var(--color-border)">
+          @for (l of lessonsByModule()[m.moduleId]; track l.lessonId) {
+            <div class="nfd-row"><span>{{ l.title }}</span></div>
+          }
+          @empty { 
+            <p class="nfd-muted">لا توجد دروس بعد لهذه الوحدة</p> 
+          }
+        </div>
+      }
+    </div>
+  }
+  @empty { 
+    <p class="nfd-muted">لا توجد وحدات لهذا البرنامج بعد</p> 
+  }
 </div>
