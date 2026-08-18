@@ -18,12 +18,9 @@
     <!-- أزرار الفلتر -->
     <div class="nfd-chips d-flex gap-2 mb-3 flex-wrap">
       @for (s of ['الكل','PendingApproval','Approved','Suspended']; track s) {
-        <button class="nfd-chip btn rounded-pill px-4 py-1.5 fw-semibold border-0 shadow-sm"
-                [class.btn-dark]="statusFilter() === s"
-                [class.text-white]="statusFilter() === s"
-                [class.btn-light]="statusFilter() !== s"
-                [class.text-muted]="statusFilter() !== s"
-                (click)="statusFilter.set(s)">
+        <button class="filter-btn"
+                [class.active]="statusFilter() === s"
+                (click)="setFilter(s)">
           @if (s === 'الكل') { الكل }
           @else if (s === 'PendingApproval') { قيد المراجعة }
           @else if (s === 'Approved') { معتمدة }
