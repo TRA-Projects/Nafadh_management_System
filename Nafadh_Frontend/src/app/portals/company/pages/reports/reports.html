@@ -1,463 +1,520 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>صفحة التقارير</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نفاذ | التقارير</title>
+<style>
+:root {
+  --primary-blue: #0F3275;
+  --bg-light: #F8FAFC;
+  --card-bg: #FFFFFF;
+  --text-dark: #0F172A;
+  --text-muted: #475569;
+  --border-color: #CBD5E1;
+  --cyan-bar: #00BCD4;
+  --badge-green-bg: #E6F4EA;
+  --badge-green-text: #137333;
+  --badge-yellow-bg: #FEF7E0;
+  --badge-yellow-text: #B06000;
+  --badge-red-bg: #FCE8E6;
+  --badge-red-text: #C5221F;
+}
 
-    <style>
-        * {
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
 
-        body {
-            margin: 0;
-            background-color: #f4f7fc;
-            color: #1a2b49;
-            padding: 30px;
-        }
+body {
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+  padding: 2rem;
+  min-height: 100vh;
+}
 
-        /* ==========================================
-           الهيدر العلوي (العنوان يمين والأزرار يسار)
-        ========================================== */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 25px;
-        }
+.content-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
 
-        /* القسم الأيمن: العنوان + الوصف + التبويبات */
-        .header-right {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+/* الرأس والأزرار */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
 
-        .header-info h1 {
-            margin: 0 0 4px 0;
-            font-size: 24px;
-            font-weight: 800;
-            color: #0c2340;
-        }
+.page-title h2 {
+  font-size: 1.5rem;
+  color: var(--text-dark);
+  font-weight: 700;
+}
 
-        .header-info p {
-            margin: 0;
-            font-size: 13px;
-            color: #64748b;
-        }
+.page-title p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
 
-        /* شريط أزرار التنقل (Tabs) تحت العنوان في اليمين */
-        .tabs {
-            display: inline-flex;
-            background-color: white;
-            padding: 4px;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            width: fit-content;
-        }
+.export-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
 
-        .tab-btn {
-            border: none;
-            background: transparent;
-            padding: 8px 20px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #64748b;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
+.btn-export-pdf {
+  background: var(--primary-blue) !important;
+  color: #FFFFFF !important;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
 
-        .tab-btn.active {
-            background-color: #003366;
-            color: white;
-        }
+.btn-export-excel {
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  color: var(--text-dark);
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
 
-        /* القسم الأيسر: أزرار التصدير فقط */
-        .header-left {
-            display: flex;
-            align-items: center;
-        }
+/* التبويبات - يمين الشاشة مع لون خط واضح داكن جداً */
+.tabs-container {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 1.5rem;
+}
 
-        .export-actions {
-            display: flex;
-            gap: 10px;
-        }
+.tabs-group {
+  background: #E2E8F0;
+  padding: 4px;
+  border-radius: 8px;
+  display: flex;
+  gap: 4px;
+}
 
-        .btn-export {
-            padding: 8px 18px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            border: 1px solid transparent;
-        }
+.tab-btn {
+  background: transparent;
+  border: none;
+  padding: 0.6rem 1.3rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #0F172A !important; /* لون اسود/كحلي شديد الوضوح للخط */
+  font-weight: 700 !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 
-        .btn-pdf {
-            background-color: #003366;
-            color: white;
-        }
+.tab-btn.active {
+  background: var(--primary-blue) !important;
+  color: #FFFFFF !important; /* لون ابيض ناصع للتبويب النشط */
+}
 
-        .btn-excel {
-            background-color: white;
-            color: #003366;
-            border-color: #d1d5db;
-        }
+/* أقسام المحتوى للمقاطع المختلفة */
+.tab-content {
+  display: none;
+}
 
-        /* ==========================================
-           إخفاء وإظهار الصفحات (Tabs Switching)
-        ========================================== */
-        .tab-page {
-            display: none !important;
-        }
+.tab-content.active-content {
+  display: block;
+}
 
-        .tab-page.active {
-            display: block !important;
-        }
+/* بطاقات الإحصائيات */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
 
-        /* تنسيقات البطاقات والجداول */
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
+.stat-card {
+  background: var(--card-bg);
+  padding: 1.2rem;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  text-align: center;
+}
 
-        .card {
-            background: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            text-align: right;
-        }
+.stat-title {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
 
-        .card-title {
-            font-size: 12px;
-            color: #64748b;
-            margin-bottom: 8px;
-        }
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: var(--primary-blue);
+}
 
-        .card-value {
-            font-size: 22px;
-            font-weight: bold;
-            color: #003366;
-        }
+.stat-value.value-orange { color: #D97706; }
+.stat-value.value-red { color: #DC2626; }
 
-        .card-value.orange { color: #f59e0b; }
-        .card-value.red { color: #ef4444; }
+.stat-subtext {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
 
-        .card-sub {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-top: 4px;
-        }
+/* الرسم البياني للأشرطة */
+.chart-card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  margin-bottom: 1.5rem;
+}
 
-        .content-box {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            margin-bottom: 20px;
-        }
+.chart-header {
+  text-align: right;
+  font-weight: bold;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  margin-bottom: 1.5rem;
+}
 
-        .box-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #0c2340;
-            margin-bottom: 15px;
-        }
+.bar-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  gap: 1rem;
+}
 
-        .bar-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 12px;
-        }
+.bar-label {
+  width: 70px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-align: left;
+}
 
-        .bar-label {
-            width: 120px;
-            font-size: 12px;
-            color: #334155;
-            font-weight: 600;
-        }
+.bar-wrapper {
+  flex: 1;
+  background: #F1F5F9;
+  height: 24px;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
 
-        .bar-bg {
-            flex: 1;
-            height: 18px;
-            background: #f1f5f9;
-            border-radius: 10px;
-            overflow: hidden;
-        }
+.bar-fill {
+  height: 100%;
+  background-color: #00BCD4 !important;
+  border-radius: 12px;
+}
 
-        .bar-fill {
-            height: 100%;
-            background: #0284c7;
-            border-radius: 10px;
-        }
+.bar-value-pill {
+  position: absolute;
+  top: 3px;
+  right: 8px;
+  background: var(--primary-blue) !important;
+  color: #FFFFFF !important;
+  font-size: 0.7rem;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-weight: bold;
+}
 
-        .bar-val {
-            width: 45px;
-            font-size: 12px;
-            font-weight: bold;
-            color: #0f172a;
-        }
+.bar-side-text {
+  width: 50px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--text-dark);
+  text-align: right;
+}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
+/* الجدول */
+.table-card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
 
-        th {
-            background-color: #f8fafc;
-            color: #64748b;
-            padding: 10px;
-            text-align: center;
-            border-bottom: 1px solid #e2e8f0;
-        }
+.table-header {
+  font-weight: bold;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  margin-bottom: 1rem;
+}
 
-        td {
-            padding: 12px 10px;
-            text-align: center;
-            border-bottom: 1px solid #f1f5f9;
-        }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+}
 
-        th:first-child, td:first-child { text-align: right; }
-    </style>
+th, td {
+  padding: 0.8rem 1rem;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+th {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.rate-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rate-green { background: var(--badge-green-bg); color: var(--badge-green-text); }
+.rate-yellow { background: var(--badge-yellow-bg); color: var(--badge-yellow-text); }
+.rate-red { background: var(--badge-red-bg); color: var(--badge-red-text); }
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-green { background: var(--badge-green-text); }
+.dot-yellow { background: var(--badge-yellow-text); }
+.dot-red { background: var(--badge-red-text); }
+</style>
 </head>
-
 <body>
 
-    <!-- الهيدر المعدل -->
-    <div class="header">
-        <!-- اليمين: العنوان والوصف والتنقلات -->
-        <div class="header-right">
-            <div class="header-info">
-                <h1>التقارير</h1>
-                <p>تقارير حضور الشركة وإنجاز المتدربين والطاقة الاستيعابية — جاهزة للتصدير</p>
-            </div>
-
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="tab-company">حضور الشركة</button>
-                <button class="tab-btn" data-tab="tab-trainees">إنجاز المتدربين</button>
-                <button class="tab-btn" data-tab="tab-capacity">الطاقة الاستيعابية</button>
-            </div>
-        </div>
-
-        <!-- اليسار: أزرار التصدير -->
-        <div class="header-left">
-            <div class="export-actions">
-                <button class="btn-export btn-pdf">تصدير PDF</button>
-                <button class="btn-export btn-excel">تصدير Excel</button>
-            </div>
-        </div>
+  <div class="content-container">
+    
+    <div class="page-header">
+      <div class="page-title">
+        <h2>التقارير</h2>
+        <p>تقارير حضور الشركة وإنجاز المتدربين والطاقة الاستيعابية — جاهزة للتصدير</p>
+      </div>
+      <div class="export-buttons">
+        <button class="btn-export-pdf">تصدير PDF 📥</button>
+        <button class="btn-export-excel">تصدير Excel 📥</button>
+      </div>
     </div>
 
-    <!-- الصفحات الثلاث -->
-    <div id="tab-company" class="tab-page active">
-        <div class="cards-grid">
-            <div class="card">
-                <div class="card-title">متوسط حضور الشركة</div>
-                <div class="card-value">94.2%</div>
-                <div class="card-sub">▲ 1.2% عن الشهر الماضي</div>
-            </div>
-            <div class="card">
-                <div class="card-title">أيام الغياب (30 يوماً)</div>
-                <div class="card-value red">17</div>
-                <div class="card-sub">6 متدربين</div>
-            </div>
-            <div class="card">
-                <div class="card-title">حالات التأخر</div>
-                <div class="card-value orange">27</div>
-                <div class="card-sub">أغلبها في الدفعة 1</div>
-            </div>
-            <div class="card">
-                <div class="card-title">الانصراف المبكر</div>
-                <div class="card-value">6</div>
-                <div class="card-sub">حالة مسجلة</div>
-            </div>
-        </div>
-
-        <div class="content-box">
-            <div class="box-title">تقرير حضور الشركة — آخر 6 أسابيع</div>
-            <div class="bar-item">
-                <span class="bar-label">الأسبوع 27</span>
-                <div class="bar-bg"><div class="bar-fill" style="width: 95.1%;"></div></div>
-                <span class="bar-val">95.1%</span>
-            </div>
-            <div class="bar-item">
-                <span class="bar-label">الأسبوع 28</span>
-                <div class="bar-bg"><div class="bar-fill" style="width: 93.4%;"></div></div>
-                <span class="bar-val">93.4%</span>
-            </div>
-            <div class="bar-item">
-                <span class="bar-label">الأسبوع 29</span>
-                <div class="bar-bg"><div class="bar-fill" style="width: 96.8%;"></div></div>
-                <span class="bar-val">96.8%</span>
-            </div>
-        </div>
-
-        <div class="content-box">
-            <div class="box-title">الحضور حسب القسم</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>القسم</th>
-                        <th>عدد المتدربين</th>
-                        <th>معدل الحضور</th>
-                        <th>الغياب</th>
-                        <th>التأخر</th>
-                        <th>التقييم</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>تقنية المعلومات</td>
-                        <td>46</td>
-                        <td>96%</td>
-                        <td>4</td>
-                        <td>8</td>
-                        <td>ممتاز</td>
-                    </tr>
-                    <tr>
-                        <td>الموارد البشرية</td>
-                        <td>12</td>
-                        <td>95%</td>
-                        <td>2</td>
-                        <td>3</td>
-                        <td>ممتاز</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <div class="tabs-container">
+      <div class="tabs-group">
+        <button class="tab-btn active" onclick="openTab('tab1', this)">حضور الشركة</button>
+        <button class="tab-btn" onclick="openTab('tab2', this)">إنجاز المتدربين</button>
+        <button class="tab-btn" onclick="openTab('tab3', this)">الطاقة الاستيعابية</button>
+      </div>
     </div>
 
-    <div id="tab-trainees" class="tab-page">
-        <div class="cards-grid">
-            <div class="card">
-                <div class="card-title">متوسط الإنجاز العام</div>
-                <div class="card-value">86%</div>
-                <div class="card-sub">لكل البرامج</div>
-            </div>
-            <div class="card">
-                <div class="card-title">مشروعات مكتملة</div>
-                <div class="card-value">74</div>
-                <div class="card-sub">من أصل 92</div>
-            </div>
-            <div class="card">
-                <div class="card-title">متدربون متميزون</div>
-                <div class="card-value">22</div>
-                <div class="card-sub">أداء &ge; 90%</div>
-            </div>
-            <div class="card">
-                <div class="card-title">متعثرون</div>
-                <div class="card-value red">6</div>
-                <div class="card-sub">خطة تحسين</div>
-            </div>
+    <div id="tab1" class="tab-content active-content">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-title">متوسط حضور الشركة</div>
+          <div class="stat-value">94.2%</div>
+          <div class="stat-subtext">▲ 1.2% عن الشهر الماضي</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">أيام الغياب (30 يوماً)</div>
+          <div class="stat-value value-red">17</div>
+          <div class="stat-subtext">6 متدربين</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">حالات التأخر</div>
+          <div class="stat-value value-orange">27</div>
+          <div class="stat-subtext">أغلبها في الدفعة أ</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">الانصراف المبكر</div>
+          <div class="stat-value">6</div>
+          <div class="stat-subtext">حالة مسجلة</div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">تقرير حضور الشركة — آخر 6 أسابيع</div>
+
+        <div class="bar-row">
+          <div class="bar-side-text">95.1%</div>
+          <div class="bar-wrapper">
+            <div class="bar-fill" style="width: 95.1%;"></div>
+            <div class="bar-value-pill">95.1%</div>
+          </div>
+          <div class="bar-label">الأسبوع 27</div>
         </div>
 
-        <div class="content-box">
-            <div class="box-title">نسبة إنجاز المتدربين حسب البرنامج</div>
-            <div class="bar-item">
-                <span class="bar-label">تطوير تطبيقات الويب</span>
-                <div class="bar-bg"><div class="bar-fill" style="width: 88%; background-color: #0a4b94;"></div></div>
-                <span class="bar-val">88%</span>
-            </div>
-            <div class="bar-item">
-                <span class="bar-label">تحليل البيانات</span>
-                <div class="bar-bg"><div class="bar-fill" style="width: 84%; background-color: #0284c7;"></div></div>
-                <span class="bar-val">84%</span>
-            </div>
-            <div class="bar-item">
-                <span class="bar-label">الأمن السيبراني</span>
-                <div class="bar-bg"><div class="bar-fill" style="width: 82%; background-color: #032b69;"></div></div>
-                <span class="bar-val">82%</span>
-            </div>
-            <div class="bar-item">
-                <span class="bar-label">الدعم الفني</span>
-                <div class="bar-bg"><div class="bar-fill" style="width: 79%; background-color: #eab308;"></div></div>
-                <span class="bar-val">79%</span>
-            </div>
+        <div class="bar-row">
+          <div class="bar-side-text">93.4%</div>
+          <div class="bar-wrapper">
+            <div class="bar-fill" style="width: 93.4%;"></div>
+            <div class="bar-value-pill">93.4%</div>
+          </div>
+          <div class="bar-label">الأسبوع 28</div>
         </div>
+
+        <div class="bar-row">
+          <div class="bar-side-text">96.8%</div>
+          <div class="bar-wrapper">
+            <div class="bar-fill" style="width: 96.8%;"></div>
+            <div class="bar-value-pill">96.8%</div>
+          </div>
+          <div class="bar-label">الأسبوع 29</div>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-side-text">92.7%</div>
+          <div class="bar-wrapper">
+            <div class="bar-fill" style="width: 92.7%;"></div>
+            <div class="bar-value-pill">92.7%</div>
+          </div>
+          <div class="bar-label">الأسبوع 30</div>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-side-text">94.5%</div>
+          <div class="bar-wrapper">
+            <div class="bar-fill" style="width: 94.5%;"></div>
+            <div class="bar-value-pill">94.5%</div>
+          </div>
+          <div class="bar-label">الأسبوع 31</div>
+        </div>
+
+        <div class="bar-row">
+          <div class="bar-side-text">95.6%</div>
+          <div class="bar-wrapper">
+            <div class="bar-fill" style="width: 95.6%;"></div>
+            <div class="bar-value-pill">95.6%</div>
+          </div>
+          <div class="bar-label">الأسبوع 32</div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header">الحضور حسب القسم</div>
+        <table>
+          <thead>
+            <tr>
+              <th>القسم</th>
+              <th>عدد المتدربين</th>
+              <th>معدل الحضور</th>
+              <th>الغياب</th>
+              <th>التأخر</th>
+              <th>التقييم</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>تقنية المعلومات</td>
+              <td>46</td>
+              <td><span class="rate-badge rate-green"><span class="dot dot-green"></span> 96%</span></td>
+              <td>4</td>
+              <td>8</td>
+              <td>ممتاز</td>
+            </tr>
+            <tr>
+              <td>الموارد البشرية</td>
+              <td>12</td>
+              <td><span class="rate-badge rate-green"><span class="dot dot-green"></span> 95%</span></td>
+              <td>2</td>
+              <td>3</td>
+              <td>ممتاز</td>
+            </tr>
+            <tr>
+              <td>العمليات</td>
+              <td>24</td>
+              <td><span class="rate-badge rate-yellow"><span class="dot dot-yellow"></span> 91%</span></td>
+              <td>5</td>
+              <td>9</td>
+              <td>جيد</td>
+            </tr>
+            <tr>
+              <td>التسويق</td>
+              <td>8</td>
+              <td><span class="rate-badge rate-red"><span class="dot dot-red"></span> 78%</span></td>
+              <td>6</td>
+              <td>7</td>
+              <td>يحتاج متابعة</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <div id="tab-capacity" class="tab-page">
-        <div class="content-box" style="text-align: center;">
-            <div class="box-title" style="text-align: right;">الطاقة الاستيعابية — الحصة المخصصة للشركة: 150 مقعداً</div>
-            <div style="padding: 20px 0;">
-                <h2 style="font-size: 36px; color: #003366; margin: 0;">85%</h2>
-                <p style="color: #64748b; margin: 5px 0;">مستخدمة</p>
-                <div style="font-size: 13px; color: #334155;">مشغول: <b>128</b> | متبقي: <b>22</b> | الحصة: <b>150</b></div>
-            </div>
-        </div>
-
-        <div class="content-box">
-            <div class="box-title">الطاقة حسب البرنامج</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>البرنامج</th>
-                        <th>الحصة المخصصة</th>
-                        <th>المستخدم</th>
-                        <th>المتبقي</th>
-                        <th>الاستغلال</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>تطوير تطبيقات الويب</td>
-                        <td>60</td>
-                        <td>54</td>
-                        <td>6</td>
-                        <td>90%</td>
-                    </tr>
-                    <tr>
-                        <td>تحليل البيانات</td>
-                        <td>40</td>
-                        <td>38</td>
-                        <td>2</td>
-                        <td>95%</td>
-                    </tr>
-                    <tr>
-                        <td>الأمن السيبراني</td>
-                        <td>25</td>
-                        <td>24</td>
-                        <td>1</td>
-                        <td>96%</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <div id="tab2" class="tab-content">
+      <div class="table-card">
+        <div class="table-header">تقرير إنجاز المهام والتكاليف للمتدربين</div>
+        <table>
+          <thead>
+            <tr>
+              <th>اسم المتدرب</th>
+              <th>القسم</th>
+              <th>المهام المكتملة</th>
+              <th>نسبة الإنجاز</th>
+              <th>الحالة</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>أحمد العلي</td>
+              <td>تقنية المعلومات</td>
+              <td>18 / 20</td>
+              <td><span class="rate-badge rate-green">90%</span></td>
+              <td>مكتمل ممتاز</td>
+            </tr>
+            <tr>
+              <td>سارة الشمري</td>
+              <td>التسويق</td>
+              <td>14 / 20</td>
+              <td><span class="rate-badge rate-yellow">70%</span></td>
+              <td>قيد التقدم</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- سكربت التنقل المعدل والمحمي -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const tabButtons = document.querySelectorAll('.tab-btn');
-            const tabPages = document.querySelectorAll('.tab-page');
+    <div id="tab3" class="tab-content">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-title">المقاعد الكلية</div>
+          <div class="stat-value">100</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">المقاعد المشغولة</div>
+          <div class="stat-value">90</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">المقاعد الشاغرة</div>
+          <div class="stat-value value-orange">10</div>
+        </div>
+      </div>
+    </div>
 
-            tabButtons.forEach(button => {
-                button.addEventListener('click', function () {
-                    const targetTabId = this.getAttribute('data-tab');
+  </div>
 
-                    // إزالة active من الأزرار والصفحات
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    tabPages.forEach(page => page.classList.remove('active'));
+<script>
+// دالة الانتقال والتنقل بين التبويبات
+function openTab(tabId, btnElement) {
+  // إخفاء كل المحتويات
+  const contents = document.querySelectorAll('.tab-content');
+  contents.forEach(content => content.classList.remove('active-content'));
 
-                    // تفعيل الزر المكبوس والصفحة المستهدفة
-                    this.classList.add('active');
-                    const targetPage = document.getElementById(targetTabId);
-                    if (targetPage) {
-                        targetPage.classList.add('active');
-                    }
-                });
-            });
-        });
-    </script>
+  // إلغاء تحديد كل الأزرار
+  const buttons = document.querySelectorAll('.tab-btn');
+  buttons.forEach(btn => btn.classList.remove('active'));
+
+  // إظهار المحتوى المحدد وتنشيط الزر المكبوس
+  document.getElementById(tabId).classList.add('active-content');
+  btnElement.classList.add('active');
+}
+</script>
 
 </body>
-
 </html>
