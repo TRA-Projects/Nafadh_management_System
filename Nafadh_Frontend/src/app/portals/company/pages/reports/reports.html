@@ -1,625 +1,495 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تقارير الأداء والتدريب - نفاذ</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
+<div class="reports-page">
 
-    body {
-        font-family: 'Tajawal', sans-serif;
-        background-color: #F1F5F9;
-        color: #0F172A;
-        padding: 24px;
-        direction: rtl;
-    }
+  <header class="reports-header">
+    <div class="header-right">
+      <h1>التقارير</h1>
+      <div class="description">
+        تقارير حضور الشركة وإنجاز المتدربين والطاقة الاستيعابية — جاهزة للتصدير
+      </div>
 
-    .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
+      <div class="tabs" role="tablist" aria-label="أقسام التقارير">
+        <button
+          class="tab"
+          [class.active]="tab() === 'attendance'"
+          (click)="selectTab('attendance')"
+          type="button">
+          حضور الشركة
+        </button>
 
-    /* Top Bar Header */
-    .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-    }
+        <button
+          class="tab"
+          [class.active]="tab() === 'achievement'"
+          (click)="selectTab('achievement')"
+          type="button">
+          إنجاز المتدربين
+        </button>
 
-    .header-titles h1 {
-        font-size: 22px;
-        font-weight: 700;
-        color: #0F172A;
-        margin-bottom: 4px;
-    }
-
-    .header-titles p {
-        font-size: 13px;
-        color: #64748B;
-    }
-
-    .header-actions {
-        display: flex;
-        gap: 10px;
-    }
-
-    .btn {
-        padding: 8px 16px;
-        border-radius: 8px;
-        font-family: inherit;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .btn-primary {
-        background-color: #2563EB;
-        color: #FFFFFF;
-        border: none;
-    }
-
-    .btn-outline {
-        background-color: #FFFFFF;
-        color: #0F172A;
-        border: 1px solid #CBD5E1;
-    }
-
-    /* Filter Bar */
-    .filter-card {
-        background-color: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 16px;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    .filter-group {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .filter-group label {
-        font-size: 11px;
-        color: #64748B;
-        font-weight: 600;
-    }
-
-    .filter-group select {
-        padding: 8px 12px;
-        border: 1px solid #CBD5E1;
-        border-radius: 6px;
-        font-family: inherit;
-        font-size: 13px;
-        color: #0F172A;
-        background-color: #FFFFFF;
-    }
-
-    /* Stats Cards Grid */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-    }
-
-    .stat-card {
-        background-color: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 16px;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    .stat-info {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .stat-title {
-        font-size: 12px;
-        color: #64748B;
-        margin-bottom: 6px;
-    }
-
-    .stat-value {
-        font-size: 24px;
-        font-weight: 700;
-        color: #0F172A;
-        margin-bottom: 6px;
-    }
-
-    .stat-sub {
-        font-size: 11px;
-        font-weight: 500;
-    }
-
-    .stat-sub.positive { color: #059669; }
-    .stat-sub.negative { color: #DC2626; }
-
-    .stat-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        background-color: #EFF6FF;
-        color: #2563EB;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .stat-icon svg {
-        width: 20px;
-        height: 20px;
-        fill: currentColor;
-    }
-
-    /* Middle Grid: Chart & Activities */
-    .middle-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 16px;
-    }
-
-    .card {
-        background-color: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 16px;
-    }
-
-    .card-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: #0F172A;
-    }
-
-    .card-subtitle {
-        font-size: 11px;
-        color: #94A3B8;
-    }
-
-    /* Chart Area */
-    .chart-box {
-        display: flex;
-        flex-direction: column;
-        height: 220px;
-        justify-content: flex-end;
-    }
-
-    .chart-bars {
-        display: flex;
-        justify-content: space-around;
-        align-items: flex-end;
-        height: 160px;
-        border-bottom: 1px solid #E2E8F0;
-        padding-bottom: 4px;
-    }
-
-    .bar-group {
-        display: flex;
-        gap: 6px;
-        align-items: flex-end;
-        height: 100%;
-    }
-
-    .bar {
-        width: 20px;
-        border-radius: 4px 4px 0 0;
-    }
-
-    .bar-light { background-color: #60A5FA; }
-    .bar-dark { background-color: #1D4ED8; }
-
-    .chart-labels {
-        display: flex;
-        justify-content: space-around;
-        margin-top: 8px;
-    }
-
-    .chart-labels span {
-        font-size: 11px;
-        color: #64748B;
-    }
-
-    .chart-legend {
-        display: flex;
-        justify-content: center;
-        gap: 24px;
-        margin-top: 16px;
-        font-size: 11px;
-        color: #64748B;
-    }
-
-    .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .legend-box {
-        width: 12px;
-        height: 12px;
-        border-radius: 3px;
-    }
-
-    /* Activity List */
-    .activity-list {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-    }
-
-    .activity-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .activity-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background-color: #E2E8F0;
-        color: #334155;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 11px;
-        font-weight: 700;
-        flex-shrink: 0;
-    }
-
-    .activity-content {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .activity-text {
-        font-size: 12px;
-        font-weight: 600;
-        color: #1E293B;
-    }
-
-    .activity-time {
-        font-size: 10px;
-        color: #64748B;
-        margin-top: 2px;
-    }
-
-    /* Table Section */
-    .table-card {
-        padding: 0;
-        overflow: hidden;
-    }
-
-    .table-header {
-        padding: 16px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .btn-sm {
-        padding: 4px 10px;
-        font-size: 11px;
-        border-radius: 6px;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        text-align: right;
-    }
-
-    th {
-        background-color: #F8FAFC;
-        color: #64748B;
-        font-size: 11px;
-        font-weight: 600;
-        padding: 12px 20px;
-        border-bottom: 1px solid #E2E8F0;
-        border-top: 1px solid #E2E8F0;
-    }
-
-    td {
-        padding: 14px 20px;
-        font-size: 12px;
-        color: #0F172A;
-        border-bottom: 1px solid #E2E8F0;
-    }
-
-    tr:last-child td {
-        border-bottom: none;
-    }
-
-    .status-badge {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 11px;
-        font-weight: 600;
-    }
-
-    .status-active {
-        background-color: #D1FAE5;
-        color: #065F46;
-    }
-
-    .status-pending {
-        background-color: #FEF3C7;
-        color: #92400E;
-    }
-
-    .status-completed {
-        background-color: #E0E7FF;
-        color: #3730A3;
-    }
-</style>
-</head>
-<body>
-
-<div class="container">
-    <!-- Header -->
-    <header class="header">
-        <div class="header-titles">
-            <h1>تقارير الأداء والتدريب</h1>
-            <p>نظرة عامة على الإحصائيات الشاملة لمنصة نفاذ</p>
-        </div>
-        <div class="header-actions">
-            <button class="btn btn-primary">تحديث البيانات</button>
-            <button class="btn btn-outline">تصدير PDF</button>
-        </div>
-    </header>
-
-    <!-- Filters -->
-   <!-- Filters -->
-    <div class="filter-card">
-        <div class="filter-group">
-            <label>الفترة الزمنية</label>
-            <select>
-                <option value="q_prev">الربع السابق</option>
-                <option value="q_current">الربع الحالي</option>
-                <option value="m_current">الشهر الحالي</option>
-                <option value="y_2026">عام 2026</option>
-            </select>
-        </div>
-        <div class="filter-group">
-            <label>الدفعة التدريبية</label>
-            <select>
-                <option value="all">جميع الدفعات</option>
-                <option value="web">دفعة تطوير الويب والتطبيقات</option>
-                <option value="net">دفعة إدارة شبكات الحاسوب</option>
-                <option value="ai">دفعة الذكاء الاصطناعي والتصميم</option>
-                <option value="data">دفعة التحول الرقمي وإدارة البيانات</option>
-            </select>
-        </div>
-        <div class="filter-group">
-            <label>الحالة</label>
-            <select>
-                <option value="all">الكل</option>
-                <option value="active">نشط</option>
-                <option value="pending">قيد التقييم</option>
-                <option value="completed">مكتمل</option>
-            </select>
-        </div>
+        <button
+          class="tab"
+          [class.active]="tab() === 'capacity'"
+          (click)="selectTab('capacity')"
+          type="button">
+          الطاقة الاستيعابية
+        </button>
+      </div>
     </div>
 
-    <!-- Stats -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-info">
-                <span class="stat-title">إجمالي المتدربين</span>
-                <span class="stat-value">1,248</span>
-                <span class="stat-sub positive">↑ 12% مقارنة بالشهر السابق</span>
-            </div>
-            <div class="stat-icon">
-                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-            </div>
-        </div>
+    <div class="header-left">
+      <div class="export-group">
+        <button class="export-btn" type="button" (click)="exportPdf()">
+          📥 تصدير PDF
+        </button>
 
-        <div class="stat-card">
-            <div class="stat-info">
-                <span class="stat-title">نسبة الإنجاز</span>
-                <span class="stat-value">88.5%</span>
-                <span class="stat-sub positive">↑ 4.2% أعلى من المعدل المستهدف</span>
-            </div>
-            <div class="stat-icon">
-                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-info">
-                <span class="stat-title">الشركات الشريكة</span>
-                <span class="stat-value">42</span>
-                <span class="stat-sub positive">↑ 3 شركات جديدة هذا الشهر</span>
-            </div>
-            <div class="stat-icon">
-                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-info">
-                <span class="stat-title">المهام المكتملة</span>
-                <span class="stat-value">3,850</span>
-                <span class="stat-sub negative">↓ 1.5% خلال الأسبوع الحالي</span>
-            </div>
-            <div class="stat-icon">
-                <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-            </div>
-        </div>
+        <button class="export-btn excel" type="button" (click)="exportExcel()">
+          📥 تصدير Excel
+        </button>
+      </div>
     </div>
+  </header>
 
-    <!-- Middle Grid: Chart + Activity -->
-    <div class="middle-grid">
-        <div class="card">
-            <div class="card-header">
-                <span class="card-title">معدل الحضور والالتزام الشهري</span>
-                <span class="card-subtitle">الأشهر الأخيرة (2026)</span>
-            </div>
-            <div class="chart-box">
-                <div class="chart-bars">
-                    <div class="bar-group">
-                        <div class="bar bar-light" style="height: 75%;"></div>
-                        <div class="bar bar-dark" style="height: 90%;"></div>
-                    </div>
-                    <div class="bar-group">
-                        <div class="bar bar-light" style="height: 65%;"></div>
-                        <div class="bar bar-dark" style="height: 80%;"></div>
-                    </div>
-                    <div class="bar-group">
-                        <div class="bar bar-light" style="height: 50%;"></div>
-                        <div class="bar bar-dark" style="height: 65%;"></div>
-                    </div>
-                    <div class="bar-group">
-                        <div class="bar bar-light" style="height: 60%;"></div>
-                        <div class="bar bar-dark" style="height: 72%;"></div>
-                    </div>
-                    <div class="bar-group">
-                        <div class="bar bar-light" style="height: 45%;"></div>
-                        <div class="bar bar-dark" style="height: 58%;"></div>
-                    </div>
-                </div>
-                <div class="chart-labels">
-                    <span>أغسطس</span>
-                    <span>يوليو</span>
-                    <span>يونيو</span>
-                    <span>مايو</span>
-                    <span>أبريل</span>
-                </div>
-                <div class="chart-legend">
-                    <div class="legend-item">
-                        <div class="legend-box" style="background-color: #1D4ED8;"></div>
-                        <span>الحضور الفعلي</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-box" style="background-color: #60A5FA;"></div>
-                        <span>تسليم المهام</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <span class="card-title">أحدث الأنشطة</span>
-            </div>
-            <div class="activity-list">
-                <div class="activity-item">
-                    <div class="activity-avatar">إس</div>
-                    <div class="activity-content">
-                        <span class="activity-text">تم رفع تقرير الدفعة الجديدة</span>
-                        <span class="activity-time">منذ 15 دقيقة</span>
-                    </div>
-                </div>
-                <div class="activity-item">
-                    <div class="activity-avatar">أم</div>
-                    <div class="activity-content">
-                        <span class="activity-text">تأكيد حضور ورشة عمل التطوير</span>
-                        <span class="activity-time">منذ ساعة واحدة</span>
-                    </div>
-                </div>
-                <div class="activity-item">
-                    <div class="activity-avatar">نفاذ</div>
-                    <div class="activity-content">
-                        <span class="activity-text">مزامنة بيانات التقييم الدوري</span>
-                        <span class="activity-time">منذ 3 ساعات</span>
-                    </div>
-                </div>
-                <div class="activity-item">
-                    <div class="activity-avatar">أح</div>
-                    <div class="activity-content">
-                        <span class="activity-text">إضافة شركة تدريبية جديدة</span>
-                        <span class="activity-time">منذ 5 ساعات</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+  @if (loading()) {
+    <div class="loading-card">
+      جاري تحميل بيانات التقرير...
     </div>
+  }
 
-    <!-- Table Card -->
-    <div class="card table-card">
-        <div class="table-header">
-            <span class="card-title">تفاصيل الدفعات التدريبية</span>
-            <button class="btn btn-outline btn-sm">عرض الكل</button>
+  @if (errorMessage()) {
+    <div class="error-card">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <main>
+
+    <!-- =========================
+         1 - COMPANY ATTENDANCE
+    ========================== -->
+    @if (tab() === 'attendance') {
+
+      @if (attendance(); as report) {
+
+        <section class="summary">
+
+          <div class="summary-card">
+            <div class="card-title">متوسط حضور الشركة</div>
+            <div class="card-value blue">
+              {{ report.overallAttendanceRate }}%
+            </div>
+            <div class="card-sub">حسب تقرير الحضور الحالي</div>
+          </div>
+
+          <div class="summary-card">
+            <div class="card-title">أيام الغياب</div>
+            <div class="card-value red">
+              {{ totalAbsentDays() }}
+            </div>
+            <div class="card-sub">إجمالي الغياب المسجل</div>
+          </div>
+
+          <div class="summary-card">
+            <div class="card-title">حالات التأخر</div>
+            <div class="card-value orange">
+              {{ totalLateDays() }}
+            </div>
+            <div class="card-sub">إجمالي حالات التأخر</div>
+          </div>
+
+          <div class="summary-card">
+            <div class="card-title">الحالات المعذورة</div>
+            <div class="card-value blue">
+              {{ totalExcusedDays() }}
+            </div>
+            <div class="card-sub">حالات مسجلة في التقرير</div>
+          </div>
+
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">
+            تقرير حضور الشركة — آخر الأسابيع
+          </h2>
+
+          @if (attendanceChart().length) {
+
+            @for (point of attendanceChart(); track point.label) {
+
+              <div class="chart-row">
+
+                <div class="percent">
+                  {{ point.value }}%
+                </div>
+
+                <div class="bar-container">
+                  <div
+                    class="bar"
+                    [style.width.%]="clampPercentage(point.value)">
+                    <span>{{ point.value }}%</span>
+                  </div>
+                </div>
+
+                <div class="week">
+                  {{ point.label }}
+                </div>
+
+              </div>
+
+            }
+
+          } @else {
+
+            <div class="empty-state">
+              لا توجد بيانات أسبوعية للحضور حالياً
+            </div>
+
+          }
+
+        </section>
+
+        <section class="section">
+
+          <h2 class="section-title">
+            تفاصيل حضور المتدربين
+          </h2>
+
+          <div class="table-wrapper">
+
+            <table>
+
+              <thead>
+                <tr>
+                  <th>المتدرب</th>
+                  <th>أيام الحضور</th>
+                  <th>الغياب</th>
+                  <th>التأخر</th>
+                  <th>المعذور</th>
+                  <th>معدل الحضور</th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+                @for (row of report.rows; track row.traineeId) {
+
+                  <tr>
+
+                    <td>
+                      {{ row.traineeName || ('متدرب #' + row.traineeId) }}
+                    </td>
+
+                    <td>
+                      {{ row.presentDays }}
+                    </td>
+
+                    <td>
+                      {{ row.absentDays }}
+                    </td>
+
+                    <td>
+                      {{ row.lateDays }}
+                    </td>
+
+                    <td>
+                      {{ row.excusedDays }}
+                    </td>
+
+                    <td>
+                      <span
+                        class="rate"
+                        [class.rate-blue]="row.attendanceRate >= 90"
+                        [class.rate-yellow]="row.attendanceRate >= 80 && row.attendanceRate < 90"
+                        [class.rate-red]="row.attendanceRate < 80">
+
+                        <span class="dot"></span>
+                        {{ row.attendanceRate }}%
+
+                      </span>
+                    </td>
+
+                  </tr>
+
+                } @empty {
+
+                  <tr>
+                    <td colspan="6" class="empty-cell">
+                      لا توجد بيانات حضور للعرض
+                    </td>
+                  </tr>
+
+                }
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </section>
+
+      } @else if (!loading()) {
+
+        <div class="empty-state">
+          لا توجد بيانات تقرير حضور متاحة حالياً
         </div>
-        <table>
+
+      }
+
+    }
+
+
+    <!-- =========================
+         2 - TRAINEE ACHIEVEMENT
+    ========================== -->
+    @if (tab() === 'achievement') {
+
+      <section class="summary">
+
+        <div class="summary-card">
+          <div class="card-title">إجمالي المتدربين</div>
+          <div class="card-value blue">
+            {{ achievementTotal() }}
+          </div>
+          <div class="card-sub">المتدربون المرتبطون بالشركة</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-title">المتدربون المنجزون</div>
+          <div class="card-value blue">
+            {{ achievementCompleted() }}
+          </div>
+          <div class="card-sub">حالتهم مكتمل</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-title">نسبة الإنجاز العامة</div>
+          <div class="card-value blue">
+            {{ achievementRate() }}%
+          </div>
+          <div class="card-sub">محسوبة من حالات التسجيل</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-title">بحاجة إلى متابعة</div>
+          <div class="card-value orange">
+            {{ atRisk().length }}
+          </div>
+          <div class="card-sub">وفق بيانات المنصة</div>
+        </div>
+
+      </section>
+
+      <section class="section">
+
+        <h2 class="section-title">
+          قائمة المتدربين والإنجاز
+        </h2>
+
+        <div class="table-wrapper">
+
+          <table>
+
             <thead>
-                <tr>
-                    <th>اسم الدفعة</th>
-                    <th>المقر / الفرع</th>
-                    <th>عدد المتدربين</th>
-                    <th>تاريخ البدء</th>
-                    <th>نسبة الإنجاز</th>
-                    <th>الحالة</th>
-                </tr>
+              <tr>
+                <th>المتدرب</th>
+                <th>البرنامج / الدفعة</th>
+                <th>تاريخ التسجيل</th>
+                <th>حالة الإنجاز</th>
+              </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td>دفعة تطوير الويب والتطبيقات</td>
-                    <td>الخابورة</td>
-                    <td>28</td>
-                    <td>2026/06/01</td>
-                    <td>92%</td>
-                    <td><span class="status-badge status-active">نشط</span></td>
-                </tr>
-                <tr>
-                    <td>دفعة إدارة شبكات الحاسوب</td>
-                    <td>مسقط</td>
-                    <td>35</td>
-                    <td>2026/06/15</td>
-                    <td>85%</td>
-                    <td><span class="status-badge status-active">نشط</span></td>
-                </tr>
-                <tr>
-                    <td>دفعة الذكاء الاصطناعي والتصميم</td>
-                    <td>الخابورة</td>
-                    <td>22</td>
-                    <td>2026/07/01</td>
-                    <td>60%</td>
-                    <td><span class="status-badge status-pending">قيد التقييم</span></td>
-                </tr>
-                <tr>
-                    <td>دفعة التحول الرقمي وإدارة البيانات</td>
-                    <td>صحار</td>
-                    <td>40</td>
-                    <td>2026/05/10</td>
-                    <td>100%</td>
-                    <td><span class="status-badge status-completed">مكتمل</span></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
 
-</body>
-</html>
+            <tbody>
+
+              @for (item of enrollments(); track item.enrollmentId) {
+
+                <tr>
+
+                  <td>
+                    {{ item.traineeName }}
+                  </td>
+
+                  <td>
+                    {{ item.batchName }}
+                  </td>
+
+                  <td>
+                    {{ item.enrollmentDate | date:'yyyy/MM/dd' }}
+                  </td>
+
+                  <td>
+                    <span
+                      class="status-badge"
+                      [class.status-completed]="item.completionStatus === 'Completed'"
+                      [class.status-active]="item.completionStatus === 'InProgress'"
+                      [class.status-pending]="item.completionStatus !== 'Completed' && item.completionStatus !== 'InProgress'">
+
+                      {{ completionLabel(item.completionStatus) }}
+
+                    </span>
+                  </td>
+
+                </tr>
+
+              } @empty {
+
+                <tr>
+                  <td colspan="4" class="empty-cell">
+                    لا توجد بيانات متدربين للعرض
+                  </td>
+                </tr>
+
+              }
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </section>
+
+      <div class="two-columns">
+
+        <section class="section">
+          <h2 class="section-title">المتدربون المتميزون</h2>
+
+          @for (trainee of topPerformers(); track trainee.traineeId) {
+            <div class="list-row">
+              <span>{{ trainee.fullName || ('متدرب #' + trainee.traineeId) }}</span>
+              <span class="mini-badge success">متميز</span>
+            </div>
+          } @empty {
+            <div class="empty-state small">لا توجد بيانات كافية بعد</div>
+          }
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">متدربون بحاجة إلى متابعة</h2>
+
+          @for (trainee of atRisk(); track trainee.traineeId) {
+            <div class="list-row">
+              <span>{{ trainee.fullName || ('متدرب #' + trainee.traineeId) }}</span>
+              <span class="mini-badge warning">متابعة</span>
+            </div>
+          } @empty {
+            <div class="empty-state small">لا يوجد متعثرون حالياً</div>
+          }
+        </section>
+
+      </div>
+
+    }
+
+
+    <!-- =========================
+         3 - CAPACITY
+    ========================== -->
+    @if (tab() === 'capacity') {
+
+      @if (capacity(); as cap) {
+
+        <section class="section">
+
+          <h2 class="section-title">
+            الطاقة الاستيعابية للشركة
+          </h2>
+
+          <div class="capacity-overview">
+
+            <div class="capacity-legend">
+
+              <div class="legend-item">
+                <span class="legend-dot dot-blue"></span>
+                <span>مشغول</span>
+                <span class="legend-val">{{ cap.used ?? 0 }}</span>
+              </div>
+
+              <div class="legend-item">
+                <span class="legend-dot dot-light"></span>
+                <span>متبقي</span>
+                <span class="legend-val">{{ cap.remaining ?? 0 }}</span>
+              </div>
+
+              <div class="legend-item">
+                <span class="legend-dot dot-yellow"></span>
+                <span>الحصة</span>
+                <span class="legend-val">{{ cap.total ?? 0 }}</span>
+              </div>
+
+            </div>
+
+            <div class="donut-container">
+
+              <div
+                class="donut-chart"
+                [style.--used]="capacityPercentage()">
+
+                <div class="donut-inner">
+                  <span class="donut-value">
+                    {{ capacityPercentage() }}%
+                  </span>
+                  <span class="donut-label">مستخدمة</span>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </section>
+
+        <section class="section">
+
+          <h2 class="section-title">
+            ملخص الطاقة الاستيعابية
+          </h2>
+
+          <div class="capacity-progress">
+
+            <div class="capacity-progress-header">
+              <strong>نسبة الاستغلال</strong>
+              <span>{{ capacityPercentage() }}%</span>
+            </div>
+
+            <div class="progress-bar-bg">
+              <div
+                class="progress-bar-fill fill-teal"
+                [style.width.%]="capacityPercentage()">
+              </div>
+            </div>
+
+          </div>
+
+          <div class="capacity-cards">
+
+            <div class="capacity-card">
+              <span>الحصة الكلية</span>
+              <strong>{{ cap.total ?? 0 }}</strong>
+            </div>
+
+            <div class="capacity-card">
+              <span>المستخدم</span>
+              <strong>{{ cap.used ?? 0 }}</strong>
+            </div>
+
+            <div class="capacity-card">
+              <span>المتبقي</span>
+              <strong>{{ cap.remaining ?? 0 }}</strong>
+            </div>
+
+          </div>
+
+        </section>
+
+      } @else if (!loading()) {
+
+        <div class="empty-state">
+          لا توجد بيانات للطاقة الاستيعابية حالياً
+        </div>
+
+      }
+
+    }
+
+  </main>
+
+</div>
