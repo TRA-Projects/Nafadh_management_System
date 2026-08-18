@@ -16,7 +16,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 input, select, textarea { font-family: inherit; }
 
 // ===== Unified component classes — used identically by all 4 portals =====
-
+//
 .nfd-card {
   @include card;
   padding: 20px;
