@@ -2,7 +2,6 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
@@ -10,19 +9,19 @@ using Nafadh_Backend.Repositories;
 
 namespace Nafadh_Backend.Services
 {
-    // Service responsible for handling company business logic
-    public class CompanyService : ICompanyService
+    // Service responsible for handling company business logic
+    public class CompanyService : ICompanyService
     {
         private readonly ICompanyRepository _repository;
 
-        // Constructor - inject Company Repository
-        public CompanyService(ICompanyRepository repository)
+        // Constructor - inject Company Repository
+        public CompanyService(ICompanyRepository repository)
         {
             _repository = repository;
         }
 
-        // Get Company by ID
-        public async Task<NFD_CompanyOutputDTO?> GetCompanyByIdAsync(int companyId)
+        // Get Company by ID
+        public async Task<NFD_CompanyOutputDTO?> GetCompanyByIdAsync(int companyId)
         {
             var company = await _repository.GetCompanyByIdAsync(companyId);
 
@@ -32,16 +31,16 @@ namespace Nafadh_Backend.Services
             return MapToOutputDTO(company);
         }
 
-        // Get all Companies
-        public async Task<IEnumerable<NFD_CompanyOutputDTO>> GetAllCompaniesAsync()
+        // Get all Companies
+        public async Task<IEnumerable<NFD_CompanyOutputDTO>> GetAllCompaniesAsync()
         {
             var companies = await _repository.GetAllCompaniesAsync();
 
             return companies.Select(MapToOutputDTO);
         }
 
-        // Get Companies filtered by Status and/or Work Field
-        public async Task<IEnumerable<NFD_CompanyOutputDTO>> GetCompaniesAsync(
+        // Get Companies filtered by Status and/or Work Field
+        public async Task<IEnumerable<NFD_CompanyOutputDTO>> GetCompaniesAsync(
          NFD_CompanyStatus? status,
          string? workField)
         {
@@ -52,14 +51,17 @@ namespace Nafadh_Backend.Services
             return companies.Select(MapToOutputDTO);
         }
 
-        // Add a new Company
-        // FIX #3: validate UserId exists before inserting (clean 400 instead of raw DB exception)
-        public async Task<(NFD_CompanyOutputDTO? result, string? error)> AddCompanyAsync(
+        // Add a new Company
+        public async Task<(NFD_CompanyOutputDTO? result, string? error)> AddCompanyAsync(
         NFD_CompanyInputDTO dto)
         {
-            var userExists = await _repository.UserExistsAsync(dto.UserId);
-            if (!userExists)
-                return (null, $"User with ID {dto.UserId} not found");
+            // التحقق من وجود المستخدم فقط إذا تم إرساله ولم يكن فارغاً
+            if (dto.UserId.HasValue)
+            {
+                var userExists = await _repository.UserExistsAsync(dto.UserId.Value);
+                if (!userExists)
+                    return (null, $"User with ID {dto.UserId} not found");
+            }
 
             var company = new NFD_Company
             {
@@ -73,7 +75,7 @@ namespace Nafadh_Backend.Services
                 Capacity = dto.Capacity,
                 Status = dto.Status,
                 ApprovalDate = dto.ApprovalDate,
-                UserId = dto.UserId
+                UserId = dto.UserId // سيتم تخزينه كقيمة صحيحة أو null
             };
 
             await _repository.AddCompanyAsync(company);
@@ -81,8 +83,8 @@ namespace Nafadh_Backend.Services
             return (MapToOutputDTO(company), null);
         }
 
-        // Update an existing Company
-        public async Task<NFD_CompanyOutputDTO?> UpdateCompanyAsync(
+        // Update an existing Company
+        public async Task<NFD_CompanyOutputDTO?> UpdateCompanyAsync(
         int companyId,
          NFD_CompanyInputDTO dto)
         {
@@ -90,6 +92,14 @@ namespace Nafadh_Backend.Services
 
             if (company == null)
                 return null;
+
+            // التحقق من وجود المستخدم في التحديث أيضاً إذا تم إرساله
+            if (dto.UserId.HasValue)
+            {
+                var userExists = await _repository.UserExistsAsync(dto.UserId.Value);
+                if (!userExists)
+                    return null; // أو التعامل مع الخطأ حسب رغبتك
+            }
 
             company.CompanyName = dto.CompanyName;
             company.CommercialRegister = dto.CommercialRegister;
@@ -108,8 +118,8 @@ namespace Nafadh_Backend.Services
             return MapToOutputDTO(company);
         }
 
-        // Approve a Company
-        public async Task<NFD_CompanyOutputDTO?> ApproveCompanyAsync(
+        // Approve a Company
+        public async Task<NFD_CompanyOutputDTO?> ApproveCompanyAsync(
         int companyId)
         {
             var company = await _repository.GetCompanyByIdAsync(companyId);
@@ -125,8 +135,8 @@ namespace Nafadh_Backend.Services
             return MapToOutputDTO(company);
         }
 
-        // Suspend or reactivate a Company
-        public async Task<NFD_CompanyOutputDTO?> SuspendCompanyAsync(
+        // Suspend or reactivate a Company
+        public async Task<NFD_CompanyOutputDTO?> SuspendCompanyAsync(
         int companyId)
         {
             var company = await _repository.GetCompanyByIdAsync(companyId);
@@ -148,9 +158,8 @@ namespace Nafadh_Backend.Services
             return MapToOutputDTO(company);
         }
 
-        // Get Company Capacity
-        // FIX #2: now works correctly because the repository Includes Trainees
-        public async Task<object?> GetCompanyCapacityAsync(
+        // Get Company Capacity
+        public async Task<object?> GetCompanyCapacityAsync(
          int companyId)
         {
             var company = await _repository.GetCompanyByIdAsync(companyId);
@@ -171,8 +180,8 @@ namespace Nafadh_Backend.Services
             };
         }
 
-        // Delete Company
-        public async Task<bool> DeleteCompanyAsync(int companyId)
+        // Delete Company
+        public async Task<bool> DeleteCompanyAsync(int companyId)
         {
             var company = await _repository.GetCompanyByIdAsync(companyId);
 
@@ -185,8 +194,8 @@ namespace Nafadh_Backend.Services
             return true;
         }
 
-        // Mapping Company Model to Output DTO
-        private static NFD_CompanyOutputDTO MapToOutputDTO(
+        // Mapping Company Model to Output DTO
+        private static NFD_CompanyOutputDTO MapToOutputDTO(
         NFD_Company company)
         {
             return new NFD_CompanyOutputDTO
