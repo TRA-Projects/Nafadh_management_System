@@ -8,7 +8,7 @@ namespace Nafadh_Backend.DTOs
         public int EnrollmentId { get; set; }
         public DateTime EnrollmentDate { get; set; }
         public string CompletionStatus { get; set; } = string.Empty;
-
+        //
         public int BatchId { get; set; }
         public string BatchName { get; set; } = string.Empty;
 
