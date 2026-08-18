@@ -21,6 +21,10 @@ namespace Nafadh_Backend.Repositories
         {
             var query = _context.NFD_Batches
                 .Include(b => b.Program)
+                    .ThenInclude(p => p.Track)
+                .Include(b => b.Program)
+                    .ThenInclude(p => p.CompanyPrograms)
+                        .ThenInclude(cp => cp.Company)
                 .Include(b => b.Enrollments)
                 .AsQueryable();
 
@@ -43,6 +47,10 @@ namespace Nafadh_Backend.Repositories
         {
             return await _context.NFD_Batches
                 .Include(b => b.Program)
+                    .ThenInclude(p => p.Track)
+                .Include(b => b.Program)
+                    .ThenInclude(p => p.CompanyPrograms)
+                        .ThenInclude(cp => cp.Company)
                 .Include(b => b.Enrollments)
                 .FirstOrDefaultAsync(b => b.BatchId == id);
         }
