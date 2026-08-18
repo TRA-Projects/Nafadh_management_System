@@ -44,4 +44,40 @@
             <div class="card-sub">متدرب نشط في الشركة</div>
         </div>
 
+<div class="summary-card">
+            <div class="card-title">متوسط نسب الحضور</div>
+            <div class="card-value blue">{{ $any(att).overallAttendanceRate ?? $any(att).averageAttendanceRate }}%</div>
+            <div class="card-sub">عبر كل البرامج</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="card-title">إجمالي الأيام المتبقية</div>
+            <div class="card-value red">{{ totalAbsentDays() }}</div>
+            <div class="card-sub">أيام غياب مسجلة</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="card-title">حالات التأخير والمعذور</div>
+            <div class="card-value orange">{{ totalLateDays() + totalExcusedDays() }}</div>
+            <div class="card-sub">تأخر: {{ totalLateDays() }} | معذور: {{ totalExcusedDays() }}</div>
+        </div>
+    </div>
+
+    <section class="section">
+        <h2 class="section-title">اتجاه الحضور الأسبوعي</h2>
+        @for (item of attendanceChart(); track item.label) {
+        <div class="chart-row">
+            <div class="percent">{{ item.value }}%</div>
+            <div class="bar-container">
+                <div class="bar" [style.width.%]="clampPercentage(item.value)">
+                    <span>{{ item.value }}%</span>
+                </div>
+            </div>
+            <div class="week">{{ item.label }}</div>
+        </div>
+        } @empty {
+        <div class="empty-state small">لا توجد بيانات مخطط حضور</div>
+        }
+
+
     }}
