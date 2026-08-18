@@ -38,6 +38,7 @@ import { CommonModule } from '@angular/common';
     </svg>
   `,
 })
+
 export class NfdIcon {
   name = input.required<string>();
   size = input<'sm' | 'md'>('md');
