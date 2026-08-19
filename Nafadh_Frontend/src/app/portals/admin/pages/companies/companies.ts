@@ -32,22 +32,22 @@ export class AdminCompanies implements OnInit {
   isSaving = signal<boolean>(false);
   addError = signal<string>('');
 
-  workFieldOptions: string[] = ['تقنية المعلومات', 'اتصالات', 'خدمات رقمية', 'برمجيات', 'بنية تحتية', 'ذكاء اصطناعي'];
-  workFieldDropdownOpen = signal<boolean>(false);
-
   statusOptions: { value: string; label: string }[] = [
     { value: 'Approved', label: 'معتمدة' },
     { value: 'PendingApproval', label: 'قيد المراجعة' },
     { value: 'Suspended', label: 'موقوفة' },
     { value: 'Rejected', label: 'مرفوضة' }
   ];
-  statusDropdownOpen = signal<boolean>(false);
 
   newCompany: any = this.emptyCompanyForm();
 
   constructor(private adminApi: AdminApi) {}
 
   ngOnInit(): void {
+    this.loadCompanies();
+  }
+
+  loadCompanies() {
     this.adminApi.getCompanies().subscribe({
       next: (data) => this.companies.set(data),
       error: (err) => console.error('خطأ في جلب البيانات:', err)
@@ -76,40 +76,35 @@ export class AdminCompanies implements OnInit {
     this.showAddModal.set(false); 
   }
 
-  toggleWorkFieldDropdown(event: MouseEvent) { 
-    event.stopPropagation(); 
-    this.workFieldDropdownOpen.update(v => !v); 
-  }
-  
-  selectWorkField(opt: string, event: MouseEvent) { 
-    event.stopPropagation(); 
-    this.newCompany.workField = opt; 
-    this.workFieldDropdownOpen.set(false); 
+  // تم إضافة هذه الدالة لإزالة خطأ الـ TypeScript وتطابقاً مع الـ HTML
+  closeAllDropdowns() {
+    // مكان لإغلاق القوائم المنسدلة إن وجدت مستقبلاً
   }
 
   statusLabel(val: any): string {
     return this.statusOptions.find(o => o.value === String(val))?.label ?? val;
   }
 
-  closeAllDropdowns() { 
-    this.workFieldDropdownOpen.set(false); 
-    this.statusDropdownOpen.set(false); 
-  }
-
   submitAddCompany() {
+    this.isSaving.set(true);
+    this.addError.set('');
+
     this.adminApi.createCompany(this.newCompany).subscribe({
       next: (res: any) => { 
         this.companies.update(list => [res, ...list]); 
         this.closeAddModal(); 
+        this.isSaving.set(false);
       },
-      error: () => this.addError.set('حدث خطأ أثناء الإضافة')
+      error: (err) => {
+        console.error(err);
+        this.addError.set('حدث خطأ أثناء إضافة الشركة');
+        this.isSaving.set(false);
+      }
     });
   }
 
   updateCompanyStatus(company: any, newStatus: any) {
-    const updatedData = { ...company, status: newStatus };
-    
-    this.adminApi.updateCompany(company.companyId, updatedData).subscribe({
+    this.adminApi.updateCompany(company.companyId, { ...company, status: newStatus }).subscribe({
       next: () => {
         this.companies.update(list => 
           list.map(c => c.companyId === company.companyId ? { ...c, status: newStatus } : c)

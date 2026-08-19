@@ -112,6 +112,17 @@ export class AdminApi {
   getPrograms(): Observable<ProgramDto[]> { return this.http.get<ProgramDto[]>(`${this.base}/Program`); }
   createProgram(dto: unknown) { return this.http.post(`${this.base}/Program`, dto); }
 
+
+  // ---- Tracks ----
+  getTracks(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/Track`);
+  }
+
+  // ---- Certificates ----
+  getCertificatesByTrainee(traineeId: number): Observable<CertificateDto[]> {
+    return this.http.get<CertificateDto[]>(`${this.base}/Certificate/trainee/${traineeId}`);
+  }
+  
   // ---- Certificates (معدلة للحماية من أخطاء الـ 404) ----
   issueCertificate(dto: unknown) {
     return this.http.post(`${this.base}/Certificate`, dto);
