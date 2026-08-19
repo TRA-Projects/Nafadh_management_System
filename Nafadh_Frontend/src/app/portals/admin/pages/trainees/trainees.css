@@ -17,27 +17,31 @@
   margin-bottom: 24px;
 }
 
-.header-title h2 {
+.header-title h2,
+.nfd-page-title {
   font-size: 1.5rem;
   font-weight: 700;
   color: #0f172a;
   margin: 0 0 4px 0;
 }
 
-.header-title p {
+.header-title p,
+.nfd-page-sub {
   font-size: 0.875rem;
   color: #64748b;
-  margin: 0;
+  margin: 0 0 16px 0;
 }
 
-.header-actions {
+.header-actions,
+.nfd-header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
 /* 2. الأزرار وشريط الأدوات */
-.btn-primary {
+.btn-primary,
+.nfd-btn.primary {
   background-color: #002b49;
   color: #ffffff;
   border: none;
@@ -48,15 +52,18 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   transition: background-color 0.2s ease;
 }
 
-.btn-primary:hover {
+.btn-primary:hover,
+.nfd-btn.primary:hover {
   background-color: #001f35;
 }
 
-.btn-secondary {
+.btn-secondary,
+.nfd-btn.ghost {
   background-color: #ffffff;
   color: #0d9488;
   border: 1px solid #cbd5e1;
@@ -67,11 +74,13 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   transition: all 0.2s ease;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover,
+.nfd-btn.ghost:hover {
   background-color: #f0fdf4;
   border-color: #0d9488;
 }
@@ -86,7 +95,8 @@
   flex-wrap: wrap;
 }
 
-.filter-tabs {
+.filter-tabs,
+.nfd-chips {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -94,9 +104,11 @@
   padding: 4px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
+  margin-bottom: 16px;
 }
 
-.tab-btn {
+.tab-btn,
+.nfd-chip {
   background: transparent;
   border: none;
   padding: 8px 16px;
@@ -108,11 +120,13 @@
   transition: all 0.2s ease;
 }
 
-.tab-btn:hover {
+.tab-btn:hover,
+.nfd-chip:hover {
   color: #0f172a;
 }
 
-.tab-btn.active {
+.tab-btn.active,
+.nfd-chip.active {
   background-color: #002b49;
   color: #ffffff;
   font-weight: 600;
@@ -147,22 +161,26 @@
 }
 
 /* 4. جدول عرض المتدربين */
-.table-card {
+.table-card,
+.nfd-card {
   background: #ffffff;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   overflow: hidden;
+  padding: 16px;
 }
 
-.trainees-table {
+.trainees-table,
+.nfd-table {
   width: 100%;
   border-collapse: collapse;
   text-align: right;
   font-size: 0.875rem;
 }
 
-.trainees-table th {
+.trainees-table th,
+.nfd-table th {
   background-color: #f8fafc;
   color: #64748b;
   font-weight: 600;
@@ -171,18 +189,21 @@
   white-space: nowrap;
 }
 
-.trainees-table td {
+.trainees-table td,
+.nfd-table td {
   padding: 14px 16px;
   border-bottom: 1px solid #f1f5f9;
   color: #334155;
   vertical-align: middle;
 }
 
-.trainees-table tbody tr:last-child td {
+.trainees-table tbody tr:last-child td,
+.nfd-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-.trainees-table tbody tr:hover {
+.trainees-table tbody tr:hover,
+.nfd-table tbody tr:hover {
   background-color: #f8fafc;
 }
 
@@ -256,4 +277,216 @@
 
 .text-center {
   text-align: center;
+}
+
+/* ==========================================================================
+   7. النوافذ المنبثقة المطابقة للتصميم (Excel Import & Registration Modal)
+   ========================================================================== */
+
+.nfd-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(71, 85, 105, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+  box-sizing: border-box;
+  direction: rtl;
+}
+
+.nfd-modal-dialog {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+  animation: modalScaleUp 0.2s ease-out;
+}
+
+.nfd-modal-dialog.large {
+  max-width: 680px;
+}
+
+.nfd-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  border-bottom: none;
+  padding: 0;
+}
+
+.nfd-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #334155;
+}
+
+.nfd-modal-body {
+  padding: 0;
+}
+
+/* منطقة رفع الملف Dropzone */
+.upload-dropzone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  background-color: #f8fafc;
+  padding: 36px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 16px;
+}
+
+.upload-dropzone:hover {
+  border-color: #0d9488;
+  background-color: #f0fdf4;
+}
+
+.upload-icon {
+  width: 52px;
+  height: 52px;
+  background-color: #ccfbf1;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px auto;
+}
+
+.upload-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 6px 0;
+}
+
+.upload-sub {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* تنبيه التعليمات */
+.nfd-alert-info {
+  background-color: #eff6ff;
+  color: #3b82f6;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 0.825rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.info-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.block-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* نماذج الإدخال */
+.form-section-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0d9488;
+  margin-bottom: 12px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.form-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.nfd-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.nfd-input:focus {
+  border-color: #0d9488;
+}
+
+.nfd-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+@keyframes modalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
