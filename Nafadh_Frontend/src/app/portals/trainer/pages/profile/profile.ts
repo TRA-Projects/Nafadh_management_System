@@ -1,160 +1,354 @@
-import { Component, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  signal
+} from '@angular/core';
+
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { TrainerDto } from '../../../../core/models/dtos';
-import { environment } from '../../../../../environments/environment';
+
 
 @Component({
   selector: 'app-trainer-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule
+  ],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })
-export class TrainerProfile implements OnInit {
+export class TrainerProfile
+  implements OnInit, OnDestroy {
 
-  trainer = signal<TrainerDto | null>(null);
+  // =====================================================
+  // DATA
+  // =====================================================
 
-  isSaving = signal(false);
+  trainer =
+    signal<TrainerDto | null>(null);
 
-  showSuccessToast = signal(false);
-  showErrorToast = signal(false);
 
-  private toastTimer?: ReturnType<typeof setTimeout>;
-  private base = environment.apiBaseUrl;
+  // =====================================================
+  // PAGE STATE
+  // =====================================================
+
+  loading =
+    signal(false);
+
+  isSaving =
+    signal(false);
+
+  showSuccessToast =
+    signal(false);
+
+  showErrorToast =
+    signal(false);
+
+  errorToastMessage =
+    signal(
+      'حدث خطأ أثناء تنفيذ العملية.'
+    );
+
+
+  private toastTimer?:
+    ReturnType<typeof setTimeout>;
+
+
+  // =====================================================
+  // CONSTRUCTOR
+  // =====================================================
 
   constructor(
     private api: TrainerApi,
-    private auth: AuthService,
-    private http: HttpClient
+    private auth: AuthService
   ) {}
 
+
+  // =====================================================
+  // INIT
+  // =====================================================
+
   ngOnInit(): void {
+
     this.loadTrainer();
+
   }
 
-  // =========================================================
-  // Load current logged-in trainer profile
-  // =========================================================
+
+  ngOnDestroy(): void {
+
+    this.clearToastTimer();
+
+  }
+
+
+  // =====================================================
+  // LOAD CURRENT TRAINER
+  // =====================================================
 
   loadTrainer(): void {
-    const userId = this.auth.userId;
 
-    if (userId == null) {
-      console.error('لا يوجد مستخدم مسجل حالياً');
+    const userId =
+      this.auth.session()?.userId;
+
+
+    if (!userId) {
+
+      console.error(
+        'لا يوجد مستخدم مسجل حالياً'
+      );
+
 
       this.trainer.set(null);
-      this.showError();
+
+      this.showError(
+        'تعذر تحديد المستخدم الحالي.'
+      );
 
       return;
     }
 
-    this.http
-      .get<TrainerDto>(
-        `${this.base}/Trainer/by-user/${userId}`
-      )
+
+    this.loading.set(true);
+
+
+    this.api
+      .getTrainerByUserId(userId)
       .subscribe({
 
         next: (data) => {
-          this.trainer.set(data);
+
+          this.trainer.set(
+            data
+          );
+
+          this.loading.set(false);
+
         },
 
+
         error: (err) => {
+
           console.error(
             'خطأ في تحميل بيانات المدرب الحالي:',
             err
           );
 
+
           this.trainer.set(null);
-          this.showError();
+
+          this.loading.set(false);
+
+          this.showError(
+            'تعذر تحميل بيانات الملف الشخصي.'
+          );
+
         }
 
       });
+
   }
 
-  // =========================================================
-  // Save trainer profile
-  // =========================================================
+
+  // =====================================================
+  // SAVE TRAINER PROFILE
+  // =====================================================
 
   save(): void {
-    const t = this.trainer();
 
-    if (!t || this.isSaving()) {
+    const trainer =
+      this.trainer();
+
+
+    if (
+      !trainer ||
+      this.isSaving()
+    ) {
+
+      return;
+
+    }
+
+
+    // Basic validation
+    if (
+      !trainer.fullName?.trim()
+    ) {
+
+      this.showError(
+        'الاسم الكامل مطلوب.'
+      );
+
       return;
     }
 
+
+    if (
+      trainer.experienceYears < 0 ||
+      trainer.experienceYears > 100
+    ) {
+
+      this.showError(
+        'سنوات الخبرة يجب أن تكون بين 0 و100.'
+      );
+
+      return;
+    }
+
+
     this.isSaving.set(true);
 
+    this.showErrorToast.set(false);
+
+    this.showSuccessToast.set(false);
+
+
     const payload = {
-      fullName: t.fullName ?? '',
-      email: t.email ?? '',
-      phone: t.phone ?? '',
-      specialty: t.specialty ?? '',
-      experienceYears: t.experienceYears ?? 0,
-      biography: t.biography ?? '',
-      cvUrl: t.cvUrl ?? ''
+
+      fullName:
+        trainer.fullName.trim(),
+
+      email:
+        trainer.email?.trim() ?? '',
+
+      phone:
+        trainer.phone?.trim() ?? '',
+
+      specialty:
+        trainer.specialty?.trim() ?? '',
+
+      experienceYears:
+        trainer.experienceYears ?? 0,
+
+      biography:
+        trainer.biography?.trim() ?? '',
+
+      cvUrl:
+        trainer.cvUrl?.trim() ?? ''
+
     };
 
+
     this.api
-      .updateTrainer(t.trainerId, payload)
+      .updateTrainer(
+        trainer.trainerId,
+        payload
+      )
       .subscribe({
 
         next: () => {
+
           this.isSaving.set(false);
 
           this.showSuccess();
 
-          // نعيد تحميل بيانات المدرب الحالي من الباك إند
+          // نجيب النسخة المحدثة
+          // من قاعدة البيانات
           this.loadTrainer();
+
         },
 
+
         error: (err) => {
-          this.isSaving.set(false);
 
           console.error(
             'خطأ في حفظ بيانات المدرب:',
             err
           );
 
-          this.showError();
+
+          this.isSaving.set(false);
+
+          this.showError(
+            'حدث خطأ أثناء تحديث بيانات الملف الشخصي.'
+          );
+
         }
 
       });
+
   }
 
-  // =========================================================
-  // Toasts
-  // =========================================================
+
+  // =====================================================
+  // TOASTS
+  // =====================================================
 
   private showSuccess(): void {
+
     this.clearToastTimer();
 
     this.showErrorToast.set(false);
+
     this.showSuccessToast.set(true);
 
-    this.toastTimer = setTimeout(() => {
-      this.showSuccessToast.set(false);
-    }, 3000);
+
+    this.toastTimer =
+      setTimeout(
+        () => {
+
+          this.showSuccessToast.set(
+            false
+          );
+
+        },
+        3000
+      );
+
   }
 
-  private showError(): void {
+
+  private showError(
+    message: string
+  ): void {
+
     this.clearToastTimer();
 
+    this.errorToastMessage.set(
+      message
+    );
+
     this.showSuccessToast.set(false);
+
     this.showErrorToast.set(true);
 
-    this.toastTimer = setTimeout(() => {
-      this.showErrorToast.set(false);
-    }, 3000);
+
+    this.toastTimer =
+      setTimeout(
+        () => {
+
+          this.showErrorToast.set(
+            false
+          );
+
+        },
+        3000
+      );
+
   }
 
+
   private clearToastTimer(): void {
-    if (this.toastTimer) {
-      clearTimeout(this.toastTimer);
+
+    if (
+      this.toastTimer
+    ) {
+
+      clearTimeout(
+        this.toastTimer
+      );
+
+      this.toastTimer =
+        undefined;
+
     }
+
   }
+
 }
