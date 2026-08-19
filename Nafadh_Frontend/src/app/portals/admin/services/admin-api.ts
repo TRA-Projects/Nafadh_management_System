@@ -131,4 +131,9 @@ export class AdminApi {
 
   // ---- Badges ----
   getAllBadges() { return this.http.get<unknown[]>(`${this.base}/Badge`); }
+
+  // ---- Announcements ----
+  getAnnouncements(): Observable<AnnouncementDto[]> {
+    return this.http.get<AnnouncementDto[]>(`${this.base}/Announcement`);
+  }
 }

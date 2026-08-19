@@ -1,0 +1,370 @@
+/* ============ متغيرات الألوان (مأخوذة من التصميم المرسل) ============ */
+:host {
+  --navy: #0a1172;
+  --navy-active: #092b7f;
+  --card-bg: #ffffff;
+  --border-color: #eef0f4;
+  --title-color: #1f2430;
+  --desc-color: #8a8f9c;
+  --time-color: #8a8f9c;
+  --accent: #12b3a8;
+  --hover-bg: #f7f8fb;
+  --unread-dot: #0e9f8b;
+  --unread-bg: #eef9f7;
+  --font: 'Tajawal', 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
+  display: block;
+  font-family: var(--font);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.page {
+  width: 100%;
+  height: 100%;
+  background: var(--card-bg);
+  font-family: var(--font);
+}
+
+/* ============ بطاقة الإشعارات ============ */
+.notifications-card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  outline: none;
+}
+
+.notification-row:last-child {
+  border-bottom: none;
+}
+
+.notification-row:hover,
+.notification-row:focus-visible {
+  background-color: var(--hover-bg);
+}
+
+.notification-row:active {
+  background-color: #eef1f8;
+}
+
+/* عمود العنوان والوصف (يمين الصف في RTL) */
+.notif-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: right;
+  flex: 1;
+}
+
+.notif-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--title-color);
+}
+
+/* نقطة الحالة (يمين الصف تمامًا) — تظهر فقط للإشعار غير المقروء */
+.unread-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--unread-dot);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.notif-desc {
+  font-size: 13px;
+  color: var(--desc-color);
+  line-height: 1.6;
+}
+
+/* عمود الوقت + شارة "جديد" (يسار الصف في RTL) */
+.notif-time-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.notif-time {
+  font-size: 12px;
+  color: var(--time-color);
+  white-space: nowrap;
+}
+
+.badge-new {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--unread-dot);
+  background: var(--unread-bg);
+  border-radius: 10px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+/* تمييز الإشعار غير المقروء بنفس ألوان التصميم المرسل */
+.notification-row.unread {
+  background-color: var(--unread-bg);
+  border-color: var(--unread-bg);
+}
+
+.notification-row.unread:hover {
+  background-color: #e4f5f1;
+}
+
+/* ============ حالة عدم وجود إشعارات ============ */
+.empty-state {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--desc-color);
+  font-size: 14px;
+}
+
+/* ============ استجابة للشاشات الصغيرة ============ */
+@media (max-width: 640px) {
+  .notification-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .notif-time {
+    align-self: flex-start;
+  }
+}
+
+/* ============ شريط الأدوات العلوي (تصدير / تعليم الكل / تبويبات) ============ */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 24px;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-export {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-export:hover:not(:disabled) {
+  background: #0f9d93;
+}
+
+.btn-mark-all {
+  color: var(--title-color);
+}
+
+.btn-mark-all:hover:not(:disabled) {
+  background: var(--hover-bg);
+}
+
+.toolbar-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 7px 16px;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  color: var(--desc-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tab.active {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+
+.tab-count {
+  background: #ffffff33;
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 11px;
+}
+
+.tab:not(.active) .tab-count {
+  background: var(--accent);
+  color: #fff;
+}
+
+.notifications-header {
+  padding: 0 24px 8px;
+  font-size: 13px;
+  color: var(--desc-color);
+}
+
+/* ============ نافذة إعلان جديد ============ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 17, 114, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.modal h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: var(--title-color);
+}
+
+.modal-textarea {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px;
+  font-family: var(--font);
+  font-size: 13px;
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.btn-cancel {
+  color: var(--desc-color);
+}
+
+.btn-primary {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--navy-active);
+}
+
+/* ============ رأس الصفحة (العنوان + زر إعلان جديد لكل النظام) ============ */
+.notif-header-card {
+  background: #fafcff;
+  border-radius: 12px;
+  padding: 20px 24px 16px;
+  margin-bottom: 12px;
+}
+
+.notif-header-title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.notif-header-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--desc-color);
+}
+
+.notif-header-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: #f2f4fa;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-top: 14px;
+}
+
+.notif-header-desc {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: right;
+  flex: 1;
+}
+
+.btn-new-announcement {
+  background: var(--navy);
+  border: 1px solid var(--navy);
+  color: #fff;
+  border-radius: 20px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background-color 0.15s ease;
+}
+
+.btn-new-announcement:hover {
+  background: var(--navy-active);
+}
+
+/* رسالة خطأ نشر الإعلان */
+.modal-error {
+  color: #d64545;
+  font-size: 12px;
+  margin: 8px 0 0;
+}
