@@ -8,7 +8,7 @@ import {
   FeedbackSummaryDto, TrainerKpisDto, WarningDto, AttendanceReportDto, ChartPointDto,
   TraineeListItemDto, ProgramDto, ProgressSummaryDto,
 } from '../../../core/models/dtos';
-
+// Company API service — all endpoints used by the Company portal, including
 @Injectable({ providedIn: 'root' })
 export class CompanyApi {
   private base = environment.apiBaseUrl;
@@ -97,6 +97,9 @@ export class CompanyApi {
   }
   sendMessage(id: number, dto: unknown): Observable<ConversationMessageDto> {
     return this.http.post<ConversationMessageDto>(`${this.base}/Conversation/${id}/messages`, dto);
+  }
+  markConversationRead(id: number, userId: number) {
+    return this.http.put(`${this.base}/Conversation/${id}/read`, {}, { params: { userId } });
   }
 
   // Announcements — send to own trainees
