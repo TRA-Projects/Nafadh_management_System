@@ -32,6 +32,15 @@ namespace Nafadh_Backend.Repositories
         }
 
 
+        //2b-
+        public async Task<NFD_CompanySupervisor?> GetByUserIdAsync(int userId)
+        {
+            return await _context.Set<NFD_CompanySupervisor>()
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+        }
+
+
         //2-
         public async Task<NFD_CompanySupervisor?> GetByIdAsync(int id)
         {
