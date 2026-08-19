@@ -116,7 +116,7 @@ export interface CompanyBranchDto {
   contactPoint?: string;
   companyId: number;
 }
-//
+//----
 export interface CompanySupervisorDto {
   id: number;
   supervisorId?: number;
