@@ -447,9 +447,9 @@
                 </span>
 
 
-                <div>
+                <div class="lesson-content">
 
-                  <strong>
+                  <strong class="lesson-title">
                     {{
                       lesson.title ||
                       'درس بدون عنوان'
@@ -462,6 +462,103 @@
                     <p>
                       {{ lesson.contentBody }}
                     </p>
+
+                  }
+
+
+                  <!-- =====================================
+                       TRAINING MATERIALS
+                  ====================================== -->
+
+                  @if (
+                    (materialsByLesson()[lesson.lessonId] ?? []).length > 0
+                  ) {
+
+                    <div class="lesson-materials">
+
+                      <div class="materials-title">
+                        المواد التعليمية
+                      </div>
+
+
+                      @for (
+                        material of materialsByLesson()[lesson.lessonId] ?? [];
+                        track material.materialId
+                      ) {
+
+                        <div class="material-item">
+
+                          <span class="material-icon">
+                            {{ getMaterialIcon(material.fileType) }}
+                          </span>
+
+
+                          <div class="material-info">
+
+                            @if (material.fileType === 'Link') {
+
+                              <a
+                                [href]="material.fileUrl"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="material-link"
+                              >
+                                فتح المرجع
+                              </a>
+
+
+                              <span class="material-url">
+                                {{ material.fileUrl }}
+                              </span>
+
+                            } @else {
+
+                              <span class="material-name">
+                                {{ getMaterialName(material) }}
+                              </span>
+
+                            }
+
+                          </div>
+
+
+                          <span class="material-type">
+
+                            @switch (material.fileType) {
+
+                              @case ('Pdf') {
+                                PDF
+                              }
+
+                              @case ('Video') {
+                                فيديو
+                              }
+
+                              @case ('Image') {
+                                صورة
+                              }
+
+                              @case ('Document') {
+                                مستند
+                              }
+
+                              @case ('Link') {
+                                رابط
+                              }
+
+                              @default {
+                                ملف
+                              }
+
+                            }
+
+                          </span>
+
+                        </div>
+
+                      }
+
+                    </div>
 
                   }
 
@@ -1389,7 +1486,14 @@
   }
 
 
-  .lesson-row strong {
+  .lesson-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+
+  .lesson-title {
+    display: block;
     color: #334155;
     font-size: 13px;
   }
@@ -1400,6 +1504,94 @@
     color: #64748b;
     font-size: 12px;
     line-height: 1.6;
+  }
+
+
+  /* ==========================================
+     TRAINING MATERIALS
+  ========================================== */
+
+  .lesson-materials {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 10px;
+    margin-top: 10px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+
+  .materials-title {
+    margin-bottom: 2px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+
+  .material-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+  }
+
+
+  .material-icon {
+    flex-shrink: 0;
+    font-size: 15px;
+  }
+
+
+  .material-info {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+
+  .material-name {
+    color: #475569;
+    font-size: 12px;
+    word-break: break-all;
+  }
+
+
+  .material-link {
+    color: #0284c7;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+
+  .material-link:hover {
+    text-decoration: underline;
+  }
+
+
+  .material-url {
+    overflow: hidden;
+    color: #94a3b8;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+
+  .material-type {
+    flex-shrink: 0;
+    padding: 3px 7px;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
   }
 
 
@@ -1641,6 +1833,11 @@
     .section-heading {
       align-items: flex-start;
       flex-direction: column;
+    }
+
+
+    .material-item {
+      align-items: flex-start;
     }
 
   }

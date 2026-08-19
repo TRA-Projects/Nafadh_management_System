@@ -7,6 +7,7 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+
 import {
   ActivatedRoute,
   Router
@@ -27,7 +28,8 @@ import {
   ModuleDto,
   ProgramDto,
   TrainerBatchDto,
-  TrainerDto
+  TrainerDto,
+  TrainingMaterialDto
 } from '../../../../core/models/dtos';
 
 
@@ -99,6 +101,11 @@ export class TrainerContent implements OnInit {
 
   lessons =
     signal<LessonDto[]>([]);
+
+
+  // المواد مقسمة حسب LessonId
+  materialsByLesson =
+    signal<Record<number, TrainingMaterialDto[]>>({});
 
 
   activeModules =
@@ -356,8 +363,6 @@ export class TrainerContent implements OnInit {
           }
 
 
-          // إذا دخل من إدارة الدفعات
-          // نختار batchId القادم في الرابط
           const requestedBatch =
             this.requestedBatchId
               ? result.find(
@@ -368,8 +373,6 @@ export class TrainerContent implements OnInit {
               : undefined;
 
 
-          // إذا دخل من القائمة الجانبية
-          // نختار أول دفعة تلقائياً
           const selectedBatch =
             requestedBatch ??
             result[0];
@@ -380,7 +383,6 @@ export class TrainerContent implements OnInit {
 
 
           this.updateBatchQueryParam();
-
 
           this.loadSelectedBatch();
 
@@ -395,9 +397,7 @@ export class TrainerContent implements OnInit {
           );
 
 
-          this.loadingBatches.set(
-            false
-          );
+          this.loadingBatches.set(false);
 
           this.batches.set([]);
 
@@ -434,7 +434,6 @@ export class TrainerContent implements OnInit {
 
     this.successMessage.set('');
 
-
     this.updateBatchQueryParam();
 
     this.loadSelectedBatch();
@@ -451,7 +450,9 @@ export class TrainerContent implements OnInit {
     if (
       !this.batchIdInput
     ) {
+
       return;
+
     }
 
 
@@ -518,7 +519,6 @@ export class TrainerContent implements OnInit {
 
 
     // نمسح بيانات الدفعة السابقة
-    // حتى ما تظهر أثناء تحميل الدفعة الجديدة
     this.batch.set(null);
 
     this.program.set(null);
@@ -526,6 +526,8 @@ export class TrainerContent implements OnInit {
     this.modules.set([]);
 
     this.lessons.set([]);
+
+    this.materialsByLesson.set({});
 
     this.selectedModuleId =
       null;
@@ -602,6 +604,7 @@ export class TrainerContent implements OnInit {
                   error
                 );
 
+
                 return of(
                   null as ProgramDto | null
                 );
@@ -609,6 +612,7 @@ export class TrainerContent implements OnInit {
               }
             )
           ),
+
 
       modules:
         this.api
@@ -677,6 +681,8 @@ export class TrainerContent implements OnInit {
 
           this.lessons.set([]);
 
+          this.materialsByLesson.set({});
+
           this.errorMessage.set(
             'تعذر تحميل محتوى البرنامج.'
           );
@@ -701,6 +707,8 @@ export class TrainerContent implements OnInit {
     ) {
 
       this.lessons.set([]);
+
+      this.materialsByLesson.set({});
 
       this.fileLessonId =
         null;
@@ -777,7 +785,11 @@ export class TrainerContent implements OnInit {
             null;
 
 
-          this.loading.set(false);
+          // بعد تحميل الدروس
+          // نجيب المواد المرتبطة بكل درس
+          this.loadAllMaterials(
+            allLessons
+          );
 
         },
 
@@ -792,6 +804,8 @@ export class TrainerContent implements OnInit {
 
           this.lessons.set([]);
 
+          this.materialsByLesson.set({});
+
           this.fileLessonId =
             null;
 
@@ -799,6 +813,148 @@ export class TrainerContent implements OnInit {
             null;
 
           this.loading.set(false);
+
+        }
+
+      });
+
+  }
+
+
+  // =====================================================
+  // LOAD ALL TRAINING MATERIALS
+  // =====================================================
+
+  private loadAllMaterials(
+    lessons: LessonDto[]
+  ): void {
+
+    if (
+      lessons.length === 0
+    ) {
+
+      this.materialsByLesson.set({});
+
+      this.loading.set(false);
+
+      return;
+    }
+
+
+    const requests =
+      lessons.map(
+        lesson =>
+          this.api
+            .getTrainingMaterialsByLesson(
+              lesson.lessonId
+            )
+            .pipe(
+              catchError(
+                error => {
+
+                  console.error(
+                    `Error loading materials for lesson ${lesson.lessonId}:`,
+                    error
+                  );
+
+
+                  return of(
+                    [] as TrainingMaterialDto[]
+                  );
+
+                }
+              )
+            )
+      );
+
+
+    forkJoin(requests)
+      .subscribe({
+
+        next: (results) => {
+
+          const materialsMap:
+            Record<number, TrainingMaterialDto[]> =
+            {};
+
+
+          lessons.forEach(
+            (lesson, index) => {
+
+              materialsMap[
+                lesson.lessonId
+              ] =
+                results[index] ?? [];
+
+            }
+          );
+
+
+          this.materialsByLesson.set(
+            materialsMap
+          );
+
+
+          this.loading.set(false);
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            'Error loading training materials:',
+            error
+          );
+
+
+          this.materialsByLesson.set({});
+
+          this.loading.set(false);
+
+        }
+
+      });
+
+  }
+
+
+  // =====================================================
+  // RELOAD MATERIALS FOR ONE LESSON
+  // =====================================================
+
+  private loadMaterialsForLesson(
+    lessonId: number
+  ): void {
+
+    this.api
+      .getTrainingMaterialsByLesson(
+        lessonId
+      )
+      .subscribe({
+
+        next: (materials) => {
+
+          this.materialsByLesson.update(
+            current => ({
+
+              ...current,
+
+              [lessonId]:
+                materials ?? []
+
+            })
+          );
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            `Error reloading materials for lesson ${lessonId}:`,
+            error
+          );
 
         }
 
@@ -820,6 +976,8 @@ export class TrainerContent implements OnInit {
     this.modules.set([]);
 
     this.lessons.set([]);
+
+    this.materialsByLesson.set({});
 
     this.selectedModuleId =
       null;
@@ -909,7 +1067,9 @@ export class TrainerContent implements OnInit {
       this.title.trim();
 
 
-    if (!cleanTitle) {
+    if (
+      !cleanTitle
+    ) {
 
       this.errorMessage.set(
         'اكتبي عنوان المحتوى.'
@@ -923,7 +1083,9 @@ export class TrainerContent implements OnInit {
       this.batch();
 
 
-    if (!currentBatch) {
+    if (
+      !currentBatch
+    ) {
 
       this.errorMessage.set(
         'اختاري الدفعة أولاً.'
@@ -1280,7 +1442,9 @@ export class TrainerContent implements OnInit {
       this.auth.session()?.userId;
 
 
-    if (!userId) {
+    if (
+      !userId
+    ) {
 
       this.errorMessage.set(
         'تعذر تحديد المستخدم الحالي.'
@@ -1315,6 +1479,10 @@ export class TrainerContent implements OnInit {
     }
 
 
+    const lessonId =
+      this.fileLessonId;
+
+
     this.saving.set(true);
 
     this.errorMessage.set('');
@@ -1326,7 +1494,7 @@ export class TrainerContent implements OnInit {
       .uploadTrainingMaterial(
         this.selectedFile,
         this.selectedFileType,
-        this.fileLessonId,
+        lessonId,
         userId
       )
       .subscribe({
@@ -1345,8 +1513,15 @@ export class TrainerContent implements OnInit {
           this.selectedFileType =
             null;
 
+
           this.successMessage.set(
             'تم رفع المادة بنجاح.'
+          );
+
+
+          // نحدث مواد هذا الدرس مباشرة
+          this.loadMaterialsForLesson(
+            lessonId
           );
 
         },
@@ -1387,7 +1562,9 @@ export class TrainerContent implements OnInit {
       this.refLink.trim();
 
 
-    if (!userId) {
+    if (
+      !userId
+    ) {
 
       this.errorMessage.set(
         'تعذر تحديد المستخدم الحالي.'
@@ -1409,7 +1586,9 @@ export class TrainerContent implements OnInit {
     }
 
 
-    if (!link) {
+    if (
+      !link
+    ) {
 
       this.errorMessage.set(
         'أدخلي رابط المرجع.'
@@ -1432,6 +1611,10 @@ export class TrainerContent implements OnInit {
     }
 
 
+    const lessonId =
+      this.referenceLessonId;
+
+
     this.saving.set(true);
 
     this.errorMessage.set('');
@@ -1448,8 +1631,7 @@ export class TrainerContent implements OnInit {
         fileType:
           'Link',
 
-        lessonId:
-          this.referenceLessonId,
+        lessonId,
 
         uploadedByUserId:
           userId
@@ -1467,8 +1649,15 @@ export class TrainerContent implements OnInit {
 
           this.refLink = '';
 
+
           this.successMessage.set(
             'تمت إضافة المرجع بنجاح.'
+          );
+
+
+          // نحدث مواد هذا الدرس مباشرة
+          this.loadMaterialsForLesson(
+            lessonId
           );
 
         },
@@ -1541,6 +1730,74 @@ export class TrainerContent implements OnInit {
       currentProgram?.title ||
       currentProgram?.name ||
       'البرنامج'
+    );
+
+  }
+
+
+  // =====================================================
+  // MATERIAL ICON
+  // =====================================================
+
+  getMaterialIcon(
+    fileType: TrainingMaterialDto['fileType']
+  ): string {
+
+    switch (
+      fileType
+    ) {
+
+      case 'Pdf':
+        return '📕';
+
+      case 'Video':
+        return '🎬';
+
+      case 'Image':
+        return '🖼️';
+
+      case 'Document':
+        return '📄';
+
+      case 'Link':
+        return '🔗';
+
+      default:
+        return '📎';
+
+    }
+
+  }
+
+
+  // =====================================================
+  // MATERIAL NAME
+  // =====================================================
+
+  getMaterialName(
+    material: TrainingMaterialDto
+  ): string {
+
+    if (
+      material.fileType ===
+      'Link'
+    ) {
+
+      return material.fileUrl;
+
+    }
+
+
+    const parts =
+      material.fileUrl
+        .split('/');
+
+
+    return (
+      parts[
+        parts.length - 1
+      ] ||
+      'ملف'
     );
 
   }

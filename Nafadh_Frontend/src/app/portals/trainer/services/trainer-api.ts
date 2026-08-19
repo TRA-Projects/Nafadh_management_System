@@ -13,6 +13,7 @@ import {
   SessionDto,
   SubmissionDto,
   TaskDto,
+  TrainingMaterialDto,
   TrainerBatchDto,
   TrainerDto,
   TrainerKpisDto,
@@ -265,9 +266,9 @@ uploadTrainingMaterial(
 
 getTrainingMaterialsByLesson(
   lessonId: number
-): Observable<unknown[]> {
+): Observable<TrainingMaterialDto[]> {
 
-  return this.http.get<unknown[]>(
+  return this.http.get<TrainingMaterialDto[]>(
     `${this.base}/TrainingMaterial/lesson/${lessonId}`
   );
 }
