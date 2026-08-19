@@ -116,11 +116,13 @@ export interface CompanyBranchDto {
   contactPoint?: string;
   companyId: number;
 }
-
+//
 export interface CompanySupervisorDto {
   id: number;
+  supervisorId?: number;
   fullName?: string;
   email?: string;
+  phone?: string;
   department?: string;
   position?: string;
   status: string;
@@ -128,10 +130,20 @@ export interface CompanySupervisorDto {
   companyId: number;
 }
 
+export interface CompanyCapacityProgramDto {
+  programName?: string;
+  allocatedQuota?: number;
+  usedQuota?: number;
+  remainingQuota?: number;
+  utilizationPercentage?: number;
+  [key: string]: unknown;
+}
+
 export interface CompanyCapacityDto {
   total?: number;
   used?: number;
   remaining?: number;
+  programs?: CompanyCapacityProgramDto[];
   [key: string]: unknown;
 }
 
