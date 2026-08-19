@@ -1,39 +1,181 @@
-<h2 class="nfd-page-title">التقارير والتحليلات</h2>
-<p class="nfd-page-sub">تقارير الأداء لكل دفعة — أدخل رقم الدفعة لعرض تقريرها</p>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>نظام التقارير التدريبية</title>
+</head>
+<body>
 
-<div class="nfd-card" style="margin-bottom:16px">
-  <div style="display:flex;gap:10px;align-items:flex-end">
-    <div style="flex:1"><label style="font-size:12px;font-weight:600">رقم الدفعة</label><input class="nfd-input" type="number" [(ngModel)]="batchIdInput" /></div>
-    <button class="nfd-btn primary" (click)="viewBatchReport()">عرض التقرير</button>
-  </div>
-</div>
+  <!-- 1. صفحة عرض الشركات وتفاصيلها (الرئيسية للتقارير) -->
+  <div class="reports-container" *ngIf="currentView === 'companies'">
+    <div class="header-section" style="text-align: right; margin-bottom: 24px;">
+      <h2 style="color: #0D1C8C !important; font-weight: bold; font-size: 24px; margin-bottom: 8px;">التقارير حسب الشركة</h2>
+      <p style="color: #64748b; font-size: 14px;">اختر شركة لعرض برامجها وتقارير دفعاتها</p>
+    </div>
 
-@if (report(); as r) {
-  <div class="nfd-card">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
-      <div>
-        <h3 style="margin:0">تقرير نهاية الدفعة — {{ r.batchName }}</h3>
-        <p class="nfd-muted">{{ r.programName }} · {{ r.companyName }}</p>
+    <div class="companies-grid">
+      <div class="company-card" *ngFor="let company of companies" (click)="selectCompany(company)">
+        <div class="company-info" style="display: flex; align-items: center; justify-content: flex-start; gap: 16px;">
+          <div class="logo-box" style="background: #0D1C8C; color: #ffffff; width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M9 3v4M15 3v4"></path>
+            </svg>
+          </div>
+          <div style="text-align: right;">
+            <h3 style="color: #0D1C8C !important; font-size: 16px; font-weight: bold; margin: 0 0 4px 0;">{{ company.name }}</h3>
+            <span style="color: #64748b; font-size: 12px;">{{ company.programsCount || 0 }} برنامج تدريبي</span>
+          </div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-box trainees">
+            <strong style="color: #0D1C8C;">{{ company.traineesCount || 0 }}</strong>
+            <span>متدرب</span>
+          </div>
+          <div class="stat-box batches">
+            <strong style="color: #0D1C8C;">{{ company.batchesCount || 0 }}</strong>
+            <span>دفعة</span>
+          </div>
+          <div class="stat-box programs">
+            <strong style="color: #0D1C8C;">{{ company.programsCount || 0 }}</strong>
+            <span>برنامج</span>
+          </div>
+        </div>
+        <div class="card-footer" style="text-align: right; color: #0D1C8C; font-weight: 600;">
+          <i class="icon-file"></i> عرض البرامج والتقارير
+        </div>
       </div>
     </div>
-    <div class="nfd-stat-grid" style="--cols:3">
-      <div class="nfd-stat"><span>عدد المتدربين</span><strong>{{ r.rows.length }}</strong></div>
-      <div class="nfd-stat"><span>متوسط الحضور</span><strong>{{ r.avgAttendance }}%</strong></div>
-      <div class="nfd-stat"><span>نسبة النجاح</span><strong>{{ r.successRate }}%</strong></div>
-    </div>
-    <table class="nfd-table">
-      <thead><tr><th>المتدرب</th><th>الحضور</th><th>التقني</th><th>السلوكي</th><th>المستوى</th></tr></thead>
-      <tbody>
-        @for (row of r.rows; track row.traineeId) {
-          <tr>
-            <td>{{ row.traineeName }}</td>
-            <td>{{ row.attendanceRate }}%</td>
-            <td>{{ row.technicalScore }}%</td>
-            <td>{{ row.behavioralScore }}%</td>
-            <td><span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ row.level }}</span></td>
-          </tr>
-        }
-      </tbody>
-    </table>
   </div>
-}
+
+  <!-- 2. صفحة برامج ودفعات الشركة المحددة -->
+  <div class="reports-container" *ngIf="currentView === 'programs'">
+    <div class="top-nav-bar" style="text-align: right; margin-bottom: 16px;">
+      <button class="back-btn" (click)="currentView = 'companies'" style="background: none; border: none; color: #0D1C8C; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+        <i class="arrow-right"></i> العودة إلى الشركات
+      </button>
+    </div>
+
+    <div class="selected-company-banner" style="display: flex; justify-content: flex-start; align-items: center; gap: 20px; text-align: right; background: #ffffff; border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
+      <div class="company-logo-large" style="background: #0D1C8C; color: #ffffff; width: 60px; height: 60px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M9 3v4M15 3v4"></path>
+        </svg>
+      </div>
+      <div class="banner-info" style="text-align: right;">
+        <h3 style="color: #0D1C8C !important; font-size: 20px; margin: 0 0 4px 0;">{{ selectedCompany?.name }}</h3>
+        <span style="color: #64748b; font-size: 13px;">{{ selectedCompany?.programsCount || 0 }} برنامج</span>
+      </div>
+    </div>
+
+    <div class="programs-list" *ngFor="let prog of selectedCompany?.programs">
+      <div class="program-item-card" style="background: #ffffff; border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
+        
+        <div class="program-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px;">
+          <h4 style="color: #0D1C8C !important; font-size: 16px; margin: 0; text-align: right;">{{ prog.name }}</h4>
+          <span class="track-tag" style="background: #eef2ff; color: #0D1C8C; padding: 4px 10px; border-radius: 6px; font-size: 12px;">{{ prog.track }}</span>
+        </div>
+        
+        <div class="batch-row" *ngFor="let batch of prog.batches" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f8fafc;">
+          
+          <div class="batch-info-right" style="display: flex; align-items: center; gap: 10px; text-align: right;">
+            <span class="dot" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
+            <strong style="color: #0D1C8C; font-size: 14px;">الدفعة {{ batch.id }}</strong>
+            <span class="dates" style="color: #64748b; font-size: 12px;">{{ batch.dates }}</span>
+          </div>
+
+          <div class="batch-info-left" style="display: flex; align-items: center; gap: 10px;">
+            <button class="view-report-btn" (click)="viewBatchReport(batch)" style="background: #0D1C8C; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+              <i class="icon-doc"></i> عرض التقرير
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. صفحة تقرير نهاية الدفعة التفصيلي -->
+  <div class="reports-container" *ngIf="currentView === 'batch-report'">
+    <div class="top-nav-bar" style="text-align: right; margin-bottom: 16px;">
+      <button class="back-btn" (click)="currentView = 'programs'" style="background: none; border: none; color: #0D1C8C; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+        <i class="arrow-right"></i> العودة إلى البرامج
+      </button>
+    </div>
+
+    <!-- الترويسة: التفاصيل يمين، وأزرار التصدير يسار -->
+    <div class="report-header-card" style="display: flex; justify-content: space-between; align-items: flex-start; text-align: right; background: #ffffff; border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
+      
+      <div class="report-title-right" style="text-align: right;">
+        <span class="badge-tag" style="background: #eef2ff; color: #0D1C8C; padding: 4px 10px; border-radius: 6px; font-size: 12px; display: inline-block; margin-bottom: 8px;">نهاية الدفعة</span>
+        <h2 style="color: #0D1C8C !important; font-size: 20px; margin: 0 0 4px 0;">تقرير نهاية الدفعة — الدفعة {{ selectedBatch?.id }}</h2>
+        <p style="color: #334155; font-size: 14px; margin: 0 0 4px 0;">{{ selectedBatch?.programName }} · {{ selectedCompany?.name }}</p>
+        <small style="color: #64748b; font-size: 12px;">{{ selectedBatch?.dates }} · تاريخ الانتهاء: {{ selectedBatch?.endDate }}</small>
+      </div>
+
+      <!-- أزرار التصدير في اليسار -->
+      <div class="actions-left" style="display: flex; gap: 8px;">
+        <button class="btn-pdf" (click)="exportToPDF()" style="background: #0D1C8C; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="download-icon"></i> تصدير PDF</button>
+        <button class="btn-excel" (click)="exportToExcel()" style="background: #10b981; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer;">Excel</button>
+      </div>
+
+    </div>
+
+    <div class="summary-metrics-grid">
+      <div class="metric-card" style="text-align: right;">
+        <span class="metric-value dark" style="color: #0D1C8C; font-size: 22px; font-weight: bold;">{{ selectedBatch?.traineesCount || 0 }}</span>
+        <span class="metric-label" style="color: #64748b; font-size: 13px; display: block; margin-top: 4px;">عدد المتدربين</span>
+      </div>
+      <div class="metric-card" style="text-align: right;">
+        <span class="metric-value green" style="color: #10b981; font-size: 22px; font-weight: bold;">89%</span>
+        <span class="metric-label" style="color: #64748b; font-size: 13px; display: block; margin-top: 4px;">متوسط الحضور</span>
+      </div>
+      <div class="metric-card" style="text-align: right;">
+        <span class="metric-value blue" style="color: #0D1C8C; font-size: 22px; font-weight: bold;">100%</span>
+        <span class="metric-label" style="color: #64748b; font-size: 13px; display: block; margin-top: 4px;">نسبة النجاح</span>
+      </div>
+    </div>
+
+    <div class="table-card" style="text-align: right;">
+      <div class="table-header-title" style="margin-bottom: 16px; text-align: right;">
+        <h3 style="color: #0D1C8C !important; font-size: 18px; margin: 0 0 4px 0;">نتائج المتدربين</h3>
+        <span style="color: #64748b; font-size: 13px;">الدفعة {{ selectedBatch?.id }} · {{ selectedBatch?.programName }}</span>
+      </div>
+
+      <table class="custom-table" style="width: 100%; text-align: right;">
+        <thead>
+          <tr style="border-bottom: 2px solid #e2e8f0;">
+            <th style="padding: 10px; color: #0D1C8C; text-align: right;">المتدرب</th>
+            <th style="padding: 10px; color: #0D1C8C; text-align: right;">التخصص</th>
+            <th style="padding: 10px; color: #0D1C8C; text-align: right;">الحضور</th>
+            <th style="padding: 10px; color: #0D1C8C; text-align: right;">التقني</th>
+            <th style="padding: 10px; color: #0D1C8C; text-align: right;">السلوكي</th>
+            <th style="padding: 10px; color: #0D1C8C; text-align: right;">المستوى</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of traineesList" style="border-bottom: 1px solid #f1f5f9;">
+            <td class="bold" style="padding: 12px; color: #0D1C8C; font-weight: bold; text-align: right;">{{ t.name }}</td>
+            <td style="padding: 12px; color: #64748b; text-align: right;">{{ t.major }}</td>
+            <td style="padding: 12px; text-align: right;">
+              <span>{{ t.attendance }}%</span>
+              <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;"><div class="fill green" [style.width.%]="t.attendance" style="background: #10b981; height: 100%; border-radius: 3px;"></div></div>
+            </td>
+            <td style="padding: 12px; text-align: right;">
+              <span>{{ t.technical }}%</span>
+              <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;"><div class="fill green" [style.width.%]="t.technical" style="background: #10b981; height: 100%; border-radius: 3px;"></div></div>
+            </td>
+            <td style="padding: 12px; text-align: right;">
+              <span>{{ t.behavioral }}%</span>
+              <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;"><div class="fill blue" [style.width.%]="t.behavioral" style="background: #0D1C8C; height: 100%; border-radius: 3px;"></div></div>
+            </td>
+            <td style="padding: 12px; text-align: right;">
+              <span class="status-pill" [ngClass]="t.levelClass" style="padding: 4px 8px; border-radius: 4px; font-size: 12px;">{{ t.level }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -37,5 +37,8 @@ namespace Nafadh_Backend.Services
         // Delete announcement
         Task DeleteAsync(int id);
 
+        // =====================================================
+        // Get announcements 
+        Task<List<AnnouncementDTO>> GetAllAsync();
     }
 }

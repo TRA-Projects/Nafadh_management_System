@@ -1,67 +1,367 @@
-/* ================= 1. النوافذ المنبثقة والخلفيات ================= */
+/* ==========================================================================
+   Trainees Management Component Styles (trainees.component.css)
+   ========================================================================== */
+
+/* 1. الحاوية الرئيسية والترويسة */
+.trainees-container {
+  padding: 24px;
+  direction: rtl;
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header-title h2,
+.nfd-page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.header-title p,
+.nfd-page-sub {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0 0 16px 0;
+}
+
+.header-actions,
+.nfd-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 2. الأزرار وشريط الأدوات */
+.btn-primary,
+.nfd-btn.primary {
+  background-color: #002b49;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover,
+.nfd-btn.primary:hover {
+  background-color: #001f35;
+}
+
+.btn-secondary,
+.nfd-btn.ghost {
+  background-color: #ffffff;
+  color: #0d9488;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover,
+.nfd-btn.ghost:hover {
+  background-color: #f0fdf4;
+  border-color: #0d9488;
+}
+
+/* 3. شريط الفلترة والبحث */
+.filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-tabs,
+.nfd-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 16px;
+}
+
+.tab-btn,
+.nfd-chip {
+  background: transparent;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover,
+.nfd-chip:hover {
+  color: #0f172a;
+}
+
+.tab-btn.active,
+.nfd-chip.active {
+  background-color: #002b49;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.search-box {
+  position: relative;
+  min-width: 280px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 9px 36px 9px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.search-box input:focus {
+  border-color: #0d9488;
+}
+
+.search-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+/* 4. جدول عرض المتدربين */
+.table-card,
+.nfd-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  padding: 16px;
+}
+
+.trainees-table,
+.nfd-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+  font-size: 0.875rem;
+}
+
+.trainees-table th,
+.nfd-table th {
+  background-color: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.trainees-table td,
+.nfd-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.trainees-table tbody tr:last-child td,
+.nfd-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.trainees-table tbody tr:hover,
+.nfd-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* 5. عناصر الجدول (الشارات، شريط التقدم، وأزرار الإجراءات) */
+.nfd-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.progress-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.progress-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  min-width: 32px;
+}
+
+.progress-bar-bg {
+  flex: 1;
+  height: 6px;
+  background-color: #f1f5f9;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #0d9488;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.icon-view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #64748b;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.icon-view-btn:hover {
+  background-color: #f1f5f9;
+  color: #0d9488;
+}
+
+/* 6. حالة فارغة (Empty State) */
+.empty-row td {
+  text-align: center;
+  padding: 40px 16px;
+  color: #94a3b8;
+}
+
+.empty-state-icon {
+  font-size: 1.75rem;
+  margin-bottom: 8px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* ==========================================================================
+   7. النوافذ المنبثقة المطابقة للتصميم (Excel Import & Registration Modal)
+   ========================================================================== */
+
 .nfd-modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(15, 23, 42, 0.5);
+  background-color: rgba(71, 85, 105, 0.45);
+  backdrop-filter: blur(3px);
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 9999;
-  backdrop-filter: blur(2px);
-}
-
-.nfd-modal-dialog {
-  background-color: #ffffff;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 500px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+  box-sizing: border-box;
   direction: rtl;
 }
 
+.nfd-modal-dialog {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+  animation: modalScaleUp 0.2s ease-out;
+}
+
 .nfd-modal-dialog.large {
-  max-width: 650px;
+  max-width: 680px;
 }
 
 .nfd-modal-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 18px 24px;
-  border-bottom: 1px solid #f1f5f9;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  border-bottom: none;
+  padding: 0;
 }
 
 .nfd-modal-header h3 {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #0f172a;
 }
 
-.nfd-modal-header .close-btn {
+.close-btn {
   background: transparent;
   border: none;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   color: #94a3b8;
   cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #334155;
 }
 
 .nfd-modal-body {
-  padding: 24px;
+  padding: 0;
 }
 
-/* ================= 2. مناطق الاستيراد والمعاينة ================= */
+/* منطقة رفع الملف Dropzone */
 .upload-dropzone {
   border: 2px dashed #cbd5e1;
-  border-radius: 12px;
-  padding: 32px 20px;
-  text-align: center;
+  border-radius: 16px;
   background-color: #f8fafc;
+  padding: 36px 20px;
+  text-align: center;
   cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 16px;
 }
 
 .upload-dropzone:hover {
@@ -70,10 +370,10 @@
 }
 
 .upload-icon {
-  width: 56px;
-  height: 56px;
-  background-color: #e6f7f3;
-  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  background-color: #ccfbf1;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -81,391 +381,112 @@
 }
 
 .upload-title {
+  font-size: 1rem;
   font-weight: 600;
   color: #1e293b;
   margin: 0 0 6px 0;
 }
 
 .upload-sub {
-  color: #94a3b8;
   font-size: 0.8rem;
+  color: #94a3b8;
   margin: 0;
 }
 
+/* تنبيه التعليمات */
 .nfd-alert-info {
   background-color: #eff6ff;
-  border: 1px solid #dbeafe;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-top: 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #1e40af;
+  color: #3b82f6;
+  border-radius: 12px;
+  padding: 14px 16px;
   font-size: 0.825rem;
-}
-
-.import-success-banner {
-  background-color: #e6f7f3;
-  border-radius: 10px;
-  padding: 12px 16px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.import-success-banner .banner-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.import-success-banner .check-icon {
-  color: #0d9488;
-  font-weight: bold;
-}
-
-.import-success-banner .file-status {
-  color: #0d9488;
-  font-size: 0.8rem;
-  margin: 2px 0 0 0;
-}
-
-.import-preview-table-wrapper {
-  border: 1px solid #f1f5f9;
-  border-radius: 8px;
-  overflow-y: auto;
-  max-height: 220px;
-}
-
-.import-preview-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-}
-
-.import-preview-table th {
-  background-color: #f8fafc;
-  color: #64748b;
-  padding: 10px 12px;
-  text-align: right;
-}
-
-.import-preview-table td {
-  padding: 10px 12px;
-  border-top: 1px solid #f1f5f9;
-}
-
-/* ================= 3. صفحة ملف المتدرب (تصميم Figma) ================= */
-.trainee-profile-container {
-  direction: rtl;
-  font-family: system-ui, -apple-system, sans-serif;
-  color: #1e293b;
-}
-
-.profile-header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.page-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin: 0;
-  color: #0f172a;
-}
-
-.page-subtitle {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin: 2px 0 0 0;
-}
-
-.back-link {
-  color: #0d9488;
-  text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: opacity 0.2s;
-}
-
-.back-link:hover {
-  opacity: 0.8;
-}
-
-.trainee-info-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 20px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  margin-bottom: 20px;
-}
-
-.info-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.avatar-circle {
-  width: 54px;
-  height: 54px;
-  background-color: #ccfbf1;
-  color: #0d9488;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
-.name-row {
-  display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
-}
-
-.name-row h3 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-}
-
-.badge {
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.badge.status-active {
-  background-color: #dcfce7;
-  color: #166534;
-}
-
-.badge.batch-tag {
-  background-color: #e0f2fe;
-  color: #0369a1;
-}
-
-.meta-text {
-  margin: 6px 0 0 0;
-  font-size: 0.85rem;
-  color: #64748b;
-}
-
-.id-code {
-  color: #94a3b8;
-  font-weight: 500;
-}
-
-.info-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-action {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  color: #475569;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s;
-}
-
-.btn-action:hover {
-  background: #f8fafc;
-}
-
-.btn-action.danger {
-  border-color: #fca5a5;
-  color: #dc2626;
-  background: #fef2f2;
-}
-
-.btn-action.danger:hover {
-  background: #fee2e2;
-}
-
-/* الإحصائيات الأربعة */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  line-height: 1.5;
   margin-bottom: 20px;
 }
 
-.stat-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.stat-value {
-  font-size: 1.75rem;
-  font-weight: 800;
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  font-size: 0.8rem;
-  color: #94a3b8;
-}
-
-.text-teal { color: #0d9488; }
-.text-blue { color: #2563eb; }
-.text-orange { color: #d97706; }
-.text-gray { color: #475569; }
-
-.bg-teal { background-color: #0d9488; }
-.bg-blue { background-color: #2563eb; }
-.bg-orange { background-color: #d97706; }
-
-/* القسم السفلي */
-.profile-bottom-grid {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  gap: 20px;
-}
-
-.content-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 20px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.card-header h4 {
-  margin: 0;
+.info-icon {
   font-size: 1rem;
+  line-height: 1;
+}
+
+.block-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #64748b;
   font-weight: 600;
+  font-size: 0.9rem;
 }
 
-.sub-header {
-  font-size: 0.75rem;
-  color: #94a3b8;
+/* نماذج الإدخال */
+.form-section-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0d9488;
+  margin-bottom: 12px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.attendance-grid {
+.form-group {
+  margin-bottom: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 6px;
 }
 
-.grid-row {
-  display: flex;
-  gap: 8px;
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
 }
 
-.attendance-grid .box {
-  flex: 1;
-  height: 32px;
-  border-radius: 6px;
+.required {
+  color: #ef4444;
 }
 
-.box.present { background-color: #ccfbf1; }
-.box.late { background-color: #fef3c7; }
-.box.absent { background-color: #ffe4e6; }
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
 
-.attendance-legend {
+.nfd-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.nfd-input:focus {
+  border-color: #0d9488;
+}
+
+.nfd-modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 16px;
-  font-size: 0.75rem;
-  color: #64748b;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
 }
 
-.attendance-legend span {
-  display: flex;
-  align-items: center;
-}
-
-.attendance-legend .dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-left: 4px;
-}
-
-.dot.present { background-color: #0d9488; }
-.dot.late { background-color: #eab308; }
-.dot.absent { background-color: #f43f5e; }
-
-.evaluations-list {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.eval-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.eval-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-}
-
-.eval-title {
-  color: #475569;
-  font-weight: 500;
-}
-
-.eval-score {
-  font-weight: 700;
-}
-
-.bar-bg {
-  background-color: #f1f5f9;
-  height: 8px;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  border-radius: 4px;
-}
-
-.icon-view-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-}
-
-.icon-view-btn:hover {
-  background-color: #f1f5f9;
+@keyframes modalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

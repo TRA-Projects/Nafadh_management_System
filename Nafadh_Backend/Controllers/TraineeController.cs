@@ -298,5 +298,44 @@ namespace Nafadh_Backend.Controllers
 
             return NoContent();
         }
+
+        // ==========================================
+        // GET: api/trainee/certificates-dashboard
+        // Endpoint مخصص للوحة إصدار الشهادات لضمان السرعة ودقة EnrollmentId
+        // ==========================================
+        [HttpGet("certificates-dashboard")]
+        public async Task<IActionResult> GetCertificatesDashboard(
+            [FromQuery] int? companyId,
+            [FromQuery] NFD_TraineeStatus? status,
+            [FromQuery] string? university,
+            [FromQuery] string? searchTerm,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            var (items, total) = await _service.GetAllAsync(companyId, status, university, searchTerm, pageNumber, pageSize);
+
+            var dtos = items.Select(t => {
+                // جلب أول Enrollment خاص بالمتدرب لربط الـ EnrollmentId الصحيح
+                var firstEnrollment = t.Enrollments?.FirstOrDefault();
+
+                return new TraineeListItemDto
+                {
+                    TraineeId = t.TraineeId,
+                    FullName = t.User?.FullName,
+                    University = t.University,
+                    Major = t.Major,
+                    Status = t.Status,
+                    VerificationStatus = t.VerificationStatus,
+                    CompanyId = t.CompanyId,
+                    CompanyName = t.Company?.CompanyName,
+
+                    // إسناد الـ EnrollmentId المباشر من قاعدة البيانات
+                    EnrollmentId = firstEnrollment?.EnrollmentId ?? 0,
+                    FileUrl = null
+                };
+            }).ToList();
+
+            return Ok(new { Items = dtos, TotalCount = total });
+        }
     }
 }

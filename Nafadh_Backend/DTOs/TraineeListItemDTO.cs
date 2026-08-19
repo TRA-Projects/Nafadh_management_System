@@ -27,5 +27,8 @@ namespace Nafadh_Backend.DTOs
 
         // Name of the host company, if assigned
         public string? CompanyName { get; set; }
+
+        public int EnrollmentId { get; set; }
+        public string? FileUrl { get; set; }
     }
 }

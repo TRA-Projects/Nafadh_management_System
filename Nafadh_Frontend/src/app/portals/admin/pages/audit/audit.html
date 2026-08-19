@@ -1,15 +1,117 @@
-<h2 class="nfd-page-title">سجل التدقيق</h2>
-<p class="nfd-page-sub">سجل العمليات والأنشطة في النظام</p>
+<div class="nfd-audit-container">
+  <div class="nfd-header-section">
+    <div>
+      <h2 class="nfd-page-title">سجل التدقيق والرقابة</h2>
+      <p class="nfd-page-sub">تتبع عمليات النظام، أنشطة المشرفين، والتغييرات الحاصلة بالكامل</p>
+    </div>
+    <button class="nfd-btn nfd-btn-export" (click)="exportToCsv()">
+      تصدير السجل (CSV)
+    </button>
+  </div>
 
-<div class="nfd-card">
-  <input class="nfd-input" style="max-width:280px;margin-bottom:14px" [(ngModel)]="search" placeholder="بحث في السجل..." />
-  <table class="nfd-table">
-    <thead><tr><th>الإجراء</th><th>المستخدم</th><th>الكيان المتأثر</th><th>التوقيت</th></tr></thead>
-    <tbody>
-      @for (l of filtered(); track (l.logId ?? l.id ?? $index)) {
-        <tr><td>{{ l.action }}</td><td>{{ l.userName }}</td><td>{{ l.entityName }} #{{ l.entityId }}</td><td>{{ (l.timestamp || l.createdAt) | date:'short' }}</td></tr>
-      }
-      @empty { <tr><td colspan="4">لا يوجد سجل</td></tr> }
-    </tbody>
-  </table>
+  <div class="nfd-card">
+    <div class="nfd-filter-bar">
+      <div class="nfd-field">
+        <label>بحث عام</label>
+        <input 
+          type="text" 
+          class="nfd-input" 
+          [ngModel]="search()" 
+          (ngModelChange)="search.set($event)" 
+          placeholder="ابحث باسم المستخدم، الكيان، الإجراء..." 
+        />
+      </div>
+
+      <div class="nfd-field">
+        <label>نوع الإجراء</label>
+        <select class="nfd-select" [ngModel]="selectedAction()" (ngModelChange)="selectedAction.set($event)">
+          <option value="">كل الإجراءات</option>
+          <option value="إصدار إنذار">إصدار إنذار</option>
+          <option value="تعديل بيانات شركة">تعديل بيانات شركة</option>
+          <option value="إصدار شهادة">إصدار شهادة</option>
+          <option value="منح شهادة إتمام">منح شهادة إتمام</option>
+          <option value="تحديث تقييم">تحديث تقييم</option>
+          <option value="إنشاء حساب مستخدم">إنشاء حساب مستخدم</option>
+        </select>
+      </div>
+
+      <div class="nfd-field">
+        <label>من تاريخ</label>
+        <input type="date" class="nfd-input" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)" />
+      </div>
+
+      <div class="nfd-field">
+        <label>إلى تاريخ</label>
+        <input type="date" class="nfd-input" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)" />
+      </div>
+    </div>
+
+    <div class="nfd-table-wrapper">
+      <table class="nfd-table">
+        <thead>
+          <tr>
+            <th>الإجراء</th>
+            <th>المستخدم / المنفّذ</th>
+            <th>الكيان المتأثر</th>
+            <th>التوقيت والتاريخ</th>
+            <th>تفاصيل</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (l of filteredLogs(); track (l.logId ?? l.id ?? $index)) {
+            <tr>
+              <td>
+                <span class="nfd-badge" [ngClass]="{
+                  'badge-warning': (l.action || '').includes('إنذار'),
+                  'badge-success': (l.action || '').includes('شهادة') || (l.action || '').includes('منح'),
+                  'badge-info': (l.action || '').includes('تعديل') || (l.action || '').includes('تحديث'),
+                  'badge-primary': (l.action || '').includes('إنشاء')
+                }">
+                  {{ l.action }}
+                </span>
+              </td>
+              <td>
+                <div class="user-info">
+                  <span class="user-name">{{ l.userName || 'غير محدد (النظام)' }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="entity-tag">{{ l.entityName }} <strong *ngIf="l.entityId">#{{ l.entityId }}</strong></span>
+              </td>
+              <td class="time-cell">
+                {{ (l.timestamp || l.createdAt) | date:'yyyy-MM-dd | hh:mm a' }}
+              </td>
+              <td>
+                <button class="nfd-btn-icon" (click)="viewDetails(l)" title="عرض التفاصيل">
+                  👁️
+                </button>
+              </td>
+            </tr>
+          }
+          @empty {
+            <tr>
+              <td colspan="5" class="empty-state">
+                لا توجد سجلات مطابقة لمعايير البحث الحالية
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="nfd-modal-backdrop" *ngIf="selectedLog()" (click)="closeModal()">
+  <div class="nfd-modal" (click)="$event.stopPropagation()">
+    <div class="nfd-modal-header">
+      <h3>تفاصيل إجراء السجل</h3>
+      <button class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+    <div class="nfd-modal-body">
+      <p><strong>نوع الإجراء:</strong> {{ selectedLog()?.action }}</p>
+      <p><strong>المستخدم المسؤول:</strong> {{ selectedLog()?.userName || 'النظام التلقائي' }}</p>
+      <p><strong>الكيان:</strong> {{ selectedLog()?.entityName }} (#{{ selectedLog()?.entityId }})</p>
+      <p><strong>التاريخ والوقت:</strong> {{ (selectedLog()?.timestamp || selectedLog()?.createdAt) | date:'medium' }}</p>
+    </div>
+  </div>
 </div>
