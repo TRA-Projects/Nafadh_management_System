@@ -1,78 +1,70 @@
-<div class="container-fluid py-3" dir="rtl">
-
-  <!-- رأس الصفحة وزر الإضافة في أقصى اليسار -->
-  <div class="header-container mb-4">
+<div class="container-fluid py-3" dir="rtl" (click)="closeAllDropdowns()">
+  <!-- الهيدر مع مسافة صحيحة ومحاذاة -->
+  <div class="header-container mb-4 d-flex justify-content-between align-items-center">
     <div class="title-section">
       <h2 class="nfd-page-title mb-1">الشركات المستضيفة</h2>
-      <p class="nfd-page-sub text-muted m-0">الشركات المعتمدة والطاقة الاستيعابية والأداء</p>
     </div>
-
-    <!-- open the add-company modal -->
-    <button class="btn add-company-btn shadow-sm" (click)="openAddModal()">
-      <span class="plus-icon">+</span>
-      <span>إضافة شركة</span>
-    </button>
+    <button class="btn add-company-btn shadow-sm" (click)="openAddModal()"><span>إضافة شركة</span></button>
   </div>
 
-  <div class="nfd-card card border-0 shadow-sm rounded-4 p-3 bg-white">
+  <!-- البطاقة البيضاء مع مسافة علوية واضحة mt-4 -->
+  <div class="nfd-card card border-0 shadow-sm rounded-4 p-3 bg-white mt-4">
     <!-- أزرار الفلتر -->
     <div class="nfd-chips d-flex gap-2 mb-3 flex-wrap">
-      @for (s of ['الكل','PendingApproval','Approved','Suspended']; track s) {
-        <button class="filter-btn"
-                [class.active]="statusFilter() === s"
-                (click)="setFilter(s)">
-          @if (s === 'الكل') { الكل }
-          @else if (s === 'PendingApproval') { قيد المراجعة }
-          @else if (s === 'Approved') { معتمدة }
-          @else if (s === 'Suspended') { موقوفة }
+      @for (s of ['الكل','PendingApproval','Approved','Suspended','Rejected']; track s) {
+        <button class="filter-btn" [class.active]="statusFilter() === s" (click)="setFilter(s)">
+          {{ s === 'الكل' ? 'الكل' : statusLabel(s) }}
         </button>
       }
     </div>
 
-    <!-- الجدول -->
     <div class="table-responsive">
       <table class="nfd-table table align-middle mb-0 text-end">
-        <thead class="table-light text-muted small border-bottom">
+        <thead>
           <tr>
-            <th class="py-3 px-3">الشركة</th>
-            <th class="py-3">المجال</th>
-            <th class="py-3">الطاقة</th>
-            <th class="py-3">الحالة</th>
-            <th class="py-3 text-center">الإجراءات</th>
+            <th>الشركة</th>
+            <th>المجال</th>
+            <th>الطاقة</th>
+            <th>الحالة</th>
+            <th>الإجراءات</th>
           </tr>
         </thead>
         <tbody>
           @for (c of filtered(); track c.companyId) {
-            <tr class="border-bottom">
-              <td class="py-3 px-3"><strong>{{ c.companyName }}</strong></td>
-              <td class="text-secondary">{{ c.workField }}</td>
-              <td class="text-secondary">{{ c.capacity }}</td>
+            <tr>
+              <td><strong>{{ c.companyName }}</strong></td>
+              <td>{{ c.workField }}</td>
+              <td>{{ c.capacity }}</td>
               <td>
-                <span class="nfd-badge px-3 py-2 rounded-pill fw-normal"
+                <span class="nfd-badge px-3 py-2 rounded-pill"
                       [ngStyle]="{
-                        'background': c.status === 'Approved' ? 'var(--status-active-bg, #e8f5e9)' : c.status === 'PendingApproval' ? 'var(--status-pending-bg, #fff8e1)' : 'var(--status-danger-bg, #ffebee)',
-                        'color': c.status === 'Approved' ? 'var(--status-active-fg, #2e7d32)' : c.status === 'PendingApproval' ? 'var(--status-pending-fg, #f57c00)' : 'var(--status-danger-fg, #c62828)'
+                        'background': c.status === 'Approved' ? '#e8f5e9' : c.status === 'Rejected' ? '#ffebee' : c.status === 'Suspended' ? '#fff3e0' : '#fff8e1',
+                        'color': c.status === 'Approved' ? '#2e7d32' : c.status === 'Rejected' ? '#c62828' : c.status === 'Suspended' ? '#e65100' : '#f57c00'
                       }">
-                  @if (c.status === 'Approved') { معتمدة }
-                  @else if (c.status === 'PendingApproval') { قيد المراجعة }
-                  @else if (c.status === 'Suspended') { موقوفة }
-                  @else { {{ c.status }} }
+                  {{ statusLabel(c.status) }}
                 </span>
               </td>
-              <td class="text-center">
-                <div class="d-flex justify-content-center gap-2">
-                  @if (c.status === 'PendingApproval') {
-                    <button class="nfd-btn secondary btn btn-sm btn-outline-success px-3" (click)="approve(c)">اعتماد</button>
+              <td>
+                <!-- تصميم بسيط، موحد ونظيف لأزرار الإجراءات مع مسافة فاصلة بينهم -->
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  @if (c.status !== 'Approved') {
+                    <button style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 4px 12px; border-radius: 50px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;" 
+                            (click)="updateCompanyStatus(c, 'Approved')">
+                      اعتماد
+                    </button>
                   }
-                  @if (c.status === 'Approved') {
-                    <button class="nfd-btn ghost btn btn-sm btn-outline-danger px-3" (click)="suspend(c)">إيقاف</button>
+                  @if (c.status !== 'Suspended') {
+                    <button style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 4px 12px; border-radius: 50px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;" 
+                            (click)="updateCompanyStatus(c, 'Suspended')">
+                      إيقاف
+                    </button>
                   }
-                  <button class="btn btn-sm btn-light text-primary border-0 shadow-sm" title="عرض" (click)="viewCompany(c)">
-                    <i class="bi bi-eye"></i>
-                  </button>
-                  <button class="btn btn-sm btn-light text-secondary border-0 shadow-sm" title="تعديل" (click)="editCompany(c)">
-                    <i class="bi bi-pencil"></i>
-                  </button>
+                  @if (c.status !== 'Rejected') {
+                    <button style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 4px 12px; border-radius: 50px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;" 
+                            (click)="updateCompanyStatus(c, 'Rejected')">
+                      رفض
+                    </button>
+                  }
                 </div>
               </td>
             </tr>
@@ -81,125 +73,4 @@
       </table>
     </div>
   </div>
-
-  <!-- ===== Add Company Modal ===== -->
-  @if (showAddModal()) {
-    <div class="nfd-modal-overlay" (click)="closeAddModal()">
-      <!-- stop click from bubbling to overlay so clicking inside doesn't close it -->
-      <div class="nfd-modal-card" (click)="$event.stopPropagation()">
-
-        <div class="nfd-modal-header">
-          <h5 class="m-0">إضافة شركة مستضيفة</h5>
-          <button type="button" class="nfd-modal-close" (click)="closeAddModal()">&times;</button>
-        </div>
-
-        <form (ngSubmit)="submitAddCompany()" #addForm="ngForm" (click)="closeAllDropdowns()">
-
-          <div class="nfd-modal-section-title">بيانات الشركة</div>
-
-          <div class="nfd-field">
-            <label>اسم الشركة <span class="req">*</span></label>
-            <input type="text" class="form-control" placeholder="اسم الشركة الكامل"
-                   name="companyName" [(ngModel)]="newCompany.companyName" required />
-          </div>
-
-          <div class="nfd-field-row">
-            <!-- custom dropdown for المجال instead of free text -->
-            <div class="nfd-field nfd-dropdown-wrap">
-              <label>المجال <span class="req">*</span></label>
-              <div class="nfd-select-input" [class.open]="workFieldDropdownOpen()"
-                   (click)="toggleWorkFieldDropdown($event)">
-                <span [class.placeholder]="!newCompany.workField">
-                  {{ newCompany.workField || 'اختر المجال' }}
-                </span>
-                <i class="bi bi-chevron-down nfd-select-caret"></i>
-              </div>
-
-              @if (workFieldDropdownOpen()) {
-                <div class="nfd-select-list">
-                  @for (opt of workFieldOptions; track opt) {
-                    <div class="nfd-select-item" [class.selected]="opt === newCompany.workField"
-                         (click)="selectWorkField(opt, $event)">
-                      {{ opt }}
-                    </div>
-                  }
-                </div>
-              }
-
-              <!-- keeps the value tracked by ngForm for required validation -->
-              <input type="hidden" name="workField" [(ngModel)]="newCompany.workField" required />
-            </div>
-
-            <div class="nfd-field">
-              <label>الطاقة الاستيعابية <span class="req">*</span></label>
-              <input type="number" class="form-control" min="0" placeholder="0"
-                     name="capacity" [(ngModel)]="newCompany.capacity" required />
-            </div>
-          </div>
-
-          <div class="nfd-field nfd-dropdown-wrap">
-            <label>الحالة</label>
-            <div class="nfd-select-input" [class.open]="statusDropdownOpen()"
-                 (click)="toggleStatusDropdown($event)">
-              <span>{{ statusLabel(newCompany.status) }}</span>
-              <i class="bi bi-chevron-down nfd-select-caret"></i>
-            </div>
-
-            @if (statusDropdownOpen()) {
-              <div class="nfd-select-list">
-                @for (opt of statusOptions; track opt.value) {
-                  <div class="nfd-select-item" [class.selected]="opt.value === newCompany.status"
-                       (click)="selectStatus(opt.value, $event)">
-                    {{ opt.label }}
-                  </div>
-                }
-              </div>
-            }
-
-            <!-- keeps the value tracked by ngForm -->
-            <input type="hidden" name="status" [(ngModel)]="newCompany.status" required />
-          </div>
-
-          <div class="nfd-modal-section-title">بيانات التواصل</div>
-
-          <!-- optional free-text field, not tied to any backend validation -->
-          <div class="nfd-field">
-            <label>اسم جهة الاتصال</label>
-            <input type="text" class="form-control" placeholder="الاسم الكامل"
-                   name="contactName" [(ngModel)]="newCompany.contactName" />
-          </div>
-
-          <div class="nfd-field-row">
-            <div class="nfd-field">
-              <label>البريد الإلكتروني</label>
-              <input type="email" class="form-control" placeholder="name@company.om"
-                     [class.is-invalid]="emailModel.invalid && (emailModel.dirty || emailModel.touched)"
-                     name="email" email [(ngModel)]="newCompany.email" #emailModel="ngModel" />
-              @if (emailModel.invalid && (emailModel.dirty || emailModel.touched)) {
-                <div class="nfd-field-error">صيغة البريد الإلكتروني غير صحيحة</div>
-              }
-            </div>
-            <div class="nfd-field">
-              <label>رقم الجوال</label>
-              <input type="text" class="form-control" placeholder="+968 XXXX XXXX"
-                     name="phone" [(ngModel)]="newCompany.phone" />
-            </div>
-          </div>
-
-          @if (addError()) {
-            <div class="nfd-modal-error">{{ addError() }}</div>
-          }
-
-          <div class="nfd-modal-actions">
-            <button type="submit" class="btn nfd-submit-btn" [disabled]="!addForm.valid || isSaving()">
-              {{ isSaving() ? 'جارٍ الإضافة...' : 'إضافة الشركة' }}
-            </button>
-            <button type="button" class="btn nfd-cancel-btn" (click)="closeAddModal()">إلغاء</button>
-          </div>
-
-        </form>
-      </div>
-    </div>
-  }
-
 </div>

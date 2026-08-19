@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminApi } from '../../services/admin-api';
@@ -13,79 +13,22 @@ import { BatchPerformanceReportDto } from '../../../../core/models/dtos';
 })
 export class AdminReports implements OnInit {
   currentView: 'companies' | 'programs' | 'batch-report' = 'companies';
-  
+
   selectedCompany: any = null;
   selectedBatch: any = null;
 
   batchIdInput = 1;
   report = signal<BatchPerformanceReportDto | null>(null);
 
-  // البيانات الاحتياطية لضمان ظهور البطاقات والتصميم مباشرة
-  companies: any[] = [
-    {
-      id: 1,
-      name: 'مركز البيانات الوطني',
-      shortName: 'مبو',
-      programsCount: 1,
-      batchesCount: 1,
-      traineesCount: 1,
-      programs: [
-        {
-          name: 'برنامج تحليل البيانات المتقدم',
-          track: 'Data Track',
-          batches: [
-            { id: 101, dates: 'فبراير - أبريل 2026', endDate: '30/04/2026', traineesCount: 1, programName: 'برنامج تحليل البيانات المتقدم' }
-          ]
-        }
-      ]
-    },
-    {
-      id: 2,
-      name: 'Al Noor Manufacturing',
-      shortName: 'نو',
-      programsCount: 1,
-      batchesCount: 1,
-      traineesCount: 3,
-      programs: [
-        {
-          name: 'إدارة العمليات الصناعية الذكية',
-          track: 'Operations Track',
-          batches: [
-            { id: 102, dates: 'مارس - مايو 2026', endDate: '31/05/2026', traineesCount: 3, programName: 'إدارة العمليات الصناعية الذكية' }
-          ]
-        }
-      ]
-    },
-    {
-      id: 3,
-      name: 'Gulf Tech Solutions',
-      shortName: 'جت',
-      programsCount: 2,
-      batchesCount: 3,
-      traineesCount: 8,
-      programs: [
-        {
-          name: 'ASP.NET Core Bootcamp',
-          track: 'NET Track',
-          batches: [
-            { id: 12, dates: 'يناير - مارس 2026', endDate: '19/03/2026', traineesCount: 4, programName: 'ASP.NET Core Bootcamp' },
-            { id: 14, dates: 'مايو - أغسطس 2026', endDate: '30/08/2026', traineesCount: 2, programName: 'ASP.NET Core Bootcamp' }
-          ]
-        },
-        {
-          name: 'TypeScript Essentials',
-          track: 'Frontend Track',
-          batches: [
-            { id: 13, dates: 'يناير - فبراير 2026', endDate: '28/02/2026', traineesCount: 2, programName: 'TypeScript Essentials' }
-          ]
-        }
-      ]
-    }
-  ];
+  // اجعلها فارغة تماماً
+  companies: any[] = [];
 
   traineesList: any[] = [];
 
-  constructor(private api: AdminApi) {}
+  constructor(
+    private api: AdminApi,
+    private cdr: ChangeDetectorRef // حقن أداة تحديث الواجهة فوراً
+  ) { }
 
   ngOnInit() {
     this.loadCompaniesData();
@@ -113,10 +56,16 @@ export class AdminReports implements OnInit {
               }
             ]
           }));
+        } else {
+          this.companies = [];
         }
+        // إجبار أنجولار على تحديث الشاشة وعرض البطاقات فور وصول البيانات
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
-        console.error('فشل جلب البيانات من الـ API، الاستمرار بالبيانات المحلية', err);
+        console.error('فشل جلب البيانات من الـ API', err);
+        this.companies = [];
+        this.cdr.detectChanges();
       }
     });
   }
@@ -124,6 +73,7 @@ export class AdminReports implements OnInit {
   selectCompany(company: any) {
     this.selectedCompany = company;
     this.currentView = 'programs';
+    this.cdr.detectChanges();
   }
 
   viewBatchReport(batch?: any) {
@@ -131,11 +81,12 @@ export class AdminReports implements OnInit {
       this.selectedBatch = batch;
       this.batchIdInput = batch.id;
       this.currentView = 'batch-report';
-      
+
       // جلب قائمة المتدربين من قاعدة البيانات
       this.api.getTrainees().subscribe({
         next: (res: any) => {
           this.traineesList = res.items || res;
+          this.cdr.detectChanges();
         },
         error: (err: any) => {
           console.error('فشل جلب بيانات المتدربين من قاعدة البيانات', err);
@@ -147,6 +98,7 @@ export class AdminReports implements OnInit {
     this.api.getBatchPerformanceReport(this.batchIdInput).subscribe({
       next: (r) => {
         this.report.set(r);
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         console.error('فشل جلب تقرير الأداء', err);
@@ -177,10 +129,10 @@ export class AdminReports implements OnInit {
     ]);
 
     let csvContent = '\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement('a');
     link.setAttribute('href', url);
     link.setAttribute('download', `Batch_${this.selectedBatch?.id || 'Report'}_Trainees.csv`);
