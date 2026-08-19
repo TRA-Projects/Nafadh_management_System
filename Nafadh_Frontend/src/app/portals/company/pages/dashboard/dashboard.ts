@@ -3,7 +3,7 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { AnnouncementDto, TraineeListItemDto, WarningDto } from '../../../../core/models/dtos';
+import { AnnouncementDto, ChartPointDto, TraineeListItemDto, WarningDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-company-dashboard',
@@ -30,10 +30,17 @@ export class CompanyDashboard implements OnInit {
     return ((cap.used ?? 0) / cap.total) * 100;
   });
 
-  attendanceAverage = signal(0);
-  // تم تحديث الهيكل ليدعم خاصية label مع الحفاظ على التوافقية
-  attendanceWeeks = signal<{ week: string; value: number; label?: string }[]>([]);
-  programDistribution = signal<{ name: string; value: number; label?: string }[]>([]);
+  attendanceWeeks = signal<ChartPointDto[]>([]);
+  programDistribution = signal<ChartPointDto[]>([]);
+  attendanceAverage = computed(() => {
+    const weeks = this.attendanceWeeks();
+    if (!weeks.length) return 0;
+    return weeks.reduce((sum, w) => sum + w.value, 0) / weeks.length;
+  });
+
+  // enrollmentId per traineeId, used to route "متابعة"/eye buttons to the
+  // real progress page (which is keyed by enrollmentId, not traineeId).
+  private enrollmentIdByTrainee = new Map<number, number>();
 
   constructor(private api: CompanyApi, private auth: AuthService, private router: Router) {}
 
@@ -54,18 +61,31 @@ export class CompanyDashboard implements OnInit {
     this.api.getAtRiskTrainees(id).subscribe((d) => this.atRisk.set(d ?? []));
     this.api.getCompanyWarnings(id).subscribe((d) => this.warnings.set(d ?? []));
     this.api.getPlatformAnnouncements().subscribe((d) => this.announcements.set(d ?? []));
+    this.api.getAttendanceChart(id).subscribe((d) => this.attendanceWeeks.set(d?.weeks ?? []));
+    this.api.getProgramDistribution(id).subscribe((d) => this.programDistribution.set(d ?? []));
+    this.api.getEnrollmentsByCompany(id).subscribe((d) => {
+      this.enrollmentIdByTrainee.clear();
+      (d ?? []).forEach((e) => this.enrollmentIdByTrainee.set(e.traineeId, e.enrollmentId));
+    });
   }
 
   openCompanyProfile() {
     this.router.navigate(['/company/profile']);
   }
 
+  // No dedicated warnings page exists in this build — send the supervisor
+  // to the trainees list, where the affected trainee can be found.
   openWarnings() {
-    this.router.navigate(['/company/warnings']);
+    this.router.navigate(['/company/trainees']);
   }
 
   openProgress(traineeId: number) {
-    this.router.navigate(['/company/trainee-progress', traineeId]);
+    const enrollmentId = this.enrollmentIdByTrainee.get(traineeId);
+    if (enrollmentId) {
+      this.router.navigate(['/company/trainees', enrollmentId, 'progress']);
+    } else {
+      this.router.navigate(['/company/trainees']);
+    }
   }
 
   dismissAnnouncements() {
