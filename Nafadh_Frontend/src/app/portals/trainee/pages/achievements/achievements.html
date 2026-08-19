@@ -41,6 +41,7 @@
   <h3>الأوسمة والإنجازات</h3>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
     
+    <!-- 1. الأداء المتميز -->
     <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid #F59E0B;background:#FFFBF0">
       <div style="font-size:26px;margin-bottom:6px">⭐</div>
       <strong style="display:block;font-size:12px;color:#1e293b">الأداء المتميز</strong>
@@ -48,6 +49,7 @@
       <span style="font-size:10px;font-weight:700;color:#D97706">✓ محقق</span>
     </div>
 
+    <!-- 2. المثابرة -->
     <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid #F59E0B;background:#FFFBF0">
       <div style="font-size:26px;margin-bottom:6px">🔥</div>
       <strong style="display:block;font-size:12px;color:#1e293b">المثابرة</strong>
@@ -55,6 +57,7 @@
       <span style="font-size:10px;font-weight:700;color:#D97706">✓ محقق</span>
     </div>
 
+    <!-- 3. متعلم سريع -->
     <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid #F59E0B;background:#FFFBF0">
       <div style="font-size:26px;margin-bottom:6px">🏅</div>
       <strong style="display:block;font-size:12px;color:#1e293b">متعلم سريع</strong>
@@ -62,37 +65,39 @@
       <span style="font-size:10px;font-weight:700;color:#D97706">✓ محقق</span>
     </div>
 
-    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid var(--color-border);background:transparent;opacity:0.5">
-      <div style="font-size:26px;margin-bottom:6px">🏆</div>
-      <strong style="display:block;font-size:12px;color:#1e293b">خريج البرنامج</strong>
-      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">إتمام البرنامج التدريبي بالكامل</p>
-    </div>
-
-    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid var(--color-border);background:transparent;opacity:0.5">
-      <div style="font-size:26px;margin-bottom:6px">💡</div>
-      <strong style="display:block;font-size:12px;color:#1e293b">مبدع</strong>
-      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">تقديم حل إبداعي في مهمة</p>
-    </div>
-
+    <!-- 4. إكمال المشروع -->
     <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid var(--color-border);background:transparent;opacity:0.5">
       <div style="font-size:26px;margin-bottom:6px">🎯</div>
       <strong style="display:block;font-size:12px;color:#1e293b">إكمال المشروع</strong>
       <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">إنهاء أول مشروع متكامل</p>
     </div>
 
+    <!-- 5. مبدع -->
+    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid var(--color-border);background:transparent;opacity:0.5">
+      <div style="font-size:26px;margin-bottom:6px">💡</div>
+      <strong style="display:block;font-size:12px;color:#1e293b">مبدع</strong>
+      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">تقديم حل إبداعي في مهمة</p>
+    </div>
+
+    <!-- 6. خريج البرنامج -->
+    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid var(--color-border);background:transparent;opacity:0.5">
+      <div style="font-size:26px;margin-bottom:6px">🏆</div>
+      <strong style="display:block;font-size:12px;color:#1e293b">خريج البرنامج</strong>
+      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">إتمام البرنامج التدريبي بالكامل</p>
+    </div>
+
   </div>
 </div>
 
 <div class="nfd-card" style="margin-top:16px">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
-    <div>
-      <h3 style="margin:0 0 4px 0">شهادة الإتمام</h3>
-      <p class="nfd-muted" style="margin:0;font-size:12px">ستصدر الشهادة عند إتمام البرنامج التدريبي بالكامل.</p>
-    </div>
-    <span class="nfd-badge" style="background:#fef3c7;color:#d97706;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600">قيد المراجعة</span>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h3 style="margin:0">شهادة الإتمام</h3>
+    <span class="nfd-badge" style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">قيد المراجعة</span>
   </div>
+  
+  <p class="nfd-muted" style="margin:0 0 16px 0;font-size:12px">ستصدر الشهادة عند إتمام البرنامج التدريبي بالكامل.</p>
 
-  <div style="background:linear-gradient(135deg, #0b1f64 0%, #030b2e 100%);border-radius:12px;padding:32px 20px;text-align:center;color:#ffffff;position:relative;overflow:hidden">
+  <div style="background:linear-gradient(135deg, #0b1f64 0%, #030b2e 100%), radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px); background-size: 100% 100%, 16px 16px; border-radius:12px; padding:32px 20px; text-align:center; color:#ffffff; position:relative; overflow:hidden">
     <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">شهادة إتمام التدريب</div>
     <h2 style="font-size:24px;font-weight:800;letter-spacing:1px;margin:0 0 12px 0;color:#ffffff">NAFADH</h2>
     <p style="font-size:13px;color:#e2e8f0;margin:0 0 20px 0;line-height:1.6">
@@ -104,7 +109,6 @@
     </div>
   </div>
 
-  <!-- زر تنزيل الشهادة بنفس الشكل والتنسيق المطابق للصورة تماماً -->
   <button style="width:100%;margin-top:12px;background:#808baf;color:#ffffff;height:42px;border-radius:8px;border:none;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600">
     <span>تنزيل الشهادة</span>
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -130,7 +134,7 @@
         </div>
       }
       <label style="display:block;font-size:12px;font-weight:600;margin-top:8px">تعليق إضافي</label>
-      <textarea class="nfd-input" rows="3" [(ngModel)]="comment"></textarea>
+      <textarea class="nfd-input" rows="3" [(ngModel)]="comment" style="resize:none"></textarea>
       <div class="nfd-modal-actions">
         <button class="nfd-btn secondary" (click)="showFeedback.set(false)">إلغاء</button>
         <button class="nfd-btn primary" (click)="submitFeedback()">إرسال التقييم</button>
