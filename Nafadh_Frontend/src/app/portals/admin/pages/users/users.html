@@ -1,165 +1,233 @@
-<div class="nfd-page-header">
-  <h2 class="nfd-page-title">المستخدمون والصلاحيات</h2>
-  <p class="nfd-page-sub">إدارة الحسابات والأدوار وصلاحيات الوصول</p>
-</div>
+<div class="page-container">
+  <!-- ترويسة الصفحة -->
+  <div class="page-header">
+    <h2 class="nfd-page-title">المستخدمون والصلاحيات</h2>
+    <p class="nfd-page-sub">إدارة الحسابات والأدوار وصلاحيات الوصول</p>
+  </div>
 
-<!-- بطاقة جدول المستخدمين -->
-<div class="nfd-card">
-  <div class="nfd-toolbar">
-    <!-- زر إنشاء حساب جديد (مفعل بالكامل) -->
-    <button type="button" class="nfd-btn primary-teal" (click)="openCreateModal()">
-      <i class="bi bi-plus-lg"></i>
-      <span>إنشاء حساب جديد</span>
-    </button>
+  <!-- بطاقة المستخدمين -->
+  <div class="nfd-card">
+    <!-- الشريط العلوي: زر الإنشاء في اليمين، والفلترة في اليسار -->
+    <div class="nfd-toolbar">
+      <button type="button" class="nfd-btn primary" (click)="openCreateModal()">
+        + إنشاء حساب جديد
+      </button>
 
-    <!-- أزرار الفلترة Chips (مفعلة بالكامل ومع الأيقونات) -->
-    <div class="nfd-chips">
-      @for (r of [
-        { label: 'الكل', key: 'الكل', icon: 'bi-grid-fill' },
-        { label: 'هيئة', key: 'Admin', icon: 'bi-building-fill-gear' },
-        { label: 'شركة', key: 'CompanySupervisor', icon: 'bi-building-fill' },
-        { label: 'مدرب', key: 'Trainer', icon: 'bi-person-badge-fill' },
-        { label: 'متدرب', key: 'Trainee', icon: 'bi-mortarboard-fill' }
-      ]; track r.key) {
-        <button 
-          type="button"
-          class="nfd-chip" 
-          [class.active]="roleFilter() === r.key" 
-          (click)="setFilter(r.key)">
-          <span class="chip-count">{{ getRoleCount(r.key) }}</span>
-          <span class="chip-label">{{ r.label }}</span>
-          <i class="bi" [ngClass]="r.icon"></i>
-        </button>
-      }
+      <div class="nfd-chips">
+        @for (r of roles(); track r.key) {
+          <button 
+            type="button"
+            class="nfd-chip" 
+            [class.active]="roleFilter() === r.key" 
+            (click)="setFilter(r.key)">
+            <span class="nfd-chip-count">{{ r.count }}</span>
+            <span>{{ r.label }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- جدول المستخدمين -->
+    <div class="table-responsive">
+      <table class="nfd-table">
+        <thead>
+          <tr>
+            <th>المستخدم</th>
+            <th>الدور</th>
+            <th>الحالة</th>
+            <th>تاريخ الإنشاء</th>
+            <th class="text-left">الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (u of filtered(); track u.userId) {
+            <tr>
+              <td>
+                <div class="user-profile">
+                  <div class="avatar">{{ getInitials(u.fullName) }}</div>
+                  <div class="user-info">
+                    <span class="user-name">{{ u.fullName }}</span>
+                    <small class="nfd-muted">{{ u.email }}</small>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="nfd-badge role-badge">
+                  {{ u.roleName }}
+                </span>
+              </td>
+              <td>
+                <span 
+                  class="nfd-badge status-badge" 
+                  [class.active-status]="u.status === 'Active' || u.status === 'نشط'"
+                  [class.inactive-status]="u.status !== 'Active' && u.status !== 'نشط'">
+                  {{ u.status === 'Active' || u.status === 'نشط' ? 'نشط' : 'موقوف' }}
+                </span>
+              </td>
+              <td>{{ u.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td class="actions-cell">
+                <button type="button" class="icon-btn" title="تعديل البيانات" (click)="openEditModal(u)">
+                  ✏️
+                </button>
+                <button type="button" class="icon-btn" title="إعادة تعيين كلمة المرور" (click)="openResetPasswordModal(u)">
+                  🔑
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty-state">لا يوجد مستخدمون مطبق عليهم هذا الفلتر.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <table class="nfd-table">
-    <thead>
-      <tr>
-        <th class="text-left" style="width: 80px;"></th>
-        <th class="text-center">تاريخ الإنشاء</th>
-        <th class="text-center">الحالة</th>
-        <th class="text-center">الدور</th>
-        <th class="text-right">المستخدم</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (u of filtered(); track u.userId) {
-        <tr>
-          <td class="text-left">
-            <div class="action-buttons">
-              <button type="button" class="btn-icon" (click)="toggleStatus(u)" [title]="u.status === 'Active' ? 'إيقاف' : 'تفعيل'">
-                <i class="bi" [ngClass]="u.status === 'Active' ? 'bi-lock-fill' : 'bi-unlock-fill'"></i>
-              </button>
-              <button type="button" class="btn-icon" title="تعديل">
-                <i class="bi bi-pencil-square"></i>
-              </button>
-            </div>
-          </td>
-          <td class="text-center">{{ u.createdAt | date:'dd/MM/yyyy' }}</td>
-          <td class="text-center">
-            <span class="nfd-badge status" [class.active]="u.status === 'Active'" [class.suspended]="u.status !== 'Active'">
-              {{ u.status === 'Active' ? 'نشط' : 'موقوف' }}
-            </span>
-          </td>
-          <td class="text-center">
-            <span class="nfd-badge role" [ngClass]="u.roleName.toLowerCase()">
-              {{ getRoleLabel(u.roleName) }}
-            </span>
-          </td>
-          <td class="text-right">
-            <div class="user-info">
-              <div class="user-details">
-                <strong class="user-name">{{ u.fullName }}</strong>
-                <small class="user-email">{{ u.email }}</small>
-              </div>
-              <div class="user-avatar" [style.background-color]="getAvatarBg(u.roleName)">
-                {{ getInitials(u.fullName) }}
-              </div>
-            </div>
-          </td>
-        </tr>
-      } @empty {
-        <tr>
-          <td colspan="5" class="text-center p-4 text-muted">لا يوجد مستخدمون لعرضهم في هذا القسم</td>
-        </tr>
-      }
-    </tbody>
-  </table>
-</div>
-
-<!-- بطاقة إدارة الأدوار والصلاحيات RBAC -->
-<div class="nfd-card rbac-card">
-  <div class="rbac-header">
-    <h3>إدارة الأدوار والصلاحيات (RBAC)</h3>
+  <!-- جدول RBAC -->
+  <div class="nfd-card rbac-card">
+    <h3 class="rbac-title">إدارة الأدوار والصلاحيات (RBAC)</h3>
+    <div class="table-responsive">
+      <table class="nfd-table">
+        <thead>
+          <tr>
+            <th>الدور</th>
+            <th>عدد الصلاحيات</th>
+            <th>عدد المستخدمين</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rbac of rbacSummary(); track rbac.role) {
+            <tr>
+              <td><strong>{{ rbac.role }}</strong></td>
+              <td>
+                <span class="nfd-badge count-badge">{{ rbac.permissionsCount }}</span>
+              </td>
+              <td>{{ rbac.usersCount }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   </div>
-  <table class="nfd-table">
-    <thead>
-      <tr>
-        <th class="text-center">عدد المستخدمين</th>
-        <th class="text-center">عدد الصلاحيات</th>
-        <th class="text-right">الدور</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="text-center">{{ getRbacUserCount('Admin') }}</td>
-        <td class="text-center"><span class="perm-badge">10</span></td>
-        <td class="text-right">Admin</td>
-      </tr>
-      <tr>
-        <td class="text-center">{{ getRbacUserCount('CompanySupervisor') }}</td>
-        <td class="text-center"><span class="perm-badge">3</span></td>
-        <td class="text-right">CompanySupervisor</td>
-      </tr>
-      <tr>
-        <td class="text-center">{{ getRbacUserCount('Trainer') }}</td>
-        <td class="text-center"><span class="perm-badge">3</span></td>
-        <td class="text-right">Trainer</td>
-      </tr>
-      <tr>
-        <td class="text-center">{{ getRbacUserCount('Trainee') }}</td>
-        <td class="text-center"><span class="perm-badge">0</span></td>
-        <td class="text-right">Trainee</td>
-      </tr>
-    </tbody>
-  </table>
 </div>
 
-<!-- النافذة المنبثقة لإنشاء حساب -->
-@if (showCreate()) {
-  <div class="nfd-modal-bg" (click)="closeCreateModal()">
-    <div class="nfd-modal" (click)="$event.stopPropagation()">
-      <h3>إنشاء حساب جديد</h3>
-      <div class="form-group mb-3">
-        <label>الاسم الكامل</label>
-        <input class="nfd-input" [(ngModel)]="newUser.fullName" />
+<!-- النافذة المنبثقة: إنشاء حساب جديد -->
+@if (isCreateModalOpen) {
+  <div class="modal-backdrop" (click)="closeCreateModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <button type="button" class="close-icon" (click)="closeCreateModal()">✕</button>
+        <h3 class="modal-title">إنشاء حساب جديد</h3>
       </div>
-      <div class="form-group mb-3">
-        <label>البريد الإلكتروني</label>
-        <input class="nfd-input" [(ngModel)]="newUser.email" />
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">الاسم الكامل <span class="asterisk">*</span></label>
+          <input 
+            type="text" 
+            class="form-control" 
+            [(ngModel)]="newUser.fullName" 
+            placeholder="أدخل الاسم الكامل" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">البريد الإلكتروني <span class="asterisk">*</span></label>
+          <input 
+            type="email" 
+            class="form-control" 
+            [(ngModel)]="newUser.email" 
+            placeholder="example@nafadh.om" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">الدور <span class="asterisk">*</span></label>
+          <select class="form-control" [(ngModel)]="newUser.roleId">
+            @for (role of rolesList(); track role.roleId) {
+              <option [ngValue]="role.roleId">{{ role.displayName || role.roleName }}</option>
+            } @empty {
+              <option [ngValue]="4">متدرب</option>
+              <option [ngValue]="3">مدرب</option>
+              <option [ngValue]="2">شركة</option>
+              <option [ngValue]="1">هيئة</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">كلمة المرور <span class="asterisk">*</span></label>
+          <input 
+            type="password" 
+            class="form-control" 
+            [(ngModel)]="newUser.password" 
+            placeholder="........" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">تأكيد كلمة المرور <span class="asterisk">*</span></label>
+          <input 
+            type="password" 
+            class="form-control" 
+            [(ngModel)]="newUser.confirmPassword" 
+            placeholder="........" />
+        </div>
       </div>
-      <div class="form-group mb-3">
-        <label>رقم الجوال</label>
-        <input class="nfd-input" [(ngModel)]="newUser.phone" />
+
+      <div class="modal-footer">
+        <button type="button" class="btn-submit" (click)="createUser()">إنشاء الحساب</button>
+        <button type="button" class="btn-cancel" (click)="closeCreateModal()">إلغاء</button>
       </div>
-      <div class="form-group mb-3">
-        <label>الدور</label>
-        <select class="nfd-input" [(ngModel)]="newUser.roleId">
-          <option [ngValue]="1">Admin</option>
-          <option [ngValue]="2">Company Supervisor</option>
-          <option [ngValue]="3">Trainer</option>
-          <option [ngValue]="4">Trainee</option>
-        </select>
+    </div>
+  </div>
+}
+
+<!-- النافذة المنبثقة: تعديل المستخدم -->
+@if (isEditModalOpen) {
+  <div class="modal-backdrop" (click)="closeEditModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <button type="button" class="close-icon" (click)="closeEditModal()">✕</button>
+        <h3 class="modal-title">تعديل بيانات المستخدم</h3>
       </div>
-      <div class="form-group mb-3">
-        <label>كلمة المرور</label>
-        <input class="nfd-input" type="password" [(ngModel)]="newUser.password" />
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">الاسم الكامل</label>
+          <input type="text" class="form-control" [(ngModel)]="selectedUser.fullName" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">الحالة</label>
+          <select class="form-control" [(ngModel)]="selectedUser.status">
+            <option value="Active">نشط</option>
+            <option value="Suspended">موقوف</option>
+          </select>
+        </div>
       </div>
-      <div class="nfd-modal-actions">
-        <button type="button" class="nfd-btn secondary" (click)="closeCreateModal()">إلغاء</button>
-        <button type="button" class="nfd-btn primary-teal" (click)="createUser()">حفظ</button>
+      <div class="modal-footer">
+        <button type="button" class="btn-submit" (click)="updateUser()">تحديث البيانات</button>
+        <button type="button" class="btn-cancel" (click)="closeEditModal()">إلغاء</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- النافذة المنبثقة: إعادة تعيين كلمة المرور -->
+@if (isResetPasswordModalOpen) {
+  <div class="modal-backdrop" (click)="closeResetPasswordModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <button type="button" class="close-icon" (click)="closeResetPasswordModal()">✕</button>
+        <h3 class="modal-title">إعادة تعيين كلمة المرور</h3>
+      </div>
+      <div class="modal-body">
+        <p class="nfd-muted">إعادة تعيين كلمة المرور لـ: <strong>{{ selectedUser.fullName }}</strong></p>
+        <div class="form-group">
+          <label class="form-label">كلمة المرور الجديدة</label>
+          <input type="password" class="form-control" [(ngModel)]="newPassword" placeholder="••••••••" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-submit" (click)="confirmResetPassword()">تأكيد التغيير</button>
+        <button type="button" class="btn-cancel" (click)="closeResetPasswordModal()">إلغاء</button>
       </div>
     </div>
   </div>

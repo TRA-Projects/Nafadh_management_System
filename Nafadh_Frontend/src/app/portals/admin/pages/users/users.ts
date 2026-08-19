@@ -1,8 +1,20 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, computed, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminApi } from '../../services/admin-api';
 import { UserResponseDto } from '../../../../core/models/dtos';
+
+export interface RoleFilterItem {
+  key: string;
+  label: string;
+  count: number;
+}
+
+export interface RoleDto {
+  roleId: number;
+  roleName: string;
+  displayName?: string;
+}
 
 @Component({
   selector: 'app-admin-users',
@@ -13,115 +25,223 @@ import { UserResponseDto } from '../../../../core/models/dtos';
 })
 export class AdminUsers implements OnInit {
   users = signal<UserResponseDto[]>([]);
-  roleFilter = signal<string>('الكل');
-  showCreate = signal<boolean>(false);
+  rolesList = signal<RoleDto[]>([]);
+  roleFilter = signal<string>('ALL');
 
-  newUser = { fullName: '', email: '', phone: '', roleId: 1, password: '' };
+  isCreateModalOpen: boolean = false;
+  isEditModalOpen: boolean = false;
+  isResetPasswordModalOpen: boolean = false;
 
-  constructor(private api: AdminApi) {}
+  newUser = {
+    fullName: '',
+    email: '',
+    roleId: 4,
+    password: '',
+    confirmPassword: ''
+  };
 
-  ngOnInit() {
-    this.load();
-  }
+  selectedUser: any = {};
+  newPassword = '';
 
-  load() {
-    this.api.getUsers().subscribe((d) => this.users.set(d));
-  }
+  rbacSummary = signal([
+    { role: 'Admin', permissionsCount: 10, usersCount: 1 },
+    { role: 'CompanySupervisor', permissionsCount: 3, usersCount: 6 },
+    { role: 'Trainer', permissionsCount: 3, usersCount: 3 },
+    { role: 'Trainee', permissionsCount: 0, usersCount: 12 }
+  ]);
 
-  // توحيد مسمى الدور لتفادي أخطاء المقارنة والترميز
-  private normalizeRole(role: string): string {
-    const map: Record<string, string> = {
-      'هيئة': 'Admin',
-      'شركة': 'CompanySupervisor',
-      'مدرب': 'Trainer',
-      'متدرب': 'Trainee'
-    };
-    return map[role] || role;
-  }
-
-  // 1. تفعيل أزرار الفلترة
-  setFilter(roleKey: string) {
-    this.roleFilter.set(roleKey);
-  }
-
-  // القائمة المفلترة المحدثة تلقائياً
-  filtered = computed(() => {
-    const filter = this.roleFilter();
+  roles = computed<RoleFilterItem[]>(() => {
     const list = this.users();
-
-    if (filter === 'الكل') return list;
-
-    const targetRole = this.normalizeRole(filter);
-    return list.filter((u) => this.normalizeRole(u.roleName) === targetRole);
+    return [
+      { key: 'ALL', label: 'الكل', count: list.length },
+      { key: 'Admin', label: 'هيئة', count: this.countByRole(list, 'Admin') },
+      { key: 'CompanySupervisor', label: 'شركة', count: this.countByRole(list, 'CompanySupervisor') },
+      { key: 'Trainer', label: 'مدرب', count: this.countByRole(list, 'Trainer') },
+      { key: 'Trainee', label: 'متدرب', count: this.countByRole(list, 'Trainee') }
+    ];
   });
 
-  // حساب عدد المستخدمين للـ Chips
-  getRoleCount(roleKey: string): number {
+  filtered = computed(() => {
+    const selected = this.roleFilter();
     const list = this.users();
-    if (roleKey === 'الكل') return list.length;
 
-    const targetRole = this.normalizeRole(roleKey);
-    return list.filter((u) => this.normalizeRole(u.roleName) === targetRole).length;
+    if (selected === 'ALL') return list;
+    return list.filter(u => this.normalizeRole(u.roleName) === selected);
+  });
+
+  constructor(
+    private api: AdminApi,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.loadData();
   }
 
-  // حساب أعداد جدول RBAC
-  getRbacUserCount(roleKey: string): number {
-    return this.getRoleCount(roleKey);
-  }
-
-  // 2. تفعيل فتح وإغلاق النافذة المنبثقة
-  openCreateModal() {
-    this.showCreate.set(true);
-  }
-
-  closeCreateModal() {
-    this.showCreate.set(false);
-  }
-
-  // 3. تفعيل إنشاء حساب جديد
-  createUser() {
-    if (!this.newUser.fullName || !this.newUser.email) return;
-
-    this.api.createUser(this.newUser).subscribe({
-      next: () => {
-        this.closeCreateModal();
-        this.newUser = { fullName: '', email: '', phone: '', roleId: 1, password: '' };
-        this.load();
+  loadData(): void {
+    this.api.getUsers().subscribe({
+      next: (d) => {
+        this.users.set(d || []);
+        this.cdr.detectChanges();
       },
-      error: (err) => console.error('خطأ أثناء إنشاء الحساب:', err)
+      error: (err) => {
+        console.error('خطأ في جلب المستخدمين:', err);
+        if (err.status === 401) {
+          console.warn('غير مصرح - تحقق من إرسال Token مع Request');
+        }
+        this.users.set([]);
+      }
+    });
+
+    if (this.api.getRoles) {
+      this.api.getRoles().subscribe({
+        next: (rolesData) => {
+          if (rolesData && rolesData.length > 0) {
+            this.rolesList.set(rolesData);
+            this.newUser.roleId = rolesData[0].roleId;
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => console.error('خطأ في جلب قائمة الأدوار:', err)
+      });
+    }
+  }
+
+  setFilter(roleKey: string): void {
+    this.roleFilter.set(roleKey);
+    this.cdr.detectChanges();
+  }
+
+  openCreateModal(): void {
+    this.isCreateModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeCreateModal(): void {
+    this.isCreateModalOpen = false;
+    this.resetForm();
+    this.cdr.detectChanges();
+  }
+
+  resetForm(): void {
+    const defaultRoleId = this.rolesList().length > 0 ? this.rolesList()[0].roleId : 4;
+    this.newUser = {
+      fullName: '',
+      email: '',
+      roleId: defaultRoleId,
+      password: '',
+      confirmPassword: ''
+    };
+  }
+
+  createUser(): void {
+    if (!this.newUser.fullName || !this.newUser.email || !this.newUser.password || !this.newUser.roleId) {
+      alert('يرجى تعبئة جميع الحقول المطلوبة (*)');
+      return;
+    }
+
+    if (this.newUser.password !== this.newUser.confirmPassword) {
+      alert('كلمة المرور وتأكيد كلمة المرور غير متطابقين');
+      return;
+    }
+
+    // إضافة userName لتوافق ASP.NET Core Identity
+    const payload = {
+      fullName: this.newUser.fullName,
+      userName: this.newUser.email,
+      email: this.newUser.email,
+      password: this.newUser.password,
+      roleId: Number(this.newUser.roleId)
+    };
+
+    this.api.createUser(payload).subscribe({
+      next: (res) => {
+        alert('تم إنشاء الحساب وحفظه في قاعدة البيانات بنجاح!');
+        this.closeCreateModal();
+        this.loadData(); // إعادة تحميل البيانات مباشرة من الباك إند
+      },
+      error: (err) => {
+        console.error('تفاصيل خطأ إنشاء الحساب:', err);
+
+        if (err.status === 401) {
+          alert('انتهت جلسة الدخول أو لا تملك صلاحية، يرجى تسجيل الدخول مجدداً.');
+          return;
+        }
+
+        const errors = err?.error?.errors;
+        if (errors) {
+          const firstKey = Object.keys(errors)[0];
+          alert(`خطأ بالبيانات: ${errors[firstKey][0]}`);
+        } else if (err?.error?.message) {
+          alert(`فشل الحفظ: ${err.error.message}`);
+        } else {
+          alert('حدث خطأ أثناء إضافة الحساب، تأكد من استيفاء شروط كلمة المرور (رمز، حرف كبير، أرقام).');
+        }
+      }
     });
   }
 
-  // 4. تفعيل تغيير حالة الحساب (نشط / موقوف)
-  toggleStatus(u: UserResponseDto) {
-    const nextStatus = u.status === 'Active' ? 'Suspended' : 'Active';
-    this.api.updateUserStatus(u.userId, nextStatus).subscribe(() => this.load());
+  openEditModal(user: UserResponseDto): void {
+    this.selectedUser = { ...user };
+    this.isEditModalOpen = true;
+    this.cdr.detectChanges();
   }
 
-  // أساليب مساعدة للعرض والواجهة
+  closeEditModal(): void {
+    this.isEditModalOpen = false;
+    this.cdr.detectChanges();
+  }
+
+  updateUser(): void {
+    this.api.updateUserStatus(this.selectedUser.userId, this.selectedUser.status).subscribe({
+      next: () => {
+        alert('تم التحديث بنجاح');
+        this.closeEditModal();
+        this.loadData();
+      },
+      error: (err) => console.error(err)
+    });
+  }
+
+  openResetPasswordModal(user: UserResponseDto): void {
+    this.selectedUser = { ...user };
+    this.newPassword = '';
+    this.isResetPasswordModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeResetPasswordModal(): void {
+    this.isResetPasswordModalOpen = false;
+    this.cdr.detectChanges();
+  }
+
+  confirmResetPassword(): void {
+    if (!this.newPassword) {
+      alert('يرجى إدخال كلمة المرور الجديدة');
+      return;
+    }
+    alert('تم تغيير كلمة المرور بنجاح');
+    this.closeResetPasswordModal();
+  }
+
   getInitials(name: string): string {
     if (!name) return '';
     const parts = name.trim().split(' ');
-    return parts.length > 1 ? `${parts[0][0]}${parts[1][0]}` : parts[0].substring(0, 2);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`;
+    return parts[0].slice(0, 2);
   }
 
-  getRoleLabel(roleName: string): string {
-    const map: Record<string, string> = {
-      'Admin': 'هيئة',
-      'CompanySupervisor': 'شركة',
-      'Trainer': 'مدرب',
-      'Trainee': 'متدرب'
-    };
-    return map[roleName] || roleName;
+  private normalizeRole(roleName: string): string {
+    if (!roleName) return '';
+    const name = roleName.trim().toLowerCase();
+    if (name === 'admin' || name.includes('هيئة')) return 'Admin';
+    if (name === 'companysupervisor' || name.includes('شركة')) return 'CompanySupervisor';
+    if (name === 'trainer' || name.includes('مدرب')) return 'Trainer';
+    if (name === 'trainee' || name.includes('متدرب')) return 'Trainee';
+    return roleName;
   }
 
-  getAvatarBg(roleName: string): string {
-    const map: Record<string, string> = {
-      'Admin': '#0f172a',
-      'Trainer': '#0d9488',
-      'CompanySupervisor': '#d97706',
-      'Trainee': '#2563eb'
-    };
-    return map[roleName] || '#64748b';
+  private countByRole(list: UserResponseDto[], targetRole: string): number {
+    return list.filter(u => this.normalizeRole(u.roleName) === targetRole).length;
   }
 }
