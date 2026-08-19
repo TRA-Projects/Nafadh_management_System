@@ -6,7 +6,7 @@
 // rather than breaking if a field is named slightly differently.
 
 import {
-  AnnouncementScopeType, AttendanceStatus, BadgeConditionType, BatchStatus, CertificateType,
+  AnnouncementScopeType, AttendanceStatus, BadgeConditionType, CertificateType,
   CompanyStatus, ConversationType, EnrollmentCompletionStatus, EvaluationPeriod, EvaluationType,
   ExcuseStatus, FeedbackType, MessageStatus, ModuleProgressStatus, ProjectStatus, RoleName,
   SubmissionStatus, SupportTicketStatus, TaskPriority, TaskStatus, TraineeStatus, TrainerStatus,
@@ -59,6 +59,8 @@ export interface TraineeListItemDto {
   verificationStatus: VerificationStatus;
   companyId?: number;
   companyName?: string;
+  enrollmentId?: number;
+  fileUrl?: string;
 }
 
 export interface TraineeProfileDto {
@@ -77,7 +79,8 @@ export interface TraineeProfileDto {
   verificationStatus: VerificationStatus;
   companyId?: number;
   companyName?: string;
-  enrollmentId? : number;
+  enrollmentId?: number;
+  fileUrl?: string;
 }
 
 export interface TraineeDashboardSummaryDto {
@@ -201,6 +204,14 @@ export interface ProgramDto {
   status?: string;
 }
 
+export enum BatchStatus {
+  Upcoming = 'Upcoming',
+  Ongoing = 'Ongoing',
+  Completed = 'Completed',
+  Cancelled = 'Cancelled'
+}
+
+// 2. استخدامها داخل الـ Interface
 export interface CompanyProgramLinkDto {
   companyId: number;
   programId: number;
@@ -210,9 +221,28 @@ export interface BatchDto {
   batchId: number;
   programId: number;
   batchName: string;
+  companyName?: string;
+  trackName?: string;
+  instructorName?: string;
   startDate: string;
   endDate: string;
   capacity: number;
+  totalTraineesCount?: number;
+  issuedCertificatesCount?: number;
+  status: BatchStatus; 
+}
+
+export interface BatchDto {
+  batchId: number;
+  programId: number;
+  batchName: string;
+  companyName?: string;
+  trackName?: string;
+  startDate: string;
+  endDate: string;
+  capacity: number;
+  totalTraineesCount?: number;
+  issuedCertificatesCount?: number;
   status: BatchStatus;
   department?: string;
   enrolledTraineesCount?: number;

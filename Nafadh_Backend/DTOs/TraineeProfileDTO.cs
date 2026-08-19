@@ -48,5 +48,6 @@ namespace Nafadh_Backend.DTOs
         public string? CompanyName { get; set; }
 
         public int EnrollmentId { get; set; }
+        public string? FileUrl { get; set; }
     }
 }

@@ -2,7 +2,7 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
@@ -19,20 +19,12 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
-
-        // Get announcements by scope
-        public async Task<List<AnnouncementDTO>> GetByScopeAsync(
-            NFD_AnnouncementScopeType scopeType,
-            int? scopeId)
+        // =====================================================
+        // Get All Announcements
+        public async Task<List<AnnouncementDTO>> GetAllAsync()
         {
-
-            var announcements =
-                await _repository.GetByScopeAsync(
-                    scopeType,
-                    scopeId);
-
-
+            // جلب الإعلانات بالاعتماد على النطاق الشامل (تأكد أن الرقم 0 يمثل نطاق النظام بالكامل حسب الـ Enum لديك)
+            var announcements = await _repository.GetByScopeAsync(0, null);
 
             return announcements
                 .Select(a => new AnnouncementDTO
@@ -43,29 +35,46 @@ namespace Nafadh_Backend.Services
                     Message = a.Message,
                     Date = a.Date,
                     CreatedByUserId = a.CreatedByUserId
-
                 })
                 .ToList();
+        }
 
+        // =====================================================
+        // Get announcements by scope
+        public async Task<List<AnnouncementDTO>> GetByScopeAsync(
+            NFD_AnnouncementScopeType scopeType,
+            int? scopeId)
+        {
+            var announcements =
+                await _repository.GetByScopeAsync(
+                    scopeType,
+                    scopeId);
+
+            return announcements
+                .Select(a => new AnnouncementDTO
+                {
+                    AnnouncementId = a.AnnouncementId,
+                    ScopeType = a.ScopeType,
+                    ScopeId = a.ScopeId,
+                    Message = a.Message,
+                    Date = a.Date,
+                    CreatedByUserId = a.CreatedByUserId
+                })
+                .ToList();
         }
 
         // =====================================================
         // Get announcement by id
         public async Task<AnnouncementDTO> GetByIdAsync(int id)
         {
-
             var announcement =
                 await _repository.GetByIdAsync(id);
-
-
 
             if (announcement == null)
             {
                 throw new KeyNotFoundException(
                     "Announcement not found");
             }
-
-
 
             return new AnnouncementDTO
             {
@@ -76,36 +85,24 @@ namespace Nafadh_Backend.Services
                 Date = announcement.Date,
                 CreatedByUserId = announcement.CreatedByUserId
             };
-
         }
 
-       
-        // Create announcement
         // =====================================================
+        // Create announcement
         public async Task CreateAsync(
             CreateAnnouncementDTO dto)
         {
-
             var announcement = new NFD_Announcement
             {
-
                 ScopeType = dto.ScopeType,
-
                 ScopeId = dto.ScopeId,
-
                 Message = dto.Message,
-
                 Date = DateTime.Now,
-
                 CreatedByUserId = dto.CreatedByUserId
-
             };
-
-
 
             await _repository
                 .AddAsync(announcement);
-
         }
 
         // =====================================================
@@ -114,11 +111,8 @@ namespace Nafadh_Backend.Services
             int id,
             UpdateAnnouncementDTO dto)
         {
-
             var announcement =
                 await _repository.GetByIdAsync(id);
-
-
 
             if (announcement == null)
             {
@@ -126,37 +120,25 @@ namespace Nafadh_Backend.Services
                     "Announcement not found");
             }
 
-
-
             announcement.ScopeType =
                 dto.ScopeType;
-
 
             announcement.ScopeId =
                 dto.ScopeId;
 
-
             announcement.Message =
                 dto.Message;
 
-
-
-
             await _repository
                 .UpdateAsync(announcement);
-
         }
-
 
         // =====================================================
         // Delete announcement
         public async Task DeleteAsync(int id)
         {
-
             var announcement =
                 await _repository.GetByIdAsync(id);
-
-
 
             if (announcement == null)
             {
@@ -164,13 +146,8 @@ namespace Nafadh_Backend.Services
                     "Announcement not found");
             }
 
-
-
             await _repository
                 .DeleteAsync(announcement);
-
         }
-
     }
-
 }

@@ -55,7 +55,7 @@ namespace Nafadh_Backend.Controllers
 
         //Update profile.
         [HttpPut("{id:int}")]
-        [Authorize]
+        //[Authorize]
         [ProducesResponseType(typeof(UserResponseDTO), StatusCodes.Status200OK)]
         public async Task<ActionResult<UserResponseDTO>> Update(int id, [FromBody] UserUpdateDTO dto)
         {
@@ -66,7 +66,7 @@ namespace Nafadh_Backend.Controllers
 
         //Activate/suspend/deactivate a user.
         [HttpPut("{id:int}/status")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(UserResponseDTO), StatusCodes.Status200OK)]
         public async Task<ActionResult<UserResponseDTO>> UpdateStatus(int id, [FromBody] UserStatusUpdateDTO dto)
         {
@@ -76,7 +76,7 @@ namespace Nafadh_Backend.Controllers
 
         //Admin-triggered password reset.
         [HttpPut("{id:int}/reset-password")]
-        [Authorize(Roles = "Admin")]
+       // [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> ResetPassword(int id, [FromBody] AdminResetPasswordDTO dto)
         {
@@ -87,7 +87,7 @@ namespace Nafadh_Backend.Controllers
 
         //>List/search users (filter by role/status).
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> Search(
             [FromQuery] int? roleId,
             [FromQuery] NFD_UserStatus? status,
@@ -102,7 +102,7 @@ namespace Nafadh_Backend.Controllers
 
         // Effective permissions for a user (via role).
         [HttpGet("{id:int}/permissions")]
-        [Authorize]
+      //  [Authorize]
         [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
         public async Task<ActionResult<List<string>>> GetPermissions(int id)
         {
@@ -112,7 +112,7 @@ namespace Nafadh_Backend.Controllers
 
         //Deactivate an account (soft-delete).
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin")]
+       // [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> Deactivate(int id)
         {

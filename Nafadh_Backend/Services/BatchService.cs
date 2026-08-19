@@ -117,6 +117,7 @@ namespace Nafadh_Backend.Services
             };
         }
 
+
         private static BatchDto MapToDto(NFD_Batch b, int enrolledCount)
         {
             string[] departments = {
@@ -125,7 +126,7 @@ namespace Nafadh_Backend.Services
         "الذكاء الاصطناعي وتحليل البيانات",
         "تصميم واجهات وتجربة المستخدم UX/UI"
     };
-
+ var company = b.Program?.CompanyPrograms?.FirstOrDefault()?.Company;
             int seed = b.BatchId;
 
             // حساب الحالة ديناميكياً بناءً على التاريخ الحالي (التاريخ اليوم: أغسطس 2026)
@@ -145,11 +146,25 @@ namespace Nafadh_Backend.Services
                 calculatedStatus = NFD_BatchStatus.Upcoming; // قادمة
             }
 
+
             return new BatchDto
             {
                 BatchId = b.BatchId,
                 ProgramId = b.ProgramId,
                 BatchName = b.BatchName,
+
+                // اسم الشركة
+                CompanyName = company?.CompanyName ?? "غير محدد",
+
+                // اسم المسار
+                TrackName = b.Program?.Track?.Name ?? b.Program?.Title ?? "عام",
+
+                StartDate = b.StartDate,
+                EndDate = b.EndDate,
+                Capacity = b.Capacity,
+                TotalTraineesCount = b.Enrollments?.Count ?? 0,
+                IssuedCertificatesCount = b.Enrollments?.Count(e => e.CompletionStatus == NFD_EnrollmentCompletionStatus.Completed) ?? 0,
+                Status = b.Status
                 StartDate = b.StartDate,
                 EndDate = b.EndDate,
                 Capacity = b.Capacity,

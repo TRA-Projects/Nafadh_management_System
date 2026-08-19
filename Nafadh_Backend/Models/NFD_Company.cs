@@ -37,8 +37,8 @@ namespace Nafadh_Backend.Models
         public NFD_CompanyStatus Status { get; set; }
         public DateTime? ApprovalDate { get; set; }
 
-        public int UserId { get; set; }
-        public NFD_User User { get; set; } = null!;
+        public int? UserId { get; set; }
+        public NFD_User? User { get; set; }
 
         public ICollection<NFD_CompanyBranch> CompanyBranches { get; set; } = new List<NFD_CompanyBranch>();
         public ICollection<NFD_CompanySupervisor> CompanySupervisors { get; set; } = new List<NFD_CompanySupervisor>();

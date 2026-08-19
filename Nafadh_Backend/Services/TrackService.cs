@@ -48,7 +48,7 @@ namespace Nafadh_Backend.Services
         }
 
         //Update track name/description/status
-        public async Task<TrackDto> UpdateTrackAsync(int id, UpdateTrackDto dto)
+        public async Task<TrackDto?> UpdateTrackAsync(int id, UpdateTrackDto dto)
         {
             var track = await _repository.GetByIdAsync(id);
             if (track is null) return null;
