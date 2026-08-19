@@ -57,12 +57,6 @@ export class TrainerTrainees implements OnInit {
   // KPI
   // =====================================================
 
-  /**
-   * Number of unique trainees across the trainer's batches.
-   *
-   * If the same trainee has more than one enrollment,
-   * the trainee is counted only once in the KPI.
-   */
   totalTrainees = computed(() => {
 
     const traineeIds =
@@ -81,24 +75,10 @@ export class TrainerTrainees implements OnInit {
   // EVALUATION AVERAGES
   // =====================================================
 
-  /**
-   * Stores the evaluation average for each enrollment.
-   *
-   * Example:
-   * {
-   *   25: 90,
-   *   58: 72.5,
-   *   78: null
-   * }
-   */
   evaluationAverages =
     signal<Record<number, number | null>>({});
 
 
-  /**
-   * Number of trainees that currently have
-   * an available evaluation average.
-   */
   evaluatedTraineesCount =
     computed(() => {
 
@@ -115,10 +95,6 @@ export class TrainerTrainees implements OnInit {
     });
 
 
-  /**
-   * Average technical performance
-   * across evaluated trainees only.
-   */
   averageTechnicalPerformance =
     computed(() => {
 
@@ -152,12 +128,6 @@ export class TrainerTrainees implements OnInit {
     });
 
 
-  /**
-   * High-performing trainees.
-   *
-   * Current rule:
-   * Average score >= 85
-   */
   highPerformers =
     computed(() => {
 
@@ -175,12 +145,6 @@ export class TrainerTrainees implements OnInit {
     });
 
 
-  /**
-   * Trainees who need support.
-   *
-   * Current rule:
-   * Average score < 60
-   */
   needsSupport =
     computed(() => {
 
@@ -196,6 +160,154 @@ export class TrainerTrainees implements OnInit {
         )
         .length;
     });
+
+
+  // =====================================================
+  // ATTENDANCE
+  // =====================================================
+
+  /**
+   * Stores attendance compliance percentage
+   * for every enrollment.
+   *
+   * Example:
+   * {
+   *   440: 60,
+   *   441: 90,
+   *   442: null
+   * }
+   */
+  attendancePercentages =
+    signal<Record<number, number | null>>({});
+
+
+  /**
+   * Returns attendance percentage
+   * for a specific enrollment.
+   */
+  attendancePercentage(
+    enrollmentId: number
+  ): number | null {
+
+    const percentage =
+      this.attendancePercentages()[
+        enrollmentId
+      ];
+
+
+    if (
+      typeof percentage !== 'number' ||
+      !Number.isFinite(percentage)
+    ) {
+
+      return null;
+    }
+
+
+    return percentage;
+  }
+
+
+  // =====================================================
+  // TECHNICAL LEVEL
+  // =====================================================
+
+  /**
+   * Returns the technical score for an enrollment.
+   */
+  technicalScore(
+    enrollmentId: number
+  ): number | null {
+
+    const score =
+      this.evaluationAverages()[
+        enrollmentId
+      ];
+
+
+    if (
+      typeof score !== 'number' ||
+      !Number.isFinite(score)
+    ) {
+
+      return null;
+    }
+
+
+    return score;
+  }
+
+
+  /**
+   * Returns the technical level label
+   * based on the evaluation average.
+   */
+  technicalLevel(
+    enrollmentId: number
+  ): string {
+
+    const score =
+      this.technicalScore(
+        enrollmentId
+      );
+
+
+    if (score === null) {
+
+      return '—';
+    }
+
+
+    if (score >= 85) {
+
+      return 'ممتاز';
+    }
+
+
+    if (score >= 70) {
+
+      return 'جيد';
+    }
+
+
+    if (score >= 60) {
+
+      return 'متوسط';
+    }
+
+
+    return 'يحتاج تطوير';
+  }
+
+
+  /**
+   * Returns a safe progress value
+   * between 0 and 100.
+   */
+  technicalProgress(
+    enrollmentId: number
+  ): number {
+
+    const score =
+      this.technicalScore(
+        enrollmentId
+      );
+
+
+    if (score === null) {
+
+      return 0;
+    }
+
+
+    return Math.min(
+      100,
+      Math.max(
+        0,
+        score
+      )
+    );
+  }
 
 
   // =====================================================
@@ -278,9 +390,6 @@ export class TrainerTrainees implements OnInit {
   // CURRENT TRAINER
   // =====================================================
 
-  /**
-   * Gets the real TrainerId using the logged-in UserId.
-   */
   private loadCurrentTrainer(): void {
 
     const userId =
@@ -296,6 +405,8 @@ export class TrainerTrainees implements OnInit {
       this.enrollments.set([]);
 
       this.evaluationAverages.set({});
+
+      this.attendancePercentages.set({});
 
       return;
     }
@@ -327,6 +438,8 @@ export class TrainerTrainees implements OnInit {
           this.enrollments.set([]);
 
           this.evaluationAverages.set({});
+
+          this.attendancePercentages.set({});
         }
 
       });
@@ -337,15 +450,6 @@ export class TrainerTrainees implements OnInit {
   // TRAINER BATCHES
   // =====================================================
 
-  /**
-   * Loads batches assigned to the current trainer.
-   *
-   * If batchId exists in the URL, only that assigned batch
-   * is loaded.
-   *
-   * Otherwise, enrollments from all trainer batches
-   * are loaded.
-   */
   private loadTrainerBatches(
     trainerId: number
   ): void {
@@ -383,6 +487,8 @@ export class TrainerTrainees implements OnInit {
 
               this.evaluationAverages.set({});
 
+              this.attendancePercentages.set({});
+
               return;
             }
 
@@ -418,6 +524,8 @@ export class TrainerTrainees implements OnInit {
           this.enrollments.set([]);
 
           this.evaluationAverages.set({});
+
+          this.attendancePercentages.set({});
         }
 
       });
@@ -428,9 +536,6 @@ export class TrainerTrainees implements OnInit {
   // ENROLLMENTS
   // =====================================================
 
-  /**
-   * Loads enrollment records for the trainer's batches.
-   */
   private loadEnrollmentsForBatches(
     batchIds: number[]
   ): void {
@@ -440,6 +545,8 @@ export class TrainerTrainees implements OnInit {
       this.enrollments.set([]);
 
       this.evaluationAverages.set({});
+
+      this.attendancePercentages.set({});
 
       return;
     }
@@ -486,9 +593,14 @@ export class TrainerTrainees implements OnInit {
           );
 
 
-          // تحميل متوسطات تقييم جميع المتدربين
-          // بعد تحميل الـ Enrollments
+          // تحميل متوسط التقييم لكل متدرب
           this.loadEvaluationAverages(
+            enrollments
+          );
+
+
+          // تحميل نسبة الحضور لكل متدرب
+          this.loadAttendancePercentages(
             enrollments
           );
         },
@@ -504,6 +616,8 @@ export class TrainerTrainees implements OnInit {
           this.enrollments.set([]);
 
           this.evaluationAverages.set({});
+
+          this.attendancePercentages.set({});
         }
 
       });
@@ -514,14 +628,6 @@ export class TrainerTrainees implements OnInit {
   // LOAD EVALUATION AVERAGES
   // =====================================================
 
-  /**
-   * Loads the evaluation average for every enrollment.
-   *
-   * These values are then used to calculate:
-   * - Average technical performance
-   * - High performers
-   * - Trainees who need support
-   */
   private loadEvaluationAverages(
     enrollments: EnrollmentDto[]
   ): void {
@@ -534,7 +640,6 @@ export class TrainerTrainees implements OnInit {
     }
 
 
-    // إزالة القيم القديمة قبل تحميل بيانات الدفعة الجديدة
     this.evaluationAverages.set({});
 
 
@@ -603,6 +708,102 @@ export class TrainerTrainees implements OnInit {
           );
 
           this.evaluationAverages.set({});
+        }
+
+      });
+  }
+
+
+  // =====================================================
+  // LOAD ATTENDANCE PERCENTAGES
+  // =====================================================
+
+  private loadAttendancePercentages(
+    enrollments: EnrollmentDto[]
+  ): void {
+
+    if (enrollments.length === 0) {
+
+      this.attendancePercentages.set({});
+
+      return;
+    }
+
+
+    this.attendancePercentages.set({});
+
+
+    const requests =
+      enrollments.map(
+        enrollment =>
+
+          this.api
+            .getAttendanceComplianceRate(
+              enrollment.enrollmentId
+            )
+            .pipe(
+
+              catchError(err => {
+
+                console.warn(
+                  `تعذر تحميل نسبة حضور التسجيل ${enrollment.enrollmentId}:`,
+                  err
+                );
+
+
+                return of({
+
+                  enrollmentId:
+                    enrollment.enrollmentId,
+
+                  totalDays:
+                    0,
+
+                  presentDays:
+                    0,
+
+                  compliancePercentage:
+                    null as number | null
+
+                });
+              })
+
+            )
+      );
+
+
+    forkJoin(requests)
+      .subscribe({
+
+        next: (results) => {
+
+          const percentages:
+            Record<number, number | null> = {};
+
+
+          for (const result of results) {
+
+            percentages[
+              result.enrollmentId
+            ] =
+              result.compliancePercentage;
+          }
+
+
+          this.attendancePercentages.set(
+            percentages
+          );
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'خطأ في تحميل نسب حضور المتدربين:',
+            err
+          );
+
+          this.attendancePercentages.set({});
         }
 
       });
@@ -861,14 +1062,12 @@ export class TrainerTrainees implements OnInit {
         enrollmentId:
           this.selectedEnrollmentId,
 
-        // المدرب الحالي الحقيقي
         trainerId:
           trainer.trainerId,
 
         templateId:
           template.templateId,
 
-        // المستخدم الحالي الحقيقي
         evaluatorUserId:
           userId,
 
@@ -889,8 +1088,7 @@ export class TrainerTrainees implements OnInit {
             null;
 
 
-          // تحديث متوسطات التقييم والـ KPI
-          // مباشرة بعد حفظ تقييم جديد
+          // تحديث التقييمات بعد حفظ تقييم جديد
           this.loadEvaluationAverages(
             this.enrollments()
           );
