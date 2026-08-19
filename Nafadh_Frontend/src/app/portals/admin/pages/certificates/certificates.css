@@ -1,22 +1,22 @@
-/* ==================== النمط العام والقائمة ==================== */
 .certificates-container {
-  padding: 20px;
+  padding: 24px;
   direction: rtl;
 }
 
 .nfd-page-title {
   font-size: 1.5rem;
-  font-weight: 700;
-  color: #111827;
-  margin: 0;
+  font-weight: bold;
+  color: #0f172a;
+  margin: 0 0 4px 0;
 }
 
 .nfd-page-sub {
-  font-size: 0.9rem;
-  color: #6b7280;
-  margin: 4px 0 20px 0;
+  color: #64748b;
+  margin: 0 0 24px 0;
+  font-size: 0.95rem;
 }
 
+/* Batches Grid */
 .batches-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -25,10 +25,11 @@
 
 .batch-card {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-header {
@@ -41,68 +42,78 @@
 .calendar-icon-box {
   width: 36px;
   height: 36px;
-  background: #0a117213;
+  background-color: #f1f5f9;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.status-badge-pill {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.status-badge-pill.ongoing {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.status-badge-pill.not-started {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
 .batch-title {
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: bold;
   margin: 0 0 4px 0;
-  color: #111827;
+  color: #0f172a;
 }
 
-.company-name {
-  color: #0A1172;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.track-name {
-  color: #6b7280;
+.company-name, .track-name {
+  color: #64748b;
   font-size: 0.85rem;
-  margin-bottom: 12px;
 }
 
 .progress-section {
-  margin: 12px 0;
+  margin: 16px 0 12px 0;
 }
 
 .progress-labels {
   display: flex;
   justify-content: space-between;
   font-size: 0.8rem;
-  color: #6b7280;
   margin-bottom: 6px;
+  color: #475569;
 }
 
 .progress-bar-bg {
-  background: #e5e7eb;
   height: 6px;
-  border-radius: 3px;
+  background-color: #f1f5f9;
+  border-radius: 10px;
   overflow: hidden;
 }
 
 .progress-bar-fill {
-  background: #0a11722f;
   height: 100%;
+  background-color: #0a1172;
 }
 
 .dates-row {
   display: flex;
   justify-content: space-between;
   font-size: 0.8rem;
-  color: #9ca3af;
-  margin-top: 10px;
+  color: #94a3b8;
+  margin-bottom: 12px;
 }
 
 .card-divider {
   border: none;
-  border-top: 1px solid #f3f4f6;
-  margin: 12px 0;
+  border-top: 1px solid #f1f5f9;
+  margin: 0 0 12px 0;
 }
 
 .card-footer {
@@ -113,15 +124,15 @@
 
 .trainees-count {
   font-size: 0.85rem;
-  color: #4b5563;
-  font-weight: 600;
+  font-weight: bold;
+  color: #334155;
 }
 
 .view-btn {
   background: none;
   border: none;
   color: #0A1172;
-  font-weight: 600;
+  font-weight: bold;
   font-size: 0.85rem;
   cursor: pointer;
   display: flex;
@@ -129,218 +140,129 @@
   gap: 4px;
 }
 
-/* ==================== زر العودة (جهة اليمين) ==================== */
-.back-link-row {
+/* Details Screen */
+.back-btn {
+  background: none;
+  border: none;
+  color: #475569;
+  cursor: pointer;
   display: flex;
-  justify-content: flex-start;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
   margin-bottom: 16px;
 }
 
-.back-btn {
-  background: transparent;
-  border: none;
-  color: #6b7280;
-  font-size: 0.9rem;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  padding: 0;
-}
-
-.back-btn:hover {
-  color: #0A1172;
-}
-
-/* ==================== 1. المستطيل العلوي (بيانات الدفعة) ==================== */
 .top-info-card {
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 24px 32px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .right-details-side {
   display: flex;
-  align-items: flex-start;
   gap: 16px;
+  align-items: center;
 }
 
 .calendar-box {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
-  background-color: #ecfdf5;
+  background: #ecfdf5;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-}
-
-.batch-main-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.title-with-badge {
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
 .batch-name-heading {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.status-badge-pill {
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.status-badge-pill.ongoing {
-  background-color: #e0f2fe;
-  color: #0284c7;
-}
-
-.status-badge-pill.not-started {
-  background-color: #f3f4f6;
-  color: #6b7280;
+  margin: 0 0 4px 0;
+  font-size: 1.2rem;
 }
 
 .company-text-highlight {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #0A1172;
+  color: #0a1172;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
 }
 
 .meta-dates-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  color: #64748b;
   font-size: 0.85rem;
-  color: #9ca3af;
-  margin-top: 2px;
-}
-
-.dot-separator {
-  color: #d1d5db;
 }
 
 .left-stats-side {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 24px;
 }
 
 .stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  text-align: center;
 }
 
 .stat-num {
-  font-size: 1.6rem;
-  font-weight: 800;
-  line-height: 1.2;
+  display: block;
+  font-size: 1.5rem;
+  font-weight: bold;
 }
 
-.stat-num.dark-text {
-  color: #1f2937;
-}
-
-.stat-num.green-text {
-  color: #0A1172;
-}
+.green-text { color: #10b981; }
+.dark-text { color: #0f172a; }
 
 .stat-lbl {
   font-size: 0.8rem;
-  color: #9ca3af;
-  margin-top: 2px;
+  color: #64748b;
 }
 
 .stat-v-divider {
   width: 1px;
   height: 36px;
-  background-color: #e5e7eb;
+  background-color: #e2e8f0;
 }
 
-/* ==================== 2. صندوق العنوان والزر المستقل ==================== */
 .header-action-box {
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 20px 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 80px; /* مسافة فاصلة واسعة بين البوكس والجدول بالأسفل */
-}
-
-.header-titles {
-  display: flex;
-  flex-direction: column;
+  margin-bottom: 16px;
 }
 
 .trainees-section-title {
   margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #111827;
+  font-size: 1.1rem;
 }
 
 .trainees-section-sub {
   margin: 4px 0 0 0;
   font-size: 0.85rem;
-  color: #6b7280;
-  font-weight: 500;
+  color: #64748b;
 }
 
-/* زر إصدار جميع الشهادات في الهيدر */
-.btn-issue-all.solid-style {
-  background-color: #0A1172;
-  color: #ffffff;
-  border: 1px solid transparent;
+.btn-issue-all {
+  background-color: #1e1b4b;
+  color: white;
+  border: none;
+  padding: 10px 18px;
   border-radius: 8px;
-  padding: 8px 18px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
+  font-weight: bold;
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: opacity 0.2s ease;
+  cursor: pointer;
 }
 
-.btn-issue-all.solid-style:hover {
-  opacity: 0.9;
-}
-
-/* ==================== 3. صندوق الجدول السفلي ==================== */
+/* Data Table */
 .table-card-container {
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .trainees-data-table {
@@ -349,86 +271,275 @@
   text-align: right;
 }
 
-.trainees-data-table th {
-  padding: 12px 16px;
-  background-color: #f9fafb;
-  color: #6b7280;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.trainees-data-table td {
+.trainees-data-table th, .trainees-data-table td {
   padding: 14px 16px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #f1f5f9;
   font-size: 0.9rem;
-  color: #374151;
 }
 
-.trainees-data-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.trainee-name-cell {
+.trainees-data-table th {
+  background-color: #f8fafc;
+  color: #64748b;
   font-weight: 600;
-  color: #1f2937;
-}
-
-.grade-badge {
-  color: #6b7280;
-}
-
-/* ==================== حالة الشهادة وأزرار جدول المتدربين ==================== */
-.status-not-issued {
-  color: #6b7280;
-  font-size: 0.85rem;
 }
 
 .status-issued {
   color: #10b981;
-  font-weight: 600;
-  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.status-not-issued {
+  color: #94a3b8;
 }
 
 .btn-action-cert {
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 6px 14px;
   font-size: 0.85rem;
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-action-cert.view-cert {
+  background-color: #ffffff;
+  color: #334155;
+}
+
+.btn-action-cert.issue-cert {
+  background-color: #0a1172;
+  color: white;
+  border: none;
+}
+
+/* Modal Styling */
+.cert-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 9999;
 }
 
-/* زر إصدار الشهادة للمتدرب (لون 0A1172) */
-.btn-action-cert.issue-cert {
-  background-color: #0A1172;
-  color: #ffffff;
-  border: 1px solid #0A1172;
+.cert-modal-container {
+  background: #ffffff;
+  width: 90%;
+  max-width: 580px;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
-.btn-action-cert.issue-cert:hover {
-  opacity: 0.9;
+.cert-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-/* زر عرض الشهادة للمتدرب (أبيض شفاف) */
-.btn-action-cert.view-cert {
-  background-color: rgba(255, 255, 255, 0.8);
-  color: #374151;
-  border: 1px solid #d1d5db;
+.cert-modal-header h3 { margin: 0; font-size: 1.1rem; }
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #94a3b8;
+  cursor: pointer;
 }
 
-.btn-action-cert.view-cert:hover {
-  background-color: #ffffff;
-  border-color: #9ca3af;
-  color: #0A1172;
-}
+.cert-modal-body { padding: 24px; }
 
-.empty-state, .empty-state-inside, .loading-state {
-  padding: 40px;
+.cert-frame {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
   text-align: center;
-  color: #9ca3af;
+  position: relative;
+}
+
+.cert-top-accent {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #0284c7, #10b981);
+}
+
+.logo-title { font-weight: bold; font-size: 1.2rem; }
+.logo-sub { font-size: 0.8rem; color: #64748b; }
+.cert-sub-heading { margin-top: 16px; color: #94a3b8; font-size: 0.9rem; }
+.trainee-cert-name { margin: 8px 0; font-size: 1.5rem; color: #0f172a; }
+.cert-desc { color: #64748b; margin: 4px 0; }
+.track-cert-title { color: #0284c7; font-size: 1.1rem; margin: 4px 0; }
+.company-cert-sub { font-size: 0.85rem; color: #64748b; }
+
+.cert-meta-grid {
+  display: flex;
+  justify-content: space-around;
+  margin: 20px 0 12px 0;
+  padding-top: 16px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.meta-label { display: block; font-size: 0.75rem; color: #94a3b8; }
+.meta-val { font-weight: bold; color: #334155; font-size: 0.9rem; }
+
+.cert-footer-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  margin-top: 12px;
+}
+
+.cert-actions-row { display: flex; gap: 12px; margin-top: 20px; }
+
+.btn-download-pdf {
+  flex: 1;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.btn-close-modal {
+  flex: 1;
+  background-color: transparent;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.success-status-bar {
+  margin-top: 16px;
+  background-color: #ecfdf5;
+  color: #065f46;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+/* إطار الشهادة المصمم */
+.certificate-card-frame {
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+  direction: rtl;
+  text-align: center;
+}
+
+/* الشريط العلوي */
+.cert-card-header {
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  color: #ffffff;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cert-badge {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cert-org-name {
   font-size: 0.95rem;
+  font-weight: bold;
+}
+
+/* جسم الشهادة */
+.cert-card-content {
+  padding: 30px 20px;
+}
+
+.cert-p-intro {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+.cert-trainee-name {
+  color: #0f172a;
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin: 10px 0 20px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px dashed #cbd5e1;
+  display: inline-block;
+  min-width: 60%;
+}
+
+.cert-p-body {
+  color: #334155;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  margin-bottom: 25px;
+}
+
+.cert-company-tag {
+  display: inline-block;
+  margin-top: 6px;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+/* فوتر الشهادة */
+.cert-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 15px;
+  margin-top: 10px;
+}
+
+.footer-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 0.8rem;
+}
+
+.f-label {
+  color: #94a3b8;
+}
+
+.f-value {
+  color: #1e293b;
+  font-weight: bold;
+}
+
+.stamp-box {
+  border: 2px double #2563eb;
+  color: #2563eb;
+  padding: 4px 12px;
+  border-radius: 50px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  transform: rotate(-5deg);
 }
