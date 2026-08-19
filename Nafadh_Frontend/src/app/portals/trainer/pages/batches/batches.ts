@@ -49,6 +49,16 @@ export class TrainerBatches implements OnInit {
     signal('');
 
 
+  // عدد المتدربين الحقيقي لكل دفعة
+  traineeCounts =
+    signal<Record<number, number>>({});
+
+
+  // اسم البرنامج الحقيقي لكل دفعة
+  programNames =
+    signal<Record<number, string>>({});
+
+
   // =====================================================
   // ACTIVE SECTION
   // =====================================================
@@ -193,6 +203,30 @@ export class TrainerBatches implements OnInit {
             result
           );
 
+
+          // تنظيف البيانات السابقة
+          this.traineeCounts.set({});
+
+          this.programNames.set({});
+
+
+          // تحميل البيانات الإضافية لكل دفعة
+          result.forEach(batch => {
+
+            // عدد المتدربين الحقيقي
+            this.loadBatchTraineeCount(
+              batch.batchId
+            );
+
+
+            // اسم البرنامج الحقيقي
+            this.loadBatchProgramName(
+              batch.batchId
+            );
+
+          });
+
+
           this.loading.set(false);
 
         },
@@ -209,8 +243,199 @@ export class TrainerBatches implements OnInit {
 
           this.batches.set([]);
 
+          this.traineeCounts.set({});
+
+          this.programNames.set({});
+
           this.errorMessage.set(
             'تعذر تحميل دفعات المدرب'
+          );
+
+        }
+
+      });
+
+  }
+
+
+  // =====================================================
+  // BATCH TRAINEE COUNT
+  // =====================================================
+
+  /**
+   * Loads the real number of unique trainees
+   * enrolled in a specific batch.
+   */
+  private loadBatchTraineeCount(
+    batchId: number
+  ): void {
+
+    this.api
+      .getEnrollments(
+        undefined,
+        batchId
+      )
+      .subscribe({
+
+        next: (enrollments) => {
+
+          const uniqueTraineeIds =
+            new Set(
+              (enrollments ?? [])
+                .map(
+                  enrollment =>
+                    enrollment.traineeId
+                )
+            );
+
+
+          this.traineeCounts.update(
+            current => ({
+
+              ...current,
+
+              [batchId]:
+                uniqueTraineeIds.size
+
+            })
+          );
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            `Error loading trainees for batch ${batchId}:`,
+            error
+          );
+
+
+          this.traineeCounts.update(
+            current => ({
+
+              ...current,
+
+              [batchId]: 0
+
+            })
+          );
+
+        }
+
+      });
+
+  }
+
+
+  // =====================================================
+  // BATCH PROGRAM NAME
+  // =====================================================
+
+  /**
+   * First loads the full batch details to get ProgramId,
+   * then loads the real program name.
+   */
+  private loadBatchProgramName(
+    batchId: number
+  ): void {
+
+    this.api
+      .getBatch(batchId)
+      .subscribe({
+
+        next: (batchDetails) => {
+
+          const programId =
+            batchDetails.programId;
+
+
+          if (!programId) {
+
+            this.programNames.update(
+              current => ({
+
+                ...current,
+
+                [batchId]:
+                  'اسم البرنامج غير متوفر'
+
+              })
+            );
+
+            return;
+          }
+
+
+          this.api
+            .getProgram(programId)
+            .subscribe({
+
+              next: (program) => {
+
+                const programName =
+                  program.title ||
+                  program.name ||
+                  'اسم البرنامج غير متوفر';
+
+
+                this.programNames.update(
+                  current => ({
+
+                    ...current,
+
+                    [batchId]:
+                      programName
+
+                  })
+                );
+
+              },
+
+
+              error: (error) => {
+
+                console.error(
+                  `Error loading program ${programId} for batch ${batchId}:`,
+                  error
+                );
+
+
+                this.programNames.update(
+                  current => ({
+
+                    ...current,
+
+                    [batchId]:
+                      'اسم البرنامج غير متوفر'
+
+                  })
+                );
+
+              }
+
+            });
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            `Error loading batch details for batch ${batchId}:`,
+            error
+          );
+
+
+          this.programNames.update(
+            current => ({
+
+              ...current,
+
+              [batchId]:
+                'اسم البرنامج غير متوفر'
+
+            })
           );
 
         }
@@ -236,7 +461,9 @@ export class TrainerBatches implements OnInit {
     batch: TrainerBatchDto
   ): TrainerBatchDto['status'] {
 
-    if (batch.status === 'Cancelled') {
+    if (
+      batch.status === 'Cancelled'
+    ) {
 
       return 'Cancelled';
 
@@ -286,14 +513,18 @@ export class TrainerBatches implements OnInit {
     );
 
 
-    if (today < startDate) {
+    if (
+      today < startDate
+    ) {
 
       return 'Upcoming';
 
     }
 
 
-    if (today > endDate) {
+    if (
+      today > endDate
+    ) {
 
       return 'Completed';
 
@@ -301,6 +532,224 @@ export class TrainerBatches implements OnInit {
 
 
     return 'Ongoing';
+
+  }
+
+
+  // =====================================================
+  // TIME PROGRESS
+  // =====================================================
+
+  /**
+   * Calculates the percentage of the batch duration
+   * that has already passed.
+   */
+  getTimeProgress(
+    batch: TrainerBatchDto
+  ): number {
+
+    if (
+      !batch.startDate ||
+      !batch.endDate
+    ) {
+
+      return 0;
+
+    }
+
+
+    const today =
+      new Date();
+
+    today.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    const startDate =
+      new Date(batch.startDate);
+
+    startDate.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    const endDate =
+      new Date(batch.endDate);
+
+    endDate.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    // الدفعة لم تبدأ بعد
+    if (
+      today <= startDate
+    ) {
+
+      return 0;
+
+    }
+
+
+    // الدفعة انتهت
+    if (
+      today >= endDate
+    ) {
+
+      return 100;
+
+    }
+
+
+    const totalDuration =
+      endDate.getTime() -
+      startDate.getTime();
+
+
+    const elapsedDuration =
+      today.getTime() -
+      startDate.getTime();
+
+
+    if (
+      totalDuration <= 0
+    ) {
+
+      return 0;
+
+    }
+
+
+    return Math.round(
+      (
+        elapsedDuration /
+        totalDuration
+      ) * 100
+    );
+
+  }
+
+
+  // =====================================================
+  // BATCH TIME LABEL
+  // =====================================================
+
+  /**
+   * Shows a useful time label depending on
+   * the current batch status.
+   */
+  getBatchTimeLabel(
+    batch: TrainerBatchDto
+  ): string {
+
+    if (
+      !batch.startDate ||
+      !batch.endDate
+    ) {
+
+      return 'غير محدد';
+
+    }
+
+
+    if (
+      batch.status === 'Cancelled'
+    ) {
+
+      return 'ملغاة';
+
+    }
+
+
+    if (
+      batch.status === 'Completed'
+    ) {
+
+      return 'انتهت';
+
+    }
+
+
+    const today =
+      new Date();
+
+    today.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    const targetDate =
+      batch.status === 'Upcoming'
+        ? new Date(batch.startDate)
+        : new Date(batch.endDate);
+
+
+    targetDate.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    const millisecondsPerDay =
+      1000 * 60 * 60 * 24;
+
+
+    const days =
+      Math.max(
+        0,
+        Math.ceil(
+          (
+            targetDate.getTime() -
+            today.getTime()
+          ) /
+          millisecondsPerDay
+        )
+      );
+
+
+    if (
+      batch.status === 'Upcoming'
+    ) {
+
+      if (
+        days === 0
+      ) {
+
+        return 'تبدأ اليوم';
+
+      }
+
+
+      return `تبدأ بعد ${days} يوم`;
+
+    }
+
+
+    if (
+      days === 0
+    ) {
+
+      return 'تنتهي اليوم';
+
+    }
+
+
+    return `متبقي ${days} يوم`;
 
   }
 
@@ -392,12 +841,16 @@ export class TrainerBatches implements OnInit {
 
 
     if (!batch) {
+
       return;
+
     }
 
 
     // CONTENT
-    if (sectionName === 'content') {
+    if (
+      sectionName === 'content'
+    ) {
 
       this.router.navigate(
         ['/trainer/content'],
@@ -415,7 +868,9 @@ export class TrainerBatches implements OnInit {
 
 
     // TASKS
-    if (sectionName === 'tasks') {
+    if (
+      sectionName === 'tasks'
+    ) {
 
       this.router.navigate(
         ['/trainer/tasks'],
@@ -434,8 +889,7 @@ export class TrainerBatches implements OnInit {
 
     // EVALUATIONS
     if (
-      sectionName ===
-      'evaluations'
+      sectionName === 'evaluations'
     ) {
 
       this.router.navigate(
@@ -455,8 +909,7 @@ export class TrainerBatches implements OnInit {
 
     // TRAINEES
     if (
-      sectionName ===
-      'trainees'
+      sectionName === 'trainees'
     ) {
 
       this.router.navigate(
@@ -539,7 +992,9 @@ export class TrainerBatches implements OnInit {
       !userId ||
       !this.announceMsg.trim()
     ) {
+
       return;
+
     }
 
 
