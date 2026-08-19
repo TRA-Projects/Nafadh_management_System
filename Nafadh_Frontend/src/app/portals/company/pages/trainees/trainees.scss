@@ -86,7 +86,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 /* أزرار الإجراء داخل الصفوف */
 .gh-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:#18181b;color:#ffffff;text-decoration:none;transition:all 0.18s ease;border:none;cursor:pointer;flex-shrink:0;margin-inline-start:6px;box-shadow:0 2px 5px rgba(0,0,0,0.15)}
 .gh-icon-btn:hover{background:#27272a;transform:scale(1.05);color:#ffffff}
-.gh-icon-btn.disabled{opacity:.35;pointer-events:none}
+.gh-icon-btn.disabled{cursor:not-allowed;pointer-events:none}
+.gh-icon-btn.disabled:hover{background:#18181b;transform:none}
 .gh-icon-btn svg{width:16px;height:16px;fill:currentColor}
 .prog-btn{width:30px;height:30px;border-radius:8px;background:#e7eefb;color:#00338d;display:inline-flex;align-items:center;justify-content:center;margin-inline-start:8px;flex-shrink:0;transition:.15s}
 .prog-btn:hover{background:#00338d;color:#fff}
