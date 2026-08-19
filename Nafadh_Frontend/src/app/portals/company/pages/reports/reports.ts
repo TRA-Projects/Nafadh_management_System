@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CompanyApi } from '../../services/company-api';
+import { AuthService } from '../../../../core/auth/auth.service';
 import {
   AttendanceReportDto,
   EnrollmentDto,
@@ -19,7 +20,7 @@ type ReportTab = 'attendance' | 'achievement' | 'capacity';
   styleUrl: './reports.scss',
 })
 export class CompanyReports implements OnInit {
-  companyId = 1;
+  companyId = this.auth.companyId ?? 0;
 
   tab = signal<ReportTab>('attendance');
 
@@ -35,7 +36,7 @@ export class CompanyReports implements OnInit {
   loading = signal(false);
   errorMessage = signal('');
 
-  constructor(private api: CompanyApi) {}
+  constructor(private api: CompanyApi, private auth: AuthService) {}
 
   ngOnInit(): void {
     this.loadReports();
