@@ -1,37 +1,109 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, signal } from '@angular/core';
+import { CommonModule, DecimalPipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AnnouncementDto, TraineeListItemDto, WarningDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-company-dashboard',
-  imports: [CommonModule],
+  standalone: true,
+  imports: [CommonModule, DecimalPipe],
   templateUrl: './dashboard.html',
+  styleUrls: ['./dashboard.scss']
 })
 export class CompanyDashboard implements OnInit {
-  companyId: number = 0;
+  companyId = computed(() => this.auth.companyId ?? 0);
+  
+  loading = signal(false);
   capacity = signal<{ total?: number; used?: number; remaining?: number } | null>(null);
   topPerformers = signal<TraineeListItemDto[]>([]);
   atRisk = signal<TraineeListItemDto[]>([]);
   warnings = signal<WarningDto[]>([]);
   announcements = signal<AnnouncementDto[]>([]);
-  
   announcementsDismissed = signal(false);
 
-  constructor(private api: CompanyApi, private auth: AuthService) {
-    this.companyId = this.auth.companyId ?? 0;
-  }
+  // حساب النسبة المئوية للسعة
+  capacityPercent = computed(() => {
+    const cap = this.capacity();
+    if (!cap || !cap.total || cap.total === 0) return 0;
+    return ((cap.used ?? 0) / cap.total) * 100;
+  });
+
+  attendanceAverage = signal(0);
+  // تم تحديث الهيكل ليدعم خاصية label مع الحفاظ على التوافقية
+  attendanceWeeks = signal<{ week: string; value: number; label?: string }[]>([]);
+  programDistribution = signal<{ name: string; value: number; label?: string }[]>([]);
+
+  constructor(private api: CompanyApi, private auth: AuthService, private router: Router) {}
 
   ngOnInit() {
-    this.api.getCapacity(this.companyId).subscribe((d) => this.capacity.set(d));
-    this.api.getTopPerformers(this.companyId).subscribe((d) => this.topPerformers.set(d ?? []));
-    this.api.getAtRiskTrainees(this.companyId).subscribe((d) => this.atRisk.set(d ?? []));
-    this.api.getCompanyWarnings(this.companyId).subscribe((d) => this.warnings.set(d ?? []));
+    this.refreshData();
+  }
+
+  refreshData() {
+    const id = this.companyId();
+    if (!id) return;
+
+    this.loading.set(true);
+    this.api.getCapacity(id).subscribe({
+      next: (d) => this.capacity.set(d),
+      complete: () => this.loading.set(false)
+    });
+    this.api.getTopPerformers(id).subscribe((d) => this.topPerformers.set(d ?? []));
+    this.api.getAtRiskTrainees(id).subscribe((d) => this.atRisk.set(d ?? []));
+    this.api.getCompanyWarnings(id).subscribe((d) => this.warnings.set(d ?? []));
     this.api.getPlatformAnnouncements().subscribe((d) => this.announcements.set(d ?? []));
+  }
+
+  openCompanyProfile() {
+    this.router.navigate(['/company/profile']);
+  }
+
+  openWarnings() {
+    this.router.navigate(['/company/warnings']);
+  }
+
+  openProgress(traineeId: number) {
+    this.router.navigate(['/company/trainee-progress', traineeId]);
   }
 
   dismissAnnouncements() {
     this.announcementsDismissed.set(true);
+  }
+
+  barPercent(value: number, max: number): number {
+    if (!max || max === 0) return 0;
+    return (value / max) * 100;
+  }
+
+  attendanceMax(): number {
+    const weeks = this.attendanceWeeks();
+    if (!weeks.length) return 100;
+    return Math.max(...weeks.map(w => w.value), 100);
+  }
+
+  programMax(): number {
+    const dist = this.programDistribution();
+    if (!dist.length) return 100;
+    return Math.max(...dist.map(p => p.value), 100);
+  }
+
+  programColor(index: number): string {
+    const colors = ['#00338d', '#efbb20', '#28a745', '#17a2b8', '#6c757d'];
+    return colors[index % colors.length];
+  }
+
+  avatarColor(name?: string): string {
+    return '#00338d';
+  }
+
+  initials(name?: string): string {
+    if (!name) return '';
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  }
+
+  performanceValue(trainee: TraineeListItemDto, index: number): number {
+    return 85; 
   }
 }

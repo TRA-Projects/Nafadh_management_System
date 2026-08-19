@@ -37,7 +37,7 @@ export interface HostedSpecialtyDto {
   styleUrl: './profile.scss',
 })
 export class CompanyProfile implements OnInit {
-  companyId = this.auth.companyId ?? 0;
+  companyId: number = 0;
   readonly coverInputId = 'company-cover-upload';
   readonly logoInputId = 'company-logo-upload';
 
@@ -89,7 +89,9 @@ export class CompanyProfile implements OnInit {
   readonly ringCircumference = 2 * Math.PI * 62;
   ringDashoffset = computed(() => this.ringCircumference * (1 - this.capacityPercent() / 100));
 
-  constructor(private api: CompanyApi, private auth: AuthService) {}
+  constructor(private api: CompanyApi, private auth: AuthService) {
+    this.companyId = this.auth.companyId ?? 0;
+  }
 
   ngOnInit() {
     this.api.getCompany(this.companyId).subscribe({
@@ -118,12 +120,8 @@ export class CompanyProfile implements OnInit {
       error: () => this.supervisorsLoadError.set(true),
     });
 
-    // Enrollment endpoint isn't available on the server in this deployment.
-    // Use the dedicated company capacity endpoint as the authoritative
-    // source for used seats / capacity counts.
     this.api.getCapacity(this.companyId).subscribe({
       next: (cap) => {
-        // CompanyCapacityDto { total?, used?, remaining? }
         this.company.update((c) => (c ? { ...c, usedCapacity: Number(cap?.used ?? 0) } : c));
         this.trainees.set([]);
         this.traineesLoadError.set(false);
@@ -164,8 +162,8 @@ export class CompanyProfile implements OnInit {
     const workFields = Array.isArray(dto.workFields) && dto.workFields.length
       ? dto.workFields
       : dto.workField
-        ? [dto.workField]
-        : [];
+      ? [dto.workField]
+      : [];
 
     return {
       ...dto,

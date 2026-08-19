@@ -20,7 +20,7 @@ type ReportTab = 'attendance' | 'achievement' | 'capacity';
   styleUrl: './reports.scss',
 })
 export class CompanyReports implements OnInit {
-  companyId = this.auth.companyId ?? 0;
+  companyId: number = 0;
 
   tab = signal<ReportTab>('attendance');
 
@@ -36,7 +36,9 @@ export class CompanyReports implements OnInit {
   loading = signal(false);
   errorMessage = signal('');
 
-  constructor(private api: CompanyApi, private auth: AuthService) {}
+  constructor(private api: CompanyApi, private auth: AuthService) {
+    this.companyId = this.auth.companyId ?? 0;
+  }
 
   ngOnInit(): void {
     this.loadReports();
@@ -113,19 +115,19 @@ export class CompanyReports implements OnInit {
       },
     });
 
-   this.api.getCapacity(this.companyId).subscribe({
-  next: (data: any) => {
-    this.capacity.set(data ? {
-      ...data,
-      programs: data.programs ?? []
-    } : null);
-    complete();
-  },
-  error: () => {
-    this.capacity.set(null);
-    complete();
-  }
-});
+    this.api.getCapacity(this.companyId).subscribe({
+      next: (data: any) => {
+        this.capacity.set(data ? {
+          ...data,
+          programs: data.programs ?? []
+        } : null);
+        complete();
+      },
+      error: () => {
+        this.capacity.set(null);
+        complete();
+      }
+    });
   }
 
   totalAbsentDays(): number {
