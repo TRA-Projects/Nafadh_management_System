@@ -93,9 +93,7 @@
 
   <section class="trainees-kpis">
 
-    <!-- =====================================================
-         TOTAL TRAINEES
-    ====================================================== -->
+    <!-- Total Trainees -->
 
     <article class="trainee-kpi">
 
@@ -131,9 +129,7 @@
     </article>
 
 
-    <!-- =====================================================
-         AVERAGE TECHNICAL PERFORMANCE
-    ====================================================== -->
+    <!-- Average Technical -->
 
     <article class="trainee-kpi">
 
@@ -182,9 +178,7 @@
     </article>
 
 
-    <!-- =====================================================
-         HIGH PERFORMERS
-    ====================================================== -->
+    <!-- High Performers -->
 
     <article class="trainee-kpi">
 
@@ -231,9 +225,7 @@
     </article>
 
 
-    <!-- =====================================================
-         NEEDS SUPPORT
-    ====================================================== -->
+    <!-- Needs Support -->
 
     <article class="trainee-kpi danger">
 
@@ -386,21 +378,49 @@
 
               <td>
 
-                <div class="progress-cell">
+                @if (technicalScore(e.enrollmentId) !== null) {
 
-                  <div class="progress-track">
+                  <div class="progress-cell">
 
-                    <div
-                      class="progress-fill placeholder-progress">
+                    <div class="progress-track">
+
+                      <div
+                        class="progress-fill"
+                        [style.width.%]="technicalProgress(e.enrollmentId)">
+                      </div>
+
                     </div>
+
+
+                    <span>
+                      {{ technicalLevel(e.enrollmentId) }}
+                      ·
+                      {{ technicalScore(e.enrollmentId) | number:'1.0-1' }}%
+                    </span>
 
                   </div>
 
-                  <span>
-                    —
-                  </span>
+                }
+                @else {
 
-                </div>
+                  <div class="progress-cell">
+
+                    <div class="progress-track">
+
+                      <div
+                        class="progress-fill"
+                        style="width:0%;">
+                      </div>
+
+                    </div>
+
+                    <span>
+                      —
+                    </span>
+
+                  </div>
+
+                }
 
               </td>
 
@@ -409,9 +429,20 @@
 
               <td>
 
-                <span class="metric-value">
-                  —
-                </span>
+                @if (attendancePercentage(e.enrollmentId) !== null) {
+
+                  <span class="metric-value">
+                    {{ attendancePercentage(e.enrollmentId) | number:'1.0-1' }}%
+                  </span>
+
+                }
+                @else {
+
+                  <span class="metric-value">
+                    —
+                  </span>
+
+                }
 
               </td>
 
@@ -420,9 +451,20 @@
 
               <td>
 
-                <span class="metric-value">
-                  —
-                </span>
+                @if (technicalScore(e.enrollmentId) !== null) {
+
+                  <span class="metric-value">
+                    {{ technicalScore(e.enrollmentId) | number:'1.0-1' }}%
+                  </span>
+
+                }
+                @else {
+
+                  <span class="metric-value">
+                    —
+                  </span>
+
+                }
 
               </td>
 

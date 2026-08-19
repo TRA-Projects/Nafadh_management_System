@@ -376,7 +376,28 @@ getProgram(
       `${this.base}/Evaluation/enrollment/${enrollmentId}/average`
     );
   }
+  /**
+   * Retrieves the average evaluation score
+   * for a specific enrollment.
+   */
+  getAttendanceComplianceRate(
+  enrollmentId: number
+): Observable<{
+  enrollmentId: number;
+  totalDays: number;
+  presentDays: number;
+  compliancePercentage: number;
+}> {
 
+  return this.http.get<{
+    enrollmentId: number;
+    totalDays: number;
+    presentDays: number;
+    compliancePercentage: number;
+  }>(
+    `${this.base}/DailyAttendance/enrollment/${enrollmentId}/compliance-rate`
+  );
+}
 
   getEvaluationTemplates(
     moduleId?: number,
