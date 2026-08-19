@@ -36,6 +36,24 @@ export class TraineeApi {
   }
 
   // =========================================================
+// Tasks - جلب المهام الخاصة بالمتدرّب
+// =========================================================
+
+// جلب مهام المتدرّب المخصصة له فقط
+getTraineeTasks(traineeId: number): Observable<TaskDto[]> {
+  return this.http.get<TaskDto[]>(`${this.base}/Task/trainee/${traineeId}`);
+}
+
+// جلب حالة مهمة معينة للمتدرّب
+getTaskStatus(taskId: number, traineeId: number): Observable<any> {
+  return this.http.get<any>(`${this.base}/Task/${taskId}/status/${traineeId}`);
+}
+
+// جلب تسليمات المتدرّب للمهام
+getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
+  return this.http.get<SubmissionDto[]>(`${this.base}/Submission/trainee/${traineeId}`);
+}
+  // =========================================================
   // Profile
   // =========================================================
 

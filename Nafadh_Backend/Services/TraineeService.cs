@@ -72,5 +72,11 @@ namespace Nafadh_Backend.Services
         {
             return _repository.SaveChangesAsync();
         }
+
+        public async Task<NFD_Trainee?> GetTraineeIdByUserID(int userId)
+        {
+            return await _repository.GetTraineeIdByUserID(userId);
+        }
+
     }
 }
