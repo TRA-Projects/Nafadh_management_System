@@ -130,3 +130,8 @@ export class CompanyDashboard implements OnInit {
     return Number.isNaN(time) ? 0 : time;
   }
 }
+ 
+
+// Connected dashboard statistics and sections to the existing Company API.
+
+
