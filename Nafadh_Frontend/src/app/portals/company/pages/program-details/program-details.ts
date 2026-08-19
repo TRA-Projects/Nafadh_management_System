@@ -194,6 +194,7 @@ export class CompanyProgramDetails implements OnInit {
 // Reads the program ID from the route parameters.
 // Loads the selected program and its related data.
 // Loads training phases and trainee information.
+// Calculates and displays capacity, occupancy, availability, and performance statistics.
 
 
 
