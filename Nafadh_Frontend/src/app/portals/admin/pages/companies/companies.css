@@ -20,7 +20,7 @@
 }
 
 .add-company-btn:hover {
-  background-color: #09135d; /* درجة أداكن قليلاً لتوضيح تفاعل المرور بالفأرة */
+  background-color: #09135d;
   color: #ffffff;
 }
 
@@ -198,12 +198,6 @@
   font-weight: 600;
 }
 
-.nfd-select-item-sub {
-  color: inherit;
-  opacity: 0.7;
-  font-size: 0.8rem;
-}
-
 .nfd-select-empty {
   padding: 10px 14px;
   font-size: 0.85rem;
@@ -250,6 +244,7 @@
   padding: 10px 16px;
   font-weight: 600;
   flex: 1;
+  cursor: pointer;
 }
 
 .nfd-submit-btn:hover:not(:disabled) {
@@ -270,12 +265,14 @@
   padding: 10px 16px;
   font-weight: 600;
   flex: 1;
+  cursor: pointer;
 }
 
 .nfd-cancel-btn:hover {
   background: #f3f4f6;
 }
-/* التصميم الافتراضي للزر */
+
+/* أزرار الفلتر */
 .filter-btn {
   background-color: transparent;
   border: 1px solid #dee2e6;
@@ -287,7 +284,6 @@
   font-weight: 500;
 }
 
-/* تأثير عند المرور بالفأرة أو عندما يكون الزر مفعلاً (Active) */
 .filter-btn:hover,
 .filter-btn.active {
   background-color: #0D1C8C !important;
