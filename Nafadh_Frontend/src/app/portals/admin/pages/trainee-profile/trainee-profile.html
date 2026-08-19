@@ -1,27 +1,133 @@
-<a routerLink="/admin/trainees" class="nfd-muted" style="display:inline-block;margin-bottom:14px">← العودة إلى قائمة المتدربين</a>
-
-@if (trainee(); as t) {
-  <div class="nfd-card" style="display:flex;align-items:center;gap:18px;margin-bottom:16px">
-    <div style="width:64px;height:64px;border-radius:50%;background:var(--color-navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700">{{ t.fullName?.charAt(0) }}</div>
-    <div>
-      <h2 style="margin:0;color:var(--color-navy)">{{ t.fullName }}</h2>
-      <p style="margin:2px 0;font-size:13px;color:var(--color-text-secondary)">{{ t.major }} · {{ t.university }}</p>
-      <p class="nfd-muted">{{ t.companyName || 'لم يُوزَّع بعد' }} — {{ statusLabels[t.status] }}</p>
-    </div>
+<div class="profile-container">
+  <!-- رابط العودة -->
+  <div class="top-nav">
+    <a routerLink="/admin/trainees" class="back-link">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 18l6-6-6-6"/>
+      </svg>
+      العودة إلى قائمة المتدربين
+    </a>
   </div>
 
-  <div class="nfd-card">
-    <h3>التقييمات</h3>
-    @for (ev of evaluations(); track ev.evaluationId) {
-      <div class="nfd-row"><span>القالب {{ ev.templateId }}</span><strong>{{ ev.score }}%</strong></div>
-      @for (c of ev.criteriaBreakdown; track c.criteriaId) {
-        <div style="display:grid;grid-template-columns:140px 1fr 70px;align-items:center;gap:10px;padding:6px 0;font-size:12px">
-          <span>{{ c.criterionName }}</span>
-          <div class="nfd-bar"><div class="fill" [style.width.%]="(c.score / (c.maxPoints || 1)) * 100"></div></div>
-          <span>{{ c.score }} / {{ c.maxPoints }}</span>
+  @if (trainee(); as t) {
+    <!-- بطاقة الهيدر الرئيسية -->
+    <div class="nfd-card profile-header-card">
+      <!-- أزرار الإجراءات (تعديل - تجميد) -->
+      <div class="header-actions">
+        <button type="button" class="btn-action btn-outline">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          تعديل
+        </button>
+        <button type="button" class="btn-action btn-light">تجميد</button>
+      </div>
+
+      <!-- معلومات المتدرب -->
+      <div class="trainee-info-wrapper">
+        <div class="trainee-details">
+          <div class="name-badges-row">
+            <h2 class="trainee-name">{{ t.fullName }}</h2>
+            <span class="status-badge" [ngStyle]="getStatusStyle(t.status)">
+              {{ statusLabels[t.status] || t.status || 'نشط' }}
+            </span>
+            <span class="batch-badge">{{ t.batch || 'الدفعة 12' }}</span>
+          </div>
+          <p class="trainee-subtext">
+            {{ t.major }} · {{ t.university }}
+          </p>
+          <p class="company-code-text">
+            {{ t.companyName || 'شركة التقنية المتقدمة' }} <span class="dot-sep">•</span> <span class="code">{{ t.nationalId || 'T-2401' }}</span>
+          </p>
         </div>
-      }
-    }
-    @empty { <p class="nfd-muted">لا توجد تقييمات مرتبطة بعرضها هنا حالياً — تُعرض عبر رقم التسجيل الخاص بالمتدرب.</p> }
-  </div>
-}
+
+        <!-- الأفاتار (الأحرف الأولى) -->
+        <div class="trainee-avatar">
+          {{ getInitials(t.fullName) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- بطاقات الإحصائيات الأربعة -->
+    <div class="stats-grid">
+      <div class="nfd-card stat-card">
+        <div class="stat-value text-teal">{{ attendanceRate() }}%</div>
+        <div class="stat-label">نسبة الحضور</div>
+      </div>
+
+      <div class="nfd-card stat-card">
+        <div class="stat-value text-blue">{{ averageScore() }}</div>
+        <div class="stat-label">متوسط التقييم</div>
+      </div>
+
+      <div class="nfd-card stat-card">
+        <div class="stat-value text-amber">{{ warningsCount() }}</div>
+        <div class="stat-label">الإنذارات</div>
+      </div>
+
+      <div class="nfd-card stat-card">
+        <div class="stat-value text-rose">{{ absenceDays() }}</div>
+        <div class="stat-label">أيام الغياب</div>
+      </div>
+    </div>
+
+    <!-- شبكة التقييمات وسجل الحضور -->
+    <div class="dashboard-grid">
+      
+      <!-- كارت التقييمات -->
+      <div class="nfd-card section-card">
+        <div class="section-header">
+          <h3>التقييمات</h3>
+          <span class="section-sub">نتائج الدورة الحالية</span>
+        </div>
+
+        <div class="evaluations-list">
+          @for (item of evaluationList(); track item.title) {
+            <div class="eval-item">
+              <div class="eval-info">
+                <span class="eval-score" [style.color]="item.color">{{ item.score }}</span>
+                <span class="eval-title">{{ item.title }}</span>
+              </div>
+              <div class="eval-bar-bg">
+                <div class="eval-bar-fill" [style.width.%]="item.score" [style.background-color]="item.color"></div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- كارت سجل الحضور والغياب -->
+      <div class="nfd-card section-card">
+        <div class="section-header">
+          <h3>سجل الحضور</h3>
+          <span class="section-sub">آخر 30 يوم</span>
+        </div>
+
+        <!-- شبكة المربعات -->
+        <div class="attendance-grid">
+          @for (day of attendanceGrid(); track $index) {
+            <div class="attendance-box" [ngClass]="day.status" [title]="day.date + ': ' + day.label"></div>
+          }
+        </div>
+
+        <!-- دليل الألوان (Legend) -->
+        <div class="attendance-legend">
+          <div class="legend-item">
+            <span class="legend-box present"></span>
+            <span>حاضر</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-box late"></span>
+            <span>متأخر</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-box absent"></span>
+            <span>غائب</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  }
+</div>

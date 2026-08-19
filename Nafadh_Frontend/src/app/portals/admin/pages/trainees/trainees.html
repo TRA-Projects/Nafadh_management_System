@@ -34,12 +34,13 @@
       </tr>
     </thead>
     <tbody>
-      @for (t of filtered(); track t.traineeId) {
+      @for (t of filtered(); track t.traineeId || t.id) {
         <tr>
           <td><strong>{{ t.fullName }}</strong></td>
           <td>{{ t.university }}</td>
           <td>{{ t.companyName || '—' }}</td>
-          <td>{{ t.programName || '—' }}</td>
+          <!-- حُلت المشكلة هنا باستخدام Type Casting الآمن -->
+          <td>{{ t.programName || t.trackName || '—' }}</td>
           
           <td>
             <div class="progress-container">
@@ -56,9 +57,9 @@
             </span>
           </td>
 
-          <!-- زر المعاينة الانتقال إلى صفحة ثانية -->
+          <!-- زر المعاينة -->
           <td>
-            <a [routerLink]="['/admin/trainees', t.traineeId]" class="icon-view-btn" title="معاينة الملف">
+            <a [routerLink]="['/admin/trainees', t.traineeId || t.id]" class="icon-view-btn" title="معاينة الملف">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                 <circle cx="12" cy="12" r="3"></circle>
@@ -163,50 +164,58 @@
   <div class="nfd-modal-backdrop" (click)="showRegisterModal.set(false)">
     <div class="nfd-modal-dialog large" (click)="$event.stopPropagation()">
       <div class="nfd-modal-header">
-        <button type="button" class="close-btn" (click)="showRegisterModal.set(false)">✕</button>
+        <button type="button" class="close-btn" (click)="showRegisterModal.set(false)" [disabled]="isSubmitting()">✕</button>
         <h3>تسجيل متدرب جديد</h3>
       </div>
       <div class="nfd-modal-body">
+        
+        <!-- رسالة أخطاء إن وجدت عند الحفظ -->
+        @if (errorMessage()) {
+          <div class="nfd-alert-error" style="background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px; border-radius: 6px; margin-bottom: 16px;">
+            ⚠️ {{ errorMessage() }}
+          </div>
+        }
+
         <form (ngSubmit)="submitNewTrainee()">
           <div class="form-section-title">البيانات الشخصية</div>
 
           <div class="form-group">
             <label>الاسم الكامل <span class="required">*</span></label>
-            <input type="text" [ngModel]="newTrainee().fullName" (ngModelChange)="newTrainee().fullName = $event" name="fullName" placeholder="e.g. Reem Al-Mahrooqi" class="nfd-input" required>
+            <input type="text" [(ngModel)]="newTrainee().fullName" name="fullName" placeholder="e.g. Reem Al-Mahrooqi" class="nfd-input" required [disabled]="isSubmitting()">
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label>رقم الهوية الوطنية <span class="required">*</span></label>
-              <input type="text" [ngModel]="newTrainee().nationalId" (ngModelChange)="newTrainee().nationalId = $event" name="nationalId" placeholder="1XXXXXXXX" class="nfd-input" required>
+              <input type="text" [(ngModel)]="newTrainee().nationalId" name="nationalId" placeholder="1XXXXXXXX" class="nfd-input" required [disabled]="isSubmitting()">
             </div>
             <div class="form-group">
               <label>رقم الجوال <span class="required">*</span></label>
-              <input type="text" [ngModel]="newTrainee().phone" (ngModelChange)="newTrainee().phone = $event" name="phone" placeholder="+968 9XXX XXXX" class="nfd-input" required>
+              <input type="text" [(ngModel)]="newTrainee().phone" name="phone" placeholder="+968 9XXX XXXX" class="nfd-input" required [disabled]="isSubmitting()">
             </div>
           </div>
 
           <div class="form-group">
             <label>البريد الإلكتروني <span class="required">*</span></label>
-            <input type="email" [ngModel]="newTrainee().email" (ngModelChange)="newTrainee().email = $event" name="email" placeholder="name@nafadh.test" class="nfd-input" required>
+            <input type="email" [(ngModel)]="newTrainee().email" name="email" placeholder="name@nafadh.test" class="nfd-input" required [disabled]="isSubmitting()">
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label>الجامعة <span class="required">*</span></label>
-              <input type="text" [ngModel]="newTrainee().university" (ngModelChange)="newTrainee().university = $event" name="university" placeholder="جامعة السلطان قابوس" class="nfd-input" required>
+              <input type="text" [(ngModel)]="newTrainee().university" name="university" placeholder="جامعة السلطان قابوس" class="nfd-input" required [disabled]="isSubmitting()">
             </div>
             <div class="form-group">
               <label>التخصص <span class="required">*</span></label>
-              <input type="text" [ngModel]="newTrainee().major" (ngModelChange)="newTrainee().major = $event" name="major" placeholder="هندسة برمجيات..." class="nfd-input" required>
+              <input type="text" [(ngModel)]="newTrainee().major" name="major" placeholder="هندسة برمجيات..." class="nfd-input" required [disabled]="isSubmitting()">
             </div>
           </div>
 
           <div class="form-section-title" style="margin-top: 20px;">بيانات التدريب</div>
 
           <div class="form-group">
-            <label>الشركة المستضيفة <span class="required">*</span></label>
-            <select class="nfd-input" [ngModel]="newTrainee().companyId" (ngModelChange)="newTrainee().companyId = $event" name="companyId" required>
+            <label>الشركة المستضيفة</label>
+            <select class="nfd-input" [(ngModel)]="newTrainee().companyId" name="companyId" [disabled]="isSubmitting()">
               <option value="">– اختر شركة –</option>
               @for (company of companies(); track company.id) {
                 <option [value]="company.id">{{ company.name }}</option>
@@ -215,8 +224,8 @@
           </div>
 
           <div class="form-group">
-            <label>البرنامج <span class="required">*</span></label>
-            <select class="nfd-input" [ngModel]="newTrainee().programId" (ngModelChange)="newTrainee().programId = $event" name="programId" required>
+            <label>البرنامج</label>
+            <select class="nfd-input" [(ngModel)]="newTrainee().programId" name="programId" [disabled]="isSubmitting()">
               <option value="">– اختر برنامجاً –</option>
               @for (program of programs(); track program.id) {
                 <option [value]="program.id">{{ program.name }}</option>
@@ -226,7 +235,7 @@
 
           <div class="form-group">
             <label>الدفعة</label>
-            <select class="nfd-input" [ngModel]="newTrainee().batch" (ngModelChange)="newTrainee().batch = $event" name="batch">
+            <select class="nfd-input" [(ngModel)]="newTrainee().batch" name="batch" [disabled]="isSubmitting()">
               <option value="">– اختر الدفعة –</option>
               @for (batch of batches(); track batch) {
                 <option [value]="batch">{{ batch }}</option>
@@ -235,8 +244,10 @@
           </div>
 
           <div class="nfd-modal-footer form-actions">
-            <button type="submit" class="nfd-btn primary">حفظ التسجيل</button>
-            <button type="button" class="nfd-btn ghost" (click)="showRegisterModal.set(false)">إلغاء</button>
+            <button type="submit" class="nfd-btn primary" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'جاري الحفظ...' : 'حفظ التسجيل' }}
+            </button>
+            <button type="button" class="nfd-btn ghost" (click)="showRegisterModal.set(false)" [disabled]="isSubmitting()">إلغاء</button>
           </div>
         </form>
       </div>
