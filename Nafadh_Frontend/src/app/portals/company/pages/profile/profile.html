@@ -239,7 +239,7 @@
         <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;margin-top:8px;">
           <div style="position:relative;width:150px;height:150px;flex-shrink:0;">
             <svg width="150" height="150" viewBox="0 0 150 150" style="transform:rotate(-90deg);display:block;">
-              <circle cx="75" cy="75" r="62" fill="none" stroke="var(--color-border-light)" stroke-width="15" />
+              <circle cx="75" cy="75" r="62" fill="none" stroke="var(--profile-capacity-remaining)" stroke-width="15" />
               <circle cx="75" cy="75" r="62" fill="none" stroke="var(--color-navy)" stroke-width="15" stroke-linecap="round" [attr.stroke-dasharray]="ringCircumference" [attr.stroke-dashoffset]="ringDashoffset()" />
             </svg>
             <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
@@ -254,7 +254,7 @@
               <strong>{{ usedCapacityValue() }}</strong>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
-              <span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:12px;height:12px;border-radius:4px;background:var(--color-border-light);display:inline-block;"></span> متبقٍ</span>
+              <span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:12px;height:12px;border-radius:4px;background:var(--profile-capacity-remaining);display:inline-block;"></span> متبقٍ</span>
               <strong>{{ ((c.capacity || 0) - usedCapacityValue()) }}</strong>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
