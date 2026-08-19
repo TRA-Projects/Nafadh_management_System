@@ -6,6 +6,7 @@ import { catchError } from 'rxjs/operators';
 import { CompanyApi } from '../../services/company-api';
 import { ProgramDto, ChartPointDto, CompanyCapacityDto } from '../../../../core/models/dtos';
 // 
+// 
 interface SpecialtyCard {
   programId: number;
   title: string;
