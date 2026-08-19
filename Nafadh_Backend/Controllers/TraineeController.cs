@@ -44,15 +44,15 @@ namespace Nafadh_Backend.Controllers
                 TraineeId = t.TraineeId,
                 FullName = t.User?.FullName,
                 University = t.University,
-                Major = t.Major,
+                Major = string.IsNullOrEmpty(t.Major) ? "غير محدد" : t.Major,
                 Status = t.Status,
                 VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
                 CompanyName = t.Company?.CompanyName,
-              
+                // تم ضبطها لتظهر بشكل واضح في الواجهة بدلاً من الشرطات
                 ProgramName = t.Enrollments != null && t.Enrollments.Any()
-                    ? t.Enrollments.FirstOrDefault()?.Batch?.Program?.Title ?? "برنامج تدريبي"
-                    : "غير مسجل"
+                    ? t.Enrollments.FirstOrDefault()?.Batch?.Program?.Title ?? "خطة التدريب العملي"
+                    : "خطة التدريب العملي"
             }).ToList();
 
             return Ok(new { Items = dtos, TotalCount = total });
@@ -96,7 +96,6 @@ namespace Nafadh_Backend.Controllers
             var existing = await _service.GetByIdAsync(id);
             if (existing == null) return NotFound();
 
-            // apply allowed updates
             existing.NationalId = update.NationalId;
             existing.University = update.University;
             existing.Major = update.Major;
@@ -127,7 +126,6 @@ namespace Nafadh_Backend.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            // prevent duplicate profile for same user
             var hasProfile = await _service.UserHasTraineeProfileAsync(create.UserId);
             if (hasProfile) return BadRequest("User already has a trainee profile.");
 
