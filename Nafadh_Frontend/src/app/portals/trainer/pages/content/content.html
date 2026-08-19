@@ -1,189 +1,1648 @@
-<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 30px; box-shadow: 0 4px 16px rgba(0,0,0,0.04);">
-        
-  <!-- الهيدر العلوي -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px;">
-    
-    <!-- الجهة اليمنى: عنوان الصفحة والشرح -->
-    <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
-      <div>
-        <h2 style="font-size: 22px; font-weight: bold; color: #0b192c; margin: 0 0 4px 300px; display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
-          <span>إدارة المحتوى📁</span> 
-        </h2>
-        <p style="font-size: 13px; color: #64748b; margin: 0;">إنشاء الوحدات والدروس ورفع الملفات والفيديوهات ومشاركة الروابط والمراجع.</p>
-      </div>
+<div
+  class="content-page"
+  dir="rtl"
+>
+
+  <!-- =====================================================
+       HEADER
+  ====================================================== -->
+
+  <div class="content-header">
+
+    <div>
+
+      <h2>
+        إدارة المحتوى 📁
+      </h2>
+
+      <p>
+        إنشاء الوحدات والدروس ورفع الملفات والفيديوهات
+        ومشاركة الروابط والمراجع.
+      </p>
+
     </div>
 
-    <!-- الجهة اليسرى: الأزرار -->
-    <div style="display: flex; gap: 12px;">
-      <button type="button" class="nfd-btn primary" (click)="showModal.set(true)" style="background: #0284c7; color: #fff; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s;">
-        + إنشاء وحدة / درس
+
+    <div class="header-actions">
+
+      <button
+        type="button"
+        class="btn primary"
+        (click)="openCreateModal('module')"
+        [disabled]="!batch()"
+      >
+        + إنشاء وحدة
       </button>
-      <!-- زر أرشيف المواد مع ربطه بفتح النافذة -->
-      <button type="button" (click)="showArchiveModal.set(true)" style="background: #ffffff; color: #334155; border: 1px solid #cbd5e1; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s;">
-        📁 أرشيف المواد
+
+
+      <button
+        type="button"
+        class="btn secondary"
+        (click)="openCreateModal('lesson')"
+        [disabled]="
+          !batch() ||
+          activeModules().length === 0
+        "
+      >
+        + إنشاء درس
       </button>
+
+
+      <button
+        type="button"
+        class="btn archive"
+        (click)="showArchiveModal.set(true)"
+        [disabled]="!batch()"
+      >
+        📁 الأرشيف
+      </button>
+
     </div>
 
   </div>
 
-  <!-- شبكة الكروت الثلاثة -->
-  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px;">
-    
-    <!-- 1. الوحدات والدروس -->
-    <div class="content-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease;">
-      <div style="height: 140px; background: #e2e8f0; overflow: hidden;">
-        <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&q=80" alt="Units" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
-      </div>
-      <div style="padding: 20px; text-align: right;">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px; color: #0284c7; font-size: 20px;">📖</div>
-        <h3 style="font-size: 18px; font-weight: 700; color: #0b192c; margin: 0 0 8px 0;">الوحدات والدروس</h3>
-        <ul style="margin: 0 0 20px 0; padding-inline-start: 18px; font-size: 12px; color: #64748b;">
-          <li>إنشاء الوحدات والدروس</li>
-          <li>تحديد متطلبات كل وحدة</li>
-        </ul>
-        <button type="button" class="nfd-btn ghost card-btn" (click)="showModal.set(true)" style="width: 100%; background: #ffffff; color: #0284c7; border: 1px solid #bae6fd; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-          + إنشاء محتوى
-        </button>
-      </div>
+
+  <!-- =====================================================
+       BATCH SELECTOR
+  ====================================================== -->
+
+  <div class="batch-selector">
+
+    <div class="batch-selector-text">
+
+      <strong>
+        الدفعة التدريبية
+      </strong>
+
+      <span>
+        اختاري الدفعة التي تريدين إدارة محتواها.
+      </span>
+
     </div>
 
-    <!-- 2. الملفات والفيديوهات -->
-    <div class="content-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease;">
-      <div style="height: 140px; background: #e2e8f0; overflow: hidden;">
-        <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80" alt="Files" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
-      </div>
-      <div style="padding: 20px; text-align: right;">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px; color: #0284c7; font-size: 20px;">🎬</div>
-        <h3 style="font-size: 18px; font-weight: 700; color: #0b192c; margin: 0 0 8px 0;">الملفات والفيديوهات</h3>
-        <ul style="margin: 0 0 20px 0; padding-inline-start: 18px; font-size: 12px; color: #64748b;">
-          <li>رفع الملفات والفيديوهات</li>
-          <li>إدارة مواد الدرس</li>
-        </ul>
-        <button type="button" class="nfd-btn ghost card-btn" (click)="showFileModal.set(true)" style="width: 100%; background: #ffffff; color: #0284c7; border: 1px solid #bae6fd; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-          ⬆ رفع مادة
-        </button>
-      </div>
-    </div>
 
-    <!-- 3. الروابط والمراجع -->
-    <div class="content-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease;">
-      <div style="height: 140px; background: #e2e8f0; overflow: hidden;">
-        <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80" alt="Links" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
-      </div>
-      <div style="padding: 20px; text-align: right;">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px; color: #0284c7; font-size: 20px;">🔗</div>
-        <h3 style="font-size: 18px; font-weight: 700; color: #0b192c; margin: 0 0 8px 0;">الروابط والمراجع</h3>
-        <ul style="margin: 0 0 20px 0; padding-inline-start: 18px; font-size: 12px; color: #64748b;">
-          <li>مشاركة الروابط والمراجع</li>
-          <li>إضافة مصادر تعليمية</li>
-        </ul>
-        <button type="button" class="nfd-btn ghost card-btn" (click)="showRefModal.set(true)" style="width: 100%; background: #ffffff; color: #0284c7; border: 1px solid #bae6fd; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-          + إضافة مرجع
-        </button>
-      </div>
+    <div class="batch-selector-control">
+
+      @if (loadingBatches()) {
+
+        <span class="loading-text">
+          جاري تحميل الدفعات...
+        </span>
+
+      } @else {
+
+        <select
+          [(ngModel)]="batchIdInput"
+          (ngModelChange)="onBatchChange()"
+          [disabled]="batches().length === 0"
+        >
+
+          <option
+            [ngValue]="0"
+            disabled
+          >
+            اختر الدفعة
+          </option>
+
+
+          @for (
+            item of batches();
+            track item.batchId
+          ) {
+
+            <option
+              [ngValue]="item.batchId"
+            >
+              {{
+                item.batchName ||
+                ('دفعة ' + item.batchId)
+              }}
+            </option>
+
+          }
+
+        </select>
+
+      }
+
     </div>
 
   </div>
+
+
+  <!-- =====================================================
+       CURRENT CONTEXT
+  ====================================================== -->
+
+  @if (batch()) {
+
+    <div class="current-context">
+
+      <span class="context-badge batch-badge">
+        الدفعة:
+        {{ batch()?.batchName }}
+      </span>
+
+
+      <span class="context-badge program-badge">
+        البرنامج:
+        {{ getProgramName() }}
+      </span>
+
+    </div>
+
+  }
+
+
+  <!-- =====================================================
+       MESSAGES
+  ====================================================== -->
+
+  @if (errorMessage()) {
+
+    <div class="message error-message">
+      {{ errorMessage() }}
+    </div>
+
+  }
+
+
+  @if (successMessage()) {
+
+    <div class="message success-message">
+      ✓ {{ successMessage() }}
+    </div>
+
+  }
+
+
+  <!-- =====================================================
+       LOADING CONTENT
+  ====================================================== -->
+
+  @if (loading()) {
+
+    <div class="loading-box">
+      جاري تحميل محتوى الدفعة...
+    </div>
+
+  } @else if (!batch()) {
+
+    <div class="empty-page">
+
+      <div class="empty-icon">
+        📚
+      </div>
+
+      <strong>
+        لم يتم تحديد دفعة
+      </strong>
+
+      <p>
+        اختاري إحدى الدفعات المسندة لك من القائمة أعلاه.
+      </p>
+
+    </div>
+
+  } @else {
+
+    <!-- ===================================================
+         CARDS
+    ==================================================== -->
+
+    <div class="content-grid">
+
+      <!-- MODULES -->
+
+      <div class="content-card">
+
+        <div class="card-image">
+
+          <img
+            src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&q=80"
+            alt="الوحدات والدروس"
+          />
+
+        </div>
+
+
+        <div class="card-body">
+
+          <div class="card-icon">
+            📖
+          </div>
+
+          <h3>
+            الوحدات والدروس
+          </h3>
+
+          <p>
+            لديك
+            <strong>
+              {{ activeModules().length }}
+            </strong>
+            وحدة و
+            <strong>
+              {{ lessons().length }}
+            </strong>
+            درس في البرنامج الحالي.
+          </p>
+
+
+          <div class="card-actions">
+
+            <button
+              type="button"
+              class="card-btn"
+              (click)="openCreateModal('module')"
+            >
+              + وحدة
+            </button>
+
+
+            <button
+              type="button"
+              class="card-btn"
+              (click)="openCreateModal('lesson')"
+              [disabled]="activeModules().length === 0"
+            >
+              + درس
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- FILES -->
+
+      <div class="content-card">
+
+        <div class="card-image">
+
+          <img
+            src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80"
+            alt="الملفات والفيديوهات"
+          />
+
+        </div>
+
+
+        <div class="card-body">
+
+          <div class="card-icon">
+            🎬
+          </div>
+
+          <h3>
+            الملفات والفيديوهات
+          </h3>
+
+          <p>
+            رفع ملفات PDF والمستندات والصور
+            والفيديوهات وربطها بالدرس المناسب.
+          </p>
+
+
+          <button
+            type="button"
+            class="card-btn full"
+            (click)="showFileModal.set(true)"
+            [disabled]="lessons().length === 0"
+          >
+            ⬆ رفع مادة
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- REFERENCES -->
+
+      <div class="content-card">
+
+        <div class="card-image">
+
+          <img
+            src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80"
+            alt="الروابط والمراجع"
+          />
+
+        </div>
+
+
+        <div class="card-body">
+
+          <div class="card-icon">
+            🔗
+          </div>
+
+          <h3>
+            الروابط والمراجع
+          </h3>
+
+          <p>
+            إضافة روابط ومراجع تعليمية خارجية
+            وربطها بالدرس المناسب.
+          </p>
+
+
+          <button
+            type="button"
+            class="card-btn full"
+            (click)="showRefModal.set(true)"
+            [disabled]="lessons().length === 0"
+          >
+            + إضافة مرجع
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- ===================================================
+         PROGRAM CONTENT
+    ==================================================== -->
+
+    <div class="program-content">
+
+      <div class="section-heading">
+
+        <div>
+
+          <h3>
+            محتوى البرنامج
+          </h3>
+
+          <p>
+            {{ getProgramName() }}
+          </p>
+
+        </div>
+
+
+        <div class="section-counts">
+
+          <span>
+            {{ activeModules().length }}
+            وحدة
+          </span>
+
+          <span>
+            {{ lessons().length }}
+            درس
+          </span>
+
+        </div>
+
+      </div>
+
+
+      @for (
+        module of activeModules();
+        track module.moduleId
+      ) {
+
+        <div class="module-box">
+
+          <div class="module-header">
+
+            <div class="module-title">
+
+              <span>
+                📘
+              </span>
+
+              <strong>
+                {{ module.title }}
+              </strong>
+
+            </div>
+
+
+            <span class="module-order">
+              ترتيب {{ module.orderIndex }}
+            </span>
+
+          </div>
+
+
+          <div class="lesson-list">
+
+            @for (
+              lesson of getLessonsForModule(module.moduleId);
+              track lesson.lessonId
+            ) {
+
+              <div class="lesson-row">
+
+                <span class="lesson-icon">
+                  📄
+                </span>
+
+
+                <div>
+
+                  <strong>
+                    {{
+                      lesson.title ||
+                      'درس بدون عنوان'
+                    }}
+                  </strong>
+
+
+                  @if (lesson.contentBody) {
+
+                    <p>
+                      {{ lesson.contentBody }}
+                    </p>
+
+                  }
+
+                </div>
+
+              </div>
+
+            } @empty {
+
+              <div class="module-empty">
+                لا توجد دروس داخل هذه الوحدة بعد.
+              </div>
+
+            }
+
+          </div>
+
+        </div>
+
+      } @empty {
+
+        <div class="empty-content">
+
+          <div>
+            📘
+          </div>
+
+          <strong>
+            لا توجد وحدات في هذا البرنامج بعد
+          </strong>
+
+          <p>
+            ابدئي بإنشاء أول وحدة، وبعدها يمكنك
+            إضافة الدروس والمواد.
+          </p>
+
+          <button
+            type="button"
+            class="btn primary"
+            (click)="openCreateModal('module')"
+          >
+            + إنشاء أول وحدة
+          </button>
+
+        </div>
+
+      }
+
+    </div>
+
+  }
 
 </div>
 
-<!-- CSS الخاص بالحركات وتأثيرات الهوفر -->
+
+<!-- =====================================================
+     CREATE MODULE / LESSON MODAL
+====================================================== -->
+
+@if (showModal()) {
+
+  <div
+    class="modal-bg"
+    (click)="showModal.set(false)"
+  >
+
+    <div
+      class="modal-box"
+      (click)="$event.stopPropagation()"
+    >
+
+      <h3>
+        {{
+          createType === 'module'
+            ? 'إنشاء وحدة'
+            : 'إنشاء درس'
+        }}
+      </h3>
+
+
+      @if (createType === 'lesson') {
+
+        <label>
+          الوحدة
+        </label>
+
+
+        <select
+          [(ngModel)]="selectedModuleId"
+          class="form-control"
+        >
+
+          @for (
+            module of activeModules();
+            track module.moduleId
+          ) {
+
+            <option
+              [ngValue]="module.moduleId"
+            >
+              {{ module.title }}
+            </option>
+
+          }
+
+        </select>
+
+      }
+
+
+      <label>
+        {{
+          createType === 'module'
+            ? 'اسم الوحدة'
+            : 'اسم الدرس'
+        }}
+      </label>
+
+
+      <input
+        [(ngModel)]="title"
+        class="form-control"
+        [placeholder]="
+          createType === 'module'
+            ? 'مثال: مقدمة في HTML'
+            : 'مثال: عناصر الصفحة الأساسية'
+        "
+      />
+
+
+      @if (createType === 'lesson') {
+
+        <label>
+          محتوى الدرس
+        </label>
+
+
+        <textarea
+          [(ngModel)]="lessonContentBody"
+          class="form-control textarea"
+          rows="4"
+          placeholder="اكتب وصفاً أو محتوى مختصراً للدرس"
+        ></textarea>
+
+      }
+
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="btn cancel"
+          (click)="showModal.set(false)"
+          [disabled]="saving()"
+        >
+          إلغاء
+        </button>
+
+
+        <button
+          type="button"
+          class="btn primary"
+          (click)="create()"
+          [disabled]="saving()"
+        >
+          {{
+            saving()
+              ? 'جاري الحفظ...'
+              : 'حفظ'
+          }}
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+}
+
+
+<!-- =====================================================
+     FILE UPLOAD MODAL
+====================================================== -->
+
+@if (showFileModal()) {
+
+  <div
+    class="modal-bg"
+    (click)="showFileModal.set(false)"
+  >
+
+    <div
+      class="modal-box"
+      (click)="$event.stopPropagation()"
+    >
+
+      <h3>
+        رفع ملف أو فيديو
+      </h3>
+
+
+      <label>
+        الدرس
+      </label>
+
+
+      <select
+        [(ngModel)]="fileLessonId"
+        class="form-control"
+      >
+
+        @for (
+          lesson of lessons();
+          track lesson.lessonId
+        ) {
+
+          <option
+            [ngValue]="lesson.lessonId"
+          >
+            {{ getModuleTitle(lesson.moduleId) }}
+            -
+            {{
+              lesson.title ||
+              'درس بدون عنوان'
+            }}
+          </option>
+
+        }
+
+      </select>
+
+
+      <label>
+        الملف
+      </label>
+
+
+      <input
+        type="file"
+        class="form-control file-control"
+        (change)="onFileSelected($event)"
+      />
+
+
+      @if (selectedFile) {
+
+        <div class="selected-file">
+
+          <strong>
+            {{ selectedFile.name }}
+          </strong>
+
+          <span>
+            النوع:
+            {{ selectedFileType }}
+          </span>
+
+        </div>
+
+      }
+
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="btn cancel"
+          (click)="showFileModal.set(false)"
+          [disabled]="saving()"
+        >
+          إلغاء
+        </button>
+
+
+        <button
+          type="button"
+          class="btn primary"
+          (click)="uploadFile()"
+          [disabled]="saving()"
+        >
+          {{
+            saving()
+              ? 'جاري الرفع...'
+              : 'رفع'
+          }}
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+}
+
+
+<!-- =====================================================
+     REFERENCE MODAL
+====================================================== -->
+
+@if (showRefModal()) {
+
+  <div
+    class="modal-bg"
+    (click)="showRefModal.set(false)"
+  >
+
+    <div
+      class="modal-box"
+      (click)="$event.stopPropagation()"
+    >
+
+      <h3>
+        إضافة مرجع أو رابط
+      </h3>
+
+
+      <label>
+        الدرس
+      </label>
+
+
+      <select
+        [(ngModel)]="referenceLessonId"
+        class="form-control"
+      >
+
+        @for (
+          lesson of lessons();
+          track lesson.lessonId
+        ) {
+
+          <option
+            [ngValue]="lesson.lessonId"
+          >
+            {{ getModuleTitle(lesson.moduleId) }}
+            -
+            {{
+              lesson.title ||
+              'درس بدون عنوان'
+            }}
+          </option>
+
+        }
+
+      </select>
+
+
+      <label>
+        رابط المرجع
+      </label>
+
+
+      <input
+        [(ngModel)]="refLink"
+        class="form-control"
+        placeholder="https://example.com"
+      />
+
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="btn cancel"
+          (click)="showRefModal.set(false)"
+          [disabled]="saving()"
+        >
+          إلغاء
+        </button>
+
+
+        <button
+          type="button"
+          class="btn primary"
+          (click)="addReference()"
+          [disabled]="saving()"
+        >
+          {{
+            saving()
+              ? 'جاري الحفظ...'
+              : 'حفظ'
+          }}
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+}
+
+
+<!-- =====================================================
+     ARCHIVE MODAL
+====================================================== -->
+
+@if (showArchiveModal()) {
+
+  <div
+    class="modal-bg"
+    (click)="showArchiveModal.set(false)"
+  >
+
+    <div
+      class="modal-box archive-modal"
+      (click)="$event.stopPropagation()"
+    >
+
+      <h3>
+        📁 الأرشيف
+      </h3>
+
+
+      <p class="archive-description">
+        الوحدات المؤرشفة التابعة للبرنامج الحالي.
+      </p>
+
+
+      <div class="archive-list">
+
+        @for (
+          module of archivedModules();
+          track module.moduleId
+        ) {
+
+          <div class="archive-item">
+
+            <span>
+              📘
+            </span>
+
+            <strong>
+              {{ module.title }}
+            </strong>
+
+          </div>
+
+        } @empty {
+
+          <div class="archive-empty">
+            لا توجد وحدات مؤرشفة في البرنامج الحالي.
+          </div>
+
+        }
+
+      </div>
+
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="btn cancel"
+          (click)="showArchiveModal.set(false)"
+        >
+          إغلاق
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+}
+
+
+<!-- =====================================================
+     STYLE
+====================================================== -->
+
 <style>
+
+  .content-page {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+  }
+
+
+  .content-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+
+  .content-header h2 {
+    margin: 0 0 6px;
+    color: #0b192c;
+    font-size: 24px;
+    font-weight: 800;
+  }
+
+
+  .content-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+  }
+
+
+  .header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+
+  .btn {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+  }
+
+
+  .btn.primary {
+    background: #0284c7;
+    color: #ffffff;
+  }
+
+
+  .btn.secondary {
+    background: #ffffff;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+  }
+
+
+  .btn.archive {
+    background: #ffffff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+  }
+
+
+  .btn.cancel {
+    background: #e2e8f0;
+    color: #334155;
+  }
+
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+  }
+
+
+  /* ==========================================
+     BATCH SELECTOR
+  ========================================== */
+
+  .batch-selector {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 16px;
+    margin-bottom: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+  }
+
+
+  .batch-selector-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+
+  .batch-selector-text strong {
+    color: #0f172a;
+    font-size: 14px;
+  }
+
+
+  .batch-selector-text span {
+    color: #64748b;
+    font-size: 12px;
+  }
+
+
+  .batch-selector-control {
+    min-width: 300px;
+  }
+
+
+  .batch-selector-control select {
+    width: 100%;
+    padding: 10px 12px;
+    background: #ffffff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    outline: none;
+  }
+
+
+  .batch-selector-control select:focus {
+    border-color: #0284c7;
+  }
+
+
+  .loading-text {
+    display: block;
+    padding: 10px;
+    color: #64748b;
+    font-size: 13px;
+  }
+
+
+  /* ==========================================
+     CONTEXT
+  ========================================== */
+
+  .current-context {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+
+  .context-badge {
+    padding: 6px 11px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+
+  .batch-badge {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+
+  .program-badge {
+    background: #ecfeff;
+    color: #0e7490;
+  }
+
+
+  /* ==========================================
+     MESSAGES
+  ========================================== */
+
+  .message {
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+
+
+  .error-message {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+  }
+
+
+  .success-message {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
+
+
+  .loading-box {
+    padding: 55px;
+    text-align: center;
+    color: #64748b;
+  }
+
+
+  .empty-page {
+    padding: 60px 20px;
+    text-align: center;
+    color: #64748b;
+    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+  }
+
+
+  .empty-page .empty-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+  }
+
+
+  .empty-page strong {
+    display: block;
+    color: #334155;
+    margin-bottom: 6px;
+  }
+
+
+  .empty-page p {
+    margin: 0;
+    font-size: 13px;
+  }
+
+
+  /* ==========================================
+     CARDS
+  ========================================== */
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 20px;
+  }
+
+
+  .content-card {
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    transition:
+      transform 0.3s ease,
+      box-shadow 0.3s ease,
+      border-color 0.3s ease;
+  }
+
+
   .content-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 24px rgba(2, 132, 199, 0.12);
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(2,132,199,0.10);
     border-color: #bae6fd;
   }
+
+
+  .card-image {
+    height: 140px;
+    overflow: hidden;
+  }
+
+
+  .card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+
   .content-card:hover img {
     transform: scale(1.05);
   }
-  .card-btn:hover {
-    background: #0284c7 !important;
-    color: #ffffff !important;
+
+
+  .card-body {
+    padding: 20px;
   }
+
+
+  .card-icon {
+    color: #0284c7;
+    font-size: 21px;
+  }
+
+
+  .card-body h3 {
+    margin: 8px 0;
+    color: #0b192c;
+    font-size: 18px;
+  }
+
+
+  .card-body p {
+    min-height: 42px;
+    margin: 0 0 18px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+
+  .card-btn {
+    flex: 1;
+    padding: 10px;
+    background: #ffffff;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+
+  .card-btn.full {
+    width: 100%;
+  }
+
+
+  .card-btn:hover:not(:disabled) {
+    background: #0284c7;
+    color: #ffffff;
+  }
+
+
+  /* ==========================================
+     PROGRAM CONTENT
+  ========================================== */
+
+  .program-content {
+    padding-top: 24px;
+    margin-top: 28px;
+    border-top: 1px solid #f1f5f9;
+  }
+
+
+  .section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 16px;
+  }
+
+
+  .section-heading h3 {
+    margin: 0 0 4px;
+    color: #0b192c;
+    font-size: 18px;
+  }
+
+
+  .section-heading p {
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+  }
+
+
+  .section-counts {
+    display: flex;
+    gap: 8px;
+  }
+
+
+  .section-counts span {
+    padding: 5px 10px;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 20px;
+    font-size: 12px;
+  }
+
+
+  .module-box {
+    padding: 16px;
+    margin-bottom: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+  }
+
+
+  .module-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 11px;
+  }
+
+
+  .module-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #0b192c;
+  }
+
+
+  .module-order {
+    color: #64748b;
+    font-size: 11px;
+  }
+
+
+  .lesson-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+
+  .lesson-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+  }
+
+
+  .lesson-icon {
+    margin-top: 1px;
+  }
+
+
+  .lesson-row strong {
+    color: #334155;
+    font-size: 13px;
+  }
+
+
+  .lesson-row p {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+
+  .module-empty {
+    padding: 10px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 12px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+  }
+
+
+  .empty-content {
+    padding: 35px 20px;
+    text-align: center;
+    color: #64748b;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+  }
+
+
+  .empty-content > div {
+    margin-bottom: 8px;
+    font-size: 28px;
+  }
+
+
+  .empty-content strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #334155;
+  }
+
+
+  .empty-content p {
+    margin: 0 0 16px;
+    font-size: 13px;
+  }
+
+
+  /* ==========================================
+     MODALS
+  ========================================== */
+
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    background: rgba(0,0,0,0.5);
+  }
+
+
+  .modal-box {
+    width: 420px;
+    max-width: 100%;
+    padding: 25px;
+    background: #ffffff;
+    border-radius: 16px;
+    text-align: right;
+    box-shadow: 0 18px 50px rgba(15,23,42,0.18);
+  }
+
+
+  .modal-box h3 {
+    margin: 0 0 20px;
+    color: #0b192c;
+    font-size: 19px;
+  }
+
+
+  .modal-box label {
+    display: block;
+    margin-bottom: 6px;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+
+  .form-control {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    margin-bottom: 15px;
+    background: #ffffff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    outline: none;
+  }
+
+
+  .form-control:focus {
+    border-color: #0284c7;
+  }
+
+
+  .textarea {
+    resize: vertical;
+  }
+
+
+  .file-control {
+    padding: 8px;
+  }
+
+
+  .selected-file {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px;
+    margin-bottom: 15px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+  }
+
+
+  .selected-file strong {
+    color: #334155;
+    font-size: 12px;
+    word-break: break-all;
+  }
+
+
+  .selected-file span {
+    color: #64748b;
+    font-size: 11px;
+  }
+
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 5px;
+  }
+
+
+  /* ==========================================
+     ARCHIVE
+  ========================================== */
+
+  .archive-modal {
+    width: 480px;
+  }
+
+
+  .archive-description {
+    margin: -8px 0 18px;
+    color: #64748b;
+    font-size: 13px;
+  }
+
+
+  .archive-list {
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+
+  .archive-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+  }
+
+
+  .archive-item strong {
+    color: #334155;
+    font-size: 13px;
+  }
+
+
+  .archive-empty {
+    padding: 25px;
+    text-align: center;
+    color: #64748b;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+
+
+  /* ==========================================
+     RESPONSIVE
+  ========================================== */
+
+  @media (max-width: 950px) {
+
+    .content-grid {
+      grid-template-columns: 1fr;
+    }
+
+
+    .content-header,
+    .batch-selector {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+
+    .batch-selector-control {
+      min-width: 0;
+      width: 100%;
+    }
+
+  }
+
+
+  @media (max-width: 600px) {
+
+    .content-page {
+      padding: 18px;
+    }
+
+
+    .header-actions {
+      width: 100%;
+    }
+
+
+    .header-actions .btn {
+      flex: 1;
+    }
+
+
+    .section-heading {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+  }
+
 </style>
-
-<!-- Modal 1: إنشاء وحدة / درس -->
-@if (showModal()) {
-  <div class="nfd-modal-bg" (click)="showModal.set(false)" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
-    <div class="nfd-modal" (click)="$event.stopPropagation()" style="background: #fff; padding: 25px; border-radius: 16px; width: 400px; text-align: right;">
-      <h3 style="margin-top: 0; color: #0b192c;">إنشاء وحدة / درس</h3>
-      <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">معرف البرنامج</label>
-      <input class="nfd-input" type="number" [(ngModel)]="programIdInput" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px;" />
-      
-      <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">عنوان المحتوى</label>
-      <input class="nfd-input" [(ngModel)]="title" placeholder="اسم الوحدة أو الدرس" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 20px;" />
-      
-      <div class="nfd-modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
-        <button class="nfd-btn secondary" (click)="showModal.set(false)" style="background: #e2e8f0; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">إلغاء</button>
-        <button class="nfd-btn primary" (click)="create()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">حفظ</button>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Modal 2: رفع مادة (ملفات وفيديوهات) -->
-@if (showFileModal()) {
-  <div class="nfd-modal-bg" (click)="showFileModal.set(false)" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
-    <div class="nfd-modal" (click)="$event.stopPropagation()" style="background: #fff; padding: 25px; border-radius: 16px; width: 400px; text-align: right;">
-      <h3 style="margin-top: 0; color: #0b192c;">رفع ملف أو فيديو</h3>
-      
-      <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">عنوان المادة</label>
-      <input class="nfd-input" [(ngModel)]="fileTitle" placeholder="عنوان المادة التعليمية" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px;" />
-      
-      <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">اختر الملف أو الفيديو</label>
-      <input class="nfd-input" type="file" (change)="onFileSelected($event)" style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 20px;" />
-
-      <div class="nfd-modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
-        <button class="nfd-btn secondary" (click)="showFileModal.set(false)" style="background: #e2e8f0; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">إلغاء</button>
-        <button class="nfd-btn primary" (click)="uploadFile()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">رفع</button>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Modal 3: إضافة مرجع (روابط ومراجع) -->
-@if (showRefModal()) {
-  <div class="nfd-modal-bg" (click)="showRefModal.set(false)" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
-    <div class="nfd-modal" (click)="$event.stopPropagation()" style="background: #fff; padding: 25px; border-radius: 16px; width: 400px; text-align: right;">
-      <h3 style="margin-top: 0; color: #0b192c;">إضافة مرجع أو رابط</h3>
-      
-      <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600;">رابط المرجع</label>
-      <input class="nfd-input" [(ngModel)]="refLink" placeholder="https://..." style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 20px;" />
-      
-      <div class="nfd-modal-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
-        <button class="nfd-btn secondary" (click)="showRefModal.set(false)" style="background: #e2e8f0; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">إلغاء</button>
-        <button class="nfd-btn primary" (click)="addReference()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">حفظ</button>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Modal 4: أرشيف المواد / مكتبة المواد السابقة (المضافة حديثاً لتطابق البروتوتايب) -->
-@if (showArchiveModal()) {
-  <div class="nfd-modal-bg" (click)="showArchiveModal.set(false)" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
-    <div class="nfd-modal" (click)="$event.stopPropagation()" style="background: #fff; padding: 25px; border-radius: 16px; width: 480px; text-align: right;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <span style="background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600;">✓ تم فتح مكتبة المواد السابقة</span>
-        <h3 style="margin: 0; color: #0b192c;">أرشيف المواد</h3>
-      </div>
-      <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">استعراض المواد والملفات المؤرشفة من الفصول والبرامج السابقة لاسترجاعها أو الاستفادة منها.</p>
-      
-      <!-- قائمة افتراضية للمواد المؤرشفة -->
-      <div style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
-        <div style="padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 12px; color: #0284c7; cursor: pointer; font-weight: 600;">استرجاع</span>
-          <span style="font-size: 13px; font-weight: 600; color: #334155;">مقرر أساسيات البرمجة (أرشيف 2025)</span>
-        </div>
-        <div style="padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 12px; color: #0284c7; cursor: pointer; font-weight: 600;">استرجاع</span>
-          <span style="font-size: 13px; font-weight: 600; color: #334155;">قواعد البيانات المتقدمة SQL (أرشيف 2025)</span>
-        </div>
-      </div>
-
-      <div class="nfd-modal-actions" style="display: flex; justify-content: flex-end;">
-        <button class="nfd-btn secondary" (click)="showArchiveModal.set(false)" style="background: #e2e8f0; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">إغلاق</button>
-      </div>
-    </div>
-  </div>
-}
