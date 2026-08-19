@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms'; // تم إضافة FormsModule
 import { AdminApi } from '../../services/admin-api';
 import { TraineeProfileDto } from '../../../../core/models/dtos';
 import { TRAINEE_STATUS_LABELS } from '../../../../core/models/enums';
@@ -8,13 +9,17 @@ import { TRAINEE_STATUS_LABELS } from '../../../../core/models/enums';
 @Component({
   selector: 'app-admin-trainee-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './trainee-profile.html',
   styleUrls: ['./trainee-profile.css']
 })
 export class AdminTraineeProfile implements OnInit {
   trainee = signal<TraineeProfileDto | any>(null);
   statusLabels: Record<string, string> = TRAINEE_STATUS_LABELS;
+
+  // إدارة حالة نافذة التجميد
+  isFreezeModalOpen = signal<boolean>(false);
+  freezeReason = signal<string>('');
 
   // القيم الإحصائية
   attendanceRate = signal<number>(91);
@@ -30,7 +35,7 @@ export class AdminTraineeProfile implements OnInit {
     { title: 'التقييم النهائي', score: 91, color: '#0d9488' }
   ]);
 
-  // شبكة الحضور (32 مربعاً مثل المصممة تماماً)
+  // شبكة الحضور
   attendanceGrid = signal<Array<{ date: string; status: 'present' | 'late' | 'absent'; label: string }>>([]);
 
   constructor(
@@ -41,13 +46,11 @@ export class AdminTraineeProfile implements OnInit {
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     
-    // جلب بيانات المتدرب من الـ API
     this.api.getTrainee(id).subscribe({
       next: (t) => {
         this.trainee.set(t);
       },
       error: () => {
-        // Mock Data احتياطية لتظهر البيانات فوراً بنفس تصميم الصورة
         this.trainee.set({
           fullName: 'خالد سعيد المطيري',
           major: 'هندسة برمجيات',
@@ -63,7 +66,26 @@ export class AdminTraineeProfile implements OnInit {
     this.generateAttendanceData();
   }
 
-  // توليد الأحرف الأولى للأفاتار
+  // دوال التحكم بنقذة التجميد
+  openFreezeModal() {
+    this.isFreezeModalOpen.set(true);
+  }
+
+  closeFreezeModal() {
+    this.isFreezeModalOpen.set(false);
+    this.freezeReason.set('');
+  }
+
+  confirmFreeze() {
+    if (!this.freezeReason().trim()) return;
+
+    // استدعاء الـ API لإرسال سبب التجميد وتحديث الحالة
+    console.log('تم التجميد بنجاح، السبب:', this.freezeReason());
+
+    // إغلاق النافذة
+    this.closeFreezeModal();
+  }
+
   getInitials(name: string | undefined): string {
     if (!name) return 'خ م';
     const parts = name.trim().split(' ');
@@ -73,7 +95,6 @@ export class AdminTraineeProfile implements OnInit {
     return name.slice(0, 2);
   }
 
-  // ألوان شارات الحالة
   getStatusStyle(status: string) {
     switch (status) {
       case 'Completed':
@@ -88,7 +109,6 @@ export class AdminTraineeProfile implements OnInit {
     }
   }
 
-  // إنشاء بيانات الحضور التلقائية للمربعات
   generateAttendanceData() {
     const statuses: Array<'present' | 'late' | 'absent'> = [
       'present', 'present', 'absent', 'present', 'present', 'present', 'present', 'present',
