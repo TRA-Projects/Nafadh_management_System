@@ -80,7 +80,7 @@
     <div style="padding:4px 4px 8px">
 
       <input
-        class="nfd-input"
+        class="nfd-input company-contact-search"
         style="height:36px;font-size:12px"
         [ngModel]="searchText"
         (ngModelChange)="searchText = $event"
@@ -143,6 +143,7 @@
         ) {
 
           <button
+            class="company-contact-conversation"
             type="button"
             (click)="open(c.conversationId)"
             style="
@@ -163,6 +164,7 @@
                 ? 'var(--color-tint-indigo)'
                 : 'transparent'
             "
+            [class.company-contact-conversation-active]="active()?.conversationId === c.conversationId"
           >
 
             <!-- Top row -->
@@ -410,6 +412,7 @@
         ) {
 
           <div
+            class="company-contact-message"
             style="
               max-width:70%;
               padding:8px 12px;
@@ -430,6 +433,7 @@
                 ? 'flex-end'
                 : 'flex-start'
             "
+            [class.company-contact-message-own]="m.senderId === (auth.userId ?? -1)"
           >
 
             <strong
@@ -507,7 +511,7 @@
       >
 
         <input
-          class="nfd-input"
+          class="nfd-input company-contact-reply-input"
           [(ngModel)]="replyText"
           placeholder="اكتب رسالتك هنا..."
           (keydown.enter)="send()"
@@ -589,7 +593,7 @@
   >
 
     <div
-      class="nfd-modal"
+      class="nfd-modal company-contact-new-modal"
       (click)="$event.stopPropagation()"
     >
 

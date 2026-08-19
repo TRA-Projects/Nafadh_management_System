@@ -182,10 +182,16 @@ export interface ProgramDto {
   title?: string;
   name?: string;
   description?: string;
+  category?: string;
   trackId?: number;
   durationHours?: number;
   price?: number;
   status?: string;
+}
+
+export interface CompanyProgramLinkDto {
+  companyId: number;
+  programId: number;
 }
 
 export interface BatchDto {
