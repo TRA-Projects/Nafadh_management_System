@@ -1,0 +1,200 @@
+@use '../../../../../styles/tokens' as *;
+
+:host {
+  display: block;
+  --contact-border: #e2e8f3;
+  --contact-border-light: #edf1f7;
+  --contact-soft: #f7faff;
+}
+
+.nfd-page-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.nfd-page-sub {
+  color: #64748b;
+}
+
+.nfd-toolbar {
+  align-items: center;
+}
+
+.nfd-toolbar .nfd-btn.primary {
+  box-shadow: 0 8px 16px -11px rgba(10, 17, 114, 0.85);
+}
+
+.nfd-card {
+  border-color: var(--contact-border);
+  box-shadow: 0 8px 24px rgba(10, 17, 114, 0.05);
+}
+
+.nfd-input {
+  border-color: var(--contact-border);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.nfd-input:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(0, 102, 196, 0.1);
+}
+
+/* Improve visual hierarchy without changing the original dimensions or layout. */
+.nfd-card > div[style*="padding:4px 4px 8px"] {
+  background: linear-gradient(180deg, var(--contact-soft), #fff);
+  border-bottom: 1px solid var(--contact-border-light);
+}
+
+.nfd-card > div[style*="padding:4px 4px 8px"] .nfd-input {
+  border: 2px solid #9aa3af !important;
+  background: #fff !important;
+  box-shadow: 0 2px 8px rgba(10, 17, 114, 0.04);
+}
+
+.nfd-card > div[style*="padding:4px 4px 8px"] .nfd-input:hover {
+  border-color: #737d8a !important;
+}
+
+.company-contact-search,
+.company-contact-reply-input {
+  border: 2px solid #9aa3af !important;
+  background: #fff !important;
+}
+
+.company-contact-search:hover,
+.company-contact-reply-input:hover {
+  border-color: #737d8a !important;
+}
+
+.company-contact-search:focus,
+.company-contact-reply-input:focus {
+  border-color: var(--color-navy) !important;
+  box-shadow: 0 0 0 3px rgba(10, 17, 114, 0.1) !important;
+}
+
+.nfd-card button[type="button"]:not(.nfd-btn) {
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.nfd-card button[type="button"]:not(.nfd-btn):hover {
+  border-color: #cbdaf1 !important;
+  background: #f1f6ff !important;
+}
+
+.nfd-card [style*="background:#DC2626"] {
+  box-shadow: 0 3px 8px rgba(220, 38, 38, 0.22);
+}
+
+.company-contact-message {
+  border: 1px solid #d9e4f3;
+  box-shadow: 0 4px 12px rgba(10, 17, 114, 0.07);
+}
+
+.company-contact-message-own {
+  border-color: #080f68;
+  box-shadow: 0 4px 12px rgba(10, 17, 114, 0.16);
+}
+
+.company-contact-conversation {
+  border: 1px solid #dbe5f2 !important;
+  background: #fbfdff !important;
+  box-shadow: 0 3px 10px rgba(10, 17, 114, 0.035);
+}
+
+.company-contact-conversation:hover {
+  border-color: #b9cceb !important;
+  background: #f2f7ff !important;
+}
+
+.company-contact-conversation-active {
+  border-color: #aebfe5 !important;
+  background: #eef4ff !important;
+  box-shadow: inset 3px 0 0 var(--color-brand), 0 3px 10px rgba(10, 17, 114, 0.07);
+}
+
+.nfd-modal {
+  border: 1px solid var(--contact-border);
+  box-shadow: 0 18px 50px rgba(10, 17, 114, 0.18);
+}
+
+.company-contact-new-modal {
+  width: min(560px, calc(100vw - 32px)) !important;
+  padding: 28px 30px !important;
+  border: 1px solid #d5deed;
+  border-top: 4px solid var(--color-navy);
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(10, 17, 114, 0.24);
+  gap: 8px;
+}
+
+.company-contact-new-modal h3 {
+  margin: 0 0 12px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--contact-border-light);
+  color: var(--color-navy);
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.company-contact-new-modal label {
+  margin-top: 10px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.company-contact-new-modal .nfd-input {
+  min-height: 44px;
+  border: 1px solid #b8c1ce !important;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.company-contact-new-modal textarea.nfd-input {
+  min-height: 112px;
+  padding-block: 11px;
+  resize: vertical;
+}
+
+.company-contact-new-modal .nfd-input:focus {
+  border-color: var(--color-brand) !important;
+  box-shadow: 0 0 0 3px rgba(0, 102, 196, 0.1) !important;
+}
+
+.company-contact-new-modal .nfd-modal-actions {
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--contact-border-light);
+}
+
+.company-contact-new-modal .nfd-modal-actions .nfd-btn {
+  min-height: 42px;
+  justify-content: center;
+}
+
+.company-contact-new-modal .nfd-modal-actions .primary {
+  min-width: 174px;
+}
+
+@media (max-width: 560px) {
+  .company-contact-new-modal {
+    padding: 22px 20px !important;
+  }
+
+  .company-contact-new-modal .nfd-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .company-contact-new-modal .nfd-modal-actions .nfd-btn,
+  .company-contact-new-modal .nfd-modal-actions .primary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 700px) {
+  .nfd-page-title {
+    font-size: 20px;
+  }
+}

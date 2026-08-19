@@ -3,124 +3,321 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
-using System.Security.Claims;
 
 namespace Nafadh_Backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-  
     public class TrainingMaterialController : ControllerBase
     {
         private readonly ITrainingMaterialService _service;
-        // Constructor
-        public TrainingMaterialController(ITrainingMaterialService service)
+        private readonly IWebHostEnvironment _environment;
+
+
+        // =====================================================
+        // CONSTRUCTOR
+        // =====================================================
+
+        public TrainingMaterialController(
+            ITrainingMaterialService service,
+            IWebHostEnvironment environment)
         {
             _service = service;
+            _environment = environment;
         }
-        // -------------------------------------------------------
+
+
+        // =====================================================
+        // GET MATERIALS BY LESSON
         // GET: api/TrainingMaterial/lesson/{lessonId}
-        // Returns all materials attached to a lesson.
-        // -------------------------------------------------------
+        // =====================================================
+
         [HttpGet("lesson/{lessonId}")]
-        public async Task<IActionResult> GetByLesson(int lessonId)
+        public async Task<IActionResult> GetByLesson(
+            int lessonId)
         {
-            var materials = await _service.GetByLessonIdAsync(lessonId);
+            var materials =
+                await _service.GetByLessonIdAsync(
+                    lessonId
+                );
 
             return Ok(materials);
         }
 
-        // -------------------------------------------------------
+
+        // =====================================================
+        // CREATE TRAINING MATERIAL
         // POST: api/TrainingMaterial
-        // Creates a new training material.
-        // -------------------------------------------------------
+        // Used for URLs / references / already uploaded files
+        // =====================================================
+
         [HttpPost]
-        //[Authorize(Roles = "Trainer,Admin")]
-        public async Task<IActionResult> Create(CreateTrainingMaterialDto dto)
+        public async Task<IActionResult> Create(
+            CreateTrainingMaterialDto dto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            //// Get authenticated user ID from JWT token
-            //var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
 
-            //if (userIdClaim == null)
-            //{
-            //    return Unauthorized();
-            //}
+            var result =
+                await _service.CreateAsync(
+                    dto,
+                    dto.UploadedByUserId
+                );
 
-            //int userId = int.Parse(userIdClaim.Value);
-            int userId = 1;
-            var result = await _service.CreateAsync(dto, userId);
 
             return CreatedAtAction(
                 nameof(GetDownloadUrl),
-                new { id = result.MaterialId },
-                result);
+                new
+                {
+                    id = result.MaterialId
+                },
+                result
+            );
         }
 
-        // -------------------------------------------------------
-        // PUT: api/TrainingMaterial/{id}
-        // Updates training material information.
-        // -------------------------------------------------------
-        [HttpPut("{id}")]
-        //[Authorize(Roles = "Trainer,Admin")]
-        public async Task<IActionResult> Update(int id, UpdateTrainingMaterialDto dto)
+
+        // =====================================================
+        // UPLOAD FILE
+        // POST: api/TrainingMaterial/upload
+        // =====================================================
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> Upload(
+            [FromForm] UploadTrainingMaterialDto dto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var updated = await _service.UpdateAsync(id, dto);
+
+            // ---------------------------------------------
+            // Validate file
+            // ---------------------------------------------
+
+            if (
+                dto.File == null ||
+                dto.File.Length == 0
+            )
+            {
+                return BadRequest(
+                    new
+                    {
+                        message =
+                            "File is required."
+                    }
+                );
+            }
+
+
+            // ---------------------------------------------
+            // Create upload folder
+            // ---------------------------------------------
+
+            var webRootPath =
+                _environment.WebRootPath;
+
+
+            if (string.IsNullOrWhiteSpace(webRootPath))
+            {
+                webRootPath =
+                    Path.Combine(
+                        _environment.ContentRootPath,
+                        "wwwroot"
+                    );
+            }
+
+
+            var uploadsFolder =
+                Path.Combine(
+                    webRootPath,
+                    "uploads",
+                    "training-materials"
+                );
+
+
+            Directory.CreateDirectory(
+                uploadsFolder
+            );
+
+
+            // ---------------------------------------------
+            // Generate unique file name
+            // ---------------------------------------------
+
+            var extension =
+                Path.GetExtension(
+                    dto.File.FileName
+                );
+
+
+            var fileName =
+                $"{Guid.NewGuid()}{extension}";
+
+
+            var fullPath =
+                Path.Combine(
+                    uploadsFolder,
+                    fileName
+                );
+
+
+            // ---------------------------------------------
+            // Save physical file
+            // ---------------------------------------------
+
+            await using (
+                var stream =
+                    new FileStream(
+                        fullPath,
+                        FileMode.Create
+                    )
+            )
+            {
+                await dto.File.CopyToAsync(
+                    stream
+                );
+            }
+
+
+            // ---------------------------------------------
+            // File URL saved in database
+            // ---------------------------------------------
+
+            var fileUrl =
+                $"/uploads/training-materials/{fileName}";
+
+
+            // ---------------------------------------------
+            // Create material record
+            // ---------------------------------------------
+
+            var createDto =
+                new CreateTrainingMaterialDto
+                {
+                    FileUrl =
+                        fileUrl,
+
+                    FileType =
+                        dto.FileType,
+
+                    LessonId =
+                        dto.LessonId,
+
+                    UploadedByUserId =
+                        dto.UploadedByUserId
+                };
+
+
+            var result =
+                await _service.CreateAsync(
+                    createDto,
+                    dto.UploadedByUserId
+                );
+
+
+            return CreatedAtAction(
+                nameof(GetDownloadUrl),
+                new
+                {
+                    id = result.MaterialId
+                },
+                result
+            );
+        }
+
+
+        // =====================================================
+        // UPDATE TRAINING MATERIAL
+        // PUT: api/TrainingMaterial/{id}
+        // =====================================================
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(
+            int id,
+            UpdateTrainingMaterialDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+
+            var updated =
+                await _service.UpdateAsync(
+                    id,
+                    dto
+                );
+
 
             if (!updated)
             {
                 return NotFound();
             }
 
+
             return NoContent();
         }
 
-        // -------------------------------------------------------
+
+        // =====================================================
+        // DELETE TRAINING MATERIAL
         // DELETE: api/TrainingMaterial/{id}
-        // Deletes a training material.
-        // -------------------------------------------------------
+        // =====================================================
+
         [HttpDelete("{id}")]
-       // [Authorize(Roles = "Trainer,Admin")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(
+            int id)
         {
-            var deleted = await _service.DeleteAsync(id);
+            var deleted =
+                await _service.DeleteAsync(
+                    id
+                );
+
 
             if (!deleted)
             {
                 return NotFound();
             }
 
+
             return NoContent();
         }
 
-        // -------------------------------------------------------
+
+        // =====================================================
+        // GET DOWNLOAD URL
         // GET: api/TrainingMaterial/{id}/download
-        // Returns file URL for download or streaming.
-        // -------------------------------------------------------
+        // =====================================================
+
         [HttpGet("{id}/download")]
-        public async Task<IActionResult> GetDownloadUrl(int id)
+        public async Task<IActionResult> GetDownloadUrl(
+            int id)
         {
-            var url = await _service.GetDownloadUrlAsync(id);
+            var url =
+                await _service.GetDownloadUrlAsync(
+                    id
+                );
+
 
             if (url == null)
             {
                 return NotFound();
             }
 
-            return Ok(new {  DownloadUrl = url });
+
+            return Ok(
+                new
+                {
+                    DownloadUrl = url
+                }
+            );
         }
     }
 }

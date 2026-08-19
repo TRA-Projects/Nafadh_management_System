@@ -7,6 +7,9 @@ using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 using Nafadh_Backend.DTOs;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace Nafadh_Backend.Services
 {
@@ -19,10 +22,13 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
-        // TODO: implement business-logic contract methods for this entity
+        // ==========================================================
+        // GET Reports
+        // ==========================================================
 
-        // GET Report
-        public async Task<List<ReportOutputDTO>> GetReportsAsync(NFD_ReportType? type, int? userId)
+        public async Task<List<ReportOutputDTO>> GetReportsAsync(
+            NFD_ReportType? type,
+            int? userId)
         {
             var reports = await _repository.GetReportsAsync(type, userId);
 
@@ -34,23 +40,184 @@ namespace Nafadh_Backend.Services
                 GeneratedAt = r.GeneratedAt,
                 FileUrl = r.FileUrl,
                 GeneratedByUserId = r.GeneratedByUserId
-
             }).ToList();
         }
 
-        // generate Report
+        // ==========================================================
+        // Generate PDF Report
+        // ==========================================================
+
         public async Task<ReportOutputDTO> GenerateReportAsync(ReportInputDTO dto)
         {
-            NFD_Report report = new NFD_Report
+            // مجلد حفظ التقارير
+            var reportsFolder = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                "reports"
+            );
+
+            // إنشاء المجلد إذا لم يكن موجوداً
+            Directory.CreateDirectory(reportsFolder);
+
+            var generatedAt = DateTime.Now;
+
+            // اسم فريد للملف
+            var fileName =
+                $"trainer-report-{dto.TrainerId ?? 0}-{generatedAt:yyyyMMddHHmmssfff}.pdf";
+
+            var fullPath = Path.Combine(reportsFolder, fileName);
+
+            // ======================================================
+            // جلب مؤشرات المدرب
+            // ======================================================
+
+            TrainerKpisDTO? kpis = null;
+
+            if (dto.TrainerId.HasValue)
+            {
+                kpis = await _repository.GetTrainerKpisAsync(
+                    dto.TrainerId.Value
+                );
+            }
+
+            // ======================================================
+            // إنشاء ملف PDF
+            // ======================================================
+
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+
+                    page.Margin(30);
+
+                    page.DefaultTextStyle(style =>
+                        style.FontSize(12)
+                    );
+
+                    // ---------------- Header ----------------
+
+                    page.Header()
+                        .AlignCenter()
+                        .Text("تقرير المدرب")
+                        .FontSize(22)
+                        .Bold();
+
+                    // ---------------- Content ----------------
+
+                    page.Content()
+                        .PaddingVertical(20)
+                        .Column(column =>
+                        {
+                            column.Spacing(12);
+
+                            column.Item()
+                                .AlignRight()
+                                .Text($"نوع التقرير: {dto.Type}");
+
+                            if (dto.TrainerId.HasValue)
+                            {
+                                column.Item()
+                                    .AlignRight()
+                                    .Text(
+                                        $"رقم المدرب: {dto.TrainerId.Value}"
+                                    );
+                            }
+
+                            column.Item()
+                                .AlignRight()
+                                .Text(
+                                    $"تاريخ الإنشاء: {generatedAt:yyyy-MM-dd HH:mm}"
+                                );
+
+                            // ----------------------------------
+                            // KPIs
+                            // ----------------------------------
+
+                            if (kpis != null)
+                            {
+                                column.Item()
+                                    .PaddingTop(15)
+                                    .AlignRight()
+                                    .Text("مؤشرات الأداء")
+                                    .FontSize(17)
+                                    .Bold();
+
+                                column.Item()
+                                    .AlignRight()
+                                    .Text(
+                                        $"نسبة الحضور العامة: {kpis.AttendanceRate}%"
+                                    );
+
+                                column.Item()
+                                    .AlignRight()
+                                    .Text(
+                                        $"معدل إنجاز المهام: {kpis.TaskCompletionRate}%"
+                                    );
+
+                                column.Item()
+                                    .AlignRight()
+                                    .Text(
+                                        $"متوسط الدرجات الفنية: {kpis.AvgTechnicalGrade} / 100"
+                                    );
+                            }
+
+                            // ----------------------------------
+                            // Filters
+                            // ----------------------------------
+
+                            if (!string.IsNullOrWhiteSpace(dto.FiltersJson))
+                            {
+                                column.Item()
+                                    .PaddingTop(15)
+                                    .AlignRight()
+                                    .Text("بيانات التقرير")
+                                    .FontSize(15)
+                                    .Bold();
+
+                                column.Item()
+                                    .AlignRight()
+                                    .Text(dto.FiltersJson);
+                            }
+                        });
+
+                    // ---------------- Footer ----------------
+
+                    page.Footer()
+                        .AlignCenter()
+                        .Text(text =>
+                        {
+                            text.Span("بوابة نفاذ - ");
+                            text.Span("تقرير المدرب");
+                        });
+                });
+            });
+
+            // حفظ PDF داخل wwwroot/reports
+            document.GeneratePdf(fullPath);
+
+            // نخزن المسار النسبي فقط في قاعدة البيانات
+            var fileUrl = $"reports/{fileName}";
+
+            // ======================================================
+            // حفظ سجل التقرير في قاعدة البيانات
+            // ======================================================
+
+            var report = new NFD_Report
             {
                 Type = dto.Type,
                 FiltersJson = dto.FiltersJson,
-                GeneratedAt = DateTime.Now,
-                FileUrl = dto.FileUrl,
+                GeneratedAt = generatedAt,
+                FileUrl = fileUrl,
                 GeneratedByUserId = dto.GeneratedByUserId
             };
 
             await _repository.AddReportAsync(report);
+
+            // ======================================================
+            // Return
+            // ======================================================
 
             return new ReportOutputDTO
             {
@@ -63,8 +230,10 @@ namespace Nafadh_Backend.Services
             };
         }
 
-
+        // ==========================================================
         // GET Report/{id}
+        // ==========================================================
+
         public async Task<ReportOutputDTO?> GetReportByIdAsync(int reportId)
         {
             var report = await _repository.GetReportByIdAsync(reportId);
@@ -83,7 +252,10 @@ namespace Nafadh_Backend.Services
             };
         }
 
+        // ==========================================================
         // GET Report/{id}/download
+        // ==========================================================
+
         public async Task<string?> DownloadReportAsync(int reportId)
         {
             var report = await _repository.GetReportByIdAsync(reportId);
@@ -95,24 +267,45 @@ namespace Nafadh_Backend.Services
         }
 
         // ==========================================================
-        // NEW analytics/aggregation pass-throughs (backend upgrade - Phase 2)
+        // Analytics / Aggregation
         // ==========================================================
 
-        public Task<DashboardChartsDTO> GetDashboardChartsAsync() => _repository.GetDashboardChartsAsync();
+        public Task<DashboardChartsDTO> GetDashboardChartsAsync()
+            => _repository.GetDashboardChartsAsync();
 
-        public Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(int batchId) => _repository.GetBatchPerformanceAsync(batchId);
+        public Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(
+            int batchId)
+            => _repository.GetBatchPerformanceAsync(batchId);
 
-        public Task<AttendanceReportDTO?> GetCompanyAttendanceReportAsync(int companyId) => _repository.GetCompanyAttendanceReportAsync(companyId);
+        public Task<AttendanceReportDTO?> GetCompanyAttendanceReportAsync(
+            int companyId)
+            => _repository.GetCompanyAttendanceReportAsync(companyId);
 
-        public Task<List<ChartPointDTO>> GetCompanyAttendanceChartAsync(int companyId) => _repository.GetCompanyAttendanceChartAsync(companyId);
+        public Task<List<ChartPointDTO>> GetCompanyAttendanceChartAsync(
+            int companyId)
+            => _repository.GetCompanyAttendanceChartAsync(companyId);
 
-        public Task<List<ChartPointDTO>> GetCompanyProgramDistributionAsync(int companyId) => _repository.GetCompanyProgramDistributionAsync(companyId);
+        public Task<List<ChartPointDTO>> GetCompanyProgramDistributionAsync(
+            int companyId)
+            => _repository.GetCompanyProgramDistributionAsync(companyId);
 
-        public Task<List<int>> GetCompanyTopPerformerTraineeIdsAsync(int companyId, int take) => _repository.GetCompanyTopPerformerTraineeIdsAsync(companyId, take);
+        public Task<List<int>> GetCompanyTopPerformerTraineeIdsAsync(
+            int companyId,
+            int take)
+            => _repository.GetCompanyTopPerformerTraineeIdsAsync(
+                companyId,
+                take
+            );
 
-        public Task<List<int>> GetCompanyAtRiskTraineeIdsAsync(int companyId, int take) => _repository.GetCompanyAtRiskTraineeIdsAsync(companyId, take);
+        public Task<List<int>> GetCompanyAtRiskTraineeIdsAsync(
+            int companyId,
+            int take)
+            => _repository.GetCompanyAtRiskTraineeIdsAsync(
+                companyId,
+                take
+            );
 
-        public Task<TrainerKpisDTO> GetTrainerKpisAsync(int trainerId) => _repository.GetTrainerKpisAsync(trainerId);
-
+        public Task<TrainerKpisDTO> GetTrainerKpisAsync(int trainerId)
+            => _repository.GetTrainerKpisAsync(trainerId);
     }
 }

@@ -53,8 +53,10 @@ namespace Nafadh_Backend.Repositories
         public async Task<List<NFD_DailyAttendance>> GetTodayByCompanyIdAsync(int companyId, DateTime today)
         {
             List<NFD_DailyAttendance> result = await _context.NFD_DailyAttendances
-                .Include(d => d.Enrollment)
+                .Include(d => d.Enrollment).ThenInclude(e => e.Trainee).ThenInclude(t => t.User)
+                .Include(d => d.Enrollment).ThenInclude(e => e.Batch)
                 .Where(d => d.Enrollment.CompanyId == companyId && d.Date.Date == today.Date)
+                .OrderBy(d => d.Enrollment.Trainee.User.FullName)
                 .ToListAsync();
             return result;
         }

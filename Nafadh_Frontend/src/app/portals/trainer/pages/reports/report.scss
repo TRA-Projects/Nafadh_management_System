@@ -1,0 +1,599 @@
+
+
+
+/* =========================================================
+   REPORTS PAGE ONLY
+   كل شيء هنا معزول عن باقي المشروع
+========================================================= */
+
+.reports-page-wrapper {
+  width: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+  direction: rtl;
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+  > .nfd-toolbar {
+    width: 100%;
+    min-height: 122px;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+
+    gap: 24px;
+
+    padding: 24px 28px !important;
+    margin: 0 0 16px 0 !important;
+
+    background: linear-gradient(
+      135deg,
+      #f4fbff 0%,
+      #eef7fc 100%
+    );
+
+    border: 1px solid #d7e7f1;
+    border-radius: 20px;
+
+    box-shadow:
+      0 8px 24px rgba(0, 59, 130, 0.05);
+  }
+
+
+  .page-header-text {
+    flex: 1;
+    min-width: 0;
+
+    .nfd-page-title {
+      margin: 0 0 5px !important;
+
+      color: #003b82 !important;
+
+      font-size: 29px !important;
+      font-weight: 800 !important;
+
+      line-height: 1.5;
+    }
+
+
+    .nfd-page-sub {
+      margin: 0 !important;
+
+      color: #718096 !important;
+
+      font-size: 12px !important;
+      line-height: 1.8;
+    }
+  }
+
+
+/* =========================================================
+   HEADER BUTTONS
+========================================================= */
+
+  .reports-header-actions {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    flex-shrink: 0;
+
+
+    .nfd-btn {
+      min-width: 126px;
+      height: 42px;
+
+      padding: 0 17px !important;
+
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+
+      gap: 7px;
+
+      border-radius: 11px !important;
+
+      font-size: 13px !important;
+      font-weight: 700 !important;
+    }
+
+
+    .nfd-btn.primary {
+      background: #0048a8 !important;
+      color: #ffffff !important;
+
+      border: 1px solid #0048a8 !important;
+
+      &:hover {
+        background: #003b82 !important;
+      }
+    }
+
+
+    .nfd-btn.secondary {
+      background: #ffffff !important;
+      color: #0048a8 !important;
+
+      border: 1px solid #9abbe3 !important;
+
+      &:hover {
+        background: #f2f7fd !important;
+      }
+    }
+  }
+
+
+/* =========================================================
+   KPI GRID
+========================================================= */
+
+  .kpis-dark-grid {
+    width: 100%;
+
+    display: grid !important;
+
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr)) !important;
+
+    gap: 14px !important;
+
+    margin: 0 0 16px !important;
+  }
+
+
+/* =========================================================
+   KPI CARD
+   نفس الصورة الأولى
+========================================================= */
+
+  .kpi-dark-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 88px !important;
+
+    margin: 0 !important;
+    padding: 15px 17px !important;
+
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    gap: 12px;
+
+    background: #ffffff !important;
+
+    border: 1px solid #d9e4ee !important;
+    border-radius: 17px !important;
+
+    box-shadow:
+      0 7px 20px rgba(0, 43, 103, 0.055) !important;
+
+    overflow: hidden;
+
+
+    .kpi-info {
+      min-width: 0;
+
+      flex: 1;
+
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+
+      gap: 4px;
+
+
+      .label {
+        display: block;
+
+        width: 100%;
+
+        margin: 0 !important;
+
+        color: #52657a !important;
+
+        font-size: 12px !important;
+        font-weight: 600 !important;
+
+        line-height: 1.5;
+
+        white-space: nowrap;
+      }
+
+
+      .number {
+        display: block;
+
+        width: 100%;
+
+        margin: 0 !important;
+
+        color: #003b82 !important;
+
+        font-size: 27px !important;
+        font-weight: 800 !important;
+
+        line-height: 1.15;
+
+        direction: ltr;
+
+        text-align: right;
+
+        white-space: nowrap;
+      }
+    }
+
+
+    .kpi-icon {
+      width: 52px !important;
+      height: 52px !important;
+
+      min-width: 52px;
+
+      flex: 0 0 52px !important;
+
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      margin: 0 !important;
+
+      border-radius: 14px !important;
+
+      background: #e7f7fb !important;
+
+      color: #0097aa !important;
+
+      border: none !important;
+
+      svg {
+        width: 25px !important;
+        height: 25px !important;
+
+        display: block;
+      }
+    }
+  }
+
+
+/* =========================================================
+   REPORT CARDS GRID
+========================================================= */
+
+  .reports-cards-grid {
+    width: 100% !important;
+
+    display: grid !important;
+
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr)) !important;
+
+    gap: 16px !important;
+
+    align-items: stretch !important;
+  }
+
+
+/* =========================================================
+   REPORT CARD
+========================================================= */
+
+  .report-action-card {
+    position: relative;
+
+    width: 100% !important;
+    min-width: 0 !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid #d9e4ee !important;
+    border-radius: 18px !important;
+
+    overflow: hidden !important;
+
+    box-shadow:
+      0 7px 22px rgba(0, 43, 103, 0.06) !important;
+
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+
+
+    &:hover {
+      transform: translateY(-3px);
+
+      box-shadow:
+        0 12px 28px rgba(0, 43, 103, 0.11) !important;
+
+      .report-image {
+        transform: scale(1.035);
+      }
+    }
+  }
+
+
+/* =========================================================
+   IMAGE
+========================================================= */
+
+  .report-image-wrapper {
+    position: relative !important;
+
+    width: 100% !important;
+    height: 150px !important;
+    min-height: 150px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    overflow: hidden !important;
+
+    background: #eef5f9 !important;
+  }
+
+
+  .report-image {
+    width: 100% !important;
+    height: 100% !important;
+
+    max-width: none !important;
+    max-height: none !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    display: block !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border: 0 !important;
+
+    transition: transform 0.4s ease;
+  }
+
+
+/* =========================================================
+   REPORT CONTENT
+========================================================= */
+
+  .report-content {
+    width: 100%;
+
+    min-height: 190px;
+
+    padding: 17px 18px 18px !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    flex: 1;
+
+    direction: rtl;
+
+    text-align: right;
+
+
+    .report-category {
+      width: fit-content;
+
+      display: inline-flex !important;
+      align-items: center;
+
+      margin: 0 0 8px 0 !important;
+
+      padding: 4px 10px !important;
+
+      border-radius: 999px;
+
+      background: #eaf7fa;
+
+      color: #008b9d;
+
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+
+    h3 {
+      margin: 0 0 6px 0 !important;
+
+      color: #003b82 !important;
+
+      font-size: 16px !important;
+      font-weight: 800 !important;
+
+      line-height: 1.6;
+    }
+
+
+    p {
+      margin: 0 !important;
+
+      color: #68798c !important;
+
+      font-size: 12px !important;
+
+      line-height: 1.8;
+    }
+  }
+
+
+/* =========================================================
+   FOOTER / BUTTON
+========================================================= */
+
+  .report-footer {
+    margin-top: auto !important;
+
+    padding-top: 15px !important;
+
+    display: flex !important;
+    justify-content: flex-start !important;
+  }
+
+
+  .report-button {
+    min-width: 136px;
+    height: 39px;
+
+    padding: 0 14px !important;
+
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    border: 1px solid #8eb3de !important;
+
+    border-radius: 10px !important;
+
+    background: #ffffff !important;
+
+    color: #0048a8 !important;
+
+    font-family: inherit;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+
+
+    &:hover {
+      background: #0048a8 !important;
+
+      color: #ffffff !important;
+
+      border-color: #0048a8 !important;
+    }
+
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+  @media (max-width: 1200px) {
+
+    .kpis-dark-grid {
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr)) !important;
+    }
+
+
+    .reports-cards-grid {
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr)) !important;
+    }
+  }
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+  @media (max-width: 768px) {
+
+    padding: 16px;
+
+
+    > .nfd-toolbar {
+      flex-direction: column !important;
+
+      align-items: stretch !important;
+
+      padding: 20px !important;
+    }
+
+
+    .page-header-text {
+
+      .nfd-page-title {
+        font-size: 23px !important;
+      }
+    }
+
+
+    .reports-header-actions {
+      width: 100%;
+
+      .nfd-btn {
+        flex: 1;
+      }
+    }
+
+
+    .kpis-dark-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+
+    .reports-cards-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+
+    .report-image-wrapper {
+      height: 190px !important;
+      min-height: 190px !important;
+    }
+  }
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+  @media (max-width: 480px) {
+
+    padding: 12px;
+
+
+    .reports-header-actions {
+      flex-direction: column;
+
+      .nfd-btn {
+        width: 100%;
+        flex: none;
+      }
+    }
+
+
+    .kpi-dark-card {
+
+      .kpi-info {
+
+        .number {
+          font-size: 22px !important;
+        }
+      }
+    }
+
+
+    .report-button {
+      width: 100%;
+    }
+  }
+}

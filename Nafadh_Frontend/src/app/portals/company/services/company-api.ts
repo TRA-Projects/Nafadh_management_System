@@ -6,9 +6,9 @@ import {
   AnnouncementDto, CompanyBranchDto, CompanyCapacityDto, CompanyDto, CompanySupervisorDto,
   ConversationDetailDto, ConversationListItemDto, ConversationMessageDto, EnrollmentDto, EvaluationDto,
   FeedbackSummaryDto, TrainerKpisDto, WarningDto, AttendanceReportDto, ChartPointDto,
-  TraineeListItemDto, ProgramDto,
+  TraineeListItemDto, ProgramDto, ProgressSummaryDto, CompanyProgramLinkDto,
 } from '../../../core/models/dtos';
-
+// Company API service — all endpoints used by the Company portal, including
 @Injectable({ providedIn: 'root' })
 export class CompanyApi {
   private base = environment.apiBaseUrl;
@@ -46,10 +46,13 @@ export class CompanyApi {
   createEnrollment(dto: unknown) { return this.http.post(`${this.base}/Enrollment`, dto); }
 
   // Specialties / Programs
-  getCompanyPrograms(companyId: number): Observable<unknown[]> {
-    return this.http.get<unknown[]>(`${this.base}/CompanyProgram/company/${companyId}`);
+  getCompanyPrograms(companyId: number): Observable<CompanyProgramLinkDto[]> {
+    return this.http.get<CompanyProgramLinkDto[]>(`${this.base}/CompanyProgram/company/${companyId}`);
   }
   getProgram(id: number): Observable<ProgramDto> { return this.http.get<ProgramDto>(`${this.base}/Program/${id}`); }
+  getBatch(id: number): Observable<any> { return this.http.get<any>(`${this.base}/Batch/${id}`); }
+  getModulesByProgram(programId: number): Observable<any[]> { return this.http.get<any[]>(`${this.base}/Module/program/${programId}`); }
+  getEnrollmentProgressSummary(enrollmentId: number): Observable<any> { return this.http.get<any>(`${this.base}/Enrollment/${enrollmentId}/progress-summary`); }
 
   // Company Profile
   getCompany(id: number): Observable<CompanyDto> { return this.http.get<CompanyDto>(`${this.base}/Company/${id}`); }
@@ -70,6 +73,12 @@ export class CompanyApi {
   updateSupervisor(id: number, dto: unknown) { return this.http.put(`${this.base}/CompanySupervisor/${id}`, dto); }
 
   // Trainee Progress
+  getEnrollment(enrollmentId: number): Observable<EnrollmentDto> {
+    return this.http.get<EnrollmentDto>(`${this.base}/Enrollment/${enrollmentId}`);
+  }
+  getProgressSummary(enrollmentId: number): Observable<ProgressSummaryDto> {
+    return this.http.get<ProgressSummaryDto>(`${this.base}/Enrollment/${enrollmentId}/progress-summary`);
+  }
   getEvaluationsForEnrollment(enrollmentId: number): Observable<EvaluationDto[]> {
     return this.http.get<EvaluationDto[]>(`${this.base}/Evaluation/enrollment/${enrollmentId}`);
   }
@@ -91,6 +100,9 @@ export class CompanyApi {
   }
   sendMessage(id: number, dto: unknown): Observable<ConversationMessageDto> {
     return this.http.post<ConversationMessageDto>(`${this.base}/Conversation/${id}/messages`, dto);
+  }
+  markConversationRead(id: number, userId: number) {
+    return this.http.put(`${this.base}/Conversation/${id}/read`, {}, { params: { userId } });
   }
 
   // Announcements — send to own trainees

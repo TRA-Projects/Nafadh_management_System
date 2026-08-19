@@ -11,6 +11,7 @@ using Nafadh_Backend.Repositories;
 using Nafadh_Backend.Services;
 using System.Security.Claims;
 using System.Text;
+using QuestPDF.Infrastructure;
 
 namespace Nafadh_Backend
 {
@@ -19,6 +20,7 @@ namespace Nafadh_Backend
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            QuestPDF.Settings.License = LicenseType.Community;
 
             // Add services to the container.
             builder.Services.AddControllers(options =>
@@ -244,6 +246,8 @@ namespace Nafadh_Backend
             }
 
             app.UseHttpsRedirection();
+            // Enable access to files inside wwwroot
+            app.UseStaticFiles();
             // Enable CORS middleware here
             app.UseCors("AllowAll");
 

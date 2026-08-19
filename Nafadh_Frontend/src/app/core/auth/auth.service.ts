@@ -16,6 +16,9 @@ export interface Session {
   email: string;
   roleId: number;
   roleName: RoleName;
+  // Only set when roleName is 'CompanySupervisor'.
+  companyId?: number;
+  supervisorId?: number;
 }
 
 // Shared across all four portals — real login against the .NET backend
@@ -44,6 +47,8 @@ export class AuthService {
             email: res.email,
             roleId: res.roleId,
             roleName: res.roleName,
+            companyId: res.companyId,
+            supervisorId: res.supervisorId,
           };
           this.sessionSignal.set(session);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
@@ -63,6 +68,14 @@ export class AuthService {
 
   get userId(): number | null {
     return this.sessionSignal()?.userId ?? null;
+  }
+
+  get companyId(): number | null {
+    return this.sessionSignal()?.companyId ?? null;
+  }
+
+  get supervisorId(): number | null {
+    return this.sessionSignal()?.supervisorId ?? null;
   }
 
   homeRouteForRole(role: RoleName): string {

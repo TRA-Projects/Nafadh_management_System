@@ -18,6 +18,8 @@ namespace Nafadh_Backend.Repositories
                 int pageNumber, int pageSize);
 
         Task<NFD_Trainer?> GetByIdAsync(int id);
+        //نريد البحث عن المدرب عن طريق UserId الخاص بالشخص المسجل.
+        Task<NFD_Trainer?> GetByUserIdAsync(int userId);
 
         Task<NFD_Trainer?> GetByIdWithBatchesAsync(int id);
 

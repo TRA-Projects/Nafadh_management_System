@@ -35,7 +35,12 @@ namespace Nafadh_Backend.Controllers
                 Department = s.Department,
                 Position = s.Position,
                 UserId = s.UserId,
-                CompanyId = s.CompanyId
+                CompanyId = s.CompanyId,
+                // prefer real user info when available
+                FullName = s.User?.FullName ?? s.Department,
+                Phone = s.User?.Phone ?? s.UserId.ToString(),
+                Email = s.User?.Email ?? string.Empty,
+                Status = s.Status.ToString()
             });
             return Ok(dtos);
         }
@@ -54,7 +59,11 @@ namespace Nafadh_Backend.Controllers
                 Department = supervisor.Department,
                 Position = supervisor.Position,
                 UserId = supervisor.UserId,
-                CompanyId = supervisor.CompanyId
+                CompanyId = supervisor.CompanyId,
+                FullName = supervisor.User?.FullName ?? supervisor.Department,
+                Phone = supervisor.User?.Phone ?? supervisor.UserId.ToString(),
+                Email = supervisor.User?.Email ?? string.Empty,
+                Status = supervisor.Status.ToString()
             };
             return Ok(dto);
         }

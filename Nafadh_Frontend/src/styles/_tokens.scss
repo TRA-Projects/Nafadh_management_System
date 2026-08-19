@@ -1,9 +1,4 @@
-// UNIFIED design tokens — single source for all four portals. Per explicit
-// instruction: the Trainee portal's visual language (navy/cyan, Cairo, flat
-// navy sidebar, soft navy-tinted shadows) is now canonical everywhere. No
-// portal-specific accent colors (no teal, no green, no gradients) anywhere
-// in the system except where a semantic status color is required (badges).
-
+// UNIFIED design tokens — single source for all four portals.
 :root {
   // Core palette — identical across all 4 portals
   --color-navy: #0A1172;
@@ -12,18 +7,12 @@
   --color-cyan: #00C4CC;
   --color-bg: #FAFCFF;
   --color-surface: #FFFFFF;
+  
+  // إضافة متغير GitHub هنا ليتعرف عليه النظام في كل البوابات
+  --color-github: #111111; 
 
-  --color-header-bg: #F1F3F6;
-  --color-text: #1F2937;
-  --color-text-secondary: #6B7280;
-  --color-text-tertiary: #9CA3AF;
-  --color-border: #E5E7EB;
-  --color-border-light: #F3F4F6;
-  --color-tint-indigo: #EEF0FF;
-  --color-tint-blue: #EFF6FF;
-
-  // Semantic status colors (badges only — the one place color varies, by meaning not by portal)
-  --status-active-bg: #F0FDF9;   --status-active-fg: #34D399;
+  // Semantic status colors
+  --status-active-bg: #F0FDF9;    --status-active-fg: #34D399;
   --status-completed-bg: #EFF6FF; --status-completed-fg: #2563EB;
   --status-review-bg: #FFF7ED;    --status-review-fg: #D97706;
   --status-cancelled-bg: #FEF2F2; --status-cancelled-fg: #DC2626;
@@ -31,7 +20,7 @@
   --status-late-bg: #FFFBEB;      --status-late-fg: #B45309;
   --status-absent-bg: #FEE2E2;    --status-absent-fg: #B91C1C;
 
-  // Typography — Cairo (Arabic) + Plus Jakarta Sans, everywhere, no exceptions
+  // Typography
   --font-arabic: 'Cairo', sans-serif;
   --font-latin: 'Plus Jakarta Sans', sans-serif;
 
@@ -43,7 +32,6 @@
   --shadow-card: 0px 4px 20px rgba(10, 17, 114, 0.07);
   --shadow-card-hover: 0px 8px 32px rgba(10, 17, 114, 0.13);
 
-  // Unified shell dimensions — identical in all 4 portal layouts
   --header-height: 64px;
   --sidebar-width: 220px;
 }

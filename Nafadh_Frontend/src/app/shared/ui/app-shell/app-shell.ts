@@ -1,4 +1,4 @@
-import { Component, input, signal } from '@angular/core';
+import { Component, HostListener, computed, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -32,9 +32,24 @@ export class AppShell {
   notifOpen = signal(false);
   accessOpen = signal(false);
   fontSize = signal(16);
+  fontScale = computed(() => this.fontSize() / 16);
+
+  // Back-to-top: shows once the page is scrolled down past a small
+  // threshold, so the user never has to grab the mouse and drag the
+  // scrollbar back up manually — one click/tap jumps to the top.
+  showBackToTop = signal(false);
 
   constructor(public auth: AuthService) {}
 
   toggleDark() { this.dark.update((v) => !v); }
   toggleLang() { this.lang.update((v) => (v === 'ar' ? 'en' : 'ar')); }
+
+  @HostListener('window:scroll')
+  onWindowScroll() {
+    this.showBackToTop.set((window.scrollY || document.documentElement.scrollTop) > 280);
+  }
+
+  scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }

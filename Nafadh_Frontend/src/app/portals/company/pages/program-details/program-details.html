@@ -1,0 +1,94 @@
+<section class="program-details-page" dir="rtl">
+  <button type="button" class="back-btn" (click)="goBack()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+    العودة إلى البرامج
+  </button>
+
+  <div class="state-card" *ngIf="loading()">
+    <span class="spinner"></span> جاري تحميل تفاصيل البرنامج...
+  </div>
+
+  <div class="state-card error" *ngIf="!loading() && error()">
+    {{ error() }}
+    <button type="button" (click)="goBack()">العودة</button>
+  </div>
+
+  <ng-container *ngIf="!loading() && !error() && program() as p">
+    <article class="card hero" [style.--program-color]="p.color">
+      <div class="program-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M12 3v18M2 9h20"/></svg>
+      </div>
+      <div class="hero-copy">
+        <h2>{{ p.title }}</h2>
+        <p>{{ p.description }}</p>
+        <div class="chips">
+          <span class="chip" [class.pending]="!p.approved"><i></i>{{ p.approved ? 'معتمد من الهيئة' : 'قيد الاعتماد' }}</span>
+          <span class="chip gray">{{ p.department }}</span>
+          <span class="chip gray">{{ p.durationWeeks }} أسبوعًا</span>
+        </div>
+      </div>
+    </article>
+
+    <div class="stats-grid">
+      <article class="stat-card"><span>الطاقة الاستيعابية</span><strong>{{ p.capacity }}</strong><small>مقعد معتمد</small></article>
+      <article class="stat-card"><span>الإشغال الحالي</span><strong [style.color]="p.color">{{ p.occupied }}</strong><small>{{ p.percent }}% من الطاقة</small></article>
+      <article class="stat-card"><span>المقاعد المتاحة</span><strong class="ok">{{ p.available }}</strong><small>يمكن استقبال مرشحين</small></article>
+      <article class="stat-card"><span>المشرفون</span><strong>{{ supervisorCount() }}</strong><small>{{ supervisorCount() ? 'مشرفون مرتبطون بالبرنامج' : 'لم يُسند مشرف' }}</small></article>
+      <article class="stat-card"><span>متوسط الأداء</span><strong>{{ averageProgress() }}%</strong><small>{{ trainees().length }} متدربًا مسجلًا</small></article>
+    </div>
+
+    <div class="two-col">
+      <article class="card card-pad">
+        <div class="card-title">استخدام الطاقة الاستيعابية <span>{{ p.occupied }} من {{ p.capacity }} مقعدًا</span></div>
+        <div class="bar"><i [style.width.%]="p.percent" [style.background]="p.color"></i></div>
+        <div class="bar-meta"><span>{{ p.percent }}% مشغول</span><span>المتبقي: {{ p.available }} مقعدًا</span></div>
+        <div class="legend"><span><i [style.background]="p.color"></i> مشغول <b>{{ p.occupied }}</b></span><span><i></i> متبقي <b>{{ p.available }}</b></span></div>
+      </article>
+
+      <article class="card card-pad">
+        <div class="card-title">التخصصات الأكاديمية المناسبة</div>
+        <div class="major-tags">
+          <span>علوم الحاسب</span><span>نظم المعلومات</span><span>هندسة البرمجيات</span><span>تقنية المعلومات</span>
+        </div>
+      </article>
+    </div>
+
+    <article class="card card-pad section-card">
+      <div class="card-title">مراحل الخطة التدريبية <span>{{ modules().length }} مراحل · {{ p.durationWeeks }} أسبوعًا</span></div>
+      <div class="plan-list" *ngIf="modules().length; else noModules">
+        <div class="plan-step" *ngFor="let module of modules(); let i = index">
+          <span class="pnum" [style.background]="p.soft" [style.color]="p.color">{{ i + 1 }}</span>
+          <div><b>{{ module.title || module.name || ('المرحلة ' + (i + 1)) }}</b><small>المرحلة {{ i + 1 }} من {{ modules().length }}</small></div>
+        </div>
+      </div>
+      <ng-template #noModules><div class="empty"><b>لا توجد مراحل معرّفة</b><span>ستظهر مراحل الخطة هنا عند ربطها بالبرنامج.</span></div></ng-template>
+    </article>
+
+    <article class="card card-pad section-card">
+      <div class="card-title">متدربو البرنامج <span>{{ trainees().length }} متدربًا مسجلًا</span></div>
+      <div class="table-wrap" *ngIf="trainees().length; else noTrainees">
+        <table>
+          <thead><tr><th>المتدرب</th><th>الدفعة</th><th>المشرف</th><th>التقدم</th><th>الحالة</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let trainee of trainees()">
+              <td><div class="trainee-name"><span class="avatar">{{ trainee.name.charAt(0) }}</span><b>{{ trainee.name }}</b></div></td>
+              <td>{{ trainee.cohort }}</td><td>{{ trainee.supervisor }}</td>
+              <td><div class="progress-cell"><div class="progress"><i [style.width.%]="trainee.progress" [style.background]="p.color"></i></div><b>{{ trainee.progress }}%</b></div></td>
+              <td><span class="status" [class.done]="trainee.status === 'مكتمل'">{{ trainee.status }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noTrainees><div class="empty"><b>لا يوجد متدربون في هذا البرنامج</b><span>ابدأ باستقبال مرشحين ضمن المقاعد المتاحة.</span></div></ng-template>
+    </article>
+  </ng-container>
+</section>
+
+ <!-- Created a dedicated program details page -->
+<!--  Added program header with program name, status, and category. -->
+<!--  Added capacity, occupancy, available seats, supervisors, and performance statistics. -->
+<!-- Added academic specialties section. -->
+<!-- Added academic specialties section. -->
+ <!-- Added program trainees table with attendance, performance, status, and progress. -->
+<!-- Added navigation button to return to the programs page. -->
+

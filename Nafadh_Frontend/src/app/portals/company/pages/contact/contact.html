@@ -1,53 +1,688 @@
-<h2 class="nfd-page-title">التواصل مع الهيئة</h2>
-<p class="nfd-page-sub">قناة تواصل مباشرة مع الهيئة — أرسل رسائلك واستقبل الردود</p>
+<h2 class="nfd-page-title">
+  التواصل مع الهيئة
+</h2>
 
-<div class="nfd-toolbar"><span></span><button class="nfd-btn primary" (click)="showNew.set(true)">+ محادثة جديدة</button></div>
+<p class="nfd-page-sub">
+  قناة تواصل مباشرة مع الهيئة — أرسل رسائلك واستقبل الردود
+</p>
 
-<div style="display:grid;grid-template-columns:300px 1fr;gap:16px;height:520px">
-  <div class="nfd-card" style="overflow-y:auto;padding:8px">
-    @for (c of conversations(); track c.conversationId) {
-      <button (click)="open(c.conversationId)" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px;border-radius:var(--radius-md);text-align:right">
-        <strong style="font-size:13px">{{ c.subject }}</strong>
-        <small style="color:var(--color-brand);font-size:10px">{{ c.category }}</small>
-        <p style="margin:0;font-size:11px;color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%">{{ c.lastMessagePreview }}</p>
-      </button>
-    }
-    @empty { <p class="nfd-muted" style="padding:10px">لا توجد محادثات بعد</p> }
-  </div>
-  <div class="nfd-card" style="display:flex;flex-direction:column;padding:0;overflow:hidden">
-    @if (active(); as conv) {
-      <div style="padding:14px 18px;border-bottom:1px solid var(--color-border)"><strong>{{ conv.subject }}</strong></div>
-      <div style="flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:10px">
-        @for (m of conv.messages; track m.messageId) {
-          <div style="max-width:70%;padding:8px 12px;border-radius:var(--radius-md)" [style.background]="m.senderId === (auth.userId ?? 2) ? 'var(--color-navy)' : 'var(--color-tint-indigo)'" [style.color]="m.senderId === (auth.userId ?? 2) ? '#fff' : 'inherit'" [style.align-self]="m.senderId === (auth.userId ?? 2) ? 'flex-end' : 'flex-start'">
-            <strong style="font-size:11px;display:block">{{ m.senderName }}</strong><p style="margin:2px 0;font-size:13px">{{ m.content }}</p>
-          </div>
-        }
-      </div>
-      <div style="display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--color-border)">
-        <input class="nfd-input" [(ngModel)]="replyText" placeholder="اكتب رسالتك هنا..." (keydown.enter)="send()" />
-        <button class="nfd-btn primary" (click)="send()">إرسال</button>
-      </div>
-    } @else { <div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--color-text-tertiary)">اختر محادثة من القائمة</div> }
-  </div>
+
+<!-- ============================================================
+     Toolbar
+============================================================ -->
+
+<div class="nfd-toolbar">
+
+  <span></span>
+
+  <button
+    class="nfd-btn primary"
+    (click)="showNew.set(true)"
+  >
+    + محادثة جديدة
+  </button>
+
 </div>
 
-@if (showNew()) {
-  <div class="nfd-modal-bg" (click)="showNew.set(false)">
-    <div class="nfd-modal" (click)="$event.stopPropagation()">
-      <h3>بدء محادثة جديدة مع الهيئة</h3>
-      <label>التصنيف</label>
-      <select class="nfd-input" [(ngModel)]="newConv.category">
-        @for (c of categories; track c) { <option [value]="c">{{ c }}</option> }
-      </select>
-      <label>عنوان المحادثة</label>
-      <input class="nfd-input" [(ngModel)]="newConv.subject" />
-      <label>نص الرسالة</label>
-      <textarea class="nfd-input" rows="4" [(ngModel)]="newConv.firstMessage"></textarea>
-      <div class="nfd-modal-actions">
-        <button class="nfd-btn secondary" (click)="showNew.set(false)">إلغاء</button>
-        <button class="nfd-btn primary" (click)="startConversation()">إرسال وبدء المحادثة</button>
-      </div>
-    </div>
+
+<!-- ============================================================
+     Error Message
+============================================================ -->
+
+@if (errorMessage()) {
+
+  <div
+    style="
+      margin-bottom:12px;
+      padding:10px 14px;
+      border-radius:var(--radius-lg);
+      background:var(--status-danger-bg, #FEF2F2);
+      color:var(--status-danger-fg, #B91C1C);
+      font-size:12px;
+    "
+  >
+    {{ errorMessage() }}
   </div>
+
+}
+
+
+<!-- ============================================================
+     Main Conversation Area
+============================================================ -->
+
+<div
+  style="
+    display:grid;
+    grid-template-columns:300px minmax(0,1fr);
+    gap:16px;
+    height:520px;
+  "
+>
+
+
+  <!-- ==========================================================
+       Conversations List
+  =========================================================== -->
+
+  <div
+    class="nfd-card"
+    style="
+      overflow:hidden;
+      padding:8px;
+      display:flex;
+      flex-direction:column;
+    "
+  >
+
+    <!-- Search -->
+
+    <div style="padding:4px 4px 8px">
+
+      <input
+        class="nfd-input company-contact-search"
+        style="height:36px;font-size:12px"
+        [ngModel]="searchText"
+        (ngModelChange)="searchText = $event"
+        placeholder="بحث في المحادثات..."
+      />
+
+    </div>
+
+
+    <!-- Conversation Count -->
+
+    <div
+      style="
+        padding:0 8px 8px;
+        font-size:10px;
+        color:var(--color-text-tertiary);
+        text-align:right;
+      "
+    >
+
+      {{ totalConversations() }} محادثات
+
+      <span
+        *ngIf="totalUnread() > 0"
+      >
+        • {{ totalUnread() }} رسائل غير مقروءة
+      </span>
+
+    </div>
+
+
+    <!-- Conversation List -->
+
+    <div
+      style="
+        flex:1;
+        overflow-y:auto;
+        padding:0 2px;
+      "
+    >
+
+      @if (loading()) {
+
+        <div
+          style="
+            padding:30px 10px;
+            text-align:center;
+            color:var(--color-text-tertiary);
+            font-size:12px;
+          "
+        >
+          جاري تحميل المحادثات...
+        </div>
+
+      } @else {
+
+        @for (
+          c of filteredConversations();
+          track c.conversationId
+        ) {
+
+          <button
+            class="company-contact-conversation"
+            type="button"
+            (click)="open(c.conversationId)"
+            style="
+              display:flex;
+              flex-direction:column;
+              align-items:flex-start;
+              gap:4px;
+              width:100%;
+              padding:10px;
+              margin-bottom:6px;
+              border-radius:var(--radius-md);
+              text-align:right;
+              border:1px solid var(--color-border-light);
+              background:transparent;
+            "
+            [style.background]="
+              active()?.conversationId === c.conversationId
+                ? 'var(--color-tint-indigo)'
+                : 'transparent'
+            "
+            [class.company-contact-conversation-active]="active()?.conversationId === c.conversationId"
+          >
+
+            <!-- Top row -->
+
+            <div
+              style="
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                width:100%;
+                gap:8px;
+              "
+            >
+
+              <strong
+                style="
+                  font-size:13px;
+                  color:var(--color-text);
+                  overflow:hidden;
+                  white-space:nowrap;
+                  text-overflow:ellipsis;
+                "
+              >
+                {{ c.subject }}
+              </strong>
+
+
+              @if (c.unreadCount > 0) {
+
+                <span
+                  style="
+                    min-width:18px;
+                    height:18px;
+                    padding:0 5px;
+                    border-radius:50%;
+                    background:#DC2626;
+                    color:#fff;
+                    display:inline-flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:9px;
+                    font-weight:700;
+                    flex-shrink:0;
+                  "
+                >
+                  {{ c.unreadCount }}
+                </span>
+
+              }
+
+            </div>
+
+
+            <!-- Category -->
+
+            <small
+              style="
+                color:var(--color-brand);
+                font-size:10px;
+              "
+            >
+              {{ c.category || 'استفسار عام' }}
+            </small>
+
+
+            <!-- Preview -->
+
+            <p
+              style="
+                margin:0;
+                font-size:11px;
+                color:var(--color-text-secondary);
+                white-space:nowrap;
+                overflow:hidden;
+                text-overflow:ellipsis;
+                width:100%;
+              "
+            >
+              {{ c.lastMessagePreview }}
+            </p>
+
+
+            <!-- Date -->
+
+            @if (c.lastMessageDate) {
+
+              <small
+                style="
+                  color:var(--color-text-tertiary);
+                  font-size:9px;
+                "
+              >
+                {{ c.lastMessageDate | date:'dd/MM/yyyy HH:mm' }}
+              </small>
+
+            }
+
+          </button>
+
+        }
+
+        @empty {
+
+          <div
+            style="
+              padding:35px 10px;
+              text-align:center;
+              color:var(--color-text-tertiary);
+            "
+          >
+
+            <div
+              style="
+                font-size:26px;
+                margin-bottom:8px;
+              "
+            >
+              💬
+            </div>
+
+            <p
+              style="
+                margin:0;
+                font-size:12px;
+              "
+            >
+              لا توجد محادثات بعد
+            </p>
+
+            <small
+              style="
+                display:block;
+                margin-top:5px;
+                font-size:10px;
+              "
+            >
+              ابدأ محادثة جديدة مع الهيئة
+            </small>
+
+          </div>
+
+        }
+
+      }
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ==========================================================
+       Active Conversation
+  =========================================================== -->
+
+  <div
+    class="nfd-card"
+    style="
+      display:flex;
+      flex-direction:column;
+      padding:0;
+      overflow:hidden;
+    "
+  >
+
+    @if (active(); as conv) {
+
+
+      <!-- ======================================================
+           Conversation Header
+      ======================================================= -->
+
+      <div
+        style="
+          padding:14px 18px;
+          border-bottom:1px solid var(--color-border);
+        "
+      >
+
+        <div
+          style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+          "
+        >
+
+          <strong
+            style="
+              font-size:14px;
+              color:var(--color-navy);
+            "
+          >
+            {{ conv.subject }}
+          </strong>
+
+
+          <span
+            class="nfd-badge"
+            style="
+              background:var(--color-tint-indigo);
+              color:var(--color-brand);
+            "
+          >
+            {{ conv.category || 'استفسار عام' }}
+          </span>
+
+        </div>
+
+
+        <small
+          style="
+            display:block;
+            margin-top:4px;
+            color:var(--color-text-tertiary);
+            font-size:10px;
+          "
+        >
+          {{ conv.startedByName }}
+        </small>
+
+      </div>
+
+
+
+      <!-- ======================================================
+           Messages
+      ======================================================= -->
+
+      <div
+        style="
+          flex:1;
+          overflow-y:auto;
+          padding:14px 18px;
+          display:flex;
+          flex-direction:column;
+          gap:10px;
+        "
+      >
+
+        @for (
+          m of conv.messages;
+          track m.messageId
+        ) {
+
+          <div
+            class="company-contact-message"
+            style="
+              max-width:70%;
+              padding:8px 12px;
+              border-radius:var(--radius-md);
+            "
+            [style.background]="
+              m.senderId === (auth.userId ?? -1)
+                ? 'var(--color-navy)'
+                : 'var(--color-tint-indigo)'
+            "
+            [style.color]="
+              m.senderId === (auth.userId ?? -1)
+                ? '#fff'
+                : 'inherit'
+            "
+            [style.align-self]="
+              m.senderId === (auth.userId ?? -1)
+                ? 'flex-end'
+                : 'flex-start'
+            "
+            [class.company-contact-message-own]="m.senderId === (auth.userId ?? -1)"
+          >
+
+            <strong
+              style="
+                font-size:11px;
+                display:block;
+              "
+            >
+              {{
+                m.senderName ||
+                (m.senderId === auth.userId
+                  ? 'أنت'
+                  : 'الهيئة')
+              }}
+            </strong>
+
+
+            <p
+              style="
+                margin:2px 0;
+                font-size:13px;
+              "
+            >
+              {{ m.content }}
+            </p>
+
+
+            <small
+              style="
+                display:block;
+                font-size:9px;
+                opacity:.7;
+                margin-top:3px;
+              "
+            >
+              {{ m.sentDate | date:'dd/MM/yyyy HH:mm' }}
+            </small>
+
+          </div>
+
+        }
+
+        @empty {
+
+          <div
+            style="
+              flex:1;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              color:var(--color-text-tertiary);
+              font-size:12px;
+            "
+          >
+            لا توجد رسائل في هذه المحادثة
+          </div>
+
+        }
+
+      </div>
+
+
+
+      <!-- ======================================================
+           Reply
+      ======================================================= -->
+
+      <div
+        style="
+          display:flex;
+          gap:8px;
+          padding:14px 18px;
+          border-top:1px solid var(--color-border);
+        "
+      >
+
+        <input
+          class="nfd-input company-contact-reply-input"
+          [(ngModel)]="replyText"
+          placeholder="اكتب رسالتك هنا..."
+          (keydown.enter)="send()"
+        />
+
+
+        <button
+          type="button"
+          class="nfd-btn primary"
+          (click)="send()"
+          [disabled]="!replyText.trim()"
+        >
+          إرسال
+        </button>
+
+      </div>
+
+
+    } @else {
+
+
+      <!-- ======================================================
+           Empty Conversation
+      ======================================================= -->
+
+      <div
+        style="
+          flex:1;
+          display:flex;
+          flex-direction:column;
+          align-items:center;
+          justify-content:center;
+          color:var(--color-text-tertiary);
+        "
+      >
+
+        <div
+          style="
+            font-size:34px;
+            margin-bottom:10px;
+            opacity:.7;
+          "
+        >
+          💬
+        </div>
+
+        <span style="font-size:13px">
+          اختر محادثة من القائمة
+        </span>
+
+        <small
+          style="
+            margin-top:5px;
+            font-size:10px;
+          "
+        >
+          لعرض الرسائل والرد على الهيئة
+        </small>
+
+      </div>
+
+    }
+
+  </div>
+
+</div>
+
+
+
+<!-- ============================================================
+     New Conversation Modal
+============================================================ -->
+
+@if (showNew()) {
+
+  <div
+    class="nfd-modal-bg"
+    (click)="showNew.set(false)"
+  >
+
+    <div
+      class="nfd-modal company-contact-new-modal"
+      (click)="$event.stopPropagation()"
+    >
+
+      <h3>
+        بدء محادثة جديدة مع الهيئة
+      </h3>
+
+
+      <!-- Category -->
+
+      <label>
+        التصنيف
+      </label>
+
+      <select
+        class="nfd-input"
+        [(ngModel)]="newConv.category"
+      >
+
+        @for (
+          c of categories;
+          track c
+        ) {
+
+          <option [value]="c">
+            {{ c }}
+          </option>
+
+        }
+
+      </select>
+
+
+      <!-- Subject -->
+
+      <label>
+        عنوان المحادثة
+      </label>
+
+      <input
+        class="nfd-input"
+        [(ngModel)]="newConv.subject"
+        placeholder="مثال: استفسار عن برنامج تدريبي"
+      />
+
+
+      <!-- First Message -->
+
+      <label>
+        نص الرسالة
+      </label>
+
+      <textarea
+        class="nfd-input"
+        rows="4"
+        [(ngModel)]="newConv.firstMessage"
+        placeholder="اكتب تفاصيل استفسارك..."
+      ></textarea>
+
+
+      <!-- Actions -->
+
+      <div class="nfd-modal-actions">
+
+        <button
+          type="button"
+          class="nfd-btn secondary"
+          (click)="showNew.set(false)"
+        >
+          إلغاء
+        </button>
+
+
+        <button
+          type="button"
+          class="nfd-btn primary"
+          (click)="startConversation()"
+          [disabled]="
+            !newConv.subject.trim() ||
+            !newConv.firstMessage.trim()
+          "
+        >
+          إرسال وبدء المحادثة
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
 }
