@@ -2,6 +2,7 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CompanyApi } from '../../services/company-api';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { CompanyBranchDto, CompanyDto, CompanySupervisorDto, EnrollmentDto } from '../../../../core/models/dtos';
 
 type CompanyProfileDto = CompanyDto & {
@@ -36,7 +37,7 @@ export interface HostedSpecialtyDto {
   styleUrl: './profile.scss',
 })
 export class CompanyProfile implements OnInit {
-  companyId = 1;
+  companyId = this.auth.companyId ?? 0;
   readonly coverInputId = 'company-cover-upload';
   readonly logoInputId = 'company-logo-upload';
 
@@ -88,7 +89,7 @@ export class CompanyProfile implements OnInit {
   readonly ringCircumference = 2 * Math.PI * 62;
   ringDashoffset = computed(() => this.ringCircumference * (1 - this.capacityPercent() / 100));
 
-  constructor(private api: CompanyApi) {}
+  constructor(private api: CompanyApi, private auth: AuthService) {}
 
   ngOnInit() {
     this.api.getCompany(this.companyId).subscribe({
