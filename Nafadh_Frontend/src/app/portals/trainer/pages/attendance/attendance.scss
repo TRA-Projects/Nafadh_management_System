@@ -17,7 +17,7 @@
 
   display: block;
   color: var(--text);
-  font-family: "IBM Plex Sans Arabic", Tahoma, "Segoe UI", Arial, sans-serif;
+  font-family: var(--font-arabic), var(--font-latin), sans-serif;
 }
 
 .attendance-page *, .attendance-page *::before, .attendance-page *::after { box-sizing: border-box; }

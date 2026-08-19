@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { TrainerApi } from '../../services/trainer-api';
 import { EvaluationCriterionDto, EvaluationTemplateDetailDto } from '../../../../core/models/dtos';
 
@@ -13,6 +14,9 @@ import { EvaluationCriterionDto, EvaluationTemplateDetailDto } from '../../../..
 })
 export class TrainerTrainees implements OnInit {
   companyId = 1;
+  batchId: number | null = null;
+taskId: number | null = null;
+
   enrollments = signal<any[]>([]);
   showEvalModal = signal(false);
   templateDetail = signal<EvaluationTemplateDetailDto | null>(null);
@@ -23,10 +27,55 @@ export class TrainerTrainees implements OnInit {
   showAddCriterion = signal(false);
   newCriterion = { name: '', weight: 0, maxPoints: 0 };
 
-  constructor(private api: TrainerApi) {}
+  constructor(
+  private api: TrainerApi,
+  private route: ActivatedRoute
+) {}
 
-  ngOnInit() { this.api.getEnrollments(this.companyId).subscribe((d) => this.enrollments.set(d ?? [])); }
+ngOnInit() {
 
+  const batchIdParam =
+    this.route.snapshot.queryParamMap.get('batchId');
+
+  const taskIdParam =
+    this.route.snapshot.queryParamMap.get('taskId');
+
+
+  this.batchId =
+    batchIdParam
+      ? Number(batchIdParam)
+      : null;
+
+
+  this.taskId =
+    taskIdParam
+      ? Number(taskIdParam)
+      : null;
+
+
+  if (this.batchId && this.batchId > 0) {
+
+    this.api
+      .getEnrollments(undefined, this.batchId)
+      .subscribe((d) => {
+
+        this.enrollments.set(d ?? []);
+
+      });
+
+  } else {
+
+    this.api
+      .getEnrollments(this.companyId)
+      .subscribe((d) => {
+
+        this.enrollments.set(d ?? []);
+
+      });
+
+  }
+
+}
   loadTemplates() {
     this.api.getEvaluationTemplates(this.selectedModuleId, this.selectedStage).subscribe((templates) => {
       const first = templates?.[0];
