@@ -73,10 +73,26 @@ postAnnouncement(dto: unknown) {
   }
 
   // Trainee evaluation
-  getEnrollments(companyId: number): Observable<EnrollmentDto[]> {
-    let params = new HttpParams().set('companyId', companyId);
-    return this.http.get<EnrollmentDto[]>(`${this.base}/Enrollment`, { params });
+  getEnrollments(
+  companyId?: number,
+  batchId?: number
+): Observable<EnrollmentDto[]> {
+
+  let params = new HttpParams();
+
+  if (companyId) {
+    params = params.set('companyId', companyId.toString());
   }
+
+  if (batchId) {
+    params = params.set('batchId', batchId.toString());
+  }
+
+  return this.http.get<EnrollmentDto[]>(
+    `${this.base}/Enrollment`,
+    { params }
+  );
+}
   getEvaluationTemplates(moduleId?: number, stage?: number): Observable<EvaluationTemplateDto[]> {
     let params = new HttpParams();
     if (moduleId) params = params.set('moduleId', moduleId);

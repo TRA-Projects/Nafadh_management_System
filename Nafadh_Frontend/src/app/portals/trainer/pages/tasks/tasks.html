@@ -1,24 +1,63 @@
-<div class="tasks-page">
+<div
+  class="tasks-page"
+  style="
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:20px;
+    padding:30px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.04);
+    box-sizing:border-box;
+  "
+>
 
-  <!-- ================= HEADER ================= -->
+  <!-- ================================================= -->
+  <!--                      HEADER                       -->
+  <!-- ================================================= -->
 
   <div
     style="
       display:flex;
       justify-content:space-between;
       align-items:flex-start;
-      margin-bottom:24px;
-      gap:20px;
+      gap:24px;
+      padding-bottom:20px;
+      margin-bottom:28px;
+      border-bottom:1px solid #f1f5f9;
     "
   >
 
-    <div>
+    <!-- RIGHT SIDE -->
 
-      <h2 class="nfd-page-title">
-        المهام والمشروعات
+    <div
+      style="
+        flex:1;
+        text-align:right;
+      "
+    >
+
+      <h2
+        style="
+          margin:0 0 6px 0;
+          font-size:24px;
+          font-weight:800;
+          color:#0b192c;
+          display:flex;
+          align-items:center;
+          gap:8px;
+        "
+      >
+        <span>📋</span>
+        <span>المهام والمشروعات</span>
       </h2>
 
-      <p class="nfd-page-sub">
+      <p
+        style="
+          margin:0;
+          font-size:13px;
+          color:#64748b;
+          line-height:1.7;
+        "
+      >
         إنشاء الواجبات والمشاريع الميدانية ومتابعة التسليم والدرجات
       </p>
 
@@ -28,7 +67,7 @@
       <div
         style="
           margin-top:18px;
-          width:280px;
+          width:300px;
           max-width:100%;
         "
       >
@@ -40,12 +79,11 @@
             margin-bottom:7px;
             font-size:13px;
             font-weight:600;
-            color:#0B192C;
+            color:#334155;
           "
         >
           الدفعة
         </label>
-
 
         <select
           id="taskBatchSelector"
@@ -55,16 +93,16 @@
           [disabled]="loadingBatches()"
           style="
             width:100%;
-            height:42px;
+            height:44px;
             box-sizing:border-box;
             padding:0 12px;
-            border:1px solid #D9E2EF;
+            border:1px solid #cbd5e1;
             border-radius:10px;
             outline:none;
             font-family:inherit;
             font-size:13px;
-            color:#0B192C;
-            background:#FFFFFF;
+            color:#0f172a;
+            background:#ffffff;
             cursor:pointer;
           "
         >
@@ -84,22 +122,31 @@
     </div>
 
 
+    <!-- LEFT BUTTON -->
+
     <button
       type="button"
       class="nfd-btn primary"
       (click)="openCreateModal()"
       [disabled]="!batchIdInput"
       style="
-        display:flex;
-        align-items:center;
-        justify-content:center;
+        min-width:190px;
+        height:46px;
+        display:flex !important;
+        align-items:center !important;
+        justify-content:center !important;
         gap:7px;
+        padding:0 20px;
+        border-radius:10px;
+        font-size:14px;
+        font-weight:700;
+        cursor:pointer;
       "
     >
 
       <span
         style="
-          font-size:18px;
+          font-size:19px;
           line-height:1;
         "
       >
@@ -114,18 +161,20 @@
 
 
 
-  <!-- ================= ERROR ================= -->
+  <!-- ================================================= -->
+  <!--                       ERROR                       -->
+  <!-- ================================================= -->
 
   @if (errorMessage() && !showCreateModal()) {
 
     <div
       style="
-        margin-bottom:18px;
-        padding:11px 14px;
-        border:1px solid #FECACA;
+        margin-bottom:20px;
+        padding:12px 14px;
+        border:1px solid #fecaca;
         border-radius:10px;
-        background:#FEF2F2;
-        color:#B91C1C;
+        background:#fef2f2;
+        color:#b91c1c;
         font-size:13px;
       "
     >
@@ -136,15 +185,17 @@
 
 
 
-  <!-- ================= LOADING ================= -->
+  <!-- ================================================= -->
+  <!--                      LOADING                      -->
+  <!-- ================================================= -->
 
   @if (loading()) {
 
     <div
       style="
-        padding:35px;
+        padding:50px;
         text-align:center;
-        color:#64748B;
+        color:#64748b;
         font-size:13px;
       "
     >
@@ -156,7 +207,7 @@
 
 
   <!-- ================================================= -->
-  <!--                  ALL TASKS GRID                    -->
+  <!--                   TASKS GRID                      -->
   <!-- ================================================= -->
 
   @if (!loading()) {
@@ -178,17 +229,18 @@
           <!-- ================= TASK CARD ================= -->
 
           <div
+            class="task-card"
             style="
-              height:390px;
-              min-height:390px;
+              min-height:410px;
               display:flex;
               flex-direction:column;
-              background:#FFFFFF;
-              border:1px solid #E2E8F0;
+              background:#ffffff;
+              border:1px solid #e2e8f0;
               border-radius:16px;
               overflow:hidden;
               box-shadow:0 4px 12px rgba(0,0,0,0.03);
               box-sizing:border-box;
+              transition:all 0.3s ease;
             "
           >
 
@@ -201,15 +253,13 @@
               style="
                 position:relative;
                 width:100%;
-                height:130px;
-                min-height:130px;
+                height:145px;
+                min-height:145px;
                 overflow:hidden;
-                background:#E2E8F0;
+                background:#e2e8f0;
               "
             >
 
-
-              <!-- OPEN IMAGE -->
 
               @if (t.status === 'Open') {
 
@@ -221,13 +271,12 @@
                     height:100%;
                     object-fit:cover;
                     display:block;
+                    transition:transform 0.5s ease;
                   "
                 />
 
               }
 
-
-              <!-- CLOSED IMAGE -->
 
               @if (t.status === 'Closed') {
 
@@ -239,13 +288,12 @@
                     height:100%;
                     object-fit:cover;
                     display:block;
+                    transition:transform 0.5s ease;
                   "
                 />
 
               }
 
-
-              <!-- OVERDUE IMAGE -->
 
               @if (t.status === 'Overdue') {
 
@@ -257,6 +305,7 @@
                     height:100%;
                     object-fit:cover;
                     display:block;
+                    transition:transform 0.5s ease;
                   "
                 />
 
@@ -264,32 +313,29 @@
 
 
 
-              <!-- ================================================= -->
-              <!--                     STATUS                         -->
-              <!-- ================================================= -->
+              <!-- ================= STATUS BADGE ================= -->
 
               @if (t.status === 'Open') {
 
                 <span
                   style="
                     position:absolute;
-                    top:12px;
-                    right:12px;
+                    top:14px;
+                    right:14px;
                     display:inline-flex;
                     align-items:center;
                     justify-content:center;
-                    gap:5px;
-                    padding:6px 12px;
+                    padding:7px 13px;
                     border-radius:20px;
-                    background:#DBF4F8;
-                    color:#0B8FA5;
-                    font-size:12px;
-                    font-weight:600;
+                    background:#e8f8fb;
+                    color:#0b8fa5;
+                    font-size:11px;
+                    font-weight:700;
                     line-height:1;
                     box-shadow:0 2px 6px rgba(0,0,0,0.05);
                   "
                 >
-                  📅 مجدولة
+                  مجدولة
                 </span>
 
               }
@@ -300,23 +346,22 @@
                 <span
                   style="
                     position:absolute;
-                    top:12px;
-                    right:12px;
+                    top:14px;
+                    right:14px;
                     display:inline-flex;
                     align-items:center;
                     justify-content:center;
-                    gap:5px;
-                    padding:6px 12px;
+                    padding:7px 13px;
                     border-radius:20px;
-                    background:#FFF2D9;
-                    color:#D58B00;
-                    font-size:12px;
-                    font-weight:600;
+                    background:#fff2d9;
+                    color:#d58b00;
+                    font-size:11px;
+                    font-weight:700;
                     line-height:1;
                     box-shadow:0 2px 6px rgba(0,0,0,0.05);
                   "
                 >
-                  👥 قيد المراجعة
+                  قيد المراجعة
                 </span>
 
               }
@@ -327,23 +372,22 @@
                 <span
                   style="
                     position:absolute;
-                    top:12px;
-                    right:12px;
+                    top:14px;
+                    right:14px;
                     display:inline-flex;
                     align-items:center;
                     justify-content:center;
-                    gap:5px;
-                    padding:6px 12px;
+                    padding:7px 13px;
                     border-radius:20px;
-                    background:#E4F7ED;
-                    color:#15945A;
-                    font-size:12px;
-                    font-weight:600;
+                    background:#e4f7ed;
+                    color:#15945a;
+                    font-size:11px;
+                    font-weight:700;
                     line-height:1;
                     box-shadow:0 2px 6px rgba(0,0,0,0.05);
                   "
                 >
-                  ✓ مكتملة التقييم
+                  مكتملة التقييم
                 </span>
 
               }
@@ -353,7 +397,7 @@
 
 
             <!-- ================================================= -->
-            <!--                      CONTENT                       -->
+            <!--                     CONTENT                        -->
             <!-- ================================================= -->
 
             <div
@@ -361,47 +405,44 @@
                 flex:1;
                 display:flex;
                 flex-direction:column;
-                padding:20px 22px 18px !important;
-                text-align:right !important;
-                box-sizing:border-box;
+                padding:20px 22px;
+                text-align:right;
                 direction:rtl;
+                box-sizing:border-box;
               "
             >
 
 
-              <!-- ================= TITLE ================= -->
+              <!-- TITLE -->
 
-              <strong
+              <h3
                 style="
+                  margin:0 0 8px 0;
+                  font-size:18px !important;
+                  font-weight:700 !important;
+                  color:#0b192c !important;
+                  line-height:1.6;
                   display:-webkit-box;
                   -webkit-line-clamp:2;
                   -webkit-box-orient:vertical;
                   overflow:hidden;
-                  font-size:18px !important;
-                  font-weight:700 !important;
-                  color:#0F172A !important;
-                  line-height:1.6 !important;
-                  margin:0 0 8px 0 !important;
-                  text-align:right !important;
                 "
               >
                 {{ t.title }}
-              </strong>
+              </h3>
 
 
-
-              <!-- ================= DESCRIPTION ================= -->
+              <!-- DESCRIPTION -->
 
               @if (t.description) {
 
                 <p
                   style="
-                    margin:0 0 14px 0 !important;
-                    font-size:14px !important;
-                    font-weight:400 !important;
-                    color:#475569 !important;
-                    line-height:1.75 !important;
-                    text-align:right !important;
+                    margin:0 0 16px 0;
+                    font-size:13px !important;
+                    font-weight:400;
+                    color:#64748b !important;
+                    line-height:1.8;
                     display:-webkit-box;
                     -webkit-line-clamp:2;
                     -webkit-box-orient:vertical;
@@ -424,30 +465,31 @@
                 <div
                   style="
                     margin-top:2px;
-                    text-align:right !important;
+                    padding:10px 12px;
+                    background:#f8fafc;
+                    border-radius:10px;
+                    text-align:right;
                   "
                 >
 
                   <span
                     style="
                       display:block;
-                      margin-bottom:4px;
-                      font-size:12px !important;
-                      font-weight:600 !important;
-                      color:#94A3B8 !important;
+                      margin-bottom:3px;
+                      font-size:11px;
+                      font-weight:600;
+                      color:#94a3b8;
                     "
                   >
                     موعد التسليم
                   </span>
 
-
                   <span
                     style="
                       display:block;
-                      font-size:14px !important;
-                      font-weight:600 !important;
-                      color:#334155 !important;
-                      line-height:1.5 !important;
+                      font-size:13px;
+                      font-weight:700;
+                      color:#334155;
                     "
                   >
                     {{ t.dueDate | date:'dd MMMM, yyyy' }}
@@ -468,30 +510,31 @@
                 <div
                   style="
                     margin-top:2px;
-                    text-align:right !important;
+                    padding:10px 12px;
+                    background:#fffbeb;
+                    border-radius:10px;
+                    text-align:right;
                   "
                 >
 
                   <span
                     style="
                       display:block;
-                      margin-bottom:4px;
-                      font-size:12px !important;
-                      font-weight:600 !important;
-                      color:#94A3B8 !important;
+                      margin-bottom:3px;
+                      font-size:11px;
+                      font-weight:600;
+                      color:#b45309;
                     "
                   >
                     حالة التسليمات
                   </span>
 
-
                   <span
                     style="
                       display:block;
-                      font-size:14px !important;
-                      font-weight:600 !important;
-                      color:#334155 !important;
-                      line-height:1.6 !important;
+                      font-size:13px;
+                      font-weight:700;
+                      color:#334155;
                     "
                   >
                     12 تسليمًا جديدًا بحاجة للتقييم
@@ -512,30 +555,31 @@
                 <div
                   style="
                     margin-top:2px;
-                    text-align:right !important;
+                    padding:10px 12px;
+                    background:#f0fdf4;
+                    border-radius:10px;
+                    text-align:right;
                   "
                 >
 
                   <span
                     style="
                       display:block;
-                      margin-bottom:4px;
-                      font-size:12px !important;
-                      font-weight:600 !important;
-                      color:#94A3B8 !important;
+                      margin-bottom:3px;
+                      font-size:11px;
+                      font-weight:600;
+                      color:#16a34a;
                     "
                   >
                     حالة التقييم
                   </span>
 
-
                   <span
                     style="
                       display:block;
-                      font-size:14px !important;
-                      font-weight:600 !important;
-                      color:#334155 !important;
-                      line-height:1.6 !important;
+                      font-size:13px;
+                      font-weight:700;
+                      color:#334155;
                     "
                   >
                     تم تقييم جميع المتدربين
@@ -548,7 +592,7 @@
 
 
               <!-- ================================================= -->
-              <!--                    OPEN FOOTER                     -->
+              <!--                     OPEN FOOTER                    -->
               <!-- ================================================= -->
 
               @if (t.status === 'Open') {
@@ -556,8 +600,8 @@
                 <div
                   style="
                     margin-top:auto;
-                    padding-top:15px;
-                    border-top:1px solid #EAEFF5;
+                    padding-top:16px;
+                    border-top:1px solid #f1f5f9;
                     display:flex;
                     justify-content:space-between;
                     align-items:center;
@@ -567,27 +611,25 @@
 
                   <span
                     style="
-                      font-size:12px !important;
-                      font-weight:500 !important;
-                      color:#64748B !important;
+                      font-size:12px;
+                      font-weight:500;
+                      color:#64748b;
                     "
                   >
                     {{ selectedBatch()?.batchName || 'الدفعة' }}
                   </span>
 
-
                   <span
                     style="
-                      display:inline-flex !important;
-                      align-items:center !important;
-                      justify-content:center !important;
-                      background:#E8F8FB !important;
-                      color:#0B8FA5 !important;
-                      font-size:11px !important;
-                      font-weight:600 !important;
-                      border-radius:20px !important;
-                      padding:6px 12px !important;
-                      line-height:1 !important;
+                      display:inline-flex;
+                      align-items:center;
+                      justify-content:center;
+                      background:#e8f8fb;
+                      color:#0b8fa5;
+                      font-size:11px;
+                      font-weight:700;
+                      border-radius:20px;
+                      padding:6px 12px;
                     "
                   >
                     نشطة
@@ -600,7 +642,7 @@
 
 
               <!-- ================================================= -->
-              <!--                   CLOSED FOOTER                    -->
+              <!--                    CLOSED FOOTER                   -->
               <!-- ================================================= -->
 
               @if (t.status === 'Closed') {
@@ -609,7 +651,7 @@
                   style="
                     margin-top:auto;
                     padding-top:14px;
-                    border-top:1px solid #EAEFF5;
+                    border-top:1px solid #f1f5f9;
                   "
                 >
 
@@ -625,9 +667,9 @@
 
                     <span
                       style="
-                        font-size:12px !important;
-                        font-weight:500 !important;
-                        color:#64748B !important;
+                        font-size:12px;
+                        font-weight:500;
+                        color:#64748b;
                       "
                     >
                       {{ selectedBatch()?.batchName || 'الدفعة' }}
@@ -636,16 +678,12 @@
 
                     <span
                       style="
-                        display:inline-flex !important;
-                        align-items:center !important;
-                        justify-content:center !important;
-                        background:#FFF2D9 !important;
-                        color:#D58B00 !important;
-                        padding:6px 12px !important;
-                        border-radius:20px !important;
-                        font-size:11px !important;
-                        font-weight:600 !important;
-                        line-height:1 !important;
+                        background:#fff2d9;
+                        color:#d58b00;
+                        padding:6px 12px;
+                        border-radius:20px;
+                        font-size:11px;
+                        font-weight:700;
                       "
                     >
                       بحاجة للتقييم
@@ -654,11 +692,9 @@
                   </div>
 
 
-                  <!-- ================= REVIEW BUTTON ================= -->
-
                   <button
                     type="button"
-                    class="nfd-btn primary"
+                    class="nfd-btn primary review-btn"
                     [routerLink]="['/trainer/trainees']"
                     [queryParams]="{
                       taskId: t.taskId,
@@ -667,16 +703,13 @@
                     style="
                       width:100% !important;
                       height:42px !important;
-                      min-height:42px !important;
                       display:flex !important;
                       align-items:center !important;
                       justify-content:center !important;
                       padding:0 16px !important;
-                      margin:0 !important;
                       border-radius:10px !important;
                       font-size:13px !important;
                       font-weight:700 !important;
-                      line-height:1 !important;
                       text-align:center !important;
                       cursor:pointer !important;
                       box-sizing:border-box !important;
@@ -692,7 +725,7 @@
 
 
               <!-- ================================================= -->
-              <!--                  OVERDUE FOOTER                    -->
+              <!--                   OVERDUE FOOTER                   -->
               <!-- ================================================= -->
 
               @if (t.status === 'Overdue') {
@@ -700,8 +733,8 @@
                 <div
                   style="
                     margin-top:auto;
-                    padding-top:15px;
-                    border-top:1px solid #EAEFF5;
+                    padding-top:16px;
+                    border-top:1px solid #f1f5f9;
                     display:flex;
                     justify-content:space-between;
                     align-items:center;
@@ -711,9 +744,9 @@
 
                   <span
                     style="
-                      font-size:12px !important;
-                      font-weight:500 !important;
-                      color:#64748B !important;
+                      font-size:12px;
+                      font-weight:500;
+                      color:#64748b;
                     "
                   >
                     {{ selectedBatch()?.batchName || 'الدفعة' }}
@@ -722,16 +755,15 @@
 
                   <span
                     style="
-                      display:inline-flex !important;
-                      align-items:center !important;
-                      justify-content:center !important;
-                      background:#E4F7ED !important;
-                      color:#15945A !important;
-                      font-size:11px !important;
-                      font-weight:600 !important;
-                      border-radius:20px !important;
-                      padding:6px 12px !important;
-                      line-height:1 !important;
+                      display:inline-flex;
+                      align-items:center;
+                      justify-content:center;
+                      background:#e4f7ed;
+                      color:#15945a;
+                      font-size:11px;
+                      font-weight:700;
+                      border-radius:20px;
+                      padding:6px 12px;
                     "
                   >
                     تم التقييم
@@ -753,22 +785,26 @@
 
     @else {
 
-      <!-- ================= NO TASKS ================= -->
+      <!-- ================================================= -->
+      <!--                    EMPTY STATE                     -->
+      <!-- ================================================= -->
 
       <div
-        class="nfd-card"
         style="
           width:100%;
-          padding:55px 20px;
+          padding:65px 20px;
           box-sizing:border-box;
           text-align:center;
+          background:#f8fafc;
+          border:1px dashed #cbd5e1;
+          border-radius:16px;
         "
       >
 
         <div
           style="
-            font-size:30px;
-            margin-bottom:10px;
+            font-size:34px;
+            margin-bottom:12px;
           "
         >
           📋
@@ -778,10 +814,10 @@
         <strong
           style="
             display:block;
-            margin-bottom:5px;
-            font-size:15px;
+            margin-bottom:6px;
+            font-size:16px;
             font-weight:700;
-            color:#0B192C;
+            color:#0b192c;
           "
         >
           لا توجد مهام
@@ -790,8 +826,8 @@
 
         <span
           style="
-            font-size:12px;
-            color:#64748B;
+            font-size:13px;
+            color:#64748b;
           "
         >
           لا توجد مهام لهذه الدفعة حتى الآن
@@ -806,7 +842,36 @@
 
 
   <!-- ================================================= -->
-  <!--                  CREATE TASK MODAL                 -->
+  <!--                     HOVER CSS                     -->
+  <!-- ================================================= -->
+
+  <style>
+
+    .task-card:hover {
+      transform:translateY(-6px);
+      box-shadow:0 12px 24px rgba(2,132,199,0.12) !important;
+      border-color:#bae6fd !important;
+    }
+
+    .task-card:hover img {
+      transform:scale(1.05);
+    }
+
+    .review-btn {
+      transition:all 0.2s ease;
+    }
+
+    .review-btn:hover {
+      transform:translateY(-1px);
+      box-shadow:0 5px 12px rgba(2,132,199,0.18);
+    }
+
+  </style>
+
+
+
+  <!-- ================================================= -->
+  <!--                CREATE TASK MODAL                  -->
   <!-- ================================================= -->
 
   @if (showCreateModal()) {
@@ -832,9 +897,9 @@
         style="
           width:min(720px,100%);
           max-height:calc(100vh - 48px);
-          background:#FFFFFF;
+          background:#ffffff;
           border-radius:18px;
-          border:1px solid #E2E8F0;
+          border:1px solid #e2e8f0;
           overflow:auto;
           box-shadow:0 24px 70px rgba(15,35,70,0.22);
         "
@@ -849,7 +914,7 @@
             justify-content:space-between;
             align-items:center;
             padding:20px 24px;
-            border-bottom:1px solid #E5EAF1;
+            border-bottom:1px solid #e5eaf1;
           "
         >
 
@@ -860,7 +925,7 @@
                 margin:0 0 4px 0;
                 font-size:18px;
                 font-weight:700;
-                color:#0B192C;
+                color:#0b192c;
               "
             >
               إنشاء واجب / مشروع
@@ -871,7 +936,7 @@
               style="
                 margin:0;
                 font-size:12px;
-                color:#64748B;
+                color:#64748b;
               "
             >
               أدخل تفاصيل المهمة ثم اضغط حفظ
@@ -890,8 +955,8 @@
               min-width:38px;
               border:0;
               border-radius:50%;
-              background:#F1F5F9;
-              color:#0B192C;
+              background:#f1f5f9;
+              color:#0b192c;
               font-size:22px;
               line-height:1;
               cursor:pointer;
@@ -908,18 +973,20 @@
 
         <form (ngSubmit)="saveTask()">
 
-          <div style="padding:24px;">
+          <div
+            style="
+              padding:24px;
+            "
+          >
 
-
-            <!-- ================= MODAL ERROR ================= -->
 
             @if (errorMessage()) {
 
               <div
                 style="
-                  background:#FEF2F2;
-                  color:#B91C1C;
-                  border:1px solid #FECACA;
+                  background:#fef2f2;
+                  color:#b91c1c;
+                  border:1px solid #fecaca;
                   border-radius:10px;
                   padding:10px 12px;
                   margin-bottom:18px;
@@ -935,7 +1002,11 @@
 
             <!-- ================= TITLE ================= -->
 
-            <div style="margin-bottom:18px;">
+            <div
+              style="
+                margin-bottom:18px;
+              "
+            >
 
               <label
                 for="taskTitle"
@@ -944,7 +1015,7 @@
                   margin-bottom:7px;
                   font-size:12px;
                   font-weight:600;
-                  color:#0B192C;
+                  color:#0b192c;
                 "
               >
                 عنوان المهمة
@@ -964,13 +1035,13 @@
                   height:44px;
                   box-sizing:border-box;
                   padding:0 14px;
-                  border:1px solid #D9E2EF;
+                  border:1px solid #d9e2ef;
                   border-radius:10px;
                   outline:none;
                   font-family:inherit;
                   font-size:13px;
-                  color:#0B192C;
-                  background:#FFFFFF;
+                  color:#0b192c;
+                  background:#ffffff;
                 "
               />
 
@@ -980,7 +1051,11 @@
 
             <!-- ================= DESCRIPTION ================= -->
 
-            <div style="margin-bottom:18px;">
+            <div
+              style="
+                margin-bottom:18px;
+              "
+            >
 
               <label
                 for="taskDescription"
@@ -989,7 +1064,7 @@
                   margin-bottom:7px;
                   font-size:12px;
                   font-weight:600;
-                  color:#0B192C;
+                  color:#0b192c;
                 "
               >
                 وصف المهمة
@@ -1008,14 +1083,14 @@
                   box-sizing:border-box;
                   resize:vertical;
                   padding:12px 14px;
-                  border:1px solid #D9E2EF;
+                  border:1px solid #d9e2ef;
                   border-radius:10px;
                   outline:none;
                   font-family:inherit;
                   font-size:13px;
                   line-height:1.7;
-                  color:#0B192C;
-                  background:#FFFFFF;
+                  color:#0b192c;
+                  background:#ffffff;
                 "
               ></textarea>
 
@@ -1046,7 +1121,7 @@
                     margin-bottom:7px;
                     font-size:12px;
                     font-weight:600;
-                    color:#0B192C;
+                    color:#0b192c;
                   "
                 >
                   الأولوية
@@ -1062,21 +1137,18 @@
                     height:44px;
                     box-sizing:border-box;
                     padding:0 12px;
-                    border:1px solid #D9E2EF;
+                    border:1px solid #d9e2ef;
                     border-radius:10px;
                     outline:none;
                     font-family:inherit;
                     font-size:13px;
-                    color:#0B192C;
-                    background:#FFFFFF;
+                    color:#0b192c;
+                    background:#ffffff;
                     cursor:pointer;
                   "
                 >
 
-                  @for (
-                    option of priorityOptions;
-                    track option.value
-                  ) {
+                  @for (option of priorityOptions; track option.value) {
 
                     <option [ngValue]="option.value">
                       {{ option.label }}
@@ -1101,7 +1173,7 @@
                     margin-bottom:7px;
                     font-size:12px;
                     font-weight:600;
-                    color:#0B192C;
+                    color:#0b192c;
                   "
                 >
                   الحالة
@@ -1117,21 +1189,18 @@
                     height:44px;
                     box-sizing:border-box;
                     padding:0 12px;
-                    border:1px solid #D9E2EF;
+                    border:1px solid #d9e2ef;
                     border-radius:10px;
                     outline:none;
                     font-family:inherit;
                     font-size:13px;
-                    color:#0B192C;
-                    background:#FFFFFF;
+                    color:#0b192c;
+                    background:#ffffff;
                     cursor:pointer;
                   "
                 >
 
-                  @for (
-                    option of statusOptions;
-                    track option.value
-                  ) {
+                  @for (option of statusOptions; track option.value) {
 
                     <option [ngValue]="option.value">
                       {{ option.label }}
@@ -1169,7 +1238,7 @@
                     margin-bottom:7px;
                     font-size:12px;
                     font-weight:600;
-                    color:#0B192C;
+                    color:#0b192c;
                   "
                 >
                   موعد التسليم
@@ -1187,13 +1256,13 @@
                     height:44px;
                     box-sizing:border-box;
                     padding:0 12px;
-                    border:1px solid #D9E2EF;
+                    border:1px solid #d9e2ef;
                     border-radius:10px;
                     outline:none;
                     font-family:inherit;
                     font-size:13px;
-                    color:#0B192C;
-                    background:#FFFFFF;
+                    color:#0b192c;
+                    background:#ffffff;
                   "
                 />
 
@@ -1211,7 +1280,7 @@
                     margin-bottom:7px;
                     font-size:12px;
                     font-weight:600;
-                    color:#0B192C;
+                    color:#0b192c;
                   "
                 >
                   الدفعة
@@ -1226,11 +1295,11 @@
                     padding:0 14px;
                     display:flex;
                     align-items:center;
-                    border:1px solid #E2E8F0;
+                    border:1px solid #e2e8f0;
                     border-radius:10px;
                     font-size:13px;
                     color:#475569;
-                    background:#F8FAFC;
+                    background:#f8fafc;
                   "
                 >
                   {{ selectedBatch()?.batchName || 'لم يتم تحديد الدفعة' }}
@@ -1253,8 +1322,8 @@
               align-items:center;
               gap:10px;
               padding:14px 24px;
-              border-top:1px solid #E5EAF1;
-              background:#FAFCFE;
+              border-top:1px solid #e5eaf1;
+              background:#fafcfe;
             "
           >
 
