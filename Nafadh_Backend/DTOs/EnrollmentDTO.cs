@@ -23,6 +23,13 @@ namespace Nafadh_Backend.DTOs
 
         public int? SupervisorId { get; set; }
         public string? SupervisorName { get; set; }
+
+        // Sourced from Trainee / Batch.Program / Batch.Program.Track — used by
+        // the company trainees list (GitHub link, program column, track subtitle).
+        public string? TraineeGitHubUrl { get; set; }
+        public string? ProgramTitle { get; set; }
+        public string? ProgramDescription { get; set; }
+        public string? TrackName { get; set; }
     }
 
     // POST /api/Enrollment  -> enroll a trainee into a batch/company/department

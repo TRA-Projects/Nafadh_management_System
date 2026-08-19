@@ -169,7 +169,11 @@ namespace Nafadh_Backend.Services
                 DepartmentId = e.DepartmentId,
                 DepartmentName = e.Department?.Name,
                 SupervisorId = e.SupervisorId,
-                SupervisorName = e.CompanySupervisor?.User.FullName
+                SupervisorName = e.CompanySupervisor?.User.FullName,
+                TraineeGitHubUrl = e.Trainee.GitHubUrl,
+                ProgramTitle = e.Batch.Program?.Title,
+                ProgramDescription = e.Batch.Program?.Description,
+                TrackName = e.Batch.Program?.Track?.Name
             };
         }
     }

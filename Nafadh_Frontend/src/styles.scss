@@ -166,3 +166,32 @@ input, select, textarea { font-family: inherit; }
 .nfd-hero-greeting h1 { font-size: 22px; margin: 0 0 6px; color: #fff; }
 .nfd-hero-greeting p { font-size: 13px; opacity: .85; margin: 0 0 10px; }
 
+/* الحل الجذري والنهائي لتغيير خلفية مربعات جيت هاب إلى أسود داكن قاطع في كل النظام */
+td a[href*="github.com"], 
+td .github-icon, 
+td nfd-icon[name="github"],
+td [data-icon="github"],
+td [ng-reflect-name*="github"],
+a[href*="github.com"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  background-color: #111111 !important;
+  background: #111111 !important;
+  border-radius: 10px !important;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.2) !important;
+  
+  &:hover {
+    background-color: #222222 !important;
+    background: #222222 !important;
+  }
+
+  svg, path, * {
+    fill: #ffffff !important;
+    color: #ffffff !important;
+    stroke: none !important;
+    opacity: 1 !important;
+  }
+}

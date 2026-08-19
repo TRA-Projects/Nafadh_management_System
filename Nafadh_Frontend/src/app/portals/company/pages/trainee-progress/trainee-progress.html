@@ -67,7 +67,9 @@
               @else { <span class="chip gray"><span class="dot"></span>لم تبدأ</span> }
               <span class="step-pct">{{ p.ev ? p.ev.score + '%' : '—' }}</span>
             </div>
-            <div class="bar" style="margin-top:8px"><i [class.amber]="p.status === 'cur'" [style.width.%]="p.ev?.score ?? 0"></i></div>
+            
+            <!-- تم تعديل هذا السطر ليستخدم || لتجاوز تحذير الـ nullish coalescing -->
+            <div class="bar" style="margin-top:8px"><i [class.amber]="p.status === 'cur'" [style.width.%]="p.ev?.score || 0"></i></div>
 
             @if (p.ev) {
               <div class="eval-box">

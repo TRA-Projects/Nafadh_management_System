@@ -3,12 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CompanyApi } from '../../services/company-api';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { EnrollmentDto } from '../../../../core/models/dtos';
 import { NfdIcon } from '../../../../shared/ui/icon/icon';
 
-// Our backend's completion-status enum only has 4 values, so it's mapped
-// onto the reference design's richer status-chip palette as closely as
-// the real data allows (InProgress -> "نشط", etc.).
 const STATUS_LABELS: Record<string, string> = {
   InProgress: 'نشط',
   Completed: 'مكتمل',
@@ -31,7 +29,7 @@ const AVATAR_PALETTE = ['#00338d', '#007cae', '#00bbc2', '#efbb20', '#1ebbf0', '
   styleUrl: './trainees.scss',
 })
 export class CompanyTrainees implements OnInit {
-  companyId = 1;
+  companyId: number = 0;
   enrollments = signal<EnrollmentDto[]>([]);
 
   search = signal('');
@@ -39,8 +37,20 @@ export class CompanyTrainees implements OnInit {
   programFilter = signal('الكل');
   batchFilter = signal('الكل');
 
-  constructor(private api: CompanyApi) {}
-  ngOnInit() { this.api.getEnrollmentsByCompany(this.companyId).subscribe((d) => this.enrollments.set(d ?? [])); }
+  constructor(private api: CompanyApi, private auth: AuthService) {
+    this.companyId = this.auth.companyId ?? 0;
+  }
+
+  ngOnInit() {
+    // تتبع معرف الشركة للتأكد من قيمته
+    console.log('Current Company ID:', this.companyId);
+
+    this.api.getEnrollmentsByCompany(this.companyId).subscribe((d) => {
+      // تتبع البيانات القادمة من الـ API
+      console.log('Enrollments Data Received:', d);
+      this.enrollments.set(d ?? []);
+    });
+  }
 
   statuses = computed(() => Array.from(new Set(this.enrollments().map((e) => e.completionStatus))));
   programs = computed(() => Array.from(new Set(this.enrollments().map((e) => e.programTitle).filter((v): v is string => !!v))));
