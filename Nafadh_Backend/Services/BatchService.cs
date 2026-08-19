@@ -117,17 +117,33 @@ namespace Nafadh_Backend.Services
             };
         }
 
-        // دالة المابينج الوحيدة والصحيحة التي تعبئ جميع البيانات والنسب لكل دفعة بناءً على الـ BatchId
         private static BatchDto MapToDto(NFD_Batch b, int enrolledCount)
         {
             string[] departments = {
-                "تطوير البرمجيات وتقنية المعلومات",
-                "الأمن السيبراني والشبكات",
-                "الذكاء الاصطناعي وتحليل البيانات",
-                "تصميم واجهات وتجربة المستخدم UX/UI"
-            };
+        "تطوير البرمجيات وتقنية المعلومات",
+        "الأمن السيبراني والشبكات",
+        "الذكاء الاصطناعي وتحليل البيانات",
+        "تصميم واجهات وتجربة المستخدم UX/UI"
+    };
 
             int seed = b.BatchId;
+
+            // حساب الحالة ديناميكياً بناءً على التاريخ الحالي (التاريخ اليوم: أغسطس 2026)
+            var today = DateTime.Today;
+            NFD_BatchStatus calculatedStatus;
+
+            if (today > b.EndDate)
+            {
+                calculatedStatus = NFD_BatchStatus.Completed; // مكتملة
+            }
+            else if (today >= b.StartDate && today <= b.EndDate)
+            {
+                calculatedStatus = NFD_BatchStatus.Ongoing; // نشطة
+            }
+            else
+            {
+                calculatedStatus = NFD_BatchStatus.Upcoming; // قادمة
+            }
 
             return new BatchDto
             {
@@ -137,7 +153,7 @@ namespace Nafadh_Backend.Services
                 StartDate = b.StartDate,
                 EndDate = b.EndDate,
                 Capacity = b.Capacity,
-                Status = b.Status,
+                Status = calculatedStatus, // استخدام الحالة المحسوبة بناءً على التاريخ
                 Department = departments[seed % departments.Length],
                 EnrolledTraineesCount = enrolledCount > 0 ? enrolledCount : (18 + (seed * 5) % 15),
                 AttendanceRate = 88 + (seed * 3) % 11,
