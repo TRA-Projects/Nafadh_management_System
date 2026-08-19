@@ -1,7 +1,11 @@
-import { Component, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  signal
+} from '@angular/core';
+
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterLink, Router } from '@angular/router';
+import { Router } from '@angular/router';
 
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -16,11 +20,10 @@ import {
   selector: 'app-trainer-batches',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    RouterLink
+    CommonModule
   ],
-  templateUrl: './batches.html'
+  templateUrl: './batches.html',
+  styleUrl: './batch.scss'
 })
 export class TrainerBatches implements OnInit {
 
@@ -49,32 +52,15 @@ export class TrainerBatches implements OnInit {
     signal('');
 
 
-  // عدد المتدربين الحقيقي لكل دفعة
+  // =====================================================
+  // EXTRA BATCH DATA
+  // =====================================================
+
   traineeCounts =
     signal<Record<number, number>>({});
 
-
-  // اسم البرنامج الحقيقي لكل دفعة
   programNames =
     signal<Record<number, string>>({});
-
-
-  // =====================================================
-  // ACTIVE SECTION
-  // =====================================================
-
-  activeSection =
-    signal<string | null>(null);
-
-
-  // =====================================================
-  // ANNOUNCEMENT
-  // =====================================================
-
-  showAnnounce =
-    signal(false);
-
-  announceMsg = '';
 
 
   // =====================================================
@@ -103,10 +89,6 @@ export class TrainerBatches implements OnInit {
   // CURRENT TRAINER
   // =====================================================
 
-  /**
-   * Loads the trainer linked to the currently
-   * logged-in user.
-   */
   private loadCurrentTrainer(): void {
 
     const userId =
@@ -116,7 +98,7 @@ export class TrainerBatches implements OnInit {
     if (!userId) {
 
       this.errorMessage.set(
-        'تعذر تحديد المستخدم الحالي'
+        'تعذر تحديد المستخدم الحالي.'
       );
 
       this.batches.set([]);
@@ -157,7 +139,7 @@ export class TrainerBatches implements OnInit {
           this.loading.set(false);
 
           this.errorMessage.set(
-            'تعذر تحميل بيانات المدرب'
+            'تعذر تحميل بيانات المدرب.'
           );
 
           this.batches.set([]);
@@ -173,11 +155,6 @@ export class TrainerBatches implements OnInit {
   // LOAD BATCHES
   // =====================================================
 
-  /**
-   * Loads only the batches assigned to the
-   * current trainer and recalculates their status
-   * using the real start/end dates.
-   */
   private loadBatches(
     trainerId: number
   ): void {
@@ -189,14 +166,24 @@ export class TrainerBatches implements OnInit {
         next: (data) => {
 
           const result =
-            (data ?? []).map(batch => ({
+            (data ?? [])
+              .map(batch => ({
 
-              ...batch,
+                ...batch,
 
-              status:
-                this.calculateBatchStatus(batch)
+                status:
+                  this.calculateBatchStatus(
+                    batch
+                  )
 
-            }));
+              }))
+              .sort(
+                (a, b) =>
+                  this.compareBatches(
+                    a,
+                    b
+                  )
+              );
 
 
           this.batches.set(
@@ -204,22 +191,17 @@ export class TrainerBatches implements OnInit {
           );
 
 
-          // تنظيف البيانات السابقة
           this.traineeCounts.set({});
 
           this.programNames.set({});
 
 
-          // تحميل البيانات الإضافية لكل دفعة
           result.forEach(batch => {
 
-            // عدد المتدربين الحقيقي
             this.loadBatchTraineeCount(
               batch.batchId
             );
 
-
-            // اسم البرنامج الحقيقي
             this.loadBatchProgramName(
               batch.batchId
             );
@@ -248,7 +230,7 @@ export class TrainerBatches implements OnInit {
           this.programNames.set({});
 
           this.errorMessage.set(
-            'تعذر تحميل دفعات المدرب'
+            'تعذر تحميل دفعات المدرب.'
           );
 
         }
@@ -259,13 +241,66 @@ export class TrainerBatches implements OnInit {
 
 
   // =====================================================
-  // BATCH TRAINEE COUNT
+  // SORT BATCHES
   // =====================================================
 
-  /**
-   * Loads the real number of unique trainees
-   * enrolled in a specific batch.
-   */
+  private compareBatches(
+    a: TrainerBatchDto,
+    b: TrainerBatchDto
+  ): number {
+
+    const priority: Record<
+      TrainerBatchDto['status'],
+      number
+    > = {
+
+      Ongoing: 0,
+      Upcoming: 1,
+      Completed: 2,
+      Cancelled: 3
+
+    };
+
+
+    const statusDifference =
+      priority[a.status] -
+      priority[b.status];
+
+
+    if (
+      statusDifference !== 0
+    ) {
+
+      return statusDifference;
+
+    }
+
+
+    const aDate =
+      a.startDate
+        ? new Date(
+            a.startDate
+          ).getTime()
+        : Number.MAX_SAFE_INTEGER;
+
+
+    const bDate =
+      b.startDate
+        ? new Date(
+            b.startDate
+          ).getTime()
+        : Number.MAX_SAFE_INTEGER;
+
+
+    return aDate - bDate;
+
+  }
+
+
+  // =====================================================
+  // TRAINEE COUNT
+  // =====================================================
+
   private loadBatchTraineeCount(
     batchId: number
   ): void {
@@ -281,11 +316,13 @@ export class TrainerBatches implements OnInit {
 
           const uniqueTraineeIds =
             new Set(
+
               (enrollments ?? [])
                 .map(
                   enrollment =>
                     enrollment.traineeId
                 )
+
             );
 
 
@@ -329,13 +366,9 @@ export class TrainerBatches implements OnInit {
 
 
   // =====================================================
-  // BATCH PROGRAM NAME
+  // PROGRAM NAME
   // =====================================================
 
-  /**
-   * First loads the full batch details to get ProgramId,
-   * then loads the real program name.
-   */
   private loadBatchProgramName(
     batchId: number
   ): void {
@@ -396,7 +429,7 @@ export class TrainerBatches implements OnInit {
               error: (error) => {
 
                 console.error(
-                  `Error loading program ${programId} for batch ${batchId}:`,
+                  `Error loading program ${programId}:`,
                   error
                 );
 
@@ -422,7 +455,7 @@ export class TrainerBatches implements OnInit {
         error: (error) => {
 
           console.error(
-            `Error loading batch details for batch ${batchId}:`,
+            `Error loading batch ${batchId}:`,
             error
           );
 
@@ -449,14 +482,6 @@ export class TrainerBatches implements OnInit {
   // BATCH STATUS
   // =====================================================
 
-  /**
-   * Calculates the status from the actual batch dates.
-   *
-   * Before StartDate -> Upcoming
-   * Between dates    -> Ongoing
-   * After EndDate    -> Completed
-   * Cancelled        -> remains Cancelled
-   */
   private calculateBatchStatus(
     batch: TrainerBatchDto
   ): TrainerBatchDto['status'] {
@@ -492,7 +517,9 @@ export class TrainerBatches implements OnInit {
 
 
     const startDate =
-      new Date(batch.startDate);
+      new Date(
+        batch.startDate
+      );
 
     startDate.setHours(
       0,
@@ -503,7 +530,9 @@ export class TrainerBatches implements OnInit {
 
 
     const endDate =
-      new Date(batch.endDate);
+      new Date(
+        batch.endDate
+      );
 
     endDate.setHours(
       0,
@@ -540,10 +569,6 @@ export class TrainerBatches implements OnInit {
   // TIME PROGRESS
   // =====================================================
 
-  /**
-   * Calculates the percentage of the batch duration
-   * that has already passed.
-   */
   getTimeProgress(
     batch: TrainerBatchDto
   ): number {
@@ -570,7 +595,9 @@ export class TrainerBatches implements OnInit {
 
 
     const startDate =
-      new Date(batch.startDate);
+      new Date(
+        batch.startDate
+      );
 
     startDate.setHours(
       0,
@@ -581,7 +608,9 @@ export class TrainerBatches implements OnInit {
 
 
     const endDate =
-      new Date(batch.endDate);
+      new Date(
+        batch.endDate
+      );
 
     endDate.setHours(
       0,
@@ -591,7 +620,6 @@ export class TrainerBatches implements OnInit {
     );
 
 
-    // الدفعة لم تبدأ بعد
     if (
       today <= startDate
     ) {
@@ -601,7 +629,6 @@ export class TrainerBatches implements OnInit {
     }
 
 
-    // الدفعة انتهت
     if (
       today >= endDate
     ) {
@@ -641,13 +668,9 @@ export class TrainerBatches implements OnInit {
 
 
   // =====================================================
-  // BATCH TIME LABEL
+  // TIME LABEL
   // =====================================================
 
-  /**
-   * Shows a useful time label depending on
-   * the current batch status.
-   */
   getBatchTimeLabel(
     batch: TrainerBatchDto
   ): string {
@@ -693,8 +716,12 @@ export class TrainerBatches implements OnInit {
 
     const targetDate =
       batch.status === 'Upcoming'
-        ? new Date(batch.startDate)
-        : new Date(batch.endDate);
+        ? new Date(
+            batch.startDate
+          )
+        : new Date(
+            batch.endDate
+          );
 
 
     targetDate.setHours(
@@ -706,7 +733,10 @@ export class TrainerBatches implements OnInit {
 
 
     const millisecondsPerDay =
-      1000 * 60 * 60 * 24;
+      1000 *
+      60 *
+      60 *
+      24;
 
 
     const days =
@@ -796,7 +826,12 @@ export class TrainerBatches implements OnInit {
       batch
     );
 
-    this.activeSection.set(
+  }
+
+
+  back(): void {
+
+    this.selected.set(
       null
     );
 
@@ -804,36 +839,15 @@ export class TrainerBatches implements OnInit {
 
 
   // =====================================================
-  // BACK
-  // =====================================================
-
-  back(): void {
-
-    if (
-      this.activeSection() !== null
-    ) {
-
-      this.activeSection.set(
-        null
-      );
-
-    } else {
-
-      this.selected.set(
-        null
-      );
-
-    }
-
-  }
-
-
-  // =====================================================
-  // OPEN SECTION
+  // NAVIGATION
   // =====================================================
 
   openSection(
-    sectionName: string
+    sectionName:
+      | 'content'
+      | 'tasks'
+      | 'evaluations'
+      | 'trainees'
   ): void {
 
     const batch =
@@ -847,98 +861,37 @@ export class TrainerBatches implements OnInit {
     }
 
 
-    // CONTENT
-    if (
-      sectionName === 'content'
-    ) {
+    const routes = {
 
-      this.router.navigate(
-        ['/trainer/content'],
-        {
-          queryParams: {
-            batchId:
-              batch.batchId
-          }
+      content:
+        '/trainer/content',
+
+      tasks:
+        '/trainer/tasks',
+
+      evaluations:
+        '/trainer/trainees',
+
+      trainees:
+        '/trainer/trainees'
+
+    };
+
+
+    this.router.navigate(
+      [
+        routes[
+          sectionName
+        ]
+      ],
+      {
+        queryParams: {
+
+          batchId:
+            batch.batchId
+
         }
-      );
-
-      return;
-
-    }
-
-
-    // TASKS
-    if (
-      sectionName === 'tasks'
-    ) {
-
-      this.router.navigate(
-        ['/trainer/tasks'],
-        {
-          queryParams: {
-            batchId:
-              batch.batchId
-          }
-        }
-      );
-
-      return;
-
-    }
-
-
-    // EVALUATIONS
-    if (
-      sectionName === 'evaluations'
-    ) {
-
-      this.router.navigate(
-        ['/trainer/trainees'],
-        {
-          queryParams: {
-            batchId:
-              batch.batchId
-          }
-        }
-      );
-
-      return;
-
-    }
-
-
-    // TRAINEES
-    if (
-      sectionName === 'trainees'
-    ) {
-
-      this.router.navigate(
-        ['/trainer/trainees'],
-        {
-          queryParams: {
-            batchId:
-              batch.batchId
-          }
-        }
-      );
-
-      return;
-
-    }
-
-  }
-
-
-  // =====================================================
-  // SET SECTION
-  // =====================================================
-
-  setSection(
-    sectionName: string | null
-  ): void {
-
-    this.activeSection.set(
-      sectionName
+      }
     );
 
   }
@@ -948,96 +901,58 @@ export class TrainerBatches implements OnInit {
   // BATCH IMAGE
   // =====================================================
 
-  getBatchImage(
-    index: number
-  ): string {
+getBatchImage(
+  batchId: number
+): string {
 
-    const images = [
+  const images = [
 
-      'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80',
+    // Laptop / Programming
+    'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=900&q=85',
 
-      'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80',
+    // Cyber / Matrix
+    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=900&q=85',
 
-      'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&q=80',
+    // Cybersecurity
+    'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=900&q=85',
 
-      'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=600&q=80',
+    // Team Programming
+    'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=85',
 
-      'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=600&q=80'
+    // Code Screen
+    'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=900&q=85',
 
-    ];
+    // Developer Workspace
+    'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=85',
 
+    // Laptop Coding
+    'https://images.unsplash.com/photo-1504639725590-34d0984388bd?auto=format&fit=crop&w=900&q=85',
 
-    return images[
-      index % images.length
-    ];
+    // Programming Screen
+    'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=900&q=85',
 
-  }
+    // Technology
+    'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=85',
 
+    // Software Development
+    'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=900&q=85',
 
-  // =====================================================
-  // POST ANNOUNCEMENT
-  // =====================================================
+    // Coding
+    'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=900&q=85',
 
-  postAnnouncement(): void {
+    // Computer Workspace
+    'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=900&q=85'
 
-    const batch =
-      this.selected();
-
-    const userId =
-      this.auth.session()?.userId;
-
-
-    if (
-      !batch ||
-      !userId ||
-      !this.announceMsg.trim()
-    ) {
-
-      return;
-
-    }
+  ];
 
 
-    this.api
-      .postAnnouncement({
-
-        scopeType:
-          'Batch',
-
-        scopeId:
-          batch.batchId,
-
-        message:
-          this.announceMsg.trim(),
-
-        createdByUserId:
-          userId
-
-      })
-      .subscribe({
-
-        next: () => {
-
-          this.showAnnounce.set(
-            false
-          );
-
-          this.announceMsg = '';
-
-        },
+  const imageIndex =
+    Math.abs(batchId) %
+    images.length;
 
 
-        error: (error) => {
+  return images[imageIndex];
 
-          console.error(
-            'Error posting announcement:',
-            error
-          );
-
-        }
-
-      });
-
-  }
+}
 
 }

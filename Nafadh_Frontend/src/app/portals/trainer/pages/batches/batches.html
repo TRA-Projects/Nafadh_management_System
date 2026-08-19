@@ -1,569 +1,366 @@
-@if (selected() === null) {
+<div class="batches-page">
 
-  <!-- ===================================================== -->
-  <!-- PAGE HEADER -->
-  <!-- ===================================================== -->
+  @if (selected() === null) {
 
-  <div
-    style="
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom:24px;
-      padding:0 4px;
-    "
-  >
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
 
-    <div>
+    <section class="page-hero">
 
-      <h1
-        style="
-          font-size:24px;
-          font-weight:800;
-          color:#003b82;
-          margin:0 0 4px 0;
-          display:flex;
-          align-items:center;
-          gap:10px;
-        "
-      >
-        <span>
+      <div>
+
+        <span class="page-kicker">
+          دفعاتي التدريبية
+        </span>
+
+        <h1>
           إدارة الدفعات
-        </span>
+        </h1>
 
-        <span
-          style="
-            background:#eff6ff;
-            color:#1e40af;
-            padding:4px 10px;
-            border-radius:10px;
-            font-size:14px;
-          "
+        <p>
+          اختر الدفعة للوصول إلى المحتوى والمهام
+          والمتدربين والتقييمات الخاصة بها.
+        </p>
+
+      </div>
+
+
+      <div class="hero-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          width="26"
+          height="26"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
         >
+
+          <rect
+            x="3"
+            y="4"
+            width="18"
+            height="17"
+            rx="2"
+          ></rect>
+
+          <line
+            x1="16"
+            y1="2"
+            x2="16"
+            y2="6"
+          ></line>
+
+          <line
+            x1="8"
+            y1="2"
+            x2="8"
+            y2="6"
+          ></line>
+
+          <line
+            x1="3"
+            y1="10"
+            x2="21"
+            y2="10"
+          ></line>
+
+        </svg>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         ERROR
+    ====================================================== -->
+
+    @if (errorMessage()) {
+
+      <div class="error-message">
+
+        {{ errorMessage() }}
+
+      </div>
+
+    }
+
+
+    <!-- =====================================================
+         LOADING
+    ====================================================== -->
+
+    @if (loading()) {
+
+      <div class="loading-state">
+
+        <div class="loading-icon">
           📅
+        </div>
+
+        <span>
+          جاري تحميل الدفعات...
         </span>
-      </h1>
+
+      </div>
+
+    }
 
 
-      <p
-        style="
-          font-size:13px;
-          color:#64748b;
-          margin:0;
-        "
-      >
-        اختر الدفعة للانتقال إلى صفحة الإجراءات والتفاصيل الخاصة بها.
-      </p>
+    <!-- =====================================================
+         BATCHES
+    ====================================================== -->
 
-    </div>
+    @if (!loading()) {
 
-  </div>
+      <section class="batches-grid">
 
+        @for (
+          b of batches();
+          track b.batchId
+        ) {
 
-  <!-- ===================================================== -->
-  <!-- ERROR -->
-  <!-- ===================================================== -->
+          <article class="batch-card">
 
-  @if (errorMessage()) {
+            <!-- IMAGE -->
 
-    <div
-      style="
-        margin-bottom:20px;
-        padding:12px 14px;
-        background:#fef2f2;
-        border:1px solid #fecaca;
-        border-radius:10px;
-        color:#b91c1c;
-        font-size:13px;
-      "
-    >
-      {{ errorMessage() }}
-    </div>
+            <div class="batch-image-wrapper">
 
-  }
+              <img
+                class="batch-image"
+                [src]="getBatchImage(b.batchId)"
+                [alt]="b.batchName || 'دفعة تدريبية'"
+              />
 
 
-  <!-- ===================================================== -->
-  <!-- LOADING -->
-  <!-- ===================================================== -->
-
-  @if (loading()) {
-
-    <div
-      style="
-        padding:50px 20px;
-        text-align:center;
-        color:#64748b;
-        font-size:13px;
-      "
-    >
-      جاري تحميل الدفعات...
-    </div>
-
-  }
-
-
-  <!-- ===================================================== -->
-  <!-- BATCHES GRID -->
-  <!-- ===================================================== -->
-
-  @if (!loading()) {
-
-    <div
-      style="
-        display:grid !important;
-        grid-template-columns:repeat(3,minmax(0,1fr)) !important;
-        gap:20px !important;
-        width:100% !important;
-      "
-    >
-
-      @for (b of batches(); track b.batchId; let i = $index) {
-
-        <div
-          style="
-            background:#ffffff !important;
-            border:1px solid #e2e8f0 !important;
-            border-radius:16px !important;
-            overflow:hidden !important;
-            display:flex !important;
-            flex-direction:column !important;
-            justify-content:space-between !important;
-            box-shadow:0 4px 12px rgba(0,0,0,0.03) !important;
-            transition:all 0.3s ease !important;
-            cursor:pointer !important;
-          "
-          onmouseover="
-            this.style.transform='translateY(-6px)';
-            this.style.boxShadow='0 12px 24px rgba(0,0,0,0.08)';
-          "
-          onmouseout="
-            this.style.transform='translateY(0)';
-            this.style.boxShadow='0 4px 12px rgba(0,0,0,0.03)';
-          "
-        >
-
-          <!-- ================================================= -->
-          <!-- IMAGE + STATUS -->
-          <!-- ================================================= -->
-
-          <div
-            style="
-              position:relative;
-              width:100%;
-              height:130px;
-              background:#e2e8f0;
-            "
-          >
-
-            <img
-              [src]="getBatchImage(i)"
-              alt="Batch Banner"
-              style="
-                width:100%;
-                height:100%;
-                object-fit:cover;
-                display:block;
-              "
-            />
-
-
-            <span
-              [style.background]="
-                b.status === 'Ongoing'
-                  ? '#dcfce7'
-                  : b.status === 'Upcoming'
-                    ? '#dbeafe'
-                    : b.status === 'Completed'
-                      ? '#f1f5f9'
-                      : '#fee2e2'
-              "
-              [style.color]="
-                b.status === 'Ongoing'
-                  ? '#15803d'
-                  : b.status === 'Upcoming'
-                    ? '#1e40af'
-                    : b.status === 'Completed'
-                      ? '#475569'
-                      : '#b91c1c'
-              "
-              style="
-                position:absolute;
-                top:12px;
-                right:12px;
-                padding:4px 12px;
-                border-radius:20px;
-                font-size:12px;
-                font-weight:600;
-              "
-            >
-              {{ getBatchStatusLabel(b.status) }}
-            </span>
-
-          </div>
-
-
-          <!-- ================================================= -->
-          <!-- BATCH CONTENT -->
-          <!-- ================================================= -->
-
-          <div
-            style="
-              padding:20px;
-              text-align:center;
-              display:flex;
-              flex-direction:column;
-              flex-grow:1;
-            "
-          >
-
-            <div style="flex-grow:1;">
-
-              <!-- Batch Name -->
-
-              <h3
-                style="
-                  font-size:18px;
-                  font-weight:700;
-                  color:#0b192c;
-                  margin:0 0 6px 0;
-                "
+              <span
+                class="status-badge"
+                [class.active]="b.status === 'Ongoing'"
+                [class.upcoming]="b.status === 'Upcoming'"
+                [class.completed]="b.status === 'Completed'"
+                [class.cancelled]="b.status === 'Cancelled'"
               >
-                {{ b.batchName || 'دفعة بدون اسم' }}
+
+                {{
+                  getBatchStatusLabel(
+                    b.status
+                  )
+                }}
+
+              </span>
+
+            </div>
+
+
+            <!-- CONTENT -->
+
+            <div class="batch-content">
+
+              <span class="batch-label">
+                دفعة تدريبية
+              </span>
+
+
+              <h3>
+                {{
+                  b.batchName ||
+                  'دفعة بدون اسم'
+                }}
               </h3>
 
 
-              <!-- Department -->
+              <p class="program-name">
 
-             <p
-  style="
-    font-size:13px;
-    color:#64748b;
-    margin:0 0 12px 0;
-    font-weight:500;
-  "
->
-  {{ programNames()[b.batchId] || 'جاري تحميل البرنامج...' }}
-</p>
+                {{
+                  programNames()[b.batchId] ||
+                  'جاري تحميل البرنامج...'
+                }}
+
+              </p>
 
 
-              <!-- Real Dates -->
+              <div class="batch-dates">
 
-              <div
-                style="
-                  font-size:12px;
-                  color:#64748b;
-                  margin-bottom:20px;
-                "
-              >
+                <span>
+                  📅
+                </span>
 
-                📅
 
-                @if (b.startDate && b.endDate) {
+                @if (
+                  b.startDate &&
+                  b.endDate
+                ) {
 
-                  {{ b.startDate | date:'yyyy/MM/dd' }}
-
-                  -
-
-                  {{ b.endDate | date:'yyyy/MM/dd' }}
+                  <span>
+                    {{
+                      b.startDate |
+                      date:'yyyy/MM/dd'
+                    }}
+                    -
+                    {{
+                      b.endDate |
+                      date:'yyyy/MM/dd'
+                    }}
+                  </span>
 
                 } @else {
 
-                  التاريخ غير محدد
+                  <span>
+                    التاريخ غير محدد
+                  </span>
 
                 }
 
               </div>
 
-            </div>
 
+              <!-- METRICS -->
 
-            <!-- ================================================= -->
-            <!-- BATCH METRICS -->
-            <!-- ================================================= -->
+              <div class="batch-metrics">
 
-            <div
-              style="
-                display:flex;
-                align-items:center;
-                justify-content:space-around;
-                border-top:1px solid #f1f5f9;
-                border-bottom:1px solid #f1f5f9;
-                padding:12px 0;
-                margin-bottom:20px;
-                gap:12px;
-              "
-            >
+                <!-- PROGRESS -->
 
-              <!-- ================================================= -->
-              <!-- TIME PROGRESS -->
-              <!-- ================================================= -->
-
-              <div
-                style="
-                  display:flex;
-                  flex-direction:column;
-                  align-items:center;
-                  gap:5px;
-                  min-width:75px;
-                "
-              >
-
-                <div
-                  [style.background]="
-                    'conic-gradient(#003b82 ' +
-                    getTimeProgress(b) +
-                    '%, #f1f5f9 0)'
-                  "
-                  style="
-                    width:50px;
-                    height:50px;
-                    border-radius:50%;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    position:relative;
-                  "
-                >
+                <div class="metric-item">
 
                   <div
-                    style="
-                      width:38px;
-                      height:38px;
-                      background:#ffffff;
-                      border-radius:50%;
-                      display:flex;
-                      align-items:center;
-                      justify-content:center;
-                      font-size:11px;
-                      font-weight:700;
-                      color:#0b192c;
+                    class="progress-circle"
+                    [style.background]="
+                      'conic-gradient(#003b82 ' +
+                      getTimeProgress(b) +
+                      '%, #edf2f7 0)'
                     "
                   >
-                    {{ getTimeProgress(b) }}%
+
+                    <div class="progress-inner">
+
+                      {{
+                        getTimeProgress(b)
+                      }}%
+
+                    </div>
+
                   </div>
+
+
+                  <span>
+                    التقدم الزمني
+                  </span>
 
                 </div>
 
 
-                <span
-                  style="
-                    font-size:10px;
-                    color:#64748b;
-                  "
-                >
-                  التقدم الزمني
-                </span>
+                <!-- TIME -->
+
+                <div class="metric-item">
+
+                  <strong>
+
+                    {{
+                      getBatchTimeLabel(b)
+                    }}
+
+                  </strong>
+
+                  <span>
+                    مدة الدفعة
+                  </span>
+
+                </div>
+
+
+                <!-- TRAINEES -->
+
+                <div class="metric-item">
+
+                  <strong class="trainee-number">
+
+                    {{
+                      traineeCounts()[
+                        b.batchId
+                      ] ?? 0
+                    }}
+
+                  </strong>
+
+                  <span>
+                    متدرب
+                  </span>
+
+                </div>
 
               </div>
 
 
-              <!-- ================================================= -->
-              <!-- BATCH TIME -->
-              <!-- ================================================= -->
-
-              <div
-                style="
-                  text-align:center;
-                  min-width:90px;
-                "
+              <button
+                type="button"
+                class="select-batch-btn"
+                (click)="select(b)"
               >
 
-                <strong
-                  style="
-                    display:block;
-                    font-size:12px;
-                    color:#0b192c;
-                    margin-bottom:3px;
-                  "
-                >
-                  {{ getBatchTimeLabel(b) }}
-                </strong>
-
-
-                <span
-                  style="
-                    font-size:11px;
-                    color:#64748b;
-                  "
-                >
-                  مدة الدفعة
+                <span>
+                  اختيار الدفعة وفتح الإجراءات
                 </span>
 
-              </div>
-
-
-              <!-- ================================================= -->
-              <!-- REAL TRAINEE COUNT -->
-              <!-- ================================================= -->
-
-              <div
-                style="
-                  text-align:center;
-                  min-width:65px;
-                "
-              >
-
-                <strong
-                  style="
-                    display:block;
-                    font-size:14px;
-                    color:#0b192c;
-                    margin-bottom:3px;
-                  "
-                >
-                  {{ traineeCounts()[b.batchId] ?? 0 }}
-                </strong>
-
-
-                <span
-                  style="
-                    font-size:11px;
-                    color:#64748b;
-                  "
-                >
-                  متدرب
+                <span>
+                  ←
                 </span>
 
-              </div>
+              </button>
 
             </div>
 
+          </article>
 
-            <!-- ================================================= -->
-            <!-- SELECT BUTTON -->
-            <!-- ================================================= -->
+        } @empty {
 
-            <button
-              type="button"
-              (click)="select(b)"
-              style="
-                width:100%;
-                background:#003b82 !important;
-                color:#ffffff !important;
-                border-radius:10px;
-                padding:10px;
-                font-size:14px;
-                font-weight:600;
-                cursor:pointer;
-                border:none;
-                text-align:center;
-                margin-top:auto;
-                transition:background 0.2s;
-              "
-             
-            >
-              اختيار الدفعة وفتح الإجراءات
-            </button>
+          <div class="empty-state">
+
+            <div class="empty-icon">
+              📅
+            </div>
+
+            <strong>
+              لا توجد دفعات مسندة
+            </strong>
+
+            <span>
+              ستظهر هنا الدفعات المسندة
+              للمدرب الحالي.
+            </span>
 
           </div>
 
-        </div>
+        }
 
-      } @empty {
+      </section>
 
-        <div
-          style="
-            grid-column:1 / -1;
-            text-align:center;
-            padding:50px 20px;
-            background:#f8fafc;
-            border:1px dashed #cbd5e1;
-            border-radius:16px;
-            color:#64748b;
-          "
-        >
+    }
 
-          <div
-            style="
-              font-size:30px;
-              margin-bottom:10px;
-            "
-          >
-            📅
-          </div>
+  } @else {
 
+    <!-- =====================================================
+         SELECTED BATCH
+    ====================================================== -->
 
-          <strong
-            style="
-              display:block;
-              color:#0b192c;
-              margin-bottom:5px;
-            "
-          >
-            لا توجد دفعات مسندة
-          </strong>
+    <section class="selected-panel">
 
-
-          <span
-            style="
-              font-size:13px;
-            "
-          >
-            ستظهر هنا الدفعات المسندة للمدرب الحالي.
-          </span>
-
-        </div>
-
-      }
-
-    </div>
-
-  }
-
-} @else {
-
-
-  <!-- ===================================================== -->
-  <!-- BATCH ACTIONS -->
-  <!-- ===================================================== -->
-
-  @if (activeSection() === null) {
-
-    <div
-      style="
-        background:#ffffff;
-        border:1px solid #e2e8f0;
-        border-radius:20px;
-        padding:30px;
-        box-shadow:0 4px 16px rgba(0,0,0,0.04);
-      "
-    >
-
-      <div
-        style="
-          display:flex;
-          justify-content:space-between;
-          align-items:center;
-          margin-bottom:30px;
-          border-bottom:1px solid #f1f5f9;
-          padding-bottom:20px;
-        "
-      >
+      <div class="selected-header">
 
         <div>
 
-          <h2
-            style="
-              font-size:22px;
-              font-weight:bold;
-              color:#0b192c;
-              margin:0 0 6px 0;
-            "
-          >
-            صفحة إجراءات:
+          <span class="selected-kicker">
+            الدفعة المحددة
+          </span>
+
+          <h2>
             {{ selected()?.batchName }}
           </h2>
 
-
-          <p
-            style="
-              font-size:13px;
-              color:#64748b;
-              margin:0;
-            "
-          >
-            اختر الإجراء الذي تريد القيام به للدفعة المحددة.
+          <p>
+            اختر الإجراء الذي تريد القيام به
+            للدفعة الحالية.
           </p>
 
         </div>
@@ -571,793 +368,234 @@
 
         <button
           type="button"
+          class="back-btn"
           (click)="back()"
-          style="
-            background:#ffffff;
-            color:#0b192c;
-            border:1px solid #cbd5e1;
-            padding:8px 16px;
-            border-radius:12px;
-            cursor:pointer;
-            font-weight:600;
-            display:flex;
-            align-items:center;
-            gap:8px;
-            font-size:13px;
-          "
         >
-          ← العودة إلى قائمة الدفعات
+          ← العودة إلى الدفعات
         </button>
 
       </div>
 
 
-      <div
-        style="
-          display:grid;
-          grid-template-columns:repeat(4,minmax(0,1fr));
-          gap:20px;
-        "
-      >
+      <!-- SELECTED SUMMARY -->
 
-        <!-- Evaluations -->
+      <div class="selected-summary">
 
-        <div
-          (click)="openSection('evaluations')"
-          style="
-            background:#ffffff;
-            border:1px solid #e2e8f0;
-            border-radius:16px;
-            padding:24px;
-            display:flex;
-            flex-direction:column;
-            justify-content:space-between;
-            cursor:pointer;
-            transition:all 0.3s ease;
-          "
-          onmouseover="
-            this.style.transform='translateY(-6px)';
-            this.style.borderColor='#0284c7';
-            this.style.boxShadow='0 12px 24px rgba(2,132,199,0.12)';
-          "
-          onmouseout="
-            this.style.transform='translateY(0)';
-            this.style.borderColor='#e2e8f0';
-            this.style.boxShadow='none';
-          "
-        >
+        <div class="selected-summary-item">
 
-          <div>
+          <span>
+            البرنامج
+          </span>
 
-            <div
-              style="
-                width:44px;
-                height:44px;
-                background:#faf5ff;
-                color:#7e22ce;
-                border-radius:12px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                margin-bottom:16px;
-                font-size:20px;
-              "
-            >
-              📌
-            </div>
+          <strong>
 
+            {{
+              programNames()[
+                selected()!.batchId
+              ] ||
+              'غير متوفر'
+            }}
 
-            <h3
-              style="
-                font-size:17px;
-                font-weight:700;
-                color:#0b192c;
-                margin:0 0 8px 0;
-              "
-            >
-              التقييمات
-            </h3>
-
-
-            <p
-              style="
-                font-size:13px;
-                color:#64748b;
-                margin:0 0 20px 0;
-                line-height:1.5;
-              "
-            >
-              إجراء التقييمات المرحلية والنهائية واعتماد درجات المتدربين.
-            </p>
-
-          </div>
-
-
-          <div
-            style="
-              color:#0284c7;
-              font-weight:600;
-              font-size:16px;
-            "
-          >
-            ←
-          </div>
+          </strong>
 
         </div>
 
 
-        <!-- Tasks -->
+        <div class="selected-summary-item">
 
-        <div
-          (click)="openSection('tasks')"
-          style="
-            background:#ffffff;
-            border:1px solid #e2e8f0;
-            border-radius:16px;
-            padding:24px;
-            display:flex;
-            flex-direction:column;
-            justify-content:space-between;
-            cursor:pointer;
-            transition:all 0.3s ease;
-          "
-          onmouseover="
-            this.style.transform='translateY(-6px)';
-            this.style.borderColor='#0284c7';
-            this.style.boxShadow='0 12px 24px rgba(2,132,199,0.12)';
-          "
-          onmouseout="
-            this.style.transform='translateY(0)';
-            this.style.borderColor='#e2e8f0';
-            this.style.boxShadow='none';
-          "
-        >
+          <span>
+            عدد المتدربين
+          </span>
 
-          <div>
+          <strong>
 
-            <div
-              style="
-                width:44px;
-                height:44px;
-                background:#fff7ed;
-                color:#c2410c;
-                border-radius:12px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                margin-bottom:16px;
-                font-size:20px;
-              "
-            >
-              📋
-            </div>
+            {{
+              traineeCounts()[
+                selected()!.batchId
+              ] ?? 0
+            }}
 
-
-            <h3
-              style="
-                font-size:17px;
-                font-weight:700;
-                color:#0b192c;
-                margin:0 0 8px 0;
-              "
-            >
-              المهام والمشروعات
-            </h3>
-
-
-            <p
-              style="
-                font-size:13px;
-                color:#64748b;
-                margin:0 0 20px 0;
-                line-height:1.5;
-              "
-            >
-              إنشاء الواجبات والمشاريع، تحديد معايير التقييم ومراجعة التسليمات.
-            </p>
-
-          </div>
-
-
-          <div
-            style="
-              color:#0284c7;
-              font-weight:600;
-              font-size:16px;
-            "
-          >
-            ←
-          </div>
+          </strong>
 
         </div>
 
 
-        <!-- Content -->
+        <div class="selected-summary-item">
 
-        <div
+          <span>
+            حالة الدفعة
+          </span>
+
+          <strong>
+
+            {{
+              getBatchStatusLabel(
+                selected()!.status
+              )
+            }}
+
+          </strong>
+
+        </div>
+
+
+        <div class="selected-summary-item">
+
+          <span>
+            التقدم الزمني
+          </span>
+
+          <strong>
+
+            {{
+              getTimeProgress(
+                selected()!
+              )
+            }}%
+
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <!-- ACTIONS -->
+
+      <div class="actions-grid">
+
+
+        <!-- CONTENT -->
+
+        <button
+          type="button"
+          class="action-card"
           (click)="openSection('content')"
-          style="
-            background:#ffffff;
-            border:1px solid #e2e8f0;
-            border-radius:16px;
-            padding:24px;
-            display:flex;
-            flex-direction:column;
-            justify-content:space-between;
-            cursor:pointer;
-            transition:all 0.3s ease;
-          "
-          onmouseover="
-            this.style.transform='translateY(-6px)';
-            this.style.borderColor='#0284c7';
-            this.style.boxShadow='0 12px 24px rgba(2,132,199,0.12)';
-          "
-          onmouseout="
-            this.style.transform='translateY(0)';
-            this.style.borderColor='#e2e8f0';
-            this.style.boxShadow='none';
-          "
         >
+
+          <div class="action-icon blue">
+            📁
+          </div>
 
           <div>
 
-            <div
-              style="
-                width:44px;
-                height:44px;
-                background:#eff6ff;
-                color:#2563eb;
-                border-radius:12px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                margin-bottom:16px;
-                font-size:20px;
-              "
-            >
-              📁
-            </div>
-
-
-            <h3
-              style="
-                font-size:17px;
-                font-weight:700;
-                color:#0b192c;
-                margin:0 0 8px 0;
-              "
-            >
+            <h3>
               إدارة المحتوى
             </h3>
 
-
-            <p
-              style="
-                font-size:13px;
-                color:#64748b;
-                margin:0 0 20px 0;
-                line-height:1.5;
-              "
-            >
-              رفع وتعديل الدروس، الملفات، الروابط وتحديد تواريخ إتاحة المحتوى.
+            <p>
+              إدارة الوحدات والدروس والملفات
+              والروابط التعليمية.
             </p>
 
           </div>
 
-
-          <div
-            style="
-              color:#0284c7;
-              font-weight:600;
-              font-size:16px;
-            "
-          >
+          <span class="action-arrow">
             ←
-          </div>
+          </span>
 
-        </div>
+        </button>
 
 
-        <!-- Trainees -->
+        <!-- TASKS -->
 
-        <div
-          (click)="openSection('trainees')"
-          style="
-            background:#ffffff;
-            border:1px solid #e2e8f0;
-            border-radius:16px;
-            padding:24px;
-            display:flex;
-            flex-direction:column;
-            justify-content:space-between;
-            cursor:pointer;
-            transition:all 0.3s ease;
-          "
-          onmouseover="
-            this.style.transform='translateY(-6px)';
-            this.style.borderColor='#0284c7';
-            this.style.boxShadow='0 12px 24px rgba(2,132,199,0.12)';
-          "
-          onmouseout="
-            this.style.transform='translateY(0)';
-            this.style.borderColor='#e2e8f0';
-            this.style.boxShadow='none';
-          "
+        <button
+          type="button"
+          class="action-card"
+          (click)="openSection('tasks')"
         >
+
+          <div class="action-icon orange">
+            📋
+          </div>
 
           <div>
 
-            <div
-              style="
-                width:44px;
-                height:44px;
-                background:#f0fdf4;
-                color:#16a34a;
-                border-radius:12px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                margin-bottom:16px;
-                font-size:20px;
-              "
-            >
-              👥
-            </div>
+            <h3>
+              المهام والمشروعات
+            </h3>
+
+            <p>
+              إنشاء المهام ومتابعة التسليمات
+              ونتائج المتدربين.
+            </p>
+
+          </div>
+
+          <span class="action-arrow">
+            ←
+          </span>
+
+        </button>
 
 
-            <h3
-              style="
-                font-size:17px;
-                font-weight:700;
-                color:#0b192c;
-                margin:0 0 8px 0;
-              "
-            >
+        <!-- TRAINEES -->
+
+        <button
+          type="button"
+          class="action-card"
+          (click)="openSection('trainees')"
+        >
+
+          <div class="action-icon green">
+            👥
+          </div>
+
+          <div>
+
+            <h3>
               عرض المتدربين
             </h3>
 
-
-            <p
-              style="
-                font-size:13px;
-                color:#64748b;
-                margin:0 0 20px 0;
-                line-height:1.5;
-              "
-            >
-              متابعة أداء المتدربين للدفعة، الحضور، وتفاصيل تقدمهم الفني.
+            <p>
+              متابعة متدربي الدفعة
+              وتفاصيل تقدمهم التدريبي.
             </p>
 
           </div>
 
-
-          <div
-            style="
-              color:#0284c7;
-              font-weight:600;
-              font-size:16px;
-            "
-          >
+          <span class="action-arrow">
             ←
-          </div>
+          </span>
 
-        </div>
-
-      </div>
-
-    </div>
-
-  } @else {
+        </button>
 
 
-    <!-- ===================================================== -->
-    <!-- SUB SECTION -->
-    <!-- ===================================================== -->
+        <!-- EVALUATIONS -->
 
-    @if (activeSection() === 'content') {
-
-      <div
-        style="
-          background:#ffffff;
-          border:1px solid #e2e8f0;
-          border-radius:20px;
-          padding:30px;
-          box-shadow:0 4px 16px rgba(0,0,0,0.04);
-        "
-      >
-
-        <div
-          style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom:30px;
-            border-bottom:1px solid #f1f5f9;
-            padding-bottom:20px;
-          "
+        <button
+          type="button"
+          class="action-card"
+          (click)="openSection('evaluations')"
         >
 
-          <div
-            style="
-              display:flex;
-              gap:12px;
-            "
-          >
-
-            <button
-              type="button"
-              style="
-                background:#0284c7;
-                color:#ffffff;
-                border:none;
-                padding:10px 20px;
-                border-radius:10px;
-                font-weight:600;
-                cursor:pointer;
-              "
-            >
-              + إنشاء وحدة / درس
-            </button>
-
-
-            <button
-              type="button"
-              style="
-                background:#ffffff;
-                color:#334155;
-                border:1px solid #cbd5e1;
-                padding:10px 20px;
-                border-radius:10px;
-                font-weight:600;
-                cursor:pointer;
-              "
-            >
-              📁 أرشيف المواد
-            </button>
-
+          <div class="action-icon purple">
+            📌
           </div>
 
+          <div>
 
-          <div
-            style="
-              text-align:right;
-            "
-          >
+            <h3>
+              التقييمات
+            </h3>
 
-            <h2
-              style="
-                font-size:22px;
-                font-weight:bold;
-                color:#0b192c;
-                margin:0 0 4px 0;
-              "
-            >
-              📁 إدارة المحتوى
-            </h2>
-
-
-            <p
-              style="
-                font-size:13px;
-                color:#64748b;
-                margin:0;
-              "
-            >
-              إنشاء الوحدات والدروس ورفع الملفات والفيديوهات ومشاركة الروابط والمراجع.
+            <p>
+              الوصول إلى تقييم المتدربين
+              واعتماد الدرجات والملاحظات.
             </p>
 
           </div>
 
-        </div>
+          <span class="action-arrow">
+            ←
+          </span>
 
-
-        <div
-          style="
-            display:grid;
-            grid-template-columns:repeat(3,minmax(0,1fr));
-            gap:20px;
-          "
-        >
-
-          <!-- Links -->
-
-          <div
-            style="
-              background:#ffffff;
-              border:1px solid #e2e8f0;
-              border-radius:16px;
-              overflow:hidden;
-            "
-          >
-
-            <div
-              style="
-                height:140px;
-              "
-            >
-
-              <img
-                src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80"
-                alt="Links"
-                style="
-                  width:100%;
-                  height:100%;
-                  object-fit:cover;
-                "
-              />
-
-            </div>
-
-
-            <div
-              style="
-                padding:20px;
-                text-align:right;
-              "
-            >
-
-              <h3>
-                🔗 الروابط والمراجع
-              </h3>
-
-              <p
-                style="
-                  font-size:12px;
-                  color:#64748b;
-                "
-              >
-                • مشاركة الروابط والمراجع
-              </p>
-
-              <p
-                style="
-                  font-size:12px;
-                  color:#64748b;
-                "
-              >
-                • إضافة مصادر تعليمية
-              </p>
-
-            </div>
-
-          </div>
-
-
-          <!-- Files -->
-
-          <div
-            style="
-              background:#ffffff;
-              border:1px solid #e2e8f0;
-              border-radius:16px;
-              overflow:hidden;
-            "
-          >
-
-            <div
-              style="
-                height:140px;
-              "
-            >
-
-              <img
-                src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80"
-                alt="Files"
-                style="
-                  width:100%;
-                  height:100%;
-                  object-fit:cover;
-                "
-              />
-
-            </div>
-
-
-            <div
-              style="
-                padding:20px;
-                text-align:right;
-              "
-            >
-
-              <h3>
-                💻 الملفات والفيديوهات
-              </h3>
-
-              <p
-                style="
-                  font-size:12px;
-                  color:#64748b;
-                "
-              >
-                • رفع الملفات والفيديوهات
-              </p>
-
-              <p
-                style="
-                  font-size:12px;
-                  color:#64748b;
-                "
-              >
-                • إدارة مواد الدرس
-              </p>
-
-            </div>
-
-          </div>
-
-
-          <!-- Modules -->
-
-          <div
-            style="
-              background:#ffffff;
-              border:1px solid #e2e8f0;
-              border-radius:16px;
-              overflow:hidden;
-            "
-          >
-
-            <div
-              style="
-                height:140px;
-              "
-            >
-
-              <img
-                src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&q=80"
-                alt="Units"
-                style="
-                  width:100%;
-                  height:100%;
-                  object-fit:cover;
-                "
-              />
-
-            </div>
-
-
-            <div
-              style="
-                padding:20px;
-                text-align:right;
-              "
-            >
-
-              <h3>
-                📖 الوحدات والدروس
-              </h3>
-
-              <p
-                style="
-                  font-size:12px;
-                  color:#64748b;
-                "
-              >
-                • إنشاء الوحدات والدروس
-              </p>
-
-              <p
-                style="
-                  font-size:12px;
-                  color:#64748b;
-                "
-              >
-                • تحديد متطلبات كل وحدة
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div
-          style="
-            margin-top:30px;
-            text-align:left;
-          "
-        >
-
-          <button
-            type="button"
-            (click)="back()"
-            style="
-              background:#e2e8f0;
-              color:#1e293b;
-              border:none;
-              padding:10px 20px;
-              border-radius:10px;
-              cursor:pointer;
-              font-weight:600;
-            "
-          >
-            ← العودة لصفحة الإجراءات
-          </button>
-
-        </div>
+        </button>
 
       </div>
 
-    } @else {
-
-      <div
-        style="
-          background:#ffffff;
-          border:1px solid #e2e8f0;
-          border-radius:20px;
-          padding:30px;
-          box-shadow:0 4px 16px rgba(0,0,0,0.04);
-        "
-      >
-
-        <div
-          style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom:20px;
-            border-bottom:1px solid #f1f5f9;
-            padding-bottom:15px;
-          "
-        >
-
-          <h2
-            style="
-              font-size:20px;
-              font-weight:bold;
-              color:#0b192c;
-              margin:0;
-            "
-          >
-
-            {{
-              activeSection() === 'trainees'
-                ? 'عرض المتدربين'
-                : activeSection() === 'tasks'
-                  ? 'المهام والمشروعات'
-                  : 'التقييمات'
-            }}
-
-            -
-
-            {{ selected()?.batchName }}
-
-          </h2>
-
-
-          <button
-            type="button"
-            (click)="back()"
-            style="
-              background:#e2e8f0;
-              color:#1e293b;
-              border:none;
-              padding:8px 16px;
-              border-radius:8px;
-              cursor:pointer;
-              font-weight:600;
-            "
-          >
-            ← العودة لصفحة الإجراءات
-          </button>
-
-        </div>
-
-
-        <p
-          style="
-            color:#64748b;
-          "
-        >
-          جاري عرض محتوى هذا القسم...
-        </p>
-
-      </div>
-
-    }
+    </section>
 
   }
 
-}
+</div>
