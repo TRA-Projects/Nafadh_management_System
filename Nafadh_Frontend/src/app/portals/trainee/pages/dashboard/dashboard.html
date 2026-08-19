@@ -38,11 +38,7 @@
     <div style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(12px); border-radius: 16px; padding: 16px 24px; display: flex; align-items: center; gap: 20px;">
       <div style="display: flex; flex-direction: column; gap: 6px; text-align: right;">
         <span style="font-size: 0.78rem; color: rgba(255, 255, 255, 0.75);">نسبة الإنجاز الإجمالية</span>
-        <span style="font-size: 0.92rem; font-weight: 700; color: #ffffff;">
-          {{ progressPercentage() >= 75 ? 'أنت على الطريق الصحيح!' : 
-             progressPercentage() >= 50 ? 'واصل التقدم!' : 
-             progressPercentage() >= 25 ? 'ابدأ الآن!' : 'لم تبدأ بعد!' }}
-        </span>
+        
         <button routerLink="/trainee/program" style="background: #2563eb; color: #ffffff; border: none; border-radius: 8px; padding: 6px 16px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.2s; width: fit-content;">
           عرض التفاصيل
         </button>
@@ -135,7 +131,6 @@
                 {{ getTrainerSpecialty() }}
               </span>
             </div>
-            <!-- أيقونة للتواصل مع المدرب -->
             <button style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 4px 8px;" 
                     title="تواصل مع المدرب"
                     (click)="contactTrainer()">
@@ -185,28 +180,67 @@
         } @else {
           @for (t of tasks(); track t.taskId) {
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9;">
-              <div style="display: flex; flex-direction: column; gap: 4px;">
-                <strong style="font-size: 0.9rem; color: #1e293b;">{{ t.title }}</strong>
-                <span style="font-size: 0.78rem; color: #64748b;">الموعد النهائي: {{ t.dueDate | date:'mediumDate' }}</span>
+              <div style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
+                <!-- اسم المهمة -->
+                <strong style="font-size: 0.9rem; color: #1e293b;">{{ t.title || 'مهمة غير مسماة' }}</strong>
+                <!-- التاريخ -->
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: #64748b;">
+                  <span>📅 الموعد النهائي: {{ t.dueDate ? (t.dueDate | date:'mediumDate') : 'غير محدد' }}</span>
+                  @if (t.dueDate) {
+                    <span [style.color]="isTaskOverdue(t.dueDate) ? '#dc2626' : '#16a34a'">
+                      {{ isTaskOverdue(t.dueDate) ? '⏰ منتهي' : '' }}
+                    </span>
+                  }
+                </div>
+                <!-- حالة التسليم (إذا وجدت) -->
+                @if (t.submissionStatus) {
+                  <span style="font-size: 0.7rem; color: #94a3b8;">
+                    📤 التسليم: {{ getTaskStatusDisplay(t.submissionStatus) }}
+                  </span>
+                }
               </div>
               <div style="display: flex; align-items: center; gap: 10px;">
-                <span [style.background]="getTaskStatusStyle(t.status).background" 
-                      [style.color]="getTaskStatusStyle(t.status).color"
-                      style="padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">
-                  {{ getTaskStatusDisplay(t.status) }}
-                </span>
-                <button [routerLink]="['/trainee/tasks']" style="background: #eff6ff; color: #2563eb; border: none; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-                  📝
-                </button>
+                <!-- حالة المهمة -->
+                @if (t.submissionStatus) {
+                  <span [style.background]="getTaskStatusStyle(t.submissionStatus).background" 
+                        [style.color]="getTaskStatusStyle(t.submissionStatus).color"
+                        style="padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">
+                    {{ getTaskStatusDisplay(t.submissionStatus) }}
+                  </span>
+                } @else {
+                  <span [style.background]="getTaskStatusStyle(t.status).background" 
+                        [style.color]="getTaskStatusStyle(t.status).color"
+                        style="padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">
+                    {{ getTaskStatusDisplay(t.status) }}
+                  </span>
+                }
+                <!-- الدرجة (إذا كانت موجودة) -->
+                @if (t.grade !== undefined && t.grade !== null && t.grade !== '') {
+                  <span style="font-size: 0.75rem; color: #2563eb; font-weight: 700; background: #eff6ff; padding: 2px 8px; border-radius: 4px;">
+                    {{ t.grade }}%
+                  </span>
+                }
               </div>
             </div>
           }
           @empty {
-            <div style="display: flex; justify-content: center; align-items: center; padding: 30px; color: #94a3b8; font-size: 0.9rem;">
-              لا توجد مهام حالياً
+            <div style="display: flex; justify-content: center; align-items: center; padding: 30px; color: #94a3b8; font-size: 0.9rem; flex-direction: column; gap: 8px;">
+              <span style="font-size: 2rem;">📋</span>
+              <span>لا توجد مهام حالياً</span>
+              <span style="font-size: 0.75rem; color: #cbd5e1;">سيتم عرض المهام المخصصة لك هنا</span>
             </div>
           }
         }
+
+        <!-- التاريخ -->
+<div style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: #64748b;">
+  <span>📅 الموعد النهائي: {{ t.dueDate ? (t.dueDate | date:'mediumDate') : 'غير محدد' }}</span>
+  @if (t.dueDate) {
+    <span [style.color]="isTaskOverdue(t.dueDate) ? '#dc2626' : '#2563eb'" style="font-weight: 500;">
+      {{ getDaysRemainingText(t.dueDate) }}
+    </span>
+  }
+</div>
       </div>
     </div>
 
