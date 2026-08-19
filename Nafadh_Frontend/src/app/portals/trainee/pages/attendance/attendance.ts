@@ -12,7 +12,9 @@ import { DailyAttendanceDto } from '../../../../core/models/dtos';
 })
 export class TraineeAttendance implements OnInit {
   // جلب معرف المتدرب ديناميكياً بناءً على الحساب المسجل حالياً
-  enrollmentId: number = this.getCurrentEnrollmentId();
+  enrollmentId = 0;
+  traineeId = 1;
+  trainee = signal<any>(null);
 
   rows = signal<any[]>([]);
   rate = signal(0);
@@ -25,22 +27,71 @@ export class TraineeAttendance implements OnInit {
   constructor(private api: TraineeApi) {}
 
   ngOnInit() {
-    this.loadAttendanceData();
+    this.getLoggedInUserId();
+    this.loadTraineeData();
   }
 
-  // دالة لجلب الـ ID الحقيقي للمتدرب من التخزين المحلي
-  getCurrentEnrollmentId(): number {
-    const storedUser = localStorage.getItem('currentUser') || localStorage.getItem('enrollmentId') || localStorage.getItem('traineeId');
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        return parsed.enrollmentId || parsed.id || Number(storedUser) || 1;
-      } catch {
-        return Number(storedUser) || 1;
+
+private getLoggedInUserId() {
+    try {
+      // 1. البحث في كل المفاتيح المحتملة للـ Storage
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          const val = localStorage.getItem(key);
+          if (val && val.startsWith('{')) {
+            const parsed = JSON.parse(val);
+            const foundId = parsed.traineeId || parsed.userId || parsed.id;
+            if (foundId) {
+              this.traineeId = Number(foundId);
+              return;
+            }
+          }
+        }
+      }
+
+      // 2. البحث في التوكن إن وجد
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token') || localStorage.getItem('user_session');
+      if (token && token.includes('.')) {
+        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        const id = payload.traineeId || payload.userId || payload.nameid || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+        if (id) {
+          this.traineeId = Number(id);
+        }
+      }
+    } catch (e) {
+      console.warn('تنبيه قراءة التوكن:', e);
+    }
+  }
+
+  loadTraineeData() {
+  this.api.getTrainee(this.traineeId).subscribe({
+    next: (t) => {
+      if (t) {
+        this.trainee.set(t);
+
+        // Get EnrollmentId from the trainee
+        this.enrollmentId = t.enrollmentId ?? 0;
+
+        // Now load attendance
+        this.loadAttendanceData();
+      }
+    },
+    error: (err) => {
+      console.error('خطأ في جلب البيانات:', err);
+
+      if (this.traineeId !== 2) {
+        this.traineeId = 2;
+        this.loadTraineeData();
       }
     }
-    return 1;
-  }
+  });
+}
+
+
+
+
+
 
   loadAttendanceData() {
     if (!this.enrollmentId) return;

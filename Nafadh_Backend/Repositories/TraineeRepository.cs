@@ -135,6 +135,7 @@ namespace Nafadh_Backend.Repositories
                 .Include(t => t.TraineeModuleProgresses)
                 .Include(t => t.SessionAttendances)
                 .Include(t => t.Submissions)
+                .Include(t=>t.Enrollments)
                 .Include(t => t.ProjectMembers).FirstOrDefaultAsync(t => t.UserId == userId);
         }
 

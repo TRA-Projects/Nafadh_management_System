@@ -75,6 +75,7 @@ export interface TraineeProfileDto {
   verificationStatus: VerificationStatus;
   companyId?: number;
   companyName?: string;
+  enrollmentId? : number;
 }
 
 export interface TraineeDashboardSummaryDto {

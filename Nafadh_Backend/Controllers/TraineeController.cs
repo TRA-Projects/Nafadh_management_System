@@ -327,7 +327,8 @@ namespace Nafadh_Backend.Controllers
                 Status = t.Status,
                 VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
-                CompanyName = t.Company?.CompanyName
+                CompanyName = t.Company?.CompanyName,
+                EnrollmentId = t.Enrollments.LastOrDefault(u => u.TraineeId==t.TraineeId).EnrollmentId
             };
 
             return Ok(dto);
