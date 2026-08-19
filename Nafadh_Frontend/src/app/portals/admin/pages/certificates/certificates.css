@@ -1,615 +1,1228 @@
-.certificates-container {
+ .certificates-container {
+
   padding: 24px;
+
   direction: rtl;
+
 }
+
+
 
 .nfd-page-title {
+
   font-size: 1.5rem;
+
   font-weight: bold;
+
   color: #0f172a;
+
   margin: 0 0 4px 0;
+
 }
+
+
 
 .nfd-page-sub {
+
   color: #64748b;
+
   margin: 0 0 24px 0;
+
   font-size: 0.95rem;
+
 }
+
+
 
 /* Batches Grid */
+
 .batches-grid {
+
   display: grid;
+
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+
   gap: 20px;
+
 }
+
+
 
 .batch-card {
+
   background: #ffffff;
+
   border: 1px solid #e2e8f0;
+
   border-radius: 12px;
+
   padding: 16px;
+
   display: flex;
+
   flex-direction: column;
+
 }
+
+
 
 .card-header {
+
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
   margin-bottom: 12px;
+
 }
+
+
 
 .calendar-icon-box {
+
   width: 36px;
+
   height: 36px;
+
   background-color: #f1f5f9;
+
   border-radius: 8px;
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
 }
+
+
 
 .status-badge-pill {
+
   padding: 4px 12px;
+
   border-radius: 20px;
+
   font-size: 0.8rem;
+
   font-weight: bold;
+
 }
+
+
 
 .status-badge-pill.ongoing {
+
   background-color: #e0f2fe;
+
   color: #0369a1;
+
 }
+
+
 
 .status-badge-pill.not-started {
+
   background-color: #f1f5f9;
+
   color: #64748b;
+
 }
+
+
 
 .batch-title {
+
   font-size: 1.1rem;
+
   font-weight: bold;
+
   margin: 0 0 4px 0;
+
   color: #0f172a;
+
 }
+
+
 
 .company-name, .track-name {
+
   color: #64748b;
+
   font-size: 0.85rem;
+
 }
+
+
 
 .progress-section {
+
   margin: 16px 0 12px 0;
+
 }
+
+
 
 .progress-labels {
+
   display: flex;
+
   justify-content: space-between;
+
   font-size: 0.8rem;
+
   margin-bottom: 6px;
+
   color: #475569;
+
 }
+
+
 
 .progress-bar-bg {
+
   height: 6px;
+
   background-color: #f1f5f9;
+
   border-radius: 10px;
+
   overflow: hidden;
+
 }
+
+
 
 .progress-bar-fill {
+
   height: 100%;
+
   background-color: #0a1172;
+
 }
+
+
 
 .dates-row {
+
   display: flex;
+
   justify-content: space-between;
+
   font-size: 0.8rem;
+
   color: #94a3b8;
+
   margin-bottom: 12px;
+
 }
+
+
 
 .card-divider {
+
   border: none;
+
   border-top: 1px solid #f1f5f9;
+
   margin: 0 0 12px 0;
+
 }
+
+
 
 .card-footer {
+
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
 }
+
+
 
 .trainees-count {
+
   font-size: 0.85rem;
+
   font-weight: bold;
+
   color: #334155;
+
 }
+
+
 
 .view-btn {
+
   background: none;
+
   border: none;
+
   color: #0A1172;
+
   font-weight: bold;
+
   font-size: 0.85rem;
+
   cursor: pointer;
+
   display: flex;
+
   align-items: center;
+
   gap: 4px;
+
 }
+
+
 
 /* Details Screen */
+
 .back-btn {
+
   background: none;
+
   border: none;
+
   color: #475569;
+
   cursor: pointer;
+
   display: flex;
+
   align-items: center;
+
   gap: 6px;
+
   font-weight: 500;
+
   margin-bottom: 16px;
+
 }
+
+
 
 .top-info-card {
+
   background: #ffffff;
+
   border: 1px solid #e2e8f0;
+
   border-radius: 12px;
+
   padding: 20px;
+
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
   margin-bottom: 24px;
+
 }
+
+
 
 .right-details-side {
+
   display: flex;
+
   gap: 16px;
+
   align-items: center;
+
 }
+
+
 
 .calendar-box {
+
   width: 44px;
+
   height: 44px;
+
   background: #ecfdf5;
+
   border-radius: 10px;
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
 }
+
+
 
 .batch-name-heading {
+
   margin: 0 0 4px 0;
+
   font-size: 1.2rem;
+
 }
+
+
 
 .company-text-highlight {
+
   color: #0a1172;
+
   font-size: 0.9rem;
+
   margin-bottom: 4px;
+
 }
+
+
 
 .meta-dates-row {
+
   color: #64748b;
+
   font-size: 0.85rem;
+
 }
+
+
 
 .left-stats-side {
+
   display: flex;
+
   align-items: center;
+
   gap: 24px;
+
 }
+
+
 
 .stat-item {
+
   text-align: center;
+
 }
+
+
 
 .stat-num {
+
   display: block;
+
   font-size: 1.5rem;
+
   font-weight: bold;
+
 }
+
+
 
 .green-text { color: #10b981; }
+
 .dark-text { color: #0f172a; }
 
+
+
 .stat-lbl {
+
   font-size: 0.8rem;
+
   color: #64748b;
+
 }
+
+
 
 .stat-v-divider {
+
   width: 1px;
+
   height: 36px;
+
   background-color: #e2e8f0;
+
 }
+
+
 
 .header-action-box {
+
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
   margin-bottom: 16px;
+
 }
+
+
 
 .trainees-section-title {
+
   margin: 0;
+
   font-size: 1.1rem;
+
 }
+
+
 
 .trainees-section-sub {
+
   margin: 4px 0 0 0;
+
   font-size: 0.85rem;
+
   color: #64748b;
+
 }
+
+
 
 .btn-issue-all {
+
   background-color: #1e1b4b;
+
   color: white;
+
   border: none;
+
   padding: 10px 18px;
+
   border-radius: 8px;
+
   font-weight: bold;
+
   display: flex;
+
   align-items: center;
+
   gap: 8px;
+
   cursor: pointer;
+
 }
+
+
 
 /* Data Table */
+
 .table-card-container {
+
   background: #ffffff;
+
   border: 1px solid #e2e8f0;
+
   border-radius: 12px;
+
   overflow: hidden;
+
 }
+
+
 
 .trainees-data-table {
+
   width: 100%;
+
   border-collapse: collapse;
+
   text-align: right;
+
 }
+
+
 
 .trainees-data-table th, .trainees-data-table td {
+
   padding: 14px 16px;
+
   border-bottom: 1px solid #f1f5f9;
+
   font-size: 0.9rem;
+
 }
+
+
 
 .trainees-data-table th {
+
   background-color: #f8fafc;
+
   color: #64748b;
+
   font-weight: 600;
+
 }
+
+
 
 .status-issued {
+
   color: #10b981;
+
   font-weight: bold;
+
 }
+
+
 
 .status-not-issued {
+
   color: #94a3b8;
+
 }
+
+
 
 .btn-action-cert {
+
   border-radius: 6px;
+
   padding: 6px 14px;
+
   font-size: 0.85rem;
+
   cursor: pointer;
+
   border: 1px solid #e2e8f0;
+
 }
+
+
 
 .btn-action-cert.view-cert {
+
   background-color: #ffffff;
+
   color: #334155;
+
 }
+
+
 
 .btn-action-cert.issue-cert {
+
   background-color: #0a1172;
+
   color: white;
+
   border: none;
+
 }
+
+
 
 /* Modal Styling */
+
 .cert-modal-backdrop {
+
   position: fixed;
+
   top: 0;
+
   left: 0;
+
   width: 100vw;
+
   height: 100vh;
+
   background-color: rgba(15, 23, 42, 0.6);
+
   backdrop-filter: blur(4px);
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   z-index: 9999;
+
 }
+
+
 
 .cert-modal-container {
+
   background: #ffffff;
+
   width: 90%;
+
   max-width: 580px;
+
   border-radius: 16px;
+
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
   overflow: hidden;
+
 }
 
+
+
 .cert-modal-header {
+
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
   padding: 16px 24px;
+
   border-bottom: 1px solid #f1f5f9;
+
 }
+
+
 
 .cert-modal-header h3 { margin: 0; font-size: 1.1rem; }
 
+
+
 .close-btn {
+
   background: none;
+
   border: none;
+
   font-size: 1.5rem;
+
   color: #94a3b8;
+
   cursor: pointer;
+
 }
+
+
 
 .cert-modal-body { padding: 24px; }
 
+
+
 .cert-frame {
+
   border: 1px solid #e2e8f0;
+
   border-radius: 12px;
+
   padding: 24px;
+
   text-align: center;
+
   position: relative;
+
 }
+
+
 
 .cert-top-accent {
+
   position: absolute;
+
   top: 0; left: 0; right: 0;
+
   height: 6px;
+
   background: linear-gradient(90deg, #0284c7, #10b981);
+
 }
+
+
 
 .logo-title { font-weight: bold; font-size: 1.2rem; }
+
 .logo-sub { font-size: 0.8rem; color: #64748b; }
+
 .cert-sub-heading { margin-top: 16px; color: #94a3b8; font-size: 0.9rem; }
+
 .trainee-cert-name { margin: 8px 0; font-size: 1.5rem; color: #0f172a; }
+
 .cert-desc { color: #64748b; margin: 4px 0; }
+
 .track-cert-title { color: #0284c7; font-size: 1.1rem; margin: 4px 0; }
+
 .company-cert-sub { font-size: 0.85rem; color: #64748b; }
 
+
+
 .cert-meta-grid {
+
   display: flex;
+
   justify-content: space-around;
+
   margin: 20px 0 12px 0;
+
   padding-top: 16px;
+
   border-top: 1px dashed #e2e8f0;
+
 }
+
+
 
 .meta-label { display: block; font-size: 0.75rem; color: #94a3b8; }
+
 .meta-val { font-weight: bold; color: #334155; font-size: 0.9rem; }
 
+
+
 .cert-footer-text {
+
   display: flex;
+
   justify-content: space-between;
+
   font-size: 0.75rem;
+
   color: #cbd5e1;
+
   margin-top: 12px;
+
 }
+
+
 
 .cert-actions-row { display: flex; gap: 12px; margin-top: 20px; }
 
+
+
 .btn-download-pdf {
+
   flex: 1;
+
   background-color: #2563eb;
+
   color: white;
+
   border: none;
+
   border-radius: 8px;
+
   padding: 10px;
+
   font-weight: bold;
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   gap: 8px;
+
   cursor: pointer;
+
 }
+
+
 
 .btn-close-modal {
+
   flex: 1;
+
   background-color: transparent;
+
   border: 1px solid #cbd5e1;
+
   color: #475569;
+
   border-radius: 8px;
+
   padding: 10px;
+
   cursor: pointer;
+
 }
+
+
 
 .success-status-bar {
+
   margin-top: 16px;
+
   background-color: #ecfdf5;
+
   color: #065f46;
+
   border-radius: 8px;
+
   padding: 12px;
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   gap: 8px;
+
   font-size: 0.85rem;
+
 }
+
+
 
 /* إطار الشهادة المصمم */
+
 .certificate-card-frame {
+
   background: #ffffff;
+
   border: 2px solid #e2e8f0;
+
   border-radius: 12px;
+
   overflow: hidden;
+
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
   margin-bottom: 20px;
+
   direction: rtl;
+
   text-align: center;
+
 }
+
+
 
 /* الشريط العلوي */
+
 .cert-card-header {
+
   background: linear-gradient(135deg, #1e3a8a, #2563eb);
+
   color: #ffffff;
+
   padding: 15px 20px;
+
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
 }
+
+
 
 .cert-badge {
+
   background: rgba(255, 255, 255, 0.2);
+
   padding: 4px 12px;
+
   border-radius: 20px;
+
   font-size: 0.85rem;
+
   font-weight: 600;
+
 }
+
+
 
 .cert-org-name {
+
   font-size: 0.95rem;
+
   font-weight: bold;
+
 }
+
+
 
 /* جسم الشهادة */
+
 .cert-card-content {
+
   padding: 30px 20px;
+
 }
+
+
 
 .cert-p-intro {
+
   color: #64748b;
+
   font-size: 0.9rem;
+
   margin-bottom: 10px;
+
 }
+
+
 
 .cert-trainee-name {
+
   color: #0f172a;
+
   font-size: 1.6rem;
+
   font-weight: 800;
+
   margin: 10px 0 20px 0;
+
   padding-bottom: 8px;
+
   border-bottom: 2px dashed #cbd5e1;
+
   display: inline-block;
+
   min-width: 60%;
+
 }
+
+
 
 .cert-p-body {
+
   color: #334155;
+
   font-size: 0.95rem;
+
   line-height: 1.8;
+
   margin-bottom: 25px;
+
 }
+
+
 
 .cert-company-tag {
+
   display: inline-block;
+
   margin-top: 6px;
+
   color: #2563eb;
+
   font-weight: 600;
+
 }
+
+
 
 /* فوتر الشهادة */
+
 .cert-card-footer {
+
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
   border-top: 1px solid #f1f5f9;
+
   padding-top: 15px;
+
   margin-top: 10px;
+
 }
+
+
 
 .footer-item {
+
   display: flex;
+
   flex-direction: column;
+
   align-items: flex-start;
+
   font-size: 0.8rem;
+
 }
+
+
 
 .f-label {
+
   color: #94a3b8;
+
 }
+
+
 
 .f-value {
+
   color: #1e293b;
+
   font-weight: bold;
+
 }
+
+
 
 .stamp-box {
+
   border: 2px double #2563eb;
+
   color: #2563eb;
+
   padding: 4px 12px;
+
   border-radius: 50px;
+
   font-weight: bold;
+
   font-size: 0.8rem;
+
   transform: rotate(-5deg);
+
 }
+
+
 
 /* ==================== التصميم الجديد لعناصر التنقل  ==================== */
+
 .compact-pagination-wrapper {
+
   display: flex;
+
   flex-direction: column;
+
   align-items: flex-end; /* نقل كل المكونات لليمين بالظبط */
+
   gap: 8px;
+
   margin-top: 25px;
+
   padding: 10px 0;
+
 }
+
 .pagination-info {
+
   font-size: 13px;
+
   color: #6b7280;
+
 }
+
+
 
 .pagination-compact-controls {
+
   display: flex;
+
   align-items: center;
+
   gap: 8px;
+
 }
+
+
 
 .compact-nav-btn {
+
   background-color: #ffffff;
+
   border: 1px solid #e5e7eb;
+
   color: #374151;
+
   padding: 5px 12px;
+
   border-radius: 6px;
+
   font-size: 13px;
+
   cursor: pointer;
+
   transition: all 0.2s ease;
+
 }
+
+
 
 .compact-nav-btn:hover:not(:disabled) {
+
   background-color: #f3f4f6;
+
   border-color: #d1d5db;
+
 }
+
+
 
 .compact-nav-btn:disabled {
+
   opacity: 0.4;
+
   cursor: not-allowed;
+
 }
+
+
 
 .page-indicator {
+
   font-size: 13px;
+
   font-weight: 600;
+
   color: #f3f4f6;
+
   background-color: #0a1172;
+
   padding: 4px 10px;
+
   border-radius: 6px;
+
   border: 1px solid #070c50;
+
 }
+
+
 
 /* 1. الحاوية الرئيسية للتأكد من استغلال المساحة الكاملة */
+
 .certificates-container {
+
   padding: 24px;
+
   direction: rtl;
+
   display: flex;
+
   flex-direction: column;
+
   min-height: calc(100vh - 100px); /* يضمن دفع الفوتر والـ pagination للأسفل دائماً */
+
 }
 
+
+
 /* 2. حاوية التنقل دفعها لأسفل الصفحة على اليمين */
+
 .compact-pagination-wrapper {
+
   display: flex;
+
   flex-direction: column;
+
   align-items: flex-end; /* جهة اليمين */
+
   gap: 8px;
+
   margin-top: auto; /* يدفع العناصر إلى قاع الصفحة بالكامل */
+
   padding-top: 30px;
 }
