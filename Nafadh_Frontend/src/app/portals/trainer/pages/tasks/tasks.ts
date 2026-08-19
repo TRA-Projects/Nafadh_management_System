@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -47,6 +47,9 @@ export class TrainerTasks implements OnInit {
 
   loadingBatches = signal(false);
 
+  // الدفعة القادمة من صفحة إدارة الدفعات
+  requestedBatchId: number | null = null;
+
 
   // =====================================================
   // TASKS
@@ -59,6 +62,15 @@ export class TrainerTasks implements OnInit {
   saving = signal(false);
 
   errorMessage = signal('');
+
+
+  // =====================================================
+  // TASK ACTIONS
+  // =====================================================
+
+  updatingTaskId = signal<number | null>(null);
+
+  deletingTaskId = signal<number | null>(null);
 
 
   // =====================================================
@@ -80,6 +92,7 @@ export class TrainerTasks implements OnInit {
 
   newTaskPriority: TaskPriority = 'Medium';
 
+  // أي مهمة جديدة تبدأ تلقائياً كمجدولة
   newTaskStatus: TaskStatus = 'Open';
 
 
@@ -110,32 +123,14 @@ export class TrainerTasks implements OnInit {
   ];
 
 
-  statusOptions: {
-    value: TaskStatus;
-    label: string;
-  }[] = [
-    {
-      value: 'Open',
-      label: 'مجدولة'
-    },
-    {
-      value: 'Closed',
-      label: 'قيد المراجعة'
-    },
-    {
-      value: 'Overdue',
-      label: 'مكتملة التقييم'
-    }
-  ];
-
-
   // =====================================================
   // CONSTRUCTOR
   // =====================================================
 
   constructor(
     private api: TrainerApi,
-    private auth: AuthService
+    private auth: AuthService,
+    private route: ActivatedRoute
   ) {}
 
 
@@ -144,7 +139,32 @@ export class TrainerTasks implements OnInit {
   // =====================================================
 
   ngOnInit(): void {
+
+    const batchIdParam =
+      this.route.snapshot.queryParamMap.get('batchId');
+
+
+    if (batchIdParam) {
+
+      const parsedBatchId =
+        Number(batchIdParam);
+
+
+      if (
+        !Number.isNaN(parsedBatchId) &&
+        parsedBatchId > 0
+      ) {
+
+        this.requestedBatchId =
+          parsedBatchId;
+
+      }
+
+    }
+
+
     this.loadBatches();
+
   }
 
 
@@ -174,8 +194,21 @@ export class TrainerTasks implements OnInit {
 
           if (result.length > 0) {
 
+            const requestedBatch =
+              this.requestedBatchId
+                ? result.find(
+                    batch =>
+                      batch.batchId ===
+                      this.requestedBatchId
+                  )
+                : undefined;
+
+
             this.batchIdInput =
-              result[0].batchId;
+              requestedBatch
+                ? requestedBatch.batchId
+                : result[0].batchId;
+
 
             this.loadTasks();
 
@@ -325,6 +358,205 @@ export class TrainerTasks implements OnInit {
 
 
   // =====================================================
+  // UPDATE TASK STATUS
+  // =====================================================
+
+  updateTaskStatus(
+    task: TaskDto,
+    newStatus: TaskStatus
+  ): void {
+
+    if (
+      this.updatingTaskId() !== null ||
+      this.deletingTaskId() !== null
+    ) {
+      return;
+    }
+
+
+    this.errorMessage.set('');
+
+    this.updatingTaskId.set(
+      task.taskId
+    );
+
+
+    const payload = {
+
+      title:
+        task.title,
+
+      description:
+        task.description ?? '',
+
+      dueDate:
+        task.dueDate,
+
+      priority:
+        task.priority,
+
+      status:
+        newStatus,
+
+      batchId:
+        task.batchId,
+
+      createdByUserId:
+        task.createdByUserId
+
+    };
+
+
+    this.api
+      .updateTask(
+        task.taskId,
+        payload
+      )
+      .subscribe({
+
+        next: () => {
+
+          this.updatingTaskId.set(null);
+
+          this.loadTasks();
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            'Error updating task status:',
+            error
+          );
+
+          this.updatingTaskId.set(null);
+
+          this.errorMessage.set(
+            'تعذر تحديث حالة المهمة'
+          );
+
+        }
+
+      });
+
+  }
+
+
+  // =====================================================
+  // DELETE TASK
+  // =====================================================
+
+  deleteTask(
+    task: TaskDto
+  ): void {
+
+    if (
+      this.deletingTaskId() !== null ||
+      this.updatingTaskId() !== null
+    ) {
+      return;
+    }
+
+
+    this.errorMessage.set('');
+
+
+    // أولاً نتأكد إذا كانت المهمة تحتوي على تسليمات
+    this.api
+      .getSubmissionsByTask(
+        task.taskId
+      )
+      .subscribe({
+
+        next: (submissions) => {
+
+          // إذا يوجد تسليمات، الباك إند يمنع الحذف
+          if (
+            submissions &&
+            submissions.length > 0
+          ) {
+
+            this.errorMessage.set(
+              'لا يمكن حذف هذه المهمة لأنها تحتوي على تسليمات من المتدربين.'
+            );
+
+            return;
+
+          }
+
+
+          // إذا لا توجد تسليمات نطلب التأكيد
+          const confirmed =
+            window.confirm(
+              `هل أنت متأكد من حذف المهمة "${task.title}"؟`
+            );
+
+
+          if (!confirmed) {
+            return;
+          }
+
+
+          this.deletingTaskId.set(
+            task.taskId
+          );
+
+
+          this.api
+            .deleteTask(
+              task.taskId
+            )
+            .subscribe({
+
+              next: () => {
+
+                this.deletingTaskId.set(null);
+
+                this.loadTasks();
+
+              },
+
+
+              error: (error) => {
+
+                console.error(
+                  'Error deleting task:',
+                  error
+                );
+
+                this.deletingTaskId.set(null);
+
+                this.errorMessage.set(
+                  'تعذر حذف المهمة.'
+                );
+
+              }
+
+            });
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            'Error checking task submissions:',
+            error
+          );
+
+          this.errorMessage.set(
+            'تعذر التحقق من تسليمات المهمة.'
+          );
+
+        }
+
+      });
+
+  }
+
+
+  // =====================================================
   // OPEN MODAL
   // =====================================================
 
@@ -378,6 +610,7 @@ export class TrainerTasks implements OnInit {
 
     this.newTaskPriority = 'Medium';
 
+    // أي مهمة جديدة ترجع تلقائياً إلى مجدولة
     this.newTaskStatus = 'Open';
 
     this.errorMessage.set('');
@@ -472,6 +705,7 @@ export class TrainerTasks implements OnInit {
       priority:
         this.newTaskPriority,
 
+      // تنشأ المهمة دائماً كمجدولة
       status:
         this.newTaskStatus,
 
