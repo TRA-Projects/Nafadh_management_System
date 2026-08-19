@@ -18,5 +18,10 @@ namespace Nafadh_Backend.DTOs
 
         // Current batch status (Upcoming, Ongoing, Completed, Cancelled)
         public NFD_BatchStatus Status { get; set; }
+
+        public string Department { get; set; }
+        public int EnrolledTraineesCount { get; set; }
+        public int AttendanceRate { get; set; }
+        public int ProgressPercentage { get; set; }
     }
 }

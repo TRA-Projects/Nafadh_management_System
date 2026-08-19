@@ -20,6 +20,9 @@ namespace Nafadh_Backend.Repositories
 
         Task<bool> UserHasTraineeProfileAsync(int userId);
 
+      
+
+
         Task<bool> CompanyExistsAsync(int companyId);
 
         // NEW: trainees pending identity verification
@@ -32,5 +35,11 @@ namespace Nafadh_Backend.Repositories
         void Update(NFD_Trainee trainee);
 
         Task<bool> SaveChangesAsync();
+
+
+       Task<NFD_Trainee?> GetTraineeIdByUserID(int userId);
+        
+
+
     }
 }

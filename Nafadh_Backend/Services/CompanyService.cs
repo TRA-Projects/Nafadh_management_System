@@ -3,6 +3,8 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.DTOs.CompanyPayment;
+using System.Linq;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
@@ -167,16 +169,17 @@ namespace Nafadh_Backend.Services
             if (company == null)
                 return null;
 
-            var currentTraineeCount = company.Trainees?.Count ?? 0;
+            // Use enrollments count as the authoritative 'used' value because
+            // trainees may not have CompanyId set even when enrollments exist.
+            var used = await _repository.GetEnrollmentCountAsync(companyId);
+            var total = Convert.ToDecimal(company.Capacity);
+            var remaining = total - used;
 
             return new
             {
-                CompanyId = company.CompanyId,
-                CompanyName = company.CompanyName,
-                Capacity = company.Capacity,
-                CurrentTraineeCount = currentTraineeCount,
-                RemainingCapacity =
-            company.Capacity - currentTraineeCount
+                total,
+                used,
+                remaining
             };
         }
 
@@ -195,6 +198,7 @@ namespace Nafadh_Backend.Services
         }
 
         // Mapping Company Model to Output DTO
+        // Mapping Company Model to Output DTO
         private static NFD_CompanyOutputDTO MapToOutputDTO(
         NFD_Company company)
         {
@@ -211,7 +215,57 @@ namespace Nafadh_Backend.Services
                 Capacity = company.Capacity,
                 Status = company.Status,
                 ApprovalDate = company.ApprovalDate,
-                UserId = company.UserId
+                UserId = company.UserId,
+                Branches = company.CompanyBranches?.Select(b => new NFD_CompanyBranchOutputDTO
+                {
+                    BranchId = b.BranchId,
+                    Location = b.Location,
+                    ContactPoint = b.ContactPoint,
+                    CompanyId = b.CompanyId
+                }).ToList() ?? new(),
+                Supervisors = company.CompanySupervisors?.Select(s => new CompanySupervisorDto
+                {
+                    SupervisorId = s.SupervisorId,
+                    FullName = s.User?.FullName,
+                    Phone = s.User?.Phone,
+                    Email = s.User?.Email,
+                    Status = s.Status.ToString(),
+                    Department = s.Department,
+                    Position = s.Position,
+                    UserId = s.UserId,
+                    CompanyId = s.CompanyId
+                }).ToList() ?? new(),
+                Programs = company.CompanyPrograms?.Select(p => new NFD_CompanyProgramOutputDTO
+                {
+                    CompanyId = p.CompanyId,
+                    ProgramId = p.ProgramId
+                }).ToList() ?? new(),
+                Payments = company.CompanyPayments?.Select(p => new CompanyPaymentResponseDto
+                {
+                    CompanyPaymentId = p.CompanyPaymentId,
+                    TotalAmount = p.TotalAmount,
+                    Status = p.Status,
+                    CompanyId = p.CompanyId,
+                    CompanyName = company.CompanyName,
+                    BatchId = p.BatchId,
+                    PaymentSchedules = p.CompanyPaymentSchedules?.Select(s => new CompanyPaymentScheduleResponseDto
+                    {
+                        ScheduleId = s.ScheduleId,
+                        MonthNumber = s.MonthNumber,
+                        MonthLabel = s.MonthLabel,
+                        DueDate = s.DueDate,
+                        Amount = s.Amount,
+                        Status = s.Status,
+                        PaidDate = s.PaidDate,
+                        CompanyPaymentId = s.CompanyPaymentId
+                    }).ToList() ?? new()
+                }).ToList() ?? new(),
+                Departments = company.Departments?.Select(d => new DepartmentDto
+                {
+                    DepartmentId = d.DepartmentId,
+                    Name = d.Name,
+                    CompanyId = d.CompanyId
+                }).ToList() ?? new()
             };
         }
     }

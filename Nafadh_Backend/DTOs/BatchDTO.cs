@@ -16,6 +16,12 @@ namespace Nafadh_Backend.DTOs
         public int TotalTraineesCount { get; set; }            // عدد المتدربين
         public int IssuedCertificatesCount { get; set; }        // الشهادات الصادرة (لحل مشكلة 0/0)
         public NFD_BatchStatus Status { get; set; }
+
+
+        public string Department { get; set; } = string.Empty;
+        public int EnrolledTraineesCount { get; set; }
+        public int AttendanceRate { get; set; } = 95; 
+        public int ProgressPercentage { get; set; }   
     }
 
     public class CreateBatchDto

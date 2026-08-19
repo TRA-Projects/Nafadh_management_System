@@ -1,29 +1,1357 @@
-<div class="nfd-card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-  <div>
-    <h2 class="nfd-page-title" style="margin-bottom:0">البرنامج التدريبي</h2>
-    <p class="nfd-page-sub" style="margin-bottom:0">مسار الوحدات والدروس الخاص بك</p>
-  </div>
-  <div class="nfd-ring" [style.--p]="progress()"><span>{{ progress() | number:'1.0-0' }}%</span></div>
+<div class="program-container">
+
+  <!-- ================= HEADER ================= -->
+  <section class="program-header">
+
+    <div class="program-info">
+
+      <div class="program-title-row">
+        <h1 class="program-title">
+          {{ program()?.title || program()?.name || 'برنامج تدريبي' }}
+        </h1>
+
+        <span class="status-badge status-active">
+          مستمر
+        </span>
+      </div>
+
+      <p class="program-description">
+        {{ program()?.description || 'برنامج متكامل لتطوير المهارات واستخدام أحدث الأدوات والتقنيات العالمية.' }}
+      </p>
+
+      <div class="program-meta">
+        <span>
+          📅 المدة:
+          <strong>{{ stats().totalDays || 0 }} يوم</strong>
+        </span>
+
+        <span>
+          📚 {{ stats().totalModules || 0 }} وحدات تدريبية
+        </span>
+
+        <span>
+          🗓 يونيو - يناير 2026
+        </span>
+      </div>
+
+    </div>
+
+
+    <!-- Progress Circle -->
+    <div class="progress-wrapper">
+
+      <div
+        class="progress-circle"
+        [style.--progress]="(stats().overallProgress || 0) + '%'"
+      >
+        <div class="progress-circle-inner">
+          <span>
+            {{ stats().overallProgress || 0 }}%
+          </span>
+        </div>
+      </div>
+
+      <span class="progress-label">
+        نسبة الإنجاز
+      </span>
+
+    </div>
+
+  </section>
+
+
+  <!-- ================= MODULES ================= -->
+  <section class="modules-container">
+
+    <h2 class="modules-title">
+      وحدات البرنامج التدريبي
+    </h2>
+
+
+    <!-- ================= STEPPER ================= -->
+    <div class="module-stepper">
+
+      <div
+        *ngFor="let module of modules(); let i = index"
+        class="step-wrapper"
+        [class.step-completed]="module.progressPercentage === 100"
+        [class.step-current]="
+          module.progressPercentage !== 100 &&
+          module.progressPercentage! > 0
+        "
+        [class.step-locked]="
+          !module.progressPercentage ||
+          module.progressPercentage === 0
+        "
+      >
+
+        <div
+          *ngIf="i < modules().length - 1"
+          class="step-line"
+          [class.completed-line]="module.progressPercentage === 100"
+        ></div>
+
+        <div class="step-circle">
+
+          <ng-container *ngIf="module.progressPercentage === 100">
+            ✓
+          </ng-container>
+
+          <ng-container
+            *ngIf="
+              module.progressPercentage !== 100 &&
+              module.progressPercentage! > 0
+            "
+          >
+            {{ i + 1 }}
+          </ng-container>
+
+          <ng-container
+            *ngIf="
+              !module.progressPercentage ||
+              module.progressPercentage === 0
+            "
+          >
+            🔒
+          </ng-container>
+
+        </div>
+
+        <span class="step-label">
+          وحدة {{ i + 1 }}
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <!-- ================= LOADING ================= -->
+    <div
+      *ngIf="loading()"
+      class="loading-state"
+    >
+      <div class="loader"></div>
+      <p>جاري تحميل الوحدات...</p>
+    </div>
+
+
+    <!-- ================= ERROR ================= -->
+    <div
+      *ngIf="error()"
+      class="error-state"
+    >
+      <p>{{ error() }}</p>
+    </div>
+
+
+    <!-- ================= MODULES ================= -->
+    <div
+      *ngIf="!loading() && !error()"
+      class="modules-list"
+    >
+
+      <details
+        *ngFor="let module of modules(); let i = index"
+        class="module-card"
+        [open]="i === 0"
+      >
+
+        <!-- MODULE HEADER -->
+        <summary class="module-summary">
+
+          <div class="module-main-info">
+
+            <div class="module-status-icon">
+
+              <ng-container
+                *ngIf="module.progressPercentage === 100"
+              >
+                ✓
+              </ng-container>
+
+              <ng-container
+                *ngIf="
+                  module.progressPercentage !== 100 &&
+                  module.progressPercentage! > 0
+                "
+              >
+                ◻
+              </ng-container>
+
+              <ng-container
+                *ngIf="
+                  !module.progressPercentage ||
+                  module.progressPercentage === 0
+                "
+              >
+                🔒
+              </ng-container>
+
+            </div>
+
+
+            <div class="module-details">
+
+              <div class="module-title-row">
+
+                <h3 class="module-title">
+                  {{ module.title }}
+                </h3>
+
+                <span
+                  *ngIf="module.progressPercentage === 100"
+                  class="module-badge completed"
+                >
+                  مكتمل
+                </span>
+
+                <span
+                  *ngIf="
+                    module.progressPercentage !== 100 &&
+                    module.progressPercentage! > 0
+                  "
+                  class="module-badge active"
+                >
+                  مستمر
+                </span>
+
+                <span
+                  *ngIf="
+                    !module.progressPercentage ||
+                    module.progressPercentage === 0
+                  "
+                  class="module-badge new"
+                >
+                  جديد
+                </span>
+
+              </div>
+
+
+              <div class="progress-row">
+
+                <span class="progress-number">
+                  {{ module.progressPercentage || 0 }}%
+                </span>
+
+                <div class="module-progress">
+                  <div
+                    class="module-progress-fill"
+                    [style.width]="
+                      (module.progressPercentage || 0) + '%'
+                    "
+                  ></div>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <span class="accordion-arrow">
+            ⌄
+          </span>
+
+        </summary>
+
+
+        <!-- LESSONS -->
+        <div
+          class="module-lessons"
+          *ngIf="module.lessons && module.lessons.length > 0"
+        >
+
+          <div
+            *ngFor="let lesson of module.lessons"
+            class="lesson-item"
+          >
+
+            <div class="lesson-info">
+
+              <div class="lesson-status">
+
+                <span
+                  *ngIf="lesson.progressPercentage === 100"
+                  class="lesson-check"
+                >
+                  ✓
+                </span>
+
+                <span
+                  *ngIf="lesson.progressPercentage !== 100"
+                  class="lesson-dot"
+                ></span>
+
+              </div>
+
+
+              <div class="lesson-text">
+
+                <h4 class="lesson-title">
+                  {{ lesson.title }}
+                </h4>
+
+                <p
+                  *ngIf="lesson.contentBody"
+                  class="lesson-description"
+                >
+                  {{ lesson.contentBody }}
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <button
+              type="button"
+              class="lesson-button"
+            >
+              فتح الدرس
+              <span>▷</span>
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <div
+          *ngIf="!module.lessons || module.lessons.length === 0"
+          class="no-lessons"
+        >
+          لا توجد دروس لهذه الوحدة
+        </div>
+
+      </details>
+
+    </div>
+
+
+    <!-- EMPTY -->
+    <div
+      *ngIf="
+        !loading() &&
+        !error() &&
+        modules().length === 0
+      "
+      class="empty-state"
+    >
+      لا توجد وحدات لهذا البرنامج
+    </div>
+
+  </section>
+
 </div>
 
-<div class="nfd-card">
-  <h3>وحدات البرنامج التدريبي</h3>
-  @for (m of modules(); track m.moduleId) {
-    <div style="border:1px solid var(--color-border);border-radius:12px;margin-bottom:10px;overflow:hidden">
-      <button (click)="toggle(m)" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px;text-align:right">
-        <span style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px" [style.background]="m.isArchived ? 'var(--color-cyan)' : 'var(--color-border)'" [style.color]="m.isArchived ? '#fff' : 'inherit'">{{ m.orderIndex }}</span>
-        <strong style="flex:1;font-size:13px">{{ m.title }}</strong>
-        <span [style.transform]="openModule() === m.moduleId ? 'rotate(180deg)' : 'none'" style="transition:transform .2s">⌄</span>
-      </button>
-      @if (openModule() === m.moduleId) {
-        <div style="padding:14px;background:#F8FAFF;border-top:1px solid var(--color-border)">
-          @for (l of lessonsByModule()[m.moduleId]; track l.lessonId) {
-            <div class="nfd-row"><span>{{ l.title }}</span></div>
-          }
-          @empty { <p class="nfd-muted">لا توجد دروس بعد لهذه الوحدة</p> }
-        </div>
-      }
-    </div>
+
+<!-- =========================================================
+     CSS
+     ========================================================= -->
+
+<style>
+
+  /* =========================
+     MAIN CONTAINER
+     ========================= */
+
+  .program-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+
+    padding: 18px 22px 28px;
+
+    box-sizing: border-box;
+
+    background: #f5f7fb;
+
+    font-family: 'Cairo',
+                 'Segoe UI',
+                 Tahoma,
+                 sans-serif;
+
+    direction: rtl;
+
+    color: #172033;
   }
-  @empty { <p class="nfd-muted">لا توجد وحدات لهذا البرنامج بعد</p> }
-</div>
+
+
+  /* =========================
+     HEADER
+     ========================= */
+
+  .program-header {
+    width: 100%;
+    min-height: 135px;
+
+    background: #ffffff;
+
+    border-radius: 14px;
+
+    padding: 20px 28px;
+
+    box-sizing: border-box;
+
+    display: flex;
+
+    flex-direction: row;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    box-shadow:
+      0 2px 10px rgba(25, 45, 80, 0.04);
+
+    margin-bottom: 20px;
+  }
+
+
+  .program-info {
+    flex: 1;
+
+    min-width: 0;
+
+    text-align: right;
+
+    padding-right: 20px;
+  }
+
+
+  .program-title-row {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-start;
+
+    gap: 10px;
+
+    margin-bottom: 5px;
+  }
+
+
+  .program-title {
+    margin: 0;
+
+    font-size: 19px;
+
+    font-weight: 700;
+
+    color: #172033;
+
+    line-height: 1.5;
+  }
+
+
+  .program-description {
+    margin: 0 0 8px;
+
+    font-size: 12px;
+
+    line-height: 1.7;
+
+    color: #8b909b;
+
+    max-width: 850px;
+  }
+
+
+  .program-meta {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-start;
+
+    gap: 18px;
+
+    color: #8a8f9a;
+
+    font-size: 10px;
+  }
+
+
+  .program-meta span {
+    white-space: nowrap;
+  }
+
+
+  .program-meta strong {
+    color: #626b79;
+
+    font-weight: 500;
+  }
+
+
+  /* =========================
+     STATUS
+     ========================= */
+
+  .status-badge {
+    padding: 3px 10px;
+
+    border-radius: 20px;
+
+    font-size: 9px;
+
+    font-weight: 500;
+  }
+
+
+  .status-active {
+    color: #13b98d;
+
+    background: #ecfaf5;
+  }
+
+
+  /* =========================
+     PROGRESS CIRCLE
+     ========================= */
+
+  .progress-wrapper {
+    width: 95px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+  }
+
+
+  .progress-circle {
+    --progress: 75%;
+
+    width: 76px;
+    height: 76px;
+
+    border-radius: 50%;
+
+    background:
+      conic-gradient(
+        #0fa7c2 0deg,
+        #0fa7c2 calc(var(--progress) * 3.6),
+        #e8edf3 calc(var(--progress) * 3.6),
+        #e8edf3 360deg
+      );
+
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+  }
+
+
+  .progress-circle::before {
+    content: "";
+
+    position: absolute;
+
+    width: 62px;
+    height: 62px;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+  }
+
+
+  .progress-circle-inner {
+    position: relative;
+
+    z-index: 1;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+  }
+
+
+  .progress-circle-inner span {
+    font-size: 13px;
+
+    font-weight: 700;
+
+    color: #173c82;
+  }
+
+
+  .progress-label {
+    margin-top: 5px;
+
+    font-size: 9px;
+
+    color: #a1a6af;
+  }
+
+
+  /* =========================
+     MODULE CONTAINER
+     ========================= */
+
+  .modules-container {
+    background: #ffffff;
+
+    border-radius: 14px;
+
+    padding: 22px 20px 18px;
+
+    box-shadow:
+      0 2px 10px rgba(25, 45, 80, 0.04);
+  }
+
+
+  .modules-title {
+    margin: 0 0 18px;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    color: #182235;
+
+    text-align: right;
+  }
+
+
+  /* =========================
+     STEPPER
+     ========================= */
+
+  .module-stepper {
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: flex-start;
+
+    direction: rtl;
+
+    margin-bottom: 20px;
+
+    padding: 0 18px;
+  }
+
+
+  .step-wrapper {
+    position: relative;
+
+    min-width: 78px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    flex: 0 0 auto;
+  }
+
+
+  .step-line {
+    position: absolute;
+
+    top: 17px;
+
+    left: 50%;
+
+    width: 100%;
+
+    height: 1px;
+
+    background: #dfe4eb;
+
+    z-index: 0;
+  }
+
+
+  .completed-line {
+    background: #0bb6c4;
+  }
+
+
+  .step-circle {
+    width: 34px;
+    height: 34px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    position: relative;
+
+    z-index: 2;
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    background: #ffffff;
+
+    border: 1px solid #dfe4eb;
+
+    color: #aeb4bd;
+  }
+
+
+  .step-completed .step-circle {
+    background: #10bfca;
+
+    border-color: #10bfca;
+
+    color: #ffffff;
+  }
+
+
+  .step-current .step-circle {
+    background: #176fc4;
+
+    border-color: #176fc4;
+
+    color: #ffffff;
+  }
+
+
+  .step-locked .step-circle {
+    background: #f1f3f6;
+
+    border-color: #f1f3f6;
+
+    color: #a9afb8;
+
+    font-size: 9px;
+  }
+
+
+  .step-label {
+    margin-top: 5px;
+
+    font-size: 8px;
+
+    color: #a1a6ae;
+
+    white-space: nowrap;
+  }
+
+
+  /* =========================
+     MODULE LIST
+     ========================= */
+
+  .modules-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+  }
+
+
+  /* =========================
+     MODULE CARD
+     ========================= */
+
+  .module-card {
+    border: 1px solid #e3e7ed;
+
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    overflow: hidden;
+
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+
+  .module-card[open] {
+    border-color: #2b8ce6;
+
+    box-shadow:
+      0 1px 4px rgba(43, 140, 230, 0.04);
+  }
+
+
+  .module-card summary {
+    list-style: none;
+  }
+
+
+  .module-card summary::-webkit-details-marker {
+    display: none;
+  }
+
+
+  /* =========================
+     MODULE HEADER
+     ========================= */
+
+  .module-summary {
+    min-height: 66px;
+
+    padding: 10px 14px;
+
+    box-sizing: border-box;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    cursor: pointer;
+
+    user-select: none;
+  }
+
+
+  .module-main-info {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    flex: 1;
+
+    min-width: 0;
+  }
+
+
+  .module-status-icon {
+    width: 29px;
+    height: 29px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #eefbf8;
+
+    color: #18c69c;
+
+    font-size: 11px;
+
+    font-weight: 700;
+  }
+
+
+  .module-card:not([open])
+  .module-status-icon {
+    background: #eef5fd;
+
+    color: #1e75c7;
+  }
+
+
+  .module-details {
+    flex: 1;
+
+    min-width: 0;
+  }
+
+
+  .module-title-row {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 4px;
+  }
+
+
+  .module-title {
+    margin: 0;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    color: #172033;
+
+    line-height: 1.5;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+  }
+
+
+  /* =========================
+     BADGES
+     ========================= */
+
+  .module-badge {
+    flex-shrink: 0;
+
+    padding: 2px 9px;
+
+    border-radius: 20px;
+
+    font-size: 8px;
+  }
+
+
+  .module-badge.completed {
+    color: #2277c5;
+
+    background: #eff6ff;
+  }
+
+
+  .module-badge.active {
+    color: #13b98d;
+
+    background: #ecfaf5;
+  }
+
+
+  .module-badge.new {
+    color: #8656dd;
+
+    background: #f3edff;
+  }
+
+
+  /* =========================
+     MODULE PROGRESS
+     ========================= */
+
+  .progress-row {
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    width: 155px;
+  }
+
+
+  .progress-number {
+    min-width: 26px;
+
+    font-size: 8px;
+
+    color: #9da3ad;
+
+    text-align: left;
+  }
+
+
+  .module-progress {
+    height: 4px;
+
+    flex: 1;
+
+    background: #e5e9ef;
+
+    border-radius: 10px;
+
+    overflow: hidden;
+  }
+
+
+  .module-progress-fill {
+    height: 100%;
+
+    border-radius: inherit;
+
+    background: #10b8c5;
+
+    transition: width 0.3s ease;
+  }
+
+
+  .module-card:not([open])
+  .module-progress-fill {
+    background: #1676ca;
+  }
+
+
+  /* =========================
+     ARROW
+     ========================= */
+
+  .accordion-arrow {
+    width: 20px;
+
+    color: #9ba2ad;
+
+    font-size: 15px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    transition: transform 0.2s ease;
+  }
+
+
+  .module-card[open]
+  .accordion-arrow {
+    transform: rotate(180deg);
+  }
+
+
+  /* =========================
+     LESSONS
+     ========================= */
+
+  .module-lessons {
+    padding: 0 12px 10px;
+
+    border-top: 1px solid #edf0f4;
+  }
+
+
+  .lesson-item {
+    min-height: 55px;
+
+    padding: 8px 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    border-bottom: 1px solid #f1f3f6;
+  }
+
+
+  .lesson-item:last-child {
+    border-bottom: none;
+  }
+
+
+  .lesson-info {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 9px;
+
+    flex: 1;
+
+    min-width: 0;
+  }
+
+
+  .lesson-status {
+    padding-top: 2px;
+  }
+
+
+  .lesson-check {
+    width: 19px;
+    height: 19px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #effbf8;
+
+    color: #18bf9b;
+
+    font-size: 9px;
+  }
+
+
+  .lesson-dot {
+    display: block;
+
+    width: 8px;
+    height: 8px;
+
+    margin: 5px;
+
+    border-radius: 50%;
+
+    background: #d6dbe2;
+  }
+
+
+  .lesson-text {
+    min-width: 0;
+  }
+
+
+  .lesson-title {
+    margin: 0;
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    color: #1b2536;
+  }
+
+
+  .lesson-description {
+    margin: 3px 0 0;
+
+    font-size: 9px;
+
+    line-height: 1.5;
+
+    color: #9ca2ab;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+  }
+
+
+  /* =========================
+     LESSON BUTTON
+     ========================= */
+
+  .lesson-button {
+    flex-shrink: 0;
+
+    border: none;
+
+    background: #eaf0ff;
+
+    color: #193d91;
+
+    border-radius: 6px;
+
+    padding: 6px 10px;
+
+    font-family: inherit;
+
+    font-size: 9px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    transition: background 0.2s ease;
+  }
+
+
+  .lesson-button:hover {
+    background: #dce7ff;
+  }
+
+
+  /* =========================
+     STATES
+     ========================= */
+
+  .loading-state,
+  .error-state,
+  .empty-state {
+    text-align: center;
+
+    padding: 45px 20px;
+
+    color: #8f96a1;
+
+    font-size: 12px;
+  }
+
+
+  .error-state {
+    color: #ef5555;
+  }
+
+
+  .loader {
+    width: 25px;
+    height: 25px;
+
+    margin: 0 auto 10px;
+
+    border: 3px solid #e7ebf0;
+
+    border-top-color: #1a75c4;
+
+    border-radius: 50%;
+
+    animation: spin 0.8s linear infinite;
+  }
+
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+
+  .no-lessons {
+    padding: 15px;
+
+    text-align: center;
+
+    color: #9ba1aa;
+
+    font-size: 10px;
+  }
+
+
+  /* =========================
+     RESPONSIVE
+     ========================= */
+
+  @media (max-width: 900px) {
+
+    .program-header {
+      padding: 18px;
+    }
+
+    .program-meta {
+      flex-wrap: wrap;
+
+      gap: 8px 15px;
+    }
+
+  }
+
+
+  @media (max-width: 650px) {
+
+    .program-container {
+      padding: 10px;
+    }
+
+
+    .program-header {
+      flex-direction: column-reverse;
+
+      align-items: stretch;
+
+      gap: 15px;
+    }
+
+
+    .progress-wrapper {
+      align-self: center;
+    }
+
+
+    .program-info {
+      padding-right: 0;
+
+      text-align: center;
+    }
+
+
+    .program-title-row {
+      justify-content: center;
+    }
+
+
+    .program-meta {
+      justify-content: center;
+    }
+
+
+    .module-stepper {
+      overflow-x: auto;
+
+      justify-content: flex-start;
+
+      padding-bottom: 5px;
+    }
+
+
+    .module-summary {
+      padding: 9px;
+    }
+
+
+    .progress-row {
+      width: 120px;
+    }
+
+
+    .lesson-item {
+      align-items: flex-start;
+
+      flex-direction: column;
+    }
+
+
+    .lesson-button {
+      align-self: flex-start;
+    }
+
+  }
+
+
+  @media (max-width: 450px) {
+
+    .program-title {
+      font-size: 16px;
+    }
+
+
+    .module-title {
+      font-size: 11px;
+    }
+
+
+    .module-badge {
+      display: none;
+    }
+
+
+    .progress-row {
+      width: 100px;
+    }
+
+  }
+
+</style>

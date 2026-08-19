@@ -1,7 +1,7 @@
-<div class="shell" [class.dark]="dark()" [style.fontSize.px]="fontSize()">
+<div class="shell" [class.dark]="dark()" [style.fontSize.px]="fontSize()" [style.--font-scale]="fontScale()">
   <header class="topbar">
     <!-- Logo (right / RTL start) -->
-    <div class="logo" [routerLink]="navItems()[0]?.path">
+    <div class="logo" [routerLink]="navItems()?.[0]?.path || '/company/dashboard'">
       <img src="assets/logo.png" alt="نفاذ" class="logo-img" />
       <div class="logo-sub">{{ portalTitle() }}</div>
     </div>
@@ -14,8 +14,6 @@
 
     <!-- Actions (left / RTL end) -->
     <div class="actions">
-      <button class="icon-btn" (click)="toggleDark()" title="الوضع الداكن"><nfd-icon [name]="dark() ? 'sun' : 'moon'" /></button>
-      <button class="lang-btn" (click)="toggleLang()">{{ lang() === 'ar' ? 'EN' : 'عربي' }}</button>
       <button class="icon-btn" (click)="accessOpen.set(!accessOpen())" title="أدوات التسهيل"><nfd-icon name="access" /></button>
 
       <div class="notif-wrap">
@@ -61,6 +59,12 @@
   <main class="content">
     <router-outlet />
   </main>
+
+  @if (showBackToTop()) {
+    <button class="back-to-top" (click)="scrollToTop()" title="الرجوع لأعلى الصفحة" aria-label="الرجوع لأعلى الصفحة">
+      <nfd-icon name="arrow-up" size="sm" />
+    </button>
+  }
 
   @if (accessOpen()) {
     <div class="access-panel">

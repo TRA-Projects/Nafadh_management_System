@@ -1,12 +1,99 @@
-<h2 class="nfd-page-title">التخصصات المعتمدة وخطط التدريب</h2>
-<p class="nfd-page-sub">البرامج التي تستضيفها الشركة وفق اعتماد الهيئة</p>
-
-<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">
-  @for (p of programs(); track $index) {
-    <div class="nfd-card" style="display:flex;align-items:center;gap:14px">
-      <div style="width:44px;height:44px;border-radius:12px;background:var(--color-tint-indigo);display:flex;align-items:center;justify-content:center;font-size:20px">📗</div>
-      <div><strong>برنامج معتمد #{{ $index + 1 }}</strong><p class="nfd-muted" style="margin:2px 0 0">{{ p | json }}</p></div>
+<section class="specialties-page" dir="rtl">
+  <header class="page-head">
+    <div>
+      <h2>التخصصات المعتمدة وخطط التدريب</h2>
+      <p>تحديد البرامج التي تستضيفها الشركة، طاقتها، التخصصات الأكاديمية المناسبة، ومراحل التدريب العملي لكل برنامج</p>
     </div>
-  }
-  @empty { <p class="nfd-muted">لا توجد برامج معتمدة بعد</p> }
-</div>
+  </header>
+
+  <div class="stats-grid" *ngIf="!loading()">
+    <article class="stat-card">
+      <span>تخصصات معتمدة</span>
+      <strong>{{ approvedCount() }}</strong>
+      <small>متاحة لاستقبال مرشحين</small>
+    </article>
+    <article class="stat-card">
+      <span>الطاقة الكلية</span>
+      <strong>{{ totalCapacity() }}</strong>
+      <small>مقعد عبر التخصصات</small>
+    </article>
+    <article class="stat-card">
+      <span>الإشغال الحالي</span>
+      <strong class="success">{{ usedCapacity() }}</strong>
+      <small>{{ occupancyPercent() }}% من الطاقة</small>
+    </article>
+    <article class="stat-card">
+      <span>خطط تدريب فعالة</span>
+      <strong>{{ activePlans() }}</strong>
+      <small>مرتبطة بمراحل ومخرجات</small>
+    </article>
+  </div>
+
+  <div class="state-card" *ngIf="loading()">
+    <span class="spinner"></span>
+    جاري تحميل البرامج المعتمدة...
+  </div>
+
+  <div class="state-card error" *ngIf="!loading() && error()">
+    {{ error() }}
+    <button type="button" (click)="load()">إعادة المحاولة</button>
+  </div>
+
+  <div class="specialty-grid" *ngIf="!loading() && cards().length">
+    <article
+      class="specialty-card"
+      *ngFor="let card of cards(); trackBy: trackByProgramId"
+      [style.--spec-color]="card.color"
+      [style.--spec-soft]="card.soft"
+      tabindex="0"
+      role="link"
+      (click)="openDetails(card)"
+      (keydown.enter)="openDetails(card)"
+      (keydown.space)="openDetails(card); $event.preventDefault()">
+      <div class="accent"></div>
+
+      <div class="spec-top">
+        <div class="spec-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 3h12l4 6-10 12L2 9Z"></path>
+            <path d="M12 3v18M2 9h20"></path>
+          </svg>
+        </div>
+        <div class="spec-title">
+          <b>{{ card.title }}</b>
+          <span>{{ card.department }}</span>
+        </div>
+        <span class="status-chip" [class.pending]="!card.approved">
+          <i></i>{{ card.approved ? 'معتمد' : 'قيد الاعتماد' }}
+        </span>
+      </div>
+
+      <div class="occupancy">
+        <div class="occupancy-head">
+          <span>الإشغال</span>
+          <b>{{ card.used }} من {{ card.capacity }} مقعدًا</b>
+        </div>
+        <div class="progress"><i [style.width.%]="card.percent"></i></div>
+      </div>
+
+      <div class="spec-foot">
+        <span>{{ card.available }} مقعد متاح</span>
+        <span class="dot-sep"></span>
+        <span>{{ card.duration }} أسبوعًا</span>
+        <button type="button" class="details-link" (click)="openDetails(card); $event.stopPropagation()">
+          التفاصيل
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5"></path><path d="m12 19-7-7 7-7"></path>
+          </svg>
+        </button>
+      </div>
+    </article>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading() && !error() && !cards().length">
+    <div class="empty-icon">◇</div>
+    <strong>لا توجد برامج معتمدة بعد</strong>
+    <span>ستظهر هنا البرامج التي تم ربط الشركة بها من قبل الهيئة.</span>
+  </div>
+
+</section>

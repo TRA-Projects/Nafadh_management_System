@@ -1,41 +1,217 @@
-<h2 class="nfd-page-title">لوحة تشغيل الاستضافة والتدريب</h2>
-<p class="nfd-page-sub">استقبال متدربي الهيئة، مطابقتهم بالتخصصات المعتمدة، ثم متابعة التدريب والأداء</p>
+<div class="dashboard-page">
+  <section class="dashboard">
+    @if (announcements().length && !announcementsDismissed()) {
+      <div class="announce-card">
+        <div class="ac-head">
+          <div class="ac-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/>
+            </svg>
+            إعلانات الهيئة والمنصة
+          </div>
+          <span class="ac-count">{{ announcements().length }}</span>
+          <button class="announce-close" type="button" (click)="dismissAnnouncements()" aria-label="إخفاء الإعلانات">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
 
-@if (announcements().length) {
-  <div class="nfd-card" style="margin-bottom:16px;border-inline-start:4px solid var(--color-cyan)">
-    @for (a of announcements(); track a.announcementId) {
-      <div style="padding:8px 0">
-        <span style="font-size:10px;font-weight:700;color:var(--color-cyan);text-transform:uppercase">إعلان من الهيئة</span>
-        <p style="margin:4px 0;font-size:13px">{{ a.message }}</p>
-        <small class="nfd-muted">{{ a.date | date:'mediumDate' }}</small>
+        <div class="ac-body">
+          @for (a of announcements().slice(0, 5); track a.announcementId; let i = $index) {
+            <div class="ann-item">
+              <div class="ann-ic" [class.gold]="i === 1" [class.red]="i === 2">
+                @if (i === 2) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4c4-2 8 2 12 0v10c-4 2-8-2-12 0"/><path d="M4 9c4-2 8 2 12 0"/></svg>
+                } @else if (i === 1) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>
+                }
+              </div>
+              <div class="ann-txt">
+                <b>{{ a.message }}</b>
+                <span>إعلان رسمي من الهيئة والمنصة</span>
+              </div>
+              <div class="ann-meta">
+                <span class="ann-scope" [class.platform]="a.scopeType === 'Platform'" [class.urgent]="a.scopeType === 'Batch'">{{ a.scopeType === 'Platform' ? 'منصة' : a.scopeType === 'Batch' ? 'دفعة' : 'هيئة' }}</span>
+                <span class="ann-date">{{ a.date | date:'yyyy-MM-dd' }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="ac-foot">
+          <span>آخر التحديثات الرسمية</span>
+        </div>
       </div>
     }
-  </div>
-}
 
-@if (capacity(); as cap) {
-  <div class="nfd-card" style="margin-bottom:16px">
-    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
-      <strong>الطاقة الاستيعابية</strong><span class="nfd-muted">المستخدم: {{ cap.used }} من {{ cap.total }}</span>
+    <div class="page-head">
+      <div>
+        <h3>لوحة تشغيل الاستضافة والتدريب</h3>
+        <p>استقبال متدربي الهيئة، مطابقتهم بالتخصصات المعتمدة، ثم متابعة التدريب والأداء</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-outline" type="button" (click)="refreshData()" [disabled]="loading()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+          {{ loading() ? 'جارٍ التحديث…' : 'تحديث البيانات' }}
+        </button>
+      </div>
     </div>
-    <div class="nfd-bar"><div class="fill" [style.width.%]="((cap.used||0)/(cap.total||1))*100"></div></div>
-  </div>
-}
 
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
-  <div class="nfd-card">
-    <h3>⭐ المتدربون المتميزون</h3>
-    @for (t of topPerformers(); track t.traineeId) { <div class="nfd-row"><span>{{ t.fullName }}</span></div> }
-    @empty { <p class="nfd-muted">لا بيانات كافية بعد</p> }
-  </div>
-  <div class="nfd-card">
-    <h3>⚠️ متعثرون بحاجة إلى متابعة</h3>
-    @for (t of atRisk(); track t.traineeId) { <div class="nfd-row"><span>{{ t.fullName }}</span></div> }
-    @empty { <p class="nfd-muted">لا يوجد متعثرون حالياً</p> }
-  </div>
-  <div class="nfd-card">
-    <h3>🔔 أحدث الإنذارات</h3>
-    @for (w of warnings(); track w.warningId) { <div class="nfd-row"><span>{{ w.type }} — {{ w.level }}</span></div> }
-    @empty { <p class="nfd-muted">لا توجد إنذارات</p> }
-  </div>
+    @if (capacity(); as cap) {
+      <div class="card card-pad capacity-card">
+        <div class="card-title">
+          الطاقة الاستيعابية
+          <span class="hint">المستخدم: {{ cap.used ?? 0 }} من {{ cap.total ?? 0 }}</span>
+        </div>
+        <div class="capacity-row">
+          <div class="capacity-progress">
+            <div class="bar cap-bar"><i [style.width.%]="capacityPercent()"></i></div>
+            <div class="capacity-meta">
+              <span>{{ capacityPercent() | number:'1.0-0' }}% مستخدم</span>
+              <span>المتبقية: {{ cap.remaining ?? 0 }} مقعدًا</span>
+            </div>
+          </div>
+          <div class="legend-inline">
+            <div class="lg-item"><span class="sw used"></span> مستخدم <b>{{ cap.used ?? 0 }}</b></div>
+            <div class="lg-item"><span class="sw remaining"></span> متبقي <b>{{ cap.remaining ?? 0 }}</b></div>
+            <button class="btn btn-outline btn-sm" type="button" (click)="openCompanyProfile()">تعديل</button>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="card card-pad loading-card">جارٍ تحميل الطاقة الاستيعابية…</div>
+    }
+
+    <div class="grid g2 g2-14 charts-row">
+      <div class="card card-pad">
+        <div class="card-title">
+          متوسط الحضور الأسبوعي (آخر 6 أسابيع)
+          <span class="hint">المعدل العام: {{ attendanceAverage() | number:'1.1-1' }}%</span>
+        </div>
+        @if (attendanceWeeks().length) {
+          <div class="hbars">
+            @for (w of attendanceWeeks(); track $index) {
+              <div class="hbar">
+                <div class="h-lbl" [title]="w.label">{{ w.label }}</div>
+                <div class="h-trk"><div class="h-fill attendance" [style.width.%]="barPercent(w.value, attendanceMax())">{{ w.value }}%</div></div>
+                <div class="h-val">{{ w.value }}%</div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty">لا توجد بيانات حضور متاحة حاليًا</div>
+        }
+      </div>
+
+      <div class="card card-pad">
+        <div class="card-title">توزيع المتدربين حسب البرنامج</div>
+        @if (programDistribution().length) {
+          <div class="hbars">
+            @for (p of programDistribution(); track $index) {
+              <div class="hbar">
+                <div class="h-lbl" [title]="p.label">{{ p.label }}</div>
+                <div class="h-trk"><div class="h-fill" [style.width.%]="barPercent(p.value, programMax())" [style.background]="programColor($index)">{{ p.value }}</div></div>
+                <div class="h-val">{{ p.value }} متدرب</div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty">لا توجد بيانات برامج متاحة حاليًا</div>
+        }
+      </div>
+    </div>
+
+    <div class="grid g3 lower-grid">
+      <!-- الإنذارات: تظهر في يسار الشاشة بسبب RTL -->
+      <div class="card card-pad lower-card warnings-card">
+        <div class="card-title">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          أحدث الإنذارات
+          <span class="hint"><button class="link-button" type="button" (click)="openWarnings()">عرض الكل</button></span>
+        </div>
+        <div class="lower-list">
+          @for (w of warnings().slice(0, 3); track w.warningId) {
+            <div class="warning-row">
+              <div class="warning-main">
+                <div class="alert-icon" [class.open]="w.status !== 'Resolved'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/></svg>
+                </div>
+                <div class="warning-name">
+                  <b>{{ w.type || 'غياب متكرر' }}</b>
+                  <span>{{ w.targetName || 'متدرب' }}</span>
+                  <small>#{{ w.warningId }} · {{ w.issuedDate | date:'yyyy-MM-dd' }}</small>
+                </div>
+              </div>
+              <div class="row-actions">
+                <button class="icon-btn eye" type="button" title="عرض التفاصيل" (click)="openWarnings()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button class="icon-btn github" type="button" title="فتح ملف المتدرب" (click)="openWarnings()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg></button>
+                <span class="chip" [class.bad]="w.status !== 'Resolved'" [class.ok]="w.status === 'Resolved'"><span class="dot"></span>
+                <button class="text-action" type="button" (click)="openWarnings()">عرض</button>
+                </span>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty"><b>لا توجد إنذارات</b><span>لم يتم تسجيل إنذارات حديثة على الشركة.</span></div>
+          }
+        </div>
+      </div>
+
+      <!-- المتعثرون -->
+      <div class="card card-pad lower-card risk-card">
+        <div class="card-title">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></svg>
+          متعثرون بحاجة إلى متابعة
+        </div>
+        <div class="lower-list">
+          @for (t of atRisk().slice(0, 3); track t.traineeId) {
+            <div class="risk-row">
+              <div class="person-block">
+                <div class="t-avatar" [style.background]="avatarColor(t.fullName)">{{ initials(t.fullName) }}</div>
+                <div class="person-copy"><b>{{ t.fullName || 'متدرب بدون اسم' }}</b><span>{{ t.major || 'يتطلب مراجعة الأداء والمتابعة' }}</span></div>
+              </div>
+              <div class="row-actions">
+                <button class="btn btn-soft btn-sm follow-btn" type="button" (click)="openProgress(t.traineeId)">متابعة</button>
+                <button class="icon-btn github" type="button" title="فتح ملف المتدرب" (click)="openProgress(t.traineeId)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg></button>
+                <button class="icon-btn eye" type="button" title="عرض صفحة التقدم" (click)="openProgress(t.traineeId)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty"><b>لا يوجد متعثرون حاليًا</b><span>أداء مستقر وجيد للمتدربين.</span></div>
+          }
+        </div>
+      </div>
+
+      <!-- المتميزون -->
+      <div class="card card-pad lower-card top-card">
+        <div class="card-title">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="#d97706" stroke="none" aria-hidden="true"><path d="m12 3 1.9 5.8a2 2 0 0 0 1.9 1.4h6.2l-5 3.6a2 2 0 0 0-.7 2.2l1.9 5.8-5-3.6a2 2 0 0 0-2.4 0l-5 3.6 1.9-5.8a2 2 0 0 0-.7-2.2L2 10.2h6.2a2 2 0 0 0 1.9-1.4Z"/></svg>
+          المتدربون المتميزون هذا الشهر
+        </div>
+        <div class="lower-list">
+          @for (t of topPerformers().slice(0, 5); track t.traineeId; let i = $index) {
+            <div class="top-row">
+              <div class="person-block">
+                <div class="t-avatar" [style.background]="avatarColor(t.fullName)">{{ initials(t.fullName) }}</div>
+                <div class="person-copy"><b>{{ t.fullName || 'متدرب بدون اسم' }}</b><span>{{ t.major || 'تطوير تطبيقات الويب' }}</span></div>
+              </div>
+              <div class="row-actions">
+                <button class="icon-btn eye" type="button" title="عرض صفحة التقدم" (click)="openProgress(t.traineeId)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button class="icon-btn github" type="button" title="فتح ملف المتدرب" (click)="openProgress(t.traineeId)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg></button>
+              </div>
+              <div class="performance"><b>{{ performanceValue(t, i) }}%</b><span>أداء</span></div>
+            </div>
+          } @empty {
+            <div class="empty"><b>لا توجد بيانات كافية</b><span>سيظهر المتدربون المتميزون عند توفر التقارير.</span></div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
 </div>

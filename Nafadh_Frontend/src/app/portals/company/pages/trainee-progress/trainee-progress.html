@@ -1,30 +1,105 @@
-<a routerLink="/company/trainees" class="nfd-muted" style="display:inline-block;margin-bottom:14px">← العودة إلى قائمة المتدربين</a>
+<a routerLink="/company/trainees" class="back-link">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+  العودة إلى قائمة المتدربين
+</a>
 
-<div class="nfd-card">
-  <h3>متوسط التقييم عبر فترات التدريب الأربع</h3>
-  <div style="display:flex;gap:20px">
-    @for (s of stages; track s) {
-      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--color-text-secondary)">
-        <div style="width:36px;height:36px;border-radius:50%;background:var(--color-border);display:flex;align-items:center;justify-content:center;font-weight:700" [style.background]="s <= 2 ? 'var(--color-cyan)' : 'var(--color-border)'" [style.color]="s <= 2 ? '#fff' : 'inherit'">{{ s }}</div>
-        <span>فترة {{ s }}</span>
+@if (enrollment(); as e) {
+  <div class="card card-pad" style="margin-bottom:16px">
+    <div class="prog-hero">
+      <div class="pg-avatar" [style.background]="avatarColor(e.traineeName)">{{ initials(e.traineeName) }}</div>
+      <div style="flex:1;min-width:220px">
+        <h3>{{ e.traineeName }}</h3>
+        <div class="pg-sub">#{{ padId(e.enrollmentId) }} · {{ e.batchName }} · {{ e.programTitle || '—' }}</div>
+        <div class="pg-actions">
+          <span class="chip" [ngClass]="statusChipClass(e.completionStatus)"><span class="dot"></span>{{ statusLabel(e.completionStatus) }}</span>
+          <span class="chip gray">القسم: {{ e.departmentName || 'غير محدد' }}</span>
+          @if (e.supervisorName) { <span class="chip gray">المشرف: {{ e.supervisorName }}</span> }
+        </div>
       </div>
-    }
+      <div class="pg-company">🏢 {{ e.companyName }}</div>
+      <a class="gh-icon-btn" [class.disabled]="!e.traineeGitHubUrl" [href]="e.traineeGitHubUrl || null" target="_blank" rel="noopener noreferrer" title="حساب GitHub">
+        <nfd-icon name="github" size="sm" />
+      </a>
+    </div>
   </div>
-</div>
 
-<div class="nfd-card" style="margin-top:16px">
-  <h3>تفاصيل التقييم</h3>
-  @for (ev of evaluations(); track ev.evaluationId) {
-    <div style="margin-bottom:16px">
-      <div class="nfd-row" style="font-weight:700"><strong>القالب {{ ev.templateId }}</strong><span>{{ ev.score }}%</span></div>
-      @for (c of ev.criteriaBreakdown; track c.criteriaId) {
-        <div style="display:grid;grid-template-columns:160px 1fr 70px;align-items:center;gap:10px;padding:6px 0;font-size:12px">
-          <span>{{ c.criterionName }}</span>
-          <div class="nfd-bar"><div class="fill" [style.width.%]="(c.score / (c.maxPoints || 1)) * 100"></div></div>
-          <span>{{ c.score }} / {{ c.maxPoints }}</span>
+  <div class="stats-4" style="margin-bottom:16px">
+    <div class="stat-box"><span>نسبة الإنجاز</span><b>{{ progressSummary()?.progressPercentage ?? 0 }}%</b></div>
+    <div class="stat-box"><span>متوسط التقييم</span><b>{{ avgScore() }}%</b></div>
+    <div class="stat-box"><span>تقييمات معلقة</span><b>{{ pendingCount() }}</b></div>
+    <div class="stat-box"><span>الفترة الحالية</span><b>{{ currentPhaseLabel() }}</b></div>
+  </div>
+
+  <div class="card card-pad" style="margin-bottom:16px">
+    <div class="card-title">متوسط التقييم عبر فترات التدريب الأربع<span class="hint">{{ phasesDoneCount() }} من 4 فترات مكتملة</span></div>
+    <div class="donut-wrap">
+      <div class="donut">
+        <svg viewBox="0 0 150 150" width="150" height="150">
+          <circle cx="75" cy="75" r="65" fill="none" stroke="#e9eef2" stroke-width="14"/>
+          <circle cx="75" cy="75" r="65" fill="none" stroke="#00338d" stroke-width="14" stroke-linecap="round"
+                  [attr.stroke-dasharray]="donutCirc" [attr.stroke-dashoffset]="donutOffset()"/>
+        </svg>
+        <div class="center"><b>{{ avgScore() }}%</b><span>المتوسط العام</span></div>
+      </div>
+      <div class="legend">
+        @for (p of phases(); track p.def.n) {
+          <div class="lg-item">
+            <span class="sw" [style.background]="p.status === 'done' ? '#00338d' : (p.status === 'cur' ? '#efbb20' : '#c3ced8')"></span>
+            الفترة {{ p.def.n }}: {{ p.def.name }} <b>{{ p.ev ? p.ev.score + '%' : '—' }}</b>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-pad">
+    <div class="card-title">فترات التدريب الأربع</div>
+    <div class="stepper">
+      @for (p of phases(); track p.def.n) {
+        <div class="step" [class.done]="p.status === 'done'">
+          <div class="step-rail"><div class="step-node" [ngClass]="p.status">{{ p.status === 'done' ? '✓' : p.def.n }}</div></div>
+          <div class="step-body">
+            <div class="step-head">
+              <b>الفترة {{ p.def.n }}: {{ p.def.name }}</b>
+              <span class="hint">{{ p.def.weeks }} · وزنها {{ p.def.weight }}% من التقييم</span>
+              @if (p.status === 'done') { <span class="chip ok"><span class="dot"></span>مكتملة</span> }
+              @else if (p.status === 'cur') { <span class="chip warn"><span class="dot"></span>قيد التنفيذ</span> }
+              @else { <span class="chip gray"><span class="dot"></span>لم تبدأ</span> }
+              <span class="step-pct">{{ p.ev ? p.ev.score + '%' : '—' }}</span>
+            </div>
+            
+            <!-- تم تعديل هذا السطر ليستخدم || لتجاوز تحذير الـ nullish coalescing -->
+            <div class="bar" style="margin-top:8px"><i [class.amber]="p.status === 'cur'" [style.width.%]="p.ev.score || 0"></i></div>
+
+            @if (p.ev) {
+              <div class="eval-box">
+                <div class="eval-top">
+                  <div class="eval-score">{{ p.ev.score }}<small>%</small></div>
+                  <div><b>تقييم المدرب</b><br><span class="eval-by">بواسطة: {{ p.ev.trainerId ? 'مدرب #' + p.ev.trainerId : 'الهيئة التدريبية' }}</span></div>
+                  <span class="chip ok" style="margin-inline-start:auto"><span class="dot"></span>تم الاعتماد</span>
+                </div>
+                <div class="rubrics">
+                  @for (c of p.ev.criteriaBreakdown; track c.criteriaId) {
+                    <div class="rubric-row">
+                      <span class="r-lbl">{{ c.criterionName }}</span>
+                      <div class="dim-trk"><i [style.width.%]="criterionPct(c.score, c.maxPoints)"></i></div>
+                      <b class="r-val">{{ c.score }}/{{ c.maxPoints }}</b>
+                    </div>
+                  }
+                </div>
+                @if (p.ev.notes) { <div class="eval-note"><b>ملاحظة المدرب:</b> "{{ p.ev.notes }}"</div> }
+              </div>
+            } @else {
+              <div class="eval-pending">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                تقييم المدرب لهذه الفترة يُحتسب بعد اكتمالها.
+              </div>
+            }
+          </div>
         </div>
       }
     </div>
-  }
-  @empty { <p class="nfd-muted">لا توجد تقييمات لهذا المتدرب بعد</p> }
-</div>
+  </div>
+} @else {
+  <div class="card card-pad">جارِ التحميل…</div>
+}

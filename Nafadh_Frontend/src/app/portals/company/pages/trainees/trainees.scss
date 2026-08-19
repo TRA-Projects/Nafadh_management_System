@@ -1,0 +1,118 @@
+// Ported 1:1 from the approved reference design (02-المتدربون.html) so this
+// page matches it exactly. Scoped to this component only (Angular emulated
+// encapsulation) so these generic class names never leak into other pages.
+:host {
+  display: block;
+  --bg:#f3f6fb; --card:#ffffff; --line:#dfe7f3; --text:#12203c; --muted:#5a6b8c;
+  --primary:#00338d; --primary-2:#002768; --primary-soft:#e7eefb;
+  --accent:#efbb20; --accent-soft:#fbf3d9;
+  --danger:#dc2626; --danger-soft:#fdecec;
+  --info:#007cae; --info-soft:#e2f2fb;
+  --violet:#000692; --violet-soft:#e9e8f9;
+  --ok:#007cae;
+  --grad:linear-gradient(90deg,#000692 0%,#007cae 55%,#00bbc2 100%);
+  --grad-soft:linear-gradient(90deg,#00338d,#007cae,#00bbc2);
+  --radius:14px;
+  --shadow:0 1px 3px rgba(12,21,47,.08),0 10px 28px -14px rgba(12,21,47,.18);
+  font-family:'Rubik','Noto Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif;
+  color: var(--text);
+  font-size: 14.5px;
+}
+
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.page-head h3{font-size:20px;font-weight:700}
+.page-head p{color:var(--muted);font-size:13px;margin-top:3px}
+.page-head .actions{display:flex;gap:9px;flex-wrap:wrap}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 17px;border-radius:10px;font-size:13.5px;font-weight:600;transition:.18s;border:1px solid transparent}
+.btn svg{width:16px;height:16px}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 8px 18px -8px rgba(0,51,141,.55)}
+.btn-primary:hover{background:var(--primary-2)}
+.btn-outline{background:#fff;border-color:var(--line);color:var(--text)}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-soft{background:var(--primary-soft);color:var(--primary-2)}
+.btn-soft:hover{background:#d6e3f8}
+.btn-danger{background:var(--danger-soft);color:var(--danger)}
+.btn-danger:hover{background:#f8d7d7}
+.btn-sm{padding:6px 12px;font-size:12.5px;border-radius:8px}
+.btn-ghost{color:var(--muted)}
+.btn-ghost:hover{color:var(--primary);background:var(--primary-soft)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+
+/* فلاتر */
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.filters .search-box{width:270px;background:#fff}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:8px 13px;transition:.2s}
+.search-box:focus-within{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(0,51,141,.12)}
+.search-box svg{width:16px;height:16px;color:var(--muted);flex-shrink:0}
+.search-box input{border:none;outline:none;background:transparent;width:100%;font-size:13.5px}
+select.sel,input.inp{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;font-size:13px;outline:none;transition:.18s;color:var(--text);min-width:150px}
+select.sel:focus,input.inp:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,51,141,.1)}
+select.sel{
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235c6b7a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:left 12px center;padding-inline-end:14px;padding-inline-start:30px;
+}
+.f-count{font-size:12.5px;color:var(--muted);margin-inline-start:auto}
+
+/* الجداول */
+.tbl-wrap{overflow-x:auto}
+table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{text-align:right;padding:11px 14px;color:var(--muted);font-size:12px;font-weight:700;background:#f8fafb;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:12px 14px;border-bottom:1px solid #eef2f5;vertical-align:middle}
+.tbl tr:hover td{background:#fafcfd}
+.tbl tr:last-child td{border-bottom:none}
+
+.t-avatar{width:34px;height:34px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;flex-shrink:0}
+.cell-user{display:flex;align-items:center;gap:10px}
+.cell-user b{font-size:13.5px;display:block}
+.cell-user span{font-size:11.5px;color:var(--muted)}
+
+/* شرائح الحالة */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:3px 11px;border-radius:20px;white-space:nowrap}
+.chip .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.chip.ok{background:#e2f2fb;color:#00507f}
+.chip.warn{background:var(--accent-soft);color:#8a6208}
+.chip.bad{background:var(--danger-soft);color:var(--danger)}
+.chip.info{background:var(--info-soft);color:var(--info)}
+.chip.gray{background:#eef2f5;color:var(--muted)}
+.chip.violet{background:var(--violet-soft);color:var(--violet)}
+
+.empty{text-align:center;padding:34px 16px;color:var(--muted)}
+.empty svg{width:38px;height:38px;opacity:.35;margin-bottom:8px}
+.empty b{display:block;font-size:14px;color:var(--text);margin-bottom:3px}
+
+/* أزرار الإجراء داخل الصفوف */
+.gh-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:#18181b;color:#ffffff;text-decoration:none;transition:all 0.18s ease;border:none;cursor:pointer;flex-shrink:0;margin-inline-start:6px;box-shadow:0 2px 5px rgba(0,0,0,0.15)}
+.gh-icon-btn:hover{background:#27272a;transform:scale(1.05);color:#ffffff}
+.gh-icon-btn.disabled{cursor:not-allowed;pointer-events:none}
+.gh-icon-btn.disabled:hover{background:#18181b;transform:none}
+.gh-icon-btn svg{width:16px;height:16px;fill:currentColor}
+.prog-btn{width:30px;height:30px;border-radius:8px;background:#e7eefb;color:#00338d;display:inline-flex;align-items:center;justify-content:center;margin-inline-start:8px;flex-shrink:0;transition:.15s}
+.prog-btn:hover{background:#00338d;color:#fff}
+
+/* المودالات */
+.overlay{position:fixed;inset:0;background:rgba(13,28,40,.45);backdrop-filter:blur(3px);z-index:100;display:none;align-items:center;justify-content:center;padding:18px}
+.overlay.open{display:flex}
+.modal{display:none;background:#fff;border-radius:18px;box-shadow:0 24px 70px -18px rgba(10,30,45,.4);width:100%;max-width:620px;max-height:92vh;overflow-y:auto}
+.modal.open{display:block}
+.modal.lg{max-width:820px}
+.m-head{display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2;border-radius:18px 18px 0 0}
+.m-head h4{font-size:16.5px;font-weight:700;flex:1}
+.m-close{width:34px;height:34px;border-radius:9px;background:#f1f5f7;color:var(--muted);display:flex;align-items:center;justify-content:center;transition:.15s}
+.m-close:hover{background:var(--danger-soft);color:var(--danger)}
+.m-close svg{width:16px;height:16px}
+.m-body{padding:20px 22px}
+.m-body.frm{display:block}
+.m-foot{display:flex;gap:10px;justify-content:flex-start;padding:14px 22px;border-top:1px solid var(--line);background:#fafcfd;border-radius:0 0 18px 18px}
+.frm-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.frm-grid .full{grid-column:1/-1}
+.frm label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.frm input.inp,.frm select.sel,.frm textarea.inp{width:100%}
+.frm textarea.inp{min-height:84px;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:9px 12px;outline:none}
+@media(max-width:640px){.frm-grid{grid-template-columns:1fr}}
+
+@media(max-width:900px){
+  .page-head h3{font-size:16.5px}
+}

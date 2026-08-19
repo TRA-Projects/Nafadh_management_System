@@ -63,7 +63,13 @@ namespace Nafadh_Backend.Repositories
                 .Include(t => t.User)
                 .FirstOrDefaultAsync(t => t.TrainerId == id);
         }
-
+        //serch Trainer by user Id
+        public async Task<NFD_Trainer?> GetByUserIdAsync(int userId)
+        {
+            return await _context.NFD_Trainers
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.UserId == userId);
+        }
         // Retrieves a trainer by ID, including associated batches and user information.
         public async Task<NFD_Trainer?> GetByIdWithBatchesAsync(int id)
         {

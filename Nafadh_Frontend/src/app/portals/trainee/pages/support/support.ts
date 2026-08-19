@@ -16,15 +16,30 @@ export class TraineeSupport implements OnInit {
   showNew = signal(false);
   replyText = '';
   newConv = { subject: '', firstMessage: '' };
+  
+  // متغير لتخزين الملف المرفق
+  selectedFile: File | null = null;
+
   subjects = ['استفسار عن البرنامج التدريبي', 'مشكلة تقنية', 'استفسار عن الحضور', 'شكوى رسمية', 'أخرى'];
 
   constructor(private api: TraineeApi, public auth: AuthService) {}
+
   ngOnInit() {
     const uid = this.auth.userId ?? 4;
     this.api.getConversations(uid).subscribe((d) => this.conversations.set(d ?? []));
   }
 
-  open(id: number) { this.api.getConversation(id).subscribe((c) => this.active.set(c)); }
+  open(id: number) { 
+    this.api.getConversation(id).subscribe((c) => this.active.set(c)); 
+  }
+
+  // دالة اختيار واستجابة الملف المرفق
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFile = file;
+    }
+  }
 
   send() {
     const c = this.active();
@@ -40,6 +55,7 @@ export class TraineeSupport implements OnInit {
     const uid = this.auth.userId ?? 4;
     this.api.startConversation({ type: 'TraineeComplaint', ...this.newConv, startedByUserId: uid }).subscribe(() => {
       this.showNew.set(false);
+      this.selectedFile = null; // إعادة تعيين الملف بعد الإرسال
       this.api.getConversations(uid).subscribe((d) => this.conversations.set(d ?? []));
     });
   }

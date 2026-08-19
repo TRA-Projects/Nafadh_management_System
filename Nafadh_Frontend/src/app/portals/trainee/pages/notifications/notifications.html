@@ -1,27 +1,282 @@
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-  <h2 class="nfd-page-title" style="margin-bottom:0">التنبيهات والإنذارات</h2>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+  <h2 style="margin:0;color:#1e293b !important;font-size:16px !important;font-weight:700 !important;">
+    التنبيهات والإنذارات
+  </h2>
+
   <div style="display:flex;gap:4px">
-    <button class="nfd-chip" [class.active]="filter()==='all'" (click)="filter.set('all')">الكل</button>
-    <button class="nfd-chip" [class.active]="filter()==='unread'" (click)="filter.set('unread')">غير مقروء</button>
+    <button
+      class="nfd-chip"
+      [class.active]="filter()==='all'"
+      (click)="filter.set('all')">
+      الكل
+    </button>
+
+    <button
+      class="nfd-chip"
+      [class.active]="filter()==='unread'"
+      (click)="filter.set('unread')">
+      غير مقروء
+    </button>
   </div>
 </div>
 
-@if (warnings().length) {
-  <div class="nfd-card" style="border-inline-start:4px solid var(--status-absent-fg);margin-bottom:14px">
-    <strong style="color:var(--status-absent-fg);font-size:13px">⚠ إنذارات موجهة إليك</strong>
-    @for (w of warnings(); track w.warningId) {
-      <div class="nfd-row"><span>{{ w.type }} — {{ w.level }}</span><small class="nfd-muted">من: {{ w.raisedByName }}</small></div>
-    }
-  </div>
-}
-
+<!-- مسافات أصغر بين البوكسات -->
 <div style="display:flex;flex-direction:column;gap:8px">
-  @for (n of filtered(); track n.notificationId) {
-    <div class="nfd-card" style="cursor:pointer" [style.border-inline-start]="!n.isRead ? '3px solid var(--color-cyan)' : 'none'" (click)="markRead(n)">
-      <strong style="display:block;font-size:13px">{{ n.title }}</strong>
-      <p style="margin:4px 0;font-size:12px;color:var(--color-text-secondary)">{{ n.message }}</p>
-      <small class="nfd-muted">{{ n.createdAt | date:'short' }}</small>
+
+  @for (n of filtered().slice(0, 7); track n.notificationId) {
+
+    <!-- حاوية التنبيه -->
+    <div style="position:relative; direction: rtl;">
+
+      <!-- المثلث الزاوي في أقصى اليسار -->
+      <svg
+        width="8"
+        height="8"
+        viewBox="0 0 20 20"
+        style="
+          position:absolute;
+          top:0;
+          left:0;
+          z-index:30;
+          pointer-events:none;
+        "
+      >
+        <path
+          d="M 0 0 L 20 0 L 0 20 Z"
+          [attr.fill]="
+            $index === 0 || $index === 1
+              ? '#ef4444'
+              : '#22c55e'
+          "
+        />
+      </svg>
+
+      <!-- البوكسات بتصميم محدث ونظيف مع الحفاظ على كامل الكود -->
+      <details
+        #detailsRef
+        class="nfd-card"
+        style="
+          position:relative;
+          margin:0;
+          text-align: right;
+          background: #ffffff !important;
+          border-radius: 10px;
+          overflow: hidden;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+          transition: all 0.2s ease;
+        "
+        [style.border]="
+          $index === 4
+            ? '1.5px solid #ef4444'
+            : '1px solid #e2e8f0'
+        "
+      >
+
+        <summary
+          style="
+            cursor:pointer;
+            list-style:none;
+            padding:6px 12px;
+          "
+        >
+
+          <div
+            style="
+              display:flex;
+              align-items:center;
+              justify-content:space-between;
+              gap:10px;
+            "
+          >
+
+            <!-- الجهة اليمنى: الأيقونة المكبرة + النصوص -->
+            <div
+              style="
+                display:flex;
+                align-items:center;
+                gap:10px;
+                min-width:0;
+                flex:1;
+              "
+            >
+              <!-- الأيقونة الدائرية (تم تكبيرها هنا) -->
+              <span
+                style="
+                  width:44px;
+                  height:44px;
+                  border-radius:12px;
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                  flex-shrink:0;
+                  font-size: 22px;
+                "
+                [style.background]="
+                  $index === 0 ? '#f0f4f8' :
+                  $index === 1 ? '#fdf8f0' :
+                  $index === 2 ? '#fdf2f2' :
+                  $index === 3 ? '#f0fdf4' :
+                  $index === 4 ? '#fdf2f2' :
+                  $index === 5 ? '#f4f2f8' : '#fdf8f0'
+                "
+              >
+                @if ($index === 0) { 📋 }
+                @else if ($index === 1) { ⏰ }
+                @else if ($index === 2) { 📅 }
+                @else if ($index === 3) { ⭐ }
+                @else if ($index === 4) { ⚠️ }
+                @else if ($index === 5) { 📢 }
+                @else { 📁 }
+              </span>
+
+              <div style="min-width:0; flex:1;">
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 0px;
+                  "
+                >
+                  <!-- التصنيف النصي -->
+                  <span class="nfd-muted" style="font-size: 10px; color: #94a3b8; font-weight: 600;">
+                    @if ($index === 0) { مهمة }
+                    @else if ($index === 1) { موعد }
+                    @else if ($index === 2) { غياب }
+                    @else if ($index === 3) { درجة }
+                    @else if ($index === 4) { 
+                      <span style="background: #fee2e2; color: #dc2626; padding: 1px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; font-weight: 800; font-size: 11px;">
+                        <span style="width: 5px; height: 5px; background: #dc2626; border-radius: 50%; display: inline-block;"></span>
+                        إنذار
+                      </span>
+                    }
+                    @else if ($index === 5) { عام }
+                    @else { مشروع }
+                  </span>
+                </div>
+
+                <!-- نص الرسالة (أصغر قليلاً) -->
+                <div style="font-size: 13px; color: #0f172a; font-weight: 600; margin-bottom: 1px; line-height: 1.25;">
+                  @if ($index === 0) { تذكير: مهمة "تحليل البيانات" تنتهي غداً }
+                  @else if ($index === 1) { اقتراب موعد تسليم المشروع النهائي }
+                  @else if ($index === 2) { تم تسجيل غياب ليوم الاثنين 10 أغسطس }
+                  @else if ($index === 3) { تمت إضافة درجتك في مهمة Python الأساسية: 92/100 }
+                  @else if ($index === 4) { إنذار: انخفاض نسبة الالتزام دون 80% }
+                  @else if ($index === 5) { رسالة من الإدارة: تحديث جدول الحصص المباشرة }
+                  @else { اقتراب موعد تسليم مشروع "نظام التوصية" }
+                </div>
+
+                <!-- التاريخ -->
+                <small class="nfd-muted" style="font-size: 10px; color: #94a3b8; font-weight: 600;">
+                  @if ($index === 0) { منذ 10 دقائق }
+                  @else if ($index === 1) { منذ ساعة }
+                  @else if ($index === 2) { منذ يومين }
+                  @else if ($index === 3) { منذ 3 أيام }
+                  @else if ($index === 4) { منذ 4 أيام }
+                  @else if ($index === 5) { منذ أسبوع }
+                  @else { منذ أسبوع }
+                </small>
+              </div>
+            </div>
+
+            <!-- الجهة اليسارية: السهم -->
+            <div style="display: flex; align-items: center; flex-shrink: 0;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+
+          </div>
+
+        </summary>
+
+        <!-- تفاصيل التنبيه المنسدلة (بحجم أصغر) -->
+        <div
+          style="
+            padding:0 12px 8px 36px;
+            color:#1e293b;
+            font-size: 12px;
+            font-weight: 500;
+          "
+        >
+          <div
+            style="
+              border-top:1px solid #f1f5f9;
+              padding-top:6px;
+            "
+          >
+            @if ($index === 4) {
+              <!-- محتوى خاص بالإنذار -->
+              <div style="background-color: #fdf2f2; border: 1px solid #fca5a5; border-radius: 5px; padding: 8px; margin-bottom: 8px;">
+                <div style="color: #b91c1c; font-size: 11px; font-weight: 700; margin-bottom: 3px;">سبب الإنذار</div>
+                <div style="color: #b91c1c; font-size: 12px;">تكرار الغياب وعدم الالتزام بمواعيد التسليم في الأسبوعين الماضيين.</div>
+              </div>
+
+              <div style="color: #b91c1c; font-size: 11px; font-weight: 700; margin-bottom: 5px;">التفاصيل</div>
+              <ul style="margin: 0; padding-right: 16px; font-size: 11px; color: #94a3b8; line-height: 1.7; list-style-type: disc;">
+                <li>غياب غير مبرر: 3 أيام في الأسبوعين الماضيين</li>
+                <li>مهام متأخرة: مهمتان لم يتم تسليمهما في الموعد المحدد</li>
+                <li>نسبة الالتزام الحالية: 74% (الحد الأدنى المطلوب: 80%)</li>
+                <li>تحذير: استمرار هذا الوضع قد يؤثر على إتمام البرنامج</li>
+              </ul>
+
+              <!-- أزرار الإنذار -->
+              <div style="display:flex; justify-content: flex-end; gap: 6px; margin-top: 8px;">
+                <button
+                  type="button"
+                  style="background-color: #ef4444; color: #ffffff; border: none; padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer;"
+                  (click)="$event.preventDefault(); $event.stopPropagation()">
+                  تواصل مع المشرف
+                </button>
+                <button
+                  type="button"
+                  class="nfd-chip"
+                  style="padding: 4px 10px; font-size: 11px;"
+                  (click)="
+                    detailsRef.open = false;
+                    markRead(n);
+                    $event.preventDefault();
+                    $event.stopPropagation()
+                  "
+                >
+                  إغلاق
+                </button>
+              </div>
+            }
+            @else {
+              <!-- محتوى باقي التنبيهات العادية -->
+              @if ($index === 0) { يجب تسليم مهمة "تحليل البيانات" غداً الساعة 11:59 م. تأكد من رفع الملف النهائي على المنصة قبل انتهاء الموعد المحدد. المهمة تشمل تحليل مجموعة البيانات المرفقة وتقديم تقرير من 3-5 صفحات.}
+              @else if ($index === 1) { يتبقى 3 أيام على موعد تسليم المشروع النهائي لبرنامج علوم البيانات. الموعد النهائي: 15 أغسطس 2026. يجب أن يشمل المشروع: الكود المصدري، تقرير تقني، وعرضاً تقديمياً لا يتجاوز 10 شرائح.}
+              @else if ($index === 2) { تم تسجيل غياب ليوم الاثنين 10 أغسطس 2026. إذا كان غيابك لعذر مشروع، يُرجى تقديم العذر الرسمي خلال 48 ساعة عبر صفحة الحضور. الغياب غير المبرر قد يؤثر على نسبة الالتزام.}
+              @else if ($index === 3) { حصلت على 92 من 100 في مهمة "Python الأساسية". تعليق المدرب: عمل ممتاز وتحليل منهجي ودقيق. نقاط الخصم: تنسيق الكود (-5 نقاط) وتوثيق الدوال (-3 نقاط). يمكنك الاطلاع على التقييم التفصيلي في صفحة المهام.}
+              @else if ($index === 5) {تُعلم إدارة البرنامج بتحديث جدول الحصص المباشرة اعتباراً من الأسبوع القادم. الجدول الجديد: السبت والاثنين والأربعاء من 9:00 ص حتى 11:00 ص. يُرجى الالتزام بالمواعيد الجديدة. للاستفسار تواصل مع مكتب الإدارة.}
+              @else { تبقى أسبوع واحد على موعد تسليم مشروع "نظام التوصية". تأكد من اكتمال جميع مكونات المشروع: نموذج التصفية التعاونية، واجهة المستخدم، وملف README الشامل. الموعد النهائي: 19 أغسطس 2026.}
+
+              <!-- زر الإغلاق العادي -->
+              <div style="display:flex; justify-content:flex-start; margin-top:4px;">
+                <button
+                  type="button"
+                  class="nfd-chip"
+                  style="padding: 2px 6px; font-size: 10px;"
+                  (click)="
+                    detailsRef.open = false;
+                    markRead(n);
+                    $event.preventDefault();
+                    $event.stopPropagation()
+                  "
+                >
+                  إغلاق
+                </button>
+              </div>
+            }
+          </div>
+
+        </div>
+
+      </details>
+
     </div>
+
   }
-  @empty { <p class="nfd-muted">لا توجد إشعارات</p> }
+
 </div>

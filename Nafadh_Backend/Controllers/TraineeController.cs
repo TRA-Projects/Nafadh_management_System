@@ -44,11 +44,14 @@ namespace Nafadh_Backend.Controllers
                 TraineeId = t.TraineeId,
                 FullName = t.User?.FullName,
                 University = t.University,
-                Major = t.Major,
+                // هنا جعلناه يعرض التخصص المخزن في قاعدة البيانات (Major) مباشرة
+                Major = string.IsNullOrEmpty(t.Major) ? "غير محدد" : t.Major,
                 Status = t.Status,
                 VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
-                CompanyName = t.Company?.CompanyName
+                CompanyName = t.Company?.CompanyName,
+                // تحديث مؤقت لعرض قيمة معبرة من البيانات مباشرة بدلاً من الثابتة
+                ProgramName = !string.IsNullOrEmpty(t.Major) ? t.Major : "برنامج التدريب"
             }).ToList();
 
             return Ok(new { Items = dtos, TotalCount = total });
@@ -92,7 +95,6 @@ namespace Nafadh_Backend.Controllers
             var existing = await _service.GetByIdAsync(id);
             if (existing == null) return NotFound();
 
-            // apply allowed updates
             existing.NationalId = update.NationalId;
             existing.University = update.University;
             existing.Major = update.Major;
@@ -123,7 +125,6 @@ namespace Nafadh_Backend.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            // prevent duplicate profile for same user
             var hasProfile = await _service.UserHasTraineeProfileAsync(create.UserId);
             if (hasProfile) return BadRequest("User already has a trainee profile.");
 
@@ -138,8 +139,6 @@ namespace Nafadh_Backend.Controllers
                 ResumeUrl = create.ResumeUrl,
                 GitHubUrl = create.GitHubUrl,
                 LinkedInUrl = create.LinkedInUrl,
-                // EDITED: canonical 3-value status — a freshly created trainee has
-                // no company yet, so NotAssigned (was "Active" under the old enum).
                 Status = Enums.NFD_TraineeStatus.NotAssigned,
                 VerificationStatus = Enums.NFD_VerificationStatus.Pending
             };
@@ -159,13 +158,11 @@ namespace Nafadh_Backend.Controllers
             if (existing == null) return NotFound();
 
             existing.Status = dto.Status;
-            // reason is not persisted in current model; can be logged or extended later
 
             _service.Update(existing);
             var saved = await _service.SaveChangesAsync();
             if (!saved) return StatusCode(500, "Failed to update status.");
 
-            // NEW: a status change to Completed may satisfy the ProgramCompletion badge.
             if (dto.Status == Enums.NFD_TraineeStatus.Completed)
             {
                 await _badgeEvaluationService.EvaluateTraineeAsync(id);
@@ -254,10 +251,7 @@ namespace Nafadh_Backend.Controllers
             return Ok(new { Imported = models.Count });
         }
 
-        // ==========================================
         // GET: api/trainee/pending-verification
-        // NEW: trainees awaiting identity verification review
-        // ==========================================
         [HttpGet("pending-verification")]
         public async Task<IActionResult> GetPendingVerification()
         {
@@ -278,10 +272,7 @@ namespace Nafadh_Backend.Controllers
             return Ok(dtos);
         }
 
-        // ==========================================
         // PUT: api/trainee/{id}/verification
-        // NEW: approve/reject a trainee's identity verification
-        // ==========================================
         [HttpPut("{id}/verification")]
         public async Task<IActionResult> UpdateVerification(int id, [FromBody] TraineeVerificationInputDTO dto)
         {
@@ -289,8 +280,6 @@ namespace Nafadh_Backend.Controllers
             if (existing == null) return NotFound();
 
             existing.VerificationStatus = dto.Status;
-            // ReviewedByUserId is accepted for audit/logging purposes; not persisted
-            // on the Trainee model itself (no dedicated column for reviewer yet).
 
             _service.Update(existing);
             var saved = await _service.SaveChangesAsync();
@@ -336,6 +325,40 @@ namespace Nafadh_Backend.Controllers
             }).ToList();
 
             return Ok(new { Items = dtos, TotalCount = total });
+        //get trainee id by user id
+        [HttpGet("traineeByUserID/{userId}")]
+        public async Task<IActionResult> GetTraineeIdByUserID(int userId)
+        {
+            var t = await _service.GetTraineeIdByUserID(userId);
+
+            if (t == null)
+                return NotFound(new
+                {
+                    message = "Trainee not found for this UserId."
+                });
+
+            var dto = new TraineeProfileDto
+            {
+                TraineeId = t.TraineeId,
+                FullName = t.User?.FullName,
+                Email = t.User?.Email,
+                NationalId = t.NationalId,
+                University = t.University,
+                Major = t.Major,
+                AcademicLevel = t.AcademicLevel,
+                Skills = t.Skills,
+                ResumeUrl = t.ResumeUrl,
+                GitHubUrl = t.GitHubUrl,
+                LinkedInUrl = t.LinkedInUrl,
+                Status = t.Status,
+                VerificationStatus = t.VerificationStatus,
+                CompanyId = t.CompanyId,
+                CompanyName = t.Company?.CompanyName,
+                EnrollmentId = t.Enrollments.LastOrDefault(u => u.TraineeId==t.TraineeId).EnrollmentId
+            };
+
+            return Ok(dto);
+
         }
     }
 }

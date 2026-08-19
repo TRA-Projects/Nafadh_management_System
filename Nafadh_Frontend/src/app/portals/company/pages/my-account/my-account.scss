@@ -1,0 +1,288 @@
+.account-page {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  /* Header Action Bar */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+
+    .title-wrap {
+      h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+      }
+      .subtitle {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-top: 0.25rem;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+
+      .btn {
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s ease;
+
+        &-primary {
+          background-color: #0d47a1;
+          color: #ffffff;
+          &:hover {
+            background-color: #0a3880;
+          }
+        }
+
+        &-secondary {
+          background-color: #ffffff;
+          border: 1px solid #cbd5e1;
+          color: #334155;
+          &:hover {
+            background-color: #f8fafc;
+          }
+        }
+      }
+    }
+  }
+
+  /* Profile Card Container */
+  .profile-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+
+    .profile-banner {
+      height: 120px;
+      background: linear-gradient(90deg, #94a3b8 0%, #cbd5e1 100%);
+    }
+
+    .profile-info-header {
+      padding: 0 2rem 1.5rem;
+      display: flex;
+      align-items: flex-end;
+      gap: 1.5rem;
+      margin-top: -40px;
+
+      .avatar-large {
+        width: 80px;
+        height: 80px;
+        background-color: #00838f;
+        color: white;
+        border: 4px solid white;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+      }
+
+      .user-main-details {
+        .user-name {
+          font-size: 1.25rem;
+          font-weight: 700;
+          margin: 0 0 0.5rem 0;
+          color: #0f172a;
+        }
+
+        .user-tags {
+          display: flex;
+          gap: 0.5rem;
+
+          .tag {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+
+            &-role {
+              background: #f1f5f9;
+              color: #475569;
+            }
+            &-status {
+              background: #e0f2fe;
+              color: #0284c7;
+            }
+            &-badge {
+              background: #f8fafc;
+              border: 1px solid #cbd5e1;
+              color: #64748b;
+            }
+          }
+        }
+      }
+    }
+
+    /* Data Grid */
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      padding: 1.5rem 2rem;
+      border-top: 1px solid #f1f5f9;
+
+      .data-item {
+        background: #f8fafc;
+        padding: 0.85rem 1rem;
+        border-radius: 8px;
+        border: 1px solid #f1f5f9;
+
+        label {
+          display: block;
+          font-size: 0.75rem;
+          color: #64748b;
+          margin-bottom: 0.25rem;
+        }
+
+        .value {
+          font-size: 0.9rem;
+          font-weight: 600;
+          color: #0f172a;
+        }
+
+        .ltr {
+          direction: ltr;
+          text-align: right;
+        }
+
+        &.full-width {
+          grid-column: span 2;
+        }
+      }
+    }
+  }
+
+  /* Bottom Grid */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+
+    .section-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+
+      .section-title {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #0f172a;
+      }
+
+      .permission-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+
+        .permission-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.75rem 1rem;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+
+          .perm-info {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            strong {
+              display: block;
+              font-size: 0.875rem;
+              color: #1e293b;
+            }
+            p {
+              font-size: 0.75rem;
+              color: #64748b;
+              margin: 0;
+            }
+          }
+
+          .status-pill {
+            background: #f1f5f9;
+            color: #334155;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+          }
+        }
+      }
+
+      .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+
+        .activity-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.75rem 0;
+          border-bottom: 1px solid #f1f5f9;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          strong {
+            font-size: 0.85rem;
+            color: #1e293b;
+          }
+          p {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin: 0;
+          }
+
+          .chip-status {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            background: #e0f2fe;
+            color: #0369a1;
+          }
+
+          /* زر الـ PDF التفاعلي البحري السفلي */
+          .pdf-btn {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+
+            &:hover {
+              background-color: #0d47a1;
+              color: #ffffff;
+              border-color: #0d47a1;
+              box-shadow: 0 2px 4px rgba(13, 71, 161, 0.2);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.cv-link {
+  color: #0d47a1;
+  text-decoration: underline;
+  font-weight: 600;
+}
