@@ -50,6 +50,7 @@ export class AdminUsers implements OnInit {
     { role: 'Trainee', permissionsCount: 0, usersCount: 12 }
   ]);
 
+  // حساب أعداد الأزرار بناءً على البيانات المتوفرة في الجدول
   roles = computed<RoleFilterItem[]>(() => {
     const list = this.users();
     return [
@@ -61,12 +62,13 @@ export class AdminUsers implements OnInit {
     ];
   });
 
+  // تصفية العناصر بناءً على الزر المضغوط
   filtered = computed(() => {
     const selected = this.roleFilter();
     const list = this.users();
 
     if (selected === 'ALL') return list;
-    return list.filter(u => this.normalizeRole(u.roleName) === selected);
+    return list.filter(u => this.normalizeRole(u.roleName || u.roleId) === selected);
   });
 
   constructor(
@@ -89,7 +91,6 @@ export class AdminUsers implements OnInit {
         if (err.status === 401) {
           console.warn('غير مصرح - تحقق من إرسال Token مع Request');
         }
-        this.users.set([]);
       }
     });
 
@@ -107,6 +108,7 @@ export class AdminUsers implements OnInit {
     }
   }
 
+  // تفعيل ضغطة الزر وإعادة توجيه الفلتر فوراً
   setFilter(roleKey: string): void {
     this.roleFilter.set(roleKey);
     this.cdr.detectChanges();
@@ -145,7 +147,6 @@ export class AdminUsers implements OnInit {
       return;
     }
 
-    // إضافة userName لتوافق ASP.NET Core Identity
     const payload = {
       fullName: this.newUser.fullName,
       userName: this.newUser.email,
@@ -158,7 +159,7 @@ export class AdminUsers implements OnInit {
       next: (res) => {
         alert('تم إنشاء الحساب وحفظه في قاعدة البيانات بنجاح!');
         this.closeCreateModal();
-        this.loadData(); // إعادة تحميل البيانات مباشرة من الباك إند
+        this.loadData();
       },
       error: (err) => {
         console.error('تفاصيل خطأ إنشاء الحساب:', err);
@@ -175,7 +176,7 @@ export class AdminUsers implements OnInit {
         } else if (err?.error?.message) {
           alert(`فشل الحفظ: ${err.error.message}`);
         } else {
-          alert('حدث خطأ أثناء إضافة الحساب، تأكد من استيفاء شروط كلمة المرور (رمز، حرف كبير، أرقام).');
+          alert('حدث خطأ أثناء إضافة الحساب، تأكد من استيفاء شروط كلمة المرور.');
         }
       }
     });
@@ -231,17 +232,20 @@ export class AdminUsers implements OnInit {
     return parts[0].slice(0, 2);
   }
 
-  private normalizeRole(roleName: string): string {
-    if (!roleName) return '';
-    const name = roleName.trim().toLowerCase();
-    if (name === 'admin' || name.includes('هيئة')) return 'Admin';
-    if (name === 'companysupervisor' || name.includes('شركة')) return 'CompanySupervisor';
-    if (name === 'trainer' || name.includes('مدرب')) return 'Trainer';
-    if (name === 'trainee' || name.includes('متدرب')) return 'Trainee';
-    return roleName;
+  // تحسين دالة المطابقة لتشمل النص العربي والإنجليزي ورقم الـ RoleId
+  private normalizeRole(roleInput: any): string {
+    if (!roleInput) return '';
+    const str = String(roleInput).trim().toLowerCase();
+
+    if (str === '1' || str === 'admin' || str.includes('هيئة')) return 'Admin';
+    if (str === '2' || str === 'companysupervisor' || str.includes('شركة')) return 'CompanySupervisor';
+    if (str === '3' || str === 'trainer' || str.includes('مدرب')) return 'Trainer';
+    if (str === '4' || str === 'trainee' || str.includes('متدرب')) return 'Trainee';
+
+    return str;
   }
 
   private countByRole(list: UserResponseDto[], targetRole: string): number {
-    return list.filter(u => this.normalizeRole(u.roleName) === targetRole).length;
+    return list.filter(u => this.normalizeRole(u.roleName || u.roleId) === targetRole).length;
   }
 }
