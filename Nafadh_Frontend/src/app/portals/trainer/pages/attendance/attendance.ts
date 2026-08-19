@@ -4,7 +4,8 @@ import { forkJoin } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TrainerApi } from '../../services/trainer-api';
-import { DailyAttendanceDto, EnrollmentDto, ExcuseDto } from '../../../../core/models/dtos';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { DailyAttendanceDto, EnrollmentDto, ExcuseDto, TrainerDto } from '../../../../core/models/dtos';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 
@@ -59,7 +60,8 @@ type Shape = 'number' | 'numeric-text' | 'name';
   styleUrl: './attendance.scss',
 })
 export class TrainerAttendance implements OnInit {
-  companyId = 1;
+  trainerId = signal<number | null>(null);
+  trainerBatchIds = signal<Set<number>>(new Set<number>());
   private base = environment.apiBaseUrl;
   private readonly repeatedAbsenceThreshold = 3;
 
@@ -82,8 +84,8 @@ export class TrainerAttendance implements OnInit {
   registerView = signal<RegisterView>('today');
 
   weeklyRows = signal<any[]>([]);
-monthlyRows = signal<any[]>([]);
-historyLoading = signal(false);
+  monthlyRows = signal<any[]>([]);
+  historyLoading = signal(false);
 
   statuses = ATTENDANCE_STATUSES;
   filters: { key: FilterKey; label: string }[] = [
@@ -113,79 +115,201 @@ historyLoading = signal(false);
 
   constructor(
     private api: TrainerApi,
-    private http: HttpClient
+    private http: HttpClient,
+    private auth: AuthService
   ) {}
 
-  ngOnInit() { this.reload(); }
+  ngOnInit() {
+    this.loadCurrentTrainerScope();
+  }
+
+  /**
+   * يربط المستخدم المسجل بسجل Trainer ثم يجلب دفعاته فقط.
+   * بعد ذلك يتم تحميل حضور متدربي هذه الدفعات دون الاعتماد على companyId ثابت.
+   */
+  private loadCurrentTrainerScope(): void {
+    this.loading.set(true);
+    this.loadError.set(null);
+
+    const userId = this.auth.userId;
+
+    if (userId == null) {
+      this.rows.set([]);
+      this.loading.set(false);
+      this.loadError.set('تعذر تحديد المستخدم الحالي. أعد تسجيل الدخول ثم حاول مرة أخرى.');
+      return;
+    }
+
+    this.http.get<TrainerDto[]>(`${this.base}/Trainer`).subscribe({
+      next: (trainers) => {
+        const trainer = (trainers ?? []).find(
+          (t) => Number(t.userId) === Number(userId)
+        );
+
+        if (!trainer) {
+          this.rows.set([]);
+          this.loading.set(false);
+          this.loadError.set('لا يوجد سجل مدرب مرتبط بحساب المستخدم الحالي.');
+          return;
+        }
+
+        this.trainerId.set(trainer.trainerId);
+
+        this.api.getMyBatches(trainer.trainerId).subscribe({
+          next: (batches) => {
+            const batchIds = new Set<number>(
+              (batches ?? [])
+                .map((b) => Number(b.batchId))
+                .filter((id) => Number.isFinite(id) && id > 0)
+            );
+
+            this.trainerBatchIds.set(batchIds);
+
+            if (!batchIds.size) {
+              this.rows.set([]);
+              this.excuses.set([]);
+              this.repeatedAbsenceIds.set(new Set<number>());
+              this.loading.set(false);
+              this.loadError.set(null);
+              return;
+            }
+
+            this.reload();
+          },
+          error: () => {
+            this.rows.set([]);
+            this.excuses.set([]);
+            this.loading.set(false);
+            this.loadError.set('تعذر تحميل الدفعات المسندة إلى المدرب الحالي.');
+          },
+        });
+      },
+      error: () => {
+        this.rows.set([]);
+        this.excuses.set([]);
+        this.loading.set(false);
+        this.loadError.set('تعذر تحميل بيانات المدرب الحالي.');
+      },
+    });
+  }
 
   // ── التحميل ─────────────────────────────────────────────
   reload() {
     this.loading.set(true);
     this.loadError.set(null);
 
-    // مهم: API حضور اليوم يرجع فقط من لديهم سجل حضور موجود بالفعل.
-    // لذلك نبدأ من Enrollment لعرض جميع المتدربين، ثم ندمج سجل اليوم إن وُجد.
-    forkJoin({
-      enrollments: this.api.getEnrollments(this.companyId),
-      attendance: this.api.getTodayAttendanceForCompany(this.companyId),
-    }).subscribe({
-      next: ({ enrollments, attendance }) => {
-        const attendanceList = (attendance ?? []) as DailyAttendanceDto[];
-        this.attShape = this.detectShape(attendanceList.map((r) => r.status));
+    const allowedBatchIds = this.trainerBatchIds();
 
-        const byEnrollment = new Map<number, DailyAttendanceDto>(
-          attendanceList.map((a) => [a.enrollmentId, a])
+    if (!allowedBatchIds.size) {
+      this.rows.set([]);
+      this.excuses.set([]);
+      this.repeatedAbsenceIds.set(new Set<number>());
+      this.loading.set(false);
+      return;
+    }
+
+    // نجلب التسجيلات ثم نحتفظ فقط بالدفعات المسندة للمدرب الحالي.
+    // لا نستخدم companyId ثابت حتى لا يرى كل المدربين نفس البيانات.
+    this.http.get<EnrollmentDto[]>(`${this.base}/Enrollment`).subscribe({
+      next: (enrollments) => {
+        const scopedEnrollments = (enrollments ?? []).filter(
+          (e) => allowedBatchIds.has(Number(e.batchId))
         );
 
-        const merged: Row[] = (enrollments ?? []).map((e: EnrollmentDto) => {
-          const a = byEnrollment.get(e.enrollmentId);
-          return {
-            dailyAttendanceId: a?.dailyAttendanceId ?? null,
-            enrollmentId: e.enrollmentId,
-            traineeName: e.traineeName || a?.traineeName || `متدرب #${e.traineeId}`,
-            batchName: e.batchName || '—',
-            date: a?.date,
-            checkInTime: a?.checkInTime ?? null,
-            checkOutTime: a?.checkOutTime ?? null,
-            // افتراض الواجهة: كل متدرب حاضر ما لم يغيّره المدرب إلى غائب/بعذر/متأخر.
-            // لا ننشئ السجل في الباك هنا؛ يتم الحفظ عند تغيير الحالة أو عند تأكيد سجل اليوم.
-            status: a ? a.status : this.toApi(this.presentStatus(), this.attShape),
-            isLate: a?.isLate ?? false,
-            note: a?.note ?? null,
-          };
-        });
-
-        // احتياط: لا نفقد أي سجل حضور رجعه الخادم حتى لو لم يظهر في Enrollment.
-        const enrollmentIds = new Set(merged.map((r) => r.enrollmentId));
-        for (const a of attendanceList) {
-          if (!enrollmentIds.has(a.enrollmentId)) {
-            merged.push({
-              dailyAttendanceId: a.dailyAttendanceId,
-              enrollmentId: a.enrollmentId,
-              traineeName: a.traineeName || `متدرب #${a.enrollmentId}`,
-              batchName: '—',
-              date: a.date,
-              checkInTime: a.checkInTime ?? null,
-              checkOutTime: a.checkOutTime ?? null,
-              status: a.status,
-              isLate: a.isLate,
-              note: a.note ?? null,
-            });
-          }
+        if (!scopedEnrollments.length) {
+          this.rows.set([]);
+          this.excuses.set([]);
+          this.repeatedAbsenceIds.set(new Set<number>());
+          this.loading.set(false);
+          return;
         }
 
-        this.rows.set(merged);
-        this.loadExcusesForRows(merged);
-        this.loadRepeatedAbsenceForRows(merged);
-        this.loading.set(false);
+        const historyRequests = scopedEnrollments.map((e) =>
+          this.http.get<DailyAttendanceDto[]>(
+            `${this.base}/DailyAttendance/enrollment/${e.enrollmentId}`
+          )
+        );
+
+        forkJoin(historyRequests).subscribe({
+          next: (histories) => {
+            const today = new Date();
+            const todayKey = this.dateKey(today);
+
+            const todayRecords: DailyAttendanceDto[] = [];
+
+            histories.forEach((history) => {
+              const record = (history ?? []).find(
+                (a) => this.dateKey(new Date(a.date)) === todayKey
+              );
+              if (record) todayRecords.push(record);
+            });
+
+            this.attShape = this.detectShape(
+              todayRecords.map((r) => r.status)
+            );
+
+            const byEnrollment = new Map<number, DailyAttendanceDto>(
+              todayRecords.map((a) => [a.enrollmentId, a])
+            );
+
+            const merged: Row[] = scopedEnrollments.map((e) => {
+              const a = byEnrollment.get(e.enrollmentId);
+
+              return {
+                dailyAttendanceId: a?.dailyAttendanceId ?? null,
+                enrollmentId: e.enrollmentId,
+                traineeName:
+                  e.traineeName ||
+                  a?.traineeName ||
+                  `متدرب #${e.traineeId}`,
+                batchName: e.batchName || '—',
+                date: a?.date,
+                checkInTime: a?.checkInTime ?? null,
+                checkOutTime: a?.checkOutTime ?? null,
+                status: a
+                  ? a.status
+                  : this.toApi(this.presentStatus(), this.attShape),
+                isLate: a?.isLate ?? false,
+                note: a?.note ?? null,
+              };
+            });
+
+            this.rows.set(merged);
+            this.loadExcusesForRows(merged);
+            this.loadRepeatedAbsenceForRows(merged);
+            this.loading.set(false);
+
+            // إذا كان المستخدم واقفاً على الأسبوعي/الشهري ثم ضغط تحديث،
+            // حدّث العرض الحالي أيضاً.
+            if (this.registerView() === 'weekly') {
+              this.loadWeeklyRegister();
+            } else if (this.registerView() === 'monthly') {
+              this.loadMonthlyRegister();
+            }
+          },
+          error: () => {
+            this.rows.set([]);
+            this.excuses.set([]);
+            this.loading.set(false);
+            this.loadError.set('تعذر تحميل سجلات حضور متدربي المدرب الحالي.');
+          },
+        });
       },
       error: () => {
         this.rows.set([]);
         this.excuses.set([]);
         this.loading.set(false);
-        this.loadError.set('تعذّر تحميل تسجيلات المتدربين. تحقق من طلب Enrollment ثم أعد المحاولة.');
+        this.loadError.set('تعذر تحميل تسجيلات متدربي الدفعات المسندة للمدرب الحالي.');
       },
     });
+  }
+
+  private dateKey(date: Date): string {
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0'),
+    ].join('-');
   }
 
   private loadExcusesForRows(rows: Row[]): void {
@@ -364,18 +488,19 @@ historyLoading = signal(false);
     return Math.round((committed / total) * 100);
   });
 
-showRegister(view: RegisterView): void {
-  this.registerView.set(view);
+  showRegister(view: RegisterView): void {
+    this.registerView.set(view);
 
-  if (view === 'weekly') {
-    this.loadWeeklyRegister();
+    if (view === 'weekly') {
+      this.loadWeeklyRegister();
+    }
+
+    if (view === 'monthly') {
+      this.loadMonthlyRegister();
+    }
   }
 
-  if (view === 'monthly') {
-    this.loadMonthlyRegister();
-  }
-}
-private loadWeeklyRegister(): void {
+  private loadWeeklyRegister(): void {
   this.historyLoading.set(true);
 
   const requests = this.rows().map((row) =>
@@ -442,7 +567,7 @@ private loadWeeklyRegister(): void {
   });
 }
 
-private loadMonthlyRegister(): void {
+  private loadMonthlyRegister(): void {
   this.historyLoading.set(true);
 
   const requests = this.rows().map((row) =>
@@ -852,7 +977,7 @@ private loadMonthlyRegister(): void {
       type: WARNING.typeAttendance,
       level: WARNING.levelMedium,
       evidence: 'غياب متكرر دون عذر رسمي.',
-      raisedByUserId: 3,
+      raisedByUserId: this.auth.userId,
     } as any).subscribe({
       next: () => {
         const attendanceId = row.dailyAttendanceId;
