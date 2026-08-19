@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+
 import {
   DailyAttendanceDto,
   EnrollmentDto,
@@ -17,6 +18,7 @@ import {
   TrainerKpisDto,
 } from '../../../core/models/dtos';
 
+
 @Injectable({ providedIn: 'root' })
 export class TrainerApi {
 
@@ -29,48 +31,73 @@ export class TrainerApi {
   // Dashboard / Batches
   // =====================================================
 
-  getMyBatches(trainerId: number): Observable<TrainerBatchDto[]> {
+  /**
+   * Retrieves the trainer profile associated with
+   * the currently logged-in user's UserId.
+   */
+  getTrainerByUserId(
+    userId: number
+  ): Observable<TrainerDto> {
+
+    return this.http.get<TrainerDto>(
+      `${this.base}/Trainer/by-user/${userId}`
+    );
+  }
+
+
+  /**
+   * Retrieves all batches assigned to a trainer.
+   */
+  getMyBatches(
+    trainerId: number
+  ): Observable<TrainerBatchDto[]> {
+
     return this.http.get<TrainerBatchDto[]>(
       `${this.base}/BatchTrainer/trainer/${trainerId}`
     );
   }
 
 
-  getTrainerSessions(trainerId: number): Observable<SessionDto[]> {
+  /**
+   * Retrieves all sessions assigned to a trainer.
+   */
+  getTrainerSessions(
+    trainerId: number
+  ): Observable<SessionDto[]> {
 
     const params = new HttpParams()
-      .set('trainerId', trainerId.toString());
+      .set(
+        'trainerId',
+        trainerId.toString()
+      );
 
-<<<<<<< HEAD
-postAnnouncement(dto: unknown) {
-  return this.http.post(
-    `${this.base}/Announcement`,
-    dto
-  );
-}
-getTrainerByUserId(userId: number): Observable<TrainerDto> {
-  return this.http.get<TrainerDto>(
-    `${this.base}/Trainer/by-user/${userId}`
-  );
-}
- 
-=======
     return this.http.get<SessionDto[]>(
       `${this.base}/Session`,
       { params }
     );
   }
 
->>>>>>> e47ccb565eefe2b3177fb8495ce50c60b5773f80
 
-  getBatchTrainees(batchId: number) {
+  /**
+   * Retrieves trainees assigned to a specific batch.
+   */
+  getBatchTrainees(
+    batchId: number
+  ) {
+
     return this.http.get<unknown[]>(
       `${this.base}/Batch/${batchId}/trainees`
     );
   }
 
 
-  postAnnouncement(dto: unknown) {
+  /**
+   * Creates a new announcement.
+   */
+  postAnnouncement(
+    dto: unknown
+  ) {
+
     return this.http.post(
       `${this.base}/Announcement`,
       dto
@@ -83,7 +110,10 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
   // Content
   // =====================================================
 
-  createModule(dto: unknown) {
+  createModule(
+    dto: unknown
+  ) {
+
     return this.http.post(
       `${this.base}/Module`,
       dto
@@ -91,7 +121,10 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
   }
 
 
-  createLesson(dto: unknown) {
+  createLesson(
+    dto: unknown
+  ) {
+
     return this.http.post(
       `${this.base}/Lesson`,
       dto
@@ -99,7 +132,10 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
   }
 
 
-  createMaterial(dto: unknown) {
+  createMaterial(
+    dto: unknown
+  ) {
+
     return this.http.post(
       `${this.base}/TrainingMaterial`,
       dto
@@ -112,7 +148,7 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
   // Attendance
   // =====================================================
 
-  // no batch-scoped "today" endpoint on the real backend,
+  // No batch-scoped "today" endpoint exists on the backend,
   // so this reads company-scoped attendance for the day.
 
   getTodayAttendanceForCompany(
@@ -125,7 +161,10 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
   }
 
 
-  checkIn(dto: unknown) {
+  checkIn(
+    dto: unknown
+  ) {
+
     return this.http.post(
       `${this.base}/DailyAttendance/check-in`,
       dto
@@ -133,7 +172,11 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
   }
 
 
-  updateAttendance(id: number, dto: unknown) {
+  updateAttendance(
+    id: number,
+    dto: unknown
+  ) {
+
     return this.http.put(
       `${this.base}/DailyAttendance/${id}`,
       dto
@@ -142,13 +185,18 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
 
 
   getPendingExcuses(): Observable<ExcuseDto[]> {
+
     return this.http.get<ExcuseDto[]>(
       `${this.base}/Excuse/pending`
     );
   }
 
 
-  reviewExcuse(id: number, dto: unknown) {
+  reviewExcuse(
+    id: number,
+    dto: unknown
+  ) {
+
     return this.http.put(
       `${this.base}/Excuse/${id}/review`,
       dto
@@ -156,7 +204,10 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
   }
 
 
-  reportRepeatedAbsence(dto: unknown) {
+  reportRepeatedAbsence(
+    dto: unknown
+  ) {
+
     return this.http.post(
       `${this.base}/Warning`,
       dto
@@ -179,7 +230,10 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
   }
 
 
-  createTask(dto: unknown) {
+  createTask(
+    dto: unknown
+  ) {
+
     return this.http.post(
       `${this.base}/Task`,
       dto
@@ -187,7 +241,7 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
   }
 
 
-  // تحديث بيانات المهمة أو حالتها
+  // Updates task information or status.
   updateTask(
     id: number,
     dto: unknown
@@ -200,7 +254,7 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
   }
 
 
-  // حذف المهمة
+  // Deletes a task.
   deleteTask(
     id: number
   ) {
@@ -246,7 +300,7 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
 
 
   // =====================================================
-  // Trainee evaluation
+  // Trainee Evaluation
   // =====================================================
 
   getEnrollments(
@@ -258,6 +312,7 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
 
 
     if (companyId) {
+
       params = params.set(
         'companyId',
         companyId.toString()
@@ -266,6 +321,7 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
 
 
     if (batchId) {
+
       params = params.set(
         'batchId',
         batchId.toString()
@@ -289,17 +345,19 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
 
 
     if (moduleId) {
+
       params = params.set(
         'moduleId',
-        moduleId
+        moduleId.toString()
       );
     }
 
 
     if (stage) {
+
       params = params.set(
         'stage',
-        stage
+        stage.toString()
       );
     }
 
@@ -321,7 +379,10 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
   }
 
 
-  createTemplate(dto: unknown) {
+  createTemplate(
+    dto: unknown
+  ) {
+
     return this.http.post(
       `${this.base}/EvaluationTemplate/CreateTemplate`,
       dto
@@ -329,7 +390,10 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
   }
 
 
-  createCriterion(dto: unknown) {
+  createCriterion(
+    dto: unknown
+  ) {
+
     return this.http.post(
       `${this.base}/EvaluationCriterion/CreateCriterion`,
       dto
@@ -337,7 +401,10 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
   }
 
 
-  submitEvaluation(dto: unknown) {
+  submitEvaluation(
+    dto: unknown
+  ) {
+
     return this.http.post(
       `${this.base}/Evaluation`,
       dto
@@ -370,17 +437,19 @@ getTrainerByUserId(userId: number): Observable<TrainerDto> {
   }
 
 
-  generateReport(dto: {
-    type:
-      | 'Attendance'
-      | 'Performance'
-      | 'Financial'
-      | 'Enrollment'
-      | 'Custom';
-    filtersJson?: string;
-    generatedByUserId: number;
-    trainerId?: number;
-  }) {
+  generateReport(
+    dto: {
+      type:
+        | 'Attendance'
+        | 'Performance'
+        | 'Financial'
+        | 'Enrollment'
+        | 'Custom';
+      filtersJson?: string;
+      generatedByUserId: number;
+      trainerId?: number;
+    }
+  ) {
 
     return this.http.post<{
       reportId: number;
