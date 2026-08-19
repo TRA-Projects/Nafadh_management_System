@@ -114,6 +114,82 @@
 
 
 /* =========================================================
+   LOADING / EMPTY
+========================================================= */
+
+.profile-loading,
+.profile-empty {
+  min-height: 180px;
+
+  padding: 30px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  text-align: center;
+
+  background: #ffffff;
+
+  border: 1px solid #dbe5ef;
+  border-radius: 18px;
+
+  color: #718096;
+
+  box-shadow:
+    0 7px 22px rgba(0, 43, 103, 0.04);
+}
+
+
+.loading-icon,
+.profile-empty .empty-icon {
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 4px;
+
+  border-radius: 13px;
+
+  background: #e9f7fb;
+
+  color: #008fa5;
+
+  font-size: 20px;
+  font-weight: 800;
+}
+
+
+.profile-empty .empty-icon {
+  background: #fff1f2;
+
+  color: #b91c1c;
+}
+
+
+.profile-empty strong {
+  color: #334155;
+
+  font-size: 14px;
+}
+
+
+.profile-empty p {
+  margin: 0;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
    PROFILE / SUMMARY CARDS
 ========================================================= */
 
@@ -198,6 +274,10 @@
 }
 
 
+/* =========================================================
+   TRAINER STATUS DOT
+========================================================= */
+
 .status-dot {
   position: absolute;
 
@@ -209,9 +289,30 @@
 
   border-radius: 50%;
 
-  background: #22c55e;
+  background: #94a3b8;
 
   border: 3px solid #ffffff;
+}
+
+
+.status-dot.active {
+  background: #22c55e;
+
+  box-shadow:
+    0 0 0 2px rgba(34, 197, 94, 0.08);
+}
+
+
+.status-dot.inactive {
+  background: #94a3b8;
+}
+
+
+.status-dot.suspended {
+  background: #ef4444;
+
+  box-shadow:
+    0 0 0 2px rgba(239, 68, 68, 0.08);
 }
 
 
@@ -675,14 +776,27 @@
   border-radius: 50%;
 
   background: #94a3b8;
+}
 
 
-  &.active {
-    background: #22c55e;
+.status-indicator.active {
+  background: #22c55e;
 
-    box-shadow:
-      0 0 0 4px rgba(34, 197, 94, 0.1);
-  }
+  box-shadow:
+    0 0 0 4px rgba(34, 197, 94, 0.1);
+}
+
+
+.status-indicator.inactive {
+  background: #94a3b8;
+}
+
+
+.status-indicator.suspended {
+  background: #ef4444;
+
+  box-shadow:
+    0 0 0 4px rgba(239, 68, 68, 0.08);
 }
 
 
@@ -871,6 +985,13 @@
 }
 
 
+.suspended-badge {
+  background: #fee2e2;
+
+  color: #b91c1c;
+}
+
+
 .count-badge {
   background: #e0f2fe;
 
@@ -893,6 +1014,7 @@
     grid-template-columns:
       repeat(2, minmax(0, 1fr));
   }
+
 }
 
 
@@ -944,6 +1066,7 @@
   .summary-grid {
     grid-template-columns: 1fr;
   }
+
 }
 
 
@@ -1001,4 +1124,5 @@
 
     flex-basis: 40px;
   }
+
 }

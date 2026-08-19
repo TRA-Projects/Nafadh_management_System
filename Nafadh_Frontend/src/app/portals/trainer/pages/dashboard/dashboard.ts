@@ -1,7 +1,18 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  signal
+} from '@angular/core';
+
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { catchError, forkJoin, of } from 'rxjs';
+
+import {
+  catchError,
+  forkJoin,
+  of
+} from 'rxjs';
 
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -17,7 +28,10 @@ import {
 @Component({
   selector: 'app-trainer-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [
+    CommonModule,
+    RouterLink
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -27,87 +41,125 @@ export class TrainerDashboard implements OnInit {
   // STATE
   // =====================================================
 
-  // بيانات المدرب الحالي
-  trainer = signal<TrainerDto | null>(null);
+  trainer =
+    signal<TrainerDto | null>(null);
 
-  // جميع الدفعات المسندة للمدرب
-  batches = signal<TrainerBatchDto[]>([]);
+  batches =
+    signal<TrainerBatchDto[]>([]);
 
-  // جميع جلسات المدرب
-  sessions = signal<SessionDto[]>([]);
+  sessions =
+    signal<SessionDto[]>([]);
 
-  // عدد المتدربين الفريدين في جميع دفعات المدرب
-  traineeCount = signal(0);
+  traineeCount =
+    signal(0);
 
 
   // =====================================================
   // UPCOMING SESSIONS
   // =====================================================
 
-  /**
-   * Returns only future scheduled/postponed sessions,
-   * ordered by session date and start time.
-   */
-  upcomingSessions = computed(() => {
+  upcomingSessions =
+    computed(() => {
 
-    const now = Date.now();
+      const now =
+        Date.now();
 
-    return [...this.sessions()]
-      .filter(session => {
 
-        const isUpcomingStatus =
-          session.status === 'Scheduled' ||
-          session.status === 'Postponed';
+      return [
+        ...this.sessions()
+      ]
+        .filter(session => {
 
-        const sessionDateTime =
-          this.getSessionDateTime(session);
+          const isUpcomingStatus =
+            session.status === 'Scheduled' ||
+            session.status === 'Postponed';
 
-        return (
-          isUpcomingStatus &&
-          sessionDateTime >= now
+
+          const sessionDateTime =
+            this.getSessionDateTime(
+              session
+            );
+
+
+          return (
+            isUpcomingStatus &&
+            sessionDateTime >= now
+          );
+
+        })
+        .sort(
+          (a, b) =>
+            this.getSessionDateTime(a) -
+            this.getSessionDateTime(b)
         );
-      })
-      .sort(
-        (a, b) =>
-          this.getSessionDateTime(a) -
-          this.getSessionDateTime(b)
-      );
-  });
+
+    });
 
 
   // =====================================================
   // DASHBOARD BATCHES
   // =====================================================
 
-  /**
-   * Shows the two most relevant trainer batches.
-   *
-   * Priority:
-   * 1. Ongoing
-   * 2. Upcoming
-   * 3. Completed
-   * 4. Cancelled
-   */
-  dashboardBatches = computed(() => {
+  dashboardBatches =
+    computed(() => {
 
-    const priority: Record<
-      TrainerBatchDto['status'],
-      number
-    > = {
-      Ongoing: 0,
-      Upcoming: 1,
-      Completed: 2,
-      Cancelled: 3
-    };
+      const priority: Record<
+        TrainerBatchDto['status'],
+        number
+      > = {
 
-    return [...this.batches()]
-      .sort(
-        (a, b) =>
-          priority[a.status] -
-          priority[b.status]
-      )
-      .slice(0, 2);
-  });
+        Ongoing: 0,
+        Upcoming: 1,
+        Completed: 2,
+        Cancelled: 3
+
+      };
+
+
+      return [
+        ...this.batches()
+      ]
+        .sort((a, b) => {
+
+          const statusDifference =
+            priority[a.status] -
+            priority[b.status];
+
+
+          if (
+            statusDifference !== 0
+          ) {
+
+            return statusDifference;
+
+          }
+
+
+          const aDate =
+            a.startDate
+              ? new Date(
+                  a.startDate
+                ).getTime()
+              : Number.MAX_SAFE_INTEGER;
+
+
+          const bDate =
+            b.startDate
+              ? new Date(
+                  b.startDate
+                ).getTime()
+              : Number.MAX_SAFE_INTEGER;
+
+
+          return aDate - bDate;
+
+        })
+        .slice(
+          0,
+          2
+        );
+
+    });
 
 
   // =====================================================
@@ -121,11 +173,13 @@ export class TrainerDashboard implements OnInit {
 
 
   // =====================================================
-  // INITIALIZATION
+  // INIT
   // =====================================================
 
   ngOnInit(): void {
+
     this.loadCurrentTrainer();
+
   }
 
 
@@ -133,22 +187,11 @@ export class TrainerDashboard implements OnInit {
   // CURRENT TRAINER
   // =====================================================
 
-  /**
-   * Loads the trainer profile associated with the
-   * currently logged-in user.
-   *
-   * Login UserId
-   *      ↓
-   * Trainer profile
-   *      ↓
-   * Real TrainerId
-   *      ↓
-   * Batches + Sessions
-   */
   private loadCurrentTrainer(): void {
 
     const userId =
       this.auth.session()?.userId;
+
 
     if (!userId) {
 
@@ -166,17 +209,20 @@ export class TrainerDashboard implements OnInit {
 
         next: (trainer) => {
 
-          this.trainer.set(trainer);
+          this.trainer.set(
+            trainer
+          );
 
-          // تحميل دفعات المدرب الحقيقي
+
           this.loadBatches(
             trainer.trainerId
           );
 
-          // تحميل جلسات المدرب الحقيقي
+
           this.loadSessions(
             trainer.trainerId
           );
+
         },
 
 
@@ -186,9 +232,11 @@ export class TrainerDashboard implements OnInit {
             'خطأ في تحميل بيانات المدرب:',
             err
           );
+
         }
 
       });
+
   }
 
 
@@ -196,12 +244,6 @@ export class TrainerDashboard implements OnInit {
   // BATCHES
   // =====================================================
 
-  /**
-   * Loads all batches assigned to the current trainer.
-   *
-   * The batch status is recalculated from the start
-   * and end dates before storing the data.
-   */
   private loadBatches(
     trainerId: number
   ): void {
@@ -213,22 +255,28 @@ export class TrainerDashboard implements OnInit {
         next: (data) => {
 
           const batches =
-            (data ?? []).map(batch => ({
-              ...batch,
+            (data ?? [])
+              .map(batch => ({
 
-              status:
-                this.calculateBatchStatus(batch)
-            }));
+                ...batch,
+
+                status:
+                  this.calculateBatchStatus(
+                    batch
+                  )
+
+              }));
+
 
           this.batches.set(
             batches
           );
 
-          // بعد معرفة دفعات المدرب،
-          // نحسب المتدربين الموجودين داخلها
+
           this.loadTraineeCount(
             batches
           );
+
         },
 
 
@@ -242,9 +290,11 @@ export class TrainerDashboard implements OnInit {
           this.batches.set([]);
 
           this.traineeCount.set(0);
+
         }
 
       });
+
   }
 
 
@@ -252,29 +302,26 @@ export class TrainerDashboard implements OnInit {
   // BATCH STATUS
   // =====================================================
 
-  /**
-   * Calculates the batch status using its dates.
-   *
-   * Cancelled batches always remain cancelled.
-   *
-   * Before StartDate  -> Upcoming
-   * During batch      -> Ongoing
-   * After EndDate     -> Completed
-   */
   private calculateBatchStatus(
     batch: TrainerBatchDto
   ): TrainerBatchDto['status'] {
 
-    // إذا كانت الدفعة ملغاة، تبقى ملغاة
-    if (batch.status === 'Cancelled') {
+    if (
+      batch.status === 'Cancelled'
+    ) {
+
       return 'Cancelled';
+
     }
 
 
-    // إذا ما كانت التواريخ موجودة،
-    // نستخدم الحالة القادمة من الـ API
-    if (!batch.startDate || !batch.endDate) {
+    if (
+      !batch.startDate ||
+      !batch.endDate
+    ) {
+
       return batch.status;
+
     }
 
 
@@ -290,7 +337,9 @@ export class TrainerDashboard implements OnInit {
 
 
     const startDate =
-      new Date(batch.startDate);
+      new Date(
+        batch.startDate
+      );
 
     startDate.setHours(
       0,
@@ -301,7 +350,9 @@ export class TrainerDashboard implements OnInit {
 
 
     const endDate =
-      new Date(batch.endDate);
+      new Date(
+        batch.endDate
+      );
 
     endDate.setHours(
       0,
@@ -311,20 +362,26 @@ export class TrainerDashboard implements OnInit {
     );
 
 
-    // إذا التاريخ الحالي قبل بداية الدفعة
-    if (today < startDate) {
+    if (
+      today < startDate
+    ) {
+
       return 'Upcoming';
+
     }
 
 
-    // إذا التاريخ الحالي بعد نهاية الدفعة
-    if (today > endDate) {
+    if (
+      today > endDate
+    ) {
+
       return 'Completed';
+
     }
 
 
-    // إذا اليوم بين البداية والنهاية
     return 'Ongoing';
+
   }
 
 
@@ -332,19 +389,13 @@ export class TrainerDashboard implements OnInit {
   // TRAINEES
   // =====================================================
 
-  /**
-   * Calculates the number of unique trainees
-   * enrolled in all batches assigned to the trainer.
-   *
-   * A trainee is counted only once even if the trainee
-   * appears in more than one enrollment/batch.
-   */
   private loadTraineeCount(
     batches: TrainerBatchDto[]
   ): void {
 
-    // لا توجد دفعات
-    if (batches.length === 0) {
+    if (
+      batches.length === 0
+    ) {
 
       this.traineeCount.set(0);
 
@@ -352,7 +403,6 @@ export class TrainerDashboard implements OnInit {
     }
 
 
-    // نطلب Enrollment لكل دفعة
     const requests =
       batches.map(batch =>
 
@@ -363,8 +413,6 @@ export class TrainerDashboard implements OnInit {
           )
           .pipe(
 
-            // إذا فشل طلب دفعة واحدة
-            // لا نخلي بقية Dashboard تفشل
             catchError(err => {
 
               console.error(
@@ -372,15 +420,18 @@ export class TrainerDashboard implements OnInit {
                 err
               );
 
+
               return of(
                 [] as EnrollmentDto[]
               );
+
             })
+
           )
+
       );
 
 
-    // تنفيذ جميع الطلبات معًا
     forkJoin(requests)
       .subscribe({
 
@@ -392,18 +443,21 @@ export class TrainerDashboard implements OnInit {
 
           results
             .flat()
-            .forEach(enrollment => {
+            .forEach(
+              enrollment => {
 
-              uniqueTraineeIds.add(
-                enrollment.traineeId
-              );
+                uniqueTraineeIds.add(
+                  enrollment.traineeId
+                );
 
-            });
+              }
+            );
 
 
           this.traineeCount.set(
             uniqueTraineeIds.size
           );
+
         },
 
 
@@ -415,9 +469,11 @@ export class TrainerDashboard implements OnInit {
           );
 
           this.traineeCount.set(0);
+
         }
 
       });
+
   }
 
 
@@ -425,15 +481,14 @@ export class TrainerDashboard implements OnInit {
   // SESSIONS
   // =====================================================
 
-  /**
-   * Loads all sessions assigned to the current trainer.
-   */
   private loadSessions(
     trainerId: number
   ): void {
 
     this.api
-      .getTrainerSessions(trainerId)
+      .getTrainerSessions(
+        trainerId
+      )
       .subscribe({
 
         next: (data) => {
@@ -441,6 +496,7 @@ export class TrainerDashboard implements OnInit {
           this.sessions.set(
             data ?? []
           );
+
         },
 
 
@@ -452,27 +508,21 @@ export class TrainerDashboard implements OnInit {
           );
 
           this.sessions.set([]);
+
         }
 
       });
+
   }
 
 
-  /**
-   * Combines SessionDate and StartTime into one timestamp
-   * so sessions can be filtered and sorted correctly.
-   */
   private getSessionDateTime(
     session: SessionDto
   ): number {
 
-    // Backend may return:
-    // 2026-08-19
-    // or:
-    // 2026-08-19T00:00:00
-
     const datePart =
-      session.sessionDate.split('T')[0];
+      session.sessionDate
+        .split('T')[0];
 
 
     let timePart =
@@ -480,23 +530,88 @@ export class TrainerDashboard implements OnInit {
       '23:59:59';
 
 
-    // Handles HH:mm values
-    if (timePart.length === 5) {
+    if (
+      timePart.length === 5
+    ) {
 
       timePart += ':00';
+
     }
 
 
     const timestamp =
       new Date(
         `${datePart}T${timePart}`
-      ).getTime();
+      )
+        .getTime();
 
 
-    return Number.isNaN(timestamp)
+    return Number.isNaN(
+      timestamp
+    )
       ? 0
       : timestamp;
+
   }
+
+
+  // =====================================================
+  // BATCH IMAGE
+  // =====================================================
+
+getBatchImage(
+  batchId: number
+): string {
+
+  const images = [
+
+    // Laptop / Programming
+    'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=900&q=85',
+
+    // Cyber / Matrix
+    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=900&q=85',
+
+    // Cybersecurity
+    'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=900&q=85',
+
+    // Team Programming
+    'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=85',
+
+    // Code Screen
+    'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=900&q=85',
+
+    // Developer Workspace
+    'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=85',
+
+    // Laptop Coding
+    'https://images.unsplash.com/photo-1504639725590-34d0984388bd?auto=format&fit=crop&w=900&q=85',
+
+    // Programming Screen
+    'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=900&q=85',
+
+    // Technology
+    'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=85',
+
+    // Software Development
+    'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=900&q=85',
+
+    // Coding
+    'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=900&q=85',
+
+    // Computer Workspace
+    'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=900&q=85'
+
+  ];
+
+
+  const imageIndex =
+    Math.abs(batchId) %
+    images.length;
+
+
+  return images[imageIndex];
+
+}
 
 
   // =====================================================
@@ -523,7 +638,9 @@ export class TrainerDashboard implements OnInit {
 
       default:
         return status;
+
     }
+
   }
 
 
@@ -547,7 +664,9 @@ export class TrainerDashboard implements OnInit {
 
       default:
         return status;
+
     }
+
   }
 
 }

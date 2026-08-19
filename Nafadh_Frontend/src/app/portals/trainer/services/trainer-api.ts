@@ -13,11 +13,14 @@ import {
   SessionDto,
   SubmissionDto,
   TaskDto,
+  TrainingMaterialDto,
   TrainerBatchDto,
   TrainerDto,
   TrainerKpisDto,
   BatchDto,
-ProgramDto,
+  ProgramDto,
+  ModuleDto,
+  LessonDto,
 } from '../../../core/models/dtos';
 
 
@@ -134,43 +137,141 @@ getProgram(
 
 
 
-  // =====================================================
-  // Content
-  // =====================================================
+// =====================================================
+// Content
+// =====================================================
 
-  createModule(
-    dto: unknown
-  ) {
+getModulesByProgram(
+  programId: number
+): Observable<ModuleDto[]> {
 
-    return this.http.post(
-      `${this.base}/Module`,
-      dto
-    );
+  return this.http.get<ModuleDto[]>(
+    `${this.base}/Module/program/${programId}`
+  );
+}
+
+
+getLessonsByModule(
+  moduleId: number
+): Observable<LessonDto[]> {
+
+  return this.http.get<LessonDto[]>(
+    `${this.base}/Lesson/module/${moduleId}`
+  );
+}
+
+
+createModule(
+  dto: {
+    programId: number;
+    title: string;
+    orderIndex: number;
+    availableFrom?: string | null;
+    availableTo?: string | null;
+    prerequisiteModuleId?: number | null;
   }
+): Observable<ModuleDto> {
+
+  return this.http.post<ModuleDto>(
+    `${this.base}/Module`,
+    dto
+  );
+}
 
 
-  createLesson(
-    dto: unknown
-  ) {
-
-    return this.http.post(
-      `${this.base}/Lesson`,
-      dto
-    );
+createLesson(
+  dto: {
+    moduleId: number;
+    title: string;
+    contentBody?: string | null;
+    orderIndex: number;
   }
+): Observable<LessonDto> {
+
+  return this.http.post<LessonDto>(
+    `${this.base}/Lesson`,
+    dto
+  );
+}
 
 
-  createMaterial(
-    dto: unknown
-  ) {
-
-    return this.http.post(
-      `${this.base}/TrainingMaterial`,
-      dto
-    );
+createMaterial(
+  dto: {
+    fileUrl: string;
+    fileType:
+      | 'Pdf'
+      | 'Video'
+      | 'Image'
+      | 'Document'
+      | 'Link'
+      | 'Other';
+    lessonId: number;
+    uploadedByUserId: number;
   }
+): Observable<unknown> {
+
+  return this.http.post(
+    `${this.base}/TrainingMaterial`,
+    dto
+  );
+}
 
 
+uploadTrainingMaterial(
+  file: File,
+  fileType:
+    | 'Pdf'
+    | 'Video'
+    | 'Image'
+    | 'Document'
+    | 'Other',
+  lessonId: number,
+  uploadedByUserId: number
+): Observable<unknown> {
+
+  const formData =
+    new FormData();
+
+
+  formData.append(
+    'File',
+    file
+  );
+
+
+  formData.append(
+    'FileType',
+    fileType
+  );
+
+
+  formData.append(
+    'LessonId',
+    lessonId.toString()
+  );
+
+
+  formData.append(
+    'UploadedByUserId',
+    uploadedByUserId.toString()
+  );
+
+
+  return this.http.post(
+    `${this.base}/TrainingMaterial/upload`,
+    formData
+  );
+}
+
+
+getTrainingMaterialsByLesson(
+  lessonId: number
+): Observable<TrainingMaterialDto[]> {
+
+  return this.http.get<TrainingMaterialDto[]>(
+    `${this.base}/TrainingMaterial/lesson/${lessonId}`
+  );
+}
 
   // =====================================================
   // Attendance

@@ -227,6 +227,22 @@ export interface LessonDto {
   orderIndex?: number;
 }
 
+// ---- Training Materials ----
+export interface TrainingMaterialDto {
+  materialId: number;
+  fileUrl: string;
+  fileType:
+    | 'Pdf'
+    | 'Video'
+    | 'Image'
+    | 'Document'
+    | 'Link'
+    | 'Other';
+  uploadDate: string;
+  lessonId: number;
+  uploadedByUserId: number;
+}
+
 export interface TraineeModuleProgressDto {
   progressId: number;
   status: ModuleProgressStatus;
@@ -235,6 +251,8 @@ export interface TraineeModuleProgressDto {
   moduleId: number;
   moduleTitle?: string;
 }
+
+
 
 export interface SessionDto {
   sessionId: number;

@@ -13,10 +13,34 @@ namespace Nafadh_Backend.DTOs
         [Required(ErrorMessage = "File type is required")]
         [EnumDataType(typeof(NFD_FileType), ErrorMessage = "Invalid file type")]
         public NFD_FileType? FileType { get; set; }
+
         [Required(ErrorMessage = "Lesson ID is required")]
         public int LessonId { get; set; }
-       
+
+        [Required(ErrorMessage = "Uploaded by user ID is required")]
+        public int UploadedByUserId { get; set; }
     }
+
+    //DTO جديد للرفع
+    public class UploadTrainingMaterialDto
+    {
+        [Required(ErrorMessage = "File is required")]
+        public IFormFile File { get; set; } = null!;
+
+        [Required(ErrorMessage = "File type is required")]
+        [EnumDataType(
+            typeof(NFD_FileType),
+            ErrorMessage = "Invalid file type"
+        )]
+        public NFD_FileType? FileType { get; set; }
+
+        [Required(ErrorMessage = "Lesson ID is required")]
+        public int LessonId { get; set; }
+
+        [Required(ErrorMessage = "Uploaded by user ID is required")]
+        public int UploadedByUserId { get; set; }
+    }
+
     // Input DTO
     // Used when updating existing training material
     public class UpdateTrainingMaterialDto

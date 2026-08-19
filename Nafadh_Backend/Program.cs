@@ -246,6 +246,8 @@ namespace Nafadh_Backend
             }
 
             app.UseHttpsRedirection();
+            // Enable access to files inside wwwroot
+            app.UseStaticFiles();
             // Enable CORS middleware here
             app.UseCors("AllowAll");
 

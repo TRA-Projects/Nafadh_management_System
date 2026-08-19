@@ -8,6 +8,7 @@
 
     <div class="hero-decoration"></div>
 
+
     <div class="hero-content">
 
       <span class="hero-badge">
@@ -15,11 +16,16 @@
       </span>
 
       <h1>
-        مرحباً {{ auth.session()?.fullName || 'بالمدرب' }}
+        مرحباً
+        {{
+          auth.session()?.fullName ||
+          'بالمدرب'
+        }}
       </h1>
 
       <p>
-        كل ما تحتاجه لمتابعة دفعاتك، أداء المتدربين والحضور اليومي في مكان واحد.
+        كل ما تحتاجه لمتابعة دفعاتك، أداء المتدربين
+        والحضور اليومي في مكان واحد.
       </p>
 
     </div>
@@ -29,9 +35,12 @@
 
       <a
         routerLink="/trainer/attendance"
-        class="hero-btn primary">
+        class="hero-btn primary"
+      >
 
-        <span class="btn-icon">📅</span>
+        <span class="btn-icon">
+          📅
+        </span>
 
         <span>
           تسجيل الحضور اليومي
@@ -42,9 +51,12 @@
 
       <a
         routerLink="/trainer/trainees"
-        class="hero-btn secondary">
+        class="hero-btn secondary"
+      >
 
-        <span class="btn-icon">👥</span>
+        <span class="btn-icon">
+          👥
+        </span>
 
         <span>
           تقييم ومتابعة المتدربين
@@ -63,7 +75,7 @@
 
   <section class="dashboard-kpis">
 
-    <!-- Assigned Batches -->
+    <!-- BATCHES -->
 
     <article class="kpi-card">
 
@@ -90,14 +102,18 @@
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          stroke-width="2">
-
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          stroke-width="2"
+        >
 
           <path
-            d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1
-            4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z">
-          </path>
+            d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
+          ></path>
+
+          <path
+            d="M6.5 2H20v20H6.5A2.5
+            2.5 0 0 1 4 19.5v-15A2.5
+            2.5 0 0 1 6.5 2Z"
+          ></path>
 
         </svg>
 
@@ -106,7 +122,7 @@
     </article>
 
 
-    <!-- Trainees -->
+    <!-- TRAINEES -->
 
     <article class="kpi-card">
 
@@ -116,7 +132,9 @@
           عدد المتدربين
         </span>
 
-      <strong>{{ traineeCount() }}</strong>
+        <strong>
+          {{ traineeCount() }}
+        </strong>
 
         <small>
           ضمن الدفعات المسندة
@@ -131,16 +149,24 @@
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          stroke-width="2">
+          stroke-width="2"
+        >
 
           <path
             d="M17 21v-2a4 4 0 0 0-4-4H5
-            a4 4 0 0 0-4 4v2">
-          </path>
+            a4 4 0 0 0-4 4v2"
+          ></path>
 
-          <circle cx="9" cy="7" r="4"></circle>
+          <circle
+            cx="9"
+            cy="7"
+            r="4"
+          ></circle>
 
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path
+            d="M23 21v-2a4
+            4 0 0 0-3-3.87"
+          ></path>
 
         </svg>
 
@@ -149,7 +175,7 @@
     </article>
 
 
-    <!-- Upcoming Sessions -->
+    <!-- UPCOMING -->
 
     <article class="kpi-card">
 
@@ -160,15 +186,19 @@
         </span>
 
         <strong>
-          {{ upcomingSessions().length }}
+          {{
+            upcomingSessions().length
+          }}
         </strong>
 
         <small>
+
           {{
             upcomingSessions().length > 0
               ? 'جلسات مجدولة قادمة'
               : 'لا توجد جلسات قادمة'
           }}
+
         </small>
 
       </div>
@@ -180,21 +210,37 @@
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          stroke-width="2">
+          stroke-width="2"
+        >
 
           <rect
             x="3"
             y="4"
             width="18"
             height="17"
-            rx="2">
-          </rect>
+            rx="2"
+          ></rect>
 
-          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line
+            x1="16"
+            y1="2"
+            x2="16"
+            y2="6"
+          ></line>
 
-          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line
+            x1="8"
+            y1="2"
+            x2="8"
+            y2="6"
+          ></line>
 
-          <line x1="3" y1="10" x2="21" y2="10"></line>
+          <line
+            x1="3"
+            y1="10"
+            x2="21"
+            y2="10"
+          ></line>
 
         </svg>
 
@@ -211,8 +257,9 @@
 
   <section class="dashboard-content-grid">
 
+
     <!-- ===================================================
-         ASSIGNED BATCHES
+         BATCHES
     ==================================================== -->
 
     <div class="dashboard-card batches-card">
@@ -234,10 +281,9 @@
 
         <a
           routerLink="/trainer/batches"
-          class="view-all-btn">
-
+          class="view-all-btn"
+        >
           عرض الكل
-
         </a>
 
       </div>
@@ -245,22 +291,22 @@
 
       <div class="batch-grid">
 
-        @for (b of dashboardBatches(); track b.batchId; let i = $index) {
+        @for (
+          b of dashboardBatches();
+          track b.batchId
+        ) {
 
           <article class="batch-card">
-
-            <!-- IMAGE -->
 
             <div class="batch-image-wrapper">
 
               <img
                 class="batch-image"
-                [src]="
-                  i === 0
-                    ? 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=900&q=85'
-                    : 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=85'
+                [src]="getBatchImage(b.batchId)"
+                [alt]="
+                  b.batchName ||
+                  'دفعة تدريبية'
                 "
-                [alt]="b.batchName || 'دفعة تدريبية'"
               />
 
 
@@ -269,16 +315,19 @@
                 [class.active]="b.status === 'Ongoing'"
                 [class.upcoming]="b.status === 'Upcoming'"
                 [class.completed]="b.status === 'Completed'"
-                [class.cancelled]="b.status === 'Cancelled'">
+                [class.cancelled]="b.status === 'Cancelled'"
+              >
 
-                {{ getBatchStatusLabel(b.status) }}
+                {{
+                  getBatchStatusLabel(
+                    b.status
+                  )
+                }}
 
               </span>
 
             </div>
 
-
-            <!-- CONTENT -->
 
             <div class="batch-card-content">
 
@@ -287,7 +336,10 @@
               </span>
 
               <h4>
-                {{ b.batchName || 'دفعة بدون اسم' }}
+                {{
+                  b.batchName ||
+                  'دفعة بدون اسم'
+                }}
               </h4>
 
 
@@ -300,11 +352,16 @@
                   </span>
 
                   <strong>
+
                     {{
                       b.startDate
-                        ? (b.startDate | date:'yyyy/MM/dd')
+                        ? (
+                            b.startDate |
+                            date:'yyyy/MM/dd'
+                          )
                         : '—'
                     }}
+
                   </strong>
 
                 </div>
@@ -317,11 +374,16 @@
                   </span>
 
                   <strong>
+
                     {{
                       b.endDate
-                        ? (b.endDate | date:'yyyy/MM/dd')
+                        ? (
+                            b.endDate |
+                            date:'yyyy/MM/dd'
+                          )
                         : '—'
                     }}
+
                   </strong>
 
                 </div>
@@ -344,15 +406,19 @@
                 height="26"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2">
-
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                stroke-width="2"
+              >
 
                 <path
-                  d="M6.5 2H20v20H6.5A2.5 2.5
-                  0 0 1 4 19.5v-15A2.5
-                  2.5 0 0 1 6.5 2Z">
-                </path>
+                  d="M4 19.5A2.5
+                  2.5 0 0 1 6.5 17H20"
+                ></path>
+
+                <path
+                  d="M6.5 2H20v20H6.5A2.5
+                  2.5 0 0 1 4 19.5v-15A2.5
+                  2.5 0 0 1 6.5 2Z"
+                ></path>
 
               </svg>
 
@@ -363,7 +429,8 @@
             </strong>
 
             <span>
-              ستظهر الدفعات هنا عند إسنادها لحساب المدرب.
+              ستظهر الدفعات هنا عند إسنادها
+              لحساب المدرب.
             </span>
 
           </div>
@@ -376,7 +443,7 @@
 
 
     <!-- ===================================================
-         UPCOMING SESSIONS
+         SESSIONS
     ==================================================== -->
 
     <div class="dashboard-card sessions-card">
@@ -395,10 +462,18 @@
 
         </div>
 
-        @if (upcomingSessions().length > 0) {
+
+        @if (
+          upcomingSessions().length > 0
+        ) {
 
           <span class="sessions-count">
-            {{ upcomingSessions().length }} جلسات
+
+            {{
+              upcomingSessions().length
+            }}
+            جلسات
+
           </span>
 
         }
@@ -418,11 +493,17 @@
             <div class="session-time-box">
 
               <strong>
-                {{ session.startTime || '—' }}
+                {{
+                  session.startTime ||
+                  '—'
+                }}
               </strong>
 
               <span>
-                {{ session.sessionDate | date:'MM/dd' }}
+                {{
+                  session.sessionDate |
+                  date:'MM/dd'
+                }}
               </span>
 
             </div>
@@ -431,18 +512,38 @@
             <div class="session-info">
 
               <strong>
-                {{ session.topic || 'جلسة تدريبية' }}
+                {{
+                  session.topic ||
+                  'جلسة تدريبية'
+                }}
               </strong>
 
               <span>
-                {{ session.sessionDate | date:'yyyy/MM/dd' }}
+                {{
+                  session.sessionDate |
+                  date:'yyyy/MM/dd'
+                }}
               </span>
 
-              @if (session.endTime) {
+
+              @if (
+                session.endTime
+              ) {
 
                 <small>
-                  من {{ session.startTime || '—' }}
-                  إلى {{ session.endTime }}
+
+                  من
+                  {{
+                    session.startTime ||
+                    '—'
+                  }}
+
+                  إلى
+
+                  {{
+                    session.endTime
+                  }}
+
                 </small>
 
               }
@@ -452,10 +553,15 @@
 
             <span
               class="session-status"
-              [class.postponed]="session.status === 'Postponed'">
+              [class.postponed]="
+                session.status ===
+                'Postponed'
+              "
+            >
 
               {{
-                session.status === 'Postponed'
+                session.status ===
+                'Postponed'
                   ? 'مؤجلة'
                   : 'قادمة'
               }}
@@ -476,21 +582,37 @@
                 height="27"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2">
+                stroke-width="2"
+              >
 
                 <rect
                   x="3"
                   y="4"
                   width="18"
                   height="17"
-                  rx="2">
-                </rect>
+                  rx="2"
+                ></rect>
 
-                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line
+                  x1="16"
+                  y1="2"
+                  x2="16"
+                  y2="6"
+                ></line>
 
-                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line
+                  x1="8"
+                  y1="2"
+                  x2="8"
+                  y2="6"
+                ></line>
 
-                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <line
+                  x1="3"
+                  y1="10"
+                  x2="21"
+                  y2="10"
+                ></line>
 
               </svg>
 
@@ -501,7 +623,8 @@
             </strong>
 
             <span>
-              ستظهر هنا الجلسات المجدولة القادمة تلقائياً.
+              ستظهر هنا الجلسات المجدولة
+              القادمة تلقائياً.
             </span>
 
           </div>
