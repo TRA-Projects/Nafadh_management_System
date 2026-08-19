@@ -334,6 +334,20 @@ export class TrainerApi {
       { params }
     );
   }
+   getEvaluationAverage(
+    enrollmentId: number
+  ): Observable<{
+    enrollmentId: number;
+    averageScore: number;
+  }> {
+
+    return this.http.get<{
+      enrollmentId: number;
+      averageScore: number;
+    }>(
+      `${this.base}/Evaluation/enrollment/${enrollmentId}/average`
+    );
+  }
 
 
   getEvaluationTemplates(

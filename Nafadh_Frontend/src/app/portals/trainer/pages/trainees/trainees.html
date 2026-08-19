@@ -93,7 +93,9 @@
 
   <section class="trainees-kpis">
 
-    <!-- Total Trainees -->
+    <!-- =====================================================
+         TOTAL TRAINEES
+    ====================================================== -->
 
     <article class="trainee-kpi">
 
@@ -104,7 +106,7 @@
         </span>
 
         <strong>
-         {{ totalTrainees() }}
+          {{ totalTrainees() }}
         </strong>
 
       </div>
@@ -129,7 +131,9 @@
     </article>
 
 
-    <!-- Average Technical -->
+    <!-- =====================================================
+         AVERAGE TECHNICAL PERFORMANCE
+    ====================================================== -->
 
     <article class="trainee-kpi">
 
@@ -139,9 +143,21 @@
           متوسط الأداء الفني
         </span>
 
-        <strong>
-          —
-        </strong>
+
+        @if (averageTechnicalPerformance() !== null) {
+
+          <strong>
+            {{ averageTechnicalPerformance() | number:'1.0-1' }}%
+          </strong>
+
+        }
+        @else {
+
+          <strong>
+            —
+          </strong>
+
+        }
 
       </div>
 
@@ -166,7 +182,9 @@
     </article>
 
 
-    <!-- High Performers -->
+    <!-- =====================================================
+         HIGH PERFORMERS
+    ====================================================== -->
 
     <article class="trainee-kpi">
 
@@ -176,9 +194,21 @@
           متدربون متميزون
         </span>
 
-        <strong>
-          —
-        </strong>
+
+        @if (evaluatedTraineesCount() > 0) {
+
+          <strong>
+            {{ highPerformers() }}
+          </strong>
+
+        }
+        @else {
+
+          <strong>
+            —
+          </strong>
+
+        }
 
       </div>
 
@@ -201,7 +231,9 @@
     </article>
 
 
-    <!-- Needs Support -->
+    <!-- =====================================================
+         NEEDS SUPPORT
+    ====================================================== -->
 
     <article class="trainee-kpi danger">
 
@@ -211,9 +243,21 @@
           بحاجة إلى دعم ومتابعة
         </span>
 
-        <strong>
-          —
-        </strong>
+
+        @if (evaluatedTraineesCount() > 0) {
+
+          <strong>
+            {{ needsSupport() }}
+          </strong>
+
+        }
+        @else {
+
+          <strong>
+            —
+          </strong>
+
+        }
 
       </div>
 

@@ -22,7 +22,6 @@ import {
   EnrollmentDto,
   EvaluationCriterionDto,
   EvaluationTemplateDetailDto,
-  TrainerBatchDto,
   TrainerDto
 } from '../../../../core/models/dtos';
 
@@ -76,6 +75,127 @@ export class TrainerTrainees implements OnInit {
 
     return traineeIds.size;
   });
+
+
+  // =====================================================
+  // EVALUATION AVERAGES
+  // =====================================================
+
+  /**
+   * Stores the evaluation average for each enrollment.
+   *
+   * Example:
+   * {
+   *   25: 90,
+   *   58: 72.5,
+   *   78: null
+   * }
+   */
+  evaluationAverages =
+    signal<Record<number, number | null>>({});
+
+
+  /**
+   * Number of trainees that currently have
+   * an available evaluation average.
+   */
+  evaluatedTraineesCount =
+    computed(() => {
+
+      return Object
+        .values(
+          this.evaluationAverages()
+        )
+        .filter(
+          (score): score is number =>
+            typeof score === 'number' &&
+            Number.isFinite(score)
+        )
+        .length;
+    });
+
+
+  /**
+   * Average technical performance
+   * across evaluated trainees only.
+   */
+  averageTechnicalPerformance =
+    computed(() => {
+
+      const scores =
+        Object
+          .values(
+            this.evaluationAverages()
+          )
+          .filter(
+            (score): score is number =>
+              typeof score === 'number' &&
+              Number.isFinite(score)
+          );
+
+
+      if (scores.length === 0) {
+
+        return null;
+      }
+
+
+      const total =
+        scores.reduce(
+          (sum, score) =>
+            sum + score,
+          0
+        );
+
+
+      return total / scores.length;
+    });
+
+
+  /**
+   * High-performing trainees.
+   *
+   * Current rule:
+   * Average score >= 85
+   */
+  highPerformers =
+    computed(() => {
+
+      return Object
+        .values(
+          this.evaluationAverages()
+        )
+        .filter(
+          (score): score is number =>
+            typeof score === 'number' &&
+            Number.isFinite(score) &&
+            score >= 85
+        )
+        .length;
+    });
+
+
+  /**
+   * Trainees who need support.
+   *
+   * Current rule:
+   * Average score < 60
+   */
+  needsSupport =
+    computed(() => {
+
+      return Object
+        .values(
+          this.evaluationAverages()
+        )
+        .filter(
+          (score): score is number =>
+            typeof score === 'number' &&
+            Number.isFinite(score) &&
+            score < 60
+        )
+        .length;
+    });
 
 
   // =====================================================
@@ -175,6 +295,8 @@ export class TrainerTrainees implements OnInit {
 
       this.enrollments.set([]);
 
+      this.evaluationAverages.set({});
+
       return;
     }
 
@@ -203,6 +325,8 @@ export class TrainerTrainees implements OnInit {
           );
 
           this.enrollments.set([]);
+
+          this.evaluationAverages.set({});
         }
 
       });
@@ -257,6 +381,8 @@ export class TrainerTrainees implements OnInit {
 
               this.enrollments.set([]);
 
+              this.evaluationAverages.set({});
+
               return;
             }
 
@@ -271,7 +397,8 @@ export class TrainerTrainees implements OnInit {
 
           const batchIds =
             batches.map(
-              batch => batch.batchId
+              batch =>
+                batch.batchId
             );
 
 
@@ -289,6 +416,8 @@ export class TrainerTrainees implements OnInit {
           );
 
           this.enrollments.set([]);
+
+          this.evaluationAverages.set({});
         }
 
       });
@@ -309,6 +438,8 @@ export class TrainerTrainees implements OnInit {
     if (batchIds.length === 0) {
 
       this.enrollments.set([]);
+
+      this.evaluationAverages.set({});
 
       return;
     }
@@ -349,7 +480,15 @@ export class TrainerTrainees implements OnInit {
           const enrollments =
             results.flat();
 
+
           this.enrollments.set(
+            enrollments
+          );
+
+
+          // تحميل متوسطات تقييم جميع المتدربين
+          // بعد تحميل الـ Enrollments
+          this.loadEvaluationAverages(
             enrollments
           );
         },
@@ -363,6 +502,107 @@ export class TrainerTrainees implements OnInit {
           );
 
           this.enrollments.set([]);
+
+          this.evaluationAverages.set({});
+        }
+
+      });
+  }
+
+
+  // =====================================================
+  // LOAD EVALUATION AVERAGES
+  // =====================================================
+
+  /**
+   * Loads the evaluation average for every enrollment.
+   *
+   * These values are then used to calculate:
+   * - Average technical performance
+   * - High performers
+   * - Trainees who need support
+   */
+  private loadEvaluationAverages(
+    enrollments: EnrollmentDto[]
+  ): void {
+
+    if (enrollments.length === 0) {
+
+      this.evaluationAverages.set({});
+
+      return;
+    }
+
+
+    // إزالة القيم القديمة قبل تحميل بيانات الدفعة الجديدة
+    this.evaluationAverages.set({});
+
+
+    const requests =
+      enrollments.map(
+        enrollment =>
+
+          this.api
+            .getEvaluationAverage(
+              enrollment.enrollmentId
+            )
+            .pipe(
+
+              catchError(err => {
+
+                console.warn(
+                  `تعذر تحميل متوسط تقييم التسجيل ${enrollment.enrollmentId}:`,
+                  err
+                );
+
+
+                return of({
+
+                  enrollmentId:
+                    enrollment.enrollmentId,
+
+                  averageScore:
+                    null as number | null
+
+                });
+              })
+
+            )
+      );
+
+
+    forkJoin(requests)
+      .subscribe({
+
+        next: (results) => {
+
+          const averages:
+            Record<number, number | null> = {};
+
+
+          for (const result of results) {
+
+            averages[
+              result.enrollmentId
+            ] =
+              result.averageScore;
+          }
+
+
+          this.evaluationAverages.set(
+            averages
+          );
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'خطأ في تحميل متوسطات تقييم المتدربين:',
+            err
+          );
+
+          this.evaluationAverages.set({});
         }
 
       });
@@ -412,6 +652,7 @@ export class TrainerTrainees implements OnInit {
                   detail
                 );
               },
+
 
               error: (err) => {
 
@@ -481,6 +722,10 @@ export class TrainerTrainees implements OnInit {
   }
 
 
+  // =====================================================
+  // ADD CRITERION
+  // =====================================================
+
   addCriterion(): void {
 
     const templateId =
@@ -489,6 +734,7 @@ export class TrainerTrainees implements OnInit {
 
 
     if (!templateId) {
+
       return;
     }
 
@@ -516,10 +762,15 @@ export class TrainerTrainees implements OnInit {
             false
           );
 
+
           this.newCriterion = {
+
             name: '',
+
             weight: 0,
+
             maxPoints: 0
+
           };
 
 
@@ -533,6 +784,15 @@ export class TrainerTrainees implements OnInit {
 
                 this.templateDetail.set(
                   detail
+                );
+              },
+
+
+              error: (err) => {
+
+                console.error(
+                  'خطأ في إعادة تحميل تفاصيل نموذج التقييم:',
+                  err
                 );
               }
 
@@ -583,16 +843,16 @@ export class TrainerTrainees implements OnInit {
       Object.entries(
         this.criteriaScores
       )
-      .map(
-        ([criteriaId, score]) => ({
+        .map(
+          ([criteriaId, score]) => ({
 
-          criteriaId:
-            Number(criteriaId),
+            criteriaId:
+              Number(criteriaId),
 
-          score
+            score
 
-        })
-      );
+          })
+        );
 
 
     this.api
@@ -627,6 +887,13 @@ export class TrainerTrainees implements OnInit {
 
           this.selectedEnrollmentId =
             null;
+
+
+          // تحديث متوسطات التقييم والـ KPI
+          // مباشرة بعد حفظ تقييم جديد
+          this.loadEvaluationAverages(
+            this.enrollments()
+          );
         },
 
 
