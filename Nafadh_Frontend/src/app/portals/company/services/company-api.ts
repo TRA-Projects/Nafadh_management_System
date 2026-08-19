@@ -6,7 +6,7 @@ import {
   AnnouncementDto, CompanyBranchDto, CompanyCapacityDto, CompanyDto, CompanySupervisorDto,
   ConversationDetailDto, ConversationListItemDto, ConversationMessageDto, EnrollmentDto, EvaluationDto,
   FeedbackSummaryDto, TrainerKpisDto, WarningDto, AttendanceReportDto, ChartPointDto,
-  TraineeListItemDto, ProgramDto,
+  TraineeListItemDto, ProgramDto, ProgressSummaryDto,
 } from '../../../core/models/dtos';
 
 @Injectable({ providedIn: 'root' })
@@ -73,6 +73,12 @@ export class CompanyApi {
   updateSupervisor(id: number, dto: unknown) { return this.http.put(`${this.base}/CompanySupervisor/${id}`, dto); }
 
   // Trainee Progress
+  getEnrollment(enrollmentId: number): Observable<EnrollmentDto> {
+    return this.http.get<EnrollmentDto>(`${this.base}/Enrollment/${enrollmentId}`);
+  }
+  getProgressSummary(enrollmentId: number): Observable<ProgressSummaryDto> {
+    return this.http.get<ProgressSummaryDto>(`${this.base}/Enrollment/${enrollmentId}/progress-summary`);
+  }
   getEvaluationsForEnrollment(enrollmentId: number): Observable<EvaluationDto[]> {
     return this.http.get<EvaluationDto[]>(`${this.base}/Evaluation/enrollment/${enrollmentId}`);
   }

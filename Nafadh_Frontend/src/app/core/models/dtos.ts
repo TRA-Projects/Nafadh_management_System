@@ -250,6 +250,12 @@ export interface EnrollmentDto {
   departmentName?: string;
   supervisorId?: number;
   supervisorName?: string;
+
+  traineeGitHubUrl?: string;
+  programTitle?: string;
+  programDescription?: string;
+  trackName?: string;
+  trackDescription?: string;
 }
 
 export interface ProgressSummaryDto {
