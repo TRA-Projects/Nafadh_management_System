@@ -134,5 +134,6 @@ export class CompanyDashboard implements OnInit {
 
 // Connected dashboard statistics and sections to the existing Company API.
 // Added loading of capacity, attendance, program distribution, top performers,
+// trainees requiring follow-up, latest alerts, and company announcements.
 
 
