@@ -1,0 +1,98 @@
+@use '../../../../../styles/tokens' as *;
+
+:host {
+  display: block;
+  --contact-border: #e2e8f3;
+  --contact-border-light: #edf1f7;
+  --contact-soft: #f7faff;
+}
+
+.nfd-page-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.nfd-page-sub {
+  color: #64748b;
+}
+
+.nfd-toolbar {
+  align-items: center;
+}
+
+.nfd-toolbar .nfd-btn.primary {
+  box-shadow: 0 8px 16px -11px rgba(10, 17, 114, 0.85);
+}
+
+.nfd-card {
+  border-color: var(--contact-border);
+  box-shadow: 0 8px 24px rgba(10, 17, 114, 0.05);
+}
+
+.nfd-input {
+  border-color: var(--contact-border);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.nfd-input:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(0, 102, 196, 0.1);
+}
+
+/* Improve visual hierarchy without changing the original dimensions or layout. */
+.nfd-card > div[style*="padding:4px 4px 8px"] {
+  background: linear-gradient(180deg, var(--contact-soft), #fff);
+  border-bottom: 1px solid var(--contact-border-light);
+}
+
+.nfd-card button[type="button"]:not(.nfd-btn) {
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.nfd-card button[type="button"]:not(.nfd-btn):hover {
+  border-color: #cbdaf1 !important;
+  background: #f1f6ff !important;
+}
+
+.nfd-card [style*="background:#DC2626"] {
+  box-shadow: 0 3px 8px rgba(220, 38, 38, 0.22);
+}
+
+.company-contact-message {
+  border: 1px solid #d9e4f3;
+  box-shadow: 0 4px 12px rgba(10, 17, 114, 0.07);
+}
+
+.company-contact-message-own {
+  border-color: #080f68;
+  box-shadow: 0 4px 12px rgba(10, 17, 114, 0.16);
+}
+
+.company-contact-conversation {
+  border: 1px solid #dbe5f2 !important;
+  background: #fbfdff !important;
+  box-shadow: 0 3px 10px rgba(10, 17, 114, 0.035);
+}
+
+.company-contact-conversation:hover {
+  border-color: #b9cceb !important;
+  background: #f2f7ff !important;
+}
+
+.company-contact-conversation-active {
+  border-color: #aebfe5 !important;
+  background: #eef4ff !important;
+  box-shadow: inset 3px 0 0 var(--color-brand), 0 3px 10px rgba(10, 17, 114, 0.07);
+}
+
+.nfd-modal {
+  border: 1px solid var(--contact-border);
+  box-shadow: 0 18px 50px rgba(10, 17, 114, 0.18);
+}
+
+@media (max-width: 700px) {
+  .nfd-page-title {
+    font-size: 20px;
+  }
+}

@@ -14,6 +14,7 @@ import {
   selector: 'app-company-contact',
   imports: [CommonModule, FormsModule],
   templateUrl: './contact.html',
+  styleUrl: './contact.scss',
 })
 export class CompanyContact implements OnInit {
 

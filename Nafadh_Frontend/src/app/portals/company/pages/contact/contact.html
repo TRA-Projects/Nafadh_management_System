@@ -143,6 +143,7 @@
         ) {
 
           <button
+            class="company-contact-conversation"
             type="button"
             (click)="open(c.conversationId)"
             style="
@@ -163,6 +164,7 @@
                 ? 'var(--color-tint-indigo)'
                 : 'transparent'
             "
+            [class.company-contact-conversation-active]="active()?.conversationId === c.conversationId"
           >
 
             <!-- Top row -->
@@ -410,6 +412,7 @@
         ) {
 
           <div
+            class="company-contact-message"
             style="
               max-width:70%;
               padding:8px 12px;
@@ -430,6 +433,7 @@
                 ? 'flex-end'
                 : 'flex-start'
             "
+            [class.company-contact-message-own]="m.senderId === (auth.userId ?? -1)"
           >
 
             <strong
