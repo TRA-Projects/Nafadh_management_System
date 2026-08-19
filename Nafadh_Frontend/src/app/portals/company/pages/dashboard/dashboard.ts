@@ -136,5 +136,5 @@ export class CompanyDashboard implements OnInit {
 // Added loading of capacity, attendance, program distribution, top performers,
 // trainees requiring follow-up, latest alerts, and company announcements.
 // Added dashboard refresh functionality.
-
+// Added navigation actions from dashboard cards to related company pages.
 
