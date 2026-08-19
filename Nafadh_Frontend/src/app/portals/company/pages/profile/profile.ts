@@ -133,7 +133,7 @@ export class CompanyProfile implements OnInit {
 
     this.api.getCompanyPrograms(this.companyId).subscribe({
       next: (items) => {
-        this.specialties.set((items ?? []).map((item) => this.normalizeSpecialty(item as Record<string, unknown>)));
+        this.specialties.set((items ?? []).map((item) => this.normalizeSpecialty((item as unknown) as Record<string, unknown>)));
         this.specialtiesLoadError.set(false);
       },
       error: () => this.specialtiesLoadError.set(true),
