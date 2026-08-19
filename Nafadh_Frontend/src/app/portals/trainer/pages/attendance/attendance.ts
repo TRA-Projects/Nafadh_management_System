@@ -135,62 +135,76 @@ export class TrainerAttendance implements OnInit {
 
     if (userId == null) {
       this.rows.set([]);
+      this.excuses.set([]);
       this.loading.set(false);
-      this.loadError.set('تعذر تحديد المستخدم الحالي. أعد تسجيل الدخول ثم حاول مرة أخرى.');
+      this.loadError.set(
+        'تعذر تحديد المستخدم الحالي. أعد تسجيل الدخول ثم حاول مرة أخرى.'
+      );
       return;
     }
 
-    this.http.get<TrainerDto[]>(`${this.base}/Trainer`).subscribe({
-      next: (trainers) => {
-        const trainer = (trainers ?? []).find(
-          (t) => Number(t.userId) === Number(userId)
-        );
+    // الباك إند يوفر endpoint مباشر يربط UserId بسجل Trainer.
+    this.http
+      .get<TrainerDto>(`${this.base}/Trainer/by-user/${userId}`)
+      .subscribe({
+        next: (trainer) => {
+          this.trainerId.set(trainer.trainerId);
 
-        if (!trainer) {
-          this.rows.set([]);
-          this.loading.set(false);
-          this.loadError.set('لا يوجد سجل مدرب مرتبط بحساب المستخدم الحالي.');
-          return;
-        }
+          this.api.getMyBatches(trainer.trainerId).subscribe({
+            next: (batches) => {
+              const batchIds = new Set<number>(
+                (batches ?? [])
+                  .map((b) => Number(b.batchId))
+                  .filter((id) => Number.isFinite(id) && id > 0)
+              );
 
-        this.trainerId.set(trainer.trainerId);
+              this.trainerBatchIds.set(batchIds);
 
-        this.api.getMyBatches(trainer.trainerId).subscribe({
-          next: (batches) => {
-            const batchIds = new Set<number>(
-              (batches ?? [])
-                .map((b) => Number(b.batchId))
-                .filter((id) => Number.isFinite(id) && id > 0)
-            );
+              if (!batchIds.size) {
+                this.rows.set([]);
+                this.excuses.set([]);
+                this.repeatedAbsenceIds.set(new Set<number>());
+                this.loading.set(false);
+                this.loadError.set(null);
+                return;
+              }
 
-            this.trainerBatchIds.set(batchIds);
+              this.reload();
+            },
 
-            if (!batchIds.size) {
+            error: (err) => {
+              console.error('خطأ في تحميل دفعات المدرب:', err);
+
               this.rows.set([]);
               this.excuses.set([]);
               this.repeatedAbsenceIds.set(new Set<number>());
               this.loading.set(false);
-              this.loadError.set(null);
-              return;
-            }
+              this.loadError.set(
+                'تعذر تحميل الدفعات المسندة إلى المدرب الحالي.'
+              );
+            },
+          });
+        },
 
-            this.reload();
-          },
-          error: () => {
-            this.rows.set([]);
-            this.excuses.set([]);
-            this.loading.set(false);
-            this.loadError.set('تعذر تحميل الدفعات المسندة إلى المدرب الحالي.');
-          },
-        });
-      },
-      error: () => {
-        this.rows.set([]);
-        this.excuses.set([]);
-        this.loading.set(false);
-        this.loadError.set('تعذر تحميل بيانات المدرب الحالي.');
-      },
-    });
+        error: (err) => {
+          console.error('خطأ في تحميل بيانات المدرب الحالي:', err);
+
+          this.rows.set([]);
+          this.excuses.set([]);
+          this.repeatedAbsenceIds.set(new Set<number>());
+          this.loading.set(false);
+
+          if (err?.status === 404) {
+            this.loadError.set(
+              'لا يوجد سجل مدرب مرتبط بحساب المستخدم الحالي.'
+            );
+          } else {
+            this.loadError.set(
+              'تعذر تحميل بيانات المدرب الحالي.'
+            );
+          }
+        },
+      });
   }
 
   // ── التحميل ─────────────────────────────────────────────
@@ -208,11 +222,19 @@ export class TrainerAttendance implements OnInit {
       return;
     }
 
-    // نجلب التسجيلات ثم نحتفظ فقط بالدفعات المسندة للمدرب الحالي.
-    // لا نستخدم companyId ثابت حتى لا يرى كل المدربين نفس البيانات.
-    this.http.get<EnrollmentDto[]>(`${this.base}/Enrollment`).subscribe({
-      next: (enrollments) => {
-        const scopedEnrollments = (enrollments ?? []).filter(
+    // يدعم Enrollment سواء رجع Array أو Wrapper مثل { items, totalCount }.
+    this.http.get<any>(`${this.base}/Enrollment`).subscribe({
+      next: (response) => {
+        const enrollments: EnrollmentDto[] =
+          Array.isArray(response)
+            ? response
+            : Array.isArray(response?.items)
+              ? response.items
+              : Array.isArray(response?.data)
+                ? response.data
+                : [];
+
+        const scopedEnrollments = enrollments.filter(
           (e) => allowedBatchIds.has(Number(e.batchId))
         );
 
@@ -221,6 +243,7 @@ export class TrainerAttendance implements OnInit {
           this.excuses.set([]);
           this.repeatedAbsenceIds.set(new Set<number>());
           this.loading.set(false);
+          this.loadError.set(null);
           return;
         }
 
@@ -232,15 +255,14 @@ export class TrainerAttendance implements OnInit {
 
         forkJoin(historyRequests).subscribe({
           next: (histories) => {
-            const today = new Date();
-            const todayKey = this.dateKey(today);
-
+            const todayKey = this.dateKey(new Date());
             const todayRecords: DailyAttendanceDto[] = [];
 
             histories.forEach((history) => {
               const record = (history ?? []).find(
                 (a) => this.dateKey(new Date(a.date)) === todayKey
               );
+
               if (record) todayRecords.push(record);
             });
 
@@ -253,24 +275,24 @@ export class TrainerAttendance implements OnInit {
             );
 
             const merged: Row[] = scopedEnrollments.map((e) => {
-              const a = byEnrollment.get(e.enrollmentId);
+              const attendance = byEnrollment.get(e.enrollmentId);
 
               return {
-                dailyAttendanceId: a?.dailyAttendanceId ?? null,
+                dailyAttendanceId: attendance?.dailyAttendanceId ?? null,
                 enrollmentId: e.enrollmentId,
                 traineeName:
                   e.traineeName ||
-                  a?.traineeName ||
+                  attendance?.traineeName ||
                   `متدرب #${e.traineeId}`,
                 batchName: e.batchName || '—',
-                date: a?.date,
-                checkInTime: a?.checkInTime ?? null,
-                checkOutTime: a?.checkOutTime ?? null,
-                status: a
-                  ? a.status
+                date: attendance?.date,
+                checkInTime: attendance?.checkInTime ?? null,
+                checkOutTime: attendance?.checkOutTime ?? null,
+                status: attendance
+                  ? attendance.status
                   : this.toApi(this.presentStatus(), this.attShape),
-                isLate: a?.isLate ?? false,
-                note: a?.note ?? null,
+                isLate: attendance?.isLate ?? false,
+                note: attendance?.note ?? null,
               };
             });
 
@@ -279,27 +301,35 @@ export class TrainerAttendance implements OnInit {
             this.loadRepeatedAbsenceForRows(merged);
             this.loading.set(false);
 
-            // إذا كان المستخدم واقفاً على الأسبوعي/الشهري ثم ضغط تحديث،
-            // حدّث العرض الحالي أيضاً.
             if (this.registerView() === 'weekly') {
               this.loadWeeklyRegister();
             } else if (this.registerView() === 'monthly') {
               this.loadMonthlyRegister();
             }
           },
-          error: () => {
+
+          error: (err) => {
+            console.error('خطأ في تحميل سجلات الحضور:', err);
+
             this.rows.set([]);
             this.excuses.set([]);
             this.loading.set(false);
-            this.loadError.set('تعذر تحميل سجلات حضور متدربي المدرب الحالي.');
+            this.loadError.set(
+              'تعذر تحميل سجلات حضور متدربي المدرب الحالي.'
+            );
           },
         });
       },
-      error: () => {
+
+      error: (err) => {
+        console.error('خطأ في تحميل Enrollment:', err);
+
         this.rows.set([]);
         this.excuses.set([]);
         this.loading.set(false);
-        this.loadError.set('تعذر تحميل تسجيلات متدربي الدفعات المسندة للمدرب الحالي.');
+        this.loadError.set(
+          'تعذر تحميل تسجيلات متدربي الدفعات المسندة للمدرب الحالي.'
+        );
       },
     });
   }
