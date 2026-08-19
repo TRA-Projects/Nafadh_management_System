@@ -14,6 +14,8 @@ namespace Nafadh_Backend.DTOs
             public NFD_AttendanceStatus Status { get; set; }
             public bool IsLate { get; set; }
             public string? Note { get; set; }
+            public string? TraineeName { get; set; } 
+            public string? BatchName { get; set; }
         }
 
         public class CreateDailyAttendanceDto

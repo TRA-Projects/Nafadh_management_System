@@ -1,40 +1,492 @@
-<h2 class="nfd-page-title">الحضور اليومي</h2>
-<p class="nfd-page-sub">تسجيل حضور المتدربين لليوم الحالي — اضغط على حالة كل متدرب لتغييرها</p>
-
-<div class="nfd-card">
-  <table class="nfd-table">
-    <thead><tr><th>المتدرب</th><th>حالة اليوم</th><th></th></tr></thead>
-    <tbody>
-      @for (r of rows(); track r.dailyAttendanceId) {
-        <tr>
-          <td>{{ r.traineeName }}</td>
-          <td>
-            <div style="display:flex;gap:6px">
-              @for (s of pickable; track s) {
-                <button class="nfd-chip" [class.active]="r.status === s" (click)="setStatus(r, s)">{{ labels[s] }}</button>
-              }
-            </div>
-          </td>
-          <td>
-            @if (r.status === 'Absent') { <button class="nfd-btn danger" (click)="reportAbsence(r)">إبلاغ الهيئة</button> }
-          </td>
-        </tr>
-      }
-      @empty { <tr><td colspan="3">لا توجد سجلات حضور لعرضها اليوم</td></tr> }
-    </tbody>
-  </table>
-</div>
-
-<div class="nfd-card" style="margin-top:16px">
-  <h3>أعذار بانتظار المراجعة</h3>
-  @for (ex of excuses(); track ex.excuseId) {
-    <div class="nfd-row">
-      <span>{{ ex.reason }}</span>
+<section class="attendance-page" dir="rtl">
+  <!-- رأس الصفحة -->
+  <header class="page-heading">
+    <div class="heading-copy">
+      <div class="heading-icon" aria-hidden="true">✓</div>
       <div>
-        <button class="nfd-btn secondary" (click)="reviewExcuse(ex, true)">✓ قبول</button>
-        <button class="nfd-btn ghost" (click)="reviewExcuse(ex, false)">✕ رفض</button>
+        <h2>الحضور اليومي</h2>
+        <p>تسجيل حضور المتدربين — {{ todayLabel }}</p>
+      </div>
+    </div>
+
+    <div class="heading-actions">
+      <button type="button" class="btn btn-primary" (click)="confirmToday()" [disabled]="loading()">
+        <span aria-hidden="true">✓</span> تأكيد سجل اليوم
+      </button>
+
+      <button type="button" class="btn btn-outline" (click)="showRegister('monthly')">
+        <span aria-hidden="true">▣</span> السجل الشهري
+      </button>
+
+      <button type="button" class="btn btn-outline" (click)="showRegister('weekly')">
+        <span aria-hidden="true">▣</span> السجل الأسبوعي
+      </button>
+    </div>
+  </header>
+
+  <!-- شريط التحكم والإحصاءات -->
+  <section class="filter-card">
+    <div class="filter-main">
+      <div class="tabs" role="tablist" aria-label="نوع السجل">
+        <button
+          type="button"
+          class="tab"
+          [class.active]="registerView() === 'today'"
+          (click)="showRegister('today')">
+          سجل اليوم
+        </button>
+
+        <button
+          type="button"
+          class="tab"
+          [class.active]="registerView() === 'weekly'"
+          (click)="showRegister('weekly')">
+          أسبوعي
+        </button>
+
+        <button
+          type="button"
+          class="tab"
+          [class.active]="registerView() === 'monthly'"
+          (click)="showRegister('monthly')">
+          شهري
+        </button>
+      </div>
+
+      <div class="stats" aria-label="إحصاءات الحضور">
+        <span class="stat-pill"><i class="dot blue"></i> حاضر {{ statusCount('present') }}</span>
+        <span class="stat-pill"><i class="dot yellow"></i> متأخر {{ statusCount('late') }}</span>
+        <span class="stat-pill"><i class="dot red"></i> غائب {{ statusCount('absent') }}</span>
+        <span class="stat-pill"><i class="dot cyan"></i> بعذر {{ statusCount('excused') }}</span>
+        <span class="stat-pill commitment">نسبة الالتزام {{ commitmentRate() }}%</span>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="btn btn-danger"
+      (click)="askReportAllRepeatedAbsence()"
+      [disabled]="absentRows().length === 0">
+      <span aria-hidden="true">➤</span>
+      إرسال الغياب المتكرر للهيئة
+    </button>
+  </section>
+
+  @if (registerView() === 'today') {
+      <!-- أدوات الكشف -->
+  <div class="section-toolbar">
+    <strong>سجل حضور اليوم — {{ todayLabel }}</strong>
+    <small>تم افتراض الجميع حاضرين — عدّل فقط الغائب أو بعذر</small>
+  </div>
+  
+  <section class="attendance-card">
+    <div class="table-tools">
+      <div class="search-box">
+        <span aria-hidden="true">⌕</span>
+        <input
+          type="search"
+          placeholder="ابحث باسم المتدرب…"
+          [value]="query()"
+          (input)="onSearch($event)" />
+      </div>
+
+      <div class="quick-filters">
+        @for (f of filters; track f.key) {
+          <button
+            type="button"
+            [class.active]="filter() === f.key"
+            (click)="filter.set(f.key)">
+            {{ f.label }}
+            @if (f.key !== 'all') {
+              <span>{{ filterCount(f.key) }}</span>
+            }
+          </button>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="reload-btn"
+        (click)="reload()"
+        [disabled]="loading()">
+        <span [class.spinning]="loading()">⟳</span>
+        تحديث
+      </button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>المتدرب</th>
+            <th>المسار</th>
+            <th>حالة اليوم</th>
+            <th>السبب / الملاحظة</th>
+            <th>إثبات العذر</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @if (loading()) {
+            @for (i of skeleton; track i) {
+              <tr class="skeleton-row">
+                <td><span class="sk avatar-sk"></span><span class="sk line-sk"></span></td>
+                <td><span class="sk line-sk short"></span></td>
+                <td><span class="sk status-sk"></span></td>
+                <td><span class="sk line-sk"></span></td>
+                <td><span class="sk mini-sk"></span></td>
+              </tr>
+            }
+          } @else {
+            @for (r of visibleRows(); track r.enrollmentId) {
+              <tr
+                [class.attention-row]="statusKey(r.status) === 'absent' || statusKey(r.status) === 'late'"
+                [class.is-saving]="savingId() === r.enrollmentId">
+
+                <td data-label="المتدرب">
+                  <div class="person person-with-excuse">
+                    <span class="avatar" [ngClass]="avatarClass(r)">
+                      {{ initials(r.traineeName) }}
+                    </span>
+
+                    <span class="person-copy">
+                      <b>{{ r.traineeName || 'متدرب' }}</b>
+                      <small>{{ traineeSubtitle(r) }}</small>
+                    </span>
+                  </div>
+                </td>
+
+                <td data-label="المسار">
+                  <span class="path-name">{{ r.batchName || '—' }}</span>
+                </td>
+
+                <td data-label="حالة اليوم">
+                  <div
+                    class="status-pills"
+                    role="group"
+                    [attr.aria-label]="'حالة ' + (r.traineeName || 'المتدرب')">
+
+                    @for (s of statuses; track s.code) {
+                      <button
+                        type="button"
+                        class="status-btn"
+                        [ngClass]="statusButtonClass(s.key)"
+                        [class.active]="isActive(r, s)"
+                        [disabled]="savingId() === r.enrollmentId"
+                        (click)="setStatus(r, s)">
+                        {{ s.label }}
+                      </button>
+                    }
+                  </div>
+                </td>
+
+                <!-- السبب / الملاحظة -->
+                <td data-label="السبب / الملاحظة">
+                  @if (statusKey(r.status) === 'excused') {
+                    <div class="excuse-reason-row">
+                      @if (excuseFor(r); as ex) {
+                        <span class="reason-text">{{ ex.reason }}</span>
+                      } @else if (r.note) {
+                        <span class="reason-text">{{ r.note }}</span>
+                      } @else {
+                        <span class="reason-text muted-note">
+                          بانتظار رفع العذر من المتدرب
+                        </span>
+                      }
+                    </div>
+
+                  } @else if (statusKey(r.status) === 'absent') {
+                    @if (repeatedAbsenceIds().has(r.enrollmentId)) {
+                      <span class="reason reason-danger">غياب متكرر</span>
+                    } @else {
+                      <span class="reason reason-danger">غياب مسجل</span>
+                    }
+
+                  } @else if (statusKey(r.status) === 'late') {
+                    <span class="reason reason-warn">تأخر عن موعد الحضور</span>
+
+                  } @else {
+                    <span class="muted-note">حاضر</span>
+                  }
+                </td>
+
+                <!-- الإثبات / الإنذار -->
+                <td data-label="إثبات العذر">
+                  @if (statusKey(r.status) === 'excused') {
+
+                    @if (excuseFor(r); as ex) {
+                      <div class="proof-actions">
+                        @if (ex.proofUrl) {
+                          <a
+                            class="proof-btn"
+                            [href]="ex.proofUrl"
+                            target="_blank"
+                            rel="noopener">
+                            ▤ عرض الإثبات
+                          </a>
+                        } @else {
+                          <span class="no-proof">لا يوجد مرفق</span>
+                        }
+
+                        @if (isExcusePending(ex)) {
+                          <button
+                            type="button"
+                            class="approve-btn"
+                            [disabled]="reviewingId() === ex.excuseId"
+                            (click)="reviewExcuse(ex, true)">
+                            ✓ قبول
+                          </button>
+
+                          <button
+                            type="button"
+                            class="reject-btn"
+                            [disabled]="reviewingId() === ex.excuseId"
+                            (click)="reviewExcuse(ex, false)">
+                            ✕ رفض
+                          </button>
+                        } @else {
+                          <span class="reviewed-note">تمت مراجعة العذر</span>
+                        }
+                      </div>
+
+                    } @else {
+                      <span class="no-proof">بانتظار رفع العذر</span>
+                    }
+
+                  } @else if (statusKey(r.status) === 'absent') {
+
+                    @if (
+                      r.dailyAttendanceId != null &&
+                      reportedIds().has(r.dailyAttendanceId)
+                    ) {
+                      <span class="reported">✓ أُبلغت الهيئة</span>
+
+                    } @else if (repeatedAbsenceIds().has(r.enrollmentId)) {
+                      <button
+                        type="button"
+                        class="proof-btn"
+                        (click)="askReportAbsence(r)">
+                        إبلاغ الهيئة عن غياب متكرر
+                      </button>
+
+                    } @else {
+                      <span class="no-proof">غياب بدون عذر</span>
+                    }
+
+                  } @else {
+                    <span class="no-proof">—</span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">
+                    @if (loadError()) {
+                      <b>تعذّر تحميل كشف الحضور</b>
+                      <p>{{ loadError() }}</p>
+                      <button type="button" class="btn btn-outline" (click)="reload()">
+                        إعادة المحاولة
+                      </button>
+
+                    } @else if (rows().length) {
+                      <b>لا نتائج مطابقة</b>
+                      <p>غيّري كلمة البحث أو التصفية لعرض بقية المتدربين.</p>
+                      <button type="button" class="btn btn-outline" (click)="clearFilters()">
+                        عرض الكشف كاملاً
+                      </button>
+
+                    } @else {
+                      <b>لا يوجد كشف حضور اليوم</b>
+                      <p>يظهر الكشف تلقائياً عند بدء يوم تدريبي للدفعات المسندة إليك.</p>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+  } @else if (registerView() === 'weekly') {
+
+  <div class="section-toolbar">
+    <strong>السجل الأسبوعي</strong>
+    <small>ملخص حضور المتدربين للأسبوع الحالي</small>
+  </div>
+
+  <section class="attendance-card">
+    <div class="table-wrap">
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>المتدرب</th>
+            <th>المسار</th>
+            <th>حاضر</th>
+            <th>متأخر</th>
+            <th>غائب</th>
+            <th>بعذر</th>
+            <th>إجمالي الأيام</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @if (historyLoading()) {
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">
+                  <b>جاري تحميل السجل الأسبوعي...</b>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (r of weeklyRows(); track r.enrollmentId) {
+              <tr>
+                <td>
+                  <div class="person">
+                    <span class="avatar">
+                      {{ initials(r.traineeName) }}
+                    </span>
+
+                    <span>
+                      <b>{{ r.traineeName || 'متدرب' }}</b>
+                    </span>
+                  </div>
+                </td>
+
+                <td>{{ r.batchName || '—' }}</td>
+                <td>{{ r.present }}</td>
+                <td>{{ r.late }}</td>
+                <td>{{ r.absent }}</td>
+                <td>{{ r.excused }}</td>
+                <td>{{ r.total }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7">
+                  <div class="empty-state">
+                    <b>لا توجد سجلات لهذا الأسبوع</b>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+} @else if (registerView() === 'monthly') {
+
+  <div class="section-toolbar">
+    <strong>السجل الشهري</strong>
+    <small>ملخص حضور المتدربين للشهر الحالي</small>
+  </div>
+
+  <section class="attendance-card">
+    <div class="table-wrap">
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>المتدرب</th>
+            <th>المسار</th>
+            <th>حاضر</th>
+            <th>متأخر</th>
+            <th>غائب</th>
+            <th>بعذر</th>
+            <th>إجمالي الأيام</th>
+            <th>نسبة الالتزام</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @if (historyLoading()) {
+            <tr>
+              <td colspan="8">
+                <div class="empty-state">
+                  <b>جاري تحميل السجل الشهري...</b>
+                </div>
+              </td>
+            </tr>
+          } @else {
+            @for (r of monthlyRows(); track r.enrollmentId) {
+              <tr>
+                <td>
+                  <div class="person">
+                    <span class="avatar">
+                      {{ initials(r.traineeName) }}
+                    </span>
+
+                    <span>
+                      <b>{{ r.traineeName || 'متدرب' }}</b>
+                    </span>
+                  </div>
+                </td>
+
+                <td>{{ r.batchName || '—' }}</td>
+                <td>{{ r.present }}</td>
+                <td>{{ r.late }}</td>
+                <td>{{ r.absent }}</td>
+                <td>{{ r.excused }}</td>
+                <td>{{ r.total }}</td>
+                <td>{{ r.commitment }}%</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">
+                    <b>لا توجد سجلات لهذا الشهر</b>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+}
+
+  @if (pending(); as p) {
+    <div class="overlay" (click)="pending.set(null)">
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        (click)="$event.stopPropagation()">
+
+        <h3>{{ p.title }}</h3>
+        <p>{{ p.text }}</p>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-outline"
+            (click)="pending.set(null)">
+            إلغاء
+          </button>
+
+          <button
+            type="button"
+            class="btn"
+            [class.btn-danger-solid]="p.tone === 'danger'"
+            [class.btn-primary]="p.tone === 'primary'"
+            (click)="runPending()">
+            {{ p.confirmLabel }}
+          </button>
+        </div>
       </div>
     </div>
   }
-  @empty { <p class="nfd-muted">لا توجد أعذار بانتظار المراجعة</p> }
-</div>
+
+  @if (toast(); as t) {
+    <div
+      class="toast"
+      [class.error]="t.kind === 'err'"
+      role="status">
+      {{ t.text }}
+    </div>
+  }
+</section>

@@ -1,33 +1,640 @@
-<div class="nfd-card" style="background:linear-gradient(135deg,var(--color-navy),var(--color-navy-light));color:#fff;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:20px">
-  <div>
-    <span style="font-size:11px;opacity:.8">✓ لوحة المدرب · اليوم</span>
-    <h2 style="margin:6px 0;font-size:22px;color:#fff">مرحباً {{ auth.session()?.fullName }}</h2>
-    <p style="font-size:13px;opacity:.8;max-width:420px">كل ما تحتاجه لمتابعة دفعاتك، أداء المتدربين والحضور اليومي في مكان واحد.</p>
-  </div>
-  <div style="display:flex;gap:10px">
-    <a routerLink="/trainer/attendance" class="nfd-btn primary" style="background:var(--color-cyan)">📅 تسجيل الحضور اليومي</a>
-    <a routerLink="/trainer/trainees" class="nfd-btn secondary" style="color:#fff;border-color:#fff">👥 تقييم ومتابعة المتدربين</a>
-  </div>
-</div>
+<div class="dashboard-page">
 
-<div class="nfd-stat-grid" style="--cols:3">
-  <div class="nfd-stat"><span>الدفعات المسندة</span><strong>{{ batches().length }}</strong></div>
-  <div class="nfd-stat"><span>عدد المتدربين</span><strong>—</strong></div>
-  <div class="nfd-stat"><span>الجلسات القادمة</span><strong>—</strong></div>
-</div>
+  <!-- =====================================================
+       HERO
+  ====================================================== -->
 
-<div class="nfd-card">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <h3 style="margin:0">الدفعات المسندة</h3>
-    <a routerLink="/trainer/batches" class="nfd-btn ghost">عرض الكل</a>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
-    @for (b of batches(); track b.batchId) {
-      <div style="padding:12px;border-radius:var(--radius-lg);background:var(--color-tint-indigo)">
-        <strong style="display:block;font-size:13px">{{ b.batchName }}</strong>
-        <small class="nfd-muted">{{ b.status }}</small>
+  <section class="dashboard-hero">
+
+    <div class="hero-decoration"></div>
+
+
+    <div class="hero-content">
+
+      <span class="hero-badge">
+        ✓ لوحة المدرب · اليوم
+      </span>
+
+      <h1>
+        مرحباً
+        {{
+          auth.session()?.fullName ||
+          'بالمدرب'
+        }}
+      </h1>
+
+      <p>
+        كل ما تحتاجه لمتابعة دفعاتك، أداء المتدربين
+        والحضور اليومي في مكان واحد.
+      </p>
+
+    </div>
+
+
+    <div class="hero-actions">
+
+      <a
+        routerLink="/trainer/attendance"
+        class="hero-btn primary"
+      >
+
+        <span class="btn-icon">
+          📅
+        </span>
+
+        <span>
+          تسجيل الحضور اليومي
+        </span>
+
+      </a>
+
+
+      <a
+        routerLink="/trainer/trainees"
+        class="hero-btn secondary"
+      >
+
+        <span class="btn-icon">
+          👥
+        </span>
+
+        <span>
+          تقييم ومتابعة المتدربين
+        </span>
+
+      </a>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       KPI CARDS
+  ====================================================== -->
+
+  <section class="dashboard-kpis">
+
+    <!-- BATCHES -->
+
+    <article class="kpi-card">
+
+      <div class="kpi-content">
+
+        <span class="kpi-label">
+          الدفعات المسندة
+        </span>
+
+        <strong>
+          {{ batches().length }}
+        </strong>
+
+        <small>
+          دفعات مرتبطة بحسابك
+        </small>
+
       </div>
-    }
-    @empty { <p class="nfd-muted">لا توجد دفعات مسندة حالياً</p> }
-  </div>
+
+
+      <div class="kpi-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+
+          <path
+            d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
+          ></path>
+
+          <path
+            d="M6.5 2H20v20H6.5A2.5
+            2.5 0 0 1 4 19.5v-15A2.5
+            2.5 0 0 1 6.5 2Z"
+          ></path>
+
+        </svg>
+
+      </div>
+
+    </article>
+
+
+    <!-- TRAINEES -->
+
+    <article class="kpi-card">
+
+      <div class="kpi-content">
+
+        <span class="kpi-label">
+          عدد المتدربين
+        </span>
+
+        <strong>
+          {{ traineeCount() }}
+        </strong>
+
+        <small>
+          ضمن الدفعات المسندة
+        </small>
+
+      </div>
+
+
+      <div class="kpi-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+
+          <path
+            d="M17 21v-2a4 4 0 0 0-4-4H5
+            a4 4 0 0 0-4 4v2"
+          ></path>
+
+          <circle
+            cx="9"
+            cy="7"
+            r="4"
+          ></circle>
+
+          <path
+            d="M23 21v-2a4
+            4 0 0 0-3-3.87"
+          ></path>
+
+        </svg>
+
+      </div>
+
+    </article>
+
+
+    <!-- UPCOMING -->
+
+    <article class="kpi-card">
+
+      <div class="kpi-content">
+
+        <span class="kpi-label">
+          الجلسات القادمة
+        </span>
+
+        <strong>
+          {{
+            upcomingSessions().length
+          }}
+        </strong>
+
+        <small>
+
+          {{
+            upcomingSessions().length > 0
+              ? 'جلسات مجدولة قادمة'
+              : 'لا توجد جلسات قادمة'
+          }}
+
+        </small>
+
+      </div>
+
+
+      <div class="kpi-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+
+          <rect
+            x="3"
+            y="4"
+            width="18"
+            height="17"
+            rx="2"
+          ></rect>
+
+          <line
+            x1="16"
+            y1="2"
+            x2="16"
+            y2="6"
+          ></line>
+
+          <line
+            x1="8"
+            y1="2"
+            x2="8"
+            y2="6"
+          ></line>
+
+          <line
+            x1="3"
+            y1="10"
+            x2="21"
+            y2="10"
+          ></line>
+
+        </svg>
+
+      </div>
+
+    </article>
+
+  </section>
+
+
+  <!-- =====================================================
+       CONTENT
+  ====================================================== -->
+
+  <section class="dashboard-content-grid">
+
+
+    <!-- ===================================================
+         BATCHES
+    ==================================================== -->
+
+    <div class="dashboard-card batches-card">
+
+      <div class="card-heading">
+
+        <div>
+
+          <h3>
+            الدفعات المسندة
+          </h3>
+
+          <p>
+            متابعة الدفعات الحالية والتقدم التدريبي.
+          </p>
+
+        </div>
+
+
+        <a
+          routerLink="/trainer/batches"
+          class="view-all-btn"
+        >
+          عرض الكل
+        </a>
+
+      </div>
+
+
+      <div class="batch-grid">
+
+        @for (
+          b of dashboardBatches();
+          track b.batchId
+        ) {
+
+          <article class="batch-card">
+
+            <div class="batch-image-wrapper">
+
+              <img
+                class="batch-image"
+                [src]="getBatchImage(b.batchId)"
+                [alt]="
+                  b.batchName ||
+                  'دفعة تدريبية'
+                "
+              />
+
+
+              <span
+                class="status-badge image-status"
+                [class.active]="b.status === 'Ongoing'"
+                [class.upcoming]="b.status === 'Upcoming'"
+                [class.completed]="b.status === 'Completed'"
+                [class.cancelled]="b.status === 'Cancelled'"
+              >
+
+                {{
+                  getBatchStatusLabel(
+                    b.status
+                  )
+                }}
+
+              </span>
+
+            </div>
+
+
+            <div class="batch-card-content">
+
+              <span class="batch-label">
+                دفعة تدريبية
+              </span>
+
+              <h4>
+                {{
+                  b.batchName ||
+                  'دفعة بدون اسم'
+                }}
+              </h4>
+
+
+              <div class="batch-meta">
+
+                <div class="meta-item">
+
+                  <span class="meta-label">
+                    البداية
+                  </span>
+
+                  <strong>
+
+                    {{
+                      b.startDate
+                        ? (
+                            b.startDate |
+                            date:'yyyy/MM/dd'
+                          )
+                        : '—'
+                    }}
+
+                  </strong>
+
+                </div>
+
+
+                <div class="meta-item">
+
+                  <span class="meta-label">
+                    النهاية
+                  </span>
+
+                  <strong>
+
+                    {{
+                      b.endDate
+                        ? (
+                            b.endDate |
+                            date:'yyyy/MM/dd'
+                          )
+                        : '—'
+                    }}
+
+                  </strong>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </article>
+
+        } @empty {
+
+          <div class="empty-state">
+
+            <div class="empty-icon">
+
+              <svg
+                viewBox="0 0 24 24"
+                width="26"
+                height="26"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+
+                <path
+                  d="M4 19.5A2.5
+                  2.5 0 0 1 6.5 17H20"
+                ></path>
+
+                <path
+                  d="M6.5 2H20v20H6.5A2.5
+                  2.5 0 0 1 4 19.5v-15A2.5
+                  2.5 0 0 1 6.5 2Z"
+                ></path>
+
+              </svg>
+
+            </div>
+
+            <strong>
+              لا توجد دفعات مسندة حالياً
+            </strong>
+
+            <span>
+              ستظهر الدفعات هنا عند إسنادها
+              لحساب المدرب.
+            </span>
+
+          </div>
+
+        }
+
+      </div>
+
+    </div>
+
+
+    <!-- ===================================================
+         SESSIONS
+    ==================================================== -->
+
+    <div class="dashboard-card sessions-card">
+
+      <div class="card-heading">
+
+        <div>
+
+          <h3>
+            الجلسات القادمة
+          </h3>
+
+          <p>
+            مواعيد الجلسات التدريبية القادمة.
+          </p>
+
+        </div>
+
+
+        @if (
+          upcomingSessions().length > 0
+        ) {
+
+          <span class="sessions-count">
+
+            {{
+              upcomingSessions().length
+            }}
+            جلسات
+
+          </span>
+
+        }
+
+      </div>
+
+
+      <div class="sessions-list">
+
+        @for (
+          session of upcomingSessions().slice(0, 3);
+          track session.sessionId
+        ) {
+
+          <div class="session-row">
+
+            <div class="session-time-box">
+
+              <strong>
+                {{
+                  session.startTime ||
+                  '—'
+                }}
+              </strong>
+
+              <span>
+                {{
+                  session.sessionDate |
+                  date:'MM/dd'
+                }}
+              </span>
+
+            </div>
+
+
+            <div class="session-info">
+
+              <strong>
+                {{
+                  session.topic ||
+                  'جلسة تدريبية'
+                }}
+              </strong>
+
+              <span>
+                {{
+                  session.sessionDate |
+                  date:'yyyy/MM/dd'
+                }}
+              </span>
+
+
+              @if (
+                session.endTime
+              ) {
+
+                <small>
+
+                  من
+                  {{
+                    session.startTime ||
+                    '—'
+                  }}
+
+                  إلى
+
+                  {{
+                    session.endTime
+                  }}
+
+                </small>
+
+              }
+
+            </div>
+
+
+            <span
+              class="session-status"
+              [class.postponed]="
+                session.status ===
+                'Postponed'
+              "
+            >
+
+              {{
+                session.status ===
+                'Postponed'
+                  ? 'مؤجلة'
+                  : 'قادمة'
+              }}
+
+            </span>
+
+          </div>
+
+        } @empty {
+
+          <div class="empty-state sessions-empty">
+
+            <div class="empty-icon">
+
+              <svg
+                viewBox="0 0 24 24"
+                width="27"
+                height="27"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+
+                <rect
+                  x="3"
+                  y="4"
+                  width="18"
+                  height="17"
+                  rx="2"
+                ></rect>
+
+                <line
+                  x1="16"
+                  y1="2"
+                  x2="16"
+                  y2="6"
+                ></line>
+
+                <line
+                  x1="8"
+                  y1="2"
+                  x2="8"
+                  y2="6"
+                ></line>
+
+                <line
+                  x1="3"
+                  y1="10"
+                  x2="21"
+                  y2="10"
+                ></line>
+
+              </svg>
+
+            </div>
+
+            <strong>
+              لا توجد جلسات قادمة
+            </strong>
+
+            <span>
+              ستظهر هنا الجلسات المجدولة
+              القادمة تلقائياً.
+            </span>
+
+          </div>
+
+        }
+
+      </div>
+
+    </div>
+
+  </section>
+
 </div>

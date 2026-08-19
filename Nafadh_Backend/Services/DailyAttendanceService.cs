@@ -136,7 +136,9 @@ namespace Nafadh_Backend.Services
                 CheckOutTime = entity.CheckOutTime,
                 Status = entity.Status,
                 IsLate = entity.IsLate,
-                Note = entity.Note
+                Note = entity.Note,
+                TraineeName = entity.Enrollment?.Trainee?.User?.FullName, 
+                BatchName = entity.Enrollment?.Batch?.BatchName
             };
         }
     }
