@@ -48,7 +48,11 @@ namespace Nafadh_Backend.Controllers
                 Status = t.Status,
                 VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
-                CompanyName = t.Company?.CompanyName
+                CompanyName = t.Company?.CompanyName,
+              
+                ProgramName = t.Enrollments != null && t.Enrollments.Any()
+                    ? t.Enrollments.FirstOrDefault()?.Batch?.Program?.Title ?? "برنامج تدريبي"
+                    : "غير مسجل"
             }).ToList();
 
             return Ok(new { Items = dtos, TotalCount = total });
@@ -138,8 +142,6 @@ namespace Nafadh_Backend.Controllers
                 ResumeUrl = create.ResumeUrl,
                 GitHubUrl = create.GitHubUrl,
                 LinkedInUrl = create.LinkedInUrl,
-                // EDITED: canonical 3-value status — a freshly created trainee has
-                // no company yet, so NotAssigned (was "Active" under the old enum).
                 Status = Enums.NFD_TraineeStatus.NotAssigned,
                 VerificationStatus = Enums.NFD_VerificationStatus.Pending
             };
@@ -159,13 +161,11 @@ namespace Nafadh_Backend.Controllers
             if (existing == null) return NotFound();
 
             existing.Status = dto.Status;
-            // reason is not persisted in current model; can be logged or extended later
 
             _service.Update(existing);
             var saved = await _service.SaveChangesAsync();
             if (!saved) return StatusCode(500, "Failed to update status.");
 
-            // NEW: a status change to Completed may satisfy the ProgramCompletion badge.
             if (dto.Status == Enums.NFD_TraineeStatus.Completed)
             {
                 await _badgeEvaluationService.EvaluateTraineeAsync(id);
@@ -254,10 +254,7 @@ namespace Nafadh_Backend.Controllers
             return Ok(new { Imported = models.Count });
         }
 
-        // ==========================================
         // GET: api/trainee/pending-verification
-        // NEW: trainees awaiting identity verification review
-        // ==========================================
         [HttpGet("pending-verification")]
         public async Task<IActionResult> GetPendingVerification()
         {
@@ -278,10 +275,7 @@ namespace Nafadh_Backend.Controllers
             return Ok(dtos);
         }
 
-        // ==========================================
         // PUT: api/trainee/{id}/verification
-        // NEW: approve/reject a trainee's identity verification
-        // ==========================================
         [HttpPut("{id}/verification")]
         public async Task<IActionResult> UpdateVerification(int id, [FromBody] TraineeVerificationInputDTO dto)
         {
@@ -289,8 +283,6 @@ namespace Nafadh_Backend.Controllers
             if (existing == null) return NotFound();
 
             existing.VerificationStatus = dto.Status;
-            // ReviewedByUserId is accepted for audit/logging purposes; not persisted
-            // on the Trainee model itself (no dedicated column for reviewer yet).
 
             _service.Update(existing);
             var saved = await _service.SaveChangesAsync();
