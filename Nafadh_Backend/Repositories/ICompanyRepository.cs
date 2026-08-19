@@ -36,5 +36,8 @@ namespace Nafadh_Backend.Repositories
 
         //used to validate FK before insert
         Task<bool> UserExistsAsync(int userId);
+
+        // Count enrollments for a company (used for capacity calculations)
+        Task<int> GetEnrollmentCountAsync(int companyId);
     }
 }

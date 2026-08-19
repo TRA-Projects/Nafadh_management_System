@@ -23,6 +23,13 @@ namespace Nafadh_Backend.Repositories
         public async Task<NFD_Company?> GetCompanyByIdAsync(int companyId)
         {
             return await _context.NFD_Companies
+            // include navigation properties so frontend receives related data from DB
+            .Include(c => c.User)
+            .Include(c => c.CompanyBranches)
+            .Include(c => c.CompanySupervisors).ThenInclude(s => s.User)
+            .Include(c => c.CompanyPrograms)
+            .Include(c => c.CompanyPayments).ThenInclude(p => p.CompanyPaymentSchedules)
+            .Include(c => c.Departments)
             .Include(c => c.Trainees)
             .FirstOrDefaultAsync(c => c.CompanyId == companyId);
         }
@@ -74,6 +81,12 @@ namespace Nafadh_Backend.Repositories
         {
             _context.NFD_Companies.Update(company);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<int> GetEnrollmentCountAsync(int companyId)
+        {
+            return await _context.NFD_Enrollments
+                .CountAsync(e => e.CompanyId == companyId);
         }
 
         // Delete Company

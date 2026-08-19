@@ -18,6 +18,9 @@ namespace Nafadh_Backend.Interfaces
         //2-
         Task<NFD_CompanySupervisor?> GetByIdAsync(int id);
 
+        //2b-
+        Task<NFD_CompanySupervisor?> GetByUserIdAsync(int userId);
+
         //3-
         Task AddAsync(NFD_CompanySupervisor supervisor);
 

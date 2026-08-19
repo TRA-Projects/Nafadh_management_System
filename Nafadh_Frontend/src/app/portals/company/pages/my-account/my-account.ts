@@ -2,53 +2,55 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
-
-export interface TrainerProfileDto {
-  trainerId: number;
-  fullName?: string;
-  email?: string;
-  specialty?: string;
-  experienceYears: number;
-  biography?: string;
-  cvUrl?: string;
-  status: any;
-}
+import { CompanySupervisorDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-company-my-account',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './my-account.html',
-  styleUrls: ['./my-account.scss']
 })
 export class CompanyMyAccount implements OnInit {
-  profile = signal<TrainerProfileDto | null>(null);
+  profile = signal<CompanySupervisorDto | null>(null);
 
   constructor(private api: CompanyApi, public auth: AuthService) {}
 
   ngOnInit() {
     const supervisorId = this.auth.userId ?? 1;
     this.api.getSupervisorProfile(supervisorId).subscribe({
-      next: (p: any) => this.profile.set(p),
-      error: (err) => console.error('خطأ في جلب بيانات الحساب:', err)
+      next: (p) => this.profile.set(p),
+      error: () => {}
     });
   }
 
-  // دالة الاستدعاء الديناميكي المباشر للمكتبة
-  async exportToPDF() {
-    const element = document.getElementById('account-page-content');
+  async exportToPdf() {
+    const element = document.getElementById('account-pdf-content');
     if (!element) return;
 
-    const html2pdf = (await import('html2pdf.js')).default;
+    if (typeof (window as any).html2pdf === 'undefined') {
+      await this.loadPdfScript();
+    }
 
-    const options = {
-      margin: 10,
-      filename: `بيانات_الحساب_${this.profile()?.fullName || 'المستخدم'}.pdf`,
-      image: { type: 'jpeg' as const, quality: 0.98 }, // 👈 إضافة as const هنا
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+    const html2pdf = (window as any).html2pdf;
+
+    const opt = {
+      margin:       10,
+      filename:     `بيانات_الحساب_${new Date().toISOString().slice(0, 10)}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    html2pdf().set(options).from(element).save();
+    html2pdf().set(opt).from(element).save();
+  }
+
+  private loadPdfScript(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.onload = () => resolve();
+      script.onerror = (err) => reject(err);
+      document.body.appendChild(script);
+    });
   }
 }

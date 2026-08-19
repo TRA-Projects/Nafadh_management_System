@@ -22,6 +22,8 @@ export interface LoginResponseDto {
   email: string;
   roleId: number;
   roleName: RoleName;
+  companyId?: number;
+  supervisorId?: number;
 }
 
 export interface UserResponseDto {
@@ -119,8 +121,10 @@ export interface CompanyBranchDto {
 
 export interface CompanySupervisorDto {
   id: number;
+  supervisorId?: number;
   fullName?: string;
   email?: string;
+  phone?: string;
   department?: string;
   position?: string;
   status: string;
@@ -128,10 +132,20 @@ export interface CompanySupervisorDto {
   companyId: number;
 }
 
+export interface CompanyCapacityProgramDto {
+  programName?: string;
+  allocatedQuota?: number;
+  usedQuota?: number;
+  remainingQuota?: number;
+  utilizationPercentage?: number;
+  [key: string]: unknown;
+}
+
 export interface CompanyCapacityDto {
   total?: number;
   used?: number;
   remaining?: number;
+  programs?: CompanyCapacityProgramDto[];
   [key: string]: unknown;
 }
 
@@ -175,10 +189,16 @@ export interface ProgramDto {
   title?: string;
   name?: string;
   description?: string;
+  category?: string;
   trackId?: number;
   durationHours?: number;
   price?: number;
   status?: string;
+}
+
+export interface CompanyProgramLinkDto {
+  companyId: number;
+  programId: number;
 }
 
 export interface BatchDto {
@@ -284,6 +304,12 @@ export interface EnrollmentDto {
   departmentName?: string;
   supervisorId?: number;
   supervisorName?: string;
+
+  traineeGitHubUrl?: string;
+  programTitle?: string;
+  programDescription?: string;
+  trackName?: string;
+  trackDescription?: string;
 }
 
 export interface ProgressSummaryDto {
