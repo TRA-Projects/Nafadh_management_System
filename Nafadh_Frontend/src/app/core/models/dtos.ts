@@ -22,6 +22,8 @@ export interface LoginResponseDto {
   email: string;
   roleId: number;
   roleName: RoleName;
+  companyId?: number;
+  supervisorId?: number;
 }
 
 export interface UserResponseDto {
@@ -116,7 +118,7 @@ export interface CompanyBranchDto {
   contactPoint?: string;
   companyId: number;
 }
-//----
+
 export interface CompanySupervisorDto {
   id: number;
   supervisorId?: number;
