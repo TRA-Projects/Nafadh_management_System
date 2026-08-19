@@ -10,16 +10,18 @@ import { AnnouncementDto, TraineeListItemDto, WarningDto } from '../../../../cor
   templateUrl: './dashboard.html',
 })
 export class CompanyDashboard implements OnInit {
-  // Resolved from the logged-in supervisor's session (set at login from
-  // their CompanySupervisor record), not a hardcoded placeholder.
-  companyId = this.auth.companyId ?? 0;
+  companyId: number = 0;
   capacity = signal<{ total?: number; used?: number; remaining?: number } | null>(null);
   topPerformers = signal<TraineeListItemDto[]>([]);
   atRisk = signal<TraineeListItemDto[]>([]);
   warnings = signal<WarningDto[]>([]);
   announcements = signal<AnnouncementDto[]>([]);
+  
+  announcementsDismissed = signal(false);
 
-  constructor(private api: CompanyApi, private auth: AuthService) {}
+  constructor(private api: CompanyApi, private auth: AuthService) {
+    this.companyId = this.auth.companyId ?? 0;
+  }
 
   ngOnInit() {
     this.api.getCapacity(this.companyId).subscribe((d) => this.capacity.set(d));
@@ -27,5 +29,9 @@ export class CompanyDashboard implements OnInit {
     this.api.getAtRiskTrainees(this.companyId).subscribe((d) => this.atRisk.set(d ?? []));
     this.api.getCompanyWarnings(this.companyId).subscribe((d) => this.warnings.set(d ?? []));
     this.api.getPlatformAnnouncements().subscribe((d) => this.announcements.set(d ?? []));
+  }
+
+  dismissAnnouncements() {
+    this.announcementsDismissed.set(true);
   }
 }
