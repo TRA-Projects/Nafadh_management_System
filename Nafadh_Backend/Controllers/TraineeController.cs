@@ -303,7 +303,8 @@ namespace Nafadh_Backend.Controllers
         {
             var (items, total) = await _service.GetAllAsync(companyId, status, university, searchTerm, pageNumber, pageSize);
 
-            var dtos = items.Select(t => {
+            var dtos = items.Select(t =>
+            {
                 // جلب أول Enrollment خاص بالمتدرب لربط الـ EnrollmentId الصحيح
                 var firstEnrollment = t.Enrollments?.FirstOrDefault();
 
@@ -325,40 +326,43 @@ namespace Nafadh_Backend.Controllers
             }).ToList();
 
             return Ok(new { Items = dtos, TotalCount = total });
-        //get trainee id by user id
-        [HttpGet("traineeByUserID/{userId}")]
-        public async Task<IActionResult> GetTraineeIdByUserID(int userId)
-        {
-            var t = await _service.GetTraineeIdByUserID(userId);
-
-            if (t == null)
-                return NotFound(new
-                {
-                    message = "Trainee not found for this UserId."
-                });
-
-            var dto = new TraineeProfileDto
-            {
-                TraineeId = t.TraineeId,
-                FullName = t.User?.FullName,
-                Email = t.User?.Email,
-                NationalId = t.NationalId,
-                University = t.University,
-                Major = t.Major,
-                AcademicLevel = t.AcademicLevel,
-                Skills = t.Skills,
-                ResumeUrl = t.ResumeUrl,
-                GitHubUrl = t.GitHubUrl,
-                LinkedInUrl = t.LinkedInUrl,
-                Status = t.Status,
-                VerificationStatus = t.VerificationStatus,
-                CompanyId = t.CompanyId,
-                CompanyName = t.Company?.CompanyName,
-                EnrollmentId = t.Enrollments.LastOrDefault(u => u.TraineeId==t.TraineeId).EnrollmentId
-            };
-
-            return Ok(dto);
-
         }
-    }
-}
+            //get trainee id by user id
+            [HttpGet("traineeByUserID/{userId}")]
+            public async Task<IActionResult> GetTraineeIdByUserID(int userId)
+            {
+                var t = await _service.GetTraineeIdByUserID(userId);
+
+                if (t == null)
+                    return NotFound(new
+                    {
+                        message = "Trainee not found for this UserId."
+                    });
+
+                var dto = new TraineeProfileDto
+                {
+                    TraineeId = t.TraineeId,
+                    FullName = t.User?.FullName,
+                    Email = t.User?.Email,
+                    NationalId = t.NationalId,
+                    University = t.University,
+                    Major = t.Major,
+                    AcademicLevel = t.AcademicLevel,
+                    Skills = t.Skills,
+                    ResumeUrl = t.ResumeUrl,
+                    GitHubUrl = t.GitHubUrl,
+                    LinkedInUrl = t.LinkedInUrl,
+                    Status = t.Status,
+                    VerificationStatus = t.VerificationStatus,
+                    CompanyId = t.CompanyId,
+                    CompanyName = t.Company?.CompanyName,
+                    EnrollmentId = t.Enrollments.LastOrDefault(u => u.TraineeId == t.TraineeId).EnrollmentId
+                };
+
+                return Ok(dto);
+
+            }
+        }
+    } 
+
+

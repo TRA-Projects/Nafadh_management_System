@@ -164,10 +164,6 @@ namespace Nafadh_Backend.Services
                 Capacity = b.Capacity,
                 TotalTraineesCount = b.Enrollments?.Count ?? 0,
                 IssuedCertificatesCount = b.Enrollments?.Count(e => e.CompletionStatus == NFD_EnrollmentCompletionStatus.Completed) ?? 0,
-                Status = b.Status
-                StartDate = b.StartDate,
-                EndDate = b.EndDate,
-                Capacity = b.Capacity,
                 Status = calculatedStatus, // استخدام الحالة المحسوبة بناءً على التاريخ
                 Department = departments[seed % departments.Length],
                 EnrolledTraineesCount = enrolledCount > 0 ? enrolledCount : (18 + (seed * 5) % 15),
