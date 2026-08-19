@@ -37,8 +37,12 @@
     <table class="tbl">
       <thead>
         <tr>
-          <th>المتدرب</th><th>الدفعة</th><th>البرامج</th><th>التخصص</th>
-          <th>الحالة</th><th style="width:1%"></th>
+          <th>المتدرب</th>
+          <th>الدفعة</th>
+          <th>البرامج</th>
+          <th>التخصص</th>
+          <th>الحالة</th>
+          <th style="width:1%"></th>
         </tr>
       </thead>
       <tbody>
@@ -49,17 +53,17 @@
                 <div class="t-avatar" [style.background]="avatarColor(e.traineeName)">{{ initials(e.traineeName) }}</div>
                 <div>
                   <b>{{ e.traineeName }}</b>
-                  <span>#{{ padId(e.enrollmentId) }} · {{ e.batchName }}</span>
+                  <span>#{{ padId(e.enrollmentId) }}</span>
                 </div>
               </div>
             </td>
             <td>{{ e.batchName }}</td>
             <td>
               <b style="font-size:12.5px">{{ e.programTitle || '—' }}</b><br>
-              <span style="font-size:10.8px;color:var(--muted)">{{ e.programDescription || 'خطة تدريب عملية' }}</span>
+              <span style="font-size:10.8px;color:var(--muted)">خطة تدريب عملية</span>
             </td>
             <td>
-              <b style="font-size:12.5px">{{ e.departmentName || 'غير محدد' }}</b><br>
+              <b style="font-size:12.5px">{{ e.departmentName || '—' }}</b><br>
               <span style="font-size:11px;color:var(--muted)">{{ e.trackName || '—' }}</span>
             </td>
             <td>
@@ -88,4 +92,3 @@
     </div>
   }
 </div>
-

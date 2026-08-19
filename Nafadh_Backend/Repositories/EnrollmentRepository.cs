@@ -22,7 +22,7 @@ namespace Nafadh_Backend.Repositories
         private IQueryable<NFD_Enrollment> Query() =>
             _context.NFD_Enrollments
                 .AsNoTracking()
-                .Include(e => e.Batch)
+                .Include(e => e.Batch).ThenInclude(b => b.Program).ThenInclude(p => p.Track)
                 .Include(e => e.Trainee).ThenInclude(t => t.User)
                 .Include(e => e.Company)
                 .Include(e => e.Department)
