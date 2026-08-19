@@ -1,6 +1,7 @@
 ﻿
 using System.ComponentModel.DataAnnotations;
 using Nafadh_Backend.Enums;
+using System.Collections.Generic;
 
 namespace Nafadh_Backend.DTOs
 {
@@ -66,5 +67,11 @@ namespace Nafadh_Backend.DTOs
         public DateTime? ApprovalDate { get; set; }
 
         public int UserId { get; set; }
+        // Related collections provided for frontend convenience
+        public List<NFD_CompanyBranchOutputDTO> Branches { get; set; } = new();
+        public List<CompanySupervisorDto> Supervisors { get; set; } = new();
+        public List<NFD_CompanyProgramOutputDTO> Programs { get; set; } = new();
+        public List<CompanyPayment.CompanyPaymentResponseDto> Payments { get; set; } = new();
+        public List<DepartmentDto> Departments { get; set; } = new();
     }
 }
