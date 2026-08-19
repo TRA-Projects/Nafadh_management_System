@@ -199,8 +199,8 @@ export class TrainerDashboard implements OnInit {
   /**
    * Loads all batches assigned to the current trainer.
    *
-   * After loading the batches, trainee enrollments
-   * are loaded to calculate the real trainee count.
+   * The batch status is recalculated from the start
+   * and end dates before storing the data.
    */
   private loadBatches(
     trainerId: number
@@ -213,7 +213,12 @@ export class TrainerDashboard implements OnInit {
         next: (data) => {
 
           const batches =
-            data ?? [];
+            (data ?? []).map(batch => ({
+              ...batch,
+
+              status:
+                this.calculateBatchStatus(batch)
+            }));
 
           this.batches.set(
             batches
@@ -244,6 +249,86 @@ export class TrainerDashboard implements OnInit {
 
 
   // =====================================================
+  // BATCH STATUS
+  // =====================================================
+
+  /**
+   * Calculates the batch status using its dates.
+   *
+   * Cancelled batches always remain cancelled.
+   *
+   * Before StartDate  -> Upcoming
+   * During batch      -> Ongoing
+   * After EndDate     -> Completed
+   */
+  private calculateBatchStatus(
+    batch: TrainerBatchDto
+  ): TrainerBatchDto['status'] {
+
+    // إذا كانت الدفعة ملغاة، تبقى ملغاة
+    if (batch.status === 'Cancelled') {
+      return 'Cancelled';
+    }
+
+
+    // إذا ما كانت التواريخ موجودة،
+    // نستخدم الحالة القادمة من الـ API
+    if (!batch.startDate || !batch.endDate) {
+      return batch.status;
+    }
+
+
+    const today =
+      new Date();
+
+    today.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    const startDate =
+      new Date(batch.startDate);
+
+    startDate.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    const endDate =
+      new Date(batch.endDate);
+
+    endDate.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    // إذا التاريخ الحالي قبل بداية الدفعة
+    if (today < startDate) {
+      return 'Upcoming';
+    }
+
+
+    // إذا التاريخ الحالي بعد نهاية الدفعة
+    if (today > endDate) {
+      return 'Completed';
+    }
+
+
+    // إذا اليوم بين البداية والنهاية
+    return 'Ongoing';
+  }
+
+
+  // =====================================================
   // TRAINEES
   // =====================================================
 
@@ -268,8 +353,8 @@ export class TrainerDashboard implements OnInit {
 
 
     // نطلب Enrollment لكل دفعة
-    const requests = batches.map(
-      batch =>
+    const requests =
+      batches.map(batch =>
 
         this.api
           .getEnrollments(
@@ -292,7 +377,7 @@ export class TrainerDashboard implements OnInit {
               );
             })
           )
-    );
+      );
 
 
     // تنفيذ جميع الطلبات معًا
