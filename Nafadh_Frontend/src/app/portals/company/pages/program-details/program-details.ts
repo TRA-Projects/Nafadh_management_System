@@ -193,6 +193,7 @@ export class CompanyProgramDetails implements OnInit {
 // Created the logic for the standalone program details page.
 // Reads the program ID from the route parameters.
 // Loads the selected program and its related data.
+// Loads training phases and trainee information.
 
 
 
