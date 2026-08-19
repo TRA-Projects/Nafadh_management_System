@@ -17,8 +17,10 @@ type CompanyProfileDto = CompanyDto & {
 };
 
 type CompanySupervisorProfileDto = CompanySupervisorDto & {
+  fullName?: string;
   name?: string;
   role?: string;
+  position?: string;
   phone?: string;
 };
 
@@ -117,12 +119,8 @@ export class CompanyProfile implements OnInit {
       error: () => this.supervisorsLoadError.set(true),
     });
 
-    // Enrollment endpoint isn't available on the server in this deployment.
-    // Use the dedicated company capacity endpoint as the authoritative
-    // source for used seats / capacity counts.
     this.api.getCapacity(this.companyId).subscribe({
       next: (cap) => {
-        // CompanyCapacityDto { total?, used?, remaining? }
         this.company.update((c) => (c ? { ...c, usedCapacity: Number(cap?.used ?? 0) } : c));
         this.trainees.set([]);
         this.traineesLoadError.set(false);
@@ -179,9 +177,12 @@ export class CompanyProfile implements OnInit {
   }
 
   private normalizeSupervisor(supervisor: Partial<CompanySupervisorProfileDto>): CompanySupervisorProfileDto {
+    const id = supervisor.supervisorId ?? supervisor.id ?? Date.now();
+
     return {
       ...supervisor,
-      id: supervisor.id ?? Date.now(),
+      supervisorId: id,
+      id,
       fullName: supervisor.fullName || supervisor.name || 'جهة اتصال',
       name: supervisor.name || supervisor.fullName || 'جهة اتصال',
       position: supervisor.position || supervisor.role || supervisor.department || 'مدير الحساب',
@@ -194,7 +195,10 @@ export class CompanyProfile implements OnInit {
 
   private normalizeSpecialty(item: Record<string, unknown>): HostedSpecialtyDto {
     const statusValue = String(item['status'] ?? 'قيد الاعتماد');
-    const status = statusValue === 'معتمد' || statusValue === 'قيد الاعتماد' ? (statusValue as 'معتمد' | 'قيد الاعتماد') : 'قيد الاعتماد';
+    const status =
+      statusValue === 'معتمد' || statusValue === 'قيد الاعتماد'
+        ? (statusValue as 'معتمد' | 'قيد الاعتماد')
+        : 'قيد الاعتماد';
 
     return {
       programId: Number(item['programId'] ?? item['id'] ?? Date.now()),
@@ -207,6 +211,7 @@ export class CompanyProfile implements OnInit {
   saveCapacity() {
     const c = this.company();
     if (!c) return;
+
     this.api.updateCompany(c.companyId, { ...c, capacity: this.capacityDraft }).subscribe(() => {
       this.company.update((cur) => (cur ? { ...cur, capacity: this.capacityDraft } : cur));
       this.editingCapacity.set(false);
@@ -277,6 +282,7 @@ export class CompanyProfile implements OnInit {
   addWorkField() {
     const value = this.newFieldDraft.trim();
     if (!value) return;
+
     this.company.update((cur) => {
       if (!cur) return cur;
       const list = [...this.workFieldList(cur), value];
@@ -286,6 +292,7 @@ export class CompanyProfile implements OnInit {
         workField: list[0] || 'غير محدد',
       };
     });
+
     this.newFieldDraft = '';
   }
 
@@ -325,20 +332,23 @@ export class CompanyProfile implements OnInit {
     const name = this.supervisorDraft.name.trim();
     if (!name) return;
 
+    const supervisorId = Date.now();
+
     this.supervisors.update((cur) => [
       ...cur,
       {
-        id: Date.now(),
+        supervisorId,
+        id: supervisorId,
         fullName: name,
         name,
-        role: this.supervisorDraft.role.trim(),
-        position: this.supervisorDraft.role.trim(),
+        role: this.supervisorDraft.role.trim() || 'مدير الحساب',
+        position: this.supervisorDraft.role.trim() || 'مدير الحساب',
         phone: this.supervisorDraft.phone.trim(),
         email: this.supervisorDraft.email.trim(),
         status: 'Active',
         userId: 0,
         companyId: this.companyId,
-      },
+      } as CompanySupervisorProfileDto,
     ]);
 
     this.supervisorDraft = { name: '', role: '', phone: '', email: '' };

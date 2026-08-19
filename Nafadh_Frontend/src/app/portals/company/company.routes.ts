@@ -14,7 +14,10 @@ export const COMPANY_ROUTES: Routes = [
       { path: 'specialties', loadComponent: () => import('./pages/specialties/specialties').then((m) => m.CompanySpecialties) },
       { path: 'profile', loadComponent: () => import('./pages/profile/profile').then((m) => m.CompanyProfile) },
       { path: 'my-account', loadComponent: () => import('./pages/my-account/my-account').then((m) => m.CompanyMyAccount) },
-      { path: 'reports', loadComponent: () => import('./pages/reports/reports').then((m) => m.CompanyReports) },
+      
+      // التعديل هنا: m.ReportsComponent بدلاً من m.CompanyReports
+      { path: 'reports', loadComponent: () => import('./pages/reports/reports').then((m) => m.ReportsComponent) },
+      
       { path: 'contact', loadComponent: () => import('./pages/contact/contact').then((m) => m.CompanyContact) },
     ],
   },

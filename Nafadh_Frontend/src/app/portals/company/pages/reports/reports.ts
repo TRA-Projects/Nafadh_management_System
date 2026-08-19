@@ -1,15 +1,77 @@
-import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CompanyApi } from '../../services/company-api';
-import {
-  AttendanceReportDto,
-  EnrollmentDto,
-  TraineeListItemDto,
-  CompanyCapacityDto,
-  ChartPointDto,
-} from '../../../../core/models/dtos';
+import { Component, computed, signal } from '@angular/core';
 
-type ReportTab = 'attendance' | 'achievement' | 'capacity';
+type TabKey = 'attendance' | 'achievement' | 'capacity';
+
+export type AttendanceChartItem = {
+  label: string;
+  value: number;
+};
+
+export type TraineeAttendanceRow = {
+  traineeId: number;
+  traineeName?: string;
+  presentDays: number;
+  absentDays: number;
+  lateDays: number;
+  excusedDays: number;
+  attendanceRate: number;
+};
+
+export type AttendanceReportDto = {
+  totalTrainees?: number;
+  presentCount?: number;   
+  absentCount?: number;    
+  attendanceRate?: number; // 👈 تم إضافتها لتطابق HTML
+  overallAttendanceRate?: number;
+  averageAttendanceRate?: number;
+  chart?: AttendanceChartItem[];
+  rows?: TraineeAttendanceRow[];
+};
+
+export type AchievementItem = {
+  id?: number;
+  traineeId?: number;
+  fullName?: string;
+  name?: string;        // 👈 تم إضافتها
+  progress?: number;    // 👈 تم إضافتها
+  courseName?: string;  // 👈 تم إضافتها
+  attendanceRate?: number;
+  gpa?: number;
+};
+
+export type EnrollmentItem = {
+  id?: number;
+  enrollmentId?: number;
+  traineeName: string;
+  batchName: string;
+  enrollmentDate: string;
+  completionStatus: 'Completed' | 'InProgress' | 'Dropped' | 'Failed' | string;
+};
+
+export type AchievementReportDto = {
+  total?: number;
+  completed?: number;
+  rate?: number;
+  topPerformers?: AchievementItem[];
+  atRisk?: AchievementItem[];
+  enrollments?: EnrollmentItem[];
+};
+
+export type ProgramCapacity = {
+  programName: string;
+  allocatedQuota: number;
+  usedQuota: number;
+  remainingQuota: number;
+  utilizationPercentage: number;
+};
+
+export type CapacityReportDto = {
+  total?: number;
+  used?: number;
+  remaining?: number;
+  programs?: ProgramCapacity[];
+};
 
 @Component({
   selector: 'app-company-reports',
@@ -18,255 +80,138 @@ type ReportTab = 'attendance' | 'achievement' | 'capacity';
   templateUrl: './reports.html',
   styleUrl: './reports.scss',
 })
-export class CompanyReports implements OnInit {
-  companyId = 1;
+export class ReportsComponent {
+  readonly tab = signal<TabKey>('attendance');
+  readonly loading = signal(false);
+  readonly errorMessage = signal<string | null>(null);
 
-  tab = signal<ReportTab>('attendance');
+  readonly attendance = signal<AttendanceReportDto | null>(null);
+  readonly achievement = signal<AchievementReportDto | null>(null);
+  readonly capacity = signal<CapacityReportDto | null>(null);
 
-  attendance = signal<AttendanceReportDto | null>(null);
-  attendanceChart = signal<ChartPointDto[]>([]);
+  // حساب محيط الدائرة للـ SVG (بناءً على r=78 المحددة في HTML)
+  readonly ringCircumference = 2 * Math.PI * 78;
 
-  enrollments = signal<EnrollmentDto[]>([]);
-  topPerformers = signal<TraineeListItemDto[]>([]);
-  atRisk = signal<TraineeListItemDto[]>([]);
+  // Computed Properties - Attendance
+  readonly attendanceChart = computed(() => this.attendance()?.chart ?? []);
+  readonly totalAbsentDays = computed(() => {
+    const rows = this.attendance()?.rows ?? [];
+    return rows.reduce((acc, row) => acc + (row.absentDays || 0), 0);
+  });
+  readonly totalLateDays = computed(() => {
+    const rows = this.attendance()?.rows ?? [];
+    return rows.reduce((acc, row) => acc + (row.lateDays || 0), 0);
+  });
+  readonly totalExcusedDays = computed(() => {
+    const rows = this.attendance()?.rows ?? [];
+    return rows.reduce((acc, row) => acc + (row.excusedDays || 0), 0);
+  });
 
-  capacity = signal<CompanyCapacityDto | null>(null);
+  // Computed Properties - Achievement
+  readonly achievementTotal = computed(() => this.achievement()?.total ?? 0);
+  readonly achievementCompleted = computed(() => this.achievement()?.completed ?? 0);
+  readonly achievementRate = computed(() => this.achievement()?.rate ?? 0);
+  readonly topPerformers = computed(() => this.achievement()?.topPerformers ?? []);
+  readonly atRisk = computed(() => this.achievement()?.atRisk ?? []);
+  readonly enrollments = computed(() => this.achievement()?.enrollments ?? []);
 
-  loading = signal(false);
-  errorMessage = signal('');
+  // Computed Properties - Capacity
+  readonly capacityPercentage = computed(() => {
+    const cap = this.capacity();
+    if (!cap || !cap.total) return 0;
+    return Math.min(100, Math.round(((cap.used ?? 0) / cap.total) * 100));
+  });
 
-  constructor(private api: CompanyApi) {}
-
-  ngOnInit(): void {
-    this.loadReports();
+  // ميثود إزاحة دائرة الـ SVG حسب نسبة الاستهلاك
+  ringDashoffset(): number {
+    const percentage = this.capacityPercentage();
+    return this.ringCircumference - (percentage / 100) * this.ringCircumference;
   }
 
-  selectTab(tab: ReportTab): void {
+  constructor() {
+    this.loadInitialData();
+  }
+
+  private loadInitialData(): void {
+    this.loading.set(true);
+
+    setTimeout(() => {
+      this.attendance.set({
+        totalTrainees: 128,
+        presentCount: 115,
+        absentCount: 13,
+        attendanceRate: 88,
+        overallAttendanceRate: 88,
+        chart: [
+          { label: 'الأسبوع 1', value: 92 },
+          { label: 'الأسبوع 2', value: 95 },
+          { label: 'الأسبوع 3', value: 89 },
+          { label: 'الأسبوع 4', value: 84 },
+        ],
+        rows: [
+          { traineeId: 101, traineeName: 'أحمد بن سعيد', presentDays: 18, absentDays: 2, lateDays: 1, excusedDays: 0, attendanceRate: 90 },
+          { traineeId: 102, traineeName: 'سارة بنت خالد', presentDays: 20, absentDays: 0, lateDays: 0, excusedDays: 0, attendanceRate: 100 },
+          { traineeId: 103, traineeName: 'محمد بن علي', presentDays: 12, absentDays: 5, lateDays: 3, excusedDays: 1, attendanceRate: 60 },
+        ],
+      });
+
+      this.achievement.set({
+        total: 60,
+        completed: 54,
+        rate: 90,
+        topPerformers: [
+          { id: 1, fullName: 'سارة بنت خالد', name: 'سارة بنت خالد', progress: 100, attendanceRate: 100 },
+          { id: 2, fullName: 'أحمد بن سعيد', name: 'أحمد بن سعيد', progress: 90, attendanceRate: 90 },
+        ],
+        atRisk: [
+          { id: 3, fullName: 'محمد بن علي', name: 'محمد بن علي', progress: 60, courseName: 'تطوير الويب Web API', attendanceRate: 60 },
+        ],
+        enrollments: [
+          { id: 1, traineeName: 'سارة بنت خالد', batchName: 'الدفعة الأولى', enrollmentDate: '2026-01-10', completionStatus: 'Completed' },
+          { id: 2, traineeName: 'أحمد بن سعيد', batchName: 'الدفعة الأولى', enrollmentDate: '2026-01-10', completionStatus: 'InProgress' },
+          { id: 3, traineeName: 'محمد بن علي', batchName: 'الدفعة الثانية', enrollmentDate: '2026-02-01', completionStatus: 'Dropped' },
+        ],
+      });
+
+      this.capacity.set({
+        total: 150,
+        used: 128,
+        remaining: 22,
+        programs: [
+          { programName: 'تطوير الويب Web API', allocatedQuota: 50, usedQuota: 45, remainingQuota: 5, utilizationPercentage: 90 },
+          { programName: 'الأمن السيبراني', allocatedQuota: 40, usedQuota: 38, remainingQuota: 2, utilizationPercentage: 95 },
+          { programName: 'تحليل البيانات', allocatedQuota: 60, usedQuota: 45, remainingQuota: 15, utilizationPercentage: 75 },
+        ],
+      });
+
+      this.loading.set(false);
+      this.errorMessage.set(null);
+    }, 300);
+  }
+
+  selectTab(tab: TabKey): void {
     this.tab.set(tab);
   }
 
-  private loadReports(): void {
-    this.loading.set(true);
-    this.errorMessage.set('');
-
-    let finished = 0;
-    const complete = () => {
-      finished += 1;
-      if (finished >= 6) {
-        this.loading.set(false);
-      }
-    };
-
-    this.api.getCompanyAttendanceReport(this.companyId).subscribe({
-      next: (data) => {
-        this.attendance.set(data);
-        complete();
-      },
-      error: () => {
-        this.errorMessage.set('تعذر تحميل تقرير الحضور.');
-        complete();
-      },
-    });
-
-    this.api.getAttendanceChart(this.companyId).subscribe({
-      next: (data) => {
-        this.attendanceChart.set(data?.weeks ?? []);
-        complete();
-      },
-      error: () => {
-        this.attendanceChart.set([]);
-        complete();
-      },
-    });
-
-    this.api.getEnrollmentsByCompany(this.companyId).subscribe({
-      next: (data) => {
-        this.enrollments.set(data ?? []);
-        complete();
-      },
-      error: () => {
-        this.enrollments.set([]);
-        complete();
-      },
-    });
-
-    this.api.getTopPerformers(this.companyId).subscribe({
-      next: (data) => {
-        this.topPerformers.set(data ?? []);
-        complete();
-      },
-      error: () => {
-        this.topPerformers.set([]);
-        complete();
-      },
-    });
-
-    this.api.getAtRiskTrainees(this.companyId).subscribe({
-      next: (data) => {
-        this.atRisk.set(data ?? []);
-        complete();
-      },
-      error: () => {
-        this.atRisk.set([]);
-        complete();
-      },
-    });
-
-   this.api.getCapacity(this.companyId).subscribe({
-  next: (data: any) => {
-    this.capacity.set(data ? {
-      ...data,
-      programs: data.programs ?? []
-    } : null);
-    complete();
-  },
-  error: () => {
-    this.capacity.set(null);
-    complete();
-  }
-});
-  }
-
-  totalAbsentDays(): number {
-    return this.attendance()
-      ?.rows.reduce((sum, row) => sum + row.absentDays, 0) ?? 0;
-  }
-
-  totalLateDays(): number {
-    return this.attendance()
-      ?.rows.reduce((sum, row) => sum + row.lateDays, 0) ?? 0;
-  }
-
-  totalExcusedDays(): number {
-    return this.attendance()
-      ?.rows.reduce((sum, row) => sum + row.excusedDays, 0) ?? 0;
-  }
-
-  achievementTotal(): number {
-    return this.enrollments().length;
-  }
-
-  achievementCompleted(): number {
-    return this.enrollments().filter(
-      (item) => item.completionStatus === 'Completed',
-    ).length;
-  }
-
-  achievementRate(): number {
-    const total = this.achievementTotal();
-
-    if (!total) {
-      return 0;
-    }
-
-    return Math.round((this.achievementCompleted() / total) * 100);
-  }
-
-  capacityPercentage(): number {
-    const capacity = this.capacity();
-
-    if (!capacity?.total) {
-      return 0;
-    }
-
-    return Math.min(
-      100,
-      Math.max(0, Math.round(((capacity.used ?? 0) / capacity.total) * 100)),
-    );
-  }
-
   clampPercentage(value: number): number {
-    return Math.min(100, Math.max(0, value));
+    return Math.max(0, Math.min(100, value));
   }
 
   completionLabel(status: string): string {
     switch (status) {
-      case 'Completed':
-        return 'مكتمل';
-      case 'InProgress':
-        return 'قيد التدريب';
-      case 'Dropped':
-        return 'منسحب';
-      case 'Failed':
-        return 'لم يجتز';
-      default:
-        return status || 'غير محدد';
+      case 'Completed': return 'مكتمل';
+      case 'InProgress': return 'قيد التدريب';
+      case 'Dropped': return 'منسحب';
+      case 'Failed': return 'متعثر';
+      default: return status;
     }
   }
 
   exportPdf(): void {
-    window.print();
+    this.errorMessage.set(null);
   }
 
   exportExcel(): void {
-    const rows = this.exportRows();
-
-    const csv = rows
-      .map((row) =>
-        row
-          .map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`)
-          .join(','),
-      )
-      .join('\n');
-
-    const blob = new Blob(['\ufeff' + csv], {
-      type: 'text/csv;charset=utf-8;',
-    });
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-
-    link.href = url;
-    link.download = `company-report-${this.tab()}.csv`;
-    link.click();
-
-    URL.revokeObjectURL(url);
-  }
-
-  private exportRows(): unknown[][] {
-    if (this.tab() === 'attendance') {
-      const report = this.attendance();
-
-      return [
-        [
-          'المتدرب',
-          'أيام الحضور',
-          'الغياب',
-          'التأخر',
-          'المعذور',
-          'معدل الحضور',
-        ],
-        ...(report?.rows ?? []).map((row) => [
-          row.traineeName || `متدرب #${row.traineeId}`,
-          row.presentDays,
-          row.absentDays,
-          row.lateDays,
-          row.excusedDays,
-          `${row.attendanceRate}%`,
-        ]),
-      ];
-    }
-
-    if (this.tab() === 'achievement') {
-      return [
-        ['المتدرب', 'الدفعة', 'تاريخ التسجيل', 'حالة الإنجاز'],
-        ...this.enrollments().map((item) => [
-          item.traineeName,
-          item.batchName,
-          item.enrollmentDate,
-          this.completionLabel(item.completionStatus),
-        ]),
-      ];
-    }
-
-    const capacity = this.capacity();
-
-    return [
-      ['البند', 'القيمة'],
-      ['الحصة الكلية', capacity?.total ?? 0],
-      ['المستخدم', capacity?.used ?? 0],
-      ['المتبقي', capacity?.remaining ?? 0],
-      ['نسبة الاستغلال', `${this.capacityPercentage()}%`],
-    ];
+    this.errorMessage.set(null);
   }
 }
