@@ -12,9 +12,19 @@ import {
   BatchDto,
   ProgramDto,
   TrainerDto,
-  CompanySupervisorDto
+  CompanySupervisorDto,
+  SubmissionDto
 } from '../../../../core/models/dtos';
-import { TRAINEE_STATUS_LABELS } from '../../../../core/models/enums';
+import { TRAINEE_STATUS_LABELS, TaskStatus } from '../../../../core/models/enums';
+
+type SubmissionStatus = SubmissionDto['status'];
+
+// تعريف نوع ممتد للمهام مع حالة التسليم
+interface TaskWithSubmissionDto extends TaskDto {
+  submissionStatus?: SubmissionStatus;
+  submissionId?: number;
+  grade?: string;
+}
 
 @Component({
   selector: 'app-trainee-dashboard',
@@ -75,7 +85,7 @@ export class TraineeDashboard implements OnInit {
   // =========================================================
 
   summary = signal<TraineeDashboardSummaryDto | null>(null);
-  tasks = signal<TaskDto[]>([]);
+  tasks = signal<TaskWithSubmissionDto[]>([]);
   announcements = signal<(AnnouncementDto & { source: string })[]>([]);
 
 
@@ -130,24 +140,67 @@ export class TraineeDashboard implements OnInit {
   // =========================================================
 
   getTaskStatusDisplay(status: any): string {
+    if (!status) return 'جديد';
+    
     const statusStr = String(status).toLowerCase();
+    
+    // حالات TaskStatus
     if (statusStr === 'new' || statusStr === 'pending') return 'جديد';
-    if (statusStr === 'completed' || statusStr === 'graded') return 'مكتمل';
-    if (statusStr === 'submitted' || statusStr === 'underreview' || statusStr === 'review') return 'قيد المراجعة';
+    if (statusStr === 'completed') return 'مكتمل';
+    if (statusStr === 'graded') return 'مكتمل';
+    if (statusStr === 'inprogress' || statusStr === 'in_progress') return 'قيد التنفيذ';
+    if (statusStr === 'overdue') return 'منتهي';
+    
+    // حالات SubmissionStatus
+    if (statusStr === 'submitted') return 'تم التسليم';
+    if (statusStr === 'underreview' || statusStr === 'under_review') return 'قيد المراجعة';
+    if (statusStr === 'returnedforrevision' || statusStr === 'returned') return 'مطلوب تعديل';
+    if (statusStr === 'late') return 'متأخر';
+    if (statusStr === 'closed') return 'مغلق';
+    if (statusStr === 'open') return 'مفتوح';
+    
     return status;
   }
 
   getTaskStatusStyle(status: any): { background: string; color: string } {
+    if (!status) return { background: '#f1f5f9', color: '#64748b' };
+    
     const statusStr = String(status).toLowerCase();
+    
+    // حالات TaskStatus
     if (statusStr === 'new' || statusStr === 'pending') {
       return { background: '#eff6ff', color: '#2563eb' };
     }
     if (statusStr === 'completed' || statusStr === 'graded') {
       return { background: '#f0fdf4', color: '#16a34a' };
     }
-    if (statusStr === 'submitted' || statusStr === 'underreview' || statusStr === 'review') {
+    if (statusStr === 'inprogress' || statusStr === 'in_progress') {
       return { background: '#fef3c7', color: '#d97706' };
     }
+    if (statusStr === 'overdue') {
+      return { background: '#fef2f2', color: '#dc2626' };
+    }
+    
+    // حالات SubmissionStatus
+    if (statusStr === 'submitted') {
+      return { background: '#fef3c7', color: '#d97706' };
+    }
+    if (statusStr === 'underreview' || statusStr === 'under_review') {
+      return { background: '#ede9fe', color: '#7c3aed' };
+    }
+    if (statusStr === 'returnedforrevision' || statusStr === 'returned') {
+      return { background: '#fef2f2', color: '#dc2626' };
+    }
+    if (statusStr === 'late') {
+      return { background: '#fef2f2', color: '#dc2626' };
+    }
+    if (statusStr === 'closed') {
+      return { background: '#f1f5f9', color: '#64748b' };
+    }
+    if (statusStr === 'open') {
+      return { background: '#eff6ff', color: '#2563eb' };
+    }
+    
     return { background: '#f1f5f9', color: '#64748b' };
   }
 
@@ -315,53 +368,56 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-// =========================================================
-// تحميل المدرب من خلال الدفعة
-// GET /api/BatchTrainer/batch/{batchId}
-// =========================================================
 
-loadTrainerByBatch(batchId: number): void {
-  this.loadingTrainer.set(true);
+  // =========================================================
+  // تحميل المدرب من خلال الدفعة
+  // GET /api/BatchTrainer/batch/{batchId}
+  // =========================================================
 
-  // جلب قائمة المدربين في الدفعة
-  this.api.getBatchTrainers(batchId).subscribe({
-    next: (trainers: TrainerDto[]) => {
-      console.log('Batch trainers response:', trainers); // للتأكد من البيانات
-      
-      if (trainers && trainers.length > 0) {
-        // نأخذ أول مدرب في الدفعة
-        const firstTrainer = trainers[0];
+  loadTrainerByBatch(batchId: number): void {
+    this.loadingTrainer.set(true);
+
+    // جلب قائمة المدربين في الدفعة
+    this.api.getBatchTrainers(batchId).subscribe({
+      next: (trainers: TrainerDto[]) => {
+        console.log('Batch trainers response:', trainers);
         
-        // إذا كان الـ API يرجع TrainerDto كامل، نستخدمه مباشرة
-        // ولكن إذا كان يرجع فقط { batchId, trainerId }، نحتاج لجلب البيانات الكاملة
-        if (firstTrainer.trainerId) {
-          // نحتاج لجلب بيانات المدرب كاملة
-          this.api.getTrainer(firstTrainer.trainerId).subscribe({
-            next: (trainer: TrainerDto) => {
-              this.trainerData.set(trainer);
-              this.loadingTrainer.set(false);
-            },
-            error: (error: any) => {
-              console.error('Error loading trainer details:', error);
-              this.loadingTrainer.set(false);
-            }
-          });
+        if (trainers && trainers.length > 0) {
+          // نأخذ أول مدرب في الدفعة
+          const firstTrainer = trainers[0];
+          
+          // التحقق من وجود trainerId
+          if (firstTrainer.trainerId) {
+            // جلب بيانات المدرب كاملة
+            this.api.getTrainer(firstTrainer.trainerId).subscribe({
+              next: (trainer: TrainerDto) => {
+                this.trainerData.set(trainer);
+                this.loadingTrainer.set(false);
+              },
+              error: (error: any) => {
+                console.error('Error loading trainer details:', error);
+                this.trainerData.set(null);
+                this.loadingTrainer.set(false);
+              }
+            });
+          } else {
+            // إذا كان الكائن يحتوي على البيانات كاملة
+            this.trainerData.set(firstTrainer);
+            this.loadingTrainer.set(false);
+          }
         } else {
           this.trainerData.set(null);
           this.loadingTrainer.set(false);
         }
-      } else {
+      },
+      error: (error: any) => {
+        console.error('Error loading trainers for batch:', error);
         this.trainerData.set(null);
         this.loadingTrainer.set(false);
       }
-    },
-    error: (error: any) => {
-      console.error('Error loading trainers for batch:', error);
-      this.trainerData.set(null);
-      this.loadingTrainer.set(false);
-    }
-  });
-}
+    });
+  }
+
 
   // =========================================================
   // تحميل بيانات المشرف
@@ -435,22 +491,194 @@ loadTrainerByBatch(batchId: number): void {
   }
 
 
-  // =========================================================
+ // =========================================================
   // تحميل المهام
   // GET /api/Task/batch/{batchId}
   // =========================================================
 
   loadTasks(batchId: number): void {
     this.loadingTasks.set(true);
+    const traineeId = this.traineeId();
 
+    // جلب مهام الدفعة (المسار الصحيح حسب الـ API)
     this.api.getTasks(batchId).subscribe({
       next: (tasks: TaskDto[]) => {
-        this.tasks.set((tasks ?? []).slice(0, 3));
+        if (tasks && tasks.length > 0 && traineeId) {
+          // جلب التسليمات للمتدرب لتحديث حالة المهام
+          this.api.getTraineeSubmissions(traineeId).subscribe({
+            next: (submissions: SubmissionDto[]) => {
+              const enrichedTasks = this.enrichTasksWithSubmission(tasks, submissions);
+              this.processAndSetTasks(enrichedTasks);
+            },
+            error: (error: any) => {
+              console.error('Error loading submissions:', error);
+              // حتى لو فشل جلب التسليمات، نعرض المهام بدون حالة التسليم
+              this.processAndSetTasks(tasks);
+            }
+          });
+        } else {
+          this.processAndSetTasks(tasks || []);
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading batch tasks:', error);
+        this.tasks.set([]);
+        this.loadingTasks.set(false);
+      }
+    });
+  }
+
+  /**
+   * معالجة المهام وترتيبها وعرض الأقرب لموعد التسليم
+   */
+  private processAndSetTasks(tasks: TaskDto[]): void {
+    if (!tasks || tasks.length === 0) {
+      this.tasks.set([]);
+      this.loadingTasks.set(false);
+      return;
+    }
+
+    // تحويل المهام إلى النوع الممتد
+    let enrichedTasks = tasks as TaskWithSubmissionDto[];
+
+    // تصفية المهام: عرض المهام التي لم تنتهي أو المهام المنتهية حديثاً
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // ترتيب المهام حسب تاريخ الاستحقاق (الأقرب أولاً)
+    const sortedTasks = enrichedTasks
+      .filter(task => {
+        // عرض المهام التي لم تكتمل أو المهام المنتهية خلال الـ 7 أيام الماضية
+        const isCompleted = (task.status as string) === 'Completed' || (task.status as string) === 'Graded';
+        if (isCompleted) return false;
+        
+        // إذا كان التاريخ موجوداً
+        if (task.dueDate) {
+          const dueDate = new Date(task.dueDate);
+          dueDate.setHours(0, 0, 0, 0);
+          
+          // عرض المهام المنتهية خلال الـ 7 أيام الماضية
+          const daysDiff = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+          if (daysDiff > 7) return false;
+          
+          return true;
+        }
+        
+        // عرض المهام بدون تاريخ
+        return true;
+      })
+      .sort((a, b) => {
+        // ترتيب حسب التاريخ (الأقرب أولاً)
+        if (!a.dueDate && !b.dueDate) return 0;
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        
+        const dateA = new Date(a.dueDate);
+        const dateB = new Date(b.dueDate);
+        return dateA.getTime() - dateB.getTime();
+      });
+
+    // أخذ أول 3 مهام فقط
+    this.tasks.set(sortedTasks.slice(0, 3));
+    this.loadingTasks.set(false);
+  }
+
+  /**
+   * إثراء المهام بحالة التسليم
+   */
+  private enrichTasksWithSubmission(tasks: TaskDto[], submissions: SubmissionDto[]): TaskWithSubmissionDto[] {
+    if (!submissions || submissions.length === 0) {
+      return tasks as TaskWithSubmissionDto[];
+    }
+
+    return tasks.map(task => {
+      const submission = submissions.find(s => s.taskId === task.taskId);
+      if (submission) {
+        return {
+          ...task,
+          submissionStatus: submission.status,
+          submissionId: submission.submissionId,
+          grade: submission.grade,
+          status: submission.status === 'Graded' ? 'Completed' as TaskStatus : task.status
+        };
+      }
+      return task as TaskWithSubmissionDto;
+    });
+  }
+
+  // حذف الدوال القديمة واستبدالها بما سبق:
+  // - إزالة loadBatchTasks
+  // - إزالة enrichTasksWithStatus القديمة
+
+  // =========================================================
+  // جلب مهام الدفعة
+  // =========================================================
+
+  private loadBatchTasks(batchId: number): void {
+    this.api.getTasks(batchId).subscribe({
+      next: (tasks: TaskDto[]) => {
+        const traineeId = this.traineeId();
+        if (traineeId) {
+          this.enrichTasksWithStatus(tasks, traineeId);
+        } else {
+          this.tasks.set((tasks ?? []).slice(0, 3) as TaskWithSubmissionDto[]);
+          this.loadingTasks.set(false);
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading batch tasks:', error);
+        this.tasks.set([]);
+        this.loadingTasks.set(false);
+      }
+    });
+  }
+
+
+  // =========================================================
+  // إثراء المهام بحالة المتدرّب لكل مهمة
+  // =========================================================
+
+  private enrichTasksWithStatus(tasks: TaskDto[], traineeId: number): void {
+    if (!tasks || tasks.length === 0) {
+      this.tasks.set([]);
+      this.loadingTasks.set(false);
+      return;
+    }
+
+    this.api.getTraineeSubmissions(traineeId).subscribe({
+      next: (submissions: SubmissionDto[]) => {
+        const enrichedTasks: TaskWithSubmissionDto[] = tasks.map(task => {
+          const submission = submissions?.find(s => s.taskId === task.taskId);
+          if (submission) {
+            return {
+              ...task,
+              submissionStatus: submission.status,
+              submissionId: submission.submissionId,
+              grade: submission.grade,
+              // تحديث حالة المهمة إذا كانت مكتملة
+              status: submission.status === 'Graded'
+                ? 'Completed' as TaskStatus 
+                : task.status
+            };
+          }
+          return task as TaskWithSubmissionDto;
+        });
+
+        // ترتيب المهام: المهام غير المكتملة أولاً، ثم المكتملة
+        enrichedTasks.sort((a, b) => {
+          const aCompleted = a.submissionStatus === 'Graded';
+          const bCompleted = b.submissionStatus === 'Graded';
+          if (aCompleted && !bCompleted) return 1;
+          if (!aCompleted && bCompleted) return -1;
+          return 0;
+        });
+
+        this.tasks.set(enrichedTasks.slice(0, 3));
         this.loadingTasks.set(false);
       },
       error: (error: any) => {
-        console.error('Error loading tasks:', error);
-        this.tasks.set([]);
+        console.error('Error loading submissions:', error);
+        this.tasks.set(tasks.slice(0, 3) as TaskWithSubmissionDto[]);
         this.loadingTasks.set(false);
       }
     });
@@ -610,17 +838,14 @@ loadTrainerByBatch(batchId: number): void {
     const trainer = this.trainerData();
     if (!trainer) return '';
     
-    // إذا كان التخصص موجوداً
     if (trainer.specialty) {
       return trainer.specialty;
     }
     
-    // إذا كانت الخبرة موجودة
     if (trainer.experienceYears !== undefined && trainer.experienceYears > 0) {
       return `خبرة ${trainer.experienceYears} سنوات`;
     }
     
-    // إذا كانت السيرة الذاتية موجودة
     if (trainer.biography) {
       return trainer.biography.length > 30 ? trainer.biography.substring(0, 30) + '...' : trainer.biography;
     }
@@ -648,7 +873,19 @@ loadTrainerByBatch(batchId: number): void {
 
 
   // =========================================================
-  // التواصل مع المدرب (اختياري)
+  // التحقق من انتهاء موعد المهمة
+  // =========================================================
+
+  isTaskOverdue(dueDate: string | Date): boolean {
+    if (!dueDate) return false;
+    const due = new Date(dueDate);
+    const today = new Date();
+    return due < today;
+  }
+
+
+  // =========================================================
+  // التواصل مع المدرب
   // =========================================================
 
   contactTrainer(): void {
@@ -656,7 +893,36 @@ loadTrainerByBatch(batchId: number): void {
     if (!trainer) return;
     
     console.log('Contact trainer:', trainer);
-    // يمكن توجيه المستخدم إلى صفحة المحادثة
-    // this.router.navigate(['/messages', trainer.userId]);
+
+    
+  }
+    // =========================================================
+  // الحصول على أيام متبقية للمهمة (للعرض الإضافي)
+  // =========================================================
+
+  getDaysRemaining(dueDate: string | Date): number {
+    if (!dueDate) return 0;
+    const due = new Date(dueDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
+    
+    const diffTime = due.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }
+
+  getDaysRemainingText(dueDate: string | Date): string {
+    const days = this.getDaysRemaining(dueDate);
+    if (days < 0) {
+      return `منتهية منذ ${Math.abs(days)} يوم`;
+    }
+    if (days === 0) {
+      return 'تنتهي اليوم';
+    }
+    if (days === 1) {
+      return 'تتبقى يوم واحد';
+    }
+    return `تتبقى ${days} أيام`;
   }
 }
