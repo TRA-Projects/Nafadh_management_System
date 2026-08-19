@@ -404,208 +404,214 @@
       </div>
 
 
-      @for (
-        module of activeModules();
-        track module.moduleId
-      ) {
+      <!-- الوحدات ككروت: كل وحدتين جنب بعض -->
 
-        <div class="module-box">
+      <div class="modules-grid">
 
-          <div class="module-header">
+        @for (
+          module of activeModules();
+          track module.moduleId
+        ) {
 
-            <div class="module-title">
+          <div class="module-box">
 
-              <span>
-                📘
+            <div class="module-header">
+
+              <div class="module-title">
+
+                <span>
+                  📘
+                </span>
+
+                <strong>
+                  {{ module.title }}
+                </strong>
+
+              </div>
+
+
+              <span class="module-order">
+                ترتيب {{ module.orderIndex }}
               </span>
-
-              <strong>
-                {{ module.title }}
-              </strong>
 
             </div>
 
 
-            <span class="module-order">
-              ترتيب {{ module.orderIndex }}
-            </span>
+            <div class="lesson-list">
 
-          </div>
+              @for (
+                lesson of getLessonsForModule(module.moduleId);
+                track lesson.lessonId
+              ) {
 
+                <div class="lesson-row">
 
-          <div class="lesson-list">
-
-            @for (
-              lesson of getLessonsForModule(module.moduleId);
-              track lesson.lessonId
-            ) {
-
-              <div class="lesson-row">
-
-                <span class="lesson-icon">
-                  📄
-                </span>
+                  <span class="lesson-icon">
+                    📄
+                  </span>
 
 
-                <div class="lesson-content">
+                  <div class="lesson-content">
 
-                  <strong class="lesson-title">
-                    {{
-                      lesson.title ||
-                      'درس بدون عنوان'
-                    }}
-                  </strong>
-
-
-                  @if (lesson.contentBody) {
-
-                    <p>
-                      {{ lesson.contentBody }}
-                    </p>
-
-                  }
+                    <strong class="lesson-title">
+                      {{
+                        lesson.title ||
+                        'درس بدون عنوان'
+                      }}
+                    </strong>
 
 
-                  <!-- =====================================
-                       TRAINING MATERIALS
-                  ====================================== -->
+                    @if (lesson.contentBody) {
 
-                  @if (
-                    (materialsByLesson()[lesson.lessonId] ?? []).length > 0
-                  ) {
+                      <p>
+                        {{ lesson.contentBody }}
+                      </p>
 
-                    <div class="lesson-materials">
-
-                      <div class="materials-title">
-                        المواد التعليمية
-                      </div>
+                    }
 
 
-                      @for (
-                        material of materialsByLesson()[lesson.lessonId] ?? [];
-                        track material.materialId
-                      ) {
+                    <!-- =====================================
+                         TRAINING MATERIALS
+                    ====================================== -->
 
-                        <div class="material-item">
+                    @if (
+                      (materialsByLesson()[lesson.lessonId] ?? []).length > 0
+                    ) {
 
-                          <span class="material-icon">
-                            {{ getMaterialIcon(material.fileType) }}
-                          </span>
+                      <div class="lesson-materials">
 
-
-                          <div class="material-info">
-
-                            @if (material.fileType === 'Link') {
-
-                              <a
-                                [href]="material.fileUrl"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="material-link"
-                              >
-                                فتح المرجع
-                              </a>
+                        <div class="materials-title">
+                          المواد التعليمية
+                        </div>
 
 
-                              <span class="material-url">
-                                {{ material.fileUrl }}
-                              </span>
+                        @for (
+                          material of materialsByLesson()[lesson.lessonId] ?? [];
+                          track material.materialId
+                        ) {
 
-                            } @else {
+                          <div class="material-item">
 
-                              <span class="material-name">
-                                {{ getMaterialName(material) }}
-                              </span>
+                            <span class="material-icon">
+                              {{ getMaterialIcon(material.fileType) }}
+                            </span>
 
-                            }
+
+                            <div class="material-info">
+
+                              @if (material.fileType === 'Link') {
+
+                                <a
+                                  [href]="material.fileUrl"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  class="material-link"
+                                >
+                                  فتح المرجع
+                                </a>
+
+
+                                <span class="material-url">
+                                  {{ material.fileUrl }}
+                                </span>
+
+                              } @else {
+
+                                <span class="material-name">
+                                  {{ getMaterialName(material) }}
+                                </span>
+
+                              }
+
+                            </div>
+
+
+                            <span class="material-type">
+
+                              @switch (material.fileType) {
+
+                                @case ('Pdf') {
+                                  PDF
+                                }
+
+                                @case ('Video') {
+                                  فيديو
+                                }
+
+                                @case ('Image') {
+                                  صورة
+                                }
+
+                                @case ('Document') {
+                                  مستند
+                                }
+
+                                @case ('Link') {
+                                  رابط
+                                }
+
+                                @default {
+                                  ملف
+                                }
+
+                              }
+
+                            </span>
 
                           </div>
 
+                        }
 
-                          <span class="material-type">
+                      </div>
 
-                            @switch (material.fileType) {
+                    }
 
-                              @case ('Pdf') {
-                                PDF
-                              }
-
-                              @case ('Video') {
-                                فيديو
-                              }
-
-                              @case ('Image') {
-                                صورة
-                              }
-
-                              @case ('Document') {
-                                مستند
-                              }
-
-                              @case ('Link') {
-                                رابط
-                              }
-
-                              @default {
-                                ملف
-                              }
-
-                            }
-
-                          </span>
-
-                        </div>
-
-                      }
-
-                    </div>
-
-                  }
+                  </div>
 
                 </div>
 
-              </div>
+              } @empty {
 
-            } @empty {
+                <div class="module-empty">
+                  لا توجد دروس داخل هذه الوحدة بعد.
+                </div>
 
-              <div class="module-empty">
-                لا توجد دروس داخل هذه الوحدة بعد.
-              </div>
+              }
 
-            }
+            </div>
 
           </div>
 
-        </div>
+        } @empty {
 
-      } @empty {
+          <div class="empty-content">
 
-        <div class="empty-content">
+            <div>
+              📘
+            </div>
 
-          <div>
-            📘
+            <strong>
+              لا توجد وحدات في هذا البرنامج بعد
+            </strong>
+
+            <p>
+              ابدئي بإنشاء أول وحدة، وبعدها يمكنك
+              إضافة الدروس والمواد.
+            </p>
+
+            <button
+              type="button"
+              class="btn primary"
+              (click)="openCreateModal('module')"
+            >
+              + إنشاء أول وحدة
+            </button>
+
           </div>
 
-          <strong>
-            لا توجد وحدات في هذا البرنامج بعد
-          </strong>
+        }
 
-          <p>
-            ابدئي بإنشاء أول وحدة، وبعدها يمكنك
-            إضافة الدروس والمواد.
-          </p>
-
-          <button
-            type="button"
-            class="btn primary"
-            (click)="openCreateModal('module')"
-          >
-            + إنشاء أول وحدة
-          </button>
-
-        </div>
-
-      }
+      </div>
 
     </div>
 
@@ -1278,7 +1284,7 @@
 
 
   /* ==========================================
-     CARDS
+     TOP CARDS
   ========================================== */
 
   .content-grid {
@@ -1431,12 +1437,27 @@
   }
 
 
+  /* ==========================================
+     MODULE CARDS GRID
+     كل وحدتين جنب بعض
+  ========================================== */
+
+  .modules-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    align-items: start;
+  }
+
+
   .module-box {
+    min-width: 0;
+    height: fit-content;
     padding: 16px;
-    margin-bottom: 14px;
+    margin-bottom: 0;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
+    border-radius: 14px;
   }
 
 
@@ -1446,6 +1467,8 @@
     align-items: center;
     gap: 15px;
     margin-bottom: 11px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
   }
 
 
@@ -1453,11 +1476,19 @@
     display: flex;
     align-items: center;
     gap: 7px;
+    min-width: 0;
     color: #0b192c;
   }
 
 
+  .module-title strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+
   .module-order {
+    flex-shrink: 0;
     color: #64748b;
     font-size: 11px;
   }
@@ -1482,6 +1513,7 @@
 
 
   .lesson-icon {
+    flex-shrink: 0;
     margin-top: 1px;
   }
 
@@ -1533,6 +1565,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
     padding: 8px 10px;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -1556,9 +1589,11 @@
 
 
   .material-name {
+    overflow: hidden;
     color: #475569;
     font-size: 12px;
-    word-break: break-all;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
 
@@ -1596,7 +1631,7 @@
 
 
   .module-empty {
-    padding: 10px;
+    padding: 16px 10px;
     text-align: center;
     color: #94a3b8;
     font-size: 12px;
@@ -1606,6 +1641,7 @@
 
 
   .empty-content {
+    grid-column: 1 / -1;
     padding: 35px 20px;
     text-align: center;
     color: #64748b;
@@ -1794,6 +1830,11 @@
   @media (max-width: 950px) {
 
     .content-grid {
+      grid-template-columns: 1fr;
+    }
+
+
+    .modules-grid {
       grid-template-columns: 1fr;
     }
 
