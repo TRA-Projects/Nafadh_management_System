@@ -178,9 +178,13 @@ export interface BatchDto {
   batchId: number;
   programId: number;
   batchName: string;
+  companyName?: string;
+  trackName?: string;
   startDate: string;
   endDate: string;
   capacity: number;
+  totalTraineesCount?: number;
+  issuedCertificatesCount?: number;
   status: BatchStatus;
 }
 

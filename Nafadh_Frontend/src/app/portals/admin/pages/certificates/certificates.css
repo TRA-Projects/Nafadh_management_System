@@ -1,0 +1,434 @@
+/* ==================== النمط العام والقائمة ==================== */
+.certificates-container {
+  padding: 20px;
+  direction: rtl;
+}
+
+.nfd-page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.nfd-page-sub {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 4px 0 20px 0;
+}
+
+.batches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.batch-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.calendar-icon-box {
+  width: 36px;
+  height: 36px;
+  background: #0a117213;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.batch-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: #111827;
+}
+
+.company-name {
+  color: #0A1172;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.track-name {
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
+.progress-section {
+  margin: 12px 0;
+}
+
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.progress-bar-bg {
+  background: #e5e7eb;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  background: #0a11722f;
+  height: 100%;
+}
+
+.dates-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-top: 10px;
+}
+
+.card-divider {
+  border: none;
+  border-top: 1px solid #f3f4f6;
+  margin: 12px 0;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.trainees-count {
+  font-size: 0.85rem;
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.view-btn {
+  background: none;
+  border: none;
+  color: #0A1172;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ==================== زر العودة (جهة اليمين) ==================== */
+.back-link-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 16px;
+}
+
+.back-btn {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 0;
+}
+
+.back-btn:hover {
+  color: #0A1172;
+}
+
+/* ==================== 1. المستطيل العلوي (بيانات الدفعة) ==================== */
+.top-info-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 24px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.right-details-side {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.calendar-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: #ecfdf5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.batch-main-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title-with-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.batch-name-heading {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.status-badge-pill {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge-pill.ongoing {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+
+.status-badge-pill.not-started {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.company-text-highlight {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0A1172;
+}
+
+.meta-dates-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.dot-separator {
+  color: #d1d5db;
+}
+
+.left-stats-side {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-num {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.stat-num.dark-text {
+  color: #1f2937;
+}
+
+.stat-num.green-text {
+  color: #0A1172;
+}
+
+.stat-lbl {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.stat-v-divider {
+  width: 1px;
+  height: 36px;
+  background-color: #e5e7eb;
+}
+
+/* ==================== 2. صندوق العنوان والزر المستقل ==================== */
+.header-action-box {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 80px; /* مسافة فاصلة واسعة بين البوكس والجدول بالأسفل */
+}
+
+.header-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.trainees-section-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.trainees-section-sub {
+  margin: 4px 0 0 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* زر إصدار جميع الشهادات في الهيدر */
+.btn-issue-all.solid-style {
+  background-color: #0A1172;
+  color: #ffffff;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s ease;
+}
+
+.btn-issue-all.solid-style:hover {
+  opacity: 0.9;
+}
+
+/* ==================== 3. صندوق الجدول السفلي ==================== */
+.table-card-container {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.trainees-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+}
+
+.trainees-data-table th {
+  padding: 12px 16px;
+  background-color: #f9fafb;
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.trainees-data-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.trainees-data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.trainee-name-cell {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.grade-badge {
+  color: #6b7280;
+}
+
+/* ==================== حالة الشهادة وأزرار جدول المتدربين ==================== */
+.status-not-issued {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.status-issued {
+  color: #10b981;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.btn-action-cert {
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* زر إصدار الشهادة للمتدرب (لون 0A1172) */
+.btn-action-cert.issue-cert {
+  background-color: #0A1172;
+  color: #ffffff;
+  border: 1px solid #0A1172;
+}
+
+.btn-action-cert.issue-cert:hover {
+  opacity: 0.9;
+}
+
+/* زر عرض الشهادة للمتدرب (أبيض شفاف) */
+.btn-action-cert.view-cert {
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-action-cert.view-cert:hover {
+  background-color: #ffffff;
+  border-color: #9ca3af;
+  color: #0A1172;
+}
+
+.empty-state, .empty-state-inside, .loading-state {
+  padding: 40px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.95rem;
+}

@@ -1,21 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-// import { CompanyService } from '../../services/company.service'; // تأكد من تعديل مسار الخدمة حسب مشروعك
-
-interface Company {
-  companyName: string;
-  initials: string;
-  workField: string;
-  address: string;
-  phone: string;
-  email: string;
-  capacity: number;
-  currentLoad: number;
-  rating: number | null;
-  status: string;
-  statusText: string;
-}
+import { AdminApi } from '../../services/admin-api';
+import { CompanyDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-companies',
@@ -25,136 +12,94 @@ interface Company {
   styleUrls: ['./companies.css']
 })
 export class AdminCompanies implements OnInit {
-  currentFilter: string = 'all';
-  isAddModalOpen: boolean = false;
-  emailError: boolean = false;
+  statusFilter = signal<string>('الكل');
 
-  availableFields: string[] = [
-    'تقنية المعلومات',
-    'اتصالات',
-    'خدمات رقمية',
-    'برمجيات',
-    'بنية تحتية',
-    'ذكاء اصطناعي'
+  setFilter(status: string) {
+    this.statusFilter.set(status);
+  }
+
+  companies = signal<CompanyDto[]>([]);
+
+  filtered = computed(() => {
+    const filter = this.statusFilter();
+    if (filter === 'الكل') {
+      return this.companies();
+    }
+    return this.companies().filter(c => c.status === filter);
+  });
+
+  showAddModal = signal<boolean>(false);
+  isSaving = signal<boolean>(false);
+  addError = signal<string>('');
+
+  workFieldOptions: string[] = ['تقنية المعلومات', 'اتصالات', 'خدمات رقمية', 'برمجيات', 'بنية تحتية', 'ذكاء اصطناعي'];
+  workFieldDropdownOpen = signal<boolean>(false);
+
+  statusOptions: { value: string; label: string }[] = [
+    { value: 'Approved', label: 'معتمدة' },
+    { value: 'PendingApproval', label: 'قيد المراجعة' },
+    { value: 'Suspended', label: 'موقوفة' },
+    { value: 'Rejected', label: 'مرفوضة' }
   ];
+  statusDropdownOpen = signal<boolean>(false);
 
-  newCompany = {
-    name: '',
-    field: 'برمجيات',
-    city: 'مسقط',
-    maxCapacity: 200,
-    statusText: 'معتمدة',
-    contactName: '',
-    email: '',
-    phone: ''
-  };
+  newCompany: any = this.emptyCompanyForm();
 
-  allCompanies: Company[] = [];
-  companiesList: Company[] = [];
+  constructor(private adminApi: AdminApi) {}
 
-  // قم بفك التعليق هنا لحقن الـ Service الخاصة بك
-  // constructor(private companyService: CompanyService) {}
-
-  ngOnInit() {
-    this.loadCompanies();
+  ngOnInit(): void {
+    this.adminApi.getCompanies().subscribe({
+      next: (data) => this.companies.set(data),
+      error: (err) => console.error('خطأ في جلب البيانات:', err)
+    });
   }
 
-  // جلب البيانات من قاعدة البيانات عبر الـ API
-  loadCompanies() {
-
+  private emptyCompanyForm() {
+    return { companyName: '', workField: '', capacity: null, status: 'PendingApproval', email: '', phone: '', contactName: '' };
   }
 
-  filterStatus(status: string) {
-    this.currentFilter = status;
-    if (status === 'all') {
-      this.companiesList = [...this.allCompanies];
-    } else {
-      this.companiesList = this.allCompanies.filter(company => company.status === status);
-    }
+  openAddModal() {
+    this.newCompany = this.emptyCompanyForm();
+    this.showAddModal.set(true);
   }
 
-  addNewCompany() {
-    this.isAddModalOpen = true;
-    this.emailError = false;
+  closeAddModal() { this.showAddModal.set(false); }
+
+  toggleWorkFieldDropdown(event: MouseEvent) { event.stopPropagation(); this.workFieldDropdownOpen.update(v => !v); }
+  selectWorkField(opt: string, event: MouseEvent) { event.stopPropagation(); this.newCompany.workField = opt; this.workFieldDropdownOpen.set(false); }
+
+  toggleStatusDropdown(event: MouseEvent) { event.stopPropagation(); this.statusDropdownOpen.update(v => !v); }
+  selectStatus(val: string, event: MouseEvent) { event.stopPropagation(); this.newCompany.status = val; this.statusDropdownOpen.set(false); }
+
+  statusLabel(val: string): string {
+    return this.statusOptions.find(o => o.value === val)?.label ?? val;
   }
 
-  closeModal() {
-    this.isAddModalOpen = false;
+  closeAllDropdowns() { this.workFieldDropdownOpen.set(false); this.statusDropdownOpen.set(false); }
+
+  submitAddCompany() {
+    this.adminApi.createCompany(this.newCompany).subscribe({
+      next: (res: any) => { 
+        this.companies.update(list => [res, ...list]); 
+        this.closeAddModal(); 
+      },
+      error: () => this.addError.set('حدث خطأ')
+    });
   }
 
-  validateEmail(email: string): boolean {
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
-  }
-
-  // دالة الإرسال والحفظ الفعلي في الداتابيس عبر الـ Backend
-  submitNewCompany() {
-    if (!this.newCompany.name) {
-      alert('يرجى إدخال اسم الشركة');
-      return;
-    }
-
-    if (this.newCompany.email && !this.validateEmail(this.newCompany.email)) {
-      this.emailError = true;
-      return;
-    } else {
-      this.emailError = false;
-    }
-
-    // تجهيز البيانات بالهيكل المطابق لـ NFD_CompanyInputDTO في الـ C# Backend
-    const companyInputDTO = {
-      companyName: this.newCompany.name,
-      commercialRegister: 'CR-' + Math.floor(10000 + Math.random() * 90000), // رقم سجل تجاري افتراضي أو أضه كحقل
-      workField: this.newCompany.field,
-      address: this.newCompany.city,
-      phone: this.newCompany.phone,
-      email: this.newCompany.email,
-      logo: 'https://cdn.nafadh.test/logos/default.png',
-      capacity: Number(this.newCompany.maxCapacity),
-      status: 1, // 1 يمثل الحالة في الـ Backend Enum
-      userId: 1  // معرف المستخدم (تأكد أنه موجود في جدول Users بالداتابيس)
-    };
-
-  
+  // دالة لتغيير حالة الشركة (اعتماد، إيقاف، رفض) من جدول الإجراءات مباشرة
+updateCompanyStatus(company: any, newStatus: string) {
+    const updatedData = { ...company, status: newStatus as any };
     
-    // مؤقتاً للتجربة المحلية لحين تفعيل الـ Service:
-    let statusKey = 'approved';
-    if (this.newCompany.statusText === 'قيد المراجعة') statusKey = 'pending';
-    if (this.newCompany.statusText === 'موقوفة') statusKey = 'rejected';
-
-    const companyToAdd: Company = {
-      companyName: this.newCompany.name,
-      initials: this.newCompany.name.slice(0, 2),
-      workField: this.newCompany.field,
-      address: this.newCompany.city,
-      phone: this.newCompany.phone,
-      email: this.newCompany.email,
-      capacity: Number(this.newCompany.maxCapacity),
-      currentLoad: 0,
-      rating: null,
-      status: statusKey,
-      statusText: this.newCompany.statusText
-    };
-
-    this.allCompanies.unshift(companyToAdd);
-    this.filterStatus(this.currentFilter);
-    this.closeModal();
-    this.resetForm();
+    this.adminApi.updateCompany(company.companyId, updatedData).subscribe({
+      next: () => {
+        this.companies.update(list => 
+          list.map(c => c.companyId === company.companyId ? { ...c, status: newStatus as any } : c)
+        );
+      },
+      error: (err) => {
+        console.error('فشل تحديث حالة الشركة:', err);
+      }
+    });
   }
-
-  resetForm() {
-    this.newCompany = {
-      name: '',
-      field: 'برمجيات',
-      city: 'مسقط',
-      maxCapacity: 0,
-      statusText: 'قيد المراجعة',
-      contactName: '',
-      email: '',
-      phone: ''
-    };
-  }
-
-  viewCompany(company: any) { console.log('عرض:', company.companyName); }
-  editCompany(company: any) { console.log('تعديل:', company.companyName); }
 }

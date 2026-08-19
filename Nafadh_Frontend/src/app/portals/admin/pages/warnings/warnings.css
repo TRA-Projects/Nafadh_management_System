@@ -1,0 +1,281 @@
+:host {
+  display: block;
+  direction: rtl;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1e293b;
+}
+
+.nfd-page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.nfd-page-sub {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0 0 20px 0;
+}
+
+.nfd-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  border: 1px solid #f1f5f9;
+}
+
+.nfd-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.nfd-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+}
+
+.nfd-table th {
+  padding: 14px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.nfd-table td {
+  padding: 16px;
+  font-size: 0.9rem;
+  color: #334155;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.text-center { text-align: center; }
+
+/* أزرار الأيقونات */
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  color: #0d9488;
+  background-color: #f0fdf4;
+}
+
+/* Badges المستويات */
+.nfd-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.lvl-yellow { background: #fef9c3; color: #854d0e; }
+.lvl-orange { background: #ffedd5; color: #9a3412; }
+.lvl-red { background: #fee2e2; color: #991b1b; }
+
+/* الحالات */
+.status-text { font-weight: 500; }
+.st-open { color: #dc2626; }
+.st-resolved { color: #16a34a; }
+.st-review { color: #d97706; }
+
+/* النافذة المنبثقة العامة */
+.nfd-modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.nfd-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* تصميم نافذة التفاصيل الخاصة بالصورة */
+.details-modal {
+  padding: 28px;
+}
+
+.details-header {
+  position: relative;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.details-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.close-icon-btn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+/* الهيدر الرمادي العلوي للشركة داخل التفاصيل */
+.company-card-header {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.company-info-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.company-circle {
+  width: 44px;
+  height: 44px;
+  background: #1e293b;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.company-text h4 {
+  margin: 0 0 2px 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.company-text span {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* الصفوف والتفاصيل */
+.details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.88rem;
+}
+
+.detail-label {
+  color: #94a3b8;
+}
+
+.detail-value {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.text-blue {
+  color: #0284c7;
+}
+
+.status-badge {
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-badge.st-open {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* صندوق الملاحظات */
+.notes-box {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.notes-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.notes-text {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #334155;
+  line-height: 1.5;
+}
+
+/* زر إغلاق الأخضر */
+.btn-green-submit {
+  width: 100%;
+  background-color: #0d9488;
+  color: #ffffff;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-green-submit:hover {
+  background-color: #0f766e;
+}
+
+/* أزرار إضافية للإنشاء */
+.nfd-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+}
+.nfd-btn.danger { background-color: #dc2626; color: #fff; }
+.nfd-btn.secondary { background-color: #f1f5f9; color: #475569; }
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 0.85rem; color: #475569; margin-bottom: 6px; }
+.nfd-input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+.nfd-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }

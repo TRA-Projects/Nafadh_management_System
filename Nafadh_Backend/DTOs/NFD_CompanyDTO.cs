@@ -35,8 +35,7 @@ namespace Nafadh_Backend.DTOs
 
         public DateTime? ApprovalDate { get; set; }
 
-        [Required]
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
     }
 
 
@@ -65,6 +64,6 @@ namespace Nafadh_Backend.DTOs
 
         public DateTime? ApprovalDate { get; set; }
 
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
     }
 }
