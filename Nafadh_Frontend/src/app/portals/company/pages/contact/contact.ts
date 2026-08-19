@@ -188,7 +188,7 @@ export class CompanyContact implements OnInit {
             );
           },
 
-          error: (error) => {
+          error: (error: unknown) => {
             console.error(
               'Failed to mark conversation as read:',
               error
