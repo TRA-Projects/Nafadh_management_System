@@ -46,6 +46,33 @@
   border-bottom: 1px solid var(--contact-border-light);
 }
 
+.nfd-card > div[style*="padding:4px 4px 8px"] .nfd-input {
+  border: 2px solid #9aa3af !important;
+  background: #fff !important;
+  box-shadow: 0 2px 8px rgba(10, 17, 114, 0.04);
+}
+
+.nfd-card > div[style*="padding:4px 4px 8px"] .nfd-input:hover {
+  border-color: #737d8a !important;
+}
+
+.company-contact-search,
+.company-contact-reply-input {
+  border: 2px solid #9aa3af !important;
+  background: #fff !important;
+}
+
+.company-contact-search:hover,
+.company-contact-reply-input:hover {
+  border-color: #737d8a !important;
+}
+
+.company-contact-search:focus,
+.company-contact-reply-input:focus {
+  border-color: var(--color-navy) !important;
+  box-shadow: 0 0 0 3px rgba(10, 17, 114, 0.1) !important;
+}
+
 .nfd-card button[type="button"]:not(.nfd-btn) {
   transition: background 0.18s ease, border-color 0.18s ease;
 }
@@ -89,6 +116,81 @@
 .nfd-modal {
   border: 1px solid var(--contact-border);
   box-shadow: 0 18px 50px rgba(10, 17, 114, 0.18);
+}
+
+.company-contact-new-modal {
+  width: min(560px, calc(100vw - 32px)) !important;
+  padding: 28px 30px !important;
+  border: 1px solid #d5deed;
+  border-top: 4px solid var(--color-navy);
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(10, 17, 114, 0.24);
+  gap: 8px;
+}
+
+.company-contact-new-modal h3 {
+  margin: 0 0 12px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--contact-border-light);
+  color: var(--color-navy);
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.company-contact-new-modal label {
+  margin-top: 10px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.company-contact-new-modal .nfd-input {
+  min-height: 44px;
+  border: 1px solid #b8c1ce !important;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.company-contact-new-modal textarea.nfd-input {
+  min-height: 112px;
+  padding-block: 11px;
+  resize: vertical;
+}
+
+.company-contact-new-modal .nfd-input:focus {
+  border-color: var(--color-brand) !important;
+  box-shadow: 0 0 0 3px rgba(0, 102, 196, 0.1) !important;
+}
+
+.company-contact-new-modal .nfd-modal-actions {
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--contact-border-light);
+}
+
+.company-contact-new-modal .nfd-modal-actions .nfd-btn {
+  min-height: 42px;
+  justify-content: center;
+}
+
+.company-contact-new-modal .nfd-modal-actions .primary {
+  min-width: 174px;
+}
+
+@media (max-width: 560px) {
+  .company-contact-new-modal {
+    padding: 22px 20px !important;
+  }
+
+  .company-contact-new-modal .nfd-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .company-contact-new-modal .nfd-modal-actions .nfd-btn,
+  .company-contact-new-modal .nfd-modal-actions .primary {
+    width: 100%;
+  }
 }
 
 @media (max-width: 700px) {

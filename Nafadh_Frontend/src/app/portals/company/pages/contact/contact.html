@@ -80,7 +80,7 @@
     <div style="padding:4px 4px 8px">
 
       <input
-        class="nfd-input"
+        class="nfd-input company-contact-search"
         style="height:36px;font-size:12px"
         [ngModel]="searchText"
         (ngModelChange)="searchText = $event"
@@ -511,7 +511,7 @@
       >
 
         <input
-          class="nfd-input"
+          class="nfd-input company-contact-reply-input"
           [(ngModel)]="replyText"
           placeholder="اكتب رسالتك هنا..."
           (keydown.enter)="send()"
@@ -593,7 +593,7 @@
   >
 
     <div
-      class="nfd-modal"
+      class="nfd-modal company-contact-new-modal"
       (click)="$event.stopPropagation()"
     >
 
