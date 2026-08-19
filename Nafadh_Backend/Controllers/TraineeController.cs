@@ -298,5 +298,40 @@ namespace Nafadh_Backend.Controllers
 
             return NoContent();
         }
+
+        //get trainee id by user id
+        [HttpGet("traineeByUserID/{userId}")]
+        public async Task<IActionResult> GetTraineeIdByUserID(int userId)
+        {
+            var t = await _service.GetTraineeIdByUserID(userId);
+
+            if (t == null)
+                return NotFound(new
+                {
+                    message = "Trainee not found for this UserId."
+                });
+
+            var dto = new TraineeProfileDto
+            {
+                TraineeId = t.TraineeId,
+                FullName = t.User?.FullName,
+                Email = t.User?.Email,
+                NationalId = t.NationalId,
+                University = t.University,
+                Major = t.Major,
+                AcademicLevel = t.AcademicLevel,
+                Skills = t.Skills,
+                ResumeUrl = t.ResumeUrl,
+                GitHubUrl = t.GitHubUrl,
+                LinkedInUrl = t.LinkedInUrl,
+                Status = t.Status,
+                VerificationStatus = t.VerificationStatus,
+                CompanyId = t.CompanyId,
+                CompanyName = t.Company?.CompanyName
+            };
+
+            return Ok(dto);
+
+        }
     }
 }
