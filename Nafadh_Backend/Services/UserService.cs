@@ -6,6 +6,7 @@ using Nafadh_Backend.Common;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Exceptions;
+using Nafadh_Backend.Interfaces;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -16,15 +17,18 @@ namespace Nafadh_Backend.Services
         private readonly IUserRepository _repository;
         private readonly IRoleRepository _roleRepository;
         private readonly IJwtTokenService _jwtTokenService;
+        private readonly ICompanySupervisorRepository _supervisorRepository;
 
         public UserService(
             IUserRepository repository,
             IRoleRepository roleRepository,
-            IJwtTokenService jwtTokenService)
+            IJwtTokenService jwtTokenService,
+            ICompanySupervisorRepository supervisorRepository)
         {
             _repository = repository;
             _roleRepository = roleRepository;
             _jwtTokenService = jwtTokenService;
+            _supervisorRepository = supervisorRepository;
         }
 
         public async Task<UserResponseDTO> RegisterAsync(UserRegisterationDTO dto)
@@ -72,6 +76,18 @@ namespace Nafadh_Backend.Services
 
             var (token, expiresAtUtc) = _jwtTokenService.GenerateToken(user);
 
+            int? companyId = null;
+            int? supervisorId = null;
+            if (user.Role?.RoleName == "CompanySupervisor")
+            {
+                var supervisor = await _supervisorRepository.GetByUserIdAsync(user.UserId);
+                if (supervisor != null)
+                {
+                    companyId = supervisor.CompanyId;
+                    supervisorId = supervisor.SupervisorId;
+                }
+            }
+
             return new UserLoginResponseDTO
             {
                 Token = token,
@@ -80,7 +96,9 @@ namespace Nafadh_Backend.Services
                 FullName = user.FullName,
                 Email = user.Email,
                 RoleId = user.RoleId,
-                RoleName = user.Role?.RoleName ?? string.Empty
+                RoleName = user.Role?.RoleName ?? string.Empty,
+                CompanyId = companyId,
+                SupervisorId = supervisorId
             };
         }
 
