@@ -34,5 +34,6 @@ namespace Nafadh_Backend.Services
         void Update(NFD_Trainee trainee);
 
         Task<bool> SaveChangesAsync();
+        Task<NFD_Trainee?> GetTraineeIdByUserID(int userId);
     }
 }

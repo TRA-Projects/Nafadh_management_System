@@ -3,9 +3,11 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -98,6 +100,8 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
         }
 
+
+
         // Add a new trainee to the context
         public async Task AddAsync(NFD_Trainee trainee)
         {
@@ -120,5 +124,22 @@ namespace Nafadh_Backend.Repositories
         {
             return await _context.SaveChangesAsync() > 0;
         }
+
+
+        public async Task<NFD_Trainee?> GetTraineeIdByUserID(int userId)
+        { 
+       
+         return await _context.NFD_Trainees.Include(t => t.User)
+                .Include(t => t.Company)
+                .Include(t => t.Enrollments)
+                .Include(t => t.TraineeModuleProgresses)
+                .Include(t => t.SessionAttendances)
+                .Include(t => t.Submissions)
+                .Include(t=>t.Enrollments)
+                .Include(t => t.ProjectMembers).FirstOrDefaultAsync(t => t.UserId == userId);
+        }
+
+
+
     }
 }

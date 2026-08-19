@@ -1,56 +1,296 @@
-<div class="nfd-hero">
-  <div class="nfd-hero-greeting">
-    <h1>مرحباً، {{ auth.session()?.fullName }} 👋</h1>
-    <p>{{ summary()?.companyName ? ('برنامج تدريبي — ' + summary()?.companyName) : 'برنامجك التدريبي' }}</p>
-    <span class="nfd-badge" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ summary()?.status || 'مستمر' }}</span>
-  </div>
-  <div class="nfd-hero-progress">
-    <div>
-      <div class="label">نسبة الإنجاز الإجمالية</div>
-      <div class="sub">أنت على الطريق الصحيح!</div>
-      <button class="nfd-btn" style="background:var(--color-cyan);color:#fff;height:32px">عرض التفاصيل</button>
-    </div>
-    <div class="nfd-ring" [style.--p]="summary()?.moduleProgressPercentage ?? 0" style="background:rgba(255,255,255,.12)">
-      <span>{{ (summary()?.moduleProgressPercentage ?? 0) | number:'1.0-0' }}%</span>
-    </div>
-  </div>
-</div>
+<div class="dashboard-viewport-container" style="display: flex; flex-direction: column; gap: 16px; padding: 16px; font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; height: calc(100vh - 70px); overflow-y: auto;">
 
-<div class="nfd-stat-pill-row" style="--cols:4">
-  <div class="nfd-stat-pill-card"><span class="label">الإنذارات</span><span class="pill" style="background:var(--status-absent-bg);color:var(--status-absent-fg)">1</span></div>
-  <div class="nfd-stat-pill-card"><span class="label">نسبة الحضور</span><span class="pill" style="background:var(--status-completed-bg);color:var(--status-completed-fg)">{{ (summary()?.attendanceRate ?? 0) | number:'1.0-0' }}%</span></div>
-  <div class="nfd-stat-pill-card"><span class="label">المهام المسلّمة</span><span class="pill" style="background:var(--status-active-bg);color:var(--status-active-fg)">{{ summary()?.submissionsCount ?? 0 }}/{{ (summary()?.submissionsCount ?? 0) + (summary()?.pendingSubmissionsCount ?? 0) }}</span></div>
-  <div class="nfd-stat-pill-card"><span class="label">الوحدات المكتملة</span><span class="pill" style="background:var(--status-new-bg);color:var(--status-new-fg)">{{ summary()?.completedModulesCount ?? 0 }}/{{ summary()?.totalModulesCount ?? 0 }}</span></div>
-</div>
+  <!-- حالة التحميل -->
+  @if (loading()) {
+    <div style="display: flex; justify-content: center; align-items: center; padding: 40px; color: #64748b;">
+      جاري تحميل البيانات...
+    </div>
+  } @else if (errorMessage()) {
+    <div style="display: flex; justify-content: center; align-items: center; padding: 40px; color: #dc2626; background: #fef2f2; border-radius: 12px;">
+      {{ errorMessage() }}
+    </div>
+  } @else {
 
-<div style="display:grid;grid-template-columns:1fr 2fr;gap:16px">
-  <div class="nfd-card">
-    <h3>فريق الإشراف</h3>
-    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--color-border-light)">
-      <div style="width:40px;height:40px;border-radius:50%;background:var(--color-navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">م</div>
-      <div><small class="nfd-muted" style="display:block">المدرب</small><strong style="font-size:13px">—</strong></div>
-    </div>
-    <div style="display:flex;align-items:center;gap:12px;padding:10px 0">
-      <div style="width:40px;height:40px;border-radius:50%;background:var(--color-cyan);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">س</div>
-      <div><small class="nfd-muted" style="display:block">المشرف</small><strong style="font-size:13px">—</strong></div>
-    </div>
-  </div>
-
-  <div class="nfd-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <h3 style="margin:0">المهام القريبة من موعد التسليم</h3>
-      <button class="nfd-btn ghost">عرض الكل</button>
-    </div>
-    @for (t of tasks(); track t.taskId) {
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--color-border-light)">
-        <div>
-          <span class="nfd-badge" style="background:var(--status-new-bg);color:var(--status-new-fg);margin-bottom:4px;display:inline-block">جديد</span>
-          <strong style="display:block;font-size:13px">{{ t.title }}</strong>
-          <small class="nfd-muted">الموعد النهائي: {{ t.dueDate | date:'mediumDate' }}</small>
-        </div>
-        <nfd-icon name="clip" />
+  <!-- 1. الهيدر الرئيسي (Hero Banner) -->
+  <div style="background: linear-gradient(135deg, #091242 0%, #0d1e78 100%); border-radius: 20px; padding: 24px 32px; color: #ffffff; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 25px rgba(13, 30, 120, 0.15);">
+    
+    <!-- معلومات الترحيب والاسم -->
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <h2 style="margin: 0; font-size: 1.6rem; font-weight: 800;">
+          مرحباً، {{ auth.session()?.fullName || traineeData()?.fullName || summary()?.fullName || 'المتدرب' }} 👋
+        </h2>
       </div>
-    }
-    @empty { <p class="nfd-muted">لا توجد مهام قريبة</p> }
+      <p style="margin: 0; font-size: 0.9rem; color: rgba(255, 255, 255, 0.8);">
+        {{ programName() || 'برنامج تدريبي' }} — {{ batchName() || 'دفعة تدريبية' }}
+      </p>
+      <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
+        <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.4); padding: 3px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 700;">
+          {{ calculatedStatus() }}
+        </span>
+        <span style="color: rgba(255, 255, 255, 0.6); font-size: 0.8rem;">
+          تاريخ الانتهاء: {{ (programEndDate() | date:'MMM yyyy') || 'غير محدد' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- نسبة الإنجاز الدائرية والزر -->
+    <div style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(12px); border-radius: 16px; padding: 16px 24px; display: flex; align-items: center; gap: 20px;">
+      <div style="display: flex; flex-direction: column; gap: 6px; text-align: right;">
+        <span style="font-size: 0.78rem; color: rgba(255, 255, 255, 0.75);">نسبة الإنجاز الإجمالية</span>
+        
+        <button routerLink="/trainee/program" style="background: #2563eb; color: #ffffff; border: none; border-radius: 8px; padding: 6px 16px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.2s; width: fit-content;">
+          عرض التفاصيل
+        </button>
+      </div>
+      <!-- حلقة الإنجاز الدائرية -->
+      <div [ngStyle]="{
+        'width': '65px',
+        'height': '65px',
+        'border-radius': '50%',
+        'display': 'flex',
+        'align-items': 'center',
+        'justify-content': 'center',
+        'position': 'relative',
+        'background': 'conic-gradient(#3b82f6 ' + progressPercentage() + '%, rgba(255, 255, 255, 0.15) 0)'
+      }">
+        <div style="position: absolute; width: 51px; height: 51px; border-radius: 50%; background: #0c1753;"></div>
+        <span style="position: relative; z-index: 1; font-size: 0.85rem; font-weight: 800; color: #ffffff;">
+          {{ progressPercentage() | number:'1.0-0' }}%
+        </span>
+      </div>
+    </div>
+
   </div>
+
+  <!-- 2. صف مؤشرات الإحصائيات (4 بطاقات أفقية) -->
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+    
+    <!-- الوحدات المكتملة -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+      <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">الوحدات المكتملة</span>
+      <span style="background: #eff6ff; color: #2563eb; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">
+        {{ summary()?.completedModulesCount ?? 0 }}/{{ summary()?.totalModulesCount ?? 0 }}
+      </span>
+    </div>
+
+    <!-- المهام المسلمة -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+      <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">المهام المسلّمة</span>
+      <span style="background: #f0fdf4; color: #16a34a; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">
+        {{ summary()?.submissionsCount ?? 0 }}/{{ (summary()?.submissionsCount ?? 0) + (summary()?.pendingSubmissionsCount ?? 0) }}
+      </span>
+    </div>
+
+    <!-- نسبة الحضور -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+      <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">نسبة الحضور</span>
+      <span style="background: #fdf4ff; color: #9333ea; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">
+        {{ (summary()?.attendanceRate ?? 0) | number:'1.0-0' }}%
+      </span>
+    </div>
+
+    <!-- الإنذارات -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+      <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">الإنذارات</span>
+      <span style="background: #fef2f2; color: #dc2626; padding: 4px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">
+        {{ summary()?.warningsCount ?? 0 }}
+      </span>
+    </div>
+
+  </div>
+
+  <!-- 3. الشبكة الرئيسية (الصف الأوسط: فريق الإشراف + المهام القريبة) -->
+  <div style="display: grid; grid-template-columns: 320px 1fr; gap: 16px;">
+    
+    <!-- فريق الإشراف -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+      <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b;">فريق الإشراف</h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <!-- المدرب -->
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9;">
+          @if (loadingTrainer()) {
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.75rem;">
+              ...
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 0.75rem; color: #64748b;">المدرب</span>
+              <span style="font-size: 0.85rem; color: #94a3b8;">جاري التحميل...</span>
+            </div>
+          } @else {
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: #0c1753; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.95rem;">
+              {{ getInitial(trainerData()?.fullName || summary()?.trainerName) }}
+            </div>
+            <div style="display: flex; flex-direction: column; flex: 1;">
+              <span style="font-size: 0.75rem; color: #64748b;">المدرب</span>
+              <strong style="font-size: 0.9rem; color: #1e293b;">
+                {{ trainerData()?.fullName || summary()?.trainerName || 'لم يتم التعيين' }}
+              </strong>
+              <span style="font-size: 0.72rem; color: #94a3b8;">
+                {{ getTrainerSpecialty() }}
+              </span>
+            </div>
+            <button style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 4px 8px;" 
+                    title="تواصل مع المدرب"
+                    (click)="contactTrainer()">
+              💬
+            </button>
+          }
+        </div>
+
+        <!-- المشرف -->
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9;">
+          @if (loadingSupervisor()) {
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.75rem;">
+              ...
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 0.75rem; color: #64748b;">المشرف</span>
+              <span style="font-size: 0.85rem; color: #94a3b8;">جاري التحميل...</span>
+            </div>
+          } @else {
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: #0284c7; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.95rem;">
+              {{ getInitial(supervisorData()?.fullName || summary()?.supervisorName) }}
+            </div>
+            <div style="display: flex; flex-direction: column; flex: 1;">
+              <span style="font-size: 0.75rem; color: #64748b;">المشرف</span>
+              <strong style="font-size: 0.9rem; color: #1e293b;">
+                {{ supervisorData()?.fullName || summary()?.supervisorName || enrollmentData()?.supervisorName || 'لم يتم التعيين' }}
+              </strong>
+              <span style="font-size: 0.72rem; color: #94a3b8;">
+                {{ getSupervisorRole() }}
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- المهام القريبة من موعد التسليم -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b;">المهام القريبة من موعد التسليم</h3>
+        <button routerLink="/trainee/tasks" style="background: none; border: none; color: #2563eb; font-size: 0.85rem; font-weight: 600; cursor: pointer;">عرض الكل</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        @if (loadingTasks()) {
+          <div style="display: flex; justify-content: center; padding: 20px; color: #94a3b8;">جاري تحميل المهام...</div>
+        } @else {
+          @for (t of tasks(); track t.taskId) {
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9;">
+              <div style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
+                <!-- اسم المهمة -->
+                <strong style="font-size: 0.9rem; color: #1e293b;">{{ t.title || 'مهمة غير مسماة' }}</strong>
+                <!-- التاريخ -->
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: #64748b;">
+                  <span>📅 الموعد النهائي: {{ t.dueDate ? (t.dueDate | date:'mediumDate') : 'غير محدد' }}</span>
+                  @if (t.dueDate) {
+                    <span [style.color]="isTaskOverdue(t.dueDate) ? '#dc2626' : '#16a34a'">
+                      {{ isTaskOverdue(t.dueDate) ? '⏰ منتهي' : '' }}
+                    </span>
+                  }
+                </div>
+                <!-- حالة التسليم (إذا وجدت) -->
+                @if (t.submissionStatus) {
+                  <span style="font-size: 0.7rem; color: #94a3b8;">
+                    📤 التسليم: {{ getTaskStatusDisplay(t.submissionStatus) }}
+                  </span>
+                }
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <!-- حالة المهمة -->
+                @if (t.submissionStatus) {
+                  <span [style.background]="getTaskStatusStyle(t.submissionStatus).background" 
+                        [style.color]="getTaskStatusStyle(t.submissionStatus).color"
+                        style="padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">
+                    {{ getTaskStatusDisplay(t.submissionStatus) }}
+                  </span>
+                } @else {
+                  <span [style.background]="getTaskStatusStyle(t.status).background" 
+                        [style.color]="getTaskStatusStyle(t.status).color"
+                        style="padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; white-space: nowrap;">
+                    {{ getTaskStatusDisplay(t.status) }}
+                  </span>
+                }
+                <!-- الدرجة (إذا كانت موجودة) -->
+                @if (t.grade !== undefined && t.grade !== null && t.grade !== '') {
+                  <span style="font-size: 0.75rem; color: #2563eb; font-weight: 700; background: #eff6ff; padding: 2px 8px; border-radius: 4px;">
+                    {{ t.grade }}%
+                  </span>
+                }
+              </div>
+            </div>
+          }
+          @empty {
+            <div style="display: flex; justify-content: center; align-items: center; padding: 30px; color: #94a3b8; font-size: 0.9rem; flex-direction: column; gap: 8px;">
+              <span style="font-size: 2rem;">📋</span>
+              <span>لا توجد مهام حالياً</span>
+              <span style="font-size: 0.75rem; color: #cbd5e1;">سيتم عرض المهام المخصصة لك هنا</span>
+            </div>
+          }
+        }
+
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 4. الشبكة السفليّة (الإعلانات + التنبيهات الأخيرة) -->
+  <div style="display: grid; grid-template-columns: 1fr 420px; gap: 16px;">
+    
+    <!-- الإعلانات -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+      <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b;">الإعلانات</h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        @if (loadingAnnouncements()) {
+          <div style="display: flex; justify-content: center; padding: 20px; color: #94a3b8;">جاري تحميل الإعلانات...</div>
+        } @else {
+          @for (ann of announcements(); track ann.announcementId) {
+            <div style="padding: 14px 18px; background: #f0fdf4; border-right: 4px solid #10b981; border-radius: 10px; display: flex; flex-direction: column; gap: 4px;">
+              <strong style="font-size: 0.9rem; color: #065f46;">{{ ann.message }}</strong>
+              <span style="font-size: 0.75rem; color: #047857;">{{ ann.date | date:'mediumDate' }} - ({{ ann.source }})</span>
+            </div>
+          }
+          @empty {
+            <div style="display: flex; justify-content: center; align-items: center; padding: 30px; color: #94a3b8; font-size: 0.9rem;">
+              لا توجد إعلانات حالياً
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- التنبيهات الأخيرة -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b;">التنبيهات الأخيرة</h3>
+        <button routerLink="/trainee/notifications" style="background: none; border: none; color: #2563eb; font-size: 0.85rem; font-weight: 600; cursor: pointer;">عرض الكل</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        @if (summary()?.latestNotifications && summary()?.latestNotifications?.length) {
+          @for (notif of summary()?.latestNotifications; track $index) {
+            <div style="display: flex; align-items: flex-start; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;">
+              <span style="font-size: 1.1rem;">📌</span>
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <strong style="font-size: 0.85rem; color: #1e293b;">{{ notif.message }}</strong>
+                <small style="font-size: 0.72rem; color: #94a3b8;">{{ notif.date | date:'mediumDate' }}</small>
+              </div>
+            </div>
+          }
+        } @else {
+          <div style="display: flex; justify-content: center; align-items: center; padding: 30px; color: #94a3b8; font-size: 0.9rem;">
+            لا توجد تنبيهات حالياً
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+
+  }
 </div>
