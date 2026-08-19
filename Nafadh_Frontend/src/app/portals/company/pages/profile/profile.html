@@ -16,6 +16,12 @@
         }
         <div class="company-profile-cover-overlay"></div>
 
+        <div class="company-profile-cover-content">
+          <span class="company-profile-cover-kicker">بوابة الشركة المستضيفة</span>
+          <h1>{{ c.companyName }}</h1>
+          <p>{{ c.workField || 'ملف الشركة والبرامج المعتمدة' }}</p>
+        </div>
+
         <div class="company-profile-cover-actions">
           <input [id]="coverInputId" type="file" accept="image/*" hidden (change)="onCoverSelected($event)" />
           <label [for]="coverInputId" class="nfd-btn secondary company-profile-upload-btn" type="button">
