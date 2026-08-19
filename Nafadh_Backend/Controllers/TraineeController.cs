@@ -44,15 +44,14 @@ namespace Nafadh_Backend.Controllers
                 TraineeId = t.TraineeId,
                 FullName = t.User?.FullName,
                 University = t.University,
+                // هنا جعلناه يعرض التخصص المخزن في قاعدة البيانات (Major) مباشرة
                 Major = string.IsNullOrEmpty(t.Major) ? "غير محدد" : t.Major,
                 Status = t.Status,
                 VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
                 CompanyName = t.Company?.CompanyName,
-                // تم ضبطها لتظهر بشكل واضح في الواجهة بدلاً من الشرطات
-                ProgramName = t.Enrollments != null && t.Enrollments.Any()
-                    ? t.Enrollments.FirstOrDefault()?.Batch?.Program?.Title ?? "خطة التدريب العملي"
-                    : "خطة التدريب العملي"
+                // تحديث مؤقت لعرض قيمة معبرة من البيانات مباشرة بدلاً من الثابتة
+                ProgramName = !string.IsNullOrEmpty(t.Major) ? t.Major : "برنامج التدريب"
             }).ToList();
 
             return Ok(new { Items = dtos, TotalCount = total });
