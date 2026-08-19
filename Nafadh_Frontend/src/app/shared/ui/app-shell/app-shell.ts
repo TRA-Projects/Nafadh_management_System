@@ -1,4 +1,4 @@
-import { Component, HostListener, input, signal } from '@angular/core';
+import { Component, HostListener, computed, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -32,6 +32,7 @@ export class AppShell {
   notifOpen = signal(false);
   accessOpen = signal(false);
   fontSize = signal(16);
+  fontScale = computed(() => this.fontSize() / 16);
 
   // Back-to-top: shows once the page is scrolled down past a small
   // threshold, so the user never has to grab the mouse and drag the
