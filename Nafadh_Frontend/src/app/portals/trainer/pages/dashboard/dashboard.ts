@@ -7,7 +7,8 @@ import { AuthService } from '../../../../core/auth/auth.service';
 
 import {
   SessionDto,
-  TrainerBatchDto
+  TrainerBatchDto,
+  TrainerDto
 } from '../../../../core/models/dtos';
 
 @Component({
@@ -19,10 +20,11 @@ import {
 })
 export class TrainerDashboard implements OnInit {
 
-  trainerId = 1;
+
 
   batches = signal<TrainerBatchDto[]>([]);
   sessions = signal<SessionDto[]>([]);
+  trainer = signal<TrainerDto | null>(null);
 
   // الجلسات القادمة فقط
   upcomingSessions = computed(() => {
@@ -64,16 +66,41 @@ export class TrainerDashboard implements OnInit {
     public auth: AuthService
   ) {}
 
+ngOnInit(): void {
+  this.loadCurrentTrainer();
+}
+private loadCurrentTrainer(): void {
 
-  ngOnInit(): void {
-    this.loadBatches();
-    this.loadSessions();
+  const userId = this.auth.session()?.userId;
+
+  if (!userId) {
+    console.error('لم يتم العثور على UserId للمستخدم الحالي');
+    return;
   }
 
+  this.api.getTrainerByUserId(userId).subscribe({
 
-  private loadBatches(): void {
+    next: (trainer) => {
 
-    this.api.getMyBatches(this.trainerId).subscribe({
+      this.trainer.set(trainer);
+
+      this.loadBatches(trainer.trainerId);
+      this.loadSessions(trainer.trainerId);
+
+    },
+
+    error: (err) => {
+      console.error(
+        'خطأ في تحميل بيانات المدرب:',
+        err
+      );
+    }
+
+  });
+}
+ private loadBatches(trainerId: number): void {
+
+    this.api.getMyBatches(trainerId).subscribe({
 
       next: (data) => {
         this.batches.set(data ?? []);
@@ -92,9 +119,9 @@ export class TrainerDashboard implements OnInit {
   }
 
 
-  private loadSessions(): void {
+private loadSessions(trainerId: number): void {
 
-    this.api.getTrainerSessions(this.trainerId).subscribe({
+  this.api.getTrainerSessions(trainerId).subscribe({
 
       next: (data) => {
         this.sessions.set(data ?? []);

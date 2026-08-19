@@ -42,7 +42,11 @@ postAnnouncement(dto: unknown) {
     dto
   );
 }
-
+getTrainerByUserId(userId: number): Observable<TrainerDto> {
+  return this.http.get<TrainerDto>(
+    `${this.base}/Trainer/by-user/${userId}`
+  );
+}
  
 
   // Content
