@@ -1,70 +1,91 @@
-<h2 class="nfd-page-title">المتدربون</h2>
-<p class="nfd-page-sub">المتدربون المقبولون والمربوطون بتخصص معتمد وخطة تدريب وقسم عمل داخل الشركة</p>
-
-<div class="nfd-card">
-  <div class="nfd-toolbar">
-    <input class="nfd-input search" [(ngModel)]="search" placeholder="بحث بالاسم..." />
-    <div style="display:flex;gap:8px">
-      <button class="nfd-btn secondary" (click)="showAnnounce.set(true)">📢 إرسال إعلان</button>
-      <button class="nfd-btn primary">+ تسجيل متدرب</button>
-    </div>
+<div class="page-head">
+  <div>
+    <h3>المتدربون</h3>
+    <p>المتدربون المقبولون والمربوطون بتخصص معتمد وخطة تدريب وقسم عمل داخل الشركة</p>
   </div>
-  <table class="nfd-table">
-    <thead><tr><th>المتدرب</th><th>الدفعة</th><th>الحالة</th><th></th></tr></thead>
-    <tbody>
-      @for (e of filtered(); track e.enrollmentId) {
-        <tr>
-          <td>{{ e.traineeName }}</td>
-          <td>{{ e.batchName }}</td>
-          <td><span class="nfd-badge" style="background:var(--color-tint-indigo);color:var(--color-navy)">{{ e.completionStatus }}</span></td>
-          <td>
-            <a [routerLink]="['/company/trainees', e.traineeId, 'progress']" class="nfd-btn ghost">التقدم</a>
-            <button class="nfd-btn ghost" (click)="openWarn(e)">إنذار</button>
-          </td>
-        </tr>
-      }
-      @empty { <tr><td colspan="4">لا يوجد متدربون بعد</td></tr> }
-    </tbody>
-  </table>
+  <div class="actions">
+    <button class="btn btn-outline" (click)="exportList()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+      تصدير القائمة
+    </button>
+  </div>
 </div>
 
-@if (showAnnounce()) {
-  <div class="nfd-modal-bg" (click)="showAnnounce.set(false)">
-    <div class="nfd-modal" (click)="$event.stopPropagation()">
-      <h3>إرسال إعلان</h3>
-      <label>النطاق</label>
-      <select class="nfd-input" [(ngModel)]="announceScope">
-        <option value="Company">جميع المتدربين (كل الدفعات)</option>
-        <option value="Batch">دفعة محددة</option>
-      </select>
-      <label>نص الإعلان</label>
-      <textarea class="nfd-input" rows="4" [(ngModel)]="announceMsg"></textarea>
-      <div class="nfd-modal-actions">
-        <button class="nfd-btn secondary" (click)="showAnnounce.set(false)">إلغاء</button>
-        <button class="nfd-btn primary" (click)="postAnnouncement()">نشر</button>
-      </div>
-    </div>
+<div class="filters">
+  <div class="search-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="بحث بالاسم أو البرنامج…" />
   </div>
-}
+  <select class="sel" [ngModel]="batchFilter()" (ngModelChange)="batchFilter.set($event)">
+    <option value="الكل">كل الدفعات</option>
+    @for (b of batches(); track b) { <option [value]="b">{{ b }}</option> }
+  </select>
+  <select class="sel" [ngModel]="programFilter()" (ngModelChange)="programFilter.set($event)">
+    <option value="الكل">كل البرامج</option>
+    @for (p of programs(); track p) { <option [value]="p">{{ p }}</option> }
+  </select>
+  <select class="sel" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+    <option value="الكل">كل الحالات</option>
+    @for (s of statuses(); track s) { <option [value]="s">{{ statusLabel(s) }}</option> }
+  </select>
+  <button class="btn btn-outline btn-sm" (click)="clearFilters()">مسح التصفية</button>
+  <span class="f-count">{{ filtered().length }} متدرب</span>
+</div>
 
-@if (showWarn()) {
-  <div class="nfd-modal-bg" (click)="showWarn.set(false)">
-    <div class="nfd-modal" (click)="$event.stopPropagation()">
-      <h3>إصدار إنذار — {{ warnTarget?.traineeName }}</h3>
-      <label>نوع المخالفة</label>
-      <select class="nfd-input" [(ngModel)]="warnForm.type">
-        <option value="Attendance">الحضور</option><option value="Performance">الأداء</option><option value="Behavioral">سلوكي</option>
-      </select>
-      <label>المستوى</label>
-      <select class="nfd-input" [(ngModel)]="warnForm.level">
-        <option value="Low">منخفض</option><option value="Medium">متوسط</option><option value="High">مرتفع</option>
-      </select>
-      <label>الأدلة</label>
-      <input class="nfd-input" [(ngModel)]="warnForm.evidence" />
-      <div class="nfd-modal-actions">
-        <button class="nfd-btn secondary" (click)="showWarn.set(false)">إلغاء</button>
-        <button class="nfd-btn danger" (click)="issueWarning()">إصدار الإنذار</button>
-      </div>
-    </div>
+<div class="card">
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>المتدرب</th><th>الدفعة</th><th>البرامج</th><th>التخصص</th>
+          <th>الحالة</th><th style="width:1%"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (e of filtered(); track e.enrollmentId) {
+          <tr>
+            <td>
+              <div class="cell-user">
+                <div class="t-avatar" [style.background]="avatarColor(e.traineeName)">{{ initials(e.traineeName) }}</div>
+                <div>
+                  <b>{{ e.traineeName }}</b>
+                  <span>#{{ padId(e.enrollmentId) }} · {{ e.batchName }}</span>
+                </div>
+              </div>
+            </td>
+            <td>{{ e.batchName }}</td>
+            <td>
+              <b style="font-size:12.5px">{{ e.programTitle || '—' }}</b><br>
+              <span style="font-size:10.8px;color:var(--muted)">{{ e.programDescription || 'خطة تدريب عملية' }}</span>
+            </td>
+            <td>
+              <b style="font-size:12.5px">{{ e.departmentName || 'غير محدد' }}</b><br>
+              <span style="font-size:11px;color:var(--muted)">{{ e.trackName || '—' }}</span>
+            </td>
+            <td>
+              <span class="chip" [ngClass]="statusChipClass(e.completionStatus)"><span class="dot"></span>{{ statusLabel(e.completionStatus) }}</span>
+            </td>
+            <td style="white-space:nowrap;text-align:left">
+              <span style="display:inline-flex;align-items:center;gap:6px">
+                <a [routerLink]="['/company/trainees', e.enrollmentId, 'progress']" class="prog-btn" title="عرض صفحة التقدم">
+                  <nfd-icon name="eye" size="sm" />
+                </a>
+                <a class="gh-icon-btn" [class.disabled]="!e.traineeGitHubUrl" [href]="e.traineeGitHubUrl || null" target="_blank" rel="noopener noreferrer" title="رابط حساب GitHub للمتدرب">
+                  <nfd-icon name="github" size="sm" />
+                </a>
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
   </div>
-}
+  @if (!filtered().length) {
+    <div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <b>لا توجد نتائج مطابقة</b>
+      جرّب تعديل كلمات البحث أو التصفية
+    </div>
+  }
+</div>
+

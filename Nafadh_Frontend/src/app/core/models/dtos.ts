@@ -116,24 +116,34 @@ export interface CompanyBranchDto {
   contactPoint?: string;
   companyId: number;
 }
-
+//----
 export interface CompanySupervisorDto {
-  supervisorId: number;
-  id?: number;
+  id: number;
+  supervisorId?: number;
   fullName?: string;
   email?: string;
   phone?: string;
   department?: string;
   position?: string;
-  status?: string;
+  status: string;
   userId: number;
   companyId: number;
+}
+
+export interface CompanyCapacityProgramDto {
+  programName?: string;
+  allocatedQuota?: number;
+  usedQuota?: number;
+  remainingQuota?: number;
+  utilizationPercentage?: number;
+  [key: string]: unknown;
 }
 
 export interface CompanyCapacityDto {
   total?: number;
   used?: number;
   remaining?: number;
+  programs?: CompanyCapacityProgramDto[];
   [key: string]: unknown;
 }
 
@@ -252,6 +262,12 @@ export interface EnrollmentDto {
   departmentName?: string;
   supervisorId?: number;
   supervisorName?: string;
+
+  traineeGitHubUrl?: string;
+  programTitle?: string;
+  programDescription?: string;
+  trackName?: string;
+  trackDescription?: string;
 }
 
 export interface ProgressSummaryDto {
