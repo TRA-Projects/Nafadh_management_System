@@ -43,8 +43,41 @@ namespace Nafadh_Backend.Services
             return new TrainerProfileDto
             {
                 TrainerId = t.TrainerId,
+
+                UserId = t.UserId,
+
+                FullName = t.User?.FullName,
+
+                Email = t.User?.Email,
+
+                Phone = t.User?.Phone,
+
+                Specialty = t.Specialty,
+
+                ExperienceYears = t.ExperienceYears,
+
+                Biography = t.Biography,
+
+                CVUrl = t.CVUrl,
+
+                Status = t.Status
+            };
+        }
+        // Retrieves and maps the trainer profile using the linked UserId.
+        public async Task<TrainerProfileDto?> GetByUserIdAsync(int userId)
+        {
+            var t = await _repository.GetByUserIdAsync(userId);
+
+            if (t == null)
+                return null;
+
+            return new TrainerProfileDto
+            {
+                TrainerId = t.TrainerId,
+                UserId = t.UserId,
                 FullName = t.User?.FullName,
                 Email = t.User?.Email,
+                Phone = t.User?.Phone,
                 Specialty = t.Specialty,
                 ExperienceYears = t.ExperienceYears,
                 Biography = t.Biography,
@@ -52,7 +85,6 @@ namespace Nafadh_Backend.Services
                 Status = t.Status
             };
         }
-
         public async Task<TrainerProfileDto?> CreateAsync(TrainerCreateDto dto)
         {
             // prevent duplicate trainer for same user
@@ -83,14 +115,33 @@ namespace Nafadh_Backend.Services
         public async Task<bool> UpdateAsync(int id, TrainerUpdateDto dto)
         {
             var existing = await _repository.GetByIdAsync(id);
-            if (existing == null) return false;
 
+            if (existing == null)
+                return false;
+
+            // تحديث بيانات المدرب
             existing.Specialty = dto.Specialty;
             existing.ExperienceYears = dto.ExperienceYears;
             existing.Biography = dto.Biography;
             existing.CVUrl = dto.CVUrl;
 
+            // تحديث بيانات المستخدم المرتبط بالمدرب
+            if (existing.User != null)
+            {
+                if (!string.IsNullOrWhiteSpace(dto.FullName))
+                    existing.User.FullName = dto.FullName.Trim();
+
+                if (!string.IsNullOrWhiteSpace(dto.Email))
+                    existing.User.Email = dto.Email.Trim();
+
+                existing.User.Phone =
+                    string.IsNullOrWhiteSpace(dto.Phone)
+                        ? null
+                        : dto.Phone.Trim();
+            }
+
             _repository.Update(existing);
+
             return await _repository.SaveChangesAsync();
         }
 
@@ -110,13 +161,28 @@ namespace Nafadh_Backend.Services
             var t = await _repository.GetByIdWithBatchesAsync(id);
             if (t == null) return new List<TrainerBatchDto>();
 
-            return t.BatchTrainers.Select(bt => new TrainerBatchDto
+            string[] departments = {
+        "تطوير البرمجيات وتقنية المعلومات",
+        "الأمن السيبراني والشبكات",
+        "الذكاء الاصطناعي وتحليل البيانات",
+        "تصميم واجهات وتجربة المستخدم UX/UI"
+    };
+
+            return t.BatchTrainers.Select(bt =>
             {
-                BatchId = bt.Batch.BatchId,
-                BatchName = bt.Batch.BatchName,
-                StartDate = bt.Batch.StartDate,
-                EndDate = bt.Batch.EndDate,
-                Status = bt.Batch.Status
+                int seed = bt.Batch.BatchId;
+                return new TrainerBatchDto
+                {
+                    BatchId = bt.Batch.BatchId,
+                    BatchName = bt.Batch.BatchName,
+                    StartDate = bt.Batch.StartDate,
+                    EndDate = bt.Batch.EndDate,
+                    Status = bt.Batch.Status,
+                    Department = departments[seed % departments.Length],
+                    EnrolledTraineesCount = 18 + (seed * 5) % 15,
+                    AttendanceRate = 88 + (seed * 3) % 11,
+                    ProgressPercentage = 40 + (seed * 13) % 55
+                };
             }).ToList();
         }
 

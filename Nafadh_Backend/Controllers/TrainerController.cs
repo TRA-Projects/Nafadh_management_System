@@ -37,6 +37,18 @@ namespace Nafadh_Backend.Controllers
             return Ok(profile);
         }
 
+        // Retrieves the trainer profile linked to the specified user account.
+        [HttpGet("by-user/{userId}")]
+        public async Task<IActionResult> GetByUserId(int userId)
+        {
+            var profile = await _service.GetByUserIdAsync(userId);
+
+            if (profile == null)
+                return NotFound();
+
+            return Ok(profile);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] TrainerCreateDto dto)
         {

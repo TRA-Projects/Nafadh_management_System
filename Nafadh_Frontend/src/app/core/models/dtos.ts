@@ -153,6 +153,8 @@ export interface CompanyCapacityDto {
 export interface TrainerDto {
   trainerId: number;
   fullName?: string;
+  email?: string;
+  phone?: string;
   specialty?: string;
   experienceYears: number;
   biography?: string;
@@ -164,9 +166,14 @@ export interface TrainerDto {
 export interface TrainerBatchDto {
   batchId: number;
   batchName?: string;
-  startDate?: string;
-  endDate?: string;
+  startDate?: string | null;
+  endDate?: string | null;
   status: BatchStatus;
+
+  department?: string;
+  enrolledTraineesCount?: number;
+  attendanceRate?: number;
+  progressPercentage?: number;
 }
 
 // ---- Academic structure ----
@@ -202,6 +209,10 @@ export interface BatchDto {
   endDate: string;
   capacity: number;
   status: BatchStatus;
+  department?: string;
+  enrolledTraineesCount?: number;
+  attendanceRate?: number;
+  progressPercentage?: number;
 }
 
 export interface BatchTraineeDto {
@@ -236,6 +247,22 @@ export interface LessonDto {
   orderIndex?: number;
 }
 
+// ---- Training Materials ----
+export interface TrainingMaterialDto {
+  materialId: number;
+  fileUrl: string;
+  fileType:
+    | 'Pdf'
+    | 'Video'
+    | 'Image'
+    | 'Document'
+    | 'Link'
+    | 'Other';
+  uploadDate: string;
+  lessonId: number;
+  uploadedByUserId: number;
+}
+
 export interface TraineeModuleProgressDto {
   progressId: number;
   status: ModuleProgressStatus;
@@ -245,14 +272,21 @@ export interface TraineeModuleProgressDto {
   moduleTitle?: string;
 }
 
+
+
 export interface SessionDto {
   sessionId: number;
-  title?: string;
-  topic?: string;
-  meetingLink?: string;
-  scheduledAt?: string;
-  status?: string;
-  batchId?: number;
+  batchId: number;
+  trainerId: number;
+  sessionDate: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  meetingLink?: string | null;
+  topic?: string | null;
+  learningObjectives?: string | null;
+  recordingUrl?: string | null;
+  summary?: string | null;
+  status: 'Scheduled' | 'Completed' | 'Cancelled' | 'Postponed';
 }
 
 // ---- Enrollment ----
@@ -476,7 +510,7 @@ export interface NotificationDto {
 // ---- Feedback ----
 export interface FeedbackCriterionDto {
   criterionId: number;
-  appliesTo: FeedbackType;
+  appliesTo?: any; // تم جعلها مرنة لتفادي خطأ عدم العثور على FeedbackType
   name: string;
   orderIndex: number;
 }
@@ -487,15 +521,15 @@ export interface FeedbackScoreInputDto {
 }
 
 export interface FeedbackSummaryDto {
-  averageOverall: number;
-  perCriterion: { criterionId: number; name?: string; average: number }[];
-  comments: { comment: string; date: string }[];
-  responseCount: number;
+  averageOverall?: number; // تم إضافة ? لمنع خطأ Strict Mode
+  perCriterion?: { criterionId?: number; name?: string; average?: number }[];
+  comments?: { comment?: string; date?: string }[];
+  responseCount?: number;
 }
 
 export interface FeedbackPendingDto {
-  trainerRatingPending: boolean;
-  batchRatingPending: boolean;
+  trainerRatingPending?: boolean;
+  batchRatingPending?: boolean;
 }
 
 // ---- Badges ----

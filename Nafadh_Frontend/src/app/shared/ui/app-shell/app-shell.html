@@ -1,7 +1,7 @@
 <div class="shell" [class.dark]="dark()" [style.fontSize.px]="fontSize()" [style.--font-scale]="fontScale()">
   <header class="topbar">
     <!-- Logo (right / RTL start) -->
-    <div class="logo" [routerLink]="navItems()[0]?.path">
+    <div class="logo" [routerLink]="navItems()?.[0]?.path || '/company/dashboard'">
       <img src="assets/logo.png" alt="نفاذ" class="logo-img" />
       <div class="logo-sub">{{ portalTitle() }}</div>
     </div>
