@@ -232,15 +232,7 @@
           }
         }
 
-        <!-- التاريخ -->
-<div style="display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: #64748b;">
-  <span>📅 الموعد النهائي: {{ t.dueDate ? (t.dueDate | date:'mediumDate') : 'غير محدد' }}</span>
-  @if (t.dueDate) {
-    <span [style.color]="isTaskOverdue(t.dueDate) ? '#dc2626' : '#2563eb'" style="font-weight: 500;">
-      {{ getDaysRemainingText(t.dueDate) }}
-    </span>
-  }
-</div>
+
       </div>
     </div>
 
