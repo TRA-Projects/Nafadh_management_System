@@ -16,6 +16,8 @@ import {
   TrainerBatchDto,
   TrainerDto,
   TrainerKpisDto,
+  BatchDto,
+ProgramDto,
 } from '../../../core/models/dtos';
 
 
@@ -45,17 +47,43 @@ export class TrainerApi {
   }
 
 
-  /**
-   * Retrieves all batches assigned to a trainer.
-   */
-  getMyBatches(
-    trainerId: number
-  ): Observable<TrainerBatchDto[]> {
+/**
+ * Retrieves all batches assigned to a trainer.
+ */
+getMyBatches(
+  trainerId: number
+): Observable<TrainerBatchDto[]> {
 
-    return this.http.get<TrainerBatchDto[]>(
-      `${this.base}/BatchTrainer/trainer/${trainerId}`
-    );
-  }
+  return this.http.get<TrainerBatchDto[]>(
+    `${this.base}/BatchTrainer/trainer/${trainerId}`
+  );
+}
+
+
+/**
+ * Retrieves full batch details.
+ */
+getBatch(
+  batchId: number
+): Observable<BatchDto> {
+
+  return this.http.get<BatchDto>(
+    `${this.base}/Batch/${batchId}`
+  );
+}
+
+
+/**
+ * Retrieves program details.
+ */
+getProgram(
+  programId: number
+): Observable<ProgramDto> {
+
+  return this.http.get<ProgramDto>(
+    `${this.base}/Program/${programId}`
+  );
+}
 
 
   /**
