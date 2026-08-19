@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AdminApi } from '../../services/admin-api';
 import { forkJoin, of } from 'rxjs';
@@ -47,18 +47,28 @@ export interface ActiveCertificateModal {
   styleUrls: ['./certificates.css']
 })
 export class AdminCertificates implements OnInit {
-  // State Management Signals
+  // ==================== State Management Signals ====================
   readonly batches = signal<BatchCertificateCardDto[]>([]);
   readonly selectedBatch = signal<BatchCertificateCardDto | null>(null);
   readonly selectedBatchTrainees = signal<TraineeDto[]>([]);
-  
+
   readonly viewMode = signal<'list' | 'details'>('list');
   readonly loading = signal<boolean>(false);
   readonly loadingTrainees = signal<boolean>(false);
 
-  // Modal State Signals
+  // ==================== Modal State Signals ====================
   readonly isModalOpen = signal<boolean>(false);
   readonly activeCertData = signal<ActiveCertificateModal | null>(null);
+
+  // ==================== Pagination Signals ====================
+  readonly currentPage = signal<number>(1);
+  readonly pageSize = signal<number>(8);
+  readonly totalBatchesCount = signal<number>(0);
+
+  // Computed Properties
+  readonly totalPages = computed(() => 
+    Math.ceil(this.totalBatchesCount() / this.pageSize()) || 1
+  );
 
   constructor(private readonly api: AdminApi) {}
 
@@ -66,7 +76,7 @@ export class AdminCertificates implements OnInit {
     this.fetchBatches();
   }
 
-  // ==================== Helper: تنظيف الـ ID من الشوائب ====================
+  // ==================== Helper: تنظيف الـ ID ====================
   private cleanId(val: any): number {
     if (!val) return 0;
     const str = String(val).split(':')[0].trim();
@@ -74,27 +84,32 @@ export class AdminCertificates implements OnInit {
     return isNaN(parsed) ? 0 : parsed;
   }
 
-  // ==================== 1. جلب الدفعات وحساب الإحصائيات خفيفة الوزن ====================
+  // ==================== 1. جلب الدفعات مقسمة لصفحات ====================
   fetchBatches(): void {
     this.loading.set(true);
+
     this.api.getBatches().subscribe({
       next: (response: any[]) => {
         const rawBatches = response || [];
+        this.totalBatchesCount.set(rawBatches.length);
+
         if (rawBatches.length === 0) {
           this.batches.set([]);
           this.loading.set(false);
           return;
         }
 
-        const batchRequests$ = rawBatches.map((b: any) => {
+        const startIndex = (this.currentPage() - 1) * this.pageSize();
+        const paginatedBatches = rawBatches.slice(startIndex, startIndex + this.pageSize());
+
+        const batchRequests$ = paginatedBatches.map((b: any) => {
           const bId = this.cleanId(b.batchId ?? b.id);
           const normalized = this.normalizeBatch(b);
 
-          return this.api.getTrainees({ batchId: bId } as any).pipe(
+          return this.api.getTraineesForCertificates({ batchId: bId } as any).pipe(
             map((res: any) => {
               const trainees = res?.items || (Array.isArray(res) ? res : []);
-              
-              // حساب الشهادات المصدرة مباشرة من بيانات المتدربين بدلاً من طلبات API فرعية
+
               const issuedCount = trainees.filter((t: any) => {
                 const rawStatus = String(t.completionStatus ?? t.status ?? '').toLowerCase();
                 const fileUrl = t.fileUrl || t.certificateUrl || t.pdfUrl;
@@ -117,7 +132,7 @@ export class AdminCertificates implements OnInit {
             this.loading.set(false);
           },
           error: () => {
-            this.batches.set(rawBatches.map(b => this.normalizeBatch(b)));
+            this.batches.set(paginatedBatches.map(b => this.normalizeBatch(b)));
             this.loading.set(false);
           }
         });
@@ -130,7 +145,14 @@ export class AdminCertificates implements OnInit {
     });
   }
 
-  // ==================== 2. جلب المتدربين للدفعة المحددة ====================
+  onPageChange(newPage: number): void {
+    if (newPage >= 1 && newPage <= this.totalPages()) {
+      this.currentPage.set(newPage);
+      this.fetchBatches();
+    }
+  }
+
+  // ==================== 2. جلب المتدربين للدفعة ====================
   onViewTrainees(batch: BatchCertificateCardDto): void {
     this.selectedBatch.set(batch);
     this.viewMode.set('details');
@@ -138,7 +160,7 @@ export class AdminCertificates implements OnInit {
 
     const bId = this.cleanId(batch.batchId || batch.id);
 
-    this.api.getTrainees({ batchId: bId } as any).subscribe({
+    this.api.getTraineesForCertificates({ batchId: bId } as any).subscribe({
       next: (res: any) => {
         const rawList = res?.items || (Array.isArray(res) ? res : []);
 
@@ -162,7 +184,6 @@ export class AdminCertificates implements OnInit {
 
         this.selectedBatchTrainees.set(mappedList);
 
-        // تحديث إحصائيات الكرت الحالي
         const realTotal = mappedList.length;
         const realIssued = mappedList.filter(t => this.isCertificateIssued(t)).length;
 
@@ -172,9 +193,9 @@ export class AdminCertificates implements OnInit {
           issuedCertificatesCount: realIssued
         } : null);
 
-        this.batches.update(list => 
-          list.map(b => (b.batchId === bId || b.id === bId) 
-            ? { ...b, totalTraineesCount: realTotal, issuedCertificatesCount: realIssued } 
+        this.batches.update(list =>
+          list.map(b => (b.batchId === bId || b.id === bId)
+            ? { ...b, totalTraineesCount: realTotal, issuedCertificatesCount: realIssued }
             : b
           )
         );
@@ -219,9 +240,8 @@ export class AdminCertificates implements OnInit {
     }
   }
 
-// ==================== 4. إصدار الشهادات ====================
+  // ==================== 4. إصدار الشهادات ====================
   issueSingleCertificate(trainee: TraineeDto, autoOpenModal: boolean = true): void {
-    // التأكد من وجود رقم التسجيل الصحيح بدلاً من الاعتماد على قيم fallback قد تكون خاطئة
     const eId = trainee.enrollmentId || trainee.traineeId;
 
     if (!eId || eId === 0) {
@@ -236,20 +256,17 @@ export class AdminCertificates implements OnInit {
 
     this.api.issueCertificate(payload as any).subscribe({
       next: (res: any) => {
-        // استخراج البيانات المرجعة من كائن certificate الداخلي إذا وجد
         const certObj = res?.certificate || res;
         const newFileUrl = certObj?.fileUrl || res?.certificateUrl || trainee.fileUrl;
-        
-        // تحديث حالة المتدرب وإحصائيات الدفعة في الـ State
+
         this.updateTraineeStatusInState(trainee.traineeId, 'Issued', newFileUrl);
         this.incrementBatchIssuedCount();
 
-        // فتح مودال المعاينة فقط في حال الإصدار الفردي لتجنب تضارب المودالات عند الإصدار الجماعي
         if (autoOpenModal) {
-          this.viewSingleCertificate({ 
-            ...trainee, 
-            completionStatus: 'Issued', 
-            fileUrl: newFileUrl 
+          this.viewSingleCertificate({
+            ...trainee,
+            completionStatus: 'Issued',
+            fileUrl: newFileUrl
           });
         }
       },
@@ -262,18 +279,18 @@ export class AdminCertificates implements OnInit {
 
   issueAllCertificates(): void {
     const unissued = this.selectedBatchTrainees().filter(t => !this.isCertificateIssued(t));
-    
+
     if (unissued.length === 0) {
       alert('جميع الشهادات لهذه الدفعة صُدرت بالفعل.');
       return;
     }
 
     if (confirm(`هل ترغب بإصدار الشهادات لـ ${unissued.length} متدربين؟`)) {
-      // تمرير false كـ autoOpenModal لتجنب فتح المودال لكل متدرب في الحلقة التكرارية
       unissued.forEach(t => this.issueSingleCertificate(t, false));
     }
   }
-  // ==================== Helper Methods ====================
+
+  // ==================== Helpers ====================
   private normalizeBatch(raw: any): BatchCertificateCardDto {
     const bId = this.cleanId(raw.batchId ?? raw.id ?? 0);
     return {
@@ -312,7 +329,7 @@ export class AdminCertificates implements OnInit {
   private updateTraineeStatusInState(traineeId: number, status: string, fileUrl?: string): void {
     this.selectedBatchTrainees.update(list =>
       list.map(t => (t.traineeId === traineeId || t.enrollmentId === traineeId)
-        ? { ...t, completionStatus: status, fileUrl: fileUrl || t.fileUrl } 
+        ? { ...t, completionStatus: status, fileUrl: fileUrl || t.fileUrl }
         : t
       )
     );

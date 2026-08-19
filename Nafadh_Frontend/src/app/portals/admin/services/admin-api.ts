@@ -174,6 +174,11 @@ export class AdminApi {
   // ---- Audit ----
   getAuditLog(): Observable<AuditLogDto[]> { return this.http.get<AuditLogDto[]>(`${this.base}/AuditLog`); }
 
-  // ---- Badges ----
+// ---- Badges ----
   getAllBadges() { return this.http.get<unknown[]>(`${this.base}/Badge`); }
+
+  // ---- Announcements ----
+  getAnnouncements(): Observable<AnnouncementDto[]> {
+    return this.http.get<AnnouncementDto[]>(`${this.base}/Announcement`);
+  }
 }

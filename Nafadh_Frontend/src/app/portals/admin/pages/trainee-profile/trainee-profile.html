@@ -12,40 +12,37 @@
   @if (trainee(); as t) {
     <!-- بطاقة الهيدر الرئيسية -->
     <div class="nfd-card profile-header-card">
-      <!-- أزرار الإجراءات (تعديل - تجميد) -->
-      <div class="header-actions">
-        <button type="button" class="btn-action btn-outline">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-          </svg>
-          تعديل
-        </button>
-        <button type="button" class="btn-action btn-light">تجميد</button>
-      </div>
-
-      <!-- معلومات المتدرب -->
       <div class="trainee-info-wrapper">
-        <div class="trainee-details">
-          <div class="name-badges-row">
-            <h2 class="trainee-name">{{ t.fullName }}</h2>
-            <span class="status-badge" [ngStyle]="getStatusStyle(t.status)">
-              {{ statusLabels[t.status] || t.status || 'نشط' }}
-            </span>
-            <span class="batch-badge">{{ t.batch || 'الدفعة 12' }}</span>
+        
+        <!-- الجزء الأيمن: الأفاتار + بيانات المتدرب والاسم -->
+        <div class="trainee-main-info">
+          <div class="trainee-avatar">
+            {{ getInitials(t.fullName) }}
           </div>
-          <p class="trainee-subtext">
-            {{ t.major }} · {{ t.university }}
-          </p>
-          <p class="company-code-text">
-            {{ t.companyName || 'شركة التقنية المتقدمة' }} <span class="dot-sep">•</span> <span class="code">{{ t.nationalId || 'T-2401' }}</span>
-          </p>
+
+          <div class="trainee-details">
+            <div class="name-badges-row">
+              <h2 class="trainee-name">{{ t.fullName }}</h2>
+              <span class="status-badge" [ngStyle]="getStatusStyle(t.status)">
+                {{ statusLabels[t.status] || t.status || 'نشط' }}
+              </span>
+              <span class="batch-badge">{{ t.batch || 'الدفعة 12' }}</span>
+            </div>
+
+            <p class="trainee-subtext">
+              {{ t.major }} · {{ t.university }}
+            </p>
+            <p class="company-code-text">
+              {{ t.companyName || 'شركة التقنية المتقدمة' }} <span class="dot-sep">•</span> <span class="code">{{ t.nationalId || 'T-2401' }}</span>
+            </p>
+          </div>
         </div>
 
-        <!-- الأفاتار (الأحرف الأولى) -->
-        <div class="trainee-avatar">
-          {{ getInitials(t.fullName) }}
+        <!-- أقصى اليسار: زر التجميد مفعل عند النقر -->
+        <div class="header-actions">
+          <button type="button" class="btn-action btn-freeze" (click)="openFreezeModal()">تجميد</button>
         </div>
+
       </div>
     </div>
 
@@ -104,14 +101,12 @@
           <span class="section-sub">آخر 30 يوم</span>
         </div>
 
-        <!-- شبكة المربعات -->
         <div class="attendance-grid">
           @for (day of attendanceGrid(); track $index) {
             <div class="attendance-box" [ngClass]="day.status" [title]="day.date + ': ' + day.label"></div>
           }
         </div>
 
-        <!-- دليل الألوان (Legend) -->
         <div class="attendance-legend">
           <div class="legend-item">
             <span class="legend-box present"></span>
@@ -128,6 +123,48 @@
         </div>
       </div>
 
+    </div>
+  }
+
+  <!-- نافذة التجميد المنبثقة (Modal) -->
+  @if (isFreezeModalOpen()) {
+    <div class="modal-overlay" (click)="closeFreezeModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        
+        <div class="modal-header">
+          <h3>تجميد حساب المتدرب</h3>
+          <button type="button" class="close-btn" (click)="closeFreezeModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-description">
+            سيؤدي تجميد الحساب إلى إيقاف صلاحيات المتدرب مؤقتاً. يرجى توضيح سبب التجميد.
+          </p>
+          <div class="form-group">
+            <label for="freezeReasonInput">سبب التجميد</label>
+            <textarea 
+              id="freezeReasonInput" 
+              class="form-control" 
+              rows="3" 
+              placeholder="اكتب سبب التجميد هنا..."
+              [ngModel]="freezeReason()"
+              (ngModelChange)="freezeReason.set($event)">
+            </textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="closeFreezeModal()">إلغاء</button>
+          <button 
+            type="button" 
+            class="btn-danger" 
+            [disabled]="!freezeReason().trim()"
+            (click)="confirmFreeze()">
+            تأكيد التجميد
+          </button>
+        </div>
+
+      </div>
     </div>
   }
 </div>
