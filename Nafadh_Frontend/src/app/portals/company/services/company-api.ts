@@ -50,6 +50,9 @@ export class CompanyApi {
     return this.http.get<unknown[]>(`${this.base}/CompanyProgram/company/${companyId}`);
   }
   getProgram(id: number): Observable<ProgramDto> { return this.http.get<ProgramDto>(`${this.base}/Program/${id}`); }
+  getBatch(id: number): Observable<any> { return this.http.get<any>(`${this.base}/Batch/${id}`); }
+  getModulesByProgram(programId: number): Observable<any[]> { return this.http.get<any[]>(`${this.base}/Module/program/${programId}`); }
+  getEnrollmentProgressSummary(enrollmentId: number): Observable<any> { return this.http.get<any>(`${this.base}/Enrollment/${enrollmentId}/progress-summary`); }
 
   // Company Profile
   getCompany(id: number): Observable<CompanyDto> { return this.http.get<CompanyDto>(`${this.base}/Company/${id}`); }
