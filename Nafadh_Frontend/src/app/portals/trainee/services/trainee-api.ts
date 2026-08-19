@@ -58,11 +58,11 @@ getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
   // =========================================================
 
   getTrainee(id: number): Observable<TraineeProfileDto> {
-    return this.http.get<TraineeProfileDto>(`${this.base}/Trainee/${id}`);
+    return this.http.get<TraineeProfileDto>(`${this.base}/Trainee/traineeByUserID/${id}`);
   }
 
   updateTrainee(id: number, dto: unknown) { 
-    return this.http.put(`${this.base}/Trainee/${id}`, dto); 
+    return this.http.put(`${this.base}/Trainee/traineeByUserID/${id}`, dto); 
   }
 
   // =========================================================
