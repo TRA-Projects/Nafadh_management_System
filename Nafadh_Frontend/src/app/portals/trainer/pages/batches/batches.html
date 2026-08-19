@@ -20,9 +20,21 @@
         <div style="position: relative; width: 100%; height: 130px; background: #e2e8f0;">
           <img [src]="getBatchImage(i)" alt="Batch Banner" style="width: 100%; height: 100%; object-fit: cover; display: block;">
          
-        <span style="position: absolute; top: 12px; right: 12px; background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
-           {{ i === 0 ? 'مكتملة' : (i === 3 ? 'قادمة' : 'نشطة') }}
-        </span>
+       <span
+  style="
+    position:absolute;
+    top:12px;
+    right:12px;
+    background:#dbeafe;
+    color:#1e40af;
+    padding:4px 12px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+  "
+>
+  {{ getBatchStatusLabel(b.status) }}
+</span>
         </div>
 
         <div style="padding: 20px; text-align: center; display: flex; flex-direction: column; flex-grow: 1;">
@@ -31,9 +43,27 @@
             <p style="font-size: 13px; color: #64748b; margin: 0 0 12px 0;">
               {{ i === 0 ? 'تطوير البرمجيات وتقنية المعلومات' : i === 1 ? 'الأمن السيبراني والشبكات' : i === 2 ? 'الذكاء الاصطناعي وتحليل البيانات' : i === 3 ? 'تصميم واجهات وتجربة المستخدم UX/UI' : 'هندسة البرمجيات المتقدمة' }}
             </p>
-            <div style="font-size: 12px; color: #64748b; margin-bottom: 20px;">
-              📅 {{ i === 0 ? '01 مايو - 31 يوليو' : i === 1 ? '15 يونيو - 15 سبتمبر' : i === 2 ? '01 أغسطس - 30 أكتوبر' : i === 3 ? '10 مارس - 10 يونيو' : '01 سبتمبر - 30 نوفمبر' }}
-            </div>
+            <div
+  style="
+    font-size:12px;
+    color:#64748b;
+    margin-bottom:20px;
+  "
+>
+  📅
+
+  @if (b.startDate && b.endDate) {
+
+    {{ b.startDate | date:'yyyy/MM/dd' }}
+    -
+    {{ b.endDate | date:'yyyy/MM/dd' }}
+
+  } @else {
+
+    التاريخ غير محدد
+
+  }
+</div>
           </div>
 
           <div style="display: flex; align-items: center; justify-content: space-around; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; padding: 12px 0; margin-bottom: 20px;">

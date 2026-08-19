@@ -4,11 +4,17 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 
 import { TrainerApi } from '../../services/trainer-api';
-import { TrainerBatchDto } from '../../../../core/models/dtos';
+import { AuthService } from '../../../../core/auth/auth.service';
+
+import {
+  TrainerBatchDto,
+  TrainerDto
+} from '../../../../core/models/dtos';
 
 
 @Component({
   selector: 'app-trainer-batches',
+  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
@@ -22,30 +28,41 @@ export class TrainerBatches implements OnInit {
   // TRAINER
   // =====================================================
 
-  trainerId = 1;
+  trainer =
+    signal<TrainerDto | null>(null);
 
 
   // =====================================================
   // BATCHES
   // =====================================================
 
-  batches = signal<TrainerBatchDto[]>([]);
+  batches =
+    signal<TrainerBatchDto[]>([]);
 
-  selected = signal<TrainerBatchDto | null>(null);
+  selected =
+    signal<TrainerBatchDto | null>(null);
+
+  loading =
+    signal(false);
+
+  errorMessage =
+    signal('');
 
 
   // =====================================================
   // ACTIVE SECTION
   // =====================================================
 
-  activeSection = signal<string | null>(null);
+  activeSection =
+    signal<string | null>(null);
 
 
   // =====================================================
   // ANNOUNCEMENT
   // =====================================================
 
-  showAnnounce = signal(false);
+  showAnnounce =
+    signal(false);
 
   announceMsg = '';
 
@@ -56,6 +73,7 @@ export class TrainerBatches implements OnInit {
 
   constructor(
     private api: TrainerApi,
+    private auth: AuthService,
     private router: Router
   ) {}
 
@@ -66,15 +84,253 @@ export class TrainerBatches implements OnInit {
 
   ngOnInit(): void {
 
-    this.api
-      .getMyBatches(this.trainerId)
-      .subscribe((data) => {
+    this.loadCurrentTrainer();
 
-        this.batches.set(
-          data ?? []
-        );
+  }
+
+
+  // =====================================================
+  // CURRENT TRAINER
+  // =====================================================
+
+  /**
+   * Loads the trainer linked to the currently
+   * logged-in user.
+   */
+  private loadCurrentTrainer(): void {
+
+    const userId =
+      this.auth.session()?.userId;
+
+
+    if (!userId) {
+
+      this.errorMessage.set(
+        'تعذر تحديد المستخدم الحالي'
+      );
+
+      this.batches.set([]);
+
+      return;
+    }
+
+
+    this.loading.set(true);
+
+    this.errorMessage.set('');
+
+
+    this.api
+      .getTrainerByUserId(userId)
+      .subscribe({
+
+        next: (trainer) => {
+
+          this.trainer.set(
+            trainer
+          );
+
+          this.loadBatches(
+            trainer.trainerId
+          );
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            'Error loading trainer:',
+            error
+          );
+
+          this.loading.set(false);
+
+          this.errorMessage.set(
+            'تعذر تحميل بيانات المدرب'
+          );
+
+          this.batches.set([]);
+
+        }
 
       });
+
+  }
+
+
+  // =====================================================
+  // LOAD BATCHES
+  // =====================================================
+
+  /**
+   * Loads only the batches assigned to the
+   * current trainer and recalculates their status
+   * using the real start/end dates.
+   */
+  private loadBatches(
+    trainerId: number
+  ): void {
+
+    this.api
+      .getMyBatches(trainerId)
+      .subscribe({
+
+        next: (data) => {
+
+          const result =
+            (data ?? []).map(batch => ({
+
+              ...batch,
+
+              status:
+                this.calculateBatchStatus(batch)
+
+            }));
+
+
+          this.batches.set(
+            result
+          );
+
+          this.loading.set(false);
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            'Error loading batches:',
+            error
+          );
+
+          this.loading.set(false);
+
+          this.batches.set([]);
+
+          this.errorMessage.set(
+            'تعذر تحميل دفعات المدرب'
+          );
+
+        }
+
+      });
+
+  }
+
+
+  // =====================================================
+  // BATCH STATUS
+  // =====================================================
+
+  /**
+   * Calculates the status from the actual batch dates.
+   *
+   * Before StartDate -> Upcoming
+   * Between dates    -> Ongoing
+   * After EndDate    -> Completed
+   * Cancelled        -> remains Cancelled
+   */
+  private calculateBatchStatus(
+    batch: TrainerBatchDto
+  ): TrainerBatchDto['status'] {
+
+    if (batch.status === 'Cancelled') {
+
+      return 'Cancelled';
+
+    }
+
+
+    if (
+      !batch.startDate ||
+      !batch.endDate
+    ) {
+
+      return batch.status;
+
+    }
+
+
+    const today =
+      new Date();
+
+    today.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    const startDate =
+      new Date(batch.startDate);
+
+    startDate.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    const endDate =
+      new Date(batch.endDate);
+
+    endDate.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    if (today < startDate) {
+
+      return 'Upcoming';
+
+    }
+
+
+    if (today > endDate) {
+
+      return 'Completed';
+
+    }
+
+
+    return 'Ongoing';
+
+  }
+
+
+  // =====================================================
+  // STATUS LABEL
+  // =====================================================
+
+  getBatchStatusLabel(
+    status: string
+  ): string {
+
+    switch (status) {
+
+      case 'Upcoming':
+        return 'قادمة';
+
+      case 'Ongoing':
+        return 'نشطة';
+
+      case 'Completed':
+        return 'مكتملة';
+
+      case 'Cancelled':
+        return 'ملغاة';
+
+      default:
+        return status;
+
+    }
 
   }
 
@@ -83,11 +339,17 @@ export class TrainerBatches implements OnInit {
   // SELECT BATCH
   // =====================================================
 
-  select(b: TrainerBatchDto): void {
+  select(
+    batch: TrainerBatchDto
+  ): void {
 
-    this.selected.set(b);
+    this.selected.set(
+      batch
+    );
 
-    this.activeSection.set(null);
+    this.activeSection.set(
+      null
+    );
 
   }
 
@@ -98,13 +360,19 @@ export class TrainerBatches implements OnInit {
 
   back(): void {
 
-    if (this.activeSection() !== null) {
+    if (
+      this.activeSection() !== null
+    ) {
 
-      this.activeSection.set(null);
+      this.activeSection.set(
+        null
+      );
 
     } else {
 
-      this.selected.set(null);
+      this.selected.set(
+        null
+      );
 
     }
 
@@ -115,26 +383,28 @@ export class TrainerBatches implements OnInit {
   // OPEN SECTION
   // =====================================================
 
-  openSection(sectionName: string): void {
+  openSection(
+    sectionName: string
+  ): void {
 
-    const batch = this.selected();
+    const batch =
+      this.selected();
+
 
     if (!batch) {
       return;
     }
 
 
-    // -----------------------------------------
     // CONTENT
-    // -----------------------------------------
-
     if (sectionName === 'content') {
 
       this.router.navigate(
         ['/trainer/content'],
         {
           queryParams: {
-            batchId: batch.batchId
+            batchId:
+              batch.batchId
           }
         }
       );
@@ -144,17 +414,15 @@ export class TrainerBatches implements OnInit {
     }
 
 
-    // -----------------------------------------
     // TASKS
-    // -----------------------------------------
-
     if (sectionName === 'tasks') {
 
       this.router.navigate(
         ['/trainer/tasks'],
         {
           queryParams: {
-            batchId: batch.batchId
+            batchId:
+              batch.batchId
           }
         }
       );
@@ -164,17 +432,18 @@ export class TrainerBatches implements OnInit {
     }
 
 
-    // -----------------------------------------
     // EVALUATIONS
-    // -----------------------------------------
-
-    if (sectionName === 'evaluations') {
+    if (
+      sectionName ===
+      'evaluations'
+    ) {
 
       this.router.navigate(
         ['/trainer/trainees'],
         {
           queryParams: {
-            batchId: batch.batchId
+            batchId:
+              batch.batchId
           }
         }
       );
@@ -184,17 +453,18 @@ export class TrainerBatches implements OnInit {
     }
 
 
-    // -----------------------------------------
     // TRAINEES
-    // -----------------------------------------
-
-    if (sectionName === 'trainees') {
+    if (
+      sectionName ===
+      'trainees'
+    ) {
 
       this.router.navigate(
         ['/trainer/trainees'],
         {
           queryParams: {
-            batchId: batch.batchId
+            batchId:
+              batch.batchId
           }
         }
       );
@@ -210,9 +480,13 @@ export class TrainerBatches implements OnInit {
   // SET SECTION
   // =====================================================
 
-  setSection(sectionName: string | null): void {
+  setSection(
+    sectionName: string | null
+  ): void {
 
-    this.activeSection.set(sectionName);
+    this.activeSection.set(
+      sectionName
+    );
 
   }
 
@@ -221,7 +495,9 @@ export class TrainerBatches implements OnInit {
   // BATCH IMAGE
   // =====================================================
 
-  getBatchImage(index: number): string {
+  getBatchImage(
+    index: number
+  ): string {
 
     const images = [
 
@@ -254,8 +530,15 @@ export class TrainerBatches implements OnInit {
     const batch =
       this.selected();
 
+    const userId =
+      this.auth.session()?.userId;
 
-    if (!batch) {
+
+    if (
+      !batch ||
+      !userId ||
+      !this.announceMsg.trim()
+    ) {
       return;
     }
 
@@ -263,23 +546,40 @@ export class TrainerBatches implements OnInit {
     this.api
       .postAnnouncement({
 
-        scopeType: 'Batch',
+        scopeType:
+          'Batch',
 
         scopeId:
           batch.batchId,
 
         message:
-          this.announceMsg,
+          this.announceMsg.trim(),
 
         createdByUserId:
-          3
+          userId
 
       })
-      .subscribe(() => {
+      .subscribe({
 
-        this.showAnnounce.set(false);
+        next: () => {
 
-        this.announceMsg = '';
+          this.showAnnounce.set(
+            false
+          );
+
+          this.announceMsg = '';
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            'Error posting announcement:',
+            error
+          );
+
+        }
 
       });
 
