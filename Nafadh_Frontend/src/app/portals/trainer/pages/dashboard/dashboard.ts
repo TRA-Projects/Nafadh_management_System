@@ -90,24 +90,51 @@ export class TrainerDashboard implements OnInit {
    */
   dashboardBatches = computed(() => {
 
-    const priority: Record<
-      TrainerBatchDto['status'],
-      number
-    > = {
-      Ongoing: 0,
-      Upcoming: 1,
-      Completed: 2,
-      Cancelled: 3
-    };
+  const priority: Record<
+    TrainerBatchDto['status'],
+    number
+  > = {
+    Ongoing: 0,
+    Upcoming: 1,
+    Completed: 2,
+    Cancelled: 3
+  };
 
-    return [...this.batches()]
-      .sort(
-        (a, b) =>
-          priority[a.status] -
-          priority[b.status]
-      )
-      .slice(0, 2);
-  });
+
+  return [...this.batches()]
+    .sort((a, b) => {
+
+      const statusDifference =
+        priority[a.status] -
+        priority[b.status];
+
+
+      // أولاً نرتب حسب حالة الدفعة
+      if (statusDifference !== 0) {
+        return statusDifference;
+      }
+
+
+      // إذا كانت نفس الحالة
+      // نرتب حسب تاريخ البداية
+      const aDate =
+        a.startDate
+          ? new Date(a.startDate).getTime()
+          : Number.MAX_SAFE_INTEGER;
+
+
+      const bDate =
+        b.startDate
+          ? new Date(b.startDate).getTime()
+          : Number.MAX_SAFE_INTEGER;
+
+
+      return aDate - bDate;
+
+    })
+    .slice(0, 2);
+
+});
 
 
   // =====================================================
