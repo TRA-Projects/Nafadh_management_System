@@ -1,26 +1,60 @@
-<h2 class="nfd-page-title">إنذارات الشركات</h2>
-<p class="nfd-page-sub">إدارة إنذارات الشركات المستضيفة المتعلقة بالامتثال</p>
+<div class="page-header">
+  <div>
+    <h2 class="nfd-page-title">إشارات ومخالفات الشركات</h2>
+    <p class="nfd-page-sub">متابعة وإدارة الامتثال للشركات المستضيفة للبرامج التدريبية</p>
+  </div>
+  <button class="nfd-btn primary-btn" (click)="showIssue.set(true)">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+    إصدار إنذار تنظيمي
+  </button>
+</div>
+
+<!-- كروت إحصائية -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-title">إجمالي الإنذارات</span>
+    <span class="stat-value">{{ warnings().length }}</span>
+  </div>
+  <div class="stat-card border-amber">
+    <span class="stat-title">قيد المعالجة</span>
+    <span class="stat-value text-amber">{{ getCountByStatus('UnderReview') }}</span>
+  </div>
+  <div class="stat-card border-red">
+    <span class="stat-title">إنذارات نشطة</span>
+    <span class="stat-value text-red">{{ getCountByStatus('Open') }}</span>
+  </div>
+  <div class="stat-card border-green">
+    <span class="stat-title">إنذارات مكتملة</span>
+    <span class="stat-value text-green">{{ getCountByStatus('Resolved') }}</span>
+  </div>
+</div>
 
 <div class="nfd-card">
+  <!-- شريط البحث -->
   <div class="nfd-toolbar">
-    <span></span>
-    <button class="nfd-btn danger" (click)="showIssue.set(true)">⚠ إصدار إنذار</button>
+    <div class="search-box">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" placeholder="البحث باسم الشركة..." [(ngModel)]="searchTerm" />
+    </div>
   </div>
+
   <table class="nfd-table">
     <thead>
       <tr>
-        <th>الشركة</th>
-        <th>النوع</th>
+        <th>كود الإنذار</th>
+        <th>الشركة المستضيفة</th>
+        <th>نوع المخالفة</th>
         <th>المستوى</th>
-        <th>الحالة</th>
+        <th>الحالة التنظيمية</th>
         <th>تاريخ الإصدار</th>
-        <th class="text-center">إجراءات</th>
+        <th class="text-center">التفاصيل</th>
       </tr>
     </thead>
     <tbody>
-      @for (w of warnings(); track w.warningId) {
+      @for (w of filteredWarnings(); track w.warningId) {
         <tr>
-          <td>{{ w.targetName || '-' }}</td>
+          <td class="font-mono">{{ getItemProp(w, 'code', 'CW-' + w.warningId) }}</td>
+          <td class="font-bold">{{ w.targetName || '-' }}</td>
           <td>{{ getTypeLabel(w.type) }}</td>
           <td>
             <span class="nfd-badge" [ngClass]="getLevelClass(w.level)">
@@ -28,81 +62,80 @@
             </span>
           </td>
           <td>
-            <span class="status-text" [ngClass]="getStatusClass(w.status)">
+            <span class="status-pill" [ngClass]="getStatusClass(w.status)">
               {{ getStatusLabel(w.status) }}
             </span>
           </td>
           <td>{{ w.issuedDate | date:'dd/MM/yyyy' }}</td>
           <td class="text-center">
-            <!-- أيقونة العين -->
             <button class="icon-btn" (click)="openDetailsModal(w)" title="عرض التفاصيل">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
           </td>
         </tr>
       }
       @empty {
-        <tr><td colspan="6" class="empty-msg">لا توجد إنذارات</td></tr>
+        <tr><td colspan="7" class="empty-msg">لا توجد سجلات إنذارات متاحة حالياً</td></tr>
       }
     </tbody>
   </table>
 </div>
 
-<!-- النافذة المنبثقة: إصدار إنذار لشركة -->
+<!-- مودال إصدار إنذار -->
 @if (showIssue()) {
   <div class="nfd-modal-bg" (click)="showIssue.set(false)">
     <div class="nfd-modal" (click)="$event.stopPropagation()">
-      <h3>إصدار إنذار لشركة</h3>
-      
-      <div class="form-group">
-        <label>معرف الشركة</label>
-        <input class="nfd-input" type="number" [(ngModel)]="newWarning.companyId" />
+      <div class="modal-title-bar">
+        <h3>إصدار إشعار مخالفة تنظيمي</h3>
+        <button class="close-icon-btn" (click)="showIssue.set(false)">✕</button>
       </div>
 
       <div class="form-group">
-        <label>نوع المخالفة</label>
+        <label>رقم الشركة/الجهة المستضيفة</label>
+        <input class="nfd-input" type="number" [(ngModel)]="newWarning.companyId" placeholder="أدخل معرف الشركة" />
+      </div>
+
+      <div class="form-group">
+        <label>تصنيف المخالفة التدريبية</label>
         <select class="nfd-input" [(ngModel)]="newWarning.type">
-          <option value="Attendance">التزامات الحضور</option>
-          <option value="Performance">الأداء</option>
-          <option value="Behavioral">سلوكي</option>
-          <option value="Other">أخرى</option>
+          <option value="Attendance">إخلال بالتزامات الحضور والمتابعة</option>
+          <option value="Performance">عدم الالتزام ببيئة التدريب المعتمدة</option>
+          <option value="Behavioral">مخالفة الضوابط والسلوك الميداني</option>
+          <option value="Other">مخالفات تنظيمية أخرى</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label>مستوى الإنذار</label>
+        <label>درجة الأهمية / المستوى</label>
         <select class="nfd-input" [(ngModel)]="newWarning.level">
-          <option value="Low">منخفض</option>
-          <option value="Medium">متوسط</option>
-          <option value="High">مرتفع</option>
-          <option value="Critical">حرج</option>
+          <option value="Low">منخفض (تنبيه)</option>
+          <option value="Medium">متوسط (إنذار أول)</option>
+          <option value="High">مرتفع (إنذار ثانٍ)</option>
+          <option value="Critical">حرج (إيقاف الشراكة)</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label>الأدلة والملاحظات</label>
-        <input class="nfd-input" [(ngModel)]="newWarning.evidence" />
+        <label>المستندات المؤيدة والأسباب</label>
+        <textarea class="nfd-input textarea" [(ngModel)]="newWarning.evidence" rows="3" placeholder="اكتب التفاصيل والملاحظات هنا..."></textarea>
       </div>
 
       <div class="nfd-modal-actions">
         <button class="nfd-btn secondary" (click)="showIssue.set(false)">إلغاء</button>
-        <button class="nfd-btn danger" (click)="issue()">إصدار الإنذار</button>
+        <button class="nfd-btn primary-btn" (click)="issue()">تأكيد وإصدار</button>
       </div>
     </div>
   </div>
 }
 
-<!-- النافذة المنبثقة: تفاصيل الإنذار (مطابقة للصورة) -->
+<!-- مودال تفاصيل الإنذار -->
 @if (selectedWarning(); as item) {
   <div class="nfd-modal-bg" (click)="closeDetailsModal()">
     <div class="nfd-modal details-modal" (click)="$event.stopPropagation()">
       
       <div class="details-header">
         <button class="close-icon-btn" (click)="closeDetailsModal()">✕</button>
-        <h3>تفاصيل الإنذار</h3>
+        <h3>تفاصيل الإشعار التنظيمي</h3>
       </div>
 
       <div class="company-card-header">
@@ -111,8 +144,8 @@
             {{ getAvatar(item.targetName) }}
           </div>
           <div class="company-text">
-            <h4>{{ item.targetName || 'اسم الشركة غير محدد' }}</h4>
-            <span>{{ (item['code'] || 'CW-001') + ' · ' + (item.issuedDate | date:'dd/MM/yyyy') }}</span>
+            <h4>{{ item.targetName || 'الشركة المستضيفة' }}</h4>
+            <span>{{ getItemProp(item, 'code', 'CW-' + item.warningId) + ' • ' + (item.issuedDate | date:'dd/MM/yyyy') }}</span>
           </div>
         </div>
         <span class="nfd-badge" [ngClass]="getLevelClass(item.level)">
@@ -122,24 +155,24 @@
 
       <div class="details-list">
         <div class="detail-row">
-          <span class="detail-label">نوع المخالفة</span>
+          <span class="detail-label">تصنيف المخالفة:</span>
           <span class="detail-value">{{ getTypeLabel(item.type) }}</span>
         </div>
 
         <div class="detail-row">
-          <span class="detail-label">الأدلة والمستندات</span>
-          <span class="detail-value text-blue">{{ item.evidence || 'تقرير المشرف الميداني' }}</span>
+          <span class="detail-label">الأدلة والمستندات:</span>
+          <span class="detail-value text-blue">{{ item.evidence || 'تقرير المتابعة الميدانية' }}</span>
         </div>
 
         <div class="detail-row">
-          <span class="detail-label">أصدره</span>
-          <span class="detail-value">{{ item['issuedBy'] || 'أحمد العمري' }}</span>
+          <span class="detail-label">الجهة المُصدرة:</span>
+          <span class="detail-value">{{ getItemProp(item, 'issuedBy', 'إدارة الامتثال والرقابة') }}</span>
         </div>
 
         <div class="detail-row">
-          <span class="detail-label">الحالة</span>
+          <span class="detail-label">الحالة الحالية:</span>
           <span class="detail-value">
-            <span class="status-badge" [ngClass]="getStatusClass(item.status)">
+            <span class="status-pill" [ngClass]="getStatusClass(item.status)">
               {{ getStatusLabel(item.status) }}
             </span>
           </span>
@@ -147,12 +180,11 @@
       </div>
 
       <div class="notes-box">
-        <span class="notes-label">ملاحظات الإدارة</span>
-        <p class="notes-text">{{ item['notes'] || 'تأخر تسليم تقارير المتدربين لأكثر من أسبوعين.' }}</p>
+        <span class="notes-label">ملاحظات والتوصيات التنفيذية</span>
+        <p class="notes-text">{{ getItemProp(item, 'notes', 'تأخر تسليم التقارير الدورية للمتدربين وفق الجدول الزمني المعتمد.') }}</p>
       </div>
 
-      <button class="btn-green-submit" (click)="closeDetailsModal()">إغلاق</button>
-
+      <button class="btn-gov-submit" (click)="closeDetailsModal()">إغلاق النافذة</button>
     </div>
   </div>
 }
