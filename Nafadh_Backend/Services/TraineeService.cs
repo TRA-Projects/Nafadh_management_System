@@ -32,6 +32,11 @@ namespace Nafadh_Backend.Services
             return _repository.GetByIdAsync(id);
         }
 
+        public Task<NFD_Trainee?> GetByUserIdAsync(int userId)
+        {
+            return _repository.GetByUserIdAsync(userId);
+        }
+
         public Task<NFD_Trainee?> GetByIdWithDashboardDataAsync(int id)
         {
             return _repository.GetByIdWithDashboardDataAsync(id);

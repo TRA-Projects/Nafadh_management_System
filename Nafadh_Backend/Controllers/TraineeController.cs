@@ -21,7 +21,9 @@ namespace Nafadh_Backend.Controllers
         private readonly ITraineeService _service;
         private readonly IBadgeEvaluationService _badgeEvaluationService;
 
-        public TraineeController(ITraineeService service, IBadgeEvaluationService badgeEvaluationService)
+        public TraineeController(
+            ITraineeService service,
+            IBadgeEvaluationService badgeEvaluationService)
         {
             _service = service;
             _badgeEvaluationService = badgeEvaluationService;
@@ -37,7 +39,13 @@ namespace Nafadh_Backend.Controllers
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 20)
         {
-            var (items, total) = await _service.GetAllAsync(companyId, status, university, searchTerm, pageNumber, pageSize);
+            var (items, total) = await _service.GetAllAsync(
+                companyId,
+                status,
+                university,
+                searchTerm,
+                pageNumber,
+                pageSize);
 
             var dtos = items.Select(t => new TraineeListItemDto
             {
@@ -51,7 +59,11 @@ namespace Nafadh_Backend.Controllers
                 CompanyName = t.Company?.CompanyName
             }).ToList();
 
-            return Ok(new { Items = dtos, TotalCount = total });
+            return Ok(new
+            {
+                Items = dtos,
+                TotalCount = total
+            });
         }
 
         // GET: api/trainee/{id}
@@ -59,7 +71,43 @@ namespace Nafadh_Backend.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var t = await _service.GetByIdWithDashboardDataAsync(id);
-            if (t == null) return NotFound();
+
+            if (t == null)
+                return NotFound();
+
+            var dto = new TraineeProfileDto
+            {
+                TraineeId = t.TraineeId,
+                FullName = t.User?.FullName,
+                Email = t.User?.Email,
+                NationalId = t.NationalId,
+                University = t.University,
+                Major = t.Major,
+                AcademicLevel = t.AcademicLevel,
+                Skills = t.Skills,
+                ResumeUrl = t.ResumeUrl,
+                GitHubUrl = t.GitHubUrl,
+                LinkedInUrl = t.LinkedInUrl,
+                Status = t.Status,
+                VerificationStatus = t.VerificationStatus,
+                CompanyId = t.CompanyId,
+                CompanyName = t.Company?.CompanyName
+            };
+
+            return Ok(dto);
+        }
+
+        // =====================================================
+        // GET: api/trainee/by-user/{userId}
+        // Gets trainee profile using the logged-in user's UserId
+        // =====================================================
+        [HttpGet("by-user/{userId:int}")]
+        public async Task<IActionResult> GetByUserId(int userId)
+        {
+            var t = await _service.GetByUserIdAsync(userId);
+
+            if (t == null)
+                return NotFound("Trainee profile not found for this user.");
 
             var dto = new TraineeProfileDto
             {
@@ -85,12 +133,17 @@ namespace Nafadh_Backend.Controllers
 
         // PUT: api/trainee/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] TraineeProfileDto update)
+        public async Task<IActionResult> Update(
+            int id,
+            [FromBody] TraineeProfileDto update)
         {
-            if (id != update.TraineeId) return BadRequest("Id mismatch.");
+            if (id != update.TraineeId)
+                return BadRequest("Id mismatch.");
 
             var existing = await _service.GetByIdAsync(id);
-            if (existing == null) return NotFound();
+
+            if (existing == null)
+                return NotFound();
 
             // apply allowed updates
             existing.NationalId = update.NationalId;
@@ -106,26 +159,38 @@ namespace Nafadh_Backend.Controllers
 
             if (existing.CompanyId.HasValue)
             {
-                var exists = await _service.CompanyExistsAsync(existing.CompanyId.Value);
-                if (!exists) return BadRequest("Company does not exist.");
+                var exists = await _service.CompanyExistsAsync(
+                    existing.CompanyId.Value);
+
+                if (!exists)
+                    return BadRequest("Company does not exist.");
             }
 
             _service.Update(existing);
+
             var saved = await _service.SaveChangesAsync();
-            if (!saved) return StatusCode(500, "Failed to save updates.");
+
+            if (!saved)
+                return StatusCode(500, "Failed to save updates.");
 
             return NoContent();
         }
 
         // POST: api/trainee
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] TraineeCreateDTO create)
+        public async Task<IActionResult> Create(
+            [FromBody] TraineeCreateDTO create)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
             // prevent duplicate profile for same user
-            var hasProfile = await _service.UserHasTraineeProfileAsync(create.UserId);
-            if (hasProfile) return BadRequest("User already has a trainee profile.");
+            var hasProfile =
+                await _service.UserHasTraineeProfileAsync(create.UserId);
+
+            if (hasProfile)
+                return BadRequest(
+                    "User already has a trainee profile.");
 
             var model = new NFD_Trainee
             {
@@ -138,37 +203,61 @@ namespace Nafadh_Backend.Controllers
                 ResumeUrl = create.ResumeUrl,
                 GitHubUrl = create.GitHubUrl,
                 LinkedInUrl = create.LinkedInUrl,
+
                 // EDITED: canonical 3-value status — a freshly created trainee has
                 // no company yet, so NotAssigned (was "Active" under the old enum).
                 Status = Enums.NFD_TraineeStatus.NotAssigned,
-                VerificationStatus = Enums.NFD_VerificationStatus.Pending
+                VerificationStatus =
+                    Enums.NFD_VerificationStatus.Pending
             };
 
             await _service.AddAsync(model);
-            var saved = await _service.SaveChangesAsync();
-            if (!saved) return StatusCode(500, "Failed to create trainee profile.");
 
-            return CreatedAtAction(nameof(GetById), new { id = model.TraineeId }, null);
+            var saved = await _service.SaveChangesAsync();
+
+            if (!saved)
+                return StatusCode(
+                    500,
+                    "Failed to create trainee profile.");
+
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = model.TraineeId },
+                null);
         }
 
         // PUT: api/trainee/{id}/status
         [HttpPut("{id}/status")]
-        public async Task<IActionResult> UpdateStatus(int id, [FromBody] TraineeStatusUpdateDto dto)
+        public async Task<IActionResult> UpdateStatus(
+            int id,
+            [FromBody] TraineeStatusUpdateDto dto)
         {
             var existing = await _service.GetByIdAsync(id);
-            if (existing == null) return NotFound();
+
+            if (existing == null)
+                return NotFound();
 
             existing.Status = dto.Status;
-            // reason is not persisted in current model; can be logged or extended later
+
+            // reason is not persisted in current model;
+            // can be logged or extended later
 
             _service.Update(existing);
-            var saved = await _service.SaveChangesAsync();
-            if (!saved) return StatusCode(500, "Failed to update status.");
 
-            // NEW: a status change to Completed may satisfy the ProgramCompletion badge.
-            if (dto.Status == Enums.NFD_TraineeStatus.Completed)
+            var saved = await _service.SaveChangesAsync();
+
+            if (!saved)
+                return StatusCode(
+                    500,
+                    "Failed to update status.");
+
+            // NEW: a status change to Completed may satisfy
+            // the ProgramCompletion badge.
+            if (dto.Status ==
+                Enums.NFD_TraineeStatus.Completed)
             {
-                await _badgeEvaluationService.EvaluateTraineeAsync(id);
+                await _badgeEvaluationService
+                    .EvaluateTraineeAsync(id);
             }
 
             return NoContent();
@@ -176,20 +265,35 @@ namespace Nafadh_Backend.Controllers
 
         // PUT: api/trainee/{id}/assign-company
         [HttpPut("{id}/assign-company")]
-        public async Task<IActionResult> AssignCompany(int id, [FromBody] TraineeAssignCompanyDto dto)
+        public async Task<IActionResult> AssignCompany(
+            int id,
+            [FromBody] TraineeAssignCompanyDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
             var existing = await _service.GetByIdAsync(id);
-            if (existing == null) return NotFound();
 
-            var companyExists = await _service.CompanyExistsAsync(dto.CompanyId);
-            if (!companyExists) return BadRequest("Company does not exist.");
+            if (existing == null)
+                return NotFound();
+
+            var companyExists =
+                await _service.CompanyExistsAsync(dto.CompanyId);
+
+            if (!companyExists)
+                return BadRequest(
+                    "Company does not exist.");
 
             existing.CompanyId = dto.CompanyId;
+
             _service.Update(existing);
+
             var saved = await _service.SaveChangesAsync();
-            if (!saved) return StatusCode(500, "Failed to assign company.");
+
+            if (!saved)
+                return StatusCode(
+                    500,
+                    "Failed to assign company.");
 
             return NoContent();
         }
@@ -198,8 +302,11 @@ namespace Nafadh_Backend.Controllers
         [HttpGet("{id}/dashboard-summary")]
         public async Task<IActionResult> GetDashboardSummary(int id)
         {
-            var t = await _service.GetByIdWithDashboardDataAsync(id);
-            if (t == null) return NotFound();
+            var t =
+                await _service.GetByIdWithDashboardDataAsync(id);
+
+            if (t == null)
+                return NotFound();
 
             var dto = new TraineeDashboardSummaryDto
             {
@@ -207,20 +314,68 @@ namespace Nafadh_Backend.Controllers
                 FullName = t.User?.FullName,
                 Status = t.Status,
                 CompanyName = t.Company?.CompanyName,
-                EnrollmentsCount = t.Enrollments?.Count ?? 0,
-                CompletedModulesCount = t.TraineeModuleProgresses?.Count(pm => pm.Status == Enums.NFD_ModuleProgressStatus.Completed) ?? 0,
-                TotalModulesCount = t.TraineeModuleProgresses?.Count ?? 0,
-                ModuleProgressPercentage = t.TraineeModuleProgresses?.Count > 0
-                    ? (t.TraineeModuleProgresses.Count(pm => pm.Status == Enums.NFD_ModuleProgressStatus.Completed) * 100.0 / t.TraineeModuleProgresses.Count)
-                    : 0,
-                TotalSessionsCount = t.SessionAttendances?.Count ?? 0,
-                AttendedSessionsCount = t.SessionAttendances?.Count(sa => sa.Status == Enums.NFD_AttendanceStatus.Present) ?? 0,
-                AttendanceRate = t.SessionAttendances?.Count > 0
-                    ? (t.SessionAttendances.Count(sa => sa.Status == Enums.NFD_AttendanceStatus.Present) * 100.0 / t.SessionAttendances.Count)
-                    : 0,
-                SubmissionsCount = t.Submissions?.Count ?? 0,
-                PendingSubmissionsCount = t.Submissions?.Count(s => s.Status != Enums.NFD_SubmissionStatus.Graded) ?? 0,
-                ActiveProjectsCount = t.ProjectMembers?.Count ?? 0
+
+                EnrollmentsCount =
+                    t.Enrollments?.Count ?? 0,
+
+                CompletedModulesCount =
+                    t.TraineeModuleProgresses?.Count(
+                        pm =>
+                            pm.Status ==
+                            Enums.NFD_ModuleProgressStatus.Completed
+                    ) ?? 0,
+
+                TotalModulesCount =
+                    t.TraineeModuleProgresses?.Count ?? 0,
+
+                ModuleProgressPercentage =
+                    t.TraineeModuleProgresses?.Count > 0
+                        ? (
+                            t.TraineeModuleProgresses.Count(
+                                pm =>
+                                    pm.Status ==
+                                    Enums.NFD_ModuleProgressStatus.Completed
+                            ) *
+                            100.0 /
+                            t.TraineeModuleProgresses.Count
+                          )
+                        : 0,
+
+                TotalSessionsCount =
+                    t.SessionAttendances?.Count ?? 0,
+
+                AttendedSessionsCount =
+                    t.SessionAttendances?.Count(
+                        sa =>
+                            sa.Status ==
+                            Enums.NFD_AttendanceStatus.Present
+                    ) ?? 0,
+
+                AttendanceRate =
+                    t.SessionAttendances?.Count > 0
+                        ? (
+                            t.SessionAttendances.Count(
+                                sa =>
+                                    sa.Status ==
+                                    Enums.NFD_AttendanceStatus.Present
+                            ) *
+                            100.0 /
+                            t.SessionAttendances.Count
+                          )
+                        : 0,
+
+                SubmissionsCount =
+                    t.Submissions?.Count ?? 0,
+
+                PendingSubmissionsCount =
+                    t.Submissions?.Count(
+                        s =>
+                            s.Status !=
+                            Enums.NFD_SubmissionStatus.Graded
+                    ) ?? 0,
+
+                ActiveProjectsCount =
+                    t.ProjectMembers?.Count ?? 0
             };
 
             return Ok(dto);
@@ -228,30 +383,44 @@ namespace Nafadh_Backend.Controllers
 
         // POST: api/trainee/import
         [HttpPost("import")]
-        public async Task<IActionResult> Import([FromBody] List<TraineeCreateDTO> items)
+        public async Task<IActionResult> Import(
+            [FromBody] List<TraineeCreateDTO> items)
         {
-            if (items == null || items.Count == 0) return BadRequest("No items provided.");
+            if (items == null || items.Count == 0)
+                return BadRequest("No items provided.");
 
-            var models = items.Select(i => new NFD_Trainee
-            {
-                UserId = i.UserId,
-                NationalId = i.NationalId,
-                University = i.University,
-                Major = i.Major,
-                AcademicLevel = i.AcademicLevel,
-                Skills = i.Skills,
-                ResumeUrl = i.ResumeUrl,
-                GitHubUrl = i.GitHubUrl,
-                LinkedInUrl = i.LinkedInUrl,
-                Status = Enums.NFD_TraineeStatus.NotAssigned,
-                VerificationStatus = Enums.NFD_VerificationStatus.Pending
-            }).ToList();
+            var models = items.Select(i =>
+                new NFD_Trainee
+                {
+                    UserId = i.UserId,
+                    NationalId = i.NationalId,
+                    University = i.University,
+                    Major = i.Major,
+                    AcademicLevel = i.AcademicLevel,
+                    Skills = i.Skills,
+                    ResumeUrl = i.ResumeUrl,
+                    GitHubUrl = i.GitHubUrl,
+                    LinkedInUrl = i.LinkedInUrl,
+                    Status =
+                        Enums.NFD_TraineeStatus.NotAssigned,
+                    VerificationStatus =
+                        Enums.NFD_VerificationStatus.Pending
+                }
+            ).ToList();
 
             await _service.AddRangeAsync(models);
-            var saved = await _service.SaveChangesAsync();
-            if (!saved) return StatusCode(500, "Failed to import trainees.");
 
-            return Ok(new { Imported = models.Count });
+            var saved = await _service.SaveChangesAsync();
+
+            if (!saved)
+                return StatusCode(
+                    500,
+                    "Failed to import trainees.");
+
+            return Ok(new
+            {
+                Imported = models.Count
+            });
         }
 
         // ==========================================
@@ -261,19 +430,24 @@ namespace Nafadh_Backend.Controllers
         [HttpGet("pending-verification")]
         public async Task<IActionResult> GetPendingVerification()
         {
-            var trainees = await _service.GetPendingVerificationAsync();
+            var trainees =
+                await _service.GetPendingVerificationAsync();
 
-            var dtos = trainees.Select(t => new TraineeListItemDto
-            {
-                TraineeId = t.TraineeId,
-                FullName = t.User?.FullName,
-                University = t.University,
-                Major = t.Major,
-                Status = t.Status,
-                VerificationStatus = t.VerificationStatus,
-                CompanyId = t.CompanyId,
-                CompanyName = t.Company?.CompanyName
-            }).ToList();
+            var dtos = trainees.Select(t =>
+                new TraineeListItemDto
+                {
+                    TraineeId = t.TraineeId,
+                    FullName = t.User?.FullName,
+                    University = t.University,
+                    Major = t.Major,
+                    Status = t.Status,
+                    VerificationStatus =
+                        t.VerificationStatus,
+                    CompanyId = t.CompanyId,
+                    CompanyName =
+                        t.Company?.CompanyName
+                }
+            ).ToList();
 
             return Ok(dtos);
         }
@@ -283,18 +457,31 @@ namespace Nafadh_Backend.Controllers
         // NEW: approve/reject a trainee's identity verification
         // ==========================================
         [HttpPut("{id}/verification")]
-        public async Task<IActionResult> UpdateVerification(int id, [FromBody] TraineeVerificationInputDTO dto)
+        public async Task<IActionResult> UpdateVerification(
+            int id,
+            [FromBody] TraineeVerificationInputDTO dto)
         {
-            var existing = await _service.GetByIdAsync(id);
-            if (existing == null) return NotFound();
+            var existing =
+                await _service.GetByIdAsync(id);
+
+            if (existing == null)
+                return NotFound();
 
             existing.VerificationStatus = dto.Status;
-            // ReviewedByUserId is accepted for audit/logging purposes; not persisted
-            // on the Trainee model itself (no dedicated column for reviewer yet).
+
+            // ReviewedByUserId is accepted for audit/logging purposes;
+            // not persisted on the Trainee model itself
+            // (no dedicated column for reviewer yet).
 
             _service.Update(existing);
-            var saved = await _service.SaveChangesAsync();
-            if (!saved) return StatusCode(500, "Failed to update verification status.");
+
+            var saved =
+                await _service.SaveChangesAsync();
+
+            if (!saved)
+                return StatusCode(
+                    500,
+                    "Failed to update verification status.");
 
             return NoContent();
         }
