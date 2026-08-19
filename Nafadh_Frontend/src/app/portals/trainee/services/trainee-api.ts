@@ -7,7 +7,7 @@ import {
   ConversationMessageDto, DailyAttendanceDto, ExcuseDto, FeedbackCriterionDto, FeedbackPendingDto,
   LessonDto, ModuleDto, NotificationDto, ProjectDto, SubmissionDto, TaskDto,
   TraineeBadgeDto, TraineeDashboardSummaryDto, TraineeModuleProgressDto, TraineeProfileDto, WarningDto,
-  EnrollmentDto, BatchDto, ProgramDto, TrainerDto, CompanySupervisorDto
+  EnrollmentDto, BatchDto, ProgramDto, TrainerDto, CompanySupervisorDto, ProgressSummaryDto
 } from '../../../core/models/dtos';
 
 @Injectable({ providedIn: 'root' })
@@ -63,23 +63,24 @@ export class TraineeApi {
     return this.http.get<BatchDto>(`${this.base}/Batch/${id}`);
   }
 
- // =========================================================
-// BatchTrainer - جلب مدرب الدفعة
-// GET /api/BatchTrainer/batch/{batchId}
-// =========================================================
+  // =========================================================
+  // BatchTrainer - جلب مدرب الدفعة
+  // GET /api/BatchTrainer/batch/{batchId}
+  // =========================================================
 
-getBatchTrainers(batchId: number): Observable<TrainerDto[]> {
-  return this.http.get<TrainerDto[]>(`${this.base}/BatchTrainer/batch/${batchId}`);
-}
+  getBatchTrainers(batchId: number): Observable<TrainerDto[]> {
+    return this.http.get<TrainerDto[]>(`${this.base}/BatchTrainer/batch/${batchId}`);
+  }
 
-// =========================================================
-// Trainer - جلب بيانات مدرب معين
-// GET /api/Trainer/{id}
-// =========================================================
+  // =========================================================
+  // Trainer - جلب بيانات مدرب معين
+  // GET /api/Trainer/{id}
+  // =========================================================
 
-getTrainer(id: number): Observable<TrainerDto> {
-  return this.http.get<TrainerDto>(`${this.base}/Trainer/${id}`);
-}
+  getTrainer(id: number): Observable<TrainerDto> {
+    return this.http.get<TrainerDto>(`${this.base}/Trainer/${id}`);
+  }
+
   // =========================================================
   // CompanySupervisor - جلب بيانات المشرف
   // GET /api/CompanySupervisor/{id}
@@ -95,6 +96,22 @@ getTrainer(id: number): Observable<TrainerDto> {
 
   getProgram(id: number): Observable<ProgramDto> {
     return this.http.get<ProgramDto>(`${this.base}/Program/${id}`);
+  }
+
+  getProgramModules(programId: number): Observable<ModuleDto[]> {
+    return this.http.get<ModuleDto[]>(`${this.base}/Program/${programId}/modules`);
+  }
+
+  getModuleLessons(moduleId: number): Observable<LessonDto[]> {
+    return this.http.get<LessonDto[]>(`${this.base}/Module/${moduleId}/lessons`);
+  }
+
+  getTraineeProgramProgress(traineeId: number, programId: number): Observable<any> {
+    return this.http.get<any>(`${this.base}/Trainee/${traineeId}/program/${programId}/progress`);
+  }
+
+  markAchievement(traineeId: number, programId: number): Observable<any> {
+    return this.http.post(`${this.base}/Trainee/${traineeId}/program/${programId}/achievement`, {});
   }
 
   // =========================================================
@@ -119,6 +136,14 @@ getTrainer(id: number): Observable<TrainerDto> {
 
   getModuleProgressPercentage(traineeId: number): Observable<number> {
     return this.http.get<number>(`${this.base}/TraineeModuleProgress/trainee/${traineeId}/percentage`);
+  }
+
+  // =========================================================
+  // Enrollment Progress
+  // =========================================================
+
+  getEnrollmentProgress(enrollmentId: number): Observable<ProgressSummaryDto> {
+    return this.http.get<ProgressSummaryDto>(`${this.base}/Enrollment/${enrollmentId}/progress-summary`);
   }
 
   // =========================================================
