@@ -25,7 +25,7 @@ export class AdminCompanies implements OnInit {
     if (filter === 'الكل') {
       return this.companies();
     }
-    return this.companies().filter(c => c.status === filter);
+    return this.companies().filter(c => String(c.status) === String(filter));
   });
 
   showAddModal = signal<boolean>(false);
@@ -55,7 +55,16 @@ export class AdminCompanies implements OnInit {
   }
 
   private emptyCompanyForm() {
-    return { companyName: '', workField: '', capacity: null, status: 'PendingApproval', email: '', phone: '', contactName: '' };
+    return { 
+      companyName: '', 
+      workField: '', 
+      address: '', 
+      capacity: null, 
+      status: 'PendingApproval', 
+      email: '', 
+      phone: '', 
+      contactName: '' 
+    };
   }
 
   openAddModal() {
@@ -63,19 +72,29 @@ export class AdminCompanies implements OnInit {
     this.showAddModal.set(true);
   }
 
-  closeAddModal() { this.showAddModal.set(false); }
-
-  toggleWorkFieldDropdown(event: MouseEvent) { event.stopPropagation(); this.workFieldDropdownOpen.update(v => !v); }
-  selectWorkField(opt: string, event: MouseEvent) { event.stopPropagation(); this.newCompany.workField = opt; this.workFieldDropdownOpen.set(false); }
-
-  toggleStatusDropdown(event: MouseEvent) { event.stopPropagation(); this.statusDropdownOpen.update(v => !v); }
-  selectStatus(val: string, event: MouseEvent) { event.stopPropagation(); this.newCompany.status = val; this.statusDropdownOpen.set(false); }
-
-  statusLabel(val: string): string {
-    return this.statusOptions.find(o => o.value === val)?.label ?? val;
+  closeAddModal() { 
+    this.showAddModal.set(false); 
   }
 
-  closeAllDropdowns() { this.workFieldDropdownOpen.set(false); this.statusDropdownOpen.set(false); }
+  toggleWorkFieldDropdown(event: MouseEvent) { 
+    event.stopPropagation(); 
+    this.workFieldDropdownOpen.update(v => !v); 
+  }
+  
+  selectWorkField(opt: string, event: MouseEvent) { 
+    event.stopPropagation(); 
+    this.newCompany.workField = opt; 
+    this.workFieldDropdownOpen.set(false); 
+  }
+
+  statusLabel(val: any): string {
+    return this.statusOptions.find(o => o.value === String(val))?.label ?? val;
+  }
+
+  closeAllDropdowns() { 
+    this.workFieldDropdownOpen.set(false); 
+    this.statusDropdownOpen.set(false); 
+  }
 
   submitAddCompany() {
     this.adminApi.createCompany(this.newCompany).subscribe({
@@ -83,18 +102,17 @@ export class AdminCompanies implements OnInit {
         this.companies.update(list => [res, ...list]); 
         this.closeAddModal(); 
       },
-      error: () => this.addError.set('حدث خطأ')
+      error: () => this.addError.set('حدث خطأ أثناء الإضافة')
     });
   }
 
-  // دالة لتغيير حالة الشركة (اعتماد، إيقاف، رفض) من جدول الإجراءات مباشرة
-updateCompanyStatus(company: any, newStatus: string) {
-    const updatedData = { ...company, status: newStatus as any };
+  updateCompanyStatus(company: any, newStatus: any) {
+    const updatedData = { ...company, status: newStatus };
     
     this.adminApi.updateCompany(company.companyId, updatedData).subscribe({
       next: () => {
         this.companies.update(list => 
-          list.map(c => c.companyId === company.companyId ? { ...c, status: newStatus as any } : c)
+          list.map(c => c.companyId === company.companyId ? { ...c, status: newStatus } : c)
         );
       },
       error: (err) => {
