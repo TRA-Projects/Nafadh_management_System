@@ -2,50 +2,157 @@
 <p class="nfd-page-sub">إدارة إنذارات الشركات المستضيفة المتعلقة بالامتثال</p>
 
 <div class="nfd-card">
-  <div class="nfd-toolbar"><span></span><button class="nfd-btn danger" (click)="showIssue.set(true)">⚠ إصدار إنذار</button></div>
+  <div class="nfd-toolbar">
+    <span></span>
+    <button class="nfd-btn danger" (click)="showIssue.set(true)">⚠ إصدار إنذار</button>
+  </div>
   <table class="nfd-table">
-    <thead><tr><th>الشركة</th><th>النوع</th><th>المستوى</th><th>الحالة</th><th>تاريخ الإصدار</th></tr></thead>
+    <thead>
+      <tr>
+        <th>الشركة</th>
+        <th>النوع</th>
+        <th>المستوى</th>
+        <th>الحالة</th>
+        <th>تاريخ الإصدار</th>
+        <th class="text-center">إجراءات</th>
+      </tr>
+    </thead>
     <tbody>
       @for (w of warnings(); track w.warningId) {
         <tr>
-          <td>{{ w.targetName }}</td>
-          <td>{{ w.type }}</td>
-          <td><span class="nfd-badge" style="background:var(--status-review-bg);color:var(--status-review-fg)">{{ w.level }}</span></td>
-          <td>{{ w.status }}</td>
-          <td>{{ w.issuedDate | date:'shortDate' }}</td>
+          <td>{{ w.targetName || '-' }}</td>
+          <td>{{ getTypeLabel(w.type) }}</td>
+          <td>
+            <span class="nfd-badge" [ngClass]="getLevelClass(w.level)">
+              {{ getLevelLabel(w.level) }}
+            </span>
+          </td>
+          <td>
+            <span class="status-text" [ngClass]="getStatusClass(w.status)">
+              {{ getStatusLabel(w.status) }}
+            </span>
+          </td>
+          <td>{{ w.issuedDate | date:'dd/MM/yyyy' }}</td>
+          <td class="text-center">
+            <!-- أيقونة العين -->
+            <button class="icon-btn" (click)="openDetailsModal(w)" title="عرض التفاصيل">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </td>
         </tr>
       }
-      @empty { <tr><td colspan="5">لا توجد إنذارات</td></tr> }
+      @empty {
+        <tr><td colspan="6" class="empty-msg">لا توجد إنذارات</td></tr>
+      }
     </tbody>
   </table>
 </div>
 
+<!-- النافذة المنبثقة: إصدار إنذار لشركة -->
 @if (showIssue()) {
   <div class="nfd-modal-bg" (click)="showIssue.set(false)">
     <div class="nfd-modal" (click)="$event.stopPropagation()">
       <h3>إصدار إنذار لشركة</h3>
-      <label>معرف الشركة</label>
-      <input class="nfd-input" type="number" [(ngModel)]="newWarning.companyId" />
-      <label>نوع المخالفة</label>
-      <select class="nfd-input" [(ngModel)]="newWarning.type">
-        <option value="Attendance">التزامات الحضور</option>
-        <option value="Performance">الأداء</option>
-        <option value="Behavioral">سلوكي</option>
-        <option value="Other">أخرى</option>
-      </select>
-      <label>مستوى الإنذار</label>
-      <select class="nfd-input" [(ngModel)]="newWarning.level">
-        <option value="Low">منخفض</option>
-        <option value="Medium">متوسط</option>
-        <option value="High">مرتفع</option>
-        <option value="Critical">حرج</option>
-      </select>
-      <label>الأدلة والملاحظات</label>
-      <input class="nfd-input" [(ngModel)]="newWarning.evidence" />
+      
+      <div class="form-group">
+        <label>معرف الشركة</label>
+        <input class="nfd-input" type="number" [(ngModel)]="newWarning.companyId" />
+      </div>
+
+      <div class="form-group">
+        <label>نوع المخالفة</label>
+        <select class="nfd-input" [(ngModel)]="newWarning.type">
+          <option value="Attendance">التزامات الحضور</option>
+          <option value="Performance">الأداء</option>
+          <option value="Behavioral">سلوكي</option>
+          <option value="Other">أخرى</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>مستوى الإنذار</label>
+        <select class="nfd-input" [(ngModel)]="newWarning.level">
+          <option value="Low">منخفض</option>
+          <option value="Medium">متوسط</option>
+          <option value="High">مرتفع</option>
+          <option value="Critical">حرج</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>الأدلة والملاحظات</label>
+        <input class="nfd-input" [(ngModel)]="newWarning.evidence" />
+      </div>
+
       <div class="nfd-modal-actions">
         <button class="nfd-btn secondary" (click)="showIssue.set(false)">إلغاء</button>
         <button class="nfd-btn danger" (click)="issue()">إصدار الإنذار</button>
       </div>
+    </div>
+  </div>
+}
+
+<!-- النافذة المنبثقة: تفاصيل الإنذار (مطابقة للصورة) -->
+@if (selectedWarning(); as item) {
+  <div class="nfd-modal-bg" (click)="closeDetailsModal()">
+    <div class="nfd-modal details-modal" (click)="$event.stopPropagation()">
+      
+      <div class="details-header">
+        <button class="close-icon-btn" (click)="closeDetailsModal()">✕</button>
+        <h3>تفاصيل الإنذار</h3>
+      </div>
+
+      <div class="company-card-header">
+        <div class="company-info-group">
+          <div class="company-circle">
+            {{ getAvatar(item.targetName) }}
+          </div>
+          <div class="company-text">
+            <h4>{{ item.targetName || 'اسم الشركة غير محدد' }}</h4>
+            <span>{{ (item['code'] || 'CW-001') + ' · ' + (item.issuedDate | date:'dd/MM/yyyy') }}</span>
+          </div>
+        </div>
+        <span class="nfd-badge" [ngClass]="getLevelClass(item.level)">
+          ● {{ getLevelLabel(item.level) }}
+        </span>
+      </div>
+
+      <div class="details-list">
+        <div class="detail-row">
+          <span class="detail-label">نوع المخالفة</span>
+          <span class="detail-value">{{ getTypeLabel(item.type) }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">الأدلة والمستندات</span>
+          <span class="detail-value text-blue">{{ item.evidence || 'تقرير المشرف الميداني' }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">أصدره</span>
+          <span class="detail-value">{{ item['issuedBy'] || 'أحمد العمري' }}</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">الحالة</span>
+          <span class="detail-value">
+            <span class="status-badge" [ngClass]="getStatusClass(item.status)">
+              {{ getStatusLabel(item.status) }}
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <div class="notes-box">
+        <span class="notes-label">ملاحظات الإدارة</span>
+        <p class="notes-text">{{ item['notes'] || 'تأخر تسليم تقارير المتدربين لأكثر من أسبوعين.' }}</p>
+      </div>
+
+      <button class="btn-green-submit" (click)="closeDetailsModal()">إغلاق</button>
+
     </div>
   </div>
 }
