@@ -252,14 +252,7 @@ export interface TraineeModuleProgressDto {
   moduleTitle?: string;
 }
 
-export interface TraineeModuleProgressDto {
-  progressId: number;
-  status: ModuleProgressStatus;
-  completedAt?: string;
-  traineeId: number;
-  moduleId: number;
-  moduleTitle?: string;
-}
+
 
 export interface SessionDto {
   sessionId: number;
