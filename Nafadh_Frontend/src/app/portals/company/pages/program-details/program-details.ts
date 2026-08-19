@@ -195,6 +195,6 @@ export class CompanyProgramDetails implements OnInit {
 // Loads the selected program and its related data.
 // Loads training phases and trainee information.
 // Calculates and displays capacity, occupancy, availability, and performance statistics.
-
+// Handles navigation back to the company specialties page.
 
 
