@@ -102,7 +102,48 @@
 .company-profile-cover-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(10, 17, 114, 0.08), rgba(10, 17, 114, 0.35));
+  background:
+    linear-gradient(90deg, rgba(10, 17, 114, 0.08), rgba(10, 17, 114, 0.32)),
+    linear-gradient(180deg, rgba(10, 17, 114, 0.04), rgba(10, 17, 114, 0.7));
+}
+
+.company-profile-cover-content {
+  position: absolute;
+  inset-inline-start: 28px;
+  bottom: 22px;
+  z-index: 1;
+  color: #fff;
+  text-align: start;
+  max-width: min(62%, 560px);
+}
+
+.company-profile-cover-kicker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.company-profile-cover-content h1 {
+  margin: 10px 0 2px;
+  color: #fff;
+  font-size: clamp(24px, 3vw, 38px);
+  line-height: 1.2;
+  font-weight: 800;
+  text-shadow: 0 3px 18px rgba(4, 8, 58, 0.3);
+}
+
+.company-profile-cover-content p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .company-profile-cover-actions {
@@ -358,5 +399,15 @@
   .company-profile-cover-actions {
     left: 16px;
     right: 16px;
+  }
+
+  .company-profile-cover-content {
+    inset-inline-start: 16px;
+    bottom: 18px;
+    max-width: 70%;
+  }
+
+  .company-profile-cover-content h1 {
+    font-size: 23px;
   }
 }
