@@ -12,6 +12,8 @@ namespace Nafadh_Backend.Services
         Task<(List<TrainerListItemDto> Items, int TotalCount)> GetAllAsync(TrainerFilterDto filter);
 
         Task<TrainerProfileDto?> GetByIdAsync(int id);
+        // Retrieves the trainer profile associated with a specific user account
+        Task<TrainerProfileDto?> GetByUserIdAsync(int userId);
 
         Task<TrainerProfileDto?> CreateAsync(TrainerCreateDto dto);
 

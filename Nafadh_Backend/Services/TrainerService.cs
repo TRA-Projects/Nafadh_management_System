@@ -63,7 +63,28 @@ namespace Nafadh_Backend.Services
                 Status = t.Status
             };
         }
+        // Retrieves and maps the trainer profile using the linked UserId.
+        public async Task<TrainerProfileDto?> GetByUserIdAsync(int userId)
+        {
+            var t = await _repository.GetByUserIdAsync(userId);
 
+            if (t == null)
+                return null;
+
+            return new TrainerProfileDto
+            {
+                TrainerId = t.TrainerId,
+                UserId = t.UserId,
+                FullName = t.User?.FullName,
+                Email = t.User?.Email,
+                Phone = t.User?.Phone,
+                Specialty = t.Specialty,
+                ExperienceYears = t.ExperienceYears,
+                Biography = t.Biography,
+                CVUrl = t.CVUrl,
+                Status = t.Status
+            };
+        }
         public async Task<TrainerProfileDto?> CreateAsync(TrainerCreateDto dto)
         {
             // prevent duplicate trainer for same user
