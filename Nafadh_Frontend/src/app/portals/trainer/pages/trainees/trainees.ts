@@ -54,6 +54,14 @@ export class TrainerTrainees implements OnInit {
 
 
   // =====================================================
+  // REPORT EXPORT STATE
+  // =====================================================
+
+  isExportingReport =
+    signal(false);
+
+
+  // =====================================================
   // KPI
   // =====================================================
 
@@ -804,6 +812,146 @@ export class TrainerTrainees implements OnInit {
           );
 
           this.attendancePercentages.set({});
+        }
+
+      });
+  }
+
+
+  // =====================================================
+  // EXPORT TRAINEES REPORT
+  // =====================================================
+
+  exportTraineesReport(): void {
+
+    const trainer =
+      this.trainer();
+
+    const userId =
+      this.auth.session()?.userId;
+
+
+    if (
+      !trainer ||
+      !userId
+    ) {
+
+      console.error(
+        'تعذر تصدير الكشف لعدم توفر بيانات المدرب الحالي'
+      );
+
+      return;
+    }
+
+
+    if (this.isExportingReport()) {
+
+      return;
+    }
+
+
+    this.isExportingReport.set(
+      true
+    );
+
+
+    this.api
+      .generateTrainerTraineesReport({
+
+        trainerId:
+          trainer.trainerId,
+
+        batchId:
+          this.batchId,
+
+        generatedByUserId:
+          userId
+
+      })
+      .subscribe({
+
+        next: (report) => {
+
+          this.api
+            .downloadReport(
+              report.reportId
+            )
+            .subscribe({
+
+              next: (blob) => {
+
+                const url =
+                  window.URL.createObjectURL(
+                    blob
+                  );
+
+
+                const link =
+                  document.createElement(
+                    'a'
+                  );
+
+
+                link.href =
+                  url;
+
+
+                link.download =
+                  `trainer-trainees-${report.reportId}.pdf`;
+
+
+                document.body.appendChild(
+                  link
+                );
+
+
+                link.click();
+
+
+                document.body.removeChild(
+                  link
+                );
+
+
+                window.URL.revokeObjectURL(
+                  url
+                );
+
+
+                this.isExportingReport.set(
+                  false
+                );
+              },
+
+
+              error: (err) => {
+
+                console.error(
+                  'خطأ في تنزيل كشف المتدربين:',
+                  err
+                );
+
+
+                this.isExportingReport.set(
+                  false
+                );
+              }
+
+            });
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'خطأ في إنشاء كشف المتدربين:',
+            err
+          );
+
+
+          this.isExportingReport.set(
+            false
+          );
         }
 
       });
