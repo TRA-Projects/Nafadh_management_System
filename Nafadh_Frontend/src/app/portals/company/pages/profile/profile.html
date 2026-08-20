@@ -9,6 +9,7 @@
 
 @if (company(); as c) {
   <div class="company-profile-page">
+    <div class="company-profile-glow"></div>
     <div class="nfd-card company-profile-hero-card" style="padding:0;overflow:hidden;margin-top:16px;border-radius:22px">
       <div class="company-profile-cover" [class.is-empty]="!c.coverImageUrl">
         @if (c.coverImageUrl) {
@@ -72,7 +73,7 @@
         }
 
         <div class="company-profile-title-wrap">
-          <h3 class="company-profile-name">{{ c.companyName }}</h3>
+          <h3 class="company-profile-name company-profile-name-gradient">{{ c.companyName }}</h3>
           <div class="company-profile-badges">
             <span class="nfd-badge company-profile-badge" [style.background]="c.status === 'Approved' ? '#e8f9ee' : '#edf3ff'" [style.color]="c.status === 'Approved' ? '#1d8f4a' : 'var(--color-navy)'" [style.border]="c.status === 'Approved' ? '1px solid #cfeedc' : '1px solid #dfeaff'">{{ statusLabel(c.status) }}</span>
             @if (c.accreditationNumber) {
@@ -136,7 +137,7 @@
     <div class="company-profile-info-wrap" style="margin-top:16px;">
       <div class="nfd-card company-profile-info-card" style="padding:18px 20px;">
         <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-          <span>معلومات الشركة</span>
+          <span class="section-title">معلومات الشركة</span>
           <button class="nfd-btn ghost" type="button" (click)="startCompanyEdit()">تعديل بيانات الشركة</button>
         </h3>
 
@@ -187,7 +188,7 @@
     <div class="company-profile-sections">
       <div class="nfd-card">
         <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-          <span>مجالات العمل</span>
+          <span class="section-title">مجالات العمل</span>
           <span style="display:flex;align-items:center;gap:6px;">
             <input class="nfd-input" style="width:140px;height:34px;font-size:12px;padding:0 10px;" placeholder="مجال جديد" [(ngModel)]="newFieldDraft" (keyup.enter)="addWorkField()" />
             <button class="nfd-btn ghost" type="button" (click)="addWorkField()">إضافة</button>
@@ -195,9 +196,9 @@
         </h3>
         <div style="display:flex;flex-wrap:wrap;gap:8px;min-height:52px;">
           @for (field of workFieldList(c); track field) {
-            <span class="nfd-badge" style="background:#eef4ff;color:var(--color-navy);display:inline-flex;align-items:center;gap:8px;border:1px solid #d8e4ff;">
+            <span class="nfd-badge workfield-chip">
               {{ field }}
-              <button type="button" (click)="removeWorkField(field)" style="border:0;background:none;cursor:pointer;color:var(--color-text-tertiary);display:flex;padding:0;">✕</button>
+              <button type="button" (click)="removeWorkField(field)" class="workfield-chip-remove">✕</button>
             </span>
           } @empty {
             <p class="nfd-muted">لا توجد مجالات مسجلة</p>
@@ -207,7 +208,7 @@
 
       <div class="nfd-card">
         <h3 style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <span>الفروع</span>
+          <span class="section-title">الفروع</span>
           <button class="nfd-btn ghost" type="button" (click)="addBranch()">+ إضافة فرع</button>
         </h3>
 
@@ -228,9 +229,14 @@
 
         <div style="display:flex;flex-direction:column;gap:10px;">
           @for (branch of branches(); track branch.branchId) {
-            <div style="padding:12px 14px;border:1px solid var(--color-border);border-radius:12px;background:#fafbff;">
-              <strong style="display:block;font-size:13.5px;color:var(--color-navy);">{{ branch.location }}</strong>
-              <span class="nfd-muted" style="display:block;margin-top:4px;">{{ branch.contactPoint || 'لا يوجد عنوان مرفق' }}</span>
+            <div class="list-tile branch-tile">
+              <span class="list-tile-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              </span>
+              <div style="flex:1;min-width:0;">
+                <strong style="display:block;font-size:13.5px;color:var(--color-navy);">{{ branch.location }}</strong>
+                <span class="nfd-muted" style="display:block;margin-top:4px;">{{ branch.contactPoint || 'لا يوجد عنوان مرفق' }}</span>
+              </div>
             </div>
           } @empty {
             @if (!branchesLoadError()) {
@@ -243,13 +249,13 @@
 
     <div class="company-profile-sections">
       <div class="nfd-card">
-        <h3>التخصصات المعتمدة</h3>
+        <h3 class="section-title">التخصصات المعتمدة</h3>
         @if (specialtiesLoadError()) {
           <p class="nfd-muted" style="color:var(--status-cancelled-fg);">تعذر تحميل التخصصات من الخادم — راجع الـ console.</p>
         }
         <div style="display:grid;grid-template-columns:1fr;gap:10px;">
           @for (program of specialties(); track program.programId) {
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--color-border);border-radius:12px;background:#fafbff;">
+            <div class="list-tile specialty-tile" [class.is-approved]="program.status === 'معتمد'">
               <div>
                 <strong style="display:block;font-size:14px;color:var(--color-navy);">{{ program.name }}</strong>
                 <span class="nfd-muted">الطاقة: {{ program.seatsAllocated }} مقعد</span>
@@ -266,15 +272,21 @@
 
       <div class="nfd-card">
         <h3 style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <span>الطاقة الاستيعابية</span>
+          <span class="section-title">الطاقة الاستيعابية</span>
           <span class="nfd-muted">المستخدم: {{ usedCapacityValue() }} متدرب</span>
         </h3>
 
         <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;margin-top:8px;">
-          <div style="position:relative;width:150px;height:150px;flex-shrink:0;">
+          <div class="capacity-ring-wrap">
             <svg width="150" height="150" viewBox="0 0 150 150" style="transform:rotate(-90deg);display:block;">
+              <defs>
+                <linearGradient id="capacityGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" [attr.stop-color]="'var(--color-brand)'" />
+                  <stop offset="100%" [attr.stop-color]="'var(--profile-purple)'" />
+                </linearGradient>
+              </defs>
               <circle cx="75" cy="75" r="62" fill="none" stroke="var(--profile-capacity-remaining)" stroke-width="15" />
-              <circle cx="75" cy="75" r="62" fill="none" stroke="var(--color-navy)" stroke-width="15" stroke-linecap="round" [attr.stroke-dasharray]="ringCircumference" [attr.stroke-dashoffset]="ringDashoffset()" />
+              <circle class="capacity-ring-progress" cx="75" cy="75" r="62" fill="none" stroke="url(#capacityGradient)" stroke-width="15" stroke-linecap="round" [attr.stroke-dasharray]="ringCircumference" [attr.stroke-dashoffset]="ringDashoffset()" />
             </svg>
             <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
               <strong style="font-size:24px;color:var(--color-navy);">{{ capacityPercent() }}%</strong>
@@ -319,7 +331,7 @@
 
     <div class="nfd-card" style="margin-top:16px;">
       <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <span>نقاط الاتصال</span>
+        <span class="section-title">نقاط الاتصال</span>
         <button class="nfd-btn ghost" type="button" (click)="addSupervisor()">+ إضافة</button>
       </h3>
 
@@ -342,8 +354,8 @@
 
       <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
         @for (person of supervisors(); track person.id) {
-          <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid var(--color-border);border-radius:12px;background:#fafbff;">
-            <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--color-navy),#4976f3);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;">{{ (person.fullName || person.name || 'ش').charAt(0) }}</div>
+          <div class="list-tile contact-tile">
+            <div class="contact-avatar">{{ (person.fullName || person.name || 'ش').charAt(0) }}</div>
             <div style="flex:1;min-width:0;">
               <strong style="display:block;font-size:14px;color:var(--color-navy);">{{ person.fullName || person.name || 'جهة اتصال' }}</strong>
               <span class="nfd-muted" style="display:block;margin-top:4px;">{{ person.position || person.role || 'مدير الحساب' }}</span>
