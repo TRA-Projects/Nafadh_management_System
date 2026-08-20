@@ -133,6 +133,7 @@ export class AdminUsers implements OnInit {
     this.cdr.detectChanges();
   }
 
+  // --- Modal: Create ---
   openCreateModal(): void {
     this.isCreateModalOpen = true;
     this.cdr.detectChanges();
@@ -176,31 +177,18 @@ export class AdminUsers implements OnInit {
 
     this.api.createUser(payload).subscribe({
       next: () => {
-        alert('تم إنشاء الحساب وحفظه في قاعدة البيانات بنجاح!');
+        alert('تم إنشاء الحساب بنجاح!');
         this.closeCreateModal();
         this.loadData();
       },
       error: (err) => {
         console.error('تفاصيل خطأ إنشاء الحساب:', err);
-
-        if (err.status === 401) {
-          alert('انتهت جلسة الدخول أو لا تملك صلاحية، يرجى تسجيل الدخول مجدداً.');
-          return;
-        }
-
-        const errors = err?.error?.errors;
-        if (errors) {
-          const firstKey = Object.keys(errors)[0];
-          alert(`خطأ بالبيانات: ${errors[firstKey][0]}`);
-        } else if (err?.error?.message) {
-          alert(`فشل الحفظ: ${err.error.message}`);
-        } else {
-          alert('حدث خطأ أثناء إضافة الحساب، تأكد من استيفاء شروط كلمة المرور.');
-        }
+        alert('حدث خطأ أثناء إضافة الحساب، تأكد من استيفاء البيانات الشروط المطلوب.');
       }
     });
   }
 
+  // --- Modal: Edit Profile ---
   openEditModal(user: UserResponseDto): void {
     this.selectedUser = { ...user };
     this.isEditModalOpen = true;
@@ -227,30 +215,18 @@ export class AdminUsers implements OnInit {
 
     this.api.updateUser(this.selectedUser.userId, payload).subscribe({
       next: () => {
-        alert('تم تحديث بيانات المستخدم بنجاح');
+        alert('تم تحديث بيانات الحساب بنجاح');
         this.closeEditModal();
         this.loadData();
       },
       error: (err) => {
-        console.error('خطأ أثناء تعديل المستخدم:', err);
+        console.error('خطأ أثناء تعديل البيانات:', err);
         alert('حدث خطأ أثناء تحديث البيانات');
       }
     });
   }
 
-  toggleStatus(user: UserResponseDto): void {
-    const isCurrentlyActive = user.status?.toLowerCase() !== 'suspended';
-    const statusPayload = isCurrentlyActive ? 'Suspended' : 'Active';
-
-    this.api.updateUserStatus(user.userId, statusPayload).subscribe({
-      next: () => this.loadData(),
-      error: (err) => {
-        console.error('خطأ أثناء تغيير حالة المستخدم:', err);
-        alert('تعذر تغيير حالة الحساب');
-      }
-    });
-  }
-
+  // --- Modal: Reset Password ---
   openResetPasswordModal(user: UserResponseDto): void {
     this.selectedUser = { ...user };
     this.newPassword = '';
@@ -275,7 +251,7 @@ export class AdminUsers implements OnInit {
         this.closeResetPasswordModal();
       },
       error: (err) => {
-        console.error('خطأ أثناء إعادة تعيين كلمة المرور:', err);
+        console.error('خطأ أثناء تغيير كلمة المرور:', err);
         alert('تعذر تغيير كلمة المرور');
       }
     });
