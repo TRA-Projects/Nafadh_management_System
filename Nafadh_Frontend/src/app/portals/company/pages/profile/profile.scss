@@ -7,6 +7,11 @@
   --profile-soft: #f6f9fe;
   --profile-text-muted: #64748b;
   --profile-capacity-remaining: #d8dee8;
+  --profile-gold: #c9932f;
+  --profile-gold-light: #f6e6c3;
+  --profile-teal: #0aa8a0;
+  --profile-purple: #7c5cff;
+  --profile-green: #1d8f4a;
 }
 
 .company-profile-page {
@@ -96,9 +101,43 @@
 .company-profile-cover {
   position: relative;
   height: 228px;
+  overflow: hidden;
   background:
-    radial-gradient(circle at 12% 20%, rgba(0, 196, 204, 0.24), transparent 28%),
+    radial-gradient(circle at 12% 20%, rgba(0, 196, 204, 0.28), transparent 32%),
+    radial-gradient(circle at 88% 82%, rgba(124, 92, 255, 0.22), transparent 36%),
     linear-gradient(135deg, var(--color-navy), var(--color-navy-light));
+}
+
+.company-profile-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.company-profile-hero-card:hover .company-profile-cover-img {
+  transform: scale(1.03);
+}
+
+.company-profile-cover-pattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.14) 1.5px, transparent 1.5px);
+  background-size: 18px 18px;
+}
+
+.company-profile-cover.is-empty::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: -20%;
+  top: -60%;
+  width: 70%;
+  height: 220%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  transform: rotate(12deg);
 }
 
 .company-profile-cover-overlay {
@@ -107,6 +146,66 @@
   background:
     linear-gradient(90deg, rgba(10, 17, 114, 0.08), rgba(10, 17, 114, 0.32)),
     linear-gradient(180deg, rgba(10, 17, 114, 0.04), rgba(10, 17, 114, 0.7));
+}
+
+.company-profile-media-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(10, 17, 114, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.company-profile-logo-loading {
+  border-radius: inherit;
+  background: rgba(10, 17, 114, 0.55);
+}
+
+.company-profile-spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  animation: profile-spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes profile-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.company-profile-remove-btn {
+  gap: 6px;
+  display: inline-flex;
+  color: #b3261e !important;
+}
+
+.company-profile-upload-error {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(179, 38, 30, 0.9);
+  padding: 6px 10px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+
+.company-profile-logo-error {
+  display: block;
+  margin-top: 6px;
+  color: #b3261e;
+  background: none;
+  padding: 0;
 }
 
 .company-profile-cover-content {
@@ -154,10 +253,30 @@
   right: 22px;
   bottom: 28px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: flex-end;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
   z-index: 1;
+}
+
+.company-profile-hero-card {
+  position: relative;
+}
+
+.company-profile-hero-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(120deg, var(--profile-teal), var(--color-brand), var(--profile-purple));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 3;
 }
 
 .company-profile-upload-btn {
@@ -200,6 +319,12 @@
   font-weight: 800;
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9), 0 12px 30px rgba(24, 39, 131, 0.18);
   overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.company-profile-logo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9), 0 16px 34px rgba(24, 39, 131, 0.26);
 }
 
 .company-profile-logo img {
@@ -211,20 +336,44 @@
 
 .company-profile-logo-button {
   position: absolute;
-  bottom: -8px;
-  left: -8px;
-  width: 28px;
-  height: 28px;
+  bottom: -6px;
+  left: -6px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: var(--color-navy);
+  background: linear-gradient(135deg, var(--color-navy), var(--profile-purple));
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 16px rgba(11, 17, 84, 0.28);
+  box-shadow: 0 0 0 3px #fff, 0 6px 16px rgba(11, 17, 84, 0.32);
   cursor: pointer;
-  font-size: 20px;
   line-height: 1;
+  transition: transform 0.18s ease;
+}
+
+.company-profile-logo-button:hover {
+  transform: scale(1.08);
+}
+
+.company-profile-logo-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 0;
+  background: #fff;
+  color: #b3261e;
+  box-shadow: 0 0 0 3px #fff, 0 4px 10px rgba(11, 17, 84, 0.2);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .company-profile-title-wrap {
@@ -253,8 +402,15 @@
   min-height: 28px;
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   font-size: 11.5px;
   font-weight: 700;
+}
+
+.company-profile-badge-gold {
+  background: linear-gradient(135deg, var(--profile-gold-light), #fbf3e0) !important;
+  color: #8a6410 !important;
+  border: 1px solid #ecd8a3 !important;
 }
 
 .company-profile-kpis {
@@ -264,27 +420,86 @@
   margin-top: 16px;
 }
 
-.company-profile-kpis .nfd-card {
+.kpi-card {
   padding: 16px;
   border: 1px solid var(--profile-border);
   background: linear-gradient(180deg, #fff, var(--profile-soft));
   position: relative;
   overflow: hidden;
+  --kpi-accent: var(--color-brand);
+  --kpi-accent-soft: #eaf2ff;
 }
 
-.company-profile-kpis .nfd-card::before {
+.kpi-card::before {
   content: '';
   position: absolute;
   inset-inline-start: 0;
   top: 0;
   width: 4px;
   height: 100%;
-  background: linear-gradient(var(--color-brand), var(--color-cyan));
-  opacity: 0.8;
+  background: var(--kpi-accent);
+  opacity: 0.85;
 }
 
-.company-profile-kpis .nfd-card strong {
+.kpi-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: var(--kpi-accent);
+  background: var(--kpi-accent-soft);
+  margin-bottom: 10px;
+}
+
+.kpi-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 800;
   color: var(--color-navy);
+  letter-spacing: -0.01em;
+}
+
+.kpi-value-of {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--profile-text-muted);
+}
+
+.kpi-error {
+  color: var(--status-cancelled-fg);
+  font-size: 12px;
+}
+
+.kpi-blue {
+  --kpi-accent: var(--color-brand);
+  --kpi-accent-soft: #eaf2ff;
+}
+
+.kpi-teal {
+  --kpi-accent: var(--profile-teal);
+  --kpi-accent-soft: #e2f8f6;
+}
+
+.kpi-purple {
+  --kpi-accent: var(--profile-purple);
+  --kpi-accent-soft: #f0edff;
+}
+
+.kpi-gold {
+  --kpi-accent: var(--profile-gold);
+  --kpi-accent-soft: var(--profile-gold-light);
+}
+
+.kpi-green {
+  --kpi-accent: var(--profile-green);
+  --kpi-accent-soft: #e8f9ee;
 }
 
 .company-profile-info-card {
