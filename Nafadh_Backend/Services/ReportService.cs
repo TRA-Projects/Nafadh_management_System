@@ -185,14 +185,19 @@ namespace Nafadh_Backend.Services
             // ======================================================
 
             var attendanceRows =
-                dto.Type ==
-                    NFD_ReportType.Attendance
-                    ? await _repository
-                        .GetTrainerTraineesReportRowsAsync(
-                            trainerId,
-                            null
-                        )
-                    : null;
+    (
+        dto.Type ==
+            NFD_ReportType.Attendance ||
+
+        dto.Type ==
+            NFD_ReportType.Custom
+    )
+        ? await _repository
+            .GetTrainerTraineesReportRowsAsync(
+                trainerId,
+                null
+            )
+        : null;
 
 
             // ======================================================
@@ -206,7 +211,7 @@ namespace Nafadh_Backend.Services
                         "تقرير الحضور والغياب",
 
                     NFD_ReportType.Performance =>
-                        "تقرير الأداء والمهام",
+                      "تقرير أداء الدفعات والمهام",
 
                     NFD_ReportType.Financial =>
                         "التقرير المالي",
@@ -215,7 +220,7 @@ namespace Nafadh_Backend.Services
                         "تقرير التسجيل",
 
                     NFD_ReportType.Custom =>
-                        "التقرير الشامل للتقييم والمهارات",
+                     "التقرير الشامل للأداء التدريبي",
 
                     _ =>
                         "تقرير المدرب"
@@ -397,224 +402,474 @@ namespace Nafadh_Backend.Services
 
 
                                 // ===================================
-                                // KPI SUMMARY
+                                // REPORT CONTENT BY TYPE
                                 // ===================================
 
                                 if (kpis != null)
                                 {
-                                    column.Item()
-                                        .AlignRight()
-                                        .Text(
-                                            "ملخص الأداء"
-                                        )
-                                        .FontSize(18)
-                                        .Bold()
-                                        .FontColor(
-                                            "#0F172A"
-                                        );
+                                    // ==================================================
+                                    // ATTENDANCE REPORT
+                                    // Attendance information only.
+                                    // ==================================================
+
+                                    if (
+                                        dto.Type ==
+                                        NFD_ReportType.Attendance
+                                    )
+                                    {
+                                        column.Item()
+                                            .AlignRight()
+                                            .Text(
+                                                "ملخص الحضور والغياب"
+                                            )
+                                            .FontSize(18)
+                                            .Bold()
+                                            .FontColor(
+                                                "#0F172A"
+                                            );
 
 
-                                    column.Item()
-                                        .Row(row =>
-                                        {
-                                            row.Spacing(10);
+                                        column.Item()
+                                            .Background(
+                                                "#F0F9FF"
+                                            )
+                                            .Border(1)
+                                            .BorderColor(
+                                                "#BAE6FD"
+                                            )
+                                            .Padding(16)
+                                            .Column(card =>
+                                            {
+                                                card.Item()
+                                                    .AlignCenter()
+                                                    .Text(
+                                                        "نسبة الحضور العامة"
+                                                    )
+                                                    .FontSize(10)
+                                                    .FontColor(
+                                                        "#64748B"
+                                                    );
 
 
-                                            // -----------------------
-                                            // Attendance KPI
-                                            // -----------------------
-
-                                            row.RelativeItem()
-                                                .Background(
-                                                    "#F0F9FF"
-                                                )
-                                                .Border(1)
-                                                .BorderColor(
-                                                    "#BAE6FD"
-                                                )
-                                                .Padding(14)
-                                                .Column(card =>
-                                                {
-                                                    card.Item()
-                                                        .AlignCenter()
-                                                        .Text(
-                                                            "الحضور"
-                                                        )
-                                                        .FontSize(10)
-                                                        .FontColor(
-                                                            "#64748B"
-                                                        );
+                                                card.Item()
+                                                    .PaddingTop(6)
+                                                    .AlignCenter()
+                                                    .Text(
+                                                        $"{kpis.AttendanceRate:0.#}%"
+                                                    )
+                                                    .FontSize(24)
+                                                    .Bold()
+                                                    .FontColor(
+                                                        "#003B82"
+                                                    );
+                                            });
 
 
-                                                    card.Item()
-                                                        .PaddingTop(6)
-                                                        .AlignCenter()
-                                                        .Text(
-                                                            $"{kpis.AttendanceRate:0.#}%"
-                                                        )
-                                                        .FontSize(21)
-                                                        .Bold()
-                                                        .FontColor(
-                                                            "#003B82"
-                                                        );
-                                                });
+                                        column.Item()
+                                            .Border(1)
+                                            .BorderColor(
+                                                Colors.Grey.Lighten2
+                                            )
+                                            .Padding(16)
+                                            .Column(details =>
+                                            {
+                                                details.Spacing(10);
 
 
-                                            // -----------------------
-                                            // Tasks KPI
-                                            // -----------------------
-
-                                            row.RelativeItem()
-                                                .Background(
-                                                    "#F0F9FF"
-                                                )
-                                                .Border(1)
-                                                .BorderColor(
-                                                    "#BAE6FD"
-                                                )
-                                                .Padding(14)
-                                                .Column(card =>
-                                                {
-                                                    card.Item()
-                                                        .AlignCenter()
-                                                        .Text(
-                                                            "إنجاز المهام"
-                                                        )
-                                                        .FontSize(10)
-                                                        .FontColor(
-                                                            "#64748B"
-                                                        );
+                                                details.Item()
+                                                    .AlignRight()
+                                                    .Text(
+                                                        "تفاصيل الحضور"
+                                                    )
+                                                    .FontSize(15)
+                                                    .Bold();
 
 
-                                                    card.Item()
-                                                        .PaddingTop(6)
-                                                        .AlignCenter()
-                                                        .Text(
-                                                            $"{kpis.TaskCompletionRate:0.#}%"
-                                                        )
-                                                        .FontSize(21)
-                                                        .Bold()
-                                                        .FontColor(
-                                                            "#003B82"
-                                                        );
-                                                });
+                                                details.Item()
+                                                    .LineHorizontal(1)
+                                                    .LineColor(
+                                                        Colors.Grey.Lighten2
+                                                    );
 
 
-                                            // -----------------------
-                                            // Technical Grade KPI
-                                            // -----------------------
-
-                                            row.RelativeItem()
-                                                .Background(
-                                                    "#F0F9FF"
-                                                )
-                                                .Border(1)
-                                                .BorderColor(
-                                                    "#BAE6FD"
-                                                )
-                                                .Padding(14)
-                                                .Column(card =>
-                                                {
-                                                    card.Item()
-                                                        .AlignCenter()
-                                                        .Text(
-                                                            "التقييم الفني"
-                                                        )
-                                                        .FontSize(10)
-                                                        .FontColor(
-                                                            "#64748B"
-                                                        );
+                                                details.Item()
+                                                    .AlignRight()
+                                                    .Text(
+                                                        $"نسبة الحضور العامة: {kpis.AttendanceRate:0.#}%"
+                                                    );
+                                            });
+                                    }
 
 
-                                                    card.Item()
-                                                        .PaddingTop(6)
-                                                        .AlignCenter()
-                                                        .Text(
-                                                            $"{kpis.AvgTechnicalGrade:0.#}"
-                                                        )
-                                                        .FontSize(21)
-                                                        .Bold()
-                                                        .FontColor(
-                                                            "#003B82"
-                                                        );
+                                    // ==================================================
+                                    // PERFORMANCE REPORT
+                                    // Tasks and technical grades only.
+                                    // ==================================================
+
+                                    else if (
+                                        dto.Type ==
+                                        NFD_ReportType.Performance
+                                    )
+                                    {
+                                        column.Item()
+                                            .AlignRight()
+                                            .Text(
+                                                "ملخص أداء الدفعات والمهام"
+                                            )
+                                            .FontSize(18)
+                                            .Bold()
+                                            .FontColor(
+                                                "#0F172A"
+                                            );
 
 
-                                                    card.Item()
-                                                        .AlignCenter()
-                                                        .Text(
-                                                            "من 100"
-                                                        )
-                                                        .FontSize(8)
-                                                        .FontColor(
-                                                            "#94A3B8"
-                                                        );
-                                                });
-                                        });
+                                        column.Item()
+                                            .Row(row =>
+                                            {
+                                                row.Spacing(10);
 
 
-                                    // ===================================
-                                    // KPI DETAILS
-                                    // ===================================
-
-                                    column.Item()
-                                        .Border(1)
-                                        .BorderColor(
-                                            Colors.Grey.Lighten2
-                                        )
-                                        .Padding(16)
-                                        .Column(details =>
-                                        {
-                                            details.Spacing(10);
-
-
-                                            details.Item()
-                                                .AlignRight()
-                                                .Text(
-                                                    "تفاصيل مؤشرات الأداء"
-                                                )
-                                                .FontSize(15)
-                                                .Bold();
+                                                row.RelativeItem()
+                                                    .Background(
+                                                        "#F0F9FF"
+                                                    )
+                                                    .Border(1)
+                                                    .BorderColor(
+                                                        "#BAE6FD"
+                                                    )
+                                                    .Padding(14)
+                                                    .Column(card =>
+                                                    {
+                                                        card.Item()
+                                                            .AlignCenter()
+                                                            .Text(
+                                                                "إنجاز المهام"
+                                                            )
+                                                            .FontSize(10)
+                                                            .FontColor(
+                                                                "#64748B"
+                                                            );
 
 
-                                            details.Item()
-                                                .LineHorizontal(1)
-                                                .LineColor(
-                                                    Colors.Grey.Lighten2
-                                                );
+                                                        card.Item()
+                                                            .PaddingTop(6)
+                                                            .AlignCenter()
+                                                            .Text(
+                                                                $"{kpis.TaskCompletionRate:0.#}%"
+                                                            )
+                                                            .FontSize(21)
+                                                            .Bold()
+                                                            .FontColor(
+                                                                "#003B82"
+                                                            );
+                                                    });
 
 
-                                            details.Item()
-                                                .AlignRight()
-                                                .Text(
-                                                    $"نسبة الحضور العامة: {kpis.AttendanceRate:0.#}%"
-                                                );
+                                                row.RelativeItem()
+                                                    .Background(
+                                                        "#F0F9FF"
+                                                    )
+                                                    .Border(1)
+                                                    .BorderColor(
+                                                        "#BAE6FD"
+                                                    )
+                                                    .Padding(14)
+                                                    .Column(card =>
+                                                    {
+                                                        card.Item()
+                                                            .AlignCenter()
+                                                            .Text(
+                                                                "متوسط الدرجات الفنية"
+                                                            )
+                                                            .FontSize(10)
+                                                            .FontColor(
+                                                                "#64748B"
+                                                            );
 
 
-                                            details.Item()
-                                                .AlignRight()
-                                                .Text(
-                                                    $"معدل إنجاز المهام: {kpis.TaskCompletionRate:0.#}%"
-                                                );
+                                                        card.Item()
+                                                            .PaddingTop(6)
+                                                            .AlignCenter()
+                                                            .Text(
+                                                                $"{kpis.AvgTechnicalGrade:0.#}"
+                                                            )
+                                                            .FontSize(21)
+                                                            .Bold()
+                                                            .FontColor(
+                                                                "#003B82"
+                                                            );
 
 
-                                            details.Item()
-                                                .AlignRight()
-                                                .Text(
-                                                    $"متوسط الدرجات الفنية: {kpis.AvgTechnicalGrade:0.#} من 100"
-                                                );
-                                        });
+                                                        card.Item()
+                                                            .AlignCenter()
+                                                            .Text(
+                                                                "من 100"
+                                                            )
+                                                            .FontSize(8)
+                                                            .FontColor(
+                                                                "#94A3B8"
+                                                            );
+                                                    });
+                                            });
+
+
+                                        column.Item()
+                                            .Border(1)
+                                            .BorderColor(
+                                                Colors.Grey.Lighten2
+                                            )
+                                            .Padding(16)
+                                            .Column(details =>
+                                            {
+                                                details.Spacing(10);
+
+
+                                                details.Item()
+                                                    .AlignRight()
+                                                    .Text(
+                                                        "تفاصيل أداء الدفعات والمهام"
+                                                    )
+                                                    .FontSize(15)
+                                                    .Bold();
+
+
+                                                details.Item()
+                                                    .LineHorizontal(1)
+                                                    .LineColor(
+                                                        Colors.Grey.Lighten2
+                                                    );
+
+
+                                                details.Item()
+                                                    .AlignRight()
+                                                    .Text(
+                                                        $"معدل إنجاز المهام: {kpis.TaskCompletionRate:0.#}%"
+                                                    );
+
+
+                                                details.Item()
+                                                    .AlignRight()
+                                                    .Text(
+                                                        $"متوسط الدرجات الفنية: {kpis.AvgTechnicalGrade:0.#} من 100"
+                                                    );
+                                            });
+                                    }
+
+
+                                    // ==================================================
+                                    // COMPREHENSIVE REPORT
+                                    // Attendance + tasks + technical grades.
+                                    // ==================================================
+
+                                    else if (
+                                        dto.Type ==
+                                        NFD_ReportType.Custom
+                                    )
+                                    {
+                                        column.Item()
+                                            .AlignRight()
+                                            .Text(
+                                                "ملخص الأداء التدريبي"
+                                            )
+                                            .FontSize(18)
+                                            .Bold()
+                                            .FontColor(
+                                                "#0F172A"
+                                            );
+
+
+                                        column.Item()
+                                            .Row(row =>
+                                            {
+                                                row.Spacing(10);
+
+
+                                                // Attendance
+                                                row.RelativeItem()
+                                                    .Background(
+                                                        "#F0F9FF"
+                                                    )
+                                                    .Border(1)
+                                                    .BorderColor(
+                                                        "#BAE6FD"
+                                                    )
+                                                    .Padding(14)
+                                                    .Column(card =>
+                                                    {
+                                                        card.Item()
+                                                            .AlignCenter()
+                                                            .Text(
+                                                                "الحضور"
+                                                            )
+                                                            .FontSize(10)
+                                                            .FontColor(
+                                                                "#64748B"
+                                                            );
+
+
+                                                        card.Item()
+                                                            .PaddingTop(6)
+                                                            .AlignCenter()
+                                                            .Text(
+                                                                $"{kpis.AttendanceRate:0.#}%"
+                                                            )
+                                                            .FontSize(21)
+                                                            .Bold()
+                                                            .FontColor(
+                                                                "#003B82"
+                                                            );
+                                                    });
+
+
+                                                // Tasks
+                                                row.RelativeItem()
+                                                    .Background(
+                                                        "#F0F9FF"
+                                                    )
+                                                    .Border(1)
+                                                    .BorderColor(
+                                                        "#BAE6FD"
+                                                    )
+                                                    .Padding(14)
+                                                    .Column(card =>
+                                                    {
+                                                        card.Item()
+                                                            .AlignCenter()
+                                                            .Text(
+                                                                "إنجاز المهام"
+                                                            )
+                                                            .FontSize(10)
+                                                            .FontColor(
+                                                                "#64748B"
+                                                            );
+
+
+                                                        card.Item()
+                                                            .PaddingTop(6)
+                                                            .AlignCenter()
+                                                            .Text(
+                                                                $"{kpis.TaskCompletionRate:0.#}%"
+                                                            )
+                                                            .FontSize(21)
+                                                            .Bold()
+                                                            .FontColor(
+                                                                "#003B82"
+                                                            );
+                                                    });
+
+
+                                                // Technical Grade
+                                                row.RelativeItem()
+                                                    .Background(
+                                                        "#F0F9FF"
+                                                    )
+                                                    .Border(1)
+                                                    .BorderColor(
+                                                        "#BAE6FD"
+                                                    )
+                                                    .Padding(14)
+                                                    .Column(card =>
+                                                    {
+                                                        card.Item()
+                                                            .AlignCenter()
+                                                            .Text(
+                                                                "التقييم الفني"
+                                                            )
+                                                            .FontSize(10)
+                                                            .FontColor(
+                                                                "#64748B"
+                                                            );
+
+
+                                                        card.Item()
+                                                            .PaddingTop(6)
+                                                            .AlignCenter()
+                                                            .Text(
+                                                                $"{kpis.AvgTechnicalGrade:0.#}"
+                                                            )
+                                                            .FontSize(21)
+                                                            .Bold()
+                                                            .FontColor(
+                                                                "#003B82"
+                                                            );
+
+
+                                                        card.Item()
+                                                            .AlignCenter()
+                                                            .Text(
+                                                                "من 100"
+                                                            )
+                                                            .FontSize(8)
+                                                            .FontColor(
+                                                                "#94A3B8"
+                                                            );
+                                                    });
+                                            });
+
+
+                                        column.Item()
+                                            .Border(1)
+                                            .BorderColor(
+                                                Colors.Grey.Lighten2
+                                            )
+                                            .Padding(16)
+                                            .Column(details =>
+                                            {
+                                                details.Spacing(10);
+
+
+                                                details.Item()
+                                                    .AlignRight()
+                                                    .Text(
+                                                        "تفاصيل مؤشرات الأداء"
+                                                    )
+                                                    .FontSize(15)
+                                                    .Bold();
+
+
+                                                details.Item()
+                                                    .LineHorizontal(1)
+                                                    .LineColor(
+                                                        Colors.Grey.Lighten2
+                                                    );
+
+
+                                                details.Item()
+                                                    .AlignRight()
+                                                    .Text(
+                                                        $"نسبة الحضور العامة: {kpis.AttendanceRate:0.#}%"
+                                                    );
+
+
+                                                details.Item()
+                                                    .AlignRight()
+                                                    .Text(
+                                                        $"معدل إنجاز المهام: {kpis.TaskCompletionRate:0.#}%"
+                                                    );
+
+
+                                                details.Item()
+                                                    .AlignRight()
+                                                    .Text(
+                                                        $"متوسط الدرجات الفنية: {kpis.AvgTechnicalGrade:0.#} من 100"
+                                                    );
+                                            });
+                                    }
                                 }
-
 
                                 // ===================================
                                 // ATTENDANCE REPORT DETAILS
                                 // ===================================
-
                                 if (
-                                    dto.Type ==
-                                        NFD_ReportType.Attendance &&
-                                    attendanceRows != null
-                                )
+    (
+        dto.Type ==
+            NFD_ReportType.Attendance ||
+
+        dto.Type ==
+            NFD_ReportType.Custom
+    ) &&
+    attendanceRows != null
+)
                                 {
                                     column.Item()
                                         .AlignRight()
