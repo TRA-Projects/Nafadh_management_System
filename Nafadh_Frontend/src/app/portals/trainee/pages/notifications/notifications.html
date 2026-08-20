@@ -1,125 +1,124 @@
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-  <h2 style="margin:0;color:#1e293b !important;font-size:16px !important;font-weight:700 !important;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-family: inherit;">
+  <h2 style="margin: 0; color: #1e3a8a !important; font-size: 22px !important; font-weight: 700 !important;">
     التنبيهات والإنذارات
   </h2>
 
-  <div style="display:flex;gap:4px">
+  <!-- أزرار الفلترة العلوية المتناسقة تماماً -->
+  <div style="display: flex; gap: 8px; align-items: center;">
+    
+    <!-- زر نوع الإشعار (القائمة المنسدلة) -->
+    <div style="position: relative; display: inline-flex; align-items: center; width: 145px; height: 32px;">
+      <select 
+        class="nfd-chip"
+        style="
+          appearance: none;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          background: transparent;
+          border: 1px solid #cbd5e1;
+          padding: 0 28px 0 10px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-family: inherit;
+          font-weight: 500;
+          cursor: pointer;
+          outline: none;
+          width: 100%;
+          height: 100%;
+          direction: rtl;
+          text-align: right;
+          color: #334155;
+          box-sizing: border-box;
+        "
+        [value]="filter()"
+        (change)="filter.set($any($event.target).value)"
+      >
+        <option value="all" style="color: #000; background: #fff; font-size: 12px;">نوع الإشعار</option>
+        <option value="notification" style="color: #000; background: #fff; font-size: 12px;">تنبيه</option>
+        <option value="warning" style="color: #000; background: #fff; font-size: 12px;">إنذار</option>
+      </select>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 10px; pointer-events: none;">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </div>
+
+    <!-- زر الكل -->
     <button
-      class="nfd-chip"
-      [class.active]="filter()==='all'"
+      type="button"
+      style="
+        height: 32px;
+        padding: 0 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-family: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        border: 1px solid;
+        transition: all 0.2s ease;
+      "
+      [style.background-color]="filter() === 'all' ? '#1e3b8a' : 'transparent'"
+      [style.color]="filter() === 'all' ? '#ffffff' : '#334155'"
+      [style.border-color]="filter() === 'all' ? '#1e3b8a' : '#cbd5e1'"
       (click)="filter.set('all')">
       الكل
     </button>
 
+    <!-- زر غير مقروء -->
     <button
-      class="nfd-chip"
-      [class.active]="filter()==='unread'"
+      type="button"
+      style="
+        height: 32px;
+        padding: 0 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-family: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        border: 1px solid;
+        transition: all 0.2s ease;
+      "
+      [style.background-color]="filter() === 'unread' ? '#1e3b8a' : 'transparent'"
+      [style.color]="filter() === 'unread' ? '#ffffff' : '#334155'"
+      [style.border-color]="filter() === 'unread' ? '#1e3b8a' : '#cbd5e1'"
       (click)="filter.set('unread')">
       غير مقروء
     </button>
+
   </div>
 </div>
 
-<!-- مسافات أصغر بين البوكسات -->
-<div style="display:flex;flex-direction:column;gap:8px">
+<!-- عرض البطاقات بناءً على الفلتر -->
+<div style="display: flex; flex-direction: column; gap: 4px;">
 
   @for (n of filtered().slice(0, 7); track n.notificationId) {
+    <div style="position: relative; direction: rtl;">
 
-    <!-- حاوية التنبيه -->
-    <div style="position:relative; direction: rtl;">
-
-      <!-- المثلث الزاوي في أقصى اليسار -->
-      <svg
-        width="8"
-        height="8"
-        viewBox="0 0 20 20"
-        style="
-          position:absolute;
-          top:0;
-          left:0;
-          z-index:30;
-          pointer-events:none;
-        "
-      >
-        <path
-          d="M 0 0 L 20 0 L 0 20 Z"
-          [attr.fill]="
-            $index === 0 || $index === 1
-              ? '#ef4444'
-              : '#22c55e'
-          "
-        />
+      <svg width="6" height="6" viewBox="0 0 20 20" style="position: absolute; top: 0; left: 0; z-index: 30; pointer-events: none;">
+        <path d="M 0 0 L 20 0 L 0 20 Z" [attr.fill]="$index === 0 || $index === 1 ? '#ef4444' : '#22c55e'" />
       </svg>
 
-      <!-- البوكسات بتصميم محدث ونظيف مع الحفاظ على كامل الكود -->
       <details
         #detailsRef
         class="nfd-card"
         style="
-          position:relative;
-          margin:0;
+          position: relative;
+          margin: 0;
           text-align: right;
-          background: #ffffff !important;
-          border-radius: 10px;
+          border-radius: 5px;
           overflow: hidden;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
           transition: all 0.2s ease;
+          border: 1px solid;
         "
-        [style.border]="
-          $index === 4
-            ? '1.5px solid #ef4444'
-            : '1px solid #e2e8f0'
-        "
+        [style.background-color]="$index === 4 ? '#fff5f5' : $index === 0 || $index === 1 ? '#f0f6ff' : '#f8fafc'"
+        [style.border-color]="$index === 4 ? '#fed7d7' : $index === 0 || $index === 1 ? '#dbeafe' : '#e2e8f0'"
+        [style.border-right]="$index === 4 ? '3px solid #f87171' : $index === 0 || $index === 1 ? '3px solid #60a5fa' : '3px solid #cbd5e1'"
       >
-
-        <summary
-          style="
-            cursor:pointer;
-            list-style:none;
-            padding:6px 12px;
-          "
-        >
-
-          <div
-            style="
-              display:flex;
-              align-items:center;
-              justify-content:space-between;
-              gap:10px;
-            "
-          >
-
-            <!-- الجهة اليمنى: الأيقونة المكبرة + النصوص -->
-            <div
-              style="
-                display:flex;
-                align-items:center;
-                gap:10px;
-                min-width:0;
-                flex:1;
-              "
-            >
-              <!-- الأيقونة الدائرية (تم تكبيرها هنا) -->
-              <span
-                style="
-                  width:44px;
-                  height:44px;
-                  border-radius:12px;
-                  display:flex;
-                  align-items:center;
-                  justify-content:center;
-                  flex-shrink:0;
-                  font-size: 22px;
-                "
-                [style.background]="
-                  $index === 0 ? '#f0f4f8' :
-                  $index === 1 ? '#fdf8f0' :
-                  $index === 2 ? '#fdf2f2' :
-                  $index === 3 ? '#f0fdf4' :
-                  $index === 4 ? '#fdf2f2' :
-                  $index === 5 ? '#f4f2f8' : '#fdf8f0'
-                "
-              >
+        <summary style="cursor: pointer; list-style: none; padding: 5px 8px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+              
+              <span style="display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 21px; background: transparent;">
                 @if ($index === 0) { 📋 }
                 @else if ($index === 1) { ⏰ }
                 @else if ($index === 2) { 📅 }
@@ -129,34 +128,31 @@
                 @else { 📁 }
               </span>
 
-              <div style="min-width:0; flex:1;">
-                <div
-                  style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    margin-bottom: 0px;
-                  "
-                >
-                  <!-- التصنيف النصي -->
-                  <span class="nfd-muted" style="font-size: 10px; color: #94a3b8; font-weight: 600;">
-                    @if ($index === 0) { مهمة }
-                    @else if ($index === 1) { موعد }
-                    @else if ($index === 2) { غياب }
-                    @else if ($index === 3) { درجة }
-                    @else if ($index === 4) { 
-                      <span style="background: #fee2e2; color: #dc2626; padding: 1px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 3px; font-weight: 800; font-size: 11px;">
-                        <span style="width: 5px; height: 5px; background: #dc2626; border-radius: 50%; display: inline-block;"></span>
-                        إنذار
-                      </span>
-                    }
-                    @else if ($index === 5) { عام }
-                    @else { مشروع }
-                  </span>
+              <div style="min-width: 0; flex: 1;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1px;">
+                  @if ($index === 4) {
+                    <span style="background: #fee2e2; color: #dc2626; padding: 1px 5px; border-radius: 3px; display: inline-flex; align-items: center; gap: 3px; font-weight: 700; font-size: 9px;">
+                      <span style="width: 3px; height: 3px; background: #dc2626; border-radius: 50%; display: inline-block;"></span>
+                      إنذار
+                    </span>
+                  } @else {
+                    <span style="color: #94a3b8; font-weight: 600; font-size: 10px;">
+                      تنبيه
+                    </span>
+                  }
+
+                  <small class="nfd-muted" style="font-size: 9px; color: #94a3b8; font-weight: 500;">
+                    @if ($index === 0) { منذ 10 دقائق }
+                    @else if ($index === 1) { منذ ساعة }
+                    @else if ($index === 2) { منذ يومين }
+                    @else if ($index === 3) { منذ 3 أيام }
+                    @else if ($index === 4) { منذ 4 أيام }
+                    @else if ($index === 5) { منذ أسبوع }
+                    @else { منذ أسبوع }
+                  </small>
                 </div>
 
-                <!-- نص الرسالة (أصغر قليلاً) -->
-                <div style="font-size: 13px; color: #0f172a; font-weight: 600; margin-bottom: 1px; line-height: 1.25;">
+                <div style="font-size: 13px; color: #1e293b; font-weight: 600; margin-bottom: 1px; line-height: 1.3;">
                   @if ($index === 0) { تذكير: مهمة "تحليل البيانات" تنتهي غداً }
                   @else if ($index === 1) { اقتراب موعد تسليم المشروع النهائي }
                   @else if ($index === 2) { تم تسجيل غياب ليوم الاثنين 10 أغسطس }
@@ -165,86 +161,40 @@
                   @else if ($index === 5) { رسالة من الإدارة: تحديث جدول الحصص المباشرة }
                   @else { اقتراب موعد تسليم مشروع "نظام التوصية" }
                 </div>
-
-                <!-- التاريخ -->
-                <small class="nfd-muted" style="font-size: 10px; color: #94a3b8; font-weight: 600;">
-                  @if ($index === 0) { منذ 10 دقائق }
-                  @else if ($index === 1) { منذ ساعة }
-                  @else if ($index === 2) { منذ يومين }
-                  @else if ($index === 3) { منذ 3 أيام }
-                  @else if ($index === 4) { منذ 4 أيام }
-                  @else if ($index === 5) { منذ أسبوع }
-                  @else { منذ أسبوع }
-                </small>
               </div>
+
             </div>
 
-            <!-- الجهة اليسارية: السهم -->
             <div style="display: flex; align-items: center; flex-shrink: 0;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </div>
-
           </div>
-
         </summary>
 
-        <!-- تفاصيل التنبيه المنسدلة (بحجم أصغر) -->
-        <div
-          style="
-            padding:0 12px 8px 36px;
-            color:#1e293b;
-            font-size: 12px;
-            font-weight: 500;
-          "
-        >
-          <div
-            style="
-              border-top:1px solid #f1f5f9;
-              padding-top:6px;
-            "
-          >
+        <div style="padding: 0 8px 6px 34px; color: #475569; font-size: 12px; font-weight: 400;">
+          <div style="border-top: 1px solid rgba(0, 0, 0, 0.04); padding-top: 5px;">
             @if ($index === 4) {
-              <!-- محتوى خاص بالإنذار -->
-              <div style="background-color: #fdf2f2; border: 1px solid #fca5a5; border-radius: 5px; padding: 8px; margin-bottom: 8px;">
-                <div style="color: #b91c1c; font-size: 11px; font-weight: 700; margin-bottom: 3px;">سبب الإنذار</div>
-                <div style="color: #b91c1c; font-size: 12px;">تكرار الغياب وعدم الالتزام بمواعيد التسليم في الأسبوعين الماضيين.</div>
+              <div style="background-color: #ffffff; border: 1px solid #fed7d7; border-radius: 4px; padding: 6px; margin-bottom: 4px;">
+                <div style="color: #991b1b; font-size: 11px; font-weight: 700; margin-bottom: 2px;">سبب الإنذار</div>
+                <div style="color: #7f1d1d; font-size: 11px; line-height: 1.3;">تكرار الغياب وعدم الالتزام بمواعيد التسليم في الأسبوعين الماضيين.</div>
               </div>
 
-              <div style="color: #b91c1c; font-size: 11px; font-weight: 700; margin-bottom: 5px;">التفاصيل</div>
-              <ul style="margin: 0; padding-right: 16px; font-size: 11px; color: #94a3b8; line-height: 1.7; list-style-type: disc;">
+              <div style="color: #334155; font-size: 11px; font-weight: 700; margin-bottom: 2px;">التفاصيل</div>
+              <ul style="margin: 0; padding-right: 14px; font-size: 11px; color: #64748b; line-height: 1.4; list-style-type: disc;">
                 <li>غياب غير مبرر: 3 أيام في الأسبوعين الماضيين</li>
                 <li>مهام متأخرة: مهمتان لم يتم تسليمهما في الموعد المحدد</li>
                 <li>نسبة الالتزام الحالية: 74% (الحد الأدنى المطلوب: 80%)</li>
                 <li>تحذير: استمرار هذا الوضع قد يؤثر على إتمام البرنامج</li>
               </ul>
 
-              <!-- أزرار الإنذار -->
-              <div style="display:flex; justify-content: flex-end; gap: 6px; margin-top: 8px;">
-                <button
-                  type="button"
-                  style="background-color: #ef4444; color: #ffffff; border: none; padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer;"
-                  (click)="$event.preventDefault(); $event.stopPropagation()">
-                  تواصل مع المشرف
-                </button>
-                <button
-                  type="button"
-                  class="nfd-chip"
-                  style="padding: 4px 10px; font-size: 11px;"
-                  (click)="
-                    detailsRef.open = false;
-                    markRead(n);
-                    $event.preventDefault();
-                    $event.stopPropagation()
-                  "
-                >
+              <div style="display: flex; justify-content: flex-end; gap: 5px; margin-top: 5px;">
+                <button type="button" class="nfd-chip" style="padding: 3px 8px; font-size: 11px;" (click)="detailsRef.open = false; markRead(n); $event.preventDefault(); $event.stopPropagation()">
                   إغلاق
                 </button>
               </div>
-            }
-            @else {
-              <!-- محتوى باقي التنبيهات العادية -->
+            } @else {
               @if ($index === 0) { يجب تسليم مهمة "تحليل البيانات" غداً الساعة 11:59 م. تأكد من رفع الملف النهائي على المنصة قبل انتهاء الموعد المحدد. المهمة تشمل تحليل مجموعة البيانات المرفقة وتقديم تقرير من 3-5 صفحات.}
               @else if ($index === 1) { يتبقى 3 أيام على موعد تسليم المشروع النهائي لبرنامج علوم البيانات. الموعد النهائي: 15 أغسطس 2026. يجب أن يشمل المشروع: الكود المصدري، تقرير تقني، وعرضاً تقديمياً لا يتجاوز 10 شرائح.}
               @else if ($index === 2) { تم تسجيل غياب ليوم الاثنين 10 أغسطس 2026. إذا كان غيابك لعذر مشروع، يُرجى تقديم العذر الرسمي خلال 48 ساعة عبر صفحة الحضور. الغياب غير المبرر قد يؤثر على نسبة الالتزام.}
@@ -252,31 +202,15 @@
               @else if ($index === 5) {تُعلم إدارة البرنامج بتحديث جدول الحصص المباشرة اعتباراً من الأسبوع القادم. الجدول الجديد: السبت والاثنين والأربعاء من 9:00 ص حتى 11:00 ص. يُرجى الالتزام بالمواعيد الجديدة. للاستفسار تواصل مع مكتب الإدارة.}
               @else { تبقى أسبوع واحد على موعد تسليم مشروع "نظام التوصية". تأكد من اكتمال جميع مكونات المشروع: نموذج التصفية التعاونية، واجهة المستخدم، وملف README الشامل. الموعد النهائي: 19 أغسطس 2026.}
 
-              <!-- زر الإغلاق العادي -->
-              <div style="display:flex; justify-content:flex-start; margin-top:4px;">
-                <button
-                  type="button"
-                  class="nfd-chip"
-                  style="padding: 2px 6px; font-size: 10px;"
-                  (click)="
-                    detailsRef.open = false;
-                    markRead(n);
-                    $event.preventDefault();
-                    $event.stopPropagation()
-                  "
-                >
+              <div style="display: flex; justify-content: flex-start; margin-top: 4px;">
+                <button type="button" class="nfd-chip" style="padding: 2px 6px; font-size: 10px;" (click)="detailsRef.open = false; markRead(n); $event.preventDefault(); $event.stopPropagation()">
                   إغلاق
                 </button>
               </div>
             }
           </div>
-
         </div>
-
       </details>
-
     </div>
-
   }
-
 </div>

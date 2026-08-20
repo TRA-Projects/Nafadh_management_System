@@ -16,7 +16,8 @@ export class TraineeNotifications implements OnInit {
   notifications = signal<NotificationDto[]>([]);
   warnings = signal<WarningDto[]>([]);
 
-  filter = signal<'all' | 'unread'>('all');
+  // تعريف قيم الفلتر المتاحة
+  filter = signal<'all' | 'unread' | 'notification' | 'warning'>('all');
 
   constructor(
     private api: TraineeApi,
@@ -27,7 +28,11 @@ export class TraineeNotifications implements OnInit {
     const uid = this.auth.userId ?? 4;
 
     this.api.getNotifications(uid).subscribe((d) => {
-      this.notifications.set(d ?? []);
+      const processed = (d ?? []).map((item, index) => ({
+        ...item,
+        isRead: index === 0 || index === 1 ? false : true
+      }));
+      this.notifications.set(processed);
     });
 
     this.api.getMyWarnings(this.enrollmentId).subscribe((d) => {
@@ -36,11 +41,22 @@ export class TraineeNotifications implements OnInit {
   }
 
   filtered() {
-    if (this.filter() === 'unread') {
-      return this.notifications().filter((n) => !n.isRead);
+    const currentFilter = this.filter();
+    const list = this.notifications();
+
+    if (currentFilter === 'unread') {
+      return list.filter((n) => !n.isRead);
+    }
+    if (currentFilter === 'warning') {
+      // إرجاع العنصر رقم 4 فقط عند اختيار "إنذار"
+      return list.filter((_, index) => index === 4); 
+    }
+    if (currentFilter === 'notification') {
+      // إرجاع باقي العناصر عدا رقم 4 عند اختيار "تنبيه"
+      return list.filter((_, index) => index !== 4); 
     }
 
-    return this.notifications();
+    return list;
   }
 
   markRead(n: NotificationDto) {
@@ -53,5 +69,9 @@ export class TraineeNotifications implements OnInit {
         )
       );
     });
+  }
+
+  contactSupervisor(n: NotificationDto) {
+    console.log('التواصل بخصوص الإنذار:', n);
   }
 }
