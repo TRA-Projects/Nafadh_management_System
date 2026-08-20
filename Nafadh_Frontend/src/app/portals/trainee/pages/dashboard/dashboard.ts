@@ -910,7 +910,48 @@ export class TraineeDashboard implements OnInit {
   getUnreadNotificationsCount(): number {
     return this.notifications().filter((n) => !n.isRead).length;
   }
+  // =========================================================
+  // متغيرات لعرض المزيد من الإعلانات والتنبيهات
+  // =========================================================
 
+  showAllAnnouncements = signal(false);
+  showAllNotifications = signal(false);
+
+  // =========================================================
+  // الإعلانات المعروضة (3 أو الكل)
+  // =========================================================
+
+  displayAnnouncements = computed(() => {
+    const all = this.announcements();
+    if (this.showAllAnnouncements()) {
+      return all;
+    }
+    return all.slice(0, 3);
+  });
+
+  // =========================================================
+  // التنبيهات المعروضة (3 أو الكل)
+  // =========================================================
+
+  displayNotifications = computed(() => {
+    const all = this.latestNotifications();
+    if (this.showAllNotifications()) {
+      return all;
+    }
+    return all.slice(0, 3);
+  });
+
+  // =========================================================
+  // دوال تبديل عرض الكل / عرض أقل
+  // =========================================================
+
+  toggleShowAllAnnouncements(): void {
+    this.showAllAnnouncements.update((value) => !value);
+  }
+
+  toggleShowAllNotifications(): void {
+    this.showAllNotifications.update((value) => !value);
+  }
   // =========================================================
   // الحصول على معرف المستخدم من التخزين المحلي
   // =========================================================

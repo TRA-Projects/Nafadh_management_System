@@ -369,9 +369,7 @@
                 "
                 title="تواصل مع المدرب"
                 (click)="contactTrainer()"
-              >
-                💬
-              </button>
+              ></button>
             }
           </div>
 
@@ -613,7 +611,24 @@
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         "
       >
-        <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b">الإعلانات</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b">الإعلانات</h3>
+          @if (announcements().length > 3) {
+            <button
+              (click)="toggleShowAllAnnouncements()"
+              style="
+                background: none;
+                border: none;
+                color: #2563eb;
+                font-size: 0.85rem;
+                font-weight: 600;
+                cursor: pointer;
+              "
+            >
+              {{ showAllAnnouncements() ? 'عرض أقل' : 'عرض المزيد' }}
+            </button>
+          }
+        </div>
 
         <div style="display: flex; flex-direction: column; gap: 10px">
           @if (loadingAnnouncements()) {
@@ -621,7 +636,7 @@
               جاري تحميل الإعلانات...
             </div>
           } @else {
-            @for (ann of announcements(); track ann.announcementId) {
+            @for (ann of displayAnnouncements(); track ann.announcementId) {
               <div
                 style="
                   padding: 14px 18px;
@@ -705,19 +720,21 @@
                 تحديد الكل كمقروء
               </button>
             }
-            <button
-              routerLink="/trainee/notifications"
-              style="
-                background: none;
-                border: none;
-                color: #2563eb;
-                font-size: 0.85rem;
-                font-weight: 600;
-                cursor: pointer;
-              "
-            >
-              عرض الكل
-            </button>
+            @if (latestNotifications().length > 3) {
+              <button
+                (click)="toggleShowAllNotifications()"
+                style="
+                  background: none;
+                  border: none;
+                  color: #2563eb;
+                  font-size: 0.85rem;
+                  font-weight: 600;
+                  cursor: pointer;
+                "
+              >
+                {{ showAllNotifications() ? 'عرض أقل' : 'عرض المزيد' }}
+              </button>
+            }
           </div>
         </div>
 
@@ -727,11 +744,21 @@
               جاري تحميل التنبيهات...
             </div>
           } @else {
-            @if (latestNotifications().length > 0) {
-              @for (notif of latestNotifications(); track notif.notificationId) {
+            @if (displayNotifications().length > 0) {
+              @for (notif of displayNotifications(); track notif.notificationId) {
                 <div
                   (click)="markNotificationAsRead(notif.notificationId, $event)"
-                  style="display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9; cursor: pointer; border-radius: 8px; transition: background 0.2s"
+                  style="
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 12px;
+                    padding: 10px 12px;
+                    padding-bottom: 10px;
+                    border-bottom: 1px solid #f1f5f9;
+                    cursor: pointer;
+                    border-radius: 8px;
+                    transition: background 0.2s;
+                  "
                   [style.background]="notif.isRead ? 'transparent' : '#f8faff'"
                 >
                   <span style="font-size: 1.1rem; margin-top: 2px">

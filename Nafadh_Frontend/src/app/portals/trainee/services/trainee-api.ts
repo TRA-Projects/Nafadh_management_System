@@ -133,6 +133,15 @@ export class TraineeApi {
     return this.http.get<CompanySupervisorDto>(`${this.base}/CompanySupervisor/${id}`);
   }
 
+  // أضف هذه الدالة الجديدة
+  /**
+   * جلب بيانات المشرف بناءً على userId
+   * GET /api/CompanySupervisor/user/{userId}
+   */
+  getCompanySupervisorByUserId(userId: number): Observable<CompanySupervisorDto> {
+    return this.http.get<CompanySupervisorDto>(`${this.base}/CompanySupervisor/user/${userId}`);
+  }
+
   // =========================================================
   // Program
   // =========================================================
