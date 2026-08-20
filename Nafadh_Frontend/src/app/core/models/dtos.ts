@@ -127,6 +127,41 @@ export interface CompanyBranchDto {
   companyId: number;
 }
 
+export interface CompanyAccountPermissionDto {
+  permissionId: number;
+  permissionKey: string;
+  description?: string;
+}
+
+export interface CompanyAccountActivityDto {
+  logId: number;
+  action: string;
+  entityName: string;
+  entityId: number;
+  details?: string;
+  timestamp: string;
+}
+
+export interface CompanyAccountDto {
+  userId: number;
+  fullName: string;
+  email: string;
+  phone?: string;
+  userStatus: string;
+  createdAt: string;
+  supervisorId: number;
+  companyId: number;
+  department?: string;
+  position?: string;
+  supervisorStatus: string;
+  companyName: string;
+  companyStatus: string;
+  roleName: string;
+  permissions: CompanyAccountPermissionDto[];
+  recentActivities: CompanyAccountActivityDto[];
+  lastActivityAt?: string;
+}
+
 export interface CompanySupervisorDto {
   id: number;
   supervisorId?: number;
@@ -317,6 +352,45 @@ export interface SessionDto {
   recordingUrl?: string | null;
   summary?: string | null;
   status: 'Scheduled' | 'Completed' | 'Cancelled' | 'Postponed';
+}
+
+
+export interface CompanyDashboardChartPointDto {
+  label: string;
+  value: number;
+}
+
+export interface CompanyDashboardTraineeDto {
+  traineeId: number;
+  enrollmentId: number;
+  fullName?: string;
+  major?: string;
+  gitHubUrl?: string;
+  performancePercent: number;
+  attendancePercent: number;
+}
+
+export interface CompanyDashboardWarningDto {
+  warningId: number;
+  enrollmentId: number;
+  traineeId: number;
+  traineeName?: string;
+  gitHubUrl?: string;
+  type: string;
+  level: string;
+  status: string;
+  issuedDate: string;
+}
+
+export interface CompanyDashboardDto {
+  capacity: { total: number; used: number; remaining: number };
+  attendanceWeeks: CompanyDashboardChartPointDto[];
+  programDistribution: CompanyDashboardChartPointDto[];
+  topPerformers: CompanyDashboardTraineeDto[];
+  atRiskTrainees: CompanyDashboardTraineeDto[];
+  recentWarnings: CompanyDashboardWarningDto[];
+  totalTrainees: number;
+  activeTrainees: number;
 }
 
 // ---- Enrollment ----
@@ -643,6 +717,7 @@ export interface AttendanceReportDto {
   periodEnd?: string;
   overallAttendanceRate: number;
   rows: AttendanceReportRowDto[];
+  chart?: ChartPointDto[];
 }
 
 export interface TrainerKpisDto {
