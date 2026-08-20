@@ -57,6 +57,12 @@ export class CompanyProfile implements OnInit {
 
   editingCapacity = signal(false);
   companyEditOpen = signal(false);
+
+  uploadingCover = signal(false);
+  uploadingLogo = signal(false);
+  coverUploadError = signal(false);
+  logoUploadError = signal(false);
+  readonly maxImageSizeMb = 5;
   companyEditDraft = {
     commercialRegister: '',
     taxNumber: '',
@@ -359,22 +365,94 @@ export class CompanyProfile implements OnInit {
   }
 
   onCoverSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-
-    const preview = URL.createObjectURL(file);
-    this.company.update((cur) => (cur ? { ...cur, coverImageUrl: preview } : cur));
-    input.value = '';
+    this.handleImageSelection(event, 'cover');
   }
 
   onLogoSelected(event: Event) {
+    this.handleImageSelection(event, 'logo');
+  }
+
+  removeCoverImage() {
+    this.persistImage('cover', '');
+  }
+
+  removeLogoImage() {
+    this.persistImage('logo', '');
+  }
+
+  private handleImageSelection(event: Event, kind: 'cover' | 'logo') {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
+    input.value = '';
     if (!file) return;
 
-    const preview = URL.createObjectURL(file);
-    this.company.update((cur) => (cur ? { ...cur, logoUrl: preview } : cur));
-    input.value = '';
+    if (!this.isValidImageFile(file)) {
+      (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(true);
+      return;
+    }
+
+    (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(false);
+
+    const previousUrl = kind === 'cover' ? this.company()?.coverImageUrl : this.company()?.logoUrl;
+    const previewUrl = URL.createObjectURL(file);
+
+    // Optimistic preview while the upload/save is in flight.
+    this.applyImageToCompany(kind, previewUrl);
+    (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(true);
+
+    this.readFileAsDataUrl(file)
+      .then((dataUrl) => this.persistImage(kind, dataUrl, previousUrl))
+      .catch(() => this.revertImage(kind, previousUrl))
+      .finally(() => {
+        URL.revokeObjectURL(previewUrl);
+        (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(false);
+      });
+  }
+
+  private persistImage(kind: 'cover' | 'logo', value: string, fallbackUrl?: string) {
+    const c = this.company();
+    if (!c) return;
+
+    (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(true);
+
+    const payload = kind === 'cover' ? { ...c, coverImageUrl: value } : { ...c, logoUrl: value };
+
+    this.api.updateCompany(c.companyId, payload).subscribe({
+      next: () => {
+        this.applyImageToCompany(kind, value);
+        (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(false);
+        (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(false);
+      },
+      error: () => {
+        this.revertImage(kind, fallbackUrl);
+        (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(true);
+        (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(false);
+      },
+    });
+  }
+
+  private applyImageToCompany(kind: 'cover' | 'logo', value: string) {
+    this.company.update((cur) =>
+      cur ? (kind === 'cover' ? { ...cur, coverImageUrl: value } : { ...cur, logoUrl: value }) : cur
+    );
+  }
+
+  private revertImage(kind: 'cover' | 'logo', fallbackUrl?: string) {
+    this.applyImageToCompany(kind, fallbackUrl || '');
+  }
+
+  private isValidImageFile(file: File): boolean {
+    const isImage = file.type.startsWith('image/');
+    const withinSize = file.size <= this.maxImageSizeMb * 1024 * 1024;
+    return isImage && withinSize;
+  }
+
+  private readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
   }
 }

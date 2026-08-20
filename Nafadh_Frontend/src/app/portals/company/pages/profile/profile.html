@@ -10,17 +10,35 @@
 @if (company(); as c) {
   <div class="company-profile-page">
     <div class="nfd-card company-profile-hero-card" style="padding:0;overflow:hidden;margin-top:16px;border-radius:22px">
-      <div class="company-profile-cover">
+      <div class="company-profile-cover" [class.is-empty]="!c.coverImageUrl">
         @if (c.coverImageUrl) {
-          <img [src]="c.coverImageUrl" alt="غلاف {{ c.companyName }}" style="width:100%;height:100%;object-fit:cover;display:block" />
+          <img [src]="c.coverImageUrl" alt="غلاف {{ c.companyName }}" class="company-profile-cover-img" />
+        } @else {
+          <div class="company-profile-cover-pattern"></div>
         }
         <div class="company-profile-cover-overlay"></div>
 
+        @if (uploadingCover()) {
+          <div class="company-profile-media-loading">
+            <span class="company-profile-spinner"></span>
+            <span>جارِ رفع الغلاف...</span>
+          </div>
+        }
+
         <div class="company-profile-cover-actions">
+          @if (coverUploadError()) {
+            <span class="company-profile-upload-error">تعذر رفع الصورة، تحقق من النوع والحجم (حتى {{ maxImageSizeMb }}MB)</span>
+          }
+          @if (c.coverImageUrl) {
+            <button type="button" class="nfd-btn secondary company-profile-remove-btn" (click)="removeCoverImage()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+              إزالة
+            </button>
+          }
           <input [id]="coverInputId" type="file" accept="image/*" hidden (change)="onCoverSelected($event)" />
           <label [for]="coverInputId" class="nfd-btn secondary company-profile-upload-btn" type="button">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z"/><circle cx="12" cy="13" r="3.5"/></svg>
-            تغيير الغلاف
+            {{ c.coverImageUrl ? 'تغيير الغلاف' : 'إضافة غلاف' }}
           </label>
         </div>
       </div>
@@ -29,22 +47,39 @@
         <div class="company-profile-logo-wrap">
           <div class="company-profile-logo">
             @if (c.logoUrl) {
-              <img [src]="c.logoUrl" alt="شعار {{ c.companyName }}" style="width:100%;height:100%;object-fit:cover" />
+              <img [src]="c.logoUrl" alt="شعار {{ c.companyName }}" />
             } @else {
               <span>{{ companyInitial() }}</span>
             }
 
+            @if (uploadingLogo()) {
+              <div class="company-profile-media-loading company-profile-logo-loading">
+                <span class="company-profile-spinner"></span>
+              </div>
+            }
+
             <input [id]="logoInputId" type="file" accept="image/*" hidden (change)="onLogoSelected($event)" />
-            <label [for]="logoInputId" class="company-profile-logo-button" aria-label="إضافة شعار الشركة">+</label>
+            <label [for]="logoInputId" class="company-profile-logo-button" aria-label="{{ c.logoUrl ? 'تغيير شعار الشركة' : 'إضافة شعار الشركة' }}">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z"/><circle cx="12" cy="13" r="3.5"/></svg>
+            </label>
+            @if (c.logoUrl) {
+              <button type="button" class="company-profile-logo-remove" aria-label="إزالة الشعار" (click)="removeLogoImage()">✕</button>
+            }
           </div>
         </div>
+        @if (logoUploadError()) {
+          <span class="company-profile-upload-error company-profile-logo-error">تعذر رفع الشعار، حتى {{ maxImageSizeMb }}MB</span>
+        }
 
         <div class="company-profile-title-wrap">
           <h3 class="company-profile-name">{{ c.companyName }}</h3>
           <div class="company-profile-badges">
             <span class="nfd-badge company-profile-badge" [style.background]="c.status === 'Approved' ? '#e8f9ee' : '#edf3ff'" [style.color]="c.status === 'Approved' ? '#1d8f4a' : 'var(--color-navy)'" [style.border]="c.status === 'Approved' ? '1px solid #cfeedc' : '1px solid #dfeaff'">{{ statusLabel(c.status) }}</span>
             @if (c.accreditationNumber) {
-              <span class="nfd-badge company-profile-badge" style="background:#f6f9ff;color:var(--color-text-secondary);border:1px solid var(--color-border);">اعتماد رقم {{ c.accreditationNumber }}</span>
+              <span class="nfd-badge company-profile-badge company-profile-badge-gold">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 2.4 4.87 5.37.78-3.89 3.79.92 5.35L12 14.27l-4.8 2.52.92-5.35-3.89-3.79 5.37-.78Z"/></svg>
+                اعتماد رقم {{ c.accreditationNumber }}
+              </span>
             }
             @for (field of workFieldList(c); track field) {
               <span class="nfd-badge company-profile-badge" style="background:#eef5ff;color:var(--color-navy);border:1px solid #dfeaff;">{{ field }}</span>
@@ -55,41 +90,46 @@
     </div>
 
     <div class="company-profile-kpis">
-      <div class="nfd-card" style="padding:16px;">
-        <span class="nfd-muted" style="display:block;margin-bottom:8px;">المتدربين</span>
+      <div class="nfd-card kpi-card kpi-blue">
+        <span class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        <span class="nfd-muted kpi-label">المتدربين</span>
         @if (traineesLoadError()) {
-          <span class="nfd-muted" style="color:var(--status-cancelled-fg);font-size:12px;">تعذر التحميل</span>
+          <span class="nfd-muted kpi-error">تعذر التحميل</span>
         } @else {
-          <strong style="font-size:24px;color:var(--color-navy);">{{ trainees().length }}</strong>
+          <strong class="kpi-value">{{ trainees().length }}</strong>
         }
       </div>
-      <div class="nfd-card" style="padding:16px;">
-        <span class="nfd-muted" style="display:block;margin-bottom:8px;">الفروع</span>
+      <div class="nfd-card kpi-card kpi-teal">
+        <span class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg></span>
+        <span class="nfd-muted kpi-label">الفروع</span>
         @if (branchesLoadError()) {
-          <span class="nfd-muted" style="color:var(--status-cancelled-fg);font-size:12px;">تعذر التحميل</span>
+          <span class="nfd-muted kpi-error">تعذر التحميل</span>
         } @else {
-          <strong style="font-size:24px;color:var(--color-navy);">{{ branches().length }}</strong>
+          <strong class="kpi-value">{{ branches().length }}</strong>
         }
       </div>
-      <div class="nfd-card" style="padding:16px;">
-        <span class="nfd-muted" style="display:block;margin-bottom:8px;">نقاط الاتصال</span>
+      <div class="nfd-card kpi-card kpi-purple">
+        <span class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+        <span class="nfd-muted kpi-label">نقاط الاتصال</span>
         @if (supervisorsLoadError()) {
-          <span class="nfd-muted" style="color:var(--status-cancelled-fg);font-size:12px;">تعذر التحميل</span>
+          <span class="nfd-muted kpi-error">تعذر التحميل</span>
         } @else {
-          <strong style="font-size:24px;color:var(--color-navy);">{{ supervisors().length }}</strong>
+          <strong class="kpi-value">{{ supervisors().length }}</strong>
         }
       </div>
-      <div class="nfd-card" style="padding:16px;">
-        <span class="nfd-muted" style="display:block;margin-bottom:8px;">التخصصات</span>
+      <div class="nfd-card kpi-card kpi-gold">
+        <span class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 3 3 6 3s6-1 6-3v-5"/></svg></span>
+        <span class="nfd-muted kpi-label">التخصصات</span>
         @if (specialtiesLoadError()) {
-          <span class="nfd-muted" style="color:var(--status-cancelled-fg);font-size:12px;">تعذر التحميل</span>
+          <span class="nfd-muted kpi-error">تعذر التحميل</span>
         } @else {
-          <strong style="font-size:24px;color:var(--color-navy);">{{ specialties().length }}</strong>
+          <strong class="kpi-value">{{ specialties().length }}</strong>
         }
       </div>
-      <div class="nfd-card" style="padding:16px;">
-        <span class="nfd-muted" style="display:block;margin-bottom:8px;">الطاقة المستخدمة</span>
-        <strong style="font-size:24px;color:var(--color-navy);">{{ usedCapacityValue() }}/{{ c.capacity }}</strong>
+      <div class="nfd-card kpi-card kpi-green">
+        <span class="kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8 12 14.7 8.5 11.2 3 16.7"/></svg></span>
+        <span class="nfd-muted kpi-label">الطاقة المستخدمة</span>
+        <strong class="kpi-value">{{ usedCapacityValue() }}<span class="kpi-value-of">/{{ c.capacity }}</span></strong>
       </div>
     </div>
 
