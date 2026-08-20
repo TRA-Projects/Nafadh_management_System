@@ -42,8 +42,6 @@
 
     <div class="header-actions">
 
-      <!-- Export Report -->
-
       <button
         type="button"
         class="action-btn secondary"
@@ -83,8 +81,6 @@
       </button>
 
 
-      <!-- Start New Evaluation -->
-
       <button
         type="button"
         class="action-btn primary"
@@ -120,8 +116,6 @@
 
   <section class="trainees-kpis">
 
-    <!-- Total Trainees -->
-
     <article class="trainee-kpi">
 
       <div class="kpi-info">
@@ -155,8 +149,6 @@
 
     </article>
 
-
-    <!-- Average Technical -->
 
     <article class="trainee-kpi">
 
@@ -205,8 +197,6 @@
     </article>
 
 
-    <!-- High Performers -->
-
     <article class="trainee-kpi">
 
       <div class="kpi-info">
@@ -251,8 +241,6 @@
 
     </article>
 
-
-    <!-- Needs Support -->
 
     <article class="trainee-kpi danger">
 
@@ -337,6 +325,10 @@
             </th>
 
             <th>
+              الحالة
+            </th>
+
+            <th>
               المستوى التقني
             </th>
 
@@ -359,7 +351,11 @@
 
         <tbody>
 
-          @for (e of enrollments(); track e.enrollmentId; let i = $index) {
+          @for (
+            e of enrollments();
+            track e.enrollmentId;
+            let i = $index
+          ) {
 
             <tr>
 
@@ -388,7 +384,8 @@
                     </strong>
 
                     <span>
-                      رقم التسجيل: {{ e.enrollmentId }}
+                      رقم التسجيل:
+                      {{ e.enrollmentId }}
                     </span>
 
                   </div>
@@ -409,11 +406,36 @@
               </td>
 
 
+              <!-- Status -->
+
+              <td>
+
+                <span
+                  class="status-badge"
+                  [ngClass]="
+                    enrollmentStatusClass(
+                      e.completionStatus
+                    )
+                  "
+                >
+                  {{
+                    enrollmentStatusLabel(
+                      e.completionStatus
+                    )
+                  }}
+                </span>
+
+              </td>
+
+
               <!-- Technical -->
 
               <td>
 
-                @if (technicalScore(e.enrollmentId) !== null) {
+                @if (
+                  e.completionStatus !== 'Dropped' &&
+                  technicalScore(e.enrollmentId) !== null
+                ) {
 
                   <div class="progress-cell">
 
@@ -421,16 +443,29 @@
 
                       <div
                         class="progress-fill"
-                        [style.width.%]="technicalProgress(e.enrollmentId)">
+                        [style.width.%]="
+                          technicalProgress(
+                            e.enrollmentId
+                          )
+                        ">
                       </div>
 
                     </div>
 
 
                     <span>
-                      {{ technicalLevel(e.enrollmentId) }}
+                      {{
+                        technicalLevel(
+                          e.enrollmentId
+                        )
+                      }}
                       ·
-                      {{ technicalScore(e.enrollmentId) | number:'1.0-1' }}%
+                      {{
+                        technicalScore(
+                          e.enrollmentId
+                        )
+                          | number:'1.0-1'
+                      }}%
                     </span>
 
                   </div>
@@ -444,7 +479,7 @@
 
                       <div
                         class="progress-fill"
-                        style="width: 0%;">
+                        style="width:0%;">
                       </div>
 
                     </div>
@@ -464,10 +499,19 @@
 
               <td>
 
-                @if (attendancePercentage(e.enrollmentId) !== null) {
+                @if (
+                  attendancePercentage(
+                    e.enrollmentId
+                  ) !== null
+                ) {
 
                   <span class="metric-value">
-                    {{ attendancePercentage(e.enrollmentId) | number:'1.0-1' }}%
+                    {{
+                      attendancePercentage(
+                        e.enrollmentId
+                      )
+                        | number:'1.0-1'
+                    }}%
                   </span>
 
                 }
@@ -486,10 +530,18 @@
 
               <td>
 
-                @if (technicalScore(e.enrollmentId) !== null) {
+                @if (
+                  e.completionStatus !== 'Dropped' &&
+                  technicalScore(e.enrollmentId) !== null
+                ) {
 
                   <span class="metric-value">
-                    {{ technicalScore(e.enrollmentId) | number:'1.0-1' }}%
+                    {{
+                      technicalScore(
+                        e.enrollmentId
+                      )
+                        | number:'1.0-1'
+                    }}%
                   </span>
 
                 }
@@ -510,20 +562,54 @@
 
                 <div class="table-actions">
 
+                  <div
+                    class="evaluation-action-wrapper"
+                    [class.disabled-evaluation]="
+                      e.completionStatus === 'Dropped'
+                    "
+                  >
+
+                    <button
+                      type="button"
+                      class="small-action-btn"
+                      (click)="openEval(e.enrollmentId)"
+                      [disabled]="
+                        e.completionStatus === 'Dropped'
+                      "
+                    >
+                      تقييم
+                    </button>
+
+
+                    @if (
+                      e.completionStatus === 'Dropped'
+                    ) {
+
+                      <div class="evaluation-tooltip">
+
+                        <span class="evaluation-tooltip-icon">
+                          !
+                        </span>
+
+                        <span>
+                          المتدرب منسحب ولا يمكن إضافة تقييم جديد
+                        </span>
+
+                      </div>
+
+                    }
+
+                  </div>
+
+
                   <button
                     type="button"
                     class="small-action-btn"
-                    (click)="openEval(e.enrollmentId)">
-
-                    تقييم
-
-                  </button>
-
-
-                  <button
-                    type="button"
-                    class="small-action-btn"
-                    (click)="openTraineeProfile(e.enrollmentId)">
+                    (click)="
+                      openTraineeProfile(
+                        e.enrollmentId
+                      )
+                    ">
 
                     الملف
 
@@ -540,12 +626,7 @@
 
             <tr>
 
-              <!--
-                CHANGED:
-                صار عدد أعمدة الجدول 6 بدل 7
-              -->
-
-              <td colspan="6">
+              <td colspan="7">
 
                 <div class="table-empty">
 
@@ -608,8 +689,6 @@
           class="nfd-modal trainee-profile-modal"
           (click)="$event.stopPropagation()">
 
-          <!-- Header -->
-
           <div class="eval-modal-header">
 
             <div>
@@ -637,14 +716,13 @@
           </div>
 
 
-          <!-- Trainee Info -->
-
           <div class="profile-trainee-header">
 
             <div class="profile-avatar">
 
               {{
-                (profile.traineeName || 'م').charAt(0)
+                (profile.traineeName || 'م')
+                  .charAt(0)
               }}
 
             </div>
@@ -653,7 +731,10 @@
             <div class="profile-trainee-info">
 
               <strong>
-                {{ profile.traineeName || 'متدرب' }}
+                {{
+                  profile.traineeName ||
+                  'متدرب'
+                }}
               </strong>
 
               <span>
@@ -681,11 +762,35 @@
           </div>
 
 
+          <!-- Status -->
+
+          <div class="profile-info-row">
+
+            <span class="profile-info-label">
+              الحالة
+            </span>
+
+            <span
+              class="status-badge"
+              [ngClass]="
+                enrollmentStatusClass(
+                  profile.completionStatus
+                )
+              "
+            >
+              {{
+                enrollmentStatusLabel(
+                  profile.completionStatus
+                )
+              }}
+            </span>
+
+          </div>
+
+
           <!-- Stats -->
 
           <div class="profile-stats-grid">
-
-            <!-- Attendance -->
 
             <div class="profile-stat-card">
 
@@ -695,12 +800,16 @@
 
 
               @if (
-                attendancePercentage(profile.enrollmentId) !== null
+                attendancePercentage(
+                  profile.enrollmentId
+                ) !== null
               ) {
 
                 <strong>
                   {{
-                    attendancePercentage(profile.enrollmentId)
+                    attendancePercentage(
+                      profile.enrollmentId
+                    )
                       | number:'1.0-1'
                   }}%
                 </strong>
@@ -717,8 +826,6 @@
             </div>
 
 
-            <!-- Evaluation -->
-
             <div class="profile-stat-card">
 
               <span>
@@ -727,12 +834,17 @@
 
 
               @if (
-                technicalScore(profile.enrollmentId) !== null
+                profile.completionStatus !== 'Dropped' &&
+                technicalScore(
+                  profile.enrollmentId
+                ) !== null
               ) {
 
                 <strong>
                   {{
-                    technicalScore(profile.enrollmentId)
+                    technicalScore(
+                      profile.enrollmentId
+                    )
                       | number:'1.0-1'
                   }}%
                 </strong>
@@ -762,7 +874,24 @@
               </span>
 
               <strong>
-                {{ technicalLevel(profile.enrollmentId) }}
+
+                @if (
+                  profile.completionStatus !== 'Dropped'
+                ) {
+
+                  {{
+                    technicalLevel(
+                      profile.enrollmentId
+                    )
+                  }}
+
+                }
+                @else {
+
+                  —
+
+                }
+
               </strong>
 
             </div>
@@ -772,20 +901,31 @@
 
               <div
                 class="profile-progress-fill"
-                [style.width.%]="technicalProgress(profile.enrollmentId)">
+                [style.width.%]="
+                  profile.completionStatus !== 'Dropped'
+                    ? technicalProgress(
+                        profile.enrollmentId
+                      )
+                    : 0
+                ">
               </div>
 
             </div>
 
 
             @if (
-              technicalScore(profile.enrollmentId) !== null
+              profile.completionStatus !== 'Dropped' &&
+              technicalScore(
+                profile.enrollmentId
+              ) !== null
             ) {
 
               <span class="profile-level-score">
 
                 {{
-                  technicalScore(profile.enrollmentId)
+                  technicalScore(
+                    profile.enrollmentId
+                  )
                     | number:'1.0-1'
                 }}%
 
@@ -810,14 +950,44 @@
             </button>
 
 
-            <button
-              type="button"
-              class="nfd-btn primary"
-              (click)="startEvaluationFromProfile()">
+            <div
+              class="evaluation-action-wrapper profile-evaluation-wrapper"
+              [class.disabled-evaluation]="
+                profile.completionStatus === 'Dropped'
+              "
+            >
 
-              بدء تقييم
+              <button
+                type="button"
+                class="nfd-btn primary"
+                (click)="startEvaluationFromProfile()"
+                [disabled]="
+                  profile.completionStatus === 'Dropped'
+                "
+              >
+                بدء تقييم
+              </button>
 
-            </button>
+
+              @if (
+                profile.completionStatus === 'Dropped'
+              ) {
+
+                <div class="evaluation-tooltip">
+
+                  <span class="evaluation-tooltip-icon">
+                    !
+                  </span>
+
+                  <span>
+                    المتدرب منسحب ولا يمكن إضافة تقييم جديد
+                  </span>
+
+                </div>
+
+              }
+
+            </div>
 
           </div>
 
@@ -874,7 +1044,7 @@
         <div class="trainee-picker-list">
 
           @for (
-            e of enrollments();
+            e of evaluableEnrollments();
             track e.enrollmentId;
             let i = $index
           ) {
@@ -882,7 +1052,11 @@
             <button
               type="button"
               class="trainee-picker-item"
-              (click)="selectTraineeForEvaluation(e.enrollmentId)">
+              (click)="
+                selectTraineeForEvaluation(
+                  e.enrollmentId
+                )
+              ">
 
               <div
                 class="trainee-avatar"
@@ -890,7 +1064,8 @@
                 [class.avatar-third]="i % 3 === 2">
 
                 {{
-                  (e.traineeName || 'م').charAt(0)
+                  (e.traineeName || 'م')
+                    .charAt(0)
                 }}
 
               </div>
@@ -899,12 +1074,18 @@
               <div class="trainee-picker-info">
 
                 <strong>
-                  {{ e.traineeName || 'متدرب' }}
+                  {{
+                    e.traineeName ||
+                    'متدرب'
+                  }}
                 </strong>
 
                 <span>
 
-                  {{ e.batchName || 'بدون دفعة' }}
+                  {{
+                    e.batchName ||
+                    'بدون دفعة'
+                  }}
 
                   ·
 
@@ -1057,7 +1238,10 @@
 
         <div class="criteria-section">
 
-          @for (c of criteria(); track c.criteriaId) {
+          @for (
+            c of criteria();
+            track c.criteriaId
+          ) {
 
             <div class="criterion-card">
 
@@ -1081,8 +1265,14 @@
                 type="number"
                 [max]="c.maxPoints"
                 min="0"
-                [(ngModel)]="criteriaScores[c.criteriaId]"
-                [name]="'crit' + c.criteriaId"
+                [(ngModel)]="
+                  criteriaScores[
+                    c.criteriaId
+                  ]
+                "
+                [name]="
+                  'crit' + c.criteriaId
+                "
               />
 
             </div>
