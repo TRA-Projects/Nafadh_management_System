@@ -22,24 +22,6 @@
 
     </div>
 
-
-  <div class="nfd-toolbar">
-
-  <div class="page-header-text">
-
-    <h1 class="nfd-page-title">
-      مركز التقارير والإحصائيات
-    </h1>
-
-    <p class="nfd-page-sub">
-      استعرض تقارير الأداء والحضور والتقييم،
-      ثم قم بتنزيل التقرير فقط عند الحاجة.
-    </p>
-
-  </div>
-
-</div>
-
   </div>
 
 
@@ -49,18 +31,16 @@
 
   @if (errorMessage()) {
 
-    <div
-      style="
-        margin-bottom:16px;
-        padding:12px 14px;
-        background:#fef2f2;
-        color:#b91c1c;
-        border:1px solid #fecaca;
-        border-radius:10px;
-        font-size:13px;
-      "
-    >
-      {{ errorMessage() }}
+    <div class="report-message error">
+
+      <span class="report-message-icon">
+        !
+      </span>
+
+      <span>
+        {{ errorMessage() }}
+      </span>
+
     </div>
 
   }
@@ -68,18 +48,16 @@
 
   @if (successMessage()) {
 
-    <div
-      style="
-        margin-bottom:16px;
-        padding:12px 14px;
-        background:#f0fdf4;
-        color:#15803d;
-        border:1px solid #bbf7d0;
-        border-radius:10px;
-        font-size:13px;
-      "
-    >
-      ✓ {{ successMessage() }}
+    <div class="report-message success">
+
+      <span class="report-message-icon">
+        ✓
+      </span>
+
+      <span>
+        {{ successMessage() }}
+      </span>
+
     </div>
 
   }
@@ -557,6 +535,7 @@
 
   </div>
 
+
   <!-- =========================================
        RECENT REPORTS
   ========================================== -->
@@ -628,6 +607,7 @@
           </svg>
 
         </div>
+
 
         <strong>
           لا توجد تقارير سابقة
@@ -762,6 +742,8 @@
     }
 
   </section>
+
+
   <!-- =====================================================
        REPORT PDF PREVIEW MODAL
   ====================================================== -->
@@ -854,16 +836,7 @@
 
           } @else {
 
-            <div
-              style="
-                height:100%;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:#64748b;
-                font-size:13px;
-              "
-            >
+            <div class="report-preview-loading">
               جاري تحميل معاينة التقرير...
             </div>
 
@@ -902,7 +875,7 @@
               stroke-width="2"
             >
               <path
-                d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1 2-2V8a2 2 0 0 1 2-2h6"
               ></path>
 
               <polyline
