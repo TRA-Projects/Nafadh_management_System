@@ -121,7 +121,48 @@ public async Task<IActionResult> DownloadReport(int id)
                 fileName
             );
         }
+        // ==========================================================
+        // Trainer Portal Report File
+        // GET: api/Report/trainer/{id}/file
+        // ==========================================================
 
+        // Serves Trainer Portal PDFs from external storage
+        // without changing the shared report download endpoint.
+        [HttpGet("trainer/{id}/file")]
+        public async Task<IActionResult> GetTrainerPortalReportFile(
+            int id
+        )
+        {
+            var filePath =
+                await _service
+                    .GetTrainerPortalReportFilePathAsync(
+                        id
+                    );
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    filePath
+                )
+            )
+            {
+                return NotFound(
+                    "Trainer report file not found."
+                );
+            }
+
+            var fileBytes =
+                await System.IO.File
+                    .ReadAllBytesAsync(
+                        filePath
+                    );
+
+            // No download filename is supplied here so the PDF
+            // can be displayed directly in the browser preview.
+            return File(
+                fileBytes,
+                "application/pdf"
+            );
+        }
         // ==========================================================
         // NEW analytics/aggregation endpoints (backend upgrade - Phase 2)
         // ==========================================================

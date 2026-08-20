@@ -70,7 +70,7 @@ export class TrainerTrainees implements OnInit {
 
 
   // =====================================================
-  // NEW: TRAINEE PROFILE STATE
+  // TRAINEE PROFILE STATE
   // =====================================================
 
   showTraineeProfile =
@@ -331,6 +331,76 @@ export class TrainerTrainees implements OnInit {
         score
       )
     );
+  }
+
+
+  // =====================================================
+  // NEW: ENROLLMENT STATUS
+  // =====================================================
+
+  enrollmentStatusLabel(
+    status: string | null | undefined
+  ): string {
+
+    switch (status) {
+
+      case 'InProgress':
+
+        return 'قيد التدريب';
+
+
+      case 'Completed':
+
+        return 'مكتمل';
+
+
+      case 'Dropped':
+
+        return 'منسحب';
+
+
+      case 'Failed':
+
+        return 'لم يجتز';
+
+
+      default:
+
+        return '—';
+    }
+  }
+
+
+  enrollmentStatusClass(
+    status: string | null | undefined
+  ): string {
+
+    switch (status) {
+
+      case 'InProgress':
+
+        return 'good';
+
+
+      case 'Completed':
+
+        return 'excellent';
+
+
+      case 'Dropped':
+
+        return 'neutral';
+
+
+      case 'Failed':
+
+        return 'support';
+
+
+      default:
+
+        return 'neutral';
+    }
   }
 
 
@@ -973,7 +1043,7 @@ export class TrainerTrainees implements OnInit {
 
 
   // =====================================================
-  // NEW: TRAINEE PROFILE METHODS
+  // TRAINEE PROFILE METHODS
   // =====================================================
 
   openTraineeProfile(
