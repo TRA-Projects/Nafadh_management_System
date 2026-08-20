@@ -443,6 +443,19 @@ deleteTrainingMaterial(
     );
   }
 
+  // =====================================================
+  // TRAINER TASK SUBMISSIONS
+  // =====================================================
+
+  getTrainerTaskSubmissions(
+    taskId: number
+  ): Observable<SubmissionDto[]> {
+
+    return this.http.get<SubmissionDto[]>(
+      `${this.base}/Submission/task/${taskId}/trainer-view`
+    );
+  }
+
 
 
   // =====================================================
