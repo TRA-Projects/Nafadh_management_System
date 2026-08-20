@@ -187,19 +187,33 @@ getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
   // =========================================================
   // Attendance
   // =========================================================
+/**
+ * جلب سجل الحضور لمتدرب معين حسب enrollmentId
+ */
+getAttendance(enrollmentId: number): Observable<DailyAttendanceDto[]> {
+  return this.http.get<DailyAttendanceDto[]>(`${this.base}/DailyAttendance/enrollment/${enrollmentId}`);
+}
 
-  getAttendance(enrollmentId: number): Observable<DailyAttendanceDto[]> {
-    return this.http.get<DailyAttendanceDto[]>(`${this.base}/DailyAttendance/enrollment/${enrollmentId}`);
-  }
+/**
+ * جلب نسبة الالتزام لمتدرب معين
+ */
+getComplianceRate(enrollmentId: number): Observable<number> {
+  return this.http.get<number>(`${this.base}/DailyAttendance/enrollment/${enrollmentId}/compliance-rate`);
+}
 
-  getComplianceRate(enrollmentId: number): Observable<number> {
-    return this.http.get<number>(`${this.base}/DailyAttendance/enrollment/${enrollmentId}/compliance-rate`);
-  }
+/**
+ * إرسال عذر جديد - يستقبل JSON
+ */
+submitExcuse(dto: { dailyAttendanceId: number; reason: string }): Observable<ExcuseDto> {
+  return this.http.post<ExcuseDto>(`${this.base}/Excuse`, dto);
+}
 
-  submitExcuse(dto: unknown): Observable<ExcuseDto> { 
-    return this.http.post<ExcuseDto>(`${this.base}/Excuse`, dto); 
-  }
-
+/**
+ * جلب العذر حسب attendanceId
+ */
+getExcuse(attendanceId: number): Observable<ExcuseDto> {
+  return this.http.get<ExcuseDto>(`${this.base}/Excuse/attendance/${attendanceId}`);
+}
   // =========================================================
   // Notifications & warnings
   // =========================================================

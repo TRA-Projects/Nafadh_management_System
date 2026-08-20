@@ -5,30 +5,26 @@
 <!-- قسم البطاقات العلوية -->
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
   
-  <!-- 1. بطاقة ملخص الحضور (تظهر على اليمين) -->
+  <!-- 1. بطاقة ملخص الحضور -->
   <div class="nfd-card">
     <h3 style="margin-bottom:16px">ملخص الحضور</h3>
     
     <div style="display:flex;flex-direction:column;gap:10px">
-      <!-- أيام الحضور -->
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid #f1f5f9;border-radius:10px;background:#fff">
         <span style="color:#94a3b8;font-size:14px">أيام الحضور</span>
         <strong style="color:var(--status-active-fg, #10b981);font-size:18px">{{ totalPresent() }}</strong>
       </div>
 
-      <!-- الغياب -->
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid #f1f5f9;border-radius:10px;background:#fff">
         <span style="color:#94a3b8;font-size:14px">الغياب</span>
         <strong style="color:var(--status-absent-fg, #ef4444);font-size:18px">{{ totalAbsent() }}</strong>
       </div>
 
-      <!-- التأخير -->
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid #f1f5f9;border-radius:10px;background:#fff">
         <span style="color:#94a3b8;font-size:14px">التأخير</span>
         <strong style="color:var(--status-late-fg, #f59e0b);font-size:18px">{{ totalLate() }}</strong>
       </div>
 
-      <!-- الأعذار المقبولة -->
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid #f1f5f9;border-radius:10px;background:#fff">
         <span style="color:#94a3b8;font-size:14px">الأعذار المقبولة</span>
         <strong style="color:var(--status-active-fg, #10b981);font-size:18px">{{ totalExcused() }}</strong>
@@ -36,7 +32,7 @@
     </div>
   </div>
 
-  <!-- 2. بطاقة نسبة الالتزام الديناميكية -->
+  <!-- 2. بطاقة نسبة الالتزام -->
   <div class="nfd-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px">
     
     <div [style.background]="'conic-gradient(#0d9488 ' + commitmentPercentage() + '%, #e2e8f0 0)'" 
@@ -78,7 +74,7 @@
       @for (r of rows(); track r.dailyAttendanceId) {
         <tr>
           <!-- التاريخ -->
-          <td>{{ r.date | date:'MMMM dd yyyy' }}</td>
+          <td>{{ r.date | date:'dd MMMM yyyy' }}</td>
           
           <!-- وقت الدخول والخروج -->
           <td>{{ r.checkInTime || '—' }}</td>
@@ -86,22 +82,39 @@
           
           <!-- الحالة -->
           <td>
-            <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;"
-                  [style.background]="r.status==='Present' ? '#e6f7f2' : r.status==='Late' ? '#fef3c7' : '#fee2e2'" 
-                  [style.color]="r.status==='Present' ? '#0d9488' : r.status==='Late' ? '#d97706' : '#dc2626'">
-              • {{ $any(labels)[r.status] || r.status }}
-            </span>
+            @let status = r.status;
+            @if (status === 'Present') {
+              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #e6f7f2; color: #0d9488;">
+                حضور
+              </span>
+            } @else if (status === 'Late') {
+              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #fef3c7; color: #d97706;">
+                متأخر
+              </span>
+            } @else if (status === 'Absent') {
+              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #fee2e2; color: #dc2626;">
+                غياب
+              </span>
+            } @else {
+              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #f1f5f9; color: #64748b;">
+                {{ status || '—' }}
+              </span>
+            }
           </td>
 
           <!-- العذر -->
           <td>
-            @if ($any(r).excuseStatus === 'Approved' || $any(r).excuseStatus === 'Pending' || $any(r).excuse || $any(r).note === 'بانتظار المراجعة' || r.status === 'Excused') {
-              <button style="border-radius: 20px; padding: 5px 18px; border: 1px solid #d1d5db; background: #fff; color: #4b5563; font-size: 13px; cursor: pointer;">
+            @let excuse = getExcuse(r.dailyAttendanceId);
+            @if (excuse) {
+              <button 
+                style="border-radius: 20px; padding: 5px 18px; border: 1px solid #d1d5db; background: #fff; color: #4b5563; font-size: 13px; cursor: pointer;"
+                (click)="viewExcuse(r.dailyAttendanceId)">
                 عرض العذر
               </button>
-            } @else if (r.status === 'Absent' || r.status === 'Late') {
-              <button style="background: #0d9488; color: #fff; border-radius: 20px; padding: 6px 18px; border: none; font-size: 13px; cursor: pointer;" 
-                      (click)="excuseOpenFor.set(r.dailyAttendanceId)">
+            } @else if (canSubmitExcuse(r)) {
+              <button 
+                style="background: #0d9488; color: #fff; border-radius: 20px; padding: 6px 18px; border: none; font-size: 13px; cursor: pointer;" 
+                (click)="excuseOpenFor.set(r.dailyAttendanceId)">
                 إرفاق العذر
               </button>
             } @else {
@@ -111,17 +124,18 @@
 
           <!-- حالة العذر -->
           <td>
-            @if ($any(r).excuseStatus === 'Approved' || $any(r).excuseStatus === 'Pending' || $any(r).excuse || $any(r).note === 'بانتظار المراجعة' || r.status === 'Excused') {
+            @let excuseStatus = getExcuseStatus(r.dailyAttendanceId);
+            @if (excuseStatus === 'Approved') {
               <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #e6f7f2; color: #0d9488;">
-                • مقبول
+                مقبول
               </span>
-            } @else if (r.status === 'Absent' || r.status === 'Late') {
+            } @else if (excuseStatus === 'Pending') {
               <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #fef3c7; color: #d97706;">
-                • قيد المراجعة
+                قيد المراجعة
               </span>
-            } @else if ($any(r).excuseStatus === 'Rejected') {
+            } @else if (excuseStatus === 'Rejected') {
               <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #fee2e2; color: #dc2626;">
-                • مرفوض
+                مرفوض
               </span>
             } @else {
               <span style="color:#9ca3af">—</span>
@@ -130,17 +144,11 @@
 
           <!-- ملاحظات -->
           <td>
-            @if (r.status === 'Present') {
-              <span style="color:#64748b">التزام ممتاز</span>
-            } @else if ($any(r).excuseStatus === 'Approved' || $any(r).excuseStatus === 'Pending' || $any(r).excuse || $any(r).note === 'بانتظار المراجعة' || r.status === 'Excused') {
-              <span style="color:#64748b">عذر مقبول</span>
-            } @else {
-              <span style="color:#9ca3af">{{ r.note || '—' }}</span>
-            }
+            <span style="color:#64748b; font-size:13px;">{{ r.note || '—' }}</span>
           </td>
         </tr>
 
-        <!-- نموذج إرفاق العذر الممتد -->
+        <!-- نموذج إرفاق العذر -->
         @if (excuseOpenFor() === r.dailyAttendanceId) {
           <tr>
             <td colspan="7" style="padding: 12px;">

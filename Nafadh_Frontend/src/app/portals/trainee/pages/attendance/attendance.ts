@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TraineeApi } from '../../services/trainee-api';
 import { ATTENDANCE_STATUS_LABELS } from '../../../../core/models/enums';
-import { DailyAttendanceDto } from '../../../../core/models/dtos';
+import { DailyAttendanceDto, ExcuseDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-trainee-attendance',
@@ -11,7 +11,6 @@ import { DailyAttendanceDto } from '../../../../core/models/dtos';
   templateUrl: './attendance.html',
 })
 export class TraineeAttendance implements OnInit {
-  // جلب معرف المتدرب ديناميكياً بناءً على الحساب المسجل حالياً
   enrollmentId = 0;
   traineeId = 1;
   trainee = signal<any>(null);
@@ -23,6 +22,10 @@ export class TraineeAttendance implements OnInit {
   labels = ATTENDANCE_STATUS_LABELS;
 
   selectedFileName = signal<string>('');
+  selectedFile = signal<File | null>(null);
+
+  // Cache للأعذار
+  excusesCache = new Map<number, ExcuseDto>();
 
   constructor(private api: TraineeApi) {}
 
@@ -31,10 +34,8 @@ export class TraineeAttendance implements OnInit {
     this.loadTraineeData();
   }
 
-
-private getLoggedInUserId() {
+  private getLoggedInUserId() {
     try {
-      // 1. البحث في كل المفاتيح المحتملة للـ Storage
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key) {
@@ -50,7 +51,6 @@ private getLoggedInUserId() {
         }
       }
 
-      // 2. البحث في التوكن إن وجد
       const token = localStorage.getItem('auth_token') || localStorage.getItem('token') || localStorage.getItem('user_session');
       if (token && token.includes('.')) {
         const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
@@ -65,40 +65,51 @@ private getLoggedInUserId() {
   }
 
   loadTraineeData() {
-  this.api.getTrainee(this.traineeId).subscribe({
-    next: (t) => {
-      if (t) {
-        this.trainee.set(t);
-
-        // Get EnrollmentId from the trainee
-        this.enrollmentId = t.enrollmentId ?? 0;
-
-        // Now load attendance
-        this.loadAttendanceData();
+    this.api.getTrainee(this.traineeId).subscribe({
+      next: (t) => {
+        if (t) {
+          this.trainee.set(t);
+          this.enrollmentId = t.enrollmentId ?? 0;
+          this.loadAttendanceData();
+        }
+      },
+      error: (err) => {
+        console.error('خطأ في جلب البيانات:', err);
+        if (this.traineeId !== 2) {
+          this.traineeId = 2;
+          this.loadTraineeData();
+        }
       }
-    },
-    error: (err) => {
-      console.error('خطأ في جلب البيانات:', err);
-
-      if (this.traineeId !== 2) {
-        this.traineeId = 2;
-        this.loadTraineeData();
-      }
-    }
-  });
-}
-
-
-
-
-
+    });
+  }
 
   loadAttendanceData() {
     if (!this.enrollmentId) return;
 
-    // جلب سجل الحضور والالتزام الخاص بالمتدرب الحالي فقط عبر الـ API
     this.api.getAttendance(this.enrollmentId).subscribe({
-      next: (d) => this.rows.set(d ?? []),
+      next: (d) => {
+        const formattedRows = (d ?? []).map((item: any) => ({
+          dailyAttendanceId: item.dailyAttendanceId || item.id,
+          date: item.date || item.attendanceDate,
+          checkInTime: item.checkInTime || item.checkIn || item.clockIn,
+          checkOutTime: item.checkOutTime || item.checkOut || item.clockOut,
+          status: item.status || item.attendanceStatus || 'Present',
+          note: item.note || item.notes || item.remarks || '',
+        }));
+        this.rows.set(formattedRows);
+        
+        // جلب الأعذار لكل صف
+        formattedRows.forEach(row => {
+          this.api.getExcuse(row.dailyAttendanceId).subscribe({
+            next: (excuse: ExcuseDto) => {
+              if (excuse && excuse.excuseId) {
+                this.excusesCache.set(row.dailyAttendanceId, excuse);
+              }
+            },
+            error: () => {}
+          });
+        });
+      },
       error: () => this.rows.set([])
     });
 
@@ -108,9 +119,68 @@ private getLoggedInUserId() {
     });
   }
 
-  // دوال الحساب الديناميكية لملخص الحضور
+  // التحقق من وجود عذر
+  hasExcuse(dailyAttendanceId: number): boolean {
+    return this.excusesCache.has(dailyAttendanceId);
+  }
+
+  // الحصول على العذر
+  getExcuse(dailyAttendanceId: number): ExcuseDto | undefined {
+    return this.excusesCache.get(dailyAttendanceId);
+  }
+
+  // الحصول على حالة العذر
+  getExcuseStatus(dailyAttendanceId: number): string | null {
+    const excuse = this.excusesCache.get(dailyAttendanceId);
+    return excuse ? excuse.status : null;
+  }
+
+  // التحقق من إمكانية إرفاق عذر
+  canSubmitExcuse(row: any): boolean {
+    // إذا كان هناك عذر مسبق
+    if (this.hasExcuse(row.dailyAttendanceId)) {
+      return false;
+    }
+    // إذا كان الحضور مسجل
+    if (row.status === 'Present') {
+      return false;
+    }
+    // فقط للحالات Absent أو Late
+    return row.status === 'Absent' || row.status === 'Late';
+  }
+
+  // دالة عرض العذر
+  viewExcuse(dailyAttendanceId: number) {
+    const excuse = this.excusesCache.get(dailyAttendanceId);
+    if (excuse) {
+      const statusMap: {[key: string]: {text: string, emoji: string}} = {
+        'Pending': {text: 'قيد المراجعة', emoji: '⏳'},
+        'Approved': {text: 'مقبول', emoji: '✅'},
+        'Rejected': {text: 'مرفوض', emoji: '❌'}
+      };
+      const statusInfo = statusMap[excuse.status] || {text: excuse.status, emoji: ''};
+      
+      alert(`📋 تفاصيل العذر:\n\n📝 السبب: ${excuse.reason}\n📌 الحالة: ${statusInfo.emoji} ${statusInfo.text}\n${excuse.proofUrl ? '📎 يوجد مرفق' : ''}`);
+    } else {
+      // جلب من الـ API إذا لم يكن في الكاش
+      this.api.getExcuse(dailyAttendanceId).subscribe({
+        next: (excuse: ExcuseDto) => {
+          if (excuse && excuse.excuseId) {
+            this.excusesCache.set(dailyAttendanceId, excuse);
+            this.viewExcuse(dailyAttendanceId);
+          } else {
+            alert('لا توجد تفاصيل إضافية للعذر');
+          }
+        },
+        error: () => {
+          alert('لا توجد تفاصيل إضافية للعذر');
+        }
+      });
+    }
+  }
+
   totalPresent = computed(() => 
-    this.rows().filter(r => r.status === 'Present' || r.status === 'Late').length
+    this.rows().filter(r => r.status === 'Present').length
   );
 
   totalAbsent = computed(() => 
@@ -121,9 +191,16 @@ private getLoggedInUserId() {
     this.rows().filter(r => r.status === 'Late').length
   );
 
-  totalExcused = computed(() => 
-    this.rows().filter(r => r.status === 'Excused' || r.excuseStatus === 'Approved' || r.note === 'بانتظار المراجعة').length
-  );
+  totalExcused = computed(() => {
+    let count = 0;
+    this.rows().forEach(row => {
+      const excuse = this.excusesCache.get(row.dailyAttendanceId);
+      if (excuse && excuse.status === 'Approved') {
+        count++;
+      }
+    });
+    return count;
+  });
 
   commitmentPercentage = computed(() => {
     const total = this.rows().length;
@@ -135,27 +212,82 @@ private getLoggedInUserId() {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.selectedFileName.set(input.files[0].name);
+      const file = input.files[0];
+      this.selectedFileName.set(file.name);
+      this.selectedFile.set(file);
     }
   }
 
-  submitExcuse(row: DailyAttendanceDto) {
-    if (!this.excuseReason.trim()) return;
+  submitExcuse(row: any) {
+    if (!this.excuseReason.trim()) {
+      alert('يرجى كتابة سبب العذر');
+      return;
+    }
 
-    this.rows.update((items) =>
-      items.map((item) =>
-        item.dailyAttendanceId === row.dailyAttendanceId
-          ? { ...item, excuseStatus: 'Pending', note: 'بانتظار المراجعة' }
-          : item
-      )
-    );
+    // التحقق من وجود عذر مسبق
+    if (this.hasExcuse(row.dailyAttendanceId)) {
+      alert('⚠️ يوجد عذر مسبق لهذا اليوم، لا يمكن إرسال عذر جديد');
+      this.excuseOpenFor.set(null);
+      this.excuseReason = '';
+      this.selectedFileName.set('');
+      this.selectedFile.set(null);
+      return;
+    }
+
+    // إعداد بيانات العذر
+    const excuseData = {
+      dailyAttendanceId: row.dailyAttendanceId,
+      reason: this.excuseReason
+    };
+
+    const currentDailyAttendanceId = row.dailyAttendanceId;
+
+    // تحديث الواجهة فوراً
+    const tempExcuse: ExcuseDto = {
+      excuseId: Date.now(),
+      dailyAttendanceId: row.dailyAttendanceId,
+      reason: this.excuseReason,
+      status: 'Pending' as any,
+    };
+    this.excusesCache.set(row.dailyAttendanceId, tempExcuse);
 
     this.excuseOpenFor.set(null);
     this.excuseReason = '';
     this.selectedFileName.set('');
+    this.selectedFile.set(null);
 
-    this.api.submitExcuse({ dailyAttendanceId: row.dailyAttendanceId, reason: this.excuseReason }).subscribe({
-      error: (err) => console.error('Error submitting excuse:', err)
+    // إرسال العذر للـ API
+    this.api.submitExcuse(excuseData).subscribe({
+      next: (response: ExcuseDto) => {
+        console.log('✅ تم إرسال العذر بنجاح:', response);
+        this.excusesCache.set(currentDailyAttendanceId, {
+          ...response,
+          status: 'Pending'
+        });
+        setTimeout(() => this.loadAttendanceData(), 500);
+      },
+      error: (err) => {
+        console.error('❌ خطأ في إرسال العذر:', err);
+        
+        let errorMessage = 'حدث خطأ في إرسال العذر، يرجى المحاولة مرة أخرى';
+        
+        if (err.error && typeof err.error === 'string') {
+          errorMessage = err.error;
+        } else if (err.error && err.error.message) {
+          errorMessage = err.error.message;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        
+        if (errorMessage.includes('already exists') || errorMessage.includes('موجود')) {
+          errorMessage = '⚠️ يوجد عذر مسبق لهذا اليوم';
+        }
+        
+        alert(errorMessage);
+        
+        this.excusesCache.delete(currentDailyAttendanceId);
+        this.loadAttendanceData();
+      }
     });
   }
 }
