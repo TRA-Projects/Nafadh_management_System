@@ -5,11 +5,13 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { CompanySupervisorDto } from '../../../../core/models/dtos';
 
 @Component({
-  selector: 'app-company-my-account',
+  selector: 'app-my-account',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './my-account.html',
+  styleUrls: ['./my-account.scss']
 })
+
 export class CompanyMyAccount implements OnInit {
   profile = signal<CompanySupervisorDto | null>(null);
 
