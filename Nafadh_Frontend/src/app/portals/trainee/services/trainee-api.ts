@@ -237,6 +237,12 @@ export class TraineeApi {
     return this.http.post<ExcuseDto>(`${this.base}/Excuse`, dto);
   }
 
+  /**
+   * جلب العذر حسب attendanceId
+   */
+  getExcuse(attendanceId: number): Observable<ExcuseDto> {
+    return this.http.get<ExcuseDto>(`${this.base}/Excuse/attendance/${attendanceId}`);
+  }
   // =========================================================
   // Notifications & warnings
   // =========================================================
