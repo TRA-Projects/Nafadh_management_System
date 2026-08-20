@@ -409,7 +409,7 @@
       <div class="sessions-list">
 
         @for (
-        session of upcomingSessions().slice(0, 3);
+        session of upcomingSessions();
         track session.sessionId
         ) {
 
@@ -525,11 +525,12 @@
 
         }
 
-        <button type="button" class="view-all-btn" (click)="openCreateSession()">
-          + إنشاء جلسة جديدة
-        </button>
 
       </div>
+      
+      <button type="button" class="view-all-btn" (click)="openCreateSession()">
+        + إنشاء جلسة جديدة
+      </button>
 
     </div>
 
