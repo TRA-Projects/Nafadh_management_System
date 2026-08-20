@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
-  AnnouncementDto, CompanyBranchDto, CompanyCapacityDto, CompanyDto, CompanySupervisorDto,
+  AnnouncementDto, CompanyAccountDto, CompanyBranchDto, CompanyCapacityDto, CompanyDto, CompanySupervisorDto, CompanyDashboardDto,
   ConversationDetailDto, ConversationListItemDto, ConversationMessageDto, EnrollmentDto, EvaluationDto,
   FeedbackSummaryDto, TrainerKpisDto, WarningDto, AttendanceReportDto, ChartPointDto,
   TraineeListItemDto, ProgramDto, ProgressSummaryDto, CompanyProgramLinkDto,
@@ -15,6 +15,9 @@ export class CompanyApi {
   constructor(private http: HttpClient) {}
 
   // Dashboard
+  getDashboard(companyId: number): Observable<CompanyDashboardDto> {
+    return this.http.get<CompanyDashboardDto>(`${this.base}/CompanyDashboard/${companyId}`);
+  }
   getCapacity(companyId: number): Observable<CompanyCapacityDto> {
     return this.http.get<CompanyCapacityDto>(`${this.base}/Company/${companyId}/capacity`);
   }
@@ -67,6 +70,9 @@ export class CompanyApi {
   addSupervisor(dto: unknown) { return this.http.post(`${this.base}/CompanySupervisor`, dto); }
 
   // My Account
+  getCurrentAccount(): Observable<CompanyAccountDto> {
+    return this.http.get<CompanyAccountDto>(`${this.base}/CompanyAccount/me`);
+  }
   getSupervisorProfile(id: number): Observable<CompanySupervisorDto> {
     return this.http.get<CompanySupervisorDto>(`${this.base}/CompanySupervisor/${id}`);
   }
