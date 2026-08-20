@@ -499,29 +499,27 @@
 
                             <div class="material-info">
 
-                              @if (material.fileType === 'Link') {
+                            <a
+  [href]="getMaterialUrl(material)"
+  target="_blank"
+  rel="noopener noreferrer"
+  class="material-link"
+>
+  {{
+    material.fileType === 'Link'
+      ? 'فتح المرجع'
+      : getMaterialName(material)
+  }}
+</a>
 
-                                <a
-                                  [href]="material.fileUrl"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  class="material-link"
-                                >
-                                  فتح المرجع
-                                </a>
 
+@if (material.fileType === 'Link') {
 
-                                <span class="material-url">
-                                  {{ material.fileUrl }}
-                                </span>
+  <span class="material-url">
+    {{ material.fileUrl }}
+  </span>
 
-                              } @else {
-
-                                <span class="material-name">
-                                  {{ getMaterialName(material) }}
-                                </span>
-
-                              }
+}
 
                             </div>
 
