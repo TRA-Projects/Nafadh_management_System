@@ -49,22 +49,13 @@ h3.section-title {
   padding-bottom: 24px;
   zoom: var(--font-scale, 1);
   position: relative;
+  padding-top: 0 !important;
+  margin-top: 0 !important;
 }
 
+/* إلغاء عنصر Glow المتسبب في الهامش العلوي الضخم */
 .company-profile-glow {
-  position: absolute;
-  inset-inline-start: 50%;
-  top: -60px;
-  width: 900px;
-  max-width: 130%;
-  height: 340px;
-  transform: translateX(-50%);
-  background:
-    radial-gradient(circle at 30% 30%, rgba(0, 168, 176, 0.12), transparent 60%),
-    radial-gradient(circle at 70% 60%, rgba(124, 92, 255, 0.1), transparent 55%);
-  pointer-events: none;
-  z-index: 0;
-  filter: blur(6px);
+  display: none !important;
 }
 
 .company-profile-page > * {
@@ -192,7 +183,7 @@ h3.section-title {
 }
 
 .company-profile-hero-card {
-  margin-top: 16px;
+  margin-top: 10px !important;
   overflow: hidden;
   border-radius: 22px;
   border: 1px solid var(--profile-border);
@@ -832,7 +823,6 @@ h3.section-title {
   border: 1px solid var(--profile-border);
 }
 
-/* Keep the editable areas visually distinct from the read-only content. */
 .company-profile-page [style*="background:#f8faff"],
 .company-profile-page [style*="background:#fafbff"] {
   background: var(--profile-soft) !important;
