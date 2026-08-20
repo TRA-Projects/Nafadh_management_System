@@ -28,6 +28,9 @@ export class AdminUsers implements OnInit {
   rolesList = signal<RoleDto[]>([]);
   roleFilter = signal<string>('ALL');
 
+  loadingUsers = signal<boolean>(true);
+  usersError = signal<string>('');
+
   isCreateModalOpen: boolean = false;
   isEditModalOpen: boolean = false;
   isResetPasswordModalOpen: boolean = false;
@@ -43,14 +46,22 @@ export class AdminUsers implements OnInit {
   selectedUser: any = {};
   newPassword = '';
 
-  rbacSummary = signal([
-    { role: 'Admin', permissionsCount: 10, usersCount: 1 },
-    { role: 'CompanySupervisor', permissionsCount: 3, usersCount: 6 },
-    { role: 'Trainer', permissionsCount: 3, usersCount: 3 },
-    { role: 'Trainee', permissionsCount: 0, usersCount: 12 }
-  ]);
+  private readonly permissionsCountByRole: Record<string, number> = {
+    Admin: 10,
+    CompanySupervisor: 3,
+    Trainer: 3,
+    Trainee: 0
+  };
 
-  // حساب أعداد الأزرار بناءً على البيانات المتوفرة في الجدول
+  rbacSummary = computed(() => {
+    const list = this.users();
+    return (['Admin', 'CompanySupervisor', 'Trainer', 'Trainee'] as const).map((role) => ({
+      role,
+      permissionsCount: this.permissionsCountByRole[role],
+      usersCount: this.countByRole(list, role)
+    }));
+  });
+
   roles = computed<RoleFilterItem[]>(() => {
     const list = this.users();
     return [
@@ -62,13 +73,11 @@ export class AdminUsers implements OnInit {
     ];
   });
 
-  // تصفية العناصر بناءً على الزر المضغوط
   filtered = computed(() => {
     const selected = this.roleFilter();
     const list = this.users();
-
     if (selected === 'ALL') return list;
-    return list.filter(u => this.normalizeRole(u.roleName || u.roleId) === selected);
+    return list.filter((u) => this.normalizeRole(u.roleName || u.roleId) === selected);
   });
 
   constructor(
@@ -81,16 +90,27 @@ export class AdminUsers implements OnInit {
   }
 
   loadData(): void {
+    this.loadingUsers.set(true);
+    this.usersError.set('');
+
     this.api.getUsers().subscribe({
       next: (d) => {
-        this.users.set(d || []);
+        this.users.set(Array.isArray(d) ? d : []);
+        this.loadingUsers.set(false);
         this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('خطأ في جلب المستخدمين:', err);
-        if (err.status === 401) {
-          console.warn('غير مصرح - تحقق من إرسال Token مع Request');
+        this.loadingUsers.set(false);
+
+        if (err.status === 401 || err.status === 403) {
+          this.usersError.set('غير مصرح لك بعرض المستخدمين - تحقق من تسجيل الدخول أو الصلاحيات');
+        } else if (err.status === 0) {
+          this.usersError.set('تعذر الاتصال بالخادم - تحقق من تشغيل الـ API وإعدادات CORS');
+        } else {
+          this.usersError.set('حدث خطأ أثناء تحميل قائمة المستخدمين');
         }
+        this.cdr.detectChanges();
       }
     });
 
@@ -108,7 +128,6 @@ export class AdminUsers implements OnInit {
     }
   }
 
-  // تفعيل ضغطة الزر وإعادة توجيه الفلتر فوراً
   setFilter(roleKey: string): void {
     this.roleFilter.set(roleKey);
     this.cdr.detectChanges();
@@ -156,7 +175,7 @@ export class AdminUsers implements OnInit {
     };
 
     this.api.createUser(payload).subscribe({
-      next: (res) => {
+      next: () => {
         alert('تم إنشاء الحساب وحفظه في قاعدة البيانات بنجاح!');
         this.closeCreateModal();
         this.loadData();
@@ -194,13 +213,43 @@ export class AdminUsers implements OnInit {
   }
 
   updateUser(): void {
-    this.api.updateUserStatus(this.selectedUser.userId, this.selectedUser.status).subscribe({
+    if (!this.selectedUser.fullName || !this.selectedUser.email) {
+      alert('يرجى تعبئة الاسم والبريد الإلكتروني');
+      return;
+    }
+
+    const payload = {
+      fullName: this.selectedUser.fullName,
+      email: this.selectedUser.email,
+      phone: this.selectedUser.phone,
+      roleId: Number(this.selectedUser.roleId)
+    };
+
+    this.api.updateUser(this.selectedUser.userId, payload).subscribe({
       next: () => {
-        alert('تم التحديث بنجاح');
+        alert('تم تحديث بيانات المستخدم بنجاح');
         this.closeEditModal();
         this.loadData();
       },
-      error: (err) => console.error(err)
+      error: (err) => {
+        console.error('خطأ أثناء تعديل المستخدم:', err);
+        alert('حدث خطأ أثناء تحديث البيانات');
+      }
+    });
+  }
+
+  // مُصحح نهائيًا: UserResponseDto.status نوعه string فعليًا (أثبتها الكومبايلر)
+  // "نشط" = أي قيمة غير 'Suspended' (احتياط لو الحروف مختلفة الحالة مثل 'active')
+  toggleStatus(user: UserResponseDto): void {
+    const isCurrentlyActive = user.status?.toLowerCase() !== 'suspended';
+    const statusPayload = isCurrentlyActive ? 'Suspended' : 'Active';
+
+    this.api.updateUserStatus(user.userId, statusPayload).subscribe({
+      next: () => this.loadData(),
+      error: (err) => {
+        console.error('خطأ أثناء تغيير حالة المستخدم:', err);
+        alert('تعذر تغيير حالة الحساب');
+      }
     });
   }
 
@@ -221,8 +270,17 @@ export class AdminUsers implements OnInit {
       alert('يرجى إدخال كلمة المرور الجديدة');
       return;
     }
-    alert('تم تغيير كلمة المرور بنجاح');
-    this.closeResetPasswordModal();
+
+    this.api.resetPassword(this.selectedUser.userId, { newPassword: this.newPassword }).subscribe({
+      next: () => {
+        alert('تم تغيير كلمة المرور بنجاح');
+        this.closeResetPasswordModal();
+      },
+      error: (err) => {
+        console.error('خطأ أثناء إعادة تعيين كلمة المرور:', err);
+        alert('تعذر تغيير كلمة المرور');
+      }
+    });
   }
 
   getInitials(name: string): string {
@@ -232,7 +290,6 @@ export class AdminUsers implements OnInit {
     return parts[0].slice(0, 2);
   }
 
-  // تحسين دالة المطابقة لتشمل النص العربي والإنجليزي ورقم الـ RoleId
   private normalizeRole(roleInput: any): string {
     if (!roleInput) return '';
     const str = String(roleInput).trim().toLowerCase();
@@ -246,6 +303,6 @@ export class AdminUsers implements OnInit {
   }
 
   private countByRole(list: UserResponseDto[], targetRole: string): number {
-    return list.filter(u => this.normalizeRole(u.roleName || u.roleId) === targetRole).length;
+    return list.filter((u) => this.normalizeRole(u.roleName || u.roleId) === targetRole).length;
   }
 }
