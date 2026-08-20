@@ -62,6 +62,14 @@ export class TrainerTrainees implements OnInit {
 
 
   // =====================================================
+  // NEW EVALUATION PICKER
+  // =====================================================
+
+  showTraineePicker =
+    signal(false);
+
+
+  // =====================================================
   // KPI
   // =====================================================
 
@@ -174,25 +182,10 @@ export class TrainerTrainees implements OnInit {
   // ATTENDANCE
   // =====================================================
 
-  /**
-   * Stores attendance compliance percentage
-   * for every enrollment.
-   *
-   * Example:
-   * {
-   *   440: 60,
-   *   441: 90,
-   *   442: null
-   * }
-   */
   attendancePercentages =
     signal<Record<number, number | null>>({});
 
 
-  /**
-   * Returns attendance percentage
-   * for a specific enrollment.
-   */
   attendancePercentage(
     enrollmentId: number
   ): number | null {
@@ -220,9 +213,6 @@ export class TrainerTrainees implements OnInit {
   // TECHNICAL LEVEL
   // =====================================================
 
-  /**
-   * Returns the technical score for an enrollment.
-   */
   technicalScore(
     enrollmentId: number
   ): number | null {
@@ -246,10 +236,6 @@ export class TrainerTrainees implements OnInit {
   }
 
 
-  /**
-   * Returns the technical level label
-   * based on the evaluation average.
-   */
   technicalLevel(
     enrollmentId: number
   ): string {
@@ -288,10 +274,6 @@ export class TrainerTrainees implements OnInit {
   }
 
 
-  /**
-   * Returns a safe progress value
-   * between 0 and 100.
-   */
   technicalProgress(
     enrollmentId: number
   ): number {
@@ -1035,6 +1017,37 @@ export class TrainerTrainees implements OnInit {
         }
 
       });
+  }
+
+
+  // =====================================================
+  // START NEW EVALUATION
+  // =====================================================
+
+  startNewEvaluation(): void {
+
+    this.showTraineePicker.set(
+      true
+    );
+  }
+
+
+  // =====================================================
+  // SELECT TRAINEE FOR EVALUATION
+  // =====================================================
+
+  selectTraineeForEvaluation(
+    enrollmentId: number
+  ): void {
+
+    this.showTraineePicker.set(
+      false
+    );
+
+
+    this.openEval(
+      enrollmentId
+    );
   }
 
 
