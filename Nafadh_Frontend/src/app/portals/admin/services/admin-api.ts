@@ -9,6 +9,16 @@ import {
   TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto,
 } from '../../../core/models/dtos';
 
+export interface TraineeCertificateStatusDto {
+  traineeId: number;
+  enrollmentId: number;
+  fullName: string;
+  isIssued: boolean;
+  certificateId: number | null;
+  fileUrl: string | null;
+  grade: number | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private base = environment.apiBaseUrl;
@@ -123,6 +133,17 @@ export class AdminApi {
   getCertificatesByTrainee(traineeId: number): Observable<CertificateDto[]> {
     return this.http.get<CertificateDto[]>(`${this.base}/Certificate/trainee/${traineeId}`);
   }
+
+  getBatchCertificatesStatus(batchId: any): Observable<TraineeCertificateStatusDto[]> {
+    const cleanId = this.sanitizeId(batchId);
+    return this.http.get<TraineeCertificateStatusDto[]>(`${this.base}/Certificate/batch/${cleanId}/status`);
+  }
+
+  updateCertificateStatus(enrollmentId: any, isIssued: boolean) {
+    const cleanId = this.sanitizeId(enrollmentId);
+    return this.http.patch(`${this.base}/Certificate/enrollment/${cleanId}/status`, { isIssued });
+  } 
+  
   
   // ---- Certificates (معدلة للحماية من أخطاء الـ 404) ----
   issueCertificate(dto: unknown) {

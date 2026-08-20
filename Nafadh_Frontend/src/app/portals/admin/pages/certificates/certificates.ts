@@ -48,7 +48,7 @@ export interface TraineeDto {
 
   fullName: string;
 
-  completionStatus: string | number;
+  isIssued: boolean;
 
   fileUrl?: string;
 
@@ -308,117 +308,72 @@ export class AdminCertificates implements OnInit {
 
   // ==================== 2. جلب المتدربين للدفعة ====================
 
-  onViewTrainees(batch: BatchCertificateCardDto): void {
+ onViewTrainees(batch: BatchCertificateCardDto): void {
+  this.selectedBatch.set(batch);
+  this.viewMode.set('details');
+  this.loadingTrainees.set(true);
 
-    this.selectedBatch.set(batch);
+  const bId = this.cleanId(batch.batchId || batch.id);
 
-    this.viewMode.set('details');
+  this.api.getBatchCertificatesStatus(bId).subscribe({
+    next: (res: any) => {
 
-    this.loadingTrainees.set(true);
+      const rawList = Array.isArray(res)
+        ? res
+        : (res?.items || []);
 
+      const mappedList: TraineeDto[] = rawList.map((t: any) => {
 
+        const cleanEId = this.cleanId(t.enrollmentId);
+        const cleanTId = this.cleanId(t.traineeId);
 
-    const bId = this.cleanId(batch.batchId || batch.id);
+        return {
+          traineeId: cleanTId,
+          enrollmentId: cleanEId,
+          fullName: t.fullName || 'متدرب بدون اسم',
+          isIssued: !!t.isIssued,
+          fileUrl: t.fileUrl || undefined,
+          grade: t.grade != null ? `${t.grade}%` : undefined
+        };
+      });
 
+      this.selectedBatchTrainees.set(mappedList);
 
+      const realTotal = mappedList.length;
 
-    this.api.getTraineesForCertificates({ batchId: bId } as any).subscribe({
+      const realIssued = mappedList.filter(
+        t => t.isIssued
+      ).length;
 
-      next: (res: any) => {
+      this.selectedBatch.update(b => b ? {
+        ...b,
+        totalTraineesCount: realTotal,
+        issuedCertificatesCount: realIssued
+      } : null);
 
-        const rawList = res?.items || (Array.isArray(res) ? res : []);
-
-
-
-        const mappedList: TraineeDto[] = rawList.map((t: any) => {
-
-          const fileUrl = t.fileUrl || t.certificateUrl || t.pdfUrl || null;
-
-          const rawStatus = String(t.completionStatus ?? t.status ?? '').toLowerCase();
-
-          const isIssued = rawStatus === 'issued' || rawStatus === 'completed' || rawStatus === '1' || !!fileUrl;
-
-
-
-          const cleanEId = this.cleanId(t.enrollmentId ?? t.id ?? t.traineeId);
-
-          const cleanTId = this.cleanId(t.traineeId ?? t.id);
-
-
-
-          return {
-
-            traineeId: cleanTId,
-
-            enrollmentId: cleanEId,
-
-            fullName: t.fullName || t.traineeName || 'متدرب بدون اسم',
-
-            completionStatus: isIssued ? 'Issued' : 'Pending',
-
-            fileUrl: fileUrl,
-
-            grade: t.grade || '91%'
-
-          };
-
-        });
-
-
-
-        this.selectedBatchTrainees.set(mappedList);
-
-
-
-        const realTotal = mappedList.length;
-
-        const realIssued = mappedList.filter(t => this.isCertificateIssued(t)).length;
-
-
-
-        this.selectedBatch.update(b => b ? {
-
-          ...b,
-
-          totalTraineesCount: realTotal,
-
-          issuedCertificatesCount: realIssued
-
-        } : null);
-
-
-
-        this.batches.update(list =>
-
-          list.map(b => (b.batchId === bId || b.id === bId)
-
-            ? { ...b, totalTraineesCount: realTotal, issuedCertificatesCount: realIssued }
-
+      this.batches.update(list =>
+        list.map(b =>
+          (b.batchId === bId || b.id === bId)
+            ? {
+                ...b,
+                totalTraineesCount: realTotal,
+                issuedCertificatesCount: realIssued
+              }
             : b
+        )
+      );
 
-          )
+      this.loadingTrainees.set(false);
+    },
 
-        );
+    error: (err) => {
+      console.error('Error fetching certificate statuses:', err);
+      this.selectedBatchTrainees.set([]);
+      this.loadingTrainees.set(false);
+    }
+  });
+}
 
-
-
-        this.loadingTrainees.set(false);
-
-      },
-
-      error: (err) => {
-
-        console.error('Error fetching trainees:', err);
-
-        this.selectedBatchTrainees.set([]);
-
-        this.loadingTrainees.set(false);
-
-      }
-
-    });
-
-  }
 
 
 
@@ -486,8 +441,12 @@ export class AdminCertificates implements OnInit {
 
   issueSingleCertificate(trainee: TraineeDto, autoOpenModal: boolean = true): void {
 
-    const eId = trainee.enrollmentId || trainee.traineeId;
+const eId = trainee.enrollmentId;
 
+if (!eId || eId === 0) {
+  alert('خطأ: لم يتم العثور على رقم التسجيل (enrollmentId) الخاص بالمتدرب.');
+  return;
+}
 
 
     if (!eId || eId === 0) {
@@ -520,8 +479,11 @@ export class AdminCertificates implements OnInit {
 
 
 
-        this.updateTraineeStatusInState(trainee.traineeId, 'Issued', newFileUrl);
-
+this.updateTraineeStatusInState(
+  trainee.enrollmentId,
+  true,
+  newFileUrl
+);
         this.incrementBatchIssuedCount();
 
 
@@ -531,8 +493,6 @@ export class AdminCertificates implements OnInit {
           this.viewSingleCertificate({
 
             ...trainee,
-
-            completionStatus: 'Issued',
 
             fileUrl: newFileUrl
 
@@ -621,12 +581,8 @@ export class AdminCertificates implements OnInit {
 
 
   isCertificateIssued(trainee: TraineeDto): boolean {
-
-    const st = String(trainee.completionStatus).toLowerCase();
-
-    return st === 'issued' || st === '1' || st === 'completed' || !!trainee.fileUrl;
-
-  }
+  return trainee.isIssued;
+}
 
 
 
@@ -654,21 +610,24 @@ export class AdminCertificates implements OnInit {
 
 
 
-  private updateTraineeStatusInState(traineeId: number, status: string, fileUrl?: string): void {
+  private updateTraineeStatusInState(
+  enrollmentId: number,
+  isIssued: boolean,
+  fileUrl?: string
+): void {
 
-    this.selectedBatchTrainees.update(list =>
-
-      list.map(t => (t.traineeId === traineeId || t.enrollmentId === traineeId)
-
-        ? { ...t, completionStatus: status, fileUrl: fileUrl || t.fileUrl }
-
+  this.selectedBatchTrainees.update(list =>
+    list.map(t =>
+      t.enrollmentId === enrollmentId
+        ? {
+            ...t,
+            isIssued,
+            fileUrl: fileUrl || t.fileUrl
+          }
         : t
-
-      )
-
-    );
-
-  }
+    )
+  );
+}
 
 
 
