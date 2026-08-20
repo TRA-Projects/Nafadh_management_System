@@ -16,6 +16,49 @@
   --smooth: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Header Component Style */
+.page-header-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.page-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nfd-page-title {
+  margin: 0;
+  font-size: 26px; /* تم تكبير الخط لتوضيح العنوان */
+  font-weight: 800;
+  color: var(--color-navy, #0a1172);
+  line-height: 1.25;
+}
+
+.nfd-page-sub {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--profile-text-muted, #64748b);
+  font-weight: 500;
+}
+
+.page-header-icon {
+  width: 52px; /* تكبير حاوية الأيقونة */
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1b56fd, #0040e0);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 8px 22px -6px rgba(27, 86, 253, 0.45);
+}
+
 .section-title {
   position: relative;
   display: inline-flex;
@@ -53,7 +96,6 @@ h3.section-title {
   margin-top: 0 !important;
 }
 
-/* إلغاء عنصر Glow المتسبب في الهامش العلوي الضخم */
 .company-profile-glow {
   display: none !important;
 }
