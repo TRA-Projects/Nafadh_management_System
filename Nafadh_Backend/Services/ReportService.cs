@@ -59,16 +59,13 @@ namespace Nafadh_Backend.Services
         public async Task<ReportOutputDTO> GenerateTrainerPortalReportAsync(
             ReportInputDTO dto
         )
-        {
-            // ======================================================
-            // Reports folder
-            // Temporary shared storage behavior.
-            // We will move Trainer Portal reports outside the project
-            // in the next storage step.
-            // ======================================================
+        {// ======================================================
+         // External Trainer Portal Reports Storage
+         // ======================================================
 
             // Store Trainer Portal reports outside the project
             // so generated PDF files are never included in Git.
+
             var reportsFolder =
                 _configuration[
                     "Storage:TrainerReportsPath"
@@ -1216,7 +1213,113 @@ namespace Nafadh_Backend.Services
 
             return report.FileUrl;
         }
+        // ==========================================================
+        // Trainer Portal Report File
+        // ==========================================================
 
+        // Resolves Trainer Portal reports only from the configured
+        // external reports folder without affecting shared reports.
+        public async Task<string?>
+            GetTrainerPortalReportFilePathAsync(
+                int reportId
+            )
+        {
+            var report =
+                await GetReportByIdAsync(
+                    reportId
+                );
+
+
+            if (
+                report == null ||
+                string.IsNullOrWhiteSpace(
+                    report.FileUrl
+                )
+            )
+            {
+                return null;
+            }
+
+
+            var reportsFolder =
+                _configuration[
+                    "Storage:TrainerReportsPath"
+                ];
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    reportsFolder
+                )
+            )
+            {
+                return null;
+            }
+
+
+            var reportsRoot =
+                Path.GetFullPath(
+                    reportsFolder
+                );
+
+
+            var filePath =
+                Path.GetFullPath(
+                    report.FileUrl
+                );
+
+
+            var rootWithSeparator =
+                reportsRoot.TrimEnd(
+                    Path.DirectorySeparatorChar,
+                    Path.AltDirectorySeparatorChar
+                )
+                + Path.DirectorySeparatorChar;
+
+
+            // Prevent reading files outside the configured
+            // Trainer Portal reports directory.
+            if (
+                !filePath.StartsWith(
+                    rootWithSeparator,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return null;
+            }
+
+
+            // Keep this endpoint isolated to Trainer Portal PDFs.
+            var fileName =
+                Path.GetFileName(
+                    filePath
+                );
+
+
+            if (
+                !fileName.StartsWith(
+                    "trainer-portal-report-",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return null;
+            }
+
+
+            if (
+                !File.Exists(
+                    filePath
+                )
+            )
+            {
+                return null;
+            }
+
+
+            return filePath;
+        }
         // ==========================================================
         // Analytics / Aggregation
         // ==========================================================
