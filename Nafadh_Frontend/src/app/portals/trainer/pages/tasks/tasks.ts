@@ -43,9 +43,8 @@ import {
     FormsModule,
     RouterLink
   ],
-    templateUrl: './tasks.html',
+  templateUrl: './tasks.html',
   styleUrl: './tasks.scss',
-
 })
 export class TrainerTasks implements OnInit {
 
@@ -900,9 +899,10 @@ export class TrainerTasks implements OnInit {
     );
 
 
-    // نجيب أحدث التسليمات من الباك إند
+    // نستخدم endpoint الخاص بالمدرب
+    // لأنه يرجع traineeName الحقيقي
     this.api
-      .getSubmissionsByTask(
+      .getTrainerTaskSubmissions(
         task.taskId
       )
       .subscribe({
@@ -933,7 +933,7 @@ export class TrainerTasks implements OnInit {
         error: (error) => {
 
           console.error(
-            'Error loading task submissions:',
+            'Error loading trainer task submissions:',
             error
           );
 
