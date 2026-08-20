@@ -69,6 +69,7 @@ export class AdminCompanies implements OnInit {
 
   openAddModal() {
     this.newCompany = this.emptyCompanyForm();
+    this.addError.set('');
     this.showAddModal.set(true);
   }
 
@@ -76,18 +77,35 @@ export class AdminCompanies implements OnInit {
     this.showAddModal.set(false); 
   }
 
-  // تم إضافة هذه الدالة لإزالة خطأ الـ TypeScript وتطابقاً مع الـ HTML
-  closeAllDropdowns() {
-    // مكان لإغلاق القوائم المنسدلة إن وجدت مستقبلاً
-  }
+  closeAllDropdowns() {}
 
   statusLabel(val: any): string {
     return this.statusOptions.find(o => o.value === String(val))?.label ?? val;
   }
 
   submitAddCompany() {
-    this.isSaving.set(true);
     this.addError.set('');
+
+    // 1. التحقق من الحقول الإجبارية
+    if (!this.newCompany.companyName || !this.newCompany.workField || !this.newCompany.capacity || !this.newCompany.email || !this.newCompany.contactName) {
+      this.addError.set('يرجى تعبئة جميع الحقول الإجبارية المعلمة بـ (*)');
+      return;
+    }
+
+    // 2. التحقق من الطاقة الاستيعابية (منع السالب أو الصفر أو القيم الفارغة)
+    if (this.newCompany.capacity <= 0) {
+      this.addError.set('لا يمكن أن تكون الطاقة الاستيعابية رقماً سالباً أو صفراً');
+      return;
+    }
+
+    // 3. التحقق من صحة صيغة البريد الإلكتروني
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(this.newCompany.email)) {
+      this.addError.set('يرجى إدخال بريد إلكتروني صحيح (مثال: name@company.com)');
+      return;
+    }
+
+    this.isSaving.set(true);
 
     this.adminApi.createCompany(this.newCompany).subscribe({
       next: (res: any) => { 
