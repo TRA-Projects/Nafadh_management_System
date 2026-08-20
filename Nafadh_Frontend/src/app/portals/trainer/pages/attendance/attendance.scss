@@ -246,21 +246,24 @@ button:disabled {
   flex-wrap: wrap;
 }
 
-.batch-filter {
+.batch-filter,
+.date-filter {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
 }
 
-.batch-filter label {
+.batch-filter label,
+.date-filter label {
   color: var(--brand);
   font-size: 11px;
   font-weight: 800;
   white-space: nowrap;
 }
 
-.batch-filter select {
+.batch-filter select,
+.date-filter input {
   min-width: 170px;
   height: 36px;
   padding: 0 10px;
@@ -273,20 +276,28 @@ button:disabled {
   outline: none;
 }
 
-.batch-filter select:focus {
+.batch-filter select:focus,
+.date-filter input:focus {
   border-color: var(--cyan);
   box-shadow: 0 0 0 3px rgba(0, 186, 194, .08);
 }
 
-.batch-filter select:disabled {
+.batch-filter select:disabled,
+.date-filter input:disabled {
   opacity: .58;
   cursor: not-allowed;
+}
+
+.date-filter input {
+  min-width: 150px;
+  direction: ltr;
+  text-align: center;
 }
 
 .filter-main {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 60px;
   flex-wrap: wrap;
 }
 
@@ -933,11 +944,13 @@ button:disabled {
     align-items: stretch;
   }
 
-  .batch-filter {
+  .batch-filter,
+  .date-filter {
     width: 100%;
   }
 
-  .batch-filter select {
+  .batch-filter select,
+  .date-filter input {
     flex: 1;
   }
 

@@ -19,8 +19,8 @@ import { environment } from '../../../../../environments/environment';
    ══════════════════════════════════════════════════════════════ */
 export const ATTENDANCE_STATUSES = [
   { code: 0, name: 'Present', key: 'present', label: 'حاضر' },
-  { code: 1, name: 'Absent', key: 'absent', label: 'غائب' },
-  { code: 2, name: 'Late', key: 'late', label: 'متأخر' },
+  { code: 1, name: 'Absent',  key: 'absent',  label: 'غائب' },
+  { code: 2, name: 'Late',    key: 'late',    label: 'متأخر' },
   { code: 3, name: 'Excused', key: 'excused', label: 'بعذر' },
 ] as const;
 export type StatusDef = (typeof ATTENDANCE_STATUSES)[number];
@@ -66,6 +66,23 @@ export class TrainerAttendance implements OnInit {
   // الدفعات المسندة للمدرب + الدفعة المختارة لعرض حضورها فقط
   trainerBatches = signal<any[]>([]);
   selectedBatchId = signal<number | null>(null);
+
+  // التاريخ المختار لعرض سجل الحضور. الافتراضي هو اليوم، ولا يسمح بتاريخ مستقبلي.
+  readonly todayDateKey = this.dateKey(new Date());
+  selectedDate = signal<string>(this.todayDateKey);
+  isTodaySelected = computed(() => this.selectedDate() === this.todayDateKey);
+  selectedDateLabel = computed(() => {
+    const value = this.selectedDate();
+    if (!value) return '';
+
+    return new Intl.DateTimeFormat('ar', {
+      calendar: 'gregory',
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    } as Intl.DateTimeFormatOptions).format(new Date(`${value}T00:00:00`));
+  });
 
   private base = environment.apiBaseUrl;
   private readonly repeatedAbsenceThreshold = 3;
@@ -122,7 +139,7 @@ export class TrainerAttendance implements OnInit {
     private api: TrainerApi,
     private http: HttpClient,
     private auth: AuthService
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.loadCurrentTrainerScope();
@@ -273,23 +290,23 @@ export class TrainerAttendance implements OnInit {
 
         forkJoin(historyRequests).subscribe({
           next: (histories) => {
-            const todayKey = this.dateKey(new Date());
-            const todayRecords: DailyAttendanceDto[] = [];
+            const selectedKey = this.selectedDate();
+            const selectedRecords: DailyAttendanceDto[] = [];
 
             histories.forEach((history) => {
               const record = (history ?? []).find(
-                (a) => this.dateKey(new Date(a.date)) === todayKey
+                (a) => this.dateKey(new Date(a.date)) === selectedKey
               );
 
-              if (record) todayRecords.push(record);
+              if (record) selectedRecords.push(record);
             });
 
             this.attShape = this.detectShape(
-              todayRecords.map((r) => r.status)
+              selectedRecords.map((r) => r.status)
             );
 
             const byEnrollment = new Map<number, DailyAttendanceDto>(
-              todayRecords.map((a) => [a.enrollmentId, a])
+              selectedRecords.map((a) => [a.enrollmentId, a])
             );
 
             const merged: Row[] = scopedEnrollments.map((e) => {
@@ -308,7 +325,9 @@ export class TrainerAttendance implements OnInit {
                 checkOutTime: attendance?.checkOutTime ?? null,
                 status: attendance
                   ? attendance.status
-                  : this.toApi(this.presentStatus(), this.attShape),
+                  : this.isTodaySelected()
+                    ? this.toApi(this.presentStatus(), this.attShape)
+                    : undefined,
                 isLate: attendance?.isLate ?? false,
                 note: attendance?.note ?? null,
               };
@@ -366,6 +385,20 @@ export class TrainerAttendance implements OnInit {
     this.selectedBatchId.set(batchId);
     this.weeklyRows.set([]);
     this.monthlyRows.set([]);
+    this.reload();
+  }
+
+  onDateChange(value: string): void {
+    if (!value || value > this.todayDateKey) return;
+
+    this.selectedDate.set(value);
+    this.query.set('');
+    this.filter.set('all');
+    this.weeklyRows.set([]);
+    this.monthlyRows.set([]);
+
+    // اختيار تاريخ يعني فتح السجل اليومي لذلك التاريخ.
+    this.registerView.set('today');
     this.reload();
   }
 
@@ -506,10 +539,18 @@ export class TrainerAttendance implements OnInit {
   }
 
   // ── الإحصاءات وشريط النداء ──────────────────────────────
-  total = computed(() => this.rows().length);
+  total = computed(() =>
+    this.isTodaySelected()
+      ? this.rows().length
+      : this.rows().filter((r) => r.dailyAttendanceId != null).length
+  );
   marked = computed(() => this.rows().filter((r) => !!this.statusOf(r.status)).length);
-  // غير المحفوظين = من يظهرون حاضرين افتراضياً لكن لم يُنشأ لهم سجل في الباك بعد.
-  unmarked = computed(() => this.rows().filter((r) => r.dailyAttendanceId == null).length);
+  // غير المحفوظين يظهرون فقط في سجل اليوم. السجلات السابقة للعرض والمراجعة فقط.
+  unmarked = computed(() =>
+    this.isTodaySelected()
+      ? this.rows().filter((r) => r.dailyAttendanceId == null).length
+      : 0
+  );
 
   segments = computed(() => {
     const total = this.total() || 1;
@@ -531,6 +572,7 @@ export class TrainerAttendance implements OnInit {
     const f = this.filter();
     return this.rows().filter((r) => {
       const key = this.statusKey(r.status);
+      if (!this.isTodaySelected() && r.dailyAttendanceId == null) return false;
       if (f === 'unmarked' && r.dailyAttendanceId != null) return false;
       if (f === 'absent' && key !== 'absent') return false;
       if (q && !this.normalize(String(r.traineeName ?? '')).includes(q)) return false;
@@ -566,153 +608,158 @@ export class TrainerAttendance implements OnInit {
   }
 
   private loadWeeklyRegister(): void {
-    this.historyLoading.set(true);
+  this.historyLoading.set(true);
 
-    const requests = this.rows().map((row) =>
-      this.http.get<DailyAttendanceDto[]>(
-        `${this.base}/DailyAttendance/enrollment/${row.enrollmentId}`
-      )
-    );
+  const requests = this.rows().map((row) =>
+    this.http.get<DailyAttendanceDto[]>(
+      `${this.base}/DailyAttendance/enrollment/${row.enrollmentId}`
+    )
+  );
 
-    if (!requests.length) {
+  if (!requests.length) {
+    this.weeklyRows.set([]);
+    this.historyLoading.set(false);
+    return;
+  }
+
+  forkJoin(requests).subscribe({
+    next: (histories) => {
+      const now = new Date();
+
+      const startOfWeek = new Date(now);
+      startOfWeek.setHours(0, 0, 0, 0);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      const result = this.rows().map((row, index) => {
+        const history = histories[index] ?? [];
+
+        const weekRecords = history.filter((record) => {
+          const date = new Date(record.date);
+          return date >= startOfWeek && date <= endOfWeek;
+        });
+
+        return {
+          enrollmentId: row.enrollmentId,
+          traineeName: row.traineeName,
+          batchName: row.batchName,
+          present: weekRecords.filter(
+            (r) => this.statusKey(r.status) === 'present'
+          ).length,
+          late: weekRecords.filter(
+            (r) => this.statusKey(r.status) === 'late'
+          ).length,
+          absent: weekRecords.filter(
+            (r) => this.statusKey(r.status) === 'absent'
+          ).length,
+          excused: weekRecords.filter(
+            (r) => this.statusKey(r.status) === 'excused'
+          ).length,
+          total: weekRecords.length,
+        };
+      });
+
+      this.weeklyRows.set(result);
+      this.historyLoading.set(false);
+    },
+
+    error: () => {
       this.weeklyRows.set([]);
       this.historyLoading.set(false);
-      return;
-    }
-
-    forkJoin(requests).subscribe({
-      next: (histories) => {
-        const now = new Date();
-
-        const startOfWeek = new Date(now);
-        startOfWeek.setHours(0, 0, 0, 0);
-        startOfWeek.setDate(now.getDate() - now.getDay());
-
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-        endOfWeek.setHours(23, 59, 59, 999);
-
-        const result = this.rows().map((row, index) => {
-          const history = histories[index] ?? [];
-
-          const weekRecords = history.filter((record) => {
-            const date = new Date(record.date);
-            return date >= startOfWeek && date <= endOfWeek;
-          });
-
-          return {
-            enrollmentId: row.enrollmentId,
-            traineeName: row.traineeName,
-            batchName: row.batchName,
-            present: weekRecords.filter(
-              (r) => this.statusKey(r.status) === 'present'
-            ).length,
-            late: weekRecords.filter(
-              (r) => this.statusKey(r.status) === 'late'
-            ).length,
-            absent: weekRecords.filter(
-              (r) => this.statusKey(r.status) === 'absent'
-            ).length,
-            excused: weekRecords.filter(
-              (r) => this.statusKey(r.status) === 'excused'
-            ).length,
-            total: weekRecords.length,
-          };
-        });
-
-        this.weeklyRows.set(result);
-        this.historyLoading.set(false);
-      },
-
-      error: () => {
-        this.weeklyRows.set([]);
-        this.historyLoading.set(false);
-        this.notify('تعذر تحميل السجل الأسبوعي.', 'err');
-      },
-    });
-  }
+      this.notify('تعذر تحميل السجل الأسبوعي.', 'err');
+    },
+  });
+}
 
   private loadMonthlyRegister(): void {
-    this.historyLoading.set(true);
+  this.historyLoading.set(true);
 
-    const requests = this.rows().map((row) =>
-      this.http.get<DailyAttendanceDto[]>(
-        `${this.base}/DailyAttendance/enrollment/${row.enrollmentId}`
-      )
-    );
+  const requests = this.rows().map((row) =>
+    this.http.get<DailyAttendanceDto[]>(
+      `${this.base}/DailyAttendance/enrollment/${row.enrollmentId}`
+    )
+  );
 
-    if (!requests.length) {
+  if (!requests.length) {
+    this.monthlyRows.set([]);
+    this.historyLoading.set(false);
+    return;
+  }
+
+  forkJoin(requests).subscribe({
+    next: (histories) => {
+      const now = new Date();
+      const month = now.getMonth();
+      const year = now.getFullYear();
+
+      const result = this.rows().map((row, index) => {
+        const history = histories[index] ?? [];
+
+        const monthRecords = history.filter((record) => {
+          const date = new Date(record.date);
+
+          return (
+            date.getMonth() === month &&
+            date.getFullYear() === year
+          );
+        });
+
+        const present = monthRecords.filter(
+          (r) => this.statusKey(r.status) === 'present'
+        ).length;
+
+        const late = monthRecords.filter(
+          (r) => this.statusKey(r.status) === 'late'
+        ).length;
+
+        const absent = monthRecords.filter(
+          (r) => this.statusKey(r.status) === 'absent'
+        ).length;
+
+        const excused = monthRecords.filter(
+          (r) => this.statusKey(r.status) === 'excused'
+        ).length;
+
+        const total = monthRecords.length;
+
+        const commitment =
+          total === 0
+            ? 0
+            : Math.round(((present + late + excused) / total) * 100);
+
+        return {
+          enrollmentId: row.enrollmentId,
+          traineeName: row.traineeName,
+          batchName: row.batchName,
+          present,
+          late,
+          absent,
+          excused,
+          total,
+          commitment,
+        };
+      });
+
+      this.monthlyRows.set(result);
+      this.historyLoading.set(false);
+    },
+
+    error: () => {
       this.monthlyRows.set([]);
       this.historyLoading.set(false);
+      this.notify('تعذر تحميل السجل الشهري.', 'err');
+    },
+  });
+}
+  confirmToday() {
+    if (!this.isTodaySelected()) {
+      this.notify('السجل السابق مخصص للعرض ومراجعة الأعذار فقط.', 'err');
       return;
     }
 
-    forkJoin(requests).subscribe({
-      next: (histories) => {
-        const now = new Date();
-        const month = now.getMonth();
-        const year = now.getFullYear();
-
-        const result = this.rows().map((row, index) => {
-          const history = histories[index] ?? [];
-
-          const monthRecords = history.filter((record) => {
-            const date = new Date(record.date);
-
-            return (
-              date.getMonth() === month &&
-              date.getFullYear() === year
-            );
-          });
-
-          const present = monthRecords.filter(
-            (r) => this.statusKey(r.status) === 'present'
-          ).length;
-
-          const late = monthRecords.filter(
-            (r) => this.statusKey(r.status) === 'late'
-          ).length;
-
-          const absent = monthRecords.filter(
-            (r) => this.statusKey(r.status) === 'absent'
-          ).length;
-
-          const excused = monthRecords.filter(
-            (r) => this.statusKey(r.status) === 'excused'
-          ).length;
-
-          const total = monthRecords.length;
-
-          const commitment =
-            total === 0
-              ? 0
-              : Math.round(((present + late + excused) / total) * 100);
-
-          return {
-            enrollmentId: row.enrollmentId,
-            traineeName: row.traineeName,
-            batchName: row.batchName,
-            present,
-            late,
-            absent,
-            excused,
-            total,
-            commitment,
-          };
-        });
-
-        this.monthlyRows.set(result);
-        this.historyLoading.set(false);
-      },
-
-      error: () => {
-        this.monthlyRows.set([]);
-        this.historyLoading.set(false);
-        this.notify('تعذر تحميل السجل الشهري.', 'err');
-      },
-    });
-  }
-  confirmToday() {
     const unsavedPresent = this.rows().filter(
       (r) => r.dailyAttendanceId == null && this.statusKey(r.status) === 'present'
     );
@@ -784,6 +831,11 @@ export class TrainerAttendance implements OnInit {
 
   // ── تسجيل الحالة ────────────────────────────────────────
   setStatus(row: Row, def: StatusDef) {
+    if (!this.isTodaySelected()) {
+      this.notify('لا يمكن تعديل حالة الحضور ليوم سابق من هذا الكشف.', 'err');
+      return;
+    }
+
     if (this.isActive(row, def) || this.savingId() !== null) return;
 
     const before = { ...row };
@@ -908,12 +960,7 @@ export class TrainerAttendance implements OnInit {
       if (done + failed < target.length) return;
       this.savingId.set(null);
       if (failed) this.notify(`تعذّر حفظ ${failed} من ${target.length}. أعد المحاولة لمن بقي.`, 'err');
-      else {
-        this.notify(
-          `تم تأكيد سجل اليوم لـ ${this.rows().length} متدرباً بنجاح.`,
-          'ok'
-        );
-      }
+      else this.notify(`سُجِّل ${done} متدرباً كحاضرين.`, 'ok');
       this.reload();
     };
 
@@ -999,11 +1046,17 @@ export class TrainerAttendance implements OnInit {
 
     const code = approve ? EXCUSE_STATUS.approved : EXCUSE_STATUS.rejected;
     const value = this.excuseShape === 'name' ? (approve ? 'Approved' : 'Rejected')
-      : this.excuseShape === 'numeric-text' ? String(code) : code;
+                : this.excuseShape === 'numeric-text' ? String(code) : code;
 
     this.api.reviewExcuse(ex.excuseId, { status: value } as any).subscribe({
       next: () => {
-        this.excuses.update((list) => list.filter((e) => e.excuseId !== ex.excuseId));
+        this.excuses.update((list) =>
+          list.map((e) =>
+            e.excuseId === ex.excuseId
+              ? ({ ...e, status: value } as Excuse)
+              : e
+          )
+        );
         this.reviewingId.set(null);
         this.notify(approve ? 'قُبل العذر.' : 'رُفض العذر.', 'ok');
       },

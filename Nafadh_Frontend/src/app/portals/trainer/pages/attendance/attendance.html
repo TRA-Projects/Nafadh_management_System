@@ -70,6 +70,18 @@
       </select>
     </div>
 
+    <div class="date-filter">
+      <label for="attendanceDate">التاريخ</label>
+
+      <input
+        id="attendanceDate"
+        type="date"
+        [ngModel]="selectedDate()"
+        (ngModelChange)="onDateChange($event)"
+        [max]="todayDateKey"
+        [disabled]="loading()" />
+    </div>
+
     <div class="filter-main">
       <div class="tabs" role="tablist" aria-label="نوع السجل">
         <button
