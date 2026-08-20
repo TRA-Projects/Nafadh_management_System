@@ -22,6 +22,8 @@ import {
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 
+// Used to build the public URL for uploaded training materials
+import { environment } from '../../../../../environments/environment';
 import {
   BatchDto,
   LessonDto,
@@ -1771,35 +1773,93 @@ export class TrainerContent implements OnInit {
 
 
   // =====================================================
-  // MATERIAL NAME
-  // =====================================================
+// MATERIAL NAME
+// =====================================================
 
-  getMaterialName(
-    material: TrainingMaterialDto
-  ): string {
+getMaterialName(
+  material: TrainingMaterialDto
+): string {
 
-    if (
-      material.fileType ===
-      'Link'
-    ) {
+  if (
+    material.fileType ===
+    'Link'
+  ) {
 
-      return material.fileUrl;
-
-    }
-
-
-    const parts =
-      material.fileUrl
-        .split('/');
-
-
-    return (
-      parts[
-        parts.length - 1
-      ] ||
-      'ملف'
-    );
+    return material.fileUrl;
 
   }
+
+
+  const parts =
+    material.fileUrl
+      .split('/');
+
+
+  return (
+    parts[
+      parts.length - 1
+    ] ||
+    'ملف'
+  );
+
+}
+
+
+// =====================================================
+// MATERIAL PUBLIC URL
+// =====================================================
+
+/**
+ * Builds the public browser URL for uploaded
+ * training materials.
+ *
+ * External links are returned as they are.
+ * Uploaded files are served by the backend
+ * from the external storage request path.
+ */
+getMaterialUrl(
+  material: TrainingMaterialDto
+): string {
+
+  // External reference link
+  if (
+    material.fileType ===
+    'Link'
+  ) {
+
+    return material.fileUrl;
+
+  }
+
+
+  // Example:
+  // environment.apiBaseUrl
+  // https://localhost:7082/api
+  //
+  // We need:
+  // https://localhost:7082
+
+  const apiRoot =
+    environment.apiBaseUrl
+      .replace(
+        /\/api\/?$/,
+        ''
+      );
+
+
+  // Make sure the stored path
+  // starts with /
+  const filePath =
+    material.fileUrl
+      .startsWith('/')
+      ? material.fileUrl
+      : `/${material.fileUrl}`;
+
+
+  return (
+    `${apiRoot}${filePath}`
+  );
+
+}
 
 }
