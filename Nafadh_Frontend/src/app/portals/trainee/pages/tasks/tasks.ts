@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { TraineeApi } from '../../services/trainee-api';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 import {
   ProjectDto,
@@ -17,19 +18,20 @@ import {
   selector: 'app-trainee-tasks',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './tasks.html',
+  templateUrl: './tasks.html'
 })
 export class TraineeTasks implements OnInit {
 
   // =========================================================
-  // Injections
+  // Services
   // =========================================================
 
   private api = inject(TraineeApi);
+  private auth = inject(AuthService);
 
 
   // =========================================================
-  // IDs - يتم جلبها من قاعدة البيانات
+  // IDs
   // =========================================================
 
   traineeId = signal<number | null>(null);
@@ -48,7 +50,7 @@ export class TraineeTasks implements OnInit {
 
 
   // =========================================================
-  // الصفحة
+  // التبويب
   // =========================================================
 
   tab = signal<'assignments' | 'projects'>('assignments');
@@ -63,35 +65,37 @@ export class TraineeTasks implements OnInit {
   projects = signal<ProjectDto[]>([]);
 
 
-  // المهمة المحددة
+  // =========================================================
+  // العناصر المحددة
+  // =========================================================
+
   selected = signal<TaskDto | null>(null);
-
-
-  // المشروع المحدد
   selectedProject = signal<ProjectDto | null>(null);
 
 
+  // =========================================================
   // رابط التسليم
+  // =========================================================
+
   submissionLink = '';
 
 
-  // حالة التحميل
+  // =========================================================
+  // Loading states
+  // =========================================================
+
   loadingTasks = signal(false);
   loadingSubmissions = signal(false);
   loadingProjects = signal(false);
-  submitting = signal(false);
   loadingProfile = signal(false);
+  submitting = signal(false);
 
 
-  // رسالة الخطأ
+  // =========================================================
+  // Error
+  // =========================================================
+
   errorMessage = signal('');
-
-
-  // =========================================================
-  // Constructor
-  // =========================================================
-
-  constructor() {}
 
 
   // =========================================================
@@ -108,75 +112,185 @@ export class TraineeTasks implements OnInit {
   // =========================================================
 
   loadTraineeData(): void {
+
     this.loadingProfile.set(true);
     this.errorMessage.set('');
 
-    // نحصل على معرف المستخدم من التخزين المحلي أو من خدمة المصادقة
-    const userId = this.getCurrentUserId();
+    // استخدام AuthService بدل localStorage.getItem('userId')
+    const userId = this.auth.userId;
+
+    console.log('Current User ID:', userId);
 
     if (!userId) {
-      this.errorMessage.set('يرجى تسجيل الدخول أولاً.');
+
       this.loadingProfile.set(false);
+
+      this.errorMessage.set(
+        'لم يتم العثور على المستخدم الحالي. يرجى تسجيل الدخول مرة أخرى.'
+      );
+
       return;
     }
 
-    // جلب بيانات المتدرب
+
+    // =======================================================
+    // GET /api/User/{userId}/trainee
+    // =======================================================
+
     this.api.getTrainee(userId).subscribe({
+
       next: (trainee: TraineeProfileDto) => {
+
+        console.log('Trainee:', trainee);
+
+        if (!trainee) {
+
+          this.loadingProfile.set(false);
+
+          this.errorMessage.set(
+            'لم يتم العثور على بيانات المتدرب.'
+          );
+
+          return;
+        }
+
+
         this.traineeData.set(trainee);
+
         this.traineeId.set(trainee.traineeId);
 
-        // بعد جلب المتدرب، نجلب تسجيلاته
-        if (trainee.traineeId) {
-          this.loadEnrollments(trainee.traineeId);
-        } else {
+
+        if (!trainee.traineeId) {
+
           this.loadingProfile.set(false);
-          this.errorMessage.set('لم يتم العثور على بيانات المتدرب.');
+
+          this.errorMessage.set(
+            'لم يتم العثور على معرف المتدرب.'
+          );
+
+          return;
         }
+
+
+        // تحميل التسجيلات
+        this.loadEnrollments(trainee.traineeId);
+
       },
-      error: (error: any) => {
-        console.error('Error loading trainee:', error);
+
+      error: (error) => {
+
+        console.error(
+          'Error loading trainee:',
+          error
+        );
+
         this.loadingProfile.set(false);
-        this.errorMessage.set('تعذر تحميل بيانات المتدرب.');
+
+        this.errorMessage.set(
+          'تعذر تحميل بيانات المتدرب.'
+        );
       }
+
     });
   }
 
 
   // =========================================================
-  // تحميل تسجيلات المتدرب
+  // تحميل التسجيلات
   // GET /api/Enrollment/trainee/{traineeId}
   // =========================================================
 
   loadEnrollments(traineeId: number): void {
+
     this.api.getEnrollmentsByTrainee(traineeId).subscribe({
+
       next: (enrollments: EnrollmentDto[]) => {
-        if (enrollments && enrollments.length > 0) {
-          // نأخذ أول تسجيل نشط
-          const activeEnrollment = enrollments.find(e =>
+
+        console.log(
+          'Trainee Enrollments:',
+          enrollments
+        );
+
+
+        if (!enrollments || enrollments.length === 0) {
+
+          this.loadingProfile.set(false);
+
+          this.errorMessage.set(
+            'لا توجد تسجيلات لهذا المتدرب.'
+          );
+
+          return;
+        }
+
+
+        // البحث عن التسجيل النشط
+        const activeEnrollment =
+          enrollments.find(e =>
             e.completionStatus === 'Active' ||
             e.completionStatus === 'InProgress'
-          ) || enrollments[0];
+          ) ?? enrollments[0];
 
-          this.enrollmentData.set(activeEnrollment);
-          this.enrollmentId.set(activeEnrollment.enrollmentId);
-          this.batchId.set(activeEnrollment.batchId);
 
-          // جلب بيانات الباتش للحصول على programId
-          this.loadBatchData(activeEnrollment.batchId);
+        console.log(
+          'Selected Enrollment:',
+          activeEnrollment
+        );
 
-          // تحميل التسليمات
-          this.loadSubmissions(traineeId);
-        } else {
+
+        this.enrollmentData.set(
+          activeEnrollment
+        );
+
+        this.enrollmentId.set(
+          activeEnrollment.enrollmentId
+        );
+
+
+        this.batchId.set(
+          activeEnrollment.batchId
+        );
+
+
+        if (!activeEnrollment.batchId) {
+
           this.loadingProfile.set(false);
-          this.errorMessage.set('لا توجد تسجيلات نشطة للمتدرب.');
+
+          this.errorMessage.set(
+            'لم يتم العثور على الدفعة الخاصة بالتسجيل.'
+          );
+
+          return;
         }
+
+
+        // تحميل بيانات الباتش
+        this.loadBatchData(
+          activeEnrollment.batchId
+        );
+
+
+        // تحميل التسليمات
+        this.loadSubmissions(
+          traineeId
+        );
+
       },
-      error: (error: any) => {
-        console.error('Error loading enrollments:', error);
+
+      error: (error) => {
+
+        console.error(
+          'Error loading enrollments:',
+          error
+        );
+
         this.loadingProfile.set(false);
-        this.errorMessage.set('تعذر تحميل تسجيلات المتدرب.');
+
+        this.errorMessage.set(
+          'تعذر تحميل تسجيلات المتدرب.'
+        );
       }
+
     });
   }
 
@@ -187,46 +301,82 @@ export class TraineeTasks implements OnInit {
   // =========================================================
 
   loadBatchData(batchId: number): void {
+
     this.api.getBatch(batchId).subscribe({
+
       next: (batch: BatchDto) => {
+
+        console.log(
+          'Batch:',
+          batch
+        );
+
+
+        if (!batch) {
+
+          this.loadingProfile.set(false);
+
+          this.errorMessage.set(
+            'لم يتم العثور على بيانات الدفعة.'
+          );
+
+          return;
+        }
+
+
         this.batchData.set(batch);
-        this.programId.set(batch.programId);
 
-        // تحميل المهام والمشاريع بعد الحصول على المعرفات
+        this.programId.set(
+          batch.programId
+        );
+
+
+        // ===================================================
+        // تحميل المهام
+        // ===================================================
+
         this.loadTasks(batchId);
-        this.loadProjects(batch.programId);
+
+
+        // ===================================================
+        // تحميل المشاريع
+        // ===================================================
+
+        if (batch.programId) {
+
+          this.loadProjects(
+            batch.programId
+          );
+
+        } else {
+
+          console.warn(
+            'Batch does not contain programId'
+          );
+
+          this.projects.set([]);
+        }
+
 
         this.loadingProfile.set(false);
+
       },
-      error: (error: any) => {
-        console.error('Error loading batch:', error);
+
+      error: (error) => {
+
+        console.error(
+          'Error loading batch:',
+          error
+        );
+
         this.loadingProfile.set(false);
-        this.errorMessage.set('تعذر تحميل بيانات الدفعة.');
+
+        this.errorMessage.set(
+          'تعذر تحميل بيانات الدفعة.'
+        );
       }
+
     });
-  }
-
-
-  // =========================================================
-  // الحصول على معرف المستخدم الحالي
-  // =========================================================
-
-  private getCurrentUserId(): number {
-    // محاولة الحصول على معرف المستخدم من localStorage
-    const userIdFromStorage = localStorage.getItem('userId');
-    if (userIdFromStorage) {
-      return parseInt(userIdFromStorage, 10);
-    }
-
-    // محاولة الحصول من sessionStorage
-    const userIdFromSession = sessionStorage.getItem('userId');
-    if (userIdFromSession) {
-      return parseInt(userIdFromSession, 10);
-    }
-
-    // يمكنك استبدال هذا بمعرف المستخدم الفعلي من خدمة المصادقة
-    // return this.authService.currentUserId;
-    return 1; // مؤقتاً
   }
 
 
@@ -236,64 +386,131 @@ export class TraineeTasks implements OnInit {
   // =========================================================
 
   loadTasks(batchId: number): void {
+
     this.loadingTasks.set(true);
-    this.errorMessage.set('');
+
 
     this.api.getTasks(batchId).subscribe({
+
       next: (data: TaskDto[]) => {
-        this.tasks.set(data ?? []);
+
+        console.log(
+          'Tasks:',
+          data
+        );
+
+
+        this.tasks.set(
+          data ?? []
+        );
+
         this.loadingTasks.set(false);
+
       },
-      error: (error: any) => {
-        console.error('Error loading tasks:', error);
+
+      error: (error) => {
+
+        console.error(
+          'Error loading tasks:',
+          error
+        );
+
         this.tasks.set([]);
+
         this.loadingTasks.set(false);
-        this.errorMessage.set('تعذر تحميل المهام.');
+
       }
+
     });
   }
 
 
   // =========================================================
-  // تحميل تسليمات المتدرب
+  // تحميل التسليمات
   // GET /api/Submission/trainee/{traineeId}
   // =========================================================
 
   loadSubmissions(traineeId: number): void {
+
     this.loadingSubmissions.set(true);
 
+
     this.api.getSubmissions(traineeId).subscribe({
+
       next: (data: SubmissionDto[]) => {
-        this.submissions.set(data ?? []);
+
+        console.log(
+          'Submissions:',
+          data
+        );
+
+
+        this.submissions.set(
+          data ?? []
+        );
+
         this.loadingSubmissions.set(false);
+
       },
-      error: (error: any) => {
-        console.error('Error loading submissions:', error);
+
+      error: (error) => {
+
+        console.error(
+          'Error loading submissions:',
+          error
+        );
+
         this.submissions.set([]);
+
         this.loadingSubmissions.set(false);
+
       }
+
     });
   }
 
 
   // =========================================================
-  // تحميل مشاريع البرنامج
+  // تحميل المشاريع
   // GET /api/Project/program/{programId}
   // =========================================================
 
   loadProjects(programId: number): void {
+
     this.loadingProjects.set(true);
 
+
     this.api.getProjectsByProgram(programId).subscribe({
+
       next: (data: ProjectDto[]) => {
-        this.projects.set(data ?? []);
+
+        console.log(
+          'Projects:',
+          data
+        );
+
+
+        this.projects.set(
+          data ?? []
+        );
+
         this.loadingProjects.set(false);
+
       },
-      error: (error: any) => {
-        console.error('Error loading projects:', error);
+
+      error: (error) => {
+
+        console.error(
+          'Error loading projects:',
+          error
+        );
+
         this.projects.set([]);
+
         this.loadingProjects.set(false);
+
       }
+
     });
   }
 
@@ -303,43 +520,61 @@ export class TraineeTasks implements OnInit {
   // =========================================================
 
   selectTask(task: TaskDto): void {
+
     this.selected.set(task);
+
     this.submissionLink = '';
 
-    const submission = this.submissionFor(task.taskId);
+
+    const submission =
+      this.submissionFor(task.taskId);
+
 
     if (submission) {
-      this.submissionLink = this.getSubmissionUrl(submission);
+
+      this.submissionLink =
+        this.getSubmissionUrl(submission);
+
     }
   }
 
 
   // =========================================================
-  // العودة من تفاصيل المهمة
+  // العودة للمهام
   // =========================================================
 
   backToTasks(): void {
+
     this.selected.set(null);
+
     this.submissionLink = '';
+
   }
 
 
   // =========================================================
-  // الحصول على تسليم مهمة معينة
+  // البحث عن تسليم المهمة
   // =========================================================
 
-  submissionFor(taskId: number): SubmissionDto | undefined {
+  submissionFor(
+    taskId: number
+  ): SubmissionDto | undefined {
+
     return this.submissions().find(
-      submission => submission.taskId === taskId
+      submission =>
+        submission.taskId === taskId
     );
   }
 
 
   // =========================================================
-  // الحصول على رابط التسليم
+  // رابط التسليم
   // =========================================================
 
-  private getSubmissionUrl(submission: SubmissionDto): string {
+  private getSubmissionUrl(
+    submission: SubmissionDto
+  ): string {
+
     const data = submission as any;
 
     return (
@@ -358,48 +593,86 @@ export class TraineeTasks implements OnInit {
   // =========================================================
 
   submit(): void {
+
     const task = this.selected();
-    const traineeId = this.traineeId();
+
+    const traineeId =
+      this.traineeId();
+
 
     if (!task) {
       return;
     }
 
+
     if (!traineeId) {
-      this.errorMessage.set('لم يتم تحديد المتدرب.');
+
+      this.errorMessage.set(
+        'لم يتم تحديد المتدرب.'
+      );
+
       return;
     }
 
-    const link = this.submissionLink.trim();
+
+    const link =
+      this.submissionLink.trim();
+
 
     if (!link) {
-      this.errorMessage.set('يرجى إدخال رابط التسليم.');
+
+      this.errorMessage.set(
+        'يرجى إدخال رابط التسليم.'
+      );
+
       return;
     }
 
+
     this.submitting.set(true);
+
     this.errorMessage.set('');
 
+
     this.api.submitAssignment({
+
       taskId: task.taskId,
+
       traineeId: traineeId,
+
       fileUrl: link
+
     }).subscribe({
+
       next: () => {
+
         this.submitting.set(false);
+
         this.submissionLink = '';
+
         this.selected.set(null);
 
-        const currentTraineeId = this.traineeId();
-        if (currentTraineeId) {
-          this.loadSubmissions(currentTraineeId);
-        }
+
+        this.loadSubmissions(
+          traineeId
+        );
+
       },
-      error: (error: any) => {
-        console.error('Error submitting assignment:', error);
+
+      error: (error) => {
+
+        console.error(
+          'Error submitting assignment:',
+          error
+        );
+
         this.submitting.set(false);
-        this.errorMessage.set('حدث خطأ أثناء تسليم المهمة.');
+
+        this.errorMessage.set(
+          'حدث خطأ أثناء تسليم المهمة.'
+        );
       }
+
     });
   }
 
@@ -409,9 +682,15 @@ export class TraineeTasks implements OnInit {
   // =========================================================
 
   displayStatus(status: any): string {
-    const value = String(status ?? '').toLowerCase().trim();
+
+    const value =
+      String(status ?? '')
+        .toLowerCase()
+        .trim();
+
 
     switch (value) {
+
       case 'submitted':
       case 'submit':
       case 'submittedforreview':
@@ -419,23 +698,28 @@ export class TraineeTasks implements OnInit {
       case 'review':
         return 'قيد المراجعة';
 
+
       case 'graded':
       case 'completed':
       case 'complete':
         return 'مكتمل';
 
+
       case 'rejected':
       case 'returned':
         return 'مُعاد';
+
 
       case 'late':
       case 'overdue':
         return 'متأخر';
 
+
       case 'new':
       case 'pending':
       case '':
         return 'جديد';
+
 
       default:
         return String(status);
@@ -444,27 +728,31 @@ export class TraineeTasks implements OnInit {
 
 
   // =========================================================
-  // لون خلفية حالة المهمة
+  // خلفية الحالة
   // =========================================================
 
   statusBackground(status: any): string {
-    const value = String(status ?? '').toLowerCase().trim();
+
+    const value =
+      String(status ?? '')
+        .toLowerCase()
+        .trim();
+
 
     switch (value) {
+
       case 'submitted':
       case 'submittedforreview':
       case 'underreview':
       case 'review':
         return 'var(--status-active-bg)';
 
+
       case 'graded':
       case 'completed':
       case 'complete':
         return 'var(--status-completed-bg)';
 
-      case 'rejected':
-      case 'returned':
-        return 'var(--status-new-bg)';
 
       default:
         return 'var(--status-new-bg)';
@@ -473,23 +761,31 @@ export class TraineeTasks implements OnInit {
 
 
   // =========================================================
-  // لون النص
+  // لون الحالة
   // =========================================================
 
   statusForeground(status: any): string {
-    const value = String(status ?? '').toLowerCase().trim();
+
+    const value =
+      String(status ?? '')
+        .toLowerCase()
+        .trim();
+
 
     switch (value) {
+
       case 'submitted':
       case 'submittedforreview':
       case 'underreview':
       case 'review':
         return 'var(--status-active-fg)';
 
+
       case 'graded':
       case 'completed':
       case 'complete':
         return 'var(--status-completed-fg)';
+
 
       default:
         return 'var(--status-new-fg)';
@@ -501,17 +797,24 @@ export class TraineeTasks implements OnInit {
   // اختيار المشروع
   // =========================================================
 
-  selectProject(project: ProjectDto): void {
-    this.selectedProject.set(project);
+  selectProject(
+    project: ProjectDto
+  ): void {
+
+    this.selectedProject.set(
+      project
+    );
   }
 
 
   // =========================================================
-  // العودة إلى المشاريع
+  // العودة للمشاريع
   // =========================================================
 
   backToProjects(): void {
+
     this.selectedProject.set(null);
+
   }
 
 
@@ -519,8 +822,12 @@ export class TraineeTasks implements OnInit {
   // نسبة إنجاز المشروع
   // =========================================================
 
-  projectProgress(project: ProjectDto): number {
+  projectProgress(
+    project: ProjectDto
+  ): number {
+
     const p = project as any;
+
 
     const value =
       p.progressPercentage ??
@@ -530,13 +837,23 @@ export class TraineeTasks implements OnInit {
       p.percentage ??
       0;
 
-    const number = Number(value);
+
+    const number =
+      Number(value);
+
 
     if (Number.isNaN(number)) {
       return 0;
     }
 
-    return Math.min(100, Math.max(0, Math.round(number)));
+
+    return Math.min(
+      100,
+      Math.max(
+        0,
+        Math.round(number)
+      )
+    );
   }
 
 
@@ -544,8 +861,12 @@ export class TraineeTasks implements OnInit {
   // تاريخ بداية المشروع
   // =========================================================
 
-  projectStartDate(project: ProjectDto): any {
+  projectStartDate(
+    project: ProjectDto
+  ): any {
+
     const p = project as any;
+
 
     return (
       p.startDate ??
@@ -560,8 +881,12 @@ export class TraineeTasks implements OnInit {
   // تاريخ نهاية المشروع
   // =========================================================
 
-  projectEndDate(project: ProjectDto): any {
+  projectEndDate(
+    project: ProjectDto
+  ): any {
+
     const p = project as any;
+
 
     return (
       p.endDate ??
@@ -577,36 +902,84 @@ export class TraineeTasks implements OnInit {
   // حالة المشروع
   // =========================================================
 
-  displayProjectStatus(project: ProjectDto): string {
+  displayProjectStatus(
+    project: ProjectDto
+  ): string {
+
     const p = project as any;
 
-    const status = String(p.status ?? '').toLowerCase().trim();
+
+    const status =
+      String(p.status ?? '')
+        .toLowerCase()
+        .trim();
+
+
+    const progress =
+      this.projectProgress(project);
+
 
     if (
       status === 'completed' ||
       status === 'complete' ||
-      this.projectProgress(project) === 100
+      progress === 100
     ) {
+
       return 'مكتمل';
     }
+
 
     if (
       status === 'new' ||
       status === 'pending' ||
-      this.projectProgress(project) === 0
+      progress === 0
     ) {
+
       return 'جديد';
     }
+
 
     if (
       status === 'active' ||
       status === 'inprogress' ||
       status === 'in progress'
     ) {
+
       return 'مستمر';
     }
 
+
     return p.status || 'مستمر';
+  }
+
+
+  // =========================================================
+  // خلفية حالة المشروع
+  // =========================================================
+
+  projectStatusBackground(
+    project: ProjectDto
+  ): string {
+
+    const status =
+      this.displayProjectStatus(
+        project
+      );
+
+
+    if (status === 'مكتمل') {
+
+      return 'var(--status-completed-bg)';
+    }
+
+
+    if (status === 'جديد') {
+
+      return 'var(--status-new-bg)';
+    }
+
+
+    return 'var(--status-active-bg)';
   }
 
 
@@ -614,31 +987,27 @@ export class TraineeTasks implements OnInit {
   // لون حالة المشروع
   // =========================================================
 
-  projectStatusBackground(project: ProjectDto): string {
-    const status = this.displayProjectStatus(project);
+  projectStatusForeground(
+    project: ProjectDto
+  ): string {
+
+    const status =
+      this.displayProjectStatus(
+        project
+      );
+
 
     if (status === 'مكتمل') {
-      return 'var(--status-completed-bg)';
-    }
 
-    if (status === 'جديد') {
-      return 'var(--status-new-bg)';
-    }
-
-    return 'var(--status-active-bg)';
-  }
-
-
-  projectStatusForeground(project: ProjectDto): string {
-    const status = this.displayProjectStatus(project);
-
-    if (status === 'مكتمل') {
       return 'var(--status-completed-fg)';
     }
 
+
     if (status === 'جديد') {
+
       return 'var(--status-new-fg)';
     }
+
 
     return 'var(--status-active-fg)';
   }
@@ -648,8 +1017,13 @@ export class TraineeTasks implements OnInit {
   // دائرة الإنجاز
   // =========================================================
 
-  projectProgressBackground(progress: number): string {
-    const angle = progress * 3.6;
+  projectProgressBackground(
+    progress: number
+  ): string {
+
+    const angle =
+      progress * 3.6;
+
 
     return `
       conic-gradient(
@@ -664,67 +1038,105 @@ export class TraineeTasks implements OnInit {
   // مراحل المشروع
   // =========================================================
 
-  projectSteps(project: ProjectDto) {
-    const progress = this.projectProgress(project);
+  projectSteps(
+    project: ProjectDto
+  ) {
+
+    const progress =
+      this.projectProgress(project);
+
 
     let currentStep = 1;
 
+
     if (progress >= 75) {
+
       currentStep = 4;
+
     } else if (progress >= 50) {
+
       currentStep = 3;
+
     } else if (progress >= 25) {
+
       currentStep = 2;
+
     }
 
+
     return [
+
       {
         number: 1,
         name: 'التخطيط',
         completed: progress >= 25,
         current: currentStep === 1
       },
+
       {
         number: 2,
         name: 'التطوير',
         completed: progress >= 50,
         current: currentStep === 2
       },
+
       {
         number: 3,
         name: 'الاختبار',
         completed: progress >= 75,
         current: currentStep === 3
       },
+
       {
         number: 4,
         name: 'التسليم',
         completed: progress >= 100,
         current: currentStep === 4
       }
+
     ];
   }
 
 
   // =========================================================
-  // إعادة تحميل البيانات
+  // Refresh
   // =========================================================
 
   refreshData(): void {
-    const batchId = this.batchId();
-    const traineeId = this.traineeId();
-    const programId = this.programId();
+
+    const batchId =
+      this.batchId();
+
+    const traineeId =
+      this.traineeId();
+
+    const programId =
+      this.programId();
+
 
     if (batchId) {
-      this.loadTasks(batchId);
+
+      this.loadTasks(
+        batchId
+      );
     }
+
 
     if (traineeId) {
-      this.loadSubmissions(traineeId);
+
+      this.loadSubmissions(
+        traineeId
+      );
     }
 
+
     if (programId) {
-      this.loadProjects(programId);
+
+      this.loadProjects(
+        programId
+      );
     }
+
   }
+
 }
