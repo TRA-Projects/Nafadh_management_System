@@ -1,4 +1,4 @@
-/* تنسيق العناصر والأزرار الهيكلية */
+/* التنسيق الأساسي للصفحة */
 .nfd-page-header {
   margin-bottom: 24px;
 }
@@ -68,7 +68,7 @@
 }
 
 .nfd-btn.primary-teal {
-  background-color: #0A1172;
+  background-color:#0A1172;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -127,7 +127,6 @@
   vertical-align: middle;
 }
 
-/* معلومات المستخدم والرمز */
 .user-info {
   display: flex;
   align-items: center;
@@ -162,31 +161,55 @@
   font-size: 0.8rem;
 }
 
-/* الشارات Badges */
+/* الشارة الأساسية General Badge */
 .nfd-badge {
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.8rem;
+  padding: 4px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
   font-weight: 500;
   display: inline-block;
+  text-align: center;
 }
 
+/* شارات الحالة */
 .nfd-badge.status.active {
-  background-color: #ccfbf1;
-  color: #0f766e;
+  background-color: #e6fffa;
+  border: 1px solid #9ae6b4;
+  color: #234e52;
 }
 
 .nfd-badge.status.suspended {
-  background-color: #ffe4e6;
-  color: #be123c;
+  background-color: #fff5f5;
+  border: 1px solid #feb2b2;
+  color: #9b2c2c;
 }
 
-.nfd-badge.role {
-  background-color: #f1f5f9;
-  color: #475569;
+/* --- ألوان وتصميم شارات الأدوار المطابقة للصورة --- */
+.nfd-badge.role.admin {
+  background-color: #f0f5ff;
+  border: 1px solid #adc6ff;
+  color: #2f54eb; /* هيئة - أزرق */
 }
 
-/* --- تنسيق أزرار العمليات المضافة --- */
+.nfd-badge.role.trainer {
+  background-color: #e6fffb;
+  border: 1px solid #87e8de;
+  color: #13c2c2; /* مدرب - تركواز/أخضر ناعم */
+}
+
+.nfd-badge.role.companysupervisor {
+  background-color: #fffbe6;
+  border: 1px solid #ffe58f;
+  color: #d48806; /* شركة - أصفر/ذهبي */
+}
+
+.nfd-badge.role.trainee {
+  background-color: #f5f5f5;
+  border: 1px solid #d9d9d9;
+  color: #595959; /* متدرب - رمادي */
+}
+
+/* أزرار العمليات */
 .action-buttons-wrapper {
   display: flex;
   align-items: center;
@@ -210,14 +233,12 @@
   transition: all 0.2s ease;
 }
 
-/* تأثير زر تعديل البيانات عند التمرير */
 .btn-action.edit-btn:hover {
   background-color: #f1f5f9;
   border-color: #94a3b8;
   color: #0f172a;
 }
 
-/* تأثير زر كلمة المرور عند التمرير */
 .btn-action.password-btn:hover {
   background-color: #f0fdf4;
   border-color: #86efac;
@@ -248,7 +269,7 @@
   color: #334155;
 }
 
-/* النوافذ المنبثقة Modal */
+/* Modals */
 .nfd-modal-bg {
   position: fixed;
   top: 0;

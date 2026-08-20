@@ -6,7 +6,6 @@
 <div class="nfd-card">
   <!-- شريط التحكم: الفلاتر يمين، الزر يسار -->
   <div class="nfd-toolbar">
-    <!-- أزرار الفلترة جهة اليمين -->
     <div class="nfd-chips">
       @for (r of roles(); track r.key) {
         <button
@@ -20,7 +19,6 @@
       }
     </div>
 
-    <!-- زر إنشاء حساب جديد جهة اليسار -->
     <div class="action-button-container">
       <button type="button" class="nfd-btn primary-teal" (click)="openCreateModal()">
         <i class="bi bi-plus-lg"></i>
@@ -68,10 +66,10 @@
               </div>
             </td>
 
-            <!-- 2. الدور -->
+            <!-- 2. الدور (مطابق للصورة) -->
             <td class="text-center">
-              <span class="nfd-badge role" [ngClass]="(u.roleName || '').toLowerCase()">
-                {{ u.roleName }}
+              <span class="nfd-badge role" [ngClass]="getRoleClass(u.roleName || u.roleId)">
+                {{ getRoleArabicName(u.roleName || u.roleId) }}
               </span>
             </td>
 
@@ -88,16 +86,14 @@
             <!-- 4. تاريخ الإنشاء -->
             <td class="text-center">{{ u.createdAt | date:'dd/MM/yyyy' }}</td>
 
-            <!-- 5. الإجراءات المحدثة بالكامل -->
+            <!-- 5. الإجراءات -->
             <td class="text-left">
               <div class="action-buttons-wrapper">
-                <!-- زر تعديل بيانات الحساب -->
                 <button type="button" class="btn-action edit-btn" (click)="openEditModal(u)" title="تعديل بيانات الحساب">
                   <i class="bi bi-pencil-square"></i>
                   <span>تعديل البيانات</span>
                 </button>
 
-                <!-- زر تغيير كلمة المرور -->
                 <button type="button" class="btn-action password-btn" (click)="openResetPasswordModal(u)" title="تغيير كلمة المرور">
                   <i class="bi bi-key"></i>
                   <span>كلمة المرور</span>
@@ -139,7 +135,7 @@
   </table>
 </div>
 
-<!-- نافذة إنشاء حساب -->
+<!-- Modal: إنشاء حساب -->
 @if (isCreateModalOpen) {
   <div class="nfd-modal-bg" (click)="closeCreateModal()">
     <div class="nfd-modal" (click)="$event.stopPropagation()">
@@ -179,7 +175,7 @@
   </div>
 }
 
-<!-- نافذة تعديل بيانات الحساب -->
+<!-- Modal: تعديل بيانات الحساب -->
 @if (isEditModalOpen) {
   <div class="nfd-modal-bg" (click)="closeEditModal()">
     <div class="nfd-modal" (click)="$event.stopPropagation()">
@@ -215,7 +211,7 @@
   </div>
 }
 
-<!-- نافذة تغيير كلمة المرور الجديدة -->
+<!-- Modal: تغيير كلمة المرور -->
 @if (isResetPasswordModalOpen) {
   <div class="nfd-modal-bg" (click)="closeResetPasswordModal()">
     <div class="nfd-modal" (click)="$event.stopPropagation()">
