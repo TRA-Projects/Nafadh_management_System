@@ -56,6 +56,7 @@ type MaterialFileType =
     FormsModule
   ],
   templateUrl: './content.html',
+  styleUrl:'./content.scss'
 })
 export class TrainerContent implements OnInit {
 
