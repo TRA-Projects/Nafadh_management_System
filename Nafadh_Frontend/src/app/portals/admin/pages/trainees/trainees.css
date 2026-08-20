@@ -1,12 +1,12 @@
-/* --------------------------------------------------------------------------
+/* ==========================================================================
    1. Main Container & Page Header
-   -------------------------------------------------------------------------- */
+   ========================================================================== */
 .trainees-container {
   padding: 28px 32px;
   direction: rtl;
-  background-color: #f8fafc;
+  background-color: var(--color-bg);
   min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-arabic);
   color: #1e293b;
   box-sizing: border-box;
 }
@@ -25,7 +25,7 @@
 .page-title {
   font-size: 1.65rem;
   font-weight: 700;
-  color: #002b49;
+  color: var(--color-navy);
   margin: 0 0 6px 0;
   letter-spacing: -0.3px;
   display: flex;
@@ -38,7 +38,7 @@
   display: inline-block;
   width: 5px;
   height: 26px;
-  background-color: #003399; /* تم التعديل للأزرق الحكومي */
+  background-color: var(--color-brand);
   border-radius: 4px;
 }
 
@@ -54,12 +54,12 @@
   gap: 12px;
 }
 
-/* --------------------------------------------------------------------------
+/* ==========================================================================
    2. Buttons & Actions
-   -------------------------------------------------------------------------- */
+   ========================================================================== */
 .btn {
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -67,43 +67,44 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   border: 1px solid transparent;
   outline: none;
   text-decoration: none;
+  font-family: var(--font-arabic);
 }
 
 .btn-primary {
-  background-color: #002b49;
+  background-color: var(--color-navy);
   color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 43, 73, 0.12);
+  box-shadow: 0 2px 4px rgba(10, 17, 114, 0.15);
 }
 
 .btn-primary:hover {
-  background-color: #001f35;
-  box-shadow: 0 4px 8px rgba(0, 43, 73, 0.2);
+  background-color: var(--color-navy-light);
+  box-shadow: var(--shadow-card-hover);
   transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background-color: #ffffff;
-  color: #003399;
-  border-color: #003399;
+  background-color: var(--color-surface);
+  color: var(--color-brand);
+  border-color: var(--color-brand);
 }
 
 .btn-secondary:hover {
-  background-color: #eff6ff;
-  border-color: #002366;
-  color: #002366;
+  background-color: var(--status-completed-bg);
+  border-color: var(--color-navy);
+  color: var(--color-navy);
   transform: translateY(-1px);
 }
 
-/* --------------------------------------------------------------------------
+/* ==========================================================================
    3. Search & Filter Bar
-   -------------------------------------------------------------------------- */
+   ========================================================================== */
 .filter-card {
-  background: #ffffff;
-  border-radius: 12px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
   border: 1px solid #e2e8f0;
   padding: 16px 20px;
   margin-bottom: 24px;
@@ -111,7 +112,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--shadow-card);
   flex-wrap: wrap;
 }
 
@@ -129,31 +130,37 @@
 
 .filter-group select {
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid #cbd5e1;
-  background-color: #f8fafc;
+  background-color: var(--color-bg);
   font-size: 0.875rem;
   color: #0f172a;
   outline: none;
   cursor: pointer;
   transition: all 0.2s ease;
+  font-family: var(--font-arabic);
 }
 
 .filter-group select:focus {
-  border-color: #003399;
-  background-color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(0, 51, 153, 0.1);
+  border-color: var(--color-brand);
+  background-color: var(--color-surface);
+  box-shadow: 0 0 0 3px rgba(0, 102, 196, 0.15);
 }
 
-/* --------------------------------------------------------------------------
+/* ==========================================================================
    4. Academic Trainees Table
-   -------------------------------------------------------------------------- */
+   ========================================================================== */
 .table-card {
-  background: #ffffff;
-  border-radius: 14px;
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
   border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.table-card:hover {
+  box-shadow: var(--shadow-card-hover);
 }
 
 .data-table {
@@ -164,8 +171,8 @@
 }
 
 .data-table th {
-  background-color: #f1f5f9;
-  color: #002b49;
+  background-color: var(--color-bg);
+  color: var(--color-navy);
   font-weight: 700;
   padding: 16px 20px;
   border-bottom: 2px solid #e2e8f0;
@@ -184,31 +191,30 @@
 }
 
 .data-table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: var(--color-bg);
 }
 
-/* --------------------------------------------------------------------------
+/* ==========================================================================
    5. Table Elements & Badges
-   -------------------------------------------------------------------------- */
+   ========================================================================== */
 .trainee-info {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-/* --- تعديل لون خلفية الحروف (الأفاتار) كحلي غامق --- */
 .avatar {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  background: #003366; /* لون كحلي مميز مطابق للصورة */
+  border-radius: var(--radius-full);
+  background: var(--color-navy);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 51, 102, 0.2);
+  box-shadow: 0 2px 6px rgba(10, 17, 114, 0.2);
 }
 
 .font-bold {
@@ -229,13 +235,34 @@
   align-items: center;
   justify-content: center;
   padding: 5px 14px;
-  border-radius: 20px;
+  border-radius: var(--radius-full);
   font-size: 0.775rem;
   font-weight: 700;
   letter-spacing: 0.2px;
 }
 
-/* --- تعديل شريط التقدم الأكاديمي (تدرج الأزرق) --- */
+/* ربط شارات الحالات بالمتغيرات الدلالية للنظام */
+.status-badge.active {
+  background-color: var(--status-active-bg);
+  color: var(--status-active-fg);
+}
+
+.status-badge.completed {
+  background-color: var(--status-completed-bg);
+  color: var(--status-completed-fg);
+}
+
+.status-badge.review {
+  background-color: var(--status-review-bg);
+  color: var(--status-review-fg);
+}
+
+.status-badge.cancelled {
+  background-color: var(--status-cancelled-bg);
+  color: var(--status-cancelled-fg);
+}
+
+/* شريط التقدم الأكاديمي */
 .progress-bar-container {
   display: flex;
   align-items: center;
@@ -244,7 +271,6 @@
   max-width: 180px;
 }
 
-/* مسار الشريط الخارجي */
 .progress-track {
   flex: 1;
   height: 8px;
@@ -253,24 +279,22 @@
   overflow: hidden;
 }
 
-/* التعبئة الممتدة بلون التدرج الأزرق (من الفاتح للكحلي مثل الصورة المرفقة) */
 .progress-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #0099ff 0%, #003399 100%);
+  background: linear-gradient(90deg, var(--color-cyan) 0%, var(--color-brand) 100%);
   border-radius: 6px;
   transition: width 0.4s ease-in-out;
 }
 
-/* لون مخصص إذا كانت النسبة 100% (أخضر كالمعتاد أو يمكنك تركها أزرق) */
 .progress-fill.completed {
-  background: linear-gradient(90deg, #16a34a, #22c55e);
+  background: linear-gradient(90deg, var(--status-active-fg), #10b981);
 }
 
 .progress-text {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #002b49;
+  color: var(--color-navy);
   min-width: 36px;
 }
 
@@ -280,15 +304,15 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 8px;
-  color: #002b49;
-  background-color: #f1f5f9;
+  border-radius: var(--radius-md);
+  color: var(--color-navy);
+  background-color: var(--color-bg);
   text-decoration: none;
   transition: all 0.2s ease;
 }
 
 .icon-view-btn:hover {
-  background-color: #002b49;
+  background-color: var(--color-navy);
   color: #ffffff;
   transform: scale(1.05);
 }
@@ -301,15 +325,15 @@
   font-weight: 500;
 }
 
-/* --------------------------------------------------------------------------
-   6. Pagination (التنقل بين الصفحات)
-   -------------------------------------------------------------------------- */
+/* ==========================================================================
+   6. Pagination
+   ========================================================================== */
 .pagination-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-top: 1px solid #e2e8f0;
 }
 
@@ -328,18 +352,19 @@
   padding: 6px 14px;
   font-size: 0.85rem;
   font-weight: 600;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   border: 1px solid #cbd5e1;
-  background-color: #ffffff;
-  color: #002b49;
+  background-color: var(--color-surface);
+  color: var(--color-navy);
   cursor: pointer;
   transition: all 0.2s ease;
+  font-family: var(--font-arabic);
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background-color: #002b49;
+  background-color: var(--color-navy);
   color: #ffffff;
-  border-color: #002b49;
+  border-color: var(--color-navy);
 }
 
 .pagination-btn:disabled {
@@ -353,16 +378,16 @@
   color: #334155;
 }
 
-/* --------------------------------------------------------------------------
-   7. Modals & Popups (النوافذ المنبثقة)
-   -------------------------------------------------------------------------- */
+/* ==========================================================================
+   7. Modals & Popups
+   ========================================================================== */
 .modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(15, 23, 42, 0.55);
+  background-color: rgba(10, 17, 114, 0.4);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -374,14 +399,14 @@
 }
 
 .modal-card {
-  background: #ffffff;
-  border-radius: 18px;
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
   width: 100%;
   max-width: 580px;
   max-height: 88vh;
   overflow-y: auto;
   padding: 28px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 20px 40px rgba(10, 17, 114, 0.2);
   box-sizing: border-box;
   animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -399,7 +424,7 @@
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #002b49;
+  color: var(--color-navy);
 }
 
 .close-btn {
@@ -410,13 +435,13 @@
   cursor: pointer;
   padding: 4px;
   line-height: 1;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   transition: all 0.2s ease;
 }
 
 .close-btn:hover {
-  color: #ef4444;
-  background-color: #fef2f2;
+  color: var(--status-cancelled-fg);
+  background-color: var(--status-cancelled-bg);
 }
 
 .modal-body {
@@ -425,8 +450,8 @@
 
 .upload-zone {
   border: 2px dashed #cbd5e1;
-  border-radius: 14px;
-  background-color: #f8fafc;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-bg);
   padding: 36px 20px;
   text-align: center;
   cursor: pointer;
@@ -435,8 +460,8 @@
 }
 
 .upload-zone:hover {
-  border-color: #003399;
-  background-color: #eff6ff;
+  border-color: var(--color-brand);
+  background-color: var(--status-completed-bg);
 }
 
 .upload-label {
@@ -449,7 +474,7 @@
 }
 
 .upload-label i {
-  color: #003399;
+  color: var(--color-brand);
 }
 
 .upload-label p {
@@ -469,7 +494,7 @@
   max-height: 220px;
   overflow-y: auto;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .preview-table {
@@ -479,9 +504,9 @@
 }
 
 .preview-table th {
-  background-color: #f1f5f9;
+  background-color: var(--color-bg);
   padding: 8px 12px;
-  color: #002b49;
+  color: var(--color-navy);
   border-bottom: 1px solid #cbd5e1;
 }
 
@@ -490,9 +515,9 @@
   border-bottom: 1px solid #f1f5f9;
 }
 
-/* --------------------------------------------------------------------------
+/* ==========================================================================
    8. Form Controls & Inputs
-   -------------------------------------------------------------------------- */
+   ========================================================================== */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -516,17 +541,18 @@
   width: 100%;
   padding: 10px 14px;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 0.875rem;
   outline: none;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   box-sizing: border-box;
   transition: all 0.2s ease;
+  font-family: var(--font-arabic);
 }
 
 .form-control:focus {
-  border-color: #003399;
-  box-shadow: 0 0 0 3px rgba(0, 51, 153, 0.12);
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(0, 102, 196, 0.15);
 }
 
 .modal-footer {
@@ -539,11 +565,11 @@
 }
 
 .alert-danger {
-  background-color: #fef2f2;
-  color: #991b1b;
+  background-color: var(--status-cancelled-bg);
+  color: var(--status-cancelled-fg);
   border: 1px solid #fecaca;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 0.85rem;
   margin-bottom: 16px;
 }
