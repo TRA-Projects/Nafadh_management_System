@@ -9,6 +9,7 @@
     <div class="header-title-group">
 
       <div class="header-icon">
+
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -20,10 +21,12 @@
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
 
         </svg>
+
       </div>
 
 
       <div>
+
         <h1>
           تقييم ومتابعة المتدربين
         </h1>
@@ -31,12 +34,15 @@
         <p>
           متابعة مستويات المتدربين وتحديد نقاط القوة والاحتياجات التدريبية.
         </p>
+
       </div>
 
     </div>
 
 
     <div class="header-actions">
+
+      <!-- Export Report -->
 
       <button
         type="button"
@@ -77,7 +83,12 @@
       </button>
 
 
-      <button class="action-btn primary">
+      <!-- Start New Evaluation -->
+
+      <button
+        type="button"
+        class="action-btn primary"
+        (click)="startNewEvaluation()">
 
         <svg
           viewBox="0 0 24 24"
@@ -538,7 +549,8 @@
 
             </tr>
 
-          } @empty {
+          }
+          @empty {
 
             <tr>
 
@@ -586,6 +598,154 @@
     </div>
 
   </section>
+
+
+  <!-- =====================================================
+       TRAINEE PICKER MODAL
+  ====================================================== -->
+
+  @if (showTraineePicker()) {
+
+    <div
+      class="nfd-modal-bg"
+      (click)="showTraineePicker.set(false)">
+
+      <div
+        class="nfd-modal trainee-picker-modal"
+        (click)="$event.stopPropagation()">
+
+        <div class="eval-modal-header">
+
+          <div>
+
+            <h3>
+              بدء تقييم جديد
+            </h3>
+
+            <p>
+              اختر المتدرب الذي تريد بدء تقييمه.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            class="modal-close"
+            (click)="showTraineePicker.set(false)">
+
+            ×
+
+          </button>
+
+        </div>
+
+
+        <div class="trainee-picker-list">
+
+          @for (
+            e of enrollments();
+            track e.enrollmentId;
+            let i = $index
+          ) {
+
+            <button
+              type="button"
+              class="trainee-picker-item"
+              (click)="selectTraineeForEvaluation(e.enrollmentId)">
+
+              <div
+                class="trainee-avatar"
+                [class.avatar-alt]="i % 3 === 1"
+                [class.avatar-third]="i % 3 === 2">
+
+                {{
+                  (e.traineeName || 'م').charAt(0)
+                }}
+
+              </div>
+
+
+              <div class="trainee-picker-info">
+
+                <strong>
+                  {{ e.traineeName || 'متدرب' }}
+                </strong>
+
+                <span>
+
+                  {{ e.batchName || 'بدون دفعة' }}
+
+                  ·
+
+                  رقم التسجيل:
+                  {{ e.enrollmentId }}
+
+                </span>
+
+              </div>
+
+
+              <div class="trainee-picker-action">
+
+                <span>
+                  تقييم
+                </span>
+
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2">
+
+                  <path d="M9 18l6-6-6-6"></path>
+
+                </svg>
+
+              </div>
+
+            </button>
+
+          }
+          @empty {
+
+            <div class="trainee-picker-empty">
+
+              <div class="empty-icon">
+
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2">
+
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+
+                </svg>
+
+              </div>
+
+
+              <strong>
+                لا يوجد متدربون
+              </strong>
+
+              <span>
+                لا يوجد متدربون متاحون للتقييم في الدفعات الحالية.
+              </span>
+
+            </div>
+
+          }
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
 
 
   <!-- =====================================================
