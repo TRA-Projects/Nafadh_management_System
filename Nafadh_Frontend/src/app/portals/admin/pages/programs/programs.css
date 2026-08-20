@@ -38,9 +38,9 @@
 
 /* حالة الزر النشط في الفلترة */
 .filter-btn.active {
-  background-color: #111827;
+  background-color: #0D1C8C;
   color: #ffffff;
-  border-color: #111827;
+  border: 1px solid #0D1C8C;
 }
 
 .filter-badge {
@@ -437,6 +437,197 @@
 
 .error-icon {
   margin-left: 6px;
+}
+
+/* --- Table Container & Wrapper --- */
+.nfd-table-container {
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+  box-sizing: border-box;
+  font-family: 'Cairo', sans-serif;
+}
+
+.nfd-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* --- Table Structure --- */
+.nfd-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.nfd-tr-header {
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.nfd-th {
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  letter-spacing: -0.2px;
+}
+
+.nfd-tbody .nfd-tr-row {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.15s ease;
+}
+
+.nfd-tbody .nfd-tr-row:last-child {
+  border-bottom: none;
+}
+
+.nfd-tbody .nfd-tr-row:hover {
+  background-color: #f8fafc;
+}
+
+.nfd-td {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+/* --- Cell Content & Flex Layouts --- */
+.nfd-cell-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.nfd-batch-name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.nfd-batch-subtext {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* --- Occupancy & Progress Bar --- */
+.nfd-occupancy-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 90px;
+  margin: 0 auto;
+}
+
+.nfd-occupancy-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.nfd-progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background-color: #e2e8f0;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.nfd-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(to left, #0D1C8C, #06b6d4); /* تدرج من الأزرق الداكن إلى السماوي/الأزرق الفاتح */
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+/* --- Status Badges Styles --- */
+.nfd-status-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 9999px;
+  text-align: center;
+}
+
+/* 1. حالة جارية (نشطة) - لون أخضر حيوي */
+.status-ongoing {
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+/* 2. حالة قادمة - لون أزرق/سماوي حيوي */
+.status-upcoming {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+/* 3. حالة منتهية (إن وجدت) - لون رمادي هادئ */
+.status-completed {
+  background-color: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+/* 4. حالة ملغية أو مرفوضة (إن وجدت) - لون أحمر خفيف */
+.status-cancelled {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+/* --- Actions Buttons --- */
+.nfd-actions-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.nfd-action-icon-btn {
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nfd-action-icon-btn:hover {
+  background-color: #f1f5f9;
+  color: #0D1C8C;
+  border-color: #cbd5e1;
+}
+
+/* --- Empty State --- */
+.nfd-empty-state {
+  text-align: center;
+  padding: 40px 16px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.nfd-empty-state i {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+  color: #cbd5e1;
+}
+
+/* --- Utilities --- */
+.text-center {
+  text-align: center;
 }
 
 /* --- Compact Pagination Styles --- */

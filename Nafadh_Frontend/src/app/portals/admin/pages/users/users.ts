@@ -238,8 +238,6 @@ export class AdminUsers implements OnInit {
     });
   }
 
-  // مُصحح نهائيًا: UserResponseDto.status نوعه string فعليًا (أثبتها الكومبايلر)
-  // "نشط" = أي قيمة غير 'Suspended' (احتياط لو الحروف مختلفة الحالة مثل 'active')
   toggleStatus(user: UserResponseDto): void {
     const isCurrentlyActive = user.status?.toLowerCase() !== 'suspended';
     const statusPayload = isCurrentlyActive ? 'Suspended' : 'Active';

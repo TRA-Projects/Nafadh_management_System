@@ -272,7 +272,7 @@
 </div>
 
 
- <!-- Table Container & Borders -->
+<!-- Table Container & Borders -->
 <div class="nfd-table-container" dir="rtl">
   <div class="nfd-table-wrapper">
     <table class="nfd-table">
@@ -354,6 +354,7 @@
           <td class="nfd-td text-center">
             <span
               class="nfd-status-badge"
+              class="nfd-status-badge status-upcoming"
               [ngClass]="getStatusBadgeClass(batch.status)"
             >
               {{ getStatusLabel(batch.status) }}
@@ -386,7 +387,7 @@
           </td>
         </tr>
 
-        <!-- Empty State -->
+        <!-- Empty State (تم تصحيح الـ colspan إلى 9) -->
         <tr *ngIf="!batchesError() && filteredBatches().length === 0">
           <td colspan="9" class="nfd-empty-state">
             <i class="fa-regular fa-folder-open"></i>
@@ -395,33 +396,28 @@
         </tr>
       </tbody>
     </table>
-
-
-
-  
-
-@if (totalPages() > 1) {
-  <div class="compact-pagination-wrapper">
-    <div class="pagination-info">
-      عرض الصفحة <strong>{{ currentPage() }}</strong> من <strong>{{ totalPages() }}</strong> (إجمالي {{ totalBatchesCount() }} دفعة)
-    </div>
-
-    <div class="pagination-compact-controls">
-      <button
-        class="compact-nav-btn"
-        [disabled]="currentPage() === 1"
-        (click)="onPageChange(currentPage() - 1)">
-        السابق
-      </button>
-
-      <span class="page-indicator">{{ currentPage() }} / {{ totalPages() }}</span>
-
-      <button
-        class="compact-nav-btn"
-        [disabled]="currentPage() === totalPages()"
-        (click)="onPageChange(currentPage() + 1)">
-        التالي
-      </button>
-    </div>
   </div>
+</div>
+
+
+  @if (totalPages() > 1) {
+<div class="compact-pagination-wrapper">
+  <div class="pagination-info">
+    عرض الصفحة <strong>{{ currentPage() }}</strong> من <strong>{{ totalPages() }}</strong> (إجمالي {{
+    totalBatchesCount() }} دفعة)
+  </div>
+
+  <div class="pagination-compact-controls">
+    <button class="compact-nav-btn" [disabled]="currentPage() === 1" (click)="onPageChange(currentPage() - 1)">
+      السابق
+    </button>
+
+    <span class="page-indicator">{{ currentPage() }} / {{ totalPages() }}</span>
+
+    <button class="compact-nav-btn" [disabled]="currentPage() === totalPages()"
+      (click)="onPageChange(currentPage() + 1)">
+      التالي
+    </button>
+  </div>
+</div>
 }
