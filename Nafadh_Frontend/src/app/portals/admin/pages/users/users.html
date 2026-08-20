@@ -40,7 +40,7 @@
   <table class="nfd-table">
     <thead>
       <tr>
-        <!-- ترتيب الأعمدة وفق الصورة المطلوبة (RTL) -->
+        <!-- ترتيب الأعمدة (RTL): المستخدم ← الدور ← الحالة ← تاريخ الإنشاء -->
         <th class="text-right">المستخدم</th>
         <th class="text-center">الدور</th>
         <th class="text-center">الحالة</th>
@@ -158,10 +158,12 @@
       </div>
       <div class="form-group mb-3">
         <label>الدور *</label>
+        <!-- إدراج الخيارات الثابتة تجنباً لاختفائها -->
         <select class="nfd-input" [(ngModel)]="newUser.roleId">
-          @for (r of rolesList(); track r.roleId) {
-            <option [ngValue]="r.roleId">{{ r.displayName || r.roleName }}</option>
-          }
+          <option [ngValue]="1">هيئة (Admin)</option>
+          <option [ngValue]="2">شركة (CompanySupervisor)</option>
+          <option [ngValue]="3">مدرب (Trainer)</option>
+          <option [ngValue]="4">متدرب (Trainee)</option>
         </select>
       </div>
       <div class="form-group mb-3">
@@ -201,10 +203,12 @@
       </div>
       <div class="form-group mb-3">
         <label>الدور</label>
+        <!-- إدراج الخيارات الثابتة تجنباً لاختفائها -->
         <select class="nfd-input" [(ngModel)]="selectedUser.roleId">
-          @for (r of rolesList(); track r.roleId) {
-            <option [ngValue]="r.roleId">{{ r.displayName || r.roleName }}</option>
-          }
+          <option [ngValue]="1">هيئة (Admin)</option>
+          <option [ngValue]="2">شركة (CompanySupervisor)</option>
+          <option [ngValue]="3">مدرب (Trainer)</option>
+          <option [ngValue]="4">متدرب (Trainee)</option>
         </select>
       </div>
 
