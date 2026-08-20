@@ -6,7 +6,7 @@
 // rather than breaking if a field is named slightly differently.
 
 import {
-  AnnouncementScopeType, AttendanceStatus, BadgeConditionType, CertificateType,
+  AnnouncementScopeType, AttendanceStatus, BadgeConditionType, BatchStatus, CertificateType,
   CompanyStatus, ConversationType, EnrollmentCompletionStatus, EvaluationPeriod, EvaluationType,
   ExcuseStatus, FeedbackType, MessageStatus, ModuleProgressStatus, ProjectStatus, RoleName,
   SubmissionStatus, SupportTicketStatus, TaskPriority, TaskStatus, TraineeStatus, TrainerStatus,
@@ -204,12 +204,7 @@ export interface ProgramDto {
   status?: string;
 }
 
-export enum BatchStatus {
-  Upcoming = 'Upcoming',
-  Ongoing = 'Ongoing',
-  Completed = 'Completed',
-  Cancelled = 'Cancelled'
-}
+
 
 // 2. استخدامها داخل الـ Interface
 export interface CompanyProgramLinkDto {

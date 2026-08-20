@@ -4,8 +4,10 @@ import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AdminApi } from '../../services/admin-api';
-import { BatchDto, ProgramDto, CompanyDto, BatchStatus } from '../../../../core/models/dtos';
-
+import { BatchDto, ProgramDto, CompanyDto} from '../../../../core/models/dtos';
+import {
+  BatchStatus
+} from '../../../../core/models/enums';
 /**
  * حالات الدفعة الأربع كما هي في الباكند (NFD_BatchStatus):
  * Upcoming | Ongoing | Completed | Cancelled
