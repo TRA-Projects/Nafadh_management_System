@@ -773,7 +773,23 @@ generateTrainerPortalReport(
     );
   }
 
+// =====================================================
+// TRAINER PORTAL REPORT FILE
+// =====================================================
 
+// Loads a Trainer Portal PDF from the dedicated
+// external-storage endpoint without affecting
+// the shared report download behavior.
+getTrainerPortalReportFile(
+  reportId: number
+): Observable<Blob> {
+  return this.http.get(
+    `${this.base}/Report/trainer/${reportId}/file`,
+    {
+      responseType: 'blob'
+    }
+  );
+}
 
   // =====================================================
   // Profile

@@ -560,10 +560,7 @@ this.reportHistory.set(
     type: TrainerReportType
   ): void {
 
-    this.api
-      .downloadReport(
-        reportId
-      )
+    this.api.getTrainerPortalReportFile(reportId)
       .subscribe({
 
         next: (blob) => {
