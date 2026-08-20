@@ -593,7 +593,211 @@
 
   </div>
 
+  <!-- =========================================
+       RECENT REPORTS
+  ========================================== -->
 
+  <section class="recent-reports-section">
+
+    <div class="recent-reports-header">
+
+      <div>
+
+        <h2>
+          آخر التقارير
+        </h2>
+
+        <p>
+          التقارير التي تم إنشاؤها مؤخرًا من بوابة المدرب.
+        </p>
+
+      </div>
+
+
+      @if (reportHistory().length > 0) {
+
+        <span class="recent-reports-count">
+          {{ reportHistory().length }}
+          تقرير
+        </span>
+
+      }
+
+    </div>
+
+
+    @if (loadingHistory()) {
+
+      <div class="reports-history-state">
+
+        <span class="history-loading-icon">
+          ◌
+        </span>
+
+        <span>
+          جاري تحميل التقارير...
+        </span>
+
+      </div>
+
+    } @else if (reportHistory().length === 0) {
+
+      <div class="reports-history-empty">
+
+        <div class="history-empty-icon">
+
+          <svg
+            viewBox="0 0 24 24"
+            width="25"
+            height="25"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+            ></path>
+
+            <polyline
+              points="14 2 14 8 20 8"
+            ></polyline>
+          </svg>
+
+        </div>
+
+        <strong>
+          لا توجد تقارير سابقة
+        </strong>
+
+        <p>
+          عند إنشاء أول تقرير سيظهر هنا تلقائيًا.
+        </p>
+
+      </div>
+
+    } @else {
+
+      <div class="reports-history-list">
+
+        @for (
+          report of reportHistory().slice(0, 5);
+          track report.reportId
+        ) {
+
+          <div class="report-history-item">
+
+            <div class="history-report-main">
+
+              <div class="history-report-icon">
+
+                <svg
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                  ></path>
+
+                  <polyline
+                    points="14 2 14 8 20 8"
+                  ></polyline>
+                </svg>
+
+              </div>
+
+
+              <div class="history-report-info">
+
+                <strong>
+                  {{ getHistoryReportTitle(report.type) }}
+                </strong>
+
+                <span>
+                  تم الإنشاء
+                  {{
+                    report.generatedAt
+                      | date:'dd/MM/yyyy - hh:mm a'
+                  }}
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div class="history-report-actions">
+
+              <span class="history-report-type">
+
+                @switch (report.type) {
+
+                  @case ('Attendance') {
+                    حضور
+                  }
+
+                  @case ('Performance') {
+                    أداء
+                  }
+
+                  @case ('Custom') {
+                    شامل
+                  }
+
+                }
+
+              </span>
+
+
+              <button
+                type="button"
+                class="history-preview-btn"
+                (click)="
+                  previewExistingReport(
+                    report.reportId,
+                    report.type
+                  )
+                "
+                [disabled]="exporting()"
+              >
+
+                <svg
+                  viewBox="0 0 24 24"
+                  width="17"
+                  height="17"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"
+                  ></path>
+
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="3"
+                  ></circle>
+                </svg>
+
+                معاينة
+
+              </button>
+
+            </div>
+
+          </div>
+
+        }
+
+      </div>
+
+    }
+
+  </section>
   <!-- =====================================================
        REPORT PDF PREVIEW MODAL
   ====================================================== -->

@@ -356,17 +356,58 @@ private loadReportHistory(): void {
 
       next: (reports) => {
 
-        const sortedReports =
-          [...(reports ?? [])]
-            .sort(
-              (a, b) =>
-                new Date(
-                  b.generatedAt
-                ).getTime() -
-                new Date(
-                  a.generatedAt
-                ).getTime()
-            );
+       // Keep only reports generated from the Trainer Portal.
+const trainerReports =
+  (reports ?? [])
+    .filter(report => {
+
+      if (
+        report.type !== 'Attendance' &&
+        report.type !== 'Performance' &&
+        report.type !== 'Custom'
+      ) {
+        return false;
+      }
+
+
+      if (!report.filtersJson) {
+        return false;
+      }
+
+
+      try {
+
+        const filters =
+          JSON.parse(
+            report.filtersJson
+          );
+
+
+        return (
+          filters?.source ===
+          'TrainerPortal'
+        );
+
+      } catch {
+
+        return false;
+
+      }
+
+    });
+
+
+const sortedReports =
+  [...trainerReports]
+    .sort(
+      (a, b) =>
+        new Date(
+          b.generatedAt
+        ).getTime() -
+        new Date(
+          a.generatedAt
+        ).getTime()
+    );
 
 
         this.reportHistory.set(
@@ -723,7 +764,66 @@ this.loadReportHistory();
 
   }
 
+// =====================================================
+// PREVIEW EXISTING REPORT
+// =====================================================
 
+previewExistingReport(
+  reportId: number,
+  type: string
+): void {
+
+  if (
+    type !== 'Attendance' &&
+    type !== 'Performance' &&
+    type !== 'Custom'
+  ) {
+    return;
+  }
+
+
+  this.exporting.set(
+    true
+  );
+
+  this.errorMessage.set('');
+
+  this.successMessage.set('');
+
+
+  this.loadReportPreview(
+    reportId,
+    type
+  );
+
+}
+
+
+// =====================================================
+// REPORT HISTORY TITLE
+// =====================================================
+
+getHistoryReportTitle(
+  type: string
+): string {
+
+  switch (type) {
+
+    case 'Attendance':
+      return 'تقرير الحضور والغياب';
+
+    case 'Performance':
+      return 'تقرير أداء الدفعات والمهام';
+
+    case 'Custom':
+      return 'التقرير الشامل للتقييم والمهارات';
+
+    default:
+      return 'تقرير';
+
+  }
+
+}
   // =====================================================
   // REPORT TITLE
   // =====================================================
