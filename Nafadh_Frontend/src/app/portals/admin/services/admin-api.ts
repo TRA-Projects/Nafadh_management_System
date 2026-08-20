@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   AnnouncementDto, AuditLogDto, BatchDto, BatchPerformanceReportDto, CertificateDto, CompanyDto,
@@ -8,6 +8,16 @@ import {
   EvaluationDto, NotificationDto, ProgramDto, TraineeListItemDto, TraineeProfileDto,
   TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto,
 } from '../../../core/models/dtos';
+
+export interface TraineeCertificateStatusDto {
+  traineeId: number;
+  enrollmentId: number;
+  fullName: string;
+  isIssued: boolean;
+  certificateId: number | null;
+  fileUrl: string | null;
+  grade: number | null;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
@@ -53,9 +63,18 @@ export class AdminApi {
   }
 
   // ---- Users & Permissions ----
-  getUsers(): Observable<UserResponseDto[]> {
-    return this.http.get<UserResponseDto[]>(`${this.base}/User`);
-  }
+  // في ملف admin-api.ts
+getUsers(): Observable<UserResponseDto[]> {
+  // إرسال pageSize كبرامتر لجلب عدد كبير جداً من الأسماء دفعة واحدة
+  return this.http.get<any>(`${this.base}/User`, {
+    params: { page: 1, pageSize: 10000 }
+  }).pipe(
+    map(res => {
+      if (Array.isArray(res)) return res;
+      return res?.items || res?.data || res?.results || [];
+    })
+  );
+}
   getRoles(): Observable<RoleDto[]> {
     return this.http.get<RoleDto[]>(`${this.base}/Role`);
   }
@@ -123,6 +142,17 @@ export class AdminApi {
   getCertificatesByTrainee(traineeId: number): Observable<CertificateDto[]> {
     return this.http.get<CertificateDto[]>(`${this.base}/Certificate/trainee/${traineeId}`);
   }
+
+  getBatchCertificatesStatus(batchId: any): Observable<TraineeCertificateStatusDto[]> {
+    const cleanId = this.sanitizeId(batchId);
+    return this.http.get<TraineeCertificateStatusDto[]>(`${this.base}/Certificate/batch/${cleanId}/status`);
+  }
+
+  updateCertificateStatus(enrollmentId: any, isIssued: boolean) {
+    const cleanId = this.sanitizeId(enrollmentId);
+    return this.http.patch(`${this.base}/Certificate/enrollment/${cleanId}/status`, { isIssued });
+  } 
+  
   
   // ---- Certificates (معدلة للحماية من أخطاء الـ 404) ----
   issueCertificate(dto: unknown) {
