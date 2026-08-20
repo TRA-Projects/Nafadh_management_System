@@ -1,11 +1,14 @@
-<div class="program-container">
+<div class="program-container" dir="rtl">
 
-  <!-- ================= HEADER ================= -->
+  <!-- =====================================================
+       PROGRAM HEADER
+       ===================================================== -->
   <section class="program-header">
 
     <div class="program-info">
 
       <div class="program-title-row">
+
         <h1 class="program-title">
           {{ program()?.title || program()?.name || 'برنامج تدريبي' }}
         </h1>
@@ -13,42 +16,61 @@
         <span class="status-badge status-active">
           مستمر
         </span>
+
       </div>
 
       <p class="program-description">
-        {{ program()?.description || 'برنامج متكامل لتطوير المهارات واستخدام أحدث الأدوات والتقنيات العالمية.' }}
+        {{
+          program()?.description ||
+          'برنامج متكامل لتطوير المهارات واستخدام أحدث الأدوات والتقنيات العالمية.'
+        }}
       </p>
 
       <div class="program-meta">
+
         <span>
           📅 المدة:
-          <strong>{{ stats().totalDays || 0 }} يوم</strong>
+          <strong>
+            {{ stats().totalDays || 0 }} يوم
+          </strong>
         </span>
 
         <span>
-          📚 {{ stats().totalModules || 0 }} وحدات تدريبية
+          📚
+          {{ stats().totalModules || 0 }}
+          وحدات تدريبية
         </span>
 
         <span>
-          🗓 يونيو - يناير 2026
+          📖
+          {{ stats().totalLessons || 0 }}
+          درس
         </span>
+
+        <span *ngIf="enrollment()?.batchName">
+          🎓
+          {{ enrollment()?.batchName }}
+        </span>
+
       </div>
 
     </div>
 
 
-    <!-- Progress Circle -->
+    <!-- Progress -->
     <div class="progress-wrapper">
 
       <div
         class="progress-circle"
         [style.--progress]="(stats().overallProgress || 0) + '%'"
       >
+
         <div class="progress-circle-inner">
           <span>
             {{ stats().overallProgress || 0 }}%
           </span>
         </div>
+
       </div>
 
       <span class="progress-label">
@@ -60,62 +82,175 @@
   </section>
 
 
-  <!-- ================= MODULES ================= -->
+  <!-- =====================================================
+       ENROLLMENT INFORMATION
+       ===================================================== -->
+  <section
+    class="enrollment-info"
+    *ngIf="enrollment()"
+  >
+
+    <div class="enrollment-item">
+
+      <span class="info-icon">🎓</span>
+
+      <div>
+        <small>الدفعة</small>
+        <strong>
+          {{ enrollment()?.batchName || '-' }}
+        </strong>
+      </div>
+
+    </div>
+
+
+    <div class="enrollment-item">
+
+      <span class="info-icon">🏢</span>
+
+      <div>
+        <small>الشركة</small>
+        <strong>
+          {{ enrollment()?.companyName || '-' }}
+        </strong>
+      </div>
+
+    </div>
+
+
+    <div class="enrollment-item">
+
+      <span class="info-icon">👨‍💼</span>
+
+      <div>
+        <small>المشرف</small>
+        <strong>
+          {{ enrollment()?.supervisorName || 'غير محدد' }}
+        </strong>
+      </div>
+
+    </div>
+
+
+    <div class="enrollment-item">
+
+      <span class="info-icon">📊</span>
+
+      <div>
+        <small>حالة التسجيل</small>
+        <strong>
+          {{ enrollment()?.completionStatus || '-' }}
+        </strong>
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       MODULES SECTION
+       ===================================================== -->
   <section class="modules-container">
 
-    <h2 class="modules-title">
-      وحدات البرنامج التدريبي
-    </h2>
+    <div class="section-header">
+
+      <div>
+        <h2 class="modules-title">
+          وحدات البرنامج التدريبي
+        </h2>
+
+        <p class="modules-subtitle">
+          تابع تقدمك وأكمل الوحدات بالترتيب
+        </p>
+      </div>
+
+      <div class="modules-counter">
+        <strong>
+          {{ completedModules() }}
+        </strong>
+
+        /
+        
+        {{ totalModules() }}
+
+        <span>
+          مكتملة
+        </span>
+      </div>
+
+    </div>
 
 
-    <!-- ================= STEPPER ================= -->
-    <div class="module-stepper">
+    <!-- =====================================================
+         STEPPER
+         ===================================================== -->
+    <div
+      class="module-stepper"
+      *ngIf="modules().length > 0"
+    >
 
       <div
-        *ngFor="let module of modules(); let i = index"
-        class="step-wrapper"
-        [class.step-completed]="module.progressPercentage === 100"
-        [class.step-current]="
-          module.progressPercentage !== 100 &&
-          module.progressPercentage! > 0
+        *ngFor="
+          let module of modules();
+          let i = index;
         "
+        class="step-wrapper"
+
+        [class.step-completed]="
+          module.progressPercentage === 100
+        "
+
+        [class.step-current]="
+          !module.isLocked &&
+          module.progressPercentage !== 100 &&
+          (module.progressPercentage || 0) > 0
+        "
+
         [class.step-locked]="
-          !module.progressPercentage ||
-          module.progressPercentage === 0
+          module.isLocked
         "
       >
 
         <div
           *ngIf="i < modules().length - 1"
           class="step-line"
-          [class.completed-line]="module.progressPercentage === 100"
+
+          [class.completed-line]="
+            module.progressPercentage === 100
+          "
         ></div>
+
 
         <div class="step-circle">
 
-          <ng-container *ngIf="module.progressPercentage === 100">
+          <ng-container
+            *ngIf="
+              module.progressPercentage === 100
+            "
+          >
             ✓
           </ng-container>
 
+
           <ng-container
             *ngIf="
-              module.progressPercentage !== 100 &&
-              module.progressPercentage! > 0
+              !module.isLocked &&
+              module.progressPercentage !== 100
             "
           >
             {{ i + 1 }}
           </ng-container>
 
+
           <ng-container
-            *ngIf="
-              !module.progressPercentage ||
-              module.progressPercentage === 0
-            "
+            *ngIf="module.isLocked"
           >
             🔒
           </ng-container>
 
         </div>
+
 
         <span class="step-label">
           وحدة {{ i + 1 }}
@@ -126,64 +261,133 @@
     </div>
 
 
-    <!-- ================= LOADING ================= -->
+    <!-- =====================================================
+         LOADING
+         ===================================================== -->
     <div
       *ngIf="loading()"
       class="loading-state"
     >
+
       <div class="loader"></div>
-      <p>جاري تحميل الوحدات...</p>
+
+      <p>
+        جاري تحميل البرنامج التدريبي...
+      </p>
+
     </div>
 
 
-    <!-- ================= ERROR ================= -->
+    <!-- =====================================================
+         ERROR
+         ===================================================== -->
     <div
-      *ngIf="error()"
+      *ngIf="error() && !loading()"
       class="error-state"
     >
-      <p>{{ error() }}</p>
+
+      <div class="error-icon">
+        !
+      </div>
+
+      <h3>
+        تعذر تحميل البرنامج
+      </h3>
+
+      <p>
+        {{ error() }}
+      </p>
+
+      <button
+        type="button"
+        class="retry-button"
+        (click)="loadProgramData()"
+      >
+        إعادة المحاولة
+      </button>
+
     </div>
 
 
-    <!-- ================= MODULES ================= -->
+    <!-- =====================================================
+         MODULE LIST
+         ===================================================== -->
     <div
-      *ngIf="!loading() && !error()"
+      *ngIf="
+        !loading() &&
+        !error() &&
+        modules().length > 0
+      "
       class="modules-list"
     >
 
       <details
-        *ngFor="let module of modules(); let i = index"
+        *ngFor="
+          let module of modules();
+          let i = index;
+        "
+
         class="module-card"
-        [open]="i === 0"
+
+        [class.locked-card]="module.isLocked"
+
+        [open]="
+          i === 0 &&
+          !module.isLocked
+        "
       >
 
-        <!-- MODULE HEADER -->
-        <summary class="module-summary">
+        <!-- =================================================
+             MODULE HEADER
+             ================================================= -->
+
+        <summary
+          class="module-summary"
+          (click)="openModule(module)"
+        >
 
           <div class="module-main-info">
 
-            <div class="module-status-icon">
+            <!-- STATUS -->
+            <div
+              class="module-status-icon"
+
+              [class.completed-icon]="
+                module.progressPercentage === 100
+              "
+
+              [class.active-icon]="
+                !module.isLocked &&
+                module.progressPercentage !== 100 &&
+                (module.progressPercentage || 0) > 0
+              "
+
+              [class.locked-icon]="
+                module.isLocked
+              "
+            >
 
               <ng-container
-                *ngIf="module.progressPercentage === 100"
+                *ngIf="
+                  module.progressPercentage === 100
+                "
               >
                 ✓
               </ng-container>
 
-              <ng-container
-                *ngIf="
-                  module.progressPercentage !== 100 &&
-                  module.progressPercentage! > 0
-                "
-              >
-                ◻
-              </ng-container>
 
               <ng-container
                 *ngIf="
-                  !module.progressPercentage ||
-                  module.progressPercentage === 0
+                  !module.isLocked &&
+                  module.progressPercentage !== 100
                 "
+              >
+                {{ i + 1 }}
+              </ng-container>
+
+
+              <ng-container
+                *ngIf="module.isLocked"
               >
                 🔒
               </ng-container>
@@ -191,35 +395,58 @@
             </div>
 
 
+            <!-- MODULE DETAILS -->
             <div class="module-details">
 
               <div class="module-title-row">
+
+                <span class="module-number">
+                  الوحدة {{ i + 1 }}
+                </span>
 
                 <h3 class="module-title">
                   {{ module.title }}
                 </h3>
 
+
+                <!-- Completed -->
                 <span
-                  *ngIf="module.progressPercentage === 100"
+                  *ngIf="
+                    module.progressPercentage === 100
+                  "
                   class="module-badge completed"
                 >
                   مكتمل
                 </span>
 
+
+                <!-- In Progress -->
                 <span
                   *ngIf="
+                    !module.isLocked &&
                     module.progressPercentage !== 100 &&
-                    module.progressPercentage! > 0
+                    (module.progressPercentage || 0) > 0
                   "
                   class="module-badge active"
                 >
                   مستمر
                 </span>
 
+
+                <!-- Locked -->
+                <span
+                  *ngIf="module.isLocked"
+                  class="module-badge locked"
+                >
+                  مقفل
+                </span>
+
+
+                <!-- New -->
                 <span
                   *ngIf="
-                    !module.progressPercentage ||
-                    module.progressPercentage === 0
+                    !module.isLocked &&
+                    !module.progressPercentage
                   "
                   class="module-badge new"
                 >
@@ -229,6 +456,7 @@
               </div>
 
 
+              <!-- Progress -->
               <div class="progress-row">
 
                 <span class="progress-number">
@@ -236,12 +464,15 @@
                 </span>
 
                 <div class="module-progress">
+
                   <div
                     class="module-progress-fill"
+
                     [style.width]="
                       (module.progressPercentage || 0) + '%'
                     "
                   ></div>
+
                 </div>
 
               </div>
@@ -251,21 +482,82 @@
           </div>
 
 
-          <span class="accordion-arrow">
+          <!-- Arrow -->
+          <span
+            *ngIf="!module.isLocked"
+            class="accordion-arrow"
+          >
             ⌄
+          </span>
+
+
+          <span
+            *ngIf="module.isLocked"
+            class="locked-arrow"
+          >
+            🔒
           </span>
 
         </summary>
 
 
-        <!-- LESSONS -->
+        <!-- =================================================
+             LOCKED MESSAGE
+             ================================================= -->
         <div
-          class="module-lessons"
-          *ngIf="module.lessons && module.lessons.length > 0"
+          *ngIf="module.isLocked"
+          class="prerequisite-message"
         >
 
+          <div class="prerequisite-icon">
+            🔒
+          </div>
+
+          <div class="prerequisite-content">
+
+            <strong>
+              هذه الوحدة مقفلة
+            </strong>
+
+            <p>
+              يجب إكمال الوحدة السابقة قبل الوصول إلى هذه الوحدة.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- =================================================
+             LESSONS
+             ================================================= -->
+        <div
+          *ngIf="
+            !module.isLocked &&
+            module.lessons &&
+            module.lessons.length > 0
+          "
+          class="module-lessons"
+        >
+
+          <div class="lessons-header">
+
+            <span>
+              دروس الوحدة
+            </span>
+
+            <span>
+              {{ module.lessons.length }} درس
+            </span>
+
+          </div>
+
+
           <div
-            *ngFor="let lesson of module.lessons"
+            *ngFor="
+              let lesson of module.lessons;
+              let lessonIndex = index;
+            "
             class="lesson-item"
           >
 
@@ -274,16 +566,22 @@
               <div class="lesson-status">
 
                 <span
-                  *ngIf="lesson.progressPercentage === 100"
+                  *ngIf="
+                    lesson.progressPercentage === 100
+                  "
                   class="lesson-check"
                 >
                   ✓
                 </span>
 
                 <span
-                  *ngIf="lesson.progressPercentage !== 100"
-                  class="lesson-dot"
-                ></span>
+                  *ngIf="
+                    lesson.progressPercentage !== 100
+                  "
+                  class="lesson-number"
+                >
+                  {{ lessonIndex + 1 }}
+                </span>
 
               </div>
 
@@ -291,7 +589,7 @@
               <div class="lesson-text">
 
                 <h4 class="lesson-title">
-                  {{ lesson.title }}
+                  {{ lesson.title || 'درس بدون عنوان' }}
                 </h4>
 
                 <p
@@ -306,12 +604,24 @@
             </div>
 
 
+            <!-- OPEN LESSON -->
             <button
               type="button"
               class="lesson-button"
+
+              (click)="
+                openLesson(lesson, module);
+                $event.preventDefault();
+                $event.stopPropagation()
+              "
             >
+
               فتح الدرس
-              <span>▷</span>
+
+              <span>
+                ←
+              </span>
+
             </button>
 
           </div>
@@ -319,11 +629,24 @@
         </div>
 
 
+        <!-- =================================================
+             NO LESSONS
+             ================================================= -->
         <div
-          *ngIf="!module.lessons || module.lessons.length === 0"
+          *ngIf="
+            !module.isLocked &&
+            (!module.lessons ||
+            module.lessons.length === 0)
+          "
           class="no-lessons"
         >
-          لا توجد دروس لهذه الوحدة
+
+          <span>
+            📚
+          </span>
+
+          لا توجد دروس لهذه الوحدة حاليًا
+
         </div>
 
       </details>
@@ -331,7 +654,9 @@
     </div>
 
 
-    <!-- EMPTY -->
+    <!-- =====================================================
+         EMPTY
+         ===================================================== -->
     <div
       *ngIf="
         !loading() &&
@@ -340,7 +665,19 @@
       "
       class="empty-state"
     >
-      لا توجد وحدات لهذا البرنامج
+
+      <div class="empty-icon">
+        📚
+      </div>
+
+      <h3>
+        لا توجد وحدات تدريبية
+      </h3>
+
+      <p>
+        لم تتم إضافة وحدات لهذا البرنامج حتى الآن.
+      </p>
+
     </div>
 
   </section>
@@ -354,1004 +691,1358 @@
 
 <style>
 
-  /* =========================
-     MAIN CONTAINER
-     ========================= */
+.program-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 20px 24px 35px;
+  box-sizing: border-box;
+
+  background: #f5f7fb;
+
+  font-family:
+    'Cairo',
+    'Segoe UI',
+    Tahoma,
+    sans-serif;
+
+  color: #172033;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.program-header {
+  width: 100%;
+  min-height: 145px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 22px 28px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #edf0f4;
+  border-radius: 14px;
+
+  box-shadow:
+    0 3px 14px rgba(25, 45, 80, 0.04);
+
+  margin-bottom: 14px;
+}
+
+
+.program-info {
+  flex: 1;
+  min-width: 0;
+
+  text-align: right;
+  padding-right: 20px;
+}
+
+
+.program-title-row {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  margin-bottom: 7px;
+}
+
+
+.program-title {
+  margin: 0;
+
+  font-size: 20px;
+  font-weight: 700;
+
+  color: #172033;
+
+  line-height: 1.5;
+}
+
+
+.program-description {
+  margin: 0 0 10px;
+
+  max-width: 900px;
+
+  font-size: 12px;
+  line-height: 1.8;
+
+  color: #8b929e;
+}
+
+
+.program-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  flex-wrap: wrap;
+
+  gap: 8px 20px;
+
+  color: #8a919d;
+
+  font-size: 10px;
+}
+
+
+.program-meta span {
+  white-space: nowrap;
+}
+
+
+.program-meta strong {
+  color: #555e6c;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.status-badge {
+  padding: 3px 11px;
+
+  border-radius: 20px;
+
+  font-size: 9px;
+  font-weight: 600;
+}
+
+
+.status-active {
+  color: #10aa83;
+  background: #eafaf5;
+}
+
+
+/* =========================================================
+   PROGRAM PROGRESS
+   ========================================================= */
+
+.progress-wrapper {
+  width: 105px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+}
+
+
+.progress-circle {
+  --progress: 0%;
+
+  width: 78px;
+  height: 78px;
+
+  border-radius: 50%;
+
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background:
+    conic-gradient(
+      #0fa7c2 0deg,
+      #0fa7c2 calc(var(--progress) * 3.6),
+      #e8edf3 calc(var(--progress) * 3.6),
+      #e8edf3 360deg
+    );
+}
+
+
+.progress-circle::before {
+  content: "";
+
+  position: absolute;
+
+  width: 64px;
+  height: 64px;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+}
+
+
+.progress-circle-inner {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.progress-circle-inner span {
+  font-size: 14px;
+  font-weight: 700;
+
+  color: #173c82;
+}
+
+
+.progress-label {
+  margin-top: 6px;
+
+  font-size: 9px;
+
+  color: #9ca3ad;
+}
+
+
+/* =========================================================
+   ENROLLMENT INFORMATION
+   ========================================================= */
+
+.enrollment-info {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 10px;
+
+  margin-bottom: 14px;
+}
+
+
+.enrollment-item {
+  min-height: 65px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 10px 13px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #edf0f4;
+  border-radius: 10px;
+}
+
+
+.info-icon {
+  width: 31px;
+  height: 31px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+
+  background: #f2f6ff;
+
+  font-size: 13px;
+}
+
+
+.enrollment-item div {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+
+.enrollment-item small {
+  font-size: 8px;
+
+  color: #9da4ae;
+}
+
+
+.enrollment-item strong {
+  font-size: 10px;
+
+  color: #283448;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   MODULE CONTAINER
+   ========================================================= */
+
+.modules-container {
+  width: 100%;
+
+  padding: 22px 20px 20px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #edf0f4;
+  border-radius: 14px;
+
+  box-shadow:
+    0 3px 14px rgba(25, 45, 80, 0.04);
+}
+
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 18px;
+}
+
+
+.modules-title {
+  margin: 0;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  color: #182235;
+}
+
+
+.modules-subtitle {
+  margin: 4px 0 0;
+
+  font-size: 9px;
+
+  color: #a0a6b0;
+}
+
+
+.modules-counter {
+  padding: 7px 12px;
+
+  border-radius: 8px;
+
+  background: #f5f8fc;
+
+  color: #8d96a3;
+
+  font-size: 9px;
+}
+
+
+.modules-counter strong {
+  color: #176fc4;
+
+  font-size: 12px;
+}
+
+
+.modules-counter span {
+  margin-right: 3px;
+}
+
+
+/* =========================================================
+   STEPPER
+   ========================================================= */
+
+.module-stepper {
+  width: 100%;
+
+  display: flex;
+  align-items: flex-start;
+
+  justify-content: flex-start;
+
+  direction: rtl;
+
+  margin-bottom: 20px;
+
+  padding: 0 15px;
+
+  box-sizing: border-box;
+
+  overflow-x: auto;
+}
+
+
+.step-wrapper {
+  position: relative;
+
+  min-width: 80px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  flex: 0 0 auto;
+}
+
+
+.step-line {
+  position: absolute;
+
+  top: 17px;
+
+  left: 50%;
+
+  width: 100%;
+  height: 2px;
+
+  background: #e0e5eb;
+
+  z-index: 0;
+}
+
+
+.completed-line {
+  background: #10b8c5;
+}
+
+
+.step-circle {
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: relative;
+  z-index: 2;
+
+  background: #ffffff;
+
+  border: 1px solid #dfe4eb;
+
+  color: #aeb4bd;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+
+.step-completed .step-circle {
+  background: #10bfca;
+
+  border-color: #10bfca;
+
+  color: #ffffff;
+}
+
+
+.step-current .step-circle {
+  background: #176fc4;
+
+  border-color: #176fc4;
+
+  color: #ffffff;
+}
+
+
+.step-locked .step-circle {
+  background: #f1f3f6;
+
+  border-color: #e7e9ed;
+
+  color: #a9afb8;
+}
+
+
+.step-label {
+  margin-top: 6px;
+
+  font-size: 8px;
+
+  color: #a1a6ae;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   MODULE LIST
+   ========================================================= */
+
+.modules-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+
+/* =========================================================
+   MODULE CARD
+   ========================================================= */
+
+.module-card {
+  border: 1px solid #e3e7ed;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  overflow: hidden;
+
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease;
+}
+
+
+.module-card[open] {
+  border-color: #2b8ce6;
+
+  box-shadow:
+    0 3px 10px rgba(43, 140, 230, .05);
+}
+
+
+.module-card.locked-card {
+  background: #fafbfc;
+
+  border-color: #e7e9ed;
+}
+
+
+.module-card summary {
+  list-style: none;
+}
+
+
+.module-card summary::-webkit-details-marker {
+  display: none;
+}
+
+
+/* =========================================================
+   MODULE HEADER
+   ========================================================= */
+
+.module-summary {
+  min-height: 68px;
+
+  padding: 10px 14px;
+
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  cursor: pointer;
+
+  user-select: none;
+}
+
+
+.locked-card .module-summary {
+  cursor: not-allowed;
+}
+
+
+.module-main-info {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  flex: 1;
+
+  min-width: 0;
+}
+
+
+.module-status-icon {
+  width: 31px;
+  height: 31px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #f3f5f8;
+
+  color: #9aa2ad;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+
+.completed-icon {
+  background: #eafaf5;
+
+  color: #13b98d;
+}
+
+
+.active-icon {
+  background: #edf5ff;
+
+  color: #176fc4;
+}
+
+
+.locked-icon {
+  background: #f0f2f5;
+
+  color: #9ca3ad;
+}
+
+
+.module-details {
+  flex: 1;
+
+  min-width: 0;
+}
+
+
+.module-title-row {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  margin-bottom: 5px;
+
+  min-width: 0;
+}
+
+
+.module-number {
+  flex-shrink: 0;
+
+  font-size: 8px;
+
+  color: #a0a6b0;
+}
+
+
+.module-title {
+  margin: 0;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  color: #172033;
+
+  line-height: 1.5;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   BADGES
+   ========================================================= */
+
+.module-badge {
+  flex-shrink: 0;
+
+  padding: 2px 9px;
+
+  border-radius: 20px;
+
+  font-size: 8px;
+}
+
+
+.module-badge.completed {
+  color: #2277c5;
+
+  background: #eff6ff;
+}
+
+
+.module-badge.active {
+  color: #13b98d;
+
+  background: #ecfaf5;
+}
+
+
+.module-badge.new {
+  color: #8656dd;
+
+  background: #f3edff;
+}
+
+
+.module-badge.locked {
+  color: #7b818b;
+
+  background: #f0f2f5;
+}
+
+
+/* =========================================================
+   MODULE PROGRESS
+   ========================================================= */
+
+.progress-row {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  width: 180px;
+}
+
+
+.progress-number {
+  min-width: 28px;
+
+  font-size: 8px;
+
+  color: #929aa5;
+
+  text-align: left;
+}
+
+
+.module-progress {
+  height: 4px;
+
+  flex: 1;
+
+  background: #e5e9ef;
+
+  border-radius: 10px;
+
+  overflow: hidden;
+}
+
+
+.module-progress-fill {
+  height: 100%;
+
+  border-radius: inherit;
+
+  background: #10b8c5;
+
+  transition: width .3s ease;
+}
+
+
+/* =========================================================
+   ARROW
+   ========================================================= */
+
+.accordion-arrow {
+  width: 22px;
+
+  color: #9ba2ad;
+
+  font-size: 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: transform .2s ease;
+}
+
+
+.module-card[open] .accordion-arrow {
+  transform: rotate(180deg);
+}
+
+
+.locked-arrow {
+  width: 22px;
+
+  color: #a3a8b0;
+
+  font-size: 10px;
+
+  text-align: center;
+}
+
+
+/* =========================================================
+   PREREQUISITE
+   ========================================================= */
+
+.prerequisite-message {
+  margin: 0 12px 12px;
+
+  padding: 13px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  border-radius: 8px;
+
+  background: #f7f8fa;
+
+  border: 1px solid #eceef1;
+}
+
+
+.prerequisite-icon {
+  width: 32px;
+  height: 32px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+
+  background: #eceff3;
+
+  font-size: 14px;
+}
+
+
+.prerequisite-content strong {
+  display: block;
+
+  margin-bottom: 3px;
+
+  font-size: 10px;
+
+  color: #555c68;
+}
+
+
+.prerequisite-content p {
+  margin: 0;
+
+  font-size: 9px;
+
+  color: #999fa8;
+}
+
+
+/* =========================================================
+   LESSONS
+   ========================================================= */
+
+.module-lessons {
+  padding: 0 12px 8px;
+
+  border-top: 1px solid #edf0f4;
+}
+
+
+.lessons-header {
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  font-size: 9px;
+
+  color: #949ba6;
+
+  border-bottom: 1px solid #f1f3f6;
+}
+
+
+.lesson-item {
+  min-height: 58px;
+
+  padding: 9px 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  border-bottom: 1px solid #f1f3f6;
+}
+
+
+.lesson-item:last-child {
+  border-bottom: none;
+}
+
+
+.lesson-info {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 9px;
+
+  flex: 1;
+
+  min-width: 0;
+}
+
+
+.lesson-status {
+  padding-top: 1px;
+
+  flex-shrink: 0;
+}
+
+
+.lesson-check {
+  width: 20px;
+  height: 20px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #effbf8;
+
+  color: #18bf9b;
+
+  font-size: 9px;
+}
+
+
+.lesson-number {
+  width: 20px;
+  height: 20px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #f1f4f8;
+
+  color: #8e96a2;
+
+  font-size: 8px;
+}
+
+
+.lesson-text {
+  min-width: 0;
+}
+
+
+.lesson-title {
+  margin: 0;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  color: #1b2536;
+}
+
+
+.lesson-description {
+  margin: 3px 0 0;
+
+  font-size: 9px;
+
+  line-height: 1.5;
+
+  color: #9ca2ab;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   LESSON BUTTON
+   ========================================================= */
+
+.lesson-button {
+  flex-shrink: 0;
+
+  border: none;
+
+  background: #eaf0ff;
+
+  color: #193d91;
+
+  border-radius: 6px;
+
+  padding: 7px 11px;
+
+  font-family: inherit;
+
+  font-size: 9px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+
+  transition:
+    background .2s ease,
+    transform .2s ease;
+}
+
+
+.lesson-button:hover {
+  background: #dce7ff;
+
+  transform: translateX(-2px);
+}
+
+
+/* =========================================================
+   NO LESSONS
+   ========================================================= */
+
+.no-lessons {
+  padding: 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  color: #9ba1aa;
+
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.loading-state {
+  text-align: center;
+
+  padding: 55px 20px;
+
+  color: #8f96a1;
+
+  font-size: 11px;
+}
+
+
+.loader {
+  width: 27px;
+  height: 27px;
+
+  margin: 0 auto 12px;
+
+  border: 3px solid #e7ebf0;
+
+  border-top-color: #1a75c4;
+
+  border-radius: 50%;
+
+  animation: spin .8s linear infinite;
+}
+
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.error-state {
+  text-align: center;
+
+  padding: 50px 20px;
+
+  color: #ef5555;
+}
+
+
+.error-icon {
+  width: 40px;
+  height: 40px;
+
+  margin: 0 auto 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #fff0f0;
+
+  color: #ef5555;
+
+  font-size: 18px;
+  font-weight: 700;
+}
+
+
+.error-state h3 {
+  margin: 0 0 5px;
+
+  font-size: 13px;
+
+  color: #555c68;
+}
+
+
+.error-state p {
+  margin: 0;
+
+  font-size: 10px;
+
+  color: #999fa8;
+}
+
+
+.retry-button {
+  margin-top: 13px;
+
+  border: none;
+
+  background: #176fc4;
+
+  color: #ffffff;
+
+  border-radius: 6px;
+
+  padding: 8px 17px;
+
+  font-family: inherit;
+
+  font-size: 10px;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   EMPTY
+   ========================================================= */
+
+.empty-state {
+  text-align: center;
+
+  padding: 55px 20px;
+
+  color: #9ba1aa;
+}
+
+
+.empty-icon {
+  font-size: 30px;
+
+  margin-bottom: 8px;
+}
+
+
+.empty-state h3 {
+  margin: 0 0 5px;
+
+  font-size: 13px;
+
+  color: #68717e;
+}
+
+
+.empty-state p {
+  margin: 0;
+
+  font-size: 10px;
+
+  color: #a1a7b0;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+  .program-header {
+    padding: 18px;
+  }
+
+  .enrollment-info {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .program-meta {
+    gap: 7px 14px;
+  }
+}
+
+
+@media (max-width: 650px) {
 
   .program-container {
-    width: 100%;
-    max-width: none;
-    margin: 0;
-
-    padding: 18px 22px 28px;
-
-    box-sizing: border-box;
-
-    background: #f5f7fb;
-
-    font-family: 'Cairo',
-                 'Segoe UI',
-                 Tahoma,
-                 sans-serif;
-
-    direction: rtl;
-
-    color: #172033;
+    padding: 10px;
   }
 
 
-  /* =========================
-     HEADER
-     ========================= */
-
   .program-header {
-    width: 100%;
-    min-height: 135px;
+    flex-direction: column-reverse;
 
-    background: #ffffff;
+    align-items: stretch;
 
-    border-radius: 14px;
+    gap: 15px;
+  }
 
-    padding: 20px 28px;
 
-    box-sizing: border-box;
-
-    display: flex;
-
-    flex-direction: row;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    box-shadow:
-      0 2px 10px rgba(25, 45, 80, 0.04);
-
-    margin-bottom: 20px;
+  .progress-wrapper {
+    align-self: center;
   }
 
 
   .program-info {
-    flex: 1;
+    padding-right: 0;
 
-    min-width: 0;
-
-    text-align: right;
-
-    padding-right: 20px;
+    text-align: center;
   }
 
 
   .program-title-row {
-    display: flex;
-
-    align-items: center;
-
-    justify-content: flex-start;
-
-    gap: 10px;
-
-    margin-bottom: 5px;
-  }
-
-
-  .program-title {
-    margin: 0;
-
-    font-size: 19px;
-
-    font-weight: 700;
-
-    color: #172033;
-
-    line-height: 1.5;
+    justify-content: center;
   }
 
 
   .program-description {
-    margin: 0 0 8px;
-
-    font-size: 12px;
-
-    line-height: 1.7;
-
-    color: #8b909b;
-
-    max-width: 850px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
 
   .program-meta {
-    display: flex;
-
-    align-items: center;
-
-    justify-content: flex-start;
-
-    gap: 18px;
-
-    color: #8a8f9a;
-
-    font-size: 10px;
-  }
-
-
-  .program-meta span {
-    white-space: nowrap;
-  }
-
-
-  .program-meta strong {
-    color: #626b79;
-
-    font-weight: 500;
-  }
-
-
-  /* =========================
-     STATUS
-     ========================= */
-
-  .status-badge {
-    padding: 3px 10px;
-
-    border-radius: 20px;
-
-    font-size: 9px;
-
-    font-weight: 500;
-  }
-
-
-  .status-active {
-    color: #13b98d;
-
-    background: #ecfaf5;
-  }
-
-
-  /* =========================
-     PROGRESS CIRCLE
-     ========================= */
-
-  .progress-wrapper {
-    width: 95px;
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    justify-content: center;
-
-    flex-shrink: 0;
-  }
-
-
-  .progress-circle {
-    --progress: 75%;
-
-    width: 76px;
-    height: 76px;
-
-    border-radius: 50%;
-
-    background:
-      conic-gradient(
-        #0fa7c2 0deg,
-        #0fa7c2 calc(var(--progress) * 3.6),
-        #e8edf3 calc(var(--progress) * 3.6),
-        #e8edf3 360deg
-      );
-
-    position: relative;
-
-    display: flex;
-
-    align-items: center;
-
     justify-content: center;
   }
 
 
-  .progress-circle::before {
-    content: "";
-
-    position: absolute;
-
-    width: 62px;
-    height: 62px;
-
-    border-radius: 50%;
-
-    background: #ffffff;
+  .enrollment-info {
+    grid-template-columns: 1fr 1fr;
   }
 
 
-  .progress-circle-inner {
-    position: relative;
-
-    z-index: 1;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-  }
-
-
-  .progress-circle-inner span {
-    font-size: 13px;
-
-    font-weight: 700;
-
-    color: #173c82;
-  }
-
-
-  .progress-label {
-    margin-top: 5px;
-
-    font-size: 9px;
-
-    color: #a1a6af;
-  }
-
-
-  /* =========================
-     MODULE CONTAINER
-     ========================= */
-
-  .modules-container {
-    background: #ffffff;
-
-    border-radius: 14px;
-
-    padding: 22px 20px 18px;
-
-    box-shadow:
-      0 2px 10px rgba(25, 45, 80, 0.04);
-  }
-
-
-  .modules-title {
-    margin: 0 0 18px;
-
-    font-size: 15px;
-
-    font-weight: 700;
-
-    color: #182235;
-
-    text-align: right;
-  }
-
-
-  /* =========================
-     STEPPER
-     ========================= */
-
-  .module-stepper {
-    display: flex;
-
+  .section-header {
     align-items: flex-start;
 
-    justify-content: flex-start;
-
-    direction: rtl;
-
-    margin-bottom: 20px;
-
-    padding: 0 18px;
+    gap: 10px;
   }
 
 
-  .step-wrapper {
-    position: relative;
-
-    min-width: 78px;
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    flex: 0 0 auto;
+  .modules-counter {
+    flex-shrink: 0;
   }
 
-
-  .step-line {
-    position: absolute;
-
-    top: 17px;
-
-    left: 50%;
-
-    width: 100%;
-
-    height: 1px;
-
-    background: #dfe4eb;
-
-    z-index: 0;
-  }
-
-
-  .completed-line {
-    background: #0bb6c4;
-  }
-
-
-  .step-circle {
-    width: 34px;
-    height: 34px;
-
-    border-radius: 50%;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    position: relative;
-
-    z-index: 2;
-
-    font-size: 11px;
-
-    font-weight: 600;
-
-    background: #ffffff;
-
-    border: 1px solid #dfe4eb;
-
-    color: #aeb4bd;
-  }
-
-
-  .step-completed .step-circle {
-    background: #10bfca;
-
-    border-color: #10bfca;
-
-    color: #ffffff;
-  }
-
-
-  .step-current .step-circle {
-    background: #176fc4;
-
-    border-color: #176fc4;
-
-    color: #ffffff;
-  }
-
-
-  .step-locked .step-circle {
-    background: #f1f3f6;
-
-    border-color: #f1f3f6;
-
-    color: #a9afb8;
-
-    font-size: 9px;
-  }
-
-
-  .step-label {
-    margin-top: 5px;
-
-    font-size: 8px;
-
-    color: #a1a6ae;
-
-    white-space: nowrap;
-  }
-
-
-  /* =========================
-     MODULE LIST
-     ========================= */
-
-  .modules-list {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 8px;
-  }
-
-
-  /* =========================
-     MODULE CARD
-     ========================= */
-
-  .module-card {
-    border: 1px solid #e3e7ed;
-
-    border-radius: 10px;
-
-    background: #ffffff;
-
-    overflow: hidden;
-
-    transition:
-      border-color 0.2s ease,
-      box-shadow 0.2s ease;
-  }
-
-
-  .module-card[open] {
-    border-color: #2b8ce6;
-
-    box-shadow:
-      0 1px 4px rgba(43, 140, 230, 0.04);
-  }
-
-
-  .module-card summary {
-    list-style: none;
-  }
-
-
-  .module-card summary::-webkit-details-marker {
-    display: none;
-  }
-
-
-  /* =========================
-     MODULE HEADER
-     ========================= */
 
   .module-summary {
-    min-height: 66px;
-
-    padding: 10px 14px;
-
-    box-sizing: border-box;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    cursor: pointer;
-
-    user-select: none;
+    padding: 9px;
   }
 
-
-  .module-main-info {
-    display: flex;
-
-    align-items: center;
-
-    gap: 10px;
-
-    flex: 1;
-
-    min-width: 0;
-  }
-
-
-  .module-status-icon {
-    width: 29px;
-    height: 29px;
-
-    flex-shrink: 0;
-
-    border-radius: 50%;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    background: #eefbf8;
-
-    color: #18c69c;
-
-    font-size: 11px;
-
-    font-weight: 700;
-  }
-
-
-  .module-card:not([open])
-  .module-status-icon {
-    background: #eef5fd;
-
-    color: #1e75c7;
-  }
-
-
-  .module-details {
-    flex: 1;
-
-    min-width: 0;
-  }
-
-
-  .module-title-row {
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
-    margin-bottom: 4px;
-  }
-
-
-  .module-title {
-    margin: 0;
-
-    font-size: 12px;
-
-    font-weight: 600;
-
-    color: #172033;
-
-    line-height: 1.5;
-
-    white-space: nowrap;
-
-    overflow: hidden;
-
-    text-overflow: ellipsis;
-  }
-
-
-  /* =========================
-     BADGES
-     ========================= */
-
-  .module-badge {
-    flex-shrink: 0;
-
-    padding: 2px 9px;
-
-    border-radius: 20px;
-
-    font-size: 8px;
-  }
-
-
-  .module-badge.completed {
-    color: #2277c5;
-
-    background: #eff6ff;
-  }
-
-
-  .module-badge.active {
-    color: #13b98d;
-
-    background: #ecfaf5;
-  }
-
-
-  .module-badge.new {
-    color: #8656dd;
-
-    background: #f3edff;
-  }
-
-
-  /* =========================
-     MODULE PROGRESS
-     ========================= */
 
   .progress-row {
-    display: flex;
-
-    align-items: center;
-
-    gap: 7px;
-
-    width: 155px;
-  }
-
-
-  .progress-number {
-    min-width: 26px;
-
-    font-size: 8px;
-
-    color: #9da3ad;
-
-    text-align: left;
-  }
-
-
-  .module-progress {
-    height: 4px;
-
-    flex: 1;
-
-    background: #e5e9ef;
-
-    border-radius: 10px;
-
-    overflow: hidden;
-  }
-
-
-  .module-progress-fill {
-    height: 100%;
-
-    border-radius: inherit;
-
-    background: #10b8c5;
-
-    transition: width 0.3s ease;
-  }
-
-
-  .module-card:not([open])
-  .module-progress-fill {
-    background: #1676ca;
-  }
-
-
-  /* =========================
-     ARROW
-     ========================= */
-
-  .accordion-arrow {
-    width: 20px;
-
-    color: #9ba2ad;
-
-    font-size: 15px;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    transition: transform 0.2s ease;
-  }
-
-
-  .module-card[open]
-  .accordion-arrow {
-    transform: rotate(180deg);
-  }
-
-
-  /* =========================
-     LESSONS
-     ========================= */
-
-  .module-lessons {
-    padding: 0 12px 10px;
-
-    border-top: 1px solid #edf0f4;
+    width: 140px;
   }
 
 
   .lesson-item {
-    min-height: 55px;
-
-    padding: 8px 0;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    gap: 15px;
-
-    border-bottom: 1px solid #f1f3f6;
-  }
-
-
-  .lesson-item:last-child {
-    border-bottom: none;
-  }
-
-
-  .lesson-info {
-    display: flex;
-
     align-items: flex-start;
 
-    gap: 9px;
-
-    flex: 1;
-
-    min-width: 0;
+    flex-direction: column;
   }
 
-
-  .lesson-status {
-    padding-top: 2px;
-  }
-
-
-  .lesson-check {
-    width: 19px;
-    height: 19px;
-
-    border-radius: 50%;
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    background: #effbf8;
-
-    color: #18bf9b;
-
-    font-size: 9px;
-  }
-
-
-  .lesson-dot {
-    display: block;
-
-    width: 8px;
-    height: 8px;
-
-    margin: 5px;
-
-    border-radius: 50%;
-
-    background: #d6dbe2;
-  }
-
-
-  .lesson-text {
-    min-width: 0;
-  }
-
-
-  .lesson-title {
-    margin: 0;
-
-    font-size: 11px;
-
-    font-weight: 600;
-
-    color: #1b2536;
-  }
-
-
-  .lesson-description {
-    margin: 3px 0 0;
-
-    font-size: 9px;
-
-    line-height: 1.5;
-
-    color: #9ca2ab;
-
-    white-space: nowrap;
-
-    overflow: hidden;
-
-    text-overflow: ellipsis;
-  }
-
-
-  /* =========================
-     LESSON BUTTON
-     ========================= */
 
   .lesson-button {
-    flex-shrink: 0;
+    align-self: flex-start;
+  }
+}
 
-    border: none;
 
-    background: #eaf0ff;
+@media (max-width: 450px) {
 
-    color: #193d91;
-
-    border-radius: 6px;
-
-    padding: 6px 10px;
-
-    font-family: inherit;
-
-    font-size: 9px;
-
-    font-weight: 600;
-
-    cursor: pointer;
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 5px;
-
-    transition: background 0.2s ease;
+  .program-title {
+    font-size: 16px;
   }
 
 
-  .lesson-button:hover {
-    background: #dce7ff;
-  }
-
-
-  /* =========================
-     STATES
-     ========================= */
-
-  .loading-state,
-  .error-state,
-  .empty-state {
-    text-align: center;
-
-    padding: 45px 20px;
-
-    color: #8f96a1;
-
-    font-size: 12px;
-  }
-
-
-  .error-state {
-    color: #ef5555;
-  }
-
-
-  .loader {
-    width: 25px;
-    height: 25px;
-
-    margin: 0 auto 10px;
-
-    border: 3px solid #e7ebf0;
-
-    border-top-color: #1a75c4;
-
-    border-radius: 50%;
-
-    animation: spin 0.8s linear infinite;
-  }
-
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-
-  .no-lessons {
-    padding: 15px;
-
-    text-align: center;
-
-    color: #9ba1aa;
-
+  .program-description {
     font-size: 10px;
   }
 
 
-  /* =========================
-     RESPONSIVE
-     ========================= */
-
-  @media (max-width: 900px) {
-
-    .program-header {
-      padding: 18px;
-    }
-
-    .program-meta {
-      flex-wrap: wrap;
-
-      gap: 8px 15px;
-    }
-
+  .enrollment-info {
+    grid-template-columns: 1fr;
   }
 
 
-  @media (max-width: 650px) {
-
-    .program-container {
-      padding: 10px;
-    }
-
-
-    .program-header {
-      flex-direction: column-reverse;
-
-      align-items: stretch;
-
-      gap: 15px;
-    }
-
-
-    .progress-wrapper {
-      align-self: center;
-    }
-
-
-    .program-info {
-      padding-right: 0;
-
-      text-align: center;
-    }
-
-
-    .program-title-row {
-      justify-content: center;
-    }
-
-
-    .program-meta {
-      justify-content: center;
-    }
-
-
-    .module-stepper {
-      overflow-x: auto;
-
-      justify-content: flex-start;
-
-      padding-bottom: 5px;
-    }
-
-
-    .module-summary {
-      padding: 9px;
-    }
-
-
-    .progress-row {
-      width: 120px;
-    }
-
-
-    .lesson-item {
-      align-items: flex-start;
-
-      flex-direction: column;
-    }
-
-
-    .lesson-button {
-      align-self: flex-start;
-    }
-
+  .module-number {
+    display: none;
   }
 
 
-  @media (max-width: 450px) {
-
-    .program-title {
-      font-size: 16px;
-    }
-
-
-    .module-title {
-      font-size: 11px;
-    }
-
-
-    .module-badge {
-      display: none;
-    }
-
-
-    .progress-row {
-      width: 100px;
-    }
-
+  .module-title {
+    font-size: 11px;
   }
+
+
+  .module-badge {
+    display: none;
+  }
+
+
+  .progress-row {
+    width: 105px;
+  }
+
+
+  .modules-counter {
+    display: none;
+  }
+
+}
 
 </style>
