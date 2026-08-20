@@ -48,6 +48,10 @@ export class AdminPrograms implements OnInit {
   readonly companies = signal<CompanyDto[]>([]);
   readonly statusFilter = signal<string>('الكل');
 
+  // Pagination Signals & Constants
+  readonly pageSize = signal<number>(8); // عدد العناصر في الصفحة الواحدة
+  readonly currentPage = signal<number>(1); // الصفحة الحالية
+
   // Error state (لعرضها في الواجهة بدل الفشل الصامت)
   readonly batchesError = signal<string | null>(null);
   readonly programsError = signal<string | null>(null);
@@ -78,6 +82,20 @@ export class AdminPrograms implements OnInit {
     });
   });
 
+  // --- Pagination Computed Signals ---
+  readonly totalBatchesCount = computed(() => this.filteredBatches().length);
+
+  readonly totalPages = computed(() => {
+    const total = this.totalBatchesCount();
+    return Math.max(1, Math.ceil(total / this.pageSize()));
+  });
+
+  readonly paginatedBatches = computed(() => {
+    const batches = this.filteredBatches();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return batches.slice(start, start + this.pageSize());
+  });
+
   ngOnInit(): void {
     this.initBatchForm();
     this.initProgramForm();
@@ -87,6 +105,14 @@ export class AdminPrograms implements OnInit {
   // --- Status Filter Handler ---
   setStatusFilter(filter: string): void {
     this.statusFilter.set(filter);
+    this.currentPage.set(1); // إعادة تعيين الصفحة عند تغيير الفلتر
+  }
+
+  // --- Pagination Handler ---
+  onPageChange(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
   }
 
   // --- Table Helpers ---

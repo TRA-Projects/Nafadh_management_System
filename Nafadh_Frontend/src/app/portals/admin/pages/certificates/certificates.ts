@@ -48,7 +48,7 @@ export interface TraineeDto {
 
   fullName: string;
 
-  completionStatus: string | number;
+  isIssued: boolean;
 
   fileUrl?: string;
 
@@ -131,6 +131,14 @@ export class AdminCertificates implements OnInit {
   readonly totalBatchesCount = signal<number>(0);
 
 
+  // ==================== Search & Filter ====================
+
+  readonly searchTerm = signal<string>('');
+  readonly statusFilter = signal<string>('all');
+
+  private allBatches: BatchCertificateCardDto[] = [];
+
+
 
   // Computed Properties
 
@@ -170,255 +178,400 @@ export class AdminCertificates implements OnInit {
 
 
 
-  // ==================== 1. جلب الدفعات مقسمة لصفحات ====================
+// ==================== 1. جلب الدفعات ====================
 
-  fetchBatches(): void {
+fetchBatches(): void {
 
-    this.loading.set(true);
+  this.loading.set(true);
 
+  this.api.getBatches().subscribe({
 
+    next: (response: any[]) => {
 
-    this.api.getBatches().subscribe({
+      const rawBatches = response || [];
 
-      next: (response: any[]) => {
+      if (rawBatches.length === 0) {
 
-        const rawBatches = response || [];
+        this.allBatches = [];
+        this.batches.set([]);
+        this.totalBatchesCount.set(0);
+        this.loading.set(false);
 
-        this.totalBatchesCount.set(rawBatches.length);
-
-
-
-        if (rawBatches.length === 0) {
-
-          this.batches.set([]);
-
-          this.loading.set(false);
-
-          return;
-
-        }
+        return;
+      }
 
 
-
-        const startIndex = (this.currentPage() - 1) * this.pageSize();
-
-        const paginatedBatches = rawBatches.slice(startIndex, startIndex + this.pageSize());
-
+      // تجهيز جميع الدفعات
+      const normalizedBatches =
+        rawBatches.map((b: any) => this.normalizeBatch(b));
 
 
-        const batchRequests$ = paginatedBatches.map((b: any) => {
+      // جلب حالة الشهادات لجميع الدفعات
+      const batchRequests$ = normalizedBatches.map(
+        (normalized: BatchCertificateCardDto) => {
 
-          const bId = this.cleanId(b.batchId ?? b.id);
+          const bId = this.cleanId(
+            normalized.batchId ?? normalized.id
+          );
 
-          const normalized = this.normalizeBatch(b);
-
-
-
-          return this.api.getTraineesForCertificates({ batchId: bId } as any).pipe(
+          return this.api.getBatchCertificatesStatus(bId).pipe(
 
             map((res: any) => {
 
-              const trainees = res?.items || (Array.isArray(res) ? res : []);
+              const trainees = Array.isArray(res)
+                ? res
+                : (res?.items || []);
 
-
-
-              const issuedCount = trainees.filter((t: any) => {
-
-                const rawStatus = String(t.completionStatus ?? t.status ?? '').toLowerCase();
-
-                const fileUrl = t.fileUrl || t.certificateUrl || t.pdfUrl;
-
-                return rawStatus === 'issued' || rawStatus === 'completed' || rawStatus === '1' || !!fileUrl;
-
-              }).length;
-
-
+              const issuedCount = trainees.filter(
+                (t: any) => !!t.isIssued
+              ).length;
 
               return {
-
                 ...normalized,
-
                 totalTraineesCount: trainees.length,
-
                 issuedCertificatesCount: issuedCount
-
               };
 
             }),
 
-            catchError(() => of({ ...normalized, totalTraineesCount: 0, issuedCertificatesCount: 0 }))
+            catchError((err) => {
+
+              console.error(
+                `Error fetching certificate status for batch ${bId}:`,
+                err
+              );
+
+              return of({
+                ...normalized,
+                totalTraineesCount: 0,
+                issuedCertificatesCount: 0
+              });
+
+            })
 
           );
 
-        });
+        }
+      );
 
 
+      forkJoin<BatchCertificateCardDto[]>(
+        batchRequests$
+      ).subscribe({
 
-        forkJoin<BatchCertificateCardDto[]>(batchRequests$).subscribe({
+        next: (finalBatches) => {
 
-          next: (finalBatches) => {
+          // نحفظ جميع الدفعات
+          this.allBatches = finalBatches;
 
-            this.batches.set(finalBatches);
+          // البحث + الفلترة + Pagination
+          this.applyFilters();
 
-            this.loading.set(false);
+          this.loading.set(false);
 
-          },
+        },
 
-          error: () => {
+        error: (err) => {
 
-            this.batches.set(paginatedBatches.map(b => this.normalizeBatch(b)));
+          console.error(
+            'Error loading batch certificate statuses:',
+            err
+          );
 
-            this.loading.set(false);
+          this.allBatches = normalizedBatches;
 
-          }
+          this.applyFilters();
 
-        });
+          this.loading.set(false);
 
-      },
+        }
 
-      error: (err) => {
+      });
 
-        console.error('Error fetching batches:', err);
+    },
 
-        this.batches.set([]);
+    error: (err) => {
 
-        this.loading.set(false);
+      console.error(
+        'Error fetching batches:',
+        err
+      );
 
-      }
+      this.allBatches = [];
+      this.batches.set([]);
+      this.totalBatchesCount.set(0);
+
+      this.loading.set(false);
+
+    }
+
+  });
+
+}
+
+// ==================== البحث والفلترة + Pagination ====================
+
+private applyFilters(): void {
+
+  const search = this.searchTerm()
+    .trim()
+    .toLowerCase();
+
+  const selectedStatus = this.statusFilter();
+
+  let filteredBatches = [...this.allBatches];
+
+
+  // ==================== البحث ====================
+
+  if (search) {
+
+    filteredBatches = filteredBatches.filter(batch => {
+
+      const batchName =
+        (batch.batchName || '').toLowerCase();
+
+      const companyName =
+        (batch.companyName || '').toLowerCase();
+
+      const trackName =
+        (batch.trackName || '').toLowerCase();
+
+
+      return (
+        batchName.includes(search) ||
+        companyName.includes(search) ||
+        trackName.includes(search)
+      );
 
     });
 
   }
 
 
+  // ==================== الفلترة ====================
 
-  onPageChange(newPage: number): void {
+  if (selectedStatus !== 'all') {
 
-    if (newPage >= 1 && newPage <= this.totalPages()) {
+    filteredBatches = filteredBatches.filter(batch => {
 
-      this.currentPage.set(newPage);
+      const status =
+        String(batch.status).toLowerCase();
 
-      this.fetchBatches();
 
-    }
+      if (selectedStatus === 'ongoing') {
+
+        return (
+          status === 'ongoing' ||
+          status === '1' ||
+          status === 'active'
+        );
+
+      }
+
+
+      if (selectedStatus === 'completed') {
+
+        return (
+          status === 'completed' ||
+          status === '2'
+        );
+
+      }
+
+
+      if (selectedStatus === 'not-started') {
+
+        return (
+          status !== 'ongoing' &&
+          status !== '1' &&
+          status !== 'active' &&
+          status !== 'completed' &&
+          status !== '2'
+        );
+
+      }
+
+
+      return true;
+
+    });
 
   }
 
+
+  // ==================== عدد النتائج ====================
+
+  this.totalBatchesCount.set(
+    filteredBatches.length
+  );
+
+
+
+  
+  // ==================== Pagination ====================
+
+  const totalPages =
+    Math.ceil(
+      filteredBatches.length / this.pageSize()
+    ) || 1;
+
+
+  if (this.currentPage() > totalPages) {
+
+    this.currentPage.set(totalPages);
+
+  }
+
+
+  const startIndex =
+    (this.currentPage() - 1) *
+    this.pageSize();
+
+
+  const paginatedBatches =
+    filteredBatches.slice(
+      startIndex,
+      startIndex + this.pageSize()
+    );
+
+
+   this.batches.set(paginatedBatches);
+
+}
+
+
+// ==================== Search ====================
+
+onSearch(event: Event): void {
+
+  const input = event.target as HTMLInputElement;
+
+  this.searchTerm.set(input.value);
+
+  this.currentPage.set(1);
+
+  this.applyFilters();
+
+}
+
+
+// ==================== Status Filter ====================
+
+onStatusFilterChange(event: Event): void {
+
+  const select = event.target as HTMLSelectElement;
+
+  this.statusFilter.set(select.value);
+
+  this.currentPage.set(1);
+
+  this.applyFilters();
+
+}
+
+
+// ==================== Reset Filters ====================
+
+resetFilters(): void {
+
+  this.searchTerm.set('');
+
+  this.statusFilter.set('all');
+
+  this.currentPage.set(1);
+
+  this.applyFilters();
+
+}
+
+
+// ==================== Pagination ====================
+
+onPageChange(newPage: number): void {
+
+  if (
+    newPage >= 1 &&
+    newPage <= this.totalPages()
+  ) {
+
+    this.currentPage.set(newPage);
+
+    this.applyFilters();
+
+  }
+
+}
 
 
   // ==================== 2. جلب المتدربين للدفعة ====================
 
-  onViewTrainees(batch: BatchCertificateCardDto): void {
+ onViewTrainees(batch: BatchCertificateCardDto): void {
+  this.selectedBatch.set(batch);
+  this.viewMode.set('details');
+  this.loadingTrainees.set(true);
 
-    this.selectedBatch.set(batch);
+  const bId = this.cleanId(batch.batchId || batch.id);
 
-    this.viewMode.set('details');
+  this.api.getBatchCertificatesStatus(bId).subscribe({
+    next: (res: any) => {
 
-    this.loadingTrainees.set(true);
+      const rawList = Array.isArray(res)
+        ? res
+        : (res?.items || []);
 
+      const mappedList: TraineeDto[] = rawList.map((t: any) => {
 
+        const cleanEId = this.cleanId(t.enrollmentId);
+        const cleanTId = this.cleanId(t.traineeId);
 
-    const bId = this.cleanId(batch.batchId || batch.id);
+        return {
+          traineeId: cleanTId,
+          enrollmentId: cleanEId,
+          fullName: t.fullName || 'متدرب بدون اسم',
+          isIssued: !!t.isIssued,
+          fileUrl: t.fileUrl || undefined,
+          grade: t.grade != null ? `${t.grade}%` : undefined
+        };
+      });
 
+      this.selectedBatchTrainees.set(mappedList);
 
+      const realTotal = mappedList.length;
 
-    this.api.getTraineesForCertificates({ batchId: bId } as any).subscribe({
+      const realIssued = mappedList.filter(
+        t => t.isIssued
+      ).length;
 
-      next: (res: any) => {
+      this.selectedBatch.update(b => b ? {
+        ...b,
+        totalTraineesCount: realTotal,
+        issuedCertificatesCount: realIssued
+      } : null);
 
-        const rawList = res?.items || (Array.isArray(res) ? res : []);
-
-
-
-        const mappedList: TraineeDto[] = rawList.map((t: any) => {
-
-          const fileUrl = t.fileUrl || t.certificateUrl || t.pdfUrl || null;
-
-          const rawStatus = String(t.completionStatus ?? t.status ?? '').toLowerCase();
-
-          const isIssued = rawStatus === 'issued' || rawStatus === 'completed' || rawStatus === '1' || !!fileUrl;
-
-
-
-          const cleanEId = this.cleanId(t.enrollmentId ?? t.id ?? t.traineeId);
-
-          const cleanTId = this.cleanId(t.traineeId ?? t.id);
-
-
-
-          return {
-
-            traineeId: cleanTId,
-
-            enrollmentId: cleanEId,
-
-            fullName: t.fullName || t.traineeName || 'متدرب بدون اسم',
-
-            completionStatus: isIssued ? 'Issued' : 'Pending',
-
-            fileUrl: fileUrl,
-
-            grade: t.grade || '91%'
-
-          };
-
-        });
-
-
-
-        this.selectedBatchTrainees.set(mappedList);
-
-
-
-        const realTotal = mappedList.length;
-
-        const realIssued = mappedList.filter(t => this.isCertificateIssued(t)).length;
-
-
-
-        this.selectedBatch.update(b => b ? {
-
-          ...b,
-
-          totalTraineesCount: realTotal,
-
-          issuedCertificatesCount: realIssued
-
-        } : null);
-
-
-
-        this.batches.update(list =>
-
-          list.map(b => (b.batchId === bId || b.id === bId)
-
-            ? { ...b, totalTraineesCount: realTotal, issuedCertificatesCount: realIssued }
-
+      this.batches.update(list =>
+        list.map(b =>
+          (b.batchId === bId || b.id === bId)
+            ? {
+                ...b,
+                totalTraineesCount: realTotal,
+                issuedCertificatesCount: realIssued
+              }
             : b
+        )
+      );
 
-          )
+      this.loadingTrainees.set(false);
+    },
 
-        );
+    error: (err) => {
+      console.error('Error fetching certificate statuses:', err);
+      this.selectedBatchTrainees.set([]);
+      this.loadingTrainees.set(false);
+    }
+  });
+}
 
-
-
-        this.loadingTrainees.set(false);
-
-      },
-
-      error: (err) => {
-
-        console.error('Error fetching trainees:', err);
-
-        this.selectedBatchTrainees.set([]);
-
-        this.loadingTrainees.set(false);
-
-      }
-
-    });
-
-  }
 
 
 
@@ -486,9 +639,7 @@ export class AdminCertificates implements OnInit {
 
   issueSingleCertificate(trainee: TraineeDto, autoOpenModal: boolean = true): void {
 
-    const eId = trainee.enrollmentId || trainee.traineeId;
-
-
+const eId = trainee.enrollmentId;
 
     if (!eId || eId === 0) {
 
@@ -520,8 +671,11 @@ export class AdminCertificates implements OnInit {
 
 
 
-        this.updateTraineeStatusInState(trainee.traineeId, 'Issued', newFileUrl);
-
+this.updateTraineeStatusInState(
+  trainee.enrollmentId,
+  true,
+  newFileUrl
+);
         this.incrementBatchIssuedCount();
 
 
@@ -531,8 +685,6 @@ export class AdminCertificates implements OnInit {
           this.viewSingleCertificate({
 
             ...trainee,
-
-            completionStatus: 'Issued',
 
             fileUrl: newFileUrl
 
@@ -621,12 +773,8 @@ export class AdminCertificates implements OnInit {
 
 
   isCertificateIssued(trainee: TraineeDto): boolean {
-
-    const st = String(trainee.completionStatus).toLowerCase();
-
-    return st === 'issued' || st === '1' || st === 'completed' || !!trainee.fileUrl;
-
-  }
+  return trainee.isIssued;
+}
 
 
 
@@ -654,59 +802,85 @@ export class AdminCertificates implements OnInit {
 
 
 
-  private updateTraineeStatusInState(traineeId: number, status: string, fileUrl?: string): void {
+  private updateTraineeStatusInState(
+  enrollmentId: number,
+  isIssued: boolean,
+  fileUrl?: string
+): void {
 
-    this.selectedBatchTrainees.update(list =>
-
-      list.map(t => (t.traineeId === traineeId || t.enrollmentId === traineeId)
-
-        ? { ...t, completionStatus: status, fileUrl: fileUrl || t.fileUrl }
-
+  this.selectedBatchTrainees.update(list =>
+    list.map(t =>
+      t.enrollmentId === enrollmentId
+        ? {
+            ...t,
+            isIssued,
+            fileUrl: fileUrl || t.fileUrl
+          }
         : t
-
-      )
-
-    );
-
-  }
+    )
+  );
+}
 
 
 
-  private incrementBatchIssuedCount(): void {
+ private incrementBatchIssuedCount(): void {
 
-    const activeBatch = this.selectedBatch();
+  const activeBatch = this.selectedBatch();
 
-    if (!activeBatch) return;
-
-
-
-    const updatedIssued = activeBatch.issuedCertificatesCount + 1;
+  if (!activeBatch) return;
 
 
-
-    this.selectedBatch.set({
-
-      ...activeBatch,
-
-      issuedCertificatesCount: updatedIssued
-
-    });
+  const updatedIssued =
+    activeBatch.issuedCertificatesCount + 1;
 
 
+  // تحديث الدفعة المحددة
+  this.selectedBatch.set({
 
-    this.batches.update(list =>
+    ...activeBatch,
 
-      list.map(b => (b.batchId === activeBatch.batchId || b.id === activeBatch.id)
+    issuedCertificatesCount: updatedIssued
 
-        ? { ...b, issuedCertificatesCount: updatedIssued }
+  });
+
+
+  // تحديث القائمة الظاهرة
+  this.batches.update(list =>
+
+    list.map(b =>
+
+      (b.batchId === activeBatch.batchId ||
+       b.id === activeBatch.id)
+
+        ? {
+            ...b,
+            issuedCertificatesCount: updatedIssued
+          }
 
         : b
 
-      )
+    )
 
-    );
+  );
 
-  }
+
+  // تحديث القائمة الأصلية التي يعتمد عليها
+  // البحث والفلترة
+  this.allBatches = this.allBatches.map(b =>
+
+    (b.batchId === activeBatch.batchId ||
+     b.id === activeBatch.id)
+
+      ? {
+          ...b,
+          issuedCertificatesCount: updatedIssued
+        }
+
+      : b
+
+  );
+
+}
 
 
 

@@ -3,8 +3,10 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
-using Nafadh_Backend.Models;
 using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
+using Nafadh_Backend.Models;
 namespace Nafadh_Backend.Repositories
 {
     public class CertificateRepository : ICertificateRepository
@@ -45,5 +47,54 @@ namespace Nafadh_Backend.Repositories
         }
 
 
+        //=================-- Admin portal =================--
+
+        public async Task<List<TraineeCertificateStatusDTO>> GetBatchCertificatesStatusAsync(int batchId)
+        {
+            var result = await _context.NFD_Enrollments
+                .Where(e => e.BatchId == batchId)
+                .Select(e => new TraineeCertificateStatusDTO
+                {
+                    TraineeId = e.TraineeId,
+                    EnrollmentId = e.EnrollmentId,
+                    FullName = e.Trainee.User.FullName,
+                    IsIssued = _context.NFD_Certificates.Any(c => c.EnrollmentId == e.EnrollmentId),
+                    CertificateId = _context.NFD_Certificates
+                        .Where(c => c.EnrollmentId == e.EnrollmentId)
+                        .Select(c => (int?)c.CertificateId)
+                        .FirstOrDefault(),
+                    FileUrl = _context.NFD_Certificates
+                        .Where(c => c.EnrollmentId == e.EnrollmentId)
+                        .Select(c => c.FileUrl)
+                        .FirstOrDefault(),
+
+                    // Type = Final (بُعد "الدرجة الإجمالية النهائية")، مو Period = Final (توقيت زمني)
+                    Grade = _context.NFD_Evaluations
+                        .Where(ev => ev.EnrollmentId == e.EnrollmentId
+                                  && ev.EvaluationTemplate.Type == NFD_EvaluationType.Final)
+                        .OrderByDescending(ev => ev.EvaluationDate)
+                        .Select(ev => (decimal?)ev.Score)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return result;
+        }
+
+        public async Task<bool> DeleteCertificateByEnrollmentIdAsync(int enrollmentId)
+        {
+            var certs = await _context.NFD_Certificates
+                .Where(c => c.EnrollmentId == enrollmentId)
+                .ToListAsync();
+
+            if (!certs.Any())
+                return false;
+
+            _context.NFD_Certificates.RemoveRange(certs);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
+
+
 }
