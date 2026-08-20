@@ -14,8 +14,8 @@ interface NotificationViewModel {
   message: string;
   isRead: boolean;
   dateLabel: string;
-  iconClass: string;      
-  isNew: boolean;         
+  iconClass: string;
+  isNew: boolean;
 }
 
 @Component({
@@ -36,11 +36,11 @@ export class AdminNotifications implements OnInit {
   private filteredRaw = computed(() => {
     const list = this.notifications();
     const filter = this.activeFilter();
-    
+
     if (filter === 'unread') {
       return list.filter((n) => {
         const readIds = JSON.parse(localStorage.getItem('admin_read_announcements') || '[]');
-        return !readIds.includes(n.announcementId);
+        return !readIds.includes(n.announcementId ?? n.id);
       });
     }
     return list;
@@ -53,7 +53,7 @@ export class AdminNotifications implements OnInit {
   unreadCount = computed(() => {
     const list = this.notifications();
     const readIds = JSON.parse(localStorage.getItem('admin_read_announcements') || '[]');
-    return list.filter((n) => !readIds.includes(n.announcementId)).length;
+    return list.filter((n) => !readIds.includes(n.announcementId ?? n.id)).length;
   });
 
   constructor(
@@ -64,8 +64,13 @@ export class AdminNotifications implements OnInit {
 
   ngOnInit() {
     this.api.getAnnouncements().subscribe({
-      next: (d) => {
-        const sorted = [...d].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      next: (d: AnnouncementDto[]) => {
+        // ترتيب الإعلانات والأحدث أولاً مع حماية ضد القيم الفارغة
+        const sorted = (d || []).sort((a, b) => {
+          const timeA = new Date(a.createdAt || a.date || Date.now()).getTime();
+          const timeB = new Date(b.createdAt || b.date || Date.now()).getTime();
+          return timeB - timeA;
+        });
         this.notifications.set(sorted);
       },
       error: (err) => {
@@ -78,9 +83,10 @@ export class AdminNotifications implements OnInit {
     this.activeFilter.set(filter);
   }
 
-  private getTimeAgo(dateString: string): { label: string; isNew: boolean } {
+  private getTimeAgo(dateString?: string | Date): { label: string; isNew: boolean } {
+    if (!dateString) return { label: 'وقت غير محدد', isNew: false };
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return { label: dateString, isNew: false };
+    if (isNaN(date.getTime())) return { label: String(dateString), isNew: false };
 
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -100,14 +106,16 @@ export class AdminNotifications implements OnInit {
   }
 
   private toViewModel(n: AnnouncementDto): NotificationViewModel {
-    const timeInfo = this.getTimeAgo(n.date);
+    const rawDate = n.createdAt || n.date;
+    const timeInfo = this.getTimeAgo(rawDate);
     const readIds = JSON.parse(localStorage.getItem('admin_read_announcements') || '[]');
-    const isRead = readIds.includes(n.announcementId);
+    const notificationId = Number(n.announcementId ?? n.id ?? 0);
+    const isRead = readIds.includes(notificationId);
 
     return {
-      notificationId: n.announcementId,
-      title: 'إعلان نظامي جديد',
-      message: n.message,
+      notificationId: notificationId,
+      title: n.title || 'إعلان نظامي جديد',
+      message: n.message || n.description || '',
       isRead: isRead,
       dateLabel: timeInfo.label,
       isNew: timeInfo.isNew && !isRead,
@@ -126,7 +134,7 @@ export class AdminNotifications implements OnInit {
   }
 
   markAllRead() {
-    const allIds = this.notifications().map((n) => n.announcementId);
+    const allIds = this.notifications().map((n) => Number(n.announcementId ?? n.id ?? 0));
     localStorage.setItem('admin_read_announcements', JSON.stringify(allIds));
     this.notifications.update((list) => [...list]);
   }
@@ -143,10 +151,10 @@ export class AdminNotifications implements OnInit {
     this.announceError.set(null);
 
     const payload = {
-      scopeType: 0, 
-      scopeId: null, 
-      message: this.announceMsg.trim(), 
-      createdByUserId: uid 
+      scopeType: 0,
+      scopeId: null,
+      message: this.announceMsg.trim(),
+      createdByUserId: uid
     };
 
     console.log('Sending announcement payload:', payload);
@@ -159,7 +167,6 @@ export class AdminNotifications implements OnInit {
         this.ngOnInit();
       },
       error: (err) => {
-        // إذا كان الخطأ هو خطأ تحليل الـ JSON (Parsing) مع كون الطلب ناجحاً فعلياً في السيرفر
         if (err.status === 200 || err.name === 'HttpErrorResponse' && (err.error?.text || err.statusText === 'OK')) {
           this.posting.set(false);
           this.showAnnounce.set(false);
@@ -170,7 +177,7 @@ export class AdminNotifications implements OnInit {
 
         this.posting.set(false);
         console.error('تفاصيل خطأ الباك إند الكاملة:', err);
-        
+
         const serverError = err?.error?.message || err?.error?.title || err?.message;
         this.announceError.set(
           serverError ? `خطأ من الخادم: ${serverError}` : 'تعذر نشر الإعلان، تأكد من الاتصال بالخادم.'
