@@ -3,9 +3,9 @@
   dir="rtl"
 >
 
-  <!-- =========================================
+  <!-- =====================================================
        HEADER
-  ========================================== -->
+  ====================================================== -->
 
   <div class="nfd-toolbar">
 
@@ -16,62 +16,53 @@
       </h1>
 
       <p class="nfd-page-sub">
-        استعرض تقارير الأداء والحضور والتقييم،
-        ثم قم بتنزيل التقرير فقط عند الحاجة.
+        استعرض تقارير الحضور والأداء والتقييم،
+        وعاين التقرير قبل تنزيله عند الحاجة.
       </p>
 
     </div>
 
+  </div>
 
-    <div class="reports-header-actions">
+
+  <!-- =====================================================
+       ERROR ALERT
+  ====================================================== -->
+
+  <div
+    *ngIf="errorMessage()"
+    class="report-alerts"
+    aria-live="polite"
+  >
+
+    <div class="report-alert-card error">
+
+      <div class="report-alert-icon">
+        !
+      </div>
+
+
+      <div class="report-alert-content">
+
+        <strong>
+          تعذر إكمال العملية
+        </strong>
+
+        <span>
+          {{ errorMessage() }}
+        </span>
+
+      </div>
+
 
       <button
         type="button"
-        class="nfd-btn secondary"
-        (click)="previewReport('Performance')"
-        [disabled]="
-          exporting() ||
-          loading() ||
-          !trainerId
-        "
+        class="report-alert-close"
+        (click)="dismissMessage()"
+        aria-label="إغلاق التنبيه"
+        title="إغلاق"
       >
-
-        <svg
-          viewBox="0 0 24 24"
-          width="18"
-          height="18"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-          ></path>
-
-          <polyline
-            points="14 2 14 8 20 8"
-          ></polyline>
-
-          <circle
-            cx="12"
-            cy="15"
-            r="2.5"
-          ></circle>
-
-          <path
-            d="M7 15s2-4 5-4 5 4 5 4-2 4-5 4-5-4-5-4z"
-          ></path>
-        </svg>
-
-
-        <span>
-          {{
-            exporting()
-              ? 'جاري تجهيز التقرير...'
-              : 'معاينة تقرير'
-          }}
-        </span>
-
+        ✕
       </button>
 
     </div>
@@ -79,51 +70,54 @@
   </div>
 
 
-  <!-- =========================================
-       MESSAGES
-  ========================================== -->
+  <!-- =====================================================
+       SUCCESS ALERT
+  ====================================================== -->
 
-  @if (errorMessage()) {
+  <div
+    *ngIf="successMessage()"
+    class="report-alerts"
+    aria-live="polite"
+  >
 
-    <div
-      style="
-        margin-bottom:16px;
-        padding:12px 14px;
-        background:#fef2f2;
-        color:#b91c1c;
-        border:1px solid #fecaca;
-        border-radius:10px;
-        font-size:13px;
-      "
-    >
-      {{ errorMessage() }}
+    <div class="report-alert-card success">
+
+      <div class="report-alert-icon">
+        ✓
+      </div>
+
+
+      <div class="report-alert-content">
+
+        <strong>
+          تم بنجاح
+        </strong>
+
+        <span>
+          {{ successMessage() }}
+        </span>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="report-alert-close"
+        (click)="dismissMessage()"
+        aria-label="إغلاق التنبيه"
+        title="إغلاق"
+      >
+        ✕
+      </button>
+
     </div>
 
-  }
+  </div>
 
 
-  @if (successMessage()) {
-
-    <div
-      style="
-        margin-bottom:16px;
-        padding:12px 14px;
-        background:#f0fdf4;
-        color:#15803d;
-        border:1px solid #bbf7d0;
-        border-radius:10px;
-        font-size:13px;
-      "
-    >
-      ✓ {{ successMessage() }}
-    </div>
-
-  }
-
-
-  <!-- =========================================
+  <!-- =====================================================
        KPI CARDS
-  ========================================== -->
+  ====================================================== -->
 
   <div class="kpis-dark-grid">
 
@@ -139,11 +133,13 @@
 
         <strong class="number">
 
-          @if (loading()) {
+          <ng-container *ngIf="loading(); else attendanceValue">
             ...
-          } @else {
+          </ng-container>
+
+          <ng-template #attendanceValue>
             {{ kpis()?.attendanceRate ?? 0 }}%
-          }
+          </ng-template>
 
         </strong>
 
@@ -196,11 +192,13 @@
 
         <strong class="number">
 
-          @if (loading()) {
+          <ng-container *ngIf="loading(); else taskValue">
             ...
-          } @else {
+          </ng-container>
+
+          <ng-template #taskValue>
             {{ kpis()?.taskCompletionRate ?? 0 }}%
-          }
+          </ng-template>
 
         </strong>
 
@@ -243,11 +241,13 @@
 
         <strong class="number">
 
-          @if (loading()) {
+          <ng-container *ngIf="loading(); else technicalValue">
             ...
-          } @else {
+          </ng-container>
+
+          <ng-template #technicalValue>
             {{ kpis()?.avgTechnicalGrade ?? 0 }} / 100
-          }
+          </ng-template>
 
         </strong>
 
@@ -292,14 +292,16 @@
 
         <strong class="number">
 
-          @if (loading()) {
+          <ng-container *ngIf="loading(); else feedbackValue">
             ...
-          } @else {
+          </ng-container>
+
+          <ng-template #feedbackValue>
             {{
               (feedback()?.averageOverall ?? 0)
                 | number:'1.1-2'
             }} / 5
-          }
+          </ng-template>
 
         </strong>
 
@@ -340,15 +342,15 @@
   </div>
 
 
-  <!-- =========================================
+  <!-- =====================================================
        REPORT CARDS
-  ========================================== -->
+  ====================================================== -->
 
   <div class="reports-cards-grid">
 
-    <!-- =====================================
+    <!-- =================================================
          ATTENDANCE REPORT
-    ====================================== -->
+    ================================================== -->
 
     <div class="report-action-card">
 
@@ -366,7 +368,7 @@
       <div class="report-content">
 
         <span class="report-category">
-          الحضور والمتابعة
+          الحضور والانضباط
         </span>
 
         <h3>
@@ -374,8 +376,8 @@
         </h3>
 
         <p>
-          استعراض مؤشرات الحضور والغياب المسجلة
-          للمدرب والبيانات المرتبطة بالأداء التدريبي.
+          متابعة نسب حضور وغياب المتدربين
+          ومستوى الالتزام في الدفعات التابعة للمدرب.
         </p>
 
 
@@ -385,18 +387,23 @@
             type="button"
             class="report-button"
             (click)="previewReport('Attendance')"
-            [disabled]="
-              exporting() ||
-              !trainerId
-            "
+            [disabled]="exporting() || !trainerId"
           >
 
-            <span>
-              {{
-                exporting()
-                  ? 'جاري تجهيز التقرير...'
-                  : 'معاينة التقرير'
-              }}
+            <span
+              *ngIf="
+                generatingReportType() === 'Attendance'
+              "
+            >
+              جاري تجهيز التقرير...
+            </span>
+
+            <span
+              *ngIf="
+                generatingReportType() !== 'Attendance'
+              "
+            >
+              معاينة التقرير
             </span>
 
 
@@ -428,9 +435,9 @@
     </div>
 
 
-    <!-- =====================================
+    <!-- =================================================
          PERFORMANCE REPORT
-    ====================================== -->
+    ================================================== -->
 
     <div class="report-action-card">
 
@@ -448,7 +455,7 @@
       <div class="report-content">
 
         <span class="report-category">
-          الأداء والإنجاز
+          الدفعات والمهام
         </span>
 
         <h3>
@@ -456,8 +463,8 @@
         </h3>
 
         <p>
-          استعراض معدل إنجاز المهام ومؤشرات الأداء
-          والنتائج الفنية المسجلة في النظام.
+          متابعة معدلات إنجاز المهام والدرجات الفنية
+          ومستوى أداء المتدربين في الدفعات التدريبية.
         </p>
 
 
@@ -467,18 +474,23 @@
             type="button"
             class="report-button"
             (click)="previewReport('Performance')"
-            [disabled]="
-              exporting() ||
-              !trainerId
-            "
+            [disabled]="exporting() || !trainerId"
           >
 
-            <span>
-              {{
-                exporting()
-                  ? 'جاري تجهيز التقرير...'
-                  : 'معاينة التقرير'
-              }}
+            <span
+              *ngIf="
+                generatingReportType() === 'Performance'
+              "
+            >
+              جاري تجهيز التقرير...
+            </span>
+
+            <span
+              *ngIf="
+                generatingReportType() !== 'Performance'
+              "
+            >
+              معاينة التقرير
             </span>
 
 
@@ -510,9 +522,9 @@
     </div>
 
 
-    <!-- =====================================
-         CUSTOM REPORT
-    ====================================== -->
+    <!-- =================================================
+         COMPREHENSIVE REPORT
+    ================================================== -->
 
     <div class="report-action-card">
 
@@ -520,7 +532,7 @@
 
         <img
           src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=900&q=85"
-          alt="التقييم والمهارات"
+          alt="الأداء التدريبي الشامل"
           class="report-image"
         />
 
@@ -530,16 +542,16 @@
       <div class="report-content">
 
         <span class="report-category">
-          التقييم والمهارات
+          نظرة شاملة
         </span>
 
         <h3>
-          التقرير الشامل للتقييم والمهارات
+          التقرير الشامل للأداء التدريبي
         </h3>
 
         <p>
-          عرض شامل لمؤشرات الحضور وإنجاز المهام
-          والدرجات الفنية لدعم متابعة الأداء التدريبي.
+          تقرير متكامل يجمع الحضور والغياب وإنجاز المهام
+          والدرجات الفنية ورضا المتدربين في عرض واحد.
         </p>
 
 
@@ -549,18 +561,23 @@
             type="button"
             class="report-button"
             (click)="previewReport('Custom')"
-            [disabled]="
-              exporting() ||
-              !trainerId
-            "
+            [disabled]="exporting() || !trainerId"
           >
 
-            <span>
-              {{
-                exporting()
-                  ? 'جاري تجهيز التقرير...'
-                  : 'معاينة التقرير'
-              }}
+            <span
+              *ngIf="
+                generatingReportType() === 'Custom'
+              "
+            >
+              جاري تجهيز التقرير...
+            </span>
+
+            <span
+              *ngIf="
+                generatingReportType() !== 'Custom'
+              "
+            >
+              معاينة التقرير
             </span>
 
 
@@ -595,134 +612,192 @@
 
 
   <!-- =====================================================
-       REPORT PDF PREVIEW MODAL
+       RECENT REPORTS
   ====================================================== -->
 
-  @if (showReportPreview()) {
+  <section class="recent-reports-section">
+
+    <div class="recent-reports-header">
+
+      <div>
+
+        <h2>
+          آخر التقارير
+        </h2>
+
+        <p>
+          آخر نسخة تم إنشاؤها من كل نوع في بوابة المدرب.
+        </p>
+
+      </div>
+
+
+      <span
+        *ngIf="reportHistory().length > 0"
+        class="recent-reports-count"
+      >
+        {{ reportHistory().length }}
+        تقرير
+      </span>
+
+    </div>
+
+
+    <!-- LOADING -->
 
     <div
-      class="report-preview-backdrop"
-      (click)="closeReportPreview()"
+      *ngIf="loadingHistory()"
+      class="reports-history-state"
+    >
+
+      <span class="history-loading-icon">
+        ◌
+      </span>
+
+      <span>
+        جاري تحميل التقارير...
+      </span>
+
+    </div>
+
+
+    <!-- EMPTY -->
+
+    <div
+      *ngIf="
+        !loadingHistory() &&
+        reportHistory().length === 0
+      "
+      class="reports-history-empty"
+    >
+
+      <div class="history-empty-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          width="25"
+          height="25"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+          ></path>
+
+          <polyline
+            points="14 2 14 8 20 8"
+          ></polyline>
+        </svg>
+
+      </div>
+
+
+      <strong>
+        لا توجد تقارير سابقة
+      </strong>
+
+      <p>
+        عند إنشاء أول تقرير سيظهر هنا تلقائيًا.
+      </p>
+
+    </div>
+
+
+    <!-- REPORT HISTORY -->
+
+    <div
+      *ngIf="
+        !loadingHistory() &&
+        reportHistory().length > 0
+      "
+      class="reports-history-list"
     >
 
       <div
-        class="report-preview-modal"
-        (click)="$event.stopPropagation()"
+        *ngFor="let report of reportHistory()"
+        class="report-history-item"
       >
 
-        <!-- =========================================
-             PREVIEW HEADER
-        ========================================== -->
+        <div class="history-report-main">
 
-        <div class="preview-header">
+          <div class="history-report-icon">
 
-          <div class="preview-title">
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+              ></path>
 
-            <div class="preview-icon">
-
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                ></path>
-
-                <polyline
-                  points="14 2 14 8 20 8"
-                ></polyline>
-              </svg>
-
-            </div>
-
-
-            <div>
-
-              <h3>
-                {{ getReportTitle() }}
-              </h3>
-
-              <span>
-                يمكنك معاينة التقرير قبل اختيار تنزيله.
-              </span>
-
-            </div>
+              <polyline
+                points="14 2 14 8 20 8"
+              ></polyline>
+            </svg>
 
           </div>
 
 
-          <button
-            type="button"
-            class="preview-close-btn"
-            (click)="closeReportPreview()"
-            title="إغلاق المعاينة"
-            aria-label="إغلاق المعاينة"
-          >
-            ✕
-          </button>
+          <div class="history-report-info">
+
+            <strong>
+              {{ getHistoryReportTitle(report.type) }}
+            </strong>
+
+            <span>
+              تم الإنشاء
+              {{
+                report.generatedAt
+                  | date:'dd/MM/yyyy - hh:mm a'
+              }}
+            </span>
+
+          </div>
 
         </div>
 
 
-        <!-- =========================================
-             PDF DOCUMENT
-        ========================================== -->
+        <div class="history-report-actions">
 
-        <div class="preview-document">
-
-          @if (
-            reportPreviewUrl();
-            as previewUrl
-          ) {
-
-            <iframe
-              [src]="previewUrl"
-              title="معاينة تقرير المدرب"
-            ></iframe>
-
-          } @else {
-
-            <div
-              style="
-                height:100%;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:#64748b;
-                font-size:13px;
-              "
-            >
-              جاري تحميل معاينة التقرير...
-            </div>
-
-          }
-
-        </div>
-
-
-        <!-- =========================================
-             PREVIEW ACTIONS
-        ========================================== -->
-
-        <div class="preview-actions">
-
-          <button
-            type="button"
-            class="preview-btn cancel"
-            (click)="closeReportPreview()"
+          <span
+            class="history-report-type"
+            [ngSwitch]="report.type"
           >
-            إغلاق
-          </button>
+
+            <ng-container *ngSwitchCase="'Attendance'">
+              حضور
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'Performance'">
+              أداء
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'Custom'">
+              شامل
+            </ng-container>
+
+            <ng-container *ngSwitchDefault>
+              تقرير
+            </ng-container>
+
+          </span>
 
 
           <button
             type="button"
-            class="preview-btn secondary"
-            (click)="openPreviewInNewTab()"
+            class="history-preview-btn"
+            (click)="
+              previewExistingReport(
+                report.reportId,
+                report.type
+              )
+            "
+            [disabled]="exporting()"
           >
 
             <svg
@@ -734,57 +809,17 @@
               stroke-width="2"
             >
               <path
-                d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"
               ></path>
 
-              <polyline
-                points="15 3 21 3 21 9"
-              ></polyline>
-
-              <line
-                x1="10"
-                y1="14"
-                x2="21"
-                y2="3"
-              ></line>
+              <circle
+                cx="12"
+                cy="12"
+                r="3"
+              ></circle>
             </svg>
 
-            فتح في تبويب جديد
-
-          </button>
-
-
-          <button
-            type="button"
-            class="preview-btn primary"
-            (click)="downloadPreviewedReport()"
-          >
-
-            <svg
-              viewBox="0 0 24 24"
-              width="17"
-              height="17"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
-              ></path>
-
-              <polyline
-                points="7 10 12 15 17 10"
-              ></polyline>
-
-              <line
-                x1="12"
-                y1="15"
-                x2="12"
-                y2="3"
-              ></line>
-            </svg>
-
-            تنزيل PDF
+            معاينة
 
           </button>
 
@@ -794,6 +829,187 @@
 
     </div>
 
-  }
+  </section>
+
+
+  <!-- =====================================================
+       PDF PREVIEW MODAL
+  ====================================================== -->
+
+  <div
+    *ngIf="showReportPreview()"
+    class="report-preview-backdrop"
+    (click)="closeReportPreview()"
+  >
+
+    <div
+      class="report-preview-modal"
+      (click)="$event.stopPropagation()"
+    >
+
+      <!-- PREVIEW HEADER -->
+
+      <div class="preview-header">
+
+        <div class="preview-title">
+
+          <div class="preview-icon">
+
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+              ></path>
+
+              <polyline
+                points="14 2 14 8 20 8"
+              ></polyline>
+            </svg>
+
+          </div>
+
+
+          <div>
+
+            <h3>
+              {{ getReportTitle() }}
+            </h3>
+
+            <span>
+              يمكنك معاينة التقرير قبل اختيار تنزيله.
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="preview-close-btn"
+          (click)="closeReportPreview()"
+          title="إغلاق المعاينة"
+          aria-label="إغلاق المعاينة"
+        >
+          ✕
+        </button>
+
+      </div>
+
+
+      <!-- PDF DOCUMENT -->
+
+      <div class="preview-document">
+
+        <iframe
+          *ngIf="reportPreviewUrl() as previewUrl"
+          [src]="previewUrl"
+          title="معاينة تقرير المدرب"
+        ></iframe>
+
+
+        <div
+          *ngIf="!reportPreviewUrl()"
+          class="report-preview-loading"
+        >
+          جاري تحميل معاينة التقرير...
+        </div>
+
+      </div>
+
+
+      <!-- PREVIEW ACTIONS -->
+
+      <div class="preview-actions">
+
+        <button
+          type="button"
+          class="preview-btn cancel"
+          (click)="closeReportPreview()"
+        >
+          إغلاق
+        </button>
+
+
+        <button
+          type="button"
+          class="preview-btn secondary"
+          (click)="openPreviewInNewTab()"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            width="17"
+            height="17"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1 2-2V8a2 2 0 0 1 2-2h6"
+            ></path>
+
+            <polyline
+              points="15 3 21 3 21 9"
+            ></polyline>
+
+            <line
+              x1="10"
+              y1="14"
+              x2="21"
+              y2="3"
+            ></line>
+          </svg>
+
+          فتح في تبويب جديد
+
+        </button>
+
+
+        <button
+          type="button"
+          class="preview-btn primary"
+          (click)="downloadPreviewedReport()"
+        >
+
+          <svg
+            viewBox="0 0 24 24"
+            width="17"
+            height="17"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+            ></path>
+
+            <polyline
+              points="7 10 12 15 17 10"
+            ></polyline>
+
+            <line
+              x1="12"
+              y1="15"
+              x2="12"
+              y2="3"
+            ></line>
+          </svg>
+
+          تنزيل PDF
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
 
 </div>

@@ -43,7 +43,9 @@ import {
     FormsModule,
     RouterLink
   ],
-  templateUrl: './tasks.html',
+    templateUrl: './tasks.html',
+  styleUrl: './tasks.scss',
+
 })
 export class TrainerTasks implements OnInit {
 

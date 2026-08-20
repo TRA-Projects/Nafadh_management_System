@@ -1,28 +1,55 @@
 <section class="attendance-page" dir="rtl">
-  <!-- رأس الصفحة -->
-  <header class="page-heading">
-    <div class="heading-copy">
-      <div class="heading-icon" aria-hidden="true">✓</div>
-      <div>
-        <h2>الحضور اليومي</h2>
-        <p>تسجيل حضور المتدربين — {{ todayLabel }}</p>
-      </div>
+ <!-- رأس الصفحة -->
+<header class="page-heading">
+
+  <!-- جهة العنوان -->
+  <div class="heading-copy">
+
+    <div class="heading-icon" aria-hidden="true">
+      ✓
     </div>
 
-    <div class="heading-actions">
-      <button type="button" class="btn btn-primary" (click)="confirmToday()" [disabled]="loading()">
-        <span aria-hidden="true">✓</span> تأكيد سجل اليوم
-      </button>
-
-      <button type="button" class="btn btn-outline" (click)="showRegister('monthly')">
-        <span aria-hidden="true">▣</span> السجل الشهري
-      </button>
-
-      <button type="button" class="btn btn-outline" (click)="showRegister('weekly')">
-        <span aria-hidden="true">▣</span> السجل الأسبوعي
-      </button>
+    <div class="heading-text">
+      <h1>الحضور اليومي</h1>
+      <p>تسجيل حضور المتدربين — {{ todayLabel }}</p>
     </div>
-  </header>
+
+  </div>
+
+  <!-- جهة الأزرار -->
+  <div class="heading-actions">
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="confirmToday()"
+      [disabled]="loading()">
+
+      <span class="btn-icon" aria-hidden="true">✓</span>
+      <span>تأكيد سجل اليوم</span>
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-outline"
+      (click)="showRegister('monthly')">
+
+      <span class="btn-icon" aria-hidden="true">↓</span>
+      <span>السجل الشهري</span>
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-outline"
+      (click)="showRegister('weekly')">
+
+      <span class="btn-icon" aria-hidden="true">▣</span>
+      <span>السجل الأسبوعي</span>
+    </button>
+
+  </div>
+
+</header>
 
   <!-- شريط التحكم والإحصاءات -->
   <section class="filter-card">

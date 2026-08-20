@@ -22,7 +22,10 @@ namespace Nafadh_Backend.Services
         Task<ReportOutputDTO?> GetReportByIdAsync(int reportId);
         Task<string?> DownloadReportAsync(int reportId);
 
-
+        // Resolves the physical PDF path used only by Trainer Portal reports.
+        Task<string?> GetTrainerPortalReportFilePathAsync(
+            int reportId
+        );
         // =====================================================
         // Trainer Trainees Report
         // =====================================================
