@@ -1,7 +1,10 @@
-<div class="reports-page-wrapper">
+<div
+  class="reports-page-wrapper"
+  dir="rtl"
+>
 
   <!-- =========================================
-       Header
+       HEADER
   ========================================== -->
 
   <div class="nfd-toolbar">
@@ -13,8 +16,8 @@
       </h1>
 
       <p class="nfd-page-sub">
-        استخراج تقارير الأداء الفني، الحضور والغياب،
-        وإنجاز الدفعات بكل سهولة.
+        استعرض تقارير الأداء والحضور والتقييم،
+        ثم قم بتنزيل التقرير فقط عند الحاجة.
       </p>
 
     </div>
@@ -23,9 +26,14 @@
     <div class="reports-header-actions">
 
       <button
+        type="button"
         class="nfd-btn secondary"
-        (click)="exportReport('Performance')"
-        [disabled]="exporting() || loading() || !trainerId"
+        (click)="previewReport('Performance')"
+        [disabled]="
+          exporting() ||
+          loading() ||
+          !trainerId
+        "
       >
 
         <svg
@@ -36,7 +44,6 @@
           stroke="currentColor"
           stroke-width="2"
         >
-
           <path
             d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
           ></path>
@@ -45,14 +52,23 @@
             points="14 2 14 8 20 8"
           ></polyline>
 
+          <circle
+            cx="12"
+            cy="15"
+            r="2.5"
+          ></circle>
+
+          <path
+            d="M7 15s2-4 5-4 5 4 5 4-2 4-5 4-5-4-5-4z"
+          ></path>
         </svg>
 
 
         <span>
           {{
             exporting()
-              ? 'جاري إنشاء التقرير...'
-              : 'تصدير تقرير'
+              ? 'جاري تجهيز التقرير...'
+              : 'معاينة تقرير'
           }}
         </span>
 
@@ -64,7 +80,7 @@
 
 
   <!-- =========================================
-       Messages
+       MESSAGES
   ========================================== -->
 
   @if (errorMessage()) {
@@ -111,7 +127,7 @@
 
   <div class="kpis-dark-grid">
 
-    <!-- نسبة الحضور -->
+    <!-- ATTENDANCE -->
 
     <div class="kpi-dark-card">
 
@@ -144,7 +160,6 @@
           stroke="currentColor"
           stroke-width="2"
         >
-
           <path
             d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
           ></path>
@@ -162,7 +177,6 @@
           <path
             d="M16 3.13a4 4 0 0 1 0 7.75"
           ></path>
-
         </svg>
 
       </div>
@@ -170,7 +184,7 @@
     </div>
 
 
-    <!-- معدل الإنجاز -->
+    <!-- TASK COMPLETION -->
 
     <div class="kpi-dark-card">
 
@@ -203,7 +217,6 @@
           stroke="currentColor"
           stroke-width="2"
         >
-
           <polyline
             points="9 11 12 14 22 4"
           ></polyline>
@@ -211,7 +224,6 @@
           <path
             d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"
           ></path>
-
         </svg>
 
       </div>
@@ -219,7 +231,7 @@
     </div>
 
 
-    <!-- متوسط الدرجات -->
+    <!-- TECHNICAL GRADE -->
 
     <div class="kpi-dark-card">
 
@@ -252,7 +264,6 @@
           stroke="currentColor"
           stroke-width="2"
         >
-
           <circle
             cx="12"
             cy="8"
@@ -262,7 +273,6 @@
           <polyline
             points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"
           ></polyline>
-
         </svg>
 
       </div>
@@ -270,7 +280,7 @@
     </div>
 
 
-    <!-- رضا المتدربين -->
+    <!-- FEEDBACK -->
 
     <div class="kpi-dark-card">
 
@@ -285,7 +295,10 @@
           @if (loading()) {
             ...
           } @else {
-            {{ (feedback()?.averageOverall ?? 0) | number:'1.1-2' }} / 5
+            {{
+              (feedback()?.averageOverall ?? 0)
+                | number:'1.1-2'
+            }} / 5
           }
 
         </strong>
@@ -303,7 +316,6 @@
           stroke="currentColor"
           stroke-width="2"
         >
-
           <polygon
             points="
               12 2
@@ -319,7 +331,6 @@
               12 2
             "
           ></polygon>
-
         </svg>
 
       </div>
@@ -335,9 +346,8 @@
 
   <div class="reports-cards-grid">
 
-
     <!-- =====================================
-         CARD 1 - Attendance
+         ATTENDANCE REPORT
     ====================================== -->
 
     <div class="report-action-card">
@@ -360,28 +370,32 @@
         </span>
 
         <h3>
-          تقرير الحضور والغياب التفصيلي
+          تقرير الحضور والغياب
         </h3>
 
         <p>
-          يتضمن كشوف الحضور، الأعذار المقبولة والغياب بدون عذر
-          مفصلاً حسب الدفعات والمتدربين.
+          استعراض مؤشرات الحضور والغياب المسجلة
+          للمدرب والبيانات المرتبطة بالأداء التدريبي.
         </p>
 
 
         <div class="report-footer">
 
           <button
+            type="button"
             class="report-button"
-            (click)="exportReport('Attendance')"
-            [disabled]="exporting() || !trainerId"
+            (click)="previewReport('Attendance')"
+            [disabled]="
+              exporting() ||
+              !trainerId
+            "
           >
 
             <span>
               {{
                 exporting()
-                  ? 'جاري التوليد...'
-                  : 'توليد التقرير'
+                  ? 'جاري تجهيز التقرير...'
+                  : 'معاينة التقرير'
               }}
             </span>
 
@@ -394,29 +408,15 @@
               stroke="currentColor"
               stroke-width="2"
             >
-
               <path
-                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"
               ></path>
 
-              <polyline
-                points="14 2 14 8 20 8"
-              ></polyline>
-
-              <line
-                x1="8"
-                y1="13"
-                x2="16"
-                y2="13"
-              ></line>
-
-              <line
-                x1="8"
-                y1="17"
-                x2="14"
-                y2="17"
-              ></line>
-
+              <circle
+                cx="12"
+                cy="12"
+                r="3"
+              ></circle>
             </svg>
 
           </button>
@@ -429,7 +429,7 @@
 
 
     <!-- =====================================
-         CARD 2 - Performance
+         PERFORMANCE REPORT
     ====================================== -->
 
     <div class="report-action-card">
@@ -456,24 +456,28 @@
         </h3>
 
         <p>
-          مقارنة نتائج الدفعات ونسب الإنجاز والتسليم في الأوقات
-          المحددة للواجبات والمهام التدريبية.
+          استعراض معدل إنجاز المهام ومؤشرات الأداء
+          والنتائج الفنية المسجلة في النظام.
         </p>
 
 
         <div class="report-footer">
 
           <button
+            type="button"
             class="report-button"
-            (click)="exportReport('Performance')"
-            [disabled]="exporting() || !trainerId"
+            (click)="previewReport('Performance')"
+            [disabled]="
+              exporting() ||
+              !trainerId
+            "
           >
 
             <span>
               {{
                 exporting()
-                  ? 'جاري التوليد...'
-                  : 'توليد التقرير'
+                  ? 'جاري تجهيز التقرير...'
+                  : 'معاينة التقرير'
               }}
             </span>
 
@@ -486,29 +490,15 @@
               stroke="currentColor"
               stroke-width="2"
             >
-
               <path
-                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"
               ></path>
 
-              <polyline
-                points="14 2 14 8 20 8"
-              ></polyline>
-
-              <line
-                x1="8"
-                y1="13"
-                x2="16"
-                y2="13"
-              ></line>
-
-              <line
-                x1="8"
-                y1="17"
-                x2="14"
-                y2="17"
-              ></line>
-
+              <circle
+                cx="12"
+                cy="12"
+                r="3"
+              ></circle>
             </svg>
 
           </button>
@@ -521,7 +511,7 @@
 
 
     <!-- =====================================
-         CARD 3 - Custom
+         CUSTOM REPORT
     ====================================== -->
 
     <div class="report-action-card">
@@ -544,28 +534,32 @@
         </span>
 
         <h3>
-          تقرير التقييم المفهومي والمهارات
+          التقرير الشامل للتقييم والمهارات
         </h3>
 
         <p>
-          تقرير تحليلي لمهارات المتدربين ومستوى استيعاب المفاهيم
-          البرمجية والتقنية ونتائج التقييم.
+          عرض شامل لمؤشرات الحضور وإنجاز المهام
+          والدرجات الفنية لدعم متابعة الأداء التدريبي.
         </p>
 
 
         <div class="report-footer">
 
           <button
+            type="button"
             class="report-button"
-            (click)="exportReport('Custom')"
-            [disabled]="exporting() || !trainerId"
+            (click)="previewReport('Custom')"
+            [disabled]="
+              exporting() ||
+              !trainerId
+            "
           >
 
             <span>
               {{
                 exporting()
-                  ? 'جاري التوليد...'
-                  : 'توليد التقرير'
+                  ? 'جاري تجهيز التقرير...'
+                  : 'معاينة التقرير'
               }}
             </span>
 
@@ -578,29 +572,15 @@
               stroke="currentColor"
               stroke-width="2"
             >
-
               <path
-                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"
               ></path>
 
-              <polyline
-                points="14 2 14 8 20 8"
-              ></polyline>
-
-              <line
-                x1="8"
-                y1="13"
-                x2="16"
-                y2="13"
-              ></line>
-
-              <line
-                x1="8"
-                y1="17"
-                x2="14"
-                y2="17"
-              ></line>
-
+              <circle
+                cx="12"
+                cy="12"
+                r="3"
+              ></circle>
             </svg>
 
           </button>
@@ -612,5 +592,208 @@
     </div>
 
   </div>
+
+
+  <!-- =====================================================
+       REPORT PDF PREVIEW MODAL
+  ====================================================== -->
+
+  @if (showReportPreview()) {
+
+    <div
+      class="report-preview-backdrop"
+      (click)="closeReportPreview()"
+    >
+
+      <div
+        class="report-preview-modal"
+        (click)="$event.stopPropagation()"
+      >
+
+        <!-- =========================================
+             PREVIEW HEADER
+        ========================================== -->
+
+        <div class="preview-header">
+
+          <div class="preview-title">
+
+            <div class="preview-icon">
+
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                ></path>
+
+                <polyline
+                  points="14 2 14 8 20 8"
+                ></polyline>
+              </svg>
+
+            </div>
+
+
+            <div>
+
+              <h3>
+                {{ getReportTitle() }}
+              </h3>
+
+              <span>
+                يمكنك معاينة التقرير قبل اختيار تنزيله.
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <button
+            type="button"
+            class="preview-close-btn"
+            (click)="closeReportPreview()"
+            title="إغلاق المعاينة"
+            aria-label="إغلاق المعاينة"
+          >
+            ✕
+          </button>
+
+        </div>
+
+
+        <!-- =========================================
+             PDF DOCUMENT
+        ========================================== -->
+
+        <div class="preview-document">
+
+          @if (
+            reportPreviewUrl();
+            as previewUrl
+          ) {
+
+            <iframe
+              [src]="previewUrl"
+              title="معاينة تقرير المدرب"
+            ></iframe>
+
+          } @else {
+
+            <div
+              style="
+                height:100%;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:#64748b;
+                font-size:13px;
+              "
+            >
+              جاري تحميل معاينة التقرير...
+            </div>
+
+          }
+
+        </div>
+
+
+        <!-- =========================================
+             PREVIEW ACTIONS
+        ========================================== -->
+
+        <div class="preview-actions">
+
+          <button
+            type="button"
+            class="preview-btn cancel"
+            (click)="closeReportPreview()"
+          >
+            إغلاق
+          </button>
+
+
+          <button
+            type="button"
+            class="preview-btn secondary"
+            (click)="openPreviewInNewTab()"
+          >
+
+            <svg
+              viewBox="0 0 24 24"
+              width="17"
+              height="17"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+              ></path>
+
+              <polyline
+                points="15 3 21 3 21 9"
+              ></polyline>
+
+              <line
+                x1="10"
+                y1="14"
+                x2="21"
+                y2="3"
+              ></line>
+            </svg>
+
+            فتح في تبويب جديد
+
+          </button>
+
+
+          <button
+            type="button"
+            class="preview-btn primary"
+            (click)="downloadPreviewedReport()"
+          >
+
+            <svg
+              viewBox="0 0 24 24"
+              width="17"
+              height="17"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              ></path>
+
+              <polyline
+                points="7 10 12 15 17 10"
+              ></polyline>
+
+              <line
+                x1="12"
+                y1="15"
+                x2="12"
+                y2="3"
+              ></line>
+            </svg>
+
+            تنزيل PDF
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
 
 </div>
