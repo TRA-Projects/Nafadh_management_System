@@ -16,10 +16,16 @@ namespace Nafadh_Backend.Services
     public class ReportService : IReportService
     {
         private readonly IReportRepository _repository;
+        private readonly IConfiguration _configuration;
 
-        public ReportService(IReportRepository repository)
+
+        public ReportService(
+            IReportRepository repository,
+            IConfiguration configuration
+        )
         {
             _repository = repository;
+            _configuration = configuration;
         }
 
         // ==========================================================
@@ -61,12 +67,24 @@ namespace Nafadh_Backend.Services
             // in the next storage step.
             // ======================================================
 
+            // Store Trainer Portal reports outside the project
+            // so generated PDF files are never included in Git.
             var reportsFolder =
-                Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "wwwroot",
-                    "reports"
+                _configuration[
+                    "Storage:TrainerReportsPath"
+                ];
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    reportsFolder
+                )
+            )
+            {
+                throw new InvalidOperationException(
+                    "Trainer reports storage path is not configured."
                 );
+            }
 
 
             Directory.CreateDirectory(
@@ -559,8 +577,8 @@ namespace Nafadh_Backend.Services
             );
 
 
-            var fileUrl =
-                $"reports/{fileName}";
+            var fileUrl = fullPath;
+
 
 
             // ======================================================
