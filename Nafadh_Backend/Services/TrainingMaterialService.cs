@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -13,12 +14,20 @@ namespace Nafadh_Backend.Services
     {
         private readonly ITrainingMaterialRepository _repository;
         private readonly ILessonRepository _lessonRepository;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<TrainingMaterialService> _logger;
+
 
         public TrainingMaterialService(
-            ITrainingMaterialRepository repository, ILessonRepository lessonRepository)
+            ITrainingMaterialRepository repository,
+            ILessonRepository lessonRepository,
+            IConfiguration configuration,
+            ILogger<TrainingMaterialService> logger)
         {
             _repository = repository;
             _lessonRepository = lessonRepository;
+            _configuration = configuration;
+            _logger = logger;
         }
         // Get all materials attached to a specific lesson.
         // Endpoint: GET /api/TrainingMaterial/lesson/{lessonId}
@@ -115,18 +124,139 @@ namespace Nafadh_Backend.Services
         // Endpoint: DELETE /api/TrainingMaterial/{id}
         public async Task<bool> DeleteAsync(int id)
         {
+            // ---------------------------------------------
+            // Get material from database
+            // ---------------------------------------------
 
-            // Get material from database.
-            var material = await _repository.GetByIdAsync(id);
+            var material =
+                await _repository.GetByIdAsync(id);
 
-            // Material not found.
+
             if (material == null)
             {
                 return false;
             }
 
-            // Delete record.
-            await _repository.DeleteAsync(material);
+
+            // ---------------------------------------------
+            // Keep file information before deleting
+            // database record.
+            //
+            // Links do not have a physical file.
+            // ---------------------------------------------
+
+            var shouldDeletePhysicalFile =
+                material.FileType != NFD_FileType.Link &&
+                !string.IsNullOrWhiteSpace(material.FileUrl);
+
+
+            string? physicalFilePath = null;
+
+
+            if (shouldDeletePhysicalFile)
+            {
+                var storagePath =
+                    _configuration[
+                        "Storage:TrainingMaterialsPath"
+                    ];
+
+
+                if (
+                    !string.IsNullOrWhiteSpace(storagePath)
+                )
+                {
+                    // FileUrl example:
+                    // /uploads/training-materials/file.pdf
+                    //
+                    // We only take the file name to avoid
+                    // using a client-controlled path.
+
+                    var normalizedUrl =
+                        material.FileUrl
+                            .Replace(
+                                '\\',
+                                '/'
+                            );
+
+
+                    var fileName =
+                        normalizedUrl
+                            .Split(
+                                '/',
+                                StringSplitOptions
+                                    .RemoveEmptyEntries
+                            )
+                            .LastOrDefault();
+
+
+                    if (
+                        !string.IsNullOrWhiteSpace(fileName)
+                    )
+                    {
+                        fileName =
+                            Path.GetFileName(
+                                fileName
+                            );
+
+
+                        physicalFilePath =
+                            Path.Combine(
+                                storagePath,
+                                fileName
+                            );
+                    }
+                }
+            }
+
+
+            // ---------------------------------------------
+            // Delete database record first
+            // ---------------------------------------------
+
+            await _repository.DeleteAsync(
+                material
+            );
+
+
+            // ---------------------------------------------
+            // Delete physical file from external storage
+            //
+            // If physical deletion fails, the database
+            // record stays deleted and the failure is logged.
+            // This prevents a broken material from remaining
+            // visible in the application.
+            // ---------------------------------------------
+
+            if (
+                !string.IsNullOrWhiteSpace(
+                    physicalFilePath
+                )
+            )
+            {
+                try
+                {
+                    if (
+                        File.Exists(
+                            physicalFilePath
+                        )
+                    )
+                    {
+                        File.Delete(
+                            physicalFilePath
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Training material {MaterialId} was deleted from the database, but its physical file could not be deleted from {FilePath}.",
+                        material.MaterialId,
+                        physicalFilePath
+                    );
+                }
+            }
+
 
             return true;
         }
