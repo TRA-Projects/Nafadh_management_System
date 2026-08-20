@@ -1,6 +1,6 @@
 <section class="program-details-page" dir="rtl">
   <button type="button" class="back-btn" (click)="goBack()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
     العودة إلى البرامج
   </button>
 
@@ -16,7 +16,7 @@
   <ng-container *ngIf="!loading() && !error() && program() as p">
     <article class="card hero" [style.--program-color]="p.color">
       <div class="program-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M12 3v18M2 9h20"/></svg>
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M12 3v18M2 9h20"/></svg>
       </div>
       <div class="hero-copy">
         <h2>{{ p.title }}</h2>
@@ -38,27 +38,74 @@
     </div>
 
     <div class="two-col">
-      <article class="card card-pad">
-        <div class="card-title">استخدام الطاقة الاستيعابية <span>{{ p.occupied }} من {{ p.capacity }} مقعدًا</span></div>
-        <div class="bar"><i [style.width.%]="p.percent" [style.background]="p.color"></i></div>
-        <div class="bar-meta"><span>{{ p.percent }}% مشغول</span><span>المتبقي: {{ p.available }} مقعدًا</span></div>
-        <div class="legend"><span><i [style.background]="p.color"></i> مشغول <b>{{ p.occupied }}</b></span><span><i></i> متبقي <b>{{ p.available }}</b></span></div>
+      <article class="card card-pad capacity-card-modern">
+        <div class="card-title">
+          استخدام الطاقة الاستيعابية والتوزيع
+          <span class="pulse-badge">محدث فوراً</span>
+        </div>
+        
+        <div class="capacity-bar-wrapper">
+          <div class="bar-info">
+            <span>معدل الإشغال الكلي</span>
+            <b class="text-gradient" [style.color]="p.color">{{ p.percent }}% مشغول</b>
+          </div>
+          <div class="main-progress-bar">
+            <div class="progress-fill-gradient" [style.width.%]="p.percent" [style.background]="p.color"></div>
+          </div>
+        </div>
+
+        <div class="colored-bars-grid">
+          <div class="bar-card-item used-col">
+            <div class="bar-header">
+              <span class="dot-indicator" [style.background]="p.color"></span>
+              <span class="label">المقاعد المشغولة</span>
+            </div>
+            <div class="bar-body">
+              <strong [style.color]="p.color">{{ p.occupied }}</strong>
+              <small>مقعد مخصص</small>
+            </div>
+            <div class="mini-col-progress">
+              <i [style.width.%]="p.percent" [style.background]="p.color"></i>
+            </div>
+          </div>
+
+          <div class="bar-card-item available-col">
+            <div class="bar-header">
+              <span class="dot-indicator bg-emerald"></span>
+              <span class="label">المقاعد المتاحة</span>
+            </div>
+            <div class="bar-body">
+              <strong class="ok">{{ p.available }}</strong>
+              <small>جاهزة للاستقبال</small>
+            </div>
+            <div class="mini-col-progress">
+              <i class="bg-emerald" [style.width.%]="100 - p.percent"></i>
+            </div>
+          </div>
+        </div>
       </article>
 
       <article class="card card-pad">
         <div class="card-title">التخصصات الأكاديمية المناسبة</div>
         <div class="major-tags">
-          <span>علوم الحاسب</span><span>نظم المعلومات</span><span>هندسة البرمجيات</span><span>تقنية المعلومات</span>
+          <button type="button" class="major-tag-btn">علوم الحاسب</button>
+          <button type="button" class="major-tag-btn">نظم المعلومات</button>
+          <button type="button" class="major-tag-btn">هندسة البرمجيات</button>
+          <button type="button" class="major-tag-btn">تقنية المعلومات</button>
         </div>
       </article>
     </div>
 
+    <!-- مراحل الخطة التدريبية كبطاقات شبكية عصرية بدلاً من الخطوط -->
     <article class="card card-pad section-card">
       <div class="card-title">مراحل الخطة التدريبية <span>{{ modules().length }} مراحل · {{ p.durationWeeks }} أسبوعًا</span></div>
-      <div class="plan-list" *ngIf="modules().length; else noModules">
-        <div class="plan-step" *ngFor="let module of modules(); let i = index">
+      <div class="plan-cards-grid" *ngIf="modules().length; else noModules">
+        <div class="plan-step-card" *ngFor="let module of modules(); let i = index">
           <span class="pnum" [style.background]="p.soft" [style.color]="p.color">{{ i + 1 }}</span>
-          <div><b>{{ module.title || module.name || ('المرحلة ' + (i + 1)) }}</b><small>المرحلة {{ i + 1 }} من {{ modules().length }}</small></div>
+          <div class="plan-content">
+            <b>{{ module.title || module.name || ('المرحلة ' + (i + 1)) }}</b>
+            <small>المرحلة {{ i + 1 }} من {{ modules().length }}</small>
+          </div>
         </div>
       </div>
       <ng-template #noModules><div class="empty"><b>لا توجد مراحل معرّفة</b><span>ستظهر مراحل الخطة هنا عند ربطها بالبرنامج.</span></div></ng-template>
@@ -83,12 +130,3 @@
     </article>
   </ng-container>
 </section>
-
- <!-- Created a dedicated program details page -->
-<!--  Added program header with program name, status, and category. -->
-<!--  Added capacity, occupancy, available seats, supervisors, and performance statistics. -->
-<!-- Added academic specialties section. -->
-<!-- Added academic specialties section. -->
- <!-- Added program trainees table with attendance, performance, status, and progress. -->
-<!-- Added navigation button to return to the programs page. -->
-
