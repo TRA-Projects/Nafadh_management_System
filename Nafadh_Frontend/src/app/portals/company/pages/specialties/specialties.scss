@@ -1,30 +1,444 @@
-:host{display:block;color:#10213d}
-.specialties-page{max-width:1148px;margin:0 auto;padding:4px 0 32px;font-family:inherit}
-.page-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
-.page-head h2{margin:0;font-size:22px;font-weight:800;color:#10213d}
-.page-head p{margin:6px 0 0;color:#60708b;font-size:13px;line-height:1.7}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.stat-card{min-height:94px;padding:14px 18px;background:#fff;border:1px solid #dbe4f0;border-radius:12px;box-shadow:0 6px 18px rgba(22,47,79,.06);display:flex;flex-direction:column;justify-content:center}
-.stat-card span{font-size:12px;color:#63718a}.stat-card strong{font-size:22px;line-height:1.25;margin:3px 0;color:#111f39}.stat-card strong.success{color:#008a9e}.stat-card small{font-size:11px;color:#64748b}
-.specialty-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.specialty-card{position:relative;min-height:178px;padding:18px;background:#fff;border:1px solid #dbe4f0;border-radius:15px;box-shadow:0 8px 20px rgba(22,47,79,.08);display:flex;flex-direction:column;gap:18px;cursor:pointer;overflow:hidden;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
-.specialty-card:hover,.specialty-card.selected{transform:translateY(-2px);border-color:var(--spec-color);box-shadow:0 14px 28px rgba(22,47,79,.12)}
-.specialty-card:focus-visible{outline:2px solid var(--spec-color);outline-offset:2px}
-.accent{position:absolute;inset-inline:0;top:0;height:4px;background:var(--spec-color)}
-.spec-top{display:flex;align-items:flex-start;gap:11px;padding-top:2px}.spec-icon{width:44px;height:44px;border-radius:12px;background:var(--spec-soft);color:var(--spec-color);display:flex;align-items:center;justify-content:center;flex:0 0 auto}.spec-icon svg{width:23px;height:23px}
-.spec-title{flex:1;min-width:0}.spec-title b{display:block;font-size:15px;color:#15243e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.spec-title span{display:block;margin-top:3px;color:#64748b;font-size:11.5px}
-.status-chip{display:inline-flex;align-items:center;gap:5px;background:#e2f2fb;color:#00627b;border-radius:20px;padding:4px 10px;font-size:10.5px;font-weight:700;white-space:nowrap}.status-chip i{width:6px;height:6px;border-radius:50%;background:currentColor}.status-chip.pending{background:#fbf3d9;color:#8a6208}
-.occupancy{margin-top:1px}.occupancy-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;font-size:11.5px;color:#63718a}.occupancy-head b{font-size:13px;color:#15243e}.progress{height:8px;border-radius:8px;background:#e8edf2;overflow:hidden}.progress i{display:block;height:100%;border-radius:8px;background:var(--spec-color);transition:width .45s ease}
-.spec-foot{margin-top:auto;padding-top:12px;border-top:1px dashed #dfe6ef;display:flex;align-items:center;gap:9px;color:#687891;font-size:11.5px}.dot-sep{width:3px;height:3px;border-radius:50%;background:#c5cfdd}.details-link{margin-inline-start:auto;display:inline-flex;align-items:center;gap:5px;color:var(--spec-color);font-weight:800}.details-link svg{width:14px;height:14px;transition:transform .18s ease}.specialty-card:hover .details-link svg{transform:translateX(-3px)}
-.state-card,.empty-state{background:#fff;border:1px solid #dbe4f0;border-radius:14px;box-shadow:0 7px 20px rgba(22,47,79,.06);padding:28px;text-align:center;color:#65738a;margin-top:8px}.state-card.error{color:#a33b3b;display:flex;align-items:center;justify-content:center;gap:12px}.state-card button{border:0;background:#00338d;color:#fff;border-radius:8px;padding:7px 13px;cursor:pointer}.spinner{width:18px;height:18px;border:2px solid #d6dfeb;border-top-color:#00338d;border-radius:50%;display:inline-block;animation:spin .8s linear infinite;vertical-align:middle}@keyframes spin{to{transform:rotate(360deg)}}
-.empty-icon{font-size:28px;color:#00338d;margin-bottom:8px}.empty-state strong{display:block;color:#15243e;font-size:15px}.empty-state span{display:block;margin-top:4px;font-size:12px}
-.details-panel{margin-top:16px;background:#fff;border:1px solid #dbe4f0;border-radius:14px;box-shadow:0 9px 24px rgba(22,47,79,.09);padding:18px}.details-head{display:flex;justify-content:space-between;gap:18px}.eyebrow{font-size:11px;color:#00338d;font-weight:800}.details-head h3{margin:3px 0;font-size:17px}.details-head p{margin:0;color:#64748b;font-size:12px}.close-btn{width:34px;height:34px;border:1px solid #dbe4f0;background:#f7f9fc;border-radius:9px;font-size:22px;line-height:1;color:#60708b;cursor:pointer}.details-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:15px}.details-grid div{background:#f8fafb;border:1px solid #e5ebf2;border-radius:10px;padding:10px}.details-grid span{display:block;color:#738198;font-size:10.5px}.details-grid b{display:block;margin-top:3px;font-size:13px;color:#17243d}
-@media(max-width:1050px){.stats-grid{grid-template-columns:repeat(2,1fr)}.specialty-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:720px){.specialties-page{padding:0 2px 24px}.page-head h2{font-size:18px}.page-head p{font-size:12px}.stats-grid,.specialty-grid,.details-grid{grid-template-columns:1fr}.specialty-card{min-height:165px}}
-.details-link{border:0;background:transparent;font:inherit;cursor:pointer}
+:host {
+    display: block;
+    color: #0f172a;
+    background-color: #f8fafc;
+    min-height: 100vh;
+    width: 100%;
+    box-sizing: border-box;
+}
 
-// Added the complete visual styling for the company specialties page.
-// Styled summary statistics cards and program cards.
-// Added occupancy progress bars, status badges, icons, spacing, borders, and shadows.
-// Added responsive RTL layout matching the provided prototype.
+.specialties-page {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 1.5rem 2rem; /* تم توحيد الهوامش لتطابق الصفحة السابقة */
+    font-family: 'Cairo', sans-serif, inherit;
+    box-sizing: border-box;
+}
 
+.page-head {
+    margin-bottom: 24px;
+    background: #ffffff;
+    padding: 20px 24px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+
+    h2 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    p {
+        margin: 6px 0 0;
+        color: #64748b;
+        font-size: 13.5px;
+        line-height: 1.6;
+    }
+}
+
+/* إحصائيات علوية أنيقة مع أيقونات ملونة */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: transform 0.2s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
+    }
+
+    .stat-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+        
+        &.bg-blue-soft { background: #eff6ff; color: #2563eb; }
+        &.bg-indigo-soft { background: #eef2ff; color: #4f46e5; }
+        &.bg-teal-soft { background: #f0fdf4; color: #16a34a; }
+        &.bg-amber-soft { background: #fffbeb; color: #d97706; }
+    }
+
+    span {
+        font-size: 12px;
+        color: #64748b;
+        display: block;
+    }
+
+    strong {
+        font-size: 22px;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.3;
+        display: block;
+
+        &.success { color: #16a34a; }
+    }
+
+    small {
+        font-size: 11px;
+        color: #94a3b8;
+    }
+}
+
+/* التنسيق الرئيسي للشبكة (الكروت في اليسار والمخطط في اليمين بشكل مرتب) */
+.dashboard-grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+    align-items: start;
+}
+
+/* شبكة كروت البرامج التدريبية */
+.specialty-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.specialty-card {
+    position: relative;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.25s ease;
+
+    &:hover {
+        transform: translateY(-3px);
+        border-color: var(--spec-color);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+    }
+}
+
+.accent {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 5px;
+    background: var(--spec-color);
+}
+
+.spec-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.spec-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: var(--spec-soft);
+    color: var(--spec-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.spec-title {
+    flex: 1;
+    min-width: 0;
+
+    b {
+        display: block;
+        font-size: 15px;
+        color: #0f172a;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    span {
+        display: block;
+        margin-top: 4px;
+        color: #64748b;
+        font-size: 12px;
+    }
+}
+
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f0fdf4;
+    color: #16a34a;
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+
+    i {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    &.pending {
+        background: #fffbeb;
+        color: #d97706;
+    }
+}
+
+.occupancy {
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+}
+
+.occupancy-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: #64748b;
+
+    b {
+        font-size: 13px;
+        color: #0f172a;
+    }
+}
+
+.progress {
+    height: 8px;
+    border-radius: 8px;
+    background: #e2e8f0;
+    overflow: hidden;
+
+    i {
+        display: block;
+        height: 100%;
+        border-radius: 8px;
+        background: var(--spec-color);
+        transition: width .4s ease;
+    }
+}
+
+.spec-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+    font-size: 12px;
+    padding-top: 4px;
+}
+
+.dot-sep {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #cbd5e1;
+}
+
+.details-link {
+    margin-inline-start: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--spec-color);
+    font-weight: 700;
+    font-size: 12px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    transition: transform 0.2s;
+
+    &:hover {
+        transform: translateX(-3px);
+    }
+}
+
+/* تصميم صندوق المخطط البصري (Donut Chart Box) */
+.visual-chart-box {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: sticky;
+    top: 20px;
+
+    .chart-header {
+        width: 100%;
+        margin-bottom: 16px;
+        text-align: right;
+
+        h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        span {
+            font-size: 12px;
+            color: #64748b;
+        }
+    }
+}
+
+.donut-container {
+    position: relative;
+    width: 170px;
+    height: 170px;
+    border-radius: 50%;
+    background: conic-gradient(#2563eb 0% 65%, #0ea5e9 65% 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    margin: 10px 0;
+}
+
+.donut-ring {
+    width: 130px;
+    height: 130px;
+    background: white;
+    border-radius: 50%;
+}
+
+.chart-center-text {
+    position: absolute;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .total-label { font-size: 11px; color: #64748b; }
+    .total-value { font-size: 22px; color: #2563eb; font-weight: 800; line-height: 1.2; }
+    .sub-label { font-size: 10px; color: #94a3b8; }
+}
+
+.chart-legend {
+    width: 100%;
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 14px;
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: #475569;
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            &.bg-primary { background: #2563eb; }
+            &.bg-secondary { background: #0ea5e9; }
+        }
+    }
+}
+
+/* الحالات الخاصة (Loading / Error / Empty) */
+.state-card, .empty-state {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    color: #64748b;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+    margin-top: 16px;
+}
+
+.state-card.error {
+    color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+
+    button {
+        background: #0f172a;
+        color: #fff;
+        border: 0;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e2e8f0;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-inline-end: 8px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.empty-icon {
+    font-size: 36px;
+    color: #2563eb;
+    margin-bottom: 12px;
+}
+
+/* التجاوب مع الشاشات المختلفة (Responsive) */
+@media(max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .dashboard-grid-layout {
+        grid-template-columns: 1fr;
+    }
+    .visual-chart-box {
+        position: static;
+    }
+}
+
+@media(max-width: 640px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    .specialty-grid {
+        grid-template-columns: 1fr;
+    }
+}

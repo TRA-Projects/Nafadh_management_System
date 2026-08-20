@@ -1,7 +1,10 @@
 .account-page {
-  padding: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 1.5rem 2rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  font-family: inherit;
+  box-sizing: border-box;
 
   /* Header Action Bar */
   .page-header {
@@ -13,8 +16,8 @@
     .title-wrap {
       h2 {
         font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b;
+        font-weight: 800;
+        color: #1d2f63;
         margin: 0;
       }
       .subtitle {
@@ -29,18 +32,21 @@
       gap: 0.75rem;
 
       .btn {
-        padding: 0.5rem 1.25rem;
-        border-radius: 8px;
+        padding: 0.6rem 1.25rem;
+        border-radius: 10px;
         font-weight: 600;
+        font-size: 0.875rem;
         cursor: pointer;
         border: none;
-        transition: all 0.2s ease;
+        transition: all 0.25s ease;
 
         &-primary {
-          background-color: #0d47a1;
+          background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
           color: #ffffff;
+          box-shadow: 0 4px 12px rgba(13, 71, 161, 0.2);
           &:hover {
-            background-color: #0a3880;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(13, 71, 161, 0.3);
           }
         }
 
@@ -50,105 +56,123 @@
           color: #334155;
           &:hover {
             background-color: #f8fafc;
+            border-color: #94a3b8;
           }
         }
       }
     }
   }
 
-  /* Profile Card Container */
+  /* Profile Card Container - تم تطويره ليكون أكثر جاذبية */
   .profile-card {
     background: #ffffff;
-    border-radius: 12px;
+    border-radius: 20px;
     border: 1px solid #e2e8f0;
     overflow: hidden;
     margin-bottom: 1.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
 
     .profile-banner {
-      height: 120px;
-      background: linear-gradient(90deg, #94a3b8 0%, #cbd5e1 100%);
+      height: 150px;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0d47a1 100%);
     }
 
     .profile-info-header {
-      padding: 0 2rem 1.5rem;
+      padding: 0 2rem 1.8rem;
       display: flex;
       align-items: flex-end;
       gap: 1.5rem;
-      margin-top: -40px;
+      margin-top: -55px;
+      position: relative;
+      z-index: 2;
 
       .avatar-large {
-        width: 80px;
-        height: 80px;
-        background-color: #00838f;
+        width: 95px;
+        height: 95px;
+        background: linear-gradient(135deg, #00838f 0%, #00acc1 100%);
         color: white;
-        border: 4px solid white;
-        border-radius: 16px;
+        border: 4px solid #ffffff;
+        border-radius: 22px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
-        font-weight: bold;
+        font-size: 2.25rem;
+        font-weight: 800;
+        box-shadow: 0 10px 25px rgba(0, 131, 143, 0.3);
       }
 
       .user-main-details {
         .user-name {
-          font-size: 1.25rem;
-          font-weight: 700;
-          margin: 0 0 0.5rem 0;
-          color: #0f172a;
+          font-size: 1.5rem;
+          font-weight: 800;
+          margin: 0 0 0.6rem 0;
+          color: #0f172a; /* تم تصحيح لون الاسم ليكون واضحاً وبارزاً */
+          letter-spacing: -0.3px;
         }
 
         .user-tags {
           display: flex;
           gap: 0.5rem;
+          flex-wrap: wrap;
 
           .tag {
             font-size: 0.75rem;
-            padding: 0.25rem 0.6rem;
-            border-radius: 6px;
+            padding: 0.35rem 0.8rem;
+            border-radius: 10px;
+            font-weight: 600;
 
             &-role {
               background: #f1f5f9;
               color: #475569;
             }
             &-status {
-              background: #e0f2fe;
-              color: #0284c7;
+              background: #ecfdf5;
+              color: #059669;
+              border: 1px solid #a7f3d0;
             }
             &-badge {
-              background: #f8fafc;
-              border: 1px solid #cbd5e1;
-              color: #64748b;
+              background: #eff6ff;
+              border: 1px solid #bfdbfe;
+              color: #1d4ed8;
             }
           }
         }
       }
     }
 
-    /* Data Grid */
+    /* Data Grid - تم تعديل التصميم ليعطي مظهراً عصرياً متناسقاً */
     .data-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-      padding: 1.5rem 2rem;
-      border-top: 1px solid #f1f5f9;
+      gap: 1.2rem;
+      padding: 1.8rem 2rem;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
 
       .data-item {
-        background: #f8fafc;
-        padding: 0.85rem 1rem;
-        border-radius: 8px;
-        border: 1px solid #f1f5f9;
+        background: #ffffff;
+        padding: 1.1rem 1.4rem;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.25s ease;
+
+        &:hover {
+          border-color: #94a3b8;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.03);
+        }
 
         label {
           display: block;
           font-size: 0.75rem;
           color: #64748b;
-          margin-bottom: 0.25rem;
+          margin-bottom: 0.4rem;
+          font-weight: 700;
         }
 
         .value {
-          font-size: 0.9rem;
-          font-weight: 600;
+          font-size: 0.95rem;
+          font-weight: 700;
           color: #0f172a;
         }
 
@@ -159,120 +183,165 @@
 
         &.full-width {
           grid-column: span 2;
+          background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+          border-left: 4px solid #1e3a8a; /* لمسة جمالية للحقول المميزة العريضة */
         }
       }
     }
   }
 
-  /* Bottom Grid */
+  /* Bottom Grid - Modern Redesign */
   .bottom-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
+    gap: 2rem;
+    margin-top: 2rem;
 
     .section-card {
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 1.5rem;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 1.8rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      border: 1px solid #f1f5f9;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
 
-      .section-title {
-        font-size: 1rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        color: #0f172a;
+      &:hover {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
       }
 
+      .section-title {
+        font-size: 1.1rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        &::before {
+          content: '';
+          width: 4px;
+          height: 20px;
+          background: #1e3a8a;
+          border-radius: 2px;
+        }
+      }
+
+      /* تحسين قائمة الصلاحيات */
       .permission-list {
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
+        gap: 1rem;
 
         .permission-item {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 0.75rem 1rem;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
+          padding: 1rem;
+          background: #f8fafc;
+          border-radius: 14px;
+          transition: all 0.3s ease;
+
+          &:hover {
+            background: #f1f5f9;
+            transform: translateX(-3px);
+
+            .perm-icon-box {
+              background: #1e3a8a;
+              color: #ffffff;
+              svg {
+                stroke: #ffffff;
+                transform: scale(1.1);
+              }
+            }
+          }
 
           .perm-info {
             display: flex;
-            gap: 0.75rem;
             align-items: center;
-            strong {
-              display: block;
-              font-size: 0.875rem;
-              color: #1e293b;
+            gap: 1rem;
+
+            .perm-icon-box {
+              width: 42px;
+              height: 42px;
+              background: #ffffff;
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #1e3a8a;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+              transition: all 0.3s ease;
+
+              svg {
+                transition: all 0.3s ease;
+              }
             }
-            p {
-              font-size: 0.75rem;
-              color: #64748b;
-              margin: 0;
+
+            .text-content {
+              strong { display: block; font-size: 0.95rem; color: #1e293b; }
+              p { font-size: 0.75rem; color: #64748b; margin: 0; }
             }
           }
 
           .status-pill {
-            background: #f1f5f9;
-            color: #334155;
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            background: #dcfce7;
+            color: #166534;
+            font-weight: 700;
+            font-size: 0.7rem;
+
+            &.active {
+              background: #dcfce7;
+              color: #166534;
+            }
           }
         }
       }
 
+      /* تحسين قائمة النشاط الأخير */
       .activity-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-
         .activity-item {
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          padding: 0.75rem 0;
-          border-bottom: 1px solid #f1f5f9;
+          justify-content: space-between;
+          padding: 1.2rem 0;
+          border-bottom: 1px solid #f8fafc;
 
           &:last-child {
             border-bottom: none;
           }
 
-          strong {
-            font-size: 0.85rem;
-            color: #1e293b;
-          }
-          p {
-            font-size: 0.75rem;
-            color: #64748b;
-            margin: 0;
+          div {
+            strong { color: #1e293b; font-size: 0.9rem; display: block; margin-bottom: 0.2rem; }
+            p { color: #94a3b8; font-size: 0.75rem; margin: 0; }
           }
 
           .chip-status {
-            font-size: 0.75rem;
-            padding: 0.2rem 0.6rem;
-            border-radius: 12px;
-            background: #e0f2fe;
-            color: #0369a1;
+            background: #f1f5f9;
+            color: #475569;
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
           }
 
-          /* زر الـ PDF التفاعلي البحري السفلي */
           .pdf-btn {
-            background-color: #f1f5f9;
-            color: #475569;
-            border: 1px solid #cbd5e1;
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 0.25rem 0.75rem;
+            background: #fffbeb;
+            color: #b45309;
+            border: 1px solid #fde68a;
+            padding: 0.4rem 0.8rem;
             border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.75rem;
             cursor: pointer;
-            transition: all 0.2s ease-in-out;
+            transition: 0.3s;
 
             &:hover {
-              background-color: #0d47a1;
-              color: #ffffff;
-              border-color: #0d47a1;
-              box-shadow: 0 2px 4px rgba(13, 71, 161, 0.2);
+              background: #f59e0b;
+              color: white;
+              border-color: #f59e0b;
             }
           }
         }
@@ -281,8 +350,15 @@
   }
 }
 
-.cv-link {
-  color: #0d47a1;
-  text-decoration: underline;
-  font-weight: 600;
+@media (max-width: 768px) {
+  .account-page {
+    padding: 1rem;
+    .profile-card .data-grid,
+    .bottom-grid {
+      grid-template-columns: 1fr;
+      .data-item.full-width {
+        grid-column: span 1;
+      }
+    }
+  }
 }
