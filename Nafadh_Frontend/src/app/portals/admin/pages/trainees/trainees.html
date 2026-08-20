@@ -1,256 +1,214 @@
-<h2 class="nfd-page-title">إدارة المتدربين</h2>
-<p class="nfd-page-sub">قائمة المتدربين وتفاصيل التسجيل والمتابعة</p>
-
-<!-- أزرار الإجراءات العلوية -->
-<div class="nfd-header-actions" style="display: flex; gap: 10px; margin-bottom: 16px;">
-  <button type="button" class="nfd-btn primary" (click)="showRegisterModal.set(true)">
-    + تسجيل متدرب
-  </button>
-  <button type="button" class="nfd-btn ghost" (click)="showImportModal.set(true)">
-    استيراد من Excel
-  </button>
-</div>
-
-<!-- كارت الجدول والفلاتر -->
-<div class="nfd-card" style="margin-bottom:16px">
-  <div class="nfd-chips">
-    @for (s of ['الكل','NotAssigned','InTraining','Completed','Late']; track s) {
-      <button class="nfd-chip" [class.active]="statusFilter() === s" (click)="statusFilter.set(s)">
-        {{ s === 'الكل' ? s : labelFor(s) }}
+<div class="trainees-container">
+  <!-- 1. الهيدر وأزرار التحكم -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">إدارة المتدربين</h1>
+      <p class="page-subtitle">إدارة وتتبع بيانات المتدربين وحالاتهم الأكاديمية</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="showImportModal.set(true)">
+        <i class="fas fa-file-import"></i> استيراد من Excel
       </button>
-    }
+      <button class="btn btn-primary" (click)="showRegisterModal.set(true)">
+        <i class="fas fa-plus"></i> إضافة متدرب
+      </button>
+    </div>
   </div>
 
-  <table class="nfd-table">
-    <thead>
-      <tr>
-        <th>المتدرب</th>
-        <th>الجامعة</th>
-        <th>الشركة</th>
-        <th>البرنامج</th>
-        <th>نسبة التقدم</th>
-        <th>الحالة</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (t of filtered(); track t.traineeId || t.id) {
+  <!-- 2. شريط الفلترة -->
+  <div class="filter-card">
+    <div class="filter-group">
+      <label for="statusFilter">تصفية حسب الحالة:</label>
+      <select id="statusFilter" [ngModel]="statusFilter()" (ngModelChange)="onStatusFilterChange($event)">
+        <option value="ALL">الكل</option>
+        <option value="0">لم يوزّع بعد</option>
+        <option value="1">قيد التدريب</option>
+        <option value="2">مكتمل</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 3. الجدول الرئيسي -->
+  <div class="table-card">
+    <table class="data-table">
+      <thead>
         <tr>
-          <td><strong>{{ t.fullName }}</strong></td>
-          <td>{{ t.university }}</td>
-          <td>{{ t.companyName || '—' }}</td>
-          <!-- حُلت المشكلة هنا باستخدام Type Casting الآمن -->
-          <td>{{ t.programName || t.trackName || '—' }}</td>
-          
-          <td>
-            <div class="progress-container">
-              <span class="progress-text">{{ getProgressValue(t) }}%</span>
-              <div class="progress-bar-bg">
-                <div class="progress-bar-fill" [style.width.%]="getProgressValue(t)"></div>
-              </div>
-            </div>
-          </td>
-
-          <td>
-            <span class="nfd-badge" [ngStyle]="getStatusStyle(t.status)">
-              {{ statusLabels[t.status] || t.status }}
-            </span>
-          </td>
-
-          <!-- زر المعاينة -->
-          <td>
-            <a [routerLink]="['/admin/trainees', t.traineeId || t.id]" class="icon-view-btn" title="معاينة الملف">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-            </a>
-          </td>
+          <th>المتدرب</th>
+          <th>الجامعة والتخصص</th>
+          <th>الحالة</th>
+          <th>نسبة الإنجاز</th>
+          <th>الإجراءات</th>
         </tr>
-      }
-    </tbody>
-  </table>
-</div>
-
-<!-- ================= نافذة استيراد المتدربين من Excel ================= -->
-@if (showImportModal()) {
-  <div class="nfd-modal-backdrop" (click)="closeImportModal()">
-    <div class="nfd-modal-dialog" (click)="$event.stopPropagation()">
-      <div class="nfd-modal-header">
-        <button type="button" class="close-btn" (click)="closeImportModal()">✕</button>
-        <h3>استيراد المتدربين من Excel</h3>
-      </div>
-
-      <div class="nfd-modal-body">
-        @if (importStep() === 1) {
-          <div class="upload-dropzone" (click)="fileInput.click()">
-            <div class="upload-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-              </svg>
-            </div>
-            <p class="upload-title">اسحب ملف Excel هنا أو انقر للاختيار</p>
-            <p class="upload-sub">يدعم xlsx. و xls. – حجم أقصى 10MB</p>
-            <input type="file" #fileInput (change)="onFileSelected($event)" accept=".xlsx, .xls" style="display: none;">
-          </div>
-
-          <div class="nfd-alert-info">
-            <span class="info-icon">ⓘ</span>
-            <span>تأكد أن الملف يحتوي على أعمدة: الاسم، رقم الهوية، الجوال، البريد، الجامعة، التخصص</span>
-          </div>
-
-          <div class="nfd-modal-footer" style="margin-top: 16px;">
-            <button type="button" class="nfd-btn ghost block-btn" (click)="closeImportModal()">إلغاء</button>
-          </div>
-        }
-
-        @if (importStep() === 2) {
-          <div class="import-success-banner">
-            <div class="banner-right">
-              <span class="check-icon">✓</span>
-              <div>
-                <strong class="file-name">{{ selectedFileName() }}</strong>
-                <p class="file-status">تم رفع الملف بنجاح – {{ importedRecords().length }} سجلات</p>
+      </thead>
+      <tbody>
+        @for (t of trainees(); track t.traineeId) {
+          <tr>
+            <td>
+              <div class="trainee-info">
+                <div class="avatar">{{ t.fullName ? t.fullName.charAt(0) : '?' }}</div>
+                <div>
+                  <div class="font-bold">{{ t.fullName || 'بدون اسم' }}</div>
+                  @if (t.email) {
+                    <div class="text-sm text-gray">{{ t.email }}</div>
+                  }
+                </div>
               </div>
-            </div>
-            <span class="file-icon">📄</span>
-          </div>
-
-          <div class="import-preview-table-wrapper">
-            <table class="nfd-table import-preview-table">
-              <thead>
-                <tr>
-                  <th>الاسم</th>
-                  <th>الجامعة</th>
-                  <th>التخصص</th>
-                  <th>الحالة</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (item of importedRecords(); track item.name) {
-                  <tr>
-                    <td><strong>{{ item.name }}</strong></td>
-                    <td>{{ item.university }}</td>
-                    <td>{{ item.major }}</td>
-                    <td>
-                      <span [class.text-warning]="item.status.includes('تحذير')" [class.text-success]="item.status === 'جاهز'">
-                        {{ item.status }}
-                      </span>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-
-          <div class="nfd-modal-footer form-actions" style="margin-top: 20px; display: flex; gap: 12px;">
-            <button type="button" class="nfd-btn primary" style="flex: 1; background-color: #0d9488;" (click)="confirmImport()">
-              استيراد السجلات
-            </button>
-            <button type="button" class="nfd-btn ghost" style="flex: 1;" (click)="importStep.set(1)">
-              رجوع
-            </button>
-          </div>
+            </td>
+            <td>
+              <div>{{ t.university || '-' }}</div>
+              <div class="text-sm text-gray">{{ t.major || '-' }}</div>
+            </td>
+            <td>
+              <span class="status-badge" [ngStyle]="getStatusStyle(t.status)">
+                {{ labelFor(t.status) }}
+              </span>
+            </td>
+            <td>
+              <div class="progress-bar-container">
+                <div class="progress-bar" [style.width.%]="getProgressValue(t)"></div>
+                <span>{{ getProgressValue(t) }}%</span>
+              </div>
+            </td>
+            <td>
+              <div class="actions">
+                <a [routerLink]="['/admin/trainees', t.traineeId]" class="icon-view-btn" title="معاينة الملف">
+                  <i class="fas fa-eye"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          @if (!isLoading()) {
+            <tr>
+              <td colspan="5" class="empty-state">لا يوجد متدربون متاحون حالياً.</td>
+            </tr>
+          }
         }
+
+        @if (isLoading()) {
+          <tr>
+            <td colspan="5" class="empty-state">جاري تحميل البيانات...</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <!-- 4. الترقيم والتنقل (Pagination) -->
+    <div class="pagination-container">
+      <div class="pagination-info">
+        عرض <b>{{ trainees().length }}</b> من إجمالي <b>{{ totalCount() }}</b> متدرب
+      </div>
+      <div class="pagination-controls">
+        <button class="pagination-btn" [disabled]="currentPage() === 1" (click)="prevPage()">السابق</button>
+        <span class="page-number">صفحة {{ currentPage() }} من {{ totalPages }}</span>
+        <button class="pagination-btn" [disabled]="currentPage() * pageSize() >= totalCount()" (click)="nextPage()">التالي</button>
       </div>
     </div>
   </div>
-}
 
-<!-- ================= نافذة تسجيل متدرب جديد ================= -->
-@if (showRegisterModal()) {
-  <div class="nfd-modal-backdrop" (click)="showRegisterModal.set(false)">
-    <div class="nfd-modal-dialog large" (click)="$event.stopPropagation()">
-      <div class="nfd-modal-header">
-        <button type="button" class="close-btn" (click)="showRegisterModal.set(false)" [disabled]="isSubmitting()">✕</button>
-        <h3>تسجيل متدرب جديد</h3>
-      </div>
-      <div class="nfd-modal-body">
-        
-        <!-- رسالة أخطاء إن وجدت عند الحفظ -->
-        @if (errorMessage()) {
-          <div class="nfd-alert-error" style="background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px; border-radius: 6px; margin-bottom: 16px;">
-            ⚠️ {{ errorMessage() }}
-          </div>
-        }
-
-        <form (ngSubmit)="submitNewTrainee()">
-          <div class="form-section-title">البيانات الشخصية</div>
-
-          <div class="form-group">
-            <label>الاسم الكامل <span class="required">*</span></label>
-            <input type="text" [(ngModel)]="newTrainee().fullName" name="fullName" placeholder="e.g. Reem Al-Mahrooqi" class="nfd-input" required [disabled]="isSubmitting()">
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>رقم الهوية الوطنية <span class="required">*</span></label>
-              <input type="text" [(ngModel)]="newTrainee().nationalId" name="nationalId" placeholder="1XXXXXXXX" class="nfd-input" required [disabled]="isSubmitting()">
+  <!-- 5. Modal: استيراد Excel -->
+  @if (showImportModal()) {
+    <div class="modal-backdrop" (click)="closeImportModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>استيراد ملف Excel</h3>
+          <button class="close-btn" (click)="closeImportModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          @if (importStep() === 1) {
+            <div class="upload-zone">
+              <input type="file" id="excelFile" accept=".xlsx, .xls" (change)="onFileSelected($event)" hidden />
+              <label for="excelFile" class="upload-label">
+                <i class="fas fa-cloud-upload-alt fa-2x"></i>
+                <p>اضغط هنا لاختيار ملف Excel للرفع</p>
+              </label>
             </div>
-            <div class="form-group">
-              <label>رقم الجوال <span class="required">*</span></label>
-              <input type="text" [(ngModel)]="newTrainee().phone" name="phone" placeholder="+968 9XXX XXXX" class="nfd-input" required [disabled]="isSubmitting()">
+          } @else if (importStep() === 2) {
+            <div class="preview-zone">
+              <p>تم تحميل الملف: <b>{{ selectedFileName() }}</b> (عدد السجلات: {{ importedRecords().length }})</p>
+              <div class="table-wrapper">
+                <table class="preview-table">
+                  <thead>
+                    <tr>
+                      <th>الاسم</th>
+                      <th>البريد</th>
+                      <th>الجامعة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (rec of importedRecords().slice(0, 5); track $index) {
+                      <tr>
+                        <td>{{ rec.fullName }}</td>
+                        <td>{{ rec.email }}</td>
+                        <td>{{ rec.university }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-
-          <div class="form-group">
-            <label>البريد الإلكتروني <span class="required">*</span></label>
-            <input type="email" [(ngModel)]="newTrainee().email" name="email" placeholder="name@nafadh.test" class="nfd-input" required [disabled]="isSubmitting()">
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>الجامعة <span class="required">*</span></label>
-              <input type="text" [(ngModel)]="newTrainee().university" name="university" placeholder="جامعة السلطان قابوس" class="nfd-input" required [disabled]="isSubmitting()">
-            </div>
-            <div class="form-group">
-              <label>التخصص <span class="required">*</span></label>
-              <input type="text" [(ngModel)]="newTrainee().major" name="major" placeholder="هندسة برمجيات..." class="nfd-input" required [disabled]="isSubmitting()">
-            </div>
-          </div>
-
-          <div class="form-section-title" style="margin-top: 20px;">بيانات التدريب</div>
-
-          <div class="form-group">
-            <label>الشركة المستضيفة</label>
-            <select class="nfd-input" [(ngModel)]="newTrainee().companyId" name="companyId" [disabled]="isSubmitting()">
-              <option value="">– اختر شركة –</option>
-              @for (company of companies(); track company.id) {
-                <option [value]="company.id">{{ company.name }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>البرنامج</label>
-            <select class="nfd-input" [(ngModel)]="newTrainee().programId" name="programId" [disabled]="isSubmitting()">
-              <option value="">– اختر برنامجاً –</option>
-              @for (program of programs(); track program.id) {
-                <option [value]="program.id">{{ program.name }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>الدفعة</label>
-            <select class="nfd-input" [(ngModel)]="newTrainee().batch" name="batch" [disabled]="isSubmitting()">
-              <option value="">– اختر الدفعة –</option>
-              @for (batch of batches(); track batch) {
-                <option [value]="batch">{{ batch }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="nfd-modal-footer form-actions">
-            <button type="submit" class="nfd-btn primary" [disabled]="isSubmitting()">
-              {{ isSubmitting() ? 'جاري الحفظ...' : 'حفظ التسجيل' }}
+          }
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeImportModal()">إلغاء</button>
+          @if (importStep() === 2) {
+            <button class="btn btn-primary" [disabled]="isSubmitting()" (click)="confirmImport()">
+              {{ isSubmitting() ? 'جاري الاستيراد...' : 'تأكيد الاستيراد' }}
             </button>
-            <button type="button" class="nfd-btn ghost" (click)="showRegisterModal.set(false)" [disabled]="isSubmitting()">إلغاء</button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- 6. Modal: إضافة متدرب -->
+  @if (showRegisterModal()) {
+    <div class="modal-backdrop" (click)="showRegisterModal.set(false)">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>إضافة متدرب جديد</h3>
+          <button class="close-btn" (click)="showRegisterModal.set(false)">&times;</button>
+        </div>
+        <form (ngSubmit)="submitNewTrainee()">
+          <div class="modal-body">
+            @if (errorMessage()) {
+              <div class="alert-danger">{{ errorMessage() }}</div>
+            }
+            <div class="form-grid">
+              <div class="form-group">
+                <label>الاسم الكامل *</label>
+                <input type="text" class="form-control" [ngModel]="newTrainee().fullName" (ngModelChange)="updateFormField('fullName', $event)" name="fullName" required />
+              </div>
+              <div class="form-group">
+                <label>البريد الإلكتروني *</label>
+                <input type="email" class="form-control" [ngModel]="newTrainee().email" (ngModelChange)="updateFormField('email', $event)" name="email" required />
+              </div>
+              <div class="form-group">
+                <label>رقم الهوية</label>
+                <input type="number" class="form-control" [ngModel]="newTrainee().nationalId" (ngModelChange)="updateFormField('nationalId', $event)" name="nationalId" />
+              </div>
+              <div class="form-group">
+                <label>الجامعة</label>
+                <input type="text" class="form-control" [ngModel]="newTrainee().university" (ngModelChange)="updateFormField('university', $event)" name="university" />
+              </div>
+              <div class="form-group">
+                <label>التخصص</label>
+                <input type="text" class="form-control" [ngModel]="newTrainee().major" (ngModelChange)="updateFormField('major', $event)" name="major" />
+              </div>
+              <div class="form-group">
+                <label>المستوى الأكاديمي</label>
+                <input type="text" class="form-control" [ngModel]="newTrainee().academicLevel" (ngModelChange)="updateFormField('academicLevel', $event)" name="academicLevel" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="showRegisterModal.set(false)">إلغاء</button>
+            <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'جاري الحفظ...' : 'حفظ البيانات' }}
+            </button>
           </div>
         </form>
       </div>
     </div>
-  </div>
-}
+  }
+</div>

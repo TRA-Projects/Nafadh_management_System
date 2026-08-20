@@ -140,14 +140,16 @@ namespace Nafadh_Backend.Services
         }
 
         public async Task<PagedResult<UserResponseDTO>> SearchAsync(
-                                                                     int? roleId,
-                                                                     NFD_UserStatus? status,
-                                                                     string? search,
-                                                                     int page,
-                                                                     int pageSize)
+                                                              int? roleId,
+                                                              NFD_UserStatus? status,
+                                                              string? search,
+                                                              int page,
+                                                              int pageSize)
         {
             page = page < 1 ? 1 : page;
-            pageSize = pageSize is < 1 or > 200 ? 20 : pageSize;
+
+            // تم السماح بقيمpageSize تصل إلى 10000 بدلاً من التقييد عند 200
+            pageSize = pageSize < 1 ? 20 : (pageSize > 10000 ? 10000 : pageSize);
 
             var (items, totalCount) = await _repository.SearchAsync(roleId, status, search, page, pageSize);
 
