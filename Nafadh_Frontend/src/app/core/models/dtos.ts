@@ -321,6 +321,8 @@ export interface SessionDto {
 
 // ---- Enrollment ----
 export interface EnrollmentDto {
+trainee: any;
+traineeLinkedInUrl: any;
   enrollmentId: number;
   enrollmentDate: string;
   completionStatus: string;

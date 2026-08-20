@@ -1,7 +1,11 @@
-<a routerLink="/company/trainees" class="back-link">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-  العودة إلى قائمة المتدربين
-</a>
+<div style="margin-bottom: 20px; display: flex;">
+  <a routerLink="/company/trainees" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 500;">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 12h14M12 5l7 7-7 7"/>
+    </svg>
+    العودة إلى قائمة المتدربين
+  </a>
+</div>
 
 @if (enrollment(); as e) {
   <div class="card card-pad" style="margin-bottom:16px">
@@ -68,8 +72,7 @@
               <span class="step-pct">{{ p.ev ? p.ev.score + '%' : '—' }}</span>
             </div>
             
-            <!-- تم تعديل هذا السطر ليستخدم || لتجاوز تحذير الـ nullish coalescing -->
-            <div class="bar" style="margin-top:8px"><i [class.amber]="p.status === 'cur'" [style.width.%]="p.ev.score || 0"></i></div>
+            <div class="bar" style="margin-top:8px"><i [class.amber]="p.status === 'cur'" [style.width.%]="p.ev?.score || 0"></i></div>
 
             @if (p.ev) {
               <div class="eval-box">
