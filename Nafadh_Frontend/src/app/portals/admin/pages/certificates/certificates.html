@@ -11,6 +11,86 @@
     <p class="nfd-page-sub">إصدار شهادات الإتمام للمتدربين حسب الدفعة</p>
 
 
+    <!-- ==================== Search & Filters ==================== -->
+
+<div class="certificates-toolbar">
+
+  <!-- Search - يمين -->
+  <div class="search-box">
+
+    <svg
+      class="search-icon"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round">
+
+      <circle cx="11" cy="11" r="8"></circle>
+      <path d="m21 21-4.3-4.3"></path>
+
+    </svg>
+
+    <input
+      type="text"
+      placeholder="البحث عن دفعة أو شركة..."
+      [value]="searchTerm()"
+      (input)="onSearch($event)"
+    />
+
+  </div>
+
+
+  <!-- Filters - يسار -->
+  <div class="filters-group">
+
+    <div class="filter-item">
+
+      <span class="filter-label">
+        الحالة
+      </span>
+
+      <select
+        [value]="statusFilter()"
+        (change)="onStatusFilterChange($event)">
+
+        <option value="all">
+          جميع الحالات
+        </option>
+
+        <option value="ongoing">
+          جارية
+        </option>
+
+        <option value="completed">
+          مكتملة
+        </option>
+
+        <option value="not-started">
+          لم تبدأ
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <button
+      type="button"
+      class="reset-filters-btn"
+      (click)="resetFilters()">
+
+      إعادة تعيين
+
+    </button>
+
+  </div>
+
+</div>
+
+
 
     @if (loading()) {
 
