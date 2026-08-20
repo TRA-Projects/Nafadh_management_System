@@ -8,19 +8,27 @@ namespace Nafadh_Backend.DTOs
     public class CompanySupervisorDto
     {
         public int SupervisorId { get; set; }
+
         // compatibility: many UI screens expect `id` / `fullName` / `phone` / `email`
         // Map these to the real, available fields so the frontend shows useful values
         // even when the Users table isn't joined here.
         public int Id { get => SupervisorId; }
+
         public string? FullName { get; set; }
         public string? Phone { get; set; }
         public string? Email { get; set; }
+
         // expose status so frontend shows badge (Active/Inactive etc.)
         public string? Status { get; set; }
+
         public string? Department { get; set; }
         public string? Position { get; set; }
+
         public int UserId { get; set; }
         public int CompanyId { get; set; }
+
+        // Permissions from Database
+        public List<string> Permissions { get; set; } = new();
     }
 
     public class CreateCompanySupervisorDto
@@ -30,7 +38,7 @@ namespace Nafadh_Backend.DTOs
         public int UserId { get; set; }
         public int CompanyId { get; set; }
     }
-    //
+
     public class UpdateCompanySupervisorDto
     {
         public string? Department { get; set; }

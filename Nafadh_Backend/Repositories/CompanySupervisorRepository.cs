@@ -14,76 +14,119 @@ namespace Nafadh_Backend.Repositories
 {
     public class CompanySupervisorRepository : ICompanySupervisorRepository
     {
-        private readonly Nafadhcontext _context; 
+        private readonly Nafadhcontext _context;
 
         public CompanySupervisorRepository(Nafadhcontext context)
         {
             _context = context;
         }
 
-
-        //1-
+        // ============================================================
+        // Get Supervisors by Company
+        // ============================================================
         public async Task<IEnumerable<NFD_CompanySupervisor>> GetByCompanyIdAsync(int companyId)
         {
             return await _context.Set<NFD_CompanySupervisor>()
                 .Where(s => s.CompanyId == companyId)
+
+                // User
                 .Include(s => s.User)
+
+                // User -> Role
+                .ThenInclude(u => u.Role)
+
+                // Role -> RolePermissions -> Permission
+                .ThenInclude(r => r.RolePermissions)
+                .ThenInclude(rp => rp.Permission)
+
                 .ToListAsync();
         }
 
-
-        //2b-
+        // ============================================================
+        // Get Supervisor by User ID
+        // ============================================================
         public async Task<NFD_CompanySupervisor?> GetByUserIdAsync(int userId)
         {
             return await _context.Set<NFD_CompanySupervisor>()
+                .Where(s => s.UserId == userId)
+
+                // User
                 .Include(s => s.User)
-                .FirstOrDefaultAsync(s => s.UserId == userId);
+
+                // User -> Role
+                .ThenInclude(u => u.Role)
+
+                // Role -> RolePermissions -> Permission
+                .ThenInclude(r => r.RolePermissions)
+                .ThenInclude(rp => rp.Permission)
+
+                .FirstOrDefaultAsync();
         }
 
-
-        //2-
+        // ============================================================
+        // Get Supervisor by Supervisor ID
+        // Used by My Account
+        // ============================================================
         public async Task<NFD_CompanySupervisor?> GetByIdAsync(int id)
         {
             return await _context.Set<NFD_CompanySupervisor>()
+                .Where(s => s.SupervisorId == id)
+
+                // User
                 .Include(s => s.User)
-                .FirstOrDefaultAsync(s => s.SupervisorId == id);
+
+                // User -> Role
+                .ThenInclude(u => u.Role)
+
+                // Role -> RolePermissions -> Permission
+                .ThenInclude(r => r.RolePermissions)
+                .ThenInclude(rp => rp.Permission)
+
+                .FirstOrDefaultAsync();
         }
 
-
-        //3-
+        // ============================================================
+        // Add Supervisor
+        // ============================================================
         public async Task AddAsync(NFD_CompanySupervisor supervisor)
         {
-            await _context.Set<NFD_CompanySupervisor>().AddAsync(supervisor);
+            await _context.Set<NFD_CompanySupervisor>()
+                .AddAsync(supervisor);
+
             await _context.SaveChangesAsync();
         }
 
-
-        //4-
+        // ============================================================
+        // Update Supervisor
+        // ============================================================
         public async Task UpdateAsync(NFD_CompanySupervisor supervisor)
         {
-            _context.Set<NFD_CompanySupervisor>().Update(supervisor);
+            _context.Set<NFD_CompanySupervisor>()
+                .Update(supervisor);
+
             await _context.SaveChangesAsync();
         }
 
-
-        //5-
+        // ============================================================
+        // Delete Supervisor
+        // ============================================================
         public async Task DeleteAsync(NFD_CompanySupervisor supervisor)
         {
-            _context.Set<NFD_CompanySupervisor>().Remove(supervisor);
+            _context.Set<NFD_CompanySupervisor>()
+                .Remove(supervisor);
+
             await _context.SaveChangesAsync();
         }
 
-        //6-
-
+        // ============================================================
+        // Get Assigned Trainees
+        // ============================================================
         public async Task<IEnumerable<NFD_Trainee>> GetAssignedTraineesAsync(int supervisorId)
         {
-            // جلب المتدربين المرتبطين بالمشرف عبر جدول Enrollments
             return await _context.Set<NFD_Enrollment>()
                 .Where(e => e.SupervisorId == supervisorId)
                 .Select(e => e.Trainee)
                 .ToListAsync();
         }
-        //
-
     }
 }
