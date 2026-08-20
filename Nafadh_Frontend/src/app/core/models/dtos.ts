@@ -218,21 +218,7 @@ export interface BatchDto {
   batchName: string;
   companyName?: string;
   trackName?: string;
-  instructorName?: string;
-  startDate: string;
-  endDate: string;
-  capacity: number;
-  totalTraineesCount?: number;
-  issuedCertificatesCount?: number;
-  status: BatchStatus; 
-}
-
-export interface BatchDto {
-  batchId: number;
-  programId: number;
-  batchName: string;
-  companyName?: string;
-  trackName?: string;
+  InstructorName?: string; 
   startDate: string;
   endDate: string;
   capacity: number;
@@ -244,6 +230,7 @@ export interface BatchDto {
   attendanceRate?: number;
   progressPercentage?: number;
 }
+
 
 export interface BatchTraineeDto {
   traineeId: number;
