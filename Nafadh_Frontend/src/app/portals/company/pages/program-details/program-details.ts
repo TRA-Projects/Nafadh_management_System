@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { CompanyApi } from '../../services/company-api';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 interface ProgramInfo {
   id: number;
@@ -46,13 +47,16 @@ export class CompanyProgramDetails implements OnInit {
   readonly supervisorCount = signal(0);
   readonly averageProgress = signal(0);
 
-  private readonly companyId = 1;
+  private readonly companyId: number;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private api: CompanyApi,
-  ) {}
+    private auth: AuthService,
+  ) {
+    this.companyId = this.auth.companyId ?? 0;
+  }
 
   get p(): ProgramInfo | null {
     return this.program();

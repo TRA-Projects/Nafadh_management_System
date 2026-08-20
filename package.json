@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "start": "echo \"No start script defined\""
+  },
   "devDependencies": {
     "@types/html2pdf.js": "^0.10.0"
   },

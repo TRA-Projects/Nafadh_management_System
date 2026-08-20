@@ -1,143 +1,124 @@
-<div class="account-page" dir="rtl" id="account-pdf-content">
-  <!-- Header Action Bar -->
-  <div class="page-header">
-    <div class="title-wrap">
-      <h2>حساب المستخدم الحالي</h2>
-      <p class="subtitle">بيانات المسؤول الحالي المسجل في بوابة الشركة المستضيفة</p>
+<div id="account-pdf-content">
+  <!-- Header Area -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+    <div>
+      <h2 class="nfd-page-title" style="margin: 0 0 4px 0;">حساب المستخدم الحالي</h2>
+      <p class="nfd-page-sub" style="margin: 0;">بيانات المسؤول الحالي المسجل في بوابة الشركة المستضيفة</p>
     </div>
-    <div class="header-actions">
-      <button type="button" class="btn btn-primary">حفظ التغييرات</button>
-      <button type="button" class="btn btn-secondary">تغيير كلمة المرور</button>
+    <div style="display: flex; gap: 8px;">
+      <button type="button" class="nfd-btn" style="background: var(--color-navy); color: #fff; padding: 6px 16px; border-radius: 4px; border: none; cursor: pointer;">حفظ</button>
+      <button type="button" class="nfd-btn" style="background: #fff; border: 1px solid #ccc; padding: 6px 16px; border-radius: 4px; cursor: pointer;">تغيير كلمة المرور</button>
     </div>
   </div>
 
-  <!-- Profile Cover & Hero Card -->
-  <div class="profile-card">
-    <div class="profile-banner"></div>
-    <div class="profile-info-header">
-      <div class="avatar-large">
+  <!-- Profile Cover Header Card -->
+  <div class="nfd-card" style="padding: 0; overflow: hidden; margin-bottom: 16px; position: relative;">
+    <div style="height: 120px; background: linear-gradient(180deg, #a0b2c6 0%, #e2e8f0 100%); width: 100%;"></div>
+    <div style="padding: 0 24px 20px 24px; position: relative; margin-top: -40px; display: flex; flex-direction: column; align-items: flex-start;">
+      <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--color-navy); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 28px; border: 4px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
         {{ (profile()?.fullName || auth.session()?.fullName || 'ن').charAt(0) }}
       </div>
-      <div class="user-main-details">
-        <h3 class="user-name">{{ profile()?.fullName || auth.session()?.fullName || 'نورة بنت سالم المسكرية' }}</h3>
-        <div class="user-tags">
-          <span class="tag tag-role">{{ profile()?.position || 'مسؤول التدريب والتطوير' }} — شركة أفق التقنية</span>
-          <span class="tag tag-status">• {{ profile()?.status || 'نشط' }}</span>
-          <span class="tag tag-badge">مستخدم حالي</span>
+      <div style="margin-top: 10px;">
+        <h3 style="margin: 0; font-size: 20px;">{{ profile()?.fullName || auth.session()?.fullName || 'نورة بنت سالم المسكرية' }}</h3>
+        <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
+          <span style="font-size: 13px; color: #666;">{{ profile()?.position || 'مسؤول التدريب والتطوير' }} — شركة أفق التقنية</span>
+          <span class="nfd-badge" style="background: var(--status-active-bg, #e6f4ea); color: var(--status-active-fg, #137333); font-size: 11px; padding: 2px 8px; border-radius: 12px;">• {{ profile()?.status || 'نشط' }}</span>
+          <span class="nfd-badge" style="background: #e8f0fe; color: #1a73e8; font-size: 11px; padding: 2px 8px; border-radius: 12px;">مستخدم حالي</span>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Data Grid (Unified & Modern) -->
-    <div class="data-grid">
-      <div class="data-item">
-        <label>الاسم الكامل</label>
-        <div class="value">{{ profile()?.fullName || auth.session()?.fullName || 'نورة بنت سالم المسكرية' }}</div>
-      </div>
-      <div class="data-item">
-        <label>المسمى الوظيفي</label>
-        <div class="value">{{ profile()?.position || 'مسؤول التدريب والتطوير' }}</div>
-      </div>
-      <div class="data-item">
-        <label>الشركة</label>
-        <div class="value">شركة أفق التقنية</div>
-      </div>
-      <div class="data-item">
-        <label>رقم الموظف</label>
-        <div class="value">EMP-2024-{{ profile()?.supervisorId || profile()?.id || '1842' }}</div>
-      </div>
-      <div class="data-item">
-        <label>البريد الإلكتروني</label>
-        <div class="value ltr">{{ profile()?.email || auth.session()?.email || 'nora@ofqtech.om' }}</div>
-      </div>
-      <div class="data-item">
-        <label>رقم الجوال</label>
-        <div class="value ltr">{{ profile()?.phone || '+968 4567 9123' }}</div>
-      </div>
-      <div class="data-item full-width">
-        <label>الصلاحية الرئيسية</label>
-        <div class="value">مسؤول تواصل مع الهيئة — إدارة المتدربين والتقارير</div>
-      </div>
-      <div class="data-item full-width">
-        <label>آخر تسجيل دخول</label>
-        <div class="value">اليوم — 09:42 ص</div>
-      </div>
+  <!-- User Details Grid -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+    <div class="nfd-card" style="padding: 12px 16px;">
+      <span class="nfd-muted" style="font-size: 11px; display: block;">الاسم الكامل</span>
+      <strong>{{ profile()?.fullName || auth.session()?.fullName || 'نورة بنت سالم المسكرية' }}</strong>
+    </div>
+    <div class="nfd-card" style="padding: 12px 16px;">
+      <span class="nfd-muted" style="font-size: 11px; display: block;">المسمى الوظيفي</span>
+      <strong>{{ profile()?.position || 'مسؤول التدريب والتطوير' }}</strong>
+    </div>
+    <div class="nfd-card" style="padding: 12px 16px;">
+      <span class="nfd-muted" style="font-size: 11px; display: block;">الشركة</span>
+      <strong>شركة أفق التقنية</strong>
+    </div>
+    <div class="nfd-card" style="padding: 12px 16px;">
+      <span class="nfd-muted" style="font-size: 11px; display: block;">رقم الموظف</span>
+      <strong>EMP-2024-{{ profile()?.supervisorId || profile()?.id || '1842' }}</strong>
+    </div>
+    <div class="nfd-card" style="padding: 12px 16px;">
+      <span class="nfd-muted" style="font-size: 11px; display: block;">البريد الإلكتروني</span>
+      <strong style="direction: ltr; display: inline-block;">{{ profile()?.email || auth.session()?.email || 'nora@ofqtech.om' }}</strong>
+    </div>
+    <div class="nfd-card" style="padding: 12px 16px;">
+      <span class="nfd-muted" style="font-size: 11px; display: block;">رقم الجوال</span>
+      <strong style="direction: ltr; display: inline-block;">{{ profile()?.phone || '+968 4567 9123' }}</strong>
+    </div>
+    <div class="nfd-card" style="padding: 12px 16px;">
+      <span class="nfd-muted" style="font-size: 11px; display: block;">الصلاحية</span>
+      <strong>مسؤول تواصل مع الهيئة — إدارة المتدربين والتقارير</strong>
+    </div>
+    <div class="nfd-card" style="padding: 12px 16px;">
+      <span class="nfd-muted" style="font-size: 11px; display: block;">آخر تسجيل دخول</span>
+      <strong>اليوم — 09:42 ص</strong>
     </div>
   </div>
 
   <!-- Bottom Grid: Permissions & Recent Activity -->
-  <div class="bottom-grid">
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
     <!-- Permissions Block -->
-    <div class="section-card">
-      <div class="section-title">الصلاحيات الممنوحة</div>
-      <div class="permission-list">
-        <div class="permission-item">
-          <div class="perm-info">
-            <div class="perm-icon-box">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-            </div>
-            <div>
-              <strong>إدارة المتدربين</strong>
-              <p>عرض ومتابعة وتقييم</p>
-            </div>
+    <div class="nfd-card">
+      <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 15px;">الصلاحيات</h3>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px;">
+          <div>
+            <strong style="display: block; font-size: 13px;">إدارة المتدربين</strong>
+            <span class="nfd-muted" style="font-size: 11px;">عرض ومتابعة وتقييم</span>
           </div>
-          <span class="status-pill active">مفعّل</span>
+          <span class="nfd-badge" style="background: var(--status-active-bg, #e6f4ea); color: var(--status-active-fg, #137333);">مفعّل</span>
         </div>
-
-        <div class="permission-item">
-          <div class="perm-info">
-            <div class="perm-icon-box">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-            </div>
-            <div>
-              <strong>التقارير</strong>
-              <p>تصدير ومتابعة</p>
-            </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px;">
+          <div>
+            <strong style="display: block; font-size: 13px;">التقارير</strong>
+            <span class="nfd-muted" style="font-size: 11px;">تصدير ومتابعة</span>
           </div>
-          <span class="status-pill active">مفعّل</span>
+          <span class="nfd-badge" style="background: var(--status-active-bg, #e6f4ea); color: var(--status-active-fg, #137333);">مفعّل</span>
         </div>
-
-        <div class="permission-item">
-          <div class="perm-info">
-            <div class="perm-icon-box">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            </div>
-            <div>
-              <strong>التواصل مع الهيئة</strong>
-              <p>إرسال واستقبال</p>
-            </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px;">
+          <div>
+            <strong style="display: block; font-size: 13px;">التواصل مع الهيئة</strong>
+            <span class="nfd-muted" style="font-size: 11px;">إرسال واستقبال</span>
           </div>
-          <span class="status-pill active">مفعّل</span>
+          <span class="nfd-badge" style="background: var(--status-active-bg, #e6f4ea); color: var(--status-active-fg, #137333);">مفعّل</span>
         </div>
       </div>
     </div>
 
     <!-- Recent Activity Block -->
-    <div class="section-card">
-      <div class="section-title">النشاط الأخير</div>
-      <div class="activity-list">
-        <div class="activity-item">
+    <div class="nfd-card">
+      <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 15px;">النشاط الأخير</h3>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px;">
           <div>
-            <strong>تحديث بيانات متدرب</strong>
-            <p>طارق الرواحي — منذ ساعتين</p>
+            <strong style="display: block; font-size: 13px;">تحديث بيانات متدرب</strong>
+            <span class="nfd-muted" style="font-size: 11px;">طارق الرواحي — منذ ساعتين</span>
           </div>
-          <span class="chip-status">تم</span>
+          <span class="nfd-badge" style="background: #f1f3f4; color: #5f6368; font-size: 10px;">تم</span>
         </div>
-
-        <div class="activity-item">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px;">
           <div>
-            <strong>إرسال رسالة للهيئة</strong>
-            <p>استفسار عن اعتماد برنامج — أمس</p>
+            <strong style="display: block; font-size: 13px;">إرسال رسالة للهيئة</strong>
+            <span class="nfd-muted" style="font-size: 11px;">استفسار عن اعتماد برنامج — أمس</span>
           </div>
-          <span class="chip-status">تم</span>
+          <span class="nfd-badge" style="background: #f1f3f4; color: #5f6368; font-size: 10px;">تم</span>
         </div>
-
-        <div class="activity-item">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <strong>تصدير تقرير الحضور</strong>
-            <p>الأسبوع 32 — قبل 3 أيام</p>
+            <strong style="display: block; font-size: 13px;">تصدير تقرير الحضور</strong>
+            <span class="nfd-muted" style="font-size: 11px;">الأسبوع 32 — قبل 3 أيام</span>
           </div>
-          <button (click)="exportToPdf()" type="button" class="pdf-btn">تصدير PDF</button>
+          <button (click)="exportToPdf()" type="button" class="nfd-badge" style="background: #feefc3; color: #b06000; font-size: 10px; border: none; cursor: pointer;">PDF</button>
         </div>
       </div>
     </div>
