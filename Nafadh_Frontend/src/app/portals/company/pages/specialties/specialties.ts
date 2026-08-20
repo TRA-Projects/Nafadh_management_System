@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { CompanyApi } from '../../services/company-api';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { ProgramDto, ChartPointDto, CompanyCapacityDto } from '../../../../core/models/dtos';
 
 interface SpecialtyCard {
@@ -29,14 +30,16 @@ interface SpecialtyCard {
   styleUrl: './specialties.scss',
 })
 export class CompanySpecialties implements OnInit {
-  readonly companyId = 1;
+  readonly companyId: number;
   readonly loading = signal(true);
   readonly error = signal('');
   readonly cards = signal<SpecialtyCard[]>([]);
   readonly totalCapacity = signal(0);
   readonly usedCapacity = signal(0);
 
-  constructor(private api: CompanyApi, private router: Router) {}
+  constructor(private api: CompanyApi, private router: Router, private auth: AuthService) {
+    this.companyId = this.auth.companyId ?? 0;
+  }
 
   ngOnInit(): void { 
     this.load(); 
