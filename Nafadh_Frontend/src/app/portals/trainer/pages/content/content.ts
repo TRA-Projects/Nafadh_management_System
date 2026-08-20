@@ -138,6 +138,18 @@ export class TrainerContent implements OnInit {
   saving =
     signal(false);
 
+  deletingMaterialId = signal<number | null>(null);
+  // Material selected for deletion confirmation
+materialToDelete =
+  signal<{
+    material: TrainingMaterialDto;
+    lessonId: number;
+  } | null>(null);
+
+showDeleteMaterialModal =
+  signal(false);
+ 
+
   errorMessage =
     signal('');
 
@@ -1685,7 +1697,115 @@ export class TrainerContent implements OnInit {
 
   }
 
+// =====================================================
+// DELETE TRAINING MATERIAL
+// =====================================================
 
+openDeleteMaterialModal(
+  material: TrainingMaterialDto,
+  lessonId: number
+): void {
+
+  this.materialToDelete.set({
+    material,
+    lessonId
+  });
+
+  this.showDeleteMaterialModal.set(true);
+}
+
+
+closeDeleteMaterialModal(): void {
+
+  if (
+    this.deletingMaterialId() !== null
+  ) {
+    return;
+  }
+
+  this.showDeleteMaterialModal.set(false);
+
+  this.materialToDelete.set(null);
+}
+
+
+confirmDeleteMaterial(): void {
+
+  const target =
+    this.materialToDelete();
+
+
+  if (!target) {
+    return;
+  }
+
+
+  const {
+    material,
+    lessonId
+  } = target;
+
+
+  this.deletingMaterialId.set(
+    material.materialId
+  );
+
+  this.errorMessage.set('');
+
+  this.successMessage.set('');
+
+
+  this.api
+    .deleteTrainingMaterial(
+      material.materialId
+    )
+    .subscribe({
+
+      next: () => {
+
+        this.deletingMaterialId.set(
+          null
+        );
+
+        this.showDeleteMaterialModal.set(
+          false
+        );
+
+        this.materialToDelete.set(
+          null
+        );
+
+        this.successMessage.set(
+          'تم حذف المادة التعليمية بنجاح.'
+        );
+
+        this.loadMaterialsForLesson(
+          lessonId
+        );
+
+      },
+
+
+      error: (error) => {
+
+        console.error(
+          'Error deleting training material:',
+          error
+        );
+
+        this.deletingMaterialId.set(
+          null
+        );
+
+        this.errorMessage.set(
+          'تعذر حذف المادة التعليمية.'
+        );
+
+      }
+
+    });
+
+}
   // =====================================================
   // HELPERS
   // =====================================================
