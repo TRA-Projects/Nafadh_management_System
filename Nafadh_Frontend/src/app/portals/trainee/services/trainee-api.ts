@@ -133,6 +133,15 @@ export class TraineeApi {
     return this.http.get<CompanySupervisorDto>(`${this.base}/CompanySupervisor/${id}`);
   }
 
+  // أضف هذه الدالة الجديدة
+  /**
+   * جلب بيانات المشرف بناءً على userId
+   * GET /api/CompanySupervisor/user/{userId}
+   */
+  getCompanySupervisorByUserId(userId: number): Observable<CompanySupervisorDto> {
+    return this.http.get<CompanySupervisorDto>(`${this.base}/CompanySupervisor/user/${userId}`);
+  }
+
   // =========================================================
   // Program
   // =========================================================
@@ -243,6 +252,7 @@ export class TraineeApi {
   getExcuse(attendanceId: number): Observable<ExcuseDto> {
     return this.http.get<ExcuseDto>(`${this.base}/Excuse/attendance/${attendanceId}`);
   }
+
   // =========================================================
   // Notifications & warnings
   // =========================================================
@@ -255,9 +265,10 @@ export class TraineeApi {
     return this.http.put(`${this.base}/Notification/${id}/read`, {});
   }
 
-  getMyWarnings(enrollmentId: number): Observable<WarningDto[]> {
+  // تم التعديل هنا: تغيير المعامل من enrollmentId إلى userId
+  getMyWarnings(userId: number): Observable<WarningDto[]> {
     return this.http.get<WarningDto[]>(`${this.base}/Warning`, {
-      params: { scope: 'Trainee', enrollmentId },
+      params: { scope: 'Trainee', userId: userId.toString() },
     });
   }
 

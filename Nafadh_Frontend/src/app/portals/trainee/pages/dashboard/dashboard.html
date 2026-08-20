@@ -5,7 +5,11 @@
     flex-direction: column;
     gap: 16px;
     padding: 16px;
-    font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+    font-family:
+      'Cairo',
+      system-ui,
+      -apple-system,
+      sans-serif;
     background: #f8fafc;
     height: calc(100vh - 70px);
     overflow-y: auto;
@@ -56,9 +60,13 @@
       "
     >
       <!-- معلومات الترحيب والاسم -->
-      <div style="display: flex; flex-direction: column; gap: 6px; font-family: 'Cairo', sans-serif;">
-        <div style="display: flex; align-items: center; gap: 8px; font-family: 'Cairo', sans-serif;">
-          <h2 style="margin: 0; font-size: 1.6rem; font-weight: 800; font-family: 'Cairo', sans-serif;">
+      <div
+        style="display: flex; flex-direction: column; gap: 6px; font-family: 'Cairo', sans-serif"
+      >
+        <div style="display: flex; align-items: center; gap: 8px; font-family: 'Cairo', sans-serif">
+          <h2
+            style="margin: 0; font-size: 1.6rem; font-weight: 800; font-family: 'Cairo', sans-serif"
+          >
             مرحباً،
             {{
               auth.session()?.fullName ||
@@ -69,10 +77,25 @@
             👋
           </h2>
         </div>
-        <p style="margin: 0; font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); font-family: 'Cairo', sans-serif;">
+        <p
+          style="
+            margin: 0;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-family: 'Cairo', sans-serif;
+          "
+        >
           {{ programName() || 'برنامج تدريبي' }} — {{ batchName() || 'دفعة تدريبية' }}
         </p>
-        <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px; font-family: 'Cairo', sans-serif;">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 6px;
+            font-family: 'Cairo', sans-serif;
+          "
+        >
           <span
             style="
               background: rgba(16, 185, 129, 0.2);
@@ -87,7 +110,13 @@
           >
             {{ calculatedStatus() }}
           </span>
-          <span style="color: rgba(255, 255, 255, 0.6); font-size: 0.8rem; font-family: 'Cairo', sans-serif;">
+          <span
+            style="
+              color: rgba(255, 255, 255, 0.6);
+              font-size: 0.8rem;
+              font-family: 'Cairo', sans-serif;
+            "
+          >
             تاريخ الانتهاء: {{ (programEndDate() | date: 'MMM yyyy') || 'غير محدد' }}
           </span>
         </div>
@@ -107,8 +136,21 @@
           font-family: 'Cairo', sans-serif;
         "
       >
-        <div style="display: flex; flex-direction: column; gap: 6px; text-align: right; font-family: 'Cairo', sans-serif;">
-          <span style="font-size: 0.78rem; color: rgba(255, 255, 255, 0.75); font-family: 'Cairo', sans-serif;"
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            text-align: right;
+            font-family: 'Cairo', sans-serif;
+          "
+        >
+          <span
+            style="
+              font-size: 0.78rem;
+              color: rgba(255, 255, 255, 0.75);
+              font-family: 'Cairo', sans-serif;
+            "
             >نسبة الإنجاز الإجمالية</span
           >
 
@@ -142,7 +184,7 @@
             'justify-content': 'center',
             position: 'relative',
             background:
-              'conic-gradient(#3b82f6 ' + progressPercentage() + '%, rgba(255, 255, 255, 0.15) 0)'
+              'conic-gradient(#3b82f6 ' + progressPercentage() + '%, rgba(255, 255, 255, 0.15) 0)',
           }"
         >
           <div
@@ -171,7 +213,14 @@
     </div>
 
     <!-- 2. صف مؤشرات الإحصائيات (4 بطاقات أفقية) -->
-    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; font-family: 'Cairo', sans-serif;">
+    <div
+      style="
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        font-family: 'Cairo', sans-serif;
+      "
+    >
       <!-- الوحدات المكتملة -->
       <div
         style="
@@ -186,7 +235,15 @@
           font-family: 'Cairo', sans-serif;
         "
       >
-        <span style="font-size: 0.85rem; color: #64748b; font-weight: 600; font-family: 'Cairo', sans-serif;">الوحدات المكتملة</span>
+        <span
+          style="
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
+            font-family: 'Cairo', sans-serif;
+          "
+          >الوحدات المكتملة</span
+        >
         <span
           style="
             background: #eff6ff;
@@ -216,7 +273,15 @@
           font-family: 'Cairo', sans-serif;
         "
       >
-        <span style="font-size: 0.85rem; color: #64748b; font-weight: 600; font-family: 'Cairo', sans-serif;">المهام المسلّمة</span>
+        <span
+          style="
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
+            font-family: 'Cairo', sans-serif;
+          "
+          >المهام المسلّمة</span
+        >
         <span
           style="
             background: #f0fdf4;
@@ -248,7 +313,15 @@
           font-family: 'Cairo', sans-serif;
         "
       >
-        <span style="font-size: 0.85rem; color: #64748b; font-weight: 600; font-family: 'Cairo', sans-serif;">نسبة الحضور</span>
+        <span
+          style="
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
+            font-family: 'Cairo', sans-serif;
+          "
+          >نسبة الحضور</span
+        >
         <span
           style="
             background: #fdf4ff;
@@ -278,7 +351,15 @@
           font-family: 'Cairo', sans-serif;
         "
       >
-        <span style="font-size: 0.85rem; color: #64748b; font-weight: 600; font-family: 'Cairo', sans-serif;">الإنذارات</span>
+        <span
+          style="
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
+            font-family: 'Cairo', sans-serif;
+          "
+          >الإنذارات</span
+        >
         <span
           style="
             background: #fef2f2;
@@ -296,7 +377,14 @@
     </div>
 
     <!-- 3. الشبكة الرئيسية (الصف الأوسط: فريق الإشراف + المهام القريبة) -->
-    <div style="display: grid; grid-template-columns: 320px 1fr; gap: 16px; font-family: 'Cairo', sans-serif;">
+    <div
+      style="
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 16px;
+        font-family: 'Cairo', sans-serif;
+      "
+    >
       <!-- فريق الإشراف -->
       <div
         style="
@@ -311,9 +399,21 @@
           font-family: 'Cairo', sans-serif;
         "
       >
-        <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b; font-family: 'Cairo', sans-serif;">فريق الإشراف</h3>
+        <h3
+          style="
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
+            font-family: 'Cairo', sans-serif;
+          "
+        >
+          فريق الإشراف
+        </h3>
 
-        <div style="display: flex; flex-direction: column; gap: 12px; font-family: 'Cairo', sans-serif;">
+        <div
+          style="display: flex; flex-direction: column; gap: 12px; font-family: 'Cairo', sans-serif"
+        >
           <!-- المدرب -->
           <div
             style="
@@ -344,9 +444,20 @@
               >
                 ...
               </div>
-              <div style="display: flex; flex-direction: column; gap: 4px; font-family: 'Cairo', sans-serif;">
-                <span style="font-size: 0.75rem; color: #64748b; font-family: 'Cairo', sans-serif;">المدرب</span>
-                <span style="font-size: 0.85rem; color: #94a3b8; font-family: 'Cairo', sans-serif;">جاري التحميل...</span>
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 4px;
+                  font-family: 'Cairo', sans-serif;
+                "
+              >
+                <span style="font-size: 0.75rem; color: #64748b; font-family: 'Cairo', sans-serif"
+                  >المدرب</span
+                >
+                <span style="font-size: 0.85rem; color: #94a3b8; font-family: 'Cairo', sans-serif"
+                  >جاري التحميل...</span
+                >
               </div>
             } @else {
               <div
@@ -366,12 +477,21 @@
               >
                 {{ getInitial(trainerData()?.fullName || summary()?.trainerName) }}
               </div>
-              <div style="display: flex; flex-direction: column; flex: 1; font-family: 'Cairo', sans-serif;">
-                <span style="font-size: 0.75rem; color: #64748b; font-family: 'Cairo', sans-serif;">المدرب</span>
-                <strong style="font-size: 0.9rem; color: #1e293b; font-family: 'Cairo', sans-serif;">
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  flex: 1;
+                  font-family: 'Cairo', sans-serif;
+                "
+              >
+                <span style="font-size: 0.75rem; color: #64748b; font-family: 'Cairo', sans-serif"
+                  >المدرب</span
+                >
+                <strong style="font-size: 0.9rem; color: #1e293b; font-family: 'Cairo', sans-serif">
                   {{ trainerData()?.fullName || summary()?.trainerName || 'لم يتم التعيين' }}
                 </strong>
-                <span style="font-size: 0.72rem; color: #94a3b8; font-family: 'Cairo', sans-serif;">
+                <span style="font-size: 0.72rem; color: #94a3b8; font-family: 'Cairo', sans-serif">
                   {{ getTrainerSpecialty() }}
                 </span>
               </div>
@@ -386,9 +506,7 @@
                 "
                 title="تواصل مع المدرب"
                 (click)="contactTrainer()"
-              >
-                💬
-              </button>
+              ></button>
             }
           </div>
 
@@ -422,9 +540,20 @@
               >
                 ...
               </div>
-              <div style="display: flex; flex-direction: column; gap: 4px; font-family: 'Cairo', sans-serif;">
-                <span style="font-size: 0.75rem; color: #64748b; font-family: 'Cairo', sans-serif;">المشرف</span>
-                <span style="font-size: 0.85rem; color: #94a3b8; font-family: 'Cairo', sans-serif;">جاري التحميل...</span>
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 4px;
+                  font-family: 'Cairo', sans-serif;
+                "
+              >
+                <span style="font-size: 0.75rem; color: #64748b; font-family: 'Cairo', sans-serif"
+                  >المشرف</span
+                >
+                <span style="font-size: 0.85rem; color: #94a3b8; font-family: 'Cairo', sans-serif"
+                  >جاري التحميل...</span
+                >
               </div>
             } @else {
               <div
@@ -444,9 +573,18 @@
               >
                 {{ getInitial(supervisorData()?.fullName || summary()?.supervisorName) }}
               </div>
-              <div style="display: flex; flex-direction: column; flex: 1; font-family: 'Cairo', sans-serif;">
-                <span style="font-size: 0.75rem; color: #64748b; font-family: 'Cairo', sans-serif;">المشرف</span>
-                <strong style="font-size: 0.9rem; color: #1e293b; font-family: 'Cairo', sans-serif;">
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  flex: 1;
+                  font-family: 'Cairo', sans-serif;
+                "
+              >
+                <span style="font-size: 0.75rem; color: #64748b; font-family: 'Cairo', sans-serif"
+                  >المشرف</span
+                >
+                <strong style="font-size: 0.9rem; color: #1e293b; font-family: 'Cairo', sans-serif">
                   {{
                     supervisorData()?.fullName ||
                       summary()?.supervisorName ||
@@ -454,7 +592,7 @@
                       'لم يتم التعيين'
                   }}
                 </strong>
-                <span style="font-size: 0.72rem; color: #94a3b8; font-family: 'Cairo', sans-serif;">
+                <span style="font-size: 0.72rem; color: #94a3b8; font-family: 'Cairo', sans-serif">
                   {{ getSupervisorRole() }}
                 </span>
               </div>
@@ -477,8 +615,23 @@
           font-family: 'Cairo', sans-serif;
         "
       >
-        <div style="display: flex; justify-content: space-between; align-items: center; font-family: 'Cairo', sans-serif;">
-          <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b; font-family: 'Cairo', sans-serif;">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Cairo', sans-serif;
+          "
+        >
+          <h3
+            style="
+              margin: 0;
+              font-size: 1rem;
+              font-weight: 700;
+              color: #1e293b;
+              font-family: 'Cairo', sans-serif;
+            "
+          >
             المهام القريبة من موعد التسليم
           </h3>
           <button
@@ -497,9 +650,19 @@
           </button>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 10px; font-family: 'Cairo', sans-serif;">
+        <div
+          style="display: flex; flex-direction: column; gap: 10px; font-family: 'Cairo', sans-serif"
+        >
           @if (loadingTasks()) {
-            <div style="display: flex; justify-content: center; padding: 20px; color: #94a3b8; font-family: 'Cairo', sans-serif;">
+            <div
+              style="
+                display: flex;
+                justify-content: center;
+                padding: 20px;
+                color: #94a3b8;
+                font-family: 'Cairo', sans-serif;
+              "
+            >
               جاري تحميل المهام...
             </div>
           } @else {
@@ -516,11 +679,20 @@
                   font-family: 'Cairo', sans-serif;
                 "
               >
-                <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; font-family: 'Cairo', sans-serif;">
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    flex: 1;
+                    font-family: 'Cairo', sans-serif;
+                  "
+                >
                   <!-- اسم المهمة -->
-                  <strong style="font-size: 0.9rem; color: #1e293b; font-family: 'Cairo', sans-serif;">{{
-                    t.title || 'مهمة غير مسماة'
-                  }}</strong>
+                  <strong
+                    style="font-size: 0.9rem; color: #1e293b; font-family: 'Cairo', sans-serif"
+                    >{{ t.title || 'مهمة غير مسماة' }}</strong
+                  >
                   <!-- التاريخ -->
                   <div
                     style="
@@ -537,19 +709,31 @@
                       {{ t.dueDate ? (t.dueDate | date: 'mediumDate') : 'غير محدد' }}</span
                     >
                     @if (t.dueDate) {
-                      <span [style.color]="isTaskOverdue(t.dueDate) ? '#dc2626' : '#16a34a'" style="font-family: 'Cairo', sans-serif;">
+                      <span
+                        [style.color]="isTaskOverdue(t.dueDate) ? '#dc2626' : '#16a34a'"
+                        style="font-family: 'Cairo', sans-serif"
+                      >
                         {{ isTaskOverdue(t.dueDate) ? '⏰ منتهي' : '' }}
                       </span>
                     }
                   </div>
                   <!-- حالة التسليم (إذا وجدت) -->
                   @if (t.submissionStatus) {
-                    <span style="font-size: 0.7rem; color: #94a3b8; font-family: 'Cairo', sans-serif;">
+                    <span
+                      style="font-size: 0.7rem; color: #94a3b8; font-family: 'Cairo', sans-serif"
+                    >
                       📤 التسليم: {{ getTaskStatusDisplay(t.submissionStatus) }}
                     </span>
                   }
                 </div>
-                <div style="display: flex; align-items: center; gap: 10px; font-family: 'Cairo', sans-serif;">
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    font-family: 'Cairo', sans-serif;
+                  "
+                >
                   <!-- حالة المهمة -->
                   @if (t.submissionStatus) {
                     <span
@@ -627,8 +811,16 @@
     </div>
 
     <!-- 4. الشبكة السفليّة (الإعلانات + التنبيهات الأخيرة) -->
-    <div style="display: grid; grid-template-columns: 1fr 420px; gap: 20px; direction: rtl; font-family: 'Cairo', sans-serif; align-items: start;">
-      
+    <div
+      style="
+        display: grid;
+        grid-template-columns: 1fr 420px;
+        gap: 20px;
+        direction: rtl;
+        font-family: 'Cairo', sans-serif;
+        align-items: start;
+      "
+    >
       <!-- الإعلانات -->
       <div
         style="
@@ -639,22 +831,31 @@
           display: flex;
           flex-direction: column;
           gap: 16px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+          box-shadow:
+            0 4px 6px -1px rgba(0, 0, 0, 0.02),
+            0 2px 4px -1px rgba(0, 0, 0, 0.01);
           font-family: 'Cairo', sans-serif;
         "
       >
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f8fafc; padding-bottom: 12px; font-family: 'Cairo', sans-serif;">
-          <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1e293b; font-family: 'Cairo', sans-serif;">الإعلانات</h3>
-          <span style="font-size: 0.7rem; background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 20px; font-weight: 600; font-family: 'Cairo', sans-serif;">العامة</span>
-        </div>
+        <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b">الإعلانات</h3>
 
-        <div style="display: flex; flex-direction: column; gap: 10px; font-family: 'Cairo', sans-serif;">
+        <div
+          style="display: flex; flex-direction: column; gap: 10px; font-family: 'Cairo', sans-serif"
+        >
           @if (loadingAnnouncements()) {
-            <div style="display: flex; justify-content: center; padding: 30px; color: #94a3b8; font-family: 'Cairo', sans-serif;">
+            <div
+              style="
+                display: flex;
+                justify-content: center;
+                padding: 30px;
+                color: #94a3b8;
+                font-family: 'Cairo', sans-serif;
+              "
+            >
               جاري تحميل الإعلانات...
             </div>
           } @else {
-            @for (ann of announcements().filter((item, index, self) => index === self.findIndex((t) => t.announcementId === item.announcementId || t.message === item.message)); track ann.announcementId; let i = $index) {
+            @for (ann of announcements(); track ann.announcementId) {
               <div
                 style="
                   position: relative;
@@ -672,19 +873,58 @@
                   font-family: 'Cairo', sans-serif;
                 "
               >
-                <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; font-family: 'Cairo', sans-serif;">
-                  <span style="font-size: 20px; flex-shrink: 0;">🔔</span>
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    min-width: 0;
+                    flex: 1;
+                    font-family: 'Cairo', sans-serif;
+                  "
+                >
+                  <span style="font-size: 20px; flex-shrink: 0">🔔</span>
 
-                  <div style="min-width: 0; flex: 1; font-family: 'Cairo', sans-serif;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; font-family: 'Cairo', sans-serif;">
-                      <span style="color: #1d4ed8; font-weight: 700; font-size: 0.75rem; font-family: 'Cairo', sans-serif;">
+                  <div style="min-width: 0; flex: 1; font-family: 'Cairo', sans-serif">
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        margin-bottom: 4px;
+                        font-family: 'Cairo', sans-serif;
+                      "
+                    >
+                      <span
+                        style="
+                          color: #1d4ed8;
+                          font-weight: 700;
+                          font-size: 0.75rem;
+                          font-family: 'Cairo', sans-serif;
+                        "
+                      >
                         إعلان رسمي
                       </span>
-                      <small style="font-size: 0.7rem; color: #94a3b8; font-weight: 500; font-family: 'Cairo', sans-serif;">
+                      <small
+                        style="
+                          font-size: 0.7rem;
+                          color: #94a3b8;
+                          font-weight: 500;
+                          font-family: 'Cairo', sans-serif;
+                        "
+                      >
                         {{ ann.date | date: 'mediumDate' }} - ({{ ann.source }})
                       </small>
                     </div>
-                    <div style="font-size: 0.85rem; color: #1e293b; font-weight: 600; line-height: 1.4; font-family: 'Cairo', sans-serif;">
+                    <div
+                      style="
+                        font-size: 0.85rem;
+                        color: #1e293b;
+                        font-weight: 600;
+                        line-height: 1.4;
+                        font-family: 'Cairo', sans-serif;
+                      "
+                    >
                       {{ ann.message }}
                     </div>
                   </div>
@@ -719,13 +959,34 @@
           display: flex;
           flex-direction: column;
           gap: 16px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+          box-shadow:
+            0 4px 6px -1px rgba(0, 0, 0, 0.02),
+            0 2px 4px -1px rgba(0, 0, 0, 0.01);
           font-family: 'Cairo', sans-serif;
         "
       >
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f8fafc; padding-bottom: 12px; font-family: 'Cairo', sans-serif;">
-          <div style="display: flex; align-items: center; gap: 8px; font-family: 'Cairo', sans-serif;">
-            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1e293b; font-family: 'Cairo', sans-serif;">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f8fafc;
+            padding-bottom: 12px;
+            font-family: 'Cairo', sans-serif;
+          "
+        >
+          <div
+            style="display: flex; align-items: center; gap: 8px; font-family: 'Cairo', sans-serif"
+          >
+            <h3
+              style="
+                margin: 0;
+                font-size: 1.05rem;
+                font-weight: 700;
+                color: #1e293b;
+                font-family: 'Cairo', sans-serif;
+              "
+            >
               التنبيهات الأخيرة
             </h3>
             @if (getUnreadNotificationsCount() > 0) {
@@ -744,7 +1005,9 @@
               </span>
             }
           </div>
-          <div style="display: flex; gap: 8px; align-items: center; font-family: 'Cairo', sans-serif;">
+          <div
+            style="display: flex; gap: 8px; align-items: center; font-family: 'Cairo', sans-serif"
+          >
             @if (getUnreadNotificationsCount() > 0) {
               <button
                 type="button"
@@ -763,7 +1026,6 @@
               </button>
             }
             <button
-              type="button"
               routerLink="/trainee/notifications"
               style="
                 background: none;
@@ -772,7 +1034,6 @@
                 font-size: 0.85rem;
                 font-weight: 600;
                 cursor: pointer;
-                font-family: 'Cairo', sans-serif;
               "
             >
               عرض الكل
@@ -780,52 +1041,102 @@
           </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 10px; font-family: 'Cairo', sans-serif;">
+        <div
+          style="display: flex; flex-direction: column; gap: 10px; font-family: 'Cairo', sans-serif"
+        >
           @if (loadingNotifications()) {
-            <div style="display: flex; justify-content: center; padding: 30px; color: #94a3b8; font-family: 'Cairo', sans-serif;">
+            <div
+              style="
+                display: flex;
+                justify-content: center;
+                padding: 30px;
+                color: #94a3b8;
+                font-family: 'Cairo', sans-serif;
+              "
+            >
               جاري تحميل التنبيهات...
             </div>
           } @else {
             @if (latestNotifications().length > 0) {
-              @for (notif of latestNotifications(); track notif.notificationId; let i = $index) {
+              @for (notif of latestNotifications(); track notif.notificationId) {
                 <div
                   (click)="markNotificationAsRead(notif.notificationId, $event)"
                   style="
-                    position: relative;
-                    padding: 12px 14px;
-                    border-radius: 10px;
-                    cursor: pointer;
-                    border: 1px solid;
                     display: flex;
-                    align-items: center;
-                    justify-content: space-between;
+                    align-items: flex-start;
                     gap: 12px;
-                    text-align: right;
-                    transition: all 0.2s ease;
-                    font-family: 'Cairo', sans-serif;
+                    padding: 10px 12px;
+                    padding-bottom: 10px;
+                    border-bottom: 1px solid #f1f5f9;
+                    cursor: pointer;
+                    border-radius: 8px;
+                    transition: background 0.2s;
                   "
-                  [style.background-color]="notif.isRead ? '#f8fafc' : '#f0f6ff'"
-                  [style.border-color]="notif.isRead ? '#e2e8f0' : '#dbeafe'"
-                  [style.border-right]="notif.isRead ? '4px solid #cbd5e1' : '4px solid #3b82f6'"
+                  [style.background]="notif.isRead ? 'transparent' : '#f8faff'"
                 >
-                  <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; font-family: 'Cairo', sans-serif;">
-                    <span style="font-size: 20px; flex-shrink: 0;">
-                      @if (i === 0) { 📋 }
-                      @else if (i === 1) { ⏰ }
-                      @else if (i === 2) { 📢 }
-                      @else if (i === 3) { ⭐ }
-                      @else { 🔔 }
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 12px;
+                      min-width: 0;
+                      flex: 1;
+                      font-family: 'Cairo', sans-serif;
+                    "
+                  >
+                    <span style="font-size: 20px; flex-shrink: 0">
+                      @if ($index === 0) {
+                        📋
+                      } @else if ($index === 1) {
+                        ⏰
+                      } @else if ($index === 2) {
+                        📢
+                      } @else if ($index === 3) {
+                        ⭐
+                      } @else {
+                        🔔
+                      }
                     </span>
-                    <div style="min-width: 0; flex: 1; font-family: 'Cairo', sans-serif;">
-                      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; font-family: 'Cairo', sans-serif;">
-                        <span [style.color]="notif.isRead ? '#64748b' : '#1d4ed8'" style="font-weight: 700; font-size: 0.75rem; font-family: 'Cairo', sans-serif;">
+                    <div style="min-width: 0; flex: 1; font-family: 'Cairo', sans-serif">
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          justify-content: space-between;
+                          margin-bottom: 4px;
+                          font-family: 'Cairo', sans-serif;
+                        "
+                      >
+                        <span
+                          [style.color]="notif.isRead ? '#64748b' : '#1d4ed8'"
+                          style="
+                            font-weight: 700;
+                            font-size: 0.75rem;
+                            font-family: 'Cairo', sans-serif;
+                          "
+                        >
                           {{ notif.isRead ? 'مقروء' : 'تنبيه جديد' }}
                         </span>
-                        <small style="font-size: 0.7rem; color: #94a3b8; font-weight: 500; font-family: 'Cairo', sans-serif;">
+                        <small
+                          style="
+                            font-size: 0.7rem;
+                            color: #94a3b8;
+                            font-weight: 500;
+                            font-family: 'Cairo', sans-serif;
+                          "
+                        >
                           {{ notif.date | date: 'mediumDate' }}
                         </small>
                       </div>
-                      <div style="font-size: 0.85rem; color: #1e293b; font-weight: 600; line-height: 1.4; font-family: 'Cairo', sans-serif;">
+                      <div
+                        style="
+                          font-size: 0.85rem;
+                          color: #1e293b;
+                          font-weight: 600;
+                          line-height: 1.4;
+                          font-family: 'Cairo', sans-serif;
+                        "
+                      >
                         {{ notif.message }}
                       </div>
                     </div>
@@ -850,7 +1161,6 @@
           }
         </div>
       </div>
-
     </div>
   }
 </div>
