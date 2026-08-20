@@ -293,43 +293,80 @@ export class TraineeApi {
   sendMessage(id: number, dto: unknown): Observable<ConversationMessageDto> {
     return this.http.post<ConversationMessageDto>(`${this.base}/Conversation/${id}/messages`, dto);
   }
+// =========================================================
+// Achievements & Certificates
+// =========================================================
 
-  // =========================================================
-  // Achievements & Certificates
-  // =========================================================
+/**
+ * جلب أوسمة المتدرب
+ */
+getMyBadges(traineeId: number): Observable<TraineeBadgeDto[]> {
+  return this.http.get<TraineeBadgeDto[]>(`${this.base}/TraineeBadge/trainee/${traineeId}`);
+}
 
-  getMyBadges(traineeId: number): Observable<TraineeBadgeDto[]> {
-    return this.http.get<TraineeBadgeDto[]>(`${this.base}/TraineeBadge/trainee/${traineeId}`);
-  }
+/**
+ * جلب جميع الأوسمة المتاحة
+ */
+getAllBadges(): Observable<BadgeDto[]> {
+  return this.http.get<BadgeDto[]>(`${this.base}/Badge`);
+}
 
-  getAllBadges(): Observable<BadgeDto[]> {
-    return this.http.get<BadgeDto[]>(`${this.base}/Badge`);
-  }
+/**
+ * جلب شهادات المتدرب
+ */
+getCertificates(traineeId: number): Observable<CertificateDto[]> {
+  return this.http.get<CertificateDto[]>(`${this.base}/Certificate/trainee/${traineeId}`);
+}
 
-  getCertificates(traineeId: number): Observable<CertificateDto[]> {
-    return this.http.get<CertificateDto[]>(`${this.base}/Certificate/trainee/${traineeId}`);
-  }
+/**
+ * تحميل شهادة
+ */
+downloadCertificate(certificateId: number): Observable<Blob> {
+  return this.http.get(`${this.base}/Certificate/${certificateId}/download`, { responseType: 'blob' });
+}
 
-  // =========================================================
-  // Feedback at module completion
-  // =========================================================
+/**
+ * جلب تقدم المتدرب في الوحدات
+ */
+getModuleProgressByTrainee(traineeId: number): Observable<TraineeModuleProgressDto[]> {
+  return this.http.get<TraineeModuleProgressDto[]>(`${this.base}/TraineeModuleProgress/trainee/${traineeId}`);
+}
 
-  getFeedbackPending(moduleId: number, traineeId: number): Observable<FeedbackPendingDto> {
-    return this.http.get<FeedbackPendingDto>(
-      `${this.base}/Feedback/module/${moduleId}/trainee/${traineeId}/pending`,
-    );
-  }
+/**
+ * جلب بيانات التسجيل
+ */
+getEnrollment(enrollmentId: number): Observable<EnrollmentDto> {
+  return this.http.get<EnrollmentDto>(`${this.base}/Enrollment/${enrollmentId}`);
+}
 
-  getFeedbackCriteria(appliesTo: string): Observable<FeedbackCriterionDto[]> {
-    return this.http.get<FeedbackCriterionDto[]>(`${this.base}/Feedback/criteria`, {
-      params: { appliesTo },
-    });
-  }
+// =========================================================
+// Feedback at module completion
+// =========================================================
 
-  submitFeedback(dto: unknown) {
-    return this.http.post(`${this.base}/Feedback`, dto);
-  }
+/**
+ * جلب حالة التقييمات المعلقة
+ */
+getFeedbackPending(moduleId: number, traineeId: number): Observable<FeedbackPendingDto> {
+  return this.http.get<FeedbackPendingDto>(
+    `${this.base}/Feedback/module/${moduleId}/trainee/${traineeId}/pending`,
+  );
+}
 
+/**
+ * جلب معايير التقييم
+ */
+getFeedbackCriteria(appliesTo: string): Observable<FeedbackCriterionDto[]> {
+  return this.http.get<FeedbackCriterionDto[]>(`${this.base}/Feedback/criteria`, {
+    params: { appliesTo },
+  });
+}
+
+/**
+ * إرسال التقييم
+ */
+submitFeedback(dto: unknown): Observable<any> {
+  return this.http.post(`${this.base}/Feedback`, dto);
+}
   // =========================================================
   // =========================================================
   // الإعلانات والتنبيهات - دوال جديدة مضافة
