@@ -537,7 +537,8 @@
 
                   <button
                     type="button"
-                    class="small-action-btn">
+                    class="small-action-btn"
+                    (click)="openTraineeProfile(e.enrollmentId)">
 
                     الملف
 
@@ -598,6 +599,259 @@
     </div>
 
   </section>
+
+
+  <!-- =====================================================
+       TRAINEE PROFILE MODAL
+  ====================================================== -->
+
+  @if (showTraineeProfile()) {
+
+    @if (selectedProfileEnrollment(); as profile) {
+
+      <div
+        class="nfd-modal-bg"
+        (click)="closeTraineeProfile()">
+
+        <div
+          class="nfd-modal trainee-profile-modal"
+          (click)="$event.stopPropagation()">
+
+          <!-- Header -->
+
+          <div class="eval-modal-header">
+
+            <div>
+
+              <h3>
+                ملف المتدرب
+              </h3>
+
+              <p>
+                ملخص أداء ومتابعة المتدرب.
+              </p>
+
+            </div>
+
+
+            <button
+              type="button"
+              class="modal-close"
+              (click)="closeTraineeProfile()">
+
+              ×
+
+            </button>
+
+          </div>
+
+
+          <!-- Trainee Info -->
+
+          <div class="profile-trainee-header">
+
+            <div class="profile-avatar">
+
+              {{
+                (profile.traineeName || 'م').charAt(0)
+              }}
+
+            </div>
+
+
+            <div class="profile-trainee-info">
+
+              <strong>
+                {{ profile.traineeName || 'متدرب' }}
+              </strong>
+
+              <span>
+                رقم التسجيل:
+                {{ profile.enrollmentId }}
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <!-- Batch -->
+
+          <div class="profile-info-row">
+
+            <span class="profile-info-label">
+              الدفعة
+            </span>
+
+            <strong>
+              {{ profile.batchName || '—' }}
+            </strong>
+
+          </div>
+
+
+          <!-- Stats -->
+
+          <div class="profile-stats-grid">
+
+            <!-- Attendance -->
+
+            <div class="profile-stat-card">
+
+              <span>
+                نسبة الحضور
+              </span>
+
+
+              @if (
+                attendancePercentage(profile.enrollmentId) !== null
+              ) {
+
+                <strong>
+                  {{
+                    attendancePercentage(profile.enrollmentId)
+                      | number:'1.0-1'
+                  }}%
+                </strong>
+
+              }
+              @else {
+
+                <strong>
+                  —
+                </strong>
+
+              }
+
+            </div>
+
+
+            <!-- Evaluation -->
+
+            <div class="profile-stat-card">
+
+              <span>
+                متوسط التقييم
+              </span>
+
+
+              @if (
+                technicalScore(profile.enrollmentId) !== null
+              ) {
+
+                <strong>
+                  {{
+                    technicalScore(profile.enrollmentId)
+                      | number:'1.0-1'
+                  }}%
+                </strong>
+
+              }
+              @else {
+
+                <strong>
+                  —
+                </strong>
+
+              }
+
+            </div>
+
+          </div>
+
+
+          <!-- Technical Level -->
+
+          <div class="profile-level-card">
+
+            <div class="profile-level-heading">
+
+              <span>
+                المستوى التقني
+              </span>
+
+              <strong>
+                {{ technicalLevel(profile.enrollmentId) }}
+              </strong>
+
+            </div>
+
+
+            <div class="profile-progress-track">
+
+              <div
+                class="profile-progress-fill"
+                [style.width.%]="technicalProgress(profile.enrollmentId)">
+              </div>
+
+            </div>
+
+
+            @if (
+              technicalScore(profile.enrollmentId) !== null
+            ) {
+
+              <span class="profile-level-score">
+
+                {{
+                  technicalScore(profile.enrollmentId)
+                    | number:'1.0-1'
+                }}%
+
+              </span>
+
+            }
+
+          </div>
+
+
+          <!-- Status -->
+
+          <div class="profile-status-row">
+
+            <span>
+              الحالة
+            </span>
+
+            <span class="status-chip neutral">
+              قيد المتابعة
+            </span>
+
+          </div>
+
+
+          <!-- Actions -->
+
+          <div class="profile-modal-actions">
+
+            <button
+              type="button"
+              class="nfd-btn secondary"
+              (click)="closeTraineeProfile()">
+
+              إغلاق
+
+            </button>
+
+
+            <button
+              type="button"
+              class="nfd-btn primary"
+              (click)="startEvaluationFromProfile()">
+
+              بدء تقييم
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    }
+
+  }
 
 
   <!-- =====================================================

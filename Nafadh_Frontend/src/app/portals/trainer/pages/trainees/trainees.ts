@@ -70,6 +70,40 @@ export class TrainerTrainees implements OnInit {
 
 
   // =====================================================
+  // NEW: TRAINEE PROFILE STATE
+  // =====================================================
+
+  showTraineeProfile =
+    signal(false);
+
+  selectedProfileEnrollmentId =
+    signal<number | null>(null);
+
+
+  selectedProfileEnrollment =
+    computed(() => {
+
+      const enrollmentId =
+        this.selectedProfileEnrollmentId();
+
+
+      if (enrollmentId === null) {
+
+        return null;
+      }
+
+
+      return (
+        this.enrollments()
+          .find(
+            enrollment =>
+              enrollment.enrollmentId === enrollmentId
+          ) ?? null
+      );
+    });
+
+
+  // =====================================================
   // KPI
   // =====================================================
 
@@ -583,13 +617,11 @@ export class TrainerTrainees implements OnInit {
           );
 
 
-          // تحميل متوسط التقييم لكل متدرب
           this.loadEvaluationAverages(
             enrollments
           );
 
 
-          // تحميل نسبة الحضور لكل متدرب
           this.loadAttendancePercentages(
             enrollments
           );
@@ -941,6 +973,61 @@ export class TrainerTrainees implements OnInit {
 
 
   // =====================================================
+  // NEW: TRAINEE PROFILE METHODS
+  // =====================================================
+
+  openTraineeProfile(
+    enrollmentId: number
+  ): void {
+
+    this.selectedProfileEnrollmentId.set(
+      enrollmentId
+    );
+
+    this.showTraineeProfile.set(
+      true
+    );
+  }
+
+
+  closeTraineeProfile(): void {
+
+    this.showTraineeProfile.set(
+      false
+    );
+
+    this.selectedProfileEnrollmentId.set(
+      null
+    );
+  }
+
+
+  startEvaluationFromProfile(): void {
+
+    const enrollment =
+      this.selectedProfileEnrollment();
+
+
+    if (!enrollment) {
+
+      return;
+    }
+
+
+    const enrollmentId =
+      enrollment.enrollmentId;
+
+
+    this.closeTraineeProfile();
+
+
+    this.openEval(
+      enrollmentId
+    );
+  }
+
+
+  // =====================================================
   // EVALUATION TEMPLATES
   // =====================================================
 
@@ -1249,7 +1336,6 @@ export class TrainerTrainees implements OnInit {
             null;
 
 
-          // تحديث التقييمات بعد حفظ تقييم جديد
           this.loadEvaluationAverages(
             this.enrollments()
           );
