@@ -24,6 +24,7 @@ export class AdminReports implements OnInit {
 
   pageSize = 5;
   currentPageNumber = 1;
+  isLoading = signal<boolean>(false);
 
   constructor(
     private api: AdminApi,
@@ -33,7 +34,10 @@ export class AdminReports implements OnInit {
   ngOnInit() {
     this.loadCompaniesData();
   }
+
   loadCompaniesData() {
+    this.isLoading.set(true); // تشغيل التحميل عند البدء
+
     this.api.getCompanies().subscribe({
       next: (res: any) => {
         const rawData = res.items || res;
@@ -91,11 +95,14 @@ export class AdminReports implements OnInit {
         } else {
           this.companies = [];
         }
+
+        this.isLoading.set(false); // إيقاف التحميل بعد معالجة البيانات بنجاح
         this.cdr.detectChanges();
       },
       error: (err: any) => {
         console.error('فشل جلب البيانات من الـ API', err);
         this.companies = [];
+        this.isLoading.set(false); // إيقاف التحميل في حال حدوث خطأ
         this.cdr.detectChanges();
       }
     });
@@ -118,6 +125,7 @@ export class AdminReports implements OnInit {
   }
 
   loadReportPage() {
+    this.isLoading.set(true);
     this.api.getBatchPerformanceReport(this.batchIdInput, this.currentPageNumber, this.pageSize).subscribe({
       next: (r: any) => {
         if (r) {
@@ -125,19 +133,20 @@ export class AdminReports implements OnInit {
           r.totalPages = r.TotalPages ?? r.totalPages ?? (Math.ceil(r.totalCount / this.pageSize) || 1);
           r.pageNumber = r.PageNumber ?? r.pageNumber ?? this.currentPageNumber;
 
-          // تحديث عدد المتدربين في الدفعة المختارة ليطابق الإجمالي الحقيقي من الداتابيس
           if (this.selectedBatch) {
             this.selectedBatch.traineesCount = r.totalCount;
           }
         }
 
         this.report.set(r);
+        this.isLoading.set(false);
         this.cdr.markForCheck();
         this.cdr.detectChanges();
       },
       error: (err: any) => {
         console.error('فشل جلب تقرير الأداء', err);
         this.report.set(null);
+        this.isLoading.set(false);
         this.cdr.detectChanges();
       }
     });
@@ -147,7 +156,6 @@ export class AdminReports implements OnInit {
     const r = this.report();
     const totalPages = r?.totalPages || Math.ceil((r?.totalCount || 0) / this.pageSize);
 
-    // الانتقال للصفحة التالية فقط إذا لم نصل للنهاية
     if (this.currentPageNumber < totalPages) {
       this.currentPageNumber++;
       this.loadReportPage();

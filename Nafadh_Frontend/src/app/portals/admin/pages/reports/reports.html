@@ -4,6 +4,23 @@
 <head>
   <meta charset="UTF-8">
   <title>نظام التقارير التدريبية</title>
+  <style>
+    /* تصميم دائرة التحميل الخاصة */
+    .custom-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #0D1C8C;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 
 <body>
@@ -16,7 +33,14 @@
       <p style="color: #64748b; font-size: 14px;">اختر شركة لعرض برامجها وتقارير دفعاتها</p>
     </div>
 
-    <div class="companies-grid">
+    <!-- عرض مؤشر التحميل أثناء جلب قائمة الشركات -->
+    <div *ngIf="isLoading()" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 300px; width: 100%;">
+      <div class="custom-spinner"></div>
+      <span style="color: #6c757d; font-size: 0.9rem;">جاري تحميل قائمة الشركات...</span>
+    </div>
+
+    <!-- شبكة الشركات تظهر فقط عند انتهاء التحميل ووجود بيانات -->
+    <div class="companies-grid" *ngIf="!isLoading() && companies.length > 0">
       <div class="company-card" *ngFor="let company of companies" (click)="selectCompany(company)">
         <div class="company-info" style="display: flex; align-items: center; justify-content: flex-start; gap: 16px;">
           <div class="logo-box"
@@ -49,6 +73,11 @@
           <i class="icon-file"></i> عرض البرامج والتقارير
         </div>
       </div>
+    </div>
+
+    <!-- رسالة في حال لم تقم قاعدة البيانات بإرجاع شركات -->
+    <div *ngIf="!isLoading() && companies.length === 0" style="text-align: center; padding: 40px; color: #94a3b8;">
+      لا توجد شركات مضافة حالياً.
     </div>
   </div>
 
@@ -118,7 +147,7 @@
       </button>
     </div>
 
-    <!-- الترويسة: التفاصيل يمين، وأزرار التصدير يسار -->
+    <!-- الترويسة -->
     <div class="report-header-card"
       style="display: flex; justify-content: space-between; align-items: flex-start; text-align: right; background: #ffffff; border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
 
@@ -183,45 +212,57 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let t of report()?.rows" style="border-bottom: 1px solid #f1f5f9;">
-            <td class="bold" style="padding: 12px; color: #0D1C8C; font-weight: bold; text-align: right;">{{
-              t.traineeName }}</td>
-            <td style="padding: 12px; color: #64748b; text-align: right;">{{ t.major }}</td>
-            <td style="padding: 12px; text-align: right;">
-              <span>{{ t.attendanceRate }}%</span>
-              <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;">
-                <div class="fill green" [style.width.%]="t.attendanceRate"
-                  style="background: #10b981; height: 100%; border-radius: 3px;"></div>
+          <!-- عرض دائرة التحميل أثناء جلب البيانات -->
+          <tr *ngIf="isLoading()">
+            <td colspan="6" style="padding: 40px; text-align: center;">
+              <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
+                <div class="custom-spinner"></div>
+                <span style="color: #6c757d; font-size: 0.9rem;">جاري تحميل بيانات التقرير...</span>
               </div>
-            </td>
-            <td style="padding: 12px; text-align: right;">
-              <span>{{ t.technicalScore }}%</span>
-              <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;">
-                <div class="fill green" [style.width.%]="t.technicalScore"
-                  style="background: #10b981; height: 100%; border-radius: 3px;"></div>
-              </div>
-            </td>
-            <td style="padding: 12px; text-align: right;">
-              <span>{{ t.behavioralScore }}%</span>
-              <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;">
-                <div class="fill blue" [style.width.%]="t.behavioralScore"
-                  style="background: #0D1C8C; height: 100%; border-radius: 3px;"></div>
-              </div>
-            </td>
-            <td style="padding: 12px; text-align: right;">
-              <span class="status-pill" [ngClass]="levelClass(t.level)"
-                style="padding: 4px 8px; border-radius: 4px; font-size: 12px;">{{ t.level }}</span>
             </td>
           </tr>
-          <tr *ngIf="!report()?.rows?.length">
-            <td colspan="6" style="padding: 20px; text-align: center; color: #94a3b8;">لا توجد بيانات لعرضها</td>
-          </tr>
+
+          <!-- عرض البيانات عند انتهائها -->
+          <ng-container *ngIf="!isLoading()">
+            <tr *ngFor="let t of report()?.rows" style="border-bottom: 1px solid #f1f5f9;">
+              <td class="bold" style="padding: 12px; color: #0D1C8C; font-weight: bold; text-align: right;">{{
+                t.traineeName }}</td>
+              <td style="padding: 12px; color: #64748b; text-align: right;">{{ t.major }}</td>
+              <td style="padding: 12px; text-align: right;">
+                <span>{{ t.attendanceRate }}%</span>
+                <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;">
+                  <div class="fill green" [style.width.%]="t.attendanceRate"
+                    style="background: #10b981; height: 100%; border-radius: 3px;"></div>
+                </div>
+              </td>
+              <td style="padding: 12px; text-align: right;">
+                <span>{{ t.technicalScore }}%</span>
+                <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;">
+                  <div class="fill green" [style.width.%]="t.technicalScore"
+                    style="background: #10b981; height: 100%; border-radius: 3px;"></div>
+                </div>
+              </td>
+              <td style="padding: 12px; text-align: right;">
+                <span>{{ t.behavioralScore }}%</span>
+                <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;">
+                  <div class="fill blue" [style.width.%]="t.behavioralScore"
+                    style="background: #0D1C8C; height: 100%; border-radius: 3px;"></div>
+                </div>
+              </td>
+              <td style="padding: 12px; text-align: right;">
+                <span class="status-pill" [ngClass]="levelClass(t.level)"
+                  style="padding: 4px 8px; border-radius: 4px; font-size: 12px;">{{ t.level }}</span>
+              </td>
+            </tr>
+            <tr *ngIf="!report()?.rows?.length">
+              <td colspan="6" style="padding: 20px; text-align: center; color: #94a3b8;">لا توجد بيانات لعرضها</td>
+            </tr>
+          </ng-container>
         </tbody>
       </table>
 
-      <!-- شريط التنقل الجديد بالنمط المطلوب -->
-      <!-- @if ((report()?.totalPages ?? 0) > 1) { -->
-      <div class="compact-pagination-wrapper"
+      <!-- شريط التنقل (Pagination) -->
+      <div class="compact-pagination-wrapper" *ngIf="!isLoading()"
         style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
         <div class="pagination-info" style="color: #64748b; font-size: 13px;">
           عرض الصفحة <strong>{{ report()?.pageNumber || 1 }}</strong> من <strong>{{ report()?.totalPages || 1
@@ -237,20 +278,13 @@
           <span class="page-indicator" style="font-size: 13px; font-weight: bold; color: #0D1C8C;">
             {{ report()?.pageNumber || 1 }} / {{ report()?.totalPages || 1 }}
           </span>
-          <button (click)="prevPage()" [disabled]="currentPageNumber <= 1">
-            السابق
-          </button>
 
-          <span class="page-indicator" style="font-size: 13px; font-weight: bold; color: #0D1C8C;">
-            {{ report()?.pageNumber || 1 }} / {{ report()?.totalPages || 1 }}
-          </span>
-
-          <button (click)="nextPage()" [disabled]="(report()?.rows?.length || 0) < pageSize">
+          <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) >= (report()?.totalPages ?? 1)" (click)="nextPage()"
+            style="padding: 6px 12px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; font-size: 12px;">
             التالي
           </button>
         </div>
       </div>
-      <!-- } -->
     </div>
   </div>
 

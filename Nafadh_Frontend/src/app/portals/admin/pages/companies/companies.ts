@@ -19,6 +19,9 @@ export class AdminCompanies implements OnInit {
   }
 
   companies = signal<CompanyDto[]>([]);
+  
+  // إضافة متغير للتحميل
+  isLoading = signal<boolean>(false);
 
   filtered = computed(() => {
     const filter = this.statusFilter();
@@ -48,9 +51,16 @@ export class AdminCompanies implements OnInit {
   }
 
   loadCompanies() {
+    this.isLoading.set(true); // تشغيل التحميل
     this.adminApi.getCompanies().subscribe({
-      next: (data) => this.companies.set(data),
-      error: (err) => console.error('خطأ في جلب البيانات:', err)
+      next: (data) => {
+        this.companies.set(data);
+        this.isLoading.set(false); // إيقاف التحميل عند النجاح
+      },
+      error: (err) => {
+        console.error('خطأ في جلب البيانات:', err);
+        this.isLoading.set(false); // إيقاف التحميل حتى لو حدث خطأ
+      }
     });
   }
 
@@ -86,19 +96,16 @@ export class AdminCompanies implements OnInit {
   submitAddCompany() {
     this.addError.set('');
 
-    // 1. التحقق من الحقول الإجبارية
     if (!this.newCompany.companyName || !this.newCompany.workField || !this.newCompany.capacity || !this.newCompany.email || !this.newCompany.contactName) {
       this.addError.set('يرجى تعبئة جميع الحقول الإجبارية المعلمة بـ (*)');
       return;
     }
 
-    // 2. التحقق من الطاقة الاستيعابية (منع السالب أو الصفر أو القيم الفارغة)
     if (this.newCompany.capacity <= 0) {
       this.addError.set('لا يمكن أن تكون الطاقة الاستيعابية رقماً سالباً أو صفراً');
       return;
     }
 
-    // 3. التحقق من صحة صيغة البريد الإلكتروني
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(this.newCompany.email)) {
       this.addError.set('يرجى إدخال بريد إلكتروني صحيح (مثال: name@company.com)');
