@@ -78,73 +78,156 @@ namespace Nafadh_Backend.Repositories
         }
 
         // Admin Reports: end-of-batch performance drill-down.
-        public async Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(int batchId)
+        public async Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(
+            int batchId, int pageNumber, int pageSize)
         {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 15;
+
             var batch = await _context.NFD_Batches
                 .Include(b => b.Program)
-                .Include(b => b.Enrollments).ThenInclude(e => e.Trainee).ThenInclude(t => t.User)
-                .Include(b => b.Enrollments).ThenInclude(e => e.Company)
-                .Include(b => b.Enrollments).ThenInclude(e => e.DailyAttendances)
-                .Include(b => b.Enrollments).ThenInclude(e => e.Evaluations).ThenInclude(ev => ev.EvaluationTemplate)
                 .FirstOrDefaultAsync(b => b.BatchId == batchId);
 
             if (batch == null) return null;
 
-            var rows = new List<BatchPerformanceRowDTO>();
+            var totalCount = await _context.NFD_Enrollments
+                .CountAsync(e => e.BatchId == batchId);
 
-            foreach (var enrollment in batch.Enrollments)
+            if (totalCount == 0)
             {
-                var totalDays = enrollment.DailyAttendances.Count;
-                var presentDays = enrollment.DailyAttendances.Count(a => a.Status == NFD_AttendanceStatus.Present);
-                var attendanceRate = totalDays > 0 ? (double)presentDays / totalDays * 100.0 : 0.0;
-
-                decimal AvgFor(NFD_EvaluationType type)
+                return new BatchPerformanceReportDTO
                 {
-                    var scores = enrollment.Evaluations
-                        .Where(e => e.EvaluationTemplate != null && e.EvaluationTemplate.Type == type)
-                        .Select(e => e.Score)
-                        .ToList();
-                    return scores.Count > 0 ? scores.Average() : 0m;
-                }
+                    BatchId = batch.BatchId,
+                    BatchName = batch.BatchName,
+                    ProgramName = batch.Program?.Title,
+                    CompanyName = null,
+                    AvgAttendance = 0,
+                    SuccessRate = 0,
+                    Rows = new List<BatchPerformanceRowDTO>(),
+                    TotalCount = 0,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize
+                };
+            }
 
-                var technical = AvgFor(NFD_EvaluationType.Technical);
-                var behavioral = AvgFor(NFD_EvaluationType.Behavioral);
-                var final = AvgFor(NFD_EvaluationType.Final);
+            // ==========================================================
+            // 1) إحصائيات الدفعة الكاملة (لازم تشمل كل المتدربين حتى تكون
+            //    متوسط الحضور ونسبة النجاح صحيحة) — بدون تحميل بيانات
+            //    User/Company الثقيلة، فقط الحضور والتقييمات.
+            // ==========================================================
+            var allEnrollmentsLean = await _context.NFD_Enrollments
+                .Where(e => e.BatchId == batchId)
+                .Include(e => e.DailyAttendances)
+                .Include(e => e.Evaluations).ThenInclude(ev => ev.EvaluationTemplate)
+                .OrderBy(e => e.TraineeId)
+                .ToListAsync();
 
+            static decimal AvgFor(NFD_Enrollment enrollment, NFD_EvaluationType type)
+            {
+                var scores = enrollment.Evaluations
+                    .Where(e => e.EvaluationTemplate != null && e.EvaluationTemplate.Type == type)
+                    .Select(e => e.Score)
+                    .ToList();
+                return scores.Count > 0 ? scores.Average() : 0m;
+            }
+
+            static double AttendanceRateFor(NFD_Enrollment enrollment)
+            {
+                var total = enrollment.DailyAttendances.Count;
+                var present = enrollment.DailyAttendances.Count(a => a.Status == NFD_AttendanceStatus.Present);
+                return total > 0 ? (double)present / total * 100.0 : 0.0;
+            }
+
+            static string LevelFor(decimal overallAvg) => overallAvg switch
+            {
+                >= 90 => "ممتاز",
+                >= 80 => "جيد جداً",
+                >= 70 => "جيد",
+                >= 60 => "مقبول",
+                _ => "راسب"
+            };
+
+            var allStats = allEnrollmentsLean.Select(e =>
+            {
+                var technical = AvgFor(e, NFD_EvaluationType.Technical);
+                var behavioral = AvgFor(e, NFD_EvaluationType.Behavioral);
+                var final = AvgFor(e, NFD_EvaluationType.Final);
                 var overall = new[] { technical, behavioral, final }.Where(s => s > 0).ToList();
                 var overallAvg = overall.Count > 0 ? overall.Average() : 0m;
 
-                var level = overallAvg switch
+                return new
                 {
-                    >= 90 => "ممتاز",
-                    >= 80 => "جيد جداً",
-                    >= 70 => "جيد",
-                    >= 60 => "مقبول",
-                    _ => "راسب"
+                    e.EnrollmentId,
+                    e.TraineeId,
+                    AttendanceRate = AttendanceRateFor(e),
+                    Technical = Math.Round(technical, 1),
+                    Behavioral = Math.Round(behavioral, 1),
+                    Final = Math.Round(final, 1),
+                    Level = LevelFor(overallAvg)
                 };
+            }).ToList();
 
-                rows.Add(new BatchPerformanceRowDTO
-                {
-                    TraineeId = enrollment.TraineeId,
-                    TraineeName = enrollment.Trainee?.User?.FullName,
-                    Major = enrollment.Trainee?.Major,
-                    AttendanceRate = Math.Round(attendanceRate, 1),
-                    TechnicalScore = Math.Round(technical, 1),
-                    BehavioralScore = Math.Round(behavioral, 1),
-                    FinalScore = Math.Round(final, 1),
-                    Level = level
-                });
+            var avgAttendance = Math.Round(allStats.Average(s => s.AttendanceRate), 1);
+            var successRate = Math.Round(allStats.Count(s => s.Level != "راسب") * 100.0 / allStats.Count, 1);
+
+            // ==========================================================
+            // 2) تحديد صفوف الصفحة الحالية فقط
+            // ==========================================================
+            var pageEnrollmentIds = allStats
+                .Select(s => s.EnrollmentId)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            // بيانات الاسم/التخصص/الشركة تُحمّل فقط لصفوف الصفحة الحالية
+            var pageEnrollments = await _context.NFD_Enrollments
+                .Where(e => pageEnrollmentIds.Contains(e.EnrollmentId))
+                .Include(e => e.Trainee).ThenInclude(t => t.User)
+                .Include(e => e.Company)
+                .ToDictionaryAsync(e => e.EnrollmentId);
+
+            var companyName = pageEnrollments.Values.Select(e => e.Company?.CompanyName).FirstOrDefault();
+            if (companyName == null)
+            {
+                // يحصل فقط إذا طُلبت صفحة تتجاوز عدد الصفحات المتاحة
+                var anyEnrollmentId = allStats.Select(s => s.EnrollmentId).FirstOrDefault();
+                companyName = await _context.NFD_Enrollments
+                    .Where(e => e.EnrollmentId == anyEnrollmentId)
+                    .Select(e => e.Company != null ? e.Company.CompanyName : null)
+                    .FirstOrDefaultAsync();
             }
+
+            var rows = pageEnrollmentIds
+                .Select(id =>
+                {
+                    var stat = allStats.First(s => s.EnrollmentId == id);
+                    var enrollment = pageEnrollments[id];
+
+                    return new BatchPerformanceRowDTO
+                    {
+                        TraineeId = stat.TraineeId,
+                        TraineeName = enrollment.Trainee?.User?.FullName,
+                        Major = enrollment.Trainee?.Major,
+                        AttendanceRate = Math.Round(stat.AttendanceRate, 1),
+                        TechnicalScore = stat.Technical,
+                        BehavioralScore = stat.Behavioral,
+                        FinalScore = stat.Final,
+                        Level = stat.Level
+                    };
+                }).ToList();
 
             return new BatchPerformanceReportDTO
             {
                 BatchId = batch.BatchId,
                 BatchName = batch.BatchName,
                 ProgramName = batch.Program?.Title,
-                CompanyName = batch.Enrollments.Select(e => e.Company?.CompanyName).FirstOrDefault(),
-                AvgAttendance = rows.Count > 0 ? Math.Round(rows.Average(r => r.AttendanceRate), 1) : 0,
-                SuccessRate = rows.Count > 0 ? Math.Round(rows.Count(r => r.Level != "راسب") * 100.0 / rows.Count, 1) : 0,
-                Rows = rows
+                CompanyName = companyName,
+                AvgAttendance = avgAttendance,
+                SuccessRate = successRate,
+                Rows = rows,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
             };
         }
 
@@ -315,6 +398,10 @@ namespace Nafadh_Backend.Repositories
                 AvgTechnicalGrade = Math.Round(avgTechnicalGrade, 1)
             };
         }
+
+        //==========================================================
+        // Admin Reports: end-of-batch performance drill-down (paginated).
+
 
     }
 }

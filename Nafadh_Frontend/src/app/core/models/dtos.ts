@@ -611,8 +611,12 @@ export interface BatchPerformanceReportDto {
   avgAttendance: number;
   successRate: number;
   rows: BatchPerformanceRowDto[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
 }
-
+ 
 export interface AttendanceReportRowDto {
   traineeId: number;
   traineeName?: string;

@@ -204,9 +204,19 @@ getUsers(): Observable<UserResponseDto[]> {
   }
 
   // ---- Reports ----
-  getBatchPerformanceReport(batchId: number): Observable<BatchPerformanceReportDto> {
-    return this.http.get<BatchPerformanceReportDto>(`${this.base}/Report/batch-performance/${this.sanitizeId(batchId)}`);
-  }
+getBatchPerformanceReport(
+  batchId: number,
+  pageNumber: number = 1,
+  pageSize: number = 15
+): Observable<BatchPerformanceReportDto> {
+  const params = new HttpParams()
+    .set('pageNumber', String(pageNumber))
+    .set('pageSize', String(pageSize));
+  return this.http.get<BatchPerformanceReportDto>(
+    `${this.base}/Report/batch-performance/${this.sanitizeId(batchId)}`,
+    { params }
+  );
+}
   getEvaluationBucketRollup(enrollmentId: number): Observable<EvaluationBucketRollupDto> {
     return this.http.get<EvaluationBucketRollupDto>(`${this.base}/Evaluation/enrollment/${this.sanitizeId(enrollmentId)}/by-bucket`);
   }
