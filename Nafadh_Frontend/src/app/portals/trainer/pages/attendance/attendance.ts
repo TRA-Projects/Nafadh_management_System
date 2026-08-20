@@ -19,8 +19,8 @@ import { environment } from '../../../../../environments/environment';
    ══════════════════════════════════════════════════════════════ */
 export const ATTENDANCE_STATUSES = [
   { code: 0, name: 'Present', key: 'present', label: 'حاضر' },
-  { code: 1, name: 'Absent',  key: 'absent',  label: 'غائب' },
-  { code: 2, name: 'Late',    key: 'late',    label: 'متأخر' },
+  { code: 1, name: 'Absent', key: 'absent', label: 'غائب' },
+  { code: 2, name: 'Late', key: 'late', label: 'متأخر' },
   { code: 3, name: 'Excused', key: 'excused', label: 'بعذر' },
 ] as const;
 export type StatusDef = (typeof ATTENDANCE_STATUSES)[number];
@@ -62,6 +62,11 @@ type Shape = 'number' | 'numeric-text' | 'name';
 export class TrainerAttendance implements OnInit {
   trainerId = signal<number | null>(null);
   trainerBatchIds = signal<Set<number>>(new Set<number>());
+
+  // الدفعات المسندة للمدرب + الدفعة المختارة لعرض حضورها فقط
+  trainerBatches = signal<any[]>([]);
+  selectedBatchId = signal<number | null>(null);
+
   private base = environment.apiBaseUrl;
   private readonly repeatedAbsenceThreshold = 3;
 
@@ -117,7 +122,7 @@ export class TrainerAttendance implements OnInit {
     private api: TrainerApi,
     private http: HttpClient,
     private auth: AuthService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.loadCurrentTrainerScope();
@@ -152,21 +157,31 @@ export class TrainerAttendance implements OnInit {
 
           this.api.getMyBatches(trainer.trainerId).subscribe({
             next: (batches) => {
-              const batchIds = new Set<number>(
-                (batches ?? [])
-                  .map((b) => Number(b.batchId))
-                  .filter((id) => Number.isFinite(id) && id > 0)
+              const trainerBatches = (batches ?? []).filter(
+                (b) => Number.isFinite(Number(b.batchId)) && Number(b.batchId) > 0
               );
 
+              const batchIds = new Set<number>(
+                trainerBatches.map((b) => Number(b.batchId))
+              );
+
+              this.trainerBatches.set(trainerBatches);
               this.trainerBatchIds.set(batchIds);
 
               if (!batchIds.size) {
+                this.selectedBatchId.set(null);
                 this.rows.set([]);
                 this.excuses.set([]);
                 this.repeatedAbsenceIds.set(new Set<number>());
                 this.loading.set(false);
                 this.loadError.set(null);
                 return;
+              }
+
+              const currentBatchId = this.selectedBatchId();
+
+              if (currentBatchId == null || !batchIds.has(currentBatchId)) {
+                this.selectedBatchId.set(Number(trainerBatches[0].batchId));
               }
 
               this.reload();
@@ -213,8 +228,9 @@ export class TrainerAttendance implements OnInit {
     this.loadError.set(null);
 
     const allowedBatchIds = this.trainerBatchIds();
+    const selectedBatchId = this.selectedBatchId();
 
-    if (!allowedBatchIds.size) {
+    if (!allowedBatchIds.size || selectedBatchId == null) {
       this.rows.set([]);
       this.excuses.set([]);
       this.repeatedAbsenceIds.set(new Set<number>());
@@ -235,7 +251,9 @@ export class TrainerAttendance implements OnInit {
                 : [];
 
         const scopedEnrollments = enrollments.filter(
-          (e) => allowedBatchIds.has(Number(e.batchId))
+          (e) =>
+            allowedBatchIds.has(Number(e.batchId)) &&
+            Number(e.batchId) === selectedBatchId
         );
 
         if (!scopedEnrollments.length) {
@@ -332,6 +350,23 @@ export class TrainerAttendance implements OnInit {
         );
       },
     });
+  }
+
+  onBatchChange(value: number | string | null): void {
+    const batchId = Number(value);
+
+    if (
+      !Number.isFinite(batchId) ||
+      batchId <= 0 ||
+      !this.trainerBatchIds().has(batchId)
+    ) {
+      return;
+    }
+
+    this.selectedBatchId.set(batchId);
+    this.weeklyRows.set([]);
+    this.monthlyRows.set([]);
+    this.reload();
   }
 
   private dateKey(date: Date): string {
@@ -531,152 +566,152 @@ export class TrainerAttendance implements OnInit {
   }
 
   private loadWeeklyRegister(): void {
-  this.historyLoading.set(true);
+    this.historyLoading.set(true);
 
-  const requests = this.rows().map((row) =>
-    this.http.get<DailyAttendanceDto[]>(
-      `${this.base}/DailyAttendance/enrollment/${row.enrollmentId}`
-    )
-  );
+    const requests = this.rows().map((row) =>
+      this.http.get<DailyAttendanceDto[]>(
+        `${this.base}/DailyAttendance/enrollment/${row.enrollmentId}`
+      )
+    );
 
-  if (!requests.length) {
-    this.weeklyRows.set([]);
-    this.historyLoading.set(false);
-    return;
-  }
-
-  forkJoin(requests).subscribe({
-    next: (histories) => {
-      const now = new Date();
-
-      const startOfWeek = new Date(now);
-      startOfWeek.setHours(0, 0, 0, 0);
-      startOfWeek.setDate(now.getDate() - now.getDay());
-
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 6);
-      endOfWeek.setHours(23, 59, 59, 999);
-
-      const result = this.rows().map((row, index) => {
-        const history = histories[index] ?? [];
-
-        const weekRecords = history.filter((record) => {
-          const date = new Date(record.date);
-          return date >= startOfWeek && date <= endOfWeek;
-        });
-
-        return {
-          enrollmentId: row.enrollmentId,
-          traineeName: row.traineeName,
-          batchName: row.batchName,
-          present: weekRecords.filter(
-            (r) => this.statusKey(r.status) === 'present'
-          ).length,
-          late: weekRecords.filter(
-            (r) => this.statusKey(r.status) === 'late'
-          ).length,
-          absent: weekRecords.filter(
-            (r) => this.statusKey(r.status) === 'absent'
-          ).length,
-          excused: weekRecords.filter(
-            (r) => this.statusKey(r.status) === 'excused'
-          ).length,
-          total: weekRecords.length,
-        };
-      });
-
-      this.weeklyRows.set(result);
-      this.historyLoading.set(false);
-    },
-
-    error: () => {
+    if (!requests.length) {
       this.weeklyRows.set([]);
       this.historyLoading.set(false);
-      this.notify('تعذر تحميل السجل الأسبوعي.', 'err');
-    },
-  });
-}
+      return;
+    }
 
-  private loadMonthlyRegister(): void {
-  this.historyLoading.set(true);
+    forkJoin(requests).subscribe({
+      next: (histories) => {
+        const now = new Date();
 
-  const requests = this.rows().map((row) =>
-    this.http.get<DailyAttendanceDto[]>(
-      `${this.base}/DailyAttendance/enrollment/${row.enrollmentId}`
-    )
-  );
+        const startOfWeek = new Date(now);
+        startOfWeek.setHours(0, 0, 0, 0);
+        startOfWeek.setDate(now.getDate() - now.getDay());
 
-  if (!requests.length) {
-    this.monthlyRows.set([]);
-    this.historyLoading.set(false);
-    return;
-  }
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
 
-  forkJoin(requests).subscribe({
-    next: (histories) => {
-      const now = new Date();
-      const month = now.getMonth();
-      const year = now.getFullYear();
+        const result = this.rows().map((row, index) => {
+          const history = histories[index] ?? [];
 
-      const result = this.rows().map((row, index) => {
-        const history = histories[index] ?? [];
+          const weekRecords = history.filter((record) => {
+            const date = new Date(record.date);
+            return date >= startOfWeek && date <= endOfWeek;
+          });
 
-        const monthRecords = history.filter((record) => {
-          const date = new Date(record.date);
-
-          return (
-            date.getMonth() === month &&
-            date.getFullYear() === year
-          );
+          return {
+            enrollmentId: row.enrollmentId,
+            traineeName: row.traineeName,
+            batchName: row.batchName,
+            present: weekRecords.filter(
+              (r) => this.statusKey(r.status) === 'present'
+            ).length,
+            late: weekRecords.filter(
+              (r) => this.statusKey(r.status) === 'late'
+            ).length,
+            absent: weekRecords.filter(
+              (r) => this.statusKey(r.status) === 'absent'
+            ).length,
+            excused: weekRecords.filter(
+              (r) => this.statusKey(r.status) === 'excused'
+            ).length,
+            total: weekRecords.length,
+          };
         });
 
-        const present = monthRecords.filter(
-          (r) => this.statusKey(r.status) === 'present'
-        ).length;
+        this.weeklyRows.set(result);
+        this.historyLoading.set(false);
+      },
 
-        const late = monthRecords.filter(
-          (r) => this.statusKey(r.status) === 'late'
-        ).length;
+      error: () => {
+        this.weeklyRows.set([]);
+        this.historyLoading.set(false);
+        this.notify('تعذر تحميل السجل الأسبوعي.', 'err');
+      },
+    });
+  }
 
-        const absent = monthRecords.filter(
-          (r) => this.statusKey(r.status) === 'absent'
-        ).length;
+  private loadMonthlyRegister(): void {
+    this.historyLoading.set(true);
 
-        const excused = monthRecords.filter(
-          (r) => this.statusKey(r.status) === 'excused'
-        ).length;
+    const requests = this.rows().map((row) =>
+      this.http.get<DailyAttendanceDto[]>(
+        `${this.base}/DailyAttendance/enrollment/${row.enrollmentId}`
+      )
+    );
 
-        const total = monthRecords.length;
-
-        const commitment =
-          total === 0
-            ? 0
-            : Math.round(((present + late + excused) / total) * 100);
-
-        return {
-          enrollmentId: row.enrollmentId,
-          traineeName: row.traineeName,
-          batchName: row.batchName,
-          present,
-          late,
-          absent,
-          excused,
-          total,
-          commitment,
-        };
-      });
-
-      this.monthlyRows.set(result);
-      this.historyLoading.set(false);
-    },
-
-    error: () => {
+    if (!requests.length) {
       this.monthlyRows.set([]);
       this.historyLoading.set(false);
-      this.notify('تعذر تحميل السجل الشهري.', 'err');
-    },
-  });
-}
+      return;
+    }
+
+    forkJoin(requests).subscribe({
+      next: (histories) => {
+        const now = new Date();
+        const month = now.getMonth();
+        const year = now.getFullYear();
+
+        const result = this.rows().map((row, index) => {
+          const history = histories[index] ?? [];
+
+          const monthRecords = history.filter((record) => {
+            const date = new Date(record.date);
+
+            return (
+              date.getMonth() === month &&
+              date.getFullYear() === year
+            );
+          });
+
+          const present = monthRecords.filter(
+            (r) => this.statusKey(r.status) === 'present'
+          ).length;
+
+          const late = monthRecords.filter(
+            (r) => this.statusKey(r.status) === 'late'
+          ).length;
+
+          const absent = monthRecords.filter(
+            (r) => this.statusKey(r.status) === 'absent'
+          ).length;
+
+          const excused = monthRecords.filter(
+            (r) => this.statusKey(r.status) === 'excused'
+          ).length;
+
+          const total = monthRecords.length;
+
+          const commitment =
+            total === 0
+              ? 0
+              : Math.round(((present + late + excused) / total) * 100);
+
+          return {
+            enrollmentId: row.enrollmentId,
+            traineeName: row.traineeName,
+            batchName: row.batchName,
+            present,
+            late,
+            absent,
+            excused,
+            total,
+            commitment,
+          };
+        });
+
+        this.monthlyRows.set(result);
+        this.historyLoading.set(false);
+      },
+
+      error: () => {
+        this.monthlyRows.set([]);
+        this.historyLoading.set(false);
+        this.notify('تعذر تحميل السجل الشهري.', 'err');
+      },
+    });
+  }
   confirmToday() {
     const unsavedPresent = this.rows().filter(
       (r) => r.dailyAttendanceId == null && this.statusKey(r.status) === 'present'
@@ -873,7 +908,12 @@ export class TrainerAttendance implements OnInit {
       if (done + failed < target.length) return;
       this.savingId.set(null);
       if (failed) this.notify(`تعذّر حفظ ${failed} من ${target.length}. أعد المحاولة لمن بقي.`, 'err');
-      else this.notify(`سُجِّل ${done} متدرباً كحاضرين.`, 'ok');
+      else {
+        this.notify(
+          `تم تأكيد سجل اليوم لـ ${this.rows().length} متدرباً بنجاح.`,
+          'ok'
+        );
+      }
       this.reload();
     };
 
@@ -959,7 +999,7 @@ export class TrainerAttendance implements OnInit {
 
     const code = approve ? EXCUSE_STATUS.approved : EXCUSE_STATUS.rejected;
     const value = this.excuseShape === 'name' ? (approve ? 'Approved' : 'Rejected')
-                : this.excuseShape === 'numeric-text' ? String(code) : code;
+      : this.excuseShape === 'numeric-text' ? String(code) : code;
 
     this.api.reviewExcuse(ex.excuseId, { status: value } as any).subscribe({
       next: () => {

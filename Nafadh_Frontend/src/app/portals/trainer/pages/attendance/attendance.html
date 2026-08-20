@@ -53,6 +53,23 @@
 
   <!-- شريط التحكم والإحصاءات -->
   <section class="filter-card">
+
+    <div class="batch-filter">
+      <label for="attendanceBatch">الدفعة</label>
+
+      <select
+        id="attendanceBatch"
+        [ngModel]="selectedBatchId()"
+        (ngModelChange)="onBatchChange($event)"
+        [disabled]="loading() || trainerBatches().length === 0">
+        @for (batch of trainerBatches(); track batch.batchId) {
+          <option [ngValue]="batch.batchId">
+            {{ batch.batchName || ('الدفعة ' + batch.batchId) }}
+          </option>
+        }
+      </select>
+    </div>
+
     <div class="filter-main">
       <div class="tabs" role="tablist" aria-label="نوع السجل">
         <button
@@ -117,7 +134,7 @@
           (input)="onSearch($event)" />
       </div>
 
-      <div class="quick-filters">
+      <!-- <div class="quick-filters">
         @for (f of filters; track f.key) {
           <button
             type="button"
@@ -129,7 +146,7 @@
             }
           </button>
         }
-      </div>
+      </div> -->
 
       <button
         type="button"
