@@ -126,12 +126,18 @@ getUsers(): Observable<UserResponseDto[]> {
   approveCompany(id: number) { return this.http.put(`${this.base}/Company/${this.sanitizeId(id)}/approve`, {}); }
   suspendCompany(id: number) { return this.http.put(`${this.base}/Company/${this.sanitizeId(id)}/suspend`, {}); }
 
+  
+
   // ---- Programs & Batches ----
   createBatch(dto: unknown) { return this.http.post(`${this.base}/Batch`, dto); }
   updateBatch(id: number, dto: unknown) { return this.http.put(`${this.base}/Batch/${this.sanitizeId(id)}`, dto); }
   getPrograms(): Observable<ProgramDto[]> { return this.http.get<ProgramDto[]>(`${this.base}/Program`); }
   createProgram(dto: unknown) { return this.http.post(`${this.base}/Program`, dto); }
-
+  
+// ---- Trainers ----
+  getTrainers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/Trainer`);
+  }
 
   // ---- Tracks ----
   getTracks(): Observable<any[]> {
