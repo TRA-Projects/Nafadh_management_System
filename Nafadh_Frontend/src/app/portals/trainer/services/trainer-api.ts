@@ -278,7 +278,18 @@ getTrainingMaterialsByLesson(
     `${this.base}/TrainingMaterial/lesson/${lessonId}`
   );
 }
+// =====================================================
+// DELETE TRAINING MATERIAL
+// =====================================================
 
+deleteTrainingMaterial(
+  materialId: number
+): Observable<void> {
+
+  return this.http.delete<void>(
+    `${this.base}/TrainingMaterial/${materialId}`
+  );
+}
   // =====================================================
   // Attendance
   // =====================================================
