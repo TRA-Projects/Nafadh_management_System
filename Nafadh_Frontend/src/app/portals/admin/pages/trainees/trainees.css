@@ -38,7 +38,7 @@
   display: inline-block;
   width: 5px;
   height: 26px;
-  background-color: #0d9488;
+  background-color: #003399; /* تم التعديل للأزرق الحكومي */
   border-radius: 4px;
 }
 
@@ -87,14 +87,14 @@
 
 .btn-secondary {
   background-color: #ffffff;
-  color: #0d9488;
-  border-color: #0d9488;
+  color: #003399;
+  border-color: #003399;
 }
 
 .btn-secondary:hover {
-  background-color: #f0fdf4;
-  border-color: #0f766e;
-  color: #0f766e;
+  background-color: #eff6ff;
+  border-color: #002366;
+  color: #002366;
   transform: translateY(-1px);
 }
 
@@ -140,9 +140,9 @@
 }
 
 .filter-group select:focus {
-  border-color: #0d9488;
+  border-color: #003399;
   background-color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 51, 153, 0.1);
 }
 
 /* --------------------------------------------------------------------------
@@ -196,18 +196,19 @@
   gap: 12px;
 }
 
+/* --- تعديل لون خلفية الحروف (الأفاتار) كحلي غامق --- */
 .avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #002b49, #0d9488);
+  background: #003366; /* لون كحلي مميز مطابق للصورة */
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 51, 102, 0.2);
 }
 
 .font-bold {
@@ -234,7 +235,7 @@
   letter-spacing: 0.2px;
 }
 
-/* --- شريط التقدم الأكاديمي (تعديل كامل للتنسيق) --- */
+/* --- تعديل شريط التقدم الأكاديمي (تدرج الأزرق) --- */
 .progress-bar-container {
   display: flex;
   align-items: center;
@@ -243,7 +244,7 @@
   max-width: 180px;
 }
 
-/* مسار الشريط الخارجي (الرمادي عند 0%) */
+/* مسار الشريط الخارجي */
 .progress-track {
   flex: 1;
   height: 8px;
@@ -252,16 +253,16 @@
   overflow: hidden;
 }
 
-/* التعبئة الممتدة داخل الشريط حسب النسبة */
+/* التعبئة الممتدة بلون التدرج الأزرق (من الفاتح للكحلي مثل الصورة المرفقة) */
 .progress-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #0d9488, #14b8a6);
+  background: linear-gradient(90deg, #0099ff 0%, #003399 100%);
   border-radius: 6px;
   transition: width 0.4s ease-in-out;
 }
 
-/* لون مخصص إذا كانت النسبة 100% */
+/* لون مخصص إذا كانت النسبة 100% (أخضر كالمعتاد أو يمكنك تركها أزرق) */
 .progress-fill.completed {
   background: linear-gradient(90deg, #16a34a, #22c55e);
 }
@@ -434,8 +435,8 @@
 }
 
 .upload-zone:hover {
-  border-color: #0d9488;
-  background-color: #f0fdf4;
+  border-color: #003399;
+  background-color: #eff6ff;
 }
 
 .upload-label {
@@ -448,7 +449,7 @@
 }
 
 .upload-label i {
-  color: #0d9488;
+  color: #003399;
 }
 
 .upload-label p {
@@ -524,8 +525,8 @@
 }
 
 .form-control:focus {
-  border-color: #0d9488;
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+  border-color: #003399;
+  box-shadow: 0 0 0 3px rgba(0, 51, 153, 0.12);
 }
 
 .modal-footer {
