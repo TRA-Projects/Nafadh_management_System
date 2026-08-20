@@ -198,9 +198,7 @@ namespace Nafadh_Backend.Services
         }
 
         // Mapping Company Model to Output DTO
-        // Mapping Company Model to Output DTO
-        private static NFD_CompanyOutputDTO MapToOutputDTO(
-        NFD_Company company)
+        private static NFD_CompanyOutputDTO MapToOutputDTO(NFD_Company company)
         {
             return new NFD_CompanyOutputDTO
             {
@@ -216,6 +214,12 @@ namespace Nafadh_Backend.Services
                 Status = company.Status,
                 ApprovalDate = company.ApprovalDate,
                 UserId = company.UserId,
+
+                // الأعداد
+                ProgramsCount = company.CompanyPrograms?.Count ?? 0,
+                BatchesCount = company.CompanyPrograms?.Count ?? 0,
+                TraineesCount = 0,
+
                 Branches = company.CompanyBranches?.Select(b => new NFD_CompanyBranchOutputDTO
                 {
                     BranchId = b.BranchId,
@@ -223,6 +227,7 @@ namespace Nafadh_Backend.Services
                     ContactPoint = b.ContactPoint,
                     CompanyId = b.CompanyId
                 }).ToList() ?? new(),
+
                 Supervisors = company.CompanySupervisors?.Select(s => new CompanySupervisorDto
                 {
                     SupervisorId = s.SupervisorId,
@@ -235,11 +240,13 @@ namespace Nafadh_Backend.Services
                     UserId = s.UserId,
                     CompanyId = s.CompanyId
                 }).ToList() ?? new(),
+
                 Programs = company.CompanyPrograms?.Select(p => new NFD_CompanyProgramOutputDTO
                 {
                     CompanyId = p.CompanyId,
                     ProgramId = p.ProgramId
                 }).ToList() ?? new(),
+
                 Payments = company.CompanyPayments?.Select(p => new CompanyPaymentResponseDto
                 {
                     CompanyPaymentId = p.CompanyPaymentId,
@@ -247,19 +254,9 @@ namespace Nafadh_Backend.Services
                     Status = p.Status,
                     CompanyId = p.CompanyId,
                     CompanyName = company.CompanyName,
-                    BatchId = p.BatchId,
-                    PaymentSchedules = p.CompanyPaymentSchedules?.Select(s => new CompanyPaymentScheduleResponseDto
-                    {
-                        ScheduleId = s.ScheduleId,
-                        MonthNumber = s.MonthNumber,
-                        MonthLabel = s.MonthLabel,
-                        DueDate = s.DueDate,
-                        Amount = s.Amount,
-                        Status = s.Status,
-                        PaidDate = s.PaidDate,
-                        CompanyPaymentId = s.CompanyPaymentId
-                    }).ToList() ?? new()
+                    BatchId = p.BatchId
                 }).ToList() ?? new(),
+
                 Departments = company.Departments?.Select(d => new DepartmentDto
                 {
                     DepartmentId = d.DepartmentId,

@@ -160,12 +160,18 @@ getAttendance(enrollmentId: number): Observable<any[]> {
   approveCompany(id: number) { return this.http.put(`${this.base}/Company/${this.sanitizeId(id)}/approve`, {}); }
   suspendCompany(id: number) { return this.http.put(`${this.base}/Company/${this.sanitizeId(id)}/suspend`, {}); }
 
+  
+
   // ---- Programs & Batches ----
   createBatch(dto: unknown) { return this.http.post(`${this.base}/Batch`, dto); }
   updateBatch(id: number, dto: unknown) { return this.http.put(`${this.base}/Batch/${this.sanitizeId(id)}`, dto); }
   getPrograms(): Observable<ProgramDto[]> { return this.http.get<ProgramDto[]>(`${this.base}/Program`); }
   createProgram(dto: unknown) { return this.http.post(`${this.base}/Program`, dto); }
-
+  
+// ---- Trainers ----
+  getTrainers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/Trainer`);
+  }
 
   // ---- Tracks ----
   getTracks(): Observable<any[]> {
@@ -232,9 +238,19 @@ getAttendance(enrollmentId: number): Observable<any[]> {
   }
 
   // ---- Reports ----
-  getBatchPerformanceReport(batchId: number): Observable<BatchPerformanceReportDto> {
-    return this.http.get<BatchPerformanceReportDto>(`${this.base}/Report/batch-performance/${this.sanitizeId(batchId)}`);
-  }
+getBatchPerformanceReport(
+  batchId: number,
+  pageNumber: number = 1,
+  pageSize: number = 15
+): Observable<BatchPerformanceReportDto> {
+  const params = new HttpParams()
+    .set('pageNumber', String(pageNumber))
+    .set('pageSize', String(pageSize));
+  return this.http.get<BatchPerformanceReportDto>(
+    `${this.base}/Report/batch-performance/${this.sanitizeId(batchId)}`,
+    { params }
+  );
+}
   getEvaluationBucketRollup(enrollmentId: number): Observable<EvaluationBucketRollupDto> {
     return this.http.get<EvaluationBucketRollupDto>(`${this.base}/Evaluation/enrollment/${this.sanitizeId(enrollmentId)}/by-bucket`);
   }

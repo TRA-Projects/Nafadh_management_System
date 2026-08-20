@@ -10,6 +10,9 @@ namespace Nafadh_Backend.DTOs
         public string BatchName { get; set; } = string.Empty;
         public string CompanyName { get; set; } = string.Empty; // لحل مشكلة "غير محدد"
         public string TrackName { get; set; } = string.Empty;   // لحل مشكلة "عام"
+
+        public string InstructorName { get; set; } = string.Empty; //لجلب المدربين
+
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public decimal Capacity { get; set; }
