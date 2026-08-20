@@ -83,6 +83,11 @@
       <div class="card card-pad loading-card">جارٍ تحميل الطاقة الاستيعابية…</div>
     }
 
+    <div class="grid g2 g2-14 quick-stats">
+      <div class="card card-pad quick-stat"><span>إجمالي المتدربين</span><b>{{ totalTrainees() }}</b><small>المربوطون بهذه الشركة</small></div>
+      <div class="card card-pad quick-stat"><span>المتدربون النشطون</span><b>{{ activeTrainees() }}</b><small>حالة التدريب الحالية</small></div>
+    </div>
+
     <div class="grid g2 g2-14 charts-row">
       <div class="card card-pad">
         <div class="card-title">
@@ -90,7 +95,7 @@
           <span class="hint">المعدل العام: {{ attendanceAverage() | number:'1.1-1' }}%</span>
         </div>
         @if (attendanceWeeks().length) {
-          <div class="hbars">
+          <div class="hbars" [attr.data-refresh]="currentAnimationKey()">
             @for (w of attendanceWeeks(); track $index) {
               <div class="hbar">
                 <div class="h-lbl" [title]="w.label">{{ w.label }}</div>
@@ -107,7 +112,7 @@
       <div class="card card-pad">
         <div class="card-title">توزيع المتدربين حسب البرنامج</div>
         @if (programDistribution().length) {
-          <div class="hbars">
+          <div class="hbars" [attr.data-refresh]="currentAnimationKey()">
             @for (p of programDistribution(); track $index) {
               <div class="hbar">
                 <div class="h-lbl" [title]="p.label">{{ p.label }}</div>
@@ -139,22 +144,22 @@
                 </div>
                 <div class="warning-name">
                   <b>{{ w.type || 'غياب متكرر' }}</b>
-                  <span>{{ w.targetName || 'متدرب' }}</span>
+                  <span>{{ w.traineeName || 'متدرب' }}</span>
                   <small>#{{ w.warningId }} · {{ w.issuedDate | date:'yyyy-MM-dd' }}</small>
                 </div>
               </div>
               <div class="row-actions">
-                <button class="icon-btn eye" type="button" title="عرض التفاصيل" (click)="openWarnings()">
+                <button class="icon-btn eye" type="button" title="عرض التفاصيل" (click)="openProgress(w.enrollmentId)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
-                <button class="icon-btn github" type="button" title="فتح ملف المتدرب" (click)="openWarnings()"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg></button>
+                <button class="icon-btn github" type="button" title="فتح ملف المتدرب" (click)="openGithub(w.gitHubUrl)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg></button>
                 <span class="chip" [class.bad]="w.status !== 'Resolved'" [class.ok]="w.status === 'Resolved'"><span class="dot"></span>
                 <button class="text-action" type="button" (click)="openWarnings()">عرض</button>
                 </span>
               </div>
             </div>
           } @empty {
-            <div class="empty"><b>لا توجد إنذارات</b><span>لم يتم تسجيل إنذارات حديثة على الشركة.</span></div>
+            <div class="empty"><b>لا توجد إنذارات</b><span>لم يتم تسجيل إنذارات حديثة على متدربي الشركة.</span></div>
           }
         </div>
       </div>
@@ -173,9 +178,9 @@
                 <div class="person-copy"><b>{{ t.fullName || 'متدرب بدون اسم' }}</b><span>{{ t.major || 'يتطلب مراجعة الأداء والمتابعة' }}</span></div>
               </div>
               <div class="row-actions">
-                <button class="btn btn-soft btn-sm follow-btn" type="button" (click)="openProgress(t.traineeId)">متابعة</button>
-                <button class="icon-btn github" type="button" title="فتح ملف المتدرب" (click)="openProgress(t.traineeId)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg></button>
-                <button class="icon-btn eye" type="button" title="عرض صفحة التقدم" (click)="openProgress(t.traineeId)">
+                <button class="btn btn-soft btn-sm follow-btn" type="button" (click)="openProgress(t.enrollmentId)">متابعة</button>
+                <button class="icon-btn github" type="button" title="فتح ملف المتدرب" (click)="openGithub(t.gitHubUrl)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg></button>
+                <button class="icon-btn eye" type="button" title="عرض صفحة التقدم" (click)="openProgress(t.enrollmentId)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
               </div>
@@ -197,15 +202,15 @@
             <div class="top-row">
               <div class="person-block">
                 <div class="t-avatar" [style.background]="avatarColor(t.fullName)">{{ initials(t.fullName) }}</div>
-                <div class="person-copy"><b>{{ t.fullName || 'متدرب بدون اسم' }}</b><span>{{ t.major || 'تطوير تطبيقات الويب' }}</span></div>
+                <div class="person-copy"><b>{{ t.fullName || 'متدرب بدون اسم' }}</b><span>{{ t.major || '—' }}</span></div>
               </div>
               <div class="row-actions">
-                <button class="icon-btn eye" type="button" title="عرض صفحة التقدم" (click)="openProgress(t.traineeId)">
+                <button class="icon-btn eye" type="button" title="عرض صفحة التقدم" (click)="openProgress(t.enrollmentId)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
-                <button class="icon-btn github" type="button" title="فتح ملف المتدرب" (click)="openProgress(t.traineeId)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg></button>
+                <button class="icon-btn github" type="button" title="فتح ملف المتدرب" (click)="openGithub(t.gitHubUrl)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg></button>
               </div>
-              <div class="performance"><b>{{ performanceValue(t, i) }}%</b><span>أداء</span></div>
+              <div class="performance"><b>{{ performanceValue(t) }}%</b><span>أداء</span></div>
             </div>
           } @empty {
             <div class="empty"><b>لا توجد بيانات كافية</b><span>سيظهر المتدربون المتميزون عند توفر التقارير.</span></div>
