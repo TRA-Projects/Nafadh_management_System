@@ -55,10 +55,17 @@ export class AdminUsers implements OnInit {
 
   rbacSummary = computed(() => {
     const list = this.users();
-    return (['Admin', 'CompanySupervisor', 'Trainer', 'Trainee'] as const).map((role) => ({
-      role,
-      permissionsCount: this.permissionsCountByRole[role],
-      usersCount: this.countByRole(list, role)
+    const rolesMap = [
+      { key: 'Admin', arLabel: 'هيئة' },
+      { key: 'CompanySupervisor', arLabel: 'شركة' },
+      { key: 'Trainer', arLabel: 'مدرب' },
+      { key: 'Trainee', arLabel: 'متدرب' }
+    ];
+
+    return rolesMap.map((r) => ({
+      role: r.arLabel,
+      permissionsCount: this.permissionsCountByRole[r.key],
+      usersCount: this.countByRole(list, r.key)
     }));
   });
 
@@ -133,7 +140,26 @@ export class AdminUsers implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // --- Modal: Create ---
+  // دالة تحويل اسم الدور للعربي
+  getRoleArabicName(roleInput: any): string {
+    if (!roleInput) return 'غير محدد';
+    const str = String(roleInput).trim().toLowerCase();
+
+    if (str === '1' || str === 'admin' || str.includes('هيئة')) return 'هيئة';
+    if (str === '2' || str === 'companysupervisor' || str.includes('شركة')) return 'شركة';
+    if (str === '3' || str === 'trainer' || str.includes('مدرب')) return 'مدرب';
+    if (str === '4' || str === 'trainee' || str.includes('متدرب')) return 'متدرب';
+
+    return String(roleInput);
+  }
+
+  // دالة جلب كلاس التنسيق الخاص بالدور
+  getRoleClass(roleInput: any): string {
+    const norm = this.normalizeRole(roleInput);
+    return norm.toLowerCase();
+  }
+
+  // Modal: Create
   openCreateModal(): void {
     this.isCreateModalOpen = true;
     this.cdr.detectChanges();
@@ -188,7 +214,7 @@ export class AdminUsers implements OnInit {
     });
   }
 
-  // --- Modal: Edit Profile ---
+  // Modal: Edit
   openEditModal(user: UserResponseDto): void {
     this.selectedUser = { ...user };
     this.isEditModalOpen = true;
@@ -226,7 +252,7 @@ export class AdminUsers implements OnInit {
     });
   }
 
-  // --- Modal: Reset Password ---
+  // Modal: Password
   openResetPasswordModal(user: UserResponseDto): void {
     this.selectedUser = { ...user };
     this.newPassword = '';
@@ -264,7 +290,7 @@ export class AdminUsers implements OnInit {
     return parts[0].slice(0, 2);
   }
 
-  private normalizeRole(roleInput: any): string {
+  public normalizeRole(roleInput: any): string {
     if (!roleInput) return '';
     const str = String(roleInput).trim().toLowerCase();
 

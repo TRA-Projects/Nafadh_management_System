@@ -399,6 +399,226 @@
   </div>
 </div>
 
+<!-- Modal: تفاصيل الدفعة -->
+<div *ngIf="isViewModalOpen" (click)="onCloseViewModal()" class="modal-overlay" dir="rtl">
+
+  <!-- Modal Container -->
+  <div (click)="$event.stopPropagation()" class="modal-container-details">
+    
+    <!-- Modal Header -->
+    <div class="details-header">
+      <h3 class="details-title">تفاصيل الدفعة</h3>
+      <button type="button" (click)="onCloseViewModal()" class="details-close-btn">&times;</button>
+    </div>
+
+    <!-- Top Card: Batch Title & Icon -->
+    <div class="details-top-card">
+      <div class="details-batch-info">
+        <span class="details-status-badge" [ngClass]="getStatusBadgeClass(selectedBatch?.status)">
+          {{ getStatusLabel(selectedBatch?.status) }}
+        </span>
+        <h4 class="details-batch-name">{{ selectedBatch?.batchName }}</h4>
+        <p class="details-batch-subtext">
+          {{ selectedBatch?.startDate | date:'MMM yyyy' }} · {{ selectedBatch?.trackName || '-' }}
+        </p>
+      </div>
+      <div class="details-icon-box">
+        <i class="fa-regular fa-calendar-days"></i>
+      </div>
+    </div>
+
+    <!-- Progress Card: Occupancy -->
+    <div class="details-progress-card">
+      <div class="details-progress-header">
+        <span class="details-progress-title">الإشغال الحالي / الطاقة</span>
+        <span class="details-progress-numbers" dir="ltr">
+          {{ selectedBatch?.totalTraineesCount }} / {{ selectedBatch?.capacity }}
+        </span>
+      </div>
+      <div class="details-progress-bg">
+        <div 
+          class="details-progress-fill" 
+          [style.width.%]="getOccupancyPercentage(selectedBatch?.totalTraineesCount, selectedBatch?.capacity)"
+        ></div>
+      </div>
+      <p class="details-progress-hint">
+        {{ (selectedBatch?.capacity || 0) - (selectedBatch?.totalTraineesCount || 0) }} مقعد متاحة
+      </p>
+    </div>
+
+    <!-- Details Rows -->
+    <div class="details-rows-container">
+      
+      <!-- الشركة المستضيفة -->
+      <div class="details-row">
+        <span class="details-row-label">الشركة المستضيفة</span>
+        <span class="details-row-value">{{ selectedBatch?.companyName || '-' }}</span>
+      </div>
+
+      <!-- المدرب -->
+      <div class="details-row">
+        <span class="details-row-label">المدرب</span>
+        <span class="details-row-value">{{ selectedBatch?.instructorName || '-' }}</span>
+      </div>
+
+      <!-- تاريخ البداية -->
+      <div class="details-row">
+        <span class="details-row-label">تاريخ البداية</span>
+        <span class="details-row-value">{{ selectedBatch?.startDate ? (selectedBatch?.startDate | date:'dd/MM/yyyy') : '-' }}</span>
+      </div>
+
+      <!-- تاريخ النهاية -->
+      <div class="details-row">
+        <span class="details-row-label">تاريخ النهاية</span>
+        <span class="details-row-value">{{ selectedBatch?.endDate ? (selectedBatch?.endDate | date:'dd/MM/yyyy') : '-' }}</span>
+      </div>
+
+    </div>
+
+    <!-- Footer Button -->
+    <div class="details-footer">
+      <button type="button" (click)="onCloseViewModal()" class="details-btn-close">
+        إغلاق
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: تعديل بيانات الدفعة -->
+<div *ngIf="isEditModalOpen" (click)="onCloseEditModal()" class="modal-overlay" dir="rtl">
+
+  <!-- Modal Container -->
+  <div (click)="$event.stopPropagation()" class="modal-container-details">
+    
+    <!-- Modal Header -->
+    <div class="details-header">
+      <h3 class="details-title">تعديل بيانات الدفعة</h3>
+      <button type="button" (click)="onCloseEditModal()" class="details-close-btn">&times;</button>
+    </div>
+
+    <!-- نموذج التعديل -->
+    <form [formGroup]="editBatchForm" (ngSubmit)="onSaveBatch()" class="edit-form">
+
+      <!-- Top Card: Summary -->
+      <div class="details-top-card">
+        <div class="details-batch-info">
+          <h4 class="details-batch-name">{{ selectedBatch?.batchName }} · {{ selectedBatch?.startDate | date:'MMM yyyy' }}</h4>
+          <p class="details-batch-subtext">{{ selectedBatch?.companyName || '-' }}</p>
+        </div>
+        <div class="details-icon-box">
+          <i class="fa-regular fa-calendar-days"></i>
+        </div>
+      </div>
+
+      <!-- 1. اسم الدفعة -->
+      <div class="form-group">
+        <label class="form-label">اسم الدفعة <span class="required-star">*</span></label>
+        <input type="text" formControlName="batchName" class="form-input" />
+      </div>
+
+    <!-- 2. البرنامج -->
+    <!-- 2. البرنامج (قائمة مخصصة تفتح للأسفل) -->
+    <div class="form-group" style="position: relative;">
+      <label class="form-label">البرنامج</label>
+    
+      <!-- الحقل الذي يظهر اسم البرنامج المختار -->
+      <div class="form-input" (click)="toggleProgramDropdown()"
+        style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+        <span>{{ getSelectedProgramName() }}</span>
+        <i class="fa fa-chevron-down"></i>
+      </div>
+    
+      <!-- القائمة المنسدلة للبرامج -->
+      <div *ngIf="isProgramDropdownOpen" class="custom-dropdown-menu">
+        <div *ngFor="let prog of programs()" (click)="selectProgram(prog)" class="dropdown-item">
+          {{ prog.name || prog.title }}
+        </div>
+      </div>
+    </div>
+
+      <!-- 3. الشركة المستضيفة -->
+    <div class="form-group" style="position: relative;">
+      <label class="form-label">الشركة المستضيفة</label>
+    
+      <!-- الحقل الذي يظهر الاسم -->
+      <div class="form-input" (click)="toggleCompanyDropdown()"
+        style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+        <span>{{ getSelectedCompanyName() }}</span>
+        <i class="fa fa-chevron-down"></i>
+      </div>
+    
+      <!-- القائمة التي ستظهر للأسفل دائماً -->
+      <div *ngIf="isCompanyDropdownOpen" class="custom-dropdown-menu">
+        <div (click)="selectCompany({companyId: '', companyName: 'بدون شركة'})" class="dropdown-item">بدون شركة</div>
+        <div *ngFor="let comp of companies()" (click)="selectCompany(comp)" class="dropdown-item">
+          {{ comp.companyName }}
+        </div>
+      </div>
+    </div>
+
+      <!-- 4. المدرب -->
+      <div class="form-group" style="position: relative;">
+        <label class="form-label">المدرب</label>
+      
+        <!-- الحقل الذي يظهر اسم المدرب المختار -->
+        <div class="form-input" (click)="toggleTrainerDropdown()"
+          style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+          <span>{{ getSelectedTrainerName() }}</span>
+          <i class="fa fa-chevron-down"></i>
+        </div>
+      
+        <!-- القائمة المنسدلة للمدربين -->
+        <div *ngIf="isTrainerDropdownOpen" class="custom-dropdown-menu">
+          <div (click)="selectTrainer({trainerId: '', name: 'بدون مدرب'})" class="dropdown-item">بدون مدرب</div>
+          <div *ngFor="let trainer of trainers()" (click)="selectTrainer(trainer)" class="dropdown-item">
+            {{ trainer.name }}
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. تاريخ البداية وتاريخ النهاية (صف واحد) -->
+      <div class="form-row-grid">
+        <div class="form-group">
+          <label class="form-label">تاريخ البداية</label>
+          <input type="date" formControlName="startDate" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">تاريخ النهاية</label>
+          <input type="date" formControlName="endDate" class="form-input" />
+        </div>
+      </div>
+
+      <!-- 6. الطاقة الاستيعابية والحالة (صف واحد) -->
+      <div class="form-row-grid">
+        <div class="form-group">
+          <label class="form-label">الطاقة الاستيعابية</label>
+          <input type="number" formControlName="capacity" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">الحالة</label>
+          <select formControlName="status" class="form-input">
+            <option value="Ongoing">جارية</option>
+            <option value="Upcoming">قادمة</option>
+            <option value="Completed">منتهية</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Form Actions Footer -->
+      <div class="edit-modal-footer">
+        <button type="submit" class="btn-save">
+          حفظ التغييرات
+        </button>
+        <button type="button" (click)="onCloseEditModal()" class="btn-cancel">
+          إلغاء
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
 
   @if (totalPages() > 1) {
 <div class="compact-pagination-wrapper">
