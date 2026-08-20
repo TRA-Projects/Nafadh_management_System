@@ -1,171 +1,1365 @@
-<h2 class="nfd-page-title">الإنجازات والشهادات</h2>
+<div class="achievements-page" dir="rtl">
 
-<!-- قسم التقييم - يظهر دائماً -->
-<div class="nfd-card" style="margin-bottom:16px;border-inline-start:4px solid var(--color-cyan)">
-  <strong style="display:block;margin-bottom:10px;font-size:13px">أكملت وحدة مؤخراً — شاركنا رأيك!</strong>
-  <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <button class="nfd-btn secondary" (click)="openFeedback('TrainerRating')">⭐ تقييم المدرب</button>
-    <button class="nfd-btn secondary" (click)="openFeedback('BatchExperienceRating')">📊 تقييم تجربة الدفعة</button>
-  </div>
-</div>
+  <!-- =========================================================
+       HEADER
+       ========================================================= -->
+  <div class="page-header">
 
-<!-- نتائج الوحدات -->
-<div class="nfd-card">
-  <h3>📚 نتائج الوحدات</h3>
-  
-  @for (module of displayModules(); track module.moduleId) {
-    @let progress = module.progress;
-    @let status = module.status;
-    @let title = module.title;
-    
-    <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
-      <span style="width:200px;font-size:13px;font-weight:600;color:#1e293b;flex-shrink:0;text-align:right">
-        {{ title }}
-      </span>
-      <div class="nfd-bar" style="flex:1;background:#f1f5f9;height:10px;border-radius:6px;overflow:hidden;position:relative;direction:rtl">
-        <div
-          class="fill"
-          [style.height]="'100%'"
-          [style.background]="'linear-gradient(90deg, ' + getBarColor(progress) + ' 0%, #1e1b4b 100%)'"
-          [style.borderRadius]="'6px'"
-          [style.width]="progress + '%'"
-          [style.transition]="'width 0.5s ease'">
+    <div>
+      <h2 class="nfd-page-title">الإنجازات والشهادات</h2>
+      <p class="nfd-page-sub">
+        تابع تقدمك، إنجازاتك وشهاداتك التدريبية
+      </p>
+    </div>
+
+    <div class="achievement-summary">
+
+      <!-- نسبة الإكمال -->
+      <div class="summary-item">
+        <div class="summary-icon progress-icon">%</div>
+        <div>
+          <span>إكمال البرنامج</span>
+          <strong>{{ completionPercentage() }}%</strong>
         </div>
       </div>
-      <span style="width:80px;font-size:13px;font-weight:700;color:#1e293b;flex-shrink:0;text-align:left">
-        @if (status === 'Completed') {
-          ✅ {{ progress }}%
-        } @else if (status === 'InProgress') {
-          ⏳ {{ progress }}%
-        } @else {
-          ⬜ 0%
-        }
-      </span>
+
+      <!-- الأوسمة -->
+      <div class="summary-item">
+        <div class="summary-icon badge-icon">🏅</div>
+        <div>
+          <span>الأوسمة</span>
+          <strong>{{ myBadges().length }}</strong>
+        </div>
+      </div>
+
+      <!-- الشهادات -->
+      <div class="summary-item">
+        <div class="summary-icon certificate-icon">📜</div>
+        <div>
+          <span>الشهادات</span>
+          <strong>{{ certificates().length }}</strong>
+        </div>
+      </div>
+
     </div>
-  }
-  @empty {
-    <p style="text-align:center;color:#94a3b8;padding:20px 0">📭 لا توجد وحدات مسجلة بعد</p>
-  }
-  
-  <!-- نسبة الإكمال الكلية -->
-  <div style="margin-top:16px;padding-top:16px;border-top:1px solid #f1f5f9">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:13px;font-weight:600;color:#1e293b">📊 نسبة إكمال البرنامج</span>
-      <span style="font-size:18px;font-weight:700;color:#0d9488">{{ completionPercentage() }}%</span>
-    </div>
-    <div class="nfd-bar" style="margin-top:8px;background:#f1f5f9;height:12px;border-radius:6px;overflow:hidden;direction:rtl">
-      <div class="fill"
-           [style.height]="'100%'"
-           [style.background]="'linear-gradient(90deg, #0d9488 0%, #1e1b4b 100%)'"
-           [style.borderRadius]="'6px'"
-           [style.width]="completionPercentage() + '%'"
-           [style.transition]="'width 0.8s ease'">
+
+  </div>
+
+
+  <!-- =========================================================
+       FEEDBACK
+       ========================================================= -->
+  <div class="feedback-strip">
+
+    <div class="feedback-info">
+      <span class="feedback-icon">💬</span>
+
+      <div>
+        <strong>شاركنا تجربتك</strong>
+        <small>أكملت وحدة مؤخراً؟ نود معرفة رأيك</small>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- الأوسمة والإنجازات -->
-<div class="nfd-card" style="margin-top:16px">
-  <h3>🏅 الأوسمة والإنجازات</h3>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));gap:12px">
-    
-    @for (badge of allBadges(); track badge.badgeId) {
-      @let earned = isEarned(badge.badgeId);
-       <div style="text-align:center;padding:14px;border-radius:12px;transition:all 0.3s ease"
-         [style.border]="'2px solid ' + (earned ? '#F59E0B' : 'var(--color-border)')"
-         [style.background]="earned ? '#FFFBF0' : 'transparent'"
-         [style.opacity]="earned ? '1' : '0.5'">
-        <div style="font-size:26px;margin-bottom:6px">{{ badge.icon || '🏅' }}</div>
-        <strong style="display:block;font-size:12px;color:#1e293b">{{ badge.name }}</strong>
-        <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">{{ badge.description }}</p>
-        @if (earned) {
-          <span style="font-size:10px;font-weight:700;color:#D97706">✓ محقق</span>
-        } @else {
-          <span style="font-size:10px;font-weight:700;color:#94a3b8">🔒 غير محقق</span>
-        }
-      </div>
-    }
-    @empty {
-      <p style="text-align:center;color:#94a3b8;padding:20px 0;grid-column:1/-1">🏷️ لا توجد أوسمة متاحة حالياً</p>
-    }
+    <div class="feedback-buttons">
+      <button
+        class="feedback-btn"
+        (click)="openFeedback('TrainerRating')">
+        ⭐ تقييم المدرب
+      </button>
 
-  </div>
-</div>
-
-<!-- شهادة الإتمام -->
-<div class="nfd-card" style="margin-top:16px">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <h3 style="margin:0">📜 شهادة الإتمام</h3>
-    @if (completionPercentage() >= 85) {
-      <span class="nfd-badge" style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">✅ متاحة للتحميل</span>
-    } @else {
-      <span class="nfd-badge" style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">⏳ قيد الإنجاز</span>
-    }
-  </div>
-  
-  <p class="nfd-muted" style="margin:0 0 16px 0;font-size:12px">
-    @if (completionPercentage() >= 85) {
-      🎉 تهانينا! لقد أكملت أكثر من 85% من البرنامج، يمكنك الآن تحميل شهادتك.
-    } @else {
-      📌 ستصدر الشهادة عند إتمام 85% من البرنامج التدريبي. ({{ completionPercentage() }}% مكتمل)
-    }
-  </p>
-
-  <div style="background:linear-gradient(135deg, #0b1f64 0%, #030b2e 100%), radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px); background-size: 100% 100%, 16px 16px; border-radius:12px; padding:32px 20px; text-align:center; color:#ffffff; position:relative; overflow:hidden">
-    <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;letter-spacing:2px">شهادة إتمام التدريب</div>
-    <h2 style="font-size:24px;font-weight:800;letter-spacing:1px;margin:0 0 12px 0;color:#ffffff">NAFADH</h2>
-    <p style="font-size:13px;color:#e2e8f0;margin:0 0 20px 0;line-height:1.6">
-      يشهد بأن المتدرب: <strong style="color:#ffffff">{{ enrollment()?.traineeName || 'اسم المتدرب' }}</strong><br>
-      أتم برنامج <strong style="color:#ffffff">{{ enrollment()?.programTitle || 'التدريب' }}</strong>
-    </p>
-    <div style="display:inline-block;background:rgba(13, 148, 136, 0.2);border:1px solid #0d9488;color:#2dd4bf;padding:6px 20px;border-radius:20px;font-size:12px;font-weight:600">
-      {{ completionPercentage() >= 85 ? '✅ جاهزة للتحميل' : '⏳ ' + completionPercentage() + '% مكتمل' }}
+      <button
+        class="feedback-btn"
+        (click)="openFeedback('BatchExperienceRating')">
+        📊 تجربة الدفعة
+      </button>
     </div>
+
   </div>
 
-  <button 
-    style="width:100%;margin-top:12px;color:#ffffff;height:42px;border-radius:8px;border:none;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;transition:all 0.3s ease"
-    [style.background]="canDownloadCertificate() ? '#0d9488' : '#808baf'"
-    [style.cursor]="canDownloadCertificate() ? 'pointer' : 'not-allowed'"
-    (click)="downloadCertificate()"
-    [disabled]="!canDownloadCertificate()">
-    <span>{{ canDownloadCertificate() ? '📥 تنزيل الشهادة' : '🔒 غير متاحة للتحميل بعد' }}</span>
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-      <polyline points="7 10 12 15 17 10"></polyline>
-      <line x1="12" y1="15" x2="12" y2="3"></line>
-    </svg>
-  </button>
-</div>
 
-<!-- نافذة التقييم المنبثقة -->
-@if (showFeedback()) {
-  <div class="nfd-modal-bg" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000" (click)="showFeedback.set(false)">
-    <div class="nfd-modal" style="background:#ffffff;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto" (click)="$event.stopPropagation()">
-      <h3 style="margin-top:0;color:#1e293b">{{ feedbackType() === 'TrainerRating' ? '⭐ تقييم المدرب' : '📊 تقييم تجربة الدفعة' }}</h3>
-      
-      @for (c of criteria(); track c.criterionId) {
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <label style="font-size:12px;color:#334155">{{ c.name }}</label>
-          <div style="display:flex;gap:2px;direction:ltr">
-            @for (s of [1,2,3,4,5]; track s) {
-              <button 
-                style="font-size:22px;background:none;border:none;cursor:pointer;padding:0 2px;transition:all 0.2s ease"
-                [style.color]="(scores[c.criterionId] || 0) >= s ? '#F59E0B' : '#e2e8f0'" 
-                (click)="scores[c.criterionId] = s">★</button>
-            }
+  <!-- =========================================================
+       MAIN CONTENT
+       ========================================================= -->
+  <div class="main-grid">
+
+    <!-- =======================================================
+         PROGRESS
+         ======================================================= -->
+    <div class="nfd-card progress-card">
+
+      <div class="card-header">
+
+        <div>
+          <h3>📚 تقدم البرنامج</h3>
+          <span>متابعة تقدمك في الوحدات التدريبية</span>
+        </div>
+
+        <div class="completion-circle">
+          <span>{{ completionPercentage() }}%</span>
+        </div>
+
+      </div>
+
+
+      <!-- Progress overview -->
+      <div class="overall-progress">
+
+        <div class="overall-progress-info">
+          <span>نسبة الإكمال الكلية</span>
+          <strong>{{ completionPercentage() }}%</strong>
+        </div>
+
+        <div class="progress-track">
+          <div
+            class="progress-fill"
+            [style.width]="completionPercentage() + '%'">
           </div>
         </div>
-      }
-      
-      <label style="display:block;font-size:12px;font-weight:600;margin-top:12px;color:#1e293b">💬 تعليق إضافي</label>
-      <textarea class="nfd-input" rows="3" [(ngModel)]="comment" style="resize:none;width:100%;padding:10px;border-radius:6px;border:1px solid #e2e8f0;font-family:inherit;font-size:13px;margin-top:4px" placeholder="أضف تعليقك هنا..."></textarea>
-      
-      <div class="nfd-modal-actions" style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-        <button class="nfd-btn secondary" style="padding:8px 20px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;color:#64748b;cursor:pointer;font-size:13px" (click)="showFeedback.set(false)">إلغاء</button>
-        <button class="nfd-btn primary" style="padding:8px 20px;border-radius:6px;border:none;background:#0d9488;color:#fff;cursor:pointer;font-size:13px;font-weight:600" (click)="submitFeedback()">📤 إرسال التقييم</button>
+
       </div>
+
+
+      <!-- Modules -->
+      <div class="modules-list">
+
+        @for (module of displayModules(); track module.moduleId) {
+
+          @let progress = module.progress;
+          @let status = module.status;
+          @let title = module.title;
+
+          <div class="module-row">
+
+            <div class="module-name">
+
+              <div
+                class="module-status"
+                [class.completed]="status === 'Completed'"
+                [class.in-progress]="status === 'InProgress'">
+
+                @if (status === 'Completed') {
+                  ✓
+                } @else if (status === 'InProgress') {
+                  ◐
+                } @else {
+                  ○
+                }
+
+              </div>
+
+              <span>{{ title }}</span>
+
+            </div>
+
+
+            <div class="module-progress">
+
+              <div class="module-track">
+
+                <div
+                  class="module-fill"
+                  [style.width]="progress + '%'"
+                  [style.background]="getBarColor(progress)">
+                </div>
+
+              </div>
+
+              <strong>
+                {{ progress }}%
+              </strong>
+
+            </div>
+
+          </div>
+
+        }
+
+        @empty {
+
+          <div class="empty-state">
+            <span>📭</span>
+            <p>لا توجد وحدات مسجلة بعد</p>
+          </div>
+
+        }
+
+      </div>
+
     </div>
+
+
+    <!-- =======================================================
+         BADGES
+         ======================================================= -->
+    <div class="nfd-card badges-card">
+
+      <div class="card-header">
+
+        <div>
+          <h3>🏅 الأوسمة والإنجازات</h3>
+          <span>إنجازاتك التي حققتها خلال التدريب</span>
+        </div>
+
+        <div class="badge-counter">
+          {{ myBadges().length }}/{{ allBadges().length }}
+        </div>
+
+      </div>
+
+
+      <div class="badges-grid">
+
+        @for (badge of allBadges(); track badge.badgeId) {
+
+          @let earned = isEarned(badge.badgeId);
+
+          <div
+            class="badge-item"
+            [class.earned]="earned"
+            [class.locked]="!earned">
+
+            <div class="badge-symbol">
+
+              {{ badge.icon || '🏅' }}
+
+              @if (earned) {
+                <span class="earned-check">✓</span>
+              }
+
+            </div>
+
+            <strong>{{ badge.name }}</strong>
+
+            <small>
+              {{ badge.description }}
+            </small>
+
+            @if (earned) {
+
+              <span class="badge-status earned-status">
+                ✓ محقق
+              </span>
+
+            } @else {
+
+              <span class="badge-status locked-status">
+                🔒 غير محقق
+              </span>
+
+            }
+
+          </div>
+
+        }
+
+        @empty {
+
+          <div class="empty-state">
+            <span>🏷️</span>
+            <p>لا توجد أوسمة متاحة حالياً</p>
+          </div>
+
+        }
+
+      </div>
+
+    </div>
+
   </div>
+
+
+  <!-- =========================================================
+       CERTIFICATE
+       ========================================================= -->
+  <div class="certificate-card nfd-card">
+
+    <div class="certificate-info">
+
+      <div class="certificate-title">
+
+        <div class="certificate-icon">
+          📜
+        </div>
+
+        <div>
+          <h3>شهادة إتمام التدريب</h3>
+
+          <p>
+            @if (completionPercentage() >= 85) {
+
+              🎉 أصبحت الشهادة متاحة للتحميل
+
+            } @else {
+
+              أكمل 85% من البرنامج للحصول على الشهادة
+
+            }
+          </p>
+        </div>
+
+      </div>
+
+
+      <div class="certificate-status">
+
+        @if (completionPercentage() >= 85) {
+
+          <span class="available">
+            ✓ متاحة للتحميل
+          </span>
+
+        } @else {
+
+          <span class="pending">
+            ⏳ {{ completionPercentage() }}% مكتمل
+          </span>
+
+        }
+
+      </div>
+
+    </div>
+
+
+    <!-- Mini certificate -->
+    <div class="certificate-preview">
+
+      <div class="certificate-brand">
+        NAFADH
+      </div>
+
+      <div class="certificate-text">
+
+        <span>شهادة إتمام التدريب</span>
+
+        <strong>
+          {{ enrollment()?.traineeName || 'اسم المتدرب' }}
+        </strong>
+
+        <small>
+          أتم برنامج
+          {{ enrollment()?.programTitle || 'التدريب' }}
+        </small>
+
+      </div>
+
+      <div class="certificate-percent">
+        {{ completionPercentage() }}%
+      </div>
+
+    </div>
+
+
+    <button
+      class="download-btn"
+      [class.enabled]="canDownloadCertificate()"
+      [disabled]="!canDownloadCertificate()"
+      (click)="downloadCertificate()">
+
+      @if (canDownloadCertificate()) {
+
+        <span>📥 تنزيل الشهادة</span>
+
+      } @else {
+
+        <span>🔒 الشهادة غير متاحة بعد</span>
+
+      }
+
+    </button>
+
+  </div>
+
+
+  <!-- =========================================================
+       FEEDBACK MODAL
+       ========================================================= -->
+  @if (showFeedback()) {
+
+    <div
+      class="nfd-modal-bg"
+      (click)="showFeedback.set(false)">
+
+      <div
+        class="nfd-modal"
+        (click)="$event.stopPropagation()">
+
+        <div class="modal-header">
+
+          <div>
+
+            <h3>
+              {{
+                feedbackType() === 'TrainerRating'
+                  ? '⭐ تقييم المدرب'
+                  : '📊 تقييم تجربة الدفعة'
+              }}
+            </h3>
+
+            <p>
+              ساعدنا في تحسين تجربتك التدريبية
+            </p>
+
+          </div>
+
+          <button
+            class="modal-close"
+            (click)="showFeedback.set(false)">
+            ×
+          </button>
+
+        </div>
+
+
+        @for (c of criteria(); track c.criterionId) {
+
+          <div class="criterion-row">
+
+            <label>
+              {{ c.name }}
+            </label>
+
+            <div class="stars">
+
+              @for (s of [1,2,3,4,5]; track s) {
+
+                <button
+                  [style.color]="
+                    (scores[c.criterionId] || 0) >= s
+                      ? '#F59E0B'
+                      : '#dbe2ea'
+                  "
+                  (click)="scores[c.criterionId] = s">
+
+                  ★
+
+                </button>
+
+              }
+
+            </div>
+
+          </div>
+
+        }
+
+
+        <label class="comment-label">
+          💬 تعليق إضافي
+        </label>
+
+        <textarea
+          [(ngModel)]="comment"
+          rows="3"
+          placeholder="أضف تعليقك هنا...">
+        </textarea>
+
+
+        <div class="modal-actions">
+
+          <button
+            class="cancel-btn"
+            (click)="showFeedback.set(false)">
+            إلغاء
+          </button>
+
+          <button
+            class="submit-feedback-btn"
+            (click)="submitFeedback()">
+            📤 إرسال التقييم
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+</div>
+
+
+<!-- =========================================================
+     PAGE STYLES
+     ========================================================= -->
+<style>
+
+.achievements-page {
+  width: 100%;
+  max-width: 1450px;
+  margin: 0 auto;
+  padding: 8px 4px;
+  box-sizing: border-box;
+  color: #1e293b;
 }
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 12px;
+}
+
+.nfd-page-title {
+  margin: 0;
+  font-size: 25px;
+  font-weight: 800;
+  color: #172554;
+}
+
+.nfd-page-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+
+.achievement-summary {
+  display: flex;
+  gap: 8px;
+}
+
+
+.summary-item {
+  min-width: 125px;
+  padding: 9px 12px;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 7px rgba(15, 23, 42, 0.03);
+}
+
+.summary-item span {
+  display: block;
+  font-size: 10px;
+  color: #94a3b8;
+  margin-bottom: 2px;
+}
+
+.summary-item strong {
+  font-size: 15px;
+  color: #172554;
+}
+
+
+.summary-icon {
+  width: 31px;
+  height: 31px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.progress-icon {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.badge-icon {
+  background: #fff7ed;
+}
+
+.certificate-icon {
+  background: #eef2ff;
+}
+
+
+/* =========================================================
+   FEEDBACK
+   ========================================================= */
+
+.feedback-strip {
+  min-height: 48px;
+  padding: 8px 14px;
+  box-sizing: border-box;
+  background: linear-gradient(90deg, #f8fafc, #f0f9ff);
+  border: 1px solid #e2e8f0;
+  border-right: 4px solid #0d9488;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.feedback-info {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.feedback-icon {
+  width: 31px;
+  height: 31px;
+  border-radius: 9px;
+  background: #e0f2fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feedback-info strong {
+  display: block;
+  font-size: 12px;
+  color: #172554;
+}
+
+.feedback-info small {
+  display: block;
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.feedback-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.feedback-btn {
+  border: 1px solid #dbeafe;
+  background: #fff;
+  color: #1e40af;
+  border-radius: 7px;
+  padding: 6px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.feedback-btn:hover {
+  background: #eff6ff;
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   MAIN GRID
+   ========================================================= */
+
+.main-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.nfd-card {
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, .035);
+}
+
+
+/* =========================================================
+   CARD HEADER
+   ========================================================= */
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #172554;
+}
+
+.card-header span {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+
+/* =========================================================
+   PROGRESS CARD
+   ========================================================= */
+
+.progress-card {
+  padding: 15px;
+}
+
+.completion-circle {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      #0d9488 {{ completionPercentage() }}%,
+      #e2e8f0 0
+    );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.completion-circle::before {
+  content: "";
+  position: absolute;
+}
+
+.completion-circle span {
+  width: 34px;
+  height: 34px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #0f766e;
+}
+
+
+/* =========================================================
+   OVERALL PROGRESS
+   ========================================================= */
+
+.overall-progress {
+  background: #f8fafc;
+  border-radius: 9px;
+  padding: 8px 10px;
+  margin-bottom: 9px;
+}
+
+.overall-progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: #64748b;
+  margin-bottom: 5px;
+}
+
+.overall-progress-info strong {
+  font-size: 12px;
+  color: #0d9488;
+}
+
+.progress-track {
+  height: 7px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0d9488, #1e3a8a);
+  border-radius: 10px;
+  transition: width .6s ease;
+}
+
+
+/* =========================================================
+   MODULES
+   ========================================================= */
+
+.modules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 210px;
+  overflow: hidden;
+}
+
+.module-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: .2s;
+}
+
+.module-row:hover {
+  background: #f8fafc;
+}
+
+.module-name {
+  width: 42%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.module-name span:last-child {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.module-status {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.module-status.completed {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.module-status.in-progress {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.module-progress {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.module-track {
+  flex: 1;
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.module-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width .5s ease;
+}
+
+.module-progress strong {
+  width: 35px;
+  font-size: 10px;
+  text-align: left;
+  color: #475569;
+}
+
+
+/* =========================================================
+   BADGES
+   ========================================================= */
+
+.badges-card {
+  padding: 15px;
+}
+
+.badge-counter {
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 4px 9px;
+  border-radius: 15px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  max-height: 220px;
+  overflow: hidden;
+}
+
+.badge-item {
+  min-height: 90px;
+  padding: 8px 5px;
+  border-radius: 9px;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+  transition: .2s;
+  box-sizing: border-box;
+}
+
+.badge-item.earned {
+  background: #fffbeb;
+  border-color: #fbbf24;
+}
+
+.badge-item.locked {
+  opacity: .45;
+}
+
+.badge-symbol {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  margin: 0 auto 3px;
+  font-size: 23px;
+}
+
+.earned-check {
+  position: absolute;
+  right: -5px;
+  bottom: -3px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #16a34a;
+  color: #fff;
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-item strong {
+  display: block;
+  font-size: 9px;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge-item small {
+  display: block;
+  margin-top: 2px;
+  font-size: 8px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge-status {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.earned-status {
+  color: #b45309;
+}
+
+.locked-status {
+  color: #94a3b8;
+}
+
+
+/* =========================================================
+   CERTIFICATE
+   ========================================================= */
+
+.certificate-card {
+  padding: 13px 15px;
+}
+
+.certificate-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 9px;
+}
+
+.certificate-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.certificate-title .certificate-icon {
+  width: 35px;
+  height: 35px;
+  background: #eef2ff;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.certificate-title h3 {
+  margin: 0;
+  font-size: 13px;
+  color: #172554;
+}
+
+.certificate-title p {
+  margin: 3px 0 0;
+  font-size: 9px;
+  color: #94a3b8;
+}
+
+.certificate-status span {
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.certificate-status .available {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.certificate-status .pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+
+/* =========================================================
+   CERTIFICATE PREVIEW
+   ========================================================= */
+
+.certificate-preview {
+  min-height: 70px;
+  border-radius: 10px;
+  padding: 10px 20px;
+  box-sizing: border-box;
+  background:
+    radial-gradient(
+      circle at 10% 20%,
+      rgba(255,255,255,.08),
+      transparent 30%
+    ),
+    linear-gradient(
+      120deg,
+      #0b1f64,
+      #030b2e
+    );
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
+}
+
+.certificate-brand {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.certificate-text {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.certificate-text span {
+  font-size: 8px;
+  color: #94a3b8;
+  letter-spacing: 1px;
+}
+
+.certificate-text strong {
+  font-size: 12px;
+  color: #fff;
+}
+
+.certificate-text small {
+  font-size: 9px;
+  color: #cbd5e1;
+}
+
+.certificate-percent {
+  min-width: 45px;
+  height: 30px;
+  border-radius: 15px;
+  background: rgba(13,148,136,.2);
+  border: 1px solid #0d9488;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2dd4bf;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   DOWNLOAD
+   ========================================================= */
+
+.download-btn {
+  width: 100%;
+  height: 35px;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: none;
+  color: #fff;
+  background: #808baf;
+  font-size: 11px;
+  font-weight: 700;
+  transition: .2s;
+}
+
+.download-btn.enabled {
+  background: #0d9488;
+  cursor: pointer;
+}
+
+.download-btn.enabled:hover {
+  background: #0f766e;
+  transform: translateY(-1px);
+}
+
+.download-btn:disabled {
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   EMPTY
+   ========================================================= */
+
+.empty-state {
+  width: 100%;
+  padding: 18px 0;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.empty-state span {
+  display: block;
+  font-size: 22px;
+}
+
+.empty-state p {
+  margin: 5px 0 0;
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   MODAL
+   ========================================================= */
+
+.nfd-modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, .55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.nfd-modal {
+  width: min(500px, 92%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  box-sizing: border-box;
+  box-shadow: 0 20px 50px rgba(0,0,0,.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #172554;
+}
+
+.modal-header p {
+  margin: 4px 0 0;
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.modal-close {
+  border: none;
+  background: #f1f5f9;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  font-size: 20px;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.criterion-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 11px;
+}
+
+.criterion-row label {
+  font-size: 11px;
+  color: #334155;
+}
+
+.stars {
+  display: flex;
+  direction: ltr;
+  gap: 1px;
+}
+
+.stars button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 21px;
+  transition: .15s;
+}
+
+.stars button:hover {
+  transform: scale(1.15);
+}
+
+.comment-label {
+  display: block;
+  margin-top: 14px;
+  margin-bottom: 5px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.nfd-modal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  padding: 9px;
+  font-family: inherit;
+  font-size: 11px;
+  outline: none;
+}
+
+.nfd-modal textarea:focus {
+  border-color: #0d9488;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  margin-top: 15px;
+}
+
+.cancel-btn,
+.submit-feedback-btn {
+  border-radius: 7px;
+  padding: 7px 15px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.submit-feedback-btn {
+  background: #0d9488;
+  border: none;
+  color: #fff;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1000px) {
+
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .achievement-summary {
+    width: 100%;
+  }
+
+  .summary-item {
+    flex: 1;
+  }
+
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+
+@media (max-width: 650px) {
+
+  .achievements-page {
+    padding: 8px;
+  }
+
+  .achievement-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .summary-item {
+    min-width: 0;
+  }
+
+  .summary-icon {
+    display: none;
+  }
+
+  .feedback-strip {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .feedback-buttons {
+    width: 100%;
+  }
+
+  .feedback-btn {
+    flex: 1;
+  }
+
+  .badges-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .certificate-preview {
+    padding: 10px;
+  }
+
+}
+
+</style>
