@@ -43,6 +43,576 @@ namespace Nafadh_Backend.Services
             }).ToList();
         }
 
+
+        // ==========================================================
+        // Generate Trainer Portal PDF Report
+        // This report is isolated from the shared report generator
+        // so other portals are not affected by Trainer Portal design.
+        // ==========================================================
+
+        public async Task<ReportOutputDTO> GenerateTrainerPortalReportAsync(
+            ReportInputDTO dto
+        )
+        {
+            // ======================================================
+            // Reports folder
+            // Temporary shared storage behavior.
+            // We will move Trainer Portal reports outside the project
+            // in the next storage step.
+            // ======================================================
+
+            var reportsFolder =
+                Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "reports"
+                );
+
+
+            Directory.CreateDirectory(
+                reportsFolder
+            );
+
+
+            var generatedAt =
+                DateTime.Now;
+
+
+            var fileName =
+                $"trainer-portal-report-{dto.TrainerId ?? 0}-{generatedAt:yyyyMMddHHmmssfff}.pdf";
+
+
+            var fullPath =
+                Path.Combine(
+                    reportsFolder,
+                    fileName
+                );
+
+
+            // ======================================================
+            // Trainer KPIs
+            // ======================================================
+
+            TrainerKpisDTO? kpis =
+                null;
+
+
+            if (dto.TrainerId.HasValue)
+            {
+                kpis =
+                    await _repository.GetTrainerKpisAsync(
+                        dto.TrainerId.Value
+                    );
+            }
+
+
+            // ======================================================
+            // Arabic report type
+            // ======================================================
+
+            var reportTypeName =
+                dto.Type switch
+                {
+                    NFD_ReportType.Attendance =>
+                        "تقرير الحضور والغياب",
+
+                    NFD_ReportType.Performance =>
+                        "تقرير الأداء والمهام",
+
+                    NFD_ReportType.Financial =>
+                        "التقرير المالي",
+
+                    NFD_ReportType.Enrollment =>
+                        "تقرير التسجيل",
+
+                    NFD_ReportType.Custom =>
+                        "التقرير الشامل",
+
+                    _ =>
+                        "تقرير المدرب"
+                };
+
+
+            // ======================================================
+            // Generate Trainer Portal PDF
+            // ======================================================
+
+            var document =
+                Document.Create(container =>
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(
+                            PageSizes.A4
+                        );
+
+
+                        page.Margin(35);
+
+
+                        page.DefaultTextStyle(
+                            style =>
+                                style.FontSize(11)
+                        );
+
+
+                        // ===========================================
+                        // HEADER
+                        // ===========================================
+
+                        page.Header()
+                            .Background("#003B82")
+                            .Padding(20)
+                            .Column(header =>
+                            {
+                                header.Item()
+                                    .AlignCenter()
+                                    .Text("تقرير المدرب")
+                                    .FontSize(24)
+                                    .Bold()
+                                    .FontColor(
+                                        Colors.White
+                                    );
+
+
+                                header.Item()
+                                    .PaddingTop(5)
+                                    .AlignCenter()
+                                    .Text(
+                                        "بوابة نفاذ للتدريب والتطوير"
+                                    )
+                                    .FontSize(10)
+                                    .FontColor(
+                                        Colors.White
+                                    );
+                            });
+
+
+                        // ===========================================
+                        // CONTENT
+                        // ===========================================
+
+                        page.Content()
+                            .PaddingVertical(24)
+                            .Column(column =>
+                            {
+                                column.Spacing(18);
+
+
+                                // ===================================
+                                // REPORT INFORMATION
+                                // ===================================
+
+                                column.Item()
+                                    .Border(1)
+                                    .BorderColor(
+                                        Colors.Grey.Lighten2
+                                    )
+                                    .Padding(16)
+                                    .Column(info =>
+                                    {
+                                        info.Spacing(9);
+
+
+                                        info.Item()
+                                            .AlignRight()
+                                            .Text(
+                                                reportTypeName
+                                            )
+                                            .FontSize(18)
+                                            .Bold()
+                                            .FontColor(
+                                                "#003B82"
+                                            );
+
+
+                                        info.Item()
+                                            .LineHorizontal(1)
+                                            .LineColor(
+                                                Colors.Grey.Lighten2
+                                            );
+
+
+                                        if (
+                                            dto.TrainerId.HasValue
+                                        )
+                                        {
+                                            info.Item()
+                                                .AlignRight()
+                                                .Text(text =>
+                                                {
+                                                    text.Span(
+                                                        "رقم المدرب: "
+                                                    )
+                                                    .SemiBold();
+
+                                                    text.Span(
+                                                        dto.TrainerId
+                                                            .Value
+                                                            .ToString()
+                                                    );
+                                                });
+                                        }
+
+
+                                        info.Item()
+                                            .AlignRight()
+                                            .Text(text =>
+                                            {
+                                                text.Span(
+                                                    "تاريخ التقرير: "
+                                                )
+                                                .SemiBold();
+
+                                                text.Span(
+                                                    generatedAt.ToString(
+                                                        "yyyy-MM-dd"
+                                                    )
+                                                );
+                                            });
+
+
+                                        info.Item()
+                                            .AlignRight()
+                                            .Text(text =>
+                                            {
+                                                text.Span(
+                                                    "وقت الإنشاء: "
+                                                )
+                                                .SemiBold();
+
+                                                text.Span(
+                                                    generatedAt.ToString(
+                                                        "HH:mm"
+                                                    )
+                                                );
+                                            });
+                                    });
+
+
+                                // ===================================
+                                // KPI SUMMARY
+                                // ===================================
+
+                                if (kpis != null)
+                                {
+                                    column.Item()
+                                        .AlignRight()
+                                        .Text(
+                                            "ملخص الأداء"
+                                        )
+                                        .FontSize(18)
+                                        .Bold()
+                                        .FontColor(
+                                            "#0F172A"
+                                        );
+
+
+                                    column.Item()
+                                        .Row(row =>
+                                        {
+                                            row.Spacing(10);
+
+
+                                            // Attendance card
+                                            row.RelativeItem()
+                                                .Background(
+                                                    "#F0F9FF"
+                                                )
+                                                .Border(1)
+                                                .BorderColor(
+                                                    "#BAE6FD"
+                                                )
+                                                .Padding(14)
+                                                .Column(card =>
+                                                {
+                                                    card.Item()
+                                                        .AlignCenter()
+                                                        .Text(
+                                                            "الحضور"
+                                                        )
+                                                        .FontSize(10)
+                                                        .FontColor(
+                                                            "#64748B"
+                                                        );
+
+
+                                                    card.Item()
+                                                        .PaddingTop(6)
+                                                        .AlignCenter()
+                                                        .Text(
+                                                            $"{kpis.AttendanceRate:0.#}%"
+                                                        )
+                                                        .FontSize(21)
+                                                        .Bold()
+                                                        .FontColor(
+                                                            "#003B82"
+                                                        );
+                                                });
+
+
+                                            // Tasks card
+                                            row.RelativeItem()
+                                                .Background(
+                                                    "#F0F9FF"
+                                                )
+                                                .Border(1)
+                                                .BorderColor(
+                                                    "#BAE6FD"
+                                                )
+                                                .Padding(14)
+                                                .Column(card =>
+                                                {
+                                                    card.Item()
+                                                        .AlignCenter()
+                                                        .Text(
+                                                            "إنجاز المهام"
+                                                        )
+                                                        .FontSize(10)
+                                                        .FontColor(
+                                                            "#64748B"
+                                                        );
+
+
+                                                    card.Item()
+                                                        .PaddingTop(6)
+                                                        .AlignCenter()
+                                                        .Text(
+                                                            $"{kpis.TaskCompletionRate:0.#}%"
+                                                        )
+                                                        .FontSize(21)
+                                                        .Bold()
+                                                        .FontColor(
+                                                            "#003B82"
+                                                        );
+                                                });
+
+
+                                            // Grade card
+                                            row.RelativeItem()
+                                                .Background(
+                                                    "#F0F9FF"
+                                                )
+                                                .Border(1)
+                                                .BorderColor(
+                                                    "#BAE6FD"
+                                                )
+                                                .Padding(14)
+                                                .Column(card =>
+                                                {
+                                                    card.Item()
+                                                        .AlignCenter()
+                                                        .Text(
+                                                            "التقييم الفني"
+                                                        )
+                                                        .FontSize(10)
+                                                        .FontColor(
+                                                            "#64748B"
+                                                        );
+
+
+                                                    card.Item()
+                                                        .PaddingTop(6)
+                                                        .AlignCenter()
+                                                        .Text(
+                                                            $"{kpis.AvgTechnicalGrade:0.#}"
+                                                        )
+                                                        .FontSize(21)
+                                                        .Bold()
+                                                        .FontColor(
+                                                            "#003B82"
+                                                        );
+
+
+                                                    card.Item()
+                                                        .AlignCenter()
+                                                        .Text(
+                                                            "من 100"
+                                                        )
+                                                        .FontSize(8)
+                                                        .FontColor(
+                                                            "#94A3B8"
+                                                        );
+                                                });
+                                        });
+
+
+                                    // ===================================
+                                    // KPI DETAILS
+                                    // ===================================
+
+                                    column.Item()
+                                        .Border(1)
+                                        .BorderColor(
+                                            Colors.Grey.Lighten2
+                                        )
+                                        .Padding(16)
+                                        .Column(details =>
+                                        {
+                                            details.Spacing(10);
+
+
+                                            details.Item()
+                                                .AlignRight()
+                                                .Text(
+                                                    "تفاصيل مؤشرات الأداء"
+                                                )
+                                                .FontSize(15)
+                                                .Bold();
+
+
+                                            details.Item()
+                                                .LineHorizontal(1)
+                                                .LineColor(
+                                                    Colors.Grey.Lighten2
+                                                );
+
+
+                                            details.Item()
+                                                .AlignRight()
+                                                .Text(
+                                                    $"نسبة الحضور العامة: {kpis.AttendanceRate:0.#}%"
+                                                );
+
+
+                                            details.Item()
+                                                .AlignRight()
+                                                .Text(
+                                                    $"معدل إنجاز المهام: {kpis.TaskCompletionRate:0.#}%"
+                                                );
+
+
+                                            details.Item()
+                                                .AlignRight()
+                                                .Text(
+                                                    $"متوسط الدرجات الفنية: {kpis.AvgTechnicalGrade:0.#} من 100"
+                                                );
+                                        });
+                                }
+
+
+                                // ===================================
+                                // SYSTEM NOTE
+                                // ===================================
+
+                                column.Item()
+                                    .Background(
+                                        "#F8FAFC"
+                                    )
+                                    .Padding(12)
+                                    .AlignRight()
+                                    .Text(
+                                        "تم إعداد هذا التقرير تلقائيًا اعتمادًا على البيانات المسجلة في بوابة نفاذ."
+                                    )
+                                    .FontSize(9)
+                                    .FontColor(
+                                        "#64748B"
+                                    );
+
+
+                                // FiltersJson is internal system data,
+                                // so it is not displayed in the PDF.
+                            });
+
+
+                        // ===========================================
+                        // FOOTER
+                        // ===========================================
+
+                        page.Footer()
+                            .PaddingTop(10)
+                            .Row(row =>
+                            {
+                                row.RelativeItem()
+                                    .AlignLeft()
+                                    .Text(
+                                        generatedAt.ToString(
+                                            "yyyy-MM-dd"
+                                        )
+                                    )
+                                    .FontSize(8)
+                                    .FontColor(
+                                        "#94A3B8"
+                                    );
+
+
+                                row.RelativeItem()
+                                    .AlignRight()
+                                    .Text(
+                                        "بوابة نفاذ للتدريب والتطوير"
+                                    )
+                                    .FontSize(8)
+                                    .FontColor(
+                                        "#94A3B8"
+                                    );
+                            });
+                    });
+                });
+
+
+            // ======================================================
+            // Save PDF
+            // ======================================================
+
+            document.GeneratePdf(
+                fullPath
+            );
+
+
+            var fileUrl =
+                $"reports/{fileName}";
+
+
+            // ======================================================
+            // Save report metadata
+            // ======================================================
+
+            var report =
+                new NFD_Report
+                {
+                    Type =
+                        dto.Type,
+
+                    FiltersJson =
+                        dto.FiltersJson,
+
+                    GeneratedAt =
+                        generatedAt,
+
+                    FileUrl =
+                        fileUrl,
+
+                    GeneratedByUserId =
+                        dto.GeneratedByUserId
+                };
+
+
+            await _repository.AddReportAsync(
+                report
+            );
+
+
+            return new ReportOutputDTO
+            {
+                ReportId =
+                    report.ReportId,
+
+                Type =
+                    report.Type,
+
+                FiltersJson =
+                    report.FiltersJson,
+
+                GeneratedAt =
+                    report.GeneratedAt,
+
+                FileUrl =
+                    report.FileUrl,
+
+                GeneratedByUserId =
+                    report.GeneratedByUserId
+            };
+        }
         // ==========================================================
         // Generate PDF Report
         // ==========================================================

@@ -603,48 +603,82 @@ deleteTrainingMaterial(
   }
 
 
+// =====================================================
+// Reports
+// =====================================================
 
-  // =====================================================
-  // Reports
-  // =====================================================
+getTrainerKpis(
+  trainerId: number
+): Observable<TrainerKpisDto> {
 
-  getTrainerKpis(
-    trainerId: number
-  ): Observable<TrainerKpisDto> {
+  return this.http.get<TrainerKpisDto>(
+    `${this.base}/Report/trainer-kpis/${trainerId}`
+  );
+}
 
-    return this.http.get<TrainerKpisDto>(
-      `${this.base}/Report/trainer-kpis/${trainerId}`
-    );
+
+// Shared report generator.
+// Keep this unchanged because other portals may use it.
+generateReport(
+  dto: {
+    type:
+      | 'Attendance'
+      | 'Performance'
+      | 'Financial'
+      | 'Enrollment'
+      | 'Custom';
+    filtersJson?: string;
+    generatedByUserId: number;
+    trainerId?: number;
   }
+) {
+
+  return this.http.post<{
+    reportId: number;
+    type: string;
+    filtersJson?: string;
+    generatedAt: string;
+    fileUrl?: string;
+    generatedByUserId: number;
+  }>(
+    `${this.base}/Report/generate`,
+    dto
+  );
+}
 
 
-  generateReport(
-    dto: {
-      type:
-        | 'Attendance'
-        | 'Performance'
-        | 'Financial'
-        | 'Enrollment'
-        | 'Custom';
-      filtersJson?: string;
-      generatedByUserId: number;
-      trainerId?: number;
-    }
-  ) {
+// =====================================================
+// TRAINER PORTAL REPORT
+// =====================================================
 
-    return this.http.post<{
-      reportId: number;
-      type: string;
-      filtersJson?: string;
-      generatedAt: string;
-      fileUrl?: string;
-      generatedByUserId: number;
-    }>(
-      `${this.base}/Report/generate`,
-      dto
-    );
+// Uses the dedicated Trainer Portal report endpoint
+// without affecting reports used by other portals.
+generateTrainerPortalReport(
+  dto: {
+    type:
+      | 'Attendance'
+      | 'Performance'
+      | 'Financial'
+      | 'Enrollment'
+      | 'Custom';
+    filtersJson?: string;
+    generatedByUserId: number;
+    trainerId?: number;
   }
+) {
 
+  return this.http.post<{
+    reportId: number;
+    type: string;
+    filtersJson?: string;
+    generatedAt: string;
+    fileUrl?: string;
+    generatedByUserId: number;
+  }>(
+    `${this.base}/Report/trainer-generate`,
+    dto
+  );
+}
 
   // =====================================================
   //  GENERATE TRAINER TRAINEES REPORT

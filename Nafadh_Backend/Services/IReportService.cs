@@ -14,6 +14,11 @@ namespace Nafadh_Backend.Services
         // TODO: define business-logic contract methods for this entity
         Task<List<ReportOutputDTO>> GetReportsAsync(NFD_ReportType? type, int? userId);
         Task<ReportOutputDTO> GenerateReportAsync(ReportInputDTO dto);
+        // Generates the PDF used only by the Trainer Portal.
+        // Kept separate to avoid changing shared report behavior.
+        Task<ReportOutputDTO> GenerateTrainerPortalReportAsync(
+            ReportInputDTO dto
+        );
         Task<ReportOutputDTO?> GetReportByIdAsync(int reportId);
         Task<string?> DownloadReportAsync(int reportId);
 
