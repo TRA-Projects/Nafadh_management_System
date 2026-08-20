@@ -107,7 +107,13 @@ getProgram(
       { params }
     );
   }
-
+  
+createSession(dto: unknown) {
+  return this.http.post(
+    `${this.base}/Session`,
+    dto
+  );
+}
 
   /**
    * Retrieves trainees assigned to a specific batch.
