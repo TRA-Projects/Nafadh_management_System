@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   AnnouncementDto, AuditLogDto, BatchDto, BatchPerformanceReportDto, CertificateDto, CompanyDto,
@@ -53,13 +53,23 @@ export class AdminApi {
   }
 
   // ---- Users & Permissions ----
-  getUsers(): Observable<UserResponseDto[]> {
-    return this.http.get<UserResponseDto[]>(`${this.base}/User`);
-  }
+  // في ملف admin-api.ts
+getUsers(): Observable<UserResponseDto[]> {
+  // إرسال pageSize كبرامتر لجلب عدد كبير جداً من الأسماء دفعة واحدة
+  return this.http.get<any>(`${this.base}/User`, {
+    params: { page: 1, pageSize: 10000 }
+  }).pipe(
+    map(res => {
+      if (Array.isArray(res)) return res;
+      return res?.items || res?.data || res?.results || [];
+    })
+  );
+}
   getRoles(): Observable<RoleDto[]> {
     return this.http.get<RoleDto[]>(`${this.base}/Role`);
   }
   createUser(dto: unknown) { return this.http.post(`${this.base}/User/register`, dto); }
+  updateUser(id: number, dto: unknown) { return this.http.put(`${this.base}/User/${this.sanitizeId(id)}`, dto); }
   updateUserStatus(id: number, status: string) { return this.http.put(`${this.base}/User/${this.sanitizeId(id)}/status`, { status }); }
   resetPassword(id: number, dto: unknown) { return this.http.put(`${this.base}/User/${this.sanitizeId(id)}/reset-password`, dto); }
 
