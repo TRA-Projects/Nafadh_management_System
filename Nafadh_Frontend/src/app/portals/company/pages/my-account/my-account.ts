@@ -2,7 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { CompanySupervisorDto } from '../../../../core/models/dtos';
+import { CompanyAccountDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-company-my-account',
@@ -11,19 +11,34 @@ import { CompanySupervisorDto } from '../../../../core/models/dtos';
   templateUrl: './my-account.html',
 })
 export class CompanyMyAccount implements OnInit {
-  profile = signal<CompanySupervisorDto | null>(null);
+  profile = signal<CompanyAccountDto | null>(null);
+  loading = signal(true);
+  loadError = signal(false);
 
   constructor(private api: CompanyApi, public auth: AuthService) {}
 
-  ngOnInit() {
-    const supervisorId = this.auth.userId ?? 1;
-    this.api.getSupervisorProfile(supervisorId).subscribe({
-      next: (p) => this.profile.set(p),
-      error: () => {}
+  ngOnInit(): void {
+    this.loadAccount();
+  }
+
+  loadAccount(): void {
+    this.loading.set(true);
+    this.loadError.set(false);
+
+    this.api.getCurrentAccount().subscribe({
+      next: (data) => {
+        this.profile.set(data);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.profile.set(null);
+        this.loadError.set(true);
+        this.loading.set(false);
+      }
     });
   }
 
-  async exportToPdf() {
+  async exportToPdf(): Promise<void> {
     const element = document.getElementById('account-pdf-content');
     if (!element) return;
 
@@ -34,11 +49,11 @@ export class CompanyMyAccount implements OnInit {
     const html2pdf = (window as any).html2pdf;
 
     const opt = {
-      margin:       10,
-      filename:     `بيانات_الحساب_${new Date().toISOString().slice(0, 10)}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      margin: 10,
+      filename: `بيانات_الحساب_${new Date().toISOString().slice(0, 10)}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
     html2pdf().set(opt).from(element).save();
