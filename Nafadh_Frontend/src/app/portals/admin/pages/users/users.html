@@ -4,12 +4,8 @@
 </div>
 
 <div class="nfd-card">
+  <!-- شريط التحكم: الفلاتر يمين، الزر يسار -->
   <div class="nfd-toolbar">
-    <button type="button" class="nfd-btn primary-teal" (click)="openCreateModal()">
-      <i class="bi bi-plus-lg"></i>
-      <span>إنشاء حساب جديد</span>
-    </button>
-
     <div class="nfd-chips">
       @for (r of roles(); track r.key) {
         <button
@@ -21,6 +17,13 @@
           <span class="chip-label">{{ r.label }}</span>
         </button>
       }
+    </div>
+
+    <div class="action-button-container">
+      <button type="button" class="nfd-btn primary-teal" (click)="openCreateModal()">
+        <i class="bi bi-plus-lg"></i>
+        <span>إنشاء حساب جديد</span>
+      </button>
     </div>
   </div>
 
@@ -35,11 +38,11 @@
   <table class="nfd-table">
     <thead>
       <tr>
-        <th class="text-left" style="width: 110px;"></th>
-        <th class="text-center">تاريخ الإنشاء</th>
-        <th class="text-center">الحالة</th>
-        <th class="text-center">الدور</th>
         <th class="text-right">المستخدم</th>
+        <th class="text-center">الدور</th>
+        <th class="text-center">الحالة</th>
+        <th class="text-center">تاريخ الإنشاء</th>
+        <th class="text-left" style="width: 220px;">الإجراءات</th>
       </tr>
     </thead>
     <tbody>
@@ -50,24 +53,27 @@
       } @else {
         @for (u of filtered(); track u.userId) {
           <tr>
-            <td class="text-left">
-              <div class="action-buttons">
-                <button
-                  type="button"
-                  class="btn-icon"
-                  (click)="toggleStatus(u)"
-                  [title]="(u.status | lowercase) === 'suspended' ? 'تفعيل' : 'إيقاف'">
-                  <i class="bi" [ngClass]="(u.status | lowercase) === 'suspended' ? 'bi-unlock-fill' : 'bi-lock-fill'"></i>
-                </button>
-                <button type="button" class="btn-icon" title="تعديل" (click)="openEditModal(u)">
-                  <i class="bi bi-pencil-square"></i>
-                </button>
-                <button type="button" class="btn-icon" title="إعادة تعيين كلمة المرور" (click)="openResetPasswordModal(u)">
-                  <i class="bi bi-key-fill"></i>
-                </button>
+            <!-- 1. المستخدم -->
+            <td class="text-right">
+              <div class="user-info">
+                <div class="user-avatar">
+                  {{ getInitials(u.fullName) }}
+                </div>
+                <div class="user-details">
+                  <strong class="user-name">{{ u.fullName }}</strong>
+                  <small class="user-email">{{ u.email }}</small>
+                </div>
               </div>
             </td>
-            <td class="text-center">{{ u.createdAt | date:'dd/MM/yyyy' }}</td>
+
+            <!-- 2. الدور (مطابق للصورة) -->
+            <td class="text-center">
+              <span class="nfd-badge role" [ngClass]="getRoleClass(u.roleName || u.roleId)">
+                {{ getRoleArabicName(u.roleName || u.roleId) }}
+              </span>
+            </td>
+
+            <!-- 3. الحالة -->
             <td class="text-center">
               <span
                 class="nfd-badge status"
@@ -76,20 +82,22 @@
                 {{ (u.status | lowercase) === 'suspended' ? 'موقوف' : 'نشط' }}
               </span>
             </td>
-            <td class="text-center">
-              <span class="nfd-badge role" [ngClass]="(u.roleName || '').toLowerCase()">
-                {{ u.roleName }}
-              </span>
-            </td>
-            <td class="text-right">
-              <div class="user-info">
-                <div class="user-details">
-                  <strong class="user-name">{{ u.fullName }}</strong>
-                  <small class="user-email">{{ u.email }}</small>
-                </div>
-                <div class="user-avatar">
-                  {{ getInitials(u.fullName) }}
-                </div>
+
+            <!-- 4. تاريخ الإنشاء -->
+            <td class="text-center">{{ u.createdAt | date:'dd/MM/yyyy' }}</td>
+
+            <!-- 5. الإجراءات -->
+            <td class="text-left">
+              <div class="action-buttons-wrapper">
+                <button type="button" class="btn-action edit-btn" (click)="openEditModal(u)" title="تعديل بيانات الحساب">
+                  <i class="bi bi-pencil-square"></i>
+                  <span>تعديل البيانات</span>
+                </button>
+
+                <button type="button" class="btn-action password-btn" (click)="openResetPasswordModal(u)" title="تغيير كلمة المرور">
+                  <i class="bi bi-key"></i>
+                  <span>كلمة المرور</span>
+                </button>
               </div>
             </td>
           </tr>
@@ -110,24 +118,24 @@
   <table class="nfd-table">
     <thead>
       <tr>
-        <th class="text-center">عدد المستخدمين</th>
-        <th class="text-center">عدد الصلاحيات</th>
         <th class="text-right">الدور</th>
+        <th class="text-center">عدد الصلاحيات</th>
+        <th class="text-center">عدد المستخدمين</th>
       </tr>
     </thead>
     <tbody>
       @for (r of rbacSummary(); track r.role) {
         <tr>
-          <td class="text-center">{{ r.usersCount }}</td>
-          <td class="text-center"><span class="perm-badge">{{ r.permissionsCount }}</span></td>
           <td class="text-right">{{ r.role }}</td>
+          <td class="text-center"><span class="perm-badge">{{ r.permissionsCount }}</span></td>
+          <td class="text-center">{{ r.usersCount }}</td>
         </tr>
       }
     </tbody>
   </table>
 </div>
 
-<!-- نافذة إنشاء حساب -->
+<!-- Modal: إنشاء حساب -->
 @if (isCreateModalOpen) {
   <div class="nfd-modal-bg" (click)="closeCreateModal()">
     <div class="nfd-modal" (click)="$event.stopPropagation()">
@@ -135,18 +143,19 @@
 
       <div class="form-group mb-3">
         <label>الاسم الكامل *</label>
-        <input class="nfd-input" [(ngModel)]="newUser.fullName" />
+        <input class="nfd-input" [(ngModel)]="newUser.fullName" placeholder="أدخل الاسم الكامل" />
       </div>
       <div class="form-group mb-3">
         <label>البريد الإلكتروني *</label>
-        <input class="nfd-input" [(ngModel)]="newUser.email" />
+        <input class="nfd-input" [(ngModel)]="newUser.email" placeholder="example@domain.com" />
       </div>
       <div class="form-group mb-3">
         <label>الدور *</label>
         <select class="nfd-input" [(ngModel)]="newUser.roleId">
-          @for (r of rolesList(); track r.roleId) {
-            <option [ngValue]="r.roleId">{{ r.displayName || r.roleName }}</option>
-          }
+          <option [ngValue]="1">هيئة</option>
+          <option [ngValue]="2">شركة</option>
+          <option [ngValue]="3">مدرب</option>
+          <option [ngValue]="4">متدرب</option>
         </select>
       </div>
       <div class="form-group mb-3">
@@ -166,11 +175,11 @@
   </div>
 }
 
-<!-- نافذة تعديل حساب -->
+<!-- Modal: تعديل بيانات الحساب -->
 @if (isEditModalOpen) {
   <div class="nfd-modal-bg" (click)="closeEditModal()">
     <div class="nfd-modal" (click)="$event.stopPropagation()">
-      <h3>تعديل بيانات المستخدم</h3>
+      <h3>تعديل بيانات الحساب</h3>
 
       <div class="form-group mb-3">
         <label>الاسم الكامل</label>
@@ -187,9 +196,10 @@
       <div class="form-group mb-3">
         <label>الدور</label>
         <select class="nfd-input" [(ngModel)]="selectedUser.roleId">
-          @for (r of rolesList(); track r.roleId) {
-            <option [ngValue]="r.roleId">{{ r.displayName || r.roleName }}</option>
-          }
+          <option [ngValue]="1">هيئة</option>
+          <option [ngValue]="2">شركة</option>
+          <option [ngValue]="3">مدرب</option>
+          <option [ngValue]="4">متدرب</option>
         </select>
       </div>
 
@@ -201,21 +211,21 @@
   </div>
 }
 
-<!-- نافذة إعادة تعيين كلمة المرور -->
+<!-- Modal: تغيير كلمة المرور -->
 @if (isResetPasswordModalOpen) {
   <div class="nfd-modal-bg" (click)="closeResetPasswordModal()">
     <div class="nfd-modal" (click)="$event.stopPropagation()">
-      <h3>إعادة تعيين كلمة المرور</h3>
-      <p class="reset-target">{{ selectedUser.fullName }} — {{ selectedUser.email }}</p>
+      <h3>تغيير كلمة المرور</h3>
+      <p class="reset-target">المستخدم: <strong>{{ selectedUser.fullName }}</strong> ({{ selectedUser.email }})</p>
 
       <div class="form-group mb-3">
-        <label>كلمة المرور الجديدة</label>
-        <input class="nfd-input" type="password" [(ngModel)]="newPassword" />
+        <label>كلمة المرور الجديدة *</label>
+        <input class="nfd-input" type="password" [(ngModel)]="newPassword" placeholder="أدخل كلمة المرور الجديدة" />
       </div>
 
       <div class="nfd-modal-actions">
         <button type="button" class="nfd-btn secondary" (click)="closeResetPasswordModal()">إلغاء</button>
-        <button type="button" class="nfd-btn primary-teal" (click)="confirmResetPassword()">تأكيد</button>
+        <button type="button" class="nfd-btn primary-teal" (click)="confirmResetPassword()">تغيير كلمة المرور</button>
       </div>
     </div>
   </div>

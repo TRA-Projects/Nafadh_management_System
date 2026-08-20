@@ -131,6 +131,14 @@ export class AdminCertificates implements OnInit {
   readonly totalBatchesCount = signal<number>(0);
 
 
+  // ==================== Search & Filter ====================
+
+  readonly searchTerm = signal<string>('');
+  readonly statusFilter = signal<string>('all');
+
+  private allBatches: BatchCertificateCardDto[] = [];
+
+
 
   // Computed Properties
 
@@ -170,135 +178,330 @@ export class AdminCertificates implements OnInit {
 
 
 
-  // ==================== 1. جلب الدفعات مقسمة لصفحات ====================
+// ==================== 1. جلب الدفعات ====================
 
-  fetchBatches(): void {
+fetchBatches(): void {
 
-    this.loading.set(true);
+  this.loading.set(true);
+
+  this.api.getBatches().subscribe({
+
+    next: (response: any[]) => {
+
+      const rawBatches = response || [];
+
+      if (rawBatches.length === 0) {
+
+        this.allBatches = [];
+        this.batches.set([]);
+        this.totalBatchesCount.set(0);
+        this.loading.set(false);
+
+        return;
+      }
 
 
-
-    this.api.getBatches().subscribe({
-
-      next: (response: any[]) => {
-
-        const rawBatches = response || [];
-
-        this.totalBatchesCount.set(rawBatches.length);
+      // تجهيز جميع الدفعات
+      const normalizedBatches =
+        rawBatches.map((b: any) => this.normalizeBatch(b));
 
 
+      // جلب حالة الشهادات لجميع الدفعات
+      const batchRequests$ = normalizedBatches.map(
+        (normalized: BatchCertificateCardDto) => {
 
-        if (rawBatches.length === 0) {
+          const bId = this.cleanId(
+            normalized.batchId ?? normalized.id
+          );
 
-          this.batches.set([]);
+          return this.api.getBatchCertificatesStatus(bId).pipe(
+
+            map((res: any) => {
+
+              const trainees = Array.isArray(res)
+                ? res
+                : (res?.items || []);
+
+              const issuedCount = trainees.filter(
+                (t: any) => !!t.isIssued
+              ).length;
+
+              return {
+                ...normalized,
+                totalTraineesCount: trainees.length,
+                issuedCertificatesCount: issuedCount
+              };
+
+            }),
+
+            catchError((err) => {
+
+              console.error(
+                `Error fetching certificate status for batch ${bId}:`,
+                err
+              );
+
+              return of({
+                ...normalized,
+                totalTraineesCount: 0,
+                issuedCertificatesCount: 0
+              });
+
+            })
+
+          );
+
+        }
+      );
+
+
+      forkJoin<BatchCertificateCardDto[]>(
+        batchRequests$
+      ).subscribe({
+
+        next: (finalBatches) => {
+
+          // نحفظ جميع الدفعات
+          this.allBatches = finalBatches;
+
+          // البحث + الفلترة + Pagination
+          this.applyFilters();
 
           this.loading.set(false);
 
-          return;
+        },
+
+        error: (err) => {
+
+          console.error(
+            'Error loading batch certificate statuses:',
+            err
+          );
+
+          this.allBatches = normalizedBatches;
+
+          this.applyFilters();
+
+          this.loading.set(false);
 
         }
 
+      });
+
+    },
+
+    error: (err) => {
+
+      console.error(
+        'Error fetching batches:',
+        err
+      );
+
+      this.allBatches = [];
+      this.batches.set([]);
+      this.totalBatchesCount.set(0);
+
+      this.loading.set(false);
+
+    }
+
+  });
+
+}
+
+// ==================== البحث والفلترة + Pagination ====================
+
+private applyFilters(): void {
+
+  const search = this.searchTerm()
+    .trim()
+    .toLowerCase();
+
+  const selectedStatus = this.statusFilter();
+
+  let filteredBatches = [...this.allBatches];
 
 
-        const startIndex = (this.currentPage() - 1) * this.pageSize();
+  // ==================== البحث ====================
 
-        const paginatedBatches = rawBatches.slice(startIndex, startIndex + this.pageSize());
+  if (search) {
 
+    filteredBatches = filteredBatches.filter(batch => {
 
+      const batchName =
+        (batch.batchName || '').toLowerCase();
 
-        const batchRequests$ = paginatedBatches.map((b: any) => {
+      const companyName =
+        (batch.companyName || '').toLowerCase();
 
-          const bId = this.cleanId(b.batchId ?? b.id);
-
-          const normalized = this.normalizeBatch(b);
-
-
-
-        return this.api.getBatchCertificatesStatus(bId).pipe(
-          map((res: any) => {
-
-            const trainees = Array.isArray(res)
-              ? res
-              : (res?.items || []);
-
-            const issuedCount = trainees.filter(
-              (t: any) => !!t.isIssued
-            ).length;
-
-            return {
-              ...normalized,
-              totalTraineesCount: trainees.length,
-              issuedCertificatesCount: issuedCount
-            };
-          }),
-
-          catchError((err) => {
-            console.error(
-              `Error fetching certificate status for batch ${bId}:`,
-              err
-            );
-
-            return of({
-              ...normalized,
-              totalTraineesCount: 0,
-              issuedCertificatesCount: 0
-            });
-          })
-        );
-        });
+      const trackName =
+        (batch.trackName || '').toLowerCase();
 
 
-
-        forkJoin<BatchCertificateCardDto[]>(batchRequests$).subscribe({
-
-          next: (finalBatches) => {
-
-            this.batches.set(finalBatches);
-
-            this.loading.set(false);
-
-          },
-
-          error: () => {
-
-            this.batches.set(paginatedBatches.map(b => this.normalizeBatch(b)));
-
-            this.loading.set(false);
-
-          }
-
-        });
-
-      },
-
-      error: (err) => {
-
-        console.error('Error fetching batches:', err);
-
-        this.batches.set([]);
-
-        this.loading.set(false);
-
-      }
+      return (
+        batchName.includes(search) ||
+        companyName.includes(search) ||
+        trackName.includes(search)
+      );
 
     });
 
   }
 
 
+  // ==================== الفلترة ====================
 
-  onPageChange(newPage: number): void {
+  if (selectedStatus !== 'all') {
 
-    if (newPage >= 1 && newPage <= this.totalPages()) {
+    filteredBatches = filteredBatches.filter(batch => {
 
-      this.currentPage.set(newPage);
+      const status =
+        String(batch.status).toLowerCase();
 
-      this.fetchBatches();
 
-    }
+      if (selectedStatus === 'ongoing') {
+
+        return (
+          status === 'ongoing' ||
+          status === '1' ||
+          status === 'active'
+        );
+
+      }
+
+
+      if (selectedStatus === 'completed') {
+
+        return (
+          status === 'completed' ||
+          status === '2'
+        );
+
+      }
+
+
+      if (selectedStatus === 'not-started') {
+
+        return (
+          status !== 'ongoing' &&
+          status !== '1' &&
+          status !== 'active' &&
+          status !== 'completed' &&
+          status !== '2'
+        );
+
+      }
+
+
+      return true;
+
+    });
 
   }
 
+
+  // ==================== عدد النتائج ====================
+
+  this.totalBatchesCount.set(
+    filteredBatches.length
+  );
+
+
+
+  
+  // ==================== Pagination ====================
+
+  const totalPages =
+    Math.ceil(
+      filteredBatches.length / this.pageSize()
+    ) || 1;
+
+
+  if (this.currentPage() > totalPages) {
+
+    this.currentPage.set(totalPages);
+
+  }
+
+
+  const startIndex =
+    (this.currentPage() - 1) *
+    this.pageSize();
+
+
+  const paginatedBatches =
+    filteredBatches.slice(
+      startIndex,
+      startIndex + this.pageSize()
+    );
+
+
+   this.batches.set(paginatedBatches);
+
+}
+
+
+// ==================== Search ====================
+
+onSearch(event: Event): void {
+
+  const input = event.target as HTMLInputElement;
+
+  this.searchTerm.set(input.value);
+
+  this.currentPage.set(1);
+
+  this.applyFilters();
+
+}
+
+
+// ==================== Status Filter ====================
+
+onStatusFilterChange(event: Event): void {
+
+  const select = event.target as HTMLSelectElement;
+
+  this.statusFilter.set(select.value);
+
+  this.currentPage.set(1);
+
+  this.applyFilters();
+
+}
+
+
+// ==================== Reset Filters ====================
+
+resetFilters(): void {
+
+  this.searchTerm.set('');
+
+  this.statusFilter.set('all');
+
+  this.currentPage.set(1);
+
+  this.applyFilters();
+
+}
+
+
+// ==================== Pagination ====================
+
+onPageChange(newPage: number): void {
+
+  if (
+    newPage >= 1 &&
+    newPage <= this.totalPages()
+  ) {
+
+    this.currentPage.set(newPage);
+
+    this.applyFilters();
+
+  }
+
+}
 
 
   // ==================== 2. جلب المتدربين للدفعة ====================
@@ -620,41 +823,64 @@ this.updateTraineeStatusInState(
 
 
 
-  private incrementBatchIssuedCount(): void {
+ private incrementBatchIssuedCount(): void {
 
-    const activeBatch = this.selectedBatch();
+  const activeBatch = this.selectedBatch();
 
-    if (!activeBatch) return;
-
-
-
-    const updatedIssued = activeBatch.issuedCertificatesCount + 1;
+  if (!activeBatch) return;
 
 
-
-    this.selectedBatch.set({
-
-      ...activeBatch,
-
-      issuedCertificatesCount: updatedIssued
-
-    });
+  const updatedIssued =
+    activeBatch.issuedCertificatesCount + 1;
 
 
+  // تحديث الدفعة المحددة
+  this.selectedBatch.set({
 
-    this.batches.update(list =>
+    ...activeBatch,
 
-      list.map(b => (b.batchId === activeBatch.batchId || b.id === activeBatch.id)
+    issuedCertificatesCount: updatedIssued
 
-        ? { ...b, issuedCertificatesCount: updatedIssued }
+  });
+
+
+  // تحديث القائمة الظاهرة
+  this.batches.update(list =>
+
+    list.map(b =>
+
+      (b.batchId === activeBatch.batchId ||
+       b.id === activeBatch.id)
+
+        ? {
+            ...b,
+            issuedCertificatesCount: updatedIssued
+          }
 
         : b
 
-      )
+    )
 
-    );
+  );
 
-  }
+
+  // تحديث القائمة الأصلية التي يعتمد عليها
+  // البحث والفلترة
+  this.allBatches = this.allBatches.map(b =>
+
+    (b.batchId === activeBatch.batchId ||
+     b.id === activeBatch.id)
+
+      ? {
+          ...b,
+          issuedCertificatesCount: updatedIssued
+        }
+
+      : b
+
+  );
+
+}
 
 
 

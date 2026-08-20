@@ -55,10 +55,17 @@ export class AdminUsers implements OnInit {
 
   rbacSummary = computed(() => {
     const list = this.users();
-    return (['Admin', 'CompanySupervisor', 'Trainer', 'Trainee'] as const).map((role) => ({
-      role,
-      permissionsCount: this.permissionsCountByRole[role],
-      usersCount: this.countByRole(list, role)
+    const rolesMap = [
+      { key: 'Admin', arLabel: 'هيئة' },
+      { key: 'CompanySupervisor', arLabel: 'شركة' },
+      { key: 'Trainer', arLabel: 'مدرب' },
+      { key: 'Trainee', arLabel: 'متدرب' }
+    ];
+
+    return rolesMap.map((r) => ({
+      role: r.arLabel,
+      permissionsCount: this.permissionsCountByRole[r.key],
+      usersCount: this.countByRole(list, r.key)
     }));
   });
 
@@ -133,6 +140,26 @@ export class AdminUsers implements OnInit {
     this.cdr.detectChanges();
   }
 
+  // دالة تحويل اسم الدور للعربي
+  getRoleArabicName(roleInput: any): string {
+    if (!roleInput) return 'غير محدد';
+    const str = String(roleInput).trim().toLowerCase();
+
+    if (str === '1' || str === 'admin' || str.includes('هيئة')) return 'هيئة';
+    if (str === '2' || str === 'companysupervisor' || str.includes('شركة')) return 'شركة';
+    if (str === '3' || str === 'trainer' || str.includes('مدرب')) return 'مدرب';
+    if (str === '4' || str === 'trainee' || str.includes('متدرب')) return 'متدرب';
+
+    return String(roleInput);
+  }
+
+  // دالة جلب كلاس التنسيق الخاص بالدور
+  getRoleClass(roleInput: any): string {
+    const norm = this.normalizeRole(roleInput);
+    return norm.toLowerCase();
+  }
+
+  // Modal: Create
   openCreateModal(): void {
     this.isCreateModalOpen = true;
     this.cdr.detectChanges();
@@ -176,31 +203,18 @@ export class AdminUsers implements OnInit {
 
     this.api.createUser(payload).subscribe({
       next: () => {
-        alert('تم إنشاء الحساب وحفظه في قاعدة البيانات بنجاح!');
+        alert('تم إنشاء الحساب بنجاح!');
         this.closeCreateModal();
         this.loadData();
       },
       error: (err) => {
         console.error('تفاصيل خطأ إنشاء الحساب:', err);
-
-        if (err.status === 401) {
-          alert('انتهت جلسة الدخول أو لا تملك صلاحية، يرجى تسجيل الدخول مجدداً.');
-          return;
-        }
-
-        const errors = err?.error?.errors;
-        if (errors) {
-          const firstKey = Object.keys(errors)[0];
-          alert(`خطأ بالبيانات: ${errors[firstKey][0]}`);
-        } else if (err?.error?.message) {
-          alert(`فشل الحفظ: ${err.error.message}`);
-        } else {
-          alert('حدث خطأ أثناء إضافة الحساب، تأكد من استيفاء شروط كلمة المرور.');
-        }
+        alert('حدث خطأ أثناء إضافة الحساب، تأكد من استيفاء البيانات الشروط المطلوب.');
       }
     });
   }
 
+  // Modal: Edit
   openEditModal(user: UserResponseDto): void {
     this.selectedUser = { ...user };
     this.isEditModalOpen = true;
@@ -227,32 +241,18 @@ export class AdminUsers implements OnInit {
 
     this.api.updateUser(this.selectedUser.userId, payload).subscribe({
       next: () => {
-        alert('تم تحديث بيانات المستخدم بنجاح');
+        alert('تم تحديث بيانات الحساب بنجاح');
         this.closeEditModal();
         this.loadData();
       },
       error: (err) => {
-        console.error('خطأ أثناء تعديل المستخدم:', err);
+        console.error('خطأ أثناء تعديل البيانات:', err);
         alert('حدث خطأ أثناء تحديث البيانات');
       }
     });
   }
 
-  // مُصحح نهائيًا: UserResponseDto.status نوعه string فعليًا (أثبتها الكومبايلر)
-  // "نشط" = أي قيمة غير 'Suspended' (احتياط لو الحروف مختلفة الحالة مثل 'active')
-  toggleStatus(user: UserResponseDto): void {
-    const isCurrentlyActive = user.status?.toLowerCase() !== 'suspended';
-    const statusPayload = isCurrentlyActive ? 'Suspended' : 'Active';
-
-    this.api.updateUserStatus(user.userId, statusPayload).subscribe({
-      next: () => this.loadData(),
-      error: (err) => {
-        console.error('خطأ أثناء تغيير حالة المستخدم:', err);
-        alert('تعذر تغيير حالة الحساب');
-      }
-    });
-  }
-
+  // Modal: Password
   openResetPasswordModal(user: UserResponseDto): void {
     this.selectedUser = { ...user };
     this.newPassword = '';
@@ -277,7 +277,7 @@ export class AdminUsers implements OnInit {
         this.closeResetPasswordModal();
       },
       error: (err) => {
-        console.error('خطأ أثناء إعادة تعيين كلمة المرور:', err);
+        console.error('خطأ أثناء تغيير كلمة المرور:', err);
         alert('تعذر تغيير كلمة المرور');
       }
     });
@@ -290,7 +290,7 @@ export class AdminUsers implements OnInit {
     return parts[0].slice(0, 2);
   }
 
-  private normalizeRole(roleInput: any): string {
+  public normalizeRole(roleInput: any): string {
     if (!roleInput) return '';
     const str = String(roleInput).trim().toLowerCase();
 
