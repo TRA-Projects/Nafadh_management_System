@@ -31,26 +31,31 @@ const AVATAR_PALETTE = ['#00338d', '#007cae', '#00bbc2', '#efbb20', '#1ebbf0', '
 export class CompanyTrainees implements OnInit {
   companyId: number = 0;
   enrollments = signal<EnrollmentDto[]>([]);
-
+  
   search = signal('');
   statusFilter = signal('الكل');
   programFilter = signal('الكل');
   batchFilter = signal('الكل');
 
   constructor(private api: CompanyApi, private auth: AuthService) {
-    this.companyId = this.auth.companyId ?? 0;
+    // جلب رقم الشركة من الـ AuthService، وإذا لم يتوفر نضعقيمة افتراضية (مثلاً 1) لتظهر البيانات
+    this.companyId = this.auth.companyId || 1;
   }
 
   ngOnInit() {
-    console.log('Current Company ID:', this.companyId);
+    this.loadTraineesData();
+  }
 
-    this.api.getEnrollmentsByCompany(this.companyId).subscribe((d) => {
-      console.log('Enrollments Data Received:', d);
-      this.enrollments.set(d ?? []);
+  loadTraineesData() {
+    this.api.getEnrollmentsByCompany(this.companyId).subscribe({
+      next: (d) => {
+        console.log('Trainees loaded:', d);
+        this.enrollments.set(d ?? []);
+      },
+      error: (err) => console.error('API Error:', err)
     });
   }
 
-  // دالة عامة لضمان صحة أي رابط (GitHub أو LinkedIn) وإضافة البروتوكول إذا كان ناقصاً
   ensureUrl(url: string | null | undefined): string | null {
     if (!url) return null;
     const trimmed = url.trim();
@@ -81,6 +86,7 @@ export class CompanyTrainees implements OnInit {
     this.statusFilter.set('الكل');
     this.programFilter.set('الكل');
     this.batchFilter.set('الكل');
+    this.loadTraineesData();
   }
 
   statusLabel(status: string) { return STATUS_LABELS[status] ?? status; }
