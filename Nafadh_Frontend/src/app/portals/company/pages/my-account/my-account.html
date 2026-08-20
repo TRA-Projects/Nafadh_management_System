@@ -1,145 +1,220 @@
 <div class="account-page" dir="rtl" id="account-pdf-content">
-  <!-- Header Action Bar -->
-  <div class="page-header">
-    <div class="title-wrap">
-      <h2>حساب المستخدم الحالي</h2>
-      <p class="subtitle">بيانات المسؤول الحالي المسجل في بوابة الشركة المستضيفة</p>
-    </div>
-    <div class="header-actions">
-      <button type="button" class="btn btn-primary">حفظ التغييرات</button>
-      <button type="button" class="btn btn-secondary">تغيير كلمة المرور</button>
-    </div>
-  </div>
+  <!-- Page Header Title Bar -->
+   
+<!-- Page Header Title Bar -->
+  <header class="page-top-header">
+    <div class="header-content">
+      <!-- الأيقونة في أقصى اليمين -->
+      <div class="header-icon-box">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </div>
 
-  <!-- Profile Cover & Hero Card -->
-  <div class="profile-card">
-    <div class="profile-banner"></div>
-    <div class="profile-info-header">
-      <div class="avatar-large">
-        {{ (profile()?.fullName || auth.session()?.fullName || 'ن').charAt(0) }}
-      </div>
-      <div class="user-main-details">
-        <h3 class="user-name">{{ profile()?.fullName || auth.session()?.fullName || 'نورة بنت سالم المسكرية' }}</h3>
-        <div class="user-tags">
-          <span class="tag tag-role">{{ profile()?.position || 'مسؤول التدريب والتطوير' }} — شركة أفق التقنية</span>
-          <span class="tag tag-status">• {{ profile()?.status || 'نشط' }}</span>
-          <span class="tag tag-badge">مستخدم حالي</span>
-        </div>
+      <!-- النص يليه في اليسار -->
+      <div class="header-text">
+        <h2>الملف الشخصي</h2>
+        <p>إدارة البيانات الشخصية والصلاحيات وسجل النشاطات للمستخدم</p>
       </div>
     </div>
+  </header>
 
-    <!-- Data Grid (Unified & Modern) -->
-    <div class="data-grid">
-      <div class="data-item">
-        <label>الاسم الكامل</label>
-        <div class="value">{{ profile()?.fullName || auth.session()?.fullName || 'نورة بنت سالم المسكرية' }}</div>
-      </div>
-      <div class="data-item">
-        <label>المسمى الوظيفي</label>
-        <div class="value">{{ profile()?.position || 'مسؤول التدريب والتطوير' }}</div>
-      </div>
-      <div class="data-item">
-        <label>الشركة</label>
-        <div class="value">شركة أفق التقنية</div>
-      </div>
-      <div class="data-item">
-        <label>رقم الموظف</label>
-        <div class="value">EMP-2024-{{ profile()?.supervisorId || profile()?.id || '1842' }}</div>
-      </div>
-      <div class="data-item">
-        <label>البريد الإلكتروني</label>
-        <div class="value ltr">{{ profile()?.email || auth.session()?.email || 'nora@ofqtech.om' }}</div>
-      </div>
-      <div class="data-item">
-        <label>رقم الجوال</label>
-        <div class="value ltr">{{ profile()?.phone || '+968 4567 9123' }}</div>
-      </div>
-      <div class="data-item full-width">
-        <label>الصلاحية الرئيسية</label>
-        <div class="value">مسؤول تواصل مع الهيئة — إدارة المتدربين والتقارير</div>
-      </div>
-      <div class="data-item full-width">
-        <label>آخر تسجيل دخول</label>
-        <div class="value">اليوم — 09:42 ص</div>
-      </div>
+  <!-- Banner Top Bar -->
+  <div class="profile-banner">
+    <div class="banner-gradient"></div>
+    <div class="banner-actions">
+      <button type="button" (click)="exportToPdf()" class="btn btn-glass-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        تصدير PDF
+      </button>
     </div>
   </div>
 
-  <!-- Bottom Grid: Permissions & Recent Activity -->
-  <div class="bottom-grid">
-    <!-- Permissions Block -->
-    <div class="section-card">
-      <div class="section-title">الصلاحيات الممنوحة</div>
-      <div class="permission-list">
-        <div class="permission-item">
-          <div class="perm-info">
-            <div class="perm-icon-box">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-            </div>
-            <div>
-              <strong>إدارة المتدربين</strong>
-              <p>عرض ومتابعة وتقييم</p>
-            </div>
-          </div>
-          <span class="status-pill active">مفعّل</span>
+  <!-- Main Grid Layout -->
+  <div class="main-dashboard-grid">
+    <!-- Left Sidebar Profile Card -->
+    <aside class="profile-sidebar">
+      <div class="avatar-box">
+        <div class="avatar-circle">
+          {{ (profile()?.fullName || auth.session()?.fullName || 'م').charAt(0) }}
         </div>
+        <span class="online-status"></span>
+      </div>
 
-        <div class="permission-item">
-          <div class="perm-info">
-            <div class="perm-icon-box">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-            </div>
-            <div>
-              <strong>التقارير</strong>
-              <p>تصدير ومتابعة</p>
-            </div>
-          </div>
-          <span class="status-pill active">مفعّل</span>
+      <div class="sidebar-user-info">
+        <h3 class="user-name">
+          {{ profile()?.fullName || auth.session()?.fullName || 'محمد الحبسي' }}
+          <svg class="verified-icon" width="18" height="18" viewBox="0 0 24 24" fill="#2563eb"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        </h3>
+        <p class="user-role">{{ profile()?.position || 'مسؤول التدريب والتطوير' }}</p>
+        <span class="company-badge">{{ profile()?.companyName || 'شركة أفق التقنية' }}</span>
+      </div>
+
+      <div class="sidebar-actions">
+        <!-- الرقم الوظيفي -->
+        <div class="badge-box badge-blue">
+          الرقم الوظيفي: EMP-{{ profile()?.supervisorId || profile()?.id || '2024-2' }}
         </div>
-
-        <div class="permission-item">
-          <div class="perm-info">
-            <div class="perm-icon-box">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            </div>
-            <div>
-              <strong>التواصل مع الهيئة</strong>
-              <p>إرسال واستقبال</p>
-            </div>
-          </div>
-          <span class="status-pill active">مفعّل</span>
+        
+        <!-- حالة الحساب -->
+        <div class="badge-box badge-green">
+          • {{ profile()?.status === 'Active' || !profile()?.status ? 'نشط' : 'غير نشط' }}
         </div>
       </div>
-    </div>
 
-    <!-- Recent Activity Block -->
-    <div class="section-card">
-      <div class="section-title">النشاط الأخير</div>
-      <div class="activity-list">
-        <div class="activity-item">
-          <div>
-            <strong>تحديث بيانات متدرب</strong>
-            <p>طارق الرواحي — منذ ساعتين</p>
-          </div>
-          <span class="chip-status">تم</span>
-        </div>
+      <div class="sidebar-divider"></div>
 
-        <div class="activity-item">
-          <div>
-            <strong>إرسال رسالة للهيئة</strong>
-            <p>استفسار عن اعتماد برنامج — أمس</p>
+      <div class="expert-tags">
+        <span class="tag-title">الصلاحيات الرئيسية</span>
+        <ng-container *ngIf="profile()?.permissions?.length; else defaultTags">
+          <div class="tag-chip" *ngFor="let perm of profile()?.permissions">
+            {{ perm?.name || perm }}
           </div>
-          <span class="chip-status">تم</span>
-        </div>
-
-        <div class="activity-item">
-          <div>
-            <strong>تصدير تقرير الحضور</strong>
-            <p>الأسبوع 32 — قبل 3 أيام</p>
-          </div>
-          <button (click)="exportToPdf()" type="button" class="pdf-btn">تصدير PDF</button>
-        </div>
+        </ng-container>
+        <ng-template #defaultTags>
+          <div class="tag-chip">مسؤول تواصل مع الهيئة</div>
+          <div class="tag-chip">إدارة المتدربين والتقارير</div>
+        </ng-template>
       </div>
-    </div>
+    </aside>
+
+    <!-- Right Content Area -->
+    <main class="content-area">
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button 
+          class="tab-item" 
+          [class.active]="activeTab() === 'info'" 
+          (click)="setActiveTab('info')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          البيانات الشخصية
+        </button>
+        <button 
+          class="tab-item" 
+          [class.active]="activeTab() === 'permissions'" 
+          (click)="setActiveTab('permissions')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          الصلاحيات الممنوحة
+        </button>
+        <button 
+          class="tab-item" 
+          [class.active]="activeTab() === 'activities'" 
+          (click)="setActiveTab('activities')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          سجل النشاطات
+        </button>
+      </nav>
+
+      <!-- Dynamic Tab Content Body -->
+      <div class="dashboard-body">
+
+        <!-- TAB 1: Personal Info -->
+        <section class="card-box full-width" *ngIf="activeTab() === 'info'">
+          <div class="card-title-bar">
+            <h4>البيانات الشخصية</h4>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-cell">
+              <label>الاسم الكامل</label>
+              <span class="val">{{ profile()?.fullName || auth.session()?.fullName || 'محمد الحبسي' }}</span>
+            </div>
+            <div class="info-cell">
+              <label>البريد الإلكتروني</label>
+              <span class="val ltr">{{ profile()?.email || auth.session()?.email || 'sup65.c1@nafadh.test' }}</span>
+            </div>
+            <div class="info-cell">
+              <label>رقم الجوال</label>
+              <span class="val ltr">{{ profile()?.phone || '+968 92000065' }}</span>
+            </div>
+            <div class="info-cell">
+              <label>المسمى الوظيفي</label>
+              <span class="val">{{ profile()?.position || 'مسؤول التدريب والتطوير' }}</span>
+            </div>
+            <div class="info-cell">
+              <label>الجهة / الشركة</label>
+              <span class="val">{{ profile()?.companyName || 'شركة أفق التقنية' }}</span>
+            </div>
+            <div class="info-cell">
+              <label>آخر تسجيل دخول</label>
+              <span class="val">اليوم — 09:42 ص</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: Permissions -->
+        <section class="card-box full-width" *ngIf="activeTab() === 'permissions'">
+          <div class="card-title-bar">
+            <h4>الصلاحيات الممنوحة</h4>
+            <span class="badge-count">{{ profile()?.permissions?.length || 3 }} مفعّلة</span>
+          </div>
+
+          <div class="mini-perm-list">
+            <div class="perm-card">
+              <div class="perm-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+              </div>
+              <div>
+                <strong>إدارة المتدربين</strong>
+                <p>عرض ومتابعة التقارير والبيانات الخاصة بالمتدربين</p>
+              </div>
+            </div>
+
+            <div class="perm-card">
+              <div class="perm-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+              </div>
+              <div>
+                <strong>إدارة التقارير</strong>
+                <p>اصدار وتقييم الأداء الدوري والتنفيذي</p>
+              </div>
+            </div>
+
+            <div class="perm-card">
+              <div class="perm-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              </div>
+              <div>
+                <strong>التواصل مع الهيئة</strong>
+                <p>إرسال المراسلات الرسمية واستقبال الردود</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: Activities -->
+        <section class="card-box full-width" *ngIf="activeTab() === 'activities'">
+          <div class="card-title-bar">
+            <h4>سجل النشاطات</h4>
+          </div>
+
+          <ul class="timeline-list">
+            <li>
+              <span class="dot"></span>
+              <div class="t-info">
+                <strong>تحديث بيانات متدرب</strong>
+                <small>طارق الرواحي — منذ ساعتين</small>
+              </div>
+            </li>
+            <li>
+              <span class="dot"></span>
+              <div class="t-info">
+                <strong>إرسال رسالة للهيئة</strong>
+                <small>استفسار عن اعتماد برنامج — أمس</small>
+              </div>
+            </li>
+            <li>
+              <span class="dot"></span>
+              <div class="t-info">
+                <strong>تصدير تقرير الحضور</strong>
+                <small>الأسبوع 32 — قبل 3 أيام</small>
+              </div>
+            </li>
+          </ul>
+        </section>
+
+      </div>
+    </main>
   </div>
 </div>

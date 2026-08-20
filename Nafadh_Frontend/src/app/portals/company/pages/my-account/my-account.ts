@@ -2,7 +2,6 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { CompanySupervisorDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-my-account',
@@ -11,9 +10,10 @@ import { CompanySupervisorDto } from '../../../../core/models/dtos';
   templateUrl: './my-account.html',
   styleUrls: ['./my-account.scss']
 })
-
 export class CompanyMyAccount implements OnInit {
-  profile = signal<CompanySupervisorDto | null>(null);
+  // استخدام any لتجنب التعارض مع Dto إذا كانت الخصائص غير معرفة فيه
+  profile = signal<any>(null);
+  activeTab = signal<'info' | 'permissions' | 'activities'>('info');
 
   constructor(private api: CompanyApi, public auth: AuthService) {}
 
@@ -21,8 +21,12 @@ export class CompanyMyAccount implements OnInit {
     const supervisorId = this.auth.userId ?? 1;
     this.api.getSupervisorProfile(supervisorId).subscribe({
       next: (p) => this.profile.set(p),
-      error: () => {}
+      error: (err) => console.error('Error fetching profile:', err)
     });
+  }
+
+  setActiveTab(tab: 'info' | 'permissions' | 'activities') {
+    this.activeTab.set(tab);
   }
 
   async exportToPdf() {
