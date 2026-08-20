@@ -1001,6 +1001,281 @@
   }
 }
 
+/* =========================================================
+   NEW: TRAINEE PROFILE MODAL
+========================================================= */
+
+.trainee-profile-modal {
+  width: 510px;
+
+  max-width: calc(100vw - 30px);
+}
+
+
+.profile-trainee-header {
+  padding: 14px;
+
+  margin-bottom: 12px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f7fbff,
+      #eef8fc
+    );
+
+  border: 1px solid #dceaf2;
+  border-radius: 13px;
+}
+
+
+.profile-avatar {
+  width: 48px;
+  height: 48px;
+
+  flex: 0 0 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #003b82;
+
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 800;
+
+  box-shadow:
+    0 5px 12px rgba(0, 59, 130, 0.14);
+}
+
+
+.profile-trainee-info {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+
+
+  strong {
+    color: #203754;
+
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+
+  span {
+    color: #8291a3;
+
+    font-size: 9px;
+  }
+}
+
+
+.profile-info-row {
+  padding: 11px 12px;
+
+  margin-bottom: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  background: #fafcfe;
+
+  border: 1px solid #e6edf3;
+  border-radius: 10px;
+
+
+  strong {
+    color: #344861;
+
+    font-size: 10px;
+    font-weight: 700;
+  }
+}
+
+
+.profile-info-label {
+  color: #7d8b9b;
+
+  font-size: 9px;
+  font-weight: 600;
+}
+
+
+.profile-stats-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 9px;
+
+  margin-bottom: 10px;
+}
+
+
+.profile-stat-card {
+  min-height: 72px;
+
+  padding: 12px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  gap: 6px;
+
+  background: #ffffff;
+
+  border: 1px solid #dfe8f0;
+  border-radius: 11px;
+
+
+  span {
+    color: #7c8b9d;
+
+    font-size: 9px;
+    font-weight: 600;
+  }
+
+
+  strong {
+    color: #003b82;
+
+    font-size: 18px;
+    font-weight: 800;
+  }
+}
+
+
+.profile-level-card {
+  padding: 13px;
+
+  margin-bottom: 10px;
+
+  background: #fafcfe;
+
+  border: 1px solid #e2eaf1;
+  border-radius: 11px;
+}
+
+
+.profile-level-heading {
+  margin-bottom: 9px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 8px;
+
+
+  span {
+    color: #718096;
+
+    font-size: 9px;
+    font-weight: 600;
+  }
+
+
+  strong {
+    color: #0052aa;
+
+    font-size: 11px;
+    font-weight: 800;
+  }
+}
+
+
+.profile-progress-track {
+  width: 100%;
+  height: 7px;
+
+  overflow: hidden;
+
+  background: #e3ebf2;
+
+  border-radius: 999px;
+}
+
+
+.profile-progress-fill {
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      #0056b8,
+      #00a8b8
+    );
+}
+
+
+.profile-level-score {
+  margin-top: 5px;
+
+  display: block;
+
+  color: #728296;
+
+  font-size: 8px;
+  font-weight: 600;
+}
+
+
+.profile-status-row {
+  min-height: 45px;
+
+  padding: 10px 12px;
+
+  margin-bottom: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  background: #ffffff;
+
+  border: 1px solid #e5ebf1;
+  border-radius: 10px;
+
+
+  > span:first-child {
+    color: #718096;
+
+    font-size: 9px;
+    font-weight: 600;
+  }
+}
+
+
+.profile-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+
+  gap: 8px;
+
+  padding-top: 3px;
+}
 
 /* =========================================================
    RESPONSIVE
@@ -1062,5 +1337,10 @@
 
   .trainee-picker-action {
     display: none;
+  }
+
+
+  .profile-stats-grid {
+    grid-template-columns: 1fr;
   }
 }
