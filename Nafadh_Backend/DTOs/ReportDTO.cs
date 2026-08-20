@@ -29,5 +29,7 @@ namespace Nafadh_Backend.DTOs
             public int GeneratedByUserId { get; set; }
         }
 
+
+
     }
 

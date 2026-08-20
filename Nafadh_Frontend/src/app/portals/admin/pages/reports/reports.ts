@@ -20,46 +20,77 @@ export class AdminReports implements OnInit {
   batchIdInput = 1;
   report = signal<BatchPerformanceReportDto | null>(null);
 
-  // اجعلها فارغة تماماً
   companies: any[] = [];
 
-  traineesList: any[] = [];
+  pageSize = 5;
+  currentPageNumber = 1;
 
   constructor(
     private api: AdminApi,
-    private cdr: ChangeDetectorRef // حقن أداة تحديث الواجهة فوراً
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
     this.loadCompaniesData();
   }
-
-  // جلب الشركات ومعالجة البيانات القادمة من قاعدة البيانات لتجنب الأصفار
   loadCompaniesData() {
     this.api.getCompanies().subscribe({
       next: (res: any) => {
         const rawData = res.items || res;
         if (rawData && rawData.length > 0) {
-          this.companies = rawData.map((c: any) => ({
-            id: c.id || c.companyId,
-            name: c.name || c.companyName || 'شركة تدريبية',
-            programsCount: c.programsCount ?? c.programs?.length ?? 1,
-            batchesCount: c.batchesCount ?? 1,
-            traineesCount: c.traineesCount ?? 4,
-            programs: c.programs && c.programs.length > 0 ? c.programs : [
-              {
-                name: c.programName || 'البرنامج التدريبي العام',
-                track: c.track || 'General Track',
-                batches: c.batches || [
-                  { id: c.id ? c.id * 10 + 1 : 101, dates: '2026', endDate: '30/08/2026', traineesCount: 4, programName: 'البرنامج التدريبي العام' }
+          this.companies = rawData.map((c: any) => {
+            const programsList = c.companyPrograms || c.CompanyPrograms || c.programs || c.Programs || [];
+            const traineesList = c.trainees || c.Trainees || [];
+
+            const programsCount = c.programsCount ?? c.ProgramsCount ?? programsList.length;
+            const traineesCount = c.traineesCount ?? c.TraineesCount ?? traineesList.length;
+            const batchesCount = c.batchesCount ?? c.BatchesCount ?? programsCount;
+
+            const mappedPrograms = programsList.map((p: any) => {
+              const progObj = p.nfd_Programs || p.program || p.Program || p;
+              const batchesList = progObj.batches || progObj.Batches || p.batches || p.Batches || [];
+
+              return {
+                name: progObj.title || progObj.Title || progObj.programName || progObj.ProgramName || 'البرنامج التدريبي',
+                track: progObj.track || progObj.Track || 'General Track',
+                batches: batchesList.length > 0 ? batchesList.map((b: any) => ({
+                  id: b.batchId || b.BatchId || b.id,
+                  dates: b.startDate || b.StartDate || '2026',
+                  endDate: b.endDate || b.EndDate || '30/08/2026',
+                  traineesCount: b.traineesCount || b.TraineesCount || 0,
+                  programName: progObj.title || progObj.Title || 'البرنامج التدريبي'
+                })) : [
+                  {
+                    id: (c.companyId || c.id || 1) * 10 + 1,
+                    dates: '2026',
+                    endDate: '30/08/2026',
+                    traineesCount: traineesCount,
+                    programName: progObj.title || progObj.Title || 'البرنامج التدريبي'
+                  }
                 ]
-              }
-            ]
-          }));
+              };
+            });
+
+            return {
+              id: c.companyId || c.CompanyId || c.id,
+              name: c.companyName || c.CompanyName || c.name || 'شركة تدريبية',
+              programsCount: programsCount,
+              batchesCount: batchesCount,
+              traineesCount: traineesCount,
+              programs: mappedPrograms.length > 0 ? mappedPrograms : [
+                {
+                  name: 'البرنامج التدريبي العام',
+                  track: 'General Track',
+                  batches: [
+                    { id: (c.companyId || 1) * 10 + 1, dates: '2026', endDate: '30/08/2026', traineesCount: traineesCount, programName: 'البرنامج التدريبي العام' }
+                  ]
+                }
+              ]
+            };
+          });
         } else {
           this.companies = [];
         }
-        // إجبار أنجولار على تحديث الشاشة وعرض البطاقات فور وصول البيانات
         this.cdr.detectChanges();
       },
       error: (err: any) => {
@@ -81,61 +112,93 @@ export class AdminReports implements OnInit {
       this.selectedBatch = batch;
       this.batchIdInput = batch.id;
       this.currentView = 'batch-report';
-
-      // جلب قائمة المتدربين من قاعدة البيانات
-      this.api.getTrainees().subscribe({
-        next: (res: any) => {
-          this.traineesList = res.items || res;
-          this.cdr.detectChanges();
-        },
-        error: (err: any) => {
-          console.error('فشل جلب بيانات المتدربين من قاعدة البيانات', err);
-        }
-      });
     }
+    this.currentPageNumber = 1;
+    this.loadReportPage();
+  }
 
-    // جلب تقرير أداء الدفعة
-    this.api.getBatchPerformanceReport(this.batchIdInput).subscribe({
-      next: (r) => {
+  loadReportPage() {
+    this.api.getBatchPerformanceReport(this.batchIdInput, this.currentPageNumber, this.pageSize).subscribe({
+      next: (r: any) => {
+        if (r) {
+          r.totalCount = r.TotalCount ?? r.totalCount ?? (r.rows ? r.rows.length : 0);
+          r.totalPages = r.TotalPages ?? r.totalPages ?? (Math.ceil(r.totalCount / this.pageSize) || 1);
+          r.pageNumber = r.PageNumber ?? r.pageNumber ?? this.currentPageNumber;
+
+          // تحديث عدد المتدربين في الدفعة المختارة ليطابق الإجمالي الحقيقي من الداتابيس
+          if (this.selectedBatch) {
+            this.selectedBatch.traineesCount = r.totalCount;
+          }
+        }
+
         this.report.set(r);
+        this.cdr.markForCheck();
         this.cdr.detectChanges();
       },
       error: (err: any) => {
         console.error('فشل جلب تقرير الأداء', err);
+        this.report.set(null);
+        this.cdr.detectChanges();
       }
     });
   }
 
-  // تصدير PDF
+  nextPage() {
+    const r = this.report();
+    const totalPages = r?.totalPages || Math.ceil((r?.totalCount || 0) / this.pageSize);
+
+    // الانتقال للصفحة التالية فقط إذا لم نصل للنهاية
+    if (this.currentPageNumber < totalPages) {
+      this.currentPageNumber++;
+      this.loadReportPage();
+    }
+  }
+
+  prevPage() {
+    if (this.currentPageNumber <= 1) return;
+    this.currentPageNumber--;
+    this.loadReportPage();
+  }
+
+  levelClass(level?: string): string {
+    if (!level) return 'level-default';
+    const l = level.trim();
+    if (l.includes('ممتاز')) return 'level-excellent';
+    if (l.includes('جيد جدا') || l.includes('جيد جداً')) return 'level-very-good';
+    if (l.includes('جيد')) return 'level-good';
+    if (l.includes('راسب')) return 'level-weak';
+    return 'level-default';
+  }
+
   exportToPDF() {
     window.print();
   }
 
-  // تصدير Excel
   exportToExcel() {
-    if (!this.traineesList || this.traineesList.length === 0) {
+    const rows = this.report()?.rows || [];
+    if (rows.length === 0) {
       alert('لا توجد بيانات متدربين لتصديرها');
       return;
     }
 
     const headers = ['المتدرب', 'التخصص', 'الحضور', 'التقني', 'السلوكي', 'المستوى'];
-    const rows = this.traineesList.map(t => [
-      t.name,
-      t.major,
-      t.attendance + '%',
-      t.technical + '%',
-      t.behavioral + '%',
-      t.level
+    const dataRows = rows.map(t => [
+      t.traineeName ?? '',
+      t.major ?? '',
+      (t.attendanceRate ?? 0) + '%',
+      (t.technicalScore ?? 0) + '%',
+      (t.behavioralScore ?? 0) + '%',
+      t.level ?? ''
     ]);
 
-    let csvContent = '\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    let csvContent = '\uFEFF' + [headers.join(','), ...dataRows.map(e => e.join(','))].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `Batch_${this.selectedBatch?.id || 'Report'}_Trainees.csv`);
+    link.setAttribute('download', `Batch_${this.selectedBatch?.id || 'Report'}_Trainees_Page${this.currentPageNumber}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

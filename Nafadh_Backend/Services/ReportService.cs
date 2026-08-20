@@ -274,8 +274,8 @@ namespace Nafadh_Backend.Services
             => _repository.GetDashboardChartsAsync();
 
         public Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(
-            int batchId)
-            => _repository.GetBatchPerformanceAsync(batchId);
+           int batchId, int pageNumber, int pageSize)
+          => _repository.GetBatchPerformanceAsync(batchId, pageNumber, pageSize);
 
         public Task<AttendanceReportDTO?> GetCompanyAttendanceReportAsync(
             int companyId)
