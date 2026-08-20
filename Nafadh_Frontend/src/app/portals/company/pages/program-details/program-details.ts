@@ -54,6 +54,10 @@ export class CompanyProgramDetails implements OnInit {
     private api: CompanyApi,
   ) {}
 
+  get p(): ProgramInfo | null {
+    return this.program();
+  }
+
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!id) {
@@ -190,11 +194,3 @@ export class CompanyProgramDetails implements OnInit {
     return map[color] ?? '#e7eefb';
   }
 }
-// Created the logic for the standalone program details page.
-// Reads the program ID from the route parameters.
-// Loads the selected program and its related data.
-// Loads training phases and trainee information.
-// Calculates and displays capacity, occupancy, availability, and performance statistics.
-// Handles navigation back to the company specialties page.
-
-
