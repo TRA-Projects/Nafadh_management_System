@@ -113,7 +113,8 @@
         <div class="nfd-field-row">
           <div class="nfd-field">
             <label>الطاقة الاستيعابية <span class="req">*</span></label>
-            <input type="number" class="form-control" [(ngModel)]="newCompany.capacity" placeholder="0">
+            <!-- تم إضافة min="1" ومنع الأرقام السالبة عبر oninput -->
+            <input type="number" min="1" class="form-control" [(ngModel)]="newCompany.capacity" placeholder="0" oninput="if(this.value < 1) this.value = 1;">
           </div>
           <div class="nfd-field">
             <label>الحالة</label>
@@ -131,7 +132,7 @@
 
         <div class="nfd-field-row">
           <div class="nfd-field">
-            <label>البريد الإلكتروني</label>
+            <label>البريد الإلكتروني <span class="req">*</span></label>
             <input type="email" class="form-control" [(ngModel)]="newCompany.email" placeholder="name@company.om">
           </div>
           <div class="nfd-field">

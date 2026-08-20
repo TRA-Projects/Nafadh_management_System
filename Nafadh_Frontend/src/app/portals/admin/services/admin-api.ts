@@ -60,6 +60,7 @@ export class AdminApi {
     return this.http.get<RoleDto[]>(`${this.base}/Role`);
   }
   createUser(dto: unknown) { return this.http.post(`${this.base}/User/register`, dto); }
+  updateUser(id: number, dto: unknown) { return this.http.put(`${this.base}/User/${this.sanitizeId(id)}`, dto); }
   updateUserStatus(id: number, status: string) { return this.http.put(`${this.base}/User/${this.sanitizeId(id)}/status`, { status }); }
   resetPassword(id: number, dto: unknown) { return this.http.put(`${this.base}/User/${this.sanitizeId(id)}/reset-password`, dto); }
 
