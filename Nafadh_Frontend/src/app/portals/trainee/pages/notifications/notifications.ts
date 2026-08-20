@@ -10,8 +10,7 @@ import { NotificationDto, WarningDto } from '../../../../core/models/dtos';
   templateUrl: './notifications.html',
 })
 export class TraineeNotifications implements OnInit {
-
-  enrollmentId = 1;
+  userId = 0; // سيتم تعيينه من AuthService
 
   notifications = signal<NotificationDto[]>([]);
   warnings = signal<WarningDto[]>([]);
@@ -21,21 +20,24 @@ export class TraineeNotifications implements OnInit {
 
   constructor(
     private api: TraineeApi,
-    private auth: AuthService
+    private auth: AuthService,
   ) {}
 
   ngOnInit() {
-    const uid = this.auth.userId ?? 4;
+    // الحصول على userId من AuthService
+    this.userId = this.auth.userId ?? 4;
 
-    this.api.getNotifications(uid).subscribe((d) => {
+    // جلب الإشعارات باستخدام userId
+    this.api.getNotifications(this.userId).subscribe((d) => {
       const processed = (d ?? []).map((item, index) => ({
         ...item,
-        isRead: index === 0 || index === 1 ? false : true
+        isRead: index === 0 || index === 1 ? false : true,
       }));
       this.notifications.set(processed);
     });
 
-    this.api.getMyWarnings(this.enrollmentId).subscribe((d) => {
+    // جلب الإنذارات - سيتم تعديلها لاستخدام userId
+    this.api.getMyWarnings(this.userId).subscribe((d) => {
       this.warnings.set(d ?? []);
     });
   }
@@ -49,11 +51,11 @@ export class TraineeNotifications implements OnInit {
     }
     if (currentFilter === 'warning') {
       // إرجاع العنصر رقم 4 فقط عند اختيار "إنذار"
-      return list.filter((_, index) => index === 4); 
+      return list.filter((_, index) => index === 4);
     }
     if (currentFilter === 'notification') {
       // إرجاع باقي العناصر عدا رقم 4 عند اختيار "تنبيه"
-      return list.filter((_, index) => index !== 4); 
+      return list.filter((_, index) => index !== 4);
     }
 
     return list;
@@ -62,11 +64,7 @@ export class TraineeNotifications implements OnInit {
   markRead(n: NotificationDto) {
     this.api.markRead(n.notificationId).subscribe(() => {
       this.notifications.update((list) =>
-        list.map((x) =>
-          x.notificationId === n.notificationId
-            ? { ...x, isRead: true }
-            : x
-        )
+        list.map((x) => (x.notificationId === n.notificationId ? { ...x, isRead: true } : x)),
       );
     });
   }
