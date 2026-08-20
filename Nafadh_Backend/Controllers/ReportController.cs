@@ -45,6 +45,26 @@ namespace Nafadh_Backend.Controllers
             return Ok(report);
         }
         // ==========================================================
+        // Generate Trainer Portal Report
+        // POST: api/Report/trainer-generate
+        // Kept separate from the shared report endpoint.
+        // ==========================================================
+
+        [HttpPost("trainer-generate")]
+        public async Task<IActionResult> GenerateTrainerPortalReport(
+            [FromBody] ReportInputDTO dto
+        )
+        {
+            var report =
+                await _service.GenerateTrainerPortalReportAsync(
+                    dto
+                );
+
+            return Ok(
+                report
+            );
+        }
+        // ==========================================================
         // Generate Trainer Trainees Report
         // POST: api/Report/trainer-trainees
         // ==========================================================
