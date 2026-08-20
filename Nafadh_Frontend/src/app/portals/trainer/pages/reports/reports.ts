@@ -397,6 +397,7 @@ const trainerReports =
     });
 
 
+// Sort reports from newest to oldest.
 const sortedReports =
   [...trainerReports]
     .sort(
@@ -410,9 +411,20 @@ const sortedReports =
     );
 
 
-        this.reportHistory.set(
-          sortedReports
-        );
+// Show only the latest report from each type.
+const latestReports =
+  sortedReports.filter(
+    (report, index, reports) =>
+      reports.findIndex(
+        item =>
+          item.type === report.type
+      ) === index
+  );
+
+
+this.reportHistory.set(
+  latestReports
+);
 
 
         this.loadingHistory.set(
