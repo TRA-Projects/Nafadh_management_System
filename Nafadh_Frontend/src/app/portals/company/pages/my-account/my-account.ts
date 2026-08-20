@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CompanyAccountDto } from '../../../../core/models/dtos';
@@ -16,7 +17,18 @@ export class CompanyMyAccount implements OnInit {
   loading = signal(true);
   loadError = signal(false);
 
-  constructor(private api: CompanyApi, public auth: AuthService) {}
+  // ============================================================
+  // Constructor
+  // ============================================================
+
+  constructor(
+    private api: CompanyApi,
+    public auth: AuthService
+  ) {}
+
+  // ============================================================
+  // Init
+  // ============================================================
 
   ngOnInit(): void {
     this.loadAccount();
@@ -43,11 +55,14 @@ export class CompanyMyAccount implements OnInit {
     const element = document.getElementById('account-pdf-content');
     if (!element) return;
 
-    if (typeof (window as any).html2pdf === 'undefined') {
+    if (
+      typeof (window as any).html2pdf === 'undefined'
+    ) {
       await this.loadPdfScript();
     }
 
-    const html2pdf = (window as any).html2pdf;
+    const html2pdf =
+      (window as any).html2pdf;
 
     const opt = {
       margin: 10,
@@ -57,15 +72,31 @@ export class CompanyMyAccount implements OnInit {
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    html2pdf().set(opt).from(element).save();
+    html2pdf()
+      .set(opt)
+      .from(element)
+      .save();
   }
 
+  // ============================================================
+  // Load PDF Library
+  // ============================================================
+
   private loadPdfScript(): Promise<void> {
+
     return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+
+      const script =
+        document.createElement('script');
+
+      script.src =
+        'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+
       script.onload = () => resolve();
-      script.onerror = (err) => reject(err);
+
+      script.onerror = (error) =>
+        reject(error);
+
       document.body.appendChild(script);
     });
   }
