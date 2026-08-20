@@ -52,12 +52,10 @@ export class AdminTraineeProfile implements OnInit {
     }
   }
 
-  // دالة العودة للصفحة السابقة
   goBack() {
     this.location.back();
   }
 
-  // دالة استخراج الأحرف الأولى من الاسم لدائرة البروفايل
   getInitials(name: string): string {
     if (!name) return 'ح ج';
     const parts = name.trim().split(' ');
@@ -71,10 +69,14 @@ export class AdminTraineeProfile implements OnInit {
     this.api.getTrainee(traineeId).subscribe({
       next: (res: any) => {
         this.trainee.set(res);
-        const enrollmentId = res?.enrollmentId || res?.EnrollmentId;
+        const enrollmentId = res?.enrollmentId || res?.EnrollmentId || res?.enrollment?.id;
 
+        // جلب التقييمات عبر enrollmentId أو traineeId كخيار بديل
+        const evalIdTarget = (enrollmentId && enrollmentId > 0) ? enrollmentId : traineeId;
+        this.fetchEvaluations(evalIdTarget);
+
+        // جلب سجل الحضور
         if (enrollmentId && enrollmentId > 0) {
-          this.fetchEvaluations(enrollmentId);
           this.fetchDailyAttendance(enrollmentId);
         } else {
           this.fetchSessionAttendance(traineeId);
@@ -84,15 +86,15 @@ export class AdminTraineeProfile implements OnInit {
     });
   }
 
-  private fetchEvaluations(enrollmentId: number) {
-    this.api.getEvaluationsByEnrollment(enrollmentId).subscribe({
+  private fetchEvaluations(id: number) {
+    this.api.getEvaluationsByEnrollment(id).subscribe({
       next: (res: any[]) => {
         const mapped = (res || []).map((item, idx) => {
-          const rawDate = item.evaluationDate || item.EvaluationDate || item.createdOn || item.CreatedOn || item.date || item.Date;
+          const rawDate = item.evaluationDate ?? item.EvaluationDate ?? item.createdOn ?? item.CreatedOn ?? item.date ?? item.Date;
           return {
-            id: item.id || item.Id || item.evaluationId || item.EvaluationId || idx + 1,
-            period: item.period || item.Period || item.term || 1,
-            score: Number(item.score || item.Score || item.totalScore || 0),
+            id: item.id ?? item.Id ?? item.evaluationId ?? item.EvaluationId ?? idx + 1,
+            period: item.period ?? item.Period ?? item.term ?? 1,
+            score: Number(item.score ?? item.Score ?? item.totalScore ?? 0),
             date: rawDate ? String(rawDate).split('T')[0] : '-'
           };
         });
@@ -125,7 +127,7 @@ export class AdminTraineeProfile implements OnInit {
     let absentCount = 0;
 
     const mapped: AttendanceRecord[] = (res || []).map((item) => {
-      // 1. حالة الحضور والغياب
+      // 1. معالجة حالة الحضور والغياب (Enum/String/Number)
       const rawStatus = item.status ?? item.Status ?? item.attendanceStatus;
       const statusStr = String(rawStatus ?? '').toLowerCase();
 
@@ -135,17 +137,13 @@ export class AdminTraineeProfile implements OnInit {
       if (isPresent) presentCount++;
       if (isAbsent) absentCount++;
 
-      // 2. التاريخ
-      const rawDate = item.date || item.Date || item.attendanceDate || item.AttendanceDate || item.createdOn || item.CreatedOn;
+      // 2. قراءة الحقول بحسب DTO الـ Backend
+      const rawDate = item.date ?? item.Date ?? item.attendanceDate ?? item.AttendanceDate;
+      const rawCheckIn = item.checkInTime ?? item.CheckInTime ?? item.checkIn ?? item.CheckIn;
+      const rawCheckOut = item.checkOutTime ?? item.CheckOutTime ?? item.checkOut ?? item.CheckOut;
+      const rawNotes = item.note ?? item.Note ?? item.notes ?? item.Notes;
 
-      // 3. أوقات الحضور والانصراف
-      const rawCheckIn = item.checkInTime ?? item.CheckInTime ?? item.check_in_time ?? item.checkIn ?? item.CheckIn;
-      const rawCheckOut = item.checkOutTime ?? item.CheckOutTime ?? item.check_out_time ?? item.checkOut ?? item.CheckOut;
-
-      // 4. الملاحظات
-      const rawNotes = item.note ?? item.Note ?? item.notes ?? item.Notes ?? item.remarks;
-
-      // دالة استخراج الوقت بشكل دقيق HH:mm
+      // 3. تنسيق استخراج الوقت HH:mm
       const extractTime = (val: any) => {
         if (!val || val === 'NULL' || val === 'null') return '-';
         const str = String(val).trim();
@@ -153,10 +151,7 @@ export class AdminTraineeProfile implements OnInit {
           const timePart = str.split('T')[1];
           return timePart ? timePart.substring(0, 5) : '-';
         }
-        if (str.includes(':')) {
-          return str.substring(0, 5);
-        }
-        return str;
+        return str.length >= 5 ? str.substring(0, 5) : str;
       };
 
       return {
