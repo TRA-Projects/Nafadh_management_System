@@ -29,9 +29,9 @@ export class TraineeNotifications implements OnInit {
 
     // جلب الإشعارات باستخدام userId
     this.api.getNotifications(this.userId).subscribe((d) => {
-      const processed = (d ?? []).map((item, index) => ({
+      const processed = (d ?? []).map((item) => ({
         ...item,
-        isRead: index === 0 || index === 1 ? false : true,
+        isRead: item.isRead ?? false, // استخدام القيمة الفعلية من الخادم
       }));
       this.notifications.set(processed);
     });
@@ -42,6 +42,9 @@ export class TraineeNotifications implements OnInit {
     });
   }
 
+  /**
+   * الحصول على العناصر المفلترة
+   */
   filtered() {
     const currentFilter = this.filter();
     const list = this.notifications();
@@ -50,26 +53,89 @@ export class TraineeNotifications implements OnInit {
       return list.filter((n) => !n.isRead);
     }
     if (currentFilter === 'warning') {
-      // إرجاع العنصر رقم 4 فقط عند اختيار "إنذار"
-      return list.filter((_, index) => index === 4);
+      // إرجاع العناصر التي تحتوي على إنذار أو تحذير
+      return list.filter((n) => n.title?.includes('إنذار') || n.title?.includes('تحذير'));
     }
     if (currentFilter === 'notification') {
-      // إرجاع باقي العناصر عدا رقم 4 عند اختيار "تنبيه"
-      return list.filter((_, index) => index !== 4);
+      // إرجاع العناصر التي لا تحتوي على إنذار أو تحذير
+      return list.filter((n) => !n.title?.includes('إنذار') && !n.title?.includes('تحذير'));
     }
 
     return list;
   }
 
+  /**
+   * تحديد تنبيه كمقروء
+   */
   markRead(n: NotificationDto) {
-    this.api.markRead(n.notificationId).subscribe(() => {
-      this.notifications.update((list) =>
-        list.map((x) => (x.notificationId === n.notificationId ? { ...x, isRead: true } : x)),
-      );
+    // تحديث محلياً أولاً لتجربة أفضل
+    this.notifications.update((list) =>
+      list.map((x) => (x.notificationId === n.notificationId ? { ...x, isRead: true } : x)),
+    );
+
+    // إرسال الطلب إلى الخادم
+    this.api.markRead(n.notificationId).subscribe({
+      next: () => {
+        console.log('Notification marked as read:', n.notificationId);
+      },
+      error: (error: any) => {
+        console.error('Error marking notification as read:', error);
+        // في حالة الخطأ، نعيد تحميل البيانات
+        this.api.getNotifications(this.userId).subscribe((d) => {
+          const processed = (d ?? []).map((item) => ({
+            ...item,
+            isRead: item.isRead ?? false,
+          }));
+          this.notifications.set(processed);
+        });
+      },
     });
   }
 
+  /**
+   * تحديد جميع التنبيهات كمقروءة
+   */
+  markAllAsRead() {
+    const unreadNotifications = this.notifications().filter((n) => !n.isRead);
+
+    if (unreadNotifications.length === 0) {
+      return;
+    }
+
+    // تحديث محلياً أولاً لتجربة أفضل
+    this.notifications.update((list) => list.map((x) => ({ ...x, isRead: true })));
+
+    // إرسال الطلب إلى الخادم
+    this.api.markAllNotificationsAsRead(this.userId).subscribe({
+      next: () => {
+        console.log('All notifications marked as read');
+      },
+      error: (error: any) => {
+        console.error('Error marking all notifications as read:', error);
+        // في حالة الخطأ، نعيد تحميل البيانات
+        this.api.getNotifications(this.userId).subscribe((d) => {
+          const processed = (d ?? []).map((item) => ({
+            ...item,
+            isRead: item.isRead ?? false,
+          }));
+          this.notifications.set(processed);
+        });
+      },
+    });
+  }
+
+  /**
+   * الحصول على عدد التنبيهات غير المقروءة
+   */
+  getUnreadCount(): number {
+    return this.notifications().filter((n) => !n.isRead).length;
+  }
+
+  /**
+   * التواصل مع المشرف بخصوص الإنذار
+   */
   contactSupervisor(n: NotificationDto) {
     console.log('التواصل بخصوص الإنذار:', n);
+    // يمكنك إضافة منطق للتواصل مع المشرف هنا
   }
 }
