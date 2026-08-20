@@ -475,7 +475,7 @@
                   font-family: 'Cairo', sans-serif;
                 "
               >
-                {{ getInitial(trainerData()?.fullName || summary()?.trainerName) }}
+                {{ getInitial(trainerData()?.fullName || summary()?.trainerName || '') }}
               </div>
               <div
                 style="
@@ -495,18 +495,6 @@
                   {{ getTrainerSpecialty() }}
                 </span>
               </div>
-              <button
-                style="
-                  background: none;
-                  border: none;
-                  color: #94a3b8;
-                  cursor: pointer;
-                  padding: 4px 8px;
-                  font-family: 'Cairo', sans-serif;
-                "
-                title="تواصل مع المدرب"
-                (click)="contactTrainer()"
-              ></button>
             }
           </div>
 
@@ -571,7 +559,7 @@
                   font-family: 'Cairo', sans-serif;
                 "
               >
-                {{ getInitial(supervisorData()?.fullName || summary()?.supervisorName) }}
+                {{ getInitial(supervisorData()?.fullName || summary()?.supervisorName || '') }}
               </div>
               <div
                 style="
@@ -855,7 +843,7 @@
               جاري تحميل الإعلانات...
             </div>
           } @else {
-            @for (ann of announcements(); track ann.announcementId) {
+            @for (ann of displayAnnouncements(); track ann.announcementId) {
               <div
                 style="
                   position: relative;
@@ -944,6 +932,32 @@
               >
                 لا توجد إعلانات حالياً
               </div>
+            }
+
+            <!-- زر عرض المزيد للإعلانات -->
+            @if (announcements().length > 3) {
+              <button
+                (click)="toggleShowAllAnnouncements()"
+                style="
+                  background: none;
+                  border: none;
+                  color: #2563eb;
+                  font-size: 0.85rem;
+                  font-weight: 600;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  justify-content: center;
+                  padding: 8px;
+                  font-family: 'Cairo', sans-serif;
+                  width: 100%;
+                  border-top: 1px solid #f1f5f9;
+                  margin-top: 4px;
+                "
+              >
+                {{ showAllAnnouncements() ? 'عرض أقل ▲' : 'عرض المزيد ▼' }}
+              </button>
             }
           }
         </div>
@@ -1057,8 +1071,8 @@
               جاري تحميل التنبيهات...
             </div>
           } @else {
-            @if (latestNotifications().length > 0) {
-              @for (notif of latestNotifications(); track notif.notificationId) {
+            @if (displayNotifications().length > 0) {
+              @for (notif of displayNotifications(); track notif.notificationId) {
                 <div
                   (click)="markNotificationAsRead(notif.notificationId, $event)"
                   style="
@@ -1157,6 +1171,32 @@
               >
                 لا توجد تنبيهات حالياً
               </div>
+            }
+
+            <!-- زر عرض المزيد للتنبيهات -->
+            @if (latestNotifications().length > 3) {
+              <button
+                (click)="toggleShowAllNotifications()"
+                style="
+                  background: none;
+                  border: none;
+                  color: #2563eb;
+                  font-size: 0.85rem;
+                  font-weight: 600;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  justify-content: center;
+                  padding: 8px;
+                  font-family: 'Cairo', sans-serif;
+                  width: 100%;
+                  border-top: 1px solid #f1f5f9;
+                  margin-top: 4px;
+                "
+              >
+                {{ showAllNotifications() ? 'عرض أقل ▲' : 'عرض المزيد ▼' }}
+              </button>
             }
           }
         </div>

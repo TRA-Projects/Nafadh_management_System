@@ -109,6 +109,13 @@ export class TraineeDashboard implements OnInit {
   errorMessage = signal('');
 
   // =========================================================
+  // متغيرات لعرض المزيد من الإعلانات والتنبيهات
+  // =========================================================
+
+  showAllAnnouncements = signal(false);
+  showAllNotifications = signal(false);
+
+  // =========================================================
   // تحويل الحالة البرمجية إلى النص العربي
   // =========================================================
 
@@ -156,6 +163,42 @@ export class TraineeDashboard implements OnInit {
       notificationId: notif.notificationId,
     }));
   });
+
+  // =========================================================
+  // الإعلانات المعروضة (3 أو الكل)
+  // =========================================================
+
+  displayAnnouncements = computed(() => {
+    const all = this.announcements();
+    if (this.showAllAnnouncements()) {
+      return all;
+    }
+    return all.slice(0, 3);
+  });
+
+  // =========================================================
+  // التنبيهات المعروضة (3 أو الكل)
+  // =========================================================
+
+  displayNotifications = computed(() => {
+    const all = this.latestNotifications();
+    if (this.showAllNotifications()) {
+      return all;
+    }
+    return all.slice(0, 3);
+  });
+
+  // =========================================================
+  // دوال تبديل عرض الكل / عرض أقل
+  // =========================================================
+
+  toggleShowAllAnnouncements(): void {
+    this.showAllAnnouncements.update((value) => !value);
+  }
+
+  toggleShowAllNotifications(): void {
+    this.showAllNotifications.update((value) => !value);
+  }
 
   // =========================================================
   // دالة مساعدة لمقارنة حالة المهمة (كسلاسل نصية)
@@ -633,81 +676,6 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-  // حذف الدوال القديمة واستبدالها بما سبق:
-  // - إزالة loadBatchTasks
-  // - إزالة enrichTasksWithStatus القديمة
-
-  // =========================================================
-  // جلب مهام الدفعة
-  // =========================================================
-
-  private loadBatchTasks(batchId: number): void {
-    this.api.getTasks(batchId).subscribe({
-      next: (tasks: TaskDto[]) => {
-        const traineeId = this.traineeId();
-        if (traineeId) {
-          this.enrichTasksWithStatus(tasks, traineeId);
-        } else {
-          this.tasks.set((tasks ?? []).slice(0, 3) as TaskWithSubmissionDto[]);
-          this.loadingTasks.set(false);
-        }
-      },
-      error: (error: any) => {
-        console.error('Error loading batch tasks:', error);
-        this.tasks.set([]);
-        this.loadingTasks.set(false);
-      },
-    });
-  }
-
-  // =========================================================
-  // إثراء المهام بحالة المتدرّب لكل مهمة
-  // =========================================================
-
-  private enrichTasksWithStatus(tasks: TaskDto[], traineeId: number): void {
-    if (!tasks || tasks.length === 0) {
-      this.tasks.set([]);
-      this.loadingTasks.set(false);
-      return;
-    }
-
-    this.api.getTraineeSubmissions(traineeId).subscribe({
-      next: (submissions: SubmissionDto[]) => {
-        const enrichedTasks: TaskWithSubmissionDto[] = tasks.map((task) => {
-          const submission = submissions?.find((s) => s.taskId === task.taskId);
-          if (submission) {
-            return {
-              ...task,
-              submissionStatus: submission.status,
-              submissionId: submission.submissionId,
-              grade: submission.grade,
-              // تحديث حالة المهمة إذا كانت مكتملة
-              status: submission.status === 'Graded' ? ('Completed' as TaskStatus) : task.status,
-            };
-          }
-          return task as TaskWithSubmissionDto;
-        });
-
-        // ترتيب المهام: المهام غير المكتملة أولاً، ثم المكتملة
-        enrichedTasks.sort((a, b) => {
-          const aCompleted = a.submissionStatus === 'Graded';
-          const bCompleted = b.submissionStatus === 'Graded';
-          if (aCompleted && !bCompleted) return 1;
-          if (!aCompleted && bCompleted) return -1;
-          return 0;
-        });
-
-        this.tasks.set(enrichedTasks.slice(0, 3));
-        this.loadingTasks.set(false);
-      },
-      error: (error: any) => {
-        console.error('Error loading submissions:', error);
-        this.tasks.set(tasks.slice(0, 3) as TaskWithSubmissionDto[]);
-        this.loadingTasks.set(false);
-      },
-    });
-  }
-
   // =========================================================
   // تحميل الإعلانات بناءً على userId
   // =========================================================
@@ -739,20 +707,31 @@ export class TraineeDashboard implements OnInit {
 
   /**
    * طريقة بديلة لجلب الإعلانات في حال فشل الطريقة الأساسية
+   * تم تعديلها لمنع التكرار باستخدام Set
    */
   private loadAnnouncementsFallback(): void {
     const batchId = this.batchId();
     const companyId = this.companyId();
+    let completedRequests = 0;
+    const totalRequests = 3; // منصة + شركة + دفعة
+
+    // دالة للتحقق من اكتمال جميع الطلبات
+    const checkCompletion = () => {
+      completedRequests++;
+      if (completedRequests >= totalRequests) {
+        this.loadingAnnouncements.set(false);
+      }
+    };
 
     // جلب إعلانات المنصة
     this.api.getPlatformAnnouncements().subscribe({
       next: (items: AnnouncementDto[]) => {
         this.mergeAnnouncements(items, 'الهيئة');
-        this.loadingAnnouncements.set(false);
+        checkCompletion();
       },
       error: (error: any) => {
         console.error('Error loading platform announcements:', error);
-        this.loadingAnnouncements.set(false);
+        checkCompletion();
       },
     });
 
@@ -761,11 +740,15 @@ export class TraineeDashboard implements OnInit {
       this.api.getCompanyAnnouncements(companyId).subscribe({
         next: (items: AnnouncementDto[]) => {
           this.mergeAnnouncements(items, 'الشركة');
+          checkCompletion();
         },
         error: (error: any) => {
           console.error('Error loading company announcements:', error);
+          checkCompletion();
         },
       });
+    } else {
+      checkCompletion();
     }
 
     // جلب إعلانات الدفعة
@@ -773,12 +756,40 @@ export class TraineeDashboard implements OnInit {
       this.api.getBatchAnnouncements(batchId).subscribe({
         next: (items: AnnouncementDto[]) => {
           this.mergeAnnouncements(items, 'المدرب');
+          checkCompletion();
         },
         error: (error: any) => {
           console.error('Error loading batch announcements:', error);
+          checkCompletion();
         },
       });
+    } else {
+      checkCompletion();
     }
+  }
+
+  /**
+   * دمج الإعلانات مع منع التكرار باستخدام Set
+   */
+  private mergeAnnouncements(items: AnnouncementDto[], source: string) {
+    this.announcements.update((list) => {
+      // إنشاء Set للمعرفات الموجودة
+      const existingIds = new Set(list.map((a) => a.announcementId));
+
+      // إضافة الإعلانات الجديدة فقط إذا لم تكن موجودة مسبقاً
+      const newItems = (items ?? [])
+        .filter((a) => !existingIds.has(a.announcementId))
+        .map((a) => ({ ...a, source }));
+
+      const combined = [...list, ...newItems];
+      // ترتيب حسب التاريخ (الأحدث أولاً)
+      combined.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateB.getTime() - dateA.getTime();
+      });
+      return combined;
+    });
   }
 
   /**
@@ -792,24 +803,6 @@ export class TraineeDashboard implements OnInit {
       Program: 'البرنامج',
     };
     return scopeMap[scopeType] || 'عام';
-  }
-
-  // =========================================================
-  // دمج الإعلانات
-  // =========================================================
-
-  private mergeAnnouncements(items: AnnouncementDto[], source: string) {
-    this.announcements.update((list) => {
-      const newItems = (items ?? []).map((a) => ({ ...a, source }));
-      const combined = [...list, ...newItems];
-      // ترتيب حسب التاريخ (الأحدث أولاً)
-      combined.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return dateB.getTime() - dateA.getTime();
-      });
-      return combined;
-    });
   }
 
   // =========================================================
@@ -910,49 +903,6 @@ export class TraineeDashboard implements OnInit {
    */
   getUnreadNotificationsCount(): number {
     return this.notifications().filter((n) => !n.isRead).length;
-  }
-
-  // =========================================================
-  // متغيرات لعرض المزيد من الإعلانات والتنبيهات
-  // =========================================================
-
-  showAllAnnouncements = signal(false);
-  showAllNotifications = signal(false);
-
-  // =========================================================
-  // الإعلانات المعروضة (3 أو الكل)
-  // =========================================================
-
-  displayAnnouncements = computed(() => {
-    const all = this.announcements();
-    if (this.showAllAnnouncements()) {
-      return all;
-    }
-    return all.slice(0, 3);
-  });
-
-  // =========================================================
-  // التنبيهات المعروضة (3 أو الكل)
-  // =========================================================
-
-  displayNotifications = computed(() => {
-    const all = this.latestNotifications();
-    if (this.showAllNotifications()) {
-      return all;
-    }
-    return all.slice(0, 3);
-  });
-
-  // =========================================================
-  // دوال تبديل عرض الكل / عرض أقل
-  // =========================================================
-
-  toggleShowAllAnnouncements(): void {
-    this.showAllAnnouncements.update((value) => !value);
-  }
-
-  toggleShowAllNotifications(): void {
-    this.showAllNotifications.update((value) => !value);
   }
 
   // =========================================================
@@ -1098,7 +1048,20 @@ export class TraineeDashboard implements OnInit {
     const trainer = this.trainerData();
     if (!trainer) return;
 
+    // يمكنك توجيه المستخدم إلى صفحة المحادثة
+    // أو فتح نافذة محادثة جديدة
     console.log('Contact trainer:', trainer);
+  }
+
+  // =========================================================
+  // التواصل مع المشرف
+  // =========================================================
+
+  contactSupervisor(): void {
+    const supervisor = this.supervisorData();
+    if (!supervisor) return;
+
+    console.log('Contact supervisor:', supervisor);
   }
 
   // =========================================================
