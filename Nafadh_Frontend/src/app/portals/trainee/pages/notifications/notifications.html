@@ -20,6 +20,34 @@
 
   <!-- أزرار الفلترة العلوية المتناسقة تماماً -->
   <div style="display: flex; gap: 8px; align-items: center">
+    <!-- زر تحديد الكل كمقروء -->
+    <button
+      type="button"
+      *ngIf="getUnreadCount() > 0"
+      (click)="markAllAsRead()"
+      style="
+        height: 32px;
+        padding: 0 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-family: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #334155;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      "
+      onmouseover="this.style.backgroundColor = '#f1f5f9'"
+      onmouseout="this.style.backgroundColor = '#f8fafc'"
+    >
+      <span>📬</span>
+      تحديد الكل كمقروء ({{ getUnreadCount() }})
+    </button>
+
     <!-- زر نوع الإشعار (القائمة المنسدلة) -->
     <div
       style="
@@ -136,7 +164,13 @@
       >
         <path
           d="M 0 0 L 20 0 L 0 20 Z"
-          [attr.fill]="$index === 0 || $index === 1 ? '#ef4444' : '#22c55e'"
+          [attr.fill]="
+            !n.isRead
+              ? '#ef4444'
+              : n.title?.includes('إنذار') || n.title?.includes('تحذير')
+                ? '#f59e0b'
+                : '#22c55e'
+          "
         />
       </svg>
 
@@ -152,20 +186,30 @@
           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.01);
           transition: all 0.2s ease;
           border: 1px solid;
+          cursor: pointer;
         "
         [style.background-color]="
-          $index === 4 ? '#fff5f5' : $index === 0 || $index === 1 ? '#f0f6ff' : '#f8fafc'
+          !n.isRead
+            ? '#f0f6ff'
+            : n.title?.includes('إنذار') || n.title?.includes('تحذير')
+              ? '#fff5f5'
+              : '#f8fafc'
         "
         [style.border-color]="
-          $index === 4 ? '#fed7d7' : $index === 0 || $index === 1 ? '#dbeafe' : '#e2e8f0'
+          !n.isRead
+            ? '#dbeafe'
+            : n.title?.includes('إنذار') || n.title?.includes('تحذير')
+              ? '#fed7d7'
+              : '#e2e8f0'
         "
         [style.border-right]="
-          $index === 4
-            ? '3px solid #f87171'
-            : $index === 0 || $index === 1
-              ? '3px solid #60a5fa'
+          !n.isRead
+            ? '3px solid #60a5fa'
+            : n.title?.includes('إنذار') || n.title?.includes('تحذير')
+              ? '3px solid #f87171'
               : '3px solid #cbd5e1'
         "
+        [style.opacity]="n.isRead ? '0.85' : '1'"
       >
         <summary style="cursor: pointer; list-style: none; padding: 5px 8px">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
@@ -180,17 +224,15 @@
                   background: transparent;
                 "
               >
-                @if (n.isRead === false && $index < 2) {
+                @if (!n.isRead) {
                   📋
-                } @else if (n.isRead === false) {
-                  ⏰
-                } @else if ($index === 2) {
-                  📅
-                } @else if ($index === 3) {
-                  ⭐
-                } @else if ($index === 4) {
+                } @else if (n.title?.includes('إنذار') || n.title?.includes('تحذير')) {
                   ⚠️
-                } @else if ($index === 5) {
+                } @else if (n.title?.includes('مهمة') || n.title?.includes('تسليم')) {
+                  ⏰
+                } @else if (n.title?.includes('تقييم') || n.title?.includes('درجة')) {
+                  ⭐
+                } @else if (n.title?.includes('إعلان')) {
                   📢
                 } @else {
                   📁
@@ -232,7 +274,12 @@
                       إنذار
                     </span>
                   } @else {
-                    <span style="color: #94a3b8; font-weight: 600; font-size: 10px"> تنبيه </span>
+                    <span
+                      [style.color]="!n.isRead ? '#2563eb' : '#94a3b8'"
+                      style="font-weight: 600; font-size: 10px"
+                    >
+                      {{ !n.isRead ? '🔵 جديد' : 'تنبيه' }}
+                    </span>
                   }
 
                   <small class="nfd-muted" style="font-size: 9px; color: #94a3b8; font-weight: 500">
@@ -254,7 +301,20 @@
               </div>
             </div>
 
-            <div style="display: flex; align-items: center; flex-shrink: 0">
+            <div style="display: flex; align-items: center; flex-shrink: 0; gap: 6px">
+              <!-- علامة غير مقروء -->
+              @if (!n.isRead) {
+                <span
+                  style="
+                    width: 8px;
+                    height: 8px;
+                    background: #3b82f6;
+                    border-radius: 50%;
+                    display: inline-block;
+                    animation: pulse 2s infinite;
+                  "
+                ></span>
+              }
               <svg
                 width="10"
                 height="10"
@@ -312,36 +372,74 @@
                 <button
                   type="button"
                   class="nfd-chip"
-                  style="padding: 3px 8px; font-size: 11px"
+                  style="padding: 3px 8px; font-size: 11px; cursor: pointer"
                   (click)="
-                    detailsRef.open = false;
-                    markRead(n);
-                    $event.preventDefault();
-                    $event.stopPropagation()
+                    detailsRef.open = false; $event.preventDefault(); $event.stopPropagation()
                   "
                 >
                   إغلاق
                 </button>
+                @if (!n.isRead) {
+                  <button
+                    type="button"
+                    style="
+                      padding: 3px 8px;
+                      font-size: 11px;
+                      cursor: pointer;
+                      background: #2563eb;
+                      color: white;
+                      border: none;
+                      border-radius: 4px;
+                    "
+                    (click)="
+                      markRead(n);
+                      detailsRef.open = false;
+                      $event.preventDefault();
+                      $event.stopPropagation()
+                    "
+                  >
+                    تحديد كمقروء
+                  </button>
+                }
               </div>
             } @else {
               <div style="color: #334155; font-size: 11px; font-weight: 500; margin-bottom: 2px">
                 {{ n.message }}
               </div>
 
-              <div style="display: flex; justify-content: flex-start; margin-top: 4px">
+              <div style="display: flex; justify-content: flex-start; gap: 5px; margin-top: 4px">
                 <button
                   type="button"
                   class="nfd-chip"
-                  style="padding: 2px 6px; font-size: 10px"
+                  style="padding: 2px 6px; font-size: 10px; cursor: pointer"
                   (click)="
-                    detailsRef.open = false;
-                    markRead(n);
-                    $event.preventDefault();
-                    $event.stopPropagation()
+                    detailsRef.open = false; $event.preventDefault(); $event.stopPropagation()
                   "
                 >
                   إغلاق
                 </button>
+                @if (!n.isRead) {
+                  <button
+                    type="button"
+                    style="
+                      padding: 2px 6px;
+                      font-size: 10px;
+                      cursor: pointer;
+                      background: #2563eb;
+                      color: white;
+                      border: none;
+                      border-radius: 4px;
+                    "
+                    (click)="
+                      markRead(n);
+                      detailsRef.open = false;
+                      $event.preventDefault();
+                      $event.stopPropagation()
+                    "
+                  >
+                    تحديد كمقروء
+                  </button>
+                }
               </div>
             }
           </div>
@@ -350,3 +448,21 @@
     </div>
   }
 </div>
+
+<!-- إضافة بعض الأنماط للحركة -->
+<style>
+  @keyframes pulse {
+    0% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(0.8);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+</style>

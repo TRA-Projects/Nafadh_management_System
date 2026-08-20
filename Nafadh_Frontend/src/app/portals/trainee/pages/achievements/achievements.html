@@ -1,116 +1,136 @@
 <h2 class="nfd-page-title">الإنجازات والشهادات</h2>
 
+<!-- قسم التقييم - يظهر دائماً -->
 <div class="nfd-card" style="margin-bottom:16px;border-inline-start:4px solid var(--color-cyan)">
   <strong style="display:block;margin-bottom:10px;font-size:13px">أكملت وحدة مؤخراً — شاركنا رأيك!</strong>
-  <div style="display:flex;gap:8px">
-    <button class="nfd-btn secondary" (click)="openFeedback('TrainerRating')">تقييم المدرب</button>
-    <button class="nfd-btn secondary" (click)="openFeedback('BatchExperienceRating')">تقييم تجربة الدفعة</button>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="nfd-btn secondary" (click)="openFeedback('TrainerRating')">⭐ تقييم المدرب</button>
+    <button class="nfd-btn secondary" (click)="openFeedback('BatchExperienceRating')">📊 تقييم تجربة الدفعة</button>
   </div>
 </div>
 
+<!-- نتائج الوحدات -->
 <div class="nfd-card">
-  <h3>نتائج الوحدات</h3>
+  <h3>📚 نتائج الوحدات</h3>
   
-  <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
-    <span style="width:180px;font-size:13px;font-weight:600;color:#1e293b;flex-shrink:0;text-align:right">مقدمة في الذكاء الاصطناعي</span>
-    <div class="nfd-bar" style="flex:1;background:#f1f5f9;height:10px;border-radius:6px;overflow:hidden;position:relative;direction:rtl">
-      <div class="fill" style="height:100%;background:linear-gradient(90deg, #0d9488 0%, #1e1b4b 100%);border-radius:6px;width:95%"></div>
-    </div>
-    <span style="width:45px;font-size:13px;font-weight:700;color:#1e293b;flex-shrink:0;text-align:left">95%</span>
-  </div>
-
-  <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
-    <span style="width:180px;font-size:13px;font-weight:600;color:#1e293b;flex-shrink:0;text-align:right">Python للذكاء الاصطناعي</span>
-    <div class="nfd-bar" style="flex:1;background:#f1f5f9;height:10px;border-radius:6px;overflow:hidden;position:relative;direction:rtl">
-      <div class="fill" style="height:100%;background:linear-gradient(90deg, #0d9488 0%, #1e1b4b 100%);border-radius:6px;width:88%"></div>
-    </div>
-    <span style="width:45px;font-size:13px;font-weight:700;color:#1e293b;flex-shrink:0;text-align:left">88%</span>
-  </div>
-
-  <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
-    <span style="width:180px;font-size:13px;font-weight:600;color:#1e293b;flex-shrink:0;text-align:right">تعلم الآلة</span>
-    <div class="nfd-bar" style="flex:1;background:#f1f5f9;height:10px;border-radius:6px;overflow:hidden;position:relative;direction:rtl">
-      <div class="fill" style="height:100%;background:linear-gradient(90deg, #0d9488 0%, #1e1b4b 100%);border-radius:6px;width:76%"></div>
-    </div>
-    <span style="width:45px;font-size:13px;font-weight:700;color:#1e293b;flex-shrink:0;text-align:left">76%</span>
-  </div>
-
-</div>
-
-<div class="nfd-card" style="margin-top:16px">
-  <h3>الأوسمة والإنجازات</h3>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+  @for (module of displayModules(); track module.moduleId) {
+    @let progress = module.progress;
+    @let status = module.status;
+    @let title = module.title;
     
-    <!-- 1. الأداء المتميز -->
-    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid #F59E0B;background:#FFFBF0">
-      <div style="font-size:26px;margin-bottom:6px">⭐</div>
-      <strong style="display:block;font-size:12px;color:#1e293b">الأداء المتميز</strong>
-      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">درجة أعلى من 90% في مهمتين</p>
-      <span style="font-size:10px;font-weight:700;color:#D97706">✓ محقق</span>
+    <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
+      <span style="width:200px;font-size:13px;font-weight:600;color:#1e293b;flex-shrink:0;text-align:right">
+        {{ title }}
+      </span>
+      <div class="nfd-bar" style="flex:1;background:#f1f5f9;height:10px;border-radius:6px;overflow:hidden;position:relative;direction:rtl">
+        <div
+          class="fill"
+          [style.height]="'100%'"
+          [style.background]="'linear-gradient(90deg, ' + getBarColor(progress) + ' 0%, #1e1b4b 100%)'"
+          [style.borderRadius]="'6px'"
+          [style.width]="progress + '%'"
+          [style.transition]="'width 0.5s ease'">
+        </div>
+      </div>
+      <span style="width:80px;font-size:13px;font-weight:700;color:#1e293b;flex-shrink:0;text-align:left">
+        @if (status === 'Completed') {
+          ✅ {{ progress }}%
+        } @else if (status === 'InProgress') {
+          ⏳ {{ progress }}%
+        } @else {
+          ⬜ 0%
+        }
+      </span>
     </div>
+  }
+  @empty {
+    <p style="text-align:center;color:#94a3b8;padding:20px 0">📭 لا توجد وحدات مسجلة بعد</p>
+  }
+  
+  <!-- نسبة الإكمال الكلية -->
+  <div style="margin-top:16px;padding-top:16px;border-top:1px solid #f1f5f9">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;font-weight:600;color:#1e293b">📊 نسبة إكمال البرنامج</span>
+      <span style="font-size:18px;font-weight:700;color:#0d9488">{{ completionPercentage() }}%</span>
+    </div>
+    <div class="nfd-bar" style="margin-top:8px;background:#f1f5f9;height:12px;border-radius:6px;overflow:hidden;direction:rtl">
+      <div class="fill"
+           [style.height]="'100%'"
+           [style.background]="'linear-gradient(90deg, #0d9488 0%, #1e1b4b 100%)'"
+           [style.borderRadius]="'6px'"
+           [style.width]="completionPercentage() + '%'"
+           [style.transition]="'width 0.8s ease'">
+      </div>
+    </div>
+  </div>
+</div>
 
-    <!-- 2. المثابرة -->
-    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid #F59E0B;background:#FFFBF0">
-      <div style="font-size:26px;margin-bottom:6px">🔥</div>
-      <strong style="display:block;font-size:12px;color:#1e293b">المثابرة</strong>
-      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">حضور مستمر لمدة 30 يوم</p>
-      <span style="font-size:10px;font-weight:700;color:#D97706">✓ محقق</span>
-    </div>
-
-    <!-- 3. متعلم سريع -->
-    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid #F59E0B;background:#FFFBF0">
-      <div style="font-size:26px;margin-bottom:6px">🏅</div>
-      <strong style="display:block;font-size:12px;color:#1e293b">متعلم سريع</strong>
-      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">أكمل 3 وحدات في أسبوع واحد</p>
-      <span style="font-size:10px;font-weight:700;color:#D97706">✓ محقق</span>
-    </div>
-
-    <!-- 4. إكمال المشروع -->
-    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid var(--color-border);background:transparent;opacity:0.5">
-      <div style="font-size:26px;margin-bottom:6px">🎯</div>
-      <strong style="display:block;font-size:12px;color:#1e293b">إكمال المشروع</strong>
-      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">إنهاء أول مشروع متكامل</p>
-    </div>
-
-    <!-- 5. مبدع -->
-    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid var(--color-border);background:transparent;opacity:0.5">
-      <div style="font-size:26px;margin-bottom:6px">💡</div>
-      <strong style="display:block;font-size:12px;color:#1e293b">مبدع</strong>
-      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">تقديم حل إبداعي في مهمة</p>
-    </div>
-
-    <!-- 6. خريج البرنامج -->
-    <div style="text-align:center;padding:14px;border-radius:12px;border:2px solid var(--color-border);background:transparent;opacity:0.5">
-      <div style="font-size:26px;margin-bottom:6px">🏆</div>
-      <strong style="display:block;font-size:12px;color:#1e293b">خريج البرنامج</strong>
-      <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">إتمام البرنامج التدريبي بالكامل</p>
-    </div>
+<!-- الأوسمة والإنجازات -->
+<div class="nfd-card" style="margin-top:16px">
+  <h3>🏅 الأوسمة والإنجازات</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));gap:12px">
+    
+    @for (badge of allBadges(); track badge.badgeId) {
+      @let earned = isEarned(badge.badgeId);
+       <div style="text-align:center;padding:14px;border-radius:12px;transition:all 0.3s ease"
+         [style.border]="'2px solid ' + (earned ? '#F59E0B' : 'var(--color-border)')"
+         [style.background]="earned ? '#FFFBF0' : 'transparent'"
+         [style.opacity]="earned ? '1' : '0.5'">
+        <div style="font-size:26px;margin-bottom:6px">{{ badge.icon || '🏅' }}</div>
+        <strong style="display:block;font-size:12px;color:#1e293b">{{ badge.name }}</strong>
+        <p style="font-size:10px;color:var(--color-text-secondary);margin:4px 0">{{ badge.description }}</p>
+        @if (earned) {
+          <span style="font-size:10px;font-weight:700;color:#D97706">✓ محقق</span>
+        } @else {
+          <span style="font-size:10px;font-weight:700;color:#94a3b8">🔒 غير محقق</span>
+        }
+      </div>
+    }
+    @empty {
+      <p style="text-align:center;color:#94a3b8;padding:20px 0;grid-column:1/-1">🏷️ لا توجد أوسمة متاحة حالياً</p>
+    }
 
   </div>
 </div>
 
+<!-- شهادة الإتمام -->
 <div class="nfd-card" style="margin-top:16px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <h3 style="margin:0">شهادة الإتمام</h3>
-    <span class="nfd-badge" style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">قيد المراجعة</span>
+    <h3 style="margin:0">📜 شهادة الإتمام</h3>
+    @if (completionPercentage() >= 85) {
+      <span class="nfd-badge" style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">✅ متاحة للتحميل</span>
+    } @else {
+      <span class="nfd-badge" style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">⏳ قيد الإنجاز</span>
+    }
   </div>
   
-  <p class="nfd-muted" style="margin:0 0 16px 0;font-size:12px">ستصدر الشهادة عند إتمام البرنامج التدريبي بالكامل.</p>
+  <p class="nfd-muted" style="margin:0 0 16px 0;font-size:12px">
+    @if (completionPercentage() >= 85) {
+      🎉 تهانينا! لقد أكملت أكثر من 85% من البرنامج، يمكنك الآن تحميل شهادتك.
+    } @else {
+      📌 ستصدر الشهادة عند إتمام 85% من البرنامج التدريبي. ({{ completionPercentage() }}% مكتمل)
+    }
+  </p>
 
   <div style="background:linear-gradient(135deg, #0b1f64 0%, #030b2e 100%), radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px); background-size: 100% 100%, 16px 16px; border-radius:12px; padding:32px 20px; text-align:center; color:#ffffff; position:relative; overflow:hidden">
-    <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">شهادة إتمام التدريب</div>
+    <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;letter-spacing:2px">شهادة إتمام التدريب</div>
     <h2 style="font-size:24px;font-weight:800;letter-spacing:1px;margin:0 0 12px 0;color:#ffffff">NAFADH</h2>
     <p style="font-size:13px;color:#e2e8f0;margin:0 0 20px 0;line-height:1.6">
-      يشهد بأن المتدرب: أحمد محمد الزهراني<br>
-      أتم برنامج تطوير مهارات الذكاء الاصطناعي
+      يشهد بأن المتدرب: <strong style="color:#ffffff">{{ enrollment()?.traineeName || 'اسم المتدرب' }}</strong><br>
+      أتم برنامج <strong style="color:#ffffff">{{ enrollment()?.programTitle || 'التدريب' }}</strong>
     </p>
-    <div style="display:inline-block;background:rgba(13, 148, 136, 0.2);border:1px solid #0d9488;color:#2dd4bf;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600">
-      قيد الإصدار — 75% مكتمل
+    <div style="display:inline-block;background:rgba(13, 148, 136, 0.2);border:1px solid #0d9488;color:#2dd4bf;padding:6px 20px;border-radius:20px;font-size:12px;font-weight:600">
+      {{ completionPercentage() >= 85 ? '✅ جاهزة للتحميل' : '⏳ ' + completionPercentage() + '% مكتمل' }}
     </div>
   </div>
 
-  <button style="width:100%;margin-top:12px;background:#808baf;color:#ffffff;height:42px;border-radius:8px;border:none;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600">
-    <span>تنزيل الشهادة</span>
+  <button 
+    style="width:100%;margin-top:12px;color:#ffffff;height:42px;border-radius:8px;border:none;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600;transition:all 0.3s ease"
+    [style.background]="canDownloadCertificate() ? '#0d9488' : '#808baf'"
+    [style.cursor]="canDownloadCertificate() ? 'pointer' : 'not-allowed'"
+    (click)="downloadCertificate()"
+    [disabled]="!canDownloadCertificate()">
+    <span>{{ canDownloadCertificate() ? '📥 تنزيل الشهادة' : '🔒 غير متاحة للتحميل بعد' }}</span>
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
       <polyline points="7 10 12 15 17 10"></polyline>
@@ -119,25 +139,32 @@
   </button>
 </div>
 
+<!-- نافذة التقييم المنبثقة -->
 @if (showFeedback()) {
-  <div class="nfd-modal-bg" (click)="showFeedback.set(false)">
-    <div class="nfd-modal" (click)="$event.stopPropagation()">
-      <h3>{{ feedbackType() === 'TrainerRating' ? 'تقييم المدرب' : 'تقييم تجربة الدفعة' }}</h3>
+  <div class="nfd-modal-bg" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000" (click)="showFeedback.set(false)">
+    <div class="nfd-modal" style="background:#ffffff;border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto" (click)="$event.stopPropagation()">
+      <h3 style="margin-top:0;color:#1e293b">{{ feedbackType() === 'TrainerRating' ? '⭐ تقييم المدرب' : '📊 تقييم تجربة الدفعة' }}</h3>
+      
       @for (c of criteria(); track c.criterionId) {
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <label style="font-size:12px">{{ c.name }}</label>
-          <div style="display:flex;gap:2px">
+          <label style="font-size:12px;color:#334155">{{ c.name }}</label>
+          <div style="display:flex;gap:2px;direction:ltr">
             @for (s of [1,2,3,4,5]; track s) {
-              <button style="font-size:18px" [style.color]="(scores[c.criterionId] || 0) >= s ? '#F59E0B' : 'var(--color-border)'" (click)="scores[c.criterionId] = s">★</button>
+              <button 
+                style="font-size:22px;background:none;border:none;cursor:pointer;padding:0 2px;transition:all 0.2s ease"
+                [style.color]="(scores[c.criterionId] || 0) >= s ? '#F59E0B' : '#e2e8f0'" 
+                (click)="scores[c.criterionId] = s">★</button>
             }
           </div>
         </div>
       }
-      <label style="display:block;font-size:12px;font-weight:600;margin-top:8px">تعليق إضافي</label>
-      <textarea class="nfd-input" rows="3" [(ngModel)]="comment" style="resize:none"></textarea>
-      <div class="nfd-modal-actions">
-        <button class="nfd-btn secondary" (click)="showFeedback.set(false)">إلغاء</button>
-        <button class="nfd-btn primary" (click)="submitFeedback()">إرسال التقييم</button>
+      
+      <label style="display:block;font-size:12px;font-weight:600;margin-top:12px;color:#1e293b">💬 تعليق إضافي</label>
+      <textarea class="nfd-input" rows="3" [(ngModel)]="comment" style="resize:none;width:100%;padding:10px;border-radius:6px;border:1px solid #e2e8f0;font-family:inherit;font-size:13px;margin-top:4px" placeholder="أضف تعليقك هنا..."></textarea>
+      
+      <div class="nfd-modal-actions" style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button class="nfd-btn secondary" style="padding:8px 20px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;color:#64748b;cursor:pointer;font-size:13px" (click)="showFeedback.set(false)">إلغاء</button>
+        <button class="nfd-btn primary" style="padding:8px 20px;border-radius:6px;border:none;background:#0d9488;color:#fff;cursor:pointer;font-size:13px;font-weight:600" (click)="submitFeedback()">📤 إرسال التقييم</button>
       </div>
     </div>
   </div>
