@@ -38,7 +38,11 @@
 
     <div class="header-actions">
 
-      <button class="action-btn secondary">
+      <button
+        type="button"
+        class="action-btn secondary"
+        [disabled]="isExportingReport()"
+        (click)="exportTraineesReport()">
 
         <svg
           viewBox="0 0 24 24"
@@ -54,8 +58,20 @@
 
         </svg>
 
+
         <span>
-          تصدير الكشف
+
+          @if (isExportingReport()) {
+
+            جاري التصدير...
+
+          }
+          @else {
+
+            تصدير الكشف
+
+          }
+
         </span>
 
       </button>
@@ -257,28 +273,28 @@
       <div class="kpi-icon">
 
         <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round">
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round">
 
-    <circle cx="8" cy="8" r="3"></circle>
+          <circle cx="8" cy="8" r="3"></circle>
 
-    <path d="M3 20v-2a5 5 0 0 1 5-5"></path>
+          <path d="M3 20v-2a5 5 0 0 1 5-5"></path>
 
-    <path
-      d="M16.5 19.5
-         12.8 16
-         a2.5 2.5 0 0 1 3.5-3.6
-         l.2.2
-         .2-.2
-         a2.5 2.5 0 0 1 3.5 3.6
-         z">
-    </path>
+          <path
+            d="M16.5 19.5
+               12.8 16
+               a2.5 2.5 0 0 1 3.5-3.6
+               l.2.2
+               .2-.2
+               a2.5 2.5 0 0 1 3.5 3.6
+               z">
+          </path>
 
-  </svg>
+        </svg>
 
       </div>
 

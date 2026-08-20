@@ -646,6 +646,40 @@ deleteTrainingMaterial(
   }
 
 
+  // =====================================================
+  //  GENERATE TRAINER TRAINEES REPORT
+  // =====================================================
+
+  generateTrainerTraineesReport(
+    dto: {
+      trainerId: number;
+      batchId?: number | null;
+      generatedByUserId: number;
+    }
+  ): Observable<{
+    reportId: number;
+    type: string;
+    filtersJson?: string | null;
+    generatedAt: string;
+    fileUrl?: string | null;
+    generatedByUserId: number;
+  }> {
+
+    return this.http.post<{
+      reportId: number;
+      type: string;
+      filtersJson?: string | null;
+      generatedAt: string;
+      fileUrl?: string | null;
+      generatedByUserId: number;
+    }>(
+      `${this.base}/Report/trainer-trainees`,
+      dto
+    );
+  }
+
+
+
   downloadReport(
     reportId: number
   ): Observable<Blob> {
