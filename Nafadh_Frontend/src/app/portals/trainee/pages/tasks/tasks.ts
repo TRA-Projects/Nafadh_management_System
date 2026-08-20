@@ -336,6 +336,7 @@ export class TraineeTasks implements OnInit {
   selectTask(task: TaskDto): void {
 
     this.selected.set(task);
+    this.selectedProject.set(null);
     this.submissionLink = '';
 
     const submission =
@@ -385,7 +386,7 @@ export class TraineeTasks implements OnInit {
   }
 
   // =========================================================
-  // Deadline Check
+  // Deadline
   // =========================================================
 
   isDeadlinePassed(
@@ -396,13 +397,10 @@ export class TraineeTasks implements OnInit {
       return false;
     }
 
-    const dueDate =
-      new Date(task.dueDate);
-
-    const now =
-      new Date();
-
-    return now.getTime() > dueDate.getTime();
+    return (
+      new Date().getTime() >
+      new Date(task.dueDate).getTime()
+    );
   }
 
   // =========================================================
@@ -416,7 +414,6 @@ export class TraineeTasks implements OnInit {
     const submission =
       this.submissionFor(task.taskId);
 
-    // إذا كانت المهمة مكتملة فلا حاجة لإعادة التسليم
     if (submission) {
 
       const status =
@@ -433,7 +430,6 @@ export class TraineeTasks implements OnInit {
       }
     }
 
-    // إذا انتهى الموعد يمنع التسليم
     return !this.isDeadlinePassed(task);
   }
 
@@ -494,7 +490,6 @@ export class TraineeTasks implements OnInit {
     const submission =
       this.submissionFor(task.taskId);
 
-    // التسليم المكتمل له الأولوية
     if (submission) {
 
       const status =
@@ -528,7 +523,6 @@ export class TraineeTasks implements OnInit {
       }
     }
 
-    // بعد ذلك نتحقق من موعد المهمة
     if (this.isDeadlinePassed(task)) {
       return 'متأخر';
     }
@@ -537,7 +531,7 @@ export class TraineeTasks implements OnInit {
   }
 
   // =========================================================
-  // Status Background
+  // Task Status Background
   // =========================================================
 
   statusBackground(
@@ -576,7 +570,7 @@ export class TraineeTasks implements OnInit {
   }
 
   // =========================================================
-  // Status Foreground
+  // Task Status Foreground
   // =========================================================
 
   statusForeground(
@@ -609,7 +603,7 @@ export class TraineeTasks implements OnInit {
   }
 
   // =========================================================
-  // Submit
+  // Submit Assignment
   // =========================================================
 
   submit(): void {
@@ -681,7 +675,7 @@ export class TraineeTasks implements OnInit {
   }
 
   // =========================================================
-  // Projects
+  // Select Project
   // =========================================================
 
   selectProject(
@@ -689,12 +683,19 @@ export class TraineeTasks implements OnInit {
   ): void {
 
     this.selectedProject.set(project);
+    this.selected.set(null);
+    this.errorMessage.set('');
   }
 
   backToProjects(): void {
 
     this.selectedProject.set(null);
+    this.errorMessage.set('');
   }
+
+  // =========================================================
+  // Project Progress
+  // =========================================================
 
   projectProgress(
     project: ProjectDto
@@ -702,7 +703,7 @@ export class TraineeTasks implements OnInit {
 
     const p = project as any;
 
-    const value =
+    const rawValue =
       p.progressPercentage ??
       p.progress ??
       p.completionPercentage ??
@@ -710,10 +711,9 @@ export class TraineeTasks implements OnInit {
       p.percentage ??
       0;
 
-    const number =
-      Number(value);
+    const value = Number(rawValue);
 
-    if (Number.isNaN(number)) {
+    if (!Number.isFinite(value)) {
       return 0;
     }
 
@@ -721,10 +721,14 @@ export class TraineeTasks implements OnInit {
       100,
       Math.max(
         0,
-        Math.round(number)
+        Math.round(value)
       )
     );
   }
+
+  // =========================================================
+  // Project Start Date
+  // =========================================================
 
   projectStartDate(
     project: ProjectDto
@@ -739,6 +743,10 @@ export class TraineeTasks implements OnInit {
       null
     );
   }
+
+  // =========================================================
+  // Project End Date
+  // =========================================================
 
   projectEndDate(
     project: ProjectDto
@@ -755,89 +763,121 @@ export class TraineeTasks implements OnInit {
     );
   }
 
+  // =========================================================
+  // Project Status
+  // =========================================================
+
   displayProjectStatus(
     project: ProjectDto
   ): string {
 
     const p = project as any;
 
-    const status =
+    const rawStatus =
       String(p.status ?? '')
         .toLowerCase()
-        .trim();
+        .trim()
+        .replace(/[\s_-]/g, '');
 
     const progress =
       this.projectProgress(project);
 
     if (
-      status === 'completed' ||
-      status === 'complete' ||
+      rawStatus === 'completed' ||
+      rawStatus === 'complete' ||
+      rawStatus === 'مكتمل' ||
       progress === 100
     ) {
       return 'مكتمل';
     }
 
     if (
-      status === 'new' ||
-      status === 'pending' ||
-      progress === 0
+      rawStatus === 'new' ||
+      rawStatus === 'pending' ||
+      rawStatus === 'جديد'
     ) {
       return 'جديد';
     }
 
     if (
-      status === 'active' ||
-      status === 'inprogress' ||
-      status === 'in progress'
+      rawStatus === 'active' ||
+      rawStatus === 'inprogress' ||
+      rawStatus === 'مستمر' ||
+      rawStatus === 'قيدالتنفيذ'
     ) {
       return 'مستمر';
     }
 
-    return p.status || 'مستمر';
+    if (progress === 0) {
+      return 'جديد';
+    }
+
+    if (progress > 0 && progress < 100) {
+      return 'مستمر';
+    }
+
+    return 'مستمر';
   }
+
+  // =========================================================
+  // Project Status Background
+  // =========================================================
 
   projectStatusBackground(
     project: ProjectDto
   ): string {
 
-    const status =
-      this.displayProjectStatus(project);
+    switch (
+      this.displayProjectStatus(project)
+    ) {
 
-    if (status === 'مكتمل') {
-      return 'var(--status-completed-bg)';
+      case 'مكتمل':
+        return 'var(--status-completed-bg)';
+
+      case 'جديد':
+        return 'var(--status-new-bg)';
+
+      default:
+        return 'var(--status-active-bg)';
     }
-
-    if (status === 'جديد') {
-      return 'var(--status-new-bg)';
-    }
-
-    return 'var(--status-active-bg)';
   }
+
+  // =========================================================
+  // Project Status Foreground
+  // =========================================================
 
   projectStatusForeground(
     project: ProjectDto
   ): string {
 
-    const status =
-      this.displayProjectStatus(project);
+    switch (
+      this.displayProjectStatus(project)
+    ) {
 
-    if (status === 'مكتمل') {
-      return 'var(--status-completed-fg)';
+      case 'مكتمل':
+        return 'var(--status-completed-fg)';
+
+      case 'جديد':
+        return 'var(--status-new-fg)';
+
+      default:
+        return 'var(--status-active-fg)';
     }
-
-    if (status === 'جديد') {
-      return 'var(--status-new-fg)';
-    }
-
-    return 'var(--status-active-fg)';
   }
+
+  // =========================================================
+  // Project Progress Ring
+  // =========================================================
 
   projectProgressBackground(
     progress: number
   ): string {
 
     const angle =
-      progress * 3.6;
+      Math.min(
+        100,
+        Math.max(0, progress)
+      ) * 3.6;
 
     return `
       conic-gradient(
@@ -845,55 +885,6 @@ export class TraineeTasks implements OnInit {
         var(--color-tint-indigo) ${angle}deg 360deg
       )
     `;
-  }
-
-  projectSteps(
-    project: ProjectDto
-  ) {
-
-    const progress =
-      this.projectProgress(project);
-
-    let currentStep = 1;
-
-    if (progress >= 75) {
-      currentStep = 4;
-    } else if (progress >= 50) {
-      currentStep = 3;
-    } else if (progress >= 25) {
-      currentStep = 2;
-    }
-
-    return [
-
-      {
-        number: 1,
-        name: 'التخطيط',
-        completed: progress >= 25,
-        current: currentStep === 1
-      },
-
-      {
-        number: 2,
-        name: 'التطوير',
-        completed: progress >= 50,
-        current: currentStep === 2
-      },
-
-      {
-        number: 3,
-        name: 'الاختبار',
-        completed: progress >= 75,
-        current: currentStep === 3
-      },
-
-      {
-        number: 4,
-        name: 'التسليم',
-        completed: progress >= 100,
-        current: currentStep === 4
-      }
-    ];
   }
 
   // =========================================================
