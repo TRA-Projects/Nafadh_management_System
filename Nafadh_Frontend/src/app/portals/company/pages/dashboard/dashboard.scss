@@ -572,3 +572,32 @@
   .lower-grid { grid-template-columns: 1fr; }
   .lower-grid > .card { min-height: 0; }
 }
+
+
+.hbars[data-refresh] .h-fill,
+.capacity-progress .cap-bar i {
+  transform-origin: right center;
+}
+
+.hbars[data-refresh] .h-fill {
+  animation: company-bar-refresh .7s ease both;
+}
+
+.capacity-progress .cap-bar i {
+  animation: company-capacity-refresh .7s ease both;
+}
+
+@keyframes company-bar-refresh {
+  from { width: 0 !important; }
+}
+
+@keyframes company-capacity-refresh {
+  from { width: 0 !important; }
+}
+
+
+.quick-stats { margin-top: 14px; }
+.quick-stat { display:flex; flex-direction:column; gap:4px; min-height:92px; }
+.quick-stat span { color:var(--muted); font-size:12px; }
+.quick-stat b { font-size:28px; line-height:1; color:var(--color-navy); }
+.quick-stat small { color:var(--muted); font-size:10.5px; }
