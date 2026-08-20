@@ -349,10 +349,6 @@
             </th>
 
             <th>
-              الحالة
-            </th>
-
-            <th>
               الإجراءات
             </th>
 
@@ -448,7 +444,7 @@
 
                       <div
                         class="progress-fill"
-                        style="width:0%;">
+                        style="width: 0%;">
                       </div>
 
                     </div>
@@ -508,17 +504,6 @@
               </td>
 
 
-              <!-- Status -->
-
-              <td>
-
-                <span class="status-chip neutral">
-                  قيد المتابعة
-                </span>
-
-              </td>
-
-
               <!-- Actions -->
 
               <td>
@@ -555,7 +540,12 @@
 
             <tr>
 
-              <td colspan="7">
+              <!--
+                CHANGED:
+                صار عدد أعمدة الجدول 6 بدل 7
+              -->
+
+              <td colspan="6">
 
                 <div class="table-empty">
 
@@ -575,6 +565,7 @@
                     </svg>
 
                   </div>
+
 
                   <strong>
                     لا يوجد متدربون بعد
@@ -801,21 +792,6 @@
               </span>
 
             }
-
-          </div>
-
-
-          <!-- Status -->
-
-          <div class="profile-status-row">
-
-            <span>
-              الحالة
-            </span>
-
-            <span class="status-chip neutral">
-              قيد المتابعة
-            </span>
 
           </div>
 
@@ -1185,6 +1161,7 @@
         <div class="nfd-modal-actions">
 
           <button
+            type="button"
             class="nfd-btn secondary"
             (click)="showEvalModal.set(false)">
 
@@ -1194,6 +1171,7 @@
 
 
           <button
+            type="button"
             class="nfd-btn primary"
             (click)="submitEvaluation()">
 
