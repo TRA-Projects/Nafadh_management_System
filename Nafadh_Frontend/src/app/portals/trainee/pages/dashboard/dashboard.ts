@@ -362,9 +362,10 @@ export class TraineeDashboard implements OnInit {
           // تحميل المدرب لهذه الدفعة
           this.loadTrainerByBatch(activeEnrollment.batchId);
 
-          // تحميل المشرف إذا كان موجوداً
-          if (activeEnrollment.supervisorId) {
-            this.loadSupervisor(activeEnrollment.supervisorId);
+          // تحميل المشرف باستخدام userId
+          const userId = this.currentUserId();
+          if (userId) {
+            this.loadSupervisorByUserId(userId);
           }
 
           // تحميل المهام
@@ -373,7 +374,6 @@ export class TraineeDashboard implements OnInit {
           // =========================================================
           // تحميل الإعلانات والتنبيهات باستخدام userId
           // =========================================================
-          const userId = this.currentUserId();
           if (userId) {
             this.loadUserAnnouncements(userId);
             this.loadUserNotifications(userId);
@@ -443,20 +443,21 @@ export class TraineeDashboard implements OnInit {
   }
 
   // =========================================================
-  // تحميل بيانات المشرف
-  // GET /api/CompanySupervisor/{id}
+  // تحميل بيانات المشرف بناءً على userId
+  // GET /api/CompanySupervisor/user/{userId}
   // =========================================================
 
-  loadSupervisor(supervisorId: number): void {
+  loadSupervisorByUserId(userId: number): void {
     this.loadingSupervisor.set(true);
 
-    this.api.getCompanySupervisor(supervisorId).subscribe({
+    // استخدام userId بدلاً من supervisorId
+    this.api.getCompanySupervisorByUserId(userId).subscribe({
       next: (supervisor: CompanySupervisorDto) => {
         this.supervisorData.set(supervisor);
         this.loadingSupervisor.set(false);
       },
       error: (error: any) => {
-        console.error('Error loading supervisor:', error);
+        console.error('Error loading supervisor by userId:', error);
         this.supervisorData.set(null);
         this.loadingSupervisor.set(false);
       },
@@ -910,6 +911,7 @@ export class TraineeDashboard implements OnInit {
   getUnreadNotificationsCount(): number {
     return this.notifications().filter((n) => !n.isRead).length;
   }
+
   // =========================================================
   // متغيرات لعرض المزيد من الإعلانات والتنبيهات
   // =========================================================
@@ -952,6 +954,7 @@ export class TraineeDashboard implements OnInit {
   toggleShowAllNotifications(): void {
     this.showAllNotifications.update((value) => !value);
   }
+
   // =========================================================
   // الحصول على معرف المستخدم من التخزين المحلي
   // =========================================================
@@ -1097,6 +1100,7 @@ export class TraineeDashboard implements OnInit {
 
     console.log('Contact trainer:', trainer);
   }
+
   // =========================================================
   // الحصول على أيام متبقية للمهمة (للعرض الإضافي)
   // =========================================================
