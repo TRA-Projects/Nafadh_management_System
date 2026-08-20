@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, computed, ViewEncapsulation } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgClass, NgStyle } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import * as XLSX from 'xlsx';
@@ -9,39 +9,31 @@ import { TRAINEE_STATUS_LABELS } from '../../../../core/models/enums';
 @Component({
   selector: 'app-admin-trainees',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, NgClass, NgStyle, RouterLink, FormsModule],
   templateUrl: './trainees.html',
   styleUrls: ['./trainees.css'],
   encapsulation: ViewEncapsulation.None
 })
 export class AdminTrainees implements OnInit {
-  // البيانات الرئيسية
   trainees = signal<any[]>([]);
-
-  // خاصية محسوبة لتوافق ملف الـ HTML وتفادي خطأ TS2339
   filtered = computed(() => this.trainees());
-  
-  // متغيرات الفلترة والترقيم
-  statusFilter = signal<string>('ALL'); // ALL | 0 | 1 | 2
+
+  statusFilter = signal<string>('ALL');
   currentPage = signal<number>(1);
   pageSize = signal<number>(10);
   totalCount = signal<number>(0);
 
-  // النوافذ المنبثقة
   showImportModal = signal<boolean>(false);
   showRegisterModal = signal<boolean>(false);
 
-  // حالات التحميل والأخطاء
   isSubmitting = signal<boolean>(false);
   isLoading = signal<boolean>(false);
   errorMessage = signal<string | null>(null);
 
-  // استيراد ملفات Excel
   importStep = signal<number>(1);
   selectedFileName = signal<string>('');
   importedRecords = signal<any[]>([]);
 
-  // نموذج تسجيل متدرب جديد
   newTrainee = signal({
     fullName: '',
     email: '',
@@ -77,7 +69,6 @@ export class AdminTrainees implements OnInit {
     this.loadDropdownData();
   }
 
-  // تحديث حقول النموذج عند التغيير عبر Signal
   updateFormField(field: string, value: any) {
     this.newTrainee.update(current => ({
       ...current,
@@ -85,20 +76,19 @@ export class AdminTrainees implements OnInit {
     }));
   }
 
-  // 1️⃣ جلب قائمة المتدربين مع تطبيق الفلترة والـ Pagination
   loadTrainees() {
     this.isLoading.set(true);
 
     const statusVal = this.statusFilter();
     const statusParam = statusVal === 'ALL' ? null : Number(statusVal);
 
-    // تجميع المعاملات في كائن واحد يتوافق مع تعريف getTrainees في AdminApi
     const queryParams: Record<string, unknown> = {
       pageNumber: this.currentPage(),
       pageSize: this.pageSize()
     };
 
-    if (statusParam !== null) {
+    // معالجة التحقق من القيمة لضمان عدم إرسال NaN
+    if (statusParam !== null && !isNaN(statusParam)) {
       queryParams['status'] = statusParam;
     }
 
@@ -136,14 +126,12 @@ export class AdminTrainees implements OnInit {
     });
   }
 
-  // تغيير الفلترة وإعادة الضبط للصفحة الأولى
   onStatusFilterChange(newStatus: string) {
     this.statusFilter.set(newStatus);
     this.currentPage.set(1);
     this.loadTrainees();
   }
 
-  // أزرار التنقل بين الصفحات
   nextPage() {
     if (this.currentPage() * this.pageSize() < this.totalCount()) {
       this.currentPage.update(p => p + 1);
@@ -158,12 +146,10 @@ export class AdminTrainees implements OnInit {
     }
   }
 
-  // حساب إجمالي عدد الصفحات
   get totalPages(): number {
     return Math.ceil(this.totalCount() / this.pageSize()) || 1;
   }
 
-  // الانتقال لصفحة تفاصيل المتدرب
   viewTraineeDetails(traineeId: number) {
     if (traineeId) {
       this.router.navigate(['/admin/trainees', traineeId]);
@@ -206,7 +192,6 @@ export class AdminTrainees implements OnInit {
     }
   }
 
-  // قراءة واستيراد ملفات Excel
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
@@ -223,18 +208,21 @@ export class AdminTrainees implements OnInit {
           
           const rawData: any[] = XLSX.utils.sheet_to_json(worksheet);
 
-          const mappedRecords = rawData.map(row => ({
-            fullName: row['الاسم'] || row['FullName'] || row['الاسم الكامل'] || '',
-            email: row['البريد'] || row['Email'] || row['البريد الإلكتروني'] || '',
-            nationalId: Number(row['رقم الهوية'] || row['NationalId'] || row['الهوية'] || 0),
-            university: row['الجامعة'] || row['University'] || '',
-            major: row['التخصص'] || row['Major'] || '',
-            academicLevel: row['المستوى الأكاديمي'] || row['AcademicLevel'] || 'غير محدد',
-            skills: row['المهارات'] || row['Skills'] || '',
-            resumeUrl: row['الرابط'] || row['ResumeUrl'] || '',
-            gitHubUrl: row['رابط GitHub'] || row['GitHubUrl'] || '',
-            linkedInUrl: row['رابط LinkedIn'] || row['LinkedInUrl'] || ''
-          }));
+          const mappedRecords = rawData.map(row => {
+            const rawId = row['رقم الهوية'] || row['NationalId'] || row['الهوية'];
+            return {
+              fullName: row['الاسم'] || row['FullName'] || row['الاسم الكامل'] || '',
+              email: row['البريد'] || row['Email'] || row['البريد الإلكتروني'] || '',
+              nationalId: rawId ? Number(rawId) : null,
+              university: row['الجامعة'] || row['University'] || '',
+              major: row['التخصص'] || row['Major'] || '',
+              academicLevel: row['المستوى الأكاديمي'] || row['AcademicLevel'] || 'غير محدد',
+              skills: row['المهارات'] || row['Skills'] || '',
+              resumeUrl: row['الرابط'] || row['ResumeUrl'] || '',
+              gitHubUrl: row['رابط GitHub'] || row['GitHubUrl'] || '',
+              linkedInUrl: row['رابط LinkedIn'] || row['LinkedInUrl'] || ''
+            };
+          });
 
           this.importedRecords.set(mappedRecords);
           this.importStep.set(2);
@@ -284,7 +272,7 @@ export class AdminTrainees implements OnInit {
     const payload = {
       fullName: form.fullName,
       email: form.email,
-      nationalId: Number(form.nationalId),
+      nationalId: form.nationalId ? Number(form.nationalId) : null,
       university: form.university,
       major: form.major,
       academicLevel: form.academicLevel,
