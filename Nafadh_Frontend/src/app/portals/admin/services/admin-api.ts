@@ -102,6 +102,40 @@ getUsers(): Observable<UserResponseDto[]> {
     return this.http.get<EvaluationDto[]>(`${this.base}/Evaluation/enrollment/${this.sanitizeId(enrollmentId)}`);
   }
 
+// ---- Attendance & Evaluation Real Endpoints ----
+
+  /**
+   * جلب سجلات الحضور اليومية برقم التسجيل (Enrollment ID)
+   */
+  getDailyAttendanceByEnrollment(enrollmentId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(enrollmentId);
+    return this.http.get<any[]>(`${this.base}/DailyAttendance/enrollment/${cleanId}`);
+  }
+
+  /**
+   * جلب حضور الجلسات برقم المتدرب (Trainee ID)
+   */
+  getSessionAttendanceByTrainee(traineeId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(traineeId);
+    return this.http.get<any[]>(`${this.base}/SessionAttendance/trainee/${cleanId}`);
+  }
+
+  /**
+   * جلب تقييمات المتدرب برقم التسجيل (Enrollment ID)
+   */
+  getEvaluationsByEnrollment(enrollmentId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(enrollmentId);
+    return this.http.get<any[]>(`${this.base}/Evaluation/enrollment/${cleanId}`);
+  }
+  // =========================================================
+// Attendance
+// =========================================================
+
+getAttendance(enrollmentId: number): Observable<any[]> {
+  const cleanId = this.sanitizeId(enrollmentId);
+  return this.http.get<any[]>(`${this.base}/DailyAttendance/enrollment/${cleanId}`);
+}
+
 
   // ---- Certificates Special Endpoint ----
   getTraineesForCertificates(params?: Record<string, unknown>): Observable<{ items: TraineeListItemDto[]; totalCount: number }> {
