@@ -65,8 +65,14 @@
             </td>
             <td>
               <div class="progress-bar-container">
-                <div class="progress-bar" [style.width.%]="getProgressValue(t)"></div>
-                <span>{{ getProgressValue(t) }}%</span>
+                <div class="progress-track">
+                  <div 
+                    class="progress-fill" 
+                    [class.completed]="getProgressValue(t) === 100"
+                    [style.width.%]="getProgressValue(t)">
+                  </div>
+                </div>
+                <span class="progress-text">{{ getProgressValue(t) }}%</span>
               </div>
             </td>
             <td>

@@ -1,5 +1,3 @@
-
-
 /* --------------------------------------------------------------------------
    1. Main Container & Page Header
    -------------------------------------------------------------------------- */
@@ -23,17 +21,11 @@
   flex-wrap: wrap;
   gap: 12px;
 }
-.progress-bar::after {
-  content: '';
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, #0d9488, #14b8a6);
-  border-radius: 4px;
-}
+
 .page-title {
   font-size: 1.65rem;
   font-weight: 700;
-  color: #002b49; /* اللون الرئيسي للهيئة */
+  color: #002b49;
   margin: 0 0 6px 0;
   letter-spacing: -0.3px;
   display: flex;
@@ -41,7 +33,6 @@
   gap: 10px;
 }
 
-/* شريط جمالي قبل العنوان يعزز الطابع الأكاديمي */
 .page-title::before {
   content: '';
   display: inline-block;
@@ -243,37 +234,43 @@
   letter-spacing: 0.2px;
 }
 
-/* شريط التقدم الأكاديمي */
+/* --- شريط التقدم الأكاديمي (تعديل كامل للتنسيق) --- */
 .progress-bar-container {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 140px;
+  width: 100%;
+  max-width: 180px;
 }
 
-.progress-bar-container span {
+/* مسار الشريط الخارجي (الرمادي عند 0%) */
+.progress-track {
+  flex: 1;
+  height: 8px;
+  background-color: #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* التعبئة الممتدة داخل الشريط حسب النسبة */
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #0d9488, #14b8a6);
+  border-radius: 6px;
+  transition: width 0.4s ease-in-out;
+}
+
+/* لون مخصص إذا كانت النسبة 100% */
+.progress-fill.completed {
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+}
+
+.progress-text {
   font-size: 0.8rem;
   font-weight: 700;
   color: #002b49;
   min-width: 36px;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 7px;
-  background-color: #e2e8f0;
-  border-radius: 4px;
-  overflow: hidden;
-  position: relative;
-}
-
-.progress-bar::after {
-  content: '';
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, #0d9488, #14b8a6);
-  border-radius: 4px;
-  transition: width 0.4s ease;
 }
 
 .icon-view-btn {
@@ -425,7 +422,6 @@
   padding: 8px 0;
 }
 
-/* منطقة الرفع Dropzone */
 .upload-zone {
   border: 2px dashed #cbd5e1;
   border-radius: 14px;
@@ -462,7 +458,6 @@
   color: #334155;
 }
 
-/* معاينة الجدول في النافذة المنبثقة */
 .preview-zone {
   display: flex;
   flex-direction: column;
@@ -552,7 +547,6 @@
   margin-bottom: 16px;
 }
 
-/* Animations */
 @keyframes modalScaleUp {
   from {
     opacity: 0;
