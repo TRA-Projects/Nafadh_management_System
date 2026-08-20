@@ -214,42 +214,37 @@ export class AdminCertificates implements OnInit {
 
 
 
-          return this.api.getTraineesForCertificates({ batchId: bId } as any).pipe(
+        return this.api.getBatchCertificatesStatus(bId).pipe(
+          map((res: any) => {
 
-            map((res: any) => {
+            const trainees = Array.isArray(res)
+              ? res
+              : (res?.items || []);
 
-              const trainees = res?.items || (Array.isArray(res) ? res : []);
+            const issuedCount = trainees.filter(
+              (t: any) => !!t.isIssued
+            ).length;
 
+            return {
+              ...normalized,
+              totalTraineesCount: trainees.length,
+              issuedCertificatesCount: issuedCount
+            };
+          }),
 
+          catchError((err) => {
+            console.error(
+              `Error fetching certificate status for batch ${bId}:`,
+              err
+            );
 
-              const issuedCount = trainees.filter((t: any) => {
-
-                const rawStatus = String(t.completionStatus ?? t.status ?? '').toLowerCase();
-
-                const fileUrl = t.fileUrl || t.certificateUrl || t.pdfUrl;
-
-                return rawStatus === 'issued' || rawStatus === 'completed' || rawStatus === '1' || !!fileUrl;
-
-              }).length;
-
-
-
-              return {
-
-                ...normalized,
-
-                totalTraineesCount: trainees.length,
-
-                issuedCertificatesCount: issuedCount
-
-              };
-
-            }),
-
-            catchError(() => of({ ...normalized, totalTraineesCount: 0, issuedCertificatesCount: 0 }))
-
-          );
-
+            return of({
+              ...normalized,
+              totalTraineesCount: 0,
+              issuedCertificatesCount: 0
+            });
+          })
+        );
         });
 
 
@@ -442,12 +437,6 @@ export class AdminCertificates implements OnInit {
   issueSingleCertificate(trainee: TraineeDto, autoOpenModal: boolean = true): void {
 
 const eId = trainee.enrollmentId;
-
-if (!eId || eId === 0) {
-  alert('خطأ: لم يتم العثور على رقم التسجيل (enrollmentId) الخاص بالمتدرب.');
-  return;
-}
-
 
     if (!eId || eId === 0) {
 
