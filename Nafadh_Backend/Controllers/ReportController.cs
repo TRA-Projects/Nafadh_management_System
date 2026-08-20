@@ -44,6 +44,21 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(report);
         }
+        // ==========================================================
+        // Generate Trainer Trainees Report
+        // POST: api/Report/trainer-trainees
+        // ==========================================================
+
+        [HttpPost("trainer-trainees")]
+        public async Task<IActionResult> GenerateTrainerTraineesReport(
+            [FromBody] TrainerTraineesReportInputDto dto
+        )
+        {
+            var report =
+                await _service.GenerateTrainerTraineesReportAsync(dto);
+
+            return Ok(report);
+        }
 
         // GET Report/{id}
         [HttpGet("{id}")]

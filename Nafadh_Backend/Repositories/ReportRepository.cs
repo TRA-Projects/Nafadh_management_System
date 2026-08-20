@@ -316,5 +316,165 @@ namespace Nafadh_Backend.Repositories
             };
         }
 
+        // ==========================================================
+        // Trainer Trainees Report
+        // ==========================================================
+
+        public async Task<List<TrainerTraineesReportRowDto>>
+            GetTrainerTraineesReportRowsAsync(
+                int trainerId,
+                int? batchId
+            )
+        {
+            // Get batches assigned to this trainer
+            var trainerBatchIds =
+                await _context.NFD_BatchTrainers
+                    .Where(bt =>
+                        bt.TrainerId == trainerId
+                    )
+                    .Select(bt =>
+                        bt.BatchId
+                    )
+                    .ToListAsync();
+
+
+            // If a specific batch was requested,
+            // make sure it belongs to this trainer.
+            if (batchId.HasValue)
+            {
+                if (!trainerBatchIds.Contains(batchId.Value))
+                {
+                    return new List<TrainerTraineesReportRowDto>();
+                }
+
+                trainerBatchIds =
+                    new List<int>
+                    {
+                batchId.Value
+                    };
+            }
+
+
+            var enrollments =
+                await _context.NFD_Enrollments
+
+                    .Include(e =>
+                        e.Trainee
+                    )
+                    .ThenInclude(t =>
+                        t.User
+                    )
+
+                    .Include(e =>
+                        e.Batch
+                    )
+
+                    .Include(e =>
+                        e.DailyAttendances
+                    )
+
+                    .Include(e =>
+                        e.Evaluations
+                    )
+
+                    .Where(e =>
+                        trainerBatchIds.Contains(e.BatchId)
+                    )
+
+                    .ToListAsync();
+
+
+            var rows =
+                enrollments
+                    .Select(e =>
+                    {
+                        // ------------------------------------------
+                        // Attendance
+                        // ------------------------------------------
+
+                        var totalDays =
+                            e.DailyAttendances.Count;
+
+                        var presentDays =
+                            e.DailyAttendances.Count(
+                                a =>
+                                    a.Status ==
+                                    NFD_AttendanceStatus.Present
+                            );
+
+
+                        var attendancePercentage =
+                            totalDays > 0
+                                ? Math.Round(
+                                    (double)presentDays /
+                                    totalDays *
+                                    100.0,
+                                    1
+                                )
+                                : 0.0;
+
+
+                        // ------------------------------------------
+                        // Evaluation Average
+                        // ------------------------------------------
+
+                        var averageScore =
+                            e.Evaluations.Count > 0
+                                ? Math.Round(
+                                    e.Evaluations.Average(
+                                        ev => ev.Score
+                                    ),
+                                    1
+                                )
+                                : 0m;
+
+
+                        // ------------------------------------------
+                        // Technical Level
+                        // Same thresholds used in trainer frontend
+                        // ------------------------------------------
+
+                        var technicalLevel =
+                            averageScore switch
+                            {
+                                >= 85 => "ممتاز",
+                                >= 70 => "جيد",
+                                >= 60 => "متوسط",
+                                _ => "يحتاج تطوير"
+                            };
+
+
+                        return new TrainerTraineesReportRowDto
+                        {
+                            EnrollmentId =
+                                e.EnrollmentId,
+
+                            TraineeId =
+                                e.TraineeId,
+
+                            TraineeName =
+                                e.Trainee?.User?.FullName,
+
+                            BatchId =
+                                e.BatchId,
+
+                            BatchName =
+                                e.Batch?.BatchName,
+
+                            AttendancePercentage =
+                                attendancePercentage,
+
+                            AverageScore =
+                                averageScore,
+
+                            TechnicalLevel =
+                                technicalLevel
+                        };
+                    })
+                    .ToList();
+
+
+            return rows;
+        }
     }
 }

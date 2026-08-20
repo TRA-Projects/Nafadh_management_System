@@ -231,6 +231,369 @@ namespace Nafadh_Backend.Services
         }
 
         // ==========================================================
+        // Generate Trainer Trainees PDF Report
+        // ==========================================================
+
+        public async Task<ReportOutputDTO> GenerateTrainerTraineesReportAsync(
+            TrainerTraineesReportInputDto dto
+        )
+        {
+            // ======================================================
+            // Get trainee rows
+            // ======================================================
+
+            var rows =
+                await _repository.GetTrainerTraineesReportRowsAsync(
+                    dto.TrainerId,
+                    dto.BatchId
+                );
+
+
+            // ======================================================
+            // Reports folder
+            // ======================================================
+
+            var reportsFolder = Path.Combine(
+               @"C:\NafadhStorage",
+               "Reports"
+
+
+            );
+
+            Directory.CreateDirectory(reportsFolder);
+
+
+            var generatedAt = DateTime.Now;
+
+
+            var fileName =
+                $"trainer-trainees-{dto.TrainerId}-{generatedAt:yyyyMMddHHmmssfff}.pdf";
+
+
+            var fullPath =
+                Path.Combine(
+                    reportsFolder,
+                    fileName
+                );
+
+
+            // ======================================================
+            // Generate PDF
+            // ======================================================
+
+            var document =
+                Document.Create(container =>
+                {
+                    container.Page(page =>
+                    {
+                        page.Size(
+                            PageSizes.A4.Landscape()
+                        );
+
+                        page.Margin(30);
+
+
+                        page.DefaultTextStyle(
+                            style =>
+                                style.FontSize(10)
+                        );
+
+
+                        // ------------------------------------------
+                        // Header
+                        // ------------------------------------------
+
+                        page.Header()
+                            .Column(header =>
+                            {
+                                header.Item()
+                                    .AlignCenter()
+                                    .Text("كشف تقييم ومتابعة المتدربين")
+                                    .FontSize(20)
+                                    .Bold();
+
+
+                                header.Item()
+                                    .PaddingTop(6)
+                                    .AlignCenter()
+                                    .Text(
+                                        $"رقم المدرب: {dto.TrainerId}"
+                                    )
+                                    .FontSize(10);
+
+
+                                if (dto.BatchId.HasValue)
+                                {
+                                    header.Item()
+                                        .PaddingTop(3)
+                                        .AlignCenter()
+                                        .Text(
+                                            $"رقم الدفعة: {dto.BatchId.Value}"
+                                        )
+                                        .FontSize(10);
+                                }
+
+
+                                header.Item()
+                                    .PaddingTop(3)
+                                    .AlignCenter()
+                                    .Text(
+                                        $"تاريخ التصدير: {generatedAt:yyyy-MM-dd HH:mm}"
+                                    )
+                                    .FontSize(10);
+                            });
+
+
+                        // ------------------------------------------
+                        // Content
+                        // ------------------------------------------
+
+                        page.Content()
+                            .PaddingVertical(20)
+                            .Column(column =>
+                            {
+                                column.Spacing(10);
+
+
+                                if (rows.Count == 0)
+                                {
+                                    column.Item()
+                                        .AlignCenter()
+                                        .PaddingTop(40)
+                                        .Text(
+                                            "لا يوجد متدربون متاحون لهذا الكشف."
+                                        )
+                                        .FontSize(14);
+
+                                    return;
+                                }
+
+
+                                column.Item()
+                                    .Table(table =>
+                                    {
+                                        // --------------------------
+                                        // Columns
+                                        // --------------------------
+
+                                        table.ColumnsDefinition(
+                                            columns =>
+                                            {
+                                                columns.ConstantColumn(70);
+                                                columns.RelativeColumn(2);
+                                                columns.RelativeColumn(2);
+                                                columns.RelativeColumn(1.3f);
+                                                columns.RelativeColumn(1.3f);
+                                                columns.RelativeColumn(1.3f);
+                                            }
+                                        );
+
+
+                                        // --------------------------
+                                        // Table Header
+                                        // --------------------------
+
+                                        table.Header(header =>
+                                        {
+                                            header.Cell()
+                                                .Border(1)
+                                                .Padding(7)
+                                                .AlignCenter()
+                                                .Text("رقم التسجيل")
+                                                .Bold();
+
+
+                                            header.Cell()
+                                                .Border(1)
+                                                .Padding(7)
+                                                .AlignCenter()
+                                                .Text("المتدرب")
+                                                .Bold();
+
+
+                                            header.Cell()
+                                                .Border(1)
+                                                .Padding(7)
+                                                .AlignCenter()
+                                                .Text("الدفعة")
+                                                .Bold();
+
+
+                                            header.Cell()
+                                                .Border(1)
+                                                .Padding(7)
+                                                .AlignCenter()
+                                                .Text("المستوى التقني")
+                                                .Bold();
+
+
+                                            header.Cell()
+                                                .Border(1)
+                                                .Padding(7)
+                                                .AlignCenter()
+                                                .Text("نسبة الحضور")
+                                                .Bold();
+
+
+                                            header.Cell()
+                                                .Border(1)
+                                                .Padding(7)
+                                                .AlignCenter()
+                                                .Text("متوسط التقييم")
+                                                .Bold();
+                                        });
+
+
+                                        // --------------------------
+                                        // Table Rows
+                                        // --------------------------
+
+                                        foreach (var row in rows)
+                                        {
+                                            table.Cell()
+                                                .Border(1)
+                                                .Padding(6)
+                                                .AlignCenter()
+                                                .Text(
+                                                    row.EnrollmentId.ToString()
+                                                );
+
+
+                                            table.Cell()
+                                                .Border(1)
+                                                .Padding(6)
+                                                .AlignRight()
+                                                .Text(
+                                                    row.TraineeName ?? "—"
+                                                );
+
+
+                                            table.Cell()
+                                                .Border(1)
+                                                .Padding(6)
+                                                .AlignRight()
+                                                .Text(
+                                                    row.BatchName ?? "—"
+                                                );
+
+
+                                            table.Cell()
+                                                .Border(1)
+                                                .Padding(6)
+                                                .AlignCenter()
+                                                .Text(
+                                                    row.TechnicalLevel
+                                                );
+
+
+                                            table.Cell()
+                                                .Border(1)
+                                                .Padding(6)
+                                                .AlignCenter()
+                                                .Text(
+                                                    $"{row.AttendancePercentage:0.#}%"
+                                                );
+
+
+                                            table.Cell()
+                                                .Border(1)
+                                                .Padding(6)
+                                                .AlignCenter()
+                                                .Text(
+                                                    $"{row.AverageScore:0.#}%"
+                                                );
+                                        }
+                                    });
+                            });
+
+
+                        // ------------------------------------------
+                        // Footer
+                        // ------------------------------------------
+
+                        page.Footer()
+                            .AlignCenter()
+                            .Text(text =>
+                            {
+                                text.Span(
+                                    "بوابة نفاذ - كشف المتدربين"
+                                );
+                            });
+                    });
+                });
+
+
+            // ======================================================
+            // Save PDF
+            // ======================================================
+
+            document.GeneratePdf(
+                fullPath
+            );
+
+
+            var fileUrl = fullPath;
+
+
+
+            // ======================================================
+            // Save report record
+            // ======================================================
+
+            var report =
+                new NFD_Report
+                {
+                    Type =
+                        NFD_ReportType.Performance,
+
+                    FiltersJson =
+                        dto.BatchId.HasValue
+                            ? $"BatchId: {dto.BatchId.Value}"
+                            : null,
+
+                    GeneratedAt =
+                        generatedAt,
+
+                    FileUrl =
+                        fileUrl,
+
+                    GeneratedByUserId =
+                        dto.GeneratedByUserId
+                };
+
+
+            await _repository.AddReportAsync(
+                report
+            );
+
+
+            // ======================================================
+            // Return
+            // ======================================================
+
+            return new ReportOutputDTO
+            {
+                ReportId =
+                    report.ReportId,
+
+                Type =
+                    report.Type,
+
+                FiltersJson =
+                    report.FiltersJson,
+
+                GeneratedAt =
+                    report.GeneratedAt,
+
+                FileUrl =
+                    report.FileUrl,
+
+                GeneratedByUserId =
+                    report.GeneratedByUserId
+            };
+        }
+
+        // ==========================================================
         // GET Report/{id}
         // ==========================================================
 
