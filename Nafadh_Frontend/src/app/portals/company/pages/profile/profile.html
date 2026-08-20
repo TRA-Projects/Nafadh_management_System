@@ -1,5 +1,17 @@
-<h2 class="nfd-page-title">ملف الشركة</h2>
-<p class="nfd-page-sub">بيانات الشركة، الفروع، نقاط الاتصال، البرامج المعتمدة والطاقة الاستيعابية</p>
+<div class="page-header-wrap">
+  <div class="page-header-icon">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 21h18"/>
+      <path d="M5 21V7l8-4v18"/>
+      <path d="M19 21V11l-6-4"/>
+      <path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/>
+    </svg>
+  </div>
+  <div class="page-header-text">
+    <h2 class="nfd-page-title">ملف الشركة</h2>
+    <p class="nfd-page-sub">بيانات الشركة، الفروع، نقاط الاتصال، البرامج المعتمدة والطاقة الاستيعابية</p>
+  </div>
+</div>
 
 @if (companyLoadError()) {
   <div class="nfd-card" style="margin-top:16px;border:1px solid var(--status-cancelled-fg);background:var(--status-cancelled-bg);color:var(--status-cancelled-fg);padding:14px 18px;">
@@ -11,12 +23,8 @@
   <div class="company-profile-page">
     <div class="company-profile-glow"></div>
     <div class="nfd-card company-profile-hero-card" style="padding:0;overflow:hidden;margin-top:16px;border-radius:22px">
-      <div class="company-profile-cover" [class.is-empty]="!c.coverImageUrl">
-        @if (c.coverImageUrl) {
-          <img [src]="c.coverImageUrl" alt="غلاف {{ c.companyName }}" class="company-profile-cover-img" />
-        } @else {
-          <div class="company-profile-cover-pattern"></div>
-        }
+      <div class="company-profile-cover">
+        <img [src]="c.coverImageUrl || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzOLJGVaUAdS6gRAHcCEFDKqSenVyJ0ihHQbbbnZWFLRbT4_8ix68D7ow&s=10'" alt="غلاف {{ c.companyName }}" class="company-profile-cover-img" />
         <div class="company-profile-cover-overlay"></div>
 
         @if (uploadingCover()) {
@@ -39,7 +47,7 @@
           <input [id]="coverInputId" type="file" accept="image/*" hidden (change)="onCoverSelected($event)" />
           <label [for]="coverInputId" class="nfd-btn secondary company-profile-upload-btn" type="button">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z"/><circle cx="12" cy="13" r="3.5"/></svg>
-            {{ c.coverImageUrl ? 'تغيير الغلاف' : 'إضافة غلاف' }}
+            تغيير الغلاف
           </label>
         </div>
       </div>
@@ -47,30 +55,9 @@
       <div class="company-profile-header">
         <div class="company-profile-logo-wrap">
           <div class="company-profile-logo">
-            @if (c.logoUrl) {
-              <img [src]="c.logoUrl" alt="شعار {{ c.companyName }}" />
-            } @else {
-              <span>{{ companyInitial() }}</span>
-            }
-
-            @if (uploadingLogo()) {
-              <div class="company-profile-media-loading company-profile-logo-loading">
-                <span class="company-profile-spinner"></span>
-              </div>
-            }
-
-            <input [id]="logoInputId" type="file" accept="image/*" hidden (change)="onLogoSelected($event)" />
-            <label [for]="logoInputId" class="company-profile-logo-button" aria-label="{{ c.logoUrl ? 'تغيير شعار الشركة' : 'إضافة شعار الشركة' }}">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z"/><circle cx="12" cy="13" r="3.5"/></svg>
-            </label>
-            @if (c.logoUrl) {
-              <button type="button" class="company-profile-logo-remove" aria-label="إزالة الشعار" (click)="removeLogoImage()">✕</button>
-            }
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJsUyJnAI3l5HKgmuhL8SQoS_633l4lx1WZ2250dcVUA&s=10" alt="شعار {{ c.companyName }}" />
           </div>
         </div>
-        @if (logoUploadError()) {
-          <span class="company-profile-upload-error company-profile-logo-error">تعذر رفع الشعار، حتى {{ maxImageSizeMb }}MB</span>
-        }
 
         <div class="company-profile-title-wrap">
           <h3 class="company-profile-name company-profile-name-gradient">{{ c.companyName }}</h3>

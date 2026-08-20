@@ -212,7 +212,6 @@ export interface TrainerBatchDto {
   startDate?: string | null;
   endDate?: string | null;
   status: BatchStatus;
-
   department?: string;
   enrolledTraineesCount?: number;
   attendanceRate?: number;
@@ -239,9 +238,6 @@ export interface ProgramDto {
   status?: string;
 }
 
-
-
-// 2. استخدامها داخل الـ Interface
 export interface CompanyProgramLinkDto {
   companyId: number;
   programId: number;
@@ -254,20 +250,6 @@ export interface BatchDto {
   companyName?: string;
   trackName?: string;
   instructorName?: string;
-  startDate: string;
-  endDate: string;
-  capacity: number;
-  totalTraineesCount?: number;
-  issuedCertificatesCount?: number;
-  status: BatchStatus; 
-}
-
-export interface BatchDto {
-  batchId: number;
-  programId: number;
-  batchName: string;
-  companyName?: string;
-  trackName?: string;
   startDate: string;
   endDate: string;
   capacity: number;
@@ -337,8 +319,6 @@ export interface TraineeModuleProgressDto {
   moduleTitle?: string;
 }
 
-
-
 export interface SessionDto {
   sessionId: number;
   batchId: number;
@@ -395,6 +375,8 @@ export interface CompanyDashboardDto {
 
 // ---- Enrollment ----
 export interface EnrollmentDto {
+  trainee?: any;
+  traineeLinkedInUrl?: any;
   enrollmentId: number;
   enrollmentDate: string;
   completionStatus: string;
@@ -408,7 +390,6 @@ export interface EnrollmentDto {
   departmentName?: string;
   supervisorId?: number;
   supervisorName?: string;
-
   traineeGitHubUrl?: string;
   programTitle?: string;
   programDescription?: string;
@@ -593,12 +574,14 @@ export interface ConversationDetailDto extends ConversationListItemDto {
 
 // ---- Announcements ----
 export interface AnnouncementDto {
-  announcementId: number;
-  scopeType: AnnouncementScopeType;
-  scopeId?: number;
-  message: string;
-  date: string;
-  createdByUserId: number;
+  id?: number | string;
+  announcementId?: number | string;
+  title?: string;
+  description?: string;
+  message?: string;
+  type?: string;
+  createdAt?: string | Date;
+  date?: string | Date;
 }
 
 // ---- Notifications ----
@@ -614,7 +597,7 @@ export interface NotificationDto {
 // ---- Feedback ----
 export interface FeedbackCriterionDto {
   criterionId: number;
-  appliesTo?: any; // تم جعلها مرنة لتفادي خطأ عدم العثور على FeedbackType
+  appliesTo?: any;
   name: string;
   orderIndex: number;
 }
@@ -625,7 +608,7 @@ export interface FeedbackScoreInputDto {
 }
 
 export interface FeedbackSummaryDto {
-  averageOverall?: number; // تم إضافة ? لمنع خطأ Strict Mode
+  averageOverall?: number;
   perCriterion?: { criterionId?: number; name?: string; average?: number }[];
   comments?: { comment?: string; date?: string }[];
   responseCount?: number;

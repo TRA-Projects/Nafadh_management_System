@@ -3,13 +3,17 @@
     color: #0f172a;
     background-color: #f8fafc;
     min-height: 100vh;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .specialties-page {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 24px 16px;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 1.5rem 2rem;
     font-family: 'Cairo', sans-serif, inherit;
+    box-sizing: border-box;
 }
 
 .page-head {
@@ -97,19 +101,59 @@
     }
 }
 
-/* التنسيق الرئيسي للشبكة (الكروت في اليسار والمخطط في اليمين بشكل مرتب) */
-.dashboard-grid-layout {
-    display: grid;
-    grid-template-columns: 1fr 340px;
+/* التخطيط المتناسق */
+.content-split-layout {
+    display: flex;
+    flex-direction: column;
     gap: 24px;
-    align-items: start;
+    width: 100%;
+}
+
+/* صندوق الرسم البياني في الأعلى */
+.sidebar-chart-area {
+    width: 100%;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+/* منطقة البرامج التدريبية في الأسفل */
+.specialties-main-area {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    min-width: 0;
+}
+
+.section-title-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    span {
+        font-size: 13px;
+        color: #64748b;
+        font-weight: 600;
+    }
 }
 
 /* شبكة كروت البرامج التدريبية */
 .specialty-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
+    gap: 20px;
+    width: 100%;
 }
 
 .specialty-card {
@@ -275,8 +319,8 @@
         transform: translateX(-3px);
     }
 }
+/********************************/
 
-/* تصميم صندوق المخطط البصري (Donut Chart Box) */
 .visual-chart-box {
     background: #fff;
     border-radius: 16px;
@@ -285,13 +329,10 @@
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    position: sticky;
-    top: 20px;
 
     .chart-header {
         width: 100%;
-        margin-bottom: 16px;
+        margin-bottom: 20px;
         text-align: right;
 
         h3 {
@@ -306,66 +347,124 @@
             color: #64748b;
         }
     }
+
+    .chart-main-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        gap: 20px;
+    }
 }
 
 .donut-container {
     position: relative;
-    width: 170px;
-    height: 170px;
+    width: 160px;
+    height: 160px;
     border-radius: 50%;
-    background: conic-gradient(#2563eb 0% 65%, #0ea5e9 65% 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
-    margin: 10px 0;
-}
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
-.donut-ring {
-    width: 130px;
-    height: 130px;
-    background: white;
-    border-radius: 50%;
-}
+    .donut-ring {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+    }
 
-.chart-center-text {
-    position: absolute;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    .total-label { font-size: 11px; color: #64748b; }
-    .total-value { font-size: 22px; color: #2563eb; font-weight: 800; line-height: 1.2; }
-    .sub-label { font-size: 10px; color: #94a3b8; }
-}
-
-.chart-legend {
-    width: 100%;
-    margin-top: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 14px;
-
-    .legend-item {
+    .chart-center-hole {
+        position: absolute;
+        width: 105px;
+        height: 105px;
+        background: #ffffff;
+        border-radius: 50%;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        color: #475569;
+        justify-content: center;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+        z-index: 2;
 
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            &.bg-primary { background: #2563eb; }
-            &.bg-secondary { background: #0ea5e9; }
+        .total-label { 
+            font-size: 10px; 
+            color: #64748b; 
+            font-weight: 600;
+        }
+        
+        .total-value { 
+            font-size: 22px; 
+            color: #0f172a; 
+            font-weight: 800; 
+            line-height: 1.2; 
+        }
+        
+        .sub-label { 
+            font-size: 9.5px; 
+            color: #059669; 
+            background: #ecfdf5;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 700;
+            margin-top: 2px;
         }
     }
 }
 
+.chart-legend {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 20px;
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #f8fafc;
+        padding: 12px 16px;
+        border-radius: 12px;
+        border: 1px solid #f1f5f9;
+        transition: background 0.2s ease;
+
+        &:hover {
+            background: #f1f5f9;
+        }
+
+        .legend-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            .dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+
+            .dept-name {
+                color: #334155;
+                font-weight: 700;
+                font-size: 13px;
+            }
+        }
+
+        .dept-count {
+            color: #64748b;
+            font-weight: 600;
+            font-size: 12px;
+            background: #ffffff;
+            padding: 4px 8px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+    }
+}
+/************************************/
 /* الحالات الخاصة (Loading / Error / Empty) */
 .state-card, .empty-state {
     background: #fff;
@@ -422,12 +521,6 @@
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    .dashboard-grid-layout {
-        grid-template-columns: 1fr;
-    }
-    .visual-chart-box {
-        position: static;
-    }
 }
 
 @media(max-width: 640px) {
@@ -435,6 +528,9 @@
         grid-template-columns: 1fr;
     }
     .specialty-grid {
+        grid-template-columns: 1fr;
+    }
+    .chart-legend {
         grid-template-columns: 1fr;
     }
 }

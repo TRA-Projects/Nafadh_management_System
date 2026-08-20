@@ -42,14 +42,23 @@ export class CompanyTrainees implements OnInit {
   }
 
   ngOnInit() {
-    // تتبع معرف الشركة للتأكد من قيمته
     console.log('Current Company ID:', this.companyId);
 
     this.api.getEnrollmentsByCompany(this.companyId).subscribe((d) => {
-      // تتبع البيانات القادمة من الـ API
       console.log('Enrollments Data Received:', d);
       this.enrollments.set(d ?? []);
     });
+  }
+
+  // دالة عامة لضمان صحة أي رابط (GitHub أو LinkedIn) وإضافة البروتوكول إذا كان ناقصاً
+  ensureUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+      return 'https://' + trimmed;
+    }
+    return trimmed;
   }
 
   statuses = computed(() => Array.from(new Set(this.enrollments().map((e) => e.completionStatus))));
