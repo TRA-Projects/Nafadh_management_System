@@ -3,7 +3,7 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { AnnouncementDto, ChartPointDto, TraineeListItemDto, WarningDto } from '../../../../core/models/dtos';
+import { AnnouncementDto, ChartPointDto, CompanyDashboardDto, CompanyDashboardTraineeDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-company-dashboard',
@@ -17,9 +17,11 @@ export class CompanyDashboard implements OnInit {
   
   loading = signal(false);
   capacity = signal<{ total?: number; used?: number; remaining?: number } | null>(null);
-  topPerformers = signal<TraineeListItemDto[]>([]);
-  atRisk = signal<TraineeListItemDto[]>([]);
-  warnings = signal<WarningDto[]>([]);
+  topPerformers = signal<CompanyDashboardTraineeDto[]>([]);
+  atRisk = signal<CompanyDashboardTraineeDto[]>([]);
+  warnings = signal<CompanyDashboardDto['recentWarnings']>([]);
+  totalTrainees = signal(0);
+  activeTrainees = signal(0);
   announcements = signal<AnnouncementDto[]>([]);
   announcementsDismissed = signal(false);
 
@@ -40,7 +42,7 @@ export class CompanyDashboard implements OnInit {
 
   // enrollmentId per traineeId, used to route "متابعة"/eye buttons to the
   // real progress page (which is keyed by enrollmentId, not traineeId).
-  private enrollmentIdByTrainee = new Map<number, number>();
+  private animationKey = signal(0);
 
   constructor(private api: CompanyApi, private auth: AuthService, private router: Router) {}
 
@@ -53,20 +55,34 @@ export class CompanyDashboard implements OnInit {
     if (!id) return;
 
     this.loading.set(true);
-    this.api.getCapacity(id).subscribe({
-      next: (d) => this.capacity.set(d),
-      complete: () => this.loading.set(false)
+    this.animationKey.update((v) => v + 1);
+
+    this.api.getDashboard(id).subscribe({
+      next: (d) => {
+        this.capacity.set(d?.capacity ?? null);
+        this.topPerformers.set(d?.topPerformers ?? []);
+        this.atRisk.set(d?.atRiskTrainees ?? []);
+        this.warnings.set(d?.recentWarnings ?? []);
+        this.attendanceWeeks.set(d?.attendanceWeeks ?? []);
+        this.programDistribution.set(d?.programDistribution ?? []);
+        this.totalTrainees.set(d?.totalTrainees ?? 0);
+        this.activeTrainees.set(d?.activeTrainees ?? 0);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.capacity.set(null);
+        this.topPerformers.set([]);
+        this.atRisk.set([]);
+        this.warnings.set([]);
+        this.attendanceWeeks.set([]);
+        this.programDistribution.set([]);
+        this.totalTrainees.set(0);
+        this.activeTrainees.set(0);
+        this.loading.set(false);
+      }
     });
-    this.api.getTopPerformers(id).subscribe((d) => this.topPerformers.set(d ?? []));
-    this.api.getAtRiskTrainees(id).subscribe((d) => this.atRisk.set(d ?? []));
-    this.api.getCompanyWarnings(id).subscribe((d) => this.warnings.set(d ?? []));
+
     this.api.getPlatformAnnouncements().subscribe((d) => this.announcements.set(d ?? []));
-    this.api.getAttendanceChart(id).subscribe((d) => this.attendanceWeeks.set(d?.weeks ?? []));
-    this.api.getProgramDistribution(id).subscribe((d) => this.programDistribution.set(d ?? []));
-    this.api.getEnrollmentsByCompany(id).subscribe((d) => {
-      this.enrollmentIdByTrainee.clear();
-      (d ?? []).forEach((e) => this.enrollmentIdByTrainee.set(e.traineeId, e.enrollmentId));
-    });
   }
 
   openCompanyProfile() {
@@ -79,13 +95,17 @@ export class CompanyDashboard implements OnInit {
     this.router.navigate(['/company/trainees']);
   }
 
-  openProgress(traineeId: number) {
-    const enrollmentId = this.enrollmentIdByTrainee.get(traineeId);
+  openProgress(enrollmentId: number) {
     if (enrollmentId) {
       this.router.navigate(['/company/trainees', enrollmentId, 'progress']);
     } else {
       this.router.navigate(['/company/trainees']);
     }
+  }
+
+  openGithub(url?: string) {
+    if (!url) return;
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   dismissAnnouncements() {
@@ -123,7 +143,13 @@ export class CompanyDashboard implements OnInit {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   }
 
-  performanceValue(trainee: TraineeListItemDto, index: number): number {
-    return 85; 
+  performanceValue(trainee: CompanyDashboardTraineeDto): number {
+    return Math.round(Math.max(0, Math.min(100, trainee.performancePercent ?? 0)));
   }
+
+  warningTraineeId(warning: CompanyDashboardDto['recentWarnings'][number]) {
+    return warning.traineeId;
+  }
+
+  currentAnimationKey() { return this.animationKey(); }
 }
