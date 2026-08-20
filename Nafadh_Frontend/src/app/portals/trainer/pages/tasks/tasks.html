@@ -30,7 +30,6 @@
           الدفعة
         </label>
 
-
         <select
           id="taskBatchSelector"
           name="taskBatchSelector"
@@ -156,7 +155,6 @@
               }
 
 
-
               <!-- ================= STATUS BADGE ================= -->
 
               @if (t.status === 'Open') {
@@ -209,7 +207,6 @@
               }
 
 
-
               <!-- ================================================= -->
               <!--                    OPEN DETAILS                    -->
               <!-- ================================================= -->
@@ -229,7 +226,6 @@
                 </div>
 
               }
-
 
 
               <!-- ================================================= -->
@@ -272,7 +268,6 @@
                 </div>
 
               }
-
 
 
               <!-- ================================================= -->
@@ -318,7 +313,6 @@
                 </div>
 
               }
-
 
 
               <!-- ================================================= -->
@@ -399,7 +393,6 @@
               }
 
 
-
               <!-- ================================================= -->
               <!--                     OPEN FOOTER                    -->
               <!-- ================================================= -->
@@ -477,7 +470,6 @@
               }
 
 
-
               <!-- ================================================= -->
               <!--                    CLOSED FOOTER                   -->
               <!-- ================================================= -->
@@ -511,12 +503,6 @@
 
                   </div>
 
-
-                  <!--
-                    مهم:
-                    هذا الزر لم يتم تغييره.
-                    ما زال يذهب لصفحة تقييم ومتابعة المتدربين.
-                  -->
 
                   <button
                     type="button"
@@ -585,7 +571,6 @@
                 </div>
 
               }
-
 
 
               <!-- ================================================= -->
@@ -660,21 +645,15 @@
 
     @else {
 
-      <!-- ================================================= -->
-      <!--                    EMPTY STATE                     -->
-      <!-- ================================================= -->
-
       <div class="tasks-inline-042">
 
         <div class="tasks-inline-043">
           📋
         </div>
 
-
         <strong class="tasks-inline-044">
           لا توجد مهام
         </strong>
-
 
         <span class="tasks-inline-045">
           لا توجد مهام لهذه الدفعة حتى الآن
@@ -890,7 +869,6 @@
           </div>
 
 
-
           <!-- ================= SUMMARY ================= -->
 
           @if (!modalLoadingSubmissions()) {
@@ -917,7 +895,6 @@
                 إجمالي التسليمات
               </span>
 
-
               <span
                 style="
                   min-width:34px;
@@ -939,7 +916,6 @@
             </div>
 
           }
-
 
 
           <!-- ================= CONTENT ================= -->
@@ -1031,7 +1007,6 @@
 
                 </div>
 
-
                 <strong
                   style="
                     color:#334155;
@@ -1040,7 +1015,6 @@
                 >
                   لا توجد تسليمات
                 </strong>
-
 
                 <span
                   style="
@@ -1081,8 +1055,6 @@
                     "
                   >
 
-                    <!-- ================= TOP ================= -->
-
                     <div
                       style="
                         display:flex;
@@ -1092,8 +1064,6 @@
                         margin-bottom:14px;
                       "
                     >
-
-                      <!-- ================= TRAINEE ================= -->
 
                       <div
                         style="
@@ -1126,11 +1096,7 @@
                         </div>
 
 
-                        <div
-                          style="
-                            min-width:0;
-                          "
-                        >
+                        <div style="min-width:0;">
 
                           <strong
                             style="
@@ -1147,7 +1113,6 @@
                             }}
                           </strong>
 
-
                           <span
                             style="
                               display:block;
@@ -1163,8 +1128,6 @@
 
                       </div>
 
-
-                      <!-- ================= STATUS ================= -->
 
                       <span
                         class="submission-status-badge"
@@ -1184,9 +1147,6 @@
                     </div>
 
 
-
-                    <!-- ================= INFO ================= -->
-
                     <div
                       style="
                         display:grid;
@@ -1195,8 +1155,6 @@
                         margin-bottom:14px;
                       "
                     >
-
-                      <!-- DATE -->
 
                       <div
                         style="
@@ -1218,7 +1176,6 @@
                           تاريخ التسليم
                         </span>
 
-
                         <strong
                           style="
                             color:#334155;
@@ -1234,8 +1191,6 @@
 
                       </div>
 
-
-                      <!-- GRADE -->
 
                       <div
                         style="
@@ -1256,7 +1211,6 @@
                         >
                           الدرجة
                         </span>
-
 
                         @if (
                           submission.grade !== null &&
@@ -1295,9 +1249,6 @@
                     </div>
 
 
-
-                    <!-- ================= FEEDBACK ================= -->
-
                     @if (submission.feedback) {
 
                       <div
@@ -1322,7 +1273,6 @@
                           ملاحظات التقييم
                         </span>
 
-
                         <p
                           style="
                             margin:0;
@@ -1338,9 +1288,6 @@
 
                     }
 
-
-
-                    <!-- ================= FILE ================= -->
 
                     <div
                       style="
@@ -1431,9 +1378,6 @@
           </div>
 
 
-
-          <!-- ================= FOOTER ================= -->
-
           <div
             style="
               padding:14px 24px;
@@ -1480,7 +1424,6 @@
         class="tasks-inline-047"
       >
 
-
         <!-- ================= MODAL HEADER ================= -->
 
         <div class="tasks-inline-048">
@@ -1491,13 +1434,11 @@
               إنشاء واجب / مشروع
             </h3>
 
-
             <p class="tasks-inline-050">
               أدخل تفاصيل المهمة ثم اضغط حفظ
             </p>
 
           </div>
-
 
           <button
             type="button"
@@ -1511,13 +1452,11 @@
         </div>
 
 
-
         <!-- ================= FORM ================= -->
 
         <form (ngSubmit)="saveTask()">
 
           <div class="tasks-inline-052">
-
 
             @if (errorMessage()) {
 
@@ -1526,7 +1465,6 @@
               </div>
 
             }
-
 
 
             <!-- ================= TITLE ================= -->
@@ -1539,7 +1477,6 @@
               >
                 عنوان المهمة
               </label>
-
 
               <input
                 id="taskTitle"
@@ -1555,7 +1492,6 @@
             </div>
 
 
-
             <!-- ================= DESCRIPTION ================= -->
 
             <div class="tasks-inline-054">
@@ -1566,7 +1502,6 @@
               >
                 وصف المهمة
               </label>
-
 
               <textarea
                 id="taskDescription"
@@ -1580,7 +1515,6 @@
             </div>
 
 
-
             <!-- ================= PRIORITY ================= -->
 
             <div class="tasks-inline-054">
@@ -1591,7 +1525,6 @@
               >
                 الأولوية
               </label>
-
 
               <select
                 id="taskPriority"
@@ -1617,15 +1550,16 @@
             </div>
 
 
+            <!-- ================================================= -->
+            <!--                DUE DATE + BATCH                   -->
+            <!-- ================================================= -->
 
-            <!-- ================= DATE + BATCH ================= -->
-
-            <div class="tasks-inline-059">
+            <div class="task-schedule-section">
 
 
-              <!-- DATE -->
+              <!-- ================= DUE DATE ================= -->
 
-              <div>
+              <div class="task-due-field">
 
                 <label
                   for="taskDueDate"
@@ -1635,30 +1569,84 @@
                 </label>
 
 
-                <input
-                  id="taskDueDate"
-                  type="datetime-local"
-                  name="taskDueDate"
-                  [(ngModel)]="newTaskDueDate"
-                  required
-                  class="tasks-inline-060"
-                />
+                <div class="task-due-input-wrapper">
+
+                  <input
+                    id="taskDueDate"
+                    type="datetime-local"
+                    name="taskDueDate"
+                    [(ngModel)]="newTaskDueDate"
+                    required
+                    class="task-due-input"
+                  />
+
+                </div>
+
+
+                <span class="task-field-hint">
+                  حدد تاريخ ووقت انتهاء استقبال التسليمات
+                </span>
 
               </div>
 
 
+              <!-- ================= BATCH ================= -->
 
-              <!-- BATCH -->
-
-              <div>
+              <div class="task-batch-field">
 
                 <label class="tasks-inline-055">
                   الدفعة
                 </label>
 
+                <div class="task-selected-batch">
 
-                <div class="tasks-inline-061">
-                  {{ selectedBatch()?.batchName || 'لم يتم تحديد الدفعة' }}
+                  <span class="task-selected-batch-icon">
+
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="17"
+                      height="17"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    >
+                      <path
+                        d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2">
+                      </path>
+
+                      <circle
+                        cx="9"
+                        cy="7"
+                        r="4">
+                      </circle>
+
+                      <path
+                        d="M22 21v-2a4 4 0 0 0-3-3.87">
+                      </path>
+
+                      <path
+                        d="M16 3.13a4 4 0 0 1 0 7.75">
+                      </path>
+                    </svg>
+
+                  </span>
+
+
+                  <div class="task-selected-batch-copy">
+
+                    <span class="task-selected-batch-label">
+                      الدفعة المحددة
+                    </span>
+
+                    <strong>
+                      {{
+                        selectedBatch()?.batchName ||
+                        'لم يتم تحديد الدفعة'
+                      }}
+                    </strong>
+
+                  </div>
+
                 </div>
 
               </div>
@@ -1666,7 +1654,6 @@
             </div>
 
           </div>
-
 
 
           <!-- ================= MODAL FOOTER ================= -->

@@ -54,6 +54,21 @@ export class TrainerTrainees implements OnInit {
 
 
   // =====================================================
+  // EVALUABLE ENROLLMENTS
+  // =====================================================
+
+  evaluableEnrollments =
+    computed(() => {
+
+      return this.enrollments()
+        .filter(
+          enrollment =>
+            enrollment.completionStatus !== 'Dropped'
+        );
+    });
+
+
+  // =====================================================
   // REPORT EXPORT STATE
   // =====================================================
 
@@ -107,18 +122,19 @@ export class TrainerTrainees implements OnInit {
   // KPI
   // =====================================================
 
-  totalTrainees = computed(() => {
+  totalTrainees =
+    computed(() => {
 
-    const traineeIds =
-      new Set(
-        this.enrollments().map(
-          enrollment =>
-            enrollment.traineeId
-        )
-      );
+      const traineeIds =
+        new Set(
+          this.enrollments().map(
+            enrollment =>
+              enrollment.traineeId
+          )
+        );
 
-    return traineeIds.size;
-  });
+      return traineeIds.size;
+    });
 
 
   // =====================================================
@@ -129,18 +145,36 @@ export class TrainerTrainees implements OnInit {
     signal<Record<number, number | null>>({});
 
 
-  evaluatedTraineesCount =
+  performanceScores =
     computed(() => {
 
-      return Object
-        .values(
-          this.evaluationAverages()
+      const averages =
+        this.evaluationAverages();
+
+
+      return this.enrollments()
+        .filter(
+          enrollment =>
+            enrollment.completionStatus !== 'Dropped'
+        )
+        .map(
+          enrollment =>
+            averages[
+              enrollment.enrollmentId
+            ]
         )
         .filter(
           (score): score is number =>
             typeof score === 'number' &&
             Number.isFinite(score)
-        )
+        );
+    });
+
+
+  evaluatedTraineesCount =
+    computed(() => {
+
+      return this.performanceScores()
         .length;
     });
 
@@ -149,15 +183,7 @@ export class TrainerTrainees implements OnInit {
     computed(() => {
 
       const scores =
-        Object
-          .values(
-            this.evaluationAverages()
-          )
-          .filter(
-            (score): score is number =>
-              typeof score === 'number' &&
-              Number.isFinite(score)
-          );
+        this.performanceScores();
 
 
       if (scores.length === 0) {
@@ -181,14 +207,9 @@ export class TrainerTrainees implements OnInit {
   highPerformers =
     computed(() => {
 
-      return Object
-        .values(
-          this.evaluationAverages()
-        )
+      return this.performanceScores()
         .filter(
-          (score): score is number =>
-            typeof score === 'number' &&
-            Number.isFinite(score) &&
+          score =>
             score >= 85
         )
         .length;
@@ -198,14 +219,9 @@ export class TrainerTrainees implements OnInit {
   needsSupport =
     computed(() => {
 
-      return Object
-        .values(
-          this.evaluationAverages()
-        )
+      return this.performanceScores()
         .filter(
-          (score): score is number =>
-            typeof score === 'number' &&
-            Number.isFinite(score) &&
+          score =>
             score < 60
         )
         .length;
@@ -335,7 +351,7 @@ export class TrainerTrainees implements OnInit {
 
 
   // =====================================================
-  // NEW: ENROLLMENT STATUS
+  // ENROLLMENT STATUS
   // =====================================================
 
   enrollmentStatusLabel(
@@ -401,6 +417,16 @@ export class TrainerTrainees implements OnInit {
 
         return 'neutral';
     }
+  }
+
+
+  canEvaluateEnrollment(
+    enrollment: EnrollmentDto
+  ): boolean {
+
+    return (
+      enrollment.completionStatus !== 'Dropped'
+    );
   }
 
 
@@ -1078,7 +1104,10 @@ export class TrainerTrainees implements OnInit {
       this.selectedProfileEnrollment();
 
 
-    if (!enrollment) {
+    if (
+      !enrollment ||
+      enrollment.completionStatus === 'Dropped'
+    ) {
 
       return;
     }
@@ -1215,6 +1244,28 @@ export class TrainerTrainees implements OnInit {
   openEval(
     enrollmentId: number
   ): void {
+
+    const enrollment =
+      this.enrollments()
+        .find(
+          item =>
+            item.enrollmentId ===
+            enrollmentId
+        );
+
+
+    if (
+      !enrollment ||
+      enrollment.completionStatus === 'Dropped'
+    ) {
+
+      console.warn(
+        'لا يمكن تقييم متدرب منسحب'
+      );
+
+      return;
+    }
+
 
     this.selectedEnrollmentId =
       enrollmentId;
@@ -1353,6 +1404,28 @@ export class TrainerTrainees implements OnInit {
       !userId ||
       !template
     ) {
+
+      return;
+    }
+
+
+    const enrollment =
+      this.enrollments()
+        .find(
+          item =>
+            item.enrollmentId ===
+            this.selectedEnrollmentId
+        );
+
+
+    if (
+      !enrollment ||
+      enrollment.completionStatus === 'Dropped'
+    ) {
+
+      console.warn(
+        'لا يمكن حفظ تقييم لمتدرب منسحب'
+      );
 
       return;
     }
