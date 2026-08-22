@@ -3,11 +3,33 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
-  AnnouncementDto, BadgeDto, CertificateDto, ConversationDetailDto, ConversationListItemDto,
-  ConversationMessageDto, DailyAttendanceDto, ExcuseDto, FeedbackCriterionDto, FeedbackPendingDto,
-  LessonDto, ModuleDto, NotificationDto, ProjectDto, SubmissionDto, TaskDto,
-  TraineeBadgeDto, TraineeDashboardSummaryDto, TraineeModuleProgressDto, TraineeProfileDto, WarningDto,
-  EnrollmentDto, BatchDto, ProgramDto, TrainerDto, CompanySupervisorDto, ProgressSummaryDto
+  AnnouncementDto,
+  BadgeDto,
+  CertificateDto,
+  ConversationDetailDto,
+  ConversationListItemDto,
+  ConversationMessageDto,
+  DailyAttendanceDto,
+  ExcuseDto,
+  FeedbackCriterionDto,
+  FeedbackPendingDto,
+  LessonDto,
+  ModuleDto,
+  NotificationDto,
+  ProjectDto,
+  SubmissionDto,
+  TaskDto,
+  TraineeBadgeDto,
+  TraineeDashboardSummaryDto,
+  TraineeModuleProgressDto,
+  TraineeProfileDto,
+  WarningDto,
+  EnrollmentDto,
+  BatchDto,
+  ProgramDto,
+  TrainerDto,
+  CompanySupervisorDto,
+  ProgressSummaryDto,
 } from '../../../core/models/dtos';
 
 @Injectable({ providedIn: 'root' })
@@ -20,7 +42,9 @@ export class TraineeApi {
   // =========================================================
 
   getDashboardSummary(id: number): Observable<TraineeDashboardSummaryDto> {
-    return this.http.get<TraineeDashboardSummaryDto>(`${this.base}/Trainee/${id}/dashboard-summary`);
+    return this.http.get<TraineeDashboardSummaryDto>(
+      `${this.base}/Trainee/${id}/dashboard-summary`,
+    );
   }
 
   getPlatformAnnouncements(): Observable<AnnouncementDto[]> {
@@ -36,23 +60,24 @@ export class TraineeApi {
   }
 
   // =========================================================
-// Tasks - جلب المهام الخاصة بالمتدرّب
-// =========================================================
+  // Tasks - جلب المهام الخاصة بالمتدرّب
+  // =========================================================
 
-// جلب مهام المتدرّب المخصصة له فقط
-getTraineeTasks(traineeId: number): Observable<TaskDto[]> {
-  return this.http.get<TaskDto[]>(`${this.base}/Task/trainee/${traineeId}`);
-}
+  // جلب مهام المتدرّب المخصصة له فقط
+  getTraineeTasks(traineeId: number): Observable<TaskDto[]> {
+    return this.http.get<TaskDto[]>(`${this.base}/Task/trainee/${traineeId}`);
+  }
 
-// جلب حالة مهمة معينة للمتدرّب
-getTaskStatus(taskId: number, traineeId: number): Observable<any> {
-  return this.http.get<any>(`${this.base}/Task/${taskId}/status/${traineeId}`);
-}
+  // جلب حالة مهمة معينة للمتدرّب
+  getTaskStatus(taskId: number, traineeId: number): Observable<any> {
+    return this.http.get<any>(`${this.base}/Task/${taskId}/status/${traineeId}`);
+  }
 
-// جلب تسليمات المتدرّب للمهام
-getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
-  return this.http.get<SubmissionDto[]>(`${this.base}/Submission/trainee/${traineeId}`);
-}
+  // جلب تسليمات المتدرّب للمهام
+  getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
+    return this.http.get<SubmissionDto[]>(`${this.base}/Submission/trainee/${traineeId}`);
+  }
+
   // =========================================================
   // Profile
   // =========================================================
@@ -61,8 +86,8 @@ getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
     return this.http.get<TraineeProfileDto>(`${this.base}/Trainee/traineeByUserID/${id}`);
   }
 
-  updateTrainee(id: number, dto: unknown) { 
-    return this.http.put(`${this.base}/Trainee/traineeByUserID/${id}`, dto); 
+  updateTrainee(id: number, dto: unknown) {
+    return this.http.put(`${this.base}/Trainee/traineeByUserID/${id}`, dto);
   }
 
   // =========================================================
@@ -108,6 +133,15 @@ getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
     return this.http.get<CompanySupervisorDto>(`${this.base}/CompanySupervisor/${id}`);
   }
 
+  // أضف هذه الدالة الجديدة
+  /**
+   * جلب بيانات المشرف بناءً على userId
+   * GET /api/CompanySupervisor/user/{userId}
+   */
+  getCompanySupervisorByUserId(userId: number): Observable<CompanySupervisorDto> {
+    return this.http.get<CompanySupervisorDto>(`${this.base}/CompanySupervisor/user/${userId}`);
+  }
+
   // =========================================================
   // Program
   // =========================================================
@@ -145,15 +179,21 @@ getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
   }
 
   checkPrerequisite(moduleId: number, traineeId: number) {
-    return this.http.get<boolean>(`${this.base}/Module/${moduleId}/check-prerequisite/${traineeId}`);
+    return this.http.get<boolean>(
+      `${this.base}/Module/${moduleId}/check-prerequisite/${traineeId}`,
+    );
   }
 
   getModuleProgress(traineeId: number): Observable<TraineeModuleProgressDto[]> {
-    return this.http.get<TraineeModuleProgressDto[]>(`${this.base}/TraineeModuleProgress/trainee/${traineeId}`);
+    return this.http.get<TraineeModuleProgressDto[]>(
+      `${this.base}/TraineeModuleProgress/trainee/${traineeId}`,
+    );
   }
 
   getModuleProgressPercentage(traineeId: number): Observable<number> {
-    return this.http.get<number>(`${this.base}/TraineeModuleProgress/trainee/${traineeId}/percentage`);
+    return this.http.get<number>(
+      `${this.base}/TraineeModuleProgress/trainee/${traineeId}/percentage`,
+    );
   }
 
   // =========================================================
@@ -161,7 +201,9 @@ getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
   // =========================================================
 
   getEnrollmentProgress(enrollmentId: number): Observable<ProgressSummaryDto> {
-    return this.http.get<ProgressSummaryDto>(`${this.base}/Enrollment/${enrollmentId}/progress-summary`);
+    return this.http.get<ProgressSummaryDto>(
+      `${this.base}/Enrollment/${enrollmentId}/progress-summary`,
+    );
   }
 
   // =========================================================
@@ -172,8 +214,8 @@ getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
     return this.http.get<TaskDto[]>(`${this.base}/Task/batch/${batchId}`);
   }
 
-  submitAssignment(dto: unknown) { 
-    return this.http.post(`${this.base}/Submission`, dto); 
+  submitAssignment(dto: unknown) {
+    return this.http.post(`${this.base}/Submission`, dto);
   }
 
   getSubmissions(traineeId: number): Observable<SubmissionDto[]> {
@@ -189,15 +231,26 @@ getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
   // =========================================================
 
   getAttendance(enrollmentId: number): Observable<DailyAttendanceDto[]> {
-    return this.http.get<DailyAttendanceDto[]>(`${this.base}/DailyAttendance/enrollment/${enrollmentId}`);
+    return this.http.get<DailyAttendanceDto[]>(
+      `${this.base}/DailyAttendance/enrollment/${enrollmentId}`,
+    );
   }
 
   getComplianceRate(enrollmentId: number): Observable<number> {
-    return this.http.get<number>(`${this.base}/DailyAttendance/enrollment/${enrollmentId}/compliance-rate`);
+    return this.http.get<number>(
+      `${this.base}/DailyAttendance/enrollment/${enrollmentId}/compliance-rate`,
+    );
   }
 
-  submitExcuse(dto: unknown): Observable<ExcuseDto> { 
-    return this.http.post<ExcuseDto>(`${this.base}/Excuse`, dto); 
+  submitExcuse(dto: unknown): Observable<ExcuseDto> {
+    return this.http.post<ExcuseDto>(`${this.base}/Excuse`, dto);
+  }
+
+  /**
+   * جلب العذر حسب attendanceId
+   */
+  getExcuse(attendanceId: number): Observable<ExcuseDto> {
+    return this.http.get<ExcuseDto>(`${this.base}/Excuse/attendance/${attendanceId}`);
   }
 
   // =========================================================
@@ -208,12 +261,15 @@ getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
     return this.http.get<NotificationDto[]>(`${this.base}/Notification/user/${userId}`);
   }
 
-  markRead(id: number) { 
-    return this.http.put(`${this.base}/Notification/${id}/read`, {}); 
+  markRead(id: number) {
+    return this.http.put(`${this.base}/Notification/${id}/read`, {});
   }
 
-  getMyWarnings(enrollmentId: number): Observable<WarningDto[]> {
-    return this.http.get<WarningDto[]>(`${this.base}/Warning`, { params: { scope: 'Trainee', enrollmentId } });
+  // تم التعديل هنا: تغيير المعامل من enrollmentId إلى userId
+  getMyWarnings(userId: number): Observable<WarningDto[]> {
+    return this.http.get<WarningDto[]>(`${this.base}/Warning`, {
+      params: { scope: 'Trainee', userId: userId.toString() },
+    });
   }
 
   // =========================================================
@@ -221,8 +277,8 @@ getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
   // =========================================================
 
   getConversations(userId: number): Observable<ConversationListItemDto[]> {
-    return this.http.get<ConversationListItemDto[]>(`${this.base}/Conversation`, { 
-      params: { type: 'TraineeComplaint', participantUserId: userId } 
+    return this.http.get<ConversationListItemDto[]>(`${this.base}/Conversation`, {
+      params: { type: 'TraineeComplaint', participantUserId: userId },
     });
   }
 
@@ -237,36 +293,127 @@ getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
   sendMessage(id: number, dto: unknown): Observable<ConversationMessageDto> {
     return this.http.post<ConversationMessageDto>(`${this.base}/Conversation/${id}/messages`, dto);
   }
+// =========================================================
+// Achievements & Certificates
+// =========================================================
+
+/**
+ * جلب أوسمة المتدرب
+ */
+getMyBadges(traineeId: number): Observable<TraineeBadgeDto[]> {
+  return this.http.get<TraineeBadgeDto[]>(`${this.base}/TraineeBadge/trainee/${traineeId}`);
+}
+
+/**
+ * جلب جميع الأوسمة المتاحة
+ */
+getAllBadges(): Observable<BadgeDto[]> {
+  return this.http.get<BadgeDto[]>(`${this.base}/Badge`);
+}
+
+/**
+ * جلب شهادات المتدرب
+ */
+getCertificates(traineeId: number): Observable<CertificateDto[]> {
+  return this.http.get<CertificateDto[]>(`${this.base}/Certificate/trainee/${traineeId}`);
+}
+
+/**
+ * تحميل شهادة
+ */
+downloadCertificate(certificateId: number): Observable<Blob> {
+  return this.http.get(`${this.base}/Certificate/${certificateId}/download`, { responseType: 'blob' });
+}
+
+/**
+ * جلب تقدم المتدرب في الوحدات
+ */
+getModuleProgressByTrainee(traineeId: number): Observable<TraineeModuleProgressDto[]> {
+  return this.http.get<TraineeModuleProgressDto[]>(`${this.base}/TraineeModuleProgress/trainee/${traineeId}`);
+}
+
+/**
+ * جلب بيانات التسجيل
+ */
+getEnrollment(enrollmentId: number): Observable<EnrollmentDto> {
+  return this.http.get<EnrollmentDto>(`${this.base}/Enrollment/${enrollmentId}`);
+}
+
+// =========================================================
+// Feedback at module completion
+// =========================================================
+
+/**
+ * جلب حالة التقييمات المعلقة
+ */
+getFeedbackPending(moduleId: number, traineeId: number): Observable<FeedbackPendingDto> {
+  return this.http.get<FeedbackPendingDto>(
+    `${this.base}/Feedback/module/${moduleId}/trainee/${traineeId}/pending`,
+  );
+}
+
+/**
+ * جلب معايير التقييم
+ */
+getFeedbackCriteria(appliesTo: string): Observable<FeedbackCriterionDto[]> {
+  return this.http.get<FeedbackCriterionDto[]>(`${this.base}/Feedback/criteria`, {
+    params: { appliesTo },
+  });
+}
+
+/**
+ * إرسال التقييم
+ */
+submitFeedback(dto: unknown): Observable<any> {
+  return this.http.post(`${this.base}/Feedback`, dto);
+}
+  // =========================================================
+  // =========================================================
+  // الإعلانات والتنبيهات - دوال جديدة مضافة
+  // =========================================================
+  // =========================================================
 
   // =========================================================
-  // Achievements & Certificates
+  // Announcements - جلب الإعلانات بناءً على userId
   // =========================================================
 
-  getMyBadges(traineeId: number): Observable<TraineeBadgeDto[]> {
-    return this.http.get<TraineeBadgeDto[]>(`${this.base}/TraineeBadge/trainee/${traineeId}`);
-  }
-
-  getAllBadges(): Observable<BadgeDto[]> { 
-    return this.http.get<BadgeDto[]>(`${this.base}/Badge`); 
-  }
-
-  getCertificates(traineeId: number): Observable<CertificateDto[]> {
-    return this.http.get<CertificateDto[]>(`${this.base}/Certificate/trainee/${traineeId}`);
+  /**
+   * جلب الإعلانات الخاصة بالمستخدم بناءً على userId
+   * يتم جلب الإعلانات من جميع المصادر (منصة، شركة، دفعة)
+   */
+  getUserAnnouncements(userId: number): Observable<AnnouncementDto[]> {
+    return this.http.get<AnnouncementDto[]>(`${this.base}/Announcement/user/${userId}`);
   }
 
   // =========================================================
-  // Feedback at module completion
+  // Notifications - دوال إضافية للتنبيهات
   // =========================================================
 
-  getFeedbackPending(moduleId: number, traineeId: number): Observable<FeedbackPendingDto> {
-    return this.http.get<FeedbackPendingDto>(`${this.base}/Feedback/module/${moduleId}/trainee/${traineeId}/pending`);
+  /**
+   * جلب التنبيهات الخاصة بالمستخدم
+   */
+  getUserNotifications(userId: number): Observable<NotificationDto[]> {
+    return this.http.get<NotificationDto[]>(`${this.base}/Notification/user/${userId}`);
   }
 
-  getFeedbackCriteria(appliesTo: string): Observable<FeedbackCriterionDto[]> {
-    return this.http.get<FeedbackCriterionDto[]>(`${this.base}/Feedback/criteria`, { params: { appliesTo } });
+  /**
+   * جلب عدد التنبيهات غير المقروءة للمستخدم
+   */
+  getUnreadNotificationsCount(userId: number): Observable<number> {
+    return this.http.get<number>(`${this.base}/Notification/user/${userId}/unread-count`);
   }
 
-  submitFeedback(dto: unknown) { 
-    return this.http.post(`${this.base}/Feedback`, dto); 
+  /**
+   * تحديد تنبيه كمقروء
+   */
+  markNotificationAsRead(notificationId: number): Observable<void> {
+    return this.http.put<void>(`${this.base}/Notification/${notificationId}/read`, {});
+  }
+
+  /**
+   * تحديد جميع التنبيهات كمقروءة للمستخدم
+   */
+  markAllNotificationsAsRead(userId: number): Observable<void> {
+    return this.http.put<void>(`${this.base}/Notification/user/${userId}/read-all`, {});
   }
 }

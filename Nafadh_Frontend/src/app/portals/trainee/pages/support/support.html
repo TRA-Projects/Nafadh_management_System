@@ -1,50 +1,930 @@
-<div style="max-width: 800px; margin: 30px auto; padding: 20px;">
-  <h2 class="nfd-page-title" style="text-align: right;">الدعم والشكاوي</h2>
-  <p class="nfd-page-sub" style="text-align: right; margin-bottom: 24px;">أرسل استفسارك أو شكواك مباشرة للجهة المختصة</p>
+<div
+  class="support-page"
+  dir="rtl"
+>
+  <!-- =========================================================
+       HEADER
+       ========================================================= -->
 
-  <div class="nfd-card" style="padding: 24px; text-align: right; direction: rtl;">
-    <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 18px; font-weight: bold;">تقديم استفسار أو شكوى :</h3>
+  <div class="support-header">
 
-    <div style="margin-bottom: 14px;">
-      <label style="display: block; margin-bottom: 6px; font-size: 13px; color: var(--color-text-secondary);">الجهة المستلمة</label>
-      <div style="display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--color-border); border-radius: 8px; padding: 8px 12px; background: var(--color-tint-indigo, #eef2ff);">
-        <span style="font-size: 14px; color: var(--color-text-main);">هيئة تنظيم الاتصالات</span>
+    <h2 class="nfd-page-title">
+      الدعم والشكاوي
+    </h2>
+
+    <p class="nfd-page-sub">
+      أرسل استفسارك أو شكواك مباشرة للجهة المختصة
+    </p>
+
+  </div>
+
+
+  <!-- =========================================================
+       SUPPORT CARD
+       ========================================================= -->
+
+  <div class="support-card">
+
+    <h3 class="support-title">
+      تقديم استفسار أو شكوى
+    </h3>
+
+
+    <!-- =======================================================
+         RECEIVER
+         ======================================================= -->
+
+    <div class="form-group">
+
+      <label>
+        الجهة المستلمة
+      </label>
+
+      <div class="receiver-box">
+
+        <span>
+          هيئة تنظيم الاتصالات
+        </span>
+
       </div>
+
     </div>
 
-    <!-- إبعاد السهم عن الحافة اليسرى بمسافة مريحة ودقيقة -->
-    <div style="margin-bottom: 14px;">
-      <label style="display: block; margin-bottom: 6px; font-size: 13px; color: var(--color-text-secondary);">الموضوع</label>
-      <select [(ngModel)]="newConv.subject" style="width: 100%; text-align: right; direction: rtl; padding: 10px 14px; padding-left: 36px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-background-input, #fff); color: var(--color-text-main, #333); font-size: 14px; outline: none;">
-        <option value="" disabled selected>اختر موضوع الطلب</option>
-        @for (s of subjects; track s) { <option [value]="s">{{ s }}</option> }
+
+    <!-- =======================================================
+         SUBJECT
+         ======================================================= -->
+
+    <div class="form-group">
+
+      <label>
+        الموضوع
+      </label>
+
+      <select
+        [(ngModel)]="newConv.subject"
+        class="support-select"
+      >
+
+        <option
+          value=""
+          disabled
+        >
+          اختر موضوع الطلب
+        </option>
+
+        @for (s of subjects; track s) {
+
+          <option [value]="s">
+            {{ s }}
+          </option>
+
+        }
+
       </select>
+
     </div>
 
-    <div style="margin-bottom: 14px;">
-      <label style="display: block; margin-bottom: 6px; font-size: 13px; color: var(--color-text-secondary);">تفاصيل الطلب</label>
-      <textarea class="nfd-input" rows="4" [(ngModel)]="newConv.firstMessage" placeholder="اكتب تفاصيل استفسارك أو شكواك هنا..." style="width: 100%; text-align: right; resize: none; padding: 10px; min-height: 90px; max-height: 150px;"></textarea>
+
+    <!-- =======================================================
+         MESSAGE
+         ======================================================= -->
+
+    <div class="form-group">
+
+      <label>
+        تفاصيل الطلب
+      </label>
+
+      <textarea
+        [(ngModel)]="newConv.firstMessage"
+        class="support-textarea"
+        rows="4"
+        placeholder="اكتب تفاصيل استفسارك أو شكواك هنا..."
+      ></textarea>
+
     </div>
 
-    <div style="margin-bottom: 20px;">
-      <label style="display: block; margin-bottom: 6px; font-size: 13px; color: var(--color-text-secondary);">إرفاق ملفات داعمة</label>
-      
-      <input type="file" #fileInput style="display: none;" (change)="onFileSelected($event)" accept=".pdf,.png,.jpg,.jpeg" />
 
-      <div (click)="fileInput.click()" style="border: 2px dashed var(--color-border); border-radius: 10px; padding: 16px; text-align: center; background: var(--color-background-subtle, #fafafa); cursor: pointer; outline: none;">
-        
-        <div style="width: 44px; height: 44px; background: var(--color-tint-indigo, #eef2ff); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; color: var(--color-navy, #1e1b4b);">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+    <!-- =======================================================
+         FILE UPLOAD
+         ======================================================= -->
+
+    <div class="form-group">
+
+      <label>
+        إرفاق ملفات داعمة
+      </label>
+
+      <input
+        type="file"
+        #fileInput
+        hidden
+        accept=".pdf,.png,.jpg,.jpeg"
+        (change)="onFileSelected($event)"
+      />
+
+      <div
+        class="file-upload"
+        (click)="fileInput.click()"
+      >
+
+        <div class="upload-icon">
+
+          <svg
+            width="21"
+            height="21"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+
+            <path
+              d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+            />
+
+            <polyline
+              points="17 8 12 3 7 8"
+            />
+
+            <line
+              x1="12"
+              y1="3"
+              x2="12"
+              y2="15"
+            />
+
+          </svg>
+
         </div>
 
-        <p style="margin: 0 0 4px; font-size: 12px; color: var(--color-text-main);">اسحب وأفلت المستندات والصور هنا، أو</p>
-        <span style="font-size: 12px; color: #0066cc; font-weight: 600; display: inline-block;">انقر للاختيار (اختياري)</span>
-        <p style="margin: 4px 0 0; font-size: 10px; color: var(--color-text-tertiary);">PDF, PNG, JPG — Max 10MB</p>
+
+        <div class="upload-text">
+
+          @if (selectedFile) {
+
+            <strong>
+              {{ selectedFile.name }}
+            </strong>
+
+            <span>
+              {{ formatFileSize(selectedFile.size) }}
+            </span>
+
+          } @else {
+
+            <strong>
+              اسحب وأفلت المستندات والصور هنا، أو
+            </strong>
+
+            <span>
+              انقر للاختيار (اختياري)
+            </span>
+
+          }
+
+        </div>
+
+
+        @if (selectedFile) {
+
+          <button
+            type="button"
+            class="remove-file"
+            (click)="removeFile($event)"
+          >
+            ×
+          </button>
+
+        }
+
       </div>
+
+
+      <p class="file-hint">
+        PDF, PNG, JPG — Max 10MB
+      </p>
+
     </div>
 
-    <div>
-      <button class="nfd-btn primary" (click)="startConversation()" style="width: 100%; padding: 10px; font-size: 14px; justify-content: center;">إرسال الطلب</button>
-    </div>
+
+    <!-- =======================================================
+         ERROR MESSAGE
+         ======================================================= -->
+
+    @if (errorMessage()) {
+
+      <div class="message error-message">
+
+        <span>
+          !
+        </span>
+
+        <p>
+          {{ errorMessage() }}
+        </p>
+
+      </div>
+
+    }
+
+
+    <!-- =======================================================
+         SUCCESS MESSAGE
+         ======================================================= -->
+
+    @if (successMessage()) {
+
+      <div class="message success-message">
+
+        <span>
+          ✓
+        </span>
+
+        <p>
+          {{ successMessage() }}
+        </p>
+
+      </div>
+
+    }
+
+
+    <!-- =======================================================
+         SEND BUTTON
+         ======================================================= -->
+
+    <button
+      type="button"
+      class="submit-button"
+      [disabled]="isSubmitting() || !canSubmit()"
+      (click)="startConversation()"
+    >
+
+      @if (isSubmitting()) {
+
+        <span class="loader"></span>
+
+        <span>
+          جاري الإرسال...
+        </span>
+
+      } @else {
+
+        <span>
+          إرسال الطلب
+        </span>
+
+      }
+
+    </button>
+
   </div>
+
 </div>
+
+
+<!-- =========================================================
+     CSS
+     ========================================================= -->
+
+<style>
+
+.support-page {
+
+  width: 100%;
+
+  max-width: 850px;
+
+  margin: 0 auto;
+
+  padding: 10px 20px 30px;
+
+  box-sizing: border-box;
+
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.support-header {
+
+  margin-bottom: 18px;
+
+}
+
+
+.nfd-page-title {
+
+  margin: 0 0 5px;
+
+  font-size: 27px;
+
+  font-weight: 700;
+
+  color: #172033;
+
+}
+
+
+.nfd-page-sub {
+
+  margin: 0;
+
+  font-size: 13px;
+
+  color: #8c98a5;
+
+}
+
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.support-card {
+
+  background: #ffffff;
+
+  border: 1px solid #e7ebf0;
+
+  border-radius: 16px;
+
+  padding: 25px 28px;
+
+  box-shadow:
+    0 4px 18px rgba(15, 23, 42, 0.04);
+
+}
+
+
+.support-title {
+
+  margin: 0 0 22px;
+
+  font-size: 18px;
+
+  font-weight: 700;
+
+  color: #1e293b;
+
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.form-group {
+
+  margin-bottom: 16px;
+
+}
+
+
+.form-group label {
+
+  display: block;
+
+  margin-bottom: 7px;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  color: #475569;
+
+}
+
+
+/* =========================================================
+   RECEIVER
+   ========================================================= */
+
+.receiver-box {
+
+  height: 44px;
+
+  display: flex;
+
+  align-items: center;
+
+  padding: 0 13px;
+
+  border: 1px solid #dbe4f0;
+
+  border-radius: 9px;
+
+  background: #eef2ff;
+
+  color: #334155;
+
+  font-size: 13px;
+
+  box-sizing: border-box;
+
+}
+
+
+/* =========================================================
+   SELECT
+   ========================================================= */
+
+.support-select {
+
+  width: 100%;
+
+  height: 44px;
+
+  padding: 0 13px;
+
+  border: 1px solid #dfe5e8;
+
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #334155;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  outline: none;
+
+  box-sizing: border-box;
+
+  cursor: pointer;
+
+}
+
+
+.support-select:focus {
+
+  border-color: #0066cc;
+
+  box-shadow:
+    0 0 0 3px rgba(0, 102, 204, 0.08);
+
+}
+
+
+/* =========================================================
+   TEXTAREA
+   ========================================================= */
+
+.support-textarea {
+
+  width: 100%;
+
+  min-height: 105px;
+
+  padding: 11px 13px;
+
+  border: 1px solid #dfe5e8;
+
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #334155;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  line-height: 1.7;
+
+  outline: none;
+
+  resize: vertical;
+
+  box-sizing: border-box;
+
+}
+
+
+.support-textarea:focus {
+
+  border-color: #0066cc;
+
+  box-shadow:
+    0 0 0 3px rgba(0, 102, 204, 0.08);
+
+}
+
+
+.support-textarea::placeholder {
+
+  color: #a5afb9;
+
+}
+
+
+/* =========================================================
+   FILE UPLOAD
+   ========================================================= */
+
+.file-upload {
+
+  min-height: 75px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 12px;
+
+  position: relative;
+
+  padding: 12px 18px;
+
+  border: 1.5px dashed #cbd6e5;
+
+  border-radius: 11px;
+
+  background: #fbfcff;
+
+  cursor: pointer;
+
+  box-sizing: border-box;
+
+  transition: 0.2s;
+
+}
+
+
+.file-upload:hover {
+
+  border-color: #0066cc;
+
+  background: #f5f8ff;
+
+}
+
+
+/* =========================================================
+   UPLOAD ICON
+   ========================================================= */
+
+.upload-icon {
+
+  width: 38px;
+
+  height: 38px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 10px;
+
+  background: #eef2ff;
+
+  color: #0066cc;
+
+}
+
+
+/* =========================================================
+   UPLOAD TEXT
+   ========================================================= */
+
+.upload-text {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+
+  text-align: right;
+
+}
+
+
+.upload-text strong {
+
+  font-size: 11px;
+
+  color: #475569;
+
+}
+
+
+.upload-text span {
+
+  font-size: 9px;
+
+  color: #0066cc;
+
+  font-weight: 600;
+
+}
+
+
+/* =========================================================
+   REMOVE FILE
+   ========================================================= */
+
+.remove-file {
+
+  position: absolute;
+
+  left: 10px;
+
+  top: 10px;
+
+  width: 24px;
+
+  height: 24px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background: #fff0f0;
+
+  color: #dc2626;
+
+  font-size: 15px;
+
+  cursor: pointer;
+
+}
+
+
+.remove-file:hover {
+
+  background: #fee2e2;
+
+}
+
+
+/* =========================================================
+   FILE HINT
+   ========================================================= */
+
+.file-hint {
+
+  margin: 5px 0 0;
+
+  font-size: 9px;
+
+  color: #9aa5af;
+
+}
+
+
+/* =========================================================
+   MESSAGES
+   ========================================================= */
+
+.message {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 9px 11px;
+
+  margin-bottom: 14px;
+
+  border-radius: 8px;
+
+  font-size: 11px;
+
+}
+
+
+.message p {
+
+  margin: 0;
+
+}
+
+
+.message > span {
+
+  width: 20px;
+
+  height: 20px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  font-weight: 700;
+
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.error-message {
+
+  background: #fff1f1;
+
+  color: #dc2626;
+
+}
+
+
+.error-message > span {
+
+  background: #ffdcdc;
+
+}
+
+
+/* =========================================================
+   SUCCESS
+   ========================================================= */
+
+.success-message {
+
+  background: #eaf8f5;
+
+  color: #0d9488;
+
+}
+
+
+.success-message > span {
+
+  background: #d0f0ea;
+
+}
+
+
+/* =========================================================
+   SUBMIT BUTTON
+   ========================================================= */
+
+.submit-button {
+
+  width: 100%;
+
+  height: 44px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  margin-top: 5px;
+
+  border: none;
+
+  border-radius: 9px;
+
+  background: #0066cc;
+
+  color: #ffffff;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
+
+}
+
+
+.submit-button:hover:not(:disabled) {
+
+  background: #0052a3;
+
+  transform: translateY(-1px);
+
+}
+
+
+.submit-button:active:not(:disabled) {
+
+  transform: translateY(0);
+
+}
+
+
+/* =========================================================
+   DISABLED BUTTON
+   ========================================================= */
+
+.submit-button:disabled {
+
+  background: #b8c7d9;
+
+  color: #ffffff;
+
+  cursor: not-allowed;
+
+  opacity: 0.85;
+
+}
+
+
+/* =========================================================
+   LOADER
+   ========================================================= */
+
+.loader {
+
+  width: 14px;
+
+  height: 14px;
+
+  border: 2px solid rgba(255, 255, 255, 0.35);
+
+  border-top-color: #ffffff;
+
+  border-radius: 50%;
+
+  animation: spin 0.7s linear infinite;
+
+}
+
+
+@keyframes spin {
+
+  to {
+
+    transform: rotate(360deg);
+
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 650px) {
+
+  .support-page {
+
+    padding: 10px 12px 25px;
+
+  }
+
+
+  .support-card {
+
+    padding: 20px;
+
+  }
+
+
+  .nfd-page-title {
+
+    font-size: 23px;
+
+  }
+
+
+  .file-upload {
+
+    padding: 12px;
+
+  }
+
+}
+
+</style>

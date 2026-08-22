@@ -1,408 +1,610 @@
-<h2 class="nfd-page-title">المهام والمشاريع</h2>
+<div
+  dir="rtl"
+  style="
+    width:100%;
+    box-sizing:border-box;
+  "
+>
 
+  <!-- ========================================================= -->
+  <!-- PAGE TITLE -->
+  <!-- ========================================================= -->
 
-<!-- ========================================================= -->
-<!-- التبويبات -->
-<!-- ========================================================= -->
-
-@if (!selected() && !selectedProject()) {
-
-  <div
+  <h2
+    class="nfd-page-title"
     style="
-      display:flex;
-      gap:4px;
-      background:var(--color-tint-indigo);
-      padding:4px;
-      border-radius:var(--radius-lg);
-      width:fit-content;
-      max-width:100%;
-      margin-bottom:16px;
+      font-size:22px;
+      line-height:1.5;
+      margin-bottom:18px;
     "
   >
+    المهام والمشاريع
+  </h2>
 
-    <button
-      class="nfd-btn"
-      [class.primary]="tab()==='assignments'"
-      [class.ghost]="tab()!=='assignments'"
-      (click)="tab.set('assignments')"
+
+  <!-- ========================================================= -->
+  <!-- TABS -->
+  <!-- ========================================================= -->
+
+  @if (!selected() && !selectedProject()) {
+
+    <div
+      style="
+        display:flex;
+        gap:4px;
+        background:var(--color-tint-indigo);
+        padding:4px;
+        border-radius:var(--radius-lg);
+        width:fit-content;
+        max-width:100%;
+        margin-bottom:18px;
+      "
     >
-      المهام
-    </button>
 
-
-    <button
-      class="nfd-btn"
-      [class.primary]="tab()==='projects'"
-      [class.ghost]="tab()!=='projects'"
-      (click)="tab.set('projects')"
-    >
-      المشاريع
-    </button>
-
-  </div>
-
-}
-
-
-<!-- ========================================================= -->
-<!-- رسالة الخطأ -->
-<!-- ========================================================= -->
-
-@if (errorMessage()) {
-
-  <div
-    class="nfd-card"
-    style="
-      margin-bottom:12px;
-      background:var(--status-new-bg);
-      color:var(--status-new-fg);
-      overflow-wrap:anywhere;
-    "
-  >
-    {{ errorMessage() }}
-  </div>
-
-}
-
-
-<!-- ========================================================= -->
-<!-- المهام -->
-<!-- ========================================================= -->
-
-@if (tab() === 'assignments' && !selected()) {
-
-  @if (loadingTasks()) {
-
-    <p class="nfd-muted">
-      جاري تحميل المهام...
-    </p>
-
-  } @else {
-
-    @for (t of tasks(); track t.taskId) {
-
-      <div
-        class="nfd-card"
+      <button
+        class="nfd-btn"
+        [class.primary]="tab() === 'assignments'"
+        [class.ghost]="tab() !== 'assignments'"
+        (click)="tab.set('assignments')"
         style="
-          display:flex;
-          justify-content:space-between;
-          align-items:center;
-          gap:12px;
-          margin-bottom:10px;
-          cursor:pointer;
-          min-width:0;
-          overflow:hidden;
+          font-size:14px;
+          padding:9px 18px;
         "
-        (click)="selectTask(t)"
       >
+        المهام
+      </button>
 
-        <!-- بيانات المهمة -->
+      <button
+        class="nfd-btn"
+        [class.primary]="tab() === 'projects'"
+        [class.ghost]="tab() !== 'projects'"
+        (click)="tab.set('projects')"
+        style="
+          font-size:14px;
+          padding:9px 18px;
+        "
+      >
+        المشاريع
+      </button>
+
+    </div>
+
+  }
+
+
+  <!-- ========================================================= -->
+  <!-- ERROR -->
+  <!-- ========================================================= -->
+
+  @if (errorMessage()) {
+
+    <div
+      class="nfd-card"
+      style="
+        margin-bottom:14px;
+        background:var(--status-new-bg);
+        color:var(--status-new-fg);
+        overflow-wrap:anywhere;
+        font-size:14px;
+        line-height:1.7;
+      "
+    >
+      {{ errorMessage() }}
+    </div>
+
+  }
+
+
+  <!-- ========================================================= -->
+  <!-- TASKS -->
+  <!-- ========================================================= -->
+
+  @if (tab() === 'assignments' && !selected()) {
+
+    @if (loadingProfile() || loadingTasks()) {
+
+      <p
+        class="nfd-muted"
+        style="
+          font-size:14px;
+          line-height:1.7;
+        "
+      >
+        جاري تحميل المهام...
+      </p>
+
+    } @else {
+
+      @if (tasks().length > 0) {
 
         <div
           style="
-            display:flex;
-            align-items:center;
-            gap:12px;
-            direction:rtl;
-            min-width:0;
-            flex:1;
+            display:grid;
+            grid-template-columns:repeat(3,minmax(0,1fr));
+            gap:16px;
+            width:100%;
           "
         >
 
-          <!-- أيقونة المهمة -->
+          @for (t of tasks(); track t.taskId) {
 
-          <div
-            style="
-              width:42px;
-              height:42px;
-              border-radius:10px;
-              background:var(--color-tint-indigo);
-              display:flex;
-              align-items:center;
-              justify-content:center;
-              flex-shrink:0;
-            "
-          >
+            @let submission = submissionFor(t.taskId);
+            @let taskStatus = displayTaskStatus(t);
+            @let deadlinePassed = isDeadlinePassed(t);
 
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--color-navy)"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-
-              <rect
-                x="3"
-                y="3"
-                width="18"
-                height="18"
-                rx="3"
-              ></rect>
-
-              <path
-                d="M8 12l2.5 2.5L16 9"
-              ></path>
-
-            </svg>
-
-          </div>
-
-
-          <div
-            style="
-              min-width:0;
-              overflow:hidden;
-            "
-          >
-
-            <strong
+            <div
+              class="nfd-card"
               style="
-                display:block;
-                font-size:13px;
-                overflow-wrap:anywhere;
-                word-break:break-word;
+                display:flex;
+                flex-direction:column;
+                min-width:0;
+                min-height:300px;
+                padding:18px;
+                border-radius:14px;
+                cursor:pointer;
+                overflow:hidden;
+                transition:
+                  transform .2s ease,
+                  box-shadow .2s ease;
               "
+              (click)="selectTask(t)"
             >
-              {{ t.title }}
-            </strong>
 
+              <div
+                style="
+                  display:flex;
+                  justify-content:space-between;
+                  align-items:flex-start;
+                  gap:10px;
+                  direction:rtl;
+                  margin-bottom:12px;
+                "
+              >
 
-            <p
-              style="
-                margin:3px 0 0;
-                font-size:11px;
-                color:var(--color-text-secondary);
-                overflow-wrap:anywhere;
-              "
-            >
-              الموعد:
-              {{ t.dueDate | date:'dd-MM-yyyy' }}
-            </p>
-
-
-            @if (submissionFor(t.taskId); as s) {
-
-              @if (s.grade !== null && s.grade !== undefined) {
-
-                <p
+                <div
                   style="
-                    margin:3px 0 0;
-                    font-size:10px;
-                    color:var(--status-active-fg);
-                    font-weight:600;
+                    width:44px;
+                    height:44px;
+                    min-width:44px;
+                    border-radius:12px;
+                    background:var(--color-tint-indigo);
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
                   "
                 >
-                  الدرجة:
-                  {{ s.grade }}/100
-                </p>
+
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--color-navy)"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+
+                    <rect
+                      x="3"
+                      y="3"
+                      width="18"
+                      height="18"
+                      rx="3"
+                    ></rect>
+
+                    <path
+                      d="M8 12l2.5 2.5L16 9"
+                    ></path>
+
+                  </svg>
+
+                </div>
+
+
+                <span
+                  class="nfd-badge"
+                  style="
+                    flex-shrink:0;
+                    white-space:nowrap;
+                    font-size:12px;
+                    padding:5px 9px;
+                  "
+                  [style.background]="
+                    statusBackground(
+                      taskStatus === 'مكتمل'
+                        ? 'completed'
+                        : taskStatus === 'قيد المراجعة'
+                          ? 'submitted'
+                          : taskStatus === 'متأخر'
+                            ? 'overdue'
+                            : 'new'
+                    )
+                  "
+                  [style.color]="
+                    statusForeground(
+                      taskStatus === 'مكتمل'
+                        ? 'completed'
+                        : taskStatus === 'قيد المراجعة'
+                          ? 'submitted'
+                          : taskStatus === 'متأخر'
+                            ? 'overdue'
+                            : 'new'
+                    )
+                  "
+                >
+                  {{ taskStatus }}
+                </span>
+
+              </div>
+
+
+              <h3
+                style="
+                  margin:0 0 8px;
+                  color:var(--color-navy);
+                  font-size:17px;
+                  line-height:1.6;
+                  font-weight:700;
+                  overflow-wrap:anywhere;
+                "
+              >
+                {{ t.title }}
+              </h3>
+
+
+              <p
+                style="
+                  margin:0;
+                  font-size:14px;
+                  line-height:1.8;
+                  color:var(--color-text-secondary);
+                  overflow-wrap:anywhere;
+                  min-height:50px;
+                "
+              >
+                {{ t.description }}
+              </p>
+
+
+              <div
+                style="
+                  height:1px;
+                  background:var(--color-tint-indigo);
+                  margin:14px 0;
+                "
+              ></div>
+
+
+              <div
+                style="
+                  display:flex;
+                  justify-content:space-between;
+                  align-items:center;
+                  gap:8px;
+                  direction:rtl;
+                  margin-bottom:10px;
+                "
+              >
+
+                <span
+                  style="
+                    font-size:13px;
+                    color:var(--color-text-secondary);
+                  "
+                >
+                  الموعد النهائي
+                </span>
+
+                <strong
+                  style="
+                    font-size:13px;
+                    color:var(--color-navy);
+                    direction:ltr;
+                  "
+                >
+                  {{ t.dueDate | date:'yyyy-MM-dd' }}
+                </strong>
+
+              </div>
+
+
+              @if (
+                deadlinePassed &&
+                taskStatus !== 'مكتمل'
+              ) {
+
+                <div
+                  style="
+                    display:flex;
+                    align-items:center;
+                    gap:7px;
+                    direction:rtl;
+                    background:var(--status-new-bg);
+                    color:var(--status-new-fg);
+                    border-radius:9px;
+                    padding:9px 10px;
+                    margin-bottom:10px;
+                    font-size:12px;
+                  "
+                >
+                  <span>⚠</span>
+                  <span>انتهى موعد التسليم</span>
+                </div>
 
               }
 
-            }
 
-          </div>
+              @if (submission) {
+
+                @if (
+                  submission.grade !== null &&
+                  submission.grade !== undefined
+                ) {
+
+                  <div
+                    style="
+                      display:flex;
+                      justify-content:space-between;
+                      align-items:center;
+                      direction:rtl;
+                      background:var(--status-active-bg);
+                      border-radius:9px;
+                      padding:10px 12px;
+                      margin-bottom:10px;
+                    "
+                  >
+
+                    <span
+                      style="
+                        font-size:13px;
+                        color:var(--status-active-fg);
+                      "
+                    >
+                      تقييم المدرب
+                    </span>
+
+                    <strong
+                      style="
+                        font-size:15px;
+                        color:var(--status-active-fg);
+                      "
+                    >
+                      {{ submission.grade }}/100
+                    </strong>
+
+                  </div>
+
+                }
+
+              }
+
+
+              <div
+                style="
+                  margin-top:auto;
+                  padding-top:8px;
+                "
+              >
+
+                @if (taskStatus === 'مكتمل') {
+
+                  <div
+                    style="
+                      width:100%;
+                      box-sizing:border-box;
+                      text-align:center;
+                      background:var(--status-completed-bg);
+                      color:var(--status-completed-fg);
+                      border-radius:9px;
+                      padding:10px;
+                      font-size:13px;
+                      font-weight:600;
+                    "
+                  >
+                    ✓ تم إكمال المهمة
+                  </div>
+
+                } @else if (deadlinePassed) {
+
+                  <button
+                    class="nfd-btn"
+                    disabled
+                    style="
+                      width:100%;
+                      opacity:.55;
+                      cursor:not-allowed;
+                      font-size:13px;
+                      padding:9px;
+                    "
+                    (click)="$event.stopPropagation()"
+                  >
+                    انتهى موعد التسليم
+                  </button>
+
+                } @else {
+
+                  <button
+                    class="nfd-btn primary"
+                    style="
+                      width:100%;
+                      font-size:13px;
+                      padding:9px;
+                    "
+                    (click)="
+                      $event.stopPropagation();
+                      selectTask(t)
+                    "
+                  >
+                    {{ submission ? 'إعادة التسليم' : 'تسليم المهمة' }}
+                  </button>
+
+                }
+
+              </div>
+
+            </div>
+
+          }
 
         </div>
 
+      } @else {
 
-        <!-- الحالة -->
+        <div
+          class="nfd-card"
+          style="
+            text-align:center;
+            padding:28px;
+            font-size:14px;
+          "
+        >
+          <p class="nfd-muted">
+            لا توجد مهام لهذا الباتش حاليًا.
+          </p>
+        </div>
 
-        @if (submissionFor(t.taskId); as s) {
-
-          <span
-            class="nfd-badge"
-            style="
-              flex-shrink:0;
-              white-space:nowrap;
-            "
-            [style.background]="statusBackground(s.status)"
-            [style.color]="statusForeground(s.status)"
-          >
-            {{ displayStatus(s.status) }}
-          </span>
-
-        } @else {
-
-          <span
-            class="nfd-badge"
-            style="
-              background:var(--status-new-bg);
-              color:var(--status-new-fg);
-              flex-shrink:0;
-              white-space:nowrap;
-            "
-          >
-            جديد
-          </span>
-
-        }
-
-      </div>
-
-    }
-
-
-    @empty {
-
-      <p class="nfd-muted">
-        لا توجد مهام بعد
-      </p>
+      }
 
     }
 
   }
 
-}
 
+  <!-- ========================================================= -->
+  <!-- TASK DETAILS -->
+  <!-- ========================================================= -->
 
-<!-- ========================================================= -->
-<!-- تفاصيل المهمة -->
-<!-- ========================================================= -->
+  @if (tab() === 'assignments' && selected(); as t) {
 
-@if (tab() === 'assignments' && selected(); as t) {
+    <button
+      class="nfd-muted"
+      style="
+        display:inline-block;
+        margin-bottom:14px;
+        border:0;
+        background:none;
+        cursor:pointer;
+        font-size:14px;
+      "
+      (click)="backToTasks()"
+    >
+      ← العودة إلى المهام
+    </button>
 
-  <button
-    class="nfd-muted"
-    style="
-      display:inline-block;
-      margin-bottom:12px;
-    "
-    (click)="backToTasks()"
-  >
-    ← العودة
-  </button>
-
-
-  <!-- معلومات المهمة -->
-
-  <div
-    class="nfd-card"
-    style="
-      margin-bottom:12px;
-      overflow:hidden;
-    "
-  >
+    @let submission = submissionFor(t.taskId);
+    @let deadlinePassed = isDeadlinePassed(t);
+    @let taskStatus = displayTaskStatus(t);
 
     <div
+      class="nfd-card"
       style="
-        display:flex;
-        justify-content:space-between;
-        align-items:flex-start;
-        gap:20px;
-        direction:rtl;
-        min-width:0;
+        overflow:hidden;
+        padding:20px;
       "
     >
 
       <div
         style="
-          min-width:0;
-          flex:1;
+          display:flex;
+          justify-content:space-between;
+          align-items:flex-start;
+          gap:15px;
+          direction:rtl;
+          margin-bottom:16px;
         "
       >
 
-        <h3
+        <div
           style="
-            margin:0 0 8px;
-            color:var(--color-navy);
-            font-size:15px;
-            overflow-wrap:anywhere;
-            word-break:break-word;
+            min-width:0;
+            flex:1;
           "
         >
-          {{ t.title }}
-        </h3>
 
+          <h3
+            style="
+              margin:0 0 8px;
+              color:var(--color-navy);
+              font-size:20px;
+              line-height:1.6;
+            "
+          >
+            {{ t.title }}
+          </h3>
 
-        <p
+          <p
+            style="
+              font-size:14px;
+              line-height:1.8;
+              margin:0;
+              color:var(--color-text-secondary);
+            "
+          >
+            {{ t.description }}
+          </p>
+
+        </div>
+
+        <span
+          class="nfd-badge"
           style="
-            font-size:13px;
-            margin:0 0 14px;
-            color:var(--color-text-secondary);
-            overflow-wrap:anywhere;
-            word-break:break-word;
+            font-size:12px;
+            padding:6px 10px;
+          "
+          [style.background]="
+            statusBackground(
+              taskStatus === 'مكتمل'
+                ? 'completed'
+                : taskStatus === 'قيد المراجعة'
+                  ? 'submitted'
+                  : taskStatus === 'متأخر'
+                    ? 'overdue'
+                    : 'new'
+            )
+          "
+          [style.color]="
+            statusForeground(
+              taskStatus === 'مكتمل'
+                ? 'completed'
+                : taskStatus === 'قيد المراجعة'
+                  ? 'submitted'
+                  : taskStatus === 'متأخر'
+                    ? 'overdue'
+                    : 'new'
+            )
           "
         >
-          {{ t.description }}
-        </p>
+          {{ taskStatus }}
+        </span>
 
       </div>
 
 
-      @if (submissionFor(t.taskId); as s) {
-
-        <span
-          class="nfd-badge"
-          style="
-            flex-shrink:0;
-            white-space:nowrap;
-          "
-          [style.background]="statusBackground(s.status)"
-          [style.color]="statusForeground(s.status)"
-        >
-          {{ displayStatus(s.status) }}
-        </span>
-
-      } @else {
-
-        <span
-          class="nfd-badge"
-          style="
-            background:var(--status-new-bg);
-            color:var(--status-new-fg);
-            flex-shrink:0;
-            white-space:nowrap;
-          "
-        >
-          جديد
-        </span>
-
-      }
-
-    </div>
-
-
-    <!-- معلومات المهمة -->
-
-    <div
-      style="
-        display:grid;
-        grid-template-columns:repeat(2,minmax(0,1fr));
-        gap:12px;
-        margin-top:12px;
-      "
-    >
-
       <div
         style="
           background:var(--color-tint-indigo);
-          border-radius:10px;
-          padding:12px;
-          min-width:0;
+          border-radius:11px;
+          padding:13px;
+          margin-bottom:14px;
         "
       >
 
         <span
           style="
             display:block;
-            font-size:10px;
+            font-size:12px;
             color:var(--color-text-secondary);
-            margin-bottom:4px;
+            margin-bottom:5px;
           "
         >
           الموعد النهائي
         </span>
 
-
         <strong
           style="
-            font-size:12px;
+            font-size:14px;
             color:var(--color-navy);
-            overflow-wrap:anywhere;
           "
         >
           {{ t.dueDate | date:'yyyy-MM-dd' }}
@@ -411,195 +613,160 @@
       </div>
 
 
-      <div
-        style="
-          background:var(--color-tint-indigo);
-          border-radius:10px;
-          padding:12px;
-          min-width:0;
-        "
-      >
+      @if (submission) {
 
-        <span
-          style="
-            display:block;
-            font-size:10px;
-            color:var(--color-text-secondary);
-            margin-bottom:4px;
-          "
-        >
-          الحالة
-        </span>
+        @if (
+          submission.grade !== null &&
+          submission.grade !== undefined
+        ) {
 
-
-        @if (submissionFor(t.taskId); as s) {
-
-          <span
-            class="nfd-badge"
-            style="max-width:100%;"
-            [style.background]="statusBackground(s.status)"
-            [style.color]="statusForeground(s.status)"
-          >
-            {{ displayStatus(s.status) }}
-          </span>
-
-        } @else {
-
-          <span
-            class="nfd-badge"
+          <div
             style="
-              background:var(--status-new-bg);
-              color:var(--status-new-fg);
+              background:var(--status-active-bg);
+              border-radius:11px;
+              padding:14px;
+              margin-bottom:16px;
             "
           >
-            جديد
-          </span>
+
+            <div
+              style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+              "
+            >
+
+              <span
+                style="
+                  font-size:14px;
+                  color:var(--status-active-fg);
+                  font-weight:600;
+                "
+              >
+                تقييم المدرب
+              </span>
+
+              <strong
+                style="
+                  font-size:20px;
+                  color:var(--status-active-fg);
+                "
+              >
+                {{ submission.grade }}/100
+              </strong>
+
+            </div>
+
+            @if (submission.feedback) {
+
+              <p
+                style="
+                  margin:8px 0 0;
+                  font-size:13px;
+                  line-height:1.8;
+                "
+              >
+                {{ submission.feedback }}
+              </p>
+
+            }
+
+          </div>
 
         }
 
-      </div>
-
-    </div>
-
-  </div>
+      }
 
 
-  <!-- ======================================================= -->
-  <!-- تسليم المهمة -->
-  <!-- ======================================================= -->
+      @if (taskStatus !== 'مكتمل') {
 
-  <div
-    class="nfd-card"
-    style="
-      overflow:hidden;
-    "
-  >
+        <div>
 
-    <h3
-      style="
-        margin:0 0 6px;
-        color:var(--color-navy);
-        font-size:15px;
-      "
-    >
-      تسليم المهمة
-    </h3>
-
-
-    <p
-      style="
-        margin:0 0 12px;
-        font-size:11px;
-        color:var(--color-text-secondary);
-        overflow-wrap:anywhere;
-      "
-    >
-      الصق رابط التسليم GitHub أو Google Drive أو أي رابط خارجي
-    </p>
-
-
-    <label
-      style="
-        display:block;
-        font-size:12px;
-        font-weight:600;
-        margin:12px 0 4px;
-      "
-    >
-      رابط تسليم المهمة
-    </label>
-
-
-    <div
-      style="
-        position:relative;
-        width:100%;
-      "
-    >
-
-      <input
-        class="nfd-input"
-        dir="ltr"
-        [(ngModel)]="submissionLink"
-        placeholder="https://github.com/..."
-        style="
-          width:100%;
-          max-width:100%;
-          box-sizing:border-box;
-          padding-right:36px;
-        "
-      />
-
-
-      <svg
-        style="
-          position:absolute;
-          right:12px;
-          top:50%;
-          transform:translateY(-50%);
-          pointer-events:none;
-        "
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="var(--color-text-secondary)"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-
-        <path
-          d="M10 13a5 5 0 0 0 7.07.07l2-2a5 5 0 0 0-7.07-7.07l-1.14 1.14"
-        ></path>
-
-        <path
-          d="M14 11a5 5 0 0 0-7.07-.07l-2 2A5 5 0 0 0 7 20l1.14-1.14"
-        ></path>
-
-      </svg>
-
-    </div>
-
-
-    <!-- الدرجة -->
-
-    @if (submissionFor(t.taskId); as s) {
-
-      @if (s.grade !== null && s.grade !== undefined) {
-
-        <div
-          style="
-            background:var(--status-active-bg);
-            border-radius:10px;
-            padding:12px;
-            margin:12px 0;
-            overflow:hidden;
-          "
-        >
-
-          <strong
+          <h3
             style="
-              color:var(--status-active-fg);
-              font-size:18px;
+              margin:0 0 7px;
+              color:var(--color-navy);
+              font-size:17px;
             "
           >
-            {{ s.grade }}/100
-          </strong>
+            تسليم المهمة
+          </h3>
 
+          <p
+            style="
+              margin:0 0 14px;
+              font-size:13px;
+              line-height:1.7;
+              color:var(--color-text-secondary);
+            "
+          >
+            الصق رابط التسليم GitHub أو Google Drive أو أي رابط خارجي.
+          </p>
 
-          @if (s.feedback) {
+          <input
+            class="nfd-input"
+            dir="ltr"
+            [(ngModel)]="submissionLink"
+            placeholder="https://github.com/..."
+            [disabled]="deadlinePassed"
+            style="
+              width:100%;
+              box-sizing:border-box;
+              font-size:14px;
+              padding:11px;
+            "
+          />
 
-            <p
+          @if (deadlinePassed) {
+
+            <div
               style="
-                margin:4px 0 0;
-                font-size:12px;
-                overflow-wrap:anywhere;
-                word-break:break-word;
+                margin-top:12px;
+                background:var(--status-new-bg);
+                color:var(--status-new-fg);
+                border-radius:10px;
+                padding:11px;
+                font-size:13px;
+                text-align:center;
               "
             >
-              {{ s.feedback }}
-            </p>
+              انتهى موعد التسليم، لا يمكن إعادة تسليم المهمة.
+            </div>
+
+          } @else {
+
+            <div
+              style="
+                display:flex;
+                justify-content:center;
+                margin-top:14px;
+              "
+            >
+
+              <button
+                class="nfd-btn primary"
+                style="
+                  min-width:160px;
+                  font-size:13px;
+                  padding:10px 22px;
+                "
+                (click)="submit()"
+                [disabled]="
+                  !submissionLink.trim() ||
+                  submitting()
+                "
+              >
+
+                @if (submitting()) {
+                  جاري التسليم...
+                } @else {
+                  {{ submission ? 'إعادة التسليم' : 'تسليم المهمة' }}
+                }
+
+              </button>
+
+            </div>
 
           }
 
@@ -607,556 +774,799 @@
 
       }
 
-    }
-
-
-    <!-- زر التسليم -->
-
-    <div
-      style="
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        width:100%;
-        margin-top:12px;
-      "
-    >
-
-      <button
-        class="nfd-btn primary"
-        style="
-          width:auto;
-          min-width:140px;
-          max-width:100%;
-          padding:7px 20px;
-          font-size:12px;
-        "
-        (click)="submit()"
-        [disabled]="!submissionLink.trim() || submitting()"
-      >
-
-        @if (submitting()) {
-
-          جاري التسليم...
-
-        } @else {
-
-          {{ submissionFor(t.taskId) ? 'تم التسليم' : 'تسليم المهمة' }}
-
-        }
-
-      </button>
-
     </div>
 
-  </div>
-
-}
+  }
 
 
-<!-- ========================================================= -->
-<!-- المشاريع -->
-<!-- ========================================================= -->
+  <!-- ========================================================= -->
+  <!-- PROJECTS LIST -->
+  <!-- ========================================================= -->
 
-@if (tab() === 'projects' && !selectedProject()) {
+  @if (tab() === 'projects' && !selectedProject()) {
 
-  @if (loadingProjects()) {
-
-    <p class="nfd-muted">
-      جاري تحميل المشاريع...
-    </p>
-
-  } @else {
-
-    @for (p of projects(); track p.projectId) {
+    @if (loadingProfile() || loadingProjects()) {
 
       <div
-        class="nfd-card"
         style="
-          margin-bottom:12px;
-          position:relative;
-          cursor:pointer;
-          min-width:0;
-          overflow:hidden;
-          box-sizing:border-box;
+          width:100%;
+          padding:30px 0;
+          text-align:center;
         "
-        (click)="selectProject(p)"
       >
 
-        <!-- محتوى المشروع -->
+        <p
+          class="nfd-muted"
+          style="
+            margin:0;
+            font-size:14px;
+          "
+        >
+          جاري تحميل المشاريع...
+        </p>
+
+      </div>
+
+    } @else {
+
+      @if (projects().length > 0) {
 
         <div
           style="
             display:flex;
-            align-items:flex-start;
+            flex-direction:column;
             gap:16px;
-            direction:ltr;
-            min-width:0;
             width:100%;
           "
         >
 
-          <!-- نسبة الإنجاز -->
+          @for (
+            project of projects();
+            track project.projectId
+          ) {
 
-          <div
-            style="
-              width:64px;
-              height:64px;
-              min-width:64px;
-              border-radius:50%;
-              position:relative;
-              display:flex;
-              align-items:center;
-              justify-content:center;
-              flex-shrink:0;
-            "
-            [style.background]="projectProgressBackground(projectProgress(p))"
-          >
+            @let progress = projectProgress(project);
+            @let projectStatus = displayProjectStatus(project);
+
+            <!-- ================================================= -->
+            <!-- PROJECT CARD -->
+            <!-- ================================================= -->
 
             <div
+              class="nfd-card"
               style="
-                width:52px;
-                height:52px;
-                background:#fff;
-                border-radius:50%;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-              "
-            >
-
-              <strong
-                style="
-                  font-size:11px;
-                  color:var(--color-navy);
-                "
-              >
-                {{ projectProgress(p) }}%
-              </strong>
-
-            </div>
-
-          </div>
-
-
-          <!-- بيانات المشروع -->
-
-          <div
-            style="
-              flex:1;
-              min-width:0;
-              direction:rtl;
-              overflow:hidden;
-            "
-          >
-
-            <!-- العنوان والحالة -->
-
-            <div
-              style="
-                display:flex;
-                justify-content:space-between;
-                align-items:flex-start;
-                gap:10px;
-                min-width:0;
-                flex-wrap:wrap;
-              "
-            >
-
-              <strong
-                style="
-                  font-size:14px;
-                  flex:1 1 150px;
-                  min-width:0;
-                  overflow-wrap:anywhere;
-                  word-break:break-word;
-                  line-height:1.5;
-                "
-              >
-                {{ p.title }}
-              </strong>
-
-
-              <span
-                class="nfd-badge"
-                style="
-                  flex-shrink:0;
-                  max-width:100%;
-                  white-space:normal;
-                  text-align:center;
-                "
-                [style.background]="projectStatusBackground(p)"
-                [style.color]="projectStatusForeground(p)"
-              >
-                {{ displayProjectStatus(p) }}
-              </span>
-
-            </div>
-
-
-            <!-- الوصف -->
-
-            <p
-              style="
-                font-size:12px;
-                color:var(--color-text-secondary);
-                margin:5px 0;
-                overflow-wrap:anywhere;
-                word-break:break-word;
-                line-height:1.6;
-              "
-            >
-              {{ p.description }}
-            </p>
-
-
-            <!-- التواريخ -->
-
-            <div
-              style="
-                display:flex;
-                gap:12px;
-                flex-wrap:wrap;
-                font-size:10px;
-                color:var(--color-text-secondary);
-                margin-top:6px;
-                min-width:0;
-              "
-            >
-
-              <span
-                style="
-                  overflow-wrap:anywhere;
-                  white-space:normal;
-                "
-              >
-                البداية:
-                {{ projectStartDate(p) | date:'dd-MM-yyyy' }}
-              </span>
-
-
-              <span
-                style="
-                  overflow-wrap:anywhere;
-                  white-space:normal;
-                "
-              >
-                النهاية:
-                {{ projectEndDate(p) | date:'dd-MM-yyyy' }}
-              </span>
-
-            </div>
-
-
-            <!-- المراحل -->
-
-            <div
-              style="
-                display:flex;
-                align-items:center;
-                direction:rtl;
-                margin-top:16px;
                 width:100%;
-                min-width:0;
+                box-sizing:border-box;
+                padding:20px 22px;
+                border-radius:14px;
+                cursor:pointer;
                 overflow:hidden;
+                transition:
+                  transform .2s ease,
+                  box-shadow .2s ease;
               "
+              (click)="selectProject(project)"
             >
 
-              @for (
-                step of projectSteps(p);
-                track step.number;
-                let last = $last
-              ) {
+              <!-- ================================================= -->
+              <!-- PROJECT HEADER -->
+              <!-- ================================================= -->
+
+              <div
+                style="
+                  display:flex;
+                  align-items:flex-start;
+                  gap:22px;
+                  width:100%;
+                  direction:ltr;
+                "
+              >
+
+                <!-- Progress Ring -->
 
                 <div
                   style="
+                    width:64px;
+                    height:64px;
+                    min-width:64px;
+                    border-radius:50%;
                     display:flex;
                     align-items:center;
-                    flex:1;
-                    min-width:0;
+                    justify-content:center;
+                    position:relative;
+                  "
+                  [style.background]="
+                    projectProgressBackground(progress)
                   "
                 >
 
                   <div
                     style="
+                      width:50px;
+                      height:50px;
+                      border-radius:50%;
+                      background:#fff;
                       display:flex;
-                      flex-direction:column;
                       align-items:center;
-                      min-width:40px;
-                      max-width:100%;
+                      justify-content:center;
                     "
                   >
 
-                    @if (step.completed) {
+                    <strong
+                      style="
+                        font-size:13px;
+                        color:var(--color-navy);
+                        direction:ltr;
+                      "
+                    >
+                      {{ progress }}%
+                    </strong>
 
-                      <div
+                  </div>
+
+                </div>
+
+
+                <!-- Project Content -->
+
+                <div
+                  style="
+                    flex:1;
+                    min-width:0;
+                    direction:rtl;
+                  "
+                >
+
+                  <!-- Title + Status -->
+
+                  <div
+                    style="
+                      display:flex;
+                      align-items:center;
+                      justify-content:flex-start;
+                      gap:9px;
+                      flex-wrap:wrap;
+                      margin-bottom:4px;
+                    "
+                  >
+
+                    <h3
+                      style="
+                        margin:0;
+                        color:var(--color-navy);
+                        font-size:16px;
+                        line-height:1.6;
+                        font-weight:700;
+                        overflow-wrap:anywhere;
+                      "
+                    >
+                      {{ project.title }}
+                    </h3>
+
+                    <span
+                      class="nfd-badge"
+                      style="
+                        font-size:11px;
+                        padding:4px 9px;
+                        white-space:nowrap;
+                      "
+                      [style.background]="
+                        projectStatusBackground(project)
+                      "
+                      [style.color]="
+                        projectStatusForeground(project)
+                      "
+                    >
+                      {{ projectStatus }}
+                    </span>
+
+                  </div>
+
+
+                  <!-- Description -->
+
+                  <p
+                    style="
+                      margin:0;
+                      color:var(--color-text-secondary);
+                      font-size:13px;
+                      line-height:1.7;
+                      overflow-wrap:anywhere;
+                    "
+                  >
+                    {{ project.description }}
+                  </p>
+
+
+                  <!-- Dates -->
+
+                  <div
+                    style="
+                      display:flex;
+                      align-items:center;
+                      gap:14px;
+                      flex-wrap:wrap;
+                      margin-top:7px;
+                      color:var(--color-text-secondary);
+                      font-size:11px;
+                    "
+                  >
+
+                    <span>
+                      البداية:
+                      <strong
                         style="
-                          width:24px;
-                          height:24px;
-                          min-width:24px;
-                          border-radius:50%;
-                          background:#06b6d4;
-                          color:#fff;
-                          display:flex;
-                          align-items:center;
-                          justify-content:center;
-                          font-size:12px;
-                          font-weight:700;
+                          color:var(--color-text-secondary);
+                          font-weight:500;
                         "
                       >
-                        ✓
-                      </div>
+                        {{
+                          projectStartDate(project)
+                            | date:'dd-MM-yyyy'
+                        }}
+                      </strong>
+                    </span>
 
-                    } @else {
+                    <span
+                      style="
+                        width:4px;
+                        height:4px;
+                        border-radius:50%;
+                        background:var(--color-text-secondary);
+                        opacity:.45;
+                      "
+                    ></span>
+
+                    <span>
+                      النهاية:
+                      <strong
+                        style="
+                          color:var(--color-text-secondary);
+                          font-weight:500;
+                        "
+                      >
+                        {{
+                          projectEndDate(project)
+                            | date:'dd-MM-yyyy'
+                        }}
+                      </strong>
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              <!-- ================================================= -->
+              <!-- PROJECT STAGES - STATIC -->
+              <!-- ================================================= -->
+
+              <div
+                style="
+                  width:100%;
+                  margin-top:18px;
+                  direction:rtl;
+                "
+              >
+
+                <div
+                  style="
+                    display:flex;
+                    align-items:flex-start;
+                    width:100%;
+                  "
+                >
+
+                  <!-- التخطيط -->
+
+                  <div
+                    style="
+                      flex:1;
+                      min-width:0;
+                      display:flex;
+                      align-items:flex-start;
+                    "
+                  >
+
+                    <div
+                      style="
+                        display:flex;
+                        flex-direction:column;
+                        align-items:center;
+                        min-width:48px;
+                      "
+                    >
 
                       <div
                         style="
-                          width:24px;
-                          height:24px;
-                          min-width:24px;
+                          width:22px;
+                          height:22px;
                           border-radius:50%;
                           background:#e2e8f0;
                           color:#64748b;
                           display:flex;
                           align-items:center;
                           justify-content:center;
-                          font-size:10px;
-                          font-weight:600;
+                          font-size:9px;
+                          box-sizing:border-box;
                         "
                       >
-                        {{ step.number }}
+                        1
                       </div>
 
-                    }
+                      <span
+                        style="
+                          margin-top:5px;
+                          font-size:10px;
+                          color:var(--color-text-secondary);
+                          white-space:nowrap;
+                          text-align:center;
+                        "
+                      >
+                        التخطيط
+                      </span>
 
+                    </div>
 
-                    <span
+                    <div
                       style="
-                        font-size:10px;
-                        color:var(--color-text-secondary);
-                        margin-top:4px;
-                        white-space:normal;
-                        text-align:center;
-                        line-height:1.3;
-                        overflow-wrap:anywhere;
+                        flex:1;
+                        height:2px;
+                        margin-top:10px;
+                        min-width:10px;
+                        background:#dfe4ec;
                       "
-                    >
-                      {{ step.name }}
-                    </span>
+                    ></div>
 
                   </div>
 
 
-                  @if (!last) {
+                  <!-- التطوير -->
+
+                  <div
+                    style="
+                      flex:1;
+                      min-width:0;
+                      display:flex;
+                      align-items:flex-start;
+                    "
+                  >
 
                     <div
                       style="
-                        height:1px;
-                        flex:1;
-                        min-width:8px;
-                        margin:0 6px;
+                        display:flex;
+                        flex-direction:column;
+                        align-items:center;
+                        min-width:48px;
                       "
-                      [style.background]="step.completed ? '#06b6d4' : '#e2e8f0'"
+                    >
+
+                      <div
+                        style="
+                          width:22px;
+                          height:22px;
+                          border-radius:50%;
+                          background:#e2e8f0;
+                          color:#64748b;
+                          display:flex;
+                          align-items:center;
+                          justify-content:center;
+                          font-size:9px;
+                          box-sizing:border-box;
+                        "
+                      >
+                        2
+                      </div>
+
+                      <span
+                        style="
+                          margin-top:5px;
+                          font-size:10px;
+                          color:var(--color-text-secondary);
+                          white-space:nowrap;
+                          text-align:center;
+                        "
+                      >
+                        التطوير
+                      </span>
+
+                    </div>
+
+                    <div
+                      style="
+                        flex:1;
+                        height:2px;
+                        margin-top:10px;
+                        min-width:10px;
+                        background:#dfe4ec;
+                      "
                     ></div>
 
-                  }
+                  </div>
+
+
+                  <!-- الاختبار -->
+
+                  <div
+                    style="
+                      flex:1;
+                      min-width:0;
+                      display:flex;
+                      align-items:flex-start;
+                    "
+                  >
+
+                    <div
+                      style="
+                        display:flex;
+                        flex-direction:column;
+                        align-items:center;
+                        min-width:48px;
+                      "
+                    >
+
+                      <div
+                        style="
+                          width:22px;
+                          height:22px;
+                          border-radius:50%;
+                          background:#e2e8f0;
+                          color:#64748b;
+                          display:flex;
+                          align-items:center;
+                          justify-content:center;
+                          font-size:9px;
+                          box-sizing:border-box;
+                        "
+                      >
+                        3
+                      </div>
+
+                      <span
+                        style="
+                          margin-top:5px;
+                          font-size:10px;
+                          color:var(--color-text-secondary);
+                          white-space:nowrap;
+                          text-align:center;
+                        "
+                      >
+                        الاختبار
+                      </span>
+
+                    </div>
+
+                    <div
+                      style="
+                        flex:1;
+                        height:2px;
+                        margin-top:10px;
+                        min-width:10px;
+                        background:#dfe4ec;
+                      "
+                    ></div>
+
+                  </div>
+
+
+                  <!-- التسليم -->
+
+                  <div
+                    style="
+                      flex:1;
+                      min-width:0;
+                      display:flex;
+                      align-items:flex-start;
+                    "
+                  >
+
+                    <div
+                      style="
+                        display:flex;
+                        flex-direction:column;
+                        align-items:center;
+                        min-width:48px;
+                      "
+                    >
+
+                      <div
+                        style="
+                          width:22px;
+                          height:22px;
+                          border-radius:50%;
+                          background:#e2e8f0;
+                          color:#64748b;
+                          display:flex;
+                          align-items:center;
+                          justify-content:center;
+                          font-size:9px;
+                          box-sizing:border-box;
+                        "
+                      >
+                        4
+                      </div>
+
+                      <span
+                        style="
+                          margin-top:5px;
+                          font-size:10px;
+                          color:var(--color-text-secondary);
+                          white-space:nowrap;
+                          text-align:center;
+                        "
+                      >
+                        التسليم
+                      </span>
+
+                    </div>
+
+                  </div>
 
                 </div>
 
-              }
+              </div>
 
             </div>
+
+          }
+
+        </div>
+
+      } @else {
+
+        <div
+          class="nfd-card"
+          style="
+            width:100%;
+            box-sizing:border-box;
+            text-align:center;
+            padding:35px 20px;
+            font-size:14px;
+          "
+        >
+
+          <p
+            class="nfd-muted"
+            style="margin:0;"
+          >
+            لا توجد مشاريع لهذا البرنامج حاليًا.
+          </p>
+
+        </div>
+
+      }
+
+    }
+
+  }
+
+
+  <!-- ========================================================= -->
+  <!-- PROJECT DETAILS -->
+  <!-- ========================================================= -->
+
+  @if (tab() === 'projects' && selectedProject(); as project) {
+
+    <button
+      class="nfd-muted"
+      style="
+        display:inline-block;
+        margin-bottom:14px;
+        border:0;
+        background:none;
+        cursor:pointer;
+        font-size:14px;
+      "
+      (click)="backToProjects()"
+    >
+      ← العودة إلى المشاريع
+    </button>
+
+
+    @let progress = projectProgress(project);
+
+
+    <div
+      class="nfd-card"
+      style="
+        width:100%;
+        box-sizing:border-box;
+        overflow:hidden;
+        padding:22px;
+      "
+    >
+
+      <!-- Header -->
+
+      <div
+        style="
+          display:flex;
+          align-items:flex-start;
+          gap:20px;
+          direction:rtl;
+        "
+      >
+
+        <div
+          style="
+            width:80px;
+            height:80px;
+            min-width:80px;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+          "
+          [style.background]="
+            projectProgressBackground(progress)
+          "
+        >
+
+          <div
+            style="
+              width:64px;
+              height:64px;
+              background:#fff;
+              border-radius:50%;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+            "
+          >
+
+            <strong
+              style="
+                font-size:17px;
+                color:var(--color-navy);
+              "
+            >
+              {{ progress }}%
+            </strong>
 
           </div>
 
         </div>
 
 
-        <!-- زر التفاصيل -->
-
         <div
           style="
-            display:flex;
-            justify-content:flex-start;
-            margin-top:12px;
-            width:100%;
+            flex:1;
+            min-width:0;
           "
         >
 
-          <button
-            class="nfd-btn ghost"
+          <div
             style="
-              max-width:100%;
-              white-space:normal;
+              display:flex;
+              align-items:center;
+              gap:9px;
+              flex-wrap:wrap;
+              margin-bottom:6px;
             "
-            (click)="$event.stopPropagation();selectProject(p)"
           >
-            عرض تفاصيل المشروع
-          </button>
+
+            <h3
+              style="
+                margin:0;
+                color:var(--color-navy);
+                font-size:21px;
+                line-height:1.6;
+              "
+            >
+              {{ project.title }}
+            </h3>
+
+            <span
+              class="nfd-badge"
+              style="
+                font-size:11px;
+                padding:4px 9px;
+              "
+              [style.background]="
+                projectStatusBackground(project)
+              "
+              [style.color]="
+                projectStatusForeground(project)
+              "
+            >
+              {{ displayProjectStatus(project) }}
+            </span>
+
+          </div>
+
+
+          <p
+            style="
+              margin:0;
+              font-size:14px;
+              line-height:1.8;
+              color:var(--color-text-secondary);
+            "
+          >
+            {{ project.description }}
+          </p>
 
         </div>
 
       </div>
 
-    }
 
-
-    @empty {
-
-      <p class="nfd-muted">
-        لا توجد مشاريع بعد
-      </p>
-
-    }
-
-  }
-
-}
-
-
-<!-- ========================================================= -->
-<!-- تفاصيل المشروع -->
-<!-- ========================================================= -->
-
-@if (tab() === 'projects' && selectedProject(); as p) {
-
-  <button
-    class="nfd-muted"
-    style="
-      display:inline-block;
-      margin-bottom:12px;
-    "
-    (click)="backToProjects()"
-  >
-    ← العودة إلى المشاريع
-  </button>
-
-
-  <div
-    class="nfd-card"
-    style="
-      overflow:hidden;
-      min-width:0;
-      box-sizing:border-box;
-    "
-  >
-
-    <!-- عنوان المشروع -->
-
-    <div
-      style="
-        display:flex;
-        justify-content:space-between;
-        align-items:flex-start;
-        gap:15px;
-        direction:rtl;
-        min-width:0;
-        flex-wrap:wrap;
-      "
-    >
+      <!-- Dates -->
 
       <div
         style="
-          min-width:0;
-          flex:1 1 200px;
+          display:grid;
+          grid-template-columns:repeat(2,minmax(0,1fr));
+          gap:12px;
+          margin-top:20px;
         "
-      >
-
-        <h3
-          style="
-            margin:0 0 8px;
-            color:var(--color-navy);
-            font-size:17px;
-            overflow-wrap:anywhere;
-            word-break:break-word;
-            line-height:1.5;
-          "
-        >
-          {{ p.title }}
-        </h3>
-
-
-        <p
-          style="
-            font-size:13px;
-            color:var(--color-text-secondary);
-            margin:0;
-            overflow-wrap:anywhere;
-            word-break:break-word;
-            line-height:1.6;
-          "
-        >
-          {{ p.description }}
-        </p>
-
-      </div>
-
-
-      <span
-        class="nfd-badge"
-        style="
-          flex-shrink:0;
-          max-width:100%;
-          white-space:normal;
-          text-align:center;
-        "
-        [style.background]="projectStatusBackground(p)"
-        [style.color]="projectStatusForeground(p)"
-      >
-        {{ displayProjectStatus(p) }}
-      </span>
-
-    </div>
-
-
-    <!-- نسبة الإنجاز -->
-
-    <div
-      style="
-        display:flex;
-        align-items:center;
-        gap:18px;
-        margin-top:20px;
-        direction:rtl;
-        min-width:0;
-        flex-wrap:wrap;
-      "
-    >
-
-      <div
-        style="
-          width:80px;
-          height:80px;
-          min-width:80px;
-          border-radius:50%;
-          position:relative;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          flex-shrink:0;
-        "
-        [style.background]="projectProgressBackground(projectProgress(p))"
       >
 
         <div
           style="
-            width:66px;
-            height:66px;
-            background:#fff;
-            border-radius:50%;
-            display:flex;
-            align-items:center;
-            justify-content:center;
+            background:var(--color-tint-indigo);
+            border-radius:10px;
+            padding:13px;
           "
         >
 
+          <span
+            style="
+              display:block;
+              font-size:12px;
+              color:var(--color-text-secondary);
+              margin-bottom:5px;
+            "
+          >
+            تاريخ البداية
+          </span>
+
           <strong
             style="
-              font-size:14px;
+              font-size:13px;
               color:var(--color-navy);
             "
           >
-            {{ projectProgress(p) }}%
+            {{
+              projectStartDate(project)
+                | date:'yyyy-MM-dd'
+            }}
+          </strong>
+
+        </div>
+
+
+        <div
+          style="
+            background:var(--color-tint-indigo);
+            border-radius:10px;
+            padding:13px;
+          "
+        >
+
+          <span
+            style="
+              display:block;
+              font-size:12px;
+              color:var(--color-text-secondary);
+              margin-bottom:5px;
+            "
+          >
+            تاريخ النهاية
+          </span>
+
+          <strong
+            style="
+              font-size:13px;
+              color:var(--color-navy);
+            "
+          >
+            {{
+              projectEndDate(project)
+                | date:'yyyy-MM-dd'
+            }}
           </strong>
 
         </div>
@@ -1164,166 +1574,114 @@
       </div>
 
 
+      <!-- Progress -->
+
       <div
         style="
-          min-width:0;
-          flex:1;
+          margin-top:24px;
         "
       >
 
         <strong
           style="
             display:block;
+            font-size:15px;
             color:var(--color-navy);
-            font-size:14px;
-            overflow-wrap:anywhere;
+            margin-bottom:14px;
           "
         >
           نسبة إنجاز المشروع
         </strong>
 
 
-        <span
+        <div
           style="
-            font-size:11px;
-            color:var(--color-text-secondary);
-            overflow-wrap:anywhere;
-            line-height:1.5;
+            height:8px;
+            width:100%;
+            background:var(--color-tint-indigo);
+            border-radius:20px;
+            overflow:hidden;
           "
         >
-          يتم تحديث النسبة حسب بيانات المشروع في النظام
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <!-- التواريخ -->
-
-    <div
-      style="
-        display:grid;
-        grid-template-columns:repeat(2,minmax(0,1fr));
-        gap:12px;
-        margin-top:20px;
-      "
-    >
-
-      <div
-        style="
-          background:var(--color-tint-indigo);
-          border-radius:10px;
-          padding:12px;
-          min-width:0;
-        "
-      >
-
-        <span
-          style="
-            display:block;
-            font-size:10px;
-            color:var(--color-text-secondary);
-            margin-bottom:4px;
-          "
-        >
-          تاريخ البداية
-        </span>
-
-
-        <strong
-          style="
-            font-size:12px;
-            color:var(--color-navy);
-            overflow-wrap:anywhere;
-          "
-        >
-          {{ projectStartDate(p) | date:'yyyy-MM-dd' }}
-        </strong>
-
-      </div>
-
-
-      <div
-        style="
-          background:var(--color-tint-indigo);
-          border-radius:10px;
-          padding:12px;
-          min-width:0;
-        "
-      >
-
-        <span
-          style="
-            display:block;
-            font-size:10px;
-            color:var(--color-text-secondary);
-            margin-bottom:4px;
-          "
-        >
-          تاريخ النهاية
-        </span>
-
-
-        <strong
-          style="
-            font-size:12px;
-            color:var(--color-navy);
-            overflow-wrap:anywhere;
-          "
-        >
-          {{ projectEndDate(p) | date:'yyyy-MM-dd' }}
-        </strong>
-
-      </div>
-
-    </div>
-
-
-    <!-- مراحل المشروع -->
-
-    <div
-      style="
-        margin-top:24px;
-        min-width:0;
-        overflow:hidden;
-      "
-    >
-
-      <strong
-        style="
-          display:block;
-          font-size:13px;
-          color:var(--color-navy);
-          margin-bottom:12px;
-        "
-      >
-        مراحل المشروع
-      </strong>
-
-
-      <div
-        style="
-          display:flex;
-          align-items:center;
-          direction:rtl;
-          width:100%;
-          min-width:0;
-        "
-      >
-
-        @for (
-          step of projectSteps(p);
-          track step.number;
-          let last = $last
-        ) {
 
           <div
             style="
-              display:flex;
-              align-items:center;
+              height:100%;
+              border-radius:20px;
+              background:var(--color-navy);
+              transition:width .3s ease;
+            "
+            [style.width.%]="progress"
+          ></div>
+
+        </div>
+
+
+        <div
+          style="
+            display:flex;
+            justify-content:space-between;
+            margin-top:6px;
+            font-size:11px;
+            color:var(--color-text-secondary);
+          "
+        >
+
+          <span>0%</span>
+
+          <strong
+            style="
+              color:var(--color-navy);
+            "
+          >
+            {{ progress }}%
+          </strong>
+
+          <span>100%</span>
+
+        </div>
+
+      </div>
+
+
+      <!-- ===================================================== -->
+      <!-- PROJECT STAGES - STATIC -->
+      <!-- ===================================================== -->
+
+      <div
+        style="
+          margin-top:28px;
+        "
+      >
+
+        <strong
+          style="
+            display:block;
+            font-size:15px;
+            color:var(--color-navy);
+            margin-bottom:16px;
+          "
+        >
+          مراحل المشروع
+        </strong>
+
+
+        <div
+          style="
+            display:flex;
+            align-items:flex-start;
+            width:100%;
+            direction:rtl;
+          "
+        >
+
+          <!-- التخطيط -->
+
+          <div
+            style="
               flex:1;
-              min-width:0;
+              display:flex;
+              align-items:flex-start;
             "
           >
 
@@ -1332,93 +1690,234 @@
                 display:flex;
                 flex-direction:column;
                 align-items:center;
-                min-width:40px;
-                max-width:100%;
+                min-width:55px;
               "
             >
 
-              @if (step.completed) {
-
-                <div
-                  style="
-                    width:26px;
-                    height:26px;
-                    min-width:26px;
-                    border-radius:50%;
-                    background:#06b6d4;
-                    color:#fff;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    font-size:13px;
-                    font-weight:700;
-                  "
-                >
-                  ✓
-                </div>
-
-              } @else {
-
-                <div
-                  style="
-                    width:26px;
-                    height:26px;
-                    min-width:26px;
-                    border-radius:50%;
-                    background:#e2e8f0;
-                    color:#64748b;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    font-size:10px;
-                    font-weight:600;
-                  "
-                >
-                  {{ step.number }}
-                </div>
-
-              }
-
+              <div
+                style="
+                  width:30px;
+                  height:30px;
+                  border-radius:50%;
+                  background:#e2e8f0;
+                  color:#64748b;
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                  font-size:11px;
+                "
+              >
+                1
+              </div>
 
               <span
                 style="
-                  font-size:10px;
+                  font-size:11px;
                   color:var(--color-text-secondary);
-                  margin-top:4px;
-                  white-space:normal;
+                  margin-top:6px;
                   text-align:center;
-                  line-height:1.3;
-                  overflow-wrap:anywhere;
+                  white-space:nowrap;
                 "
               >
-                {{ step.name }}
+                التخطيط
               </span>
 
             </div>
 
-
-            @if (!last) {
-
-              <div
-                style="
-                  height:1px;
-                  flex:1;
-                  min-width:8px;
-                  margin:0 6px;
-                "
-                [style.background]="step.completed ? '#06b6d4' : '#e2e8f0'"
-              ></div>
-
-            }
+            <div
+              style="
+                flex:1;
+                height:2px;
+                margin-top:14px;
+                min-width:10px;
+                background:#e2e8f0;
+              "
+            ></div>
 
           </div>
 
-        }
+
+          <!-- التطوير -->
+
+          <div
+            style="
+              flex:1;
+              display:flex;
+              align-items:flex-start;
+            "
+          >
+
+            <div
+              style="
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                min-width:55px;
+              "
+            >
+
+              <div
+                style="
+                  width:30px;
+                  height:30px;
+                  border-radius:50%;
+                  background:#e2e8f0;
+                  color:#64748b;
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                  font-size:11px;
+                "
+              >
+                2
+              </div>
+
+              <span
+                style="
+                  font-size:11px;
+                  color:var(--color-text-secondary);
+                  margin-top:6px;
+                  text-align:center;
+                  white-space:nowrap;
+                "
+              >
+                التطوير
+              </span>
+
+            </div>
+
+            <div
+              style="
+                flex:1;
+                height:2px;
+                margin-top:14px;
+                min-width:10px;
+                background:#e2e8f0;
+              "
+            ></div>
+
+          </div>
+
+
+          <!-- الاختبار -->
+
+          <div
+            style="
+              flex:1;
+              display:flex;
+              align-items:flex-start;
+            "
+          >
+
+            <div
+              style="
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                min-width:55px;
+              "
+            >
+
+              <div
+                style="
+                  width:30px;
+                  height:30px;
+                  border-radius:50%;
+                  background:#e2e8f0;
+                  color:#64748b;
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                  font-size:11px;
+                "
+              >
+                3
+              </div>
+
+              <span
+                style="
+                  font-size:11px;
+                  color:var(--color-text-secondary);
+                  margin-top:6px;
+                  text-align:center;
+                  white-space:nowrap;
+                "
+              >
+                الاختبار
+              </span>
+
+            </div>
+
+            <div
+              style="
+                flex:1;
+                height:2px;
+                margin-top:14px;
+                min-width:10px;
+                background:#e2e8f0;
+              "
+            ></div>
+
+          </div>
+
+
+          <!-- التسليم -->
+
+          <div
+            style="
+              flex:1;
+              display:flex;
+              align-items:flex-start;
+            "
+          >
+
+            <div
+              style="
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                min-width:55px;
+              "
+            >
+
+              <div
+                style="
+                  width:30px;
+                  height:30px;
+                  border-radius:50%;
+                  background:#e2e8f0;
+                  color:#64748b;
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                  font-size:11px;
+                "
+              >
+                4
+              </div>
+
+              <span
+                style="
+                  font-size:11px;
+                  color:var(--color-text-secondary);
+                  margin-top:6px;
+                  text-align:center;
+                  white-space:nowrap;
+                "
+              >
+                التسليم
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
 
       </div>
 
     </div>
 
-  </div>
+  }
 
-}
+</div>
