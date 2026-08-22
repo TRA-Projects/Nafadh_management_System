@@ -18,60 +18,82 @@ namespace Nafadh_Backend.Controllers
     {
         private readonly ICompanySupervisorRepository _supervisorRepo;
 
-        public CompanySupervisorController(ICompanySupervisorRepository supervisorRepo)
+        public CompanySupervisorController(
+            ICompanySupervisorRepository supervisorRepo)
         {
             _supervisorRepo = supervisorRepo;
         }
 
-
-        //get Supervisors at a company
+        // ============================================================
+        // Get Supervisors at a company
+        // ============================================================
         [HttpGet("company/{companyId}")]
         public async Task<IActionResult> GetSupervisorsByCompany(int companyId)
         {
-            var supervisors = await _supervisorRepo.GetByCompanyIdAsync(companyId);
+            var supervisors =
+                await _supervisorRepo.GetByCompanyIdAsync(companyId);
+
             var dtos = supervisors.Select(s => new CompanySupervisorDto
             {
                 SupervisorId = s.SupervisorId,
+
                 Department = s.Department,
                 Position = s.Position,
+
                 UserId = s.UserId,
                 CompanyId = s.CompanyId,
-                // prefer real user info when available
-                FullName = s.User?.FullName ?? s.Department,
-                Phone = s.User?.Phone ?? s.UserId.ToString(),
-                Email = s.User?.Email ?? string.Empty,
+
+                // Real information from NFD_Users
+                FullName = s.User?.FullName,
+                Phone = s.User?.Phone,
+                Email = s.User?.Email,
+
                 Status = s.Status.ToString()
             });
+
             return Ok(dtos);
         }
 
-
-        //get Supervisor profile
+        // ============================================================
+        // Get Supervisor Profile
+        // Used by My Account page
+        // ============================================================
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSupervisorProfile(int id)
         {
-            var supervisor = await _supervisorRepo.GetByIdAsync(id);
-            if (supervisor == null) return NotFound();
+            var supervisor =
+                await _supervisorRepo.GetByIdAsync(id);
+
+            if (supervisor == null)
+                return NotFound();
 
             var dto = new CompanySupervisorDto
             {
                 SupervisorId = supervisor.SupervisorId,
+
+                // Real information from NFD_Users
+                FullName = supervisor.User?.FullName,
+                Phone = supervisor.User?.Phone,
+                Email = supervisor.User?.Email,
+
+                // Information from CompanySupervisor
+                Status = supervisor.Status.ToString(),
                 Department = supervisor.Department,
                 Position = supervisor.Position,
+
                 UserId = supervisor.UserId,
-                CompanyId = supervisor.CompanyId,
-                FullName = supervisor.User?.FullName ?? supervisor.Department,
-                Phone = supervisor.User?.Phone ?? supervisor.UserId.ToString(),
-                Email = supervisor.User?.Email ?? string.Empty,
-                Status = supervisor.Status.ToString()
+                CompanyId = supervisor.CompanyId
             };
+
             return Ok(dto);
         }
 
-
-        //post _ Add a supervisor
+        // ============================================================
+        // Add a supervisor
+        // ============================================================
         [HttpPost]
-        public async Task<IActionResult> AddSupervisor([FromBody] CreateCompanySupervisorDto createDto)
+        public async Task<IActionResult> AddSupervisor(
+            [FromBody] CreateCompanySupervisorDto createDto)
         {
             var supervisor = new NFD_CompanySupervisor
             {
@@ -82,45 +104,63 @@ namespace Nafadh_Backend.Controllers
             };
 
             await _supervisorRepo.AddAsync(supervisor);
-            return CreatedAtAction(nameof(GetSupervisorProfile), new { id = supervisor.SupervisorId }, supervisor);
+
+            return CreatedAtAction(
+                nameof(GetSupervisorProfile),
+                new { id = supervisor.SupervisorId },
+                supervisor
+            );
         }
 
-
-        //put _ Update department/position
+        // ============================================================
+        // Update department / position
+        // ============================================================
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateSupervisor(int id, [FromBody] UpdateCompanySupervisorDto updateDto)
+        public async Task<IActionResult> UpdateSupervisor(
+            int id,
+            [FromBody] UpdateCompanySupervisorDto updateDto)
         {
-            var supervisor = await _supervisorRepo.GetByIdAsync(id);
-            if (supervisor == null) return NotFound();
+            var supervisor =
+                await _supervisorRepo.GetByIdAsync(id);
+
+            if (supervisor == null)
+                return NotFound();
 
             supervisor.Department = updateDto.Department;
             supervisor.Position = updateDto.Position;
 
             await _supervisorRepo.UpdateAsync(supervisor);
+
             return NoContent();
         }
 
-
-        //delete _ Remove/offboard a supervisor
+        // ============================================================
+        // Delete / Remove supervisor
+        // ============================================================
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveSupervisor(int id)
         {
-            var supervisor = await _supervisorRepo.GetByIdAsync(id);
-            if (supervisor == null) return NotFound();
+            var supervisor =
+                await _supervisorRepo.GetByIdAsync(id);
+
+            if (supervisor == null)
+                return NotFound();
 
             await _supervisorRepo.DeleteAsync(supervisor);
+
             return NoContent();
         }
 
-
-        //get _Trainees currently assigned to this supervisor
-
+        // ============================================================
+        // Get trainees assigned to this supervisor
+        // ============================================================
         [HttpGet("{id}/trainees")]
         public async Task<IActionResult> GetAssignedTrainees(int id)
         {
-            var trainees = await _supervisorRepo.GetAssignedTraineesAsync(id);
+            var trainees =
+                await _supervisorRepo.GetAssignedTraineesAsync(id);
+
             return Ok(trainees);
         }
-        //
     }
 }

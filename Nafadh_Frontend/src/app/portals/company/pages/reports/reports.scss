@@ -50,8 +50,8 @@
 }
 
 .title-icon {
-  width: 46px;
-  height: 46px;
+  width: 50px;
+  height: 50px;
 
   display: flex;
   align-items: center;
@@ -68,7 +68,7 @@
 
   color: white;
 
-  font-size: 22px;
+  font-size: 24px;
 
   box-shadow:
     0 8px 20px rgba(23, 105, 224, .20);
@@ -77,7 +77,7 @@
 .header-title-wrap h1 {
   margin: 0;
 
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 800;
 
   color: #172033;
@@ -86,33 +86,33 @@
 .header-title-wrap p {
   margin: 5px 0 0;
 
-  color: #7b879a;
+  color: #65748b;
 
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .btn {
-  min-height: 38px;
+  min-height: 42px;
 
-  padding: 0 15px;
+  padding: 0 18px;
 
-  border-radius: 9px;
+  border-radius: 10px;
 
   border: 1px solid transparent;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
 
   font-family: inherit;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
 
   cursor: pointer;
@@ -154,7 +154,7 @@
 }
 
 .refresh-icon {
-  font-size: 17px;
+  font-size: 19px;
 
   &.spinning {
     animation: spin .8s linear infinite;
@@ -176,17 +176,17 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
 
-  gap: 8px;
+  gap: 10px;
 
-  padding: 5px;
+  padding: 6px;
 
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 
   background: rgba(255,255,255,.8);
 
   border: 1px solid #dfe7f2;
 
-  border-radius: 12px;
+  border-radius: 14px;
 
   box-shadow:
     0 4px 15px rgba(28, 52, 84, .04);
@@ -195,22 +195,24 @@
 .tab-btn {
   position: relative;
 
-  min-height: 58px;
+  min-height: 64px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  gap: 10px;
+  gap: 12px;
 
   border: 0;
-  border-radius: 9px;
+  border-radius: 10px;
 
   background: transparent;
 
-  color: #65748b;
+  color: #4a5970;
 
   font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
 
   cursor: pointer;
 
@@ -219,12 +221,12 @@
   small {
     display: block;
 
-    margin-top: 3px;
+    margin-top: 4px;
 
-    color: #9aa6b7;
+    color: #7b889d;
 
-    font-size: 10px;
-    font-weight: 500;
+    font-size: 12px;
+    font-weight: 600;
   }
 
   &:hover {
@@ -240,13 +242,13 @@
       0 3px 12px rgba(34, 65, 105, .08);
 
     small {
-      color: #8a96a8;
+      color: #5a6b82;
     }
   }
 }
 
 .tab-icon {
-  font-size: 17px;
+  font-size: 20px;
 }
 
 
@@ -258,17 +260,17 @@
   display: flex;
   align-items: center;
 
-  gap: 14px;
+  gap: 16px;
 
-  padding: 20px;
+  padding: 22px;
 
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 
   background: #fff;
 
   border: 1px solid #e2e8f1;
 
-  border-radius: 12px;
+  border-radius: 14px;
 
   box-shadow:
     0 5px 18px rgba(29, 54, 88, .05);
@@ -279,19 +281,19 @@
   }
 
   strong {
-    margin-bottom: 4px;
-    font-size: 13px;
+    margin-bottom: 5px;
+    font-size: 16px;
   }
 
   span {
-    color: #7d899b;
-    font-size: 11px;
+    color: #65748b;
+    font-size: 13px;
   }
 }
 
 .loading-spinner {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
 
   border: 3px solid #e3ebf6;
   border-top-color: #1769e0;
@@ -305,8 +307,8 @@
   border-color: #ffd8d8;
 
   .state-icon {
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
 
     display: flex;
     align-items: center;
@@ -324,16 +326,17 @@
 .retry-btn {
   margin-right: auto;
 
-  padding: 8px 14px;
+  padding: 10px 18px;
 
   border: 0;
-  border-radius: 7px;
+  border-radius: 8px;
 
   background: #1769e0;
   color: white;
 
   font-family: inherit;
-  font-size: 11px;
+  font-size: 13px;
+  font-weight: 700;
 
   cursor: pointer;
 }
@@ -346,7 +349,7 @@
 .report-section {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
 .kpi-grid {
@@ -355,17 +358,17 @@
   grid-template-columns:
     repeat(4, minmax(0, 1fr));
 
-  gap: 14px;
+  gap: 16px;
 }
 
 .kpi-card {
-  padding: 18px;
+  padding: 20px;
 
   background: #fff;
 
   border: 1px solid #e1e8f2;
 
-  border-radius: 12px;
+  border-radius: 14px;
 
   box-shadow:
     0 5px 18px rgba(31, 56, 90, .05);
@@ -380,16 +383,17 @@
 }
 
 .kpi-icon {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  border-radius: 9px;
+  border-radius: 10px;
 
   font-weight: 800;
+  font-size: 18px;
 }
 
 .blue-icon {
@@ -413,11 +417,11 @@
 }
 
 .kpi-status {
-  padding: 5px 8px;
+  padding: 6px 11px;
 
   border-radius: 20px;
 
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -428,7 +432,7 @@
 
 .neutral {
   background: #f1f4f8;
-  color: #718096;
+  color: #55657d;
 }
 
 .danger {
@@ -444,17 +448,18 @@
 .kpi-title {
   display: block;
 
-  color: #68778d;
+  color: #53637a;
 
-  font-size: 11px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .kpi-value {
   display: block;
 
-  margin: 7px 0;
+  margin: 8px 0;
 
-  font-size: 28px;
+  font-size: 32px;
   line-height: 1;
 
   font-weight: 800;
@@ -477,8 +482,8 @@
 }
 
 .kpi-subtext {
-  color: #9aa5b5;
-  font-size: 9px;
+  color: #7b889d;
+  font-size: 11px;
 }
 
 
@@ -496,13 +501,13 @@
 
   align-items: center;
 
-  padding: 15px 22px;
+  padding: 18px 24px;
 
   background: #fff;
 
   border: 1px solid #e1e8f2;
 
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
 .overview-item {
@@ -511,21 +516,23 @@
   span {
     display: block;
 
-    margin-bottom: 5px;
+    margin-bottom: 6px;
 
-    color: #8490a2;
+    color: #65748b;
 
-    font-size: 10px;
+    font-size: 12px;
+    font-weight: 600;
   }
 
   strong {
-    font-size: 17px;
+    font-size: 20px;
+    font-weight: 800;
   }
 }
 
 .overview-divider {
   width: 1px;
-  height: 32px;
+  height: 36px;
 
   background: #e8edf4;
 }
@@ -558,7 +565,7 @@
 
   border: 1px solid #e1e8f2;
 
-  border-radius: 12px;
+  border-radius: 14px;
 
   box-shadow:
     0 5px 18px rgba(31, 56, 90, .05);
@@ -571,25 +578,25 @@
   align-items: center;
   justify-content: space-between;
 
-  padding: 18px 20px;
+  padding: 20px 24px;
 
   border-bottom: 1px solid #edf1f6;
 
   h2 {
     margin: 0;
 
-    color: #26344a;
+    color: #1d2b40;
 
-    font-size: 15px;
+    font-size: 18px;
     font-weight: 800;
   }
 
   p {
     margin: 5px 0 0;
 
-    color: #909bad;
+    color: #70809a;
 
-    font-size: 10px;
+    font-size: 12px;
   }
 }
 
@@ -599,9 +606,10 @@
   span {
     display: block;
 
-    color: #8c98a9;
+    color: #70809a;
 
-    font-size: 9px;
+    font-size: 11px;
+    font-weight: 600;
   }
 
   strong {
@@ -611,7 +619,8 @@
 
     color: #1769e0;
 
-    font-size: 22px;
+    font-size: 26px;
+    font-weight: 800;
   }
 }
 
@@ -626,10 +635,10 @@
 
 .bar-row {
   display: grid;
-  grid-template-columns: 90px 1fr 55px;
+  grid-template-columns: 110px 1fr 65px;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 14px;
+  margin-bottom: 18px;
 
   &:last-child {
     margin-bottom: 0;
@@ -637,21 +646,19 @@
 }
 
 .week-label {
-  color: #6d7a8e;
-  font-size: 10px;
-  font-weight: 600;
+  color: #4a5a72;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .bar-track {
   position: relative;
   width: 100%;
-  height: 14px;
+  height: 18px;
   background: #edf1f6;
   border-radius: 20px;
   overflow: hidden;
 }
-
-/* الشريط الأساسي */
 
 .progress-bar-fill {
   position: relative;
@@ -676,9 +683,6 @@
     0 2px 7px rgba(23, 105, 224, .20);
 }
 
-/* ممتاز */
-
-/* ممتاز - أزرق */
 .progress-bar-fill.high {
   background: linear-gradient(
     90deg,
@@ -689,8 +693,6 @@
   box-shadow:
     0 2px 8px rgba(23, 105, 224, .22);
 }
-
-/* متوسط */
 
 .progress-bar-fill.medium {
   background: linear-gradient(
@@ -703,8 +705,6 @@
     0 2px 8px rgba(239, 166, 45, .22);
 }
 
-/* ضعيف */
-
 .progress-bar-fill.low {
   background: linear-gradient(
     90deg,
@@ -715,8 +715,6 @@
   box-shadow:
     0 2px 8px rgba(226, 77, 90, .22);
 }
-
-/* لمعة داخل الشريط */
 
 .progress-bar-fill::after {
   content: "";
@@ -733,19 +731,17 @@
   pointer-events: none;
 }
 
-/* النسبة داخل الشريط */
-
 .bar-badge {
   position: absolute;
 
   top: 50%;
-  left: 7px;
+  left: 9px;
 
   transform: translateY(-50%);
 
   color: #fff;
 
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 800;
 
   line-height: 1;
@@ -757,10 +753,11 @@
 }
 
 .bar-outer-val {
-  color: #44536a;
-  font-size: 10px;
-  font-weight: 700;
+  color: #2d3c54;
+  font-size: 13px;
+  font-weight: 800;
 }
+
 
 /* =========================================================
    TABLE
@@ -778,7 +775,7 @@ table {
 
   th,
   td {
-    padding: 13px 16px;
+    padding: 15px 18px;
 
     border-bottom: 1px solid #edf1f5;
 
@@ -790,16 +787,17 @@ table {
   th {
     background: #f8fafc;
 
-    color: #758297;
+    color: #4a5a72;
 
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 800;
   }
 
   td {
-    color: #526177;
+    color: #34445c;
 
-    font-size: 10px;
+    font-size: 13px;
+    font-weight: 500;
   }
 
   tbody tr {
@@ -816,26 +814,27 @@ table {
 }
 
 .records-count {
-  padding: 5px 9px;
+  padding: 6px 12px;
 
   border-radius: 20px;
 
   background: #f1f5fa;
 
-  color: #6e7c90;
+  color: #4c5c74;
 
-  font-size: 9px;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .trainee-cell {
   display: flex;
   align-items: center;
 
-  gap: 9px;
+  gap: 11px;
 
   .avatar {
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
 
     display: flex;
     align-items: center;
@@ -846,42 +845,43 @@ table {
     background: #eaf3ff;
     color: #1769e0;
 
-    font-size: 10px;
+    font-size: 13px;
     font-weight: 800;
   }
 
   strong {
     display: block;
 
-    color: #27354a;
+    color: #1d2b40;
 
-    font-size: 10px;
+    font-size: 13px;
+    font-weight: 700;
   }
 
   small {
     display: block;
 
-    margin-top: 2px;
+    margin-top: 3px;
 
-    color: #9ba5b4;
+    color: #70809a;
 
-    font-size: 8px;
+    font-size: 11px;
   }
 }
 
 .number-badge {
-  min-width: 25px;
+  min-width: 28px;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  padding: 4px 6px;
+  padding: 5px 8px;
 
-  border-radius: 6px;
+  border-radius: 7px;
 
-  font-size: 9px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 800;
 
   &.red {
     background: #fff0f0;
@@ -899,22 +899,23 @@ table {
   display: flex;
   align-items: center;
 
-  gap: 8px;
+  gap: 10px;
 
-  min-width: 140px;
+  min-width: 160px;
 
   .progress-track {
     flex: 1;
   }
 
   strong {
-    min-width: 35px;
-    font-size: 9px;
+    min-width: 42px;
+    font-size: 12px;
+    font-weight: 800;
   }
 }
 
 .progress-track {
-  height: 7px;
+  height: 9px;
 
   background: #edf1f5;
 
@@ -951,11 +952,11 @@ table {
 .status-pill {
   display: inline-flex;
 
-  padding: 5px 9px;
+  padding: 6px 12px;
 
   border-radius: 20px;
 
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -988,7 +989,7 @@ table {
 
   width: 100%;
 
-  padding: 22px;
+  padding: 24px;
 
   background: #fff;
 
@@ -1010,7 +1011,7 @@ table {
 
   gap: 20px;
 
-  padding-bottom: 18px;
+  padding-bottom: 20px;
 
   border-bottom: 1px solid #edf1f6;
 
@@ -1019,23 +1020,23 @@ table {
 
     color: #1d2b40;
 
-    font-size: 16px;
+    font-size: 19px;
     font-weight: 800;
   }
 
   p {
     margin: 5px 0 0;
 
-    color: #8995a7;
+    color: #70809a;
 
-    font-size: 10px;
+    font-size: 12px;
   }
 }
 
 .achievement-summary-badge {
-  min-width: 115px;
+  min-width: 130px;
 
-  padding: 10px 15px;
+  padding: 12px 18px;
 
   text-align: center;
 
@@ -1043,25 +1044,27 @@ table {
 
   border: 1px solid #d8e7ff;
 
-  border-radius: 10px;
+  border-radius: 12px;
 
   span {
     display: block;
 
-    color: #70809a;
+    color: #556680;
 
-    font-size: 9px;
+    font-size: 11px;
+    font-weight: 600;
   }
 
   strong {
     display: block;
 
-    margin-top: 3px;
+    margin-top: 4px;
 
     color: #1769e0;
 
-    font-size: 22px;
+    font-size: 26px;
     line-height: 1;
+    font-weight: 800;
   }
 }
 
@@ -1074,32 +1077,32 @@ table {
   grid-template-columns:
     repeat(3, minmax(0, 1fr));
 
-  gap: 10px;
+  gap: 12px;
 
-  margin-top: 15px;
+  margin-top: 18px;
 }
 
 .insight-item {
   display: flex;
   align-items: center;
 
-  gap: 10px;
+  gap: 12px;
 
   min-width: 0;
 
-  padding: 12px 14px;
+  padding: 14px 16px;
 
   background: #f9fbfd;
 
   border: 1px solid #edf1f5;
 
-  border-radius: 9px;
+  border-radius: 10px;
 
   .insight-dot {
     flex: 0 0 auto;
 
-    width: 9px;
-    height: 9px;
+    width: 11px;
+    height: 11px;
 
     border-radius: 50%;
 
@@ -1124,11 +1127,12 @@ table {
   small {
     display: block;
 
-    margin-bottom: 3px;
+    margin-bottom: 4px;
 
-    color: #8995a7;
+    color: #70809a;
 
-    font-size: 8px;
+    font-size: 11px;
+    font-weight: 600;
   }
 
   strong {
@@ -1136,16 +1140,17 @@ table {
 
     overflow: hidden;
 
-    color: #2c394d;
+    color: #1d2b40;
 
-    font-size: 10px;
+    font-size: 13px;
+    font-weight: 700;
 
     white-space: nowrap;
     text-overflow: ellipsis;
   }
 
   b {
-    font-size: 13px;
+    font-size: 15px;
   }
 }
 
@@ -1155,15 +1160,15 @@ table {
 .achievement-chart {
   position: relative;
 
-  height: 410px;
+  height: 430px;
 
-  margin-top: 22px;
+  margin-top: 24px;
 
   padding:
     15px
     25px
     0
-    65px;
+    75px;
 
   background:
     linear-gradient(
@@ -1174,7 +1179,7 @@ table {
 
   border: 1px solid #edf1f5;
 
-  border-radius: 12px;
+  border-radius: 14px;
 
   overflow: hidden;
 }
@@ -1186,11 +1191,11 @@ table {
   position: absolute;
 
   top: 18px;
-  bottom: 55px;
+  bottom: 60px;
   right: auto;
-  left: 10px;
+  left: 12px;
 
-  width: 38px;
+  width: 45px;
 
   display: flex;
   flex-direction: column;
@@ -1199,9 +1204,10 @@ table {
   z-index: 4;
 
   span {
-    color: #8793a5;
+    color: #5d6d85;
 
-    font-size: 8px;
+    font-size: 11px;
+    font-weight: 700;
 
     text-align: right;
   }
@@ -1216,8 +1222,8 @@ table {
   inset:
     20px
     20px
-    58px
-    65px;
+    62px
+    75px;
 
   display: flex;
   flex-direction: column;
@@ -1246,7 +1252,7 @@ table {
   top: calc(10% + 20px);
 
   right: 20px;
-  left: 65px;
+  left: 75px;
 
   height: 0;
 
@@ -1260,18 +1266,18 @@ table {
 .target-label {
   position: absolute;
 
-  top: -22px;
+  top: -24px;
   right: 0;
 
-  padding: 4px 7px;
+  padding: 5px 9px;
 
-  border-radius: 5px;
+  border-radius: 6px;
 
   background: #eaf3ff;
 
   color: #1769e0;
 
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 800;
 }
 
@@ -1284,7 +1290,7 @@ table {
   top: 20px;
   right: 25px;
   bottom: 0;
-  left: 65px;
+  left: 75px;
 
   display: flex;
   align-items: flex-end;
@@ -1304,7 +1310,7 @@ table {
   width: 100%;
   max-width: 120px;
 
-  height: 332px;
+  height: 350px;
 
   display: flex;
   flex-direction: column;
@@ -1322,12 +1328,12 @@ table {
   position: absolute;
 
   bottom: calc(
-    var(--bar-height) + 10px
+    var(--bar-height) + 12px
   );
 
-  color: #344258;
+  color: #1d2b40;
 
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
 
   z-index: 6;
@@ -1341,19 +1347,19 @@ table {
 .achievement-bar {
   position: absolute;
 
-  bottom: 38px;
+  bottom: 42px;
 
-  width: 58px;
+  width: 62px;
 
   height: var(--bar-height);
 
   min-height: 5px;
 
   border-radius:
-    9px
-    9px
-    3px
-    3px;
+    10px
+    10px
+    4px
+    4px;
 
   overflow: hidden;
 
@@ -1380,57 +1386,59 @@ table {
     translateY(-3px);
 }
 
+
 /* =========================================================
-   ACHIEVEMENT BAR COLORS
+   ACHIEVEMENT BAR COLORS (Harmonious Luxury Blue Palette)
    ========================================================= */
 
 .achievement-bar.blue {
   background: linear-gradient(
     180deg,
-    #4f8df7 0%,
-    #1769e0 100%
+    #3b82f6 0%,
+    #1e40af 100%
   ) !important;
 }
 
 .achievement-bar.cyan {
   background: linear-gradient(
     180deg,
-    #38c6df 0%,
-    #0f9fbd 100%
+    #06b6d4 0%,
+    #0e7490 100%
   ) !important;
 }
 
 .achievement-bar.purple {
   background: linear-gradient(
     180deg,
-    #a477ef 0%,
-    #7046c8 100%
+    #6366f1 0%,
+    #3730a3 100%
   ) !important;
 }
 
 .achievement-bar.orange {
   background: linear-gradient(
     180deg,
-    #ffc65a 0%,
-    #e58b1c 100%
+    #93c5fd 0%,
+    #2563eb 100%
   ) !important;
 }
 
 .achievement-bar.red {
   background: linear-gradient(
     180deg,
-    #f47782 0%,
-    #d94352 100%
+    #818cf8 0%,
+    #1e1b4b 100%
   ) !important;
 }
 
 .achievement-bar.green {
   background: linear-gradient(
     180deg,
-    #1f3b77 0%,
-    #4730b1 100%
+    #2563eb 0%,
+    #172554 100%
   ) !important;
 }
+
 
 /* SHINE */
 
@@ -1467,15 +1475,15 @@ table {
     translate(-50%, -50%)
     rotate(0deg);
 
-  color: rgba(255,255,255,.95);
+  color: rgba(255,255,255,.98);
 
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
 
   writing-mode: vertical-rl;
 
   text-shadow:
-    0 1px 3px rgba(0,0,0,.12);
+    0 1px 3px rgba(0,0,0,.15);
 }
 
 
@@ -1486,14 +1494,14 @@ table {
 
   bottom: 10px;
 
-  width: 110px;
+  width: 115px;
 
-  color: #536177;
+  color: #34445c;
 
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
 
-  line-height: 1.5;
+  line-height: 1.4;
 
   text-align: center;
 }
@@ -1537,25 +1545,26 @@ table {
 
   flex-wrap: wrap;
 
-  gap: 22px;
+  gap: 24px;
 
-  padding-top: 17px;
+  padding-top: 20px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
 
-  gap: 7px;
+  gap: 8px;
 
-  color: #748196;
+  color: #556680;
 
-  font-size: 9px;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .legend-dot {
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
 
   border-radius: 50%;
 
@@ -1569,7 +1578,7 @@ table {
 }
 
 .legend-line {
-  width: 22px;
+  width: 24px;
 
   border-top:
     2px dashed #1769e0;
@@ -1581,7 +1590,7 @@ table {
    ========================================================= */
 
 .capacity-section {
-  gap: 18px;
+  gap: 20px;
 }
 
 .capacity-top {
@@ -1592,21 +1601,21 @@ table {
   h2 {
     margin: 0;
 
-    font-size: 17px;
+    font-size: 19px;
     font-weight: 800;
   }
 
   p {
     margin: 5px 0 0;
 
-    color: #8c98aa;
+    color: #70809a;
 
-    font-size: 10px;
+    font-size: 12px;
   }
 }
 
 .tag {
-  padding: 7px 11px;
+  padding: 8px 14px;
 
   border-radius: 20px;
 
@@ -1614,7 +1623,7 @@ table {
 
   color: #1769e0;
 
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -1622,19 +1631,19 @@ table {
   display: grid;
 
   grid-template-columns:
-    1fr 280px;
+    1fr 300px;
 
   align-items: center;
 
   gap: 30px;
 
-  padding: 25px;
+  padding: 28px;
 
   background: #fff;
 
   border: 1px solid #e1e8f2;
 
-  border-radius: 12px;
+  border-radius: 14px;
 
   box-shadow:
     0 5px 18px rgba(31, 56, 90, .05);
@@ -1646,42 +1655,46 @@ table {
 
     color: #1769e0;
 
-    font-size: 42px;
+    font-size: 46px;
     line-height: 1;
+    font-weight: 800;
   }
 
   span {
     display: block;
 
-    margin-top: 7px;
+    margin-top: 8px;
 
-    color: #8793a5;
+    color: #70809a;
 
-    font-size: 10px;
+    font-size: 12px;
+    font-weight: 600;
   }
 }
 
 .capacity-progress {
-  margin-top: 25px;
+  margin-top: 28px;
 }
 
 .capacity-progress-top {
   display: flex;
   justify-content: space-between;
 
-  margin-bottom: 8px;
+  margin-bottom: 9px;
 
-  color: #68768a;
+  color: #53637a;
 
-  font-size: 10px;
+  font-size: 12px;
+  font-weight: 600;
 
   strong {
-    color: #29384e;
+    color: #1d2b40;
+    font-weight: 800;
   }
 }
 
 .capacity-progress-track {
-  height: 10px;
+  height: 12px;
 
   overflow: hidden;
 
@@ -1712,18 +1725,18 @@ table {
 
   gap: 35px;
 
-  margin-top: 25px;
+  margin-top: 28px;
 }
 
 .capacity-stat {
   display: flex;
   align-items: center;
 
-  gap: 8px;
+  gap: 10px;
 
   .stat-dot {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
 
     border-radius: 50%;
 
@@ -1743,19 +1756,21 @@ table {
   small {
     display: block;
 
-    color: #8a96a7;
+    color: #70809a;
 
-    font-size: 8px;
+    font-size: 11px;
+    font-weight: 600;
   }
 
   strong {
     display: block;
 
-    margin-top: 2px;
+    margin-top: 3px;
 
-    color: #2a384c;
+    color: #1d2b40;
 
-    font-size: 14px;
+    font-size: 16px;
+    font-weight: 800;
   }
 }
 
@@ -1765,8 +1780,8 @@ table {
 .donut-wrap {
   position: relative;
 
-  width: 220px;
-  height: 220px;
+  width: 230px;
+  height: 230px;
 
   margin: auto;
 }
@@ -1817,22 +1832,24 @@ table {
   strong {
     color: #1769e0;
 
-    font-size: 29px;
+    font-size: 32px;
     line-height: 1;
+    font-weight: 800;
   }
 
   span {
-    margin-top: 5px;
+    margin-top: 6px;
 
-    color: #8b97a8;
+    color: #70809a;
 
-    font-size: 9px;
+    font-size: 11px;
+    font-weight: 600;
   }
 }
 
 .program-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
 
   border-radius: 50%;
 
@@ -1843,12 +1860,12 @@ table {
   display: flex;
   align-items: center;
 
-  gap: 8px;
+  gap: 10px;
 }
 
 .remaining-value {
-  color: #3c4a5f;
-  font-weight: 700;
+  color: #2d3c54;
+  font-weight: 800;
 
   &.low {
     color: #df4d5b;
@@ -1861,17 +1878,18 @@ table {
    ========================================================= */
 
 .empty-state {
-  padding: 35px 20px;
+  padding: 40px 20px;
 
-  color: #929dad;
+  color: #70809a;
 
-  font-size: 11px;
+  font-size: 13px;
+  font-weight: 600;
 
   text-align: center;
 }
 
 .large-empty {
-  min-height: 180px;
+  min-height: 200px;
 
   display: flex;
   align-items: center;
@@ -1881,7 +1899,7 @@ table {
 
   border: 1px solid #e1e8f2;
 
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
 
@@ -1934,35 +1952,35 @@ table {
   }
 
   .achievement-chart {
-    height: 360px;
-    padding-left: 55px;
+    height: 380px;
+    padding-left: 60px;
   }
 
   .bars-area {
-    left: 55px;
+    left: 60px;
     right: 15px;
 
-    gap: 10px;
+    gap: 12px;
   }
 
   .achievement-bar {
-    width: 42px;
+    width: 46px;
   }
 
   .bar-program-name {
-    width: 80px;
+    width: 90px;
 
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .bar-percentage {
-    font-size: 9px;
+    font-size: 11px;
   }
 
   .overview-strip {
     grid-template-columns: 1fr 1fr;
 
-    gap: 15px;
+    gap: 16px;
   }
 
   .overview-divider {
@@ -1986,11 +2004,11 @@ table {
   }
 
   .achievement-chart {
-    height: 330px;
+    height: 350px;
   }
 
   .achievement-bar {
-    width: 32px;
+    width: 36px;
   }
 
   .bar-value-inside {
@@ -1998,14 +2016,14 @@ table {
   }
 
   .bar-program-name {
-    width: 65px;
+    width: 70px;
 
-    font-size: 7px;
+    font-size: 9px;
   }
 
   .capacity-stats {
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
   }
 
 }

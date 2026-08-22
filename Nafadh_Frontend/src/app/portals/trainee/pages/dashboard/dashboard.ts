@@ -19,7 +19,6 @@ import { TRAINEE_STATUS_LABELS, TaskStatus } from '../../../../core/models/enums
 
 type SubmissionStatus = SubmissionDto['status'];
 
-// تعريف نوع ممتد للمهام مع حالة التسليم
 interface TaskWithSubmissionDto extends TaskDto {
   submissionStatus?: SubmissionStatus;
   submissionId?: number;
@@ -32,35 +31,16 @@ interface TaskWithSubmissionDto extends TaskDto {
   templateUrl: './dashboard.html',
 })
 export class TraineeDashboard implements OnInit {
-  // =========================================================
-  // Injections
-  // =========================================================
-
   private api = inject(TraineeApi);
   public auth = inject(AuthService);
 
-
-  // =========================================================
-  // المستخدم الحالي - من AuthService
-  // =========================================================
-
   currentUserId = signal<number | null>(null);
-
-
-  // =========================================================
-  // IDs - يتم جلبها من قاعدة البيانات
-  // =========================================================
 
   traineeId = signal<number | null>(null);
   companyId = signal<number | null>(null);
   batchId = signal<number | null>(null);
   enrollmentId = signal<number | null>(null);
   supervisorId = signal<number | null>(null);
-
-
-  // =========================================================
-  // بيانات المتدرب والبرنامج
-  // =========================================================
 
   traineeData = signal<TraineeProfileDto | null>(null);
   enrollmentData = signal<EnrollmentDto | null>(null);
@@ -71,27 +51,12 @@ export class TraineeDashboard implements OnInit {
   batchName = signal<string>('');
   programEndDate = signal<string>('');
 
-
-  // =========================================================
-  // بيانات فريق الإشراف
-  // =========================================================
-
   trainerData = signal<TrainerDto | null>(null);
   supervisorData = signal<CompanySupervisorDto | null>(null);
-
-
-  // =========================================================
-  // البيانات الرئيسية
-  // =========================================================
 
   summary = signal<TraineeDashboardSummaryDto | null>(null);
   tasks = signal<TaskWithSubmissionDto[]>([]);
   announcements = signal<(AnnouncementDto & { source: string })[]>([]);
-
-
-  // =========================================================
-  // حالات التحميل
-  // =========================================================
 
   loading = signal(false);
   loadingTasks = signal(false);
@@ -100,17 +65,7 @@ export class TraineeDashboard implements OnInit {
   loadingTrainer = signal(false);
   loadingSupervisor = signal(false);
 
-
-  // =========================================================
-  // رسالة الخطأ
-  // =========================================================
-
   errorMessage = signal('');
-
-
-  // =========================================================
-  // تحويل الحالة البرمجية إلى النص العربي
-  // =========================================================
 
   calculatedStatus = computed(() => {
     const status = this.summary()?.status;
@@ -119,14 +74,9 @@ export class TraineeDashboard implements OnInit {
     }
     
     const today = new Date();
-    const endDate = new Date(this.programEndDate());
+    const endDate = new Date(this.programEndDate() || Date.now());
     return today > endDate ? 'منتهي' : 'قيد التدريب';
   });
-
-
-  // =========================================================
-  // نسبة الإنجاز المحسوبة
-  // =========================================================
 
   progressPercentage = computed(() => {
     const summary = this.summary();
@@ -134,24 +84,17 @@ export class TraineeDashboard implements OnInit {
     return summary.moduleProgressPercentage ?? 0;
   });
 
-
-  // =========================================================
-  // دالة مساعدة لمقارنة حالة المهمة (كسلاسل نصية)
-  // =========================================================
-
   getTaskStatusDisplay(status: any): string {
     if (!status) return 'جديد';
     
     const statusStr = String(status).toLowerCase();
     
-    // حالات TaskStatus
     if (statusStr === 'new' || statusStr === 'pending') return 'جديد';
     if (statusStr === 'completed') return 'مكتمل';
     if (statusStr === 'graded') return 'مكتمل';
     if (statusStr === 'inprogress' || statusStr === 'in_progress') return 'قيد التنفيذ';
     if (statusStr === 'overdue') return 'منتهي';
     
-    // حالات SubmissionStatus
     if (statusStr === 'submitted') return 'تم التسليم';
     if (statusStr === 'underreview' || statusStr === 'under_review') return 'قيد المراجعة';
     if (statusStr === 'returnedforrevision' || statusStr === 'returned') return 'مطلوب تعديل';
@@ -167,7 +110,6 @@ export class TraineeDashboard implements OnInit {
     
     const statusStr = String(status).toLowerCase();
     
-    // حالات TaskStatus
     if (statusStr === 'new' || statusStr === 'pending') {
       return { background: '#eff6ff', color: '#2563eb' };
     }
@@ -181,7 +123,6 @@ export class TraineeDashboard implements OnInit {
       return { background: '#fef2f2', color: '#dc2626' };
     }
     
-    // حالات SubmissionStatus
     if (statusStr === 'submitted') {
       return { background: '#fef3c7', color: '#d97706' };
     }
@@ -204,13 +145,7 @@ export class TraineeDashboard implements OnInit {
     return { background: '#f1f5f9', color: '#64748b' };
   }
 
-
-  // =========================================================
-  // Constructor - مراقبة تغير المستخدم
-  // =========================================================
-
   constructor() {
-    // مراقبة تغير المستخدم الحالي
     effect(() => {
       const session = this.auth.session?.();
       if (session?.userId) {
@@ -220,19 +155,12 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-
-  // =========================================================
-  // OnInit
-  // =========================================================
-
   ngOnInit() {
-    // محاولة الحصول على المستخدم من الجلسة
     const session = this.auth.session?.();
     if (session?.userId) {
       this.currentUserId.set(session.userId);
       this.loadTraineeData();
     } else {
-      // إذا لم يكن هناك جلسة، حاول الحصول من التخزين المحلي
       const userId = this.getUserIdFromStorage();
       if (userId) {
         this.currentUserId.set(userId);
@@ -242,11 +170,6 @@ export class TraineeDashboard implements OnInit {
       }
     }
   }
-
-
-  // =========================================================
-  // تحميل بيانات المتدرب
-  // =========================================================
 
   loadTraineeData(): void {
     const userId = this.currentUserId();
@@ -260,7 +183,6 @@ export class TraineeDashboard implements OnInit {
     this.loadingProfile.set(true);
     this.errorMessage.set('');
 
-    // جلب بيانات المتدرب
     this.api.getTrainee(userId).subscribe({
       next: (trainee: TraineeProfileDto) => {
         this.traineeData.set(trainee);
@@ -288,12 +210,6 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-
-  // =========================================================
-  // تحميل ملخص لوحة التحكم
-  // GET /api/Trainee/{traineeId}/dashboard-summary
-  // =========================================================
-
   loadDashboardSummary(traineeId: number): void {
     this.api.getDashboardSummary(traineeId).subscribe({
       next: (summary: TraineeDashboardSummaryDto) => {
@@ -310,17 +226,10 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-
-  // =========================================================
-  // تحميل تسجيلات المتدرب
-  // GET /api/Enrollment/trainee/{traineeId}
-  // =========================================================
-
   loadEnrollments(traineeId: number): void {
     this.api.getEnrollmentsByTrainee(traineeId).subscribe({
       next: (enrollments: EnrollmentDto[]) => {
         if (enrollments && enrollments.length > 0) {
-          // البحث عن تسجيل نشط
           const activeEnrollment = enrollments.find(e =>
             e.completionStatus === 'Active' ||
             e.completionStatus === 'InProgress'
@@ -330,7 +239,6 @@ export class TraineeDashboard implements OnInit {
           this.enrollmentId.set(activeEnrollment.enrollmentId);
           this.batchId.set(activeEnrollment.batchId);
 
-          // حفظ supervisorId إذا كان موجوداً
           if (activeEnrollment.supervisorId) {
             this.supervisorId.set(activeEnrollment.supervisorId);
           }
@@ -339,18 +247,13 @@ export class TraineeDashboard implements OnInit {
             this.batchName.set(activeEnrollment.batchName);
           }
 
-          // تحميل بيانات الباتش
           this.loadBatchData(activeEnrollment.batchId);
-          
-          // تحميل المدرب لهذه الدفعة
           this.loadTrainerByBatch(activeEnrollment.batchId);
           
-          // تحميل المشرف إذا كان موجوداً
           if (activeEnrollment.supervisorId) {
             this.loadSupervisor(activeEnrollment.supervisorId);
           }
 
-          // تحميل المهام والإعلانات
           this.loadTasks(activeEnrollment.batchId);
           this.loadAnnouncements(activeEnrollment.batchId);
         } else {
@@ -368,27 +271,15 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-
-  // =========================================================
-  // تحميل المدرب من خلال الدفعة
-  // GET /api/BatchTrainer/batch/{batchId}
-  // =========================================================
-
   loadTrainerByBatch(batchId: number): void {
     this.loadingTrainer.set(true);
 
-    // جلب قائمة المدربين في الدفعة
     this.api.getBatchTrainers(batchId).subscribe({
       next: (trainers: TrainerDto[]) => {
-        console.log('Batch trainers response:', trainers);
-        
         if (trainers && trainers.length > 0) {
-          // نأخذ أول مدرب في الدفعة
           const firstTrainer = trainers[0];
           
-          // التحقق من وجود trainerId
           if (firstTrainer.trainerId) {
-            // جلب بيانات المدرب كاملة
             this.api.getTrainer(firstTrainer.trainerId).subscribe({
               next: (trainer: TrainerDto) => {
                 this.trainerData.set(trainer);
@@ -401,7 +292,6 @@ export class TraineeDashboard implements OnInit {
               }
             });
           } else {
-            // إذا كان الكائن يحتوي على البيانات كاملة
             this.trainerData.set(firstTrainer);
             this.loadingTrainer.set(false);
           }
@@ -418,12 +308,6 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-
-  // =========================================================
-  // تحميل بيانات المشرف
-  // GET /api/CompanySupervisor/{id}
-  // =========================================================
-
   loadSupervisor(supervisorId: number): void {
     this.loadingSupervisor.set(true);
 
@@ -439,12 +323,6 @@ export class TraineeDashboard implements OnInit {
       }
     });
   }
-
-
-  // =========================================================
-  // تحميل بيانات الباتش
-  // GET /api/Batch/{batchId}
-  // =========================================================
 
   loadBatchData(batchId: number): void {
     this.api.getBatch(batchId).subscribe({
@@ -469,12 +347,6 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-
-  // =========================================================
-  // تحميل بيانات البرنامج
-  // GET /api/Program/{programId}
-  // =========================================================
-
   loadProgramData(programId: number): void {
     this.api.getProgram(programId).subscribe({
       next: (program: ProgramDto) => {
@@ -490,21 +362,13 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-
- // =========================================================
-  // تحميل المهام
-  // GET /api/Task/batch/{batchId}
-  // =========================================================
-
   loadTasks(batchId: number): void {
     this.loadingTasks.set(true);
     const traineeId = this.traineeId();
 
-    // جلب مهام الدفعة (المسار الصحيح حسب الـ API)
     this.api.getTasks(batchId).subscribe({
       next: (tasks: TaskDto[]) => {
         if (tasks && tasks.length > 0 && traineeId) {
-          // جلب التسليمات للمتدرب لتحديث حالة المهام
           this.api.getTraineeSubmissions(traineeId).subscribe({
             next: (submissions: SubmissionDto[]) => {
               const enrichedTasks = this.enrichTasksWithSubmission(tasks, submissions);
@@ -512,7 +376,6 @@ export class TraineeDashboard implements OnInit {
             },
             error: (error: any) => {
               console.error('Error loading submissions:', error);
-              // حتى لو فشل جلب التسليمات، نعرض المهام بدون حالة التسليم
               this.processAndSetTasks(tasks);
             }
           });
@@ -528,9 +391,6 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-  /**
-   * معالجة المهام وترتيبها وعرض الأقرب لموعد التسليم
-   */
   private processAndSetTasks(tasks: TaskDto[]): void {
     if (!tasks || tasks.length === 0) {
       this.tasks.set([]);
@@ -538,54 +398,42 @@ export class TraineeDashboard implements OnInit {
       return;
     }
 
-    // تحويل المهام إلى النوع الممتد
     let enrichedTasks = tasks as TaskWithSubmissionDto[];
 
-    // تصفية المهام: عرض المهام التي لم تنتهي أو المهام المنتهية حديثاً
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // ترتيب المهام حسب تاريخ الاستحقاق (الأقرب أولاً)
     const sortedTasks = enrichedTasks
       .filter(task => {
-        // عرض المهام التي لم تكتمل أو المهام المنتهية خلال الـ 7 أيام الماضية
         const isCompleted = (task.status as string) === 'Completed' || (task.status as string) === 'Graded';
         if (isCompleted) return false;
         
-        // إذا كان التاريخ موجوداً
         if (task.dueDate) {
           const dueDate = new Date(task.dueDate);
           dueDate.setHours(0, 0, 0, 0);
           
-          // عرض المهام المنتهية خلال الـ 7 أيام الماضية
           const daysDiff = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
           if (daysDiff > 7) return false;
           
           return true;
         }
         
-        // عرض المهام بدون تاريخ
         return true;
       })
       .sort((a, b) => {
-        // ترتيب حسب التاريخ (الأقرب أولاً)
         if (!a.dueDate && !b.dueDate) return 0;
         if (!a.dueDate) return 1;
         if (!b.dueDate) return -1;
         
-        const dateA = new Date(a.dueDate);
-        const dateB = new Date(b.dueDate);
+        const dateA = new Date(a.dueDate || Date.now());
+        const dateB = new Date(b.dueDate || Date.now());
         return dateA.getTime() - dateB.getTime();
       });
 
-    // أخذ أول 3 مهام فقط
     this.tasks.set(sortedTasks.slice(0, 3));
     this.loadingTasks.set(false);
   }
 
-  /**
-   * إثراء المهام بحالة التسليم
-   */
   private enrichTasksWithSubmission(tasks: TaskDto[], submissions: SubmissionDto[]): TaskWithSubmissionDto[] {
     if (!submissions || submissions.length === 0) {
       return tasks as TaskWithSubmissionDto[];
@@ -606,94 +454,10 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-  // حذف الدوال القديمة واستبدالها بما سبق:
-  // - إزالة loadBatchTasks
-  // - إزالة enrichTasksWithStatus القديمة
-
-  // =========================================================
-  // جلب مهام الدفعة
-  // =========================================================
-
-  private loadBatchTasks(batchId: number): void {
-    this.api.getTasks(batchId).subscribe({
-      next: (tasks: TaskDto[]) => {
-        const traineeId = this.traineeId();
-        if (traineeId) {
-          this.enrichTasksWithStatus(tasks, traineeId);
-        } else {
-          this.tasks.set((tasks ?? []).slice(0, 3) as TaskWithSubmissionDto[]);
-          this.loadingTasks.set(false);
-        }
-      },
-      error: (error: any) => {
-        console.error('Error loading batch tasks:', error);
-        this.tasks.set([]);
-        this.loadingTasks.set(false);
-      }
-    });
-  }
-
-
-  // =========================================================
-  // إثراء المهام بحالة المتدرّب لكل مهمة
-  // =========================================================
-
-  private enrichTasksWithStatus(tasks: TaskDto[], traineeId: number): void {
-    if (!tasks || tasks.length === 0) {
-      this.tasks.set([]);
-      this.loadingTasks.set(false);
-      return;
-    }
-
-    this.api.getTraineeSubmissions(traineeId).subscribe({
-      next: (submissions: SubmissionDto[]) => {
-        const enrichedTasks: TaskWithSubmissionDto[] = tasks.map(task => {
-          const submission = submissions?.find(s => s.taskId === task.taskId);
-          if (submission) {
-            return {
-              ...task,
-              submissionStatus: submission.status,
-              submissionId: submission.submissionId,
-              grade: submission.grade,
-              // تحديث حالة المهمة إذا كانت مكتملة
-              status: submission.status === 'Graded'
-                ? 'Completed' as TaskStatus 
-                : task.status
-            };
-          }
-          return task as TaskWithSubmissionDto;
-        });
-
-        // ترتيب المهام: المهام غير المكتملة أولاً، ثم المكتملة
-        enrichedTasks.sort((a, b) => {
-          const aCompleted = a.submissionStatus === 'Graded';
-          const bCompleted = b.submissionStatus === 'Graded';
-          if (aCompleted && !bCompleted) return 1;
-          if (!aCompleted && bCompleted) return -1;
-          return 0;
-        });
-
-        this.tasks.set(enrichedTasks.slice(0, 3));
-        this.loadingTasks.set(false);
-      },
-      error: (error: any) => {
-        console.error('Error loading submissions:', error);
-        this.tasks.set(tasks.slice(0, 3) as TaskWithSubmissionDto[]);
-        this.loadingTasks.set(false);
-      }
-    });
-  }
-
-
-  // =========================================================
-  // تحميل الإعلانات من مصادر متعددة
-  // =========================================================
-
   loadAnnouncements(batchId: number): void {
     this.loadingAnnouncements.set(true);
     this.announcements.set([]);
 
-    // إعلانات المنصة
     this.api.getPlatformAnnouncements().subscribe({
       next: (items: AnnouncementDto[]) => {
         this.mergeAnnouncements(items, 'الهيئة');
@@ -705,7 +469,6 @@ export class TraineeDashboard implements OnInit {
       }
     });
 
-    // إعلانات الشركة
     const companyId = this.companyId();
     if (companyId) {
       this.api.getCompanyAnnouncements(companyId).subscribe({
@@ -718,7 +481,6 @@ export class TraineeDashboard implements OnInit {
       });
     }
 
-    // إعلانات الدفعة
     this.api.getBatchAnnouncements(batchId).subscribe({
       next: (items: AnnouncementDto[]) => {
         this.mergeAnnouncements(items, 'المدرب');
@@ -729,38 +491,25 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-
-  // =========================================================
-  // دمج الإعلانات
-  // =========================================================
-
   private mergeAnnouncements(items: AnnouncementDto[], source: string) {
     this.announcements.update((list) => {
       const newItems = (items ?? []).map((a) => ({ ...a, source }));
       const combined = [...list, ...newItems];
-      // ترتيب حسب التاريخ (الأحدث أولاً)
       combined.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
+        const dateA = new Date(a.date || Date.now());
+        const dateB = new Date(b.date || Date.now());
         return dateB.getTime() - dateA.getTime();
       });
       return combined;
     });
   }
 
-
-  // =========================================================
-  // الحصول على معرف المستخدم من التخزين المحلي
-  // =========================================================
-
   private getUserIdFromStorage(): number | null {
-    // محاولة من localStorage
     const userIdFromStorage = localStorage.getItem('userId');
     if (userIdFromStorage) {
       return parseInt(userIdFromStorage, 10);
     }
 
-    // محاولة من sessionStorage
     const userIdFromSession = sessionStorage.getItem('userId');
     if (userIdFromSession) {
       return parseInt(userIdFromSession, 10);
@@ -768,11 +517,6 @@ export class TraineeDashboard implements OnInit {
 
     return null;
   }
-
-
-  // =========================================================
-  // إعادة تحميل البيانات
-  // =========================================================
 
   refreshData(): void {
     const traineeId = this.traineeId();
@@ -788,11 +532,6 @@ export class TraineeDashboard implements OnInit {
       this.loadTrainerByBatch(batchId);
     }
   }
-
-
-  // =========================================================
-  // دوال مساعدة للعرض
-  // =========================================================
 
   getStatusColor(status: string): string {
     const statusMap: Record<string, string> = {
@@ -818,21 +557,11 @@ export class TraineeDashboard implements OnInit {
     return statusMap[status] || 'var(--status-new-fg)';
   }
 
-
-  // =========================================================
-  // الحصول على الحرف الأول من الاسم
-  // =========================================================
-
   getInitial(name: string | undefined): string {
     if (!name) return 'م';
     const trimmed = name.trim();
     return trimmed.length > 0 ? trimmed[0] : 'م';
   }
-
-
-  // =========================================================
-  // الحصول على تخصص المدرب أو وصفه
-  // =========================================================
 
   getTrainerSpecialty(): string {
     const trainer = this.trainerData();
@@ -853,11 +582,6 @@ export class TraineeDashboard implements OnInit {
     return 'مدرب البرنامج';
   }
 
-
-  // =========================================================
-  // الحصول على قسم المشرف أو منصبه
-  // =========================================================
-
   getSupervisorRole(): string {
     const supervisor = this.supervisorData();
     if (!supervisor) return 'مشرف التدريب';
@@ -871,11 +595,6 @@ export class TraineeDashboard implements OnInit {
     return 'مشرف التدريب';
   }
 
-
-  // =========================================================
-  // التحقق من انتهاء موعد المهمة
-  // =========================================================
-
   isTaskOverdue(dueDate: string | Date): boolean {
     if (!dueDate) return false;
     const due = new Date(dueDate);
@@ -883,22 +602,11 @@ export class TraineeDashboard implements OnInit {
     return due < today;
   }
 
-
-  // =========================================================
-  // التواصل مع المدرب
-  // =========================================================
-
   contactTrainer(): void {
     const trainer = this.trainerData();
     if (!trainer) return;
-    
     console.log('Contact trainer:', trainer);
-
-    
   }
-    // =========================================================
-  // الحصول على أيام متبقية للمهمة (للعرض الإضافي)
-  // =========================================================
 
   getDaysRemaining(dueDate: string | Date): number {
     if (!dueDate) return 0;

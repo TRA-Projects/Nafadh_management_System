@@ -1,6 +1,8 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CompanyBranchDto, CompanyDto, CompanySupervisorDto, EnrollmentDto } from '../../../../core/models/dtos';
@@ -57,6 +59,12 @@ export class CompanyProfile implements OnInit {
 
   editingCapacity = signal(false);
   companyEditOpen = signal(false);
+
+  uploadingCover = signal(false);
+  uploadingLogo = signal(false);
+  coverUploadError = signal(false);
+  logoUploadError = signal(false);
+  readonly maxImageSizeMb = 5;
   companyEditDraft = {
     commercialRegister: '',
     taxNumber: '',
@@ -133,8 +141,36 @@ export class CompanyProfile implements OnInit {
 
     this.api.getCompanyPrograms(this.companyId).subscribe({
       next: (items) => {
-        this.specialties.set((items ?? []).map((item) => this.normalizeSpecialty((item as unknown) as Record<string, unknown>)));
-        this.specialtiesLoadError.set(false);
+        // التحويل الآمن باستخدام unknown لتفادي خطأ TS2352
+        const rawItems = ((items ?? []) as unknown) as Record<string, unknown>[];
+        if (rawItems.length === 0) {
+          this.specialties.set([]);
+          return;
+        }
+
+        if (rawItems[0]['title'] || rawItems[0]['name'] || rawItems[0]['program']) {
+          this.specialties.set(rawItems.map((item) => this.normalizeSpecialty(item)));
+          this.specialtiesLoadError.set(false);
+          return;
+        }
+
+        const programRequests = rawItems.map((item) => {
+          const pId = Number(item['programId'] ?? item['ProgramId'] ?? 0);
+          if (!pId) return of(this.normalizeSpecialty(item));
+
+          return this.api.getProgram(pId).pipe(
+            map((p) => this.normalizeSpecialty((p as unknown) as Record<string, unknown>)),
+            catchError(() => of(this.normalizeSpecialty(item)))
+          );
+        });
+
+        forkJoin(programRequests).subscribe({
+          next: (res) => {
+            this.specialties.set(res);
+            this.specialtiesLoadError.set(false);
+          },
+          error: () => this.specialtiesLoadError.set(true),
+        });
       },
       error: () => this.specialtiesLoadError.set(true),
     });
@@ -143,22 +179,22 @@ export class CompanyProfile implements OnInit {
   private normalizeCompany(dto?: Partial<CompanyProfileDto> | null): CompanyProfileDto | null {
     if (!dto) return null;
 
-    const raw = dto as Record<string, unknown>;
+    const raw = (dto as unknown) as Record<string, unknown>;
 
     const logoUrl =
       dto.logoUrl ||
-      String(raw['logo'] ?? '') ||
-      String(raw['companyLogo'] ?? '') ||
-      String(raw['logoImageUrl'] ?? '') ||
-      String(raw['imageUrl'] ?? '') ||
+      String(raw['logo'] ?? raw['Logo'] ?? '') ||
+      String(raw['companyLogo'] ?? raw['CompanyLogo'] ?? '') ||
+      String(raw['logoImageUrl'] ?? raw['LogoImageUrl'] ?? '') ||
+      String(raw['imageUrl'] ?? raw['ImageUrl'] ?? '') ||
       '';
 
     const coverImageUrl =
       dto.coverImageUrl ||
-      String(raw['cover'] ?? '') ||
-      String(raw['coverImage'] ?? '') ||
-      String(raw['coverUrl'] ?? '') ||
-      String(raw['bannerUrl'] ?? '') ||
+      String(raw['cover'] ?? raw['Cover'] ?? '') ||
+      String(raw['coverImage'] ?? raw['CoverImage'] ?? '') ||
+      String(raw['coverUrl'] ?? raw['CoverUrl'] ?? '') ||
+      String(raw['bannerUrl'] ?? raw['BannerUrl'] ?? '') ||
       '';
 
     const workFields = Array.isArray(dto.workFields) && dto.workFields.length
@@ -197,17 +233,51 @@ export class CompanyProfile implements OnInit {
   }
 
   private normalizeSpecialty(item: Record<string, unknown>): HostedSpecialtyDto {
-    const statusValue = String(item['status'] ?? 'قيد الاعتماد');
-    const status =
-      statusValue === 'معتمد' || statusValue === 'قيد الاعتماد'
-        ? (statusValue as 'معتمد' | 'قيد الاعتماد')
+    const programObj = (item['program'] || item['Program'] || item['specialty'] || item['Specialty']) as Record<string, unknown> | undefined;
+
+    const extractedName =
+      item['title'] ??
+      item['Title'] ??
+      item['name'] ??
+      item['Name'] ??
+      item['programName'] ??
+      item['ProgramName'] ??
+      programObj?.['title'] ??
+      programObj?.['Title'] ??
+      programObj?.['name'] ??
+      programObj?.['Name'];
+
+    const extractedSeats =
+      item['seatsAllocated'] ??
+      item['SeatsAllocated'] ??
+      item['capacity'] ??
+      item['Capacity'] ??
+      item['durationHours'] ??
+      item['DurationHours'] ??
+      item['seats'] ??
+      item['Seats'] ??
+      programObj?.['seatsAllocated'] ??
+      programObj?.['capacity'] ??
+      0;
+
+    const rawStatus = String(
+      item['status'] ??
+      item['Status'] ??
+      item['programStatus'] ??
+      programObj?.['status'] ??
+      ''
+    );
+
+    const status: 'معتمد' | 'قيد الاعتماد' =
+      rawStatus === 'Approved' || rawStatus === 'معتمد' || rawStatus === 'Active'
+        ? 'معتمد'
         : 'قيد الاعتماد';
 
     return {
-      programId: Number(item['programId'] ?? item['id'] ?? Date.now()),
-      name: String(item['name'] ?? item['title'] ?? 'تخصص'),
+      programId: Number(item['programId'] ?? item['ProgramId'] ?? item['id'] ?? item['Id'] ?? Date.now()),
+      name: extractedName ? String(extractedName) : 'تخصص غير محدد',
+      seatsAllocated: Number(extractedSeats),
       status,
-      seatsAllocated: Number(item['seatsAllocated'] ?? item['capacity'] ?? 0),
     };
   }
 
@@ -359,22 +429,93 @@ export class CompanyProfile implements OnInit {
   }
 
   onCoverSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-
-    const preview = URL.createObjectURL(file);
-    this.company.update((cur) => (cur ? { ...cur, coverImageUrl: preview } : cur));
-    input.value = '';
+    this.handleImageSelection(event, 'cover');
   }
 
   onLogoSelected(event: Event) {
+    this.handleImageSelection(event, 'logo');
+  }
+
+  removeCoverImage() {
+    this.persistImage('cover', '');
+  }
+
+  removeLogoImage() {
+    this.persistImage('logo', '');
+  }
+
+  private handleImageSelection(event: Event, kind: 'cover' | 'logo') {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
+    input.value = '';
     if (!file) return;
 
-    const preview = URL.createObjectURL(file);
-    this.company.update((cur) => (cur ? { ...cur, logoUrl: preview } : cur));
-    input.value = '';
+    if (!this.isValidImageFile(file)) {
+      (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(true);
+      return;
+    }
+
+    (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(false);
+
+    const previousUrl = kind === 'cover' ? this.company()?.coverImageUrl : this.company()?.logoUrl;
+    const previewUrl = URL.createObjectURL(file);
+
+    this.applyImageToCompany(kind, previewUrl);
+    (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(true);
+
+    this.readFileAsDataUrl(file)
+      .then((dataUrl) => this.persistImage(kind, dataUrl, previousUrl))
+      .catch(() => this.revertImage(kind, previousUrl))
+      .finally(() => {
+        URL.revokeObjectURL(previewUrl);
+        (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(false);
+      });
+  }
+
+  private persistImage(kind: 'cover' | 'logo', value: string, fallbackUrl?: string) {
+    const c = this.company();
+    if (!c) return;
+
+    (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(true);
+
+    const payload = kind === 'cover' ? { ...c, coverImageUrl: value } : { ...c, logoUrl: value };
+
+    this.api.updateCompany(c.companyId, payload).subscribe({
+      next: () => {
+        this.applyImageToCompany(kind, value);
+        (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(false);
+        (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(false);
+      },
+      error: () => {
+        this.revertImage(kind, fallbackUrl);
+        (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(true);
+        (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(false);
+      },
+    });
+  }
+
+  private applyImageToCompany(kind: 'cover' | 'logo', value: string) {
+    this.company.update((cur) =>
+      cur ? (kind === 'cover' ? { ...cur, coverImageUrl: value } : { ...cur, logoUrl: value }) : cur
+    );
+  }
+
+  private revertImage(kind: 'cover' | 'logo', fallbackUrl?: string) {
+    this.applyImageToCompany(kind, fallbackUrl || '');
+  }
+
+  private isValidImageFile(file: File): boolean {
+    const isImage = file.type.startsWith('image/');
+    const withinSize = file.size <= this.maxImageSizeMb * 1024 * 1024;
+    return isImage && withinSize;
+  }
+
+  private readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
   }
 }
