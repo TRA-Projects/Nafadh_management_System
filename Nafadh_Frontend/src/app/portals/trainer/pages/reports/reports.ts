@@ -1,31 +1,68 @@
 import {
   Component,
+  OnDestroy,
   OnInit,
   signal
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
 
+import {
+  DomSanitizer,
+  SafeResourceUrl
+} from '@angular/platform-browser';
+
 import { TrainerApi } from '../../services/trainer-api';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 
 import {
-  TrainerKpisDto,
-  FeedbackSummaryDto
+  FeedbackSummaryDto,
+  TrainerKpisDto
 } from '../../../../core/models/dtos';
+
+
+type TrainerReportType =
+  | 'Attendance'
+  | 'Performance'
+  | 'Custom';
+
+
+type TrainerReportHistoryItem = {
+  reportId: number;
+
+  type:
+    | 'Attendance'
+    | 'Performance'
+    | 'Financial'
+    | 'Enrollment'
+    | 'Custom';
+
+  filtersJson?: string | null;
+
+  generatedAt: string;
+
+  fileUrl?: string | null;
+
+  generatedByUserId: number;
+};
 
 
 @Component({
   selector: 'app-trainer-reports',
+
   standalone: true,
+
   imports: [
     CommonModule
   ],
+
   templateUrl: './reports.html',
+
   styleUrl: './report.scss'
 })
-export class TrainerReports implements OnInit {
+export class TrainerReports
+  implements OnInit, OnDestroy {
 
   // =====================================================
   // CURRENT TRAINER / USER
@@ -34,6 +71,7 @@ export class TrainerReports implements OnInit {
   trainerId:
     number | null =
       null;
+
 
   generatedByUserId:
     number | null =
@@ -45,10 +83,21 @@ export class TrainerReports implements OnInit {
   // =====================================================
 
   kpis =
-    signal<TrainerKpisDto | null>(null);
+    signal<TrainerKpisDto | null>(
+      null
+    );
+
 
   feedback =
-    signal<FeedbackSummaryDto | null>(null);
+    signal<FeedbackSummaryDto | null>(
+      null
+    );
+
+
+  reportHistory =
+    signal<TrainerReportHistoryItem[]>(
+      []
+    );
 
 
   // =====================================================
@@ -58,14 +107,62 @@ export class TrainerReports implements OnInit {
   loading =
     signal(false);
 
+
+  loadingHistory =
+    signal(false);
+
+
   exporting =
     signal(false);
+
+
+  // Shows loading only on the report
+  // that the trainer selected.
+  generatingReportType =
+    signal<TrainerReportType | null>(
+      null
+    );
+
 
   errorMessage =
     signal('');
 
+
   successMessage =
     signal('');
+
+
+  // =====================================================
+  // REPORT PREVIEW STATE
+  // =====================================================
+
+  showReportPreview =
+    signal(false);
+
+
+  reportPreviewUrl =
+    signal<SafeResourceUrl | null>(
+      null
+    );
+
+
+  previewReportId =
+    signal<number | null>(
+      null
+    );
+
+
+  previewReportType =
+    signal<TrainerReportType | null>(
+      null
+    );
+
+
+  // Browser Blob URL used for preview,
+  // new tab and manual download.
+  private previewObjectUrl:
+    string | null =
+      null;
 
 
   // =====================================================
@@ -74,7 +171,8 @@ export class TrainerReports implements OnInit {
 
   constructor(
     private api: TrainerApi,
-    private auth: AuthService
+    private auth: AuthService,
+    private sanitizer: DomSanitizer
   ) {}
 
 
@@ -85,6 +183,13 @@ export class TrainerReports implements OnInit {
   ngOnInit(): void {
 
     this.loadCurrentTrainer();
+
+  }
+
+
+  ngOnDestroy(): void {
+
+    this.clearPreviewUrl();
 
   }
 
@@ -109,18 +214,29 @@ export class TrainerReports implements OnInit {
     }
 
 
-    // المستخدم الذي يقوم بتوليد التقرير
     this.generatedByUserId =
       userId;
 
 
-    this.loading.set(true);
+    // Load Trainer Portal report history
+    // for the logged-in user.
+    this.loadReportHistory();
 
-    this.errorMessage.set('');
+
+    this.loading.set(
+      true
+    );
+
+
+    this.errorMessage.set(
+      ''
+    );
 
 
     this.api
-      .getTrainerByUserId(userId)
+      .getTrainerByUserId(
+        userId
+      )
       .subscribe({
 
         next: (trainer) => {
@@ -144,7 +260,10 @@ export class TrainerReports implements OnInit {
           );
 
 
-          this.loading.set(false);
+          this.loading.set(
+            false
+          );
+
 
           this.errorMessage.set(
             'تعذر تحميل بيانات المدرب.'
@@ -164,9 +283,7 @@ export class TrainerReports implements OnInit {
   private loadKpis(): void {
 
     if (!this.trainerId) {
-
       return;
-
     }
 
 
@@ -183,7 +300,9 @@ export class TrainerReports implements OnInit {
           );
 
 
-          this.loading.set(false);
+          this.loading.set(
+            false
+          );
 
         },
 
@@ -200,7 +319,11 @@ export class TrainerReports implements OnInit {
             null
           );
 
-          this.loading.set(false);
+
+          this.loading.set(
+            false
+          );
+
 
           this.errorMessage.set(
             'تعذر تحميل مؤشرات الأداء.'
@@ -220,9 +343,7 @@ export class TrainerReports implements OnInit {
   private loadFeedback(): void {
 
     if (!this.trainerId) {
-
       return;
-
     }
 
 
@@ -261,14 +382,162 @@ export class TrainerReports implements OnInit {
 
 
   // =====================================================
-  // GENERATE REPORT
+  // LOAD REPORT HISTORY
   // =====================================================
 
-  exportReport(
-    type:
-      | 'Attendance'
-      | 'Performance'
-      | 'Custom'
+  private loadReportHistory(): void {
+
+    if (!this.generatedByUserId) {
+      return;
+    }
+
+
+    this.loadingHistory.set(
+      true
+    );
+
+
+    this.api
+      .getTrainerReports(
+        this.generatedByUserId
+      )
+      .subscribe({
+
+        next: (reports) => {
+
+          // Keep only reports created
+          // through Trainer Portal.
+          const trainerReports =
+            (reports ?? [])
+              .filter(report => {
+
+                if (
+                  report.type !== 'Attendance' &&
+                  report.type !== 'Performance' &&
+                  report.type !== 'Custom'
+                ) {
+                  return false;
+                }
+
+
+                if (!report.filtersJson) {
+                  return false;
+                }
+
+
+                try {
+
+                  const filters =
+                    JSON.parse(
+                      report.filtersJson
+                    );
+
+
+                  return (
+                    filters?.source ===
+                    'TrainerPortal'
+                  );
+
+                } catch {
+
+                  return false;
+
+                }
+
+              });
+
+
+          // Newest reports first.
+          const sortedReports =
+            [...trainerReports]
+              .sort(
+                (a, b) =>
+                  new Date(
+                    b.generatedAt
+                  ).getTime() -
+                  new Date(
+                    a.generatedAt
+                  ).getTime()
+              );
+
+
+          // Keep only the latest report
+          // from each report type.
+          const latestReports =
+            sortedReports.filter(
+              (
+                report,
+                index,
+                items
+              ) =>
+                items.findIndex(
+                  item =>
+                    item.type ===
+                    report.type
+                ) === index
+            );
+
+
+          this.reportHistory.set(
+            latestReports
+          );
+
+
+          this.loadingHistory.set(
+            false
+          );
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'خطأ في تحميل سجل التقارير:',
+            err
+          );
+
+
+          this.reportHistory.set(
+            []
+          );
+
+
+          this.loadingHistory.set(
+            false
+          );
+
+        }
+
+      });
+
+  }
+
+
+  // =====================================================
+  // DISMISS PAGE MESSAGE
+  // =====================================================
+
+  dismissMessage(): void {
+
+    this.errorMessage.set(
+      ''
+    );
+
+
+    this.successMessage.set(
+      ''
+    );
+
+  }
+
+
+  // =====================================================
+  // GENERATE + PREVIEW REPORT
+  // =====================================================
+
+  previewReport(
+    type: TrainerReportType
   ): void {
 
     if (
@@ -284,11 +553,24 @@ export class TrainerReports implements OnInit {
     }
 
 
-    this.exporting.set(true);
+    this.exporting.set(
+      true
+    );
 
-    this.errorMessage.set('');
 
-    this.successMessage.set('');
+    this.generatingReportType.set(
+      type
+    );
+
+
+    this.errorMessage.set(
+      ''
+    );
+
+
+    this.successMessage.set(
+      ''
+    );
 
 
     const dto = {
@@ -310,14 +592,19 @@ export class TrainerReports implements OnInit {
     };
 
 
+    // Generate using the dedicated
+    // Trainer Portal endpoint.
     this.api
-      .generateReport(dto)
+      .generateTrainerPortalReport(
+        dto
+      )
       .subscribe({
 
         next: (report) => {
 
-          this.downloadGeneratedReport(
-            report.reportId
+          this.loadReportPreview(
+            report.reportId,
+            type
           );
 
         },
@@ -331,7 +618,20 @@ export class TrainerReports implements OnInit {
           );
 
 
-          this.exporting.set(false);
+          this.exporting.set(
+            false
+          );
+
+
+          this.generatingReportType.set(
+            null
+          );
+
+
+          this.successMessage.set(
+            ''
+          );
+
 
           this.errorMessage.set(
             'تعذر توليد التقرير.'
@@ -345,62 +645,83 @@ export class TrainerReports implements OnInit {
 
 
   // =====================================================
-  // DOWNLOAD GENERATED REPORT
+  // LOAD PDF FOR PREVIEW
   // =====================================================
 
-  private downloadGeneratedReport(
-    reportId: number
+  private loadReportPreview(
+    reportId: number,
+    type: TrainerReportType
   ): void {
 
     this.api
-      .downloadReport(reportId)
+      .getTrainerPortalReportFile(
+        reportId
+      )
       .subscribe({
 
         next: (blob) => {
 
-          const url =
+          // Remove the previous browser Blob URL
+          // before creating the new preview.
+          this.clearPreviewUrl();
+
+
+          this.previewObjectUrl =
             window.URL.createObjectURL(
               blob
             );
 
 
-          const link =
-            document.createElement(
-              'a'
-            );
+          const safeUrl =
+            this.sanitizer
+              .bypassSecurityTrustResourceUrl(
+                this.previewObjectUrl
+              );
 
 
-          link.href =
-            url;
+          this.reportPreviewUrl.set(
+            safeUrl
+          );
 
 
-          link.download =
-            `trainer-report-${reportId}.pdf`;
+          this.previewReportId.set(
+            reportId
+          );
 
 
-          document.body
-            .appendChild(
-              link
-            );
+          this.previewReportType.set(
+            type
+          );
 
 
-          link.click();
+          this.showReportPreview.set(
+            true
+          );
 
 
-          link.remove();
+          this.exporting.set(
+            false
+          );
 
 
-          window.URL
-            .revokeObjectURL(
-              url
-            );
+          this.generatingReportType.set(
+            null
+          );
 
 
-          this.exporting.set(false);
+          this.errorMessage.set(
+            ''
+          );
+
 
           this.successMessage.set(
-            'تم إنشاء التقرير وتنزيله بنجاح.'
+            'تم تجهيز التقرير بنجاح.'
           );
+
+
+          // Refresh Recent Reports so the
+          // new report appears immediately.
+          this.loadReportHistory();
 
         },
 
@@ -408,15 +729,34 @@ export class TrainerReports implements OnInit {
         error: (err) => {
 
           console.error(
-            'خطأ في تنزيل التقرير:',
+            'خطأ في تحميل معاينة التقرير:',
             err
           );
 
 
-          this.exporting.set(false);
+          this.exporting.set(
+            false
+          );
+
+
+          this.generatingReportType.set(
+            null
+          );
+
+
+          this.successMessage.set(
+            ''
+          );
+
+
+          // The database record may already exist,
+          // so refresh the list even if its PDF
+          // could not be opened.
+          this.loadReportHistory();
+
 
           this.errorMessage.set(
-            'تم إنشاء التقرير ولكن تعذر تنزيل الملف.'
+            'تعذر فتح ملف التقرير. حاولي إنشاء التقرير مرة أخرى.'
           );
 
         }
@@ -425,4 +765,218 @@ export class TrainerReports implements OnInit {
 
   }
 
+
+  // =====================================================
+  // PREVIEW EXISTING REPORT
+  // =====================================================
+
+  previewExistingReport(
+    _reportId: number,
+    type: string
+  ): void {
+
+    if (
+      type !== 'Attendance' &&
+      type !== 'Performance' &&
+      type !== 'Custom'
+    ) {
+      return;
+    }
+
+
+    /*
+     * Some older reports were generated before
+     * Trainer Portal PDFs were moved to external storage.
+     *
+     * Generate a fresh report using the current flow
+     * instead of trying to open an old missing PDF.
+     */
+    this.previewReport(
+      type
+    );
+
+  }
+
+
+  // =====================================================
+  // OPEN REPORT IN NEW TAB
+  // =====================================================
+
+  openPreviewInNewTab(): void {
+
+    if (!this.previewObjectUrl) {
+      return;
+    }
+
+
+    const previewWindow =
+      window.open(
+        this.previewObjectUrl,
+        '_blank'
+      );
+
+
+    if (previewWindow) {
+
+      previewWindow.opener =
+        null;
+
+    }
+
+  }
+
+
+  // =====================================================
+  // DOWNLOAD REPORT
+  // =====================================================
+
+  downloadPreviewedReport(): void {
+
+    const reportId =
+      this.previewReportId();
+
+
+    if (
+      !this.previewObjectUrl ||
+      !reportId
+    ) {
+      return;
+    }
+
+
+    const link =
+      document.createElement(
+        'a'
+      );
+
+
+    link.href =
+      this.previewObjectUrl;
+
+
+    link.download =
+      `trainer-report-${reportId}.pdf`;
+
+
+    document.body
+      .appendChild(
+        link
+      );
+
+
+    link.click();
+
+    link.remove();
+
+
+    this.successMessage.set(
+      'تم تنزيل التقرير بنجاح.'
+    );
+
+  }
+
+
+  // =====================================================
+  // CLOSE REPORT PREVIEW
+  // =====================================================
+
+  closeReportPreview(): void {
+
+    this.showReportPreview.set(
+      false
+    );
+
+
+    this.previewReportId.set(
+      null
+    );
+
+
+    this.previewReportType.set(
+      null
+    );
+
+
+    this.clearPreviewUrl();
+
+  }
+
+
+  // =====================================================
+  // CLEAR BLOB URL
+  // =====================================================
+
+  private clearPreviewUrl(): void {
+
+    if (this.previewObjectUrl) {
+
+      window.URL.revokeObjectURL(
+        this.previewObjectUrl
+      );
+
+
+      this.previewObjectUrl =
+        null;
+
+    }
+
+
+    this.reportPreviewUrl.set(
+      null
+    );
+
+  }
+
+
+// =====================================================
+// REPORT HISTORY TITLE
+// =====================================================
+
+getHistoryReportTitle(
+  type: string
+): string {
+
+  switch (type) {
+
+    case 'Attendance':
+      return 'تقرير الحضور والغياب';
+
+    case 'Performance':
+      return 'تقرير أداء الدفعات والمهام';
+
+    case 'Custom':
+      return 'التقرير الشامل للأداء التدريبي';
+
+    default:
+      return 'تقرير';
+
+  }
+
 }
+
+
+// =====================================================
+// PREVIEW REPORT TITLE
+// =====================================================
+
+getReportTitle(): string {
+
+  switch (
+    this.previewReportType()
+  ) {
+
+    case 'Attendance':
+      return 'تقرير الحضور والغياب';
+
+    case 'Performance':
+      return 'تقرير أداء الدفعات والمهام';
+
+    case 'Custom':
+      return 'التقرير الشامل للأداء التدريبي';
+
+    default:
+      return 'معاينة التقرير';
+
+  }
+
+}}

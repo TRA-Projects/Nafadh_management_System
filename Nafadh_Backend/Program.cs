@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
@@ -246,8 +247,40 @@ namespace Nafadh_Backend
             }
 
             app.UseHttpsRedirection();
-            // Enable access to files inside wwwroot
+            // STATIC FILES INSIDE WWWROOT
             app.UseStaticFiles();
+            // EXTERNAL TRAINING MATERIAL FILES
+            // =====================================================
+            // Physical storage path outside the project
+            var trainingMaterialsPath = builder.Configuration["Storage:TrainingMaterialsPath"];
+
+
+            // Public URL path used by the browser
+            var trainingMaterialsRequestPath = builder.Configuration["Storage:TrainingMaterialsRequestPath"] ?? "/uploads/training-materials";
+
+            if (!string.IsNullOrWhiteSpace(trainingMaterialsPath))
+
+
+            {
+                // Create the external folder
+                // if it does not exist yet
+                Directory.CreateDirectory(trainingMaterialsPath);
+
+
+                // Allow the browser to access files
+                // stored outside wwwroot
+                app.UseStaticFiles(new StaticFileOptions
+
+                {
+                        FileProvider = new PhysicalFileProvider(trainingMaterialsPath),
+
+                    RequestPath = trainingMaterialsRequestPath
+
+                }
+                );
+            }
+
+
             // Enable CORS middleware here
             app.UseCors("AllowAll");
 

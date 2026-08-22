@@ -54,21 +54,87 @@ export class TrainerTrainees implements OnInit {
 
 
   // =====================================================
+  // EVALUABLE ENROLLMENTS
+  // =====================================================
+
+  evaluableEnrollments =
+    computed(() => {
+
+      return this.enrollments()
+        .filter(
+          enrollment =>
+            enrollment.completionStatus !== 'Dropped'
+        );
+    });
+
+
+  // =====================================================
+  // REPORT EXPORT STATE
+  // =====================================================
+
+  isExportingReport =
+    signal(false);
+
+
+  // =====================================================
+  // NEW EVALUATION PICKER
+  // =====================================================
+
+  showTraineePicker =
+    signal(false);
+
+
+  // =====================================================
+  // TRAINEE PROFILE STATE
+  // =====================================================
+
+  showTraineeProfile =
+    signal(false);
+
+  selectedProfileEnrollmentId =
+    signal<number | null>(null);
+
+
+  selectedProfileEnrollment =
+    computed(() => {
+
+      const enrollmentId =
+        this.selectedProfileEnrollmentId();
+
+
+      if (enrollmentId === null) {
+
+        return null;
+      }
+
+
+      return (
+        this.enrollments()
+          .find(
+            enrollment =>
+              enrollment.enrollmentId === enrollmentId
+          ) ?? null
+      );
+    });
+
+
+  // =====================================================
   // KPI
   // =====================================================
 
-  totalTrainees = computed(() => {
+  totalTrainees =
+    computed(() => {
 
-    const traineeIds =
-      new Set(
-        this.enrollments().map(
-          enrollment =>
-            enrollment.traineeId
-        )
-      );
+      const traineeIds =
+        new Set(
+          this.enrollments().map(
+            enrollment =>
+              enrollment.traineeId
+          )
+        );
 
-    return traineeIds.size;
-  });
+      return traineeIds.size;
+    });
 
 
   // =====================================================
@@ -79,18 +145,36 @@ export class TrainerTrainees implements OnInit {
     signal<Record<number, number | null>>({});
 
 
-  evaluatedTraineesCount =
+  performanceScores =
     computed(() => {
 
-      return Object
-        .values(
-          this.evaluationAverages()
+      const averages =
+        this.evaluationAverages();
+
+
+      return this.enrollments()
+        .filter(
+          enrollment =>
+            enrollment.completionStatus !== 'Dropped'
+        )
+        .map(
+          enrollment =>
+            averages[
+              enrollment.enrollmentId
+            ]
         )
         .filter(
           (score): score is number =>
             typeof score === 'number' &&
             Number.isFinite(score)
-        )
+        );
+    });
+
+
+  evaluatedTraineesCount =
+    computed(() => {
+
+      return this.performanceScores()
         .length;
     });
 
@@ -99,15 +183,7 @@ export class TrainerTrainees implements OnInit {
     computed(() => {
 
       const scores =
-        Object
-          .values(
-            this.evaluationAverages()
-          )
-          .filter(
-            (score): score is number =>
-              typeof score === 'number' &&
-              Number.isFinite(score)
-          );
+        this.performanceScores();
 
 
       if (scores.length === 0) {
@@ -131,14 +207,9 @@ export class TrainerTrainees implements OnInit {
   highPerformers =
     computed(() => {
 
-      return Object
-        .values(
-          this.evaluationAverages()
-        )
+      return this.performanceScores()
         .filter(
-          (score): score is number =>
-            typeof score === 'number' &&
-            Number.isFinite(score) &&
+          score =>
             score >= 85
         )
         .length;
@@ -148,14 +219,9 @@ export class TrainerTrainees implements OnInit {
   needsSupport =
     computed(() => {
 
-      return Object
-        .values(
-          this.evaluationAverages()
-        )
+      return this.performanceScores()
         .filter(
-          (score): score is number =>
-            typeof score === 'number' &&
-            Number.isFinite(score) &&
+          score =>
             score < 60
         )
         .length;
@@ -166,25 +232,10 @@ export class TrainerTrainees implements OnInit {
   // ATTENDANCE
   // =====================================================
 
-  /**
-   * Stores attendance compliance percentage
-   * for every enrollment.
-   *
-   * Example:
-   * {
-   *   440: 60,
-   *   441: 90,
-   *   442: null
-   * }
-   */
   attendancePercentages =
     signal<Record<number, number | null>>({});
 
 
-  /**
-   * Returns attendance percentage
-   * for a specific enrollment.
-   */
   attendancePercentage(
     enrollmentId: number
   ): number | null {
@@ -212,9 +263,6 @@ export class TrainerTrainees implements OnInit {
   // TECHNICAL LEVEL
   // =====================================================
 
-  /**
-   * Returns the technical score for an enrollment.
-   */
   technicalScore(
     enrollmentId: number
   ): number | null {
@@ -238,10 +286,6 @@ export class TrainerTrainees implements OnInit {
   }
 
 
-  /**
-   * Returns the technical level label
-   * based on the evaluation average.
-   */
   technicalLevel(
     enrollmentId: number
   ): string {
@@ -280,10 +324,6 @@ export class TrainerTrainees implements OnInit {
   }
 
 
-  /**
-   * Returns a safe progress value
-   * between 0 and 100.
-   */
   technicalProgress(
     enrollmentId: number
   ): number {
@@ -306,6 +346,86 @@ export class TrainerTrainees implements OnInit {
         0,
         score
       )
+    );
+  }
+
+
+  // =====================================================
+  // ENROLLMENT STATUS
+  // =====================================================
+
+  enrollmentStatusLabel(
+    status: string | null | undefined
+  ): string {
+
+    switch (status) {
+
+      case 'InProgress':
+
+        return 'قيد التدريب';
+
+
+      case 'Completed':
+
+        return 'مكتمل';
+
+
+      case 'Dropped':
+
+        return 'منسحب';
+
+
+      case 'Failed':
+
+        return 'لم يجتز';
+
+
+      default:
+
+        return '—';
+    }
+  }
+
+
+  enrollmentStatusClass(
+    status: string | null | undefined
+  ): string {
+
+    switch (status) {
+
+      case 'InProgress':
+
+        return 'good';
+
+
+      case 'Completed':
+
+        return 'excellent';
+
+
+      case 'Dropped':
+
+        return 'neutral';
+
+
+      case 'Failed':
+
+        return 'support';
+
+
+      default:
+
+        return 'neutral';
+    }
+  }
+
+
+  canEvaluateEnrollment(
+    enrollment: EnrollmentDto
+  ): boolean {
+
+    return (
+      enrollment.completionStatus !== 'Dropped'
     );
   }
 
@@ -593,13 +713,11 @@ export class TrainerTrainees implements OnInit {
           );
 
 
-          // تحميل متوسط التقييم لكل متدرب
           this.loadEvaluationAverages(
             enrollments
           );
 
 
-          // تحميل نسبة الحضور لكل متدرب
           this.loadAttendancePercentages(
             enrollments
           );
@@ -811,6 +929,204 @@ export class TrainerTrainees implements OnInit {
 
 
   // =====================================================
+  // EXPORT TRAINEES REPORT
+  // =====================================================
+
+  exportTraineesReport(): void {
+
+    const trainer =
+      this.trainer();
+
+    const userId =
+      this.auth.session()?.userId;
+
+
+    if (
+      !trainer ||
+      !userId
+    ) {
+
+      console.error(
+        'تعذر تصدير الكشف لعدم توفر بيانات المدرب الحالي'
+      );
+
+      return;
+    }
+
+
+    if (this.isExportingReport()) {
+
+      return;
+    }
+
+
+    this.isExportingReport.set(
+      true
+    );
+
+
+    this.api
+      .generateTrainerTraineesReport({
+
+        trainerId:
+          trainer.trainerId,
+
+        batchId:
+          this.batchId,
+
+        generatedByUserId:
+          userId
+
+      })
+      .subscribe({
+
+        next: (report) => {
+
+          this.api
+            .downloadReport(
+              report.reportId
+            )
+            .subscribe({
+
+              next: (blob) => {
+
+                const url =
+                  window.URL.createObjectURL(
+                    blob
+                  );
+
+
+                const link =
+                  document.createElement(
+                    'a'
+                  );
+
+
+                link.href =
+                  url;
+
+
+                link.download =
+                  `trainer-trainees-${report.reportId}.pdf`;
+
+
+                document.body.appendChild(
+                  link
+                );
+
+
+                link.click();
+
+
+                document.body.removeChild(
+                  link
+                );
+
+
+                window.URL.revokeObjectURL(
+                  url
+                );
+
+
+                this.isExportingReport.set(
+                  false
+                );
+              },
+
+
+              error: (err) => {
+
+                console.error(
+                  'خطأ في تنزيل كشف المتدربين:',
+                  err
+                );
+
+
+                this.isExportingReport.set(
+                  false
+                );
+              }
+
+            });
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'خطأ في إنشاء كشف المتدربين:',
+            err
+          );
+
+
+          this.isExportingReport.set(
+            false
+          );
+        }
+
+      });
+  }
+
+
+  // =====================================================
+  // TRAINEE PROFILE METHODS
+  // =====================================================
+
+  openTraineeProfile(
+    enrollmentId: number
+  ): void {
+
+    this.selectedProfileEnrollmentId.set(
+      enrollmentId
+    );
+
+    this.showTraineeProfile.set(
+      true
+    );
+  }
+
+
+  closeTraineeProfile(): void {
+
+    this.showTraineeProfile.set(
+      false
+    );
+
+    this.selectedProfileEnrollmentId.set(
+      null
+    );
+  }
+
+
+  startEvaluationFromProfile(): void {
+
+    const enrollment =
+      this.selectedProfileEnrollment();
+
+
+    if (
+      !enrollment ||
+      enrollment.completionStatus === 'Dropped'
+    ) {
+
+      return;
+    }
+
+
+    const enrollmentId =
+      enrollment.enrollmentId;
+
+
+    this.closeTraineeProfile();
+
+
+    this.openEval(
+      enrollmentId
+    );
+  }
+
+
+  // =====================================================
   // EVALUATION TEMPLATES
   // =====================================================
 
@@ -891,12 +1207,65 @@ export class TrainerTrainees implements OnInit {
 
 
   // =====================================================
+  // START NEW EVALUATION
+  // =====================================================
+
+  startNewEvaluation(): void {
+
+    this.showTraineePicker.set(
+      true
+    );
+  }
+
+
+  // =====================================================
+  // SELECT TRAINEE FOR EVALUATION
+  // =====================================================
+
+  selectTraineeForEvaluation(
+    enrollmentId: number
+  ): void {
+
+    this.showTraineePicker.set(
+      false
+    );
+
+
+    this.openEval(
+      enrollmentId
+    );
+  }
+
+
+  // =====================================================
   // OPEN EVALUATION
   // =====================================================
 
   openEval(
     enrollmentId: number
   ): void {
+
+    const enrollment =
+      this.enrollments()
+        .find(
+          item =>
+            item.enrollmentId ===
+            enrollmentId
+        );
+
+
+    if (
+      !enrollment ||
+      enrollment.completionStatus === 'Dropped'
+    ) {
+
+      console.warn(
+        'لا يمكن تقييم متدرب منسحب'
+      );
+
+      return;
+    }
+
 
     this.selectedEnrollmentId =
       enrollmentId;
@@ -1040,6 +1409,28 @@ export class TrainerTrainees implements OnInit {
     }
 
 
+    const enrollment =
+      this.enrollments()
+        .find(
+          item =>
+            item.enrollmentId ===
+            this.selectedEnrollmentId
+        );
+
+
+    if (
+      !enrollment ||
+      enrollment.completionStatus === 'Dropped'
+    ) {
+
+      console.warn(
+        'لا يمكن حفظ تقييم لمتدرب منسحب'
+      );
+
+      return;
+    }
+
+
     const criteriaScores =
       Object.entries(
         this.criteriaScores
@@ -1088,7 +1479,6 @@ export class TrainerTrainees implements OnInit {
             null;
 
 
-          // تحديث التقييمات بعد حفظ تقييم جديد
           this.loadEvaluationAverages(
             this.enrollments()
           );

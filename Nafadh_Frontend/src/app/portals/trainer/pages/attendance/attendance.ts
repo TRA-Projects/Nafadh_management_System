@@ -62,6 +62,28 @@ type Shape = 'number' | 'numeric-text' | 'name';
 export class TrainerAttendance implements OnInit {
   trainerId = signal<number | null>(null);
   trainerBatchIds = signal<Set<number>>(new Set<number>());
+
+  // الدفعات المسندة للمدرب + الدفعة المختارة لعرض حضورها فقط
+  trainerBatches = signal<any[]>([]);
+  selectedBatchId = signal<number | null>(null);
+
+  // التاريخ المختار لعرض سجل الحضور. الافتراضي هو اليوم، ولا يسمح بتاريخ مستقبلي.
+  readonly todayDateKey = this.dateKey(new Date());
+  selectedDate = signal<string>(this.todayDateKey);
+  isTodaySelected = computed(() => this.selectedDate() === this.todayDateKey);
+  selectedDateLabel = computed(() => {
+    const value = this.selectedDate();
+    if (!value) return '';
+
+    return new Intl.DateTimeFormat('ar', {
+      calendar: 'gregory',
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    } as Intl.DateTimeFormatOptions).format(new Date(`${value}T00:00:00`));
+  });
+
   private base = environment.apiBaseUrl;
   private readonly repeatedAbsenceThreshold = 3;
 
@@ -152,21 +174,31 @@ export class TrainerAttendance implements OnInit {
 
           this.api.getMyBatches(trainer.trainerId).subscribe({
             next: (batches) => {
-              const batchIds = new Set<number>(
-                (batches ?? [])
-                  .map((b) => Number(b.batchId))
-                  .filter((id) => Number.isFinite(id) && id > 0)
+              const trainerBatches = (batches ?? []).filter(
+                (b) => Number.isFinite(Number(b.batchId)) && Number(b.batchId) > 0
               );
 
+              const batchIds = new Set<number>(
+                trainerBatches.map((b) => Number(b.batchId))
+              );
+
+              this.trainerBatches.set(trainerBatches);
               this.trainerBatchIds.set(batchIds);
 
               if (!batchIds.size) {
+                this.selectedBatchId.set(null);
                 this.rows.set([]);
                 this.excuses.set([]);
                 this.repeatedAbsenceIds.set(new Set<number>());
                 this.loading.set(false);
                 this.loadError.set(null);
                 return;
+              }
+
+              const currentBatchId = this.selectedBatchId();
+
+              if (currentBatchId == null || !batchIds.has(currentBatchId)) {
+                this.selectedBatchId.set(Number(trainerBatches[0].batchId));
               }
 
               this.reload();
@@ -213,8 +245,9 @@ export class TrainerAttendance implements OnInit {
     this.loadError.set(null);
 
     const allowedBatchIds = this.trainerBatchIds();
+    const selectedBatchId = this.selectedBatchId();
 
-    if (!allowedBatchIds.size) {
+    if (!allowedBatchIds.size || selectedBatchId == null) {
       this.rows.set([]);
       this.excuses.set([]);
       this.repeatedAbsenceIds.set(new Set<number>());
@@ -235,7 +268,9 @@ export class TrainerAttendance implements OnInit {
                 : [];
 
         const scopedEnrollments = enrollments.filter(
-          (e) => allowedBatchIds.has(Number(e.batchId))
+          (e) =>
+            allowedBatchIds.has(Number(e.batchId)) &&
+            Number(e.batchId) === selectedBatchId
         );
 
         if (!scopedEnrollments.length) {
@@ -255,23 +290,23 @@ export class TrainerAttendance implements OnInit {
 
         forkJoin(historyRequests).subscribe({
           next: (histories) => {
-            const todayKey = this.dateKey(new Date());
-            const todayRecords: DailyAttendanceDto[] = [];
+            const selectedKey = this.selectedDate();
+            const selectedRecords: DailyAttendanceDto[] = [];
 
             histories.forEach((history) => {
               const record = (history ?? []).find(
-                (a) => this.dateKey(new Date(a.date)) === todayKey
+                (a) => this.dateKey(new Date(a.date)) === selectedKey
               );
 
-              if (record) todayRecords.push(record);
+              if (record) selectedRecords.push(record);
             });
 
             this.attShape = this.detectShape(
-              todayRecords.map((r) => r.status)
+              selectedRecords.map((r) => r.status)
             );
 
             const byEnrollment = new Map<number, DailyAttendanceDto>(
-              todayRecords.map((a) => [a.enrollmentId, a])
+              selectedRecords.map((a) => [a.enrollmentId, a])
             );
 
             const merged: Row[] = scopedEnrollments.map((e) => {
@@ -290,7 +325,9 @@ export class TrainerAttendance implements OnInit {
                 checkOutTime: attendance?.checkOutTime ?? null,
                 status: attendance
                   ? attendance.status
-                  : this.toApi(this.presentStatus(), this.attShape),
+                  : this.isTodaySelected()
+                    ? this.toApi(this.presentStatus(), this.attShape)
+                    : undefined,
                 isLate: attendance?.isLate ?? false,
                 note: attendance?.note ?? null,
               };
@@ -332,6 +369,37 @@ export class TrainerAttendance implements OnInit {
         );
       },
     });
+  }
+
+  onBatchChange(value: number | string | null): void {
+    const batchId = Number(value);
+
+    if (
+      !Number.isFinite(batchId) ||
+      batchId <= 0 ||
+      !this.trainerBatchIds().has(batchId)
+    ) {
+      return;
+    }
+
+    this.selectedBatchId.set(batchId);
+    this.weeklyRows.set([]);
+    this.monthlyRows.set([]);
+    this.reload();
+  }
+
+  onDateChange(value: string): void {
+    if (!value || value > this.todayDateKey) return;
+
+    this.selectedDate.set(value);
+    this.query.set('');
+    this.filter.set('all');
+    this.weeklyRows.set([]);
+    this.monthlyRows.set([]);
+
+    // اختيار تاريخ يعني فتح السجل اليومي لذلك التاريخ.
+    this.registerView.set('today');
+    this.reload();
   }
 
   private dateKey(date: Date): string {
@@ -471,10 +539,18 @@ export class TrainerAttendance implements OnInit {
   }
 
   // ── الإحصاءات وشريط النداء ──────────────────────────────
-  total = computed(() => this.rows().length);
+  total = computed(() =>
+    this.isTodaySelected()
+      ? this.rows().length
+      : this.rows().filter((r) => r.dailyAttendanceId != null).length
+  );
   marked = computed(() => this.rows().filter((r) => !!this.statusOf(r.status)).length);
-  // غير المحفوظين = من يظهرون حاضرين افتراضياً لكن لم يُنشأ لهم سجل في الباك بعد.
-  unmarked = computed(() => this.rows().filter((r) => r.dailyAttendanceId == null).length);
+  // غير المحفوظين يظهرون فقط في سجل اليوم. السجلات السابقة للعرض والمراجعة فقط.
+  unmarked = computed(() =>
+    this.isTodaySelected()
+      ? this.rows().filter((r) => r.dailyAttendanceId == null).length
+      : 0
+  );
 
   segments = computed(() => {
     const total = this.total() || 1;
@@ -496,6 +572,7 @@ export class TrainerAttendance implements OnInit {
     const f = this.filter();
     return this.rows().filter((r) => {
       const key = this.statusKey(r.status);
+      if (!this.isTodaySelected() && r.dailyAttendanceId == null) return false;
       if (f === 'unmarked' && r.dailyAttendanceId != null) return false;
       if (f === 'absent' && key !== 'absent') return false;
       if (q && !this.normalize(String(r.traineeName ?? '')).includes(q)) return false;
@@ -678,6 +755,11 @@ export class TrainerAttendance implements OnInit {
   });
 }
   confirmToday() {
+    if (!this.isTodaySelected()) {
+      this.notify('السجل السابق مخصص للعرض ومراجعة الأعذار فقط.', 'err');
+      return;
+    }
+
     const unsavedPresent = this.rows().filter(
       (r) => r.dailyAttendanceId == null && this.statusKey(r.status) === 'present'
     );
@@ -749,6 +831,11 @@ export class TrainerAttendance implements OnInit {
 
   // ── تسجيل الحالة ────────────────────────────────────────
   setStatus(row: Row, def: StatusDef) {
+    if (!this.isTodaySelected()) {
+      this.notify('لا يمكن تعديل حالة الحضور ليوم سابق من هذا الكشف.', 'err');
+      return;
+    }
+
     if (this.isActive(row, def) || this.savingId() !== null) return;
 
     const before = { ...row };
@@ -963,7 +1050,13 @@ export class TrainerAttendance implements OnInit {
 
     this.api.reviewExcuse(ex.excuseId, { status: value } as any).subscribe({
       next: () => {
-        this.excuses.update((list) => list.filter((e) => e.excuseId !== ex.excuseId));
+        this.excuses.update((list) =>
+          list.map((e) =>
+            e.excuseId === ex.excuseId
+              ? ({ ...e, status: value } as Excuse)
+              : e
+          )
+        );
         this.reviewingId.set(null);
         this.notify(approve ? 'قُبل العذر.' : 'رُفض العذر.', 'ok');
       },

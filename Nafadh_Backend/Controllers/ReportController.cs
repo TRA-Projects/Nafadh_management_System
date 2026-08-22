@@ -44,6 +44,41 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(report);
         }
+        // ==========================================================
+        // Generate Trainer Portal Report
+        // POST: api/Report/trainer-generate
+        // Kept separate from the shared report endpoint.
+        // ==========================================================
+
+        [HttpPost("trainer-generate")]
+        public async Task<IActionResult> GenerateTrainerPortalReport(
+            [FromBody] ReportInputDTO dto
+        )
+        {
+            var report =
+                await _service.GenerateTrainerPortalReportAsync(
+                    dto
+                );
+
+            return Ok(
+                report
+            );
+        }
+        // ==========================================================
+        // Generate Trainer Trainees Report
+        // POST: api/Report/trainer-trainees
+        // ==========================================================
+
+        [HttpPost("trainer-trainees")]
+        public async Task<IActionResult> GenerateTrainerTraineesReport(
+            [FromBody] TrainerTraineesReportInputDto dto
+        )
+        {
+            var report =
+                await _service.GenerateTrainerTraineesReportAsync(dto);
+
+            return Ok(report);
+        }
 
         // GET Report/{id}
         [HttpGet("{id}")]
@@ -86,7 +121,48 @@ public async Task<IActionResult> DownloadReport(int id)
                 fileName
             );
         }
+        // ==========================================================
+        // Trainer Portal Report File
+        // GET: api/Report/trainer/{id}/file
+        // ==========================================================
 
+        // Serves Trainer Portal PDFs from external storage
+        // without changing the shared report download endpoint.
+        [HttpGet("trainer/{id}/file")]
+        public async Task<IActionResult> GetTrainerPortalReportFile(
+            int id
+        )
+        {
+            var filePath =
+                await _service
+                    .GetTrainerPortalReportFilePathAsync(
+                        id
+                    );
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    filePath
+                )
+            )
+            {
+                return NotFound(
+                    "Trainer report file not found."
+                );
+            }
+
+            var fileBytes =
+                await System.IO.File
+                    .ReadAllBytesAsync(
+                        filePath
+                    );
+
+            // No download filename is supplied here so the PDF
+            // can be displayed directly in the browser preview.
+            return File(
+                fileBytes,
+                "application/pdf"
+            );
+        }
         // ==========================================================
         // NEW analytics/aggregation endpoints (backend upgrade - Phase 2)
         // ==========================================================
