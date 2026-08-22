@@ -26,6 +26,9 @@ namespace Nafadh_Backend.Repositories
                     .ThenInclude(p => p.CompanyPrograms)
                         .ThenInclude(cp => cp.Company)
                 .Include(b => b.Enrollments)
+                .Include(b => b.BatchTrainers)
+                .ThenInclude(bt => bt.Trainer)
+                .ThenInclude(t => t.User)
                 .AsQueryable();
 
             if (programId.HasValue)
@@ -42,6 +45,8 @@ namespace Nafadh_Backend.Repositories
 
             return await query.ToListAsync();
         }
+
+
 
         public async Task<NFD_Batch?> GetByIdAsync(int id)
         {

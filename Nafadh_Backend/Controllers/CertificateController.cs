@@ -98,6 +98,36 @@ namespace Nafadh_Backend.Controllers
         }
 
 
+        //=================-- Admin portal =================--
+
+        // GET api/Certificate/batch/{batchId}/status
+        // يرجّع كل متدربي الدفعة + حالة الشهادة الحقيقية (من جدول Certificate) في استعلام واحد
+
+
+        [HttpGet("batch/{batchId}/status")]
+        public async Task<IActionResult> GetBatchCertificatesStatus(int batchId)
+        {
+            var result = await _service.GetBatchCertificatesStatusAsync(batchId);
+            if (result == null)
+                return NotFound();
+
+            return Ok(result);
+        }
+
+
+        // PATCH api/Certificate/enrollment/{enrollmentId}/status
+        // endpoint صريح لتغيير حالة الإصدار (لو تحتاجه بشكل منفصل عن AddCertificate)
+
+
+        [HttpPatch("enrollment/{enrollmentId}/status")]
+        public async Task<IActionResult> UpdateCertificateStatus(int enrollmentId, [FromBody] UpdateCertificateStatusDTO dto)
+        {
+            var result = await _service.UpdateCertificateStatusAsync(enrollmentId, dto.IsIssued);
+            if (result == null)
+                return NotFound();
+
+            return Ok(new { Message = "تم تحديث حالة الشهادة", Certificate = result });
+        }
 
     }
 }

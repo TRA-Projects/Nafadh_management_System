@@ -159,17 +159,24 @@ namespace Nafadh_Backend.Services
                 // اسم المسار
                 TrackName = b.Program?.Track?.Name ?? b.Program?.Title ?? "عام",
 
+                // جلب اسم المدرب من جدول الربط الوسيط BatchTrainers
+                InstructorName = b.BatchTrainers != null && b.BatchTrainers.FirstOrDefault()?.Trainer?.User != null
+         ? b.BatchTrainers.First().Trainer.User.FullName
+         : "بدون مدرب",
+
                 StartDate = b.StartDate,
                 EndDate = b.EndDate,
                 Capacity = b.Capacity,
                 TotalTraineesCount = b.Enrollments?.Count ?? 0,
                 IssuedCertificatesCount = b.Enrollments?.Count(e => e.CompletionStatus == NFD_EnrollmentCompletionStatus.Completed) ?? 0,
-                Status = calculatedStatus, // استخدام الحالة المحسوبة بناءً على التاريخ
+                Status = calculatedStatus,
                 Department = departments[seed % departments.Length],
                 EnrolledTraineesCount = enrolledCount > 0 ? enrolledCount : (18 + (seed * 5) % 15),
                 AttendanceRate = 88 + (seed * 3) % 11,
                 ProgressPercentage = 40 + (seed * 13) % 55
             };
         }
+
+
     }
 }

@@ -1,357 +1,339 @@
-/* التخطيط العام */
-.page-container {
-  direction: rtl;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+/* التنسيق الأساسي للصفحة */
+.nfd-page-header {
+  margin-bottom: 24px;
 }
-
-.page-header {
-  margin-bottom: 8px;
-}
-
 .nfd-page-title {
-  font-size: 22px;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #0d1282;
-  margin: 0 0 4px 0;
-}
-
-.nfd-page-sub {
-  font-size: 13px;
-  color: #64748b;
+  color: #0A1172;
   margin: 0;
+}
+.nfd-page-sub {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-top: 4px;
 }
 
 .nfd-card {
   background: #ffffff;
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   border: 1px solid #e2e8f0;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* الشريط العلوي مع تحسين المحاذاة (اليمين واليسار) */
 .nfd-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  gap: 16px;
-  flex-wrap: wrap;
-  direction: rtl;
 }
 
-/* زر إنشاء حساب جديد (جهة اليمين) */
-.nfd-btn.primary {
-  background-color: #0d9488;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 9px 20px;
-  font-size: 13.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.nfd-btn.primary:hover {
-  background-color: #0f766e;
-}
-
-/* أزرار الفلترة (جهة اليسار) */
 .nfd-chips {
   display: flex;
   gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
 }
 
 .nfd-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   padding: 6px 14px;
   border-radius: 20px;
-  border: 1px solid #e2e8f0;
-  background-color: #ffffff;
-  color: #475569;
-  font-size: 13px;
-  font-weight: 500;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #475569;
   transition: all 0.2s ease;
 }
 
-.nfd-chip:hover {
-  background-color: #f8fafc;
-}
-
 .nfd-chip.active {
-  background-color: #1e1b4b;
+  background: #0A1172;
   color: #ffffff;
-  border-color: #1e1b4b;
+  border-color: #0f172a;
 }
 
-.nfd-chip-count {
-  font-weight: 700;
+.chip-count {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.75rem;
 }
 
-/* الجداول */
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
+.nfd-chip.active .chip-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
+.nfd-btn.primary-teal {
+  background-color:#0A1172;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nfd-inline-error {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.retry-btn {
+  background: transparent;
+  border: 1px solid #991b1b;
+  color: #991b1b;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-right: auto;
+}
+
+/* الجدول */
 .nfd-table {
   width: 100%;
   border-collapse: collapse;
-  text-align: right;
-  font-size: 13px;
 }
 
 .nfd-table th {
   background-color: #f8fafc;
   color: #475569;
   font-weight: 600;
+  font-size: 0.85rem;
   padding: 12px 16px;
   border-bottom: 1px solid #e2e8f0;
 }
 
 .nfd-table td {
-  padding: 12px 16px;
+  padding: 14px 16px;
   border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
   color: #334155;
   vertical-align: middle;
 }
 
-.text-left {
-  text-align: left;
-}
-
-/* الملف الشخصي والشارات */
-.user-profile {
+.user-info {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.avatar {
-  width: 36px;
-  height: 36px;
+.user-avatar {
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background-color: #e2e8f0;
-  color: #334155;
+  background-color: #0A1172;
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 13px;
+  font-weight: 600;
+  font-size: 0.85rem;
 }
 
-.user-info {
+.user-details {
   display: flex;
   flex-direction: column;
 }
 
 .user-name {
-  font-weight: 600;
   color: #0f172a;
+  font-size: 0.9rem;
 }
 
-.nfd-muted {
+.user-email {
   color: #94a3b8;
-  font-size: 12px;
+  font-size: 0.8rem;
 }
 
+/* الشارة الأساسية General Badge */
 .nfd-badge {
+  padding: 4px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
   text-align: center;
 }
 
-.role-badge {
-  background-color: #e0e7ff;
-  color: #3730a3;
+/* شارات الحالة */
+.nfd-badge.status.active {
+  background-color: #e6fffa;
+  border: 1px solid #9ae6b4;
+  color: #234e52;
 }
 
-.status-badge.active-status {
-  background-color: #dcfce7;
+.nfd-badge.status.suspended {
+  background-color: #fff5f5;
+  border: 1px solid #feb2b2;
+  color: #9b2c2c;
+}
+
+/* --- ألوان وتصميم شارات الأدوار المطابقة للصورة --- */
+.nfd-badge.role.admin {
+  background-color: #f0f5ff;
+  border: 1px solid #adc6ff;
+  color: #2f54eb; /* هيئة - أزرق */
+}
+
+.nfd-badge.role.trainer {
+  background-color: #e6fffb;
+  border: 1px solid #87e8de;
+  color: #13c2c2; /* مدرب - تركواز/أخضر ناعم */
+}
+
+.nfd-badge.role.companysupervisor {
+  background-color: #fffbe6;
+  border: 1px solid #ffe58f;
+  color: #d48806; /* شركة - أصفر/ذهبي */
+}
+
+.nfd-badge.role.trainee {
+  background-color: #f5f5f5;
+  border: 1px solid #d9d9d9;
+  color: #595959; /* متدرب - رمادي */
+}
+
+/* أزرار العمليات */
+.action-buttons-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-action.edit-btn:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.btn-action.password-btn:hover {
+  background-color: #f0fdf4;
+  border-color: #86efac;
   color: #166534;
 }
 
-.status-badge.inactive-status {
-  background-color: #fee2e2;
-  color: #991b1b;
+.btn-action i {
+  font-size: 0.9rem;
 }
 
-.count-badge {
-  background-color: #f1f5f9;
-  color: #0284c7;
-}
-
-.actions-cell {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.icon-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 4px;
-  border-radius: 4px;
-}
-
-.icon-btn:hover {
-  background-color: #f1f5f9;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 32px;
-  color: #94a3b8;
-}
-
+/* RBAC Table */
 .rbac-card {
-  margin-top: 10px;
+  margin-top: 24px;
 }
 
-.rbac-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f172a;
+.rbac-header h3 {
+  margin-top: 0;
   margin-bottom: 16px;
-}
-
-/* النوافذ المنبثقة (Modals) */
-.modal-backdrop {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  background-color: rgba(15, 23, 42, 0.4) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  z-index: 99999 !important;
-  direction: rtl;
-}
-
-.modal-container {
-  background: #ffffff;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 440px;
-  padding: 24px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  box-sizing: border-box;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #f1f5f9;
-  padding-bottom: 12px;
-  margin-bottom: 16px;
-}
-
-.modal-title {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 1.1rem;
   color: #0f172a;
-  margin: 0;
 }
 
-.close-icon {
-  background: none;
-  border: none;
-  font-size: 16px;
-  color: #94a3b8;
-  cursor: pointer;
-}
-
-.modal-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-align: right;
-}
-
-.form-label {
-  font-size: 12px;
+.perm-badge {
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
   font-weight: 600;
   color: #334155;
 }
 
-.asterisk {
-  color: #ef4444;
-}
-
-.form-control {
-  width: 100%;
-  height: 40px;
-  padding: 0 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 13px;
-  box-sizing: border-box;
-  outline: none;
-}
-
-.form-control:focus {
-  border-color: #0d9488;
-}
-
-.modal-footer {
+/* Modals */
+.nfd-modal-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.4);
   display: flex;
-  gap: 12px;
-  margin-top: 20px;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.btn-submit {
-  flex: 1;
-  height: 40px;
-  background-color: #0d9488;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
+.nfd-modal {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-.btn-submit:hover {
-  background-color: #0f766e;
+.nfd-modal h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #0f172a;
+  font-size: 1.2rem;
 }
 
-.btn-cancel {
-  flex: 1;
-  height: 40px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+.reset-target {
+  font-size: 0.85rem;
   color: #64748b;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
+  margin-bottom: 16px;
 }
 
-.btn-cancel:hover {
-  background-color: #f8fafc;
+.nfd-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.nfd-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.nfd-btn.secondary {
+  background: #f1f5f9;
+  color: #475569;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
 }

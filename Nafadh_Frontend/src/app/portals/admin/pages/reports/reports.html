@@ -1,28 +1,57 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
   <meta charset="UTF-8">
   <title>نظام التقارير التدريبية</title>
+  <style>
+    /* تصميم دائرة التحميل الخاصة */
+    .custom-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #0D1C8C;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
+
 <body>
 
   <!-- 1. صفحة عرض الشركات وتفاصيلها (الرئيسية للتقارير) -->
   <div class="reports-container" *ngIf="currentView === 'companies'">
     <div class="header-section" style="text-align: right; margin-bottom: 24px;">
-      <h2 style="color: #0D1C8C !important; font-weight: bold; font-size: 24px; margin-bottom: 8px;">التقارير حسب الشركة</h2>
+      <h2 style="color: #0D1C8C !important; font-weight: bold; font-size: 24px; margin-bottom: 8px;">التقارير حسب الشركة
+      </h2>
       <p style="color: #64748b; font-size: 14px;">اختر شركة لعرض برامجها وتقارير دفعاتها</p>
     </div>
 
-    <div class="companies-grid">
+    <!-- عرض مؤشر التحميل أثناء جلب قائمة الشركات -->
+    <div *ngIf="isLoading()" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 300px; width: 100%;">
+      <div class="custom-spinner"></div>
+      <span style="color: #6c757d; font-size: 0.9rem;">جاري تحميل قائمة الشركات...</span>
+    </div>
+
+    <!-- شبكة الشركات تظهر فقط عند انتهاء التحميل ووجود بيانات -->
+    <div class="companies-grid" *ngIf="!isLoading() && companies.length > 0">
       <div class="company-card" *ngFor="let company of companies" (click)="selectCompany(company)">
         <div class="company-info" style="display: flex; align-items: center; justify-content: flex-start; gap: 16px;">
-          <div class="logo-box" style="background: #0D1C8C; color: #ffffff; width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <div class="logo-box"
+            style="background: #0D1C8C; color: #ffffff; width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M9 3v4M15 3v4"></path>
             </svg>
           </div>
           <div style="text-align: right;">
-            <h3 style="color: #0D1C8C !important; font-size: 16px; font-weight: bold; margin: 0 0 4px 0;">{{ company.name }}</h3>
+            <h3 style="color: #0D1C8C !important; font-size: 16px; font-weight: bold; margin: 0 0 4px 0;">{{
+              company.name }}</h3>
             <span style="color: #64748b; font-size: 12px;">{{ company.programsCount || 0 }} برنامج تدريبي</span>
           </div>
         </div>
@@ -45,18 +74,26 @@
         </div>
       </div>
     </div>
+
+    <!-- رسالة في حال لم تقم قاعدة البيانات بإرجاع شركات -->
+    <div *ngIf="!isLoading() && companies.length === 0" style="text-align: center; padding: 40px; color: #94a3b8;">
+      لا توجد شركات مضافة حالياً.
+    </div>
   </div>
 
   <!-- 2. صفحة برامج ودفعات الشركة المحددة -->
   <div class="reports-container" *ngIf="currentView === 'programs'">
     <div class="top-nav-bar" style="text-align: right; margin-bottom: 16px;">
-      <button class="back-btn" (click)="currentView = 'companies'" style="background: none; border: none; color: #0D1C8C; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+      <button class="back-btn" (click)="currentView = 'companies'"
+        style="background: none; border: none; color: #0D1C8C; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
         <i class="arrow-right"></i> العودة إلى الشركات
       </button>
     </div>
 
-    <div class="selected-company-banner" style="display: flex; justify-content: flex-start; align-items: center; gap: 20px; text-align: right; background: #ffffff; border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
-      <div class="company-logo-large" style="background: #0D1C8C; color: #ffffff; width: 60px; height: 60px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+    <div class="selected-company-banner"
+      style="display: flex; justify-content: flex-start; align-items: center; gap: 20px; text-align: right; background: #ffffff; border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
+      <div class="company-logo-large"
+        style="background: #0D1C8C; color: #ffffff; width: 60px; height: 60px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M9 3v4M15 3v4"></path>
         </svg>
@@ -68,23 +105,30 @@
     </div>
 
     <div class="programs-list" *ngFor="let prog of selectedCompany?.programs">
-      <div class="program-item-card" style="background: #ffffff; border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
-        
-        <div class="program-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px;">
+      <div class="program-item-card"
+        style="background: #ffffff; border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
+
+        <div class="program-header"
+          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px;">
           <h4 style="color: #0D1C8C !important; font-size: 16px; margin: 0; text-align: right;">{{ prog.name }}</h4>
-          <span class="track-tag" style="background: #eef2ff; color: #0D1C8C; padding: 4px 10px; border-radius: 6px; font-size: 12px;">{{ prog.track }}</span>
+          <span class="track-tag"
+            style="background: #eef2ff; color: #0D1C8C; padding: 4px 10px; border-radius: 6px; font-size: 12px;">{{
+            prog.track }}</span>
         </div>
-        
-        <div class="batch-row" *ngFor="let batch of prog.batches" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f8fafc;">
-          
+
+        <div class="batch-row" *ngFor="let batch of prog.batches"
+          style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f8fafc;">
+
           <div class="batch-info-right" style="display: flex; align-items: center; gap: 10px; text-align: right;">
-            <span class="dot" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
+            <span class="dot"
+              style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
             <strong style="color: #0D1C8C; font-size: 14px;">الدفعة {{ batch.id }}</strong>
             <span class="dates" style="color: #64748b; font-size: 12px;">{{ batch.dates }}</span>
           </div>
 
           <div class="batch-info-left" style="display: flex; align-items: center; gap: 10px;">
-            <button class="view-report-btn" (click)="viewBatchReport(batch)" style="background: #0D1C8C; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+            <button class="view-report-btn" (click)="viewBatchReport(batch)"
+              style="background: #0D1C8C; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;">
               <i class="icon-doc"></i> عرض التقرير
             </button>
           </div>
@@ -97,48 +141,63 @@
   <!-- 3. صفحة تقرير نهاية الدفعة التفصيلي -->
   <div class="reports-container" *ngIf="currentView === 'batch-report'">
     <div class="top-nav-bar" style="text-align: right; margin-bottom: 16px;">
-      <button class="back-btn" (click)="currentView = 'programs'" style="background: none; border: none; color: #0D1C8C; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+      <button class="back-btn" (click)="currentView = 'programs'"
+        style="background: none; border: none; color: #0D1C8C; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
         <i class="arrow-right"></i> العودة إلى البرامج
       </button>
     </div>
 
-    <!-- الترويسة: التفاصيل يمين، وأزرار التصدير يسار -->
-    <div class="report-header-card" style="display: flex; justify-content: space-between; align-items: flex-start; text-align: right; background: #ffffff; border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
-      
+    <!-- الترويسة -->
+    <div class="report-header-card"
+      style="display: flex; justify-content: space-between; align-items: flex-start; text-align: right; background: #ffffff; border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
+
       <div class="report-title-right" style="text-align: right;">
-        <span class="badge-tag" style="background: #eef2ff; color: #0D1C8C; padding: 4px 10px; border-radius: 6px; font-size: 12px; display: inline-block; margin-bottom: 8px;">نهاية الدفعة</span>
-        <h2 style="color: #0D1C8C !important; font-size: 20px; margin: 0 0 4px 0;">تقرير نهاية الدفعة — الدفعة {{ selectedBatch?.id }}</h2>
-        <p style="color: #334155; font-size: 14px; margin: 0 0 4px 0;">{{ selectedBatch?.programName }} · {{ selectedCompany?.name }}</p>
-        <small style="color: #64748b; font-size: 12px;">{{ selectedBatch?.dates }} · تاريخ الانتهاء: {{ selectedBatch?.endDate }}</small>
+        <span class="badge-tag"
+          style="background: #eef2ff; color: #0D1C8C; padding: 4px 10px; border-radius: 6px; font-size: 12px; display: inline-block; margin-bottom: 8px;">نهاية
+          الدفعة</span>
+        <h2 style="color: #0D1C8C !important; font-size: 20px; margin: 0 0 4px 0;">تقرير نهاية الدفعة — الدفعة {{
+          selectedBatch?.id }}</h2>
+        <p style="color: #334155; font-size: 14px; margin: 0 0 4px 0;">{{ selectedBatch?.programName }} · {{
+          selectedCompany?.name }}</p>
+        <small style="color: #64748b; font-size: 12px;">{{ selectedBatch?.dates }} · تاريخ الانتهاء: {{
+          selectedBatch?.endDate }}</small>
       </div>
 
       <!-- أزرار التصدير في اليسار -->
       <div class="actions-left" style="display: flex; gap: 8px;">
-        <button class="btn-pdf" (click)="exportToPDF()" style="background: #0D1C8C; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="download-icon"></i> تصدير PDF</button>
-        <button class="btn-excel" (click)="exportToExcel()" style="background: #10b981; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer;">Excel</button>
+        <button class="btn-pdf" (click)="exportToPDF()"
+          style="background: #0D1C8C; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i
+            class="download-icon"></i> تصدير PDF</button>
+        <button class="btn-excel" (click)="exportToExcel()"
+          style="background: #10b981; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer;">Excel</button>
       </div>
 
     </div>
 
     <div class="summary-metrics-grid">
       <div class="metric-card" style="text-align: right;">
-        <span class="metric-value dark" style="color: #0D1C8C; font-size: 22px; font-weight: bold;">{{ selectedBatch?.traineesCount || 0 }}</span>
-        <span class="metric-label" style="color: #64748b; font-size: 13px; display: block; margin-top: 4px;">عدد المتدربين</span>
+        <span class="metric-value dark" style="color: #0D1C8C; font-size: 22px; font-weight: bold;">{{
+          selectedBatch?.traineesCount || 0 }}</span>
+        <span class="metric-label" style="color: #64748b; font-size: 13px; display: block; margin-top: 4px;">عدد
+          المتدربين</span>
       </div>
       <div class="metric-card" style="text-align: right;">
         <span class="metric-value green" style="color: #10b981; font-size: 22px; font-weight: bold;">89%</span>
-        <span class="metric-label" style="color: #64748b; font-size: 13px; display: block; margin-top: 4px;">متوسط الحضور</span>
+        <span class="metric-label" style="color: #64748b; font-size: 13px; display: block; margin-top: 4px;">متوسط
+          الحضور</span>
       </div>
       <div class="metric-card" style="text-align: right;">
         <span class="metric-value blue" style="color: #0D1C8C; font-size: 22px; font-weight: bold;">100%</span>
-        <span class="metric-label" style="color: #64748b; font-size: 13px; display: block; margin-top: 4px;">نسبة النجاح</span>
+        <span class="metric-label" style="color: #64748b; font-size: 13px; display: block; margin-top: 4px;">نسبة
+          النجاح</span>
       </div>
     </div>
 
     <div class="table-card" style="text-align: right;">
       <div class="table-header-title" style="margin-bottom: 16px; text-align: right;">
         <h3 style="color: #0D1C8C !important; font-size: 18px; margin: 0 0 4px 0;">نتائج المتدربين</h3>
-        <span style="color: #64748b; font-size: 13px;">الدفعة {{ selectedBatch?.id }} · {{ selectedBatch?.programName }}</span>
+        <span style="color: #64748b; font-size: 13px;">الدفعة {{ selectedBatch?.id }} · {{ selectedBatch?.programName
+          }}</span>
       </div>
 
       <table class="custom-table" style="width: 100%; text-align: right;">
@@ -153,29 +212,82 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let t of traineesList" style="border-bottom: 1px solid #f1f5f9;">
-            <td class="bold" style="padding: 12px; color: #0D1C8C; font-weight: bold; text-align: right;">{{ t.name }}</td>
-            <td style="padding: 12px; color: #64748b; text-align: right;">{{ t.major }}</td>
-            <td style="padding: 12px; text-align: right;">
-              <span>{{ t.attendance }}%</span>
-              <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;"><div class="fill green" [style.width.%]="t.attendance" style="background: #10b981; height: 100%; border-radius: 3px;"></div></div>
-            </td>
-            <td style="padding: 12px; text-align: right;">
-              <span>{{ t.technical }}%</span>
-              <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;"><div class="fill green" [style.width.%]="t.technical" style="background: #10b981; height: 100%; border-radius: 3px;"></div></div>
-            </td>
-            <td style="padding: 12px; text-align: right;">
-              <span>{{ t.behavioral }}%</span>
-              <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;"><div class="fill blue" [style.width.%]="t.behavioral" style="background: #0D1C8C; height: 100%; border-radius: 3px;"></div></div>
-            </td>
-            <td style="padding: 12px; text-align: right;">
-              <span class="status-pill" [ngClass]="t.levelClass" style="padding: 4px 8px; border-radius: 4px; font-size: 12px;">{{ t.level }}</span>
+          <!-- عرض دائرة التحميل أثناء جلب البيانات -->
+          <tr *ngIf="isLoading()">
+            <td colspan="6" style="padding: 40px; text-align: center;">
+              <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
+                <div class="custom-spinner"></div>
+                <span style="color: #6c757d; font-size: 0.9rem;">جاري تحميل بيانات التقرير...</span>
+              </div>
             </td>
           </tr>
+
+          <!-- عرض البيانات عند انتهائها -->
+          <ng-container *ngIf="!isLoading()">
+            <tr *ngFor="let t of report()?.rows" style="border-bottom: 1px solid #f1f5f9;">
+              <td class="bold" style="padding: 12px; color: #0D1C8C; font-weight: bold; text-align: right;">{{
+                t.traineeName }}</td>
+              <td style="padding: 12px; color: #64748b; text-align: right;">{{ t.major }}</td>
+              <td style="padding: 12px; text-align: right;">
+                <span>{{ t.attendanceRate }}%</span>
+                <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;">
+                  <div class="fill green" [style.width.%]="t.attendanceRate"
+                    style="background: #10b981; height: 100%; border-radius: 3px;"></div>
+                </div>
+              </td>
+              <td style="padding: 12px; text-align: right;">
+                <span>{{ t.technicalScore }}%</span>
+                <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;">
+                  <div class="fill green" [style.width.%]="t.technicalScore"
+                    style="background: #10b981; height: 100%; border-radius: 3px;"></div>
+                </div>
+              </td>
+              <td style="padding: 12px; text-align: right;">
+                <span>{{ t.behavioralScore }}%</span>
+                <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;">
+                  <div class="fill blue" [style.width.%]="t.behavioralScore"
+                    style="background: #0D1C8C; height: 100%; border-radius: 3px;"></div>
+                </div>
+              </td>
+              <td style="padding: 12px; text-align: right;">
+                <span class="status-pill" [ngClass]="levelClass(t.level)"
+                  style="padding: 4px 8px; border-radius: 4px; font-size: 12px;">{{ t.level }}</span>
+              </td>
+            </tr>
+            <tr *ngIf="!report()?.rows?.length">
+              <td colspan="6" style="padding: 20px; text-align: center; color: #94a3b8;">لا توجد بيانات لعرضها</td>
+            </tr>
+          </ng-container>
         </tbody>
       </table>
+
+      <!-- شريط التنقل (Pagination) -->
+      <div class="compact-pagination-wrapper" *ngIf="!isLoading()"
+        style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+        <div class="pagination-info" style="color: #64748b; font-size: 13px;">
+          عرض الصفحة <strong>{{ report()?.pageNumber || 1 }}</strong> من <strong>{{ report()?.totalPages || 1
+            }}</strong> (إجمالي {{ report()?.totalCount || 0 }} متدرب)
+        </div>
+
+        <div class="pagination-compact-controls" style="display: flex; align-items: center; gap: 8px;">
+          <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) <= 1" (click)="prevPage()"
+            style="padding: 6px 12px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; font-size: 12px;">
+            السابق
+          </button>
+
+          <span class="page-indicator" style="font-size: 13px; font-weight: bold; color: #0D1C8C;">
+            {{ report()?.pageNumber || 1 }} / {{ report()?.totalPages || 1 }}
+          </span>
+
+          <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) >= (report()?.totalPages ?? 1)" (click)="nextPage()"
+            style="padding: 6px 12px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; font-size: 12px;">
+            التالي
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
 </body>
+
 </html>

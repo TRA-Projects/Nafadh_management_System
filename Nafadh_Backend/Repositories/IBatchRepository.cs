@@ -14,6 +14,7 @@ namespace Nafadh_Backend.Repositories
     {
         Task<List<NFD_Batch>> GetAllAsync(int? programId, string? status, DateTime? from, DateTime? to);
         Task<NFD_Batch?> GetByIdAsync(int id);
+
         Task<NFD_Batch> AddAsync(NFD_Batch batch);
         Task UpdateAsync(NFD_Batch batch);
         Task DeleteAsync(NFD_Batch batch);

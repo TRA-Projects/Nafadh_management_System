@@ -17,14 +17,14 @@
           type="text" 
           class="nfd-input" 
           [ngModel]="search()" 
-          (ngModelChange)="search.set($event)" 
+          (ngModelChange)="search.set($event); currentPage.set(1)" 
           placeholder="ابحث باسم المستخدم، الكيان، الإجراء..." 
         />
       </div>
 
       <div class="nfd-field">
         <label>نوع الإجراء</label>
-        <select class="nfd-select" [ngModel]="selectedAction()" (ngModelChange)="selectedAction.set($event)">
+        <select class="nfd-select" [ngModel]="selectedAction()" (ngModelChange)="selectedAction.set($event); currentPage.set(1)">
           <option value="">كل الإجراءات</option>
           <option value="إصدار إنذار">إصدار إنذار</option>
           <option value="تعديل بيانات شركة">تعديل بيانات شركة</option>
@@ -37,12 +37,12 @@
 
       <div class="nfd-field">
         <label>من تاريخ</label>
-        <input type="date" class="nfd-input" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)" />
+        <input type="date" class="nfd-input" [ngModel]="startDate()" (ngModelChange)="startDate.set($event); currentPage.set(1)" />
       </div>
 
       <div class="nfd-field">
         <label>إلى تاريخ</label>
-        <input type="date" class="nfd-input" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)" />
+        <input type="date" class="nfd-input" [ngModel]="endDate()" (ngModelChange)="endDate.set($event); currentPage.set(1)" />
       </div>
     </div>
 
@@ -58,7 +58,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (l of filteredLogs(); track (l.logId ?? l.id ?? $index)) {
+          @for (l of paginatedLogs(); track (l.logId ?? l.id ?? $index)) {
             <tr>
               <td>
                 <span class="nfd-badge" [ngClass]="{
@@ -84,8 +84,8 @@
               <td>
                 <button class="nfd-btn-icon" (click)="viewDetails(l)" title="عرض التفاصيل">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 12S5 5 12 5S23 12 23 12S19 19 12 19S1 12 1 12Z" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <circle cx="12" cy="12" r="3" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M1 12S5 5 12 5S23 12 23 12S19 19 12 19S1 12 1 12Z" stroke="#0066C4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="12" cy="12" r="3" stroke="#0066C4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </button>
               </td>
@@ -101,9 +101,23 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Footer Bar with Pagination (نفس تصميم الصورة المرفقة) -->
+    <div class="nfd-pagination-wrapper">
+      <div class="nfd-pagination-info">
+        عرض الصفحة <strong>{{ currentPage() }}</strong> من <strong>{{ totalPages() }}</strong> (إجمالي <strong>{{ filteredLogs().length }}</strong> سجل)
+      </div>
+
+      <div class="nfd-pagination-controls">
+        <button class="nfd-btn-page" [disabled]="currentPage() === 1" (click)="prevPage()">السابق</button>
+        <span class="nfd-page-num">{{ currentPage() }}</span>
+        <button class="nfd-btn-page" [disabled]="currentPage() >= totalPages()" (click)="nextPage()">التالي</button>
+      </div>
+    </div>
   </div>
 </div>
 
+<!-- Modal -->
 <div class="nfd-modal-backdrop" *ngIf="selectedLog()" (click)="closeModal()">
   <div class="nfd-modal" (click)="$event.stopPropagation()">
     <div class="nfd-modal-header">

@@ -65,8 +65,14 @@ namespace Nafadh_Backend.DTOs
 
         public DateTime? ApprovalDate { get; set; }
 
-
         public int? UserId { get; set; }
+
+        //   الخصائص للأعداد الحقيقية:
+        public int ProgramsCount { get; set; }
+        public int BatchesCount { get; set; }
+        public int TraineesCount { get; set; }
+  
+
         // Related collections provided for frontend convenience
         public List<NFD_CompanyBranchOutputDTO> Branches { get; set; } = new();
         public List<CompanySupervisorDto> Supervisors { get; set; } = new();

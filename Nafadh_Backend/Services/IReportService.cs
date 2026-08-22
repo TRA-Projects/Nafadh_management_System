@@ -36,7 +36,7 @@ namespace Nafadh_Backend.Services
 
         // NEW: analytics/aggregation endpoints — see DTOs/ReportAnalyticsDTOs.cs
         Task<DashboardChartsDTO> GetDashboardChartsAsync();
-        Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(int batchId);
+        Task<BatchPerformanceReportDTO?> GetBatchPerformanceAsync(int batchId, int pageNumber, int pageSize);
         Task<AttendanceReportDTO?> GetCompanyAttendanceReportAsync(int companyId);
         Task<List<ChartPointDTO>> GetCompanyAttendanceChartAsync(int companyId);
         Task<List<ChartPointDTO>> GetCompanyProgramDistributionAsync(int companyId);

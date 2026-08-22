@@ -8,11 +8,7 @@ import { BatchDto, ProgramDto, CompanyDto} from '../../../../core/models/dtos';
 import {
   BatchStatus
 } from '../../../../core/models/enums';
-/**
- * حالات الدفعة الأربع كما هي في الباكند (NFD_BatchStatus):
- * Upcoming | Ongoing | Completed | Cancelled
- * كل حالة لها تسمية عربية + كلاس تصميم خاص بها — لا نفترض أن غير "جارية" تعني "قادمة".
- */
+
 type BatchStatusKey = 'Upcoming' | 'Ongoing' | 'Completed' | 'Cancelled';
 
 const STATUS_LABELS: Record<BatchStatusKey, string> = {
@@ -46,9 +42,14 @@ export class AdminPrograms implements OnInit {
   readonly programs = signal<ProgramDto[]>([]);
   readonly tracks = signal<any[]>([]);
   readonly companies = signal<CompanyDto[]>([]);
+  readonly trainers = signal<any[]>([]); // <--- Signal لجلب المدربين
   readonly statusFilter = signal<string>('الكل');
 
-  // Error state (لعرضها في الواجهة بدل الفشل الصامت)
+  // Pagination Signals & Constants
+  readonly pageSize = signal<number>(8);
+  readonly currentPage = signal<number>(1);
+
+  // Error state
   readonly batchesError = signal<string | null>(null);
   readonly programsError = signal<string | null>(null);
 
@@ -65,6 +66,16 @@ export class AdminPrograms implements OnInit {
   // --- UI Modal State - View Details Modal ---
   isViewModalOpen = false;
   selectedBatch: BatchDto | null = null;
+
+  // --- UI Modal State - Edit Modal ---
+  isEditModalOpen = false;
+  editBatchForm!: FormGroup;
+
+  // --- Custom Dropdowns States ---
+  isCompanyDropdownOpen = false;
+  isProgramDropdownOpen = false;
+  isTrainerDropdownOpen = false;
+
   readonly Math = Math;
 
   // Dynamic Filtering Computed Signal
@@ -78,8 +89,23 @@ export class AdminPrograms implements OnInit {
     });
   });
 
+  // --- Pagination Computed Signals ---
+  readonly totalBatchesCount = computed(() => this.filteredBatches().length);
+
+  readonly totalPages = computed(() => {
+    const total = this.totalBatchesCount();
+    return Math.max(1, Math.ceil(total / this.pageSize()));
+  });
+
+  readonly paginatedBatches = computed(() => {
+    const batches = this.filteredBatches();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return batches.slice(start, start + this.pageSize());
+  });
+
   ngOnInit(): void {
     this.initBatchForm();
+    this.initEditBatchForm();
     this.initProgramForm();
     this.loadInitialData();
   }
@@ -87,11 +113,121 @@ export class AdminPrograms implements OnInit {
   // --- Status Filter Handler ---
   setStatusFilter(filter: string): void {
     this.statusFilter.set(filter);
+    this.currentPage.set(1);
+  }
+
+  // --- Pagination Handler ---
+  onPageChange(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  // --- Custom Dropdowns Handlers: Company ---
+  toggleCompanyDropdown(): void {
+    this.isCompanyDropdownOpen = !this.isCompanyDropdownOpen;
+  }
+
+  selectCompany(company: any): void {
+    this.editBatchForm.patchValue({ companyId: company.companyId });
+    this.isCompanyDropdownOpen = false;
+  }
+
+  getSelectedCompanyName(): string {
+    const selectedId = this.editBatchForm.get('companyId')?.value;
+    const company = this.companies().find(c => c.companyId == selectedId);
+    return company ? company.companyName : 'اختر الشركة';
+  }
+
+  // --- Custom Dropdowns Handlers: Program ---
+  toggleProgramDropdown(): void {
+    this.isProgramDropdownOpen = !this.isProgramDropdownOpen;
+  }
+
+  selectProgram(program: ProgramDto): void {
+    this.editBatchForm.patchValue({ programId: program.programId });
+    this.isProgramDropdownOpen = false;
+  }
+
+  getSelectedProgramName(): string {
+    const selectedId = this.editBatchForm.get('programId')?.value;
+    const program = this.programs().find(p => p.programId == selectedId);
+    return program?.name || program?.title || 'اختر البرنامج';
+  }
+
+  // --- Custom Dropdowns Handlers: Trainer ---
+  toggleTrainerDropdown(): void {
+    this.isTrainerDropdownOpen = !this.isTrainerDropdownOpen;
+  }
+
+  selectTrainer(trainer: any): void {
+    this.editBatchForm.patchValue({ instructorName: trainer.name }); // أو trainer.instructorId حسب تصميم الـ Backend
+    this.isTrainerDropdownOpen = false;
+  }
+
+  getSelectedTrainerName(): string {
+    const selectedName = this.editBatchForm.get('instructorName')?.value;
+    return selectedName ? selectedName : 'اختر المدرب';
+  }
+
+  // إغلاق كافة القوائم المنسدلة عند النقر في أي مكان
+  closeAllDropdowns(): void {
+    this.isCompanyDropdownOpen = false;
+    this.isProgramDropdownOpen = false;
+    this.isTrainerDropdownOpen = false;
   }
 
   // --- Table Helpers ---
   onEdit(batch: BatchDto): void {
-    console.log('Edit batch clicked:', batch);
+    this.selectedBatch = batch;
+    this.isEditModalOpen = true;
+
+    this.editBatchForm.patchValue({
+      batchName: (batch as any).batchName || '',
+      programId: (batch as any).programId || '',
+      companyId: (batch as any).companyId || '',
+      instructorName: (batch as any).instructorName || '',
+      startDate: (batch as any).startDate ? (batch as any).startDate.split('T')[0] : '',
+      endDate: (batch as any).endDate ? (batch as any).endDate.split('T')[0] : '',
+      capacity: (batch as any).capacity || 15,
+      status: (batch as any).status || ''
+    });
+  }
+
+  onCloseEditModal(): void {
+    this.isEditModalOpen = false;
+    this.selectedBatch = null;
+    this.closeAllDropdowns();
+    this.editBatchForm.reset();
+  }
+
+  onSaveBatch(): void {
+    if (this.editBatchForm.invalid) {
+      this.editBatchForm.markAllAsTouched();
+      return;
+    }
+
+    const rawValues = this.editBatchForm.value;
+    const batchId = (this.selectedBatch as any)?.batchId || (this.selectedBatch as any)?.id;
+    
+    const payload = {
+      ...rawValues,
+      programId: Number(rawValues.programId),
+      companyId: rawValues.companyId ? Number(rawValues.companyId) : null,
+      capacity: Number(rawValues.capacity)
+    };
+
+    this.api.updateBatch(batchId, payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.fetchBatches();
+          this.onCloseEditModal();
+        },
+        error: (err) => {
+          console.error('Error updating batch:', err);
+        }
+      });
   }
 
   onView(batch: BatchDto): void {
@@ -114,7 +250,6 @@ export class AdminPrograms implements OnInit {
     return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   }
 
-  /** يحسب نسبة الإشغال بأمان — يمنع القسمة على صفر */
   getOccupancyPercentage(count: number | null | undefined, capacity: number | null | undefined): number {
     const safeCount = count ?? 0;
     const safeCapacity = capacity ?? 0;
@@ -122,7 +257,6 @@ export class AdminPrograms implements OnInit {
     return Math.min((safeCount / safeCapacity) * 100, 100);
   }
 
-  /** يحوّل قيمة status (نص/رقم/enum) إلى مفتاح موحّد BatchStatusKey */
   private getStatusKey(status: BatchStatus | string | number | null | undefined): BatchStatusKey {
     const s = status?.toString();
     switch (s) {
@@ -184,6 +318,7 @@ export class AdminPrograms implements OnInit {
     this.fetchPrograms();
     this.fetchTracks();
     this.fetchCompanies();
+    this.fetchTrainers(); // <--- جلب المدربين عند تحميل الصفحة
   }
 
   private fetchBatches(): void {
@@ -230,6 +365,15 @@ export class AdminPrograms implements OnInit {
       });
   }
 
+  private fetchTrainers(): void {
+    this.api.getTrainers()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data: any[]) => this.trainers.set(data),
+        error: (err: any) => console.error('Error fetching trainers:', err)
+      });
+  }
+
   // --- Form Initialization ---
   private initBatchForm(): void {
     this.batchForm = this.fb.group({
@@ -240,6 +384,19 @@ export class AdminPrograms implements OnInit {
       startDate: ['', Validators.required],
       endDate: ['', Validators.required],
       capacity: [15, [Validators.required, Validators.min(1)]]
+    });
+  }
+
+  private initEditBatchForm(): void {
+    this.editBatchForm = this.fb.group({
+      batchName: ['', Validators.required],
+      programId: ['', Validators.required],
+      companyId: [''],
+      instructorName: [''],
+      startDate: ['', Validators.required],
+      endDate: ['', Validators.required],
+      capacity: [15, [Validators.required, Validators.min(1)]],
+      status: ['']
     });
   }
 
