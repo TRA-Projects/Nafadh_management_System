@@ -583,6 +583,7 @@ export interface AnnouncementDto {
   type?: string;
   createdAt?: string | Date;
   date?: string | Date;
+  scopeType: AnnouncementScopeType;
 }
 
 // ---- Notifications ----

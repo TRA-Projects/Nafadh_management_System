@@ -16,7 +16,7 @@ import {
   SubmissionDto,
   NotificationDto,
 } from '../../../../core/models/dtos';
-import { TRAINEE_STATUS_LABELS, TaskStatus } from '../../../../core/models/enums';
+import { AnnouncementScopeType, TRAINEE_STATUS_LABELS, TaskStatus } from '../../../../core/models/enums';
 
 type SubmissionStatus = SubmissionDto['status'];
 
@@ -710,7 +710,6 @@ export class TraineeDashboard implements OnInit {
     });
 
     // جلب إعلانات الشركة
-    const companyId = this.companyId();
     if (companyId) {
       this.api.getCompanyAnnouncements(companyId).subscribe({
         next: (items: AnnouncementDto[]) => {
@@ -769,7 +768,7 @@ export class TraineeDashboard implements OnInit {
   /**
    * تحديد مصدر الإعلان بناءً على نطاقه
    */
-  private getAnnouncementSource(scopeType: string): string {
+  private getAnnouncementSource(scopeType: AnnouncementScopeType): string {
     const scopeMap: Record<string, string> = {
       Platform: 'الهيئة',
       Company: 'الشركة',
