@@ -14,7 +14,7 @@ namespace Nafadh_Backend.Controllers
     public class TrainingMaterialController : ControllerBase
     {
         private readonly ITrainingMaterialService _service;
-        private readonly IWebHostEnvironment _environment;
+        private readonly IConfiguration _configuration;
 
 
         // =====================================================
@@ -23,10 +23,10 @@ namespace Nafadh_Backend.Controllers
 
         public TrainingMaterialController(
             ITrainingMaterialService service,
-            IWebHostEnvironment environment)
+             IConfiguration configuration)
         {
             _service = service;
-            _environment = environment;
+            _configuration = configuration;
         }
 
 
@@ -116,36 +116,33 @@ namespace Nafadh_Backend.Controllers
             }
 
 
+        
+
             // ---------------------------------------------
-            // Create upload folder
+            // Get upload folder from appsettings
+            // Files are stored outside the project folder
+            // so they are not committed to Git.
             // ---------------------------------------------
 
-            var webRootPath =
-                _environment.WebRootPath;
+            var uploadsFolder =
+                _configuration[
+                    "Storage:TrainingMaterialsPath"
+                ];
 
 
-            if (string.IsNullOrWhiteSpace(webRootPath))
+            if (string.IsNullOrWhiteSpace(uploadsFolder))
             {
-                webRootPath =
-                    Path.Combine(
-                        _environment.ContentRootPath,
-                        "wwwroot"
-                    );
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    "Training materials storage path is not configured."
+                );
             }
 
 
-            var uploadsFolder =
-                Path.Combine(
-                    webRootPath,
-                    "uploads",
-                    "training-materials"
-                );
-
-
+            // Create the external folder if it does not exist
             Directory.CreateDirectory(
                 uploadsFolder
             );
-
 
             // ---------------------------------------------
             // Generate unique file name
@@ -187,11 +184,26 @@ namespace Nafadh_Backend.Controllers
 
 
             // ---------------------------------------------
+            // ---------------------------------------------
             // File URL saved in database
+            // Request path comes from appsettings
             // ---------------------------------------------
 
-            var fileUrl =
-                $"/uploads/training-materials/{fileName}";
+            var requestPath = _configuration["Storage:TrainingMaterialsRequestPath"];
+
+
+            if (string.IsNullOrWhiteSpace(requestPath))
+            {
+                requestPath = "/uploads/training-materials";
+
+            }
+
+
+            requestPath = requestPath.TrimEnd('/');
+
+
+
+            var fileUrl = $"{requestPath}/{fileName}";
 
 
             // ---------------------------------------------

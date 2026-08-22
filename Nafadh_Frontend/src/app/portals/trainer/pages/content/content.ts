@@ -22,6 +22,8 @@ import {
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 
+// Used to build the public URL for uploaded training materials
+import { environment } from '../../../../../environments/environment';
 import {
   BatchDto,
   LessonDto,
@@ -54,6 +56,7 @@ type MaterialFileType =
     FormsModule
   ],
   templateUrl: './content.html',
+  styleUrl:'./content.scss'
 })
 export class TrainerContent implements OnInit {
 
@@ -135,6 +138,18 @@ export class TrainerContent implements OnInit {
 
   saving =
     signal(false);
+
+  deletingMaterialId = signal<number | null>(null);
+  // Material selected for deletion confirmation
+materialToDelete =
+  signal<{
+    material: TrainingMaterialDto;
+    lessonId: number;
+  } | null>(null);
+
+showDeleteMaterialModal =
+  signal(false);
+ 
 
   errorMessage =
     signal('');
@@ -1683,7 +1698,115 @@ export class TrainerContent implements OnInit {
 
   }
 
+// =====================================================
+// DELETE TRAINING MATERIAL
+// =====================================================
 
+openDeleteMaterialModal(
+  material: TrainingMaterialDto,
+  lessonId: number
+): void {
+
+  this.materialToDelete.set({
+    material,
+    lessonId
+  });
+
+  this.showDeleteMaterialModal.set(true);
+}
+
+
+closeDeleteMaterialModal(): void {
+
+  if (
+    this.deletingMaterialId() !== null
+  ) {
+    return;
+  }
+
+  this.showDeleteMaterialModal.set(false);
+
+  this.materialToDelete.set(null);
+}
+
+
+confirmDeleteMaterial(): void {
+
+  const target =
+    this.materialToDelete();
+
+
+  if (!target) {
+    return;
+  }
+
+
+  const {
+    material,
+    lessonId
+  } = target;
+
+
+  this.deletingMaterialId.set(
+    material.materialId
+  );
+
+  this.errorMessage.set('');
+
+  this.successMessage.set('');
+
+
+  this.api
+    .deleteTrainingMaterial(
+      material.materialId
+    )
+    .subscribe({
+
+      next: () => {
+
+        this.deletingMaterialId.set(
+          null
+        );
+
+        this.showDeleteMaterialModal.set(
+          false
+        );
+
+        this.materialToDelete.set(
+          null
+        );
+
+        this.successMessage.set(
+          'تم حذف المادة التعليمية بنجاح.'
+        );
+
+        this.loadMaterialsForLesson(
+          lessonId
+        );
+
+      },
+
+
+      error: (error) => {
+
+        console.error(
+          'Error deleting training material:',
+          error
+        );
+
+        this.deletingMaterialId.set(
+          null
+        );
+
+        this.errorMessage.set(
+          'تعذر حذف المادة التعليمية.'
+        );
+
+      }
+
+    });
+
+}
   // =====================================================
   // HELPERS
   // =====================================================
@@ -1771,35 +1894,93 @@ export class TrainerContent implements OnInit {
 
 
   // =====================================================
-  // MATERIAL NAME
-  // =====================================================
+// MATERIAL NAME
+// =====================================================
 
-  getMaterialName(
-    material: TrainingMaterialDto
-  ): string {
+getMaterialName(
+  material: TrainingMaterialDto
+): string {
 
-    if (
-      material.fileType ===
-      'Link'
-    ) {
+  if (
+    material.fileType ===
+    'Link'
+  ) {
 
-      return material.fileUrl;
-
-    }
-
-
-    const parts =
-      material.fileUrl
-        .split('/');
-
-
-    return (
-      parts[
-        parts.length - 1
-      ] ||
-      'ملف'
-    );
+    return material.fileUrl;
 
   }
+
+
+  const parts =
+    material.fileUrl
+      .split('/');
+
+
+  return (
+    parts[
+      parts.length - 1
+    ] ||
+    'ملف'
+  );
+
+}
+
+
+// =====================================================
+// MATERIAL PUBLIC URL
+// =====================================================
+
+/**
+ * Builds the public browser URL for uploaded
+ * training materials.
+ *
+ * External links are returned as they are.
+ * Uploaded files are served by the backend
+ * from the external storage request path.
+ */
+getMaterialUrl(
+  material: TrainingMaterialDto
+): string {
+
+  // External reference link
+  if (
+    material.fileType ===
+    'Link'
+  ) {
+
+    return material.fileUrl;
+
+  }
+
+
+  // Example:
+  // environment.apiBaseUrl
+  // https://localhost:7082/api
+  //
+  // We need:
+  // https://localhost:7082
+
+  const apiRoot =
+    environment.apiBaseUrl
+      .replace(
+        /\/api\/?$/,
+        ''
+      );
+
+
+  // Make sure the stored path
+  // starts with /
+  const filePath =
+    material.fileUrl
+      .startsWith('/')
+      ? material.fileUrl
+      : `/${material.fileUrl}`;
+
+
+  return (
+    `${apiRoot}${filePath}`
+  );
+
+}
 
 }

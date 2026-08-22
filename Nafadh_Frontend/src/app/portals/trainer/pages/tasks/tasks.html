@@ -1,88 +1,34 @@
 <div
-  class="tasks-page"
-  style="
-    background:#ffffff;
-    border:1px solid #e2e8f0;
-    border-radius:20px;
-    padding:30px;
-    box-shadow:0 4px 16px rgba(0,0,0,0.04);
-    box-sizing:border-box;
-  "
+  class="tasks-page tasks-inline-001"
 >
 
   <!-- ================================================= -->
   <!--                      HEADER                       -->
   <!-- ================================================= -->
 
-  <div
-    style="
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:24px;
-      padding-bottom:20px;
-      margin-bottom:28px;
-      border-bottom:1px solid #f1f5f9;
-    "
-  >
+  <div class="tasks-header">
 
-    <div
-      style="
-        flex:1;
-        text-align:right;
-      "
-    >
+    <div class="tasks-header-copy">
 
-      <h2
-        style="
-          margin:0 0 6px 0;
-          font-size:24px;
-          font-weight:800;
-          color:#0b192c;
-          display:flex;
-          align-items:center;
-          gap:8px;
-        "
-      >
+      <h2>
         <span>📋</span>
         <span>المهام والمشروعات</span>
       </h2>
 
-      <p
-        style="
-          margin:0;
-          font-size:13px;
-          color:#64748b;
-          line-height:1.7;
-        "
-      >
+      <p>
         إنشاء الواجبات والمشاريع الميدانية ومتابعة التسليم والدرجات
       </p>
 
 
       <!-- ================= BATCH SELECTOR ================= -->
 
-      <div
-        style="
-          margin-top:18px;
-          width:300px;
-          max-width:100%;
-        "
-      >
+      <div class="task-batch-selector">
 
         <label
           for="taskBatchSelector"
-          style="
-            display:block;
-            margin-bottom:7px;
-            font-size:13px;
-            font-weight:600;
-            color:#334155;
-          "
         >
           الدفعة
         </label>
-
 
         <select
           id="taskBatchSelector"
@@ -90,20 +36,6 @@
           [(ngModel)]="batchIdInput"
           (ngModelChange)="onBatchChange()"
           [disabled]="loadingBatches()"
-          style="
-            width:100%;
-            height:44px;
-            box-sizing:border-box;
-            padding:0 12px;
-            border:1px solid #cbd5e1;
-            border-radius:10px;
-            outline:none;
-            font-family:inherit;
-            font-size:13px;
-            color:#0f172a;
-            background:#ffffff;
-            cursor:pointer;
-          "
         >
 
           @for (b of batches(); track b.batchId) {
@@ -123,30 +55,12 @@
 
     <button
       type="button"
-      class="nfd-btn primary"
+      class="nfd-btn primary tasks-header-action"
       (click)="openCreateModal()"
       [disabled]="!batchIdInput"
-      style="
-        min-width:190px;
-        height:46px;
-        display:flex !important;
-        align-items:center !important;
-        justify-content:center !important;
-        gap:7px;
-        padding:0 20px;
-        border-radius:10px;
-        font-size:14px;
-        font-weight:700;
-        cursor:pointer;
-      "
     >
 
-      <span
-        style="
-          font-size:19px;
-          line-height:1;
-        "
-      >
+      <span class="tasks-header-action-icon">
         +
       </span>
 
@@ -164,17 +78,7 @@
 
   @if (errorMessage() && !showCreateModal()) {
 
-    <div
-      style="
-        margin-bottom:20px;
-        padding:12px 14px;
-        border:1px solid #fecaca;
-        border-radius:10px;
-        background:#fef2f2;
-        color:#b91c1c;
-        font-size:13px;
-      "
-    >
+    <div class="tasks-inline-011">
       {{ errorMessage() }}
     </div>
 
@@ -188,14 +92,7 @@
 
   @if (loading()) {
 
-    <div
-      style="
-        padding:50px;
-        text-align:center;
-        color:#64748b;
-        font-size:13px;
-      "
-    >
+    <div class="tasks-inline-012">
       جاري تحميل المهام...
     </div>
 
@@ -211,63 +108,26 @@
 
     @if (tasks().length > 0) {
 
-      <div
-        style="
-          display:grid;
-          grid-template-columns:repeat(3,minmax(0,1fr));
-          gap:20px;
-          align-items:stretch;
-          width:100%;
-        "
-      >
+      <div class="tasks-inline-013">
 
         @for (t of tasks(); track t.taskId) {
 
           <div
-            class="task-card"
-            style="
-              min-height:410px;
-              display:flex;
-              flex-direction:column;
-              background:#ffffff;
-              border:1px solid #e2e8f0;
-              border-radius:16px;
-              overflow:hidden;
-              box-shadow:0 4px 12px rgba(0,0,0,0.03);
-              box-sizing:border-box;
-              transition:all 0.3s ease;
-            "
+            class="task-card tasks-inline-014"
           >
-
 
             <!-- ================================================= -->
             <!--                       IMAGE                        -->
             <!-- ================================================= -->
 
-            <div
-              style="
-                position:relative;
-                width:100%;
-                height:145px;
-                min-height:145px;
-                overflow:hidden;
-                background:#e2e8f0;
-              "
-            >
-
+            <div class="tasks-inline-015">
 
               @if (t.status === 'Open') {
 
                 <img
                   src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80"
                   alt="مهمة مجدولة"
-                  style="
-                    width:100%;
-                    height:100%;
-                    object-fit:cover;
-                    display:block;
-                    transition:transform 0.5s ease;
-                  "
+                  class="tasks-inline-016"
                 />
 
               }
@@ -278,13 +138,7 @@
                 <img
                   src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80"
                   alt="مهمة قيد المراجعة"
-                  style="
-                    width:100%;
-                    height:100%;
-                    object-fit:cover;
-                    display:block;
-                    transition:transform 0.5s ease;
-                  "
+                  class="tasks-inline-016"
                 />
 
               }
@@ -295,41 +149,17 @@
                 <img
                   src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=900&q=80"
                   alt="مهمة مكتملة التقييم"
-                  style="
-                    width:100%;
-                    height:100%;
-                    object-fit:cover;
-                    display:block;
-                    transition:transform 0.5s ease;
-                  "
+                  class="tasks-inline-016"
                 />
 
               }
-
 
 
               <!-- ================= STATUS BADGE ================= -->
 
               @if (t.status === 'Open') {
 
-                <span
-                  style="
-                    position:absolute;
-                    top:14px;
-                    right:14px;
-                    display:inline-flex;
-                    align-items:center;
-                    justify-content:center;
-                    padding:7px 13px;
-                    border-radius:20px;
-                    background:#e8f8fb;
-                    color:#0b8fa5;
-                    font-size:11px;
-                    font-weight:700;
-                    line-height:1;
-                    box-shadow:0 2px 6px rgba(0,0,0,0.05);
-                  "
-                >
+                <span class="tasks-inline-017">
                   مجدولة
                 </span>
 
@@ -338,24 +168,7 @@
 
               @if (t.status === 'Closed') {
 
-                <span
-                  style="
-                    position:absolute;
-                    top:14px;
-                    right:14px;
-                    display:inline-flex;
-                    align-items:center;
-                    justify-content:center;
-                    padding:7px 13px;
-                    border-radius:20px;
-                    background:#fff2d9;
-                    color:#d58b00;
-                    font-size:11px;
-                    font-weight:700;
-                    line-height:1;
-                    box-shadow:0 2px 6px rgba(0,0,0,0.05);
-                  "
-                >
+                <span class="tasks-inline-018">
                   قيد المراجعة
                 </span>
 
@@ -364,24 +177,7 @@
 
               @if (t.status === 'Overdue') {
 
-                <span
-                  style="
-                    position:absolute;
-                    top:14px;
-                    right:14px;
-                    display:inline-flex;
-                    align-items:center;
-                    justify-content:center;
-                    padding:7px 13px;
-                    border-radius:20px;
-                    background:#e4f7ed;
-                    color:#15945a;
-                    font-size:11px;
-                    font-weight:700;
-                    line-height:1;
-                    box-shadow:0 2px 6px rgba(0,0,0,0.05);
-                  "
-                >
+                <span class="tasks-inline-019">
                   مكتملة التقييم
                 </span>
 
@@ -395,55 +191,20 @@
             <!--                     CONTENT                        -->
             <!-- ================================================= -->
 
-            <div
-              style="
-                flex:1;
-                display:flex;
-                flex-direction:column;
-                padding:20px 22px;
-                text-align:right;
-                direction:rtl;
-                box-sizing:border-box;
-              "
-            >
+            <div class="tasks-inline-020">
 
-              <h3
-                style="
-                  margin:0 0 8px 0;
-                  font-size:18px !important;
-                  font-weight:700 !important;
-                  color:#0b192c !important;
-                  line-height:1.6;
-                  display:-webkit-box;
-                  -webkit-line-clamp:2;
-                  -webkit-box-orient:vertical;
-                  overflow:hidden;
-                "
-              >
+              <h3 class="tasks-inline-021">
                 {{ t.title }}
               </h3>
 
 
               @if (t.description) {
 
-                <p
-                  style="
-                    margin:0 0 16px 0;
-                    font-size:13px !important;
-                    font-weight:400;
-                    color:#64748b !important;
-                    line-height:1.8;
-                    display:-webkit-box;
-                    -webkit-line-clamp:2;
-                    -webkit-box-orient:vertical;
-                    overflow:hidden;
-                  "
-                >
+                <p class="tasks-inline-022">
                   {{ t.description }}
                 </p>
 
               }
-
 
 
               <!-- ================================================= -->
@@ -452,36 +213,13 @@
 
               @if (t.status === 'Open') {
 
-                <div
-                  style="
-                    margin-top:2px;
-                    padding:10px 12px;
-                    background:#f8fafc;
-                    border-radius:10px;
-                    text-align:right;
-                  "
-                >
+                <div class="tasks-inline-023">
 
-                  <span
-                    style="
-                      display:block;
-                      margin-bottom:3px;
-                      font-size:11px;
-                      font-weight:600;
-                      color:#94a3b8;
-                    "
-                  >
+                  <span class="tasks-inline-024">
                     موعد التسليم
                   </span>
 
-                  <span
-                    style="
-                      display:block;
-                      font-size:13px;
-                      font-weight:700;
-                      color:#334155;
-                    "
-                  >
+                  <span class="tasks-inline-025">
                     {{ t.dueDate | date:'dd MMMM, yyyy' }}
                   </span>
 
@@ -490,50 +228,46 @@
               }
 
 
-
               <!-- ================================================= -->
               <!--                   CLOSED DETAILS                   -->
               <!-- ================================================= -->
 
               @if (t.status === 'Closed') {
 
-                <div
-                  style="
-                    margin-top:2px;
-                    padding:10px 12px;
-                    background:#fffbeb;
-                    border-radius:10px;
-                    text-align:right;
-                  "
-                >
+                <div class="tasks-inline-026">
 
-                  <span
-                    style="
-                      display:block;
-                      margin-bottom:3px;
-                      font-size:11px;
-                      font-weight:600;
-                      color:#b45309;
-                    "
-                  >
+                  <span class="tasks-inline-027">
                     حالة التسليمات
                   </span>
 
-                  <span
-                    style="
-                      display:block;
-                      font-size:13px;
-                      font-weight:700;
-                      color:#334155;
-                    "
-                  >
-                    12 تسليمًا جديدًا بحاجة للتقييم
+                  <span class="tasks-inline-025">
+
+                    @if (loadingSubmissions()) {
+
+                      جاري تحميل التسليمات...
+
+                    }
+                    @else {
+
+                      @if (submissionsNeedingReview(t.taskId) > 0) {
+
+                        {{ submissionsNeedingReview(t.taskId) }}
+                        تسليم بحاجة للمراجعة
+
+                      }
+                      @else {
+
+                        لا توجد تسليمات بحاجة للمراجعة
+
+                      }
+
+                    }
+
                   </span>
 
                 </div>
 
               }
-
 
 
               <!-- ================================================= -->
@@ -542,43 +276,121 @@
 
               @if (t.status === 'Overdue') {
 
-                <div
-                  style="
-                    margin-top:2px;
-                    padding:10px 12px;
-                    background:#f0fdf4;
-                    border-radius:10px;
-                    text-align:right;
-                  "
-                >
+                <div class="tasks-inline-028">
 
-                  <span
-                    style="
-                      display:block;
-                      margin-bottom:3px;
-                      font-size:11px;
-                      font-weight:600;
-                      color:#16a34a;
-                    "
-                  >
+                  <span class="tasks-inline-029">
                     حالة التقييم
                   </span>
 
-                  <span
-                    style="
-                      display:block;
-                      font-size:13px;
-                      font-weight:700;
-                      color:#334155;
-                    "
-                  >
-                    تم تقييم جميع المتدربين
+                  <span class="tasks-inline-025">
+
+                    @if (loadingSubmissions()) {
+
+                      جاري تحميل التسليمات...
+
+                    }
+                    @else {
+
+                      @if (totalSubmissions(t.taskId) === 0) {
+
+                        لا توجد تسليمات
+
+                      }
+                      @else {
+
+                        تم تقييم
+                        {{ gradedSubmissions(t.taskId) }}
+                        من
+                        {{ totalSubmissions(t.taskId) }}
+                        تسليم
+
+                      }
+
+                    }
+
                   </span>
 
                 </div>
 
               }
 
+
+              <!-- ================================================= -->
+              <!--                 VIEW SUBMISSIONS                  -->
+              <!-- ================================================= -->
+
+              @if (
+                !loadingSubmissions() &&
+                totalSubmissions(t.taskId) > 0
+              ) {
+
+                <button
+                  type="button"
+                  class="view-submissions-btn"
+                  (click)="openSubmissionsModal(t)"
+                  style="
+                    width:100%;
+                    min-height:40px;
+                    margin-top:12px;
+                    padding:0 14px;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    gap:7px;
+                    background:#f0f7ff;
+                    color:#0056b8;
+                    border:1px solid #bfdbfe;
+                    border-radius:9px;
+                    font-family:inherit;
+                    font-size:12px;
+                    font-weight:700;
+                    cursor:pointer;
+                    box-sizing:border-box;
+                  "
+                >
+
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="16"
+                    height="16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z">
+                    </path>
+
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="3">
+                    </circle>
+                  </svg>
+
+                  عرض التسليمات
+
+                  <span
+                    style="
+                      min-width:22px;
+                      height:22px;
+                      padding:0 6px;
+                      display:inline-flex;
+                      align-items:center;
+                      justify-content:center;
+                      background:#0056b8;
+                      color:#ffffff;
+                      border-radius:999px;
+                      font-size:10px;
+                      font-weight:800;
+                    "
+                  >
+                    {{ totalSubmissions(t.taskId) }}
+                  </span>
+
+                </button>
+
+              }
 
 
               <!-- ================================================= -->
@@ -587,86 +399,42 @@
 
               @if (t.status === 'Open') {
 
-                <div
-                  style="
-                    margin-top:auto;
-                    padding-top:14px;
-                    border-top:1px solid #f1f5f9;
-                  "
-                >
+                <div class="tasks-inline-030">
 
-                  <div
-                    style="
-                      display:flex;
-                      justify-content:space-between;
-                      align-items:center;
-                      gap:12px;
-                      margin-bottom:12px;
-                    "
-                  >
+                  <div class="tasks-inline-031">
 
-                    <span
-                      style="
-                        font-size:12px;
-                        font-weight:500;
-                        color:#64748b;
-                      "
-                    >
+                    <span class="tasks-inline-032">
                       {{ selectedBatch()?.batchName || 'الدفعة' }}
                     </span>
 
-                    <span
-                      style="
-                        display:inline-flex;
-                        align-items:center;
-                        justify-content:center;
-                        background:#e8f8fb;
-                        color:#0b8fa5;
-                        font-size:11px;
-                        font-weight:700;
-                        border-radius:20px;
-                        padding:6px 12px;
-                      "
-                    >
+                    <span class="tasks-inline-033">
                       نشطة
                     </span>
 
                   </div>
 
 
-                  <div
-                    style="
-                      display:grid;
-                      grid-template-columns:1fr auto;
-                      gap:8px;
-                    "
-                  >
+                  <div class="tasks-inline-034">
 
                     <button
                       type="button"
-                      class="nfd-btn primary"
+                      class="nfd-btn primary tasks-inline-035"
                       (click)="updateTaskStatus(t, 'Closed')"
                       [disabled]="
                         updatingTaskId() === t.taskId ||
                         deletingTaskId() === t.taskId
                       "
-                      style="
-                        height:40px;
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                        border-radius:9px;
-                        font-size:12px;
-                        font-weight:700;
-                        cursor:pointer;
-                      "
                     >
 
                       @if (updatingTaskId() === t.taskId) {
+
                         جاري التحديث...
+
                       }
                       @else {
+
                         نقل إلى قيد المراجعة
+
                       }
 
                     </button>
@@ -674,31 +442,23 @@
 
                     <button
                       type="button"
-                      class="task-delete-btn"
+                      class="task-delete-btn tasks-inline-036"
                       (click)="deleteTask(t)"
                       [disabled]="
                         deletingTaskId() === t.taskId ||
                         updatingTaskId() === t.taskId
                       "
-                      style="
-                        height:40px;
-                        min-width:70px;
-                        padding:0 12px;
-                        background:#ffffff;
-                        color:#dc2626;
-                        border:1px solid #fecaca;
-                        border-radius:9px;
-                        font-size:12px;
-                        font-weight:700;
-                        cursor:pointer;
-                      "
                     >
 
                       @if (deletingTaskId() === t.taskId) {
+
                         ...
+
                       }
                       @else {
+
                         حذف
+
                       }
 
                     </button>
@@ -708,7 +468,6 @@
                 </div>
 
               }
-
 
 
               <!-- ================================================= -->
@@ -717,46 +476,29 @@
 
               @if (t.status === 'Closed') {
 
-                <div
-                  style="
-                    margin-top:auto;
-                    padding-top:14px;
-                    border-top:1px solid #f1f5f9;
-                  "
-                >
+                <div class="tasks-inline-030">
 
-                  <div
-                    style="
-                      display:flex;
-                      justify-content:space-between;
-                      align-items:center;
-                      gap:12px;
-                      margin-bottom:12px;
-                    "
-                  >
+                  <div class="tasks-inline-031">
 
-                    <span
-                      style="
-                        font-size:12px;
-                        font-weight:500;
-                        color:#64748b;
-                      "
-                    >
+                    <span class="tasks-inline-032">
                       {{ selectedBatch()?.batchName || 'الدفعة' }}
                     </span>
 
 
-                    <span
-                      style="
-                        background:#fff2d9;
-                        color:#d58b00;
-                        padding:6px 12px;
-                        border-radius:20px;
-                        font-size:11px;
-                        font-weight:700;
-                      "
-                    >
-                      بحاجة للتقييم
+                    <span class="tasks-inline-037">
+
+                      @if (loadingSubmissions()) {
+
+                        جاري التحميل...
+
+                      }
+                      @else {
+
+                        {{ submissionsNeedingReview(t.taskId) }}
+                        بحاجة للتقييم
+
+                      }
+
                     </span>
 
                   </div>
@@ -764,39 +506,18 @@
 
                   <button
                     type="button"
-                    class="nfd-btn primary review-btn"
+                    class="nfd-btn primary review-btn tasks-inline-038"
                     [routerLink]="['/trainer/trainees']"
                     [queryParams]="{
                       taskId: t.taskId,
                       batchId: batchIdInput
                     }"
-                    style="
-                      width:100% !important;
-                      height:40px !important;
-                      display:flex !important;
-                      align-items:center !important;
-                      justify-content:center !important;
-                      margin-bottom:8px !important;
-                      padding:0 16px !important;
-                      border-radius:9px !important;
-                      font-size:12px !important;
-                      font-weight:700 !important;
-                      text-align:center !important;
-                      cursor:pointer !important;
-                      box-sizing:border-box !important;
-                    "
                   >
                     مراجعة والتقييم
                   </button>
 
 
-                  <div
-                    style="
-                      display:grid;
-                      grid-template-columns:1fr auto;
-                      gap:8px;
-                    "
-                  >
+                  <div class="tasks-inline-034">
 
                     <button
                       type="button"
@@ -805,23 +526,18 @@
                         updatingTaskId() === t.taskId ||
                         deletingTaskId() === t.taskId
                       "
-                      style="
-                        height:40px;
-                        background:#ecfdf5;
-                        color:#15803d;
-                        border:1px solid #bbf7d0;
-                        border-radius:9px;
-                        font-size:12px;
-                        font-weight:700;
-                        cursor:pointer;
-                      "
+                      class="tasks-inline-039"
                     >
 
                       @if (updatingTaskId() === t.taskId) {
+
                         جاري التحديث...
+
                       }
                       @else {
+
                         اعتماد كمكتملة التقييم
+
                       }
 
                     </button>
@@ -829,31 +545,23 @@
 
                     <button
                       type="button"
-                      class="task-delete-btn"
+                      class="task-delete-btn tasks-inline-036"
                       (click)="deleteTask(t)"
                       [disabled]="
                         deletingTaskId() === t.taskId ||
                         updatingTaskId() === t.taskId
                       "
-                      style="
-                        height:40px;
-                        min-width:70px;
-                        padding:0 12px;
-                        background:#ffffff;
-                        color:#dc2626;
-                        border:1px solid #fecaca;
-                        border-radius:9px;
-                        font-size:12px;
-                        font-weight:700;
-                        cursor:pointer;
-                      "
                     >
 
                       @if (deletingTaskId() === t.taskId) {
+
                         ...
+
                       }
                       @else {
+
                         حذف
+
                       }
 
                     </button>
@@ -865,56 +573,37 @@
               }
 
 
-
               <!-- ================================================= -->
               <!--                   OVERDUE FOOTER                   -->
               <!-- ================================================= -->
 
               @if (t.status === 'Overdue') {
 
-                <div
-                  style="
-                    margin-top:auto;
-                    padding-top:14px;
-                    border-top:1px solid #f1f5f9;
-                  "
-                >
+                <div class="tasks-inline-030">
 
-                  <div
-                    style="
-                      display:flex;
-                      justify-content:space-between;
-                      align-items:center;
-                      gap:12px;
-                      margin-bottom:12px;
-                    "
-                  >
+                  <div class="tasks-inline-031">
 
-                    <span
-                      style="
-                        font-size:12px;
-                        font-weight:500;
-                        color:#64748b;
-                      "
-                    >
+                    <span class="tasks-inline-032">
                       {{ selectedBatch()?.batchName || 'الدفعة' }}
                     </span>
 
 
-                    <span
-                      style="
-                        display:inline-flex;
-                        align-items:center;
-                        justify-content:center;
-                        background:#e4f7ed;
-                        color:#15945a;
-                        font-size:11px;
-                        font-weight:700;
-                        border-radius:20px;
-                        padding:6px 12px;
-                      "
-                    >
-                      تم التقييم
+                    <span class="tasks-inline-040">
+
+                      @if (loadingSubmissions()) {
+
+                        جاري التحميل...
+
+                      }
+                      @else {
+
+                        {{ gradedSubmissions(t.taskId) }}
+                        من
+                        {{ totalSubmissions(t.taskId) }}
+                        تم تقييمها
+
+                      }
+
                     </span>
 
                   </div>
@@ -922,27 +611,20 @@
 
                   <button
                     type="button"
-                    class="task-delete-btn"
+                    class="task-delete-btn tasks-inline-041"
                     (click)="deleteTask(t)"
                     [disabled]="deletingTaskId() === t.taskId"
-                    style="
-                      width:100%;
-                      height:40px;
-                      background:#ffffff;
-                      color:#dc2626;
-                      border:1px solid #fecaca;
-                      border-radius:9px;
-                      font-size:12px;
-                      font-weight:700;
-                      cursor:pointer;
-                    "
                   >
 
                     @if (deletingTaskId() === t.taskId) {
+
                       جاري الحذف...
+
                     }
                     @else {
+
                       حذف المهمة
+
                     }
 
                   </button>
@@ -963,51 +645,17 @@
 
     @else {
 
-      <!-- ================================================= -->
-      <!--                    EMPTY STATE                     -->
-      <!-- ================================================= -->
+      <div class="tasks-inline-042">
 
-      <div
-        style="
-          width:100%;
-          padding:65px 20px;
-          box-sizing:border-box;
-          text-align:center;
-          background:#f8fafc;
-          border:1px dashed #cbd5e1;
-          border-radius:16px;
-        "
-      >
-
-        <div
-          style="
-            font-size:34px;
-            margin-bottom:12px;
-          "
-        >
+        <div class="tasks-inline-043">
           📋
         </div>
 
-
-        <strong
-          style="
-            display:block;
-            margin-bottom:6px;
-            font-size:16px;
-            font-weight:700;
-            color:#0b192c;
-          "
-        >
+        <strong class="tasks-inline-044">
           لا توجد مهام
         </strong>
 
-
-        <span
-          style="
-            font-size:13px;
-            color:#64748b;
-          "
-        >
+        <span class="tasks-inline-045">
           لا توجد مهام لهذه الدفعة حتى الآن
         </span>
 
@@ -1053,12 +701,710 @@
       border-color:#fca5a5 !important;
     }
 
+    .view-submissions-btn {
+      transition:all 0.2s ease;
+    }
+
+    .view-submissions-btn:hover {
+      background:#e6f2ff !important;
+      border-color:#93c5fd !important;
+      transform:translateY(-1px);
+    }
+
+    .submission-item {
+      transition:all 0.2s ease;
+    }
+
+    .submission-item:hover {
+      border-color:#cbddeb !important;
+      box-shadow:0 5px 14px rgba(15,35,70,0.07) !important;
+    }
+
+    .submission-status-badge {
+      flex:0 0 auto;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:6px 11px;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:800;
+    }
+
+    .submission-status-badge.submitted {
+      background:#e8f8fb;
+      color:#0b8fa5;
+    }
+
+    .submission-status-badge.review {
+      background:#fff2d9;
+      color:#d58b00;
+    }
+
+    .submission-status-badge.graded {
+      background:#e4f7ed;
+      color:#15945a;
+    }
+
+    .submission-status-badge.revision {
+      background:#eef2ff;
+      color:#4f46e5;
+    }
+
+    .submission-status-badge.late {
+      background:#fef2f2;
+      color:#dc2626;
+    }
+
     button:disabled {
       opacity:0.6;
       cursor:not-allowed !important;
     }
 
   </style>
+
+
+
+  <!-- ================================================= -->
+  <!--              SUBMISSIONS VIEW MODAL               -->
+  <!-- ================================================= -->
+
+  @if (showSubmissionsModal()) {
+
+    @if (selectedSubmissionsTask(); as selectedTask) {
+
+      <div
+        (click)="closeSubmissionsModal()"
+        style="
+          position:fixed;
+          inset:0;
+          z-index:1200;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          padding:24px;
+          box-sizing:border-box;
+          background:rgba(15,35,70,0.42);
+          backdrop-filter:blur(3px);
+        "
+      >
+
+        <div
+          (click)="$event.stopPropagation()"
+          style="
+            width:min(760px,100%);
+            max-height:calc(100vh - 48px);
+            display:flex;
+            flex-direction:column;
+            background:#ffffff;
+            border:1px solid #e2e8f0;
+            border-radius:18px;
+            overflow:hidden;
+            box-shadow:0 24px 70px rgba(15,35,70,0.24);
+            direction:rtl;
+          "
+        >
+
+          <!-- ================= HEADER ================= -->
+
+          <div
+            style="
+              padding:20px 24px;
+              display:flex;
+              align-items:flex-start;
+              justify-content:space-between;
+              gap:18px;
+              border-bottom:1px solid #e5eaf1;
+              background:#ffffff;
+            "
+          >
+
+            <div>
+
+              <h3
+                style="
+                  margin:0 0 5px 0;
+                  color:#0b192c;
+                  font-size:18px;
+                  font-weight:800;
+                "
+              >
+                تسليمات المهمة
+              </h3>
+
+              <p
+                style="
+                  margin:0;
+                  color:#64748b;
+                  font-size:12px;
+                "
+              >
+                {{ selectedTask.title }}
+              </p>
+
+            </div>
+
+
+            <button
+              type="button"
+              (click)="closeSubmissionsModal()"
+              style="
+                width:38px;
+                height:38px;
+                min-width:38px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                background:#f1f5f9;
+                color:#0f172a;
+                border:0;
+                border-radius:50%;
+                font-size:22px;
+                cursor:pointer;
+              "
+            >
+              ×
+            </button>
+
+          </div>
+
+
+          <!-- ================= SUMMARY ================= -->
+
+          @if (!modalLoadingSubmissions()) {
+
+            <div
+              style="
+                padding:12px 24px;
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:12px;
+                background:#f8fbff;
+                border-bottom:1px solid #e5eaf1;
+              "
+            >
+
+              <span
+                style="
+                  color:#64748b;
+                  font-size:11px;
+                  font-weight:600;
+                "
+              >
+                إجمالي التسليمات
+              </span>
+
+              <span
+                style="
+                  min-width:34px;
+                  height:28px;
+                  padding:0 10px;
+                  display:inline-flex;
+                  align-items:center;
+                  justify-content:center;
+                  background:#e6f3ff;
+                  color:#0056b8;
+                  border-radius:999px;
+                  font-size:11px;
+                  font-weight:800;
+                "
+              >
+                {{ selectedTaskSubmissions().length }}
+              </span>
+
+            </div>
+
+          }
+
+
+          <!-- ================= CONTENT ================= -->
+
+          <div
+            style="
+              padding:20px 24px;
+              overflow:auto;
+            "
+          >
+
+            @if (modalLoadingSubmissions()) {
+
+              <div
+                style="
+                  min-height:180px;
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                  color:#64748b;
+                  font-size:13px;
+                "
+              >
+                جاري تحميل التسليمات...
+              </div>
+
+            }
+
+            @else if (submissionsModalError()) {
+
+              <div
+                style="
+                  padding:14px;
+                  background:#fef2f2;
+                  color:#b91c1c;
+                  border:1px solid #fecaca;
+                  border-radius:10px;
+                  font-size:12px;
+                "
+              >
+                {{ submissionsModalError() }}
+              </div>
+
+            }
+
+            @else if (selectedTaskSubmissions().length === 0) {
+
+              <div
+                style="
+                  min-height:180px;
+                  display:flex;
+                  flex-direction:column;
+                  align-items:center;
+                  justify-content:center;
+                  gap:7px;
+                  text-align:center;
+                "
+              >
+
+                <div
+                  style="
+                    width:48px;
+                    height:48px;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    background:#f1f5f9;
+                    color:#64748b;
+                    border-radius:50%;
+                  "
+                >
+
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="22"
+                    height="22"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
+                    </path>
+
+                    <polyline
+                      points="14 2 14 8 20 8">
+                    </polyline>
+                  </svg>
+
+                </div>
+
+                <strong
+                  style="
+                    color:#334155;
+                    font-size:13px;
+                  "
+                >
+                  لا توجد تسليمات
+                </strong>
+
+                <span
+                  style="
+                    color:#94a3b8;
+                    font-size:11px;
+                  "
+                >
+                  لا توجد تسليمات مرتبطة بهذه المهمة حاليًا.
+                </span>
+
+              </div>
+
+            }
+
+            @else {
+
+              <div
+                style="
+                  display:flex;
+                  flex-direction:column;
+                  gap:12px;
+                "
+              >
+
+                @for (
+                  submission of selectedTaskSubmissions();
+                  track submission.submissionId
+                ) {
+
+                  <div
+                    class="submission-item"
+                    style="
+                      padding:16px;
+                      background:#ffffff;
+                      border:1px solid #e2e8f0;
+                      border-radius:13px;
+                      box-shadow:0 2px 8px rgba(15,35,70,0.03);
+                    "
+                  >
+
+                    <div
+                      style="
+                        display:flex;
+                        align-items:flex-start;
+                        justify-content:space-between;
+                        gap:14px;
+                        margin-bottom:14px;
+                      "
+                    >
+
+                      <div
+                        style="
+                          min-width:0;
+                          display:flex;
+                          align-items:center;
+                          gap:10px;
+                        "
+                      >
+
+                        <div
+                          style="
+                            width:42px;
+                            height:42px;
+                            min-width:42px;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            background:#003b82;
+                            color:#ffffff;
+                            border-radius:50%;
+                            font-size:13px;
+                            font-weight:800;
+                          "
+                        >
+                          {{
+                            (submission.traineeName || 'م')
+                              .charAt(0)
+                          }}
+                        </div>
+
+
+                        <div style="min-width:0;">
+
+                          <strong
+                            style="
+                              display:block;
+                              margin-bottom:4px;
+                              color:#0b192c;
+                              font-size:13px;
+                              font-weight:800;
+                            "
+                          >
+                            {{
+                              submission.traineeName ||
+                              'متدرب'
+                            }}
+                          </strong>
+
+                          <span
+                            style="
+                              display:block;
+                              color:#94a3b8;
+                              font-size:10px;
+                            "
+                          >
+                            رقم المتدرب:
+                            {{ submission.traineeId }}
+                          </span>
+
+                        </div>
+
+                      </div>
+
+
+                      <span
+                        class="submission-status-badge"
+                        [ngClass]="
+                          submissionStatusClass(
+                            submission.status
+                          )
+                        "
+                      >
+                        {{
+                          submissionStatusLabel(
+                            submission.status
+                          )
+                        }}
+                      </span>
+
+                    </div>
+
+
+                    <div
+                      style="
+                        display:grid;
+                        grid-template-columns:repeat(2,minmax(0,1fr));
+                        gap:10px;
+                        margin-bottom:14px;
+                      "
+                    >
+
+                      <div
+                        style="
+                          padding:10px 12px;
+                          background:#f8fafc;
+                          border-radius:9px;
+                        "
+                      >
+
+                        <span
+                          style="
+                            display:block;
+                            margin-bottom:4px;
+                            color:#94a3b8;
+                            font-size:10px;
+                            font-weight:600;
+                          "
+                        >
+                          تاريخ التسليم
+                        </span>
+
+                        <strong
+                          style="
+                            color:#334155;
+                            font-size:11px;
+                            font-weight:700;
+                          "
+                        >
+                          {{
+                            submission.submittedAt
+                              | date:'dd MMMM, yyyy - h:mm a'
+                          }}
+                        </strong>
+
+                      </div>
+
+
+                      <div
+                        style="
+                          padding:10px 12px;
+                          background:#f8fafc;
+                          border-radius:9px;
+                        "
+                      >
+
+                        <span
+                          style="
+                            display:block;
+                            margin-bottom:4px;
+                            color:#94a3b8;
+                            font-size:10px;
+                            font-weight:600;
+                          "
+                        >
+                          الدرجة
+                        </span>
+
+                        @if (
+                          submission.grade !== null &&
+                          submission.grade !== undefined &&
+                          submission.grade !== ''
+                        ) {
+
+                          <strong
+                            style="
+                              color:#0056b8;
+                              font-size:12px;
+                              font-weight:800;
+                            "
+                          >
+                            {{ submission.grade }}
+                          </strong>
+
+                        }
+
+                        @else {
+
+                          <strong
+                            style="
+                              color:#94a3b8;
+                              font-size:11px;
+                              font-weight:700;
+                            "
+                          >
+                            لم يتم التقييم
+                          </strong>
+
+                        }
+
+                      </div>
+
+                    </div>
+
+
+                    @if (submission.feedback) {
+
+                      <div
+                        style="
+                          margin-bottom:14px;
+                          padding:11px 12px;
+                          background:#fffbeb;
+                          border:1px solid #fef3c7;
+                          border-radius:9px;
+                        "
+                      >
+
+                        <span
+                          style="
+                            display:block;
+                            margin-bottom:5px;
+                            color:#b45309;
+                            font-size:10px;
+                            font-weight:700;
+                          "
+                        >
+                          ملاحظات التقييم
+                        </span>
+
+                        <p
+                          style="
+                            margin:0;
+                            color:#475569;
+                            font-size:11px;
+                            line-height:1.7;
+                          "
+                        >
+                          {{ submission.feedback }}
+                        </p>
+
+                      </div>
+
+                    }
+
+
+                    <div
+                      style="
+                        display:flex;
+                        justify-content:flex-start;
+                      "
+                    >
+
+                      @if (submission.fileUrl) {
+
+                        <a
+                          [href]="submission.fileUrl"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style="
+                            min-height:38px;
+                            padding:0 15px;
+                            display:inline-flex;
+                            align-items:center;
+                            justify-content:center;
+                            gap:7px;
+                            background:#0056b8;
+                            color:#ffffff;
+                            border-radius:9px;
+                            font-size:11px;
+                            font-weight:700;
+                            text-decoration:none;
+                          "
+                        >
+
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="15"
+                            height="15"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <path
+                              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
+                            </path>
+
+                            <polyline
+                              points="14 2 14 8 20 8">
+                            </polyline>
+
+                            <line
+                              x1="12"
+                              y1="18"
+                              x2="12"
+                              y2="12">
+                            </line>
+
+                            <polyline
+                              points="9 15 12 12 15 15">
+                            </polyline>
+                          </svg>
+
+                          عرض التسليم
+
+                        </a>
+
+                      }
+
+                      @else {
+
+                        <span
+                          style="
+                            color:#94a3b8;
+                            font-size:11px;
+                          "
+                        >
+                          لا يوجد ملف مرفق
+                        </span>
+
+                      }
+
+                    </div>
+
+                  </div>
+
+                }
+
+              </div>
+
+            }
+
+          </div>
+
+
+          <div
+            style="
+              padding:14px 24px;
+              display:flex;
+              justify-content:flex-start;
+              border-top:1px solid #e5eaf1;
+              background:#fafcfe;
+            "
+          >
+
+            <button
+              type="button"
+              class="nfd-btn"
+              (click)="closeSubmissionsModal()"
+            >
+              إغلاق
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    }
+
+  }
 
 
 
@@ -1070,89 +1416,35 @@
 
     <div
       (click)="closeCreateModal()"
-      style="
-        position:fixed;
-        inset:0;
-        z-index:1000;
-        background:rgba(15,35,70,0.38);
-        backdrop-filter:blur(2px);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        padding:24px;
-        box-sizing:border-box;
-      "
+      class="tasks-inline-046"
     >
 
       <div
         (click)="$event.stopPropagation()"
-        style="
-          width:min(720px,100%);
-          max-height:calc(100vh - 48px);
-          background:#ffffff;
-          border-radius:18px;
-          border:1px solid #e2e8f0;
-          overflow:auto;
-          box-shadow:0 24px 70px rgba(15,35,70,0.22);
-        "
+        class="tasks-inline-047"
       >
-
 
         <!-- ================= MODAL HEADER ================= -->
 
-        <div
-          style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            padding:20px 24px;
-            border-bottom:1px solid #e5eaf1;
-          "
-        >
+        <div class="tasks-inline-048">
 
           <div>
 
-            <h3
-              style="
-                margin:0 0 4px 0;
-                font-size:18px;
-                font-weight:700;
-                color:#0b192c;
-              "
-            >
+            <h3 class="tasks-inline-049">
               إنشاء واجب / مشروع
             </h3>
 
-
-            <p
-              style="
-                margin:0;
-                font-size:12px;
-                color:#64748b;
-              "
-            >
+            <p class="tasks-inline-050">
               أدخل تفاصيل المهمة ثم اضغط حفظ
             </p>
 
           </div>
 
-
           <button
             type="button"
             (click)="closeCreateModal()"
             [disabled]="saving()"
-            style="
-              width:38px;
-              height:38px;
-              min-width:38px;
-              border:0;
-              border-radius:50%;
-              background:#f1f5f9;
-              color:#0b192c;
-              font-size:22px;
-              line-height:1;
-              cursor:pointer;
-            "
+            class="tasks-inline-051"
           >
             ×
           </button>
@@ -1160,59 +1452,31 @@
         </div>
 
 
-
         <!-- ================= FORM ================= -->
 
         <form (ngSubmit)="saveTask()">
 
-          <div
-            style="
-              padding:24px;
-            "
-          >
-
+          <div class="tasks-inline-052">
 
             @if (errorMessage()) {
 
-              <div
-                style="
-                  background:#fef2f2;
-                  color:#b91c1c;
-                  border:1px solid #fecaca;
-                  border-radius:10px;
-                  padding:10px 12px;
-                  margin-bottom:18px;
-                  font-size:12px;
-                "
-              >
+              <div class="tasks-inline-053">
                 {{ errorMessage() }}
               </div>
 
             }
 
 
-
             <!-- ================= TITLE ================= -->
 
-            <div
-              style="
-                margin-bottom:18px;
-              "
-            >
+            <div class="tasks-inline-054">
 
               <label
                 for="taskTitle"
-                style="
-                  display:block;
-                  margin-bottom:7px;
-                  font-size:12px;
-                  font-weight:600;
-                  color:#0b192c;
-                "
+                class="tasks-inline-055"
               >
                 عنوان المهمة
               </label>
-
 
               <input
                 id="taskTitle"
@@ -1222,46 +1486,22 @@
                 placeholder="مثال: بناء واجهة برمجية لتطبيقات الويب"
                 required
                 autocomplete="off"
-                style="
-                  width:100%;
-                  height:44px;
-                  box-sizing:border-box;
-                  padding:0 14px;
-                  border:1px solid #d9e2ef;
-                  border-radius:10px;
-                  outline:none;
-                  font-family:inherit;
-                  font-size:13px;
-                  color:#0b192c;
-                  background:#ffffff;
-                "
+                class="tasks-inline-056"
               />
 
             </div>
 
 
-
             <!-- ================= DESCRIPTION ================= -->
 
-            <div
-              style="
-                margin-bottom:18px;
-              "
-            >
+            <div class="tasks-inline-054">
 
               <label
                 for="taskDescription"
-                style="
-                  display:block;
-                  margin-bottom:7px;
-                  font-size:12px;
-                  font-weight:600;
-                  color:#0b192c;
-                "
+                class="tasks-inline-055"
               >
                 وصف المهمة
               </label>
-
 
               <textarea
                 id="taskDescription"
@@ -1269,72 +1509,37 @@
                 [(ngModel)]="newTaskDescription"
                 placeholder="اكتب وصف المهمة والتعليمات المطلوبة..."
                 rows="4"
-                style="
-                  width:100%;
-                  min-height:100px;
-                  box-sizing:border-box;
-                  resize:vertical;
-                  padding:12px 14px;
-                  border:1px solid #d9e2ef;
-                  border-radius:10px;
-                  outline:none;
-                  font-family:inherit;
-                  font-size:13px;
-                  line-height:1.7;
-                  color:#0b192c;
-                  background:#ffffff;
-                "
+                class="tasks-inline-057"
               ></textarea>
 
             </div>
 
 
-
             <!-- ================= PRIORITY ================= -->
 
-            <div
-              style="
-                margin-bottom:18px;
-              "
-            >
+            <div class="tasks-inline-054">
 
               <label
                 for="taskPriority"
-                style="
-                  display:block;
-                  margin-bottom:7px;
-                  font-size:12px;
-                  font-weight:600;
-                  color:#0b192c;
-                "
+                class="tasks-inline-055"
               >
                 الأولوية
               </label>
-
 
               <select
                 id="taskPriority"
                 name="taskPriority"
                 [(ngModel)]="newTaskPriority"
-                style="
-                  width:100%;
-                  height:44px;
-                  box-sizing:border-box;
-                  padding:0 12px;
-                  border:1px solid #d9e2ef;
-                  border-radius:10px;
-                  outline:none;
-                  font-family:inherit;
-                  font-size:13px;
-                  color:#0b192c;
-                  background:#ffffff;
-                  cursor:pointer;
-                "
+                class="tasks-inline-058"
               >
 
-                @for (option of priorityOptions; track option.value) {
+                @for (
+                  option of priorityOptions;
+                  track option.value
+                ) {
 
-                  <option [ngValue]="option.value">
+                  <option
+                    [ngValue]="option.value">
                     {{ option.label }}
                   </option>
 
@@ -1345,94 +1550,103 @@
             </div>
 
 
+            <!-- ================================================= -->
+            <!--                DUE DATE + BATCH                   -->
+            <!-- ================================================= -->
 
-            <!-- ================= DATE + BATCH ================= -->
-
-            <div
-              style="
-                display:grid;
-                grid-template-columns:repeat(2,minmax(0,1fr));
-                gap:16px;
-              "
-            >
+            <div class="task-schedule-section">
 
 
-              <!-- DATE -->
+              <!-- ================= DUE DATE ================= -->
 
-              <div>
+              <div class="task-due-field">
 
                 <label
                   for="taskDueDate"
-                  style="
-                    display:block;
-                    margin-bottom:7px;
-                    font-size:12px;
-                    font-weight:600;
-                    color:#0b192c;
-                  "
+                  class="tasks-inline-055"
                 >
                   موعد التسليم
                 </label>
 
 
-                <input
-                  id="taskDueDate"
-                  type="datetime-local"
-                  name="taskDueDate"
-                  [(ngModel)]="newTaskDueDate"
-                  required
-                  style="
-                    width:100%;
-                    height:44px;
-                    box-sizing:border-box;
-                    padding:0 12px;
-                    border:1px solid #d9e2ef;
-                    border-radius:10px;
-                    outline:none;
-                    font-family:inherit;
-                    font-size:13px;
-                    color:#0b192c;
-                    background:#ffffff;
-                  "
-                />
+                <div class="task-due-input-wrapper">
+
+                  <input
+                    id="taskDueDate"
+                    type="datetime-local"
+                    name="taskDueDate"
+                    [(ngModel)]="newTaskDueDate"
+                    required
+                    class="task-due-input"
+                  />
+
+                </div>
+
+
+                <span class="task-field-hint">
+                  حدد تاريخ ووقت انتهاء استقبال التسليمات
+                </span>
 
               </div>
 
 
+              <!-- ================= BATCH ================= -->
 
-              <!-- BATCH -->
+              <div class="task-batch-field">
 
-              <div>
-
-                <label
-                  style="
-                    display:block;
-                    margin-bottom:7px;
-                    font-size:12px;
-                    font-weight:600;
-                    color:#0b192c;
-                  "
-                >
+                <label class="tasks-inline-055">
                   الدفعة
                 </label>
 
+                <div class="task-selected-batch">
 
-                <div
-                  style="
-                    width:100%;
-                    height:44px;
-                    box-sizing:border-box;
-                    padding:0 14px;
-                    display:flex;
-                    align-items:center;
-                    border:1px solid #e2e8f0;
-                    border-radius:10px;
-                    font-size:13px;
-                    color:#475569;
-                    background:#f8fafc;
-                  "
-                >
-                  {{ selectedBatch()?.batchName || 'لم يتم تحديد الدفعة' }}
+                  <span class="task-selected-batch-icon">
+
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="17"
+                      height="17"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                    >
+                      <path
+                        d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2">
+                      </path>
+
+                      <circle
+                        cx="9"
+                        cy="7"
+                        r="4">
+                      </circle>
+
+                      <path
+                        d="M22 21v-2a4 4 0 0 0-3-3.87">
+                      </path>
+
+                      <path
+                        d="M16 3.13a4 4 0 0 1 0 7.75">
+                      </path>
+                    </svg>
+
+                  </span>
+
+
+                  <div class="task-selected-batch-copy">
+
+                    <span class="task-selected-batch-label">
+                      الدفعة المحددة
+                    </span>
+
+                    <strong>
+                      {{
+                        selectedBatch()?.batchName ||
+                        'لم يتم تحديد الدفعة'
+                      }}
+                    </strong>
+
+                  </div>
+
                 </div>
 
               </div>
@@ -1442,29 +1656,15 @@
           </div>
 
 
-
           <!-- ================= MODAL FOOTER ================= -->
 
-          <div
-            style="
-              display:flex;
-              justify-content:flex-start;
-              align-items:center;
-              gap:10px;
-              padding:14px 24px;
-              border-top:1px solid #e5eaf1;
-              background:#fafcfe;
-            "
-          >
+          <div class="tasks-inline-062">
 
             <button
               type="button"
-              class="nfd-btn"
+              class="nfd-btn tasks-inline-063"
               (click)="closeCreateModal()"
               [disabled]="saving()"
-              style="
-                min-width:80px;
-              "
             >
               إلغاء
             </button>
@@ -1472,22 +1672,23 @@
 
             <button
               type="submit"
-              class="nfd-btn primary"
+              class="nfd-btn primary tasks-inline-064"
               [disabled]="
                 saving() ||
                 !newTaskTitle.trim() ||
                 !newTaskDueDate
               "
-              style="
-                min-width:120px;
-              "
             >
 
               @if (saving()) {
+
                 جاري الحفظ...
+
               }
               @else {
+
                 إنشاء المهمة
+
               }
 
             </button>

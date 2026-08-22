@@ -29,7 +29,10 @@ namespace Nafadh_Backend.Repositories
         // Update submission
         Task UpdateSubmissionAsync(NFD_Submission submission);
 
+        //
 
+        Task<IEnumerable<NFD_Submission>>
+    GetTrainerTaskSubmissionsAsync(int taskId);
 
     }
 }

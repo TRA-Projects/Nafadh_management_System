@@ -7,7 +7,7 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-
+import { FormsModule } from '@angular/forms';
 import {
   catchError,
   forkJoin,
@@ -30,7 +30,8 @@ import {
   standalone: true,
   imports: [
     CommonModule,
-    RouterLink
+    RouterLink,
+    FormsModule
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
@@ -58,44 +59,120 @@ export class TrainerDashboard implements OnInit {
   // UPCOMING SESSIONS
   // =====================================================
 
-  upcomingSessions =
-    computed(() => {
+  upcomingSessions = computed(() => {
+    const now = Date.now();
 
-      const now =
-        Date.now();
+    return [...this.sessions()]
+      .filter((session) => {
+        const status = String(session.status).toLowerCase();
 
+        const isUpcomingStatus =
+          status === '0' ||
+          status === '1' ||
+          status === 'scheduled' ||
+          status === 'postponed';
 
-      return [
-        ...this.sessions()
-      ]
-        .filter(session => {
+        const sessionDateTime =
+          this.getSessionDateTime(session);
 
-          const isUpcomingStatus =
-            session.status === 'Scheduled' ||
-            session.status === 'Postponed';
-
-
-          const sessionDateTime =
-            this.getSessionDateTime(
-              session
-            );
-
-
-          return (
-            isUpcomingStatus &&
-            sessionDateTime >= now
-          );
-
-        })
-        .sort(
-          (a, b) =>
-            this.getSessionDateTime(a) -
-            this.getSessionDateTime(b)
+        return (
+          isUpcomingStatus &&
+          sessionDateTime >= now
         );
+      })
+      .sort(
+        (a, b) =>
+          this.getSessionDateTime(a) -
+          this.getSessionDateTime(b)
+      );
+  });
 
-    });
+showCreateSession = signal(false);
+creatingSession = signal(false);
 
+newSession = signal({
+  batchId: 0,
+  sessionDate: '',
+  startTime: '',
+  endTime: '',
+  meetingLink: '',
+  topic: '',
+  learningObjectives: ''
+});
 
+openCreateSession(): void {
+  this.newSession.set({
+    batchId: this.batches()[0]?.batchId ?? 0,
+    sessionDate: '',
+    startTime: '',
+    endTime: '',
+    meetingLink: '',
+    topic: '',
+    learningObjectives: ''
+  });
+
+  this.showCreateSession.set(true);
+}
+
+closeCreateSession(): void {
+  if (this.creatingSession()) return;
+  this.showCreateSession.set(false);
+}
+
+createSession(): void {
+  const trainer = this.trainer();
+  const form = this.newSession();
+
+  if (!trainer) {
+    console.error('بيانات المدرب غير متوفرة');
+    return;
+  }
+
+  if (
+    !form.batchId ||
+    !form.sessionDate ||
+    !form.startTime ||
+    !form.endTime ||
+    !form.topic.trim()
+  ) {
+    alert('يرجى تعبئة الحقول المطلوبة.');
+    return;
+  }
+
+  const dto = {
+    BatchId: form.batchId,
+    TrainerId: trainer.trainerId,
+    SessionDate: `${form.sessionDate}T00:00:00`,
+    StartTime: form.startTime,
+    EndTime: form.endTime,
+    MeetingLink: form.meetingLink.trim(),
+    Topic: form.topic.trim(),
+    LearningObjectives: form.learningObjectives.trim()
+  };
+
+  this.creatingSession.set(true);
+
+  this.api.createSession(dto).subscribe({
+    next: () => {
+      this.creatingSession.set(false);
+      this.showCreateSession.set(false);
+
+      // إعادة تحميل الجلسات حتى تظهر الجديدة مباشرة
+      this.loadSessions(trainer.trainerId);
+    },
+
+    error: (err) => {
+      this.creatingSession.set(false);
+
+      console.error(
+        'خطأ في إنشاء الجلسة:',
+        err
+      );
+
+      alert('تعذر إنشاء الجلسة. حاول مرة أخرى.');
+    }
+  });
+}
   // =====================================================
   // DASHBOARD BATCHES
   // =====================================================
@@ -138,16 +215,16 @@ export class TrainerDashboard implements OnInit {
           const aDate =
             a.startDate
               ? new Date(
-                  a.startDate
-                ).getTime()
+                a.startDate
+              ).getTime()
               : Number.MAX_SAFE_INTEGER;
 
 
           const bDate =
             b.startDate
               ? new Date(
-                  b.startDate
-                ).getTime()
+                b.startDate
+              ).getTime()
               : Number.MAX_SAFE_INTEGER;
 
 
@@ -169,7 +246,7 @@ export class TrainerDashboard implements OnInit {
   constructor(
     private api: TrainerApi,
     public auth: AuthService
-  ) {}
+  ) { }
 
 
   // =====================================================
@@ -559,59 +636,59 @@ export class TrainerDashboard implements OnInit {
   // BATCH IMAGE
   // =====================================================
 
-getBatchImage(
-  batchId: number
-): string {
+  getBatchImage(
+    batchId: number
+  ): string {
 
-  const images = [
+    const images = [
 
-    // Laptop / Programming
-    'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=900&q=85',
+      // Laptop / Programming
+      'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=900&q=85',
 
-    // Cyber / Matrix
-    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=900&q=85',
+      // Cyber / Matrix
+      'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=900&q=85',
 
-    // Cybersecurity
-    'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=900&q=85',
+      // Cybersecurity
+      'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=900&q=85',
 
-    // Team Programming
-    'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=85',
+      // Team Programming
+      'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=85',
 
-    // Code Screen
-    'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=900&q=85',
+      // Code Screen
+      'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=900&q=85',
 
-    // Developer Workspace
-    'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=85',
+      // Developer Workspace
+      'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=85',
 
-    // Laptop Coding
-    'https://images.unsplash.com/photo-1504639725590-34d0984388bd?auto=format&fit=crop&w=900&q=85',
+      // Laptop Coding
+      'https://images.unsplash.com/photo-1504639725590-34d0984388bd?auto=format&fit=crop&w=900&q=85',
 
-    // Programming Screen
-    'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=900&q=85',
+      // Programming Screen
+      'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=900&q=85',
 
-    // Technology
-    'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=85',
+      // Technology
+      'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=85',
 
-    // Software Development
-    'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=900&q=85',
+      // Software Development
+      'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=900&q=85',
 
-    // Coding
-    'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=900&q=85',
+      // Coding
+      'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=900&q=85',
 
-    // Computer Workspace
-    'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=900&q=85'
+      // Computer Workspace
+      'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=900&q=85'
 
-  ];
-
-
-  const imageIndex =
-    Math.abs(batchId) %
-    images.length;
+    ];
 
 
-  return images[imageIndex];
+    const imageIndex =
+      Math.abs(batchId) %
+      images.length;
 
-}
+
+    return images[imageIndex];
+
+  }
 
 
   // =====================================================
