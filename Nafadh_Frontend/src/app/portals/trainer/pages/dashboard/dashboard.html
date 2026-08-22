@@ -18,8 +18,8 @@
       <h1>
         مرحباً
         {{
-          auth.session()?.fullName ||
-          'بالمدرب'
+        auth.session()?.fullName ||
+        'بالمدرب'
         }}
       </h1>
 
@@ -33,10 +33,7 @@
 
     <div class="hero-actions">
 
-      <a
-        routerLink="/trainer/attendance"
-        class="hero-btn primary"
-      >
+      <a routerLink="/trainer/attendance" class="hero-btn primary">
 
         <span class="btn-icon">
           📅
@@ -49,10 +46,7 @@
       </a>
 
 
-      <a
-        routerLink="/trainer/trainees"
-        class="hero-btn secondary"
-      >
+      <a routerLink="/trainer/trainees" class="hero-btn secondary">
 
         <span class="btn-icon">
           👥
@@ -98,22 +92,13 @@
 
       <div class="kpi-icon">
 
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 
-          <path
-            d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
-          ></path>
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
 
-          <path
-            d="M6.5 2H20v20H6.5A2.5
+          <path d="M6.5 2H20v20H6.5A2.5
             2.5 0 0 1 4 19.5v-15A2.5
-            2.5 0 0 1 6.5 2Z"
-          ></path>
+            2.5 0 0 1 6.5 2Z"></path>
 
         </svg>
 
@@ -145,28 +130,15 @@
 
       <div class="kpi-icon">
 
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 
-          <path
-            d="M17 21v-2a4 4 0 0 0-4-4H5
-            a4 4 0 0 0-4 4v2"
-          ></path>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5
+            a4 4 0 0 0-4 4v2"></path>
 
-          <circle
-            cx="9"
-            cy="7"
-            r="4"
-          ></circle>
+          <circle cx="9" cy="7" r="4"></circle>
 
-          <path
-            d="M23 21v-2a4
-            4 0 0 0-3-3.87"
-          ></path>
+          <path d="M23 21v-2a4
+            4 0 0 0-3-3.87"></path>
 
         </svg>
 
@@ -187,60 +159,33 @@
 
         <strong>
           {{
-            upcomingSessions().length
+          upcomingSessions().length
           }}
         </strong>
 
         <small>
-
           {{
-            upcomingSessions().length > 0
-              ? 'جلسات مجدولة قادمة'
-              : 'لا توجد جلسات قادمة'
+          upcomingSessions().length > 0
+          ? 'جلسات مجدولة قادمة'
+          : 'لا توجد جلسات قادمة'
           }}
-
         </small>
+
 
       </div>
 
 
       <div class="kpi-icon">
 
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 
-          <rect
-            x="3"
-            y="4"
-            width="18"
-            height="17"
-            rx="2"
-          ></rect>
+          <rect x="3" y="4" width="18" height="17" rx="2"></rect>
 
-          <line
-            x1="16"
-            y1="2"
-            x2="16"
-            y2="6"
-          ></line>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
 
-          <line
-            x1="8"
-            y1="2"
-            x2="8"
-            y2="6"
-          ></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
 
-          <line
-            x1="3"
-            y1="10"
-            x2="21"
-            y2="10"
-          ></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
 
         </svg>
 
@@ -279,10 +224,7 @@
         </div>
 
 
-        <a
-          routerLink="/trainer/batches"
-          class="view-all-btn"
-        >
+        <a routerLink="/trainer/batches" class="view-all-btn">
           عرض الكل
         </a>
 
@@ -292,148 +234,129 @@
       <div class="batch-grid">
 
         @for (
-          b of dashboardBatches();
-          track b.batchId
+        b of dashboardBatches();
+        track b.batchId
         ) {
 
-          <article class="batch-card">
+        <article class="batch-card">
 
-            <div class="batch-image-wrapper">
+          <div class="batch-image-wrapper">
 
-              <img
-                class="batch-image"
-                [src]="getBatchImage(b.batchId)"
-                [alt]="
+            <img class="batch-image" [src]="getBatchImage(b.batchId)" [alt]="
                   b.batchName ||
                   'دفعة تدريبية'
-                "
-              />
+                " />
 
 
-              <span
-                class="status-badge image-status"
-                [class.active]="b.status === 'Ongoing'"
-                [class.upcoming]="b.status === 'Upcoming'"
-                [class.completed]="b.status === 'Completed'"
-                [class.cancelled]="b.status === 'Cancelled'"
-              >
+            <span class="status-badge image-status" [class.active]="b.status === 'Ongoing'"
+              [class.upcoming]="b.status === 'Upcoming'" [class.completed]="b.status === 'Completed'"
+              [class.cancelled]="b.status === 'Cancelled'">
 
-                {{
-                  getBatchStatusLabel(
-                    b.status
+              {{
+              getBatchStatusLabel(
+              b.status
+              )
+              }}
+
+            </span>
+
+          </div>
+
+
+          <div class="batch-card-content">
+
+            <span class="batch-label">
+              دفعة تدريبية
+            </span>
+
+            <h4>
+              {{
+              b.batchName ||
+              'دفعة بدون اسم'
+              }}
+            </h4>
+
+
+            <div class="batch-meta">
+
+              <div class="meta-item">
+
+                <span class="meta-label">
+                  البداية
+                </span>
+
+                <strong>
+
+                  {{
+                  b.startDate
+                  ? (
+                  b.startDate |
+                  date:'yyyy/MM/dd'
                   )
-                }}
+                  : '—'
+                  }}
 
-              </span>
+                </strong>
 
-            </div>
-
-
-            <div class="batch-card-content">
-
-              <span class="batch-label">
-                دفعة تدريبية
-              </span>
-
-              <h4>
-                {{
-                  b.batchName ||
-                  'دفعة بدون اسم'
-                }}
-              </h4>
+              </div>
 
 
-              <div class="batch-meta">
+              <div class="meta-item">
 
-                <div class="meta-item">
+                <span class="meta-label">
+                  النهاية
+                </span>
 
-                  <span class="meta-label">
-                    البداية
-                  </span>
+                <strong>
 
-                  <strong>
+                  {{
+                  b.endDate
+                  ? (
+                  b.endDate |
+                  date:'yyyy/MM/dd'
+                  )
+                  : '—'
+                  }}
 
-                    {{
-                      b.startDate
-                        ? (
-                            b.startDate |
-                            date:'yyyy/MM/dd'
-                          )
-                        : '—'
-                    }}
-
-                  </strong>
-
-                </div>
-
-
-                <div class="meta-item">
-
-                  <span class="meta-label">
-                    النهاية
-                  </span>
-
-                  <strong>
-
-                    {{
-                      b.endDate
-                        ? (
-                            b.endDate |
-                            date:'yyyy/MM/dd'
-                          )
-                        : '—'
-                    }}
-
-                  </strong>
-
-                </div>
+                </strong>
 
               </div>
 
             </div>
 
-          </article>
+          </div>
+
+        </article>
 
         } @empty {
 
-          <div class="empty-state">
+        <div class="empty-state">
 
-            <div class="empty-icon">
+          <div class="empty-icon">
 
-              <svg
-                viewBox="0 0 24 24"
-                width="26"
-                height="26"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2">
 
-                <path
-                  d="M4 19.5A2.5
-                  2.5 0 0 1 6.5 17H20"
-                ></path>
+              <path d="M4 19.5A2.5
+                  2.5 0 0 1 6.5 17H20"></path>
 
-                <path
-                  d="M6.5 2H20v20H6.5A2.5
+              <path d="M6.5 2H20v20H6.5A2.5
                   2.5 0 0 1 4 19.5v-15A2.5
-                  2.5 0 0 1 6.5 2Z"
-                ></path>
+                  2.5 0 0 1 6.5 2Z"></path>
 
-              </svg>
-
-            </div>
-
-            <strong>
-              لا توجد دفعات مسندة حالياً
-            </strong>
-
-            <span>
-              ستظهر الدفعات هنا عند إسنادها
-              لحساب المدرب.
-            </span>
+            </svg>
 
           </div>
+
+          <strong>
+            لا توجد دفعات مسندة حالياً
+          </strong>
+
+          <span>
+            ستظهر الدفعات هنا عند إسنادها
+            لحساب المدرب.
+          </span>
+
+        </div>
 
         }
 
@@ -464,17 +387,19 @@
 
 
         @if (
-          upcomingSessions().length > 0
+        upcomingSessions().length > 0
         ) {
 
-          <span class="sessions-count">
 
-            {{
-              upcomingSessions().length
-            }}
-            جلسات
+        <span class="sessions-count">
 
-          </span>
+          {{
+          upcomingSessions().length
+          }}
+          جلسات
+
+        </span>
+
 
         }
 
@@ -484,157 +409,338 @@
       <div class="sessions-list">
 
         @for (
-          session of upcomingSessions().slice(0, 3);
-          track session.sessionId
+        session of upcomingSessions();
+        track session.sessionId
         ) {
 
-          <div class="session-row">
+        <div class="session-row">
 
-            <div class="session-time-box">
-
-              <strong>
-                {{
-                  session.startTime ||
-                  '—'
-                }}
-              </strong>
-
-              <span>
-                {{
-                  session.sessionDate |
-                  date:'MM/dd'
-                }}
-              </span>
-
-            </div>
-
-
-            <div class="session-info">
-
-              <strong>
-                {{
-                  session.topic ||
-                  'جلسة تدريبية'
-                }}
-              </strong>
-
-              <span>
-                {{
-                  session.sessionDate |
-                  date:'yyyy/MM/dd'
-                }}
-              </span>
-
-
-              @if (
-                session.endTime
-              ) {
-
-                <small>
-
-                  من
-                  {{
-                    session.startTime ||
-                    '—'
-                  }}
-
-                  إلى
-
-                  {{
-                    session.endTime
-                  }}
-
-                </small>
-
-              }
-
-            </div>
-
-
-            <span
-              class="session-status"
-              [class.postponed]="
-                session.status ===
-                'Postponed'
-              "
-            >
-
-              {{
-                session.status ===
-                'Postponed'
-                  ? 'مؤجلة'
-                  : 'قادمة'
-              }}
-
-            </span>
-
-          </div>
-
-        } @empty {
-
-          <div class="empty-state sessions-empty">
-
-            <div class="empty-icon">
-
-              <svg
-                viewBox="0 0 24 24"
-                width="27"
-                height="27"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-
-                <rect
-                  x="3"
-                  y="4"
-                  width="18"
-                  height="17"
-                  rx="2"
-                ></rect>
-
-                <line
-                  x1="16"
-                  y1="2"
-                  x2="16"
-                  y2="6"
-                ></line>
-
-                <line
-                  x1="8"
-                  y1="2"
-                  x2="8"
-                  y2="6"
-                ></line>
-
-                <line
-                  x1="3"
-                  y1="10"
-                  x2="21"
-                  y2="10"
-                ></line>
-
-              </svg>
-
-            </div>
+          <div class="session-time-box">
 
             <strong>
-              لا توجد جلسات قادمة
+              {{
+              session.startTime ||
+              '—'
+              }}
             </strong>
 
             <span>
-              ستظهر هنا الجلسات المجدولة
-              القادمة تلقائياً.
+              {{
+              session.sessionDate |
+              date:'MM/dd'
+              }}
             </span>
 
           </div>
 
+
+          <div class="session-info">
+
+            <strong>
+              {{
+              session.topic ||
+              'جلسة تدريبية'
+              }}
+            </strong>
+
+            <span>
+              {{
+              session.sessionDate |
+              date:'yyyy/MM/dd'
+              }}
+            </span>
+
+
+            @if (
+            session.endTime
+            ) {
+
+            <small>
+
+              من
+              {{
+              session.startTime ||
+              '—'
+              }}
+
+              إلى
+
+              {{
+              session.endTime
+              }}
+
+            </small>
+
+            }
+
+          </div>
+
+
+          <span class="session-status" [class.postponed]="
+                session.status ===
+                'Postponed'
+              ">
+
+            {{
+            session.status ===
+            'Postponed'
+            ? 'مؤجلة'
+            : 'قادمة'
+            }}
+
+          </span>
+
+        </div>
+
+        } @empty {
+
+        <div class="empty-state sessions-empty">
+
+          <div class="empty-icon">
+
+            <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor" stroke-width="2">
+
+              <rect x="3" y="4" width="18" height="17" rx="2"></rect>
+
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+
+            </svg>
+
+          </div>
+
+          <strong>
+            لا توجد جلسات قادمة
+          </strong>
+
+          <span>
+            ستظهر هنا الجلسات المجدولة
+            القادمة تلقائياً.
+          </span>
+
+        </div>
+
         }
+
+
+      </div>
+      
+      <button type="button" class="view-all-btn" (click)="openCreateSession()">
+        + إنشاء جلسة جديدة
+      </button>
+
+    </div>
+
+  </section>
+  @if (showCreateSession()) {
+
+  <div class="session-modal-overlay" (click)="closeCreateSession()">
+
+    <div class="session-modal" (click)="$event.stopPropagation()">
+
+      <div class="session-modal-header">
+
+        <div>
+          <h3>إنشاء جلسة جديدة</h3>
+          <p>
+            أضف موعداً جديداً لإحدى الدفعات المسندة إليك.
+          </p>
+        </div>
+
+        <button type="button" class="modal-close-btn" (click)="closeCreateSession()">
+          ×
+        </button>
+
+      </div>
+
+
+      <div class="session-form">
+
+        <!-- الدفعة -->
+        <div class="form-group full-width">
+
+          <label>
+            الدفعة
+            <span>*</span>
+          </label>
+
+          <select [ngModel]="newSession().batchId" (ngModelChange)="
+              newSession.update(
+                value => ({
+                  ...value,
+                  batchId: +$event
+                })
+              )
+            ">
+
+            <option [ngValue]="0" disabled>
+              اختر الدفعة
+            </option>
+
+            @for (
+            batch of batches();
+            track batch.batchId
+            ) {
+
+            <option [ngValue]="batch.batchId">
+              {{
+              batch.batchName ||
+              ('دفعة #' + batch.batchId)
+              }}
+            </option>
+
+            }
+
+          </select>
+
+        </div>
+
+
+        <!-- التاريخ -->
+        <div class="form-group">
+
+          <label>
+            تاريخ الجلسة
+            <span>*</span>
+          </label>
+
+          <input type="date" [ngModel]="newSession().sessionDate" (ngModelChange)="
+              newSession.update(
+                value => ({
+                  ...value,
+                  sessionDate: $event
+                })
+              )
+            " />
+
+        </div>
+
+
+        <!-- وقت البداية -->
+        <div class="form-group">
+
+          <label>
+            وقت البداية
+            <span>*</span>
+          </label>
+
+          <input type="time" [ngModel]="newSession().startTime" (ngModelChange)="
+              newSession.update(
+                value => ({
+                  ...value,
+                  startTime: $event
+                })
+              )
+            " />
+
+        </div>
+
+
+        <!-- وقت النهاية -->
+        <div class="form-group">
+
+          <label>
+            وقت النهاية
+            <span>*</span>
+          </label>
+
+          <input type="time" [ngModel]="newSession().endTime" (ngModelChange)="
+              newSession.update(
+                value => ({
+                  ...value,
+                  endTime: $event
+                })
+              )
+            " />
+
+        </div>
+
+
+        <!-- الرابط -->
+        <div class="form-group">
+
+          <label>
+            رابط الاجتماع
+          </label>
+
+          <input type="url" placeholder="https://..." [ngModel]="newSession().meetingLink" (ngModelChange)="
+              newSession.update(
+                value => ({
+                  ...value,
+                  meetingLink: $event
+                })
+              )
+            " />
+
+        </div>
+
+
+        <!-- الموضوع -->
+        <div class="form-group full-width">
+
+          <label>
+            عنوان الجلسة
+            <span>*</span>
+          </label>
+
+          <input type="text" placeholder="مثال: تطبيق عملي على Angular" [ngModel]="newSession().topic" (ngModelChange)="
+              newSession.update(
+                value => ({
+                  ...value,
+                  topic: $event
+                })
+              )
+            " />
+
+        </div>
+
+
+        <!-- الأهداف -->
+        <div class="form-group full-width">
+
+          <label>
+            أهداف الجلسة
+          </label>
+
+          <textarea rows="4" placeholder="اكتب أهداف الجلسة التعليمية..." [ngModel]="newSession().learningObjectives"
+            (ngModelChange)="
+              newSession.update(
+                value => ({
+                  ...value,
+                  learningObjectives: $event
+                })
+              )
+            "></textarea>
+
+        </div>
+
+      </div>
+
+
+      <div class="session-modal-actions">
+
+        <button type="button" class="cancel-session-btn" (click)="closeCreateSession()" [disabled]="creatingSession()">
+          إلغاء
+        </button>
+
+        <button type="button" class="save-session-btn" (click)="createSession()" [disabled]="creatingSession()">
+
+          @if (creatingSession()) {
+          جاري الحفظ...
+          } @else {
+          إنشاء الجلسة
+          }
+
+        </button>
 
       </div>
 
     </div>
 
-  </section>
+  </div>
 
+  }
 </div>

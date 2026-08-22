@@ -9,6 +9,7 @@
     <div class="header-title-group">
 
       <div class="header-icon">
+
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -20,10 +21,12 @@
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
 
         </svg>
+
       </div>
 
 
       <div>
+
         <h1>
           تقييم ومتابعة المتدربين
         </h1>
@@ -31,6 +34,7 @@
         <p>
           متابعة مستويات المتدربين وتحديد نقاط القوة والاحتياجات التدريبية.
         </p>
+
       </div>
 
     </div>
@@ -38,7 +42,11 @@
 
     <div class="header-actions">
 
-      <button class="action-btn secondary">
+      <button
+        type="button"
+        class="action-btn secondary"
+        [disabled]="isExportingReport()"
+        (click)="exportTraineesReport()">
 
         <svg
           viewBox="0 0 24 24"
@@ -54,14 +62,29 @@
 
         </svg>
 
+
         <span>
-          تصدير الكشف
+
+          @if (isExportingReport()) {
+
+            جاري التصدير...
+
+          }
+          @else {
+
+            تصدير الكشف
+
+          }
+
         </span>
 
       </button>
 
 
-      <button class="action-btn primary">
+      <button
+        type="button"
+        class="action-btn primary"
+        (click)="startNewEvaluation()">
 
         <svg
           viewBox="0 0 24 24"
@@ -92,8 +115,6 @@
   ====================================================== -->
 
   <section class="trainees-kpis">
-
-    <!-- Total Trainees -->
 
     <article class="trainee-kpi">
 
@@ -128,8 +149,6 @@
 
     </article>
 
-
-    <!-- Average Technical -->
 
     <article class="trainee-kpi">
 
@@ -178,8 +197,6 @@
     </article>
 
 
-    <!-- High Performers -->
-
     <article class="trainee-kpi">
 
       <div class="kpi-info">
@@ -225,8 +242,6 @@
     </article>
 
 
-    <!-- Needs Support -->
-
     <article class="trainee-kpi danger">
 
       <div class="kpi-info">
@@ -257,28 +272,28 @@
       <div class="kpi-icon">
 
         <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round">
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round">
 
-    <circle cx="8" cy="8" r="3"></circle>
+          <circle cx="8" cy="8" r="3"></circle>
 
-    <path d="M3 20v-2a5 5 0 0 1 5-5"></path>
+          <path d="M3 20v-2a5 5 0 0 1 5-5"></path>
 
-    <path
-      d="M16.5 19.5
-         12.8 16
-         a2.5 2.5 0 0 1 3.5-3.6
-         l.2.2
-         .2-.2
-         a2.5 2.5 0 0 1 3.5 3.6
-         z">
-    </path>
+          <path
+            d="M16.5 19.5
+               12.8 16
+               a2.5 2.5 0 0 1 3.5-3.6
+               l.2.2
+               .2-.2
+               a2.5 2.5 0 0 1 3.5 3.6
+               z">
+          </path>
 
-  </svg>
+        </svg>
 
       </div>
 
@@ -310,6 +325,10 @@
             </th>
 
             <th>
+              الحالة
+            </th>
+
+            <th>
               المستوى التقني
             </th>
 
@@ -319,10 +338,6 @@
 
             <th>
               متوسط التقييم
-            </th>
-
-            <th>
-              الحالة
             </th>
 
             <th>
@@ -336,7 +351,11 @@
 
         <tbody>
 
-          @for (e of enrollments(); track e.enrollmentId; let i = $index) {
+          @for (
+            e of enrollments();
+            track e.enrollmentId;
+            let i = $index
+          ) {
 
             <tr>
 
@@ -365,7 +384,8 @@
                     </strong>
 
                     <span>
-                      رقم التسجيل: {{ e.enrollmentId }}
+                      رقم التسجيل:
+                      {{ e.enrollmentId }}
                     </span>
 
                   </div>
@@ -386,11 +406,36 @@
               </td>
 
 
+              <!-- Status -->
+
+              <td>
+
+                <span
+                  class="status-badge"
+                  [ngClass]="
+                    enrollmentStatusClass(
+                      e.completionStatus
+                    )
+                  "
+                >
+                  {{
+                    enrollmentStatusLabel(
+                      e.completionStatus
+                    )
+                  }}
+                </span>
+
+              </td>
+
+
               <!-- Technical -->
 
               <td>
 
-                @if (technicalScore(e.enrollmentId) !== null) {
+                @if (
+                  e.completionStatus !== 'Dropped' &&
+                  technicalScore(e.enrollmentId) !== null
+                ) {
 
                   <div class="progress-cell">
 
@@ -398,16 +443,29 @@
 
                       <div
                         class="progress-fill"
-                        [style.width.%]="technicalProgress(e.enrollmentId)">
+                        [style.width.%]="
+                          technicalProgress(
+                            e.enrollmentId
+                          )
+                        ">
                       </div>
 
                     </div>
 
 
                     <span>
-                      {{ technicalLevel(e.enrollmentId) }}
+                      {{
+                        technicalLevel(
+                          e.enrollmentId
+                        )
+                      }}
                       ·
-                      {{ technicalScore(e.enrollmentId) | number:'1.0-1' }}%
+                      {{
+                        technicalScore(
+                          e.enrollmentId
+                        )
+                          | number:'1.0-1'
+                      }}%
                     </span>
 
                   </div>
@@ -441,10 +499,19 @@
 
               <td>
 
-                @if (attendancePercentage(e.enrollmentId) !== null) {
+                @if (
+                  attendancePercentage(
+                    e.enrollmentId
+                  ) !== null
+                ) {
 
                   <span class="metric-value">
-                    {{ attendancePercentage(e.enrollmentId) | number:'1.0-1' }}%
+                    {{
+                      attendancePercentage(
+                        e.enrollmentId
+                      )
+                        | number:'1.0-1'
+                    }}%
                   </span>
 
                 }
@@ -463,10 +530,18 @@
 
               <td>
 
-                @if (technicalScore(e.enrollmentId) !== null) {
+                @if (
+                  e.completionStatus !== 'Dropped' &&
+                  technicalScore(e.enrollmentId) !== null
+                ) {
 
                   <span class="metric-value">
-                    {{ technicalScore(e.enrollmentId) | number:'1.0-1' }}%
+                    {{
+                      technicalScore(
+                        e.enrollmentId
+                      )
+                        | number:'1.0-1'
+                    }}%
                   </span>
 
                 }
@@ -481,36 +556,60 @@
               </td>
 
 
-              <!-- Status -->
-
-              <td>
-
-                <span class="status-chip neutral">
-                  قيد المتابعة
-                </span>
-
-              </td>
-
-
               <!-- Actions -->
 
               <td>
 
                 <div class="table-actions">
 
+                  <div
+                    class="evaluation-action-wrapper"
+                    [class.disabled-evaluation]="
+                      e.completionStatus === 'Dropped'
+                    "
+                  >
+
+                    <button
+                      type="button"
+                      class="small-action-btn"
+                      (click)="openEval(e.enrollmentId)"
+                      [disabled]="
+                        e.completionStatus === 'Dropped'
+                      "
+                    >
+                      تقييم
+                    </button>
+
+
+                    @if (
+                      e.completionStatus === 'Dropped'
+                    ) {
+
+                      <div class="evaluation-tooltip">
+
+                        <span class="evaluation-tooltip-icon">
+                          !
+                        </span>
+
+                        <span>
+                          المتدرب منسحب ولا يمكن إضافة تقييم جديد
+                        </span>
+
+                      </div>
+
+                    }
+
+                  </div>
+
+
                   <button
                     type="button"
                     class="small-action-btn"
-                    (click)="openEval(e.enrollmentId)">
-
-                    تقييم
-
-                  </button>
-
-
-                  <button
-                    type="button"
-                    class="small-action-btn">
+                    (click)="
+                      openTraineeProfile(
+                        e.enrollmentId
+                      )
+                    ">
 
                     الملف
 
@@ -522,7 +621,8 @@
 
             </tr>
 
-          } @empty {
+          }
+          @empty {
 
             <tr>
 
@@ -547,6 +647,7 @@
 
                   </div>
 
+
                   <strong>
                     لا يوجد متدربون بعد
                   </strong>
@@ -570,6 +671,492 @@
     </div>
 
   </section>
+
+
+  <!-- =====================================================
+       TRAINEE PROFILE MODAL
+  ====================================================== -->
+
+  @if (showTraineeProfile()) {
+
+    @if (selectedProfileEnrollment(); as profile) {
+
+      <div
+        class="nfd-modal-bg"
+        (click)="closeTraineeProfile()">
+
+        <div
+          class="nfd-modal trainee-profile-modal"
+          (click)="$event.stopPropagation()">
+
+          <div class="eval-modal-header">
+
+            <div>
+
+              <h3>
+                ملف المتدرب
+              </h3>
+
+              <p>
+                ملخص أداء ومتابعة المتدرب.
+              </p>
+
+            </div>
+
+
+            <button
+              type="button"
+              class="modal-close"
+              (click)="closeTraineeProfile()">
+
+              ×
+
+            </button>
+
+          </div>
+
+
+          <div class="profile-trainee-header">
+
+            <div class="profile-avatar">
+
+              {{
+                (profile.traineeName || 'م')
+                  .charAt(0)
+              }}
+
+            </div>
+
+
+            <div class="profile-trainee-info">
+
+              <strong>
+                {{
+                  profile.traineeName ||
+                  'متدرب'
+                }}
+              </strong>
+
+              <span>
+                رقم التسجيل:
+                {{ profile.enrollmentId }}
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <!-- Batch -->
+
+          <div class="profile-info-row">
+
+            <span class="profile-info-label">
+              الدفعة
+            </span>
+
+            <strong>
+              {{ profile.batchName || '—' }}
+            </strong>
+
+          </div>
+
+
+          <!-- Status -->
+
+          <div class="profile-info-row">
+
+            <span class="profile-info-label">
+              الحالة
+            </span>
+
+            <span
+              class="status-badge"
+              [ngClass]="
+                enrollmentStatusClass(
+                  profile.completionStatus
+                )
+              "
+            >
+              {{
+                enrollmentStatusLabel(
+                  profile.completionStatus
+                )
+              }}
+            </span>
+
+          </div>
+
+
+          <!-- Stats -->
+
+          <div class="profile-stats-grid">
+
+            <div class="profile-stat-card">
+
+              <span>
+                نسبة الحضور
+              </span>
+
+
+              @if (
+                attendancePercentage(
+                  profile.enrollmentId
+                ) !== null
+              ) {
+
+                <strong>
+                  {{
+                    attendancePercentage(
+                      profile.enrollmentId
+                    )
+                      | number:'1.0-1'
+                  }}%
+                </strong>
+
+              }
+              @else {
+
+                <strong>
+                  —
+                </strong>
+
+              }
+
+            </div>
+
+
+            <div class="profile-stat-card">
+
+              <span>
+                متوسط التقييم
+              </span>
+
+
+              @if (
+                profile.completionStatus !== 'Dropped' &&
+                technicalScore(
+                  profile.enrollmentId
+                ) !== null
+              ) {
+
+                <strong>
+                  {{
+                    technicalScore(
+                      profile.enrollmentId
+                    )
+                      | number:'1.0-1'
+                  }}%
+                </strong>
+
+              }
+              @else {
+
+                <strong>
+                  —
+                </strong>
+
+              }
+
+            </div>
+
+          </div>
+
+
+          <!-- Technical Level -->
+
+          <div class="profile-level-card">
+
+            <div class="profile-level-heading">
+
+              <span>
+                المستوى التقني
+              </span>
+
+              <strong>
+
+                @if (
+                  profile.completionStatus !== 'Dropped'
+                ) {
+
+                  {{
+                    technicalLevel(
+                      profile.enrollmentId
+                    )
+                  }}
+
+                }
+                @else {
+
+                  —
+
+                }
+
+              </strong>
+
+            </div>
+
+
+            <div class="profile-progress-track">
+
+              <div
+                class="profile-progress-fill"
+                [style.width.%]="
+                  profile.completionStatus !== 'Dropped'
+                    ? technicalProgress(
+                        profile.enrollmentId
+                      )
+                    : 0
+                ">
+              </div>
+
+            </div>
+
+
+            @if (
+              profile.completionStatus !== 'Dropped' &&
+              technicalScore(
+                profile.enrollmentId
+              ) !== null
+            ) {
+
+              <span class="profile-level-score">
+
+                {{
+                  technicalScore(
+                    profile.enrollmentId
+                  )
+                    | number:'1.0-1'
+                }}%
+
+              </span>
+
+            }
+
+          </div>
+
+
+          <!-- Actions -->
+
+          <div class="profile-modal-actions">
+
+            <button
+              type="button"
+              class="nfd-btn secondary"
+              (click)="closeTraineeProfile()">
+
+              إغلاق
+
+            </button>
+
+
+            <div
+              class="evaluation-action-wrapper profile-evaluation-wrapper"
+              [class.disabled-evaluation]="
+                profile.completionStatus === 'Dropped'
+              "
+            >
+
+              <button
+                type="button"
+                class="nfd-btn primary"
+                (click)="startEvaluationFromProfile()"
+                [disabled]="
+                  profile.completionStatus === 'Dropped'
+                "
+              >
+                بدء تقييم
+              </button>
+
+
+              @if (
+                profile.completionStatus === 'Dropped'
+              ) {
+
+                <div class="evaluation-tooltip">
+
+                  <span class="evaluation-tooltip-icon">
+                    !
+                  </span>
+
+                  <span>
+                    المتدرب منسحب ولا يمكن إضافة تقييم جديد
+                  </span>
+
+                </div>
+
+              }
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    }
+
+  }
+
+
+  <!-- =====================================================
+       TRAINEE PICKER MODAL
+  ====================================================== -->
+
+  @if (showTraineePicker()) {
+
+    <div
+      class="nfd-modal-bg"
+      (click)="showTraineePicker.set(false)">
+
+      <div
+        class="nfd-modal trainee-picker-modal"
+        (click)="$event.stopPropagation()">
+
+        <div class="eval-modal-header">
+
+          <div>
+
+            <h3>
+              بدء تقييم جديد
+            </h3>
+
+            <p>
+              اختر المتدرب الذي تريد بدء تقييمه.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            class="modal-close"
+            (click)="showTraineePicker.set(false)">
+
+            ×
+
+          </button>
+
+        </div>
+
+
+        <div class="trainee-picker-list">
+
+          @for (
+            e of evaluableEnrollments();
+            track e.enrollmentId;
+            let i = $index
+          ) {
+
+            <button
+              type="button"
+              class="trainee-picker-item"
+              (click)="
+                selectTraineeForEvaluation(
+                  e.enrollmentId
+                )
+              ">
+
+              <div
+                class="trainee-avatar"
+                [class.avatar-alt]="i % 3 === 1"
+                [class.avatar-third]="i % 3 === 2">
+
+                {{
+                  (e.traineeName || 'م')
+                    .charAt(0)
+                }}
+
+              </div>
+
+
+              <div class="trainee-picker-info">
+
+                <strong>
+                  {{
+                    e.traineeName ||
+                    'متدرب'
+                  }}
+                </strong>
+
+                <span>
+
+                  {{
+                    e.batchName ||
+                    'بدون دفعة'
+                  }}
+
+                  ·
+
+                  رقم التسجيل:
+                  {{ e.enrollmentId }}
+
+                </span>
+
+              </div>
+
+
+              <div class="trainee-picker-action">
+
+                <span>
+                  تقييم
+                </span>
+
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2">
+
+                  <path d="M9 18l6-6-6-6"></path>
+
+                </svg>
+
+              </div>
+
+            </button>
+
+          }
+          @empty {
+
+            <div class="trainee-picker-empty">
+
+              <div class="empty-icon">
+
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2">
+
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+
+                </svg>
+
+              </div>
+
+
+              <strong>
+                لا يوجد متدربون
+              </strong>
+
+              <span>
+                لا يوجد متدربون متاحون للتقييم في الدفعات الحالية.
+              </span>
+
+            </div>
+
+          }
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
 
 
   <!-- =====================================================
@@ -651,7 +1238,10 @@
 
         <div class="criteria-section">
 
-          @for (c of criteria(); track c.criteriaId) {
+          @for (
+            c of criteria();
+            track c.criteriaId
+          ) {
 
             <div class="criterion-card">
 
@@ -675,8 +1265,14 @@
                 type="number"
                 [max]="c.maxPoints"
                 min="0"
-                [(ngModel)]="criteriaScores[c.criteriaId]"
-                [name]="'crit' + c.criteriaId"
+                [(ngModel)]="
+                  criteriaScores[
+                    c.criteriaId
+                  ]
+                "
+                [name]="
+                  'crit' + c.criteriaId
+                "
               />
 
             </div>
@@ -755,6 +1351,7 @@
         <div class="nfd-modal-actions">
 
           <button
+            type="button"
             class="nfd-btn secondary"
             (click)="showEvalModal.set(false)">
 
@@ -764,6 +1361,7 @@
 
 
           <button
+            type="button"
             class="nfd-btn primary"
             (click)="submitEvaluation()">
 

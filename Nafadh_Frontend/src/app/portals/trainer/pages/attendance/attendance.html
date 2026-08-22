@@ -1,31 +1,87 @@
 <section class="attendance-page" dir="rtl">
-  <!-- رأس الصفحة -->
-  <header class="page-heading">
-    <div class="heading-copy">
-      <div class="heading-icon" aria-hidden="true">✓</div>
-      <div>
-        <h2>الحضور اليومي</h2>
-        <p>تسجيل حضور المتدربين — {{ todayLabel }}</p>
-      </div>
+ <!-- رأس الصفحة -->
+<header class="page-heading">
+
+  <!-- جهة العنوان -->
+  <div class="heading-copy">
+
+    <div class="heading-icon" aria-hidden="true">
+      ✓
     </div>
 
-    <div class="heading-actions">
-      <button type="button" class="btn btn-primary" (click)="confirmToday()" [disabled]="loading()">
-        <span aria-hidden="true">✓</span> تأكيد سجل اليوم
-      </button>
-
-      <button type="button" class="btn btn-outline" (click)="showRegister('monthly')">
-        <span aria-hidden="true">▣</span> السجل الشهري
-      </button>
-
-      <button type="button" class="btn btn-outline" (click)="showRegister('weekly')">
-        <span aria-hidden="true">▣</span> السجل الأسبوعي
-      </button>
+    <div class="heading-text">
+      <h1>الحضور اليومي</h1>
+      <p>تسجيل حضور المتدربين — {{ todayLabel }}</p>
     </div>
-  </header>
+
+  </div>
+
+  <!-- جهة الأزرار -->
+  <div class="heading-actions">
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="confirmToday()"
+      [disabled]="loading()">
+
+      <span class="btn-icon" aria-hidden="true">✓</span>
+      <span>تأكيد سجل اليوم</span>
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-outline"
+      (click)="showRegister('monthly')">
+
+      <span class="btn-icon" aria-hidden="true">↓</span>
+      <span>السجل الشهري</span>
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-outline"
+      (click)="showRegister('weekly')">
+
+      <span class="btn-icon" aria-hidden="true">▣</span>
+      <span>السجل الأسبوعي</span>
+    </button>
+
+  </div>
+
+</header>
 
   <!-- شريط التحكم والإحصاءات -->
   <section class="filter-card">
+
+    <div class="batch-filter">
+      <label for="attendanceBatch">الدفعة</label>
+
+      <select
+        id="attendanceBatch"
+        [ngModel]="selectedBatchId()"
+        (ngModelChange)="onBatchChange($event)"
+        [disabled]="loading() || trainerBatches().length === 0">
+        @for (batch of trainerBatches(); track batch.batchId) {
+          <option [ngValue]="batch.batchId">
+            {{ batch.batchName || ('الدفعة ' + batch.batchId) }}
+          </option>
+        }
+      </select>
+    </div>
+
+    <div class="date-filter">
+      <label for="attendanceDate">التاريخ</label>
+
+      <input
+        id="attendanceDate"
+        type="date"
+        [ngModel]="selectedDate()"
+        (ngModelChange)="onDateChange($event)"
+        [max]="todayDateKey"
+        [disabled]="loading()" />
+    </div>
+
     <div class="filter-main">
       <div class="tabs" role="tablist" aria-label="نوع السجل">
         <button
@@ -90,7 +146,7 @@
           (input)="onSearch($event)" />
       </div>
 
-      <div class="quick-filters">
+      <!-- <div class="quick-filters">
         @for (f of filters; track f.key) {
           <button
             type="button"
@@ -102,7 +158,7 @@
             }
           </button>
         }
-      </div>
+      </div> -->
 
       <button
         type="button"

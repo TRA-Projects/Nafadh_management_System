@@ -19,6 +19,9 @@ export class AdminCompanies implements OnInit {
   }
 
   companies = signal<CompanyDto[]>([]);
+  
+  // إضافة متغير للتحميل
+  isLoading = signal<boolean>(false);
 
   filtered = computed(() => {
     const filter = this.statusFilter();
@@ -48,9 +51,16 @@ export class AdminCompanies implements OnInit {
   }
 
   loadCompanies() {
+    this.isLoading.set(true); // تشغيل التحميل
     this.adminApi.getCompanies().subscribe({
-      next: (data) => this.companies.set(data),
-      error: (err) => console.error('خطأ في جلب البيانات:', err)
+      next: (data) => {
+        this.companies.set(data);
+        this.isLoading.set(false); // إيقاف التحميل عند النجاح
+      },
+      error: (err) => {
+        console.error('خطأ في جلب البيانات:', err);
+        this.isLoading.set(false); // إيقاف التحميل حتى لو حدث خطأ
+      }
     });
   }
 
@@ -69,6 +79,7 @@ export class AdminCompanies implements OnInit {
 
   openAddModal() {
     this.newCompany = this.emptyCompanyForm();
+    this.addError.set('');
     this.showAddModal.set(true);
   }
 
@@ -76,18 +87,32 @@ export class AdminCompanies implements OnInit {
     this.showAddModal.set(false); 
   }
 
-  // تم إضافة هذه الدالة لإزالة خطأ الـ TypeScript وتطابقاً مع الـ HTML
-  closeAllDropdowns() {
-    // مكان لإغلاق القوائم المنسدلة إن وجدت مستقبلاً
-  }
+  closeAllDropdowns() {}
 
   statusLabel(val: any): string {
     return this.statusOptions.find(o => o.value === String(val))?.label ?? val;
   }
 
   submitAddCompany() {
-    this.isSaving.set(true);
     this.addError.set('');
+
+    if (!this.newCompany.companyName || !this.newCompany.workField || !this.newCompany.capacity || !this.newCompany.email || !this.newCompany.contactName) {
+      this.addError.set('يرجى تعبئة جميع الحقول الإجبارية المعلمة بـ (*)');
+      return;
+    }
+
+    if (this.newCompany.capacity <= 0) {
+      this.addError.set('لا يمكن أن تكون الطاقة الاستيعابية رقماً سالباً أو صفراً');
+      return;
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(this.newCompany.email)) {
+      this.addError.set('يرجى إدخال بريد إلكتروني صحيح (مثال: name@company.com)');
+      return;
+    }
+
+    this.isSaving.set(true);
 
     this.adminApi.createCompany(this.newCompany).subscribe({
       next: (res: any) => { 

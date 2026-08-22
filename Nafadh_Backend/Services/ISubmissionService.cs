@@ -8,10 +8,9 @@ namespace Nafadh_Backend.Services
 
         Task<IEnumerable<NFD_Submission>> GetSubmissionsByTaskIdAsync(int taskId);
 
-
+        Task<IEnumerable<NFD_Submission>> GetTrainerTaskSubmissionsAsync(int taskId);
 
         Task<IEnumerable<NFD_Submission>> GetSubmissionsByTraineeIdAsync(int traineeId);
-
 
 
         Task<NFD_Submission?> GetSubmissionByIdAsync(int id);

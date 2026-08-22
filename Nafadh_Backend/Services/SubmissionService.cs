@@ -60,5 +60,11 @@ namespace Nafadh_Backend.Services
             await _repository.UpdateSubmissionAsync(submission);
         }
 
+        public async Task<IEnumerable<NFD_Submission>>
+    GetTrainerTaskSubmissionsAsync(int taskId)
+        {
+            return await _repository
+                .GetTrainerTaskSubmissionsAsync(taskId);
+        }
     }
 }

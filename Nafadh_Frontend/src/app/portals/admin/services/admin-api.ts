@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   AnnouncementDto, AuditLogDto, BatchDto, BatchPerformanceReportDto, CertificateDto, CompanyDto,
@@ -8,6 +8,16 @@ import {
   EvaluationDto, NotificationDto, ProgramDto, TraineeListItemDto, TraineeProfileDto,
   TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto,
 } from '../../../core/models/dtos';
+
+export interface TraineeCertificateStatusDto {
+  traineeId: number;
+  enrollmentId: number;
+  fullName: string;
+  isIssued: boolean;
+  certificateId: number | null;
+  fileUrl: string | null;
+  grade: number | null;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
@@ -53,13 +63,23 @@ export class AdminApi {
   }
 
   // ---- Users & Permissions ----
-  getUsers(): Observable<UserResponseDto[]> {
-    return this.http.get<UserResponseDto[]>(`${this.base}/User`);
-  }
+  // في ملف admin-api.ts
+getUsers(): Observable<UserResponseDto[]> {
+  // إرسال pageSize كبرامتر لجلب عدد كبير جداً من الأسماء دفعة واحدة
+  return this.http.get<any>(`${this.base}/User`, {
+    params: { page: 1, pageSize: 10000 }
+  }).pipe(
+    map(res => {
+      if (Array.isArray(res)) return res;
+      return res?.items || res?.data || res?.results || [];
+    })
+  );
+}
   getRoles(): Observable<RoleDto[]> {
     return this.http.get<RoleDto[]>(`${this.base}/Role`);
   }
   createUser(dto: unknown) { return this.http.post(`${this.base}/User/register`, dto); }
+  updateUser(id: number, dto: unknown) { return this.http.put(`${this.base}/User/${this.sanitizeId(id)}`, dto); }
   updateUserStatus(id: number, status: string) { return this.http.put(`${this.base}/User/${this.sanitizeId(id)}/status`, { status }); }
   resetPassword(id: number, dto: unknown) { return this.http.put(`${this.base}/User/${this.sanitizeId(id)}/reset-password`, dto); }
 
@@ -81,6 +101,40 @@ export class AdminApi {
   getEvaluationsForEnrollment(enrollmentId: number): Observable<EvaluationDto[]> {
     return this.http.get<EvaluationDto[]>(`${this.base}/Evaluation/enrollment/${this.sanitizeId(enrollmentId)}`);
   }
+
+// ---- Attendance & Evaluation Real Endpoints ----
+
+  /**
+   * جلب سجلات الحضور اليومية برقم التسجيل (Enrollment ID)
+   */
+  getDailyAttendanceByEnrollment(enrollmentId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(enrollmentId);
+    return this.http.get<any[]>(`${this.base}/DailyAttendance/enrollment/${cleanId}`);
+  }
+
+  /**
+   * جلب حضور الجلسات برقم المتدرب (Trainee ID)
+   */
+  getSessionAttendanceByTrainee(traineeId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(traineeId);
+    return this.http.get<any[]>(`${this.base}/SessionAttendance/trainee/${cleanId}`);
+  }
+
+  /**
+   * جلب تقييمات المتدرب برقم التسجيل (Enrollment ID)
+   */
+  getEvaluationsByEnrollment(enrollmentId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(enrollmentId);
+    return this.http.get<any[]>(`${this.base}/Evaluation/enrollment/${cleanId}`);
+  }
+  // =========================================================
+// Attendance
+// =========================================================
+
+getAttendance(enrollmentId: number): Observable<any[]> {
+  const cleanId = this.sanitizeId(enrollmentId);
+  return this.http.get<any[]>(`${this.base}/DailyAttendance/enrollment/${cleanId}`);
+}
 
 
   // ---- Certificates Special Endpoint ----
@@ -106,12 +160,18 @@ export class AdminApi {
   approveCompany(id: number) { return this.http.put(`${this.base}/Company/${this.sanitizeId(id)}/approve`, {}); }
   suspendCompany(id: number) { return this.http.put(`${this.base}/Company/${this.sanitizeId(id)}/suspend`, {}); }
 
+  
+
   // ---- Programs & Batches ----
   createBatch(dto: unknown) { return this.http.post(`${this.base}/Batch`, dto); }
   updateBatch(id: number, dto: unknown) { return this.http.put(`${this.base}/Batch/${this.sanitizeId(id)}`, dto); }
   getPrograms(): Observable<ProgramDto[]> { return this.http.get<ProgramDto[]>(`${this.base}/Program`); }
   createProgram(dto: unknown) { return this.http.post(`${this.base}/Program`, dto); }
-
+  
+// ---- Trainers ----
+  getTrainers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/Trainer`);
+  }
 
   // ---- Tracks ----
   getTracks(): Observable<any[]> {
@@ -122,6 +182,17 @@ export class AdminApi {
   getCertificatesByTrainee(traineeId: number): Observable<CertificateDto[]> {
     return this.http.get<CertificateDto[]>(`${this.base}/Certificate/trainee/${traineeId}`);
   }
+
+  getBatchCertificatesStatus(batchId: any): Observable<TraineeCertificateStatusDto[]> {
+    const cleanId = this.sanitizeId(batchId);
+    return this.http.get<TraineeCertificateStatusDto[]>(`${this.base}/Certificate/batch/${cleanId}/status`);
+  }
+
+  updateCertificateStatus(enrollmentId: any, isIssued: boolean) {
+    const cleanId = this.sanitizeId(enrollmentId);
+    return this.http.patch(`${this.base}/Certificate/enrollment/${cleanId}/status`, { isIssued });
+  } 
+  
   
   // ---- Certificates (معدلة للحماية من أخطاء الـ 404) ----
   issueCertificate(dto: unknown) {
@@ -167,9 +238,19 @@ export class AdminApi {
   }
 
   // ---- Reports ----
-  getBatchPerformanceReport(batchId: number): Observable<BatchPerformanceReportDto> {
-    return this.http.get<BatchPerformanceReportDto>(`${this.base}/Report/batch-performance/${this.sanitizeId(batchId)}`);
-  }
+getBatchPerformanceReport(
+  batchId: number,
+  pageNumber: number = 1,
+  pageSize: number = 15
+): Observable<BatchPerformanceReportDto> {
+  const params = new HttpParams()
+    .set('pageNumber', String(pageNumber))
+    .set('pageSize', String(pageSize));
+  return this.http.get<BatchPerformanceReportDto>(
+    `${this.base}/Report/batch-performance/${this.sanitizeId(batchId)}`,
+    { params }
+  );
+}
   getEvaluationBucketRollup(enrollmentId: number): Observable<EvaluationBucketRollupDto> {
     return this.http.get<EvaluationBucketRollupDto>(`${this.base}/Evaluation/enrollment/${this.sanitizeId(enrollmentId)}/by-bucket`);
   }

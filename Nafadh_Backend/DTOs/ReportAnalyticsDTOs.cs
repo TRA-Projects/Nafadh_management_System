@@ -39,6 +39,12 @@ namespace Nafadh_Backend.DTOs
         public double AvgAttendance { get; set; }
         public double SuccessRate { get; set; }
         public List<BatchPerformanceRowDTO> Rows { get; set; } = new List<BatchPerformanceRowDTO>();
+
+        // ==== جديد: بيانات الصفحات ====
+        public int TotalCount { get; set; }
+        public int PageNumber { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages => PageSize > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 0;
     }
 
     public class AttendanceReportRowDTO

@@ -249,7 +249,7 @@ export interface BatchDto {
   batchName: string;
   companyName?: string;
   trackName?: string;
-  instructorName?: string;
+  InstructorName?: string; 
   startDate: string;
   endDate: string;
   capacity: number;
@@ -261,6 +261,7 @@ export interface BatchDto {
   attendanceRate?: number;
   progressPercentage?: number;
 }
+
 
 export interface BatchTraineeDto {
   traineeId: number;
@@ -681,8 +682,12 @@ export interface BatchPerformanceReportDto {
   avgAttendance: number;
   successRate: number;
   rows: BatchPerformanceRowDto[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
 }
-
+ 
 export interface AttendanceReportRowDto {
   traineeId: number;
   traineeName?: string;
