@@ -20,7 +20,6 @@ import { TRAINEE_STATUS_LABELS, TaskStatus } from '../../../../core/models/enums
 
 type SubmissionStatus = SubmissionDto['status'];
 
-// تعريف نوع ممتد للمهام مع حالة التسليم
 interface TaskWithSubmissionDto extends TaskDto {
   submissionStatus?: SubmissionStatus;
   submissionId?: number;
@@ -33,10 +32,6 @@ interface TaskWithSubmissionDto extends TaskDto {
   templateUrl: './dashboard.html',
 })
 export class TraineeDashboard implements OnInit {
-  // =========================================================
-  // Injections
-  // =========================================================
-
   private api = inject(TraineeApi);
   public auth = inject(AuthService);
 
@@ -126,7 +121,7 @@ export class TraineeDashboard implements OnInit {
     }
 
     const today = new Date();
-    const endDate = new Date(this.programEndDate());
+    const endDate = new Date(this.programEndDate() || Date.now());
     return today > endDate ? 'منتهي' : 'قيد التدريب';
   });
 
@@ -274,7 +269,6 @@ export class TraineeDashboard implements OnInit {
   // =========================================================
 
   constructor() {
-    // مراقبة تغير المستخدم الحالي
     effect(() => {
       const session = this.auth.session?.();
       if (session?.userId) {
@@ -289,13 +283,11 @@ export class TraineeDashboard implements OnInit {
   // =========================================================
 
   ngOnInit() {
-    // محاولة الحصول على المستخدم من الجلسة
     const session = this.auth.session?.();
     if (session?.userId) {
       this.currentUserId.set(session.userId);
       this.loadTraineeData();
     } else {
-      // إذا لم يكن هناك جلسة، حاول الحصول من التخزين المحلي
       const userId = this.getUserIdFromStorage();
       if (userId) {
         this.currentUserId.set(userId);
@@ -322,7 +314,6 @@ export class TraineeDashboard implements OnInit {
     this.loadingProfile.set(true);
     this.errorMessage.set('');
 
-    // جلب بيانات المتدرب
     this.api.getTrainee(userId).subscribe({
       next: (trainee: TraineeProfileDto) => {
         this.traineeData.set(trainee);
@@ -390,7 +381,6 @@ export class TraineeDashboard implements OnInit {
           this.enrollmentId.set(activeEnrollment.enrollmentId);
           this.batchId.set(activeEnrollment.batchId);
 
-          // حفظ supervisorId إذا كان موجوداً
           if (activeEnrollment.supervisorId) {
             this.supervisorId.set(activeEnrollment.supervisorId);
           }
@@ -399,7 +389,6 @@ export class TraineeDashboard implements OnInit {
             this.batchName.set(activeEnrollment.batchName);
           }
 
-          // تحميل بيانات الباتش
           this.loadBatchData(activeEnrollment.batchId);
 
           // تحميل المدرب لهذه الدفعة
@@ -444,18 +433,15 @@ export class TraineeDashboard implements OnInit {
   loadTrainerByBatch(batchId: number): void {
     this.loadingTrainer.set(true);
 
-    // جلب قائمة المدربين في الدفعة
     this.api.getBatchTrainers(batchId).subscribe({
       next: (trainers: TrainerDto[]) => {
         console.log('Batch trainers response:', trainers);
 
         if (trainers && trainers.length > 0) {
-          // نأخذ أول مدرب في الدفعة
           const firstTrainer = trainers[0];
 
           // التحقق من وجود trainerId
           if (firstTrainer.trainerId) {
-            // جلب بيانات المدرب كاملة
             this.api.getTrainer(firstTrainer.trainerId).subscribe({
               next: (trainer: TrainerDto) => {
                 this.trainerData.set(trainer);
@@ -468,7 +454,6 @@ export class TraineeDashboard implements OnInit {
               },
             });
           } else {
-            // إذا كان الكائن يحتوي على البيانات كاملة
             this.trainerData.set(firstTrainer);
             this.loadingTrainer.set(false);
           }
@@ -564,11 +549,9 @@ export class TraineeDashboard implements OnInit {
     this.loadingTasks.set(true);
     const traineeId = this.traineeId();
 
-    // جلب مهام الدفعة (المسار الصحيح حسب الـ API)
     this.api.getTasks(batchId).subscribe({
       next: (tasks: TaskDto[]) => {
         if (tasks && tasks.length > 0 && traineeId) {
-          // جلب التسليمات للمتدرب لتحديث حالة المهام
           this.api.getTraineeSubmissions(traineeId).subscribe({
             next: (submissions: SubmissionDto[]) => {
               const enrichedTasks = this.enrichTasksWithSubmission(tasks, submissions);
@@ -576,7 +559,6 @@ export class TraineeDashboard implements OnInit {
             },
             error: (error: any) => {
               console.error('Error loading submissions:', error);
-              // حتى لو فشل جلب التسليمات، نعرض المهام بدون حالة التسليم
               this.processAndSetTasks(tasks);
             },
           });
@@ -592,9 +574,6 @@ export class TraineeDashboard implements OnInit {
     });
   }
 
-  /**
-   * معالجة المهام وترتيبها وعرض الأقرب لموعد التسليم
-   */
   private processAndSetTasks(tasks: TaskDto[]): void {
     if (!tasks || tasks.length === 0) {
       this.tasks.set([]);
@@ -602,14 +581,11 @@ export class TraineeDashboard implements OnInit {
       return;
     }
 
-    // تحويل المهام إلى النوع الممتد
     let enrichedTasks = tasks as TaskWithSubmissionDto[];
 
-    // تصفية المهام: عرض المهام التي لم تنتهي أو المهام المنتهية حديثاً
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // ترتيب المهام حسب تاريخ الاستحقاق (الأقرب أولاً)
     const sortedTasks = enrichedTasks
       .filter((task) => {
         // عرض المهام التي لم تكتمل أو المهام المنتهية خلال الـ 7 أيام الماضية
@@ -635,17 +611,15 @@ export class TraineeDashboard implements OnInit {
         return true;
       })
       .sort((a, b) => {
-        // ترتيب حسب التاريخ (الأقرب أولاً)
         if (!a.dueDate && !b.dueDate) return 0;
         if (!a.dueDate) return 1;
         if (!b.dueDate) return -1;
-
-        const dateA = new Date(a.dueDate);
-        const dateB = new Date(b.dueDate);
+        
+        const dateA = new Date(a.dueDate || Date.now());
+        const dateB = new Date(b.dueDate || Date.now());
         return dateA.getTime() - dateB.getTime();
       });
 
-    // أخذ أول 3 مهام فقط
     this.tasks.set(sortedTasks.slice(0, 3));
     this.loadingTasks.set(false);
   }
@@ -736,6 +710,7 @@ export class TraineeDashboard implements OnInit {
     });
 
     // جلب إعلانات الشركة
+    const companyId = this.companyId();
     if (companyId) {
       this.api.getCompanyAnnouncements(companyId).subscribe({
         next: (items: AnnouncementDto[]) => {
@@ -782,10 +757,9 @@ export class TraineeDashboard implements OnInit {
         .map((a) => ({ ...a, source }));
 
       const combined = [...list, ...newItems];
-      // ترتيب حسب التاريخ (الأحدث أولاً)
       combined.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
+        const dateA = new Date(a.date || Date.now());
+        const dateB = new Date(b.date || Date.now());
         return dateB.getTime() - dateA.getTime();
       });
       return combined;
@@ -910,13 +884,11 @@ export class TraineeDashboard implements OnInit {
   // =========================================================
 
   private getUserIdFromStorage(): number | null {
-    // محاولة من localStorage
     const userIdFromStorage = localStorage.getItem('userId');
     if (userIdFromStorage) {
       return parseInt(userIdFromStorage, 10);
     }
 
-    // محاولة من sessionStorage
     const userIdFromSession = sessionStorage.getItem('userId');
     if (userIdFromSession) {
       return parseInt(userIdFromSession, 10);

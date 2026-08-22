@@ -44,6 +44,41 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(report);
         }
+        // ==========================================================
+        // Generate Trainer Portal Report
+        // POST: api/Report/trainer-generate
+        // Kept separate from the shared report endpoint.
+        // ==========================================================
+
+        [HttpPost("trainer-generate")]
+        public async Task<IActionResult> GenerateTrainerPortalReport(
+            [FromBody] ReportInputDTO dto
+        )
+        {
+            var report =
+                await _service.GenerateTrainerPortalReportAsync(
+                    dto
+                );
+
+            return Ok(
+                report
+            );
+        }
+        // ==========================================================
+        // Generate Trainer Trainees Report
+        // POST: api/Report/trainer-trainees
+        // ==========================================================
+
+        [HttpPost("trainer-trainees")]
+        public async Task<IActionResult> GenerateTrainerTraineesReport(
+            [FromBody] TrainerTraineesReportInputDto dto
+        )
+        {
+            var report =
+                await _service.GenerateTrainerTraineesReportAsync(dto);
+
+            return Ok(report);
+        }
 
         // GET Report/{id}
         [HttpGet("{id}")]
@@ -57,10 +92,10 @@ namespace Nafadh_Backend.Controllers
             return Ok(report);
         }
 
-
-// GET Report/{id}/download
-[HttpGet("{id}/download")]
-public async Task<IActionResult> DownloadReport(int id)
+ 
+       // GET Report/{id}/download
+       [HttpGet("{id}/download")]
+       public async Task<IActionResult> DownloadReport(int id)
         {
             var fileUrl = await _service.DownloadReportAsync(id);
 
@@ -86,7 +121,48 @@ public async Task<IActionResult> DownloadReport(int id)
                 fileName
             );
         }
+        // ==========================================================
+        // Trainer Portal Report File
+        // GET: api/Report/trainer/{id}/file
+        // ==========================================================
 
+        // Serves Trainer Portal PDFs from external storage
+        // without changing the shared report download endpoint.
+        [HttpGet("trainer/{id}/file")]
+        public async Task<IActionResult> GetTrainerPortalReportFile(
+            int id
+        )
+        {
+            var filePath =
+                await _service
+                    .GetTrainerPortalReportFilePathAsync(
+                        id
+                    );
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    filePath
+                )
+            )
+            {
+                return NotFound(
+                    "Trainer report file not found."
+                );
+            }
+
+            var fileBytes =
+                await System.IO.File
+                    .ReadAllBytesAsync(
+                        filePath
+                    );
+
+            // No download filename is supplied here so the PDF
+            // can be displayed directly in the browser preview.
+            return File(
+                fileBytes,
+                "application/pdf"
+            );
+        }
         // ==========================================================
         // NEW analytics/aggregation endpoints (backend upgrade - Phase 2)
         // ==========================================================
@@ -98,11 +174,14 @@ public async Task<IActionResult> DownloadReport(int id)
             return Ok(await _service.GetDashboardChartsAsync());
         }
 
-        // GET: api/Report/batch-performance/{batchId} (Admin Reports drill-down)
+        // GET: api/Report/batch-performance/{batchId}?pageNumber=1&pageSize=15 (Admin Reports drill-down)
         [HttpGet("batch-performance/{batchId}")]
-        public async Task<IActionResult> GetBatchPerformance(int batchId)
+        public async Task<IActionResult> GetBatchPerformance(
+            int batchId,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 15)
         {
-            var report = await _service.GetBatchPerformanceAsync(batchId);
+            var report = await _service.GetBatchPerformanceAsync(batchId, pageNumber, pageSize);
             if (report == null) return NotFound();
             return Ok(report);
         }

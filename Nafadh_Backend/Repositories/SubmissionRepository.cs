@@ -83,5 +83,15 @@ namespace Nafadh_Backend.Repositories
 
         }
 
+        public async Task<IEnumerable<NFD_Submission>>
+    GetTrainerTaskSubmissionsAsync(int taskId)
+        {
+            return await _context.NFD_Submissions
+                .Include(s => s.Trainee)
+                    .ThenInclude(t => t.User)
+                .Where(s => s.TaskId == taskId)
+                .ToListAsync();
+        }
+
     }
 }

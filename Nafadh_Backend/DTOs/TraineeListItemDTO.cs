@@ -10,6 +10,9 @@ namespace Nafadh_Backend.DTOs
         // Trainee's display name (from the linked user account)
         public string? FullName { get; set; } = string.Empty;
 
+        // Trainee's email address
+        public string? Email { get; set; } // 👈 إضافة الخاصية المفقودة
+
         // Trainee's university/institution name
         public string? University { get; set; }
 

@@ -1,128 +1,179 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms'; // تم إضافة FormsModule
+import { CommonModule, Location } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AdminApi } from '../../services/admin-api';
-import { TraineeProfileDto } from '../../../../core/models/dtos';
-import { TRAINEE_STATUS_LABELS } from '../../../../core/models/enums';
+
+export interface EvaluationRecord {
+  id: number;
+  period: number;
+  score: number;
+  date: string;
+}
+
+export interface AttendanceRecord {
+  date: string;
+  checkIn: string;
+  checkOut: string;
+  status: string;
+  isLate: number;
+  notes: string;
+}
 
 @Component({
   selector: 'app-admin-trainee-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './trainee-profile.html',
   styleUrls: ['./trainee-profile.css']
 })
 export class AdminTraineeProfile implements OnInit {
-  trainee = signal<TraineeProfileDto | any>(null);
-  statusLabels: Record<string, string> = TRAINEE_STATUS_LABELS;
+  trainee = signal<any>(null);
 
-  // إدارة حالة نافذة التجميد
-  isFreezeModalOpen = signal<boolean>(false);
-  freezeReason = signal<string>('');
+  // إحصائيات تحسب تلقائياً
+  attendanceRate = signal<string>('0%');
+  totalAbsence = signal<number>(0);
+  totalPresent = signal<number>(0);
 
-  // القيم الإحصائية
-  attendanceRate = signal<number>(91);
-  averageScore = signal<number>(87.4);
-  warningsCount = signal<number>(1);
-  absenceDays = signal<number>(3);
-
-  // قائمة التقييمات مع الألوان
-  evaluationList = signal([
-    { title: 'التقييم التقني', score: 88, color: '#0d9488' },
-    { title: 'التقييم السلوكي', score: 85, color: '#2563eb' },
-    { title: 'تقييم المنتصف', score: 82, color: '#d97706' },
-    { title: 'التقييم النهائي', score: 91, color: '#0d9488' }
-  ]);
-
-  // شبكة الحضور
-  attendanceGrid = signal<Array<{ date: string; status: 'present' | 'late' | 'absent'; label: string }>>([]);
+  // مصفوفات البيانات
+  evaluations = signal<EvaluationRecord[]>([]);
+  attendanceLogs = signal<AttendanceRecord[]>([]);
 
   constructor(
-    private route: ActivatedRoute, 
-    private api: AdminApi
+    private route: ActivatedRoute,
+    private api: AdminApi,
+    private location: Location
   ) {}
 
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
-    
-    this.api.getTrainee(id).subscribe({
-      next: (t) => {
-        this.trainee.set(t);
-      },
-      error: () => {
-        this.trainee.set({
-          fullName: 'خالد سعيد المطيري',
-          major: 'هندسة برمجيات',
-          university: 'جامعة الملك سعود',
-          companyName: 'شركة التقنية المتقدمة',
-          nationalId: 'T-2401',
-          status: 'InTraining',
-          batch: 'الدفعة 12'
-        });
-      }
-    });
-
-    this.generateAttendanceData();
+    if (id) {
+      this.loadProfileData(id);
+    }
   }
 
-  // دوال التحكم بنقذة التجميد
-  openFreezeModal() {
-    this.isFreezeModalOpen.set(true);
+  goBack() {
+    this.location.back();
   }
 
-  closeFreezeModal() {
-    this.isFreezeModalOpen.set(false);
-    this.freezeReason.set('');
-  }
-
-  confirmFreeze() {
-    if (!this.freezeReason().trim()) return;
-
-    // استدعاء الـ API لإرسال سبب التجميد وتحديث الحالة
-    console.log('تم التجميد بنجاح، السبب:', this.freezeReason());
-
-    // إغلاق النافذة
-    this.closeFreezeModal();
-  }
-
-  getInitials(name: string | undefined): string {
-    if (!name) return 'خ م';
+  getInitials(name: string): string {
+    if (!name) return 'ح ج';
     const parts = name.trim().split(' ');
     if (parts.length >= 2) {
-      return `${parts[0].charAt(0)}${parts[1].charAt(0)}`;
+      return `${parts[0][0]} ${parts[1][0]}`;
     }
-    return name.slice(0, 2);
+    return parts[0][0] || 'ح';
   }
 
-  getStatusStyle(status: string) {
-    switch (status) {
-      case 'Completed':
-      case 'مكتمل':
-        return { background: '#dcfce7', color: '#15803d' };
-      case 'InTraining':
-      case 'نشط':
-      case 'قيد التدريب':
-        return { background: '#dcfce7', color: '#16a34a' };
-      default:
-        return { background: '#f1f5f9', color: '#475569' };
-    }
+  private loadProfileData(traineeId: number) {
+    this.api.getTrainee(traineeId).subscribe({
+      next: (res: any) => {
+        this.trainee.set(res);
+        const enrollmentId = res?.enrollmentId || res?.EnrollmentId || res?.enrollment?.id;
+
+        // جلب التقييمات عبر enrollmentId أو traineeId كخيار بديل
+        const evalIdTarget = (enrollmentId && enrollmentId > 0) ? enrollmentId : traineeId;
+        this.fetchEvaluations(evalIdTarget);
+
+        // جلب سجل الحضور
+        if (enrollmentId && enrollmentId > 0) {
+          this.fetchDailyAttendance(enrollmentId);
+        } else {
+          this.fetchSessionAttendance(traineeId);
+        }
+      },
+      error: (err) => console.error('Error fetching trainee profile:', err)
+    });
   }
 
-  generateAttendanceData() {
-    const statuses: Array<'present' | 'late' | 'absent'> = [
-      'present', 'present', 'absent', 'present', 'present', 'present', 'present', 'present',
-      'present', 'present', 'present', 'present', 'present', 'absent', 'present', 'present',
-      'absent', 'present', 'present', 'present', 'present', 'late', 'absent', 'present',
-      'absent', 'present', 'present', 'present', 'present', 'present', 'absent', 'present'
-    ];
+  private fetchEvaluations(id: number) {
+    this.api.getEvaluationsByEnrollment(id).subscribe({
+      next: (res: any[]) => {
+        const mapped = (res || []).map((item, idx) => {
+          const rawDate = item.evaluationDate ?? item.EvaluationDate ?? item.createdOn ?? item.CreatedOn ?? item.date ?? item.Date;
+          return {
+            id: item.id ?? item.Id ?? item.evaluationId ?? item.EvaluationId ?? idx + 1,
+            period: item.period ?? item.Period ?? item.term ?? 1,
+            score: Number(item.score ?? item.Score ?? item.totalScore ?? 0),
+            date: rawDate ? String(rawDate).split('T')[0] : '-'
+          };
+        });
+        this.evaluations.set(mapped);
+      },
+      error: (err) => console.error('Error fetching evaluations:', err)
+    });
+  }
 
-    const grid = statuses.map((status, index) => ({
-      date: `اليوم ${index + 1}`,
-      status: status,
-      label: status === 'present' ? 'حاضر' : status === 'late' ? 'متأخر' : 'غائب'
-    }));
+  private fetchDailyAttendance(enrollmentId: number) {
+    this.api.getAttendance(enrollmentId).subscribe({
+      next: (res: any[]) => {
+        this.processAttendanceData(res);
+      },
+      error: (err) => console.error('Error fetching daily attendance:', err)
+    });
+  }
 
-    this.attendanceGrid.set(grid);
+  private fetchSessionAttendance(traineeId: number) {
+    this.api.getSessionAttendanceByTrainee(traineeId).subscribe({
+      next: (res: any[]) => {
+        this.processAttendanceData(res);
+      },
+      error: (err) => console.error('Error fetching session attendance:', err)
+    });
+  }
+
+  private processAttendanceData(res: any[]) {
+    let presentCount = 0;
+    let absentCount = 0;
+
+    const mapped: AttendanceRecord[] = (res || []).map((item) => {
+      // 1. معالجة حالة الحضور والغياب (Enum/String/Number)
+      const rawStatus = item.status ?? item.Status ?? item.attendanceStatus;
+      const statusStr = String(rawStatus ?? '').toLowerCase();
+
+      const isPresent = statusStr.includes('present') || statusStr.includes('حاضر') || rawStatus === 0;
+      const isAbsent = statusStr.includes('absent') || statusStr.includes('غائب') || rawStatus === 2;
+
+      if (isPresent) presentCount++;
+      if (isAbsent) absentCount++;
+
+      // 2. قراءة الحقول بحسب DTO الـ Backend
+      const rawDate = item.date ?? item.Date ?? item.attendanceDate ?? item.AttendanceDate;
+      const rawCheckIn = item.checkInTime ?? item.CheckInTime ?? item.checkIn ?? item.CheckIn;
+      const rawCheckOut = item.checkOutTime ?? item.CheckOutTime ?? item.checkOut ?? item.CheckOut;
+      const rawNotes = item.note ?? item.Note ?? item.notes ?? item.Notes;
+
+      // 3. تنسيق استخراج الوقت HH:mm
+      const extractTime = (val: any) => {
+        if (!val || val === 'NULL' || val === 'null') return '-';
+        const str = String(val).trim();
+        if (str.includes('T')) {
+          const timePart = str.split('T')[1];
+          return timePart ? timePart.substring(0, 5) : '-';
+        }
+        return str.length >= 5 ? str.substring(0, 5) : str;
+      };
+
+      return {
+        date: rawDate ? String(rawDate).split('T')[0] : '-',
+        checkIn: extractTime(rawCheckIn),
+        checkOut: extractTime(rawCheckOut),
+        status: isPresent ? 'حاضر' : isAbsent ? 'غائب' : 'متأخر',
+        isLate: (item.isLate || item.IsLate) ? 1 : 0,
+        notes: (rawNotes && String(rawNotes) !== 'NULL') ? String(rawNotes) : '-'
+      };
+    });
+
+    this.attendanceLogs.set(mapped);
+    this.totalPresent.set(presentCount);
+    this.totalAbsence.set(absentCount);
+
+    const totalDays = presentCount + absentCount;
+    if (totalDays > 0) {
+      const rate = ((presentCount / totalDays) * 100).toFixed(1);
+      this.attendanceRate.set(`${rate}%`);
+    } else {
+      this.attendanceRate.set('0%');
+    }
   }
 }

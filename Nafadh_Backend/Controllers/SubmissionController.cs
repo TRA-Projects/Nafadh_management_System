@@ -256,5 +256,55 @@ namespace Nafadh_Backend.Controllers
         }
 
 
+        // GET: api/Submission/task/{taskId}/trainer-view
+        // Detailed task submissions for Trainer Portal
+        [HttpGet("task/{taskId}/trainer-view")]
+        public async Task<IActionResult>
+            GetTrainerTaskSubmissions(int taskId)
+        {
+            var submissions =
+                await _service
+                    .GetTrainerTaskSubmissionsAsync(taskId);
+
+
+            var result = submissions.Select(
+                s => new
+                {
+                    SubmissionId =
+                        s.SubmissionId,
+
+                    FileUrl =
+                        s.FileUrl,
+
+                    SubmittedAt =
+                        s.SubmittedAt,
+
+                    Status =
+                        s.Status,
+
+                    Grade =
+                        s.Grade,
+
+                    Feedback =
+                        s.Feedback,
+
+                    TaskId =
+                        s.TaskId,
+
+                    TraineeId =
+                        s.TraineeId,
+
+                    TraineeName =
+                        s.Trainee?
+                            .User?
+                            .FullName
+                }
+            );
+
+
+            return Ok(result);
+        }
+
+
     }
 }

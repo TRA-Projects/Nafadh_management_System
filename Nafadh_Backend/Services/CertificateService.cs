@@ -103,6 +103,51 @@ namespace Nafadh_Backend.Services
 
         }
 
+        //============-- Admin portal==========-
+
+        public async Task<List<TraineeCertificateStatusDTO>> GetBatchCertificatesStatusAsync(int batchId)
+        {
+            return await _repository.GetBatchCertificatesStatusAsync(batchId);
+        }
+
+        // isIssued = true  → لو موجودة شهادة يرجّعها كما هي، لو مو موجودة يرجّع null
+        //                    (لأن الـ DTO ما فيه Type/FileUrl الكافية لإنشاء شهادة جديدة —
+        //                     استخدم POST /api/Certificate للإصدار الفعلي)
+        // isIssued = false → سحب/إلغاء الشهادة الموجودة (revoke)
+        public async Task<CertificateOutputDTO?> UpdateCertificateStatusAsync(int enrollmentId, bool isIssued)
+        {
+            var existing = await _repository.GetCertificateByEnrollmentIdAsync(enrollmentId);
+
+            if (!isIssued)
+            {
+                if (existing == null)
+                    return null;
+
+                await _repository.DeleteCertificateByEnrollmentIdAsync(enrollmentId);
+
+                return new CertificateOutputDTO
+                {
+                    CertificateId = existing.CertificateId,
+                    EnrollmentId = enrollmentId,
+                    IssueDate = existing.IssueDate,
+                    Type = existing.Type,
+                    FileUrl = null
+                };
+            }
+
+            if (existing == null)
+                return null; // وجّه المستخدم لاستخدام AddCertificate بدلاً من هذا الـ endpoint
+
+            return new CertificateOutputDTO
+            {
+                CertificateId = existing.CertificateId,
+                EnrollmentId = existing.EnrollmentId,
+                IssueDate = existing.IssueDate,
+                Type = existing.Type,
+                FileUrl = existing.FileUrl
+            };
+        }
+
 
     }
 }

@@ -1,17 +1,13 @@
-import {
-  Component,
-  OnInit,
-  ElementRef,
-  inject,
-  signal,
-  computed
-} from '@angular/core';
-
+import { Component, OnInit, ElementRef, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
-
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
+import { CompanyApi } from '../../services/company-api';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { AttendanceReportDto, EnrollmentDto } from '../../../../core/models/dtos';
 
 interface AttendanceRow {
   traineeId: number;
@@ -23,27 +19,7 @@ interface AttendanceRow {
   attendanceRate: number;
 }
 
-interface AttendanceReportDto {
-  totalTrainees?: number;
-  presentCount?: number;
-  absentCount?: number;
-  latenessCount?: number;
-  earlyLeaveCount?: number;
-  attendanceRate?: number;
-  overallAttendanceRate?: number;
-  chart?: {
-    label: string;
-    value: number;
-  }[];
-  rows?: AttendanceRow[];
-}
-
-interface AchievementReportDto {
-  total?: number;
-  completed?: number;
-  rate?: number;
-}
-
+interface AchievementReportDto { total: number; completed: number; rate: number; }
 interface CapacityProgram {
   programName: string;
   allocatedQuota: number;
@@ -51,20 +27,13 @@ interface CapacityProgram {
   remainingQuota: number;
   utilizationPercentage: number;
 }
-
 interface CapacityReportDto {
-  total?: number;
-  used?: number;
-  remaining?: number;
-  programs?: CapacityProgram[];
+  total: number;
+  used: number;
+  remaining: number;
+  programs: CapacityProgram[];
 }
-
-interface ProgramProgress {
-  programName: string;
-  shortName: string;
-  progress: number;
-  colorClass: string;
-}
+interface ProgramProgress { programName: string; shortName: string; progress: number; colorClass: string; }
 
 @Component({
   selector: 'app-company-reports',
@@ -74,548 +43,140 @@ interface ProgramProgress {
   styleUrl: './reports.scss'
 })
 export class ReportsComponent implements OnInit {
-
   private readonly elementRef = inject(ElementRef);
-
-  readonly tab = signal<
-    'attendance' | 'achievement' | 'capacity'
-  >('achievement');
-
+  readonly tab = signal<'attendance' | 'achievement' | 'capacity'>('achievement');
   readonly loading = signal(false);
-
   readonly errorMessage = signal<string | null>(null);
+  readonly attendance = signal<AttendanceReportDto | null>(null);
+  readonly achievement = signal<AchievementReportDto | null>(null);
+  readonly capacity = signal<CapacityReportDto | null>(null);
+  readonly programProgressList: ProgramProgress[] = [];
 
-  readonly attendance =
-    signal<AttendanceReportDto | null>(null);
+  constructor(private api: CompanyApi, private auth: AuthService) {}
 
-  readonly achievement =
-    signal<AchievementReportDto | null>(null);
-
-  readonly capacity =
-    signal<CapacityReportDto | null>(null);
-
-
-  // =====================================================
-  // بيانات البرامج التجريبية
-  // =====================================================
-
-  readonly programProgressList: ProgramProgress[] = [
-    {
-      programName: 'برنامج تطوير البرمجيات',
-      shortName: 'البرمجيات',
-      progress: 96,
-      colorClass: 'blue'
-    },
-    {
-      programName: 'برنامج الأمن السيبراني',
-      shortName: 'الأمن السيبراني',
-      progress: 91,
-      colorClass: 'cyan'
-    },
-    {
-      programName: 'برنامج تحليل البيانات',
-      shortName: 'تحليل البيانات',
-      progress: 88,
-      colorClass: 'purple'
-    },
-    {
-      programName: 'برنامج إدارة المشاريع',
-      shortName: 'إدارة المشاريع',
-      progress: 82,
-      colorClass: 'orange'
-    },
-    {
-      programName: 'برنامج التسويق الرقمي',
-      shortName: 'التسويق',
-      progress: 74,
-      colorClass: 'red'
-    },
-    {
-      programName: 'برنامج الموارد البشرية',
-      shortName: 'الموارد البشرية',
-      progress: 93,
-      colorClass: 'green'
-    }
-  ];
-
-
-  // =====================================================
-  // INIT
-  // =====================================================
-
-  ngOnInit(): void {
-    this.loadInitialData();
-  }
-
-
-  // =====================================================
-  // تحميل بيانات تجريبية
-  // =====================================================
+  ngOnInit(): void { this.loadInitialData(); }
 
   private loadInitialData(): void {
+    const companyId = this.auth.companyId ?? 0;
+    if (!companyId) {
+      this.errorMessage.set('لا يمكن تحديد الشركة الحالية من جلسة الدخول.');
+      return;
+    }
 
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    setTimeout(() => {
+    forkJoin({
+      attendance: this.api.getCompanyAttendanceReport(companyId).pipe(catchError(() => of(null))),
+      attendanceChart: this.api.getAttendanceChart(companyId).pipe(catchError(() => of({ weeks: [] }))),
+      capacity: this.api.getCapacity(companyId).pipe(catchError(() => of({ total: 0, used: 0, remaining: 0 } as any))),
+      distribution: this.api.getProgramDistribution(companyId).pipe(catchError(() => of([]))),
+      enrollments: this.api.getEnrollmentsByCompany(companyId).pipe(catchError(() => of([] as EnrollmentDto[]))),
+    }).subscribe({
+      next: ({ attendance, attendanceChart, capacity, distribution, enrollments }) => {
+        this.attendance.set(attendance ? { ...(attendance as AttendanceReportDto), chart: attendanceChart?.weeks ?? [] } : null);
 
-      this.attendance.set({
+        const rows = (enrollments ?? []).map((e) => this.api.getProgressSummary(e.enrollmentId).pipe(
+          catchError(() => of({ enrollmentId: e.enrollmentId, totalModules: 0, completedModules: 0, progressPercentage: 0 })) ,
+          map(progress => ({ e, progress }))
+        ));
 
-        totalTrainees: 150,
+        if (!rows.length) {
+          this.setAchievementAndCapacity(enrollments ?? [], distribution as any[], capacity as any);
+          this.loading.set(false);
+          return;
+        }
 
-        presentCount: 145,
+        forkJoin(rows).subscribe({
+          next: (items) => {
+            const group = new Map<string, { total: number; sum: number }>();
+            items.forEach(({ e, progress }) => {
+              const key = e.programTitle || 'غير محدد';
+              const current = group.get(key) ?? { total: 0, sum: 0 };
+              current.total += 1;
+              current.sum += Number(progress.progressPercentage ?? 0);
+              group.set(key, current);
+            });
 
-        absentCount: 5,
+            this.programProgressList.splice(0, this.programProgressList.length,
+              ...Array.from(group.entries()).map(([programName, value], i) => ({
+                programName,
+                shortName: programName.length > 18 ? `${programName.slice(0, 18)}…` : programName,
+                progress: Math.round(value.sum / Math.max(1, value.total)),
+                colorClass: ['blue', 'cyan', 'purple', 'orange', 'red', 'green'][i % 6]
+              }))
+            );
 
-        latenessCount: 8,
-
-        earlyLeaveCount: 3,
-
-        attendanceRate: 96,
-
-        overallAttendanceRate: 94,
-
-        chart: [
-          {
-            label: 'الأسبوع 1',
-            value: 92
+            const completed = items.filter(({ progress }) => Number(progress.progressPercentage ?? 0) >= 100).length;
+            this.achievement.set({ total: enrollments.length, completed, rate: enrollments.length ? Math.round(completed * 100 / enrollments.length) : 0 });
+            this.setCapacity(enrollments, distribution as any[], capacity as any);
+            this.loading.set(false);
           },
-          {
-            label: 'الأسبوع 2',
-            value: 95
-          },
-          {
-            label: 'الأسبوع 3',
-            value: 97
-          },
-          {
-            label: 'الأسبوع 4',
-            value: 96
-          },
-          {
-            label: 'الأسبوع 5',
-            value: 94
+          error: () => {
+            this.setAchievementAndCapacity(enrollments ?? [], distribution as any[], capacity as any);
+            this.loading.set(false);
           }
-        ],
-
-        rows: [
-          {
-            traineeId: 1001,
-            traineeName: 'أحمد محمد',
-            presentDays: 22,
-            absentDays: 1,
-            lateDays: 1,
-            excusedDays: 0,
-            attendanceRate: 96
-          },
-          {
-            traineeId: 1002,
-            traineeName: 'سارة علي',
-            presentDays: 23,
-            absentDays: 0,
-            lateDays: 0,
-            excusedDays: 0,
-            attendanceRate: 100
-          },
-          {
-            traineeId: 1003,
-            traineeName: 'محمد خالد',
-            presentDays: 20,
-            absentDays: 3,
-            lateDays: 2,
-            excusedDays: 1,
-            attendanceRate: 87
-          },
-          {
-            traineeId: 1004,
-            traineeName: 'نورة سالم',
-            presentDays: 21,
-            absentDays: 2,
-            lateDays: 1,
-            excusedDays: 1,
-            attendanceRate: 91
-          },
-          {
-            traineeId: 1005,
-            traineeName: 'خالد عبدالله',
-            presentDays: 17,
-            absentDays: 6,
-            lateDays: 3,
-            excusedDays: 1,
-            attendanceRate: 74
-          }
-        ]
-
-      });
-
-
-      this.achievement.set({
-
-        total: 60,
-
-        completed: 55,
-
-        rate: 87
-
-      });
-
-
-      this.capacity.set({
-
-        total: 200,
-
-        used: 150,
-
-        remaining: 50,
-
-        programs: [
-
-          {
-            programName: 'تطوير البرمجيات',
-            allocatedQuota: 50,
-            usedQuota: 45,
-            remainingQuota: 5,
-            utilizationPercentage: 90
-          },
-
-          {
-            programName: 'الأمن السيبراني',
-            allocatedQuota: 40,
-            usedQuota: 34,
-            remainingQuota: 6,
-            utilizationPercentage: 85
-          },
-
-          {
-            programName: 'تحليل البيانات',
-            allocatedQuota: 35,
-            usedQuota: 25,
-            remainingQuota: 10,
-            utilizationPercentage: 71
-          },
-
-          {
-            programName: 'إدارة المشاريع',
-            allocatedQuota: 30,
-            usedQuota: 20,
-            remainingQuota: 10,
-            utilizationPercentage: 67
-          },
-
-          {
-            programName: 'التسويق الرقمي',
-            allocatedQuota: 25,
-            usedQuota: 15,
-            remainingQuota: 10,
-            utilizationPercentage: 60
-          },
-
-          {
-            programName: 'الموارد البشرية',
-            allocatedQuota: 20,
-            usedQuota: 11,
-            remainingQuota: 9,
-            utilizationPercentage: 55
-          }
-
-        ]
-
-      });
-
-
-      this.loading.set(false);
-
-    }, 500);
+        });
+      },
+      error: () => {
+        this.errorMessage.set('تعذر تحميل تقارير الشركة من قاعدة البيانات.');
+        this.loading.set(false);
+      }
+    });
   }
 
-
-  // =====================================================
-  // Tabs
-  // =====================================================
-
-  selectTab(
-    tab: 'attendance' | 'achievement' | 'capacity'
-  ): void {
-
-    this.tab.set(tab);
-
+  private setAchievementAndCapacity(enrollments: EnrollmentDto[], distribution: any[], capacity: any) {
+    this.achievement.set({ total: enrollments.length, completed: enrollments.filter(e => /Completed/i.test(e.completionStatus)).length, rate: enrollments.length ? Math.round(enrollments.filter(e => /Completed/i.test(e.completionStatus)).length * 100 / enrollments.length) : 0 });
+    this.setCapacity(enrollments, distribution, capacity);
+    this.programProgressList.splice(0, this.programProgressList.length);
   }
 
-
-  // =====================================================
-  // Attendance
-  // =====================================================
-
-  readonly attendanceChart = computed(() => {
-
-    return this.attendance()?.chart ?? [];
-
-  });
-
-
-  readonly totalAbsentDays = computed(() => {
-
-    return this.attendance()?.rows?.reduce(
-      (total, row) => total + row.absentDays,
-      0
-    ) ?? 0;
-
-  });
-
-
-  readonly totalLateDays = computed(() => {
-
-    return this.attendance()?.rows?.reduce(
-      (total, row) => total + row.lateDays,
-      0
-    ) ?? 0;
-
-  });
-
-
-  attendanceLabel(rate: number): string {
-
-    if (rate >= 90) {
-      return 'ممتاز';
-    }
-
-    if (rate >= 75) {
-      return 'جيد';
-    }
-
-    return 'يحتاج متابعة';
-
+  private setCapacity(enrollments: EnrollmentDto[], distribution: any[], capacity: any) {
+    const total = Number(capacity?.total ?? 0);
+    const used = Number(capacity?.used ?? enrollments.length);
+    const remaining = Number(capacity?.remaining ?? Math.max(0, total - used));
+    const sum = (distribution ?? []).reduce((n: number, x: any) => n + Number(x?.value ?? 0), 0);
+    const programs = (distribution ?? []).map((x: any) => {
+      const usedQuota = Number(x?.value ?? 0);
+      const allocatedQuota = sum > 0 && total > 0 ? Math.max(usedQuota, Math.round(total * usedQuota / sum)) : usedQuota;
+      return {
+        programName: String(x?.label ?? 'غير محدد'),
+        allocatedQuota,
+        usedQuota,
+        remainingQuota: Math.max(0, allocatedQuota - usedQuota),
+        utilizationPercentage: allocatedQuota ? Math.round(usedQuota * 100 / allocatedQuota) : 0,
+      };
+    });
+    this.capacity.set({ total, used, remaining, programs });
   }
 
+  selectTab(tab: 'attendance' | 'achievement' | 'capacity'): void { this.tab.set(tab); }
 
-  getInitials(name: string | undefined): string {
-
-    if (!name) {
-      return '?';
-    }
-
-    const parts = name.trim().split(/\s+/);
-
-    if (parts.length === 1) {
-      return parts[0].substring(0, 2);
-    }
-
-    return (
-      parts[0].charAt(0) +
-      parts[1].charAt(0)
-    );
-
-  }
-
-
-  clampPercentage(value: number | undefined): number {
-
-    const number = Number(value ?? 0);
-
-    return Math.max(
-      0,
-      Math.min(100, number)
-    );
-
-  }
-
-
-  // =====================================================
-  // Achievement
-  // =====================================================
-
-  readonly achievementRate = computed(() => {
-
-    return this.achievement()?.rate ?? 0;
-
-  });
-
-
-  readonly bestProgram = computed(() => {
-
-    if (!this.programProgressList.length) {
-      return null;
-    }
-
-    return [...this.programProgressList]
-      .sort((a, b) => b.progress - a.progress)[0];
-
-  });
-
-
-  readonly weakestProgram = computed(() => {
-
-    if (!this.programProgressList.length) {
-      return null;
-    }
-
-    return [...this.programProgressList]
-      .sort((a, b) => a.progress - b.progress)[0];
-
-  });
-
-
-  // =====================================================
-  // Capacity
-  // =====================================================
-
-  readonly capacityPercentage = computed(() => {
-
-    const data = this.capacity();
-
-    if (!data?.total) {
-      return 0;
-    }
-
-    return this.clampPercentage(
-      ((data.used ?? 0) / data.total) * 100
-    );
-
-  });
-
-
-  readonly ringCircumference =
-    2 * Math.PI * 78;
-
-
-  readonly ringDashoffset = computed(() => {
-
-    const percentage =
-      this.capacityPercentage();
-
-    return (
-      this.ringCircumference *
-      (1 - percentage / 100)
-    );
-
-  });
-
-
-  // =====================================================
-  // Refresh
-  // =====================================================
-
-  refreshReports(): void {
-
-    this.loadInitialData();
-
-  }
-
-
-  // =====================================================
-  // PDF
-  // =====================================================
+  readonly attendanceChart = computed(() => this.attendance()?.chart ?? []);
+  readonly totalAbsentDays = computed(() => this.attendance()?.rows?.reduce((t, r) => t + r.absentDays, 0) ?? 0);
+  readonly totalLateDays = computed(() => this.attendance()?.rows?.reduce((t, r) => t + r.lateDays, 0) ?? 0);
+  attendanceLabel(rate: number): string { return rate >= 90 ? 'ممتاز' : rate >= 75 ? 'جيد' : 'يحتاج متابعة'; }
+  getInitials(name?: string): string { const p = (name ?? '').trim().split(/\s+/).filter(Boolean); return p.length ? p.slice(0, 2).map(x => x[0]).join('') : '?'; }
+  clampPercentage(value: number | undefined): number { return Math.max(0, Math.min(100, Number(value ?? 0))); }
+  readonly achievementRate = computed(() => this.achievement()?.rate ?? 0);
+  readonly bestProgram = computed(() => this.programProgressList.length ? [...this.programProgressList].sort((a, b) => b.progress - a.progress)[0] : null);
+  readonly weakestProgram = computed(() => this.programProgressList.length ? [...this.programProgressList].sort((a, b) => a.progress - b.progress)[0] : null);
+  readonly capacityPercentage = computed(() => { const d = this.capacity(); return d?.total ? this.clampPercentage((d.used / d.total) * 100) : 0; });
+  readonly ringCircumference = 2 * Math.PI * 78;
+  readonly ringDashoffset = computed(() => this.ringCircumference * (1 - this.capacityPercentage() / 100));
+  refreshReports(): void { this.loadInitialData(); }
 
   exportPdf(): void {
-
-    const element =
-      this.elementRef.nativeElement
-        .querySelector('.reports-page');
-
-    if (!element) {
-      return;
-    }
-
-    const options = {
-
-      margin: 8,
-
-      filename:
-        `report_${new Date()
-          .toISOString()
-          .slice(0, 10)}.pdf`,
-
-      image: {
-        type: 'jpeg',
-        quality: 0.95
-      },
-
-      html2canvas: {
-        scale: 2,
-        useCORS: true
-      },
-
-      jsPDF: {
-        unit: 'mm',
-        format: 'a4',
-        orientation: 'landscape'
-      }
-
-    };
-
-    (html2pdf as any)()
-      .set(options)
-      .from(element)
-      .save();
-
+    const element = this.elementRef.nativeElement.querySelector('.reports-page');
+    if (!element) return;
+    (html2pdf as any)().set({ margin: 8, filename: `report_${new Date().toISOString().slice(0, 10)}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(element).save();
   }
-
-
-  // =====================================================
-  // Excel
-  // =====================================================
 
   exportExcel(): void {
-
-    const workbook =
-      XLSX.utils.book_new();
-
-
-    // Attendance
-
-    const attendanceRows =
-      this.attendance()?.rows ?? [];
-
-    const attendanceSheet =
-      XLSX.utils.json_to_sheet(
-        attendanceRows
-      );
-
-    XLSX.utils.book_append_sheet(
-      workbook,
-      attendanceSheet,
-      'الحضور'
-    );
-
-
-    // Capacity
-
-    const capacityRows =
-      this.capacity()?.programs ?? [];
-
-    const capacitySheet =
-      XLSX.utils.json_to_sheet(
-        capacityRows
-      );
-
-    XLSX.utils.book_append_sheet(
-      workbook,
-      capacitySheet,
-      'الطاقة الاستيعابية'
-    );
-
-
-    // Achievement
-
-    const achievementSheet =
-      XLSX.utils.json_to_sheet(
-        this.programProgressList
-      );
-
-    XLSX.utils.book_append_sheet(
-      workbook,
-      achievementSheet,
-      'الإنجاز'
-    );
-
-
-    XLSX.writeFile(
-      workbook,
-      `تقرير_${new Date()
-        .toISOString()
-        .slice(0, 10)}.xlsx`
-    );
-
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(this.attendance()?.rows ?? []), 'الحضور');
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(this.capacity()?.programs ?? []), 'الطاقة الاستيعابية');
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(this.programProgressList), 'الإنجاز');
+    XLSX.writeFile(workbook, `تقرير_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
-
 }

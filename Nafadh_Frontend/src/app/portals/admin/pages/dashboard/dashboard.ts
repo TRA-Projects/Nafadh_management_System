@@ -105,8 +105,8 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         labels: ['2021', '2022', '2023', '2024', '2025'],
         datasets: [{
           data: [4, 7, 9, 11, 6],
-          backgroundColor: '#0d9488',
-          hoverBackgroundColor: '#0d9488',
+          backgroundColor: '#0A1172',
+          hoverBackgroundColor: '#0A1172',
           borderRadius: 6,
           barThickness: 32
         }]
@@ -127,7 +127,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
             titleColor: '#1e293b',
             titleFont: { size: 13, weight: 'normal' },
             titleAlign: 'center',
-            bodyColor: '#0d9488',
+            bodyColor: '#0A1172',
             bodyFont: { size: 13, weight: 'normal' },
             bodyAlign: 'center',
             borderColor: '#e2e8f0',

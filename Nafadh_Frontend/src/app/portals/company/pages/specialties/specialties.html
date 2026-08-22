@@ -1,97 +1,153 @@
 <section class="specialties-page" dir="rtl">
+  <!-- رأس الصفحة -->
   <header class="page-head">
     <div>
       <h2>التخصصات المعتمدة وخطط التدريب</h2>
-      <p>تحديد البرامج التي تستضيفها الشركة، طاقتها، التخصصات الأكاديمية المناسبة، ومراحل التدريب العملي لكل برنامج</p>
+      <p>نظرة عامة على البرامج التدريبية المعتمدة وتوزيع الطاقة الاستيعابية ومتابعة مسارات التدريب</p>
     </div>
   </header>
 
+  <!-- بطاقات الإحصائيات العلوية -->
   <div class="stats-grid" *ngIf="!loading()">
     <article class="stat-card">
-      <span>تخصصات معتمدة</span>
-      <strong>{{ approvedCount() }}</strong>
-      <small>متاحة لاستقبال مرشحين</small>
+      <div class="stat-icon-box bg-blue-soft"><i class="fa-solid fa-certificate"></i></div>
+      <div>
+        <span>تخصصات معتمدة</span>
+        <strong>{{ approvedCount() }}</strong>
+        <small>متاحة لاستقبال مرشحين</small>
+      </div>
     </article>
     <article class="stat-card">
-      <span>الطاقة الكلية</span>
-      <strong>{{ totalCapacity() }}</strong>
-      <small>مقعد عبر التخصصات</small>
+      <div class="stat-icon-box bg-indigo-soft"><i class="fa-solid fa-users-rectangle"></i></div>
+      <div>
+        <span>الطاقة الكلية</span>
+        <strong>{{ totalCapacity() }}</strong>
+        <small>مقعد عبر التخصصات</small>
+      </div>
     </article>
     <article class="stat-card">
-      <span>الإشغال الحالي</span>
-      <strong class="success">{{ usedCapacity() }}</strong>
-      <small>{{ occupancyPercent() }}% من الطاقة</small>
+      <div class="stat-icon-box bg-teal-soft"><i class="fa-solid fa-chart-pie"></i></div>
+      <div>
+        <span>الإشغال الحالي</span>
+        <strong class="success">{{ usedCapacity() }}</strong>
+        <small>{{ occupancyPercent() }}% من الطاقة</small>
+      </div>
     </article>
     <article class="stat-card">
-      <span>خطط تدريب فعالة</span>
-      <strong>{{ activePlans() }}</strong>
-      <small>مرتبطة بمراحل ومخرجات</small>
+      <div class="stat-icon-box bg-amber-soft"><i class="fa-solid fa-layer-group"></i></div>
+      <div>
+        <span>خطط تدريب فعالة</span>
+        <strong>{{ activePlans() }}</strong>
+        <small>مرتبطة بمراحل ومخرجات</small>
+      </div>
     </article>
   </div>
 
+  <!-- حالات التحميل والأخطاء -->
   <div class="state-card" *ngIf="loading()">
     <span class="spinner"></span>
-    جاري تحميل البرامج المعتمدة...
+    <span>جاري تحميل البرامج المعتمدة...</span>
   </div>
 
   <div class="state-card error" *ngIf="!loading() && error()">
-    {{ error() }}
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <span>{{ error() }}</span>
     <button type="button" (click)="load()">إعادة المحاولة</button>
   </div>
 
-  <div class="specialty-grid" *ngIf="!loading() && cards().length">
-    <article
-      class="specialty-card"
-      *ngFor="let card of cards(); trackBy: trackByProgramId"
-      [style.--spec-color]="card.color"
-      [style.--spec-soft]="card.soft"
-      tabindex="0"
-      role="link"
-      (click)="openDetails(card)"
-      (keydown.enter)="openDetails(card)"
-      (keydown.space)="openDetails(card); $event.preventDefault()">
-      <div class="accent"></div>
-
-      <div class="spec-top">
-        <div class="spec-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 3h12l4 6-10 12L2 9Z"></path>
-            <path d="M12 3v18M2 9h20"></path>
-          </svg>
-        </div>
-        <div class="spec-title">
-          <b>{{ card.title }}</b>
-          <span>{{ card.department }}</span>
-        </div>
-        <span class="status-chip" [class.pending]="!card.approved">
-          <i></i>{{ card.approved ? 'معتمد' : 'قيد الاعتماد' }}
-        </span>
+  <!-- التخطيط المتناسق الجديد (الرسم البياني بجانب كروت البرامج) -->
+  <div class="content-split-layout" *ngIf="!loading() && cards().length">
+    
+    <!-- عمود الكروت (يأخذ المساحة الأكبر) -->
+    <div class="specialties-main-area">
+      <div class="section-title-bar">
+        <h3>البرامج التدريبية المتاحة</h3>
+        <span>إجمالي البرامج: {{ cards().length }}</span>
       </div>
 
-      <div class="occupancy">
-        <div class="occupancy-head">
-          <span>الإشغال</span>
-          <b>{{ card.used }} من {{ card.capacity }} مقعدًا</b>
-        </div>
-        <div class="progress"><i [style.width.%]="card.percent"></i></div>
-      </div>
+      <div class="specialty-grid">
+        <article
+          class="specialty-card"
+          *ngFor="let card of cards(); trackBy: trackByProgramId"
+          [style.--spec-color]="card.color"
+          [style.--spec-soft]="card.soft"
+          tabindex="0"
+          role="link"
+          (click)="openDetails(card)">
+          
+          <div class="accent"></div>
 
-      <div class="spec-foot">
-        <span>{{ card.available }} مقعد متاح</span>
-        <span class="dot-sep"></span>
-        <span>{{ card.duration }} أسبوعًا</span>
-        <button type="button" class="details-link" (click)="openDetails(card); $event.stopPropagation()">
-          التفاصيل
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 12H5"></path><path d="m12 19-7-7 7-7"></path>
-          </svg>
-        </button>
+          <div class="spec-top">
+            <div class="spec-icon" aria-hidden="true">
+              <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div class="spec-title">
+              <b>{{ card.title }}</b>
+              <span><i class="fa-solid fa-briefcase ml-1"></i> {{ card.department }}</span>
+            </div>
+            <span class="status-chip" [class.pending]="!card.approved">
+              <i></i>{{ card.approved ? 'معتمد' : 'قيد الاعتماد' }}
+            </span>
+          </div>
+
+          <div class="occupancy">
+            <div class="occupancy-head">
+              <span>معدل الإشغال</span>
+              <b>{{ card.used }} من {{ card.capacity }} مقعدًا</b>
+            </div>
+            <div class="progress"><i [style.width.%]="card.percent"></i></div>
+          </div>
+
+          <div class="spec-foot">
+            <span><i class="fa-solid fa-chair text-slate-400 ml-1"></i> {{ card.available }} متاح</span>
+            <span class="dot-sep"></span>
+            <span><i class="fa-regular fa-clock text-slate-400 ml-1"></i> {{ card.duration }} أسبوعًا</span>
+            <button type="button" class="details-link" (click)="openDetails(card); $event.stopPropagation()">
+              التفاصيل
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+          </div>
+        </article>
       </div>
-    </article>
+    </div>
+
+  <aside class="sidebar-chart-area">
+      <div class="visual-chart-box">
+        <div class="chart-header">
+          <h3>توزيع البرامج</h3>
+          <span>حسب التخصصات</span>
+        </div>
+
+        <div class="chart-main-container">
+          <!-- الرسم الدائري في الأعلى أو الوسط -->
+          <div class="donut-container">
+            <div class="donut-ring" [style.background]="getDonutGradient()"></div>
+            <div class="chart-center-hole">
+              <span class="total-label">إجمالي البرامج</span>
+              <strong class="total-value">{{ cards().length }}</strong>
+              <span class="sub-label">نشط الآن</span>
+            </div>
+          </div>
+
+          <!-- مفتاح الأقسام مرتب ومنظم بشكل عريض ومرتب -->
+          <div class="chart-legend">
+            <div *ngFor="let item of getDepartmentDistribution()" class="legend-item">
+              <div class="legend-info">
+                <span class="dot" [style.background-color]="item.color"></span> 
+                <span class="dept-name">{{ item.name }}</span>
+              </div>
+              <span class="dept-count">{{ item.count }} برامج</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
   </div>
 
+  <!-- الحالة الفارغة -->
   <div class="empty-state" *ngIf="!loading() && !error() && !cards().length">
-    <div class="empty-icon">◇</div>
+    <div class="empty-icon"><i class="fa-solid fa-folder-open"></i></div>
     <strong>لا توجد برامج معتمدة بعد</strong>
     <span>ستظهر هنا البرامج التي تم ربط الشركة بها من قبل الهيئة.</span>
   </div>

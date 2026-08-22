@@ -127,6 +127,41 @@ export interface CompanyBranchDto {
   companyId: number;
 }
 
+export interface CompanyAccountPermissionDto {
+  permissionId: number;
+  permissionKey: string;
+  description?: string;
+}
+
+export interface CompanyAccountActivityDto {
+  logId: number;
+  action: string;
+  entityName: string;
+  entityId: number;
+  details?: string;
+  timestamp: string;
+}
+
+export interface CompanyAccountDto {
+  userId: number;
+  fullName: string;
+  email: string;
+  phone?: string;
+  userStatus: string;
+  createdAt: string;
+  supervisorId: number;
+  companyId: number;
+  department?: string;
+  position?: string;
+  supervisorStatus: string;
+  companyName: string;
+  companyStatus: string;
+  roleName: string;
+  permissions: CompanyAccountPermissionDto[];
+  recentActivities: CompanyAccountActivityDto[];
+  lastActivityAt?: string;
+}
+
 export interface CompanySupervisorDto {
   id: number;
   supervisorId?: number;
@@ -177,7 +212,6 @@ export interface TrainerBatchDto {
   startDate?: string | null;
   endDate?: string | null;
   status: BatchStatus;
-
   department?: string;
   enrolledTraineesCount?: number;
   attendanceRate?: number;
@@ -204,9 +238,6 @@ export interface ProgramDto {
   status?: string;
 }
 
-
-
-// 2. استخدامها داخل الـ Interface
 export interface CompanyProgramLinkDto {
   companyId: number;
   programId: number;
@@ -218,21 +249,7 @@ export interface BatchDto {
   batchName: string;
   companyName?: string;
   trackName?: string;
-  instructorName?: string;
-  startDate: string;
-  endDate: string;
-  capacity: number;
-  totalTraineesCount?: number;
-  issuedCertificatesCount?: number;
-  status: BatchStatus; 
-}
-
-export interface BatchDto {
-  batchId: number;
-  programId: number;
-  batchName: string;
-  companyName?: string;
-  trackName?: string;
+  InstructorName?: string; 
   startDate: string;
   endDate: string;
   capacity: number;
@@ -244,6 +261,7 @@ export interface BatchDto {
   attendanceRate?: number;
   progressPercentage?: number;
 }
+
 
 export interface BatchTraineeDto {
   traineeId: number;
@@ -302,8 +320,6 @@ export interface TraineeModuleProgressDto {
   moduleTitle?: string;
 }
 
-
-
 export interface SessionDto {
   sessionId: number;
   batchId: number;
@@ -319,8 +335,49 @@ export interface SessionDto {
   status: 'Scheduled' | 'Completed' | 'Cancelled' | 'Postponed';
 }
 
+
+export interface CompanyDashboardChartPointDto {
+  label: string;
+  value: number;
+}
+
+export interface CompanyDashboardTraineeDto {
+  traineeId: number;
+  enrollmentId: number;
+  fullName?: string;
+  major?: string;
+  gitHubUrl?: string;
+  performancePercent: number;
+  attendancePercent: number;
+}
+
+export interface CompanyDashboardWarningDto {
+  warningId: number;
+  enrollmentId: number;
+  traineeId: number;
+  traineeName?: string;
+  gitHubUrl?: string;
+  type: string;
+  level: string;
+  status: string;
+  issuedDate: string;
+}
+
+export interface CompanyDashboardDto {
+  capacity: { total: number; used: number; remaining: number };
+  attendanceWeeks: CompanyDashboardChartPointDto[];
+  programDistribution: CompanyDashboardChartPointDto[];
+  topPerformers: CompanyDashboardTraineeDto[];
+  atRiskTrainees: CompanyDashboardTraineeDto[];
+  recentWarnings: CompanyDashboardWarningDto[];
+  totalTrainees: number;
+  activeTrainees: number;
+}
+
 // ---- Enrollment ----
 export interface EnrollmentDto {
+  trainee?: any;
+  traineeLinkedInUrl?: any;
   enrollmentId: number;
   enrollmentDate: string;
   completionStatus: string;
@@ -334,7 +391,6 @@ export interface EnrollmentDto {
   departmentName?: string;
   supervisorId?: number;
   supervisorName?: string;
-
   traineeGitHubUrl?: string;
   programTitle?: string;
   programDescription?: string;
@@ -519,12 +575,14 @@ export interface ConversationDetailDto extends ConversationListItemDto {
 
 // ---- Announcements ----
 export interface AnnouncementDto {
-  announcementId: number;
-  scopeType: AnnouncementScopeType;
-  scopeId?: number;
-  message: string;
-  date: string;
-  createdByUserId: number;
+  id?: number | string;
+  announcementId?: number | string;
+  title?: string;
+  description?: string;
+  message?: string;
+  type?: string;
+  createdAt?: string | Date;
+  date?: string | Date;
 }
 
 // ---- Notifications ----
@@ -540,7 +598,7 @@ export interface NotificationDto {
 // ---- Feedback ----
 export interface FeedbackCriterionDto {
   criterionId: number;
-  appliesTo?: any; // تم جعلها مرنة لتفادي خطأ عدم العثور على FeedbackType
+  appliesTo?: any;
   name: string;
   orderIndex: number;
 }
@@ -551,7 +609,7 @@ export interface FeedbackScoreInputDto {
 }
 
 export interface FeedbackSummaryDto {
-  averageOverall?: number; // تم إضافة ? لمنع خطأ Strict Mode
+  averageOverall?: number;
   perCriterion?: { criterionId?: number; name?: string; average?: number }[];
   comments?: { comment?: string; date?: string }[];
   responseCount?: number;
@@ -624,8 +682,12 @@ export interface BatchPerformanceReportDto {
   avgAttendance: number;
   successRate: number;
   rows: BatchPerformanceRowDto[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
 }
-
+ 
 export interface AttendanceReportRowDto {
   traineeId: number;
   traineeName?: string;
@@ -643,6 +705,7 @@ export interface AttendanceReportDto {
   periodEnd?: string;
   overallAttendanceRate: number;
   rows: AttendanceReportRowDto[];
+  chart?: ChartPointDto[];
 }
 
 export interface TrainerKpisDto {

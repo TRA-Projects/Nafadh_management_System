@@ -8,7 +8,7 @@ namespace Nafadh_Backend.DTOs
         public int EnrollmentId { get; set; }
         public DateTime EnrollmentDate { get; set; }
         public string CompletionStatus { get; set; } = string.Empty;
-        //
+
         public int BatchId { get; set; }
         public string BatchName { get; set; } = string.Empty;
 
@@ -24,15 +24,13 @@ namespace Nafadh_Backend.DTOs
         public int? SupervisorId { get; set; }
         public string? SupervisorName { get; set; }
 
-        // Sourced from Trainee / Batch.Program / Batch.Program.Track — used by
-        // the company trainees list (GitHub link, program column, track subtitle).
         public string? TraineeGitHubUrl { get; set; }
+        public string? TraineeLinkedInUrl { get; set; }
         public string? ProgramTitle { get; set; }
         public string? ProgramDescription { get; set; }
         public string? TrackName { get; set; }
     }
 
-    // POST /api/Enrollment  -> enroll a trainee into a batch/company/department
     public class CreateEnrollmentDto
     {
         public int BatchId { get; set; }
@@ -42,20 +40,17 @@ namespace Nafadh_Backend.DTOs
         public int? SupervisorId { get; set; }
     }
 
-    // PUT /api/Enrollment/{id}  -> update department/supervisor assignment
     public class UpdateEnrollmentAssignmentDto
     {
         public int? DepartmentId { get; set; }
         public int? SupervisorId { get; set; }
     }
 
-    // PUT /api/Enrollment/{id}/status  -> update completion status
     public class UpdateEnrollmentStatusDto
     {
         public NFD_EnrollmentCompletionStatus CompletionStatus { get; set; }
     }
 
-    // GET /api/Enrollment?batchId=&traineeId=&companyId=&status=  (all filters optional)
     public class EnrollmentFilterDto
     {
         public int? BatchId { get; set; }
@@ -64,7 +59,6 @@ namespace Nafadh_Backend.DTOs
         public NFD_EnrollmentCompletionStatus? Status { get; set; }
     }
 
-    // GET /api/Enrollment/{id}/progress-summary
     public class ProgressSummaryDto
     {
         public int EnrollmentId { get; set; }
@@ -72,4 +66,4 @@ namespace Nafadh_Backend.DTOs
         public int CompletedModules { get; set; }
         public double ProgressPercentage { get; set; }
     }
-    }
+}

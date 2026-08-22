@@ -2,7 +2,6 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
@@ -18,12 +17,10 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        // Get Company by ID
-        // added .Include(c => c.Trainees) so capacity calc has real data to count
-        public async Task<NFD_Company?> GetCompanyByIdAsync(int companyId)
+        // Get Company by ID
+        public async Task<NFD_Company?> GetCompanyByIdAsync(int companyId)
         {
             return await _context.NFD_Companies
-            // include navigation properties so frontend receives related data from DB
             .Include(c => c.User)
             .Include(c => c.CompanyBranches)
             .Include(c => c.CompanySupervisors).ThenInclude(s => s.User)
@@ -34,19 +31,32 @@ namespace Nafadh_Backend.Repositories
             .FirstOrDefaultAsync(c => c.CompanyId == companyId);
         }
 
-        // Get all companies
-        public async Task<IEnumerable<NFD_Company>> GetAllCompaniesAsync()
+        // Get all companies with all related data for real-time counts
+        public async Task<IEnumerable<NFD_Company>> GetAllCompaniesAsync()
         {
             return await _context.NFD_Companies
-            .ToListAsync();
+                .Include(c => c.User)
+                .Include(c => c.CompanyBranches)
+                .Include(c => c.CompanySupervisors).ThenInclude(s => s.User)
+                .Include(c => c.CompanyPayments).ThenInclude(p => p.CompanyPaymentSchedules)
+                .Include(c => c.Departments)
+                .Include(c => c.CompanyPrograms)       
+                .ToListAsync();
         }
-
-        // Get companies with optional filters
-         public async Task<IEnumerable<NFD_Company>> GetCompaniesAsync(
-          NFD_CompanyStatus? status,
-          string? workField)
-         {
-            var query = _context.NFD_Companies.AsQueryable();
+        // Get companies with optional filters and includes
+        public async Task<IEnumerable<NFD_Company>> GetCompaniesAsync(
+         NFD_CompanyStatus? status,
+         string? workField)
+        {
+            var query = _context.NFD_Companies
+                .Include(c => c.User)
+                .Include(c => c.CompanyBranches)
+                .Include(c => c.CompanySupervisors).ThenInclude(s => s.User)
+                .Include(c => c.CompanyPayments).ThenInclude(p => p.CompanyPaymentSchedules)
+                .Include(c => c.Departments)
+                .Include(c => c.CompanyPrograms)
+                .Include(c => c.Trainees)
+                .AsQueryable();
 
             if (status.HasValue)
             {
@@ -61,23 +71,23 @@ namespace Nafadh_Backend.Repositories
             }
 
             return await query.ToListAsync();
-          }
+        }
 
-         // check the UserId exists before we let AddCompanyAsync use it
-          public async Task<bool> UserExistsAsync(int userId)
+        // check the UserId exists before we let AddCompanyAsync use it
+        public async Task<bool> UserExistsAsync(int userId)
         {
             return await _context.NFD_Users.AnyAsync(u => u.UserId == userId);
-          }
+        }
 
-        // Add Company
-          public async Task AddCompanyAsync(NFD_Company company)
-         {
+        // Add Company
+        public async Task AddCompanyAsync(NFD_Company company)
+        {
             await _context.NFD_Companies.AddAsync(company);
             await _context.SaveChangesAsync();
-          }
+        }
 
-        // Update Company
-        public async Task UpdateCompanyAsync(NFD_Company company)
+        // Update Company
+        public async Task UpdateCompanyAsync(NFD_Company company)
         {
             _context.NFD_Companies.Update(company);
             await _context.SaveChangesAsync();
@@ -89,9 +99,8 @@ namespace Nafadh_Backend.Repositories
                 .CountAsync(e => e.CompanyId == companyId);
         }
 
-        // Delete Company
-        // NOTE: kept as a real delete here for completeness, but Service layer
-        public async Task DeleteCompanyAsync(int companyId)
+        // Delete Company
+        public async Task DeleteCompanyAsync(int companyId)
         {
             var company = await _context.NFD_Companies
             .FindAsync(companyId);

@@ -16,7 +16,7 @@
 .nfd-page-title {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #0A1172;
   margin: 0 0 4px 0;
 }
 
@@ -128,7 +128,7 @@
 }
 
 .primary-btn {
-  background-color: #0f766e; /* لون رسمي كحلي/زيتي */
+  background-color: #0a1172; /* لون رسمي كحلي/زيتي */
   color: #ffffff;
 }
 .primary-btn:hover { background-color: #0d9488; }
