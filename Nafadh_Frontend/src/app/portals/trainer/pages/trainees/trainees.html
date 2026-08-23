@@ -851,11 +851,12 @@
 
 
               @if (
-                profile.completionStatus !== 'Dropped' &&
-                technicalScore(
-                  profile.enrollmentId
-                ) !== null
-              ) {
+  canShowTrainingMetrics(profile) &&
+  profile.completionStatus !== 'Dropped' &&
+  technicalScore(
+    profile.enrollmentId
+  ) !== null
+) {
 
                 <strong>
                   {{
