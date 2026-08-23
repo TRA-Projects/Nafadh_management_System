@@ -1,10 +1,10 @@
 <div class="profile-container">
 
-  <!-- =========================================
+  <!-- =====================================================
        PAGE HEADER
-  ========================================== -->
+  ====================================================== -->
 
-  <div class="page-header">
+  <section class="page-header">
 
     <div class="page-header-content">
 
@@ -12,12 +12,12 @@
         حساب المدرب
       </span>
 
-      <h2 class="page-title">
+      <h1 class="page-title">
         الملف الشخصي والإعدادات
-      </h2>
+      </h1>
 
       <p class="page-sub">
-        إدارة بياناتك المهنية ومعلومات الحساب والدفعات التدريبية.
+        إدارة بياناتك المهنية ومعلومات حسابك ونشاطك التدريبي.
       </p>
 
     </div>
@@ -30,8 +30,8 @@
         fill="none"
         stroke="currentColor"
         stroke-width="1.8"
-        width="25"
-        height="25"
+        width="26"
+        height="26"
       >
 
         <path
@@ -48,41 +48,47 @@
 
     </div>
 
-  </div>
+  </section>
 
 
-  <!-- =========================================
+  <!-- =====================================================
        LOADING
-  ========================================== -->
+  ====================================================== -->
 
   @if (loading()) {
 
-    <div class="profile-loading">
+    <section class="profile-loading">
 
-      <div class="loading-icon">
-        👤
-      </div>
+      <div class="loading-spinner"></div>
+
+      <strong>
+        جاري تحميل الملف الشخصي
+      </strong>
 
       <span>
-        جاري تحميل بيانات الملف الشخصي...
+        يرجى الانتظار قليلًا...
       </span>
 
-    </div>
+    </section>
 
   }
 
 
-  <!-- =========================================
+  <!-- =====================================================
        PROFILE
-  ========================================== -->
+  ====================================================== -->
 
-  @if (!loading() && trainer(); as t) {
+  @if (
+    !loading() &&
+    trainer();
+    as t
+  ) {
 
-    <div class="profile-card">
+    <section class="profile-card">
 
-      <!-- =========================================
-           PROFILE HEADER
-      ========================================== -->
+      <!-- =================================================
+           PROFILE HERO
+      ================================================== -->
 
       <div class="profile-hero">
 
@@ -92,31 +98,27 @@
 
             <div class="avatar-box">
 
-              <svg
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                width="40"
-                height="40"
-              >
-
-                <path
-                  d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4
-                  1.79-4 4 1.79 4 4 4zm0 2c-2.67
-                  0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                ></path>
-
-              </svg>
+              <span class="avatar-letter">
+                {{
+                  (t.fullName || 'م')
+                    .charAt(0)
+                }}
+              </span>
 
             </div>
 
 
-            <!-- الحالة الفعلية للمدرب -->
-
             <span
               class="status-dot"
-              [class.active]="t.status === 'Active'"
-              [class.inactive]="t.status === 'Inactive'"
-              [class.suspended]="t.status === 'Suspended'"
+              [class.active]="
+                t.status === 'Active'
+              "
+              [class.inactive]="
+                t.status === 'Inactive'
+              "
+              [class.suspended]="
+                t.status === 'Suspended'
+              "
             ></span>
 
           </div>
@@ -126,11 +128,14 @@
 
             <div class="name-row">
 
-              <h3 class="user-name">
-                {{ t.fullName || 'اسم المدرب' }}
-              </h3>
+              <h2 class="user-name">
+                {{
+                  t.fullName ||
+                  'اسم المدرب'
+                }}
+              </h2>
 
-              <span class="verified-badge">
+              <span class="trainer-badge">
                 مدرب
               </span>
 
@@ -138,10 +143,12 @@
 
 
             <span class="user-subtitle">
+
               {{
                 t.specialty ||
                 'لم يتم تحديد التخصص التدريبي'
               }}
+
             </span>
 
           </div>
@@ -149,59 +156,93 @@
         </div>
 
 
-        <!-- SAVE BUTTON -->
+        <div class="profile-hero-actions">
 
-        <button
-          type="button"
-          class="save-btn"
-          [disabled]="isSaving()"
-          (click)="save()"
-        >
+          @if (
+            hasUnsavedChanges()
+          ) {
 
-          @if (!isSaving()) {
+            <span class="unsaved-note">
 
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-            >
+              <span class="unsaved-dot">
+              </span>
 
-              <polyline
-                points="20 6 9 17 4 12"
-              ></polyline>
+              توجد تعديلات غير محفوظة
 
-            </svg>
+            </span>
 
           }
 
 
-          <span>
-            {{
-              isSaving()
-                ? 'جاري الحفظ...'
-                : 'حفظ التعديلات'
-            }}
-          </span>
+          <button
+            type="button"
+            class="save-btn"
+            [disabled]="
+              isSaving() ||
+              !hasUnsavedChanges()
+            "
+            (click)="save()"
+          >
 
-        </button>
+            @if (
+              isSaving()
+            ) {
+
+              <span class="button-spinner">
+              </span>
+
+              <span>
+                جاري الحفظ...
+              </span>
+
+            }
+            @else {
+
+              <svg
+                viewBox="0 0 24 24"
+                width="17"
+                height="17"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+              >
+
+                <path
+                  d="M20 6 9 17l-5-5"
+                ></path>
+
+              </svg>
+
+              <span>
+                حفظ التعديلات
+              </span>
+
+            }
+
+          </button>
+
+        </div>
 
       </div>
 
 
-      <!-- =========================================
-           SUCCESS TOAST
-      ========================================== -->
+      <!-- =================================================
+           SUCCESS MESSAGE
+      ================================================== -->
 
-      @if (showSuccessToast()) {
+      @if (
+        showSuccessToast()
+      ) {
 
-        <div class="toast-success">
+        <div
+          class="profile-message success"
+          aria-live="polite"
+        >
 
-          <div class="toast-icon">
+          <div class="message-icon">
             ✓
           </div>
+
 
           <div>
 
@@ -220,17 +261,23 @@
       }
 
 
-      <!-- =========================================
-           ERROR TOAST
-      ========================================== -->
+      <!-- =================================================
+           ERROR MESSAGE
+      ================================================== -->
 
-      @if (showErrorToast()) {
+      @if (
+        showErrorToast()
+      ) {
 
-        <div class="toast-error">
+        <div
+          class="profile-message error"
+          aria-live="assertive"
+        >
 
-          <div class="toast-icon">
+          <div class="message-icon">
             !
           </div>
+
 
           <div>
 
@@ -249,9 +296,9 @@
       }
 
 
-      <!-- =========================================
-           SECTION HEADER
-      ========================================== -->
+      <!-- =================================================
+           SECTION HEADING
+      ================================================== -->
 
       <div class="section-heading">
 
@@ -281,12 +328,12 @@
 
         <div>
 
-          <h4>
+          <h3>
             المعلومات الشخصية
-          </h4>
+          </h3>
 
           <p>
-            يمكنك تحديث بياناتك المهنية من هنا.
+            عدّل بياناتك المهنية ثم احفظ التغييرات.
           </p>
 
         </div>
@@ -294,20 +341,22 @@
       </div>
 
 
-      <!-- =========================================
+      <!-- =================================================
            FORM
-      ========================================== -->
+      ================================================== -->
 
       <div class="form-grid">
 
 
-        <!-- الاسم -->
+        <!-- FULL NAME -->
 
         <div class="form-group">
 
           <label>
             الاسم الكامل
+            <span class="required-mark">*</span>
           </label>
+
 
           <div class="input-wrapper">
 
@@ -341,6 +390,8 @@
               type="text"
               class="profile-input"
               [(ngModel)]="t.fullName"
+              (ngModelChange)="markProfileChanged()"
+              autocomplete="name"
               placeholder="الاسم الكامل"
             />
 
@@ -349,13 +400,14 @@
         </div>
 
 
-        <!-- البريد الإلكتروني -->
+        <!-- EMAIL -->
 
         <div class="form-group">
 
           <label>
             البريد الإلكتروني
           </label>
+
 
           <div class="input-wrapper">
 
@@ -378,9 +430,9 @@
                   rx="2"
                 ></rect>
 
-                <polyline
-                  points="3 7 12 13 21 7"
-                ></polyline>
+                <path
+                  d="m3 7 9 6 9-6"
+                ></path>
 
               </svg>
 
@@ -391,6 +443,8 @@
               type="email"
               class="profile-input text-ltr"
               [(ngModel)]="t.email"
+              (ngModelChange)="markProfileChanged()"
+              autocomplete="email"
               placeholder="trainer@nafadh.om"
             />
 
@@ -399,13 +453,14 @@
         </div>
 
 
-        <!-- رقم الهاتف -->
+        <!-- PHONE -->
 
         <div class="form-group">
 
           <label>
             رقم الهاتف
           </label>
+
 
           <div class="input-wrapper">
 
@@ -421,18 +476,12 @@
               >
 
                 <path
-                  d="M22 16.92v3a2 2 0 0 1-2.18
-                  2 19.79 19.79 0 0 1-8.63-3.07
+                  d="M22 16.92v3a2 2 0 0 1-2.18 2
+                  19.79 19.79 0 0 1-8.63-3.07
                   19.5 19.5 0 0 1-6-6
                   19.79 19.79 0 0 1-3.07-8.67
                   A2 2 0 0 1 4.11 2h3
-                  a2 2 0 0 1 2 1.72
-                  12.84 12.84 0 0 0 .7 2.81
-                  2 2 0 0 1-.45 2.11L8.09
-                  9.91a16 16 0 0 0 6 6l1.27-1.27
-                  a2 2 0 0 1 2.11-.45
-                  12.84 12.84 0 0 0 2.81.7
-                  A2 2 0 0 1 22 16.92z"
+                  a2 2 0 0 1 2 1.72"
                 ></path>
 
               </svg>
@@ -444,6 +493,9 @@
               type="tel"
               class="profile-input text-ltr"
               [(ngModel)]="t.phone"
+              (ngModelChange)="markProfileChanged()"
+              autocomplete="tel"
+              inputmode="tel"
               placeholder="+968 9123 4567"
             />
 
@@ -452,13 +504,14 @@
         </div>
 
 
-        <!-- التخصص -->
+        <!-- SPECIALTY -->
 
         <div class="form-group">
 
           <label>
             التخصص التدريبي
           </label>
+
 
           <div class="input-wrapper">
 
@@ -490,6 +543,7 @@
               type="text"
               class="profile-input"
               [(ngModel)]="t.specialty"
+              (ngModelChange)="markProfileChanged()"
               placeholder="مثال: تطوير البرمجيات"
             />
 
@@ -498,13 +552,14 @@
         </div>
 
 
-        <!-- سنوات الخبرة -->
+        <!-- EXPERIENCE -->
 
         <div class="form-group">
 
           <label>
             سنوات الخبرة
           </label>
+
 
           <div class="input-wrapper">
 
@@ -538,9 +593,11 @@
               type="number"
               min="0"
               max="100"
+              step="1"
               class="profile-input"
               [(ngModel)]="t.experienceYears"
-              placeholder="7"
+              (ngModelChange)="markProfileChanged()"
+              placeholder="0"
             />
 
           </div>
@@ -548,7 +605,7 @@
         </div>
 
 
-        <!-- حالة الحساب -->
+        <!-- STATUS -->
 
         <div class="form-group">
 
@@ -556,44 +613,65 @@
             حالة الحساب
           </label>
 
+
           <div class="readonly-status">
 
             <span
               class="status-indicator"
-              [class.active]="t.status === 'Active'"
-              [class.inactive]="t.status === 'Inactive'"
-              [class.suspended]="t.status === 'Suspended'"
+              [class.active]="
+                t.status === 'Active'
+              "
+              [class.inactive]="
+                t.status === 'Inactive'
+              "
+              [class.suspended]="
+                t.status === 'Suspended'
+              "
             ></span>
 
 
             <strong>
 
-              @if (t.status === 'Active') {
+              @if (
+                t.status === 'Active'
+              ) {
 
                 نشط
 
-              } @else if (t.status === 'Inactive') {
+              }
+              @else if (
+                t.status === 'Inactive'
+              ) {
 
                 غير نشط
 
-              } @else if (t.status === 'Suspended') {
+              }
+              @else if (
+                t.status === 'Suspended'
+              ) {
 
                 موقوف
 
-              } @else {
+              }
+              @else {
 
-                {{ t.status }}
+                {{ t.status || 'غير محدد' }}
 
               }
 
             </strong>
+
+
+            <span class="readonly-label">
+              للعرض فقط
+            </span>
 
           </div>
 
         </div>
 
 
-        <!-- النبذة -->
+        <!-- BIOGRAPHY -->
 
         <div class="form-group full-width">
 
@@ -604,39 +682,44 @@
 
           <textarea
             class="profile-textarea"
-            rows="4"
+            rows="5"
             [(ngModel)]="t.biography"
+            (ngModelChange)="markProfileChanged()"
             placeholder="اكتب نبذة مختصرة عن خبراتك المهنية والتدريبية..."
           ></textarea>
 
 
           <span class="field-hint">
-            تساعد النبذة المهنية في تقديم صورة أفضل عن خبراتك وتخصصك.
+            اكتب نبذة مختصرة توضح خبراتك ومجالك التدريبي.
           </span>
 
         </div>
 
       </div>
 
-    </div>
+    </section>
 
 
-    <!-- =========================================
+    <!-- =====================================================
          ACCOUNT SUMMARY
-    ========================================== -->
+    ====================================================== -->
 
-    <div class="summary-card">
+    <section class="summary-card">
 
       <div class="summary-header">
 
         <div>
 
-          <h3 class="summary-title">
+          <span class="summary-kicker">
+            النشاط التدريبي
+          </span>
+
+          <h2 class="summary-title">
             ملخص الحساب
-          </h3>
+          </h2>
 
           <p class="summary-sub">
-            نظرة سريعة على حالة الحساب والنشاط التدريبي.
+            نظرة سريعة على حالة الحساب والدفعات التدريبية المسندة لك.
           </p>
 
         </div>
@@ -649,14 +732,14 @@
 
         <!-- ACCOUNT STATUS -->
 
-        <div class="summary-stat">
+        <article class="summary-stat account">
 
           <div class="summary-stat-icon green">
 
             <svg
               viewBox="0 0 24 24"
-              width="23"
-              height="23"
+              width="22"
+              height="22"
               fill="none"
               stroke="currentColor"
               stroke-width="2"
@@ -685,28 +768,28 @@
               </strong>
 
 
-              @if (t.status === 'Active') {
+              @if (
+                t.status === 'Active'
+              ) {
 
                 <span class="badge active-badge">
                   نشط
                 </span>
 
-              } @else if (t.status === 'Inactive') {
-
-                <span class="badge inactive-badge">
-                  غير نشط
-                </span>
-
-              } @else if (t.status === 'Suspended') {
+              }
+              @else if (
+                t.status === 'Suspended'
+              ) {
 
                 <span class="badge suspended-badge">
                   موقوف
                 </span>
 
-              } @else {
+              }
+              @else {
 
                 <span class="badge inactive-badge">
-                  {{ t.status }}
+                  غير نشط
                 </span>
 
               }
@@ -715,19 +798,83 @@
 
           </div>
 
-        </div>
+        </article>
 
 
-        <!-- EXPERIENCE -->
+        <!-- ASSIGNED BATCHES -->
 
-        <div class="summary-stat">
+        <article class="summary-stat assigned">
 
           <div class="summary-stat-icon blue">
 
             <svg
               viewBox="0 0 24 24"
-              width="23"
-              height="23"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+
+              <rect
+                x="3"
+                y="4"
+                width="18"
+                height="16"
+                rx="2"
+              ></rect>
+
+              <path
+                d="M8 2v4"
+              ></path>
+
+              <path
+                d="M16 2v4"
+              ></path>
+
+              <path
+                d="M3 10h18"
+              ></path>
+
+            </svg>
+
+          </div>
+
+
+          <div class="summary-stat-content">
+
+            <span class="stat-label">
+              الدفعات المسندة
+            </span>
+
+
+            <div class="stat-value-row">
+
+              <strong class="summary-number">
+                {{ assignedBatchesCount() }}
+              </strong>
+
+              <span class="badge count-badge">
+                إجمالي الدفعات
+              </span>
+
+            </div>
+
+          </div>
+
+        </article>
+
+
+        <!-- ONGOING BATCHES -->
+
+        <article class="summary-stat ongoing">
+
+          <div class="summary-stat-icon cyan">
+
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
               fill="none"
               stroke="currentColor"
               stroke-width="2"
@@ -751,92 +898,57 @@
           <div class="summary-stat-content">
 
             <span class="stat-label">
-              سنوات الخبرة
+              الدفعات الجارية الآن
             </span>
 
 
             <div class="stat-value-row">
 
-              <strong>
-                {{ t.experienceYears || 0 }}
-                سنوات
+              <strong class="summary-number">
+                {{ ongoingBatchesCount() }}
               </strong>
+
+
+              @if (
+                ongoingBatchesCount() > 0
+              ) {
+
+                <span class="badge active-badge">
+                  جارية
+                </span>
+
+              }
+              @else {
+
+                <span class="badge inactive-badge">
+                  لا توجد
+                </span>
+
+              }
 
             </div>
 
           </div>
 
-        </div>
-
-
-        <!-- SPECIALTY -->
-
-        <div class="summary-stat">
-
-          <div class="summary-stat-icon cyan">
-
-            <svg
-              viewBox="0 0 24 24"
-              width="23"
-              height="23"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-
-              <path
-                d="M12 2 2 7l10 5 10-5-10-5Z"
-              ></path>
-
-              <path
-                d="m2 17 10 5 10-5"
-              ></path>
-
-              <path
-                d="m2 12 10 5 10-5"
-              ></path>
-
-            </svg>
-
-          </div>
-
-
-          <div class="summary-stat-content">
-
-            <span class="stat-label">
-              التخصص
-            </span>
-
-
-            <div class="stat-value-row">
-
-              <strong>
-                {{
-                  t.specialty ||
-                  'غير محدد'
-                }}
-              </strong>
-
-            </div>
-
-          </div>
-
-        </div>
+        </article>
 
       </div>
 
-    </div>
+    </section>
 
   }
 
 
-  <!-- =========================================
+  <!-- =====================================================
        NO DATA
-  ========================================== -->
+  ====================================================== -->
 
-  @if (!loading() && !trainer()) {
+  @if (
+    !loading() &&
+    !trainer()
+  ) {
 
-    <div class="profile-empty">
+    <section class="profile-empty">
 
       <div class="empty-icon">
         !
@@ -850,7 +962,7 @@
         لم نتمكن من تحميل بيانات المدرب الحالي.
       </p>
 
-    </div>
+    </section>
 
   }
 

@@ -1570,4 +1570,29 @@
 
     font-size: 8px;
   }
+  
+}
+// =====================================================
+// ACTIVE KPI FILTER
+// =====================================================
+
+.trainee-kpi {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.trainee-kpi[role='button']:hover {
+  transform: translateY(-2px);
+}
+
+.trainee-kpi.active-filter {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.08);
+}
+
+.trainee-kpi.danger.active-filter {
+  border-color: #ef476f;
+  box-shadow: 0 0 0 2px rgba(239, 71, 111, 0.08);
 }

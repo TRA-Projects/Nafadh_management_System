@@ -1057,8 +1057,141 @@ export class TrainerTasks implements OnInit {
         return '';
     }
   }
+// =====================================================
+// OPEN SUBMISSION FILE
+// =====================================================
+
+openSubmissionFile(
+  submission: SubmissionDto
+): void {
+
+  this.submissionsModalError.set(
+    ''
+  );
 
 
+  if (
+    !submission.submissionId
+  ) {
+
+    this.submissionsModalError.set(
+      'تعذر تحديد ملف التسليم.'
+    );
+
+    return;
+  }
+
+
+  /*
+   * Open a blank tab immediately from the user's click.
+   * This prevents the browser from blocking the new tab
+   * while the real file is being loaded from the backend.
+   */
+  const previewWindow =
+    window.open(
+      '',
+      '_blank'
+    );
+
+
+  if (!previewWindow) {
+
+    this.submissionsModalError.set(
+      'تعذر فتح ملف التسليم. تأكدي من السماح بالنوافذ المنبثقة.'
+    );
+
+    return;
+  }
+
+
+  previewWindow.opener =
+    null;
+
+
+  this.api
+    .getSubmissionFile(
+      submission.submissionId
+    )
+    .subscribe({
+
+      next: (blob) => {
+
+        if (
+          !blob ||
+          blob.size === 0
+        ) {
+
+          previewWindow.close();
+
+
+          this.submissionsModalError.set(
+            'ملف التسليم فارغ أو غير متوفر.'
+          );
+
+          return;
+        }
+
+
+        const objectUrl =
+          window.URL.createObjectURL(
+            blob
+          );
+
+
+        previewWindow.location.href =
+          objectUrl;
+
+
+        /*
+         * Keep the Blob URL alive long enough
+         * for the browser to load the document.
+         */
+        window.setTimeout(
+          () => {
+
+            window.URL.revokeObjectURL(
+              objectUrl
+            );
+
+          },
+          60000
+        );
+
+      },
+
+
+      error: (error) => {
+
+        console.error(
+          'Error opening submission file:',
+          error
+        );
+
+
+        previewWindow.close();
+
+
+        if (
+          error?.status === 404
+        ) {
+
+          this.submissionsModalError.set(
+            'ملف هذا التسليم غير متوفر. قد يكون التسليم قديمًا أو يحتوي على رابط تجريبي.'
+          );
+
+          return;
+        }
+
+
+        this.submissionsModalError.set(
+          'تعذر تحميل ملف التسليم.'
+        );
+
+      }
+
+    });
+
+}
   // =====================================================
   // FILTER
   // =====================================================

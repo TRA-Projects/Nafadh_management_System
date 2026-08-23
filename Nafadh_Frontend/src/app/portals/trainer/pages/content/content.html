@@ -423,24 +423,60 @@
 
             <div class="module-header">
 
-              <div class="module-title">
+  <div class="module-title">
 
-                <span>
-                  📘
-                </span>
+    <span>
+      📘
+    </span>
 
-                <strong>
-                  {{ module.title }}
-                </strong>
+    <strong>
+      {{ module.title }}
+    </strong>
 
-              </div>
+  </div>
 
 
-              <span class="module-order">
-                ترتيب {{ module.orderIndex }}
-              </span>
+  <div
+    style="
+      display:flex;
+      align-items:center;
+      gap:8px;
+    "
+  >
 
-            </div>
+    <span class="module-order">
+      ترتيب {{ module.orderIndex }}
+    </span>
+
+
+    <button
+      type="button"
+      (click)="archiveModule(module)"
+      [disabled]="saving()"
+      title="أرشفة الوحدة"
+      style="
+        min-height:32px;
+        padding:0 11px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        gap:5px;
+        background:#fff7ed;
+        color:#c2410c;
+        border:1px solid #fed7aa;
+        border-radius:8px;
+        font-family:inherit;
+        font-size:10px;
+        font-weight:700;
+        cursor:pointer;
+      "
+    >
+      📁 أرشفة
+    </button>
+
+  </div>
+
+</div>
 
 
             <div class="lesson-list">
@@ -1099,17 +1135,31 @@
           track module.moduleId
         ) {
 
-          <div class="archive-item">
+         <div class="archive-item">
 
-            <span>
-              📘
-            </span>
+  <span>
+    📘
+  </span>
 
-            <strong>
-              {{ module.title }}
-            </strong>
+  <strong
+    style="
+      flex:1;
+    "
+  >
+    {{ module.title }}
+  </strong>
 
-          </div>
+
+  <button
+    type="button"
+    class="btn secondary"
+    (click)="restoreModule(module)"
+    [disabled]="saving()"
+  >
+    استعادة
+  </button>
+
+</div>
 
         } @empty {
 
