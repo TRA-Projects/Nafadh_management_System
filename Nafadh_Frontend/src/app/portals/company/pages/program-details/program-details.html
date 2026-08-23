@@ -88,10 +88,15 @@
       <article class="card card-pad">
         <div class="card-title">التخصصات الأكاديمية المناسبة</div>
         <div class="major-tags">
-          <button type="button" class="major-tag-btn">علوم الحاسب</button>
-          <button type="button" class="major-tag-btn">نظم المعلومات</button>
-          <button type="button" class="major-tag-btn">هندسة البرمجيات</button>
-          <button type="button" class="major-tag-btn">تقنية المعلومات</button>
+          <span class="major-tag-btn" *ngIf="p.category">{{ p.category }}</span>
+          @for (department of p.department.split('، '); track department) {
+            @if (department && department !== 'غير محدد') {
+              <span class="major-tag-btn">{{ department }}</span>
+            }
+          }
+          @if (!p.category && p.department === 'غير محدد') {
+            <span class="major-tag-btn">لا توجد تخصصات محددة</span>
+          }
         </div>
       </article>
     </div>
