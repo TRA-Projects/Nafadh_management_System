@@ -61,27 +61,12 @@ namespace Nafadh_Backend.Controllers
         {
             var fileUrl = await _service.DownloadCertificateAsync(id);
 
-            if (fileUrl == null)
-                return NotFound();
-
-            var filePath = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "wwwroot",
-                fileUrl
-            );
-
-            if (!System.IO.File.Exists(filePath))
+            if (string.IsNullOrWhiteSpace(fileUrl))
                 return NotFound("Certificate file not found.");
 
-            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+            var fileName = Path.GetFileName(new Uri(fileUrl).AbsolutePath);
 
-            var fileName = Path.GetFileName(filePath);
-
-            return File(
-                fileBytes,
-                "application/pdf",
-                fileName
-            );
+            return Redirect(fileUrl);
         }
 
         // Get all certificates for trainee

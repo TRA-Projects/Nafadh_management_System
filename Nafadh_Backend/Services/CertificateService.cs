@@ -46,18 +46,33 @@ namespace Nafadh_Backend.Services
         // Create certificate
         public async Task<CertificateOutputDTO> AddCertificateAsync(CertificateInputDTO dto)
         {
+            var existing = await _repository
+                .GetCertificateByEnrollmentIdAsync(dto.EnrollmentId);
 
-            NFD_Certificate certificate = new NFD_Certificate
+            // منع إصدار شهادة مكررة
+            if (existing != null)
             {
+                return new CertificateOutputDTO
+                {
+                    CertificateId = existing.CertificateId,
+                    EnrollmentId = existing.EnrollmentId,
+                    IssueDate = existing.IssueDate,
+                    Type = existing.Type,
+                    FileUrl = existing.FileUrl
+                };
+            }
+
+            var certificate = new NFD_Certificate
+            {
+                EnrollmentId = dto.EnrollmentId,
                 Type = dto.Type,
-                IssueDate = dto.IssueDate,
-                FileUrl = dto.FileUrl,
-                EnrollmentId = dto.EnrollmentId
+                IssueDate = dto.IssueDate == default
+                    ? DateTime.UtcNow
+                    : dto.IssueDate,
+                FileUrl = dto.FileUrl
             };
 
-
             await _repository.AddCertificateAsync(certificate);
-
 
             return new CertificateOutputDTO
             {
@@ -68,6 +83,7 @@ namespace Nafadh_Backend.Services
                 FileUrl = certificate.FileUrl
             };
         }
+
 
 
         // Download certificate file
