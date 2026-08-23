@@ -130,7 +130,11 @@ export class TrainerTrainees implements OnInit {
 // =====================================================
 
 traineeListFilter =
-  signal<'all' | 'support'>(
+  signal<
+    'all' |
+    'support' |
+    'high'
+  >(
     'all'
   );
 
@@ -144,6 +148,10 @@ filteredEnrollments =
     const averages =
       this.evaluationAverages();
 
+
+    // =========================
+    // NEEDS SUPPORT
+    // =========================
 
     if (filter === 'support') {
 
@@ -173,28 +181,97 @@ filteredEnrollments =
               Number.isFinite(score) &&
               score < 60
             );
+
           }
         );
+
     }
 
 
+    // =========================
+    // HIGH PERFORMERS
+    // =========================
+
+    if (filter === 'high') {
+
+      return this.enrollments()
+        .filter(
+          enrollment => {
+
+            if (
+              enrollment.completionStatus ===
+                'Dropped' ||
+              !this.canShowTrainingMetrics(
+                enrollment
+              )
+            ) {
+              return false;
+            }
+
+
+            const score =
+              averages[
+                enrollment.enrollmentId
+              ];
+
+
+            return (
+              typeof score === 'number' &&
+              Number.isFinite(score) &&
+              score >= 85
+            );
+
+          }
+        );
+
+    }
+
+
+    // =========================
+    // ALL TRAINEES
+    // =========================
+
     return this.enrollments();
+
   });
 
+
+// =====================================================
+// SHOW SUPPORT TRAINEES
+// =====================================================
 
 showSupportTrainees(): void {
 
   this.traineeListFilter.set(
     'support'
   );
+
 }
 
+
+// =====================================================
+// SHOW HIGH PERFORMERS
+// =====================================================
+
+showHighPerformers(): void {
+
+  this.traineeListFilter.set(
+    'high'
+  );
+
+}
+
+
+// =====================================================
+// SHOW ALL TRAINEES
+// =====================================================
 
 showAllTrainees(): void {
 
   this.traineeListFilter.set(
     'all'
   );
+
 }
   // =====================================================
   // KPI
