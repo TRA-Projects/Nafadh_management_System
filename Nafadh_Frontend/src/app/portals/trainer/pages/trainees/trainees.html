@@ -410,17 +410,17 @@
 
               <td>
 
-              <span
+            <span
   class="status-badge"
   [ngClass]="
     enrollmentStatusClass(
-      effectiveEnrollmentStatus(e)
+      effectiveEnrollmentStatus(profile)
     )
   "
 >
   {{
     enrollmentStatusLabel(
-      effectiveEnrollmentStatus(e)
+      effectiveEnrollmentStatus(profile)
     )
   }}
 </span>
@@ -432,10 +432,11 @@
 
               <td>
 
-                @if (
-                  e.completionStatus !== 'Dropped' &&
-                  technicalScore(e.enrollmentId) !== null
-                ) {
+             @if (
+  canShowTrainingMetrics(e) &&
+  e.completionStatus !== 'Dropped' &&
+  technicalScore(e.enrollmentId) !== null
+) {
 
                   <div class="progress-cell">
 
@@ -499,11 +500,12 @@
 
               <td>
 
-                @if (
-                  attendancePercentage(
-                    e.enrollmentId
-                  ) !== null
-                ) {
+               @if (
+  canShowTrainingMetrics(e) &&
+  attendancePercentage(
+    e.enrollmentId
+  ) !== null
+) {
 
                   <span class="metric-value">
                     {{
@@ -530,10 +532,11 @@
 
               <td>
 
-                @if (
-                  e.completionStatus !== 'Dropped' &&
-                  technicalScore(e.enrollmentId) !== null
-                ) {
+             @if (
+  canShowTrainingMetrics(e) &&
+  e.completionStatus !== 'Dropped' &&
+  technicalScore(e.enrollmentId) !== null
+) {
 
                   <span class="metric-value">
                     {{
@@ -562,44 +565,58 @@
 
                 <div class="table-actions">
 
-                  <div
-                    class="evaluation-action-wrapper"
-                    [class.disabled-evaluation]="
-                      e.completionStatus === 'Dropped'
-                    "
-                  >
+               <div
+  class="evaluation-action-wrapper"
+  [class.disabled-evaluation]="
+    !canEvaluateEnrollment(e)
+  "
+>
 
-                    <button
-                      type="button"
-                      class="small-action-btn"
-                      (click)="openEval(e.enrollmentId)"
-                      [disabled]="
-                        e.completionStatus === 'Dropped'
-                      "
-                    >
-                      تقييم
-                    </button>
+  <button
+    type="button"
+    class="small-action-btn"
+    (click)="openEval(e.enrollmentId)"
+    [disabled]="
+      !canEvaluateEnrollment(e)
+    "
+  >
+    تقييم
+  </button>
 
 
-                    @if (
-                      e.completionStatus === 'Dropped'
-                    ) {
+  @if (
+    !canEvaluateEnrollment(e)
+  ) {
 
-                      <div class="evaluation-tooltip">
+    <div class="evaluation-tooltip">
 
-                        <span class="evaluation-tooltip-icon">
-                          !
-                        </span>
+      <span class="evaluation-tooltip-icon">
+        !
+      </span>
 
-                        <span>
-                          المتدرب منسحب ولا يمكن إضافة تقييم جديد
-                        </span>
+      <span>
 
-                      </div>
+        @if (
+          effectiveEnrollmentStatus(e) === 'NotStarted'
+        ) {
+          الدفعة لم تبدأ بعد ولا يمكن إضافة تقييم
+        }
+        @else if (
+          effectiveEnrollmentStatus(e) === 'Dropped'
+        ) {
+          المتدرب منسحب ولا يمكن إضافة تقييم جديد
+        }
+        @else {
+          لا يمكن إضافة تقييم لهذا المتدرب
+        }
 
-                    }
+      </span>
 
-                  </div>
+    </div>
+
+  }
+
+</div>
 
 
                   <button
