@@ -641,22 +641,15 @@ export class AdminCertificates implements OnInit {
   }
 
   downloadPdf(): void {
+  const cert = this.activeCertData();
 
-    const cert =
-      this.activeCertData();
-
-    if (cert?.fileUrl) {
-
-      window.open(
-        cert.fileUrl,
-        '_blank'
-      );
-
-    } else {
-
-      window.print();
-    }
+  if (cert?.fileUrl) {
+    window.open(cert.fileUrl, '_blank');
+    return;
   }
+
+  window.print();
+}
 
   // ============================================================
   // 5. ISSUE SINGLE CERTIFICATE
