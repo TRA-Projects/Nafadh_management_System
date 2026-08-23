@@ -1,12 +1,14 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+
 import { TraineeApi } from '../../services/trainee-api';
 import { ATTENDANCE_STATUS_LABELS } from '../../../../core/models/enums';
 import { DailyAttendanceDto, ExcuseDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-trainee-attendance',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './attendance.html',
 })
@@ -17,8 +19,10 @@ export class TraineeAttendance implements OnInit {
 
   rows = signal<any[]>([]);
   rate = signal(0);
+
   excuseOpenFor = signal<number | null>(null);
   excuseReason = '';
+
   labels = ATTENDANCE_STATUS_LABELS;
 
   selectedFileName = signal<string>('');
@@ -27,6 +31,16 @@ export class TraineeAttendance implements OnInit {
   // Cache للأعذار
   excusesCache = new Map<number, ExcuseDto>();
 
+  // =========================================================
+  // POPUP MESSAGE
+  // =========================================================
+
+  popupVisible = signal(false);
+  popupMessage = signal('');
+  popupType = signal<'success' | 'error' | 'warning' | 'info'>('info');
+
+  private popupTimer: any;
+
   constructor(private api: TraineeApi) {}
 
   ngOnInit() {
@@ -34,15 +48,72 @@ export class TraineeAttendance implements OnInit {
     this.loadTraineeData();
   }
 
+  // =========================================================
+  // POPUP FUNCTIONS
+  // =========================================================
+
+  showPopup(
+    message: string,
+    type: 'success' | 'error' | 'warning' | 'info' = 'info'
+  ): void {
+    if (this.popupTimer) {
+      clearTimeout(this.popupTimer);
+    }
+
+    this.popupMessage.set(message);
+    this.popupType.set(type);
+    this.popupVisible.set(true);
+
+    this.popupTimer = setTimeout(() => {
+      this.closePopup();
+    }, 3500);
+  }
+
+  closePopup(): void {
+    this.popupVisible.set(false);
+
+    if (this.popupTimer) {
+      clearTimeout(this.popupTimer);
+      this.popupTimer = null;
+    }
+  }
+
+  getPopupIcon(): string {
+    switch (this.popupType()) {
+      case 'success':
+        return '✓';
+
+      case 'error':
+        return '×';
+
+      case 'warning':
+        return '!';
+
+      default:
+        return 'i';
+    }
+  }
+
+  // =========================================================
+  // GET LOGGED USER
+  // =========================================================
+
   private getLoggedInUserId() {
     try {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
+
         if (key) {
           const val = localStorage.getItem(key);
+
           if (val && val.startsWith('{')) {
             const parsed = JSON.parse(val);
-            const foundId = parsed.traineeId || parsed.userId || parsed.id;
+
+            const foundId =
+              parsed.traineeId ||
+              parsed.userId ||
+              parsed.id;
+
             if (foundId) {
               this.traineeId = Number(foundId);
               return;
@@ -51,10 +122,29 @@ export class TraineeAttendance implements OnInit {
         }
       }
 
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('token') || localStorage.getItem('user_session');
+      const token =
+        localStorage.getItem('auth_token') ||
+        localStorage.getItem('token') ||
+        localStorage.getItem('user_session');
+
       if (token && token.includes('.')) {
-        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-        const id = payload.traineeId || payload.userId || payload.nameid || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+        const payload = JSON.parse(
+          atob(
+            token
+              .split('.')[1]
+              .replace(/-/g, '+')
+              .replace(/_/g, '/')
+          )
+        );
+
+        const id =
+          payload.traineeId ||
+          payload.userId ||
+          payload.nameid ||
+          payload[
+            'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
+          ];
+
         if (id) {
           this.traineeId = Number(id);
         }
@@ -64,24 +154,35 @@ export class TraineeAttendance implements OnInit {
     }
   }
 
+  // =========================================================
+  // LOAD TRAINEE
+  // =========================================================
+
   loadTraineeData() {
     this.api.getTrainee(this.traineeId).subscribe({
       next: (t) => {
         if (t) {
           this.trainee.set(t);
           this.enrollmentId = t.enrollmentId ?? 0;
+
           this.loadAttendanceData();
         }
       },
+
       error: (err) => {
         console.error('خطأ في جلب البيانات:', err);
+
         if (this.traineeId !== 2) {
           this.traineeId = 2;
           this.loadTraineeData();
         }
-      }
+      },
     });
   }
+
+  // =========================================================
+  // LOAD ATTENDANCE
+  // =========================================================
 
   loadAttendanceData() {
     if (!this.enrollmentId) return;
@@ -89,167 +190,320 @@ export class TraineeAttendance implements OnInit {
     this.api.getAttendance(this.enrollmentId).subscribe({
       next: (d) => {
         const formattedRows = (d ?? []).map((item: any) => ({
-          dailyAttendanceId: item.dailyAttendanceId || item.id,
-          date: item.date || item.attendanceDate,
-          checkInTime: item.checkInTime || item.checkIn || item.clockIn,
-          checkOutTime: item.checkOutTime || item.checkOut || item.clockOut,
-          status: item.status || item.attendanceStatus || 'Present',
-          note: item.note || item.notes || item.remarks || '',
+          dailyAttendanceId:
+            item.dailyAttendanceId || item.id,
+
+          date:
+            item.date ||
+            item.attendanceDate,
+
+          checkInTime:
+            item.checkInTime ||
+            item.checkIn ||
+            item.clockIn,
+
+          checkOutTime:
+            item.checkOutTime ||
+            item.checkOut ||
+            item.clockOut,
+
+          status:
+            item.status ||
+            item.attendanceStatus ||
+            'Present',
+
+          note:
+            item.note ||
+            item.notes ||
+            item.remarks ||
+            '',
         }));
+
         this.rows.set(formattedRows);
-        
+
         // جلب الأعذار لكل صف
-        formattedRows.forEach(row => {
-          this.api.getExcuse(row.dailyAttendanceId).subscribe({
-            next: (excuse: ExcuseDto) => {
-              if (excuse && excuse.excuseId) {
-                this.excusesCache.set(row.dailyAttendanceId, excuse);
-              }
-            },
-            error: () => {}
-          });
+        formattedRows.forEach((row) => {
+          this.api
+            .getExcuse(row.dailyAttendanceId)
+            .subscribe({
+              next: (excuse: ExcuseDto) => {
+                if (excuse && excuse.excuseId) {
+                  this.excusesCache.set(
+                    row.dailyAttendanceId,
+                    excuse
+                  );
+                }
+              },
+
+              error: () => {},
+            });
         });
       },
-      error: () => this.rows.set([])
+
+      error: () => this.rows.set([]),
     });
 
     this.api.getComplianceRate(this.enrollmentId).subscribe({
       next: (r) => this.rate.set(r),
-      error: () => {}
+      error: () => {},
     });
   }
 
-  // التحقق من وجود عذر
+  // =========================================================
+  // EXCUSES
+  // =========================================================
+
   hasExcuse(dailyAttendanceId: number): boolean {
     return this.excusesCache.has(dailyAttendanceId);
   }
 
-  // الحصول على العذر
-  getExcuse(dailyAttendanceId: number): ExcuseDto | undefined {
+  getExcuse(
+    dailyAttendanceId: number
+  ): ExcuseDto | undefined {
     return this.excusesCache.get(dailyAttendanceId);
   }
 
-  // الحصول على حالة العذر
-  getExcuseStatus(dailyAttendanceId: number): string | null {
-    const excuse = this.excusesCache.get(dailyAttendanceId);
+  getExcuseStatus(
+    dailyAttendanceId: number
+  ): string | null {
+    const excuse =
+      this.excusesCache.get(dailyAttendanceId);
+
     return excuse ? excuse.status : null;
   }
 
-  // التحقق من إمكانية إرفاق عذر
   canSubmitExcuse(row: any): boolean {
-    // إذا كان هناك عذر مسبق
     if (this.hasExcuse(row.dailyAttendanceId)) {
       return false;
     }
-    // إذا كان الحضور مسجل
+
     if (row.status === 'Present') {
       return false;
     }
-    // فقط للحالات Absent أو Late
-    return row.status === 'Absent' || row.status === 'Late';
+
+    return (
+      row.status === 'Absent' ||
+      row.status === 'Late'
+    );
   }
 
-  // دالة عرض العذر
+  // =========================================================
+  // VIEW EXCUSE
+  // =========================================================
+
   viewExcuse(dailyAttendanceId: number) {
-    const excuse = this.excusesCache.get(dailyAttendanceId);
+    const excuse =
+      this.excusesCache.get(dailyAttendanceId);
+
     if (excuse) {
-      const statusMap: {[key: string]: {text: string, emoji: string}} = {
-        'Pending': {text: 'قيد المراجعة', emoji: '⏳'},
-        'Approved': {text: 'مقبول', emoji: '✅'},
-        'Rejected': {text: 'مرفوض', emoji: '❌'}
+      const statusMap: {
+        [key: string]: {
+          text: string;
+          emoji: string;
+        };
+      } = {
+        Pending: {
+          text: 'قيد المراجعة',
+          emoji: '⏳',
+        },
+
+        Approved: {
+          text: 'مقبول',
+          emoji: '✓',
+        },
+
+        Rejected: {
+          text: 'مرفوض',
+          emoji: '×',
+        },
       };
-      const statusInfo = statusMap[excuse.status] || {text: excuse.status, emoji: ''};
-      
-      alert(`📋 تفاصيل العذر:\n\n📝 السبب: ${excuse.reason}\n📌 الحالة: ${statusInfo.emoji} ${statusInfo.text}\n${excuse.proofUrl ? '📎 يوجد مرفق' : ''}`);
+
+      const statusInfo =
+        statusMap[excuse.status] || {
+          text: excuse.status,
+          emoji: '',
+        };
+
+      const attachmentMessage =
+        excuse.proofUrl
+          ? '\n📎 يوجد مرفق'
+          : '';
+
+      this.showPopup(
+        `تفاصيل العذر\n\nالسبب: ${excuse.reason}\nالحالة: ${statusInfo.emoji} ${statusInfo.text}${attachmentMessage}`,
+        excuse.status === 'Approved'
+          ? 'success'
+          : excuse.status === 'Rejected'
+            ? 'error'
+            : 'warning'
+      );
     } else {
       // جلب من الـ API إذا لم يكن في الكاش
-      this.api.getExcuse(dailyAttendanceId).subscribe({
-        next: (excuse: ExcuseDto) => {
-          if (excuse && excuse.excuseId) {
-            this.excusesCache.set(dailyAttendanceId, excuse);
-            this.viewExcuse(dailyAttendanceId);
-          } else {
-            alert('لا توجد تفاصيل إضافية للعذر');
-          }
-        },
-        error: () => {
-          alert('لا توجد تفاصيل إضافية للعذر');
-        }
-      });
+      this.api
+        .getExcuse(dailyAttendanceId)
+        .subscribe({
+          next: (excuse: ExcuseDto) => {
+            if (excuse && excuse.excuseId) {
+              this.excusesCache.set(
+                dailyAttendanceId,
+                excuse
+              );
+
+              this.viewExcuse(dailyAttendanceId);
+            } else {
+              this.showPopup(
+                'لا توجد تفاصيل إضافية للعذر',
+                'info'
+              );
+            }
+          },
+
+          error: () => {
+            this.showPopup(
+              'لا توجد تفاصيل إضافية للعذر',
+              'info'
+            );
+          },
+        });
     }
   }
 
-  totalPresent = computed(() => 
-    this.rows().filter(r => r.status === 'Present').length
+  // =========================================================
+  // STATISTICS
+  // =========================================================
+
+  totalPresent = computed(() =>
+    this.rows().filter(
+      (r) => r.status === 'Present'
+    ).length
   );
 
-  totalAbsent = computed(() => 
-    this.rows().filter(r => r.status === 'Absent').length
+  totalAbsent = computed(() =>
+    this.rows().filter(
+      (r) => r.status === 'Absent'
+    ).length
   );
 
-  totalLate = computed(() => 
-    this.rows().filter(r => r.status === 'Late').length
+  totalLate = computed(() =>
+    this.rows().filter(
+      (r) => r.status === 'Late'
+    ).length
   );
 
   totalExcused = computed(() => {
     let count = 0;
-    this.rows().forEach(row => {
-      const excuse = this.excusesCache.get(row.dailyAttendanceId);
-      if (excuse && excuse.status === 'Approved') {
+
+    this.rows().forEach((row) => {
+      const excuse =
+        this.excusesCache.get(
+          row.dailyAttendanceId
+        );
+
+      if (
+        excuse &&
+        excuse.status === 'Approved'
+      ) {
         count++;
       }
     });
+
     return count;
   });
 
   commitmentPercentage = computed(() => {
     const total = this.rows().length;
+
     if (total === 0) return 0;
-    const presentCount = this.rows().filter(r => r.status === 'Present').length;
-    return Math.round((presentCount / total) * 100);
+
+    const presentCount =
+      this.rows().filter(
+        (r) => r.status === 'Present'
+      ).length;
+
+    return Math.round(
+      (presentCount / total) * 100
+    );
   });
 
+  // =========================================================
+  // FILE
+  // =========================================================
+
   onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
+    const input =
+      event.target as HTMLInputElement;
+
+    if (
+      input.files &&
+      input.files.length > 0
+    ) {
       const file = input.files[0];
-      this.selectedFileName.set(file.name);
+
+      this.selectedFileName.set(
+        file.name
+      );
+
       this.selectedFile.set(file);
     }
   }
 
+  // =========================================================
+  // SUBMIT EXCUSE
+  // =========================================================
+
   submitExcuse(row: any) {
     if (!this.excuseReason.trim()) {
-      alert('يرجى كتابة سبب العذر');
+      this.showPopup(
+        'يرجى كتابة سبب العذر',
+        'warning'
+      );
+
       return;
     }
 
     // التحقق من وجود عذر مسبق
-    if (this.hasExcuse(row.dailyAttendanceId)) {
-      alert('⚠️ يوجد عذر مسبق لهذا اليوم، لا يمكن إرسال عذر جديد');
+    if (
+      this.hasExcuse(
+        row.dailyAttendanceId
+      )
+    ) {
+      this.showPopup(
+        'يوجد عذر مسبق لهذا اليوم، لا يمكن إرسال عذر جديد',
+        'warning'
+      );
+
       this.excuseOpenFor.set(null);
       this.excuseReason = '';
       this.selectedFileName.set('');
       this.selectedFile.set(null);
+
       return;
     }
 
     // إعداد بيانات العذر
     const excuseData = {
-      dailyAttendanceId: row.dailyAttendanceId,
-      reason: this.excuseReason
+      dailyAttendanceId:
+        row.dailyAttendanceId,
+
+      reason: this.excuseReason,
     };
 
-    const currentDailyAttendanceId = row.dailyAttendanceId;
+    const currentDailyAttendanceId =
+      row.dailyAttendanceId;
 
     // تحديث الواجهة فوراً
     const tempExcuse: ExcuseDto = {
       excuseId: Date.now(),
-      dailyAttendanceId: row.dailyAttendanceId,
+      dailyAttendanceId:
+        row.dailyAttendanceId,
       reason: this.excuseReason,
       status: 'Pending' as any,
     };
-    this.excusesCache.set(row.dailyAttendanceId, tempExcuse);
+
+    this.excusesCache.set(
+      row.dailyAttendanceId,
+      tempExcuse
+    );
 
     this.excuseOpenFor.set(null);
     this.excuseReason = '';
@@ -257,37 +511,80 @@ export class TraineeAttendance implements OnInit {
     this.selectedFile.set(null);
 
     // إرسال العذر للـ API
-    this.api.submitExcuse(excuseData).subscribe({
-      next: (response: ExcuseDto) => {
-        console.log('✅ تم إرسال العذر بنجاح:', response);
-        this.excusesCache.set(currentDailyAttendanceId, {
-          ...response,
-          status: 'Pending'
-        });
-        setTimeout(() => this.loadAttendanceData(), 500);
-      },
-      error: (err) => {
-        console.error('❌ خطأ في إرسال العذر:', err);
-        
-        let errorMessage = 'حدث خطأ في إرسال العذر، يرجى المحاولة مرة أخرى';
-        
-        if (err.error && typeof err.error === 'string') {
-          errorMessage = err.error;
-        } else if (err.error && err.error.message) {
-          errorMessage = err.error.message;
-        } else if (err.message) {
-          errorMessage = err.message;
-        }
-        
-        if (errorMessage.includes('already exists') || errorMessage.includes('موجود')) {
-          errorMessage = '⚠️ يوجد عذر مسبق لهذا اليوم';
-        }
-        
-        alert(errorMessage);
-        
-        this.excusesCache.delete(currentDailyAttendanceId);
-        this.loadAttendanceData();
-      }
-    });
+    this.api
+      .submitExcuse(excuseData)
+      .subscribe({
+        next: (response: ExcuseDto) => {
+          console.log(
+            '✅ تم إرسال العذر بنجاح:',
+            response
+          );
+
+          this.excusesCache.set(
+            currentDailyAttendanceId,
+            {
+              ...response,
+              status: 'Pending',
+            }
+          );
+
+          // Popup نجاح
+          this.showPopup(
+            'تم إرسال العذر بنجاح، وهو الآن قيد المراجعة',
+            'success'
+          );
+
+          setTimeout(() => {
+            this.loadAttendanceData();
+          }, 500);
+        },
+
+        error: (err) => {
+          console.error(
+            '❌ خطأ في إرسال العذر:',
+            err
+          );
+
+          let errorMessage =
+            'حدث خطأ في إرسال العذر، يرجى المحاولة مرة أخرى';
+
+          if (
+            err.error &&
+            typeof err.error === 'string'
+          ) {
+            errorMessage = err.error;
+          } else if (
+            err.error &&
+            err.error.message
+          ) {
+            errorMessage =
+              err.error.message;
+          } else if (err.message) {
+            errorMessage = err.message;
+          }
+
+          if (
+            errorMessage.includes(
+              'already exists'
+            ) ||
+            errorMessage.includes('موجود')
+          ) {
+            errorMessage =
+              'يوجد عذر مسبق لهذا اليوم';
+          }
+
+          // Popup الخطأ
+          this.showPopup(
+            errorMessage,
+            'error'
+          );
+
+          this.excusesCache.delete(
+            currentDailyAttendanceId
+          );
+
+          this.loadAttendanceData();
+        },
+      });
   }
 }
