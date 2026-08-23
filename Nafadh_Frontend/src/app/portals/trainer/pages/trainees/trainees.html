@@ -1102,7 +1102,47 @@
 
         </div>
 
+<!-- =====================================================
+     EVALUATION BATCH
+====================================================== -->
 
+<div
+  class="modal-field"
+  style="margin-bottom:16px;"
+>
+
+  <label>
+    الدفعة
+  </label>
+
+  <select
+    class="nfd-input"
+    [ngModel]="selectedEvaluationBatchId()"
+    (ngModelChange)="
+      selectedEvaluationBatchId.set($event)
+    "
+  >
+
+    <option [ngValue]="null">
+      اختر الدفعة
+    </option>
+
+    @for (
+      batch of evaluationBatchOptions();
+      track batch.batchId
+    ) {
+
+      <option
+        [ngValue]="batch.batchId"
+      >
+        {{ batch.batchName }}
+      </option>
+
+    }
+
+  </select>
+
+</div>
         <div class="trainee-picker-list">
 
           @for (
@@ -1200,14 +1240,30 @@
               </div>
 
 
-              <strong>
-                لا يوجد متدربون
-              </strong>
+             @if (
+  selectedEvaluationBatchId() === null
+) {
 
-              <span>
-                لا يوجد متدربون متاحون للتقييم في الدفعات الحالية.
-              </span>
+  <strong>
+    اختر الدفعة أولًا
+  </strong>
 
+  <span>
+    اختر الدفعة لعرض المتدربين المتاحين للتقييم.
+  </span>
+
+}
+@else {
+
+  <strong>
+    لا يوجد متدربون متاحون
+  </strong>
+
+  <span>
+    لا يوجد متدربون متاحون للتقييم في هذه الدفعة.
+  </span>
+
+}
             </div>
 
           }

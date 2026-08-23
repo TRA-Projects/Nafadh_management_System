@@ -61,21 +61,94 @@ export class TrainerTrainees implements OnInit {
 
 
   // =====================================================
-  // EVALUABLE ENROLLMENTS
-  // =====================================================
+// EVALUATION BATCH PICKER
+// =====================================================
 
- evaluableEnrollments =
+selectedEvaluationBatchId =
+  signal<number | null>(
+    null
+  );
+
+
+evaluationBatchOptions =
   computed(() => {
 
-    return this.enrollments()
+    const batches =
+      new Map<
+        number,
+        string
+      >();
+
+
+    this.enrollments()
       .filter(
         enrollment =>
           this.canEvaluateEnrollment(
             enrollment
           )
+      )
+      .forEach(
+        enrollment => {
+
+          batches.set(
+            enrollment.batchId,
+            enrollment.batchName ||
+              `دفعة ${enrollment.batchId}`
+          );
+
+        }
       );
+
+
+    return Array
+      .from(
+        batches.entries()
+      )
+      .map(
+        ([batchId, batchName]) => ({
+
+          batchId,
+
+          batchName
+
+        })
+      );
+
   });
 
+
+// =====================================================
+// EVALUABLE ENROLLMENTS
+// =====================================================
+
+evaluableEnrollments =
+  computed(() => {
+
+    const batchId =
+      this.selectedEvaluationBatchId();
+
+
+    if (batchId === null) {
+
+      return [];
+
+    }
+
+
+    return this.enrollments()
+      .filter(
+        enrollment =>
+
+          enrollment.batchId ===
+            batchId &&
+
+          this.canEvaluateEnrollment(
+            enrollment
+          )
+
+      );
+
+  });
   // =====================================================
   // REPORT EXPORT STATE
   // =====================================================
@@ -1744,14 +1817,18 @@ loadEvaluationStages(): void {
   // =====================================================
   // START NEW EVALUATION
   // =====================================================
+startNewEvaluation(): void {
 
-  startNewEvaluation(): void {
+  this.selectedEvaluationBatchId.set(
+    null
+  );
 
-    this.showTraineePicker.set(
-      true
-    );
-  }
 
+  this.showTraineePicker.set(
+    true
+  );
+
+}
 
   // =====================================================
   // SELECT TRAINEE FOR EVALUATION
