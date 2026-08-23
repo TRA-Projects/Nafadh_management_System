@@ -328,6 +328,7 @@ export interface BatchDto {
   batchName: string;
   companyName?: string;
   programName?: string;
+  trackName?: string;
   InstructorName?: string; 
   startDate: string;
   endDate: string;

@@ -200,7 +200,14 @@
           type="text" 
           formControlName="name" 
           placeholder="e.g. .NET Track"
-          class="form-input text-right">
+          class="form-input text-right"
+          [class.input-error]="pf['name'].touched && pf['name'].invalid">
+        
+        <!-- Validation Message -->
+        <div *ngIf="pf['name'].touched && pf['name'].invalid" class="error-msg text-right">
+          <small *ngIf="pf['name'].errors?.['required']">اسم البرنامج مطلوب</small>
+          <small *ngIf="pf['name'].errors?.['minlength']">الاسم يجب أن يكون حرفين على الأقل</small>
+        </div>
       </div>
 
       <!-- المسار -->
@@ -208,12 +215,20 @@
         <label class="form-label">
           المسار <span class="required-star">*</span>
         </label>
-        <select formControlName="trackId" class="form-select text-right">
-          <option [ngValue]="null" disabled selected>– اختر مساراً –</option>
+        <select 
+          formControlName="trackId" 
+          class="form-select text-right"
+          [class.input-error]="pf['trackId'].touched && pf['trackId'].invalid">
+          <option [ngValue]="null" disabledselected>– اختر مساراً –</option>
           <option *ngFor="let track of tracks()" [value]="track.trackId || track.id">
             {{ track.name || track.title }}
           </option>
         </select>
+        
+        <!-- Validation Message -->
+        <div *ngIf="pf['trackId'].touched && pf['trackId'].invalid" class="error-msg text-right">
+          <small *ngIf="pf['trackId'].errors?.['required']">يرجى اختيار المسار</small>
+        </div>
       </div>
 
       <!-- مدة البرنامج (بالأسابيع) -->
@@ -223,9 +238,18 @@
         </label>
         <input 
           type="number" 
+          min="1"
+          (keydown)="preventNegative($event)"
           formControlName="durationWeeks" 
           placeholder="10"
-          class="form-input text-right">
+          class="form-input text-right"
+          [class.input-error]="pf['durationWeeks'].touched && pf['durationWeeks'].invalid">
+        
+        <!-- Validation Message -->
+        <div *ngIf="pf['durationWeeks'].touched && pf['durationWeeks'].invalid" class="error-msg text-right">
+          <small *ngIf="pf['durationWeeks'].errors?.['required']">مدة البرنامج مطلوبة</small>
+          <small *ngIf="pf['durationWeeks'].errors?.['min']">يجب أن تكون المدة أسبوعاً واحداً على الأقل (بدون أرقام سالبة)</small>
+        </div>
       </div>
 
       <!-- وصف البرنامج -->
@@ -236,6 +260,11 @@
           rows="3" 
           placeholder="وصف مختصر عن محتوى البرنامج وأهدافه..."
           class="form-textarea text-right"></textarea>
+      </div>
+
+      <!-- تنبيه خطأ الـ Server إذا فشل الحفظ -->
+      <div *ngIf="programErrorMessage" class="error-msg text-center mb-2">
+        <small>{{ programErrorMessage }}</small>
       </div>
 
       <!-- Footer Buttons -->
@@ -312,7 +341,7 @@
 
           <!-- 2. البرنامج -->
           <td class="nfd-td">
-            {{ batch.trackName || '-' }}
+            {{ getProgramName(batch) }}
           </td>
 
           <!-- 3. الشركة المستضيفة -->
@@ -419,7 +448,7 @@
         </span>
         <h4 class="details-batch-name">{{ selectedBatch?.batchName }}</h4>
         <p class="details-batch-subtext">
-          {{ selectedBatch?.startDate | date:'MMM yyyy' }} · {{ selectedBatch?.trackName || '-' }}
+          {{ selectedBatch?.startDate | date:'MMM yyyy' }} · {{ getProgramName(selectedBatch) }}
         </p>
       </div>
       <div class="details-icon-box">
