@@ -81,7 +81,7 @@ export interface TraineeProfileDto {
   companyName?: string;
   enrollmentId?: number;
   fileUrl?: string;
-  phone?: string;
+ phone?: string;
 }
 
 export interface TraineeDashboardSummaryDto {

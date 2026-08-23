@@ -5,12 +5,20 @@ import { TraineeApi } from '../../services/trainee-api';
 import { TraineeProfileDto } from '../../../../core/models/dtos';
 
 interface TraineeUpdateDto {
+
   email: string;
+
   phone?: string;
+
   skills: string;
+
   resumeUrl?: string;
+
   gitHubUrl?: string;
+
   linkedInUrl?: string;
+
+  academicLevel?: string;
 }
 
 @Component({
@@ -21,11 +29,8 @@ interface TraineeUpdateDto {
 })
 export class TraineeProfile implements OnInit {
 
-  // مهم:
-  // هذا أصبح UserId لأن API التعديل والجلب المستخدم هنا يعتمد على UserId
   userId = 0;
 
-  // نخليه موجود حتى لا يتأثر أي جزء آخر من الصفحة يعتمد عليه
   traineeId = 1;
 
   trainee = signal<any>(null);
@@ -34,35 +39,299 @@ export class TraineeProfile implements OnInit {
 
   avatarUrl = signal<string | null>(null);
 
-  // جديد فقط: حفظ رابط الملف المرفوع مؤقتًا للتحميل
-  cvDownloadUrl = signal<string | null>(null);
+  // =========================================================
+  // Validation signals
+  // =========================================================
+
+  phoneError = signal<string | null>(null);
+
+  gitHubError = signal<string | null>(null);
+
+  linkedInError = signal<string | null>(null);
+
+  // =========================================================
+  // Snapshot for detecting changes
+  // =========================================================
+
+  private originalProfile: any = null;
 
   constructor(private api: TraineeApi) {}
 
   ngOnInit() {
+
     this.getLoggedInUserId();
+
     this.loadTraineeData();
   }
+
+
+  // =========================================================
+  // Validation Methods
+  // =========================================================
+
+  /**
+   * التحقق من صحة رقم الهاتف
+   * يجب أن يبدأ بـ +968 وبعده 8 أرقام فقط
+   */
+  validatePhone(phone: string): void {
+
+    if (!phone || phone.trim() === '') {
+
+      this.phoneError.set(null);
+
+      return;
+
+    }
+
+    const cleanPhone = phone.trim();
+
+    // نمط رقم الهاتف: +968 متبوعاً بـ 8 أرقام فقط
+    const phoneRegex = /^\+968\d{8}$/;
+
+    if (!phoneRegex.test(cleanPhone)) {
+
+      this.phoneError.set('رقم الهاتف يجب أن يبدأ بـ +968 ويتبعه 8 أرقام فقط (مثال: +96812345678)');
+
+    } else {
+
+      this.phoneError.set(null);
+
+    }
+
+  }
+
+
+  validateGitHub(url: string): void {
+
+    if (!url || url.trim() === '') {
+
+      this.gitHubError.set(null);
+
+      return;
+
+    }
+
+    const cleanUrl = url.trim();
+
+    // نمط رابط GitHub صحيح
+    const githubRegex = /^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,38}[a-zA-Z0-9])?$/;
+
+    if (!githubRegex.test(cleanUrl)) {
+
+      this.gitHubError.set('الرجاء إدخال رابط GitHub صحيح (مثال: https://github.com/username)');
+
+    } else {
+
+      // التأكد من وجود https:// في البداية
+      if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+
+        const currentTrainee = this.trainee();
+
+        if (currentTrainee) {
+
+          this.trainee.update((curr) => ({
+
+            ...curr,
+
+            gitHubUrl: 'https://' + cleanUrl
+
+          }));
+
+        }
+
+      }
+
+      this.gitHubError.set(null);
+
+    }
+
+  }
+
+
+  validateLinkedIn(url: string): void {
+
+    if (!url || url.trim() === '') {
+
+      this.linkedInError.set(null);
+
+      return;
+
+    }
+
+    const cleanUrl = url.trim();
+
+    // نمط رابط LinkedIn صحيح
+    const linkedinRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/(in|company|school)\/[a-zA-Z0-9-]+$/;
+
+    if (!linkedinRegex.test(cleanUrl)) {
+
+      this.linkedInError.set('الرجاء إدخال رابط LinkedIn صحيح (مثال: https://www.linkedin.com/in/username)');
+
+    } else {
+
+      // التأكد من وجود https:// في البداية
+      if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+
+        const currentTrainee = this.trainee();
+
+        if (currentTrainee) {
+
+          this.trainee.update((curr) => ({
+
+            ...curr,
+
+            linkedInUrl: 'https://' + cleanUrl
+
+          }));
+
+        }
+
+      }
+
+      this.linkedInError.set(null);
+
+    }
+
+  }
+
+
+  /**
+   * دالة للتحقق من صحة جميع الحقول قبل الحفظ
+   * تعيد true إذا كانت جميع الحقول صحيحة أو فارغة (اختيارية)
+   */
+  private isFormValid(): boolean {
+
+    const t = this.trainee();
+
+    if (!t) return false;
+
+    let hasError = false;
+
+    // التحقق من صحة رقم الهاتف إذا كان موجوداً
+    if (t.phone && t.phone.trim() !== '') {
+
+      this.validatePhone(t.phone);
+
+      if (this.phoneError()) {
+
+        hasError = true;
+
+      }
+
+    } else {
+
+      // إذا كان الهاتف فارغاً، نزيل أي خطأ سابق
+      this.phoneError.set(null);
+
+    }
+
+    // التحقق من صحة رابط GitHub إذا كان موجوداً
+    if (t.gitHubUrl && t.gitHubUrl.trim() !== '') {
+
+      this.validateGitHub(t.gitHubUrl);
+
+      if (this.gitHubError()) {
+
+        hasError = true;
+
+      }
+
+    } else {
+
+      this.gitHubError.set(null);
+
+    }
+
+    // التحقق من صحة رابط LinkedIn إذا كان موجوداً
+    if (t.linkedInUrl && t.linkedInUrl.trim() !== '') {
+
+      this.validateLinkedIn(t.linkedInUrl);
+
+      if (this.linkedInError()) {
+
+        hasError = true;
+
+      }
+
+    } else {
+
+      this.linkedInError.set(null);
+
+    }
+
+    return !hasError;
+
+  }
+
+
+  /**
+   * التحقق من وجود تغييرات في الحقول القابلة للتعديل فقط
+   */
+  private hasEditableChanges(t: any): boolean {
+
+    if (!this.originalProfile) {
+
+      return true;
+
+    }
+
+    const current = {
+
+      phone: t.phone?.toString().trim() || '',
+
+      academicLevel: t.academicLevel?.toString().trim() || '',
+
+      skills: this.getSkillsList(t.skills).join(', '),
+
+      resumeUrl: t.resumeUrl?.toString().trim() || '',
+
+      gitHubUrl: t.gitHubUrl?.toString().trim() || '',
+
+      linkedInUrl: t.linkedInUrl?.toString().trim() || ''
+
+    };
+
+    return (
+
+      current.phone !== (this.originalProfile.phone || '') ||
+
+      current.academicLevel !== (this.originalProfile.academicLevel || '') ||
+
+      current.skills !== (this.originalProfile.skills || '') ||
+
+      current.resumeUrl !== (this.originalProfile.resumeUrl || '') ||
+
+      current.gitHubUrl !== (this.originalProfile.gitHubUrl || '') ||
+
+      current.linkedInUrl !== (this.originalProfile.linkedInUrl || '')
+
+    );
+
+  }
+
 
   // =========================================================
   // Get logged-in UserId
   // =========================================================
 
   private getLoggedInUserId() {
+
     try {
 
-      // -------------------------------------------------------
-      // 1. nafadh_session
-      // -------------------------------------------------------
-
-      const session = localStorage.getItem('nafadh_session');
+      const session =
+        localStorage.getItem('nafadh_session');
 
       if (session) {
+
         try {
-          const parsed = JSON.parse(session);
+
+          const parsed =
+            JSON.parse(session);
 
           if (parsed?.userId) {
-            this.userId = Number(parsed.userId);
+
+            this.userId =
+              Number(parsed.userId);
 
             console.log(
               'Logged UserId from nafadh_session:',
@@ -71,32 +340,43 @@ export class TraineeProfile implements OnInit {
 
             return;
           }
+
         } catch {
-          console.warn('تعذر قراءة nafadh_session');
+
+          console.warn(
+            'تعذر قراءة nafadh_session'
+          );
+
         }
+
       }
 
-      // -------------------------------------------------------
-      // 2. Search other localStorage JSON objects
-      // -------------------------------------------------------
 
-      for (let i = 0; i < localStorage.length; i++) {
+      for (
+        let i = 0;
+        i < localStorage.length;
+        i++
+      ) {
 
-        const key = localStorage.key(i);
+        const key =
+          localStorage.key(i);
 
         if (!key) continue;
 
-        const val = localStorage.getItem(key);
+        const val =
+          localStorage.getItem(key);
 
         if (!val) continue;
 
         try {
 
-          const parsed = JSON.parse(val);
+          const parsed =
+            JSON.parse(val);
 
           if (parsed?.userId) {
 
-            this.userId = Number(parsed.userId);
+            this.userId =
+              Number(parsed.userId);
 
             console.log(
               'Logged UserId from localStorage:',
@@ -107,29 +387,35 @@ export class TraineeProfile implements OnInit {
           }
 
         } catch {
+
           // القيمة ليست JSON
+
         }
+
       }
 
-      // -------------------------------------------------------
-      // 3. Search JWT token
-      // -------------------------------------------------------
 
       const token =
         localStorage.getItem('auth_token') ||
         localStorage.getItem('token') ||
         localStorage.getItem('user_session');
 
-      if (token && token.includes('.')) {
 
-        const payload = JSON.parse(
-          atob(
-            token
-              .split('.')[1]
-              .replace(/-/g, '+')
-              .replace(/_/g, '/')
-          )
-        );
+      if (
+        token &&
+        token.includes('.')
+      ) {
+
+        const payload =
+          JSON.parse(
+            atob(
+              token
+                .split('.')[1]
+                .replace(/-/g, '+')
+                .replace(/_/g, '/')
+            )
+          );
+
 
         const foundUserId =
           payload.userId ||
@@ -138,9 +424,11 @@ export class TraineeProfile implements OnInit {
             'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
           ];
 
+
         if (foundUserId) {
 
-          this.userId = Number(foundUserId);
+          this.userId =
+            Number(foundUserId);
 
           console.log(
             'Logged UserId from JWT:',
@@ -148,8 +436,11 @@ export class TraineeProfile implements OnInit {
           );
 
           return;
+
         }
+
       }
+
 
       console.warn(
         'لم يتم العثور على UserId للمستخدم الحالي'
@@ -161,8 +452,11 @@ export class TraineeProfile implements OnInit {
         'خطأ في قراءة UserId:',
         e
       );
+
     }
+
   }
+
 
   // =========================================================
   // Load trainee
@@ -170,7 +464,10 @@ export class TraineeProfile implements OnInit {
 
   loadTraineeData() {
 
-    if (!this.userId || this.userId <= 0) {
+    if (
+      !this.userId ||
+      this.userId <= 0
+    ) {
 
       console.error(
         'UserId غير صالح:',
@@ -178,62 +475,129 @@ export class TraineeProfile implements OnInit {
       );
 
       return;
+
     }
+
 
     console.log(
       'Loading trainee using UserId:',
       this.userId
     );
 
-    this.api.getTrainee(this.userId).subscribe({
 
-      next: (t) => {
+    this.api
+      .getTrainee(this.userId)
+      .subscribe({
 
-        console.log(
-          'Trainee data received:',
-          t
-        );
+        next: (t) => {
 
-        if (t) {
+          console.log(
+            'Trainee data received:',
+            t
+          );
 
-          this.trainee.set(t);
+          if (t) {
 
-          // نحتفظ بـ TraineeId الحقيقي أيضًا
-          if (t.traineeId) {
-            this.traineeId = Number(t.traineeId);
+            // Phone يأتي مباشرة من NFD_Users.Phone
+            const traineeData: any = {
+              ...t,
+              phone: t.phone ?? ''
+            };
+
+            this.trainee.set(
+              traineeData
+            );
+
+            if (traineeData.traineeId) {
+
+              this.traineeId =
+                Number(
+                  traineeData.traineeId
+                );
+
+            }
+
+            console.log(
+              'TraineeId:',
+              this.traineeId
+            );
+
+            console.log(
+              'UserId:',
+              this.userId
+            );
+
+            console.log(
+              'Phone from Database:',
+              traineeData.phone
+            );
+
+            // إعادة تعيين رسائل الخطأ
+            this.phoneError.set(null);
+            this.gitHubError.set(null);
+            this.linkedInError.set(null);
+
           }
+        },
 
-          console.log(
-            'TraineeId:',
-            this.traineeId
+        error: (err) => {
+
+          console.error(
+            'خطأ في جلب البيانات:',
+            err
           );
 
-          console.log(
-            'UserId:',
-            this.userId
+          console.error(
+            'Status:',
+            err.status
           );
+
+          console.error(
+            'Error:',
+            err.error
+          );
+
         }
-      },
 
-      error: (err) => {
+      });
 
-        console.error(
-          'خطأ في جلب البيانات:',
-          err
-        );
-
-        console.error(
-          'Status:',
-          err.status
-        );
-
-        console.error(
-          'Error:',
-          err.error
-        );
-      }
-    });
   }
+
+
+  // =========================================================
+  // Create snapshot when entering edit mode
+  // =========================================================
+
+  private createProfileSnapshot(t: any) {
+
+    return {
+
+      email:
+        t.email?.toString().trim() || '',
+
+      phone:
+        t.phone?.toString().trim() || '',
+
+      academicLevel:
+        t.academicLevel?.toString().trim() || '',
+
+      skills:
+        this.getSkillsList(
+          t.skills
+        ).join(', '),
+
+      resumeUrl:
+        t.resumeUrl?.toString().trim() || '',
+
+      gitHubUrl:
+        t.gitHubUrl?.toString().trim() || '',
+
+      linkedInUrl:
+        t.linkedInUrl?.toString().trim() || ''
+    };
+
+  }
+
 
   // =========================================================
   // Edit / Save
@@ -241,31 +605,120 @@ export class TraineeProfile implements OnInit {
 
   toggleEdit() {
 
-    // -------------------------------------------------------
-    // Start editing
-    // -------------------------------------------------------
+    // =======================================================
+    // ENTER EDIT MODE
+    // =======================================================
 
     if (!this.editing()) {
+
+      const t =
+        this.trainee();
+
+      if (!t) {
+
+        return;
+
+      }
+
+      // إعادة تعيين رسائل الخطأ
+      this.phoneError.set(null);
+      this.gitHubError.set(null);
+      this.linkedInError.set(null);
+
+      this.originalProfile =
+        this.createProfileSnapshot(t);
+
+      console.log(
+        'Original profile snapshot:',
+        this.originalProfile
+      );
 
       this.editing.set(true);
 
       return;
+
     }
 
-    // -------------------------------------------------------
-    // Save changes
-    // -------------------------------------------------------
 
-    const t = this.trainee();
+    // =======================================================
+    // SAVE
+    // =======================================================
+
+    const t =
+      this.trainee();
 
     if (!t) {
 
       this.editing.set(false);
 
       return;
+
     }
 
-    if (!this.userId || this.userId <= 0) {
+
+    // =======================================================
+    // الخطوة 1: التحقق من صحة الحقول
+    // =======================================================
+
+    if (!this.isFormValid()) {
+
+      console.warn('Form validation failed');
+
+      // جمع رسائل الأخطاء
+      let errorMessages: string[] = [];
+
+      if (this.phoneError()) {
+        errorMessages.push('• ' + this.phoneError());
+      }
+
+      if (this.gitHubError()) {
+        errorMessages.push('• ' + this.gitHubError());
+      }
+
+      if (this.linkedInError()) {
+        errorMessages.push('• ' + this.linkedInError());
+      }
+
+      alert(
+        'يرجى تصحيح الأخطاء التالية قبل الحفظ:\n\n' +
+        errorMessages.join('\n')
+      );
+
+      return;
+
+    }
+
+
+    // =======================================================
+    // الخطوة 2: التحقق من وجود تغييرات
+    // =======================================================
+
+    if (!this.hasEditableChanges(t)) {
+
+      console.log(
+        'No changes detected. Nothing to update.'
+      );
+
+      this.editing.set(false);
+
+      this.originalProfile = null;
+
+      // رسالة للمستخدم
+      alert('لم يتم إجراء أي تغييرات لحفظها.');
+
+      return;
+
+    }
+
+
+    // =======================================================
+    // الخطوة 3: التحقق من وجود UserId
+    // =======================================================
+
+    if (
+      !this.userId ||
+      this.userId <= 0
+    ) {
 
       console.error(
         'لا يمكن الحفظ: UserId غير موجود',
@@ -277,32 +730,45 @@ export class TraineeProfile implements OnInit {
       );
 
       return;
+
     }
 
-    // -------------------------------------------------------
-    // Build ONLY the fields that the backend allows updating
-    // -------------------------------------------------------
 
-    const payload: TraineeUpdateDto = {
+    // =======================================================
+    // الخطوة 4: بناء الـ payload
+    // =======================================================
 
-      email:
-        t.email?.toString().trim() || '',
+    const currentProfile = this.createProfileSnapshot(t);
 
-      phone:
-        t.phone?.toString().trim() || undefined,
-
-      skills:
-        this.getSkillsList(t.skills).join(', '),
-
-      resumeUrl:
-        t.resumeUrl?.toString().trim() || undefined,
-
-      gitHubUrl:
-        t.gitHubUrl?.toString().trim() || undefined,
-
-      linkedInUrl:
-        t.linkedInUrl?.toString().trim() || undefined
+    const payload: any = {
+      email: currentProfile.email
     };
+
+    // إضافة الحقول التي تغيرت فقط (باستثناء الـ email)
+    if (currentProfile.phone !== this.originalProfile?.phone) {
+      payload.phone = currentProfile.phone || undefined;
+    }
+
+    if (currentProfile.academicLevel !== this.originalProfile?.academicLevel) {
+      payload.academicLevel = currentProfile.academicLevel || undefined;
+    }
+
+    if (currentProfile.skills !== this.originalProfile?.skills) {
+      payload.skills = currentProfile.skills;
+    }
+
+    if (currentProfile.resumeUrl !== this.originalProfile?.resumeUrl) {
+      payload.resumeUrl = currentProfile.resumeUrl || undefined;
+    }
+
+    if (currentProfile.gitHubUrl !== this.originalProfile?.gitHubUrl) {
+      payload.gitHubUrl = currentProfile.gitHubUrl || undefined;
+    }
+
+    if (currentProfile.linkedInUrl !== this.originalProfile?.linkedInUrl) {
+      payload.linkedInUrl = currentProfile.linkedInUrl || undefined;
+    }
+
 
     console.log(
       'Saving profile using UserId:',
@@ -310,74 +776,124 @@ export class TraineeProfile implements OnInit {
     );
 
     console.log(
-      'Update payload:',
+      'Update payload (only changed fields):',
       payload
     );
 
-    // -------------------------------------------------------
-    // PUT api/Trainee/traineeByUserID/{userId}
-    // -------------------------------------------------------
 
-    this.api.updateTrainee(
-      this.userId,
-      payload
-    ).subscribe({
+    // =======================================================
+    // الخطوة 5: إرسال الطلب
+    // =======================================================
 
-      next: (updatedTrainee) => {
+    this.api
+      .updateTrainee(
+        this.userId,
+        payload
+      )
+      .subscribe({
 
-        console.log(
-          'تم حفظ التعديلات بنجاح:',
-          updatedTrainee
-        );
+        next: (updatedTrainee) => {
 
-        // إذا الـAPI رجع البيانات المحدثة
-        if (updatedTrainee) {
+          console.log(
+            'تم حفظ التعديلات بنجاح:',
+            updatedTrainee
+          );
 
-          const updated = updatedTrainee as Partial<{
-            traineeId: number | string;
-          }>;
+          if (updatedTrainee) {
 
-          this.trainee.set(updatedTrainee);
+            const updated =
+              updatedTrainee as Partial<{
+                traineeId:
+                  number | string;
 
-          if (updated.traineeId) {
+                phone:
+                  string;
 
-            this.traineeId =
-              Number(updated.traineeId);
+                phoneNumber:
+                  string;
+
+                mobileNumber:
+                  string;
+
+                user?: {
+                  phone?: string;
+                };
+              }>;
+
+
+            const updatedData: any = {
+
+              ...updatedTrainee,
+
+              phone:
+                updated.phone ??
+                updated.phoneNumber ??
+                updated.mobileNumber ??
+                updated.user?.phone ??
+                t.phone ??
+                ''
+
+            };
+
+            this.trainee.set(
+              updatedData
+            );
+
+            if (
+              updatedData.traineeId
+            ) {
+
+              this.traineeId =
+                Number(
+                  updatedData.traineeId
+                );
+
+            }
+
           }
+
+          this.editing.set(false);
+
+          this.originalProfile = null;
+
+          // إعادة تعيين رسائل الخطأ
+          this.phoneError.set(null);
+          this.gitHubError.set(null);
+          this.linkedInError.set(null);
+
+          // إعادة الجلب من Backend للتأكد من أن البيانات محفوظة فعليًا
+          this.loadTraineeData();
+
+        },
+
+        error: (err) => {
+
+          console.error(
+            'فشل حفظ التعديلات:',
+            err
+          );
+
+          console.error(
+            'Status:',
+            err.status
+          );
+
+          console.error(
+            'Backend Error:',
+            err.error
+          );
+
+          alert(
+            err.error?.message ||
+            'حدث خطأ أثناء حفظ التعديلات.'
+          );
+
         }
 
-        // إغلاق وضع التعديل
-        this.editing.set(false);
+      });
 
-        // إعادة الجلب من الـBackend
-        // للتأكد أن البيانات أصبحت محفوظة فعليًا
-        this.loadTraineeData();
-      },
-
-      error: (err) => {
-
-        console.error(
-          'فشل حفظ التعديلات:',
-          err
-        );
-
-        console.error(
-          'Status:',
-          err.status
-        );
-
-        console.error(
-          'Backend Error:',
-          err.error
-        );
-
-        alert(
-          err.error?.message ||
-          'حدث خطأ أثناء حفظ التعديلات.'
-        );
-      }
-    });
   }
+
 
   // =========================================================
   // Avatar
@@ -404,6 +920,7 @@ export class TraineeProfile implements OnInit {
         this.avatarUrl.set(
           reader.result as string
         );
+
       };
 
       reader.readAsDataURL(file);
@@ -412,17 +929,27 @@ export class TraineeProfile implements OnInit {
         (current) => {
 
           if (!current) {
+
             return current;
+
           }
 
           return {
+
             ...current,
-            avatar: file.name
+
+            avatar:
+              file.name
+
           };
+
         }
       );
+
     }
+
   }
+
 
   // =========================================================
   // CV
@@ -441,24 +968,17 @@ export class TraineeProfile implements OnInit {
       const file =
         input.files[0];
 
-      // جديد:
-      // إنشاء رابط مؤقت للملف حتى يمكن تحميله مباشرة
-      // بدون تغيير منطق الرفع القديم
-      const objectUrl =
-        URL.createObjectURL(file);
-
-      this.cvDownloadUrl.set(
-        objectUrl
-      );
-
       this.trainee.update(
         (current) => {
 
           if (!current) {
+
             return current;
+
           }
 
           return {
+
             ...current,
 
             cvFileName:
@@ -466,114 +986,57 @@ export class TraineeProfile implements OnInit {
 
             resumeUrl:
               file.name
+
           };
+
         }
       );
+
     }
+
   }
 
-  // =========================================================
-  // Download CV
-  // =========================================================
-
-  downloadCv() {
-
-    const t = this.trainee();
-
-    if (!t) {
-      return;
-    }
-
-    // -------------------------------------------------------
-    // إذا تم رفع الملف الآن
-    // -------------------------------------------------------
-
-    const localUrl =
-      this.cvDownloadUrl();
-
-    if (localUrl) {
-
-      const link =
-        document.createElement('a');
-
-      link.href =
-        localUrl;
-
-      link.download =
-        t.cvFileName ||
-        'CV.pdf';
-
-      document.body.appendChild(
-        link
-      );
-
-      link.click();
-
-      document.body.removeChild(
-        link
-      );
-
-      return;
-    }
-
-    // -------------------------------------------------------
-    // إذا كان الملف موجودًا من الـ Backend
-    // -------------------------------------------------------
-
-    const resumeUrl =
-      t.resumeUrl;
-
-    if (
-      resumeUrl &&
-      typeof resumeUrl === 'string' &&
-      (
-        resumeUrl.startsWith('http://') ||
-        resumeUrl.startsWith('https://') ||
-        resumeUrl.startsWith('/')
-      )
-    ) {
-
-      window.open(
-        resumeUrl,
-        '_blank'
-      );
-
-      return;
-    }
-
-    alert(
-      'لا يوجد ملف سيرة ذاتية متاح للتحميل.'
-    );
-  }
 
   // =========================================================
   // Skills
   // =========================================================
 
-  getSkillsList(skills: any): string[] {
+  getSkillsList(
+    skills: any
+  ): string[] {
 
     if (!skills) {
+
       return [];
+
     }
 
     if (Array.isArray(skills)) {
+
       return skills;
+
     }
 
-    if (typeof skills === 'string') {
+    if (
+      typeof skills === 'string'
+    ) {
 
       return skills
         .split(',')
         .map(
-          (s) => s.trim()
+          (s) =>
+            s.trim()
         )
         .filter(
           Boolean
         );
+
     }
 
     return [];
+
   }
+
 
   // =========================================================
   // Add skill
@@ -590,7 +1053,9 @@ export class TraineeProfile implements OnInit {
       !newSkill ||
       !newSkill.trim()
     ) {
+
       return;
+
     }
 
     const skill =
@@ -600,7 +1065,9 @@ export class TraineeProfile implements OnInit {
       (current) => {
 
         if (!current) {
+
           return current;
+
         }
 
         const skillsArr =
@@ -608,7 +1075,6 @@ export class TraineeProfile implements OnInit {
             current.skills
           );
 
-        // منع تكرار المهارة
         const exists =
           skillsArr.some(
             (item) =>
@@ -623,9 +1089,11 @@ export class TraineeProfile implements OnInit {
           );
 
           return current;
+
         }
 
         return {
+
           ...current,
 
           skills:
@@ -633,22 +1101,30 @@ export class TraineeProfile implements OnInit {
               ...skillsArr,
               skill
             ].join(', ')
+
         };
+
       }
     );
+
   }
+
 
   // =========================================================
   // Remove skill
   // =========================================================
 
-  removeSkill(index: number) {
+  removeSkill(
+    index: number
+  ) {
 
     this.trainee.update(
       (current) => {
 
         if (!current) {
+
           return current;
+
         }
 
         const skillsArr =
@@ -662,36 +1138,17 @@ export class TraineeProfile implements OnInit {
         );
 
         return {
+
           ...current,
 
           skills:
             skillsArr.join(', ')
+
         };
+
       }
     );
+
   }
-getCvDownloadUrl(resumeUrl: string): string {
-  if (!resumeUrl) {
-    return '';
-  }
-
-  // إذا كان Backend يرجع رابط كامل
-  if (
-    resumeUrl.startsWith('http://') ||
-    resumeUrl.startsWith('https://')
-  ) {
-    return resumeUrl;
-  }
-
-  // إذا كان يرجع مسار مثل /uploads/cv/file.pdf
-  if (resumeUrl.startsWith('/')) {
-    return `${window.location.origin}${resumeUrl}`;
-  }
-
-  // إذا كان يرجع اسم/مسار نسبي
-  return `${window.location.origin}/${resumeUrl}`;
-}
-
-
 
 }
