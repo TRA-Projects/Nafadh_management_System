@@ -1,222 +1,695 @@
 <div class="account-page" dir="rtl" id="account-pdf-content">
-  <!-- Page Header Title Bar -->
-   
-<!-- Page Header Title Bar -->
+
+  <!-- =========================================================
+       Page Header
+       ========================================================= -->
   <header class="page-top-header">
     <div class="header-content">
-      <!-- الأيقونة في أقصى اليمين -->
+
       <div class="header-icon-box">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2">
+          <path
+            d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2">
+          </path>
+          <circle
+            cx="12"
+            cy="7"
+            r="4">
+          </circle>
         </svg>
       </div>
 
-      <!-- النص يليه في اليسار -->
       <div class="header-text">
         <h2>الملف الشخصي</h2>
-        <p>إدارة البيانات الشخصية والصلاحيات وسجل النشاطات للمستخدم</p>
+        <p>
+          إدارة البيانات الشخصية والصلاحيات وسجل النشاطات للمستخدم
+        </p>
       </div>
+
     </div>
   </header>
 
-  <!-- Banner Top Bar -->
+
+  <!-- =========================================================
+       Banner
+       ========================================================= -->
   <div class="profile-banner">
     <div class="banner-gradient"></div>
+
     <div class="banner-actions">
-      <button type="button" (click)="exportToPdf()" class="btn btn-glass-primary">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      <button
+        type="button"
+        (click)="exportToPdf()"
+        class="btn btn-glass-primary">
+
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2">
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4">
+          </path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line
+            x1="12"
+            y1="15"
+            x2="12"
+            y2="3">
+          </line>
+        </svg>
+
         تصدير PDF
       </button>
     </div>
+  </div>
+
+
+  <!-- =========================================================
+       Loading State
+       ========================================================= -->
+  <div
+    class="account-state"
+    *ngIf="loading()">
+
+    جارٍ تحميل بيانات الحساب...
 
   </div>
 
-  <!-- Main Grid Layout -->
-  <div class="main-dashboard-grid">
-    <!-- Left Sidebar Profile Card -->
-    <aside class="profile-sidebar">
-      <div class="avatar-box">
-        <div class="avatar-circle">
-          {{ (profile()?.fullName || auth.session()?.fullName || 'م').charAt(0) }}
-        </div>
-        <span class="online-status"></span>
-      </div>
 
-      <div class="sidebar-user-info">
-        <h3 class="user-name">
-          {{ profile()?.fullName || auth.session()?.fullName || 'محمد الحبسي' }}
-          <svg class="verified-icon" width="18" height="18" viewBox="0 0 24 24" fill="#2563eb"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-        </h3>
-        <p class="user-role">{{ profile()?.position || 'مسؤول التدريب والتطوير' }}</p>
-        <span class="company-badge">{{ profile()?.companyName || 'شركة أفق التقنية' }}</span>
-      </div>
+  <!-- =========================================================
+       Error State
+       ========================================================= -->
+  <div
+    class="account-state error"
+    *ngIf="!loading() && loadError()">
 
-      <div class="sidebar-actions">
-        <!-- الرقم الوظيفي -->
-        <div class="badge-box badge-blue">
-          الرقم الوظيفي: EMP-{{ profile()?.supervisorId || profile()?.id || '2024-2' }}
-        </div>
-        
-        <!-- حالة الحساب -->
-        <div class="badge-box badge-green">
-          • {{ profile()?.status === 'Active' || !profile()?.status ? 'نشط' : 'غير نشط' }}
-        </div>
-      </div>
+    <span>
+      تعذر تحميل بيانات الحساب من الخادم.
+    </span>
 
-      <div class="sidebar-divider"></div>
+    <button
+      type="button"
+      class="btn btn-outline"
+      (click)="loadAccount()">
 
-      <div class="expert-tags">
-        <span class="tag-title">الصلاحيات الرئيسية</span>
-        <ng-container *ngIf="profile()?.permissions?.length; else defaultTags">
-          <div class="tag-chip" *ngFor="let perm of profile()?.permissions">
-            {{ perm?.name || perm }}
-          </div>
-        </ng-container>
-        <ng-template #defaultTags>
-          <div class="tag-chip">مسؤول تواصل مع الهيئة</div>
-          <div class="tag-chip">إدارة المتدربين والتقارير</div>
-        </ng-template>
-      </div>
-    </aside>
+      إعادة المحاولة
 
-    <!-- Right Content Area -->
-    <main class="content-area">
-      <!-- Navigation Tabs -->
-      <nav class="nav-tabs">
-        <button 
-          class="tab-item" 
-          [class.active]="activeTab() === 'info'" 
-          (click)="setActiveTab('info')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          البيانات الشخصية
-        </button>
-        <button 
-          class="tab-item" 
-          [class.active]="activeTab() === 'permissions'" 
-          (click)="setActiveTab('permissions')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-          الصلاحيات الممنوحة
-        </button>
-        <button 
-          class="tab-item" 
-          [class.active]="activeTab() === 'activities'" 
-          (click)="setActiveTab('activities')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-          سجل النشاطات
-        </button>
-      </nav>
+    </button>
 
-      <!-- Dynamic Tab Content Body -->
-      <div class="dashboard-body">
-
-        <!-- TAB 1: Personal Info -->
-        <section class="card-box full-width" *ngIf="activeTab() === 'info'">
-          <div class="card-title-bar">
-            <h4>البيانات الشخصية</h4>
-          </div>
-
-          <div class="info-grid">
-            <div class="info-cell">
-              <label>الاسم الكامل</label>
-              <span class="val">{{ profile()?.fullName || auth.session()?.fullName || 'محمد الحبسي' }}</span>
-            </div>
-            <div class="info-cell">
-              <label>البريد الإلكتروني</label>
-              <span class="val ltr">{{ profile()?.email || auth.session()?.email || 'sup65.c1@nafadh.test' }}</span>
-            </div>
-            <div class="info-cell">
-              <label>رقم الجوال</label>
-              <span class="val ltr">{{ profile()?.phone || '+968 92000065' }}</span>
-            </div>
-            <div class="info-cell">
-              <label>المسمى الوظيفي</label>
-              <span class="val">{{ profile()?.position || 'مسؤول التدريب والتطوير' }}</span>
-            </div>
-            <div class="info-cell">
-              <label>الجهة / الشركة</label>
-              <span class="val">{{ profile()?.companyName || 'شركة أفق التقنية' }}</span>
-            </div>
-            <div class="info-cell">
-              <label>آخر تسجيل دخول</label>
-              <span class="val">اليوم — 09:42 ص</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- TAB 2: Permissions -->
-        <section class="card-box full-width" *ngIf="activeTab() === 'permissions'">
-          <div class="card-title-bar">
-            <h4>الصلاحيات الممنوحة</h4>
-            <span class="badge-count">{{ profile()?.permissions?.length || 3 }} مفعّلة</span>
-          </div>
-
-          <div class="mini-perm-list">
-            <div class="perm-card">
-              <div class="perm-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-              </div>
-              <div>
-                <strong>إدارة المتدربين</strong>
-                <p>عرض ومتابعة التقارير والبيانات الخاصة بالمتدربين</p>
-              </div>
-            </div>
-
-            <div class="perm-card">
-              <div class="perm-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-              </div>
-              <div>
-                <strong>إدارة التقارير</strong>
-                <p>اصدار وتقييم الأداء الدوري والتنفيذي</p>
-              </div>
-            </div>
-
-            <div class="perm-card">
-              <div class="perm-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-              </div>
-              <div>
-                <strong>التواصل مع الهيئة</strong>
-                <p>إرسال المراسلات الرسمية واستقبال الردود</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- TAB 3: Activities -->
-        <section class="card-box full-width" *ngIf="activeTab() === 'activities'">
-          <div class="card-title-bar">
-            <h4>سجل النشاطات</h4>
-          </div>
-
-          <ul class="timeline-list">
-            <li>
-              <span class="dot"></span>
-              <div class="t-info">
-                <strong>تحديث بيانات متدرب</strong>
-                <small>طارق الرواحي — منذ ساعتين</small>
-              </div>
-            </li>
-            <li>
-              <span class="dot"></span>
-              <div class="t-info">
-                <strong>إرسال رسالة للهيئة</strong>
-                <small>استفسار عن اعتماد برنامج — أمس</small>
-              </div>
-            </li>
-            <li>
-              <span class="dot"></span>
-              <div class="t-info">
-                <strong>تصدير تقرير الحضور</strong>
-                <small>الأسبوع 32 — قبل 3 أيام</small>
-              </div>
-            </li>
-          </ul>
-        </section>
-
-      </div>
-    </main>
   </div>
+
+
+  <!-- =========================================================
+       Real Account Data
+       ========================================================= -->
+  <ng-container
+    *ngIf="!loading() && !loadError() && profile() as account">
+
+    <div class="main-dashboard-grid">
+
+
+      <!-- =======================================================
+           Profile Sidebar
+           ======================================================= -->
+      <aside class="profile-sidebar">
+
+        <div class="avatar-box">
+
+          <div class="avatar-circle">
+            {{ account.fullName.charAt(0) || 'م' }}
+          </div>
+
+          <span class="online-status"></span>
+
+        </div>
+
+
+        <div class="sidebar-user-info">
+
+          <h3 class="user-name">
+
+            {{ account.fullName || 'غير متوفر' }}
+
+            <svg
+              class="verified-icon"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="#2563eb">
+
+              <path
+                d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z">
+              </path>
+
+            </svg>
+
+          </h3>
+
+
+          <p class="user-role">
+            {{ account.position || 'غير محدد' }}
+          </p>
+
+
+          <span class="company-badge">
+            {{ account.companyName || 'غير محدد' }}
+          </span>
+
+        </div>
+
+
+        <!-- =====================================================
+             Account Summary
+             ===================================================== -->
+        <div class="sidebar-actions">
+
+          <div class="badge-box badge-blue">
+            رقم المشرف:
+            {{ account.supervisorId }}
+          </div>
+
+
+          <div class="badge-box badge-green">
+            •
+            {{
+              account.userStatus === 'Active'
+                ? 'نشط'
+                : account.userStatus || 'غير محدد'
+            }}
+          </div>
+
+        </div>
+
+
+        <div class="sidebar-divider"></div>
+
+
+        <!-- =====================================================
+             Main Permissions
+             ===================================================== -->
+        <div class="expert-tags">
+
+          <span class="tag-title">
+            الصلاحيات الرئيسية
+          </span>
+
+
+          <ng-container
+            *ngIf="account.permissions.length > 0; else noSidebarPermissions">
+
+            <div
+              class="tag-chip"
+              *ngFor="let perm of account.permissions">
+
+              {{ perm.permissionKey }}
+
+            </div>
+
+          </ng-container>
+
+
+          <ng-template #noSidebarPermissions>
+
+            <div class="tag-chip">
+              لا توجد صلاحيات مسجلة
+            </div>
+
+          </ng-template>
+
+        </div>
+
+      </aside>
+
+
+      <!-- =======================================================
+           Main Content
+           ======================================================= -->
+      <main class="content-area">
+
+
+        <!-- =====================================================
+             Navigation Tabs
+             ===================================================== -->
+        <nav class="nav-tabs">
+
+
+          <!-- Personal Information -->
+          <button
+            type="button"
+            class="tab-item"
+            [class.active]="activeTab() === 'info'"
+            (click)="setActiveTab('info')">
+
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2">
+
+              <path
+                d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2">
+              </path>
+
+              <circle
+                cx="12"
+                cy="7"
+                r="4">
+              </circle>
+
+            </svg>
+
+            البيانات الشخصية
+
+          </button>
+
+
+          <!-- Permissions -->
+          <button
+            type="button"
+            class="tab-item"
+            [class.active]="activeTab() === 'permissions'"
+            (click)="setActiveTab('permissions')">
+
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2">
+
+              <path
+                d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z">
+              </path>
+
+            </svg>
+
+            الصلاحيات الممنوحة
+
+          </button>
+
+
+          <!-- Activities -->
+          <button
+            type="button"
+            class="tab-item"
+            [class.active]="activeTab() === 'activities'"
+            (click)="setActiveTab('activities')">
+
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2">
+
+              <polyline
+                points="22 12 18 12 15 21 9 3 6 12 2 12">
+              </polyline>
+
+            </svg>
+
+            سجل النشاطات
+
+          </button>
+
+        </nav>
+
+
+        <!-- =====================================================
+             Dashboard Body
+             ===================================================== -->
+        <div class="dashboard-body">
+
+
+          <!-- ===================================================
+               TAB 1 — Personal Information
+               =================================================== -->
+          <section
+            class="card-box full-width"
+            *ngIf="activeTab() === 'info'">
+
+            <div class="card-title-bar">
+              <h4>
+                البيانات الشخصية
+              </h4>
+            </div>
+
+
+            <div class="info-grid">
+
+
+              <div class="info-cell">
+
+                <label>
+                  الاسم الكامل
+                </label>
+
+                <span class="val">
+                  {{ account.fullName || 'غير متوفر' }}
+                </span>
+
+              </div>
+
+
+              <div class="info-cell">
+
+                <label>
+                  البريد الإلكتروني
+                </label>
+
+                <span class="val ltr">
+                  {{ account.email || 'غير متوفر' }}
+                </span>
+
+              </div>
+
+
+              <div class="info-cell">
+
+                <label>
+                  رقم الجوال
+                </label>
+
+                <span class="val ltr">
+                  {{ account.phone || 'غير متوفر' }}
+                </span>
+
+              </div>
+
+
+              <div class="info-cell">
+
+                <label>
+                  المسمى الوظيفي
+                </label>
+
+                <span class="val">
+                  {{ account.position || 'غير محدد' }}
+                </span>
+
+              </div>
+
+
+              <div class="info-cell">
+
+                <label>
+                  القسم
+                </label>
+
+                <span class="val">
+                  {{ account.department || 'غير محدد' }}
+                </span>
+
+              </div>
+
+
+              <div class="info-cell">
+
+                <label>
+                  الجهة / الشركة
+                </label>
+
+                <span class="val">
+                  {{ account.companyName || 'غير محدد' }}
+                </span>
+
+              </div>
+
+
+              <div class="info-cell">
+
+                <label>
+                  الدور الوظيفي
+                </label>
+
+                <span class="val">
+                  {{ account.roleName || 'غير محدد' }}
+                </span>
+
+              </div>
+
+
+              <div class="info-cell">
+
+                <label>
+                  حالة الحساب
+                </label>
+
+                <span class="val">
+                  {{ account.userStatus || 'غير محدد' }}
+                </span>
+
+              </div>
+
+
+              <div class="info-cell">
+
+                <label>
+                  حالة المشرف
+                </label>
+
+                <span class="val">
+                  {{ account.supervisorStatus || 'غير محدد' }}
+                </span>
+
+              </div>
+
+
+              <div class="info-cell">
+
+                <label>
+                  حالة الشركة
+                </label>
+
+                <span class="val">
+                  {{ account.companyStatus || 'غير محدد' }}
+                </span>
+
+              </div>
+
+
+              <div class="info-cell">
+
+                <label>
+                  تاريخ إنشاء الحساب
+                </label>
+
+                <span class="val">
+                  {{
+                    account.createdAt
+                      ? (account.createdAt | date:'yyyy-MM-dd HH:mm')
+                      : 'غير متوفر'
+                  }}
+                </span>
+
+              </div>
+
+
+              <div class="info-cell">
+
+                <label>
+                  آخر نشاط مسجل
+                </label>
+
+                <span class="val">
+                  {{
+                    account.lastActivityAt
+                      ? (account.lastActivityAt | date:'yyyy-MM-dd HH:mm')
+                      : 'غير متوفر'
+                  }}
+                </span>
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+          <!-- ===================================================
+               TAB 2 — Permissions
+               =================================================== -->
+          <section
+            class="card-box full-width"
+            *ngIf="activeTab() === 'permissions'">
+
+            <div class="card-title-bar">
+
+              <h4>
+                الصلاحيات الممنوحة
+              </h4>
+
+              <span class="badge-count">
+                {{ account.permissions.length }}
+                مفعّلة
+              </span>
+
+            </div>
+
+
+            <div class="mini-perm-list">
+
+              <ng-container
+                *ngIf="account.permissions.length > 0; else noPermissions">
+
+                <div
+                  class="perm-card"
+                  *ngFor="let perm of account.permissions">
+
+                  <div class="perm-icon">
+
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2">
+
+                      <path
+                        d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z">
+                      </path>
+
+                    </svg>
+
+                  </div>
+
+
+                  <div>
+
+                    <strong>
+                      {{ perm.permissionKey }}
+                    </strong>
+
+                    <p>
+                      {{
+                        perm.description ||
+                        'لا يوجد وصف للصلاحية'
+                      }}
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </ng-container>
+
+
+              <ng-template #noPermissions>
+
+                <div class="empty-state">
+                  لا توجد صلاحيات مسجلة لهذا الحساب.
+                </div>
+
+              </ng-template>
+
+            </div>
+
+          </section>
+
+
+          <!-- ===================================================
+               TAB 3 — Activities
+               =================================================== -->
+          <section
+            class="card-box full-width"
+            *ngIf="activeTab() === 'activities'">
+
+            <div class="card-title-bar">
+
+              <h4>
+                سجل النشاطات
+              </h4>
+
+            </div>
+
+
+            <ng-container
+              *ngIf="account.recentActivities.length > 0; else noActivities">
+
+              <ul class="timeline-list">
+
+                <li
+                  *ngFor="let activity of account.recentActivities">
+
+                  <span class="dot"></span>
+
+
+                  <div class="t-info">
+
+                    <strong>
+                      {{ activity.action }}
+                    </strong>
+
+
+                    <small>
+
+                      {{ activity.entityName }}
+
+                      <ng-container
+                        *ngIf="activity.entityId">
+
+                        — رقم:
+                        {{ activity.entityId }}
+
+                      </ng-container>
+
+
+                      <ng-container
+                        *ngIf="activity.details">
+
+                        —
+                        {{ activity.details }}
+
+                      </ng-container>
+
+
+                      —
+                      {{
+                        activity.timestamp
+                          | date:'yyyy-MM-dd HH:mm'
+                      }}
+
+                    </small>
+
+                  </div>
+
+                </li>
+
+              </ul>
+
+            </ng-container>
+
+
+            <ng-template #noActivities>
+
+              <div class="empty-state">
+                لا توجد نشاطات مسجلة لهذا الحساب.
+              </div>
+
+            </ng-template>
+
+          </section>
+
+        </div>
+
+      </main>
+
+    </div>
+
+  </ng-container>
 
 </div>
