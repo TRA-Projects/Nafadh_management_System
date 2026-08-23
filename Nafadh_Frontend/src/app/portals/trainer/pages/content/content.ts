@@ -1,3 +1,5 @@
+
+
 import {
   Component,
   OnInit,
@@ -2104,27 +2106,25 @@ confirmDeleteMaterial(): void {
     fileType: TrainingMaterialDto['fileType']
   ): string {
 
-    switch (
-      fileType
-    ) {
+    switch (fileType) {
 
       case 'Pdf':
-        return '📕';
+        return 'fa-solid fa-file-pdf';
 
       case 'Video':
-        return '🎬';
+        return 'fa-solid fa-file-video';
 
       case 'Image':
-        return '🖼️';
+        return 'fa-solid fa-file-image';
 
       case 'Document':
-        return '📄';
+        return 'fa-solid fa-file-lines';
 
       case 'Link':
-        return '🔗';
+        return 'fa-solid fa-link';
 
       default:
-        return '📎';
+        return 'fa-solid fa-paperclip';
 
     }
 
