@@ -642,11 +642,14 @@ updateCriterion(
     weight: number;
     maxPoints: number;
   }
-): Observable<void> {
+): Observable<string> {
 
-  return this.http.put<void>(
+  return this.http.put(
     `${this.base}/EvaluationCriterion/UpdateCriterion/${criteriaId}`,
-    dto
+    dto,
+    {
+      responseType: 'text'
+    }
   );
 
 }
@@ -658,10 +661,13 @@ updateCriterion(
 
 deleteCriterion(
   criteriaId: number
-): Observable<void> {
+): Observable<string> {
 
-  return this.http.delete<void>(
-    `${this.base}/EvaluationCriterion/DeleteCriterion/${criteriaId}`
+  return this.http.delete(
+    `${this.base}/EvaluationCriterion/DeleteCriterion/${criteriaId}`,
+    {
+      responseType: 'text'
+    }
   );
 
 }
