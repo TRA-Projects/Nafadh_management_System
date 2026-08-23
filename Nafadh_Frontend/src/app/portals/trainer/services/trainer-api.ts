@@ -456,7 +456,22 @@ deleteTrainingMaterial(
     );
   }
 
+// =====================================================
+// GET REAL SUBMISSION FILE
+// =====================================================
 
+getSubmissionFile(
+  submissionId: number
+): Observable<Blob> {
+
+  return this.http.get(
+    `${this.base}/Submission/${submissionId}/file`,
+    {
+      responseType: 'blob'
+    }
+  );
+
+}
 
   // =====================================================
   // Trainee Evaluation

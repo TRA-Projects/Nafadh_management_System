@@ -1070,63 +1070,31 @@ openSubmissionFile(
   );
 
 
-  const fileUrl =
-    submission.fileUrl?.trim();
-
-
-  if (!fileUrl) {
-
-    this.submissionsModalError.set(
-      'لا يوجد ملف مرفق لهذا التسليم.'
-    );
-
-    return;
-  }
-
-
-  // Old test submissions may contain
-  // a fake Nafadh Drive URL.
   if (
-    fileUrl.includes(
-      'drive.nafadh.test'
-    )
+    !submission.submissionId
   ) {
 
     this.submissionsModalError.set(
-      'ملف هذا التسليم غير متوفر لأن الرابط المسجل تجريبي.'
+      'تعذر تحديد ملف التسليم.'
     );
 
     return;
   }
 
 
-  // Only allow valid web links.
-  if (
-    !fileUrl.startsWith(
-      'http://'
-    ) &&
-    !fileUrl.startsWith(
-      'https://'
-    )
-  ) {
-
-    this.submissionsModalError.set(
-      'رابط ملف التسليم غير صالح.'
-    );
-
-    return;
-  }
-
-
-  const submissionWindow =
+  /*
+   * Open a blank tab immediately from the user's click.
+   * This prevents the browser from blocking the new tab
+   * while the real file is being loaded from the backend.
+   */
+  const previewWindow =
     window.open(
-      fileUrl,
-      '_blank',
-      'noopener,noreferrer'
+      '',
+      '_blank'
     );
 
 
-  if (!submissionWindow) {
+  if (!previewWindow) {
 
     this.submissionsModalError.set(
       'تعذر فتح ملف التسليم. تأكدي من السماح بالنوافذ المنبثقة.'
@@ -1136,11 +1104,94 @@ openSubmissionFile(
   }
 
 
-  submissionWindow.opener =
+  previewWindow.opener =
     null;
 
-}
 
+  this.api
+    .getSubmissionFile(
+      submission.submissionId
+    )
+    .subscribe({
+
+      next: (blob) => {
+
+        if (
+          !blob ||
+          blob.size === 0
+        ) {
+
+          previewWindow.close();
+
+
+          this.submissionsModalError.set(
+            'ملف التسليم فارغ أو غير متوفر.'
+          );
+
+          return;
+        }
+
+
+        const objectUrl =
+          window.URL.createObjectURL(
+            blob
+          );
+
+
+        previewWindow.location.href =
+          objectUrl;
+
+
+        /*
+         * Keep the Blob URL alive long enough
+         * for the browser to load the document.
+         */
+        window.setTimeout(
+          () => {
+
+            window.URL.revokeObjectURL(
+              objectUrl
+            );
+
+          },
+          60000
+        );
+
+      },
+
+
+      error: (error) => {
+
+        console.error(
+          'Error opening submission file:',
+          error
+        );
+
+
+        previewWindow.close();
+
+
+        if (
+          error?.status === 404
+        ) {
+
+          this.submissionsModalError.set(
+            'ملف هذا التسليم غير متوفر. قد يكون التسليم قديمًا أو يحتوي على رابط تجريبي.'
+          );
+
+          return;
+        }
+
+
+        this.submissionsModalError.set(
+          'تعذر تحميل ملف التسليم.'
+        );
+
+      }
+
+    });
+
+}
   // =====================================================
   // FILTER
   // =====================================================
