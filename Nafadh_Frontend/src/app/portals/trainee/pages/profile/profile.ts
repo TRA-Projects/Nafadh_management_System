@@ -1,156 +1,3 @@
-// import { Component, OnInit, signal } from '@angular/core';
-// import { CommonModule } from '@angular/common';
-// import { FormsModule } from '@angular/forms';
-// import { TraineeApi } from '../../services/trainee-api';
-
-// @Component({
-//   selector: 'app-trainee-profile',
-//   standalone: true,
-//   imports: [CommonModule, FormsModule],
-//   templateUrl: './profile.html',
-// })
-// export class TraineeProfile implements OnInit {
-//   traineeId = 1;
-//   trainee = signal<any>(null);
-//   editing = signal(false);
-
-//   avatarUrl = signal<string | null>(null);
-
-//   constructor(private api: TraineeApi) {}
-
-//   ngOnInit() {
-//     this.getLoggedInUserId();
-//     this.loadTraineeData();
-//   }
-
-//   private getLoggedInUserId() {
-//     try {
-//       // 1. البحث في كل المفاتيح المحتملة للـ Storage
-//       for (let i = 0; i < localStorage.length; i++) {
-//         const key = localStorage.key(i);
-//         if (key) {
-//           const val = localStorage.getItem(key);
-//           if (val && val.startsWith('{')) {
-//             const parsed = JSON.parse(val);
-//             const foundId = parsed.traineeId || parsed.userId || parsed.id;
-//             if (foundId) {
-//               this.traineeId = Number(foundId);
-//               return;
-//             }
-//           }
-//         }
-//       }
-
-//       // 2. البحث في التوكن إن وجد
-//       const token = localStorage.getItem('auth_token') || localStorage.getItem('token') || localStorage.getItem('user_session');
-//       if (token && token.includes('.')) {
-//         const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-//         const id = payload.traineeId || payload.userId || payload.nameid || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
-//         if (id) {
-//           this.traineeId = Number(id);
-//         }
-//       }
-//     } catch (e) {
-//       console.warn('تنبيه قراءة التوكن:', e);
-//     }
-//   }
-
-//   loadTraineeData() {
-//     this.api.getTrainee(this.traineeId).subscribe({
-//       next: (t) => {
-//         if (t) {
-//           this.trainee.set(t);
-//         }
-//       },
-//       error: (err) => {
-//         console.error('خطأ في جلب البيانات:', err);
-//         // في حال فشل السيرفر، يتم المحاولة بالـ ID الثاني
-//         if (this.traineeId !== 2) {
-//           this.traineeId = 2;
-//           this.loadTraineeData();
-//         }
-//       }
-//     });
-//   }
-
-//   toggleEdit() {
-//     if (this.editing()) {
-//       const t = this.trainee();
-//       if (t) {
-//         const payload = {
-//           ...t,
-//           nationalId: Number(t.nationalId) || 0,
-//         };
-
-//         const targetId = t.traineeId || t.id || this.traineeId;
-
-//         this.api.updateTrainee(targetId, payload).subscribe({
-//           next: () => {
-//             this.editing.set(false);
-//             this.loadTraineeData();
-//           },
-//           error: (err) => {
-//             console.error('فشل التحديث:', err);
-//             this.editing.set(false);
-//           }
-//         });
-//       } else {
-//         this.editing.set(false);
-//       }
-//     } else {
-//       this.editing.set(true);
-//     }
-//   }
-
-//   onAvatarUpload(event: Event) {
-//     const input = event.target as HTMLInputElement;
-//     if (input.files && input.files.length > 0) {
-//       const file = input.files[0];
-//       const reader = new FileReader();
-//       reader.onload = () => this.avatarUrl.set(reader.result as string);
-//       reader.readAsDataURL(file);
-
-//       this.trainee.update((current) => ({ ...current, avatar: file.name }));
-//     }
-//   }
-
-//   onCvUpload(event: Event) {
-//     const input = event.target as HTMLInputElement;
-//     if (input.files && input.files.length > 0) {
-//       const file = input.files[0];
-//       this.trainee.update((current) => ({ ...current, cvFileName: file.name, resumeUrl: file.name }));
-//     }
-//   }
-
-//   getSkillsList(skills: any): string[] {
-//     if (!skills) return ['Python', 'Machine Learning', 'React', 'SQL'];
-//     if (Array.isArray(skills)) return skills;
-//     if (typeof skills === 'string') return skills.split(',').map((s) => s.trim()).filter(Boolean);
-//     return [];
-//   }
-
-//   addSkill() {
-//     const newSkill = prompt('أدخل اسم المهارة الجديدة:');
-//     if (!newSkill || !newSkill.trim()) return;
-
-//     this.trainee.update((current) => {
-//       if (!current) return current;
-//       const skillsArr = this.getSkillsList(current.skills);
-//       skillsArr.push(newSkill.trim());
-//       return { ...current, skills: skillsArr.join(', ') };
-//     });
-//   }
-
-//   removeSkill(index: number) {
-//     this.trainee.update((current) => {
-//       if (!current) return current;
-//       const skillsArr = this.getSkillsList(current.skills);
-//       skillsArr.splice(index, 1);
-//       return { ...current, skills: skillsArr.join(', ') };
-//     });
-//   }
-// }
-//==========================================
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -186,6 +33,9 @@ export class TraineeProfile implements OnInit {
   editing = signal(false);
 
   avatarUrl = signal<string | null>(null);
+
+  // جديد فقط: حفظ رابط الملف المرفوع مؤقتًا للتحميل
+  cvDownloadUrl = signal<string | null>(null);
 
   constructor(private api: TraineeApi) {}
 
@@ -490,6 +340,7 @@ export class TraineeProfile implements OnInit {
           this.trainee.set(updatedTrainee);
 
           if (updated.traineeId) {
+
             this.traineeId =
               Number(updated.traineeId);
           }
@@ -590,6 +441,16 @@ export class TraineeProfile implements OnInit {
       const file =
         input.files[0];
 
+      // جديد:
+      // إنشاء رابط مؤقت للملف حتى يمكن تحميله مباشرة
+      // بدون تغيير منطق الرفع القديم
+      const objectUrl =
+        URL.createObjectURL(file);
+
+      this.cvDownloadUrl.set(
+        objectUrl
+      );
+
       this.trainee.update(
         (current) => {
 
@@ -609,6 +470,80 @@ export class TraineeProfile implements OnInit {
         }
       );
     }
+  }
+
+  // =========================================================
+  // Download CV
+  // =========================================================
+
+  downloadCv() {
+
+    const t = this.trainee();
+
+    if (!t) {
+      return;
+    }
+
+    // -------------------------------------------------------
+    // إذا تم رفع الملف الآن
+    // -------------------------------------------------------
+
+    const localUrl =
+      this.cvDownloadUrl();
+
+    if (localUrl) {
+
+      const link =
+        document.createElement('a');
+
+      link.href =
+        localUrl;
+
+      link.download =
+        t.cvFileName ||
+        'CV.pdf';
+
+      document.body.appendChild(
+        link
+      );
+
+      link.click();
+
+      document.body.removeChild(
+        link
+      );
+
+      return;
+    }
+
+    // -------------------------------------------------------
+    // إذا كان الملف موجودًا من الـ Backend
+    // -------------------------------------------------------
+
+    const resumeUrl =
+      t.resumeUrl;
+
+    if (
+      resumeUrl &&
+      typeof resumeUrl === 'string' &&
+      (
+        resumeUrl.startsWith('http://') ||
+        resumeUrl.startsWith('https://') ||
+        resumeUrl.startsWith('/')
+      )
+    ) {
+
+      window.open(
+        resumeUrl,
+        '_blank'
+      );
+
+      return;
+    }
+
+    alert(
+      'لا يوجد ملف سيرة ذاتية متاح للتحميل.'
+    );
   }
 
   // =========================================================
@@ -735,4 +670,28 @@ export class TraineeProfile implements OnInit {
       }
     );
   }
+getCvDownloadUrl(resumeUrl: string): string {
+  if (!resumeUrl) {
+    return '';
+  }
+
+  // إذا كان Backend يرجع رابط كامل
+  if (
+    resumeUrl.startsWith('http://') ||
+    resumeUrl.startsWith('https://')
+  ) {
+    return resumeUrl;
+  }
+
+  // إذا كان يرجع مسار مثل /uploads/cv/file.pdf
+  if (resumeUrl.startsWith('/')) {
+    return `${window.location.origin}${resumeUrl}`;
+  }
+
+  // إذا كان يرجع اسم/مسار نسبي
+  return `${window.location.origin}/${resumeUrl}`;
+}
+
+
+
 }
