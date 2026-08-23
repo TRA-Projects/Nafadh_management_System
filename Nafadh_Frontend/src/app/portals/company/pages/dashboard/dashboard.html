@@ -1,256 +1,270 @@
-<div class="dashboard-page">
+<div class="dashboard-page" dir="rtl">
   <section class="dashboard">
 
-    <!-- 1. قسم إعلانات الهيئة والمنصة -->
+    <header class="company-dashboard-header">
+      <div class="company-brand">
+        <div class="company-brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 21h18"/>
+            <path d="M5 21V5l7-3 7 3v16"/>
+            <path d="M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/>
+          </svg>
+        </div>
+        <div>
+          <h2>{{ companyName() }}</h2>
+          <p>الشركة المستضيفة</p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="dashboard-refresh-top"
+        (click)="refreshData()"
+        [disabled]="loading()">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 11a8.1 8.1 0 0 0-14.5-4.9L3 8.5"/>
+          <path d="M3 3v5.5h5.5"/>
+          <path d="M4 13a8.1 8.1 0 0 0 14.5 4.9l2.5-2.4"/>
+          <path d="M21 21v-5.5h-5.5"/>
+        </svg>
+        {{ loading() ? 'جارٍ التحديث…' : 'تحديث البيانات' }}
+      </button>
+    </header>
+
     @if (!announcementsDismissed()) {
-    <div class="card announcements-card anim-card" style="--delay: 1">
-      <div class="announcements-header">
-        <div class="header-right">
-          <span class="icon-doc">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
-            </svg>
-          </span>
-          <h3 class="title">إعلانات الهيئة والفرص التدريبية</h3>
+      <div class="card announcements-card">
+        <div class="announcements-header">
+          <div class="header-right">
+            <span class="icon-doc">
+              <svg viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+            </span>
+            <h3 class="title">إعلانات الهيئة والمنصة</h3>
+          </div>
+          <div class="header-left">
+            <span class="count-badge">{{ announcements().length }}</span>
+            <button
+              class="banner-close"
+              type="button"
+              (click)="dismissAnnouncements()"
+              aria-label="إخفاء الإعلانات">×</button>
+          </div>
         </div>
 
-        <div class="header-left">
-          <span class="count-badge">{{ announcements().length || 4 }}</span>
-          <button class="banner-close" type="button" (click)="dismissAnnouncements()" aria-label="إخفاء الإعلانات">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
+        <div class="announcements-list">
+          @for (
+            item of announcements();
+            track item.id || item.announcementId || $index
+          ) {
+            <button
+              class="announcement-item"
+              type="button"
+              (click)="openOpportunityModal(item)">
+              <div class="item-main">
+                <div class="item-title">
+                  {{ item.title || 'إعلان رسمي' }}
+                </div>
+                <div class="item-sub">
+                  {{
+                    item.description ||
+                    item.message ||
+                    'انقر لعرض تفاصيل الإعلان.'
+                  }}
+                </div>
+              </div>
+
+              <div class="item-meta">
+                <span class="badge-type">{{ item.type || 'إعلان' }}</span>
+                <span class="item-date">
+                  {{ announcementDate(item) | date:'yyyy-MM-dd' }}
+                </span>
+              </div>
+
+              <div class="item-icon blue">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+              </div>
+            </button>
+          } @empty {
+            <div class="announcement-empty">
+              <i class="fa-regular fa-bell-slash"></i>
+              <span>لا توجد إعلانات منشورة حاليًا من الهيئة أو المنصة.</span>
+            </div>
+          }
+        </div>
+
+        <div class="announcements-footer">
+          <button
+            type="button"
+            class="link-footer"
+            (click)="refreshData()"
+            [disabled]="loading()">
+            {{ loading() ? 'جارٍ التحديث…' : 'تحديث الإعلانات والبيانات' }}
           </button>
         </div>
       </div>
-
-      <div class="announcements-list">
-        @for (item of announcements(); track item.id || $index) {
-        <div class="announcement-item clickable" (click)="openOpportunityModal(item, $index)">
-          <div class="item-main">
-            <div class="item-title">
-              {{ item.title || ['برنامج تطوير تطبيقات الويب Full-Stack', 'فرصة تدريب في تحليل البيانات والذكاء
-              الاصطناعي', 'برنامج إدارة مشاريع وتقنية المعلومات', 'فرصة تدريب في الأمن السيبراني وشبكات الحاسوب'][$index
-              % 4] }}
-            </div>
-            <div class="item-sub">
-              {{ item.description || ['تدريب مكثف على تقنيات Angular و .NET', 'تدريب عملي على تحليل البيانات والذكاء
-              الاصطناعي', 'إدارة المشاريع التقنية ومنهجيات Agile', 'اختبار الاختراق وحماية البنية التحتية'][$index % 4]
-              }}
-            </div>
-          </div>
-
-          <div class="item-meta">
-            <span class="badge-type">{{ item.type || 'فرصة تدريبية' }}</span>
-            <span class="item-date">{{ (item.createdAt || item.date) | date:'yyyy-MM-dd' }}</span>
-          </div>
-
-          <div class="item-icon blue">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
-            </svg>
-          </div>
-        </div>
-        } @empty {
-        <!-- 1. فرصة تطوير تطبيقات الويب -->
-        <div class="announcement-item clickable" (click)="openOpportunityModal(null, 0)">
-          <div class="item-main">
-            <div class="item-title">برنامج تطوير تطبيقات الويب Full-Stack</div>
-            <div class="item-sub">الشركة العمانية للاتصالات (عمانتل) — تدريب مكثف على Angular و .NET</div>
-          </div>
-          <div class="item-meta">
-            <span class="badge-type">فرصة تدريبية</span>
-            <span class="item-date">2026-08-11</span>
-          </div>
-          <div class="item-icon blue">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-            </svg>
-          </div>
-        </div>
-
-        <!-- 2. فرصة تحليل البيانات -->
-        <div class="announcement-item clickable" (click)="openOpportunityModal(null, 1)">
-          <div class="item-main">
-            <div class="item-title">فرصة تدريب في تحليل البيانات والذكاء الاصطناعي</div>
-            <div class="item-sub">شركة أوريدو عمان — تحليل البيانات الضخمة وبناء النماذج الذكية</div>
-          </div>
-          <div class="item-meta">
-            <span class="badge-type">فرصة تدريبية</span>
-            <span class="item-date">2026-06-23</span>
-          </div>
-          <div class="item-icon blue">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-            </svg>
-          </div>
-        </div>
-
-        <!-- 3. فرصة إدارة المشاريع -->
-        <div class="announcement-item clickable" (click)="openOpportunityModal(null, 2)">
-          <div class="item-main">
-            <div class="item-title">برنامج إدارة مشاريع وتقنية المعلومات</div>
-            <div class="item-sub">مجموعة إذكاء (ITHCA Group) — تطبيق منهجيات Agile وScrum</div>
-          </div>
-          <div class="item-meta">
-            <span class="badge-type">فرصة تدريبية</span>
-            <span class="item-date">2026-06-19</span>
-          </div>
-          <div class="item-icon blue">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-            </svg>
-          </div>
-        </div>
-
-        <!-- 4. فرصة الأمن السيبراني -->
-        <div class="announcement-item clickable" (click)="openOpportunityModal(null, 3)">
-          <div class="item-main">
-            <div class="item-title">فرصة تدريب في الأمن السيبراني وشبكات الحاسوب</div>
-            <div class="item-sub">المركز الوطني للسلامة المعلوماتية — حماية البنية التحتية واختبار الاختراق</div>
-          </div>
-          <div class="item-meta">
-            <span class="badge-type">فرصة تدريبية</span>
-            <span class="item-date">2026-06-06</span>
-          </div>
-          <div class="item-icon blue">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-            </svg>
-          </div>
-        </div>
-        }
-      </div>
-
-      <div class="announcements-footer">
-        <a href="javascript:void(0)" class="link-footer">آخر التحديثات الرسمية</a>
-      </div>
-    </div>
     }
 
-    <!-- 2. بطاقات الإحصائيات (KPIs) -->
     <div class="kpi-grid">
-      <div class="kpi-card anim-card" style="--delay: 2">
+      <article class="kpi-card">
         <div class="kpi-icon blue">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
+          <svg viewBox="0 0 24 24">
+            <path d="M4 20v-7M10 20V9M16 20V5M22 20V2"/>
           </svg>
         </div>
         <div class="kpi-info">
-          <div class="kpi-value">{{ capacity()?.used ?? 0 }}</div>
-          <div class="kpi-label">المتدربون المستضافون</div>
+          <span class="kpi-label">متوسط الحضور</span>
+          <strong class="kpi-value">
+            {{ attendanceAverage() | number:'1.0-0' }}%
+          </strong>
+          <small>من الأسابيع المتاحة</small>
         </div>
-      </div>
+      </article>
 
-      <div class="kpi-card anim-card" style="--delay: 3">
-        <div class="kpi-icon yellow">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 20h9" />
-            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+      <article class="kpi-card">
+        <div class="kpi-icon purple">
+          <svg viewBox="0 0 24 24">
+            <path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.4l6.1-.9Z"/>
           </svg>
         </div>
         <div class="kpi-info">
-          <div class="kpi-value">{{ atRisk().length }}</div>
-          <div class="kpi-label">متعثرون بحاجة لمتابعة</div>
+          <span class="kpi-label">المتدربون المتميزون</span>
+          <strong class="kpi-value">{{ topPerformers().length }}</strong>
+          <small>هذا الشهر</small>
         </div>
-      </div>
+      </article>
 
-      <div class="kpi-card anim-card" style="--delay: 4">
-        <div class="kpi-icon light-blue">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="4" width="20" height="16" rx="2" />
-            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+      <article class="kpi-card">
+        <div class="kpi-icon cyan">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 19V5M4 19h16M7 15l4-4 3 2 5-6"/>
           </svg>
         </div>
         <div class="kpi-info">
-          <div class="kpi-value">{{ topPerformers().length }}</div>
-          <div class="kpi-label">المتميزون هذا الشهر</div>
+          <span class="kpi-label">متوسط أداء المتميزين</span>
+          <strong class="kpi-value">
+            {{ topPerformersAverage() | number:'1.0-0' }}%
+          </strong>
+          <small>محسوب من بيانات الأداء الحقيقية</small>
         </div>
-      </div>
+      </article>
 
-      <div class="kpi-card border-red anim-card" style="--delay: 5">
+      <article class="kpi-card danger">
         <div class="kpi-icon red-soft">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+          <svg viewBox="0 0 24 24">
+            <path d="M10.3 3.4 2.2 18a2 2 0 0 0 1.7 3h16.2a2 2 0 0 0 1.7-3L13.7 3.4a2 2 0 0 0-3.4 0Z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
         </div>
         <div class="kpi-info">
-          <div class="kpi-value">{{ warnings().length }}</div>
-          <div class="kpi-label">الإنذارات المفتوحة</div>
+          <span class="kpi-label">متعثرون بحاجة لمتابعة</span>
+          <strong class="kpi-value">{{ atRisk().length }}</strong>
+          <small>بيانات حقيقية من لوحة الشركة</small>
         </div>
-      </div>
+      </article>
     </div>
 
-    <!-- 3. عنوان الصفحة وتحديث البيانات -->
-    <div class="page-head anim-card" style="--delay: 6">
+    <div class="page-head">
       <div>
         <h3>لوحة تشغيل الاستضافة والتدريب</h3>
         <p>متابعة أداء المتدربين، الطاقة الاستيعابية والإنذارات</p>
       </div>
-      <div class="actions">
-        <button class="btn btn-outline" type="button" (click)="refreshData()" [disabled]="loading()">
-          {{ loading() ? 'جارٍ التحديث…' : 'تحديث البيانات' }}
-        </button>
-      </div>
+      <button
+        class="btn btn-outline"
+        type="button"
+        (click)="refreshData()"
+        [disabled]="loading()">
+        {{ loading() ? 'جارٍ التحديث…' : 'تحديث البيانات' }}
+      </button>
     </div>
 
-    <!-- 4. شريط الطاقة الاستيعابية -->
     @if (capacity(); as cap) {
       <div class="card card-pad capacity-card">
         <div class="card-title">
           الطاقة الاستيعابية
-          <span class="hint">المستخدم: {{ cap.used ?? 0 }} من {{ cap.total ?? 0 }}</span>
+          <span class="hint">
+            المستخدم: {{ cap.used }} من {{ cap.total }}
+          </span>
         </div>
+
         <div class="capacity-row">
           <div class="capacity-progress">
-            <div class="bar cap-bar"><i [style.width.%]="capacityPercent()"></i></div>
+            <div class="bar cap-bar">
+              <i
+                [class.replay]="barsAnimating()"
+                [style.width.%]="capacityPercent()"></i>
+            </div>
             <div class="capacity-meta">
               <span>{{ capacityPercent() | number:'1.0-0' }}% مستخدم</span>
-              <span>المتبقية: {{ cap.remaining ?? 0 }} مقعدًا</span>
+              <span>المتبقية: {{ cap.remaining }} مقعدًا</span>
             </div>
           </div>
+
           <div class="legend-inline">
-            <div class="lg-item"><span class="sw used"></span> مستخدم <b>{{ cap.used ?? 0 }}</b></div>
-            <div class="lg-item"><span class="sw remaining"></span> متبقي <b>{{ cap.remaining ?? 0 }}</b></div>
-            <button class="btn btn-outline btn-sm" type="button" (click)="openCompanyProfile()">تعديل</button>
+            <div class="lg-item">
+              <span class="sw used"></span>
+              مستخدم <b>{{ cap.used }}</b>
+            </div>
+            <div class="lg-item">
+              <span class="sw remaining"></span>
+              متبقي <b>{{ cap.remaining }}</b>
+            </div>
+            <button
+              class="btn btn-outline btn-sm"
+              type="button"
+              (click)="openCompanyProfile()">تعديل</button>
           </div>
         </div>
       </div>
     } @else {
-      <div class="card card-pad loading-card">جارٍ تحميل الطاقة الاستيعابية…</div>
+      <div class="card card-pad loading-card">
+        جارٍ تحميل الطاقة الاستيعابية…
+      </div>
     }
 
     <div class="grid g2 g2-14 quick-stats">
-      <div class="card card-pad quick-stat"><span>إجمالي المتدربين</span><b>{{ totalTrainees() }}</b><small>المربوطون بهذه الشركة</small></div>
-      <div class="card card-pad quick-stat"><span>المتدربون النشطون</span><b>{{ activeTrainees() }}</b><small>حالة التدريب الحالية</small></div>
+      <div class="card card-pad quick-stat">
+        <span>إجمالي المتدربين</span>
+        <b>{{ totalTrainees() }}</b>
+        <small>المربوطون بهذه الشركة</small>
+      </div>
+      <div class="card card-pad quick-stat">
+        <span>المتدربون النشطون</span>
+        <b>{{ activeTrainees() }}</b>
+        <small>حالة التدريب الحالية</small>
+      </div>
     </div>
 
     <div class="grid g2 g2-14 charts-row">
-      <div class="card card-pad">
+      <div class="card card-pad chart-card">
         <div class="card-title">
           متوسط الحضور الأسبوعي
-          <span class="hint">المعدل العام: {{ attendanceAverage() | number:'1.1-1' }}%</span>
+          <span class="hint">
+            المعدل العام: {{ attendanceAverage() | number:'1.1-1' }}%
+          </span>
         </div>
+
         @if (attendanceWeeks().length) {
           <div class="hbars" [attr.data-refresh]="currentAnimationKey()">
-            @for (w of attendanceWeeks(); track $index) {
+            @for (week of attendanceWeeks(); track $index) {
               <div class="hbar">
-                <div class="h-lbl" [title]="w.label">{{ w.label }}</div>
-                <div class="h-trk"><div class="h-fill attendance" [style.width.%]="barPercent(w.value, attendanceMax())">{{ w.value }}%</div></div>
-                <div class="h-val">{{ w.value }}%</div>
+                <div class="h-lbl" [title]="week.label">{{ week.label }}</div>
+                <div class="h-trk">
+                  <div
+                    class="h-fill attendance"
+                    [class.replay]="barsAnimating()"
+                    [style.width.%]="barPercent(week.value, attendanceMax())">
+                    {{ week.value }}%
+                  </div>
+                </div>
+                <div class="h-val">{{ week.value }}%</div>
               </div>
             }
           </div>
@@ -259,15 +273,26 @@
         }
       </div>
 
-      <div class="card anim-card" style="--delay: 9">
+      <div class="card card-pad chart-card">
         <div class="card-title">توزيع المتدربين حسب البرنامج</div>
+
         @if (programDistribution().length) {
           <div class="hbars" [attr.data-refresh]="currentAnimationKey()">
-            @for (p of programDistribution(); track $index) {
+            @for (program of programDistribution(); track $index) {
               <div class="hbar">
-                <div class="h-lbl" [title]="p.label">{{ p.label }}</div>
-                <div class="h-trk"><div class="h-fill" [style.width.%]="barPercent(p.value, programMax())" [style.background]="programColor($index)">{{ p.value }}</div></div>
-                <div class="h-val">{{ p.value }} متدرب</div>
+                <div class="h-lbl" [title]="program.label">
+                  {{ program.label }}
+                </div>
+                <div class="h-trk">
+                  <div
+                    class="h-fill"
+                    [class.replay]="barsAnimating()"
+                    [style.width.%]="barPercent(program.value, programMax())"
+                    [style.background]="programColor($index)">
+                    {{ program.value }}
+                  </div>
+                </div>
+                <div class="h-val">{{ program.value }} متدرب</div>
               </div>
             }
           </div>
@@ -277,154 +302,275 @@
       </div>
     </div>
 
-    <!-- 6. القوائم الثلاث السفلى -->
     <div class="bottom-lists-grid">
 
-      <!-- 1. المتميزون هذا الشهر -->
-      <div class="card anim-card" style="--delay: 14">
+      <div class="card list-card">
         <div class="card-title">
-          <span><span class="icon-star">★</span> المتدربون المتميزون هذا الشهر</span>
+          <span>
+            <span class="icon-star">★</span>
+            المتدربون المتميزون هذا الشهر
+          </span>
+          <button
+            class="link-btn"
+            type="button"
+            (click)="openTrainees()">عرض الكل</button>
         </div>
-        <div class="lower-list">
-          @for (w of warnings().slice(0, 3); track w.warningId) {
-            <div class="warning-row">
-              <div class="warning-main">
-                <div class="alert-icon" [class.open]="w.status !== 'Resolved'">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/></svg>
-                </div>
-                <div class="warning-name">
-                  <b>{{ w.type || 'غياب متكرر' }}</b>
-                  <span>{{ w.traineeName || 'متدرب' }}</span>
-                  <small>#{{ w.warningId }} · {{ w.issuedDate | date:'yyyy-MM-dd' }}</small>
-                </div>
-              </div>
-              <div class="row-actions">
-                <button class="icon-btn eye" type="button" title="عرض التفاصيل" (click)="openProgress(w.enrollmentId)">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                </button>
-                <button class="icon-btn github" type="button" title="فتح ملف المتدرب" (click)="openGithub(w.gitHubUrl)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg></button>
-                <span class="chip" [class.bad]="w.status !== 'Resolved'" [class.ok]="w.status === 'Resolved'"><span class="dot"></span>
-                <button class="text-action" type="button" (click)="openWarnings()">عرض</button>
-                </span>
-              </div>
-            </div>
-          } @empty {
-            <div class="empty"><b>لا توجد إنذارات</b><span>لم يتم تسجيل إنذارات حديثة على متدربي الشركة.</span></div>
-          }
-        </div>
-      </div>
 
-      <!-- 2. متعثرون بحاجة إلى متابعة -->
-      <div class="card anim-card" style="--delay: 15">
-        <div class="card-title warning-title">
-          <span><span class="icon-warn">⚠️</span> متعثرون بحاجة إلى متابعة</span>
-        </div>
-        <div class="trainee-list">
-          @for (t of atRisk(); track $any(t).traineeId || $index) {
-          <div class="trainee-row">
-            <div class="avatar"
-              [style.background-color]="avatarColor($any(t).traineeName || $any(t).fullName || ['نجلاء النبهاني', 'دانة المعمري', 'حمد الوهيبي', 'عائشة الحارثي', 'حسن الجابري'][$index % 5])">
-              {{ initials($any(t).traineeName || $any(t).fullName || ['نجلاء النبهاني', 'دانة المعمري', 'حمد الوهيبي',
-              'عائشة الحارثي', 'حسن الجابري'][$index % 5]) }}
-            </div>
-            <div class="trainee-meta">
-              <div class="name">{{ $any(t).traineeName || $any(t).fullName || ['نجلاء النبهاني', 'دانة المعمري', 'حمد
-                الوهيبي', 'عائشة الحارثي', 'حسن الجابري'][$index % 5] }}</div>
-              <div class="sub danger-text">
-                {{ $any(t).reason || $any(t).statusReason || ($index % 3 === 0 ? 'غياب متكرر (3 أيام)' : $index % 3 ===
-                1 ? 'انخفاض مستوى الأداء' : 'تأخر في تسليم المشروع') }}
-              </div>
-              <div class="row-actions">
-                <button class="btn btn-soft btn-sm follow-btn" type="button" (click)="openProgress(t.enrollmentId)">متابعة</button>
-                <button class="icon-btn github" type="button" title="فتح ملف المتدرب" (click)="openGithub(t.gitHubUrl)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg></button>
-                <button class="icon-btn eye" type="button" title="عرض صفحة التقدم" (click)="openProgress(t.enrollmentId)">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                </button>
-              </div>
-            </div>
-          } @empty {
-            <div class="empty"><b>لا يوجد متعثرون حاليًا</b><span>أداء مستقر وجيد للمتدربين.</span></div>
-          }
-        </div>
-      </div>
-
-      <!-- 3. أحدث الإنذارات -->
-      <div class="card anim-card" style="--delay: 16">
-        <div class="card-title">
-          <span><span class="icon-bell">🔔</span> أحدث الإنذارات</span>
-          <button class="link-btn" type="button" (click)="openWarnings()">عرض الكل</button>
-        </div>
         <div class="lower-list">
-          @for (t of topPerformers().slice(0, 5); track t.traineeId; let i = $index) {
+          @for (
+            trainee of topPerformers().slice(0, 5);
+            track trainee.traineeId
+          ) {
             <div class="top-row">
               <div class="person-block">
-                <div class="t-avatar" [style.background]="avatarColor(t.fullName)">{{ initials(t.fullName) }}</div>
-                <div class="person-copy"><b>{{ t.fullName || 'متدرب بدون اسم' }}</b><span>{{ t.major || '—' }}</span></div>
+                <div
+                  class="t-avatar"
+                  [style.background]="avatarColor(trainee.fullName)">
+                  {{ initials(trainee.fullName) }}
+                </div>
+                <div class="person-copy">
+                  <b>{{ trainee.fullName || 'متدرب بدون اسم' }}</b>
+                  <span>{{ trainee.major || '—' }}</span>
+                </div>
               </div>
+
               <div class="row-actions">
-                <button class="icon-btn eye" type="button" title="عرض صفحة التقدم" (click)="openProgress(t.enrollmentId)">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <button
+                  class="icon-btn eye"
+                  type="button"
+                  title="عرض صفحة التقدم"
+                  (click)="openProgress(trainee.enrollmentId)">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
                 </button>
-                <button class="icon-btn github" type="button" title="فتح ملف المتدرب" (click)="openGithub(t.gitHubUrl)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg></button>
+
+                <button
+                  class="icon-btn github"
+                  type="button"
+                  title="فتح ملف المتدرب"
+                  (click)="openGithub(trainee.gitHubUrl)">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/>
+                  </svg>
+                </button>
               </div>
-              <div class="performance"><b>{{ performanceValue(t) }}%</b><span>أداء</span></div>
+
+              <div class="performance">
+                <b>{{ performanceValue(trainee) }}%</b>
+                <span>أداء</span>
+              </div>
             </div>
-          </div>
+          } @empty {
+            <div class="empty">لا توجد بيانات للمتميزين حاليًا.</div>
+          }
+        </div>
+      </div>
+
+      <div class="card list-card">
+        <div class="card-title warning-title">
+          <span>
+            <span class="icon-warn">⚠️</span>
+            متعثرون بحاجة إلى متابعة
+          </span>
+          <span class="list-count">{{ atRisk().length }}</span>
+        </div>
+
+        <div class="trainee-list">
+          @for (trainee of atRisk(); track trainee.traineeId) {
+            <div class="trainee-row">
+              <div
+                class="avatar"
+                [style.background-color]="avatarColor(trainee.fullName)">
+                {{ initials(trainee.fullName) }}
+              </div>
+
+              <div class="trainee-meta">
+                <div class="name">
+                  {{ trainee.fullName || 'متدرب بدون اسم' }}
+                </div>
+                <div class="sub danger-text">
+                  {{ riskReason(trainee) }}
+                </div>
+
+                <div class="row-actions">
+                  <button
+                    class="btn btn-soft btn-sm follow-btn"
+                    type="button"
+                    (click)="openProgress(trainee.enrollmentId)">
+                    متابعة
+                  </button>
+
+                  <button
+                    class="icon-btn github"
+                    type="button"
+                    title="فتح ملف المتدرب"
+                    (click)="openGithub(trainee.gitHubUrl)">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 .31-.01.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/>
+                    </svg>
+                  </button>
+
+                  <button
+                    class="icon-btn eye"
+                    type="button"
+                    title="عرض صفحة التقدم"
+                    (click)="openProgress(trainee.enrollmentId)">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty">
+              <b>لا يوجد متعثرون حاليًا</b>
+              <span>أداء مستقر وجيد للمتدربين.</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="card list-card">
+        <div class="card-title">
+          <span>
+            <span class="icon-bell">🔔</span>
+            أحدث الإنذارات
+          </span>
+          <button
+            class="link-btn"
+            type="button"
+            (click)="openWarnings()">عرض الكل</button>
+        </div>
+
+        <div class="lower-list">
+          @for (
+            warning of warnings().slice(0, 5);
+            track warning.warningId
+          ) {
+            <div class="warning-row">
+              <div class="warning-main">
+                <div
+                  class="alert-icon"
+                  [class.open]="warning.status !== 'Resolved'">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+                  </svg>
+                </div>
+
+                <div class="warning-name">
+                  <b>{{ warning.type || 'إنذار' }}</b>
+                  <span>{{ warning.traineeName || 'متدرب' }}</span>
+                  <small>
+                    #{{ warning.warningId }}
+                    ·
+                    {{ warning.issuedDate | date:'yyyy-MM-dd' }}
+                  </small>
+                </div>
+              </div>
+
+              <div class="row-actions">
+                <button
+                  class="icon-btn eye"
+                  type="button"
+                  title="عرض صفحة التقدم"
+                  (click)="openProgress(warning.enrollmentId)">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+
+                <button
+                  class="icon-btn github"
+                  type="button"
+                  title="فتح GitHub"
+                  (click)="openGithub(warning.gitHubUrl)">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2-.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 .31-.01.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty">لا توجد إنذارات حديثة.</div>
           }
         </div>
       </div>
 
     </div>
+
+    @if (loading()) {
+      <div class="dashboard-refresh-state" aria-live="polite">
+        <span class="refresh-spinner"></span>
+        جارٍ تحديث بيانات لوحة التحكم من الخادم…
+      </div>
+    }
+
+    @if (loadError()) {
+      <div class="dashboard-error-state" role="alert">
+        <span>تعذر تحميل بيانات لوحة التحكم من الخادم.</span>
+        <button
+          type="button"
+          class="btn btn-outline btn-sm"
+          (click)="refreshData()">إعادة المحاولة</button>
+      </div>
+    }
 
   </section>
 </div>
 
-<!-- Modal لعرض تفاصيل الفرصة أو الإعلان التدريبي -->
-@if (selectedOpportunity()) {
-<div class="modal-backdrop" (click)="closeOpportunityModal()">
-  <div class="modal-content flyer-modal" (click)="$event.stopPropagation()">
+@if (selectedOpportunity(); as announcement) {
+  <div
+    class="modal-backdrop"
+    (click)="closeOpportunityModal()">
 
-    <div class="modal-header flyer-top-bar">
-      <span class="org-brand">هيئة تنظيم الخدمات العامة والمنصة</span>
-      <button class="close-btn" type="button" (click)="closeOpportunityModal()">&times;</button>
+    <div
+      class="modal-content flyer-modal"
+      (click)="$event.stopPropagation()">
+
+      <div class="modal-header flyer-top-bar">
+        <span class="org-brand">إعلان رسمي من الهيئة والمنصة</span>
+        <button
+          class="close-btn"
+          type="button"
+          (click)="closeOpportunityModal()"
+          aria-label="إغلاق">&times;</button>
+      </div>
+
+      <div class="modal-body flyer-body-content">
+        <h2 class="flyer-main-title">
+          {{ announcement.title || 'إعلان رسمي' }}
+        </h2>
+
+        <div class="target-major-badge">
+          {{ announcement.type || 'إعلان' }}
+        </div>
+
+        <div class="flyer-section">
+          <h4 class="section-heading">تفاصيل الإعلان</h4>
+          <p class="flyer-desc">
+            {{ announcementMessage(announcement) }}
+          </p>
+        </div>
+
+        <div class="flyer-deadline-box">
+          <p>
+            <strong>تاريخ النشر:</strong>
+            {{ announcementDate(announcement) | date:'yyyy-MM-dd' }}
+          </p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          class="btn-primary"
+          type="button"
+          (click)="closeOpportunityModal()">إغلاق</button>
+      </div>
     </div>
-
-    <div class="modal-body flyer-body-content">
-      <h2 class="flyer-main-title">{{ selectedOpportunity()?.title }}</h2>
-      <div class="target-major-badge">{{ selectedOpportunity()?.targetMajor }}</div>
-
-      <div class="flyer-section">
-        <h4 class="section-heading">أهداف البرنامج</h4>
-        <ul class="flyer-list">
-          @for (goal of selectedOpportunity()?.goals; track goal) {
-          <li>• {{ goal }}</li>
-          }
-        </ul>
-      </div>
-
-      <div class="flyer-section">
-        <h4 class="section-heading">نبذة عن البرنامج</h4>
-        <p class="flyer-desc">{{ selectedOpportunity()?.description }}</p>
-      </div>
-
-      <div class="flyer-section">
-        <h4 class="section-heading">شروط التقديم</h4>
-        <ul class="flyer-list">
-          @for (req of selectedOpportunity()?.requirements; track req) {
-          <li>• {{ req }}</li>
-          }
-        </ul>
-      </div>
-
-      <div class="flyer-deadline-box">
-        <p><strong>آخر موعد للتقديم / التاريخ:</strong> {{ selectedOpportunity()?.deadline }}</p>
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn-primary" type="button" (click)="closeOpportunityModal()">إغلاق</button>
-    </div>
-
   </div>
-</div>
 }
