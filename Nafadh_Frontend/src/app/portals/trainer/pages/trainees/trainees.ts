@@ -356,9 +356,10 @@ export class TrainerTrainees implements OnInit {
   }
 
 
-  // =====================================================
-  // ENROLLMENT STATUS
-  // =====================================================
+ // =====================================================
+// ENROLLMENT STATUS
+// =====================================================
+
 effectiveEnrollmentStatus(
   enrollment: EnrollmentDto
 ): string {
@@ -367,7 +368,7 @@ effectiveEnrollmentStatus(
     enrollment.completionStatus;
 
 
-  // المنسحب يبقى منسحب حتى لو الدفعة مستمرة.
+  // المنسحب يبقى منسحب.
   if (
     status === 'Dropped'
   ) {
@@ -384,10 +385,7 @@ effectiveEnrollmentStatus(
       );
 
 
-  if (
-    !batch ||
-    !batch.endDate
-  ) {
+  if (!batch) {
     return status;
   }
 
@@ -403,6 +401,36 @@ effectiveEnrollmentStatus(
   );
 
 
+  // الدفعة لم تبدأ بعد.
+  if (batch.startDate) {
+
+    const startDate =
+      new Date(
+        batch.startDate
+      );
+
+    startDate.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+
+    if (
+      today < startDate
+    ) {
+      return 'NotStarted';
+    }
+
+  }
+
+
+  if (!batch.endDate) {
+    return status;
+  }
+
+
   const endDate =
     new Date(
       batch.endDate
@@ -416,8 +444,8 @@ effectiveEnrollmentStatus(
   );
 
 
-  // طالما الدفعة لم تنتهِ:
-  // Completed و Failed يظهران قيد التدريب.
+  // طالما الدفعة مستمرة،
+  // لا نظهر Completed أو Failed.
   if (
     today <= endDate &&
     (
@@ -431,80 +459,92 @@ effectiveEnrollmentStatus(
 
   return status;
 }
-  enrollmentStatusLabel(
-    status: string | null | undefined
-  ): string {
-
-    switch (status) {
-
-      case 'InProgress':
-
-        return 'قيد التدريب';
 
 
-      case 'Completed':
+enrollmentStatusLabel(
+  status: string | null | undefined
+): string {
 
-        return 'مكتمل';
+  switch (status) {
 
+    case 'NotStarted':
 
-      case 'Dropped':
-
-        return 'منسحب';
-
-
-      case 'Failed':
-
-        return 'لم يجتز';
+      return 'لم يبدأ';
 
 
-      default:
+    case 'InProgress':
 
-        return '—';
-    }
+      return 'قيد التدريب';
+
+
+    case 'Completed':
+
+      return 'مكتمل';
+
+
+    case 'Dropped':
+
+      return 'منسحب';
+
+
+    case 'Failed':
+
+      return 'لم يجتز';
+
+
+    default:
+
+      return '—';
   }
+}
 
 
-  enrollmentStatusClass(
-    status: string | null | undefined
-  ): string {
+enrollmentStatusClass(
+  status: string | null | undefined
+): string {
 
-    switch (status) {
+  switch (status) {
 
-      case 'InProgress':
+    case 'NotStarted':
 
-        return 'good';
-
-
-      case 'Completed':
-
-        return 'excellent';
+      return 'neutral';
 
 
-      case 'Dropped':
+    case 'InProgress':
 
-        return 'neutral';
-
-
-      case 'Failed':
-
-        return 'support';
+      return 'good';
 
 
-      default:
+    case 'Completed':
 
-        return 'neutral';
-    }
+      return 'excellent';
+
+
+    case 'Dropped':
+
+      return 'neutral';
+
+
+    case 'Failed':
+
+      return 'support';
+
+
+    default:
+
+      return 'neutral';
   }
+}
 
 
-  canEvaluateEnrollment(
-    enrollment: EnrollmentDto
-  ): boolean {
+canEvaluateEnrollment(
+  enrollment: EnrollmentDto
+): boolean {
 
-    return (
-      enrollment.completionStatus !== 'Dropped'
-    );
-  }
+  return (
+    enrollment.completionStatus !== 'Dropped'
+  );
+}
 
 
   // =====================================================
