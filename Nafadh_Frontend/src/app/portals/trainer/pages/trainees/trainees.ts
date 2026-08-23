@@ -602,7 +602,20 @@ canShowTrainingMetrics(
     weight: 0,
     maxPoints: 0
   };
+// =====================================================
+// EDIT CRITERION STATE
+// =====================================================
 
+editingCriterionId =
+  signal<number | null>(
+    null
+  );
+
+criterionEditForm = {
+  name: '',
+  weight: 0,
+  maxPoints: 0
+};
 
   // =====================================================
   // CONSTRUCTOR
@@ -1614,7 +1627,169 @@ deleteCriterion(
     });
 
 }
+// =====================================================
+// START EDIT CRITERION
+// =====================================================
 
+startEditCriterion(
+  criterion: EvaluationCriterionDto
+): void {
+
+  this.editingCriterionId.set(
+    criterion.criteriaId
+  );
+
+
+  this.criterionEditForm = {
+    name:
+      criterion.name,
+
+    weight:
+      Number(
+        criterion.weight
+      ),
+
+    maxPoints:
+      Number(
+        criterion.maxPoints
+      )
+  };
+}
+
+
+// =====================================================
+// CANCEL EDIT CRITERION
+// =====================================================
+
+cancelCriterionEdit(): void {
+
+  this.editingCriterionId.set(
+    null
+  );
+
+
+  this.criterionEditForm = {
+    name: '',
+    weight: 0,
+    maxPoints: 0
+  };
+}
+
+
+// =====================================================
+// SAVE CRITERION EDIT
+// =====================================================
+
+saveCriterionEdit(
+  criteriaId: number
+): void {
+
+  const templateId =
+    this.templateDetail()
+      ?.templateId;
+
+
+  if (!templateId) {
+    return;
+  }
+
+
+  const name =
+    this.criterionEditForm
+      .name
+      .trim();
+
+  const weight =
+    Number(
+      this.criterionEditForm.weight
+    );
+
+  const maxPoints =
+    Number(
+      this.criterionEditForm.maxPoints
+    );
+
+
+  if (
+    !name ||
+    !Number.isFinite(weight) ||
+    !Number.isFinite(maxPoints) ||
+    weight <= 0 ||
+    weight > 100 ||
+    maxPoints <= 0
+  ) {
+
+    window.alert(
+      'تأكدي من اسم المعيار والوزن والحد الأقصى.'
+    );
+
+    return;
+  }
+
+
+  this.api
+    .updateCriterion(
+      criteriaId,
+      {
+        templateId,
+        name,
+        weight,
+        maxPoints
+      }
+    )
+    .subscribe({
+
+      next: () => {
+
+        this.api
+          .getTemplateDetail(
+            templateId
+          )
+          .subscribe({
+
+            next: (detail) => {
+
+              this.templateDetail.set(
+                detail
+              );
+
+
+              this.cancelCriterionEdit();
+
+            },
+
+
+            error: (err) => {
+
+              console.error(
+                'خطأ في إعادة تحميل نموذج التقييم:',
+                err
+              );
+
+            }
+
+          });
+
+      },
+
+
+      error: (err) => {
+
+        console.error(
+          'خطأ في تعديل معيار التقييم:',
+          err
+        );
+
+
+        window.alert(
+          'تعذر تعديل المعيار.'
+        );
+
+      }
+
+    });
+
+}
   // =====================================================
   // SUBMIT EVALUATION
   // =====================================================

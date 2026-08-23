@@ -1280,20 +1280,166 @@
 
             <div class="criterion-card">
 
-              <div class="criterion-heading">
+             <div class="criterion-heading">
 
-                <label>
-                  {{ c.name }}
-                </label>
+  <div>
 
-                <span>
-                  وزن {{ c.weight }}%
-                  ·
-                  من {{ c.maxPoints }}
-                </span>
+    <label>
+      {{ c.name }}
+    </label>
 
-              </div>
+    <span>
+      وزن {{ c.weight }}%
+      ·
+      من {{ c.maxPoints }}
+    </span>
 
+  </div>
+
+
+  <div
+    style="
+      display:flex;
+      align-items:center;
+      gap:6px;
+    "
+  >
+
+    <button
+      type="button"
+      (click)="
+        startEditCriterion(c)
+      "
+      title="تعديل المعيار"
+      style="
+        border:none;
+        background:transparent;
+        cursor:pointer;
+        font-size:18px;
+        padding:4px 6px;
+      "
+    >
+      ✏️
+    </button>
+
+
+    <button
+      type="button"
+      (click)="
+        deleteCriterion(
+          c.criteriaId,
+          c.name
+        )
+      "
+      title="حذف المعيار"
+      style="
+        border:none;
+        background:transparent;
+        cursor:pointer;
+        font-size:18px;
+        padding:4px 6px;
+      "
+    >
+      🗑️
+    </button>
+
+  </div>
+
+</div>
+@if (
+  editingCriterionId() ===
+  c.criteriaId
+) {
+
+  <div
+    class="new-criterion-box"
+    style="margin:10px 0 12px;"
+  >
+
+    <input
+      class="nfd-input"
+      placeholder="اسم المعيار"
+      [(ngModel)]="
+        criterionEditForm.name
+      "
+      [name]="
+        'editCriterionName' +
+        c.criteriaId
+      "
+    />
+
+
+    <div class="new-criterion-grid">
+
+      <input
+        class="nfd-input"
+        type="number"
+        min="1"
+        max="100"
+        placeholder="الوزن %"
+        [(ngModel)]="
+          criterionEditForm.weight
+        "
+        [name]="
+          'editCriterionWeight' +
+          c.criteriaId
+        "
+      />
+
+
+      <input
+        class="nfd-input"
+        type="number"
+        min="1"
+        placeholder="الحد الأقصى"
+        [(ngModel)]="
+          criterionEditForm.maxPoints
+        "
+        [name]="
+          'editCriterionMax' +
+          c.criteriaId
+        "
+      />
+
+    </div>
+
+
+    <div
+      style="
+        display:flex;
+        gap:8px;
+        margin-top:10px;
+      "
+    >
+
+      <button
+        type="button"
+        class="nfd-btn primary"
+        (click)="
+          saveCriterionEdit(
+            c.criteriaId
+          )
+        "
+      >
+        حفظ التعديل
+      </button>
+
+
+      <button
+        type="button"
+        class="nfd-btn secondary"
+        (click)="
+          cancelCriterionEdit()
+        "
+      >
+        إلغاء
+      </button>
+
+    </div>
+
+  </div>
+
+}
 
               <input
                 class="nfd-input"
