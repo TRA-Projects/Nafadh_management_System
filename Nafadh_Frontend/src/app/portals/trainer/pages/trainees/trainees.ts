@@ -1232,33 +1232,31 @@ canShowTrainingMetrics(
   }
 
 
-  startEvaluationFromProfile(): void {
+ startEvaluationFromProfile(): void {
 
-    const enrollment =
-      this.selectedProfileEnrollment();
-
-
-    if (
-      !enrollment ||
-      enrollment.completionStatus === 'Dropped'
-    ) {
-
-      return;
-    }
+  const enrollment =
+    this.selectedProfileEnrollment();
 
 
-    const enrollmentId =
-      enrollment.enrollmentId;
-
-
-    this.closeTraineeProfile();
-
-
-    this.openEval(
-      enrollmentId
-    );
+  if (
+    !enrollment ||
+    !this.canEvaluateEnrollment(enrollment)
+  ) {
+    return;
   }
 
+
+  const enrollmentId =
+    enrollment.enrollmentId;
+
+
+  this.closeTraineeProfile();
+
+
+  this.openEval(
+    enrollmentId
+  );
+}
 
   // =====================================================
   // EVALUATION TEMPLATES

@@ -973,26 +973,26 @@
 
             <div
               class="evaluation-action-wrapper profile-evaluation-wrapper"
-              [class.disabled-evaluation]="
-                profile.completionStatus === 'Dropped'
-              "
+ [class.disabled-evaluation]="
+  !canEvaluateEnrollment(profile)
+"
             >
 
               <button
                 type="button"
                 class="nfd-btn primary"
                 (click)="startEvaluationFromProfile()"
-                [disabled]="
-                  profile.completionStatus === 'Dropped'
-                "
+              [disabled]="
+  !canEvaluateEnrollment(profile)
+"
               >
                 بدء تقييم
               </button>
 
 
-              @if (
-                profile.completionStatus === 'Dropped'
-              ) {
+          @if (
+  !canEvaluateEnrollment(profile)
+) {
 
                 <div class="evaluation-tooltip">
 
@@ -1000,9 +1000,23 @@
                     !
                   </span>
 
-                  <span>
-                    المتدرب منسحب ولا يمكن إضافة تقييم جديد
-                  </span>
+                 <span>
+
+  @if (
+    effectiveEnrollmentStatus(profile) === 'NotStarted'
+  ) {
+    الدفعة لم تبدأ بعد ولا يمكن إضافة تقييم
+  }
+  @else if (
+    effectiveEnrollmentStatus(profile) === 'Dropped'
+  ) {
+    المتدرب منسحب ولا يمكن إضافة تقييم جديد
+  }
+  @else {
+    لا يمكن إضافة تقييم لهذا المتدرب
+  }
+
+</span>
 
                 </div>
 
