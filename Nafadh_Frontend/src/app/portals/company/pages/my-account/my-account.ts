@@ -1,37 +1,36 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CompanyAccountDto } from '../../../../core/models/dtos';
 
+type AccountTab = 'info' | 'permissions' | 'activities';
+
 @Component({
   selector: 'app-my-account',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DatePipe],
   templateUrl: './my-account.html',
-  styleUrls: ['./my-account.scss']
+  styleUrls: ['./my-account.scss'],
 })
 export class CompanyMyAccount implements OnInit {
   profile = signal<CompanyAccountDto | null>(null);
   loading = signal(true);
   loadError = signal(false);
-
-  // ============================================================
-  // Constructor
-  // ============================================================
+  activeTab = signal<AccountTab>('info');
 
   constructor(
     private api: CompanyApi,
-    public auth: AuthService
+    public auth: AuthService,
   ) {}
-
-  // ============================================================
-  // Init
-  // ============================================================
 
   ngOnInit(): void {
     this.loadAccount();
+  }
+
+  setActiveTab(tab: AccountTab): void {
+    this.activeTab.set(tab);
   }
 
   loadAccount(): void {
@@ -43,11 +42,12 @@ export class CompanyMyAccount implements OnInit {
         this.profile.set(data);
         this.loading.set(false);
       },
-      error: () => {
+      error: (error) => {
+        console.error('Failed to load company account:', error);
         this.profile.set(null);
         this.loadError.set(true);
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -55,48 +55,39 @@ export class CompanyMyAccount implements OnInit {
     const element = document.getElementById('account-pdf-content');
     if (!element) return;
 
-    if (
-      typeof (window as any).html2pdf === 'undefined'
-    ) {
+    if (typeof (window as any).html2pdf === 'undefined') {
       await this.loadPdfScript();
     }
 
-    const html2pdf =
-      (window as any).html2pdf;
-
-    const opt = {
-      margin: 10,
-      filename: `بيانات_الحساب_${new Date().toISOString().slice(0, 10)}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+    const html2pdf = (window as any).html2pdf;
+    if (!html2pdf) return;
 
     html2pdf()
-      .set(opt)
+      .set({
+        margin: 10,
+        filename: `بيانات_الحساب_${new Date().toISOString().slice(0, 10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      })
       .from(element)
       .save();
   }
 
-  // ============================================================
-  // Load PDF Library
-  // ============================================================
-
   private loadPdfScript(): Promise<void> {
-
     return new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[data-html2pdf="true"]');
+      if (existing) {
+        resolve();
+        return;
+      }
 
-      const script =
-        document.createElement('script');
-
+      const script = document.createElement('script');
       script.src =
         'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-
+      script.setAttribute('data-html2pdf', 'true');
       script.onload = () => resolve();
-
-      script.onerror = (error) =>
-        reject(error);
-
+      script.onerror = (error) => reject(error);
       document.body.appendChild(script);
     });
   }
