@@ -1,5 +1,3 @@
-
-
 import {
   Component,
   OnInit,
@@ -129,6 +127,14 @@ export class TrainerContent implements OnInit {
           module.isArchived
       )
     );
+
+
+  // =====================================================
+  // PROGRAM CONTENT ACCORDION
+  // =====================================================
+
+  expandedModuleId =
+    signal<number | null>(null);
 
 
   // =====================================================
@@ -677,6 +683,24 @@ showDeleteMaterialModal =
             null;
 
 
+          const currentExpandedModuleId =
+            this.expandedModuleId();
+
+          const currentExpandedStillActive =
+            currentExpandedModuleId !== null &&
+            sortedModules.some(
+              module =>
+                module.moduleId === currentExpandedModuleId &&
+                !module.isArchived
+            );
+
+          if (!currentExpandedStillActive) {
+            this.expandedModuleId.set(
+              firstActiveModule?.moduleId ?? null
+            );
+          }
+
+
           this.loadAllLessons(
             sortedModules
           );
@@ -1004,6 +1028,8 @@ showDeleteMaterialModal =
 
     this.referenceLessonId =
       null;
+
+    this.expandedModuleId.set(null);
 
     this.loading.set(false);
 
@@ -1436,6 +1462,20 @@ archiveModule(
         }
 
 
+        if (
+          this.expandedModuleId() ===
+          module.moduleId
+        ) {
+
+          this.expandedModuleId.set(
+            this.activeModules()[0]
+              ?.moduleId ??
+            null
+          );
+
+        }
+
+
         this.saving.set(
           false
         );
@@ -1544,6 +1584,10 @@ restoreModule(
 
         this.selectedModuleId =
           module.moduleId;
+
+        this.expandedModuleId.set(
+          module.moduleId
+        );
 
 
         this.saving.set(
@@ -2047,6 +2091,62 @@ confirmDeleteMaterial(): void {
     });
 
 }
+  // =====================================================
+  // PROGRAM ACCORDION HELPERS
+  // =====================================================
+
+  toggleModule(
+    moduleId: number
+  ): void {
+
+    this.expandedModuleId.update(
+      current =>
+        current === moduleId
+          ? null
+          : moduleId
+    );
+
+  }
+
+
+  isModuleExpanded(
+    moduleId: number
+  ): boolean {
+
+    return (
+      this.expandedModuleId() ===
+      moduleId
+    );
+
+  }
+
+
+  getModuleMaterialCount(
+    moduleId: number
+  ): number {
+
+    const lessonIds =
+      this.getLessonsForModule(
+        moduleId
+      )
+        .map(
+          lesson =>
+            lesson.lessonId
+        );
+
+    const materialsMap =
+      this.materialsByLesson();
+
+    return lessonIds.reduce(
+      (total, lessonId) =>
+        total +
+        (materialsMap[lessonId]?.length ?? 0),
+      0
+    );
+
+  }
+
+
   // =====================================================
   // HELPERS
   // =====================================================

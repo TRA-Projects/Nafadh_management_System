@@ -425,7 +425,7 @@
 
     <section class="program-content">
 
-      <div class="section-heading">
+      <div class="section-heading program-heading">
 
         <div class="section-heading-copy">
 
@@ -434,15 +434,8 @@
           </div>
 
           <div>
-
-            <h2>
-              محتوى البرنامج
-            </h2>
-
-            <p>
-              {{ getProgramName() }}
-            </p>
-
+            <h2>محتوى البرنامج</h2>
+            <p>{{ getProgramName() }}</p>
           </div>
 
         </div>
@@ -465,205 +458,249 @@
       </div>
 
 
-      <div class="modules-grid">
+      <div class="program-modules-list">
 
         @for (
           module of activeModules();
           track module.moduleId
         ) {
 
-          <article class="module-box">
+          <article
+            class="program-module-card"
+            [class.expanded]="isModuleExpanded(module.moduleId)"
+          >
 
-            <div class="module-header">
-
-              <div class="module-title">
-
-                <div class="module-title-icon">
-                  <i class="fa-solid fa-book"></i>
-                </div>
-
-                <div class="module-title-copy">
-
-                  <strong>
-                    {{ module.title }}
-                  </strong>
-
-                  <span class="module-order">
-                    ترتيب {{ module.orderIndex }}
-                  </span>
-
-                </div>
-
-              </div>
-
+            <div class="program-module-header">
 
               <button
                 type="button"
-                class="module-archive-btn"
-                (click)="archiveModule(module)"
-                [disabled]="saving()"
-                title="أرشفة الوحدة"
+                class="program-module-main"
+                (click)="toggleModule(module.moduleId)"
+                [attr.aria-expanded]="isModuleExpanded(module.moduleId)"
               >
-                <i class="fa-solid fa-box-archive"></i>
-                <span>أرشفة</span>
-              </button>
 
-            </div>
-
-
-            <div class="lesson-list">
-
-              @for (
-                lesson of getLessonsForModule(module.moduleId);
-                track lesson.lessonId
-              ) {
-
-                <div class="lesson-row">
-
-                  <div class="lesson-main">
-
-                    <div class="lesson-icon">
-                      <i class="fa-solid fa-file-lines"></i>
-                    </div>
+                <div class="module-number">
+                  {{ module.orderIndex }}
+                </div>
 
 
-                    <div class="lesson-content">
+                <div class="module-summary-copy">
 
-                      <strong class="lesson-title">
-                        {{
-                          lesson.title ||
-                          'درس بدون عنوان'
-                        }}
-                      </strong>
+                  <div class="module-summary-title-line">
 
+                    <span class="module-label">
+                      الوحدة {{ module.orderIndex }}
+                    </span>
 
-                      @if (lesson.contentBody) {
+                    <strong>
+                      {{ module.title }}
+                    </strong>
 
-                        <p>
-                          {{ lesson.contentBody }}
-                        </p>
-
-                      }
-
-                    </div>
+                    <span class="module-active-badge">
+                      نشطة
+                    </span>
 
                   </div>
 
 
-                  <!-- =====================================
-                       TRAINING MATERIALS
-                  ====================================== -->
+                  <div class="module-summary-meta">
 
-                  @if (
-                    (materialsByLesson()[lesson.lessonId] ?? []).length > 0
+                    <span>
+                      <i class="fa-regular fa-file-lines"></i>
+                      {{ getLessonsForModule(module.moduleId).length }} درس
+                    </span>
+
+                    <span>
+                      <i class="fa-solid fa-paperclip"></i>
+                      {{ getModuleMaterialCount(module.moduleId) }} مادة
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </button>
+
+
+              <div class="module-header-tools">
+
+                <button
+                  type="button"
+                  class="module-archive-btn"
+                  (click)="archiveModule(module)"
+                  [disabled]="saving()"
+                  title="أرشفة الوحدة"
+                >
+                  <i class="fa-solid fa-box-archive"></i>
+                  <span>أرشفة</span>
+                </button>
+
+
+                <button
+                  type="button"
+                  class="module-chevron-btn"
+                  (click)="toggleModule(module.moduleId)"
+                  [attr.aria-label]="
+                    isModuleExpanded(module.moduleId)
+                      ? 'إغلاق الوحدة'
+                      : 'فتح الوحدة'
+                  "
+                >
+                  <i
+                    class="fa-solid fa-chevron-down"
+                    [class.rotated]="isModuleExpanded(module.moduleId)"
+                  ></i>
+                </button>
+
+              </div>
+
+            </div>
+
+
+            @if (isModuleExpanded(module.moduleId)) {
+
+              <div class="program-module-body">
+
+                <div class="module-lessons-head">
+
+                  <span>دروس الوحدة</span>
+
+                  <span>
+                    {{ getLessonsForModule(module.moduleId).length }} درس
+                  </span>
+
+                </div>
+
+
+                <div class="program-lessons-list">
+
+                  @for (
+                    lesson of getLessonsForModule(module.moduleId);
+                    track lesson.lessonId
                   ) {
 
-                    <div class="lesson-materials">
+                    <div class="program-lesson-row">
 
-                      <div class="materials-title">
-                        <i class="fa-solid fa-paperclip"></i>
-                        <span>المواد التعليمية</span>
+                      <div class="program-lesson-top">
+
+                        <div class="program-lesson-info">
+
+                          <div class="program-lesson-icon">
+                            <i class="fa-regular fa-file-lines"></i>
+                          </div>
+
+
+                          <div class="program-lesson-copy">
+
+                            <strong>
+                              {{ lesson.title || 'درس بدون عنوان' }}
+                            </strong>
+
+                            @if (lesson.contentBody) {
+                              <p>{{ lesson.contentBody }}</p>
+                            }
+                            @else {
+                              <p>لا يوجد وصف مضاف لهذا الدرس.</p>
+                            }
+
+                          </div>
+
+                        </div>
+
+
+                        <span class="program-lesson-order">
+                          درس {{ lesson.orderIndex ?? '-' }}
+                        </span>
+
                       </div>
 
 
-                      @for (
-                        material of materialsByLesson()[lesson.lessonId] ?? [];
-                        track material.materialId
+                      @if (
+                        (materialsByLesson()[lesson.lessonId] ?? []).length > 0
                       ) {
 
-                        <div class="material-item">
+                        <div class="lesson-materials accordion-materials">
 
-                          <div class="material-file-icon">
-                            <i [class]="getMaterialIcon(material.fileType)"></i>
+                          <div class="materials-title">
+                            <i class="fa-solid fa-paperclip"></i>
+                            <span>المواد التعليمية</span>
                           </div>
 
 
-                          <div class="material-info">
+                          @for (
+                            material of materialsByLesson()[lesson.lessonId] ?? [];
+                            track material.materialId
+                          ) {
 
-                            <a
-                              [href]="getMaterialUrl(material)"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              class="material-link"
-                            >
-                              {{
-                                material.fileType === 'Link'
-                                  ? 'فتح المرجع'
-                                  : getMaterialName(material)
-                              }}
-                            </a>
+                            <div class="material-item">
+
+                              <div class="material-file-icon">
+                                <i [class]="getMaterialIcon(material.fileType)"></i>
+                              </div>
 
 
-                            @if (
-                              material.fileType === 'Link'
-                            ) {
+                              <div class="material-info">
 
-                              <span class="material-url">
-                                {{ material.fileUrl }}
+                                <a
+                                  [href]="getMaterialUrl(material)"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  class="material-link"
+                                >
+                                  {{
+                                    material.fileType === 'Link'
+                                      ? 'فتح المرجع'
+                                      : getMaterialName(material)
+                                  }}
+                                </a>
+
+                                @if (material.fileType === 'Link') {
+                                  <span class="material-url">
+                                    {{ material.fileUrl }}
+                                  </span>
+                                }
+
+                              </div>
+
+
+                              <span class="material-type">
+
+                                @switch (material.fileType) {
+                                  @case ('Pdf') { PDF }
+                                  @case ('Video') { فيديو }
+                                  @case ('Image') { صورة }
+                                  @case ('Document') { مستند }
+                                  @case ('Link') { رابط }
+                                  @default { ملف }
+                                }
+
                               </span>
 
-                            }
 
-                          </div>
+                              <button
+                                type="button"
+                                class="material-delete-btn"
+                                (click)="openDeleteMaterialModal(material, lesson.lessonId)"
+                                [disabled]="
+                                  deletingMaterialId() === material.materialId
+                                "
+                                title="حذف المادة"
+                              >
 
+                                @if (
+                                  deletingMaterialId() === material.materialId
+                                ) {
+                                  <i class="fa-solid fa-spinner fa-spin"></i>
+                                }
+                                @else {
+                                  <i class="fa-solid fa-trash-can"></i>
+                                }
 
-                          <span class="material-type">
+                              </button>
 
-                            @switch (material.fileType) {
+                            </div>
 
-                              @case ('Pdf') {
-                                PDF
-                              }
-
-                              @case ('Video') {
-                                فيديو
-                              }
-
-                              @case ('Image') {
-                                صورة
-                              }
-
-                              @case ('Document') {
-                                مستند
-                              }
-
-                              @case ('Link') {
-                                رابط
-                              }
-
-                              @default {
-                                ملف
-                              }
-
-                            }
-
-                          </span>
-
-
-                          <button
-                            type="button"
-                            class="material-delete-btn"
-                            (click)="openDeleteMaterialModal(material, lesson.lessonId)"
-                            [disabled]="
-                              deletingMaterialId() === material.materialId
-                            "
-                            title="حذف المادة"
-                          >
-
-                            @if (
-                              deletingMaterialId() === material.materialId
-                            ) {
-
-                              <i class="fa-solid fa-spinner fa-spin"></i>
-
-                            }
-                            @else {
-
-                              <i class="fa-solid fa-trash-can"></i>
-
-                            }
-
-                          </button>
+                          }
 
                         </div>
 
@@ -672,29 +709,21 @@
                     </div>
 
                   }
+                  @empty {
+
+                    <div class="module-empty accordion-empty">
+                      <i class="fa-regular fa-file-lines"></i>
+                      <strong>لا توجد دروس داخل هذه الوحدة بعد</strong>
+                      <span>يمكنك إضافة أول درس من زر إنشاء درس.</span>
+                    </div>
+
+                  }
 
                 </div>
 
-              }
-              @empty {
+              </div>
 
-                <div class="module-empty">
-
-                  <i class="fa-regular fa-file-lines"></i>
-
-                  <strong>
-                    لا توجد دروس داخل هذه الوحدة بعد
-                  </strong>
-
-                  <span>
-                    يمكنك إضافة أول درس من زر إنشاء درس.
-                  </span>
-
-                </div>
-
-              }
-
-            </div>
+            }
 
           </article>
 
@@ -707,15 +736,12 @@
               <i class="fa-solid fa-layer-group"></i>
             </div>
 
-            <strong>
-              لا توجد وحدات في هذا البرنامج بعد
-            </strong>
+            <strong>لا توجد وحدات في هذا البرنامج بعد</strong>
 
             <p>
               ابدئي بإنشاء أول وحدة، وبعدها يمكنك
               إضافة الدروس والمواد التعليمية.
             </p>
-
 
             <button
               type="button"

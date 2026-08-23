@@ -513,12 +513,12 @@ button:disabled {
 }
 
 /* =========================================================
-   PROGRAM CONTENT
+   PROGRAM CONTENT - ACCORDION STYLE
 ========================================================= */
 
 .program-content {
-  padding-top: 24px;
-  margin-top: 28px;
+  padding-top: 28px;
+  margin-top: 30px;
   border-top: 1px solid #edf2f6;
 }
 
@@ -527,133 +527,196 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 17px;
+  margin-bottom: 20px;
 }
 
 .section-heading-copy {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
 
 .section-heading-icon {
-  width: 39px;
-  height: 39px;
-  flex: 0 0 39px;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
   display: grid;
   place-items: center;
-  border-radius: 11px;
-  background: #eaf7fa;
-  color: #0095a8;
-  font-size: 15px;
+  border-radius: 13px;
+  background: #eaf8fb;
+  color: #0098ad;
+  font-size: 18px;
 }
 
 .section-heading h2 {
-  margin: 0 0 3px;
+  margin: 0 0 4px;
   color: #172b43;
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 850;
 }
 
 .section-heading p {
   margin: 0;
-  color: #7a899a;
+  color: #8795a5;
   font-size: 11px;
 }
 
 .section-counts {
   display: flex;
-  gap: 7px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
 .section-counts span {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 9px;
+  gap: 6px;
+  padding: 7px 11px;
   border-radius: 999px;
   background: #f1f5f9;
   color: #64748b;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 750;
 }
 
 /* =========================================================
-   MODULES
+   MODULE ACCORDION LIST
 ========================================================= */
 
-.modules-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 17px;
-  align-items: start;
+.program-modules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
 }
 
-.module-box {
-  min-width: 0;
+.program-module-card {
   overflow: hidden;
   border: 1px solid #dce5ed;
   border-radius: 15px;
-  background: #fbfcfe;
+  background: #ffffff;
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease;
 }
 
-.module-header {
+.program-module-card.expanded {
+  border-color: #2d8cff;
+  box-shadow: 0 8px 24px rgba(45, 140, 255, .06);
+}
+
+.program-module-header {
+  min-height: 88px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  padding: 14px 15px;
-  border-bottom: 1px solid #e8eef4;
-  background: #f7fafc;
+  padding: 0 16px;
+  background: #ffffff;
 }
 
-.module-title {
+.program-module-main {
   min-width: 0;
+  flex: 1;
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 12px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: right;
+  cursor: pointer;
+}
+
+.module-number {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #eef4fb;
+  color: #5d7188;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.program-module-card.expanded .module-number {
+  background: #eaf4ff;
+  color: #1471d8;
+}
+
+.module-summary-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.module-summary-title-line {
   display: flex;
   align-items: center;
   gap: 9px;
+  flex-wrap: wrap;
 }
 
-.module-title-icon {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 9px;
-  background: #eaf5ff;
-  color: #2b73cf;
-  font-size: 13px;
+.module-label {
+  color: #98a5b4;
+  font-size: 10px;
+  font-weight: 650;
 }
 
-.module-title-copy {
+.module-summary-title-line strong {
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.module-title-copy strong {
-  overflow: hidden;
   color: #172b43;
-  font-size: 14px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 850;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.module-order {
-  color: #8b98a8;
+.module-active-badge {
+  flex-shrink: 0;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #eaf9f2;
+  color: #13a060;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.module-summary-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+  color: #8291a2;
   font-size: 10px;
 }
 
-.module-archive-btn {
-  min-height: 32px;
+.module-summary-meta span {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+}
+
+.module-summary-meta i {
+  color: #6f91b6;
+}
+
+.module-header-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.module-archive-btn {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 0 10px;
   border: 1px solid #f1c98f;
   border-radius: 9px;
@@ -661,7 +724,7 @@ button:disabled {
   color: #b96900;
   font-family: inherit;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 750;
   cursor: pointer;
 }
 
@@ -670,61 +733,131 @@ button:disabled {
   border-color: #e7b269;
 }
 
-.lesson-list {
-  display: flex;
-  flex-direction: column;
+.module-chevron-btn {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #91a0b2;
+  cursor: pointer;
 }
 
-.lesson-row {
-  padding: 13px 14px;
+.module-chevron-btn:hover {
+  background: #f4f7fa;
+  color: #3978be;
+}
+
+.module-chevron-btn i {
+  font-size: 11px;
+  transition: transform .2s ease;
+}
+
+.module-chevron-btn i.rotated {
+  transform: rotate(180deg);
+}
+
+/* =========================================================
+   EXPANDED MODULE BODY
+========================================================= */
+
+.program-module-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid #edf1f5;
   background: #ffffff;
+}
+
+.module-lessons-head {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #8290a1;
+  font-size: 10px;
+}
+
+.module-lessons-head span:first-child {
+  color: #748397;
+  font-weight: 750;
+}
+
+.program-lessons-list {
+  border-top: 1px solid #edf1f5;
+}
+
+.program-lesson-row {
+  padding: 15px 2px;
   border-bottom: 1px solid #edf1f5;
 }
 
-.lesson-row:last-child {
+.program-lesson-row:last-child {
   border-bottom: 0;
 }
 
-.lesson-main {
+.program-lesson-top {
   display: flex;
   align-items: flex-start;
-  gap: 9px;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.lesson-icon {
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
+.program-lesson-info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.program-lesson-icon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
   display: grid;
   place-items: center;
   margin-top: 1px;
-  border-radius: 8px;
-  background: #f4f1fb;
-  color: #8068b5;
-  font-size: 12px;
+  border-radius: 50%;
+  background: #eaf9f7;
+  color: #16aaa0;
+  font-size: 11px;
 }
 
-.lesson-content {
+.program-lesson-copy {
   min-width: 0;
   flex: 1;
 }
 
-.lesson-title {
+.program-lesson-copy strong {
   display: block;
-  color: #334155;
+  color: #172b43;
   font-size: 13px;
-  font-weight: 750;
+  font-weight: 800;
 }
 
-.lesson-content > p {
+.program-lesson-copy p {
   margin: 4px 0 0;
-  color: #7f8c9d;
-  font-size: 11px;
-  line-height: 1.65;
+  color: #99a4b2;
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.program-lesson-order {
+  flex-shrink: 0;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #f2f6fa;
+  color: #738296;
+  font-size: 9px;
+  font-weight: 700;
 }
 
 /* =========================================================
-   MATERIALS
+   TRAINING MATERIALS INSIDE ACCORDION
 ========================================================= */
 
 .lesson-materials {
@@ -733,14 +866,18 @@ button:disabled {
   gap: 6px;
   padding-top: 10px;
   margin-top: 10px;
-  border-top: 1px solid #eef2f6;
+  border-top: 1px solid #f0f3f6;
+}
+
+.accordion-materials {
+  margin-right: 38px;
 }
 
 .materials-title {
   display: flex;
   align-items: center;
   gap: 5px;
-  margin-bottom: 1px;
+  margin-bottom: 2px;
   color: #64748b;
   font-size: 10px;
   font-weight: 800;
@@ -857,8 +994,12 @@ button:disabled {
   font-size: 10px;
 }
 
+.accordion-empty {
+  border: 0;
+  border-radius: 0;
+}
+
 .empty-content {
-  grid-column: 1 / -1;
   min-height: 190px;
   padding: 30px;
   display: flex;
@@ -1509,5 +1650,93 @@ button:disabled {
   .restore-btn {
     width: 100%;
     justify-content: center;
+  }
+}
+
+
+/* =========================================================
+   PROGRAM ACCORDION RESPONSIVE
+========================================================= */
+
+@media (max-width: 720px) {
+  .program-module-header {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .program-module-main {
+    min-height: auto;
+    align-items: flex-start;
+    padding: 0;
+  }
+
+  .module-summary-title-line strong {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .module-summary-meta {
+    flex-wrap: wrap;
+    gap: 7px 12px;
+  }
+
+  .module-header-tools {
+    flex-direction: column;
+  }
+
+  .module-archive-btn span {
+    display: none;
+  }
+
+  .module-archive-btn {
+    width: 34px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .program-module-body {
+    padding: 0 12px 12px;
+  }
+
+  .program-lesson-top {
+    flex-direction: column;
+  }
+
+  .program-lesson-order {
+    margin-right: 38px;
+  }
+
+  .accordion-materials {
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .section-counts {
+    width: 100%;
+  }
+
+  .section-counts span {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .module-number {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+
+  .module-summary-title-line {
+    gap: 6px;
+  }
+
+  .module-summary-title-line strong {
+    font-size: 14px;
+  }
+
+  .material-item {
+    align-items: flex-start;
+    flex-wrap: wrap;
   }
 }
