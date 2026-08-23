@@ -622,14 +622,17 @@ getSubmissionFile(
 
 
   createCriterion(
-    dto: unknown
-  ) {
+  dto: unknown
+): Observable<string> {
 
-    return this.http.post(
-      `${this.base}/EvaluationCriterion/CreateCriterion`,
-      dto
-    );
-  }
+  return this.http.post(
+    `${this.base}/EvaluationCriterion/CreateCriterion`,
+    dto,
+    {
+      responseType: 'text'
+    }
+  );
+}
 // =====================================================
 // UPDATE EVALUATION CRITERION
 // =====================================================

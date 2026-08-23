@@ -1449,93 +1449,151 @@ criterionEditForm = {
 
 
   // =====================================================
-  // ADD CRITERION
-  // =====================================================
+// ADD CRITERION
+// =====================================================
 
-  addCriterion(): void {
+addCriterion(): void {
 
-    const templateId =
-      this.templateDetail()
-        ?.templateId;
-
-
-    if (!templateId) {
-
-      return;
-    }
+  const templateId =
+    this.templateDetail()
+      ?.templateId;
 
 
-    this.api
-      .createCriterion({
-
-        templateId,
-
-        name:
-          this.newCriterion.name,
-
-        weight:
-          this.newCriterion.weight,
-
-        maxPoints:
-          this.newCriterion.maxPoints
-
-      })
-      .subscribe({
-
-        next: () => {
-
-          this.showAddCriterion.set(
-            false
-          );
-
-
-          this.newCriterion = {
-
-            name: '',
-
-            weight: 0,
-
-            maxPoints: 0
-
-          };
-
-
-          this.api
-            .getTemplateDetail(
-              templateId
-            )
-            .subscribe({
-
-              next: (detail) => {
-
-                this.templateDetail.set(
-                  detail
-                );
-              },
-
-
-              error: (err) => {
-
-                console.error(
-                  'خطأ في إعادة تحميل تفاصيل نموذج التقييم:',
-                  err
-                );
-              }
-
-            });
-        },
-
-
-        error: (err) => {
-
-          console.error(
-            'خطأ في إضافة معيار التقييم:',
-            err
-          );
-        }
-
-      });
+  if (!templateId) {
+    return;
   }
+
+
+  const name =
+    this.newCriterion.name.trim();
+
+  const weight =
+    Number(
+      this.newCriterion.weight
+    );
+
+  const maxPoints =
+    Number(
+      this.newCriterion.maxPoints
+    );
+
+
+  if (!name) {
+
+    window.alert(
+      'أدخلي اسم المعيار.'
+    );
+
+    return;
+  }
+
+
+  if (
+    !Number.isFinite(weight) ||
+    weight <= 0 ||
+    weight > 100
+  ) {
+
+    window.alert(
+      'أدخلي وزنًا صحيحًا من 1 إلى 100.'
+    );
+
+    return;
+  }
+
+
+  if (
+    !Number.isFinite(maxPoints) ||
+    maxPoints <= 0
+  ) {
+
+    window.alert(
+      'أدخلي الحد الأقصى للدرجة بشكل صحيح.'
+    );
+
+    return;
+  }
+
+
+  this.api
+    .createCriterion({
+
+      templateId,
+
+      name,
+
+      weight,
+
+      maxPoints
+
+    })
+    .subscribe({
+
+      next: () => {
+
+        this.showAddCriterion.set(
+          false
+        );
+
+
+        this.newCriterion = {
+          name: '',
+          weight: 0,
+          maxPoints: 0
+        };
+
+
+        window.alert(
+          'تمت إضافة معيار التقييم بنجاح.'
+        );
+
+
+        this.api
+          .getTemplateDetail(
+            templateId
+          )
+          .subscribe({
+
+            next: (detail) => {
+
+              this.templateDetail.set(
+                detail
+              );
+
+            },
+
+
+            error: (err) => {
+
+              console.error(
+                'خطأ في إعادة تحميل تفاصيل نموذج التقييم:',
+                err
+              );
+
+            }
+
+          });
+
+      },
+
+
+      error: (err) => {
+
+        console.error(
+          'خطأ في إضافة معيار التقييم:',
+          err
+        );
+
+
+        window.alert(
+          'تعذر إضافة معيار التقييم.'
+        );
+
+      }
+
+    });
+
+}
 // =====================================================
 // DELETE CRITERION
 // =====================================================
