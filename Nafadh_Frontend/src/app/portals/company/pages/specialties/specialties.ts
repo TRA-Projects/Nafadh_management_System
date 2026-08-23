@@ -102,19 +102,23 @@ export class CompanySpecialties implements OnInit {
   }
 
   getDepartmentDistribution(): { name: string; count: number; color: string }[] {
-    const counts = new Map<string, number>();
+  const departmentMap = new Map<string, { count: number; color: string }>();
 
-    for (const card of this.cards()) {
-      const department = card.department || 'غير محدد';
-      counts.set(department, (counts.get(department) ?? 0) + 1);
+  for (const card of this.cards()) {
+    const department = card.department || 'غير محدد';
+    if (!departmentMap.has(department)) {
+      departmentMap.set(department, { count: 0, color: card.color });
     }
-
-    return Array.from(counts.entries()).map(([name, count]) => ({
-      name,
-      count,
-      color: this.departmentColors[name] || '#64748b',
-    }));
+    const current = departmentMap.get(department)!;
+    current.count++;
   }
+
+  return Array.from(departmentMap.entries()).map(([name, data]) => ({
+    name,
+    count: data.count,
+    color: data.color,
+  }));
+}
 
   openDetails(card: SpecialtyCard): void {
     this.router.navigate(['/company/specialties', card.programId]);
