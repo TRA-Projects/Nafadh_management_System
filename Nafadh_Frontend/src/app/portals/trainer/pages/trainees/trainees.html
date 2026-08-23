@@ -1428,10 +1428,9 @@
      <button
   type="button"
   class="nfd-btn secondary"
-  (click)="showEvalModal.set(false)">
-
-  إغلاق التقييم
-
+  (click)="cancelCriterionEdit()"
+>
+  إلغاء التعديل
 </button>
 
     </div>
@@ -1530,14 +1529,13 @@
 
         <div class="nfd-modal-actions">
 
-          <button
-            type="button"
-            class="nfd-btn secondary"
-            (click)="showEvalModal.set(false)">
-
-            إلغاء
-
-          </button>
+        <button
+  type="button"
+  class="nfd-btn secondary"
+  (click)="showEvalModal.set(false)"
+>
+  إغلاق التقييم
+</button>
 
 
           <button
