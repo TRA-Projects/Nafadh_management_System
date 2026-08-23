@@ -87,9 +87,87 @@
         overflow-wrap:anywhere;
         font-size:14px;
         line-height:1.7;
+        display:flex;
+        align-items:center;
+        gap:9px;
+        padding:13px 16px;
+        border-radius:10px;
       "
     >
-      {{ errorMessage() }}
+
+      <span
+        style="
+          width:24px;
+          height:24px;
+          min-width:24px;
+          border-radius:50%;
+          background:var(--status-new-fg);
+          color:var(--status-new-bg);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          font-size:14px;
+          font-weight:700;
+        "
+      >
+        !
+      </span>
+
+      <span>
+        {{ errorMessage() }}
+      </span>
+
+    </div>
+
+  }
+
+
+  <!-- ========================================================= -->
+  <!-- SUCCESS MESSAGE -->
+  <!-- ========================================================= -->
+
+  @if (successMessage()) {
+
+    <div
+      class="nfd-card"
+      style="
+        margin-bottom:14px;
+        background:var(--status-completed-bg);
+        color:var(--status-completed-fg);
+        overflow-wrap:anywhere;
+        font-size:14px;
+        line-height:1.7;
+        display:flex;
+        align-items:center;
+        gap:9px;
+        padding:13px 16px;
+        border-radius:10px;
+        font-weight:600;
+      "
+    >
+
+      <span
+        style="
+          width:24px;
+          height:24px;
+          min-width:24px;
+          border-radius:50%;
+          background:var(--status-completed-fg);
+          color:var(--status-completed-bg);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          font-size:14px;
+          font-weight:700;
+        "
+      >
+        ✓
+      </span>
+
+      <span>
+        {{ successMessage() }}
+      </span>
+
     </div>
 
   }
@@ -200,7 +278,6 @@
                   </svg>
 
                 </div>
-
 
                 <span
                   class="nfd-badge"
@@ -328,8 +405,13 @@
                     font-size:12px;
                   "
                 >
+
                   <span>⚠</span>
-                  <span>انتهى موعد التسليم</span>
+
+                  <span>
+                    انتهى موعد التسليم
+                  </span>
+
                 </div>
 
               }
@@ -459,9 +541,11 @@
             font-size:14px;
           "
         >
+
           <p class="nfd-muted">
             لا توجد مهام لهذا الباتش حاليًا.
           </p>
+
         </div>
 
       }
@@ -492,9 +576,11 @@
       ← العودة إلى المهام
     </button>
 
+
     @let submission = submissionFor(t.taskId);
     @let deadlinePassed = isDeadlinePassed(t);
     @let taskStatus = displayTaskStatus(t);
+
 
     <div
       class="nfd-card"
@@ -546,6 +632,7 @@
 
         </div>
 
+
         <span
           class="nfd-badge"
           style="
@@ -581,6 +668,8 @@
       </div>
 
 
+      <!-- DEADLINE -->
+
       <div
         style="
           background:var(--color-tint-indigo);
@@ -612,6 +701,8 @@
 
       </div>
 
+
+      <!-- GRADE -->
 
       @if (submission) {
 
@@ -679,6 +770,10 @@
       }
 
 
+      <!-- ===================================================== -->
+      <!-- SUBMISSION -->
+      <!-- ===================================================== -->
+
       @if (taskStatus !== 'مكتمل') {
 
         <div>
@@ -704,12 +799,16 @@
             الصق رابط التسليم GitHub أو Google Drive أو أي رابط خارجي.
           </p>
 
+
+          <!-- SUBMISSION URL INPUT -->
+
           <input
             class="nfd-input"
             dir="ltr"
             [(ngModel)]="submissionLink"
             placeholder="https://github.com/..."
-            [disabled]="deadlinePassed"
+            autocomplete="url"
+            [disabled]="deadlinePassed || submitting()"
             style="
               width:100%;
               box-sizing:border-box;
@@ -717,6 +816,74 @@
               padding:11px;
             "
           />
+
+
+          <!-- URL VALIDATION MESSAGE -->
+
+          @if (
+            submissionLink.trim() &&
+            !isValidSubmissionUrl(submissionLink)
+          ) {
+
+            <div
+              style="
+                display:flex;
+                align-items:flex-start;
+                gap:8px;
+                margin-top:9px;
+                padding:10px 12px;
+                border-radius:9px;
+                background:var(--status-new-bg);
+                color:var(--status-new-fg);
+                font-size:12px;
+                line-height:1.7;
+              "
+            >
+
+              <span>⚠</span>
+
+              <span>
+                {{ getSubmissionUrlError() }}
+              </span>
+
+            </div>
+
+          }
+
+
+          <!-- VALID URL MESSAGE -->
+
+          @if (
+            submissionLink.trim() &&
+            isValidSubmissionUrl(submissionLink)
+          ) {
+
+            <div
+              style="
+                display:flex;
+                align-items:center;
+                gap:7px;
+                margin-top:9px;
+                padding:9px 12px;
+                border-radius:9px;
+                background:var(--status-completed-bg);
+                color:var(--status-completed-fg);
+                font-size:12px;
+              "
+            >
+
+              <span>✓</span>
+
+              <span>
+                الرابط صالح ويمكن إرساله.
+              </span>
+
+            </div>
+
+          }
+
+
+          <!-- DEADLINE -->
 
           @if (deadlinePassed) {
 
@@ -754,14 +921,19 @@
                 (click)="submit()"
                 [disabled]="
                   !submissionLink.trim() ||
+                  !isValidSubmissionUrl(submissionLink) ||
                   submitting()
                 "
               >
 
                 @if (submitting()) {
+
                   جاري التسليم...
+
                 } @else {
+
                   {{ submission ? 'إعادة التسليم' : 'تسليم المهمة' }}
+
                 }
 
               </button>
@@ -841,8 +1013,6 @@
               (click)="selectProject(project)"
             >
 
-              <!-- PROJECT HEADER -->
-
               <div
                 style="
                   display:flex;
@@ -852,8 +1022,6 @@
                   direction:rtl;
                 "
               >
-
-                <!-- Project Icon -->
 
                 <div
                   style="
@@ -887,32 +1055,16 @@
                       rx="3"
                     ></rect>
 
-                    <path
-                      d="M8 4V2"
-                    ></path>
-
-                    <path
-                      d="M16 4V2"
-                    ></path>
-
-                    <path
-                      d="M3 9h18"
-                    ></path>
-
-                    <path
-                      d="M8 13h3"
-                    ></path>
-
-                    <path
-                      d="M8 16h5"
-                    ></path>
+                    <path d="M8 4V2"></path>
+                    <path d="M16 4V2"></path>
+                    <path d="M3 9h18"></path>
+                    <path d="M8 13h3"></path>
+                    <path d="M8 16h5"></path>
 
                   </svg>
 
                 </div>
 
-
-                <!-- Project Content -->
 
                 <div
                   style="
@@ -978,8 +1130,6 @@
                   </p>
 
 
-                  <!-- Dates -->
-
                   <div
                     style="
                       display:flex;
@@ -994,6 +1144,7 @@
 
                     <span>
                       البداية:
+
                       <strong
                         style="
                           color:var(--color-text-secondary);
@@ -1007,6 +1158,7 @@
                       </strong>
                     </span>
 
+
                     <span
                       style="
                         width:4px;
@@ -1017,8 +1169,10 @@
                       "
                     ></span>
 
+
                     <span>
                       النهاية:
+
                       <strong
                         style="
                           color:var(--color-text-secondary);
@@ -1039,9 +1193,7 @@
               </div>
 
 
-              <!-- ================================================= -->
-              <!-- STATIC PROJECT STAGES -->
-              <!-- ================================================= -->
+              <!-- PROJECT STAGES -->
 
               <div
                 style="
@@ -1059,337 +1211,100 @@
                   "
                 >
 
-                  <!-- التخطيط -->
-
-                  <div
-                    style="
-                      flex:1;
-                      min-width:0;
-                      display:flex;
-                      align-items:flex-start;
-                    "
-                  >
-
-                    <div
-                      style="
-                        display:flex;
-                        flex-direction:column;
-                        align-items:center;
-                        min-width:48px;
-                      "
-                    >
-
-                      <div
-                        style="
-                          width:24px;
-                          height:24px;
-                          border-radius:50%;
-                          display:flex;
-                          align-items:center;
-                          justify-content:center;
-                          font-size:9px;
-                          box-sizing:border-box;
-                          transition:.2s ease;
-                        "
-                        [style.background]="
-                          projectStagesCompleted(project)
-                            ? 'var(--color-navy)'
-                            : '#e2e8f0'
-                        "
-                        [style.color]="
-                          projectStagesCompleted(project)
-                            ? '#ffffff'
-                            : '#64748b'
-                        "
-                      >
-                        1
-                      </div>
-
-                      <span
-                        style="
-                          margin-top:5px;
-                          font-size:10px;
-                          white-space:nowrap;
-                          text-align:center;
-                        "
-                        [style.color]="
-                          projectStagesCompleted(project)
-                            ? 'var(--color-navy)'
-                            : 'var(--color-text-secondary)'
-                        "
-                        [style.font-weight]="
-                          projectStagesCompleted(project)
-                            ? '700'
-                            : '400'
-                        "
-                      >
-                        التخطيط
-                      </span>
-
-                    </div>
+                  @for (
+                    stage of ['التخطيط','التطوير','الاختبار','التسليم'];
+                    track stage;
+                    let i = $index
+                  ) {
 
                     <div
                       style="
                         flex:1;
-                        height:2px;
-                        margin-top:11px;
-                        min-width:10px;
-                        transition:.2s ease;
-                      "
-                      [style.background]="
-                        projectStagesCompleted(project)
-                          ? 'var(--color-navy)'
-                          : '#dfe4ec'
-                      "
-                    ></div>
-
-                  </div>
-
-
-                  <!-- التطوير -->
-
-                  <div
-                    style="
-                      flex:1;
-                      min-width:0;
-                      display:flex;
-                      align-items:flex-start;
-                    "
-                  >
-
-                    <div
-                      style="
+                        min-width:0;
                         display:flex;
-                        flex-direction:column;
-                        align-items:center;
-                        min-width:48px;
+                        align-items:flex-start;
                       "
                     >
 
                       <div
                         style="
-                          width:24px;
-                          height:24px;
-                          border-radius:50%;
                           display:flex;
+                          flex-direction:column;
                           align-items:center;
-                          justify-content:center;
-                          font-size:9px;
-                          box-sizing:border-box;
-                          transition:.2s ease;
-                        "
-                        [style.background]="
-                          projectStagesCompleted(project)
-                            ? 'var(--color-navy)'
-                            : '#e2e8f0'
-                        "
-                        [style.color]="
-                          projectStagesCompleted(project)
-                            ? '#ffffff'
-                            : '#64748b'
+                          min-width:48px;
                         "
                       >
-                        2
+
+                        <div
+                          style="
+                            width:24px;
+                            height:24px;
+                            border-radius:50%;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            font-size:9px;
+                            box-sizing:border-box;
+                          "
+                          [style.background]="
+                            projectStagesCompleted(project)
+                              ? 'var(--color-navy)'
+                              : '#e2e8f0'
+                          "
+                          [style.color]="
+                            projectStagesCompleted(project)
+                              ? '#ffffff'
+                              : '#64748b'
+                          "
+                        >
+                          {{ i + 1 }}
+                        </div>
+
+                        <span
+                          style="
+                            margin-top:5px;
+                            font-size:10px;
+                            white-space:nowrap;
+                            text-align:center;
+                          "
+                          [style.color]="
+                            projectStagesCompleted(project)
+                              ? 'var(--color-navy)'
+                              : 'var(--color-text-secondary)'
+                          "
+                          [style.font-weight]="
+                            projectStagesCompleted(project)
+                              ? '700'
+                              : '400'
+                          "
+                        >
+                          {{ stage }}
+                        </span>
+
                       </div>
 
-                      <span
-                        style="
-                          margin-top:5px;
-                          font-size:10px;
-                          white-space:nowrap;
-                          text-align:center;
-                        "
-                        [style.color]="
-                          projectStagesCompleted(project)
-                            ? 'var(--color-navy)'
-                            : 'var(--color-text-secondary)'
-                        "
-                        [style.font-weight]="
-                          projectStagesCompleted(project)
-                            ? '700'
-                            : '400'
-                        "
-                      >
-                        التطوير
-                      </span>
+
+                      @if (i < 3) {
+
+                        <div
+                          style="
+                            flex:1;
+                            height:2px;
+                            margin-top:11px;
+                            min-width:10px;
+                          "
+                          [style.background]="
+                            projectStagesCompleted(project)
+                              ? 'var(--color-navy)'
+                              : '#dfe4ec'
+                          "
+                        ></div>
+
+                      }
 
                     </div>
 
-                    <div
-                      style="
-                        flex:1;
-                        height:2px;
-                        margin-top:11px;
-                        min-width:10px;
-                        transition:.2s ease;
-                      "
-                      [style.background]="
-                        projectStagesCompleted(project)
-                          ? 'var(--color-navy)'
-                          : '#dfe4ec'
-                      "
-                    ></div>
-
-                  </div>
-
-
-                  <!-- الاختبار -->
-
-                  <div
-                    style="
-                      flex:1;
-                      min-width:0;
-                      display:flex;
-                      align-items:flex-start;
-                    "
-                  >
-
-                    <div
-                      style="
-                        display:flex;
-                        flex-direction:column;
-                        align-items:center;
-                        min-width:48px;
-                      "
-                    >
-
-                      <div
-                        style="
-                          width:24px;
-                          height:24px;
-                          border-radius:50%;
-                          display:flex;
-                          align-items:center;
-                          justify-content:center;
-                          font-size:9px;
-                          box-sizing:border-box;
-                          transition:.2s ease;
-                        "
-                        [style.background]="
-                          projectStagesCompleted(project)
-                            ? 'var(--color-navy)'
-                            : '#e2e8f0'
-                        "
-                        [style.color]="
-                          projectStagesCompleted(project)
-                            ? '#ffffff'
-                            : '#64748b'
-                        "
-                      >
-                        3
-                      </div>
-
-                      <span
-                        style="
-                          margin-top:5px;
-                          font-size:10px;
-                          white-space:nowrap;
-                          text-align:center;
-                        "
-                        [style.color]="
-                          projectStagesCompleted(project)
-                            ? 'var(--color-navy)'
-                            : 'var(--color-text-secondary)'
-                        "
-                        [style.font-weight]="
-                          projectStagesCompleted(project)
-                            ? '700'
-                            : '400'
-                        "
-                      >
-                        الاختبار
-                      </span>
-
-                    </div>
-
-                    <div
-                      style="
-                        flex:1;
-                        height:2px;
-                        margin-top:11px;
-                        min-width:10px;
-                        transition:.2s ease;
-                      "
-                      [style.background]="
-                        projectStagesCompleted(project)
-                          ? 'var(--color-navy)'
-                          : '#dfe4ec'
-                      "
-                    ></div>
-
-                  </div>
-
-
-                  <!-- التسليم -->
-
-                  <div
-                    style="
-                      flex:1;
-                      min-width:0;
-                      display:flex;
-                      align-items:flex-start;
-                    "
-                  >
-
-                    <div
-                      style="
-                        display:flex;
-                        flex-direction:column;
-                        align-items:center;
-                        min-width:48px;
-                      "
-                    >
-
-                      <div
-                        style="
-                          width:24px;
-                          height:24px;
-                          border-radius:50%;
-                          display:flex;
-                          align-items:center;
-                          justify-content:center;
-                          font-size:9px;
-                          box-sizing:border-box;
-                          transition:.2s ease;
-                        "
-                        [style.background]="
-                          projectStagesCompleted(project)
-                            ? 'var(--color-navy)'
-                            : '#e2e8f0'
-                        "
-                        [style.color]="
-                          projectStagesCompleted(project)
-                            ? '#ffffff'
-                            : '#64748b'
-                        "
-                      >
-                        4
-                      </div>
-
-                      <span
-                        style="
-                          margin-top:5px;
-                          font-size:10px;
-                          white-space:nowrap;
-                          text-align:center;
-                        "
-                        [style.color]="
-                          projectStagesCompleted(project)
-                            ? 'var(--color-navy)'
-                            : 'var(--color-text-secondary)'
-                        "
-                        [style.font-weight]="
-                          projectStagesCompleted(project)
-                            ? '700'
-                            : '400'
-                        "
-                      >
-                        التسليم
-                      </span>
-
-                    </div>
-
-                  </div>
+                  }
 
                 </div>
 
@@ -1462,8 +1377,6 @@
       "
     >
 
-      <!-- PROJECT HEADER -->
-
       <div
         style="
           display:flex;
@@ -1505,25 +1418,11 @@
               rx="3"
             ></rect>
 
-            <path
-              d="M8 4V2"
-            ></path>
-
-            <path
-              d="M16 4V2"
-            ></path>
-
-            <path
-              d="M3 9h18"
-            ></path>
-
-            <path
-              d="M8 13h3"
-            ></path>
-
-            <path
-              d="M8 16h5"
-            ></path>
+            <path d="M8 4V2"></path>
+            <path d="M16 4V2"></path>
+            <path d="M3 9h18"></path>
+            <path d="M8 13h3"></path>
+            <path d="M8 16h5"></path>
 
           </svg>
 
@@ -1674,9 +1573,7 @@
       </div>
 
 
-      <!-- ===================================================== -->
       <!-- PROJECT STAGES -->
-      <!-- ===================================================== -->
 
       <div
         style="
@@ -1705,340 +1602,100 @@
           "
         >
 
-          <!-- التخطيط -->
-
-          <div
-            style="
-              flex:1;
-              display:flex;
-              align-items:flex-start;
-              min-width:0;
-            "
-          >
-
-            <div
-              style="
-                display:flex;
-                flex-direction:column;
-                align-items:center;
-                min-width:55px;
-              "
-            >
-
-              <div
-                style="
-                  width:30px;
-                  height:30px;
-                  border-radius:50%;
-                  display:flex;
-                  align-items:center;
-                  justify-content:center;
-                  font-size:11px;
-                  transition:.2s ease;
-                "
-                [style.background]="
-                  projectStagesCompleted(project)
-                    ? 'var(--color-navy)'
-                    : '#e2e8f0'
-                "
-                [style.color]="
-                  projectStagesCompleted(project)
-                    ? '#ffffff'
-                    : '#64748b'
-                "
-              >
-                1
-              </div>
-
-              <span
-                style="
-                  font-size:11px;
-                  margin-top:6px;
-                  text-align:center;
-                  white-space:nowrap;
-                  transition:.2s ease;
-                "
-                [style.color]="
-                  projectStagesCompleted(project)
-                    ? 'var(--color-navy)'
-                    : 'var(--color-text-secondary)'
-                "
-                [style.font-weight]="
-                  projectStagesCompleted(project)
-                    ? '700'
-                    : '400'
-                "
-              >
-                التخطيط
-              </span>
-
-            </div>
-
+          @for (
+            stage of ['التخطيط','التطوير','الاختبار','التسليم'];
+            track stage;
+            let i = $index
+          ) {
 
             <div
               style="
                 flex:1;
-                height:2px;
-                margin-top:14px;
-                min-width:10px;
-                transition:.2s ease;
-              "
-              [style.background]="
-                projectStagesCompleted(project)
-                  ? 'var(--color-navy)'
-                  : '#e2e8f0'
-              "
-            ></div>
-
-          </div>
-
-
-          <!-- التطوير -->
-
-          <div
-            style="
-              flex:1;
-              display:flex;
-              align-items:flex-start;
-              min-width:0;
-            "
-          >
-
-            <div
-              style="
                 display:flex;
-                flex-direction:column;
-                align-items:center;
-                min-width:55px;
+                align-items:flex-start;
+                min-width:0;
               "
             >
 
               <div
                 style="
-                  width:30px;
-                  height:30px;
-                  border-radius:50%;
                   display:flex;
+                  flex-direction:column;
                   align-items:center;
-                  justify-content:center;
-                  font-size:11px;
-                  transition:.2s ease;
-                "
-                [style.background]="
-                  projectStagesCompleted(project)
-                    ? 'var(--color-navy)'
-                    : '#e2e8f0'
-                "
-                [style.color]="
-                  projectStagesCompleted(project)
-                    ? '#ffffff'
-                    : '#64748b'
+                  min-width:55px;
                 "
               >
-                2
+
+                <div
+                  style="
+                    width:30px;
+                    height:30px;
+                    border-radius:50%;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:11px;
+                  "
+                  [style.background]="
+                    projectStagesCompleted(project)
+                      ? 'var(--color-navy)'
+                      : '#e2e8f0'
+                  "
+                  [style.color]="
+                    projectStagesCompleted(project)
+                      ? '#ffffff'
+                      : '#64748b'
+                  "
+                >
+                  {{ i + 1 }}
+                </div>
+
+
+                <span
+                  style="
+                    font-size:11px;
+                    margin-top:6px;
+                    text-align:center;
+                    white-space:nowrap;
+                  "
+                  [style.color]="
+                    projectStagesCompleted(project)
+                      ? 'var(--color-navy)'
+                      : 'var(--color-text-secondary)'
+                  "
+                  [style.font-weight]="
+                    projectStagesCompleted(project)
+                      ? '700'
+                      : '400'
+                  "
+                >
+                  {{ stage }}
+                </span>
+
               </div>
 
-              <span
-                style="
-                  font-size:11px;
-                  margin-top:6px;
-                  text-align:center;
-                  white-space:nowrap;
-                  transition:.2s ease;
-                "
-                [style.color]="
-                  projectStagesCompleted(project)
-                    ? 'var(--color-navy)'
-                    : 'var(--color-text-secondary)'
-                "
-                [style.font-weight]="
-                  projectStagesCompleted(project)
-                    ? '700'
-                    : '400'
-                "
-              >
-                التطوير
-              </span>
+
+              @if (i < 3) {
+
+                <div
+                  style="
+                    flex:1;
+                    height:2px;
+                    margin-top:14px;
+                    min-width:10px;
+                  "
+                  [style.background]="
+                    projectStagesCompleted(project)
+                      ? 'var(--color-navy)'
+                      : '#e2e8f0'
+                  "
+                ></div>
+
+              }
 
             </div>
 
-
-            <div
-              style="
-                flex:1;
-                height:2px;
-                margin-top:14px;
-                min-width:10px;
-                transition:.2s ease;
-              "
-              [style.background]="
-                projectStagesCompleted(project)
-                  ? 'var(--color-navy)'
-                  : '#e2e8f0'
-              "
-            ></div>
-
-          </div>
-
-
-          <!-- الاختبار -->
-
-          <div
-            style="
-              flex:1;
-              display:flex;
-              align-items:flex-start;
-              min-width:0;
-            "
-          >
-
-            <div
-              style="
-                display:flex;
-                flex-direction:column;
-                align-items:center;
-                min-width:55px;
-              "
-            >
-
-              <div
-                style="
-                  width:30px;
-                  height:30px;
-                  border-radius:50%;
-                  display:flex;
-                  align-items:center;
-                  justify-content:center;
-                  font-size:11px;
-                  transition:.2s ease;
-                "
-                [style.background]="
-                  projectStagesCompleted(project)
-                    ? 'var(--color-navy)'
-                    : '#e2e8f0'
-                "
-                [style.color]="
-                  projectStagesCompleted(project)
-                    ? '#ffffff'
-                    : '#64748b'
-                "
-              >
-                3
-              </div>
-
-              <span
-                style="
-                  font-size:11px;
-                  margin-top:6px;
-                  text-align:center;
-                  white-space:nowrap;
-                  transition:.2s ease;
-                "
-                [style.color]="
-                  projectStagesCompleted(project)
-                    ? 'var(--color-navy)'
-                    : 'var(--color-text-secondary)'
-                "
-                [style.font-weight]="
-                  projectStagesCompleted(project)
-                    ? '700'
-                    : '400'
-                "
-              >
-                الاختبار
-              </span>
-
-            </div>
-
-
-            <div
-              style="
-                flex:1;
-                height:2px;
-                margin-top:14px;
-                min-width:10px;
-                transition:.2s ease;
-              "
-              [style.background]="
-                projectStagesCompleted(project)
-                  ? 'var(--color-navy)'
-                  : '#e2e8f0'
-              "
-            ></div>
-
-          </div>
-
-
-          <!-- التسليم -->
-
-          <div
-            style="
-              flex:1;
-              display:flex;
-              align-items:flex-start;
-              min-width:0;
-            "
-          >
-
-            <div
-              style="
-                display:flex;
-                flex-direction:column;
-                align-items:center;
-                min-width:55px;
-              "
-            >
-
-              <div
-                style="
-                  width:30px;
-                  height:30px;
-                  border-radius:50%;
-                  display:flex;
-                  align-items:center;
-                  justify-content:center;
-                  font-size:11px;
-                  transition:.2s ease;
-                "
-                [style.background]="
-                  projectStagesCompleted(project)
-                    ? 'var(--color-navy)'
-                    : '#e2e8f0'
-                "
-                [style.color]="
-                  projectStagesCompleted(project)
-                    ? '#ffffff'
-                    : '#64748b'
-                "
-              >
-                4
-              </div>
-
-              <span
-                style="
-                  font-size:11px;
-                  margin-top:6px;
-                  text-align:center;
-                  white-space:nowrap;
-                  transition:.2s ease;
-                "
-                [style.color]="
-                  projectStagesCompleted(project)
-                    ? 'var(--color-navy)'
-                    : 'var(--color-text-secondary)'
-                "
-                [style.font-weight]="
-                  projectStagesCompleted(project)
-                    ? '700'
-                    : '400'
-                "
-              >
-                التسليم
-              </span>
-
-            </div>
-
-          </div>
+          }
 
         </div>
 
