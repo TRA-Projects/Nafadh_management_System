@@ -704,6 +704,27 @@
 
 <style>
 
+/* تلوين باقي أيقونات Font Awesome في الداشبورد باللون الأزرق المخصص */
+.program-header i,
+.enrollment-item i,
+.modules-container .section-header i,
+.error-icon i,
+.prerequisite-icon i,
+.no-lessons i,
+.empty-icon i,
+.lesson-action-button i,
+.module-status-icon i {
+  color: #176fc4 !important;
+}
+
+/* استثناء الـ Stepper العلوي ليعود لألوانه الافتراضية السابقة */
+.module-stepper i {
+  color: inherit !important;
+}
+.step-completed .step-circle i {
+  color: #ffffff !important;
+}
+
 .program-container {
   width: 100%;
   max-width: 100%;
@@ -1130,7 +1151,7 @@
 
 
 .completed-line {
-  background: #10b8c5;
+  background: #176fc4;
 }
 
 
@@ -1159,18 +1180,18 @@
 
 
 .step-completed .step-circle {
-  background: #10bfca;
+  background: #176fc4;
 
-  border-color: #10bfca;
+  border-color: #176fc4;
 
   color: #ffffff;
 }
 
 
 .step-current .step-circle {
-  background: #176fc4;
+  background: #159a78;
 
-  border-color: #176fc4;
+  border-color: #159a78;
 
   color: #ffffff;
 }
@@ -1312,9 +1333,9 @@
 
 
 .completed-icon {
-  background: #eafaf5;
+  background: #eff6ff;
 
-  color: #13b98d;
+  color: #176fc4;
 }
 
 
@@ -1364,6 +1385,7 @@
   margin: 0;
 
   font-size: 15px;
+
   font-weight: 600;
 
   color: #172033;
@@ -1394,23 +1416,23 @@
 
 
 .module-badge.completed {
-  color: #2277c5;
+  color: #176fc4;
 
   background: #eff6ff;
 }
 
 
 .module-badge.active {
-  color: #13b98d;
+  color: #176fc4;
 
-  background: #ecfaf5;
+  background: #edf5ff;
 }
 
 
 .module-badge.new {
-  color: #8656dd;
+  color: #176fc4;
 
-  background: #f3edff;
+  background: #f0f5ff;
 }
 
 
@@ -1464,7 +1486,7 @@
 
   border-radius: inherit;
 
-  background: #10b8c5;
+  background: #176fc4;
 
   transition: width .3s ease;
 }
@@ -1640,9 +1662,9 @@
   align-items: center;
   justify-content: center;
 
-  background: #effbf8;
+  background: #eff6ff;
 
-  color: #18bf9b;
+  color: #176fc4;
 
   font-size: 11px;
 }
@@ -1741,7 +1763,7 @@
 
   border: 3px solid #e7ebf0;
 
-  border-top-color: #1a75c4;
+  border-top-color: #176fc4;
 
   border-radius: 50%;
 
