@@ -21,10 +21,12 @@ namespace Nafadh_Backend.Repositories
         public async Task<NFD_Company?> GetCompanyByIdAsync(int companyId)
         {
             return await _context.NFD_Companies
+            .AsSplitQuery()
             .Include(c => c.User)
             .Include(c => c.CompanyBranches)
             .Include(c => c.CompanySupervisors).ThenInclude(s => s.User)
-            .Include(c => c.CompanyPrograms)
+            .Include(c => c.CompanyPrograms).ThenInclude(cp => cp.Program).ThenInclude(p => p.Track)
+            .Include(c => c.CompanyPrograms).ThenInclude(cp => cp.Program).ThenInclude(p => p.Batches).ThenInclude(b => b.Enrollments)
             .Include(c => c.CompanyPayments).ThenInclude(p => p.CompanyPaymentSchedules)
             .Include(c => c.Departments)
             .Include(c => c.Trainees)
@@ -35,12 +37,14 @@ namespace Nafadh_Backend.Repositories
         public async Task<IEnumerable<NFD_Company>> GetAllCompaniesAsync()
         {
             return await _context.NFD_Companies
+                .AsSplitQuery()
                 .Include(c => c.User)
                 .Include(c => c.CompanyBranches)
                 .Include(c => c.CompanySupervisors).ThenInclude(s => s.User)
                 .Include(c => c.CompanyPayments).ThenInclude(p => p.CompanyPaymentSchedules)
                 .Include(c => c.Departments)
-                .Include(c => c.CompanyPrograms)       
+                .Include(c => c.CompanyPrograms).ThenInclude(cp => cp.Program).ThenInclude(p => p.Track)
+                .Include(c => c.CompanyPrograms).ThenInclude(cp => cp.Program).ThenInclude(p => p.Batches).ThenInclude(b => b.Enrollments)
                 .ToListAsync();
         }
         // Get companies with optional filters and includes
@@ -49,12 +53,14 @@ namespace Nafadh_Backend.Repositories
          string? workField)
         {
             var query = _context.NFD_Companies
+                .AsSplitQuery()
                 .Include(c => c.User)
                 .Include(c => c.CompanyBranches)
                 .Include(c => c.CompanySupervisors).ThenInclude(s => s.User)
                 .Include(c => c.CompanyPayments).ThenInclude(p => p.CompanyPaymentSchedules)
                 .Include(c => c.Departments)
-                .Include(c => c.CompanyPrograms)
+                .Include(c => c.CompanyPrograms).ThenInclude(cp => cp.Program).ThenInclude(p => p.Track)
+                .Include(c => c.CompanyPrograms).ThenInclude(cp => cp.Program).ThenInclude(p => p.Batches).ThenInclude(b => b.Enrollments)
                 .Include(c => c.Trainees)
                 .AsQueryable();
 
@@ -97,6 +103,21 @@ namespace Nafadh_Backend.Repositories
         {
             return await _context.NFD_Enrollments
                 .CountAsync(e => e.CompanyId == companyId);
+        }
+
+        // Lean projection of all enrollments — used to compute real, per-company
+        // batch/trainee counts instead of relying on Program.Batches (shared
+        // across many companies) or Trainee.CompanyId (can be unset).
+        public async Task<List<CompanyEnrollmentLinkDTO>> GetEnrollmentLinksAsync()
+        {
+            return await _context.NFD_Enrollments
+                .Select(e => new CompanyEnrollmentLinkDTO
+                {
+                    CompanyId = e.CompanyId,
+                    BatchId = e.BatchId,
+                    TraineeId = e.TraineeId
+                })
+                .ToListAsync();
         }
 
         // Delete Company

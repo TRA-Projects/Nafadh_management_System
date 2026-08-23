@@ -118,6 +118,31 @@ export interface CompanyDto {
   status: CompanyStatus;
   approvalDate?: string;
   userId?: number;
+  // Real, company-scoped counts computed server-side from actual Enrollments
+  // (see CompanyService.MapToOutputDTO) — no client-side estimation needed.
+  programsCount?: number;
+  batchesCount?: number;
+  traineesCount?: number;
+  programs?: CompanyReportProgramDto[];
+}
+
+// Real per-program breakdown for a company, used by the admin Reports screen.
+export interface CompanyReportProgramDto {
+  companyId: number;
+  programId: number;
+  title?: string;
+  track?: string;
+  batchesCount: number;
+  traineesCount: number;
+  batches: CompanyReportBatchDto[];
+}
+
+export interface CompanyReportBatchDto {
+  batchId: number;
+  batchName: string;
+  startDate: string;
+  endDate: string;
+  traineesCount: number;
 }
 
 export interface CompanyBranchDto {
