@@ -608,7 +608,25 @@ getSubmissionFile(
       `${this.base}/EvaluationTemplate/GetTemplateById/${templateId}`
     );
   }
+// =====================================================
+// CHECK EVALUATION TEMPLATE WEIGHTS
+// =====================================================
 
+checkTemplateWeights(
+  templateId: number
+): Observable<{
+  templateId: number;
+  isValid: boolean;
+}> {
+
+  return this.http.get<{
+    templateId: number;
+    isValid: boolean;
+  }>(
+    `${this.base}/EvaluationCriterion/CheckWeights/${templateId}`
+  );
+
+}
 
   createTemplate(
     dto: unknown

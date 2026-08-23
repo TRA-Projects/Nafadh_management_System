@@ -1849,117 +1849,169 @@ saveCriterionEdit(
 
 }
   // =====================================================
-  // SUBMIT EVALUATION
-  // =====================================================
+// SUBMIT EVALUATION
+// =====================================================
 
-  submitEvaluation(): void {
+submitEvaluation(): void {
 
-    const trainer =
-      this.trainer();
+  const trainer =
+    this.trainer();
 
-    const userId =
-      this.auth.session()?.userId;
+  const userId =
+    this.auth.session()?.userId;
 
-    const template =
-      this.templateDetail();
-
-
-    if (
-      !this.selectedEnrollmentId ||
-      !trainer ||
-      !userId ||
-      !template
-    ) {
-
-      return;
-    }
+  const template =
+    this.templateDetail();
 
 
-    const enrollment =
-      this.enrollments()
-        .find(
-          item =>
-            item.enrollmentId ===
-            this.selectedEnrollmentId
-        );
-
-
-    if (
-      !enrollment ||
-      enrollment.completionStatus === 'Dropped'
-    ) {
-
-      console.warn(
-        'لا يمكن حفظ تقييم لمتدرب منسحب'
-      );
-
-      return;
-    }
-
-
-    const criteriaScores =
-      Object.entries(
-        this.criteriaScores
-      )
-        .map(
-          ([criteriaId, score]) => ({
-
-            criteriaId:
-              Number(criteriaId),
-
-            score
-
-          })
-        );
-
-
-    this.api
-      .submitEvaluation({
-
-        enrollmentId:
-          this.selectedEnrollmentId,
-
-        trainerId:
-          trainer.trainerId,
-
-        templateId:
-          template.templateId,
-
-        evaluatorUserId:
-          userId,
-
-        criteriaScores
-
-      })
-      .subscribe({
-
-        next: () => {
-
-          this.showEvalModal.set(
-            false
-          );
-
-          this.criteriaScores = {};
-
-          this.selectedEnrollmentId =
-            null;
-
-
-          this.loadEvaluationAverages(
-            this.enrollments()
-          );
-        },
-
-
-        error: (err) => {
-
-          console.error(
-            'خطأ في حفظ التقييم:',
-            err
-          );
-        }
-
-      });
+  if (
+    !this.selectedEnrollmentId ||
+    !trainer ||
+    !userId ||
+    !template
+  ) {
+    return;
   }
 
+
+  const enrollment =
+    this.enrollments()
+      .find(
+        item =>
+          item.enrollmentId ===
+          this.selectedEnrollmentId
+      );
+
+
+  if (
+    !enrollment ||
+    !this.canEvaluateEnrollment(
+      enrollment
+    )
+  ) {
+
+    window.alert(
+      'لا يمكن تقييم هذا المتدرب حاليًا.'
+    );
+
+    return;
+  }
+
+
+  // First make sure criterion
+  // weights total exactly 100%.
+  this.api
+    .checkTemplateWeights(
+      template.templateId
+    )
+    .subscribe({
+
+      next: (result) => {
+
+        if (!result.isValid) {
+
+          window.alert(
+            'مجموع أوزان معايير التقييم يجب أن يساوي 100%.'
+          );
+
+          return;
+        }
+
+
+        const criteriaScores =
+          Object.entries(
+            this.criteriaScores
+          )
+            .map(
+              ([criteriaId, score]) => ({
+
+                criteriaId:
+                  Number(criteriaId),
+
+                score
+
+              })
+            );
+
+
+        this.api
+          .submitEvaluation({
+
+            enrollmentId:
+              this.selectedEnrollmentId,
+
+            trainerId:
+              trainer.trainerId,
+
+            templateId:
+              template.templateId,
+
+            evaluatorUserId:
+              userId,
+
+            criteriaScores
+
+          })
+          .subscribe({
+
+            next: () => {
+
+              this.showEvalModal.set(
+                false
+              );
+
+              this.criteriaScores = {};
+
+              this.selectedEnrollmentId =
+                null;
+
+
+              this.loadEvaluationAverages(
+                this.enrollments()
+              );
+
+
+              window.alert(
+                'تم حفظ التقييم بنجاح.'
+              );
+
+            },
+
+
+            error: (err) => {
+
+              console.error(
+                'خطأ في حفظ التقييم:',
+                err
+              );
+
+
+              window.alert(
+                'تعذر حفظ التقييم.'
+              );
+
+            }
+
+          });
+
+      },
+
+
+      error: (err) => {
+
+        console.error(
+          'خطأ في التحقق من أوزان التقييم:',
+          err
+        );
+
+
+        window.alert(
+          'تعذر التحقق من مجموع أوزان معايير التقييم.'
+        );
+
+      }
+
+    });
+
+}
 }
