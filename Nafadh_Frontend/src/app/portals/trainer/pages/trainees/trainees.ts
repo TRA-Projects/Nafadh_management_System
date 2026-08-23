@@ -63,16 +63,17 @@ export class TrainerTrainees implements OnInit {
   // EVALUABLE ENROLLMENTS
   // =====================================================
 
-  evaluableEnrollments =
-    computed(() => {
+ evaluableEnrollments =
+  computed(() => {
 
-      return this.enrollments()
-        .filter(
-          enrollment =>
-            enrollment.completionStatus !== 'Dropped'
-        );
-    });
-
+    return this.enrollments()
+      .filter(
+        enrollment =>
+          this.canEvaluateEnrollment(
+            enrollment
+          )
+      );
+  });
 
   // =====================================================
   // REPORT EXPORT STATE
@@ -542,11 +543,21 @@ canEvaluateEnrollment(
 ): boolean {
 
   return (
-    enrollment.completionStatus !== 'Dropped'
+    this.effectiveEnrollmentStatus(
+      enrollment
+    ) === 'InProgress'
   );
 }
+canShowTrainingMetrics(
+  enrollment: EnrollmentDto
+): boolean {
 
-
+  return (
+    this.effectiveEnrollmentStatus(
+      enrollment
+    ) !== 'NotStarted'
+  );
+}
   // =====================================================
   // EVALUATION STATE
   // =====================================================
