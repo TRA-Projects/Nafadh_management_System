@@ -243,6 +243,60 @@ export interface CompanyProgramLinkDto {
   programId: number;
 }
 
+export interface CompanyProgramSummaryDto {
+  programId: number;
+  title: string;
+  description?: string;
+  category?: string;
+  durationHours: number;
+  price: number;
+  status: string;
+  approvedForCompany: boolean;
+  batchCount: number;
+  enrollmentCount: number;
+  currentTraineeCount: number;
+  allocatedCapacity: number;
+  usedCapacity: number;
+  remainingCapacity: number;
+  utilizationPercentage: number;
+  departments: string[];
+}
+
+export interface CompanyProgramBatchDto {
+  batchId: number;
+  batchName: string;
+  startDate: string;
+  endDate: string;
+  capacity: number;
+  companyEnrollmentCount: number;
+  status: string;
+}
+
+export interface CompanyProgramEnrollmentDto {
+  enrollmentId: number;
+  traineeId: number;
+  traineeName: string;
+  departmentName?: string;
+  supervisorName?: string;
+  batchName: string;
+  completionStatus: string;
+  traineeGitHubUrl?: string;
+  traineeLinkedInUrl?: string;
+}
+
+export interface CompanyProgramModuleDto {
+  moduleId: number;
+  title: string;
+  orderIndex: number;
+  prerequisiteModuleId?: number;
+}
+
+export interface CompanyProgramDetailsDto extends CompanyProgramSummaryDto {
+  batches: CompanyProgramBatchDto[];
+  enrollments: CompanyProgramEnrollmentDto[];
+  modules: CompanyProgramModuleDto[];
+}
+
 export interface BatchDto {
   batchId: number;
   programId: number;
@@ -583,7 +637,6 @@ export interface AnnouncementDto {
   type?: string;
   createdAt?: string | Date;
   date?: string | Date;
-  scopeType: AnnouncementScopeType;
 }
 
 // ---- Notifications ----
