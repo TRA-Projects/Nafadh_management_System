@@ -132,10 +132,17 @@
       <!-- أدوات الكشف -->
   <div class="section-toolbar">
     <strong>سجل حضور اليوم — {{ todayLabel }}</strong>
-    <small>تم افتراض الجميع حاضرين — عدّل فقط الغائب أو بعذر</small>
+    <!-- <small>تم افتراض الجميع حاضرين — عدّل فقط الغائب أو بعذر</small> -->
   </div>
   
   <section class="attendance-card">
+    @if (loading()) {
+    <div class="attendance-loading">
+      <div class="attendance-spinner"></div>
+      <span>جاري تحميل بيانات الحضور...</span>
+    </div>
+  }
+
     <div class="table-tools">
       <div class="search-box">
         <span aria-hidden="true">⌕</span>

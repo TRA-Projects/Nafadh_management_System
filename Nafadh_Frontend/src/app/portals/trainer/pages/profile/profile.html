@@ -25,24 +25,11 @@
 
     <div class="header-icon">
 
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        width="26"
-        height="26"
-      >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="26" height="26">
 
-        <path
-          d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
-        ></path>
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
 
-        <circle
-          cx="12"
-          cy="7"
-          r="4"
-        ></circle>
+        <circle cx="12" cy="7" r="4"></circle>
 
       </svg>
 
@@ -57,19 +44,19 @@
 
   @if (loading()) {
 
-    <section class="profile-loading">
+  <section class="profile-loading">
 
-      <div class="loading-spinner"></div>
+    <div class="loading-spinner"></div>
 
-      <strong>
-        جاري تحميل الملف الشخصي
-      </strong>
+    <strong>
+      جاري تحميل الملف الشخصي
+    </strong>
 
-      <span>
-        يرجى الانتظار قليلًا...
-      </span>
+    <span>
+      يرجى الانتظار قليلًا...
+    </span>
 
-    </section>
+  </section>
 
   }
 
@@ -79,862 +66,682 @@
   ====================================================== -->
 
   @if (
-    !loading() &&
-    trainer();
-    as t
+  !loading() &&
+  trainer();
+  as t
   ) {
 
-    <section class="profile-card">
+  <section class="profile-card">
 
-      <!-- =================================================
+    <!-- =================================================
            PROFILE HERO
       ================================================== -->
 
-      <div class="profile-hero">
+    <div class="profile-hero">
 
-        <div class="user-meta">
+      <div class="user-meta">
 
-          <div class="avatar-wrapper">
+        <div class="avatar-wrapper">
 
-            <div class="avatar-box">
+          <div class="avatar-box">
 
-              <span class="avatar-letter">
-                {{
-                  (t.fullName || 'م')
-                    .charAt(0)
-                }}
-              </span>
-
-            </div>
-
-
-            <span
-              class="status-dot"
-              [class.active]="
-                t.status === 'Active'
-              "
-              [class.inactive]="
-                t.status === 'Inactive'
-              "
-              [class.suspended]="
-                t.status === 'Suspended'
-              "
-            ></span>
-
-          </div>
-
-
-          <div class="user-titles">
-
-            <div class="name-row">
-
-              <h2 class="user-name">
-                {{
-                  t.fullName ||
-                  'اسم المدرب'
-                }}
-              </h2>
-
-              <span class="trainer-badge">
-                مدرب
-              </span>
-
-            </div>
-
-
-            <span class="user-subtitle">
-
+            <span class="avatar-letter">
               {{
-                t.specialty ||
-                'لم يتم تحديد التخصص التدريبي'
+              (t.fullName || 'م')
+              .charAt(0)
               }}
-
             </span>
 
           </div>
+
+
+          <span class="status-dot" [class.active]="
+                t.status === 'Active'
+              " [class.inactive]="
+                t.status === 'Inactive'
+              " [class.suspended]="
+                t.status === 'Suspended'
+              "></span>
 
         </div>
 
 
-        <div class="profile-hero-actions">
+        <div class="user-titles">
 
-          @if (
-            hasUnsavedChanges()
-          ) {
+          <div class="name-row">
 
-            <span class="unsaved-note">
+            <h2 class="user-name">
+              {{
+              t.fullName ||
+              'اسم المدرب'
+              }}
+            </h2>
 
-              <span class="unsaved-dot">
-              </span>
-
-              توجد تعديلات غير محفوظة
-
+            <span class="trainer-badge">
+              مدرب
             </span>
 
-          }
+          </div>
 
 
-          <button
-            type="button"
-            class="save-btn"
-            [disabled]="
-              isSaving() ||
-              !hasUnsavedChanges()
-            "
-            (click)="save()"
-          >
+          <span class="user-subtitle">
 
-            @if (
-              isSaving()
-            ) {
+            {{
+            t.specialty ||
+            'لم يتم تحديد التخصص التدريبي'
+            }}
 
-              <span class="button-spinner">
-              </span>
-
-              <span>
-                جاري الحفظ...
-              </span>
-
-            }
-            @else {
-
-              <svg
-                viewBox="0 0 24 24"
-                width="17"
-                height="17"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.4"
-              >
-
-                <path
-                  d="M20 6 9 17l-5-5"
-                ></path>
-
-              </svg>
-
-              <span>
-                حفظ التعديلات
-              </span>
-
-            }
-
-          </button>
+          </span>
 
         </div>
 
       </div>
 
 
-      <!-- =================================================
+      <div class="profile-hero-actions">
+
+        @if (
+        hasUnsavedChanges()
+        ) {
+
+        <span class="unsaved-note">
+
+          <span class="unsaved-dot">
+          </span>
+
+          توجد تعديلات غير محفوظة
+
+        </span>
+
+        }
+
+
+        <button type="button" class="save-btn" [disabled]="
+              isSaving() ||
+              !hasUnsavedChanges()
+            " (click)="save()">
+
+          @if (
+          isSaving()
+          ) {
+
+          <span class="button-spinner">
+          </span>
+
+          <span>
+            جاري الحفظ...
+          </span>
+
+          }
+          @else {
+
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4">
+
+            <path d="M20 6 9 17l-5-5"></path>
+
+          </svg>
+
+          <span>
+            حفظ التعديلات
+          </span>
+
+          }
+
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- =================================================
            SUCCESS MESSAGE
       ================================================== -->
 
-      @if (
-        showSuccessToast()
-      ) {
+    @if (
+    showSuccessToast()
+    ) {
 
-        <div
-          class="profile-message success"
-          aria-live="polite"
-        >
+    <div class="profile-message success" aria-live="polite">
 
-          <div class="message-icon">
-            ✓
-          </div>
+      <div class="message-icon">
+        ✓
+      </div>
 
 
-          <div>
+      <div>
 
-            <strong>
-              تم حفظ التعديلات
-            </strong>
+        <strong>
+          تم حفظ التعديلات
+        </strong>
 
-            <span>
-              تم تحديث بيانات الملف الشخصي بنجاح.
-            </span>
+        <span>
+          تم تحديث بيانات الملف الشخصي بنجاح.
+        </span>
 
-          </div>
+      </div>
 
-        </div>
+    </div>
 
-      }
+    }
 
 
-      <!-- =================================================
+    <!-- =================================================
            ERROR MESSAGE
       ================================================== -->
 
-      @if (
-        showErrorToast()
-      ) {
+    @if (
+    showErrorToast()
+    ) {
 
-        <div
-          class="profile-message error"
-          aria-live="assertive"
-        >
+    <div class="profile-message error" aria-live="assertive">
 
-          <div class="message-icon">
-            !
-          </div>
+      <div class="message-icon">
+        !
+      </div>
 
 
-          <div>
+      <div>
 
-            <strong>
-              تعذر تنفيذ العملية
-            </strong>
+        <strong>
+          تعذر تنفيذ العملية
+        </strong>
 
-            <span>
-              {{ errorToastMessage() }}
-            </span>
+        <span>
+          {{ errorToastMessage() }}
+        </span>
 
-          </div>
+      </div>
 
-        </div>
+    </div>
 
-      }
+    }
 
 
-      <!-- =================================================
+    <!-- =================================================
            SECTION HEADING
       ================================================== -->
 
-      <div class="section-heading">
+    <div class="section-heading">
 
-        <div class="section-icon">
+      <div class="section-icon">
 
-          <svg
-            viewBox="0 0 24 24"
-            width="19"
-            height="19"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2">
 
-            <path
-              d="M12 20h9"
-            ></path>
+          <path d="M12 20h9"></path>
 
-            <path
-              d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
-            ></path>
+          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+
+        </svg>
+
+      </div>
+
+
+      <div>
+
+        <h3>
+          المعلومات الشخصية
+        </h3>
+
+        <p>
+          عدّل بياناتك المهنية ثم احفظ التغييرات.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <!-- =================================================
+           FORM
+      ================================================== -->
+
+    <div class="form-grid">
+
+
+      <!-- FULL NAME -->
+
+      <div class="form-group">
+
+        <label>
+          الاسم الكامل
+          <span class="required-mark">*</span>
+        </label>
+
+
+        <div class="input-wrapper">
+
+          <span class="input-icon">
+
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+
+              <circle cx="12" cy="7" r="4"></circle>
+
+            </svg>
+
+          </span>
+
+
+          <input type="text" class="profile-input" [(ngModel)]="t.fullName" readonly autocomplete="name"
+            placeholder="الاسم الكامل" />
+
+        </div>
+
+      </div>
+
+
+      <!-- EMAIL -->
+
+      <div class="form-group">
+
+        <label>
+          البريد الإلكتروني
+        </label>
+
+
+        <div class="input-wrapper">
+
+          <span class="input-icon">
+
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+
+              <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+
+              <path d="m3 7 9 6 9-6"></path>
+
+            </svg>
+
+          </span>
+
+
+          <input type="email" class="profile-input text-ltr" [(ngModel)]="t.email" readonly autocomplete="email"
+            placeholder="trainer@nafadh.om" />
+
+        </div>
+
+      </div>
+
+
+      <!-- PHONE -->
+
+      <div class="form-group">
+
+        <label>
+          رقم الهاتف
+        </label>
+
+
+        <div class="input-wrapper">
+
+          <span class="input-icon">
+
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2
+                  19.79 19.79 0 0 1-8.63-3.07
+                  19.5 19.5 0 0 1-6-6
+                  19.79 19.79 0 0 1-3.07-8.67
+                  A2 2 0 0 1 4.11 2h3
+                  a2 2 0 0 1 2 1.72"></path>
+
+            </svg>
+
+          </span>
+
+
+          <input type="tel" class="profile-input text-ltr" [(ngModel)]="t.phone" (ngModelChange)="markProfileChanged()"
+            autocomplete="tel" inputmode="tel" placeholder="+968 9123 4567" />
+
+        </div>
+
+      </div>
+
+
+      <!-- SPECIALTY -->
+
+      <div class="form-group">
+
+        <label>
+          التخصص التدريبي
+        </label>
+
+
+        <div class="input-wrapper">
+
+          <span class="input-icon">
+
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+
+              <path d="M22 10v6M2 10l10-5 10 5-10 5Z"></path>
+
+              <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+
+            </svg>
+
+          </span>
+
+
+          <input type="text" class="profile-input" [(ngModel)]="t.specialty" readonly
+            placeholder="مثال: تطوير البرمجيات" />
+
+        </div>
+
+      </div>
+
+
+      <!-- EXPERIENCE -->
+
+      <div class="form-group">
+
+        <label>
+          سنوات الخبرة
+        </label>
+
+
+        <div class="input-wrapper">
+
+          <span class="input-icon">
+
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+
+              <circle cx="12" cy="12" r="9"></circle>
+
+              <path d="M12 7v5l3 2"></path>
+
+            </svg>
+
+          </span>
+
+
+          <input type="number" min="0" max="100" step="1" class="profile-input" [(ngModel)]="t.experienceYears"
+            (ngModelChange)="markProfileChanged()" placeholder="0" />
+
+        </div>
+
+      </div>
+
+
+      <!-- STATUS -->
+
+      <div class="form-group">
+
+        <label>
+          حالة الحساب
+        </label>
+
+
+        <div class="readonly-status">
+
+          <span class="status-indicator" [class.active]="
+                t.status === 'Active'
+              " [class.inactive]="
+                t.status === 'Inactive'
+              " [class.suspended]="
+                t.status === 'Suspended'
+              "></span>
+
+
+          <strong>
+
+            @if (
+            t.status === 'Active'
+            ) {
+
+            نشط
+
+            }
+            @else if (
+            t.status === 'Inactive'
+            ) {
+
+            غير نشط
+
+            }
+            @else if (
+            t.status === 'Suspended'
+            ) {
+
+            موقوف
+
+            }
+            @else {
+
+            {{ t.status || 'غير محدد' }}
+
+            }
+
+          </strong>
+
+
+          <span class="readonly-label">
+            للعرض فقط
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- BIOGRAPHY -->
+
+      <div class="form-group full-width">
+
+        <label>
+          نبذة مهنية
+        </label>
+
+
+        <textarea class="profile-textarea" rows="5" [(ngModel)]="t.biography" (ngModelChange)="markProfileChanged()"
+          placeholder="اكتب نبذة مختصرة عن خبراتك المهنية والتدريبية..."></textarea>
+
+
+        <span class="field-hint">
+          اكتب نبذة مختصرة توضح خبراتك ومجالك التدريبي.
+        </span>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+         ACCOUNT SUMMARY
+    ====================================================== -->
+
+  <section class="summary-card">
+
+    <div class="summary-header">
+
+      <div>
+
+        <span class="summary-kicker">
+          النشاط التدريبي
+        </span>
+
+        <h2 class="summary-title">
+          ملخص الحساب
+        </h2>
+
+        <p class="summary-sub">
+          نظرة سريعة على حالة الحساب والدفعات التدريبية المسندة لك.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="summary-grid">
+
+
+      <!-- ACCOUNT STATUS -->
+
+      <article class="summary-stat account">
+
+        <div class="summary-stat-icon green">
+
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+
+            <path d="M20 6 9 17l-5-5"></path>
 
           </svg>
 
         </div>
 
 
-        <div>
+        <div class="summary-stat-content">
 
-          <h3>
-            المعلومات الشخصية
-          </h3>
-
-          <p>
-            عدّل بياناتك المهنية ثم احفظ التغييرات.
-          </p>
-
-        </div>
-
-      </div>
-
-
-      <!-- =================================================
-           FORM
-      ================================================== -->
-
-      <div class="form-grid">
-
-
-        <!-- FULL NAME -->
-
-        <div class="form-group">
-
-          <label>
-            الاسم الكامل
-            <span class="required-mark">*</span>
-          </label>
-
-
-          <div class="input-wrapper">
-
-            <span class="input-icon">
-
-              <svg
-                viewBox="0 0 24 24"
-                width="17"
-                height="17"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-
-                <path
-                  d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
-                ></path>
-
-                <circle
-                  cx="12"
-                  cy="7"
-                  r="4"
-                ></circle>
-
-              </svg>
-
-            </span>
-
-
-            <input
-              type="text"
-              class="profile-input"
-              [(ngModel)]="t.fullName"
-              (ngModelChange)="markProfileChanged()"
-              autocomplete="name"
-              placeholder="الاسم الكامل"
-            />
-
-          </div>
-
-        </div>
-
-
-        <!-- EMAIL -->
-
-        <div class="form-group">
-
-          <label>
-            البريد الإلكتروني
-          </label>
-
-
-          <div class="input-wrapper">
-
-            <span class="input-icon">
-
-              <svg
-                viewBox="0 0 24 24"
-                width="17"
-                height="17"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-
-                <rect
-                  x="3"
-                  y="5"
-                  width="18"
-                  height="14"
-                  rx="2"
-                ></rect>
-
-                <path
-                  d="m3 7 9 6 9-6"
-                ></path>
-
-              </svg>
-
-            </span>
-
-
-            <input
-              type="email"
-              class="profile-input text-ltr"
-              [(ngModel)]="t.email"
-              (ngModelChange)="markProfileChanged()"
-              autocomplete="email"
-              placeholder="trainer@nafadh.om"
-            />
-
-          </div>
-
-        </div>
-
-
-        <!-- PHONE -->
-
-        <div class="form-group">
-
-          <label>
-            رقم الهاتف
-          </label>
-
-
-          <div class="input-wrapper">
-
-            <span class="input-icon">
-
-              <svg
-                viewBox="0 0 24 24"
-                width="17"
-                height="17"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-
-                <path
-                  d="M22 16.92v3a2 2 0 0 1-2.18 2
-                  19.79 19.79 0 0 1-8.63-3.07
-                  19.5 19.5 0 0 1-6-6
-                  19.79 19.79 0 0 1-3.07-8.67
-                  A2 2 0 0 1 4.11 2h3
-                  a2 2 0 0 1 2 1.72"
-                ></path>
-
-              </svg>
-
-            </span>
-
-
-            <input
-              type="tel"
-              class="profile-input text-ltr"
-              [(ngModel)]="t.phone"
-              (ngModelChange)="markProfileChanged()"
-              autocomplete="tel"
-              inputmode="tel"
-              placeholder="+968 9123 4567"
-            />
-
-          </div>
-
-        </div>
-
-
-        <!-- SPECIALTY -->
-
-        <div class="form-group">
-
-          <label>
-            التخصص التدريبي
-          </label>
-
-
-          <div class="input-wrapper">
-
-            <span class="input-icon">
-
-              <svg
-                viewBox="0 0 24 24"
-                width="17"
-                height="17"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-
-                <path
-                  d="M22 10v6M2 10l10-5 10 5-10 5Z"
-                ></path>
-
-                <path
-                  d="M6 12v5c3 3 9 3 12 0v-5"
-                ></path>
-
-              </svg>
-
-            </span>
-
-
-            <input
-              type="text"
-              class="profile-input"
-              [(ngModel)]="t.specialty"
-              (ngModelChange)="markProfileChanged()"
-              placeholder="مثال: تطوير البرمجيات"
-            />
-
-          </div>
-
-        </div>
-
-
-        <!-- EXPERIENCE -->
-
-        <div class="form-group">
-
-          <label>
-            سنوات الخبرة
-          </label>
-
-
-          <div class="input-wrapper">
-
-            <span class="input-icon">
-
-              <svg
-                viewBox="0 0 24 24"
-                width="17"
-                height="17"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="9"
-                ></circle>
-
-                <path
-                  d="M12 7v5l3 2"
-                ></path>
-
-              </svg>
-
-            </span>
-
-
-            <input
-              type="number"
-              min="0"
-              max="100"
-              step="1"
-              class="profile-input"
-              [(ngModel)]="t.experienceYears"
-              (ngModelChange)="markProfileChanged()"
-              placeholder="0"
-            />
-
-          </div>
-
-        </div>
-
-
-        <!-- STATUS -->
-
-        <div class="form-group">
-
-          <label>
+          <span class="stat-label">
             حالة الحساب
-          </label>
+          </span>
 
 
-          <div class="readonly-status">
-
-            <span
-              class="status-indicator"
-              [class.active]="
-                t.status === 'Active'
-              "
-              [class.inactive]="
-                t.status === 'Inactive'
-              "
-              [class.suspended]="
-                t.status === 'Suspended'
-              "
-            ></span>
-
+          <div class="stat-value-row">
 
             <strong>
-
-              @if (
-                t.status === 'Active'
-              ) {
-
-                نشط
-
-              }
-              @else if (
-                t.status === 'Inactive'
-              ) {
-
-                غير نشط
-
-              }
-              @else if (
-                t.status === 'Suspended'
-              ) {
-
-                موقوف
-
-              }
-              @else {
-
-                {{ t.status || 'غير محدد' }}
-
-              }
-
+              حساب مدرب
             </strong>
 
 
-            <span class="readonly-label">
-              للعرض فقط
+            @if (
+            t.status === 'Active'
+            ) {
+
+            <span class="badge active-badge">
+              نشط
             </span>
+
+            }
+            @else if (
+            t.status === 'Suspended'
+            ) {
+
+            <span class="badge suspended-badge">
+              موقوف
+            </span>
+
+            }
+            @else {
+
+            <span class="badge inactive-badge">
+              غير نشط
+            </span>
+
+            }
 
           </div>
 
         </div>
 
-
-        <!-- BIOGRAPHY -->
-
-        <div class="form-group full-width">
-
-          <label>
-            نبذة مهنية
-          </label>
+      </article>
 
 
-          <textarea
-            class="profile-textarea"
-            rows="5"
-            [(ngModel)]="t.biography"
-            (ngModelChange)="markProfileChanged()"
-            placeholder="اكتب نبذة مختصرة عن خبراتك المهنية والتدريبية..."
-          ></textarea>
+      <!-- ASSIGNED BATCHES -->
+
+      <article class="summary-stat assigned">
+
+        <div class="summary-stat-icon blue">
+
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+
+            <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+
+            <path d="M8 2v4"></path>
+
+            <path d="M16 2v4"></path>
+
+            <path d="M3 10h18"></path>
+
+          </svg>
+
+        </div>
 
 
-          <span class="field-hint">
-            اكتب نبذة مختصرة توضح خبراتك ومجالك التدريبي.
+        <div class="summary-stat-content">
+
+          <span class="stat-label">
+            الدفعات المسندة
           </span>
 
+
+          <div class="stat-value-row">
+
+            <strong class="summary-number">
+              {{ assignedBatchesCount() }}
+            </strong>
+
+            <span class="badge count-badge">
+              إجمالي الدفعات
+            </span>
+
+          </div>
+
         </div>
 
-      </div>
-
-    </section>
+      </article>
 
 
-    <!-- =====================================================
-         ACCOUNT SUMMARY
-    ====================================================== -->
+      <!-- ONGOING BATCHES -->
 
-    <section class="summary-card">
+      <article class="summary-stat ongoing">
 
-      <div class="summary-header">
+        <div class="summary-stat-icon cyan">
 
-        <div>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
 
-          <span class="summary-kicker">
-            النشاط التدريبي
+            <circle cx="12" cy="12" r="9"></circle>
+
+            <path d="M12 7v5l3 2"></path>
+
+          </svg>
+
+        </div>
+
+
+        <div class="summary-stat-content">
+
+          <span class="stat-label">
+            الدفعات الجارية الآن
           </span>
 
-          <h2 class="summary-title">
-            ملخص الحساب
-          </h2>
 
-          <p class="summary-sub">
-            نظرة سريعة على حالة الحساب والدفعات التدريبية المسندة لك.
-          </p>
+          <div class="stat-value-row">
+
+            <strong class="summary-number">
+              {{ ongoingBatchesCount() }}
+            </strong>
+
+
+            @if (
+            ongoingBatchesCount() > 0
+            ) {
+
+            <span class="badge active-badge">
+              جارية
+            </span>
+
+            }
+            @else {
+
+            <span class="badge inactive-badge">
+              لا توجد
+            </span>
+
+            }
+
+          </div>
 
         </div>
 
-      </div>
+      </article>
 
+    </div>
 
-      <div class="summary-grid">
-
-
-        <!-- ACCOUNT STATUS -->
-
-        <article class="summary-stat account">
-
-          <div class="summary-stat-icon green">
-
-            <svg
-              viewBox="0 0 24 24"
-              width="22"
-              height="22"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-
-              <path
-                d="M20 6 9 17l-5-5"
-              ></path>
-
-            </svg>
-
-          </div>
-
-
-          <div class="summary-stat-content">
-
-            <span class="stat-label">
-              حالة الحساب
-            </span>
-
-
-            <div class="stat-value-row">
-
-              <strong>
-                حساب مدرب
-              </strong>
-
-
-              @if (
-                t.status === 'Active'
-              ) {
-
-                <span class="badge active-badge">
-                  نشط
-                </span>
-
-              }
-              @else if (
-                t.status === 'Suspended'
-              ) {
-
-                <span class="badge suspended-badge">
-                  موقوف
-                </span>
-
-              }
-              @else {
-
-                <span class="badge inactive-badge">
-                  غير نشط
-                </span>
-
-              }
-
-            </div>
-
-          </div>
-
-        </article>
-
-
-        <!-- ASSIGNED BATCHES -->
-
-        <article class="summary-stat assigned">
-
-          <div class="summary-stat-icon blue">
-
-            <svg
-              viewBox="0 0 24 24"
-              width="22"
-              height="22"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-
-              <rect
-                x="3"
-                y="4"
-                width="18"
-                height="16"
-                rx="2"
-              ></rect>
-
-              <path
-                d="M8 2v4"
-              ></path>
-
-              <path
-                d="M16 2v4"
-              ></path>
-
-              <path
-                d="M3 10h18"
-              ></path>
-
-            </svg>
-
-          </div>
-
-
-          <div class="summary-stat-content">
-
-            <span class="stat-label">
-              الدفعات المسندة
-            </span>
-
-
-            <div class="stat-value-row">
-
-              <strong class="summary-number">
-                {{ assignedBatchesCount() }}
-              </strong>
-
-              <span class="badge count-badge">
-                إجمالي الدفعات
-              </span>
-
-            </div>
-
-          </div>
-
-        </article>
-
-
-        <!-- ONGOING BATCHES -->
-
-        <article class="summary-stat ongoing">
-
-          <div class="summary-stat-icon cyan">
-
-            <svg
-              viewBox="0 0 24 24"
-              width="22"
-              height="22"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-
-              <circle
-                cx="12"
-                cy="12"
-                r="9"
-              ></circle>
-
-              <path
-                d="M12 7v5l3 2"
-              ></path>
-
-            </svg>
-
-          </div>
-
-
-          <div class="summary-stat-content">
-
-            <span class="stat-label">
-              الدفعات الجارية الآن
-            </span>
-
-
-            <div class="stat-value-row">
-
-              <strong class="summary-number">
-                {{ ongoingBatchesCount() }}
-              </strong>
-
-
-              @if (
-                ongoingBatchesCount() > 0
-              ) {
-
-                <span class="badge active-badge">
-                  جارية
-                </span>
-
-              }
-              @else {
-
-                <span class="badge inactive-badge">
-                  لا توجد
-                </span>
-
-              }
-
-            </div>
-
-          </div>
-
-        </article>
-
-      </div>
-
-    </section>
+  </section>
 
   }
 
@@ -944,25 +751,25 @@
   ====================================================== -->
 
   @if (
-    !loading() &&
-    !trainer()
+  !loading() &&
+  !trainer()
   ) {
 
-    <section class="profile-empty">
+  <section class="profile-empty">
 
-      <div class="empty-icon">
-        !
-      </div>
+    <div class="empty-icon">
+      !
+    </div>
 
-      <strong>
-        تعذر عرض الملف الشخصي
-      </strong>
+    <strong>
+      تعذر عرض الملف الشخصي
+    </strong>
 
-      <p>
-        لم نتمكن من تحميل بيانات المدرب الحالي.
-      </p>
+    <p>
+      لم نتمكن من تحميل بيانات المدرب الحالي.
+    </p>
 
-    </section>
+  </section>
 
   }
 

@@ -43,6 +43,29 @@ namespace Nafadh_Backend.Controllers
             }
         }
 
+        // POST /api/DailyAttendance/{id}/confirm-absence
+        [HttpPost("{id}/confirm-absence")]
+        public async Task<IActionResult> ConfirmAbsence(int id)
+        {
+            try
+            {
+                bool success =
+                    await _service.ConfirmAbsenceAsync(id);
+
+                if (!success)
+                    return NotFound();
+
+                return Ok(new
+                {
+                    message = "Absence confirmed successfully."
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         // PUT /api/DailyAttendance/{id}/check-out
         [HttpPut("{id}/check-out")]
         public async Task<IActionResult> CheckOut(int id, [FromBody] CheckOutDailyAttendanceDto dto)
