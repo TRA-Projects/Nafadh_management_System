@@ -605,24 +605,38 @@
 
 
             <!-- OPEN LESSON -->
-            <button
-              type="button"
-              class="lesson-button"
+           <div class="lesson-actions">
 
-              (click)="
-                openLesson(lesson, module);
-                $event.preventDefault();
-                $event.stopPropagation()
-              "
-            >
 
-              فتح الدرس
+  <!-- حضور الدرس -->
+  <button
+    type="button"
+    class="lesson-action-button attendance-button"
+    (click)="
+      attendLesson(lesson, module);
+      $event.preventDefault();
+      $event.stopPropagation()
+    "
+  >
+    <span>📅</span>
+    حضور الدرس
+  </button>
 
-              <span>
-                ←
-              </span>
+  <!-- تحميل الدرس -->
+  <button
+    type="button"
+    class="lesson-action-button download-button"
+    (click)="
+      downloadLessonMaterials(lesson, module);
+      $event.preventDefault();
+      $event.stopPropagation()
+    "
+  >
+    <span>⬇</span>
+    تحميل الدرس
+  </button>
 
-            </button>
+</div>
 
           </div>
 
@@ -1996,7 +2010,13 @@
   }
 
 
-  .lesson-button {
+  .lesson-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .lesson-button,
+  .lesson-action-button {
     align-self: flex-start;
   }
 }
@@ -2043,6 +2063,60 @@
     display: none;
   }
 
+}
+/* =========================================================
+   LESSON ACTIONS
+   ========================================================= */
+
+.lesson-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.lesson-action-button {
+  border: none;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  transition:
+    background .2s ease,
+    transform .2s ease;
+}
+
+/* حضور الدرس */
+
+.attendance-button {
+  background: #eafaf5;
+  color: #159a78;
+}
+
+.attendance-button:hover {
+  background: #d9f5ec;
+  transform: translateY(-1px);
+}
+
+/* تحميل الدرس */
+
+.download-button {
+  background: #f0f5ff;
+  color: #176fc4;
+}
+
+.download-button:hover {
+  background: #e1ebff;
+  transform: translateY(-1px);
 }
 
 </style>

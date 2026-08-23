@@ -26,6 +26,8 @@ import {
   WarningDto,
   EnrollmentDto,
   BatchDto,
+  TrainingMaterialDto,
+  SessionDto,
   ProgramDto,
   TrainerDto,
   CompanySupervisorDto,
@@ -165,7 +167,46 @@ export class TraineeApi {
   markAchievement(traineeId: number, programId: number): Observable<any> {
     return this.http.post(`${this.base}/Trainee/${traineeId}/program/${programId}/achievement`, {});
   }
+//
+// =========================================================
+// Training Materials
+// =========================================================
 
+/**
+ * جلب الملفات والمواد التدريبية الخاصة بالدرس
+ * GET /api/TrainingMaterial/lesson/{lessonId}
+ */
+getTrainingMaterials(lessonId: number): Observable<TrainingMaterialDto[]> {
+  return this.http.get<TrainingMaterialDto[]>(
+    `${this.base}/TrainingMaterial/lesson/${lessonId}`
+  );
+}
+
+// =========================================================
+// Sessions
+// =========================================================
+
+/**
+ * جلب جلسات الدفعة
+ * GET /api/Session/batch/{batchId}
+ *
+ * إذا كان Endpoint الـ Session عندك مختلف،
+ * نغيره فقط هنا.
+ */
+getSessionsByBatch(batchId: number): Observable<SessionDto[]> {
+  return this.http.get<SessionDto[]>(
+    `${this.base}/Session/batch/${batchId}`
+  );
+}
+/**
+ * جلب جلسة محددة
+ * GET /api/Session/{id}
+ */
+getSession(sessionId: number): Observable<SessionDto> {
+  return this.http.get<SessionDto>(
+    `${this.base}/Session/${sessionId}`
+  );
+}
   // =========================================================
   // Program Modules
   // =========================================================
