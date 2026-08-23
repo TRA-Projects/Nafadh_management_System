@@ -79,7 +79,7 @@ export class CompanyProfile implements OnInit {
   branchFormOpen = signal(false);
   branchDraft = { location: '', contactPoint: '' };
   supervisorFormOpen = signal(false);
-  supervisorDraft = { name: '', role: '', phone: '', email: '' };
+  supervisorDraft = { userId: '', name: '', role: '', phone: '', email: '' };
 
   companyInitial = computed(() => this.company()?.companyName?.trim()?.charAt(0)?.toUpperCase() ?? 'ش');
 
@@ -107,6 +107,16 @@ export class CompanyProfile implements OnInit {
     this.api.getCompany(this.companyId).subscribe({
       next: (response) => {
         const normalizedCompany = this.normalizeCompany(response);
+        if (normalizedCompany) {
+          try {
+            const storedCover = localStorage.getItem(`nafadh-company-${normalizedCompany.companyId}-cover`);
+            const storedLogo = localStorage.getItem(`nafadh-company-${normalizedCompany.companyId}-logo`);
+            if (storedCover) normalizedCompany.coverImageUrl = storedCover;
+            if (storedLogo) normalizedCompany.logoUrl = storedLogo;
+          } catch {
+            // Ignore local storage read failures.
+          }
+        }
         this.company.set(normalizedCompany);
         this.capacityDraft = normalizedCompany?.capacity ?? 0;
         this.companyLoadError.set(false);
@@ -139,40 +149,23 @@ export class CompanyProfile implements OnInit {
       error: () => this.traineesLoadError.set(true),
     });
 
-    this.api.getCompanyPrograms(this.companyId).subscribe({
+    this.api.getCompanyProgramSummaries(this.companyId).subscribe({
       next: (items) => {
-        // التحويل الآمن باستخدام unknown لتفادي خطأ TS2352
-        const rawItems = ((items ?? []) as unknown) as Record<string, unknown>[];
-        if (rawItems.length === 0) {
-          this.specialties.set([]);
-          return;
-        }
-
-        if (rawItems[0]['title'] || rawItems[0]['name'] || rawItems[0]['program']) {
-          this.specialties.set(rawItems.map((item) => this.normalizeSpecialty(item)));
-          this.specialtiesLoadError.set(false);
-          return;
-        }
-
-        const programRequests = rawItems.map((item) => {
-          const pId = Number(item['programId'] ?? item['ProgramId'] ?? 0);
-          if (!pId) return of(this.normalizeSpecialty(item));
-
-          return this.api.getProgram(pId).pipe(
-            map((p) => this.normalizeSpecialty((p as unknown) as Record<string, unknown>)),
-            catchError(() => of(this.normalizeSpecialty(item)))
-          );
-        });
-
-        forkJoin(programRequests).subscribe({
-          next: (res) => {
-            this.specialties.set(res);
-            this.specialtiesLoadError.set(false);
-          },
-          error: () => this.specialtiesLoadError.set(true),
-        });
+        this.specialties.set((items ?? []).map((item) => ({
+          programId: item.programId,
+          name: item.title,
+          status: item.approvedForCompany && !/suspended|inactive|rejected/i.test(item.status)
+            ? 'معتمد'
+            : 'قيد الاعتماد',
+          seatsAllocated: Number(item.allocatedCapacity ?? 0),
+        })));
+        this.specialtiesLoadError.set(false);
       },
-      error: () => this.specialtiesLoadError.set(true),
+      error: (error) => {
+        console.error('Failed to load company program summaries:', error);
+        this.specialties.set([]);
+        this.specialtiesLoadError.set(true);
+      },
     });
   }
 
@@ -200,12 +193,12 @@ export class CompanyProfile implements OnInit {
     const workFields = Array.isArray(dto.workFields) && dto.workFields.length
       ? dto.workFields
       : dto.workField
-      ? [dto.workField]
+      ? dto.workField.split(/[،,]/).map((x) => x.trim()).filter(Boolean)
       : [];
 
     return {
       ...dto,
-      companyName: dto.companyName || 'اسم الشركة',
+      companyName: dto.companyName || 'غير متوفر',
       workField: dto.workField || workFields[0] || 'غير محدد',
       workFields,
       logoUrl,
@@ -216,78 +209,37 @@ export class CompanyProfile implements OnInit {
   }
 
   private normalizeSupervisor(supervisor: Partial<CompanySupervisorProfileDto>): CompanySupervisorProfileDto {
-    const id = supervisor.supervisorId ?? supervisor.id ?? Date.now();
+    const id = supervisor.supervisorId ?? supervisor.id ?? 0;
 
     return {
       ...supervisor,
       supervisorId: id,
       id,
-      fullName: supervisor.fullName || supervisor.name || 'جهة اتصال',
-      name: supervisor.name || supervisor.fullName || 'جهة اتصال',
-      position: supervisor.position || supervisor.role || supervisor.department || 'مدير الحساب',
-      role: supervisor.role || supervisor.position || supervisor.department || 'مدير الحساب',
+      fullName: supervisor.fullName || supervisor.name || '—',
+      name: supervisor.name || supervisor.fullName || '—',
+      position: supervisor.position || supervisor.role || supervisor.department || '—',
+      role: supervisor.role || supervisor.position || supervisor.department || '—',
       phone: supervisor.phone || '',
       email: supervisor.email || '',
-      status: supervisor.status || 'Active',
+      status: supervisor.status || '—',
     } as CompanySupervisorProfileDto;
-  }
-
-  private normalizeSpecialty(item: Record<string, unknown>): HostedSpecialtyDto {
-    const programObj = (item['program'] || item['Program'] || item['specialty'] || item['Specialty']) as Record<string, unknown> | undefined;
-
-    const extractedName =
-      item['title'] ??
-      item['Title'] ??
-      item['name'] ??
-      item['Name'] ??
-      item['programName'] ??
-      item['ProgramName'] ??
-      programObj?.['title'] ??
-      programObj?.['Title'] ??
-      programObj?.['name'] ??
-      programObj?.['Name'];
-
-    const extractedSeats =
-      item['seatsAllocated'] ??
-      item['SeatsAllocated'] ??
-      item['capacity'] ??
-      item['Capacity'] ??
-      item['durationHours'] ??
-      item['DurationHours'] ??
-      item['seats'] ??
-      item['Seats'] ??
-      programObj?.['seatsAllocated'] ??
-      programObj?.['capacity'] ??
-      0;
-
-    const rawStatus = String(
-      item['status'] ??
-      item['Status'] ??
-      item['programStatus'] ??
-      programObj?.['status'] ??
-      ''
-    );
-
-    const status: 'معتمد' | 'قيد الاعتماد' =
-      rawStatus === 'Approved' || rawStatus === 'معتمد' || rawStatus === 'Active'
-        ? 'معتمد'
-        : 'قيد الاعتماد';
-
-    return {
-      programId: Number(item['programId'] ?? item['ProgramId'] ?? item['id'] ?? item['Id'] ?? Date.now()),
-      name: extractedName ? String(extractedName) : 'تخصص غير محدد',
-      seatsAllocated: Number(extractedSeats),
-      status,
-    };
   }
 
   saveCapacity() {
     const c = this.company();
     if (!c) return;
 
-    this.api.updateCompany(c.companyId, { ...c, capacity: this.capacityDraft }).subscribe(() => {
-      this.company.update((cur) => (cur ? { ...cur, capacity: this.capacityDraft } : cur));
-      this.editingCapacity.set(false);
+    const payload = this.buildCompanyUpdatePayload(c, {
+      capacity: Math.max(0, Number(this.capacityDraft ?? 0)),
+    });
+
+    this.api.updateCompany(c.companyId, payload).subscribe({
+      next: (updated) => {
+        const merged = this.normalizeCompany({ ...c, ...(updated as Partial<CompanyProfileDto>), capacity: Number(this.capacityDraft ?? 0) });
+        if (merged) this.company.set(merged);
+        this.editingCapacity.set(false);
+      },
+      error: (error) => console.error('Failed to update company capacity:', error),
     });
   }
 
@@ -310,21 +262,46 @@ export class CompanyProfile implements OnInit {
     const c = this.company();
     if (!c) return;
 
-    const payload = {
-      ...c,
-      ...this.companyEditDraft,
-      companyName: c.companyName,
-      workField: c.workField,
-      logoUrl: c.logoUrl,
-      coverImageUrl: c.coverImageUrl,
-      usedCapacity: c.usedCapacity,
-      capacity: c.capacity,
-    };
-
-    this.api.updateCompany(c.companyId, payload).subscribe(() => {
-      this.company.update((cur) => (cur ? { ...cur, ...this.companyEditDraft } : cur));
-      this.companyEditOpen.set(false);
+    const payload = this.buildCompanyUpdatePayload(c, {
+      commercialRegister: this.companyEditDraft.commercialRegister.trim() || null,
+      phone: this.companyEditDraft.phone.trim() || null,
+      email: this.companyEditDraft.email.trim() || null,
     });
+
+    this.api.updateCompany(c.companyId, payload).subscribe({
+      next: (updated) => {
+        const merged = this.normalizeCompany({
+          ...c,
+          ...(updated as Partial<CompanyProfileDto>),
+          commercialRegister: this.companyEditDraft.commercialRegister.trim(),
+          phone: this.companyEditDraft.phone.trim(),
+          email: this.companyEditDraft.email.trim(),
+        });
+        if (merged) this.company.set(merged);
+        this.companyEditOpen.set(false);
+      },
+      error: (error) => console.error('Failed to update company profile:', error),
+    });
+  }
+
+  private buildCompanyUpdatePayload(
+    c: CompanyProfileDto,
+    patch: Record<string, unknown> = {},
+  ) {
+    return {
+      companyName: c.companyName,
+      commercialRegister: c.commercialRegister || null,
+      workField: c.workField || null,
+      address: c.address || null,
+      phone: c.phone || null,
+      email: c.email || null,
+      logo: c.logoUrl || c.logo || null,
+      capacity: Number(patch['capacity'] ?? c.capacity ?? 0),
+      status: c.status,
+      approvalDate: c.approvalDate || null,
+      userId: c.userId ?? null,
+      ...patch,
+    };
   }
 
   statusLabel(value?: string | null): string {
@@ -342,7 +319,7 @@ export class CompanyProfile implements OnInit {
       case 'Inactive':
         return 'غير نشط';
       default:
-        return value || 'نشط';
+        return value || 'غير محدد';
     }
   }
 
@@ -354,25 +331,36 @@ export class CompanyProfile implements OnInit {
 
   addWorkField() {
     const value = this.newFieldDraft.trim();
-    if (!value) return;
+    const c = this.company();
+    if (!value || !c) return;
 
-    this.company.update((cur) => {
-      if (!cur) return cur;
-      const list = [...this.workFieldList(cur), value];
-      return {
-        ...cur,
-        workFields: list,
-        workField: list[0] || 'غير محدد',
-      };
+    const list = Array.from(new Set([...this.workFieldList(c), value]));
+    const workField = list.join('، ');
+
+    this.api.updateCompany(c.companyId, this.buildCompanyUpdatePayload(c, { workField })).subscribe({
+      next: (updated) => {
+        const merged = this.normalizeCompany({ ...c, ...(updated as Partial<CompanyProfileDto>), workField, workFields: list });
+        if (merged) this.company.set(merged);
+        this.newFieldDraft = '';
+      },
+      error: (error) => console.error('Failed to add work field:', error),
     });
-
-    this.newFieldDraft = '';
   }
 
   removeWorkField(field: string) {
-    this.company.update((cur) =>
-      cur ? { ...cur, workFields: this.workFieldList(cur).filter((f) => f !== field) } : cur
-    );
+    const c = this.company();
+    if (!c) return;
+
+    const list = this.workFieldList(c).filter((f) => f !== field);
+    const workField = list.join('، ');
+
+    this.api.updateCompany(c.companyId, this.buildCompanyUpdatePayload(c, { workField })).subscribe({
+      next: (updated) => {
+        const merged = this.normalizeCompany({ ...c, ...(updated as Partial<CompanyProfileDto>), workField, workFields: list });
+        if (merged) this.company.set(merged);
+      },
+      error: (error) => console.error('Failed to remove work field:', error),
+    });
   }
 
   addBranch() {
@@ -381,20 +369,22 @@ export class CompanyProfile implements OnInit {
 
   saveBranch() {
     const location = this.branchDraft.location.trim();
-    if (!location) return;
+    if (!location || !this.companyId) return;
 
-    this.branches.update((cur) => [
-      ...cur,
-      {
-        branchId: Date.now(),
-        location,
-        contactPoint: this.branchDraft.contactPoint.trim(),
-        companyId: this.companyId,
+    this.api.addBranch({
+      companyId: this.companyId,
+      location,
+      contactPoint: this.branchDraft.contactPoint.trim() || null,
+    }).subscribe({
+      next: (branch) => {
+        this.branches.update((cur) => [...cur, branch as CompanyBranchDto]);
+        this.branchDraft = { location: '', contactPoint: '' };
+        this.branchFormOpen.set(false);
       },
-    ]);
-
-    this.branchDraft = { location: '', contactPoint: '' };
-    this.branchFormOpen.set(false);
+      error: (error) => {
+        console.error('Failed to add company branch:', error);
+      },
+    });
   }
 
   addSupervisor() {
@@ -402,30 +392,29 @@ export class CompanyProfile implements OnInit {
   }
 
   saveSupervisor() {
-    const name = this.supervisorDraft.name.trim();
-    if (!name) return;
+    const userId = Number(this.supervisorDraft.userId);
+    if (!userId || !this.companyId) return;
 
-    const supervisorId = Date.now();
-
-    this.supervisors.update((cur) => [
-      ...cur,
-      {
-        supervisorId,
-        id: supervisorId,
-        fullName: name,
-        name,
-        role: this.supervisorDraft.role.trim() || 'مدير الحساب',
-        position: this.supervisorDraft.role.trim() || 'مدير الحساب',
-        phone: this.supervisorDraft.phone.trim(),
-        email: this.supervisorDraft.email.trim(),
-        status: 'Active',
-        userId: 0,
-        companyId: this.companyId,
-      } as CompanySupervisorProfileDto,
-    ]);
-
-    this.supervisorDraft = { name: '', role: '', phone: '', email: '' };
-    this.supervisorFormOpen.set(false);
+    // The current backend endpoint accepts a real supervisor creation DTO.
+    // Keep the UI contract small and let the API validate required fields.
+    this.api.addSupervisor({
+      userId,
+      department: this.supervisorDraft.role.trim() || null,
+      position: this.supervisorDraft.role.trim() || null,
+      companyId: this.companyId,
+    }).subscribe({
+      next: () => {
+        this.supervisorDraft = { userId: '', name: '', role: '', phone: '', email: '' };
+        this.supervisorFormOpen.set(false);
+        this.api.getSupervisors(this.companyId).subscribe({
+          next: (items) => this.supervisors.set((items ?? []).map((x) => this.normalizeSupervisor(x))),
+          error: () => undefined,
+        });
+      },
+      error: (error) => {
+        console.error('Failed to add company supervisor:', error);
+      },
+    });
   }
 
   onCoverSelected(event: Event) {
@@ -476,22 +465,30 @@ export class CompanyProfile implements OnInit {
     const c = this.company();
     if (!c) return;
 
-    (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(true);
+    const uploadingSignal = kind === 'cover' ? this.uploadingCover : this.uploadingLogo;
+    const errorSignal = kind === 'cover' ? this.coverUploadError : this.logoUploadError;
 
-    const payload = kind === 'cover' ? { ...c, coverImageUrl: value } : { ...c, logoUrl: value };
+    uploadingSignal.set(true);
+    errorSignal.set(false);
 
-    this.api.updateCompany(c.companyId, payload).subscribe({
-      next: () => {
-        this.applyImageToCompany(kind, value);
-        (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(false);
-        (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(false);
-      },
-      error: () => {
-        this.revertImage(kind, fallbackUrl);
-        (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(true);
-        (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(false);
-      },
-    });
+    // The current backend schema stores only a Logo URL and has no binary
+    // file-upload endpoint/cover column. Keep the selected image usable in
+    // the Company Portal without sending an oversized base64 payload to an
+    // unrelated text field. A future storage endpoint can replace this block
+    // without changing the page design.
+    try {
+      localStorage.setItem(`nafadh-company-${c.companyId}-${kind}`, value);
+    } catch (error) {
+      console.error(`Failed to store ${kind} preview locally:`, error);
+      this.revertImage(kind, fallbackUrl);
+      errorSignal.set(true);
+    }
+
+    if (!errorSignal()) {
+      this.applyImageToCompany(kind, value);
+    }
+
+    uploadingSignal.set(false);
   }
 
   private applyImageToCompany(kind: 'cover' | 'logo', value: string) {
