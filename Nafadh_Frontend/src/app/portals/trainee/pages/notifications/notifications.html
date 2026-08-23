@@ -80,8 +80,8 @@
           color: #334155;
           box-sizing: border-box;
         "
-        [value]="filter()"
-        (change)="filter.set($any($event.target).value)"
+        [value]="displayFilter()"
+        (change)="onFilterChange($any($event.target).value)"
       >
         <option value="all" style="color: #000; background: #fff; font-size: 12px">الكل</option>
         <option value="notification" style="color: #000; background: #fff; font-size: 12px">
@@ -106,29 +106,7 @@
       </svg>
     </div>
 
-    <!-- زر الكل -->
-    <button
-      type="button"
-      style="
-        height: 32px;
-        padding: 0 14px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-family: inherit;
-        font-weight: 500;
-        cursor: pointer;
-        border: 1px solid;
-        transition: all 0.2s ease;
-      "
-      [style.background-color]="filter() === 'all' ? '#1e3b8a' : 'transparent'"
-      [style.color]="filter() === 'all' ? '#ffffff' : '#334155'"
-      [style.border-color]="filter() === 'all' ? '#1e3b8a' : '#cbd5e1'"
-      (click)="filter.set('all')"
-    >
-      الكل
-    </button>
-
-    <!-- زر غير مقروء -->
+    <!-- زر غير مقروء (مستقل) -->
     <button
       type="button"
       style="
@@ -145,7 +123,7 @@
       [style.background-color]="filter() === 'unread' ? '#1e3b8a' : 'transparent'"
       [style.color]="filter() === 'unread' ? '#ffffff' : '#334155'"
       [style.border-color]="filter() === 'unread' ? '#1e3b8a' : '#cbd5e1'"
-      (click)="filter.set('unread')"
+      (click)="setUnreadFilter()"
     >
       غير مقروء
     </button>
