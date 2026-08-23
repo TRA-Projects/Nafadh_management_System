@@ -410,20 +410,20 @@
 
               <td>
 
-                <span
-                  class="status-badge"
-                  [ngClass]="
-                    enrollmentStatusClass(
-                      e.completionStatus
-                    )
-                  "
-                >
-                  {{
-                    enrollmentStatusLabel(
-                      e.completionStatus
-                    )
-                  }}
-                </span>
+              <span
+  class="status-badge"
+  [ngClass]="
+    enrollmentStatusClass(
+      effectiveEnrollmentStatus(e)
+    )
+  "
+>
+  {{
+    enrollmentStatusLabel(
+      effectiveEnrollmentStatus(e)
+    )
+  }}
+</span>
 
               </td>
 

@@ -22,6 +22,7 @@ import {
   EnrollmentDto,
   EvaluationCriterionDto,
   EvaluationTemplateDetailDto,
+  TrainerBatchDto,
   TrainerDto
 } from '../../../../core/models/dtos';
 
@@ -42,11 +43,16 @@ export class TrainerTrainees implements OnInit {
   // STATE
   // =====================================================
 
-  trainer =
-    signal<TrainerDto | null>(null);
+  trainer = signal<TrainerDto | null>(null);
+   
 
-  enrollments =
-    signal<EnrollmentDto[]>([]);
+    batches =  signal<TrainerBatchDto[]>(  [] );
+
+  
+ 
+
+  enrollments =  signal<EnrollmentDto[]>([]);
+  
 
   batchId: number | null = null;
 
@@ -353,7 +359,77 @@ export class TrainerTrainees implements OnInit {
   // =====================================================
   // ENROLLMENT STATUS
   // =====================================================
+effectiveEnrollmentStatus(
+  enrollment: EnrollmentDto
+): string {
 
+  const status =
+    enrollment.completionStatus;
+
+
+  // Withdrawal and failure are individual
+  // trainee states and should remain unchanged.
+  if (
+    status === 'Dropped' ||
+    status === 'Failed'
+  ) {
+    return status;
+  }
+
+
+  const batch =
+    this.batches()
+      .find(
+        item =>
+          item.batchId ===
+          enrollment.batchId
+      );
+
+
+  if (
+    !batch ||
+    !batch.endDate
+  ) {
+    return status;
+  }
+
+
+  const today =
+    new Date();
+
+  today.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+
+  const endDate =
+    new Date(
+      batch.endDate
+    );
+
+  endDate.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+
+  // Do not show "Completed" while
+  // the batch itself is still active.
+  if (
+    status === 'Completed' &&
+    today <= endDate
+  ) {
+    return 'InProgress';
+  }
+
+
+  return status;
+}
   enrollmentStatusLabel(
     status: string | null | undefined
   ): string {
@@ -583,7 +659,9 @@ export class TrainerTrainees implements OnInit {
           const batches =
             data ?? [];
 
-
+         this.batches.set(
+             batches
+                  );
           if (
             this.batchId &&
             this.batchId > 0
@@ -642,6 +720,7 @@ export class TrainerTrainees implements OnInit {
           );
 
           this.enrollments.set([]);
+          this.batches.set(  []);
 
           this.evaluationAverages.set({});
 
