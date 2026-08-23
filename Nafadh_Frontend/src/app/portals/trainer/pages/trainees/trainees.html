@@ -116,11 +116,14 @@
 
   <section class="trainees-kpis">
 
-    <article
+  <article
   class="trainee-kpi"
   role="button"
   tabindex="0"
   style="cursor:pointer;"
+  [class.active-filter]="
+    traineeListFilter() === 'all'
+  "
   (click)="showAllTrainees()"
 >
 
@@ -248,11 +251,14 @@
     </article>
 
 
-    <article
+<article
   class="trainee-kpi danger"
   role="button"
   tabindex="0"
   style="cursor:pointer;"
+  [class.active-filter]="
+    traineeListFilter() === 'support'
+  "
   (click)="showSupportTrainees()"
 >
 
