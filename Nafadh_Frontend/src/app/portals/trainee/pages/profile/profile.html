@@ -267,37 +267,39 @@
     />
 
 
-    <!-- الهاتف - قابل للتعديل -->
-    <label
-      [style.color]="editing() ? '#64748b' : '#64748b'"
-      style="display: block; font-size: 12px; font-weight: 600; margin: 12px 0 6px;">
+<!-- الهاتف - قابل للتعديل -->
+<label
+  [style.color]="editing() ? '#64748b' : '#64748b'"
+  style="display: block; font-size: 12px; font-weight: 600; margin: 12px 0 6px;">
 
-      رقم الهاتف
+  رقم الهاتف
 
-    </label>
+</label>
 
-    @if (editing()) {
+@if (editing()) {
 
-      <input
-        class="nfd-input"
-        [(ngModel)]="$any(t).phone"
-        dir="ltr"
-        type="tel"
-        placeholder="أدخل رقم الهاتف"
-        style="width: 100%; text-align: center; background: #ffffff; border: 1px solid #0284c7; border-radius: 8px; padding: 10px; font-size: 13px; color: #1e293b; outline: none; cursor: text;"
-      />
+  <input
+    class="nfd-input"
+    [(ngModel)]="t.phone"
+    dir="ltr"
+    type="tel"
+    placeholder="أدخل رقم الهاتف"
+    style="width: 100%; text-align: center; background: #ffffff; border: 1px solid #0284c7; border-radius: 8px; padding: 10px; font-size: 13px; color: #1e293b; outline: none; cursor: text;"
+  />
 
-    } @else {
+} 
 
-      <input
-        [value]="$any(t).phone || 'غير مسجل'"
-        readonly
-        tabindex="-1"
-        dir="ltr"
-        style="width: 100%; text-align: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 13px; color: #1e293b; outline: none;"
-      />
+@else {
 
-    }
+  <input
+    [value]="t.phone || 'غير مسجل'"
+    readonly
+    tabindex="-1"
+    dir="ltr"
+    style="width: 100%; text-align: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 13px; color: #1e293b; outline: none;"
+  />
+
+}
 
 
     <!-- الحسابات المهنية -->

@@ -234,79 +234,50 @@ export class TraineeProfile implements OnInit {
       .getTrainee(this.userId)
       .subscribe({
 
-        next: (t) => {
+next: (t) => {
 
-          console.log(
-            'Trainee data received:',
-            t
-          );
+  console.log(
+    'Trainee data received:',
+    t
+  );
 
+  if (t) {
 
-          if (t) {
+    // Phone يأتي مباشرة من NFD_Users.Phone
+    const traineeData: any = {
+      ...t,
+      phone: t.phone ?? ''
+    };
 
-            /*
-             * =====================================================
-             * IMPORTANT:
-             * Make sure phone is available in the object.
-             *
-             * Supports:
-             * phone
-             * phoneNumber
-             * mobileNumber
-             *
-             * This does NOT change the backend.
-             * It only normalizes the response for the UI.
-             * =====================================================
-             */
+    this.trainee.set(
+      traineeData
+    );
 
-            const traineeData: any = {
-              ...t,
+    if (traineeData.traineeId) {
 
-              phone:
-                t.phone ??
-                (t as any).phoneNumber ??
-                (t as any).mobileNumber ??
-                ''
-            };
+      this.traineeId =
+        Number(
+          traineeData.traineeId
+        );
 
+    }
 
-            this.trainee.set(
-              traineeData
-            );
+    console.log(
+      'TraineeId:',
+      this.traineeId
+    );
 
+    console.log(
+      'UserId:',
+      this.userId
+    );
 
-            if (
-              traineeData.traineeId
-            ) {
-
-              this.traineeId =
-                Number(
-                  traineeData.traineeId
-                );
-
-            }
-
-
-            console.log(
-              'TraineeId:',
-              this.traineeId
-            );
-
-
-            console.log(
-              'UserId:',
-              this.userId
-            );
-
-
-            console.log(
-              'Phone from Backend:',
-              traineeData.phone
-            );
-
-          }
-
-        },
+    console.log(
+      'Phone from Database:',
+      traineeData.phone
+    );
+  }
+},
 
 
         error: (err) => {
@@ -414,6 +385,7 @@ export class TraineeProfile implements OnInit {
       const t =
         this.trainee();
 
+
       if (!t) {
 
         return;
@@ -421,7 +393,6 @@ export class TraineeProfile implements OnInit {
       }
 
 
-      // Save the original values before editing
       this.originalProfile =
         this.createProfileSnapshot(t);
 
@@ -456,12 +427,6 @@ export class TraineeProfile implements OnInit {
     }
 
 
-    // =======================================================
-    // IMPORTANT:
-    // If nothing changed, DO NOT call backend.
-    // Simply leave edit mode.
-    // =======================================================
-
     if (
       !this.hasProfileChanges(t)
     ) {
@@ -469,6 +434,7 @@ export class TraineeProfile implements OnInit {
       console.log(
         'No changes detected. Nothing to update.'
       );
+
 
       this.editing.set(false);
 
@@ -498,10 +464,6 @@ export class TraineeProfile implements OnInit {
 
     }
 
-
-    // =======================================================
-    // فقط الحقول المسموح للمستخدم تعديلها
-    // =======================================================
 
     const payload: TraineeUpdateDto = {
 
@@ -591,12 +553,12 @@ export class TraineeProfile implements OnInit {
 
                 mobileNumber:
                   string;
+
+                user?: {
+                  phone?: string;
+                };
               }>;
 
-
-            /*
-             * Normalize phone again after update
-             */
 
             const updatedData: any = {
 
@@ -606,6 +568,7 @@ export class TraineeProfile implements OnInit {
                 updated.phone ??
                 updated.phoneNumber ??
                 updated.mobileNumber ??
+                updated.user?.phone ??
                 t.phone ??
                 ''
 
@@ -637,7 +600,7 @@ export class TraineeProfile implements OnInit {
 
 
           // إعادة الجلب من Backend
-          // حتى نتأكد أن البيانات محفوظة فعليًا.
+          // للتأكد من أن البيانات محفوظة فعليًا.
 
           this.loadTraineeData();
 
