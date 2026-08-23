@@ -395,10 +395,130 @@ namespace Nafadh_Backend.Controllers
                 VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
                 CompanyName = t.Company?.CompanyName,
+                Phone = t.User?.Phone,
                 EnrollmentId = t.Enrollments?.LastOrDefault(u => u.TraineeId == t.TraineeId)?.EnrollmentId ?? 0
             };
 
             return Ok(dto);
+        }
+        // PUT: api/trainee/traineeByUserID/{userId}
+        [HttpPut("traineeByUserID/{userId}")]
+        public async Task<IActionResult> UpdateTraineeByUserID(
+            int userId,
+            [FromBody] TraineeUpdateDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Get trainee using UserId
+            var trainee = await _service.GetTraineeIdByUserID(userId);
+
+            if (trainee == null)
+            {
+                return NotFound(new
+                {
+                    message = "Trainee not found for this UserId."
+                });
+            }
+
+            // Make sure User exists
+            if (trainee.User == null)
+            {
+                return NotFound(new
+                {
+                    message = "User account not found."
+                });
+            }
+
+            // Check if the new email is already used by another user
+            var emailExists = await _context.NFD_Users
+                .AnyAsync(u =>
+                    u.Email == dto.Email &&
+                    u.UserId != trainee.UserId);
+
+            if (emailExists)
+            {
+                return BadRequest(new
+                {
+                    message = "This email is already registered by another user."
+                });
+            }
+
+            // =========================
+            // Update User information
+            // =========================
+
+            trainee.User.Email = dto.Email.Trim();
+
+            trainee.User.Phone = string.IsNullOrWhiteSpace(dto.Phone)
+                ? null
+                : dto.Phone.Trim();
+
+            // =========================
+            // Update Trainee information
+            // =========================
+
+            trainee.Skills = string.IsNullOrWhiteSpace(dto.Skills)
+                ? null
+                : dto.Skills.Trim();
+
+            trainee.ResumeUrl = string.IsNullOrWhiteSpace(dto.ResumeUrl)
+                ? null
+                : dto.ResumeUrl.Trim();
+
+            trainee.GitHubUrl = string.IsNullOrWhiteSpace(dto.GitHubUrl)
+                ? null
+                : dto.GitHubUrl.Trim();
+
+            trainee.LinkedInUrl = string.IsNullOrWhiteSpace(dto.LinkedInUrl)
+                ? null
+                : dto.LinkedInUrl.Trim();
+
+            try
+            {
+                var saved = await _service.SaveChangesAsync();
+
+                if (!saved)
+                {
+                    return StatusCode(500, new
+                    {
+                        message = "Failed to update trainee profile."
+                    });
+                }
+
+                // Return the updated profile
+                var updatedDto = new TraineeProfileDto
+                {
+                    TraineeId = trainee.TraineeId,
+                    FullName = trainee.User.FullName,
+                    Email = trainee.User.Email,
+                    Phone = trainee.User.Phone,
+                    NationalId = trainee.NationalId,
+                    University = trainee.University,
+                    Major = trainee.Major,
+                    AcademicLevel = trainee.AcademicLevel,
+                    Skills = trainee.Skills,
+                    ResumeUrl = trainee.ResumeUrl,
+                    GitHubUrl = trainee.GitHubUrl,
+                    LinkedInUrl = trainee.LinkedInUrl,
+                    Status = trainee.Status,
+                    VerificationStatus = trainee.VerificationStatus,
+                    CompanyId = trainee.CompanyId,
+                    CompanyName = trainee.Company?.CompanyName,
+                    EnrollmentId = trainee.Enrollments?
+                        .LastOrDefault(e => e.TraineeId == trainee.TraineeId)?
+                        .EnrollmentId ?? 0
+                };
+
+                return Ok(updatedDto);
+            }
+            catch (DbUpdateException)
+            {
+                return StatusCode(500, new
+                {
+                    message = "A database error occurred while updating the profile."
+                });
+            }
         }
     }
 }
