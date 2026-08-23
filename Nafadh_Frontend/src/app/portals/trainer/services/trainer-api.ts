@@ -183,7 +183,29 @@ createModule(
     dto
   );
 }
+// =====================================================
+// UPDATE MODULE
+// Used for archiving and restoring modules.
+// =====================================================
 
+updateModule(
+  moduleId: number,
+  dto: {
+    title: string;
+    orderIndex: number;
+    availableFrom?: string | null;
+    availableTo?: string | null;
+    isArchived: boolean;
+    prerequisiteModuleId?: number | null;
+  }
+): Observable<void> {
+
+  return this.http.put<void>(
+    `${this.base}/Module/${moduleId}`,
+    dto
+  );
+
+}
 
 createLesson(
   dto: {
