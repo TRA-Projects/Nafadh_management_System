@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using System.Globalization;
+using System.Security.Claims;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -11,6 +13,7 @@ namespace Nafadh_Backend.Controllers
     // Admin and Trainer portals.
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "CompanySupervisor")]
     public class CompanyDashboardController : ControllerBase
     {
         private readonly Nafadhcontext _context;
@@ -23,6 +26,17 @@ namespace Nafadh_Backend.Controllers
         [HttpGet("{companyId:int}")]
         public async Task<ActionResult<CompanyDashboardDTO>> Get(int companyId)
         {
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (!int.TryParse(userIdValue, out var userId))
+                return Unauthorized();
+
+            var ownsCompany = await _context.NFD_CompanySupervisors
+                .AsNoTracking()
+                .AnyAsync(s => s.UserId == userId && s.CompanyId == companyId);
+
+            if (!ownsCompany)
+                return Forbid();
+
             var company = await _context.NFD_Companies
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.CompanyId == companyId);
