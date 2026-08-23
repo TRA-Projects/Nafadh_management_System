@@ -6,7 +6,7 @@ import {
   AnnouncementDto, CompanyAccountDto, CompanyBranchDto, CompanyCapacityDto, CompanyDto, CompanySupervisorDto, CompanyDashboardDto,
   ConversationDetailDto, ConversationListItemDto, ConversationMessageDto, EnrollmentDto, EvaluationDto,
   FeedbackSummaryDto, TrainerKpisDto, WarningDto, AttendanceReportDto, ChartPointDto,
-  TraineeListItemDto, ProgramDto, ProgressSummaryDto, CompanyProgramLinkDto,
+  TraineeListItemDto, ProgramDto, ProgressSummaryDto, CompanyProgramLinkDto, CompanyProgramSummaryDto, CompanyProgramDetailsDto,
 } from '../../../core/models/dtos';
 // Company API service — all endpoints used by the Company portal, including
 @Injectable({ providedIn: 'root' })
@@ -51,6 +51,12 @@ export class CompanyApi {
   // Specialties / Programs
   getCompanyPrograms(companyId: number): Observable<CompanyProgramLinkDto[]> {
     return this.http.get<CompanyProgramLinkDto[]>(`${this.base}/CompanyProgram/company/${companyId}`);
+  }
+  getCompanyProgramSummaries(companyId: number): Observable<CompanyProgramSummaryDto[]> {
+    return this.http.get<CompanyProgramSummaryDto[]>(`${this.base}/CompanyProgram/company/${companyId}/details`);
+  }
+  getCompanyProgramDetails(companyId: number, programId: number): Observable<CompanyProgramDetailsDto> {
+    return this.http.get<CompanyProgramDetailsDto>(`${this.base}/CompanyProgram/company/${companyId}/program/${programId}/details`);
   }
   getProgram(id: number): Observable<ProgramDto> { return this.http.get<ProgramDto>(`${this.base}/Program/${id}`); }
   getBatch(id: number): Observable<any> { return this.http.get<any>(`${this.base}/Batch/${id}`); }
