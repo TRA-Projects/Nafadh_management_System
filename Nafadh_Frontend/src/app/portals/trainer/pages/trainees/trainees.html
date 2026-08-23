@@ -406,26 +406,26 @@
               </td>
 
 
-              <!-- Status -->
+            <!-- Status -->
 
-              <td>
+<td>
 
-            <span
-  class="status-badge"
-  [ngClass]="
-    enrollmentStatusClass(
-      effectiveEnrollmentStatus(profile)
-    )
-  "
->
-  {{
-    enrollmentStatusLabel(
-      effectiveEnrollmentStatus(profile)
-    )
-  }}
-</span>
+  <span
+    class="status-badge"
+    [ngClass]="
+      enrollmentStatusClass(
+        effectiveEnrollmentStatus(e)
+      )
+    "
+  >
+    {{
+      enrollmentStatusLabel(
+        effectiveEnrollmentStatus(e)
+      )
+    }}
+  </span>
 
-              </td>
+</td>
 
 
               <!-- Technical -->
@@ -788,19 +788,19 @@
             </span>
 
             <span
-              class="status-badge"
-              [ngClass]="
-                enrollmentStatusClass(
-                  profile.completionStatus
-                )
-              "
-            >
-              {{
-                enrollmentStatusLabel(
-                  profile.completionStatus
-                )
-              }}
-            </span>
+  class="status-badge"
+  [ngClass]="
+    enrollmentStatusClass(
+      effectiveEnrollmentStatus(profile)
+    )
+  "
+>
+  {{
+    enrollmentStatusLabel(
+      effectiveEnrollmentStatus(profile)
+    )
+  }}
+</span>
 
           </div>
 
@@ -815,12 +815,12 @@
                 نسبة الحضور
               </span>
 
-
-              @if (
-                attendancePercentage(
-                  profile.enrollmentId
-                ) !== null
-              ) {
+@if (
+  canShowTrainingMetrics(profile) &&
+  attendancePercentage(
+    profile.enrollmentId
+  ) !== null
+) {
 
                 <strong>
                   {{
