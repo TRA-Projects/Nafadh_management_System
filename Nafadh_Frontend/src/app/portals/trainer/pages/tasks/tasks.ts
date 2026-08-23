@@ -1057,7 +1057,89 @@ export class TrainerTasks implements OnInit {
         return '';
     }
   }
+// =====================================================
+// OPEN SUBMISSION FILE
+// =====================================================
 
+openSubmissionFile(
+  submission: SubmissionDto
+): void {
+
+  this.submissionsModalError.set(
+    ''
+  );
+
+
+  const fileUrl =
+    submission.fileUrl?.trim();
+
+
+  if (!fileUrl) {
+
+    this.submissionsModalError.set(
+      'لا يوجد ملف مرفق لهذا التسليم.'
+    );
+
+    return;
+  }
+
+
+  // Old test submissions may contain
+  // a fake Nafadh Drive URL.
+  if (
+    fileUrl.includes(
+      'drive.nafadh.test'
+    )
+  ) {
+
+    this.submissionsModalError.set(
+      'ملف هذا التسليم غير متوفر لأن الرابط المسجل تجريبي.'
+    );
+
+    return;
+  }
+
+
+  // Only allow valid web links.
+  if (
+    !fileUrl.startsWith(
+      'http://'
+    ) &&
+    !fileUrl.startsWith(
+      'https://'
+    )
+  ) {
+
+    this.submissionsModalError.set(
+      'رابط ملف التسليم غير صالح.'
+    );
+
+    return;
+  }
+
+
+  const submissionWindow =
+    window.open(
+      fileUrl,
+      '_blank',
+      'noopener,noreferrer'
+    );
+
+
+  if (!submissionWindow) {
+
+    this.submissionsModalError.set(
+      'تعذر فتح ملف التسليم. تأكدي من السماح بالنوافذ المنبثقة.'
+    );
+
+    return;
+  }
+
+
+  submissionWindow.opener =
+    null;
+
+}
 
   // =====================================================
   // FILTER
