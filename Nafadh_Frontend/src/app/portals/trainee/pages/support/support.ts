@@ -39,7 +39,6 @@ export class TraineeSupport implements OnInit {
   conversations =
     signal<ConversationListItemDto[]>([]);
 
-
   active =
     signal<ConversationDetailDto | null>(null);
 
@@ -51,10 +50,8 @@ export class TraineeSupport implements OnInit {
   isSubmitting =
     signal(false);
 
-
   errorMessage =
     signal('');
-
 
   successMessage =
     signal('');
@@ -311,9 +308,7 @@ export class TraineeSupport implements OnInit {
       input.files[0];
 
 
-    // ---------------------------------------------------------
     // Maximum 10 MB
-    // ---------------------------------------------------------
 
     const maxSize =
       10 * 1024 * 1024;
@@ -336,9 +331,7 @@ export class TraineeSupport implements OnInit {
     }
 
 
-    // ---------------------------------------------------------
     // Allowed types
-    // ---------------------------------------------------------
 
     const allowedTypes = [
 
@@ -371,10 +364,6 @@ export class TraineeSupport implements OnInit {
 
     }
 
-
-    // ---------------------------------------------------------
-    // Valid
-    // ---------------------------------------------------------
 
     this.errorMessage.set('');
 
@@ -564,18 +553,12 @@ export class TraineeSupport implements OnInit {
     }
 
 
-    // ---------------------------------------------------------
-    // Clear messages
-    // ---------------------------------------------------------
-
     this.errorMessage.set('');
 
     this.successMessage.set('');
 
 
-    // ---------------------------------------------------------
     // Validate Subject
-    // ---------------------------------------------------------
 
     if (!this.newConv.subject) {
 
@@ -588,9 +571,7 @@ export class TraineeSupport implements OnInit {
     }
 
 
-    // ---------------------------------------------------------
     // Validate Message
-    // ---------------------------------------------------------
 
     if (
 
@@ -609,9 +590,7 @@ export class TraineeSupport implements OnInit {
     }
 
 
-    // ---------------------------------------------------------
     // User
-    // ---------------------------------------------------------
 
     const uid =
       this.auth.userId;
@@ -628,9 +607,7 @@ export class TraineeSupport implements OnInit {
     }
 
 
-    // ---------------------------------------------------------
     // Payload
-    // ---------------------------------------------------------
 
     const payload = {
 
@@ -654,10 +631,6 @@ export class TraineeSupport implements OnInit {
     );
 
 
-    // ---------------------------------------------------------
-    // Submit
-    // ---------------------------------------------------------
-
     this.isSubmitting.set(true);
 
 
@@ -675,18 +648,12 @@ export class TraineeSupport implements OnInit {
           );
 
 
-          // ---------------------------------------------------
-          // Success
-          // ---------------------------------------------------
-
           this.successMessage.set(
             'تم إرسال الطلب بنجاح'
           );
 
 
-          // ---------------------------------------------------
           // Reset form
-          // ---------------------------------------------------
 
           this.newConv = {
 
@@ -700,23 +667,15 @@ export class TraineeSupport implements OnInit {
           this.selectedFile = null;
 
 
-          // ---------------------------------------------------
           // Refresh conversations
-          // ---------------------------------------------------
 
           this.loadConversations();
 
 
-          // ---------------------------------------------------
-          // Finish loading
-          // ---------------------------------------------------
-
           this.isSubmitting.set(false);
 
 
-          // ---------------------------------------------------
           // Hide success message
-          // ---------------------------------------------------
 
           setTimeout(() => {
 
@@ -739,10 +698,6 @@ export class TraineeSupport implements OnInit {
             'حدث خطأ أثناء إرسال الطلب، يرجى المحاولة مرة أخرى';
 
 
-          // ---------------------------------------------------
-          // Backend object error
-          // ---------------------------------------------------
-
           if (
 
             err?.error &&
@@ -758,11 +713,6 @@ export class TraineeSupport implements OnInit {
 
           }
 
-
-          // ---------------------------------------------------
-          // Backend string error
-          // ---------------------------------------------------
-
           else if (
 
             err?.error &&
@@ -775,11 +725,6 @@ export class TraineeSupport implements OnInit {
               err.error;
 
           }
-
-
-          // ---------------------------------------------------
-          // Angular error
-          // ---------------------------------------------------
 
           else if (err?.message) {
 
