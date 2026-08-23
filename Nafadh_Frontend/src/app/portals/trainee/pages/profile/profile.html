@@ -267,39 +267,47 @@
     />
 
 
-<!-- الهاتف - قابل للتعديل -->
-<label
-  [style.color]="editing() ? '#64748b' : '#64748b'"
-  style="display: block; font-size: 12px; font-weight: 600; margin: 12px 0 6px;">
+    <!-- الهاتف - قابل للتعديل مع Validation (+968 وبعده 8 أرقام) -->
+    <label
+      [style.color]="editing() ? '#64748b' : '#64748b'"
+      style="display: block; font-size: 12px; font-weight: 600; margin: 12px 0 6px;">
 
-  رقم الهاتف
+      رقم الهاتف
 
-</label>
+    </label>
 
-@if (editing()) {
+    @if (editing()) {
 
-  <input
-    class="nfd-input"
-    [(ngModel)]="t.phone"
-    dir="ltr"
-    type="tel"
-    placeholder="أدخل رقم الهاتف"
-    style="width: 100%; text-align: center; background: #ffffff; border: 1px solid #0284c7; border-radius: 8px; padding: 10px; font-size: 13px; color: #1e293b; outline: none; cursor: text;"
-  />
+      <div>
+        <input
+          class="nfd-input"
+          [(ngModel)]="t.phone"
+          (input)="validatePhone(t.phone)"
+          dir="ltr"
+          type="tel"
+          placeholder="+968XXXXXXXX"
+          [style.border-color]="phoneError() ? '#ef4444' : '#0284c7'"
+          style="width: 100%; text-align: center; background: #ffffff; border: 1px solid; border-radius: 8px; padding: 10px; font-size: 13px; color: #1e293b; outline: none; cursor: text;"
+        />
 
-} 
+        @if (phoneError()) {
+          <small style="color: #ef4444; font-size: 11px; display: block; margin-top: 4px;">
+            {{ phoneError() }}
+          </small>
+        }
+      </div>
 
-@else {
+    } @else {
 
-  <input
-    [value]="t.phone || 'غير مسجل'"
-    readonly
-    tabindex="-1"
-    dir="ltr"
-    style="width: 100%; text-align: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 13px; color: #1e293b; outline: none;"
-  />
+      <input
+        [value]="t.phone || 'غير مسجل'"
+        readonly
+        tabindex="-1"
+        dir="ltr"
+        style="width: 100%; text-align: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 13px; color: #1e293b; outline: none;"
+      />
 
-}
+    }
 
 
     <!-- الحسابات المهنية -->
@@ -310,7 +318,7 @@
       </span>
 
 
-      <!-- GitHub -->
+      <!-- GitHub مع Validation -->
       <div style="margin-bottom: 12px;">
 
         <div style="display: flex; align-items: center; justify-content: flex-start; gap: 6px; margin-bottom: 4px; direction: rtl;">
@@ -327,12 +335,23 @@
 
         @if (editing()) {
 
-          <input
-            class="nfd-input"
-            [(ngModel)]="t.gitHubUrl"
-            dir="ltr"
-            style="width: 100%; text-align: left; background: #ffffff; border: 1px solid #0284c7; border-radius: 8px; padding: 10px; font-size: 13px; color: #1e293b; outline: none;"
-          />
+          <div>
+            <input
+              class="nfd-input"
+              [(ngModel)]="t.gitHubUrl"
+              (input)="validateGitHub(t.gitHubUrl)"
+              dir="ltr"
+              placeholder="https://github.com/username"
+              [style.border-color]="gitHubError() ? '#ef4444' : '#0284c7'"
+              style="width: 100%; text-align: left; background: #ffffff; border: 1px solid; border-radius: 8px; padding: 10px; font-size: 13px; color: #1e293b; outline: none;"
+            />
+
+            @if (gitHubError()) {
+              <small style="color: #ef4444; font-size: 11px; display: block; margin-top: 4px;">
+                {{ gitHubError() }}
+              </small>
+            }
+          </div>
 
         } @else {
 
@@ -348,7 +367,7 @@
       </div>
 
 
-      <!-- LinkedIn -->
+      <!-- LinkedIn مع Validation -->
       <div style="margin-bottom: 8px;">
 
         <div style="display: flex; align-items: center; justify-content: flex-start; gap: 6px; margin-bottom: 4px; direction: rtl;">
@@ -365,12 +384,23 @@
 
         @if (editing()) {
 
-          <input
-            class="nfd-input"
-            [(ngModel)]="t.linkedInUrl"
-            dir="ltr"
-            style="width: 100%; text-align: left; background: #ffffff; border: 1px solid #0284c7; border-radius: 8px; padding: 10px; font-size: 13px; color: #1e293b; outline: none;"
-          />
+          <div>
+            <input
+              class="nfd-input"
+              [(ngModel)]="t.linkedInUrl"
+              (input)="validateLinkedIn(t.linkedInUrl)"
+              dir="ltr"
+              placeholder="https://www.linkedin.com/in/username"
+              [style.border-color]="linkedInError() ? '#ef4444' : '#0284c7'"
+              style="width: 100%; text-align: left; background: #ffffff; border: 1px solid; border-radius: 8px; padding: 10px; font-size: 13px; color: #1e293b; outline: none;"
+            />
+
+            @if (linkedInError()) {
+              <small style="color: #ef4444; font-size: 11px; display: block; margin-top: 4px;">
+                {{ linkedInError() }}
+              </small>
+            }
+          </div>
 
         } @else {
 

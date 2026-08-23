@@ -40,6 +40,16 @@ export class TraineeProfile implements OnInit {
   avatarUrl = signal<string | null>(null);
 
   // =========================================================
+  // Validation signals
+  // =========================================================
+
+  phoneError = signal<string | null>(null);
+
+  gitHubError = signal<string | null>(null);
+
+  linkedInError = signal<string | null>(null);
+
+  // =========================================================
   // Snapshot for detecting changes
   // =========================================================
 
@@ -52,6 +62,251 @@ export class TraineeProfile implements OnInit {
     this.getLoggedInUserId();
 
     this.loadTraineeData();
+  }
+
+
+  // =========================================================
+  // Validation Methods
+  // =========================================================
+
+  /**
+   * التحقق من صحة رقم الهاتف
+   * يجب أن يبدأ بـ +968 وبعده 8 أرقام فقط
+   */
+  validatePhone(phone: string): void {
+
+    if (!phone || phone.trim() === '') {
+
+      this.phoneError.set(null);
+
+      return;
+
+    }
+
+    const cleanPhone = phone.trim();
+
+    // نمط رقم الهاتف: +968 متبوعاً بـ 8 أرقام فقط
+    const phoneRegex = /^\+968\d{8}$/;
+
+    if (!phoneRegex.test(cleanPhone)) {
+
+      this.phoneError.set('رقم الهاتف يجب أن يبدأ بـ +968 ويتبعه 8 أرقام فقط (مثال: +96812345678)');
+
+    } else {
+
+      this.phoneError.set(null);
+
+    }
+
+  }
+
+
+  validateGitHub(url: string): void {
+
+    if (!url || url.trim() === '') {
+
+      this.gitHubError.set(null);
+
+      return;
+
+    }
+
+    const cleanUrl = url.trim();
+
+    // نمط رابط GitHub صحيح
+    const githubRegex = /^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,38}[a-zA-Z0-9])?$/;
+
+    if (!githubRegex.test(cleanUrl)) {
+
+      this.gitHubError.set('الرجاء إدخال رابط GitHub صحيح (مثال: https://github.com/username)');
+
+    } else {
+
+      // التأكد من وجود https:// في البداية
+      if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+
+        const currentTrainee = this.trainee();
+
+        if (currentTrainee) {
+
+          this.trainee.update((curr) => ({
+
+            ...curr,
+
+            gitHubUrl: 'https://' + cleanUrl
+
+          }));
+
+        }
+
+      }
+
+      this.gitHubError.set(null);
+
+    }
+
+  }
+
+
+  validateLinkedIn(url: string): void {
+
+    if (!url || url.trim() === '') {
+
+      this.linkedInError.set(null);
+
+      return;
+
+    }
+
+    const cleanUrl = url.trim();
+
+    // نمط رابط LinkedIn صحيح
+    const linkedinRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/(in|company|school)\/[a-zA-Z0-9-]+$/;
+
+    if (!linkedinRegex.test(cleanUrl)) {
+
+      this.linkedInError.set('الرجاء إدخال رابط LinkedIn صحيح (مثال: https://www.linkedin.com/in/username)');
+
+    } else {
+
+      // التأكد من وجود https:// في البداية
+      if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+
+        const currentTrainee = this.trainee();
+
+        if (currentTrainee) {
+
+          this.trainee.update((curr) => ({
+
+            ...curr,
+
+            linkedInUrl: 'https://' + cleanUrl
+
+          }));
+
+        }
+
+      }
+
+      this.linkedInError.set(null);
+
+    }
+
+  }
+
+
+  /**
+   * دالة للتحقق من صحة جميع الحقول قبل الحفظ
+   * تعيد true إذا كانت جميع الحقول صحيحة أو فارغة (اختيارية)
+   */
+  private isFormValid(): boolean {
+
+    const t = this.trainee();
+
+    if (!t) return false;
+
+    let hasError = false;
+
+    // التحقق من صحة رقم الهاتف إذا كان موجوداً
+    if (t.phone && t.phone.trim() !== '') {
+
+      this.validatePhone(t.phone);
+
+      if (this.phoneError()) {
+
+        hasError = true;
+
+      }
+
+    } else {
+
+      // إذا كان الهاتف فارغاً، نزيل أي خطأ سابق
+      this.phoneError.set(null);
+
+    }
+
+    // التحقق من صحة رابط GitHub إذا كان موجوداً
+    if (t.gitHubUrl && t.gitHubUrl.trim() !== '') {
+
+      this.validateGitHub(t.gitHubUrl);
+
+      if (this.gitHubError()) {
+
+        hasError = true;
+
+      }
+
+    } else {
+
+      this.gitHubError.set(null);
+
+    }
+
+    // التحقق من صحة رابط LinkedIn إذا كان موجوداً
+    if (t.linkedInUrl && t.linkedInUrl.trim() !== '') {
+
+      this.validateLinkedIn(t.linkedInUrl);
+
+      if (this.linkedInError()) {
+
+        hasError = true;
+
+      }
+
+    } else {
+
+      this.linkedInError.set(null);
+
+    }
+
+    return !hasError;
+
+  }
+
+
+  /**
+   * التحقق من وجود تغييرات في الحقول القابلة للتعديل فقط
+   */
+  private hasEditableChanges(t: any): boolean {
+
+    if (!this.originalProfile) {
+
+      return true;
+
+    }
+
+    const current = {
+
+      phone: t.phone?.toString().trim() || '',
+
+      academicLevel: t.academicLevel?.toString().trim() || '',
+
+      skills: this.getSkillsList(t.skills).join(', '),
+
+      resumeUrl: t.resumeUrl?.toString().trim() || '',
+
+      gitHubUrl: t.gitHubUrl?.toString().trim() || '',
+
+      linkedInUrl: t.linkedInUrl?.toString().trim() || ''
+
+    };
+
+    return (
+
+      current.phone !== (this.originalProfile.phone || '') ||
+
+      current.academicLevel !== (this.originalProfile.academicLevel || '') ||
+
+      current.skills !== (this.originalProfile.skills || '') ||
+
+      current.resumeUrl !== (this.originalProfile.resumeUrl || '') ||
+
+      current.gitHubUrl !== (this.originalProfile.gitHubUrl || '') ||
+
+      current.linkedInUrl !== (this.originalProfile.linkedInUrl || '')
+
+    );
+
   }
 
 
@@ -234,51 +489,56 @@ export class TraineeProfile implements OnInit {
       .getTrainee(this.userId)
       .subscribe({
 
-next: (t) => {
+        next: (t) => {
 
-  console.log(
-    'Trainee data received:',
-    t
-  );
+          console.log(
+            'Trainee data received:',
+            t
+          );
 
-  if (t) {
+          if (t) {
 
-    // Phone يأتي مباشرة من NFD_Users.Phone
-    const traineeData: any = {
-      ...t,
-      phone: t.phone ?? ''
-    };
+            // Phone يأتي مباشرة من NFD_Users.Phone
+            const traineeData: any = {
+              ...t,
+              phone: t.phone ?? ''
+            };
 
-    this.trainee.set(
-      traineeData
-    );
+            this.trainee.set(
+              traineeData
+            );
 
-    if (traineeData.traineeId) {
+            if (traineeData.traineeId) {
 
-      this.traineeId =
-        Number(
-          traineeData.traineeId
-        );
+              this.traineeId =
+                Number(
+                  traineeData.traineeId
+                );
 
-    }
+            }
 
-    console.log(
-      'TraineeId:',
-      this.traineeId
-    );
+            console.log(
+              'TraineeId:',
+              this.traineeId
+            );
 
-    console.log(
-      'UserId:',
-      this.userId
-    );
+            console.log(
+              'UserId:',
+              this.userId
+            );
 
-    console.log(
-      'Phone from Database:',
-      traineeData.phone
-    );
-  }
-},
+            console.log(
+              'Phone from Database:',
+              traineeData.phone
+            );
 
+            // إعادة تعيين رسائل الخطأ
+            this.phoneError.set(null);
+            this.gitHubError.set(null);
+            this.linkedInError.set(null);
+
+          }
+        },
 
         error: (err) => {
 
@@ -287,12 +547,10 @@ next: (t) => {
             err
           );
 
-
           console.error(
             'Status:',
             err.status
           );
-
 
           console.error(
             'Error:',
@@ -342,35 +600,6 @@ next: (t) => {
 
 
   // =========================================================
-  // Check whether user changed anything
-  // =========================================================
-
-  private hasProfileChanges(t: any): boolean {
-
-    if (!this.originalProfile) {
-
-      return true;
-
-    }
-
-
-    const current =
-      this.createProfileSnapshot(t);
-
-
-    return (
-      JSON.stringify(
-        current
-      ) !==
-      JSON.stringify(
-        this.originalProfile
-      )
-    );
-
-  }
-
-
-  // =========================================================
   // Edit / Save
   // =========================================================
 
@@ -385,23 +614,24 @@ next: (t) => {
       const t =
         this.trainee();
 
-
       if (!t) {
 
         return;
 
       }
 
+      // إعادة تعيين رسائل الخطأ
+      this.phoneError.set(null);
+      this.gitHubError.set(null);
+      this.linkedInError.set(null);
 
       this.originalProfile =
         this.createProfileSnapshot(t);
-
 
       console.log(
         'Original profile snapshot:',
         this.originalProfile
       );
-
 
       this.editing.set(true);
 
@@ -417,7 +647,6 @@ next: (t) => {
     const t =
       this.trainee();
 
-
     if (!t) {
 
       this.editing.set(false);
@@ -427,23 +656,64 @@ next: (t) => {
     }
 
 
-    if (
-      !this.hasProfileChanges(t)
-    ) {
+    // =======================================================
+    // الخطوة 1: التحقق من صحة الحقول
+    // =======================================================
 
-      console.log(
-        'No changes detected. Nothing to update.'
+    if (!this.isFormValid()) {
+
+      console.warn('Form validation failed');
+
+      // جمع رسائل الأخطاء
+      let errorMessages: string[] = [];
+
+      if (this.phoneError()) {
+        errorMessages.push('• ' + this.phoneError());
+      }
+
+      if (this.gitHubError()) {
+        errorMessages.push('• ' + this.gitHubError());
+      }
+
+      if (this.linkedInError()) {
+        errorMessages.push('• ' + this.linkedInError());
+      }
+
+      alert(
+        'يرجى تصحيح الأخطاء التالية قبل الحفظ:\n\n' +
+        errorMessages.join('\n')
       );
-
-
-      this.editing.set(false);
-
-      this.originalProfile = null;
 
       return;
 
     }
 
+
+    // =======================================================
+    // الخطوة 2: التحقق من وجود تغييرات
+    // =======================================================
+
+    if (!this.hasEditableChanges(t)) {
+
+      console.log(
+        'No changes detected. Nothing to update.'
+      );
+
+      this.editing.set(false);
+
+      this.originalProfile = null;
+
+      // رسالة للمستخدم
+      alert('لم يتم إجراء أي تغييرات لحفظها.');
+
+      return;
+
+    }
+
+
+    // =======================================================
+    // الخطوة 3: التحقق من وجود UserId
+    // =======================================================
 
     if (
       !this.userId ||
@@ -455,7 +725,6 @@ next: (t) => {
         this.userId
       );
 
-
       alert(
         'تعذر حفظ التعديلات. لم يتم العثور على UserId للمستخدم الحالي.'
       );
@@ -465,50 +734,40 @@ next: (t) => {
     }
 
 
-    const payload: TraineeUpdateDto = {
+    // =======================================================
+    // الخطوة 4: بناء الـ payload
+    // =======================================================
 
-      email:
-        t.email?.toString().trim() || '',
+    const currentProfile = this.createProfileSnapshot(t);
 
-
-      // =====================================================
-      // Phone
-      // =====================================================
-
-      phone:
-        t.phone?.toString().trim() || undefined,
-
-
-      academicLevel:
-        t.academicLevel
-          ?.toString()
-          .trim() || undefined,
-
-
-      skills:
-        this.getSkillsList(
-          t.skills
-        ).join(', '),
-
-
-      resumeUrl:
-        t.resumeUrl
-          ?.toString()
-          .trim() || undefined,
-
-
-      gitHubUrl:
-        t.gitHubUrl
-          ?.toString()
-          .trim() || undefined,
-
-
-      linkedInUrl:
-        t.linkedInUrl
-          ?.toString()
-          .trim() || undefined
-
+    const payload: any = {
+      email: currentProfile.email
     };
+
+    // إضافة الحقول التي تغيرت فقط (باستثناء الـ email)
+    if (currentProfile.phone !== this.originalProfile?.phone) {
+      payload.phone = currentProfile.phone || undefined;
+    }
+
+    if (currentProfile.academicLevel !== this.originalProfile?.academicLevel) {
+      payload.academicLevel = currentProfile.academicLevel || undefined;
+    }
+
+    if (currentProfile.skills !== this.originalProfile?.skills) {
+      payload.skills = currentProfile.skills;
+    }
+
+    if (currentProfile.resumeUrl !== this.originalProfile?.resumeUrl) {
+      payload.resumeUrl = currentProfile.resumeUrl || undefined;
+    }
+
+    if (currentProfile.gitHubUrl !== this.originalProfile?.gitHubUrl) {
+      payload.gitHubUrl = currentProfile.gitHubUrl || undefined;
+    }
+
+    if (currentProfile.linkedInUrl !== this.originalProfile?.linkedInUrl) {
+      payload.linkedInUrl = currentProfile.linkedInUrl || undefined;
+    }
 
 
     console.log(
@@ -516,12 +775,15 @@ next: (t) => {
       this.userId
     );
 
-
     console.log(
-      'Update payload:',
+      'Update payload (only changed fields):',
       payload
     );
 
+
+    // =======================================================
+    // الخطوة 5: إرسال الطلب
+    // =======================================================
 
     this.api
       .updateTrainee(
@@ -536,7 +798,6 @@ next: (t) => {
             'تم حفظ التعديلات بنجاح:',
             updatedTrainee
           );
-
 
           if (updatedTrainee) {
 
@@ -574,11 +835,9 @@ next: (t) => {
 
             };
 
-
             this.trainee.set(
               updatedData
             );
-
 
             if (
               updatedData.traineeId
@@ -593,19 +852,19 @@ next: (t) => {
 
           }
 
-
           this.editing.set(false);
 
           this.originalProfile = null;
 
+          // إعادة تعيين رسائل الخطأ
+          this.phoneError.set(null);
+          this.gitHubError.set(null);
+          this.linkedInError.set(null);
 
-          // إعادة الجلب من Backend
-          // للتأكد من أن البيانات محفوظة فعليًا.
-
+          // إعادة الجلب من Backend للتأكد من أن البيانات محفوظة فعليًا
           this.loadTraineeData();
 
         },
-
 
         error: (err) => {
 
@@ -614,18 +873,15 @@ next: (t) => {
             err
           );
 
-
           console.error(
             'Status:',
             err.status
           );
 
-
           console.error(
             'Backend Error:',
             err.error
           );
-
 
           alert(
             err.error?.message ||
@@ -648,7 +904,6 @@ next: (t) => {
     const input =
       event.target as HTMLInputElement;
 
-
     if (
       input.files &&
       input.files.length > 0
@@ -657,10 +912,8 @@ next: (t) => {
       const file =
         input.files[0];
 
-
       const reader =
         new FileReader();
-
 
       reader.onload = () => {
 
@@ -670,9 +923,7 @@ next: (t) => {
 
       };
 
-
       reader.readAsDataURL(file);
-
 
       this.trainee.update(
         (current) => {
@@ -682,7 +933,6 @@ next: (t) => {
             return current;
 
           }
-
 
           return {
 
@@ -710,7 +960,6 @@ next: (t) => {
     const input =
       event.target as HTMLInputElement;
 
-
     if (
       input.files &&
       input.files.length > 0
@@ -718,7 +967,6 @@ next: (t) => {
 
       const file =
         input.files[0];
-
 
       this.trainee.update(
         (current) => {
@@ -728,7 +976,6 @@ next: (t) => {
             return current;
 
           }
-
 
           return {
 
@@ -764,13 +1011,11 @@ next: (t) => {
 
     }
 
-
     if (Array.isArray(skills)) {
 
       return skills;
 
     }
-
 
     if (
       typeof skills === 'string'
@@ -788,7 +1033,6 @@ next: (t) => {
 
     }
 
-
     return [];
 
   }
@@ -805,7 +1049,6 @@ next: (t) => {
         'أدخل اسم المهارة الجديدة:'
       );
 
-
     if (
       !newSkill ||
       !newSkill.trim()
@@ -815,10 +1058,8 @@ next: (t) => {
 
     }
 
-
     const skill =
       newSkill.trim();
-
 
     this.trainee.update(
       (current) => {
@@ -829,12 +1070,10 @@ next: (t) => {
 
         }
 
-
         const skillsArr =
           this.getSkillsList(
             current.skills
           );
-
 
         const exists =
           skillsArr.some(
@@ -842,7 +1081,6 @@ next: (t) => {
               item.toLowerCase() ===
               skill.toLowerCase()
           );
-
 
         if (exists) {
 
@@ -853,7 +1091,6 @@ next: (t) => {
           return current;
 
         }
-
 
         return {
 
@@ -890,18 +1127,15 @@ next: (t) => {
 
         }
 
-
         const skillsArr =
           this.getSkillsList(
             current.skills
           );
 
-
         skillsArr.splice(
           index,
           1
         );
-
 
         return {
 
