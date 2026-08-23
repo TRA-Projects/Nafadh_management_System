@@ -894,21 +894,22 @@
               <strong>
 
                 @if (
-                  profile.completionStatus !== 'Dropped'
-                ) {
+  canShowTrainingMetrics(profile) &&
+  profile.completionStatus !== 'Dropped'
+) {
 
-                  {{
-                    technicalLevel(
-                      profile.enrollmentId
-                    )
-                  }}
+  {{
+    technicalLevel(
+      profile.enrollmentId
+    )
+  }}
 
-                }
-                @else {
+}
+@else {
 
-                  —
+  —
 
-                }
+}
 
               </strong>
 
@@ -919,24 +920,26 @@
 
               <div
                 class="profile-progress-fill"
-                [style.width.%]="
-                  profile.completionStatus !== 'Dropped'
-                    ? technicalProgress(
-                        profile.enrollmentId
-                      )
-                    : 0
-                ">
+           [style.width.%]="
+  canShowTrainingMetrics(profile) &&
+  profile.completionStatus !== 'Dropped'
+    ? technicalProgress(
+        profile.enrollmentId
+      )
+    : 0
+">
               </div>
 
             </div>
 
 
-            @if (
-              profile.completionStatus !== 'Dropped' &&
-              technicalScore(
-                profile.enrollmentId
-              ) !== null
-            ) {
+           @if (
+  canShowTrainingMetrics(profile) &&
+  profile.completionStatus !== 'Dropped' &&
+  technicalScore(
+    profile.enrollmentId
+  ) !== null
+) {
 
               <span class="profile-level-score">
 
