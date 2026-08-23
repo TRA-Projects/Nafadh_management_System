@@ -84,6 +84,12 @@ export class CompanyTraineeProgress implements OnInit {
     return AVATAR_PALETTE[hash];
   }
 
+  ensureUrl(url?: string): string | null {
+    if (!url?.trim()) return null;
+    const value = url.trim();
+    return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+  }
+
   criterionPct(score: number, maxPoints: number) { return maxPoints ? Math.round((score / maxPoints) * 100) : 0; }
   padId(id: number) { return String(id).padStart(4, '0'); }
 }

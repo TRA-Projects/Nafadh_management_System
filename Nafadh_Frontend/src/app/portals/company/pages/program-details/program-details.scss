@@ -620,3 +620,12 @@ tbody tr:last-child td {
 .icon-btn { width: 30px; height: 30px; border: 1px solid #dbe4ee; background: #fff; color: #35516f; border-radius: 8px; cursor: pointer; }
 .icon-btn:hover { background: #f8fafc; }
 @media (max-width: 900px) { .program-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hero-heading { flex-direction: column; } .batch-row { align-items: flex-start; flex-direction: column; } .batch-meta { text-align: right; } }
+
+
+.trainee-socials{display:flex;align-items:center;gap:7px}
+.social-icon-btn{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;color:#fff;text-decoration:none;transition:all .18s ease}
+.social-icon-btn:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(25,56,93,.12)}
+.social-icon-btn.disabled{opacity:.38;pointer-events:none}
+.social-icon-btn.github{background:#18181b}.social-icon-btn.github:hover{background:#27272a}
+.social-icon-btn.linkedin{background:#0a66c2}.social-icon-btn.linkedin:hover{background:#084f96}
+.social-icon-btn svg{width:15px;height:15px;fill:currentColor}

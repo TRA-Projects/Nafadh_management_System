@@ -30,6 +30,8 @@ interface TraineeRow {
   supervisor: string;
   status: string;
   progress: number;
+  gitHubUrl?: string;
+  linkedInUrl?: string;
 }
 
 @Component({
@@ -135,6 +137,8 @@ export class CompanyProgramDetails implements OnInit {
       supervisor: e.supervisorName || '—',
       status: this.statusLabel(e.completionStatus),
       progress: 0,
+      gitHubUrl: e.traineeGitHubUrl,
+      linkedInUrl: e.traineeLinkedInUrl,
     }));
 
     if (!rows.length) {
@@ -188,6 +192,12 @@ export class CompanyProgramDetails implements OnInit {
     if (s.includes('drop') || s.includes('withdraw') || s.includes('suspend')) return 'متوقف';
     if (s.includes('fail')) return 'متعثر';
     return 'قيد التدريب';
+  }
+
+  ensureUrl(url?: string): string | null {
+    if (!url?.trim()) return null;
+    const value = url.trim();
+    return /^https?:\/\//i.test(value) ? value : `https://${value}`;
   }
 
   private colorFor(title: string): string {

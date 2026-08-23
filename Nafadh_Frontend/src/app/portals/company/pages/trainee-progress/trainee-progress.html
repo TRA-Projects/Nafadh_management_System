@@ -21,8 +21,11 @@
         </div>
       </div>
       <div class="pg-company">🏢 {{ e.companyName }}</div>
-      <a class="gh-icon-btn" [class.disabled]="!e.traineeGitHubUrl" [href]="e.traineeGitHubUrl || null" target="_blank" rel="noopener noreferrer" title="حساب GitHub">
+      <a class="social-icon-btn github" [class.disabled]="!e.traineeGitHubUrl" [href]="ensureUrl(e.traineeGitHubUrl)" target="_blank" rel="noopener noreferrer" title="حساب GitHub">
         <nfd-icon name="github" size="sm" />
+      </a>
+      <a class="social-icon-btn linkedin" [class.disabled]="!e.traineeLinkedInUrl" [href]="ensureUrl(e.traineeLinkedInUrl)" target="_blank" rel="noopener noreferrer" title="حساب LinkedIn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14M8.3 18.5v-8.3H5.5v8.3h2.8ZM6.9 9.1a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Zm12.1 9.4v-4.8c0-2.6-1.4-3.8-3.3-3.8-1.5 0-2.2.8-2.6 1.4v-1.1h-2.8v8.3h2.8v-4.6c0-1.2.2-2.3 1.7-2.3 1.5 0 1.5 1.4 1.5 2.4v4.5H19Z"/></svg>
       </a>
     </div>
   </div>

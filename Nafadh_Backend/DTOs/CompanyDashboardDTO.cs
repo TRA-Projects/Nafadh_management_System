@@ -34,6 +34,7 @@ namespace Nafadh_Backend.DTOs
         public string? FullName { get; set; }
         public string? Major { get; set; }
         public string? GitHubUrl { get; set; }
+        public string? LinkedInUrl { get; set; }
         public double PerformancePercent { get; set; }
         public double AttendancePercent { get; set; }
     }
@@ -45,6 +46,7 @@ namespace Nafadh_Backend.DTOs
         public int TraineeId { get; set; }
         public string? TraineeName { get; set; }
         public string? GitHubUrl { get; set; }
+        public string? LinkedInUrl { get; set; }
         public string Type { get; set; } = string.Empty;
         public string Level { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;

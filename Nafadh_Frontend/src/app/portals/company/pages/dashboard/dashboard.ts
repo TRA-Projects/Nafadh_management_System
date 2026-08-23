@@ -201,16 +201,25 @@ export class CompanyDashboard implements OnInit {
     this.openTrainees();
   }
 
-  openGithub(url?: string): void {
-    if (!url) {
-      return;
-    }
+  ensureUrl(url?: string): string {
+    if (!url?.trim()) return '';
+    const value = url.trim();
+    return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+  }
 
-    window.open(
-      url,
-      '_blank',
-      'noopener,noreferrer'
-    );
+  openGithub(url?: string): void {
+    this.openExternalUrl(url);
+  }
+
+  openLinkedIn(url?: string): void {
+    this.openExternalUrl(url);
+  }
+
+  private openExternalUrl(url?: string): void {
+    if (!url?.trim()) return;
+    const value = url.trim();
+    const normalized = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+    window.open(normalized, '_blank', 'noopener,noreferrer');
   }
 
   openOpportunityModal(

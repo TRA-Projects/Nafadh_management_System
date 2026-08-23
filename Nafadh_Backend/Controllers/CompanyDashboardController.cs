@@ -63,6 +63,7 @@ namespace Nafadh_Backend.Controllers
                 FullName = e.Trainee?.User?.FullName,
                 Major = e.Trainee?.Major,
                 GitHubUrl = e.Trainee?.GitHubUrl,
+                LinkedInUrl = e.Trainee?.LinkedInUrl,
                 Performance = e.Evaluations.Count > 0
                     ? Math.Round((double)e.Evaluations.Average(x => x.Score), 1)
                     : 0,
@@ -84,6 +85,7 @@ namespace Nafadh_Backend.Controllers
                     FullName = x.FullName,
                     Major = x.Major,
                     GitHubUrl = x.GitHubUrl,
+                    LinkedInUrl = x.LinkedInUrl,
                     PerformancePercent = x.Performance,
                     AttendancePercent = x.Attendance
                 })
@@ -101,6 +103,7 @@ namespace Nafadh_Backend.Controllers
                     FullName = x.FullName,
                     Major = x.Major,
                     GitHubUrl = x.GitHubUrl,
+                    LinkedInUrl = x.LinkedInUrl,
                     PerformancePercent = x.Performance,
                     AttendancePercent = x.Attendance
                 })
@@ -145,6 +148,7 @@ namespace Nafadh_Backend.Controllers
                     TraineeId = w.Enrollment!.TraineeId,
                     TraineeName = w.Enrollment.Trainee.User.FullName,
                     GitHubUrl = w.Enrollment.Trainee.GitHubUrl,
+                    LinkedInUrl = w.Enrollment.Trainee.LinkedInUrl,
                     Type = w.Type.ToString(),
                     Level = w.Level.ToString(),
                     Status = w.Status.ToString(),
