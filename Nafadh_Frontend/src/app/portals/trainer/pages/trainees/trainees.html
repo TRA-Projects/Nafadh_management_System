@@ -1246,7 +1246,7 @@
   <select
     class="nfd-input"
     [(ngModel)]="selectedModuleId"
-    (change)="loadTemplates()"
+    (change)="loadEvaluationStages()"
   >
 
     @for (
@@ -1267,21 +1267,34 @@
 </div>
 
 
-          <div class="modal-field">
+         <div class="modal-field">
 
-            <label>
-              الفترة
-            </label>
+  <label>
+    الفترة
+  </label>
 
-            <input
-              class="nfd-input"
-              type="number"
-              [(ngModel)]="selectedStage"
-              (change)="loadTemplates()"
-            />
+  <select
+    class="nfd-input"
+    [(ngModel)]="selectedStage"
+    (change)="loadTemplates()"
+  >
 
-          </div>
+    @for (
+      stage of evaluationStages();
+      track stage
+    ) {
 
+      <option
+        [ngValue]="stage"
+      >
+        الفترة {{ stage }}
+      </option>
+
+    }
+
+  </select>
+
+</div>
         </div>
 
 

@@ -591,7 +591,11 @@ canShowTrainingMetrics(
 selectedModuleId:
   number | null = null;
 
-selectedStage = 1;
+evaluationStages =
+  signal<number[]>([]);
+
+selectedStage:
+  number | null = null;
 
   selectedEnrollmentId:
     number | null = null;
@@ -1360,7 +1364,7 @@ private loadEvaluationModules(
                 firstModule.moduleId;
 
 
-              this.loadTemplates();
+              this.loadEvaluationStages();
 
             },
 
@@ -1395,7 +1399,105 @@ private loadEvaluationModules(
     });
 
 }
+// =====================================================
+// LOAD EVALUATION STAGES
+// =====================================================
 
+loadEvaluationStages(): void {
+
+  if (!this.selectedModuleId) {
+
+    this.evaluationStages.set([]);
+
+    this.selectedStage = null;
+
+    this.templateDetail.set(null);
+
+    this.criteriaScores = {};
+
+    return;
+  }
+
+
+  this.api
+    .getEvaluationTemplates(
+      this.selectedModuleId
+    )
+    .subscribe({
+
+      next: (templates) => {
+
+        const stages =
+          [
+            ...new Set(
+              (templates ?? [])
+                .map(
+                  template =>
+                    template.stage
+                )
+                .filter(
+                  (stage):
+                    stage is number =>
+                      typeof stage ===
+                      'number'
+                )
+            )
+          ]
+            .sort(
+              (a, b) =>
+                a - b
+            );
+
+
+        this.evaluationStages.set(
+          stages
+        );
+
+
+        this.selectedStage =
+          stages[0] ?? null;
+
+
+        if (
+          this.selectedStage !== null
+        ) {
+
+          this.loadTemplates();
+
+        }
+        else {
+
+          this.templateDetail.set(
+            null
+          );
+
+          this.criteriaScores = {};
+
+        }
+
+      },
+
+
+      error: (err) => {
+
+        console.error(
+          'خطأ في تحميل فترات التقييم:',
+          err
+        );
+
+        this.evaluationStages.set([]);
+
+        this.selectedStage = null;
+
+        this.templateDetail.set(null);
+
+        this.criteriaScores = {};
+
+      }
+
+    });
+
+}
   // =====================================================
   // EVALUATION TEMPLATES
   // =====================================================
@@ -1403,7 +1505,10 @@ private loadEvaluationModules(
   loadTemplates(): void {
 
 
-      if (!this.selectedModuleId) {
+       if (
+    !this.selectedModuleId ||
+    this.selectedStage === null
+  ) {
 
     this.templateDetail.set(
       null
@@ -1414,11 +1519,12 @@ private loadEvaluationModules(
     return;
   }
 
-    this.api
-      .getEvaluationTemplates(
-        this.selectedModuleId,
-        this.selectedStage
-      )
+
+  this.api
+    .getEvaluationTemplates(
+      this.selectedModuleId,
+      this.selectedStage
+    )
       .subscribe({
 
         next: (templates) => {
