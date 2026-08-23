@@ -111,6 +111,20 @@ export class TraineeDashboard implements OnInit {
   showAllNotifications = signal(false);
 
   // =========================================================
+  // متغيرات ودوال نافذة تفاصيل الإعلان (Popup)
+  // =========================================================
+
+  selectedAnnouncement = signal<any | null>(null);
+
+  openAnnouncementPopup(ann: any) {
+    this.selectedAnnouncement.set(ann);
+  }
+
+  closeAnnouncementPopup() {
+    this.selectedAnnouncement.set(null);
+  }
+
+  // =========================================================
   // تحويل الحالة البرمجية إلى النص العربي
   // =========================================================
 

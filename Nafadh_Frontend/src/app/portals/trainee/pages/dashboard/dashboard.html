@@ -809,6 +809,7 @@
         align-items: start;
       "
     >
+     <!-- الإعلانات -->
       <!-- الإعلانات -->
       <div
         style="
@@ -891,19 +892,29 @@
                           font-family: 'Cairo', sans-serif;
                         "
                       >
-                        إعلان رسمي
+                        إعلان رسمي - ({{ ann.source }})
                       </span>
-                      <small
+
+                      <!-- زر التفاصيل -->
+                      <button
+                        (click)="openAnnouncementPopup(ann)"
                         style="
-                          font-size: 0.7rem;
-                          color: #94a3b8;
-                          font-weight: 500;
+                          background: #eff6ff;
+                          color: #2563eb;
+                          border: 1px solid #dbeafe;
+                          padding: 3px 10px;
+                          border-radius: 6px;
+                          font-size: 0.75rem;
+                          font-weight: 600;
+                          cursor: pointer;
+                          transition: all 0.2s;
                           font-family: 'Cairo', sans-serif;
                         "
                       >
-                        {{ ann.date | date: 'mediumDate' }} - ({{ ann.source }})
-                      </small>
+                        التفاصيل
+                      </button>
                     </div>
+
                     <div
                       style="
                         font-size: 0.85rem;
@@ -962,6 +973,57 @@
           }
         </div>
       </div>
+
+      <!-- نافذة البوبب (Popup Modal) للـ Frontend -->
+      @if (selectedAnnouncement()) {
+        <div style="
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+          font-family: 'Cairo', sans-serif;
+        ">
+          <div style="
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: right;
+            direction: rtl;
+          ">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h4 style="margin: 0; font-size: 1.1rem; color: #1e293b; font-weight: 700;">تفاصيل الإعلان</h4>
+              <button (click)="closeAnnouncementPopup()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b;">✕</button>
+            </div>
+
+            <!-- رابط صورة ثابتة -->
+            <div style="text-align: center; margin-bottom: 16px;">
+              <img src="https://via.placeholder.com/150" alt="صورة الإعلان" style="max-height: 140px; border-radius: 8px; object-fit: cover;">
+            </div>
+
+            <div style="margin-bottom: 12px;">
+              <span style="color: #1d4ed8; font-weight: 700; font-size: 0.8rem;">إعلان رسمي - ({{ selectedAnnouncement()?.source }})</span>
+              <p style="color: #94a3b8; font-size: 0.75rem; margin: 4px 0 12px 0;">{{ selectedAnnouncement()?.date | date: 'mediumDate' }}</p>
+            </div>
+
+            <p style="font-size: 0.9rem; color: #334155; line-height: 1.5; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              {{ selectedAnnouncement()?.message }}
+            </p>
+
+            <div style="text-align: left; margin-top: 20px;">
+              <button (click)="closeAnnouncementPopup()" style="background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: 'Cairo', sans-serif; font-size: 0.85rem;">إغلاق</button>
+            </div>
+          </div>
+        </div>
+      }
 
       <!-- التنبيهات الأخيرة -->
       <div
