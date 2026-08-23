@@ -13,11 +13,14 @@ namespace Nafadh_Backend.Services
     public class ExcuseService : IExcuseService
     {
         private readonly IExcuseRepository _repository;
+        private readonly IAbsenceWarningService _absenceWarningService;
 
-        public ExcuseService(IExcuseRepository repository)
+        public ExcuseService(IExcuseRepository repository, IAbsenceWarningService absenceWarningService)
         {
             _repository = repository;
+            _absenceWarningService = absenceWarningService;
         }
+
         public async Task<ExcuseReadDto?> GetByDailyAttendanceIdAsync(
            int dailyAttendanceId)
         {
