@@ -224,5 +224,17 @@ namespace Nafadh_Backend.Services
                 }).ToList() ?? new List<EvaluationCriterionScoreDTO>()
             };
         }
+
+
+        public async Task DeleteEvaluationAsync(int evaluationId)
+        {
+            var evaluation = await _repository.GetEvaluationByIdAsync(evaluationId);
+
+            if (evaluation == null)
+                throw new InvalidOperationException(
+                    "The specified evaluation does not exist.");
+
+            await _repository.DeleteEvaluationAsync(evaluationId);
+        }
     }
 }
