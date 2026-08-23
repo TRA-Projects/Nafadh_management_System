@@ -51,5 +51,31 @@ namespace Nafadh_Backend.Repositories
             _context.NFD_EvaluationCriteria.Remove(criterion);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<NFD_Evaluation?> GetEvaluationByEnrollmentAndTemplateAsync(
+                int enrollmentId,
+                int templateId)
+        {
+            return await _context.NFD_Evaluations
+                .FirstOrDefaultAsync(e =>
+                    e.EnrollmentId == enrollmentId &&
+                    e.TemplateId == templateId);
+        }
+
+
+        public async Task DeleteEvaluationAsync(int evaluationId)
+        {
+            var evaluation = await _context.NFD_Evaluations
+                .FirstOrDefaultAsync(e => e.EvaluationId == evaluationId);
+
+            if (evaluation == null)
+                return;
+
+            _context.NFD_Evaluations.Remove(evaluation);
+
+            await _context.SaveChangesAsync();
+        }
+
+
     }
 }

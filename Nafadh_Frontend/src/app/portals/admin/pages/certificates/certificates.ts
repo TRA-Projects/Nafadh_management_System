@@ -513,63 +513,79 @@ onPageChange(newPage: number): void {
 
   const bId = this.cleanId(batch.batchId || batch.id);
 
-  this.api.getBatchCertificatesStatus(bId).subscribe({
-    next: (res: any) => {
+this.api.getBatchCertificatesStatus(bId).subscribe({
+  next: (res: any) => {
 
-      const rawList = Array.isArray(res)
-        ? res
-        : (res?.items || []);
+    // 🔥 للتأكد من البيانات القادمة من الـ API
+    console.log('🔥 RESPONSE FROM API:', res);
 
-      const mappedList: TraineeDto[] = rawList.map((t: any) => {
+    const rawList = Array.isArray(res)
+      ? res
+      : (res?.items || []);
 
-        const cleanEId = this.cleanId(t.enrollmentId);
-        const cleanTId = this.cleanId(t.traineeId);
+    // 🔥 نشوف قائمة المتدربين كما رجعت من الـ API
+    console.log('🔥 TRAINEES FROM API:', rawList);
 
-        return {
-          traineeId: cleanTId,
-          enrollmentId: cleanEId,
-          fullName: t.fullName || 'متدرب بدون اسم',
-          isIssued: !!t.isIssued,
-          fileUrl: t.fileUrl || undefined,
-          grade: t.grade != null ? `${t.grade}%` : undefined
-        };
-      });
+    const mappedList: TraineeDto[] = rawList.map((t: any) => {
 
-      this.selectedBatchTrainees.set(mappedList);
-
-      const realTotal = mappedList.length;
-
-      const realIssued = mappedList.filter(
-        t => t.isIssued
-      ).length;
-
-      this.selectedBatch.update(b => b ? {
-        ...b,
-        totalTraineesCount: realTotal,
-        issuedCertificatesCount: realIssued
-      } : null);
-
-      this.batches.update(list =>
-        list.map(b =>
-          (b.batchId === bId || b.id === bId)
-            ? {
-                ...b,
-                totalTraineesCount: realTotal,
-                issuedCertificatesCount: realIssued
-              }
-            : b
-        )
+      // 🔥 نتأكد من الدرجة لكل متدرب
+      console.log(
+        '🔥 TRAINEE:',
+        t.fullName,
+        '| GRADE FROM API:',
+        t.grade
       );
 
-      this.loadingTrainees.set(false);
-    },
+      const cleanEId = this.cleanId(t.enrollmentId);
+      const cleanTId = this.cleanId(t.traineeId);
 
-    error: (err) => {
-      console.error('Error fetching certificate statuses:', err);
-      this.selectedBatchTrainees.set([]);
-      this.loadingTrainees.set(false);
-    }
-  });
+      return {
+        traineeId: cleanTId,
+        enrollmentId: cleanEId,
+        fullName: t.fullName || 'متدرب بدون اسم',
+        isIssued: !!t.isIssued,
+        fileUrl: t.fileUrl || undefined,
+
+        // ✅ الدرجة الحقيقية القادمة من الـ API
+        grade: t.grade != null ? `${t.grade}%` : undefined
+      };
+    });
+
+    this.selectedBatchTrainees.set(mappedList);
+
+    const realTotal = mappedList.length;
+
+    const realIssued = mappedList.filter(
+      t => t.isIssued
+    ).length;
+
+    this.selectedBatch.update(b => b ? {
+      ...b,
+      totalTraineesCount: realTotal,
+      issuedCertificatesCount: realIssued
+    } : null);
+
+    this.batches.update(list =>
+      list.map(b =>
+        (b.batchId === bId || b.id === bId)
+          ? {
+              ...b,
+              totalTraineesCount: realTotal,
+              issuedCertificatesCount: realIssued
+            }
+          : b
+      )
+    );
+
+    this.loadingTrainees.set(false);
+  },
+
+  error: (err) => {
+    console.error('Error fetching certificate statuses:', err);
+    this.selectedBatchTrainees.set([]);
+    this.loadingTrainees.set(false);
+  }
+});
 }
 
 
@@ -595,7 +611,7 @@ onPageChange(newPage: number): void {
 
       endDate: batch?.endDate || '2025-04-30',
 
-      grade: trainee.grade || '91%',
+      grade: trainee.grade,
 
       fileUrl: trainee.fileUrl
 

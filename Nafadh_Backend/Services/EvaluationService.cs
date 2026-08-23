@@ -55,6 +55,41 @@ namespace Nafadh_Backend.Services
             if (template == null)
                 throw new Exception("Evaluation Template not found.");
 
+            // Make sure all template criteria are submitted
+            var templateCriteriaIds = template.EvaluationCriteria
+                .Select(c => c.CriteriaId)
+                .OrderBy(id => id)
+                .ToList();
+
+            var submittedCriteriaIds = createDto.CriteriaScores
+                .Select(c => c.CriteriaId)
+                .Distinct()
+                .OrderBy(id => id)
+                .ToList();
+
+            if (!templateCriteriaIds.SequenceEqual(submittedCriteriaIds))
+            {
+                throw new Exception(
+                    "All evaluation criteria must be submitted before creating the evaluation."
+                );
+            }
+
+                    var existingEvaluation =
+            await _repository.GetEvaluationByEnrollmentAndTemplateAsync(
+                createDto.EnrollmentId,
+                createDto.TemplateId);
+
+                    if (existingEvaluation != null)
+                    {
+                        throw new Exception(
+                            "An evaluation already exists for this trainee and template."
+                        );
+                    }
+
+
+
+
+
             var computedScore = ComputeWeightedScore(template.EvaluationCriteria, createDto.CriteriaScores);
 
             var evaluation = new NFD_Evaluation
