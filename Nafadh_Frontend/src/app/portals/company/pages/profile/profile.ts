@@ -1,5 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -36,11 +35,14 @@ export interface HostedSpecialtyDto {
 
 @Component({
   selector: 'app-company-profile',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })
 export class CompanyProfile implements OnInit {
+  private readonly api = inject(CompanyApi);
+  private readonly auth = inject(AuthService);
+
   companyId: number = 0;
   readonly coverInputId = 'company-cover-upload';
   readonly logoInputId = 'company-logo-upload';
@@ -99,11 +101,8 @@ export class CompanyProfile implements OnInit {
   readonly ringCircumference = 2 * Math.PI * 62;
   ringDashoffset = computed(() => this.ringCircumference * (1 - this.capacityPercent() / 100));
 
-  constructor(private api: CompanyApi, private auth: AuthService) {
-    this.companyId = this.auth.companyId ?? 0;
-  }
-
   ngOnInit() {
+    this.companyId = this.auth.companyId ?? 0;
     this.api.getCompany(this.companyId).subscribe({
       next: (response) => {
         const normalizedCompany = this.normalizeCompany(response);

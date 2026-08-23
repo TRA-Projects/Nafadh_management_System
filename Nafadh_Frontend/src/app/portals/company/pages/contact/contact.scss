@@ -2,6 +2,7 @@
 
 :host {
   display: block;
+
   --contact-border: #e2e8f3;
   --contact-border-light: #edf1f7;
   --contact-soft: #f7faff;
@@ -41,6 +42,7 @@
 }
 
 /* Improve visual hierarchy without changing the original dimensions or layout. */
+
 .nfd-card > div[style*="padding:4px 4px 8px"] {
   background: linear-gradient(180deg, var(--contact-soft), #fff);
   border-bottom: 1px solid var(--contact-border-light);
@@ -110,7 +112,9 @@
 .company-contact-conversation-active {
   border-color: #aebfe5 !important;
   background: #eef4ff !important;
-  box-shadow: inset 3px 0 0 var(--color-brand), 0 3px 10px rgba(10, 17, 114, 0.07);
+  box-shadow:
+    inset 3px 0 0 var(--color-brand),
+    0 3px 10px rgba(10, 17, 114, 0.07);
 }
 
 .nfd-modal {
@@ -200,4 +204,10 @@
 }
 
 /* Unified company portal page title */
-.nfd-page-title{font-family:'Cairo',sans-serif;font-size:24px;font-weight:800;color:#0f172a;line-height:1.3}
+.nfd-page-title {
+  font-family: 'Cairo', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: #0a1172;
+  line-height: 1.3;
+}

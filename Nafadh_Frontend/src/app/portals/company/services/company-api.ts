@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
@@ -11,8 +11,8 @@ import {
 // Company API service — all endpoints used by the Company portal, including
 @Injectable({ providedIn: 'root' })
 export class CompanyApi {
-  private base = environment.apiBaseUrl;
-  constructor(private http: HttpClient) {}
+  private readonly http = inject(HttpClient);
+  private readonly base = environment.apiBaseUrl;
 
   // Dashboard
   getDashboard(companyId: number): Observable<CompanyDashboardDto> {

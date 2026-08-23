@@ -103,11 +103,11 @@
 
       {{ totalConversations() }} محادثات
 
-      <span
-        *ngIf="totalUnread() > 0"
-      >
-        • {{ totalUnread() }} رسائل غير مقروءة
-      </span>
+      @if (totalUnread() > 0) {
+        <span>
+          • {{ totalUnread() }} رسائل غير مقروءة
+        </span>
+      }
 
     </div>
 

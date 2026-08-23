@@ -1,5 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import { CompanyApi } from '../../services/company-api';
@@ -36,12 +35,15 @@ interface TraineeRow {
 
 @Component({
   selector: 'app-company-program-details',
-  standalone: true,
-  imports: [CommonModule],
   templateUrl: './program-details.html',
   styleUrl: './program-details.scss',
 })
 export class CompanyProgramDetails implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly api = inject(CompanyApi);
+  private readonly auth = inject(AuthService);
+
   readonly loading = signal(true);
   readonly error = signal('');
   readonly program = signal<ProgramInfo | null>(null);
@@ -50,16 +52,7 @@ export class CompanyProgramDetails implements OnInit {
   readonly supervisorCount = signal(0);
   readonly averageProgress = signal(0);
 
-  private readonly companyId: number;
-
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private api: CompanyApi,
-    private auth: AuthService,
-  ) {
-    this.companyId = this.auth.companyId ?? 0;
-  }
+  private readonly companyId: number = this.auth.companyId ?? 0;
 
   get p(): ProgramInfo | null {
     return this.program();

@@ -1,11 +1,20 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal
+} from '@angular/core';
+
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+
 import {
   AnnouncementDto,
   ChartPointDto,
@@ -16,13 +25,19 @@ import {
 
 @Component({
   selector: 'app-company-dashboard',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
 })
 export class CompanyDashboard implements OnInit {
-  readonly companyId = computed(() => this.auth.companyId ?? 0);
+
+  private readonly api = inject(CompanyApi);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
+  readonly companyId = computed(
+    () => this.auth.companyId ?? 0
+  );
 
   loading = signal(false);
   loadError = signal(false);
@@ -30,19 +45,32 @@ export class CompanyDashboard implements OnInit {
   companyName = signal('الشركة المستضيفة');
 
   capacity = signal<CompanyDashboardDto['capacity'] | null>(null);
-  topPerformers = signal<CompanyDashboardTraineeDto[]>([]);
-  atRisk = signal<CompanyDashboardTraineeDto[]>([]);
-  warnings = signal<CompanyDashboardDto['recentWarnings']>([]);
+
+  topPerformers =
+    signal<CompanyDashboardTraineeDto[]>([]);
+
+  atRisk =
+    signal<CompanyDashboardTraineeDto[]>([]);
+
+  warnings =
+    signal<CompanyDashboardDto['recentWarnings']>([]);
 
   totalTrainees = signal(0);
   activeTrainees = signal(0);
 
-  announcements = signal<AnnouncementDto[]>([]);
-  announcementsDismissed = signal(false);
-  selectedOpportunity = signal<AnnouncementDto | null>(null);
+  announcements =
+    signal<AnnouncementDto[]>([]);
 
-  attendanceWeeks = signal<ChartPointDto[]>([]);
-  programDistribution = signal<ChartPointDto[]>([]);
+  announcementsDismissed = signal(false);
+
+  selectedOpportunity =
+    signal<AnnouncementDto | null>(null);
+
+  attendanceWeeks =
+    signal<ChartPointDto[]>([]);
+
+  programDistribution =
+    signal<ChartPointDto[]>([]);
 
   animationKey = signal(0);
   barsAnimating = signal(false);
@@ -54,7 +82,13 @@ export class CompanyDashboard implements OnInit {
       return 0;
     }
 
-    return Math.min(100, Math.max(0, (cap.used / cap.total) * 100));
+    return Math.min(
+      100,
+      Math.max(
+        0,
+        (cap.used / cap.total) * 100
+      )
+    );
   });
 
   attendanceAverage = computed(() => {
@@ -64,10 +98,13 @@ export class CompanyDashboard implements OnInit {
       return 0;
     }
 
-    return weeks.reduce(
-      (sum, week) => sum + Number(week.value || 0),
-      0
-    ) / weeks.length;
+    return (
+      weeks.reduce(
+        (sum, week) =>
+          sum + Number(week.value || 0),
+        0
+      ) / weeks.length
+    );
   });
 
   topPerformersAverage = computed(() => {
@@ -80,17 +117,14 @@ export class CompanyDashboard implements OnInit {
     return Math.round(
       trainees.reduce(
         (sum, trainee) =>
-          sum + Number(trainee.performancePercent || 0),
+          sum +
+          Number(
+            trainee.performancePercent || 0
+          ),
         0
       ) / trainees.length
     );
   });
-
-  constructor(
-    private api: CompanyApi,
-    private auth: AuthService,
-    private router: Router
-  ) {}
 
   ngOnInit(): void {
     this.refreshData();
@@ -109,40 +143,82 @@ export class CompanyDashboard implements OnInit {
     this.barsAnimating.set(false);
 
     forkJoin({
-      dashboard: this.api.getDashboard(companyId),
-      announcements: this.api.getPlatformAnnouncements(),
-      account: this.api.getCurrentAccount().pipe(
-        catchError((error) => {
-          console.warn(
-            'Company account name could not be loaded:',
-            error
-          );
-          return of(null as CompanyAccountDto | null);
-        })
-      ),
+      dashboard:
+        this.api.getDashboard(companyId),
+
+      announcements:
+        this.api.getPlatformAnnouncements(),
+
+      account:
+        this.api
+          .getCurrentAccount()
+          .pipe(
+            catchError((error) => {
+              console.warn(
+                'Company account name could not be loaded:',
+                error
+              );
+
+              return of(
+                null as CompanyAccountDto | null
+              );
+            })
+          ),
     }).subscribe({
-      next: ({ dashboard, announcements, account }) => {
-        this.capacity.set(dashboard?.capacity ?? null);
-        this.topPerformers.set(dashboard?.topPerformers ?? []);
-        this.atRisk.set(dashboard?.atRiskTrainees ?? []);
-        this.warnings.set(dashboard?.recentWarnings ?? []);
 
-        this.totalTrainees.set(dashboard?.totalTrainees ?? 0);
-        this.activeTrainees.set(dashboard?.activeTrainees ?? 0);
+      next: ({
+        dashboard,
+        announcements,
+        account
+      }) => {
 
-        this.attendanceWeeks.set(dashboard?.attendanceWeeks ?? []);
+        this.capacity.set(
+          dashboard?.capacity ?? null
+        );
+
+        this.topPerformers.set(
+          dashboard?.topPerformers ?? []
+        );
+
+        this.atRisk.set(
+          dashboard?.atRiskTrainees ?? []
+        );
+
+        this.warnings.set(
+          dashboard?.recentWarnings ?? []
+        );
+
+        this.totalTrainees.set(
+          dashboard?.totalTrainees ?? 0
+        );
+
+        this.activeTrainees.set(
+          dashboard?.activeTrainees ?? 0
+        );
+
+        this.attendanceWeeks.set(
+          dashboard?.attendanceWeeks ?? []
+        );
+
         this.programDistribution.set(
           dashboard?.programDistribution ?? []
         );
 
-        this.announcements.set(announcements ?? []);
+        this.announcements.set(
+          announcements ?? []
+        );
 
         if (account?.companyName?.trim()) {
-          this.companyName.set(account.companyName);
+          this.companyName.set(
+            account.companyName
+          );
         }
 
         this.loading.set(false);
-        this.animationKey.update((value) => value + 1);
+
+        this.animationKey.update(
+          value => value + 1
+        );
 
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
@@ -152,6 +228,7 @@ export class CompanyDashboard implements OnInit {
       },
 
       error: (error) => {
+
         console.error(
           'Company Dashboard refresh failed:',
           error
@@ -171,30 +248,42 @@ export class CompanyDashboard implements OnInit {
 
         this.attendanceWeeks.set([]);
         this.programDistribution.set([]);
+
         this.announcements.set([]);
-      },
+      }
     });
   }
 
   openCompanyProfile(): void {
-    this.router.navigate(['/company/profile']);
+    this.router.navigate([
+      '/company/profile'
+    ]);
   }
 
   openTrainees(): void {
-    this.router.navigate(['/company/trainees']);
+    this.router.navigate([
+      '/company/trainees'
+    ]);
   }
 
   openWarnings(): void {
-    this.router.navigate(['/company/trainees']);
+    this.router.navigate([
+      '/company/trainees'
+    ]);
   }
 
-  openProgress(enrollmentId: number): void {
+  openProgress(
+    enrollmentId: number
+  ): void {
+
     if (enrollmentId > 0) {
+
       this.router.navigate([
         '/company/trainees',
         enrollmentId,
-        'progress',
+        'progress'
       ]);
+
       return;
     }
 
@@ -202,9 +291,16 @@ export class CompanyDashboard implements OnInit {
   }
 
   ensureUrl(url?: string): string {
-    if (!url?.trim()) return '';
+
+    if (!url?.trim()) {
+      return '';
+    }
+
     const value = url.trim();
-    return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+
+    return /^https?:\/\//i.test(value)
+      ? value
+      : `https://${value}`;
   }
 
   openGithub(url?: string): void {
@@ -215,16 +311,32 @@ export class CompanyDashboard implements OnInit {
     this.openExternalUrl(url);
   }
 
-  private openExternalUrl(url?: string): void {
-    if (!url?.trim()) return;
+  private openExternalUrl(
+    url?: string
+  ): void {
+
+    if (!url?.trim()) {
+      return;
+    }
+
     const value = url.trim();
-    const normalized = /^https?:\/\//i.test(value) ? value : `https://${value}`;
-    window.open(normalized, '_blank', 'noopener,noreferrer');
+
+    const normalized =
+      /^https?:\/\//i.test(value)
+        ? value
+        : `https://${value}`;
+
+    window.open(
+      normalized,
+      '_blank',
+      'noopener,noreferrer'
+    );
   }
 
   openOpportunityModal(
     item: AnnouncementDto | null
   ): void {
+
     if (!item) {
       return;
     }
@@ -240,7 +352,10 @@ export class CompanyDashboard implements OnInit {
     this.announcementsDismissed.set(true);
   }
 
-  announcementMessage(item: AnnouncementDto): string {
+  announcementMessage(
+    item: AnnouncementDto
+  ): string {
+
     return (
       item.message ||
       item.description ||
@@ -251,22 +366,32 @@ export class CompanyDashboard implements OnInit {
   announcementDate(
     item: AnnouncementDto
   ): string | Date | undefined {
+
     return item.createdAt || item.date;
   }
 
-  barPercent(value: number, max: number): number {
+  barPercent(
+    value: number,
+    max: number
+  ): number {
+
     if (!max || max <= 0) {
       return 0;
     }
 
     return Math.min(
       100,
-      Math.max(0, (value / max) * 100)
+      Math.max(
+        0,
+        (value / max) * 100
+      )
     );
   }
 
   attendanceMax(): number {
-    const weeks = this.attendanceWeeks();
+
+    const weeks =
+      this.attendanceWeeks();
 
     if (!weeks.length) {
       return 100;
@@ -275,13 +400,16 @@ export class CompanyDashboard implements OnInit {
     return Math.max(
       100,
       ...weeks.map(
-        (week) => Number(week.value || 0)
+        week =>
+          Number(week.value || 0)
       )
     );
   }
 
   programMax(): number {
-    const programs = this.programDistribution();
+
+    const programs =
+      this.programDistribution();
 
     if (!programs.length) {
       return 1;
@@ -290,12 +418,16 @@ export class CompanyDashboard implements OnInit {
     return Math.max(
       1,
       ...programs.map(
-        (program) => Number(program.value || 0)
+        program =>
+          Number(program.value || 0)
       )
     );
   }
 
-  programColor(index: number): string {
+  programColor(
+    index: number
+  ): string {
+
     const colors = [
       '#063b8c',
       '#0788a7',
@@ -305,10 +437,15 @@ export class CompanyDashboard implements OnInit {
       '#159cc7',
     ];
 
-    return colors[index % colors.length];
+    return colors[
+      index % colors.length
+    ];
   }
 
-  avatarColor(name?: string): string {
+  avatarColor(
+    name?: string
+  ): string {
+
     if (!name) {
       return '#063b8c';
     }
@@ -323,7 +460,11 @@ export class CompanyDashboard implements OnInit {
 
     let hash = 0;
 
-    for (let index = 0; index < name.length; index++) {
+    for (
+      let index = 0;
+      index < name.length;
+      index++
+    ) {
       hash =
         name.charCodeAt(index) +
         ((hash << 5) - hash);
@@ -334,7 +475,10 @@ export class CompanyDashboard implements OnInit {
     ];
   }
 
-  initials(name?: string): string {
+  initials(
+    name?: string
+  ): string {
+
     if (!name?.trim()) {
       return '';
     }
@@ -342,7 +486,10 @@ export class CompanyDashboard implements OnInit {
     return name
       .trim()
       .split(/\s+/)
-      .map((part) => part.charAt(0))
+      .map(
+        part =>
+          part.charAt(0)
+      )
       .join('')
       .substring(0, 2)
       .toUpperCase();
@@ -351,12 +498,15 @@ export class CompanyDashboard implements OnInit {
   performanceValue(
     trainee: CompanyDashboardTraineeDto
   ): number {
+
     return Math.round(
       Math.min(
         100,
         Math.max(
           0,
-          Number(trainee.performancePercent || 0)
+          Number(
+            trainee.performancePercent || 0
+          )
         )
       )
     );
@@ -365,13 +515,16 @@ export class CompanyDashboard implements OnInit {
   riskReason(
     trainee: CompanyDashboardTraineeDto
   ): string {
-    const attendance = Number(
-      trainee.attendancePercent || 0
-    );
 
-    const performance = Number(
-      trainee.performancePercent || 0
-    );
+    const attendance =
+      Number(
+        trainee.attendancePercent || 0
+      );
+
+    const performance =
+      Number(
+        trainee.performancePercent || 0
+      );
 
     if (attendance < 75) {
       return `انخفاض الحضور (${Math.round(attendance)}%)`;
