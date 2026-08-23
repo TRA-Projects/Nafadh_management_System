@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -75,13 +75,11 @@ export class CompanyContact implements OnInit {
   });
 
   // ============================================================
-  // Constructor
+  // Dependencies
   // ============================================================
 
-  constructor(
-    private api: CompanyApi,
-    public auth: AuthService
-  ) {}
+  private readonly api = inject(CompanyApi);
+  readonly auth = inject(AuthService);
 
   // ============================================================
   // Init

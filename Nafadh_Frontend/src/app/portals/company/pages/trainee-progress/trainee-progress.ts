@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CompanyApi } from '../../services/company-api';
@@ -29,13 +29,14 @@ const DONUT_CIRC = 2 * Math.PI * DONUT_R;
   styleUrl: './trainee-progress.scss',
 })
 export class CompanyTraineeProgress implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly api = inject(CompanyApi);
+
   enrollment = signal<EnrollmentDto | null>(null);
   evaluations = signal<EvaluationDto[]>([]);
   progressSummary = signal<ProgressSummaryDto | null>(null);
   phaseDefs = PHASE_DEFS;
   donutCirc = DONUT_CIRC;
-
-  constructor(private route: ActivatedRoute, private api: CompanyApi) {}
 
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));

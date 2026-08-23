@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
@@ -11,8 +11,8 @@ import {
 // Company API service — all endpoints used by the Company portal, including
 @Injectable({ providedIn: 'root' })
 export class CompanyApi {
-  private base = environment.apiBaseUrl;
-  constructor(private http: HttpClient) {}
+  private readonly http = inject(HttpClient);
+  private readonly base = environment.apiBaseUrl;
 
   // Dashboard
   getDashboard(companyId: number): Observable<CompanyDashboardDto> {
@@ -74,6 +74,10 @@ export class CompanyApi {
     return this.http.get<CompanySupervisorDto[]>(`${this.base}/CompanySupervisor/company/${companyId}`);
   }
   addSupervisor(dto: unknown) { return this.http.post(`${this.base}/CompanySupervisor`, dto); }
+  deleteSupervisor(id: number) { return this.http.delete(`${this.base}/CompanySupervisor/${id}`); }
+  getSupervisorAssignedTrainees(id: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/CompanySupervisor/${id}/trainees`);
+  }
 
   // My Account
   getCurrentAccount(): Observable<CompanyAccountDto> {
@@ -87,6 +91,10 @@ export class CompanyApi {
   // Trainee Progress
   getEnrollment(enrollmentId: number): Observable<EnrollmentDto> {
     return this.http.get<EnrollmentDto>(`${this.base}/Enrollment/${enrollmentId}`);
+  }
+  // Distribute trainees to supervisors — updates the enrollment's department/supervisor assignment.
+  updateEnrollmentAssignment(enrollmentId: number, dto: { departmentId?: number | null; supervisorId?: number | null }): Observable<EnrollmentDto> {
+    return this.http.put<EnrollmentDto>(`${this.base}/Enrollment/${enrollmentId}`, dto);
   }
   getProgressSummary(enrollmentId: number): Observable<ProgressSummaryDto> {
     return this.http.get<ProgressSummaryDto>(`${this.base}/Enrollment/${enrollmentId}/progress-summary`);

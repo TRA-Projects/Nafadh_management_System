@@ -1,6 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
 import { catchError, of } from 'rxjs';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -23,13 +22,15 @@ interface SpecialtyCard {
 
 @Component({
   selector: 'app-company-specialties',
-  standalone: true,
-  imports: [CommonModule],
   templateUrl: './specialties.html',
   styleUrl: './specialties.scss',
 })
 export class CompanySpecialties implements OnInit {
-  readonly companyId: number;
+  private readonly api = inject(CompanyApi);
+  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
+
+  readonly companyId: number = this.auth.companyId ?? 0;
   readonly loading = signal(true);
   readonly error = signal('');
   readonly cards = signal<SpecialtyCard[]>([]);
@@ -43,14 +44,6 @@ export class CompanySpecialties implements OnInit {
     ['#efbb20', '#fbf3d9'],
     ['#1ebbf0', '#e2f7fb'],
   ];
-
-  constructor(
-    private api: CompanyApi,
-    private router: Router,
-    private auth: AuthService,
-  ) {
-    this.companyId = this.auth.companyId ?? 0;
-  }
 
   ngOnInit(): void {
     this.load();

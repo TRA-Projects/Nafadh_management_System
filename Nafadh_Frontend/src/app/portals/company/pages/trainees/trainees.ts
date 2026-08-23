@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -29,17 +29,16 @@ const AVATAR_PALETTE = ['#00338d', '#007cae', '#00bbc2', '#efbb20', '#1ebbf0', '
   styleUrl: './trainees.scss',
 })
 export class CompanyTrainees implements OnInit {
-  companyId: number = 0;
+  private readonly api = inject(CompanyApi);
+  private readonly auth = inject(AuthService);
+
+  companyId: number = this.auth.companyId ?? 0;
   enrollments = signal<EnrollmentDto[]>([]);
-  
+
   search = signal('');
   statusFilter = signal('الكل');
   programFilter = signal('الكل');
   batchFilter = signal('الكل');
-
-  constructor(private api: CompanyApi, private auth: AuthService) {
-    this.companyId = this.auth.companyId ?? 0;
-  }
 
   ngOnInit() {
     this.loadTraineesData();
@@ -49,11 +48,8 @@ export class CompanyTrainees implements OnInit {
     if (!this.companyId) return;
 
     this.api.getEnrollmentsByCompany(this.companyId).subscribe({
-      next: (d) => {
-        console.log('Trainees loaded:', d);
-        this.enrollments.set(d ?? []);
-      },
-      error: (err) => console.error('API Error:', err)
+      next: (d) => this.enrollments.set(d ?? []),
+      error: (err) => console.error('Failed to load trainees:', err),
     });
   }
 

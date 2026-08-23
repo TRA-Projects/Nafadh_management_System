@@ -1,5 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
 
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -9,21 +9,18 @@ type AccountTab = 'info' | 'permissions' | 'activities';
 
 @Component({
   selector: 'app-my-account',
-  standalone: true,
-  imports: [CommonModule, DatePipe],
+  imports: [DatePipe],
   templateUrl: './my-account.html',
   styleUrls: ['./my-account.scss'],
 })
 export class CompanyMyAccount implements OnInit {
+  private readonly api = inject(CompanyApi);
+  readonly auth = inject(AuthService);
+
   profile = signal<CompanyAccountDto | null>(null);
   loading = signal(true);
   loadError = signal(false);
   activeTab = signal<AccountTab>('info');
-
-  constructor(
-    private api: CompanyApi,
-    public auth: AuthService,
-  ) {}
 
   ngOnInit(): void {
     this.loadAccount();
