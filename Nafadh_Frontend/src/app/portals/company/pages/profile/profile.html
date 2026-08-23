@@ -131,11 +131,11 @@
         @if (companyEditOpen()) {
           <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px;padding:12px;border:1px solid var(--color-border);border-radius:12px;background:#f8faff;">
             <input class="nfd-input" placeholder="السجل التجاري" [(ngModel)]="companyEditDraft.commercialRegister" />
-            <input class="nfd-input" placeholder="الرقم الضريبي" [(ngModel)]="companyEditDraft.taxNumber" />
+            <input class="nfd-input" placeholder="الرقم الضريبي" [(ngModel)]="companyEditDraft.taxNumber" readonly title="غير قابل للتعديل: لا يوجد حقل مقابل له في قاعدة البيانات الحالية" />
             <input class="nfd-input" placeholder="الهاتف" [(ngModel)]="companyEditDraft.phone" />
             <input class="nfd-input" placeholder="البريد" [(ngModel)]="companyEditDraft.email" />
-            <input class="nfd-input" placeholder="الموقع" [(ngModel)]="companyEditDraft.website" />
-            <input class="nfd-input" placeholder="تاريخ الاعتماد" [(ngModel)]="companyEditDraft.accreditationValidUntil" />
+            <input class="nfd-input" placeholder="الموقع" [(ngModel)]="companyEditDraft.website" readonly title="غير قابل للتعديل: لا يوجد حقل مقابل له في قاعدة البيانات الحالية" />
+            <input class="nfd-input" placeholder="تاريخ الاعتماد" [(ngModel)]="companyEditDraft.accreditationValidUntil" readonly title="غير قابل للتعديل: لا يوجد حقل مقابل له في قاعدة البيانات الحالية" />
             <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;">
               <button class="nfd-btn ghost" type="button" (click)="companyEditOpen.set(false)">إلغاء</button>
               <button class="nfd-btn primary" type="button" (click)="saveCompanyEdit()">حفظ</button>
@@ -324,10 +324,9 @@
 
       @if (supervisorFormOpen()) {
         <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px;padding:12px;border:1px solid var(--color-border);border-radius:12px;background:#f8faff;">
+          <input class="nfd-input" placeholder="رقم المستخدم (User ID)" type="number" min="1" [(ngModel)]="supervisorDraft.userId" />
           <input class="nfd-input" placeholder="اسم جهة الاتصال" [(ngModel)]="supervisorDraft.name" />
           <input class="nfd-input" placeholder="المسمى الوظيفي" [(ngModel)]="supervisorDraft.role" />
-          <input class="nfd-input" placeholder="رقم الهاتف" [(ngModel)]="supervisorDraft.phone" />
-          <input class="nfd-input" placeholder="البريد الإلكتروني" [(ngModel)]="supervisorDraft.email" />
           <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;">
             <button class="nfd-btn ghost" type="button" (click)="supervisorFormOpen.set(false)">إلغاء</button>
             <button class="nfd-btn primary" type="button" (click)="saveSupervisor()">حفظ</button>
