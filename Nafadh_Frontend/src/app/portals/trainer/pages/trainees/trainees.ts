@@ -159,17 +159,20 @@ export class TrainerTrainees implements OnInit {
         this.evaluationAverages();
 
 
-      return this.enrollments()
-        .filter(
-          enrollment =>
-            enrollment.completionStatus !== 'Dropped'
-        )
-        .map(
-          enrollment =>
-            averages[
-              enrollment.enrollmentId
-            ]
-        )
+    return this.enrollments()
+  .filter(
+    enrollment =>
+      enrollment.completionStatus !== 'Dropped' &&
+      this.canShowTrainingMetrics(
+        enrollment
+      )
+  )
+  .map(
+    enrollment =>
+      averages[
+        enrollment.enrollmentId
+      ]
+  )
         .filter(
           (score): score is number =>
             typeof score === 'number' &&
