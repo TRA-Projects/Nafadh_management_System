@@ -68,7 +68,10 @@
               <span style="font-size:11px;color:var(--muted)">{{ e.trackName || '—' }}</span>
             </td>
             <td>
-              <span class="chip" [ngClass]="statusChipClass(e.completionStatus)"><span class="dot"></span>{{ statusLabel(e.completionStatus) }}</span>
+              <!-- تم التحديث هنا لاستخدام الدوال التي تقبل الكائن e بالكامل -->
+              <span class="chip" [ngClass]="statusChipClassFor(e)">
+                <span class="dot"></span>{{ statusLabelFor(e) }}
+              </span>
             </td>
             <td style="white-space:nowrap; text-align:left; vertical-align:middle;">
               <span style="display:inline-flex; align-items:center; gap:14px; padding: 4px 0;">

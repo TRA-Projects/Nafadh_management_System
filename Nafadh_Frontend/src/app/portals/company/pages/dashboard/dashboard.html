@@ -135,7 +135,7 @@
         </div>
         <div class="kpi-info">
           <span class="kpi-label">المتدربون المتميزون</span>
-          <strong class="kpi-value">{{ topPerformers().length }}</strong>
+          <strong class="kpi-value">{{ filteredTopPerformers().length }}</strong>
           <small>هذا الشهر</small>
         </div>
       </article>
@@ -304,6 +304,7 @@
 
     <div class="bottom-lists-grid">
 
+      <!-- قسم المتدربون المتميزون (معدل ليستخدم القائمة المصفاة) -->
       <div class="card list-card">
         <div class="card-title">
           <span>
@@ -318,7 +319,7 @@
 
         <div class="lower-list">
           @for (
-            trainee of topPerformers().slice(0, 5);
+            trainee of filteredTopPerformers().slice(0, 5);
             track trainee.traineeId
           ) {
             <div class="top-row">
@@ -366,7 +367,7 @@
         </div>
       </div>
 
-      <!-- قسم المتدربين المتعثرين المعدل بالاتجاه الصحيح -->
+      <!-- قسم المتدربين المتعثرين -->
       <div class="card list-card">
         <div class="card-title warning-title">
           <span>
@@ -380,7 +381,6 @@
           @for (trainee of atRisk(); track trainee.traineeId) {
             <div class="trainee-row" style="display: flex; align-items: center; justify-content: space-between;">
               
-              <!-- الجانب الأيمن: أيقونة الحرف المختصر، الاسم، والحالة -->
               <div style="display: flex; align-items: center; gap: 12px;">
                 <div
                   class="avatar"
@@ -399,7 +399,6 @@
                 </div>
               </div>
 
-              <!-- الجانب الأيسر: الأيقونات (عرض التقدم، GitHub، LinkedIn) -->
               <div class="row-actions" style="display: flex; align-items: center; gap: 8px;">
                 <button
                   class="icon-btn eye"
@@ -431,6 +430,7 @@
         </div>
       </div>
 
+      <!-- أحدث الإنذارات -->
       <div class="card list-card">
         <div class="card-title">
           <span>
