@@ -367,11 +367,9 @@ effectiveEnrollmentStatus(
     enrollment.completionStatus;
 
 
-  // Withdrawal and failure are individual
-  // trainee states and should remain unchanged.
+  // المنسحب يبقى منسحب حتى لو الدفعة مستمرة.
   if (
-    status === 'Dropped' ||
-    status === 'Failed'
+    status === 'Dropped'
   ) {
     return status;
   }
@@ -418,11 +416,14 @@ effectiveEnrollmentStatus(
   );
 
 
-  // Do not show "Completed" while
-  // the batch itself is still active.
+  // طالما الدفعة لم تنتهِ:
+  // Completed و Failed يظهران قيد التدريب.
   if (
-    status === 'Completed' &&
-    today <= endDate
+    today <= endDate &&
+    (
+      status === 'Completed' ||
+      status === 'Failed'
+    )
   ) {
     return 'InProgress';
   }
