@@ -1410,17 +1410,19 @@ criterionEditForm = {
         );
 
 
-    if (
-      !enrollment ||
-      enrollment.completionStatus === 'Dropped'
-    ) {
+   if (
+  !enrollment ||
+  !this.canEvaluateEnrollment(
+    enrollment
+  )
+) {
 
-      console.warn(
-        'لا يمكن تقييم متدرب منسحب'
-      );
+  console.warn(
+    'لا يمكن تقييم هذا المتدرب حاليًا'
+  );
 
-      return;
-    }
+  return;
+}
 
 
     this.selectedEnrollmentId =
@@ -1446,7 +1448,29 @@ criterionEditForm = {
         ?.criteria ?? []
     );
   }
+// =====================================================
+// CRITERIA TOTAL WEIGHT
+// =====================================================
 
+criteriaTotalWeight(
+  excludeCriteriaId?: number
+): number {
+
+  return this.criteria()
+    .filter(
+      criterion =>
+        criterion.criteriaId !==
+        excludeCriteriaId
+    )
+    .reduce(
+      (total, criterion) =>
+        total +
+        Number(
+          criterion.weight ?? 0
+        ),
+      0
+    );
+}
 
   // =====================================================
 // ADD CRITERION
@@ -1513,7 +1537,23 @@ addCriterion(): void {
 
     return;
   }
+const currentWeight =
+  this.criteriaTotalWeight();
 
+const remainingWeight =
+  100 - currentWeight;
+
+
+if (
+  currentWeight + weight > 100
+) {
+
+  window.alert(
+    `لا يمكن إضافة المعيار. الوزن المتبقي هو ${remainingWeight}% فقط.`
+  );
+
+  return;
+}
 
   this.api
     .createCriterion({
@@ -1784,7 +1824,25 @@ saveCriterionEdit(
     return;
   }
 
+const otherCriteriaWeight =
+  this.criteriaTotalWeight(
+    criteriaId
+  );
 
+const remainingWeight =
+  100 - otherCriteriaWeight;
+
+
+if (
+  otherCriteriaWeight + weight > 100
+) {
+
+  window.alert(
+    `لا يمكن حفظ التعديل. أقصى وزن مسموح لهذا المعيار هو ${remainingWeight}%.`
+  );
+
+  return;
+}
   this.api
     .updateCriterion(
       criteriaId,
@@ -1847,8 +1905,7 @@ saveCriterionEdit(
 
     });
 
-}
-  // =====================================================
+}// =====================================================
 // SUBMIT EVALUATION
 // =====================================================
 
@@ -1918,20 +1975,100 @@ submitEvaluation(): void {
         }
 
 
+        const criteria =
+          this.criteria();
+
+
+        // There must be at least one criterion.
+        if (criteria.length === 0) {
+
+          window.alert(
+            'لا توجد معايير تقييم لهذا النموذج.'
+          );
+
+          return;
+        }
+
+
+        // Make sure every criterion has a score.
+        const hasMissingScore =
+          criteria.some(
+            criterion => {
+
+              const score =
+                this.criteriaScores[
+                  criterion.criteriaId
+                ];
+
+
+              return (
+                score === undefined ||
+                score === null
+              );
+            }
+          );
+
+
+        if (hasMissingScore) {
+
+          window.alert(
+            'يجب إدخال درجة لكل معيار قبل حفظ التقييم.'
+          );
+
+          return;
+        }
+
+
+        // Make sure every score is valid
+        // and does not exceed max points.
+        const hasInvalidScore =
+          criteria.some(
+            criterion => {
+
+              const score =
+                Number(
+                  this.criteriaScores[
+                    criterion.criteriaId
+                  ]
+                );
+
+
+              return (
+                !Number.isFinite(score) ||
+                score < 0 ||
+                score >
+                  criterion.maxPoints
+              );
+            }
+          );
+
+
+        if (hasInvalidScore) {
+
+          window.alert(
+            'تأكدي أن كل درجة بين 0 والحد الأقصى للمعيار.'
+          );
+
+          return;
+        }
+
+
         const criteriaScores =
-          Object.entries(
-            this.criteriaScores
-          )
-            .map(
-              ([criteriaId, score]) => ({
+          criteria.map(
+            criterion => ({
 
-                criteriaId:
-                  Number(criteriaId),
+              criteriaId:
+                criterion.criteriaId,
 
-                score
+              score:
+                Number(
+                  this.criteriaScores[
+                    criterion.criteriaId
+                  ]
+                )
 
-              })
-            );
+            })
+          );
 
 
         this.api
