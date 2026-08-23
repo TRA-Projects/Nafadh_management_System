@@ -68,9 +68,9 @@ export interface TraineeProfileDto {
   fullName?: string;
   email?: string;
   nationalId: number;
-  university?: string;
-  major?: string;
-  academicLevel?: string;
+  university: string;
+  major: string;
+  academicLevel: string;
   skills?: string;
   resumeUrl?: string;
   gitHubUrl?: string;
@@ -81,6 +81,7 @@ export interface TraineeProfileDto {
   companyName?: string;
   enrollmentId?: number;
   fileUrl?: string;
+ phone?: string;
 }
 
 export interface TraineeDashboardSummaryDto {
@@ -103,6 +104,7 @@ export interface TraineeDashboardSummaryDto {
   supervisorName?: string;
   latestNotifications?: { message: string; date: string }[];
 }
+
 
 // ---- Company ----
 export interface CompanyDto {

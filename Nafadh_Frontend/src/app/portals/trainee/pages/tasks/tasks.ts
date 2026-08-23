@@ -694,39 +694,6 @@ export class TraineeTasks implements OnInit {
   }
 
   // =========================================================
-  // Project Progress
-  // =========================================================
-
-  projectProgress(
-    project: ProjectDto
-  ): number {
-
-    const p = project as any;
-
-    const rawValue =
-      p.progressPercentage ??
-      p.progress ??
-      p.completionPercentage ??
-      p.completion ??
-      p.percentage ??
-      0;
-
-    const value = Number(rawValue);
-
-    if (!Number.isFinite(value)) {
-      return 0;
-    }
-
-    return Math.min(
-      100,
-      Math.max(
-        0,
-        Math.round(value)
-      )
-    );
-  }
-
-  // =========================================================
   // Project Start Date
   // =========================================================
 
@@ -779,44 +746,27 @@ export class TraineeTasks implements OnInit {
         .trim()
         .replace(/[\s_-]/g, '');
 
-    const progress =
-      this.projectProgress(project);
+    switch (rawStatus) {
 
-    if (
-      rawStatus === 'completed' ||
-      rawStatus === 'complete' ||
-      rawStatus === 'مكتمل' ||
-      progress === 100
-    ) {
-      return 'مكتمل';
+      case 'completed':
+      case 'complete':
+      case 'مكتمل':
+        return 'مكتمل';
+
+      case 'new':
+      case 'pending':
+      case 'جديد':
+        return 'جديد';
+
+      case 'active':
+      case 'inprogress':
+      case 'مستمر':
+      case 'قيدالتنفيذ':
+        return 'مستمر';
+
+      default:
+        return String(p.status ?? 'غير محدد');
     }
-
-    if (
-      rawStatus === 'new' ||
-      rawStatus === 'pending' ||
-      rawStatus === 'جديد'
-    ) {
-      return 'جديد';
-    }
-
-    if (
-      rawStatus === 'active' ||
-      rawStatus === 'inprogress' ||
-      rawStatus === 'مستمر' ||
-      rawStatus === 'قيدالتنفيذ'
-    ) {
-      return 'مستمر';
-    }
-
-    if (progress === 0) {
-      return 'جديد';
-    }
-
-    if (progress > 0 && progress < 100) {
-      return 'مستمر';
-    }
-
-    return 'مستمر';
   }
 
   // =========================================================
@@ -866,25 +816,35 @@ export class TraineeTasks implements OnInit {
   }
 
   // =========================================================
-  // Project Progress Ring
+  // Project Stages
+  // =========================================================
+  // المراحل هنا للعرض فقط.
+  //
+  // لا يوجد Progress في الـ Backend.
+  // إذا كانت حالة المشروع مكتمل:
+  // تظهر المراحل الأربع كمكتملة.
+  //
+  // إذا كانت الحالة غير مكتملة:
+  // تبقى المراحل رمادية.
   // =========================================================
 
-  projectProgressBackground(
-    progress: number
-  ): string {
+  projectStagesCompleted(
+    project: ProjectDto
+  ): boolean {
 
-    const angle =
-      Math.min(
-        100,
-        Math.max(0, progress)
-      ) * 3.6;
+    const p = project as any;
 
-    return `
-      conic-gradient(
-        var(--color-navy) 0deg ${angle}deg,
-        var(--color-tint-indigo) ${angle}deg 360deg
-      )
-    `;
+    const status =
+      String(p.status ?? '')
+        .toLowerCase()
+        .trim()
+        .replace(/[\s_-]/g, '');
+
+    return (
+      status === 'completed' ||
+      status === 'complete' ||
+      status === 'مكتمل'
+    );
   }
 
   // =========================================================

@@ -86,7 +86,7 @@ export class TraineeApi {
     return this.http.get<TraineeProfileDto>(`${this.base}/Trainee/traineeByUserID/${id}`);
   }
 
-  updateTrainee(id: number, dto: unknown) {
+  updateTrainee(id: number, dto: Partial<TraineeProfileDto>) {
     return this.http.put(`${this.base}/Trainee/traineeByUserID/${id}`, dto);
   }
 
