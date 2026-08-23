@@ -110,5 +110,38 @@ namespace Nafadh_Backend.Repositories
             }
             return (double)evaluations.Average(e => e.Score);
         }
+
+
+        public async Task<NFD_Evaluation?> GetEvaluationByEnrollmentAndTemplateAsync(
+            int enrollmentId,
+            int templateId)
+                {
+                    return await _context.NFD_Evaluations
+                        .Include(e => e.EvaluationTemplate)
+                        .Include(e => e.CriterionScores)
+                            .ThenInclude(cs => cs.Criterion)
+                        .FirstOrDefaultAsync(e =>
+                            e.EnrollmentId == enrollmentId &&
+                            e.TemplateId == templateId);
+        }
+
+
+        public async Task DeleteEvaluationAsync(int evaluationId)
+        {
+            var evaluation = await _context.NFD_Evaluations
+                .FirstOrDefaultAsync(e => e.EvaluationId == evaluationId);
+
+            if (evaluation == null)
+            {
+                throw new InvalidOperationException(
+                    $"Evaluation with ID {evaluationId} was not found.");
+            }
+
+            _context.NFD_Evaluations.Remove(evaluation);
+
+            await _context.SaveChangesAsync();
+        }
+
+
     }
 }
