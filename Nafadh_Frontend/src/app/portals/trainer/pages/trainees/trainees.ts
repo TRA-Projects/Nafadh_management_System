@@ -448,20 +448,31 @@ effectiveEnrollmentStatus(
   );
 
 
-  // طالما الدفعة مستمرة،
-  // لا نظهر Completed أو Failed.
-  if (
-    today <= endDate &&
-    (
-      status === 'Completed' ||
-      status === 'Failed'
-    )
-  ) {
-    return 'InProgress';
-  }
+ // طالما الدفعة مستمرة،
+// لا نظهر Completed أو Failed.
+if (
+  today <= endDate &&
+  (
+    status === 'Completed' ||
+    status === 'Failed'
+  )
+) {
+  return 'InProgress';
+}
 
 
-  return status;
+// إذا انتهت الدفعة وما زالت
+// حالة المتدرب InProgress،
+// نعرضه كمكتمل.
+if (
+  today > endDate &&
+  status === 'InProgress'
+) {
+  return 'Completed';
+}
+
+
+return status;
 }
 
 
