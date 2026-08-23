@@ -246,7 +246,71 @@ export class TrainerProfile
 
       return;
     }
+// ===================================================
+// EMAIL VALIDATION
+// ===================================================
 
+const email =
+  trainer.email?.trim() ?? '';
+
+
+if (email) {
+
+  const emailPattern =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+  if (
+    !emailPattern.test(
+      email
+    )
+  ) {
+
+    this.showError(
+      'أدخلي بريدًا إلكترونيًا صحيحًا.'
+    );
+
+    return;
+  }
+
+}
+
+
+// ===================================================
+// PHONE VALIDATION
+// ===================================================
+
+const phone =
+  trainer.phone?.trim() ?? '';
+
+
+if (phone) {
+
+  const normalizedPhone =
+    phone.replace(
+      /[\s\-()]/g,
+      ''
+    );
+
+
+  const phonePattern =
+    /^\+?[0-9]{8,15}$/;
+
+
+  if (
+    !phonePattern.test(
+      normalizedPhone
+    )
+  ) {
+
+    this.showError(
+      'أدخلي رقم هاتف صحيحًا.'
+    );
+
+    return;
+  }
+
+}
 
     const experienceYears =
       Number(
@@ -289,28 +353,25 @@ export class TrainerProfile
 
     const payload = {
 
-      fullName:
-        trainer.fullName.trim(),
+  fullName:
+    trainer.fullName.trim(),
 
-      email:
-        trainer.email?.trim() ?? '',
+  email,
 
-      phone:
-        trainer.phone?.trim() ?? '',
+  phone,
 
-      specialty:
-        trainer.specialty?.trim() ?? '',
+  specialty:
+    trainer.specialty?.trim() ?? '',
 
-      experienceYears,
+  experienceYears,
 
-      biography:
-        trainer.biography?.trim() ?? '',
+  biography:
+    trainer.biography?.trim() ?? '',
 
-      cvUrl:
-        trainer.cvUrl?.trim() ?? ''
+  cvUrl:
+    trainer.cvUrl?.trim() ?? ''
 
-    };
-
+};
 
     this.api
       .updateTrainer(
