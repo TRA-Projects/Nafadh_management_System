@@ -38,8 +38,7 @@ export class CompanyTrainees implements OnInit {
   batchFilter = signal('الكل');
 
   constructor(private api: CompanyApi, private auth: AuthService) {
-    // جلب رقم الشركة من الـ AuthService، وإذا لم يتوفر نضعقيمة افتراضية (مثلاً 1) لتظهر البيانات
-    this.companyId = this.auth.companyId || 1;
+    this.companyId = this.auth.companyId ?? 0;
   }
 
   ngOnInit() {
@@ -47,6 +46,8 @@ export class CompanyTrainees implements OnInit {
   }
 
   loadTraineesData() {
+    if (!this.companyId) return;
+
     this.api.getEnrollmentsByCompany(this.companyId).subscribe({
       next: (d) => {
         console.log('Trainees loaded:', d);
