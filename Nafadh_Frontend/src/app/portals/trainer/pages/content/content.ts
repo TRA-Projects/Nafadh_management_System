@@ -1339,7 +1339,245 @@ showDeleteMaterialModal =
     );
 
   }
+// =====================================================
+// ARCHIVE MODULE
+// =====================================================
 
+archiveModule(
+  module: ModuleDto
+): void {
+
+  if (this.saving()) {
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      `هل تريدين أرشفة الوحدة "${module.title}"؟`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  this.saving.set(
+    true
+  );
+
+  this.errorMessage.set(
+    ''
+  );
+
+  this.successMessage.set(
+    ''
+  );
+
+
+  this.api
+    .updateModule(
+      module.moduleId,
+      {
+        title:
+          module.title,
+
+        orderIndex:
+          module.orderIndex,
+
+        availableFrom:
+          module.availableFrom ?? null,
+
+        availableTo:
+          module.availableTo ?? null,
+
+        isArchived:
+          true,
+
+        prerequisiteModuleId:
+          module.prerequisiteModuleId ?? null
+      }
+    )
+    .subscribe({
+
+      next: () => {
+
+        // Update the local module immediately.
+        this.modules.update(
+          modules =>
+            modules.map(
+              item =>
+                item.moduleId ===
+                module.moduleId
+                  ? {
+                      ...item,
+                      isArchived: true
+                    }
+                  : item
+            )
+        );
+
+
+        // If the archived module was selected,
+        // select another active module.
+        if (
+          this.selectedModuleId ===
+          module.moduleId
+        ) {
+
+          this.selectedModuleId =
+            this.activeModules()[0]
+              ?.moduleId ??
+            null;
+
+        }
+
+
+        this.saving.set(
+          false
+        );
+
+
+        this.successMessage.set(
+          'تمت أرشفة الوحدة بنجاح.'
+        );
+
+      },
+
+
+      error: (error) => {
+
+        console.error(
+          'Error archiving module:',
+          error
+        );
+
+
+        this.saving.set(
+          false
+        );
+
+
+        this.errorMessage.set(
+          'تعذر أرشفة الوحدة.'
+        );
+
+      }
+
+    });
+
+}
+
+
+// =====================================================
+// RESTORE MODULE
+// =====================================================
+
+restoreModule(
+  module: ModuleDto
+): void {
+
+  if (this.saving()) {
+    return;
+  }
+
+
+  this.saving.set(
+    true
+  );
+
+  this.errorMessage.set(
+    ''
+  );
+
+  this.successMessage.set(
+    ''
+  );
+
+
+  this.api
+    .updateModule(
+      module.moduleId,
+      {
+        title:
+          module.title,
+
+        orderIndex:
+          module.orderIndex,
+
+        availableFrom:
+          module.availableFrom ?? null,
+
+        availableTo:
+          module.availableTo ?? null,
+
+        isArchived:
+          false,
+
+        prerequisiteModuleId:
+          module.prerequisiteModuleId ?? null
+      }
+    )
+    .subscribe({
+
+      next: () => {
+
+        // Move the restored module
+        // back to the active modules list.
+        this.modules.update(
+          modules =>
+            modules.map(
+              item =>
+                item.moduleId ===
+                module.moduleId
+                  ? {
+                      ...item,
+                      isArchived: false
+                    }
+                  : item
+            )
+        );
+
+
+        this.selectedModuleId =
+          module.moduleId;
+
+
+        this.saving.set(
+          false
+        );
+
+
+        this.successMessage.set(
+          'تمت استعادة الوحدة بنجاح.'
+        );
+
+      },
+
+
+      error: (error) => {
+
+        console.error(
+          'Error restoring module:',
+          error
+        );
+
+
+        this.saving.set(
+          false
+        );
+
+
+        this.errorMessage.set(
+          'تعذر استعادة الوحدة.'
+        );
+
+      }
+
+    });
+
+}
 
   // =====================================================
   // FILE SELECTED
