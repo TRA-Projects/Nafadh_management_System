@@ -4,16 +4,20 @@
     العودة إلى البرامج
   </button>
 
-  <div class="state-card" *ngIf="loading()">
-    <span class="spinner"></span> جاري تحميل تفاصيل البرنامج...
-  </div>
+  @if (loading()) {
+    <div class="state-card">
+      <span class="spinner"></span> جاري تحميل تفاصيل البرنامج...
+    </div>
+  }
 
-  <div class="state-card error" *ngIf="!loading() && error()">
-    {{ error() }}
-    <button type="button" (click)="goBack()">العودة</button>
-  </div>
+  @if (!loading() && error()) {
+    <div class="state-card error">
+      {{ error() }}
+      <button type="button" (click)="goBack()">العودة</button>
+    </div>
+  }
 
-  <ng-container *ngIf="!loading() && !error() && program() as p">
+  @if (!loading() && !error() && program(); as p) {
     <article class="card hero" [style.--program-color]="p.color">
       <div class="program-icon">
         <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M12 3v18M2 9h20"/></svg>
@@ -43,7 +47,7 @@
           استخدام الطاقة الاستيعابية والتوزيع
           <span class="pulse-badge">محدث فوراً</span>
         </div>
-        
+
         <div class="capacity-bar-wrapper">
           <div class="bar-info">
             <span>معدل الإشغال الكلي</span>
@@ -88,7 +92,9 @@
       <article class="card card-pad">
         <div class="card-title">التخصصات الأكاديمية المناسبة</div>
         <div class="major-tags">
-          <span class="major-tag-btn" *ngIf="p.category">{{ p.category }}</span>
+          @if (p.category) {
+            <span class="major-tag-btn">{{ p.category }}</span>
+          }
           @for (department of p.department.split('، '); track department) {
             @if (department && department !== 'غير محدد') {
               <span class="major-tag-btn">{{ department }}</span>
@@ -104,34 +110,44 @@
     <!-- مراحل الخطة التدريبية كبطاقات شبكية عصرية بدلاً من الخطوط -->
     <article class="card card-pad section-card">
       <div class="card-title">مراحل الخطة التدريبية <span>{{ modules().length }} مراحل · {{ p.durationWeeks }} أسبوعًا</span></div>
-      <div class="plan-cards-grid" *ngIf="modules().length; else noModules">
-        <div class="plan-step-card" *ngFor="let module of modules(); let i = index">
-          <span class="pnum" [style.background]="p.soft" [style.color]="p.color">{{ i + 1 }}</span>
-          <div class="plan-content">
-            <b>{{ module.title || module.name || ('المرحلة ' + (i + 1)) }}</b>
-            <small>المرحلة {{ i + 1 }} من {{ modules().length }}</small>
-          </div>
+      @if (modules().length) {
+        <div class="plan-cards-grid">
+          @for (module of modules(); track module.moduleId ?? $index; let i = $index) {
+            <div class="plan-step-card">
+              <span class="pnum" [style.background]="p.soft" [style.color]="p.color">{{ i + 1 }}</span>
+              <div class="plan-content">
+                <b>{{ module.title || module.name || ('المرحلة ' + (i + 1)) }}</b>
+                <small>المرحلة {{ i + 1 }} من {{ modules().length }}</small>
+              </div>
+            </div>
+          }
         </div>
-      </div>
-      <ng-template #noModules><div class="empty"><b>لا توجد مراحل معرّفة</b><span>ستظهر مراحل الخطة هنا عند ربطها بالبرنامج.</span></div></ng-template>
+      } @else {
+        <div class="empty"><b>لا توجد مراحل معرّفة</b><span>ستظهر مراحل الخطة هنا عند ربطها بالبرنامج.</span></div>
+      }
     </article>
 
     <article class="card card-pad section-card">
       <div class="card-title">متدربو البرنامج <span>{{ trainees().length }} متدربًا مسجلًا</span></div>
-      <div class="table-wrap" *ngIf="trainees().length; else noTrainees">
-        <table>
-          <thead><tr><th>المتدرب</th><th>الدفعة</th><th>المشرف</th><th>التقدم</th><th>الحالة</th></tr></thead>
-          <tbody>
-            <tr *ngFor="let trainee of trainees()">
-              <td><div class="trainee-name"><span class="avatar">{{ trainee.name.charAt(0) }}</span><b>{{ trainee.name }}</b></div></td>
-              <td>{{ trainee.cohort }}</td><td>{{ trainee.supervisor }}</td>
-              <td><div class="progress-cell"><div class="progress"><i [style.width.%]="trainee.progress" [style.background]="p.color"></i></div><b>{{ trainee.progress }}%</b></div></td>
-              <td><span class="status" [class.done]="trainee.status === 'مكتمل'">{{ trainee.status }}</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <ng-template #noTrainees><div class="empty"><b>لا يوجد متدربون في هذا البرنامج</b><span>ابدأ باستقبال مرشحين ضمن المقاعد المتاحة.</span></div></ng-template>
+      @if (trainees().length) {
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>المتدرب</th><th>الدفعة</th><th>المشرف</th><th>التقدم</th><th>الحالة</th></tr></thead>
+            <tbody>
+              @for (trainee of trainees(); track trainee.enrollmentId) {
+                <tr>
+                  <td><div class="trainee-name"><span class="avatar">{{ trainee.name.charAt(0) }}</span><b>{{ trainee.name }}</b></div></td>
+                  <td>{{ trainee.cohort }}</td><td>{{ trainee.supervisor }}</td>
+                  <td><div class="progress-cell"><div class="progress"><i [style.width.%]="trainee.progress" [style.background]="p.color"></i></div><b>{{ trainee.progress }}%</b></div></td>
+                  <td><span class="status" [class.done]="trainee.status === 'مكتمل'">{{ trainee.status }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="empty"><b>لا يوجد متدربون في هذا البرنامج</b><span>ابدأ باستقبال مرشحين ضمن المقاعد المتاحة.</span></div>
+      }
     </article>
-  </ng-container>
+  }
 </section>
