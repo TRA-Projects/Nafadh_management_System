@@ -1523,7 +1523,97 @@ canShowTrainingMetrics(
 
       });
   }
+// =====================================================
+// DELETE CRITERION
+// =====================================================
 
+deleteCriterion(
+  criteriaId: number,
+  criterionName: string
+): void {
+
+  const templateId =
+    this.templateDetail()
+      ?.templateId;
+
+
+  if (!templateId) {
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      `هل تريدين حذف معيار "${criterionName}"؟`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  this.api
+    .deleteCriterion(
+      criteriaId
+    )
+    .subscribe({
+
+      next: () => {
+
+        // Reload the template so the deleted
+        // criterion disappears immediately.
+        this.api
+          .getTemplateDetail(
+            templateId
+          )
+          .subscribe({
+
+            next: (detail) => {
+
+              this.templateDetail.set(
+                detail
+              );
+
+
+              delete this.criteriaScores[
+                criteriaId
+              ];
+
+            },
+
+
+            error: (err) => {
+
+              console.error(
+                'خطأ في إعادة تحميل نموذج التقييم:',
+                err
+              );
+
+            }
+
+          });
+
+      },
+
+
+      error: (err) => {
+
+        console.error(
+          'خطأ في حذف معيار التقييم:',
+          err
+        );
+
+
+        window.alert(
+          'تعذر حذف المعيار. قد يكون مستخدمًا في تقييم محفوظ.'
+        );
+
+      }
+
+    });
+
+}
 
   // =====================================================
   // SUBMIT EVALUATION
