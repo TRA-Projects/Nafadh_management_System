@@ -110,13 +110,17 @@
             </div>
 
 
-            <!-- الحالة الفعلية للمدرب -->
-
             <span
               class="status-dot"
-              [class.active]="t.status === 'Active'"
-              [class.inactive]="t.status === 'Inactive'"
-              [class.suspended]="t.status === 'Suspended'"
+              [class.active]="
+                t.status === 'Active'
+              "
+              [class.inactive]="
+                t.status === 'Inactive'
+              "
+              [class.suspended]="
+                t.status === 'Suspended'
+              "
             ></span>
 
           </div>
@@ -127,7 +131,10 @@
             <div class="name-row">
 
               <h3 class="user-name">
-                {{ t.fullName || 'اسم المدرب' }}
+                {{
+                  t.fullName ||
+                  'اسم المدرب'
+                }}
               </h3>
 
               <span class="verified-badge">
@@ -138,10 +145,12 @@
 
 
             <span class="user-subtitle">
+
               {{
                 t.specialty ||
                 'لم يتم تحديد التخصص التدريبي'
               }}
+
             </span>
 
           </div>
@@ -154,7 +163,10 @@
         <button
           type="button"
           class="save-btn"
-          [disabled]="isSaving()"
+          [disabled]="
+            isSaving() ||
+            !hasUnsavedChanges()
+          "
           (click)="save()"
         >
 
@@ -179,11 +191,13 @@
 
 
           <span>
+
             {{
               isSaving()
                 ? 'جاري الحفظ...'
                 : 'حفظ التعديلات'
             }}
+
           </span>
 
         </button>
@@ -301,7 +315,7 @@
       <div class="form-grid">
 
 
-        <!-- الاسم -->
+        <!-- FULL NAME -->
 
         <div class="form-group">
 
@@ -341,6 +355,7 @@
               type="text"
               class="profile-input"
               [(ngModel)]="t.fullName"
+              (ngModelChange)="markProfileChanged()"
               placeholder="الاسم الكامل"
             />
 
@@ -349,7 +364,7 @@
         </div>
 
 
-        <!-- البريد الإلكتروني -->
+        <!-- EMAIL -->
 
         <div class="form-group">
 
@@ -391,6 +406,7 @@
               type="email"
               class="profile-input text-ltr"
               [(ngModel)]="t.email"
+              (ngModelChange)="markProfileChanged()"
               placeholder="trainer@nafadh.om"
             />
 
@@ -399,7 +415,7 @@
         </div>
 
 
-        <!-- رقم الهاتف -->
+        <!-- PHONE -->
 
         <div class="form-group">
 
@@ -444,6 +460,7 @@
               type="tel"
               class="profile-input text-ltr"
               [(ngModel)]="t.phone"
+              (ngModelChange)="markProfileChanged()"
               placeholder="+968 9123 4567"
             />
 
@@ -452,7 +469,7 @@
         </div>
 
 
-        <!-- التخصص -->
+        <!-- SPECIALTY -->
 
         <div class="form-group">
 
@@ -490,6 +507,7 @@
               type="text"
               class="profile-input"
               [(ngModel)]="t.specialty"
+              (ngModelChange)="markProfileChanged()"
               placeholder="مثال: تطوير البرمجيات"
             />
 
@@ -498,7 +516,7 @@
         </div>
 
 
-        <!-- سنوات الخبرة -->
+        <!-- EXPERIENCE YEARS -->
 
         <div class="form-group">
 
@@ -540,6 +558,7 @@
               max="100"
               class="profile-input"
               [(ngModel)]="t.experienceYears"
+              (ngModelChange)="markProfileChanged()"
               placeholder="7"
             />
 
@@ -548,7 +567,7 @@
         </div>
 
 
-        <!-- حالة الحساب -->
+        <!-- ACCOUNT STATUS -->
 
         <div class="form-group">
 
@@ -560,27 +579,42 @@
 
             <span
               class="status-indicator"
-              [class.active]="t.status === 'Active'"
-              [class.inactive]="t.status === 'Inactive'"
-              [class.suspended]="t.status === 'Suspended'"
+              [class.active]="
+                t.status === 'Active'
+              "
+              [class.inactive]="
+                t.status === 'Inactive'
+              "
+              [class.suspended]="
+                t.status === 'Suspended'
+              "
             ></span>
 
 
             <strong>
 
-              @if (t.status === 'Active') {
+              @if (
+                t.status === 'Active'
+              ) {
 
                 نشط
 
-              } @else if (t.status === 'Inactive') {
+              }
+              @else if (
+                t.status === 'Inactive'
+              ) {
 
                 غير نشط
 
-              } @else if (t.status === 'Suspended') {
+              }
+              @else if (
+                t.status === 'Suspended'
+              ) {
 
                 موقوف
 
-              } @else {
+              }
+              @else {
 
                 {{ t.status }}
 
@@ -593,7 +627,7 @@
         </div>
 
 
-        <!-- النبذة -->
+        <!-- BIOGRAPHY -->
 
         <div class="form-group full-width">
 
@@ -606,6 +640,7 @@
             class="profile-textarea"
             rows="4"
             [(ngModel)]="t.biography"
+            (ngModelChange)="markProfileChanged()"
             placeholder="اكتب نبذة مختصرة عن خبراتك المهنية والتدريبية..."
           ></textarea>
 
@@ -685,25 +720,34 @@
               </strong>
 
 
-              @if (t.status === 'Active') {
+              @if (
+                t.status === 'Active'
+              ) {
 
                 <span class="badge active-badge">
                   نشط
                 </span>
 
-              } @else if (t.status === 'Inactive') {
+              }
+              @else if (
+                t.status === 'Inactive'
+              ) {
 
                 <span class="badge inactive-badge">
                   غير نشط
                 </span>
 
-              } @else if (t.status === 'Suspended') {
+              }
+              @else if (
+                t.status === 'Suspended'
+              ) {
 
                 <span class="badge suspended-badge">
                   موقوف
                 </span>
 
-              } @else {
+              }
+              @else {
 
                 <span class="badge inactive-badge">
                   {{ t.status }}
@@ -811,10 +855,12 @@
             <div class="stat-value-row">
 
               <strong>
+
                 {{
                   t.specialty ||
                   'غير محدد'
                 }}
+
               </strong>
 
             </div>
@@ -834,7 +880,10 @@
        NO DATA
   ========================================== -->
 
-  @if (!loading() && !trainer()) {
+  @if (
+    !loading() &&
+    !trainer()
+  ) {
 
     <div class="profile-empty">
 

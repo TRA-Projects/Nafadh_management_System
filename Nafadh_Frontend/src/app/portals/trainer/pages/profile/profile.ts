@@ -31,7 +31,9 @@ export class TrainerProfile
   // =====================================================
 
   trainer =
-    signal<TrainerDto | null>(null);
+    signal<TrainerDto | null>(
+      null
+    );
 
 
   // =====================================================
@@ -42,6 +44,9 @@ export class TrainerProfile
     signal(false);
 
   isSaving =
+    signal(false);
+
+  hasUnsavedChanges =
     signal(false);
 
   showSuccessToast =
@@ -105,7 +110,14 @@ export class TrainerProfile
       );
 
 
-      this.trainer.set(null);
+      this.trainer.set(
+        null
+      );
+
+      this.hasUnsavedChanges.set(
+        false
+      );
+
 
       this.showError(
         'تعذر تحديد المستخدم الحالي.'
@@ -115,11 +127,15 @@ export class TrainerProfile
     }
 
 
-    this.loading.set(true);
+    this.loading.set(
+      true
+    );
 
 
     this.api
-      .getTrainerByUserId(userId)
+      .getTrainerByUserId(
+        userId
+      )
       .subscribe({
 
         next: (data) => {
@@ -128,7 +144,17 @@ export class TrainerProfile
             data
           );
 
-          this.loading.set(false);
+
+          // البيانات المحملة من قاعدة البيانات
+          // لا تعتبر تعديلات غير محفوظة.
+          this.hasUnsavedChanges.set(
+            false
+          );
+
+
+          this.loading.set(
+            false
+          );
 
         },
 
@@ -141,9 +167,18 @@ export class TrainerProfile
           );
 
 
-          this.trainer.set(null);
+          this.trainer.set(
+            null
+          );
 
-          this.loading.set(false);
+          this.hasUnsavedChanges.set(
+            false
+          );
+
+          this.loading.set(
+            false
+          );
+
 
           this.showError(
             'تعذر تحميل بيانات الملف الشخصي.'
@@ -152,6 +187,26 @@ export class TrainerProfile
         }
 
       });
+
+  }
+
+
+  // =====================================================
+  // PROFILE CHANGE STATE
+  // =====================================================
+
+  markProfileChanged(): void {
+
+    this.hasUnsavedChanges.set(
+      true
+    );
+
+
+    // نخفي رسالة النجاح القديمة
+    // إذا بدأ المستخدم تعديل جديد.
+    this.showSuccessToast.set(
+      false
+    );
 
   }
 
@@ -168,7 +223,8 @@ export class TrainerProfile
 
     if (
       !trainer ||
-      this.isSaving()
+      this.isSaving() ||
+      !this.hasUnsavedChanges()
     ) {
 
       return;
@@ -176,7 +232,10 @@ export class TrainerProfile
     }
 
 
-    // Basic validation
+    // ===================================================
+    // BASIC VALIDATION
+    // ===================================================
+
     if (
       !trainer.fullName?.trim()
     ) {
@@ -189,9 +248,18 @@ export class TrainerProfile
     }
 
 
+    const experienceYears =
+      Number(
+        trainer.experienceYears
+      );
+
+
     if (
-      trainer.experienceYears < 0 ||
-      trainer.experienceYears > 100
+      !Number.isFinite(
+        experienceYears
+      ) ||
+      experienceYears < 0 ||
+      experienceYears > 100
     ) {
 
       this.showError(
@@ -202,11 +270,21 @@ export class TrainerProfile
     }
 
 
-    this.isSaving.set(true);
+    // ===================================================
+    // START SAVING
+    // ===================================================
 
-    this.showErrorToast.set(false);
+    this.isSaving.set(
+      true
+    );
 
-    this.showSuccessToast.set(false);
+    this.showErrorToast.set(
+      false
+    );
+
+    this.showSuccessToast.set(
+      false
+    );
 
 
     const payload = {
@@ -223,8 +301,7 @@ export class TrainerProfile
       specialty:
         trainer.specialty?.trim() ?? '',
 
-      experienceYears:
-        trainer.experienceYears ?? 0,
+      experienceYears,
 
       biography:
         trainer.biography?.trim() ?? '',
@@ -244,12 +321,21 @@ export class TrainerProfile
 
         next: () => {
 
-          this.isSaving.set(false);
+          this.isSaving.set(
+            false
+          );
+
+
+          this.hasUnsavedChanges.set(
+            false
+          );
+
 
           this.showSuccess();
 
-          // نجيب النسخة المحدثة
-          // من قاعدة البيانات
+
+          // نعيد تحميل النسخة المحفوظة
+          // من قاعدة البيانات.
           this.loadTrainer();
 
         },
@@ -263,7 +349,10 @@ export class TrainerProfile
           );
 
 
-          this.isSaving.set(false);
+          this.isSaving.set(
+            false
+          );
+
 
           this.showError(
             'حدث خطأ أثناء تحديث بيانات الملف الشخصي.'
@@ -277,16 +366,21 @@ export class TrainerProfile
 
 
   // =====================================================
-  // TOASTS
+  // SUCCESS TOAST
   // =====================================================
 
   private showSuccess(): void {
 
     this.clearToastTimer();
 
-    this.showErrorToast.set(false);
 
-    this.showSuccessToast.set(true);
+    this.showErrorToast.set(
+      false
+    );
+
+    this.showSuccessToast.set(
+      true
+    );
 
 
     this.toastTimer =
@@ -304,19 +398,29 @@ export class TrainerProfile
   }
 
 
+  // =====================================================
+  // ERROR TOAST
+  // =====================================================
+
   private showError(
     message: string
   ): void {
 
     this.clearToastTimer();
 
+
     this.errorToastMessage.set(
       message
     );
 
-    this.showSuccessToast.set(false);
 
-    this.showErrorToast.set(true);
+    this.showSuccessToast.set(
+      false
+    );
+
+    this.showErrorToast.set(
+      true
+    );
 
 
     this.toastTimer =
@@ -334,6 +438,10 @@ export class TrainerProfile
   }
 
 
+  // =====================================================
+  // CLEAR TOAST TIMER
+  // =====================================================
+
   private clearToastTimer(): void {
 
     if (
@@ -343,6 +451,7 @@ export class TrainerProfile
       clearTimeout(
         this.toastTimer
       );
+
 
       this.toastTimer =
         undefined;
