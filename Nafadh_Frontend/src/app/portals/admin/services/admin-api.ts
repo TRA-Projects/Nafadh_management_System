@@ -102,6 +102,23 @@ getUsers(): Observable<UserResponseDto[]> {
     return this.http.get<EvaluationDto[]>(`${this.base}/Evaluation/enrollment/${this.sanitizeId(enrollmentId)}`);
   }
 
+  /**
+   * جلب تسجيلات (Enrollments) متدرب معيّن — يُستخدم لاستخراج enrollmentId
+   * الفعلي عند فتح ملف المتدرب (بدل الاعتماد فقط على الحقل المرجع من Trainee/{id}).
+   */
+  getEnrollmentsByTrainee(traineeId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(traineeId);
+    return this.http.get<any[]>(`${this.base}/Enrollment/trainee/${cleanId}`);
+  }
+
+  /**
+   * نسبة إنجاز المتدرب الإجمالية في التدريب (بناءً على وحدات/موديولات البرنامج)
+   */
+  getTraineeProgressPercentage(traineeId: number): Observable<{ traineeId: number; percentage: number }> {
+    const cleanId = this.sanitizeId(traineeId);
+    return this.http.get<{ traineeId: number; percentage: number }>(`${this.base}/TraineeModuleProgress/trainee/${cleanId}/percentage`);
+  }
+
 // ---- Attendance & Evaluation Real Endpoints ----
 
   /**

@@ -83,3 +83,17 @@ export const WARNING_LEVEL_LABELS: Record<WarningLevel, string> = {
   High: 'مرتفع',
   Critical: 'حرج',
 };
+
+export const WARNING_TYPE_LABELS: Record<WarningType, string> = {
+  Attendance: 'حضور وانضباط',
+  Performance: 'أداء',
+  Behavioral: 'سلوكي',
+  Other: 'أخرى',
+};
+
+export const WARNING_STATUS_LABELS: Record<WarningStatus, string> = {
+  Open: 'مفتوح',
+  UnderReview: 'قيد المراجعة',
+  Resolved: 'تم الحل',
+  Escalated: 'تم التصعيد',
+};
