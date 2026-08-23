@@ -26,7 +26,18 @@ export class AdminWarnings implements OnInit {
   }
 
   load(): void {
-    this.api.getWarnings({ scope: 'Company' }).subscribe((d) => this.warnings.set(d));
+    this.api.getWarnings({ scope: 'Company' } as any).subscribe((d: any) => {
+      const list: WarningDto[] = Array.isArray(d) ? d : (d?.items || []);
+      
+      // فلترة القائمة لعرض إنذارات الشركات فقط
+      const companyWarnings = list.filter(w => 
+        w.scope === 'Company' || 
+        (w as any).scope === 0 || 
+        (w as any).companyId !== null
+      );
+
+      this.warnings.set(companyWarnings);
+    });
   }
 
   issue(): void {
@@ -43,20 +54,29 @@ export class AdminWarnings implements OnInit {
     });
   }
 
-  // البحث والتصفية
+  // البحث والتصفية بحسب اسم الشركة أو كود الإنذار
   filteredWarnings(): WarningDto[] {
-    if (!this.searchTerm.trim()) return this.warnings();
-    return this.warnings().filter(w => 
-      w.targetName?.toLowerCase().includes(this.searchTerm.toLowerCase())
-    );
+    const term = this.searchTerm.trim().toLowerCase();
+    if (!term) return this.warnings();
+
+    return this.warnings().filter(w => {
+      const name = (w.targetName || (w as any).companyName || '').toLowerCase();
+      const code = ('CW-' + w.warningId).toLowerCase();
+      return name.includes(term) || code.includes(term);
+    });
   }
 
-  // إحصائيات الحالات
-  getCountByStatus(status: string): number {
-    return this.warnings().filter(w => w.status === status).length;
+  // إحصائيات الحالات (تتعامل مع القيم الرقمية والنصية)
+  getCountByStatus(statusKey: string): number {
+    return this.warnings().filter(w => {
+      const st = String(w.status);
+      if (statusKey === 'Open') return st === '0' || st === 'Open';
+      if (statusKey === 'UnderReview') return st === '1' || st === 'UnderReview';
+      if (statusKey === 'Resolved') return st === '2' || st === 'Resolved';
+      return false;
+    }).length;
   }
 
-  // الوصول للخصائص الديناميكية بدون أخطاء TypeScript (noImplicitAny / TS7053)
   getItemProp(item: any, propName: string, fallback: string = '-'): string {
     return item && item[propName] ? item[propName] : fallback;
   }
@@ -77,51 +97,46 @@ export class AdminWarnings implements OnInit {
       : name.substring(0, 2).toUpperCase();
   }
 
-  getTypeLabel(type?: string): string {
-    switch (type) {
-      case 'Performance': return 'بيئة الأداء والتدريب';
-      case 'Attendance': return 'التزامات الحضور';
-      case 'Behavioral': return 'الضوابط السلوكية';
-      case 'Other': return 'تنظيمي آخر';
-      default: return type || '-';
-    }
+  getTypeLabel(type?: any): string {
+    const val = String(type);
+    if (val === '0' || val === 'Performance') return 'بيئة الأداء والتدريب';
+    if (val === '1' || val === 'Attendance') return 'التزامات الحضور';
+    if (val === '2' || val === 'Behavioral') return 'الضوابط السلوكية';
+    if (val === '3' || val === 'Other') return 'تنظيمي آخر';
+    return type ?? '-';
   }
 
-  getLevelLabel(level?: string): string {
-    switch (level) {
-      case 'Low': return 'منخفض';
-      case 'Medium': return 'متوسط';
-      case 'High': return 'مرتفع';
-      case 'Critical': return 'حرج جداً';
-      default: return level || 'متوسط';
-    }
+  getLevelLabel(level?: any): string {
+    const val = String(level);
+    if (val === '0' || val === 'Low') return 'منخفض';
+    if (val === '1' || val === 'Medium') return 'متوسط';
+    if (val === '2' || val === 'High') return 'مرتفع';
+    if (val === '3' || val === 'Critical') return 'حرج جداً';
+    return level ?? 'متوسط';
   }
 
-  getLevelClass(level?: string): string {
-    switch (level) {
-      case 'Low': return 'lvl-low';
-      case 'Medium': return 'lvl-medium';
-      case 'High': return 'lvl-high';
-      case 'Critical': return 'lvl-critical';
-      default: return 'lvl-medium';
-    }
+  getLevelClass(level?: any): string {
+    const val = String(level);
+    if (val === '0' || val === 'Low') return 'lvl-low';
+    if (val === '1' || val === 'Medium') return 'lvl-medium';
+    if (val === '2' || val === 'High') return 'lvl-high';
+    if (val === '3' || val === 'Critical') return 'lvl-critical';
+    return 'lvl-medium';
   }
 
-  getStatusLabel(status?: string): string {
-    switch (status) {
-      case 'Open': return 'نشط';
-      case 'Resolved': return 'مكتمل';
-      case 'UnderReview': return 'قيد المراجعة';
-      default: return status || 'نشط';
-    }
+  getStatusLabel(status?: any): string {
+    const val = String(status);
+    if (val === '0' || val === 'Open') return 'نشط';
+    if (val === '1' || val === 'UnderReview') return 'قيد المراجعة';
+    if (val === '2' || val === 'Resolved') return 'مكتمل';
+    return status ?? 'نشط';
   }
 
-  getStatusClass(status?: string): string {
-    switch (status) {
-      case 'Open': return 'st-open';
-      case 'Resolved': return 'st-resolved';
-      case 'UnderReview': return 'st-review';
-      default: return 'st-open';
-    }
+  getStatusClass(status?: any): string {
+    const val = String(status);
+    if (val === '0' || val === 'Open') return 'st-open';
+    if (val === '1' || val === 'UnderReview') return 'st-review';
+    if (val === '2' || val === 'Resolved') return 'st-resolved';
+    return 'st-open';
   }
 }
