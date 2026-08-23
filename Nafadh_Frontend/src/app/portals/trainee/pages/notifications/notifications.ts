@@ -17,6 +17,9 @@ export class TraineeNotifications implements OnInit {
 
   // تعريف قيم الفلتر المتاحة
   filter = signal<'all' | 'unread' | 'notification' | 'warning'>('all');
+  
+  // متغير للتحكم في عرض القائمة المنسدلة فقط
+  displayFilter = signal<string>('all');
 
   constructor(
     private api: TraineeApi,
@@ -62,6 +65,22 @@ export class TraineeNotifications implements OnInit {
     }
 
     return list;
+  }
+
+  /**
+   * تغيير الفلتر من القائمة المنسدلة
+   */
+  onFilterChange(value: string) {
+    this.filter.set(value as 'all' | 'notification' | 'warning');
+    this.displayFilter.set(value);
+  }
+
+  /**
+   * تعيين فلتر "غير مقروء"
+   */
+  setUnreadFilter() {
+    this.filter.set('unread');
+    // لا نغير displayFilter، فيبقى على آخر قيمة مختارة
   }
 
   /**
