@@ -1071,29 +1071,39 @@ button:disabled {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
 
-  background: rgba(255, 255, 255, 0.9);
+  gap: 8px;
+
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(2px);
 
-  color: #00338d;
-  font-size: 13px;
-  font-weight: 700;
+  text-align: center;
 }
 
-.attendance-spinner {
-  width: 44px;
-  height: 44px;
+.loading-icon-box {
+  width: 46px;
+  height: 46px;
 
-  border: 4px solid #e3edf7;
-  border-top-color: #00338d;
-  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  animation: attendanceSpin 0.8s linear infinite;
+  margin-bottom: 6px;
+
+  background: #eaf9fc;
+  border-radius: 13px;
+
+  color: #00a9c6;
+  font-size: 21px;
 }
 
-@keyframes attendanceSpin {
-  to {
-    transform: rotate(360deg);
-  }
+.attendance-loading strong {
+  color: #172554;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.attendance-loading span {
+  color: #94a3b8;
+  font-size: 12px;
 }

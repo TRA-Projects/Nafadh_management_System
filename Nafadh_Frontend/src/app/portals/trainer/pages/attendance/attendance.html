@@ -136,12 +136,17 @@
   </div>
   
   <section class="attendance-card">
-    @if (loading()) {
-    <div class="attendance-loading">
-      <div class="attendance-spinner"></div>
-      <span>جاري تحميل بيانات الحضور...</span>
-    </div>
-  }
+@if (loading()) {
+  <div class="attendance-loading">
+
+    <div class="loading-icon-box">
+  <i class="fa-solid fa-spinner fa-spin"></i>
+</div>
+
+    <strong>جاري تحميل بيانات الحضور</strong>
+
+  </div>
+}
 
     <div class="table-tools">
       <div class="search-box">
