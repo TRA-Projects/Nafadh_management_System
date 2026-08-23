@@ -168,8 +168,8 @@
             ◉
           </div>
 
-          <span class="kpi-status positive">
-            +1.2%
+          <span class="kpi-status neutral">
+            الحالي
           </span>
 
         </div>
@@ -179,7 +179,7 @@
         </span>
 
         <strong class="kpi-value blue">
-          {{ att.attendanceRate ?? 0 }}%
+          {{ attendanceRate() }}%
         </strong>
 
         <span class="kpi-subtext">
@@ -208,7 +208,7 @@
         </span>
 
         <strong class="kpi-value dark">
-          {{ att.totalTrainees ?? 0 }}
+          {{ totalTrainees() }}
         </strong>
 
         <span class="kpi-subtext">
@@ -285,7 +285,7 @@
       <div class="overview-item">
         <span>الحضور</span>
         <strong>
-          {{ att.presentCount ?? 0 }}
+          {{ totalPresentDays() }}
         </strong>
       </div>
 
@@ -294,7 +294,7 @@
       <div class="overview-item">
         <span>الغياب</span>
         <strong class="red-text">
-          {{ att.absentCount ?? 0 }}
+          {{ totalAbsentDays() }}
         </strong>
       </div>
 
@@ -303,16 +303,16 @@
       <div class="overview-item">
         <span>التأخير</span>
         <strong class="orange-text">
-          {{ att.latenessCount ?? 0 }}
+          {{ totalLateDays() }}
         </strong>
       </div>
 
       <div class="overview-divider"></div>
 
       <div class="overview-item">
-        <span>الانصراف المبكر</span>
+        <span>الأيام المعذورة</span>
         <strong>
-          {{ att.earlyLeaveCount ?? 0 }}
+          {{ totalExcusedDays() }}
         </strong>
       </div>
 
@@ -337,11 +337,7 @@
           <span>المتوسط</span>
 
           <strong>
-            {{
-            att.overallAttendanceRate
-            ?? att.attendanceRate
-            ?? 0
-            }}%
+            {{ attendanceRate() }}%
           </strong>
 
         </div>
@@ -415,13 +411,13 @@
         </div>
 
         <span class="records-count">
-          {{ (att.rows ?? []).length }} سجلات
+          {{ att.rows.length }} سجلات
         </span>
 
       </div>
 
 
-      @if (att.rows?.length) {
+      @if (att.rows.length > 0) {
 
       <div class="table-wrap">
 
@@ -728,7 +724,7 @@
         <div class="bars-area">
 
           @for (
-          item of programProgressList;
+          item of programProgressList();
           track item.programName;
           let i = $index
           ) {
@@ -894,9 +890,9 @@
             </span>
 
             <strong>
-              {{ cap.used ?? 0 }}
+              {{ cap.used }}
               /
-              {{ cap.total ?? 0 }}
+              {{ cap.total }}
             </strong>
 
           </div>
@@ -925,7 +921,7 @@
               <small>المستخدم</small>
 
               <strong>
-                {{ cap.used ?? 0 }}
+                {{ cap.used }}
               </strong>
 
             </div>
@@ -942,7 +938,7 @@
               <small>المتبقي</small>
 
               <strong>
-                {{ cap.remaining ?? 0 }}
+                {{ cap.remaining }}
               </strong>
 
             </div>
@@ -959,7 +955,7 @@
               <small>الإجمالي</small>
 
               <strong>
-                {{ cap.total ?? 0 }}
+                {{ cap.total }}
               </strong>
 
             </div>
@@ -1026,14 +1022,14 @@
         </div>
 
         <span class="records-count">
-          {{ (cap.programs ?? []).length }}
+          {{ cap.programs.length }}
           برامج
         </span>
 
       </div>
 
 
-      @if (cap.programs?.length) {
+      @if (cap.programs.length > 0) {
 
       <div class="table-wrap">
 
