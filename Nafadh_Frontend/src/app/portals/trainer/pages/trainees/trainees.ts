@@ -22,6 +22,7 @@ import {
   EnrollmentDto,
   EvaluationCriterionDto,
   EvaluationTemplateDetailDto,
+  ModuleDto,
   TrainerBatchDto,
   TrainerDto
 } from '../../../../core/models/dtos';
@@ -584,9 +585,13 @@ canShowTrainingMetrics(
       null
     );
 
-  selectedModuleId = 1;
+  evaluationModules =
+  signal<ModuleDto[]>([]);
 
-  selectedStage = 1;
+selectedModuleId:
+  number | null = null;
+
+selectedStage = 1;
 
   selectedEnrollmentId:
     number | null = null;
@@ -1281,12 +1286,133 @@ criterionEditForm = {
     enrollmentId
   );
 }
+// =====================================================
+// LOAD EVALUATION MODULES
+// =====================================================
+
+private loadEvaluationModules(
+  batchId: number
+): void {
+
+  this.evaluationModules.set(
+    []
+  );
+
+  this.selectedModuleId =
+    null;
+
+  this.templateDetail.set(
+    null
+  );
+
+  this.criteriaScores = {};
+
+
+  this.api
+    .getBatch(
+      batchId
+    )
+    .subscribe({
+
+      next: (batch) => {
+
+        this.api
+          .getModulesByProgram(
+            batch.programId
+          )
+          .subscribe({
+
+            next: (modules) => {
+
+              const activeModules =
+                (modules ?? [])
+                  .filter(
+                    module =>
+                      !module.isArchived
+                  )
+                  .sort(
+                    (a, b) =>
+                      a.orderIndex -
+                      b.orderIndex
+                  );
+
+
+              this.evaluationModules.set(
+                activeModules
+              );
+
+
+              const firstModule =
+                activeModules[0];
+
+
+              if (!firstModule) {
+
+                this.templateDetail.set(
+                  null
+                );
+
+                return;
+              }
+
+
+              this.selectedModuleId =
+                firstModule.moduleId;
+
+
+              this.loadTemplates();
+
+            },
+
+
+            error: (err) => {
+
+              console.error(
+                'خطأ في تحميل وحدات التقييم:',
+                err
+              );
+
+              this.evaluationModules.set(
+                []
+              );
+
+            }
+
+          });
+
+      },
+
+
+      error: (err) => {
+
+        console.error(
+          'خطأ في تحميل بيانات الدفعة للتقييم:',
+          err
+        );
+
+      }
+
+    });
+
+}
 
   // =====================================================
   // EVALUATION TEMPLATES
   // =====================================================
 
   loadTemplates(): void {
+
+
+      if (!this.selectedModuleId) {
+
+    this.templateDetail.set(
+      null
+    );
+
+    this.criteriaScores = {};
+
+    return;
+  }
 
     this.api
       .getEvaluationTemplates(
@@ -1425,14 +1551,18 @@ criterionEditForm = {
 }
 
 
-    this.selectedEnrollmentId =
-      enrollmentId;
+   this.selectedEnrollmentId =
+  enrollmentId;
 
-    this.loadTemplates();
 
-    this.showEvalModal.set(
-      true
-    );
+this.loadEvaluationModules(
+  enrollment.batchId
+);
+
+
+this.showEvalModal.set(
+  true
+);
   }
 
 
@@ -1632,6 +1762,23 @@ if (
       }
 
     });
+
+}
+// =====================================================
+// CANCEL ADD CRITERION
+// =====================================================
+
+cancelAddCriterion(): void {
+
+  this.showAddCriterion.set(
+    false
+  );
+
+  this.newCriterion = {
+    name: '',
+    weight: 0,
+    maxPoints: 0
+  };
 
 }
 // =====================================================

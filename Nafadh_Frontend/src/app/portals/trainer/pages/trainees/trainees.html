@@ -1237,20 +1237,34 @@
 
         <div class="eval-config-grid">
 
-          <div class="modal-field">
+       <div class="modal-field">
 
-            <label>
-              الوحدة
-            </label>
+  <label>
+    الوحدة
+  </label>
 
-            <input
-              class="nfd-input"
-              type="number"
-              [(ngModel)]="selectedModuleId"
-              (change)="loadTemplates()"
-            />
+  <select
+    class="nfd-input"
+    [(ngModel)]="selectedModuleId"
+    (change)="loadTemplates()"
+  >
 
-          </div>
+    @for (
+      module of evaluationModules();
+      track module.moduleId
+    ) {
+
+      <option
+        [ngValue]="module.moduleId"
+      >
+        {{ module.title }}
+      </option>
+
+    }
+
+  </select>
+
+</div>
 
 
           <div class="modal-field">
@@ -1513,14 +1527,32 @@
             </div>
 
 
-            <button
-              type="button"
-              class="nfd-btn secondary"
-              (click)="addCriterion()">
+            <div
+  style="
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  "
+>
 
-              إضافة المعيار
+  <button
+    type="button"
+    class="nfd-btn primary"
+    (click)="addCriterion()"
+  >
+    إضافة المعيار
+  </button>
 
-            </button>
+
+  <button
+    type="button"
+    class="nfd-btn secondary"
+    (click)="cancelAddCriterion()"
+  >
+    إلغاء الإضافة
+  </button>
+
+</div>
 
           </div>
 
