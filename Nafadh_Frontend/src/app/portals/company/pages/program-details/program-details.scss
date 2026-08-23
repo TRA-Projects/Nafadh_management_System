@@ -592,3 +592,31 @@ tbody tr:last-child td {
         grid-template-columns: 1fr;
     }
 }
+
+.page-actions { display: flex; justify-content: flex-start; margin-bottom: 12px; }
+.hero-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.eyebrow { display: block; margin-bottom: 4px; color: #64748b; font-size: 11px; font-weight: 700; }
+.program-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.program-summary-grid > div { background: #f8fafc; border: 1px solid #edf2f7; border-radius: 11px; padding: 11px 12px; }
+.program-summary-grid span, .program-summary-grid b { display: block; }
+.program-summary-grid span { color: #64748b; font-size: 11px; margin-bottom: 4px; }
+.program-summary-grid b { color: #0f172a; font-size: 17px; }
+.department-list { margin-top: 16px; }
+.mini-label { display: block; color: #64748b; font-size: 11px; margin-bottom: 8px; font-weight: 700; }
+.tag-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.real-tag { background: #eef5ff; color: #17457f; border: 1px solid #d5e4fb; padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.empty-inline { margin-top: 14px; color: #94a3b8; font-size: 12px; }
+.batch-list { display: flex; flex-direction: column; gap: 9px; }
+.batch-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid #eef2f7; }
+.batch-row:last-child { border-bottom: 0; }
+.batch-row > div:first-child { min-width: 0; }
+.batch-row b, .batch-row span, .batch-row em { display: block; }
+.batch-row b { color: #0f172a; font-size: 12px; }
+.batch-row span { color: #64748b; font-size: 10px; margin-top: 3px; }
+.batch-meta { text-align: left; white-space: nowrap; }
+.batch-meta span { display: inline; margin-inline-end: 8px; }
+.batch-meta em { display: inline; color: #0f766e; font-size: 10px; font-style: normal; font-weight: 700; }
+.row-actions { display: inline-flex; align-items: center; gap: 6px; }
+.icon-btn { width: 30px; height: 30px; border: 1px solid #dbe4ee; background: #fff; color: #35516f; border-radius: 8px; cursor: pointer; }
+.icon-btn:hover { background: #f8fafc; }
+@media (max-width: 900px) { .program-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hero-heading { flex-direction: column; } .batch-row { align-items: flex-start; flex-direction: column; } .batch-meta { text-align: right; } }
