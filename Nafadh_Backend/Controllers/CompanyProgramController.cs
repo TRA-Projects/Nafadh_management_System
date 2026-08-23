@@ -3,7 +3,10 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
@@ -14,66 +17,246 @@ namespace Nafadh_Backend.Controllers
     public class CompanyProgramController : ControllerBase
     {
         private readonly ICompanyProgramService _service;
+        private readonly Nafadhcontext _context;
 
-        public CompanyProgramController(
-            ICompanyProgramService service)
+        public CompanyProgramController(ICompanyProgramService service, Nafadhcontext context)
         {
             _service = service;
+            _context = context;
         }
 
         // GET: api/CompanyProgram/company/{companyId}
-        // Programs a company is eligible to host
+        // Programs a company is eligible to host.
         [HttpGet("company/{companyId}")]
-        public async Task<IActionResult> GetByCompanyId(
-            int companyId)
+        public async Task<IActionResult> GetByCompanyId(int companyId)
         {
-            var result =
-                await _service.GetByCompanyIdAsync(companyId);
+            var result = await _service.GetByCompanyIdAsync(companyId);
+            return Ok(result);
+        }
+
+        // GET: api/CompanyProgram/company/{companyId}/details
+        // Company Portal program cards, sourced from the real database.
+        [HttpGet("company/{companyId}/details")]
+        [Authorize(Roles = "CompanySupervisor")]
+        public async Task<ActionResult<IEnumerable<CompanyProgramSummaryDTO>>> GetDetailsByCompanyId(int companyId)
+        {
+            if (!await OwnsCompanyAsync(companyId))
+                return Forbid();
+
+            var companyExists = await _context.NFD_Companies
+                .AsNoTracking()
+                .AnyAsync(c => c.CompanyId == companyId);
+
+            if (!companyExists)
+                return NotFound(new { message = "Company not found." });
+
+            var programIds = await _context.NFD_CompanyPrograms
+                .AsNoTracking()
+                .Where(cp => cp.CompanyId == companyId)
+                .Select(cp => cp.ProgramId)
+                .ToListAsync();
+
+            if (programIds.Count == 0)
+                return Ok(Array.Empty<CompanyProgramSummaryDTO>());
+
+            var programs = await _context.NFD_Programs
+                .AsNoTracking()
+                .Where(p => programIds.Contains(p.ProgramId))
+                .OrderBy(p => p.Title)
+                .Select(p => new CompanyProgramSummaryDTO
+                {
+                    ProgramId = p.ProgramId,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Category = p.Category,
+                    DurationHours = p.DurationHours,
+                    Price = p.Price,
+                    Status = p.Status.ToString(),
+                    ApprovedForCompany = true,
+                    BatchCount = p.Batches.Count,
+                    EnrollmentCount = p.Batches
+                        .SelectMany(b => b.Enrollments)
+                        .Count(e => e.CompanyId == companyId),
+                    CurrentTraineeCount = p.Batches
+                        .SelectMany(b => b.Enrollments)
+                        .Count(e => e.CompanyId == companyId && e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress),
+                    AllocatedCapacity = p.Batches.Sum(b => b.Capacity),
+                    UsedCapacity = p.Batches.SelectMany(b => b.Enrollments).Count(e => e.CompanyId == companyId),
+                    RemainingCapacity = Math.Max(0, (int)p.Batches.Sum(b => b.Capacity) - p.Batches.SelectMany(b => b.Enrollments).Count(e => e.CompanyId == companyId)),
+                    UtilizationPercentage = p.Batches.Sum(b => b.Capacity) > 0
+                        ? Math.Round((decimal)p.Batches.SelectMany(b => b.Enrollments).Count(e => e.CompanyId == companyId) * 100m / p.Batches.Sum(b => b.Capacity), 1)
+                        : 0m,
+                    Departments = p.Batches
+                        .SelectMany(b => b.Enrollments)
+                        .Where(e => e.CompanyId == companyId && e.Department != null)
+                        .Select(e => e.Department!.Name)
+                        .Distinct()
+                        .OrderBy(x => x)
+                        .ToList()
+                })
+                .ToListAsync();
+
+            return Ok(programs);
+        }
+
+        // GET: api/CompanyProgram/company/{companyId}/program/{programId}/details
+        // Full company-scoped details for the Company Portal program-details page.
+        [HttpGet("company/{companyId}/program/{programId}/details")]
+        [Authorize(Roles = "CompanySupervisor")]
+        public async Task<ActionResult<CompanyProgramDetailsDTO>> GetDetails(int companyId, int programId)
+        {
+            if (!await OwnsCompanyAsync(companyId))
+                return Forbid();
+
+            var companyProgram = await _context.NFD_CompanyPrograms
+                .AsNoTracking()
+                .FirstOrDefaultAsync(cp => cp.CompanyId == companyId && cp.ProgramId == programId);
+
+            if (companyProgram is null)
+                return NotFound(new { message = "This program is not linked to the company." });
+
+            var program = await _context.NFD_Programs
+                .AsNoTracking()
+                .Where(p => p.ProgramId == programId)
+                .Select(p => new
+                {
+                    p.ProgramId,
+                    p.Title,
+                    p.Description,
+                    p.Category,
+                    p.DurationHours,
+                    p.Price,
+                    Status = p.Status.ToString()
+                })
+                .FirstOrDefaultAsync();
+
+            if (program is null)
+                return NotFound(new { message = "Program not found." });
+
+            var batches = await _context.NFD_Batches
+                .AsNoTracking()
+                .Where(b => b.ProgramId == programId)
+                .OrderBy(b => b.StartDate)
+                .Select(b => new CompanyProgramBatchDTO
+                {
+                    BatchId = b.BatchId,
+                    BatchName = b.BatchName,
+                    StartDate = b.StartDate,
+                    EndDate = b.EndDate,
+                    Capacity = b.Capacity,
+                    CompanyEnrollmentCount = b.Enrollments.Count(e => e.CompanyId == companyId),
+                    Status = b.Status.ToString()
+                })
+                .ToListAsync();
+
+            var enrollments = await _context.NFD_Enrollments
+                .AsNoTracking()
+                .Include(e => e.Trainee).ThenInclude(t => t.User)
+                .Include(e => e.Batch)
+                .Include(e => e.Department)
+                .Include(e => e.CompanySupervisor).ThenInclude(s => s!.User)
+                .Where(e => e.CompanyId == companyId && e.Batch.ProgramId == programId)
+                .OrderBy(e => e.Trainee.User.FullName)
+                .ToListAsync();
+
+            var modules = await _context.NFD_Modules
+                .AsNoTracking()
+                .Where(m => m.ProgramId == programId && !m.IsArchived)
+                .OrderBy(m => m.OrderIndex)
+                .Select(m => new CompanyProgramModuleDTO
+                {
+                    ModuleId = m.ModuleId,
+                    Title = m.Title,
+                    OrderIndex = m.OrderIndex,
+                    PrerequisiteModuleId = m.PrerequisiteModuleId
+                })
+                .ToListAsync();
+
+            var departments = enrollments
+                .Where(e => e.Department is not null)
+                .Select(e => e.Department!.Name)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x)
+                .ToList();
+
+            var result = new CompanyProgramDetailsDTO
+            {
+                ProgramId = program.ProgramId,
+                Title = program.Title,
+                Description = program.Description,
+                Category = program.Category,
+                DurationHours = program.DurationHours,
+                Price = program.Price,
+                Status = program.Status,
+                ApprovedForCompany = true,
+                BatchCount = batches.Count,
+                EnrollmentCount = enrollments.Count,
+                CurrentTraineeCount = enrollments.Count(e => e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress),
+                AllocatedCapacity = batches.Sum(b => b.Capacity),
+                UsedCapacity = enrollments.Count,
+                RemainingCapacity = Math.Max(0, (int)batches.Sum(b => b.Capacity) - enrollments.Count),
+                UtilizationPercentage = batches.Sum(b => b.Capacity) > 0
+                    ? Math.Round((decimal)enrollments.Count * 100m / batches.Sum(b => b.Capacity), 1)
+                    : 0m,
+                Departments = departments,
+                Batches = batches,
+                Enrollments = enrollments.Select(e => new CompanyProgramEnrollmentDTO
+                {
+                    EnrollmentId = e.EnrollmentId,
+                    TraineeId = e.TraineeId,
+                    TraineeName = e.Trainee?.User?.FullName ?? string.Empty,
+                    DepartmentName = e.Department?.Name,
+                    SupervisorName = e.CompanySupervisor?.User?.FullName,
+                    BatchName = e.Batch?.BatchName ?? string.Empty,
+                    CompletionStatus = e.CompletionStatus.ToString(),
+                    TraineeGitHubUrl = e.Trainee?.GitHubUrl,
+                    TraineeLinkedInUrl = e.Trainee?.LinkedInUrl
+                }).ToList(),
+                Modules = modules
+            };
 
             return Ok(result);
         }
 
         // GET: api/CompanyProgram/program/{programId}
-        // Companies eligible to host a given program
+        // Companies eligible to host a given program.
         [HttpGet("program/{programId}")]
-        public async Task<IActionResult> GetByProgramId(
-            int programId)
+        public async Task<IActionResult> GetByProgramId(int programId)
         {
-            var result =
-                await _service.GetByProgramIdAsync(programId);
-
+            var result = await _service.GetByProgramIdAsync(programId);
             return Ok(result);
         }
 
         // POST: api/CompanyProgram
-        // Qualify a company for a program
+        // Qualify a company for a program.
         [HttpPost]
         public async Task<IActionResult> Add([FromBody] NFD_CompanyProgramInputDTO dto)
         {
             var (result, error) = await _service.AddAsync(dto);
-
             if (error is not null)
                 return BadRequest(new { message = error });
-
             return Ok(result);
         }
 
         // DELETE: api/CompanyProgram?companyId=1&programId=2
-        // Remove a company's eligibility for a program
+        // Remove a company's eligibility for a program.
         [HttpDelete]
-        public async Task<IActionResult> Delete(
-            [FromQuery] int companyId,
-            [FromQuery] int programId)
+        public async Task<IActionResult> Delete([FromQuery] int companyId, [FromQuery] int programId)
         {
-            var deleted =
-                await _service.DeleteAsync(
-                    companyId,
-                    programId);
-
+            var deleted = await _service.DeleteAsync(companyId, programId);
             if (!deleted)
                 return NotFound();
-
             return NoContent();
+        }
+        private async Task<bool> OwnsCompanyAsync(int companyId)
+        {
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            if (!int.TryParse(userIdValue, out var userId))
+                return false;
+
+            return await _context.NFD_CompanySupervisors
+                .AsNoTracking()
+                .AnyAsync(s => s.UserId == userId && s.CompanyId == companyId);
         }
     }
 }
