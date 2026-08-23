@@ -630,7 +630,41 @@ getSubmissionFile(
       dto
     );
   }
+// =====================================================
+// UPDATE EVALUATION CRITERION
+// =====================================================
 
+updateCriterion(
+  criteriaId: number,
+  dto: {
+    templateId: number;
+    name: string;
+    weight: number;
+    maxPoints: number;
+  }
+): Observable<void> {
+
+  return this.http.put<void>(
+    `${this.base}/EvaluationCriterion/UpdateCriterion/${criteriaId}`,
+    dto
+  );
+
+}
+
+
+// =====================================================
+// DELETE EVALUATION CRITERION
+// =====================================================
+
+deleteCriterion(
+  criteriaId: number
+): Observable<void> {
+
+  return this.http.delete<void>(
+    `${this.base}/EvaluationCriterion/DeleteCriterion/${criteriaId}`
+  );
+
+}
 
   submitEvaluation(
     dto: unknown
