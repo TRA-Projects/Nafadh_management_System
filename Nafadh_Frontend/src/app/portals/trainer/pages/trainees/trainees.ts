@@ -125,7 +125,77 @@ export class TrainerTrainees implements OnInit {
       );
     });
 
+// =====================================================
+// TRAINEES TABLE FILTER
+// =====================================================
 
+traineeListFilter =
+  signal<'all' | 'support'>(
+    'all'
+  );
+
+
+filteredEnrollments =
+  computed(() => {
+
+    const filter =
+      this.traineeListFilter();
+
+    const averages =
+      this.evaluationAverages();
+
+
+    if (filter === 'support') {
+
+      return this.enrollments()
+        .filter(
+          enrollment => {
+
+            if (
+              enrollment.completionStatus ===
+                'Dropped' ||
+              !this.canShowTrainingMetrics(
+                enrollment
+              )
+            ) {
+              return false;
+            }
+
+
+            const score =
+              averages[
+                enrollment.enrollmentId
+              ];
+
+
+            return (
+              typeof score === 'number' &&
+              Number.isFinite(score) &&
+              score < 60
+            );
+          }
+        );
+    }
+
+
+    return this.enrollments();
+  });
+
+
+showSupportTrainees(): void {
+
+  this.traineeListFilter.set(
+    'support'
+  );
+}
+
+
+showAllTrainees(): void {
+
+  this.traineeListFilter.set(
+    'all'
+  );
+}
   // =====================================================
   // KPI
   // =====================================================

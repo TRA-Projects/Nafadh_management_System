@@ -116,7 +116,13 @@
 
   <section class="trainees-kpis">
 
-    <article class="trainee-kpi">
+    <article
+  class="trainee-kpi"
+  role="button"
+  tabindex="0"
+  style="cursor:pointer;"
+  (click)="showAllTrainees()"
+>
 
       <div class="kpi-info">
 
@@ -242,7 +248,13 @@
     </article>
 
 
-    <article class="trainee-kpi danger">
+    <article
+  class="trainee-kpi danger"
+  role="button"
+  tabindex="0"
+  style="cursor:pointer;"
+  (click)="showSupportTrainees()"
+>
 
       <div class="kpi-info">
 
@@ -352,7 +364,7 @@
         <tbody>
 
           @for (
-            e of enrollments();
+           e of filteredEnrollments();
             track e.enrollmentId;
             let i = $index
           ) {
