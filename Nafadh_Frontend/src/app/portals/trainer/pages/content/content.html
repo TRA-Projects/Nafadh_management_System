@@ -1135,17 +1135,31 @@
           track module.moduleId
         ) {
 
-          <div class="archive-item">
+         <div class="archive-item">
 
-            <span>
-              📘
-            </span>
+  <span>
+    📘
+  </span>
 
-            <strong>
-              {{ module.title }}
-            </strong>
+  <strong
+    style="
+      flex:1;
+    "
+  >
+    {{ module.title }}
+  </strong>
 
-          </div>
+
+  <button
+    type="button"
+    class="btn secondary"
+    (click)="restoreModule(module)"
+    [disabled]="saving()"
+  >
+    استعادة
+  </button>
+
+</div>
 
         } @empty {
 
