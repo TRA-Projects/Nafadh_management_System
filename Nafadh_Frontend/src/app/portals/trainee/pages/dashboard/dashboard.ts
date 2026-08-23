@@ -665,117 +665,29 @@ export class TraineeDashboard implements OnInit {
   }
 
   // =========================================================
-  // تحميل الإعلانات بناءً على userId
+  // تحميل الإعلانات الخاصة بالهيئة فقط
   // =========================================================
 
   loadUserAnnouncements(userId: number): void {
     this.loadingAnnouncements.set(true);
     this.announcements.set([]);
 
-    // محاولة جلب الإعلانات الخاصة بالمستخدم
-    this.api.getUserAnnouncements(userId).subscribe({
+    // جلب إعلانات الهيئة (المنصة) فقط
+    this.api.getPlatformAnnouncements().subscribe({
       next: (items: AnnouncementDto[]) => {
         if (items && items.length > 0) {
-          // إضافة مصدر لكل إعلان
           const mappedItems = items.map((item) => ({
             ...item,
-            source: this.getAnnouncementSource(item.scopeType),
+            source: 'الهيئة',
           }));
           this.announcements.set(mappedItems);
         }
         this.loadingAnnouncements.set(false);
       },
       error: (error: any) => {
-        console.error('Error loading user announcements:', error);
-        // في حال فشل جلب الإعلانات الخاصة بالمستخدم، نحاول جلبها من المصادر التقليدية
-        this.loadAnnouncementsFallback();
-      },
-    });
-  }
-
-  /**
-   * طريقة بديلة لجلب الإعلانات في حال فشل الطريقة الأساسية
-   * تم تعديلها لمنع التكرار باستخدام Set
-   */
-  private loadAnnouncementsFallback(): void {
-    const batchId = this.batchId();
-    const companyId = this.companyId();
-    let completedRequests = 0;
-    const totalRequests = 3; // منصة + شركة + دفعة
-
-    // دالة للتحقق من اكتمال جميع الطلبات
-    const checkCompletion = () => {
-      completedRequests++;
-      if (completedRequests >= totalRequests) {
-        this.loadingAnnouncements.set(false);
-      }
-    };
-
-    // جلب إعلانات المنصة
-    this.api.getPlatformAnnouncements().subscribe({
-      next: (items: AnnouncementDto[]) => {
-        this.mergeAnnouncements(items, 'الهيئة');
-        checkCompletion();
-      },
-      error: (error: any) => {
         console.error('Error loading platform announcements:', error);
-        checkCompletion();
+        this.loadingAnnouncements.set(false);
       },
-    });
-
-    // جلب إعلانات الشركة
-    if (companyId) {
-      this.api.getCompanyAnnouncements(companyId).subscribe({
-        next: (items: AnnouncementDto[]) => {
-          this.mergeAnnouncements(items, 'الشركة');
-          checkCompletion();
-        },
-        error: (error: any) => {
-          console.error('Error loading company announcements:', error);
-          checkCompletion();
-        },
-      });
-    } else {
-      checkCompletion();
-    }
-
-    // جلب إعلانات الدفعة
-    if (batchId) {
-      this.api.getBatchAnnouncements(batchId).subscribe({
-        next: (items: AnnouncementDto[]) => {
-          this.mergeAnnouncements(items, 'المدرب');
-          checkCompletion();
-        },
-        error: (error: any) => {
-          console.error('Error loading batch announcements:', error);
-          checkCompletion();
-        },
-      });
-    } else {
-      checkCompletion();
-    }
-  }
-
-  /**
-   * دمج الإعلانات مع منع التكرار باستخدام Set
-   */
-  private mergeAnnouncements(items: AnnouncementDto[], source: string) {
-    this.announcements.update((list) => {
-      // إنشاء Set للمعرفات الموجودة
-      const existingIds = new Set(list.map((a) => a.announcementId));
-
-      // إضافة الإعلانات الجديدة فقط إذا لم تكن موجودة مسبقاً
-      const newItems = (items ?? [])
-        .filter((a) => !existingIds.has(a.announcementId))
-        .map((a) => ({ ...a, source }));
-
-      const combined = [...list, ...newItems];
-      combined.sort((a, b) => {
-        const dateA = new Date(a.date || Date.now());
-        const dateB = new Date(b.date || Date.now());
-        return dateB.getTime() - dateA.getTime();
-      });
-      return combined;
     });
   }
 
