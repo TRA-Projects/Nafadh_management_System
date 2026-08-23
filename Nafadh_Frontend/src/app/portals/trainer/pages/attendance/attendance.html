@@ -136,6 +136,13 @@
   </div>
   
   <section class="attendance-card">
+    @if (loading()) {
+    <div class="attendance-loading">
+      <div class="attendance-spinner"></div>
+      <span>جاري تحميل بيانات الحضور...</span>
+    </div>
+  }
+
     <div class="table-tools">
       <div class="search-box">
         <span aria-hidden="true">⌕</span>
