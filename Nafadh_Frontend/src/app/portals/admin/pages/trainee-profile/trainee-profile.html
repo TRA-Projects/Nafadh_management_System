@@ -1,127 +1,99 @@
 <div class="profile-container">
-  <!-- الهيدر وعنوان الصفحة -->
-  <div class="header-container">
-    <h1 class="page-title">
-      تقييم المتدرب: {{ trainee()?.fullName || trainee()?.name || 'حسن الجابري' }}
-    </h1>
+
+  <!-- الهيدر -->
+  <div class="header-row">
+    <h1 class="page-title">ملف المتدرب: {{ fullName() }}</h1>
     <button class="back-btn" (click)="goBack()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      رجوع للقائمة
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M5 12h14"/>
         <path d="m12 5 7 7-7 7"/>
       </svg>
-      رجوع
     </button>
   </div>
 
-  <!-- الجزء العلوي: بطاقة المتدرب + الإحصائيات -->
-  <div class="top-dashboard-grid">
-    <!-- بطاقة المتدرب -->
-    <div class="nfd-card user-card">
-      <div class="avatar-circle">
-        {{ getInitials(trainee()?.fullName || trainee()?.name || 'حسن الجابري') }}
+  @if (isLoading()) {
+    <div class="state-box">جاري تحميل بيانات المتدرب...</div>
+  } @else if (loadError()) {
+    <div class="state-box state-error">{{ loadError() }}</div>
+  } @else {
+
+    <!-- بطاقة معلومات المتدرب -->
+    <div class="nfd-card identity-card">
+      <div class="avatar-circle">{{ getInitials(fullName()) }}</div>
+      <h2 class="user-name">{{ fullName() }}</h2>
+      @if (trainee()?.email) {
+        <p class="user-email">{{ trainee()?.email }}</p>
+      }
+      <div class="badge-row">
+        <span class="pill pill-status">{{ statusLabel() }}</span>
+        @if (universityMajor()) {
+          <span class="pill pill-muted">{{ universityMajor() }}</span>
+        }
       </div>
-      <h2 class="user-name">{{ trainee()?.fullName || trainee()?.name || 'حسن الجابري' }}</h2>
-      <p class="user-subtext">الاسم: {{ trainee()?.fullName || trainee()?.name || 'حسن الجابري' }}</p>
-      <span class="user-id">رقم المتدرب: {{ trainee()?.id || 6 }}</span>
     </div>
 
     <!-- كروت الإحصائيات -->
-    <div class="stats-row">
-      <!-- نسبة الحضور -->
+    <div class="stats-grid">
+      <div class="nfd-card stat-card">
+        <span class="stat-title">حالات التأخير</span>
+        <div class="stat-value text-amber">{{ lateCount() }}</div>
+        <span class="stat-sub">مرات التأخير</span>
+      </div>
+
+      <div class="nfd-card stat-card">
+        <span class="stat-title">أيام الغياب</span>
+        <div class="stat-value text-rose">{{ absentDays() }}</div>
+        <span class="stat-sub">أيام غياب</span>
+      </div>
+
+      <div class="nfd-card stat-card">
+        <span class="stat-title">أيام الحضور</span>
+        <div class="stat-value text-blue">{{ presentDays() }}</div>
+        <span class="stat-sub">أيام مسجلة</span>
+      </div>
+
       <div class="nfd-card stat-card">
         <span class="stat-title">نسبة الحضور</span>
-        <div class="stat-value text-teal">{{ attendanceRate() }}</div>
-        <span class="stat-sub">التزام</span>
-      </div>
-
-      <!-- إجمالي الغيابات -->
-      <div class="nfd-card stat-card">
-        <span class="stat-title">إجمالي الغيابات (Last 30 Days)</span>
-        <div class="stat-value text-rose">{{ totalAbsence() }}</div>
-        <span class="stat-sub">أيام</span>
-      </div>
-
-      <!-- إجمالي أيام الحضور -->
-      <div class="nfd-card stat-card">
-        <span class="stat-title">إجمالي أيام الحضور (Last 30 Days)</span>
-        <div class="stat-value text-blue">{{ totalPresent() }}</div>
-        <span class="stat-sub">أيام</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- الجداول -->
-  <div class="tables-grid">
-    <!-- جدول التقييمات (يمين) -->
-    <div class="nfd-card table-card">
-      <div class="card-header">
-        <h3>ملخص التقييمات الحديثة</h3>
-      </div>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>رقم التقييم</th>
-              <th>الفترة</th>
-              <th>الدرجة</th>
-              <th>تاريخ التقييم</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let eval of evaluations()">
-              <td>#{{ eval.id }}</td>
-              <td>الفترة {{ eval.period }}</td>
-              <td><strong>{{ eval.score }}%</strong></td>
-              <td>{{ eval.date }}</td>
-            </tr>
-            <tr *ngIf="evaluations().length === 0">
-              <td colspan="4" style="text-align: center; color: #94a3b8; padding: 20px;">
-                لا توجد تقييمات مسجلة
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="stat-value text-teal">{{ attendanceRate() }}%</div>
+        <span class="stat-sub">معدل الالتزام</span>
       </div>
     </div>
 
-    <!-- جدول الحضور اليومي (يسار) -->
-    <div class="nfd-card table-card">
-      <div class="card-header">
-        <h3>سجل الحضور اليومي - آخر 30 يوم</h3>
-      </div>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>التاريخ</th>
-              <th>وقت الحضور</th>
-              <th>وقت الانصراف</th>
-              <th>الحالة</th>
-              <th>متأخر؟</th>
-              <th>ملاحظات</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let log of attendanceLogs()">
-              <td>{{ log.date }}</td>
-              <td>{{ log.checkIn }}</td>
-              <td>{{ log.checkOut }}</td>
-              <td>
-                <span [ngClass]="log.status === 'حاضر' ? 'badge-present' : 'badge-absent'">
-                  {{ log.status }}
-                </span>
-              </td>
-              <td>{{ log.isLate }}</td>
-              <td>{{ log.notes }}</td>
-            </tr>
-            <tr *ngIf="attendanceLogs().length === 0">
-              <td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">
-                لا توجد سجلات حضور متاحة
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- نسبة الإنجاز -->
+    <div class="nfd-card section-card">
+      <h3 class="section-title">نسبة الإنجاز في التدريب</h3>
+      <div class="progress-row">
+        <span class="progress-percent">{{ completionPercentage() }}%</span>
+        <div class="progress-track">
+          <div class="progress-fill" [style.width.%]="completionPercentage()"></div>
+        </div>
       </div>
     </div>
-  </div>
+
+    <!-- سجل الإنذارات -->
+    <div class="nfd-card section-card">
+      <h3 class="section-title">سجل الإنذارات</h3>
+
+      @if (warnings().length === 0) {
+        <p class="empty-note">لا توجد إنذارات مسجلة لهذا المتدرب.</p>
+      } @else {
+        <div class="warnings-list">
+          @for (w of warnings(); track w.warningId) {
+            <div class="warning-item" [attr.data-level]="w.level">
+              <div class="warning-main">
+                <span class="warning-type">{{ warningTypeLabels[w.type] }}</span>
+                <span class="warning-level" [attr.data-level]="w.level">{{ warningLevelLabels[w.level] }}</span>
+              </div>
+              @if (w.evidence) {
+                <p class="warning-evidence">{{ w.evidence }}</p>
+              }
+              <span class="warning-date">{{ w.issuedDate | date:'yyyy-MM-dd' }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+  }
 </div>

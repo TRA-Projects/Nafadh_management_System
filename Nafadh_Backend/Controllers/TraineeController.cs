@@ -65,6 +65,12 @@ namespace Nafadh_Backend.Controllers
             var t = await _service.GetByIdWithDashboardDataAsync(id);
             if (t == null) return NotFound();
 
+            // Prefer the enrollment still in progress; fall back to the most recent one.
+            var activeEnrollment = t.Enrollments?
+                .OrderByDescending(e => e.CompletionStatus == Enums.NFD_EnrollmentCompletionStatus.InProgress)
+                .ThenByDescending(e => e.EnrollmentDate)
+                .FirstOrDefault();
+
             var dto = new TraineeProfileDto
             {
                 TraineeId = t.TraineeId,
@@ -81,7 +87,10 @@ namespace Nafadh_Backend.Controllers
                 Status = t.Status,
                 VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
-                CompanyName = t.Company?.CompanyName
+                CompanyName = t.Company?.CompanyName,
+                // FIX: was left at its default (0), which silently broke every
+                // consumer that relies on EnrollmentId (attendance, warnings, evaluations).
+                EnrollmentId = activeEnrollment?.EnrollmentId ?? 0
             };
 
             return Ok(dto);
