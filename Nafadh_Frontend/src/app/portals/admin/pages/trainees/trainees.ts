@@ -34,6 +34,11 @@ export class AdminTrainees implements OnInit {
   selectedFileName = signal<string>('');
   importedRecords = signal<any[]>([]);
 
+  // Signals الخاصة بأخطاء الاستيراد من Excel
+  importError = signal<string | null>(null);
+  invalidRows = signal<{ rowNumber: number; errors: string[] }[]>([]);
+
+  // نموذج بيانات المتدرب الجديد
   newTrainee = signal({
     fullName: '',
     email: '',
@@ -46,6 +51,10 @@ export class AdminTrainees implements OnInit {
     gitHubUrl: '',
     linkedInUrl: ''
   });
+
+  // Signals الخاصة بإدارة الفالديشن
+  formErrors = signal<Record<string, string>>({});
+  touchedFields = signal<Record<string, boolean>>({});
 
   companies = signal<any[]>([]);
 
@@ -70,10 +79,95 @@ export class AdminTrainees implements OnInit {
   }
 
   updateFormField(field: string, value: any) {
+    if (field === 'nationalId' && value !== null && value !== '' && Number(value) < 0) {
+      return;
+    }
+
     this.newTrainee.update(current => ({
       ...current,
       [field]: value
     }));
+
+    if (this.touchedFields()[field]) {
+      this.validateSingleField(field);
+    }
+  }
+
+  markFieldTouched(field: string) {
+    this.touchedFields.update(t => ({ ...t, [field]: true }));
+    this.validateSingleField(field);
+  }
+
+  validateSingleField(field: string) {
+    const form = this.newTrainee();
+    let error = '';
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const urlRegex = /^(https?:\/\/)?([\w\d]+\.)+[\w\d]+(\/.*)?$/i;
+
+    switch (field) {
+      case 'fullName':
+        if (!form.fullName || !form.fullName.trim()) {
+          error = 'الاسم الكامل مطلوب.';
+        } else if (form.fullName.trim().length < 3) {
+          error = 'الاسم يجب أن يتكون من 3 أحرف على الأقل.';
+        } else if (form.fullName.trim().length > 100) {
+          error = 'الاسم طويل جداً (الحد الأقصى 100 حرف).';
+        }
+        break;
+
+      case 'email':
+        if (!form.email || !form.email.trim()) {
+          error = 'البريد الإلكتروني مطلوب.';
+        } else if (!emailRegex.test(form.email.trim())) {
+          error = 'يرجى إدخال بريد إلكتروني صحيح يحتوي على (@).';
+        }
+        break;
+
+      case 'nationalId':
+        if (form.nationalId !== null && form.nationalId !== undefined && form.nationalId !== ('' as any)) {
+          const idStr = String(form.nationalId);
+          if (Number(form.nationalId) <= 0) {
+            error = 'رقم الهوية يجب أن يكون رقماً موجباً.';
+          } else if (idStr.length < 8 || idStr.length > 14) {
+            error = 'رقم الهوية يجب أن يكون بين 8 إلى 14 رقم.';
+          }
+        }
+        break;
+
+      case 'resumeUrl':
+      case 'gitHubUrl':
+      case 'linkedInUrl':
+        const urlVal = form[field as keyof typeof form];
+        if (urlVal && typeof urlVal === 'string' && urlVal.trim() !== '') {
+          if (!urlRegex.test(urlVal.trim())) {
+            error = 'يرجى إدخال رابط صحيح (URL).';
+          }
+        }
+        break;
+    }
+
+    this.formErrors.update(errors => {
+      const updated = { ...errors };
+      if (error) {
+        updated[field] = error;
+      } else {
+        delete updated[field];
+      }
+      return updated;
+    });
+  }
+
+  validateForm(): boolean {
+    const fields = ['fullName', 'email', 'nationalId', 'resumeUrl', 'gitHubUrl', 'linkedInUrl'];
+    
+    const allTouched: Record<string, boolean> = {};
+    fields.forEach(f => allTouched[f] = true);
+    this.touchedFields.set(allTouched);
+
+    fields.forEach(f => this.validateSingleField(f));
+
+    return Object.keys(this.formErrors()).length === 0;
   }
 
   loadTrainees() {
@@ -87,7 +181,6 @@ export class AdminTrainees implements OnInit {
       pageSize: this.pageSize()
     };
 
-    // معالجة التحقق من القيمة لضمان عدم إرسال NaN
     if (statusParam !== null && !isNaN(statusParam)) {
       queryParams['status'] = statusParam;
     }
@@ -192,28 +285,101 @@ export class AdminTrainees implements OnInit {
     }
   }
 
+  // --- دالة قراءة وفحص ملف الـ Excel المحدثة ---
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files?.length) {
-      const file = input.files[0];
-      this.selectedFileName.set(file.name);
+    this.importError.set(null);
+    this.invalidRows.set([]);
 
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          
-          const rawData: any[] = XLSX.utils.sheet_to_json(worksheet);
+    if (!input.files?.length) return;
 
-          const mappedRecords = rawData.map(row => {
-            const rawId = row['رقم الهوية'] || row['NationalId'] || row['الهوية'];
-            return {
-              fullName: row['الاسم'] || row['FullName'] || row['الاسم الكامل'] || '',
-              email: row['البريد'] || row['Email'] || row['البريد الإلكتروني'] || '',
-              nationalId: rawId ? Number(rawId) : null,
+    const file = input.files[0];
+    const maxSizeBytes = 5 * 1024 * 1024; // 5 MB
+    const allowedExtensions = /(\.xlsx|\.xls)$/i;
+
+    // 1. التحقق من الامتداد
+    if (!allowedExtensions.exec(file.name)) {
+      this.importError.set('عذراً، يرجى اختيار ملف بصيغة Excel فقط (.xlsx أو .xls).');
+      input.value = '';
+      return;
+    }
+
+    // 2. التحقق من الحجم
+    if (file.size > maxSizeBytes) {
+      this.importError.set('حجم الملف يتجاوز الحد المسموح به (5 ميجابايت).');
+      input.value = '';
+      return;
+    }
+
+    this.selectedFileName.set(file.name);
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+          this.importError.set('ملف Excel لا يحتوي على أي أوراق عمل.');
+          return;
+        }
+
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const rawData: any[] = XLSX.utils.sheet_to_json(worksheet);
+
+        // 3. التحقق من البيانات داخل الشيت
+        if (!rawData || rawData.length === 0) {
+          this.importError.set('الملف المرفوع فارغ ولا يحتوي على أي بيانات.');
+          return;
+        }
+
+        const validRecords: any[] = [];
+        const rowErrors: { rowNumber: number; errors: string[] }[] = [];
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const seenEmails = new Set<string>();
+
+        rawData.forEach((row, index) => {
+          const rowNum = index + 2;
+          const currentErrors: string[] = [];
+
+          const fullName = (row['الاسم'] || row['FullName'] || row['الاسم الكامل'] || '').toString().trim();
+          const email = (row['البريد'] || row['Email'] || row['البريد الإلكتروني'] || '').toString().trim();
+          const rawId = row['رقم الهوية'] || row['NationalId'] || row['الهوية'];
+          const nationalId = rawId ? Number(rawId) : null;
+
+          if (!fullName) {
+            currentErrors.push('الاسم الكامل مطلوب.');
+          } else if (fullName.length < 3) {
+            currentErrors.push('الاسم قصير جداً.');
+          }
+
+          if (!email) {
+            currentErrors.push('البريد الإلكتروني مطلوب.');
+          } else if (!emailRegex.test(email)) {
+            currentErrors.push('صيغة البريد الإلكتروني غير صحيحة.');
+          } else if (seenEmails.has(email.toLowerCase())) {
+            currentErrors.push('البريد الإلكتروني مكرر داخل الشيت.');
+          } else {
+            seenEmails.add(email.toLowerCase());
+          }
+
+          if (nationalId !== null) {
+            const idStr = String(nationalId);
+            if (isNaN(nationalId) || nationalId <= 0) {
+              currentErrors.push('رقم الهوية غير صحيح.');
+            } else if (idStr.length < 8 || idStr.length > 14) {
+              currentErrors.push('رقم الهوية يجب أن يكون بين 8 إلى 14 رقم.');
+            }
+          }
+
+          if (currentErrors.length > 0) {
+            rowErrors.push({ rowNumber: rowNum, errors: currentErrors });
+          } else {
+            validRecords.push({
+              fullName,
+              email,
+              nationalId,
               university: row['الجامعة'] || row['University'] || '',
               major: row['التخصص'] || row['Major'] || '',
               academicLevel: row['المستوى الأكاديمي'] || row['AcademicLevel'] || 'غير محدد',
@@ -221,19 +387,29 @@ export class AdminTrainees implements OnInit {
               resumeUrl: row['الرابط'] || row['ResumeUrl'] || '',
               gitHubUrl: row['رابط GitHub'] || row['GitHubUrl'] || '',
               linkedInUrl: row['رابط LinkedIn'] || row['LinkedInUrl'] || ''
-            };
-          });
+            });
+          }
+        });
 
-          this.importedRecords.set(mappedRecords);
-          this.importStep.set(2);
-        } catch (err) {
-          console.error('خطأ أثناء قراءة ملف Excel:', err);
-          alert('تعذر قراءة الملف. يرجى التأكد من اختيار ملف Excel صالحة صيغته.');
+        if (rowErrors.length > 0) {
+          this.invalidRows.set(rowErrors);
         }
-      };
 
-      reader.readAsArrayBuffer(file);
-    }
+        if (validRecords.length === 0) {
+          this.importError.set('لم يتم العثور على أي سجل صالحة بياناته داخل الملف.');
+          return;
+        }
+
+        this.importedRecords.set(validRecords);
+        this.importStep.set(2);
+
+      } catch (err) {
+        console.error('خطأ أثناء قراءة ملف Excel:', err);
+        this.importError.set('حدث خطأ أثناء معالجة الملف. يرجى التأكد من أن الملف غير تالف.');
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
   }
 
   confirmImport() {
@@ -262,24 +438,30 @@ export class AdminTrainees implements OnInit {
     this.importStep.set(1);
     this.importedRecords.set([]);
     this.selectedFileName.set('');
+    this.importError.set(null);
+    this.invalidRows.set([]);
   }
 
   submitNewTrainee() {
+    if (!this.validateForm()) {
+      return;
+    }
+
     const form = this.newTrainee();
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
 
     const payload = {
-      fullName: form.fullName,
-      email: form.email,
+      fullName: form.fullName.trim(),
+      email: form.email.trim(),
       nationalId: form.nationalId ? Number(form.nationalId) : null,
-      university: form.university,
-      major: form.major,
-      academicLevel: form.academicLevel,
-      skills: form.skills,
-      resumeUrl: form.resumeUrl,
-      gitHubUrl: form.gitHubUrl,
-      linkedInUrl: form.linkedInUrl
+      university: form.university?.trim() || '',
+      major: form.major?.trim() || '',
+      academicLevel: form.academicLevel?.trim() || '',
+      skills: form.skills || '',
+      resumeUrl: form.resumeUrl?.trim() || '',
+      gitHubUrl: form.gitHubUrl?.trim() || '',
+      linkedInUrl: form.linkedInUrl?.trim() || ''
     };
 
     this.api.createTrainee(payload).subscribe({
@@ -310,6 +492,8 @@ export class AdminTrainees implements OnInit {
       gitHubUrl: '',
       linkedInUrl: ''
     });
+    this.formErrors.set({});
+    this.touchedFields.set({});
     this.errorMessage.set(null);
   }
 }

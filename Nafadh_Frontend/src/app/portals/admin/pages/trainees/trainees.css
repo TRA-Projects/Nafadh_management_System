@@ -4,9 +4,9 @@
 .trainees-container {
   padding: 28px 32px;
   direction: rtl;
-  background-color: var(--color-bg);
+  background-color: var(--color-bg, #f8fafc);
   min-height: 100vh;
-  font-family: var(--font-arabic);
+  font-family: var(--font-arabic, sans-serif);
   color: #1e293b;
   box-sizing: border-box;
 }
@@ -25,7 +25,7 @@
 .page-title {
   font-size: 1.65rem;
   font-weight: 700;
-  color: var(--color-navy);
+  color: var(--color-navy, #0a1172);
   margin: 0 0 6px 0;
   letter-spacing: -0.3px;
   display: flex;
@@ -38,7 +38,7 @@
   display: inline-block;
   width: 5px;
   height: 26px;
-  background-color: var(--color-brand);
+  background-color: var(--color-brand, #0066c4);
   border-radius: 4px;
 }
 
@@ -59,7 +59,7 @@
    ========================================================================== */
 .btn {
   padding: 10px 20px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-md, 8px);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -71,40 +71,42 @@
   border: 1px solid transparent;
   outline: none;
   text-decoration: none;
-  font-family: var(--font-arabic);
 }
 
 .btn-primary {
-  background-color: var(--color-navy);
+  background-color: var(--color-navy, #0a1172);
   color: #ffffff;
   box-shadow: 0 2px 4px rgba(10, 17, 114, 0.15);
 }
 
-.btn-primary:hover {
-  background-color: var(--color-navy-light);
-  box-shadow: var(--shadow-card-hover);
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-navy-light, #1520a6);
   transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background-color: var(--color-surface);
-  color: var(--color-brand);
-  border-color: var(--color-brand);
+  background-color: #ffffff;
+  color: var(--color-brand, #0066c4);
+  border-color: var(--color-brand, #0066c4);
 }
 
 .btn-secondary:hover {
-  background-color: var(--status-completed-bg);
-  border-color: var(--color-navy);
-  color: var(--color-navy);
+  background-color: #e0f2fe;
+  color: var(--color-navy, #0a1172);
   transform: translateY(-1px);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ==========================================================================
    3. Search & Filter Bar
    ========================================================================== */
 .filter-card {
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
+  background: #ffffff;
+  border-radius: var(--radius-lg, 12px);
   border: 1px solid #e2e8f0;
   padding: 16px 20px;
   margin-bottom: 24px;
@@ -112,7 +114,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   flex-wrap: wrap;
 }
 
@@ -130,37 +132,31 @@
 
 .filter-group select {
   padding: 8px 16px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-md, 8px);
   border: 1px solid #cbd5e1;
-  background-color: var(--color-bg);
+  background-color: #f8fafc;
   font-size: 0.875rem;
   color: #0f172a;
   outline: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-family: var(--font-arabic);
 }
 
 .filter-group select:focus {
-  border-color: var(--color-brand);
-  background-color: var(--color-surface);
+  border-color: var(--color-brand, #0066c4);
+  background-color: #ffffff;
   box-shadow: 0 0 0 3px rgba(0, 102, 196, 0.15);
 }
 
 /* ==========================================================================
-   4. Academic Trainees Table
+   4. Data Table Card
    ========================================================================== */
 .table-card {
-  background: var(--color-surface);
-  border-radius: var(--radius-card);
+  background: #ffffff;
+  border-radius: var(--radius-card, 12px);
   border: 1px solid #e2e8f0;
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-  transition: box-shadow 0.2s ease;
-}
-
-.table-card:hover {
-  box-shadow: var(--shadow-card-hover);
 }
 
 .data-table {
@@ -171,8 +167,8 @@
 }
 
 .data-table th {
-  background-color: var(--color-bg);
-  color: var(--color-navy);
+  background-color: #f8fafc;
+  color: var(--color-navy, #0a1172);
   font-weight: 700;
   padding: 16px 20px;
   border-bottom: 2px solid #e2e8f0;
@@ -186,16 +182,12 @@
   vertical-align: middle;
 }
 
-.data-table tbody tr {
-  transition: background-color 0.15s ease;
-}
-
 .data-table tbody tr:hover {
-  background-color: var(--color-bg);
+  background-color: #f8fafc;
 }
 
 /* ==========================================================================
-   5. Table Elements & Badges
+   5. Table Elements & Status Badges
    ========================================================================== */
 .trainee-info {
   display: flex;
@@ -206,15 +198,14 @@
 .avatar {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-full);
-  background: var(--color-navy);
+  border-radius: 50%;
+  background: var(--color-navy, #0a1172);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 1rem;
-  box-shadow: 0 2px 6px rgba(10, 17, 114, 0.2);
 }
 
 .font-bold {
@@ -235,34 +226,12 @@
   align-items: center;
   justify-content: center;
   padding: 5px 14px;
-  border-radius: var(--radius-full);
+  border-radius: 9999px;
   font-size: 0.775rem;
   font-weight: 700;
-  letter-spacing: 0.2px;
 }
 
-/* ربط شارات الحالات بالمتغيرات الدلالية للنظام */
-.status-badge.active {
-  background-color: var(--status-active-bg);
-  color: var(--status-active-fg);
-}
-
-.status-badge.completed {
-  background-color: var(--status-completed-bg);
-  color: var(--status-completed-fg);
-}
-
-.status-badge.review {
-  background-color: var(--status-review-bg);
-  color: var(--status-review-fg);
-}
-
-.status-badge.cancelled {
-  background-color: var(--status-cancelled-bg);
-  color: var(--status-cancelled-fg);
-}
-
-/* شريط التقدم الأكاديمي */
+/* Progress Bar */
 .progress-bar-container {
   display: flex;
   align-items: center;
@@ -282,19 +251,19 @@
 .progress-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--color-cyan) 0%, var(--color-brand) 100%);
+  background: linear-gradient(90deg, #38bdf8 0%, #0066c4 100%);
   border-radius: 6px;
   transition: width 0.4s ease-in-out;
 }
 
 .progress-fill.completed {
-  background: linear-gradient(90deg, var(--status-active-fg), #10b981);
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
 }
 
 .progress-text {
   font-size: 0.8rem;
   font-weight: 700;
-  color: var(--color-navy);
+  color: var(--color-navy, #0a1172);
   min-width: 36px;
 }
 
@@ -304,15 +273,16 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-md);
-  color: var(--color-navy);
-  background-color: var(--color-bg);
-  text-decoration: none;
+  border-radius: 8px;
+  color: var(--color-navy, #0a1172);
+  background-color: #f1f5f9;
+  border: none;
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .icon-view-btn:hover {
-  background-color: var(--color-navy);
+  background-color: var(--color-navy, #0a1172);
   color: #ffffff;
   transform: scale(1.05);
 }
@@ -322,7 +292,6 @@
   padding: 48px 16px;
   color: #94a3b8;
   font-size: 0.95rem;
-  font-weight: 500;
 }
 
 /* ==========================================================================
@@ -333,13 +302,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background-color: var(--color-surface);
+  background-color: #ffffff;
   border-top: 1px solid #e2e8f0;
-}
-
-.pagination-info {
-  font-size: 0.875rem;
-  color: #64748b;
 }
 
 .pagination-controls {
@@ -352,19 +316,16 @@
   padding: 6px 14px;
   font-size: 0.85rem;
   font-weight: 600;
-  border-radius: var(--radius-md);
+  border-radius: 6px;
   border: 1px solid #cbd5e1;
-  background-color: var(--color-surface);
-  color: var(--color-navy);
+  background-color: #ffffff;
+  color: var(--color-navy, #0a1172);
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: var(--font-arabic);
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background-color: var(--color-navy);
+  background-color: var(--color-navy, #0a1172);
   color: #ffffff;
-  border-color: var(--color-navy);
 }
 
 .pagination-btn:disabled {
@@ -372,14 +333,8 @@
   cursor: not-allowed;
 }
 
-.page-number {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #334155;
-}
-
 /* ==========================================================================
-   7. Modals & Popups
+   7. Modals
    ========================================================================== */
 .modal-backdrop {
   position: fixed;
@@ -399,8 +354,8 @@
 }
 
 .modal-card {
-  background: var(--color-surface);
-  border-radius: var(--radius-card);
+  background: #ffffff;
+  border-radius: 12px;
   width: 100%;
   max-width: 580px;
   max-height: 88vh;
@@ -408,7 +363,7 @@
   padding: 28px;
   box-shadow: 0 20px 40px rgba(10, 17, 114, 0.2);
   box-sizing: border-box;
-  animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: modalScaleUp 0.25s ease-out;
 }
 
 .modal-header {
@@ -424,7 +379,7 @@
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--color-navy);
+  color: var(--color-navy, #0a1172);
 }
 
 .close-btn {
@@ -433,25 +388,16 @@
   font-size: 1.5rem;
   color: #94a3b8;
   cursor: pointer;
-  padding: 4px;
-  line-height: 1;
-  border-radius: var(--radius-md);
-  transition: all 0.2s ease;
 }
 
 .close-btn:hover {
-  color: var(--status-cancelled-fg);
-  background-color: var(--status-cancelled-bg);
-}
-
-.modal-body {
-  padding: 8px 0;
+  color: #ef4444;
 }
 
 .upload-zone {
   border: 2px dashed #cbd5e1;
-  border-radius: var(--radius-lg);
-  background-color: var(--color-bg);
+  border-radius: 12px;
+  background-color: #f8fafc;
   padding: 36px 20px;
   text-align: center;
   cursor: pointer;
@@ -460,12 +406,11 @@
 }
 
 .upload-zone:hover {
-  border-color: var(--color-brand);
-  background-color: var(--status-completed-bg);
+  border-color: var(--color-brand, #0066c4);
+  background-color: #f0f9ff;
 }
 
 .upload-label {
-  cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -473,28 +418,11 @@
   color: #64748b;
 }
 
-.upload-label i {
-  color: var(--color-brand);
-}
-
-.upload-label p {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #334155;
-}
-
-.preview-zone {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
 .table-wrapper {
   max-height: 220px;
   overflow-y: auto;
   border: 1px solid #e2e8f0;
-  border-radius: var(--radius-md);
+  border-radius: 8px;
 }
 
 .preview-table {
@@ -504,9 +432,9 @@
 }
 
 .preview-table th {
-  background-color: var(--color-bg);
+  background-color: #f8fafc;
   padding: 8px 12px;
-  color: var(--color-navy);
+  color: var(--color-navy, #0a1172);
   border-bottom: 1px solid #cbd5e1;
 }
 
@@ -516,7 +444,7 @@
 }
 
 /* ==========================================================================
-   8. Form Controls & Inputs
+   8. Form Controls & Validation
    ========================================================================== */
 .form-grid {
   display: grid;
@@ -541,18 +469,29 @@
   width: 100%;
   padding: 10px 14px;
   border: 1px solid #cbd5e1;
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   font-size: 0.875rem;
   outline: none;
-  background-color: var(--color-surface);
+  background-color: #ffffff;
   box-sizing: border-box;
   transition: all 0.2s ease;
-  font-family: var(--font-arabic);
 }
 
 .form-control:focus {
-  border-color: var(--color-brand);
+  border-color: var(--color-brand, #0066c4);
   box-shadow: 0 0 0 3px rgba(0, 102, 196, 0.15);
+}
+
+.form-control.is-invalid {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2;
+}
+
+.field-error {
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 2px;
 }
 
 .modal-footer {
@@ -565,22 +504,16 @@
 }
 
 .alert-danger {
-  background-color: var(--status-cancelled-bg);
-  color: var(--status-cancelled-fg);
+  background-color: #fef2f2;
+  color: #991b1b;
   border: 1px solid #fecaca;
   padding: 12px;
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   font-size: 0.85rem;
   margin-bottom: 16px;
 }
 
 @keyframes modalScaleUp {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }

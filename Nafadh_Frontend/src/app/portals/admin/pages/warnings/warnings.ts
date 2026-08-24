@@ -17,7 +17,12 @@ export class AdminWarnings implements OnInit {
   selectedWarning = signal<any | null>(null);
   searchTerm = '';
 
-  newWarning = { companyId: 1, type: 'Performance', level: 'Medium', evidence: '' };
+  // حالة التحميل والأخطاء
+  isSubmitting = signal(false);
+  formErrors = signal<{ [key: string]: string }>({});
+  touchedFields = signal<{ [key: string]: boolean }>({});
+
+  newWarning = { companyId: null as number | null, type: 'Performance', level: 'Medium', evidence: '' };
 
   constructor(private api: AdminApi) {}
 
@@ -28,33 +33,88 @@ export class AdminWarnings implements OnInit {
   load(): void {
     this.api.getWarnings({ scope: 'Company' } as any).subscribe((d: any) => {
       const list: WarningDto[] = Array.isArray(d) ? d : (d?.items || []);
-      
-      // فلترة القائمة لعرض إنذارات الشركات فقط
       const companyWarnings = list.filter(w => 
         w.scope === 'Company' || 
         (w as any).scope === 0 || 
         (w as any).companyId !== null
       );
-
       this.warnings.set(companyWarnings);
     });
   }
 
+  // فتح وإغلاق النافذة مع إعادة تعيين النموذج
+  openIssueModal(): void {
+    this.newWarning = { companyId: null, type: 'Performance', level: 'Medium', evidence: '' };
+    this.formErrors.set({});
+    this.touchedFields.set({});
+    this.showIssue.set(true);
+  }
+
+  closeIssueModal(): void {
+    if (this.isSubmitting()) return;
+    this.showIssue.set(false);
+  }
+
+  // التحقق من الحقول
+  validateForm(): boolean {
+    const errors: { [key: string]: string } = {};
+
+    if (!this.newWarning.companyId || this.newWarning.companyId <= 0) {
+      errors['companyId'] = 'يرجى إدخال رقم شركة صحيح وموجود.';
+    }
+
+    if (!this.newWarning.type) {
+      errors['type'] = 'يرجى اختيار تصنيف المخالفة.';
+    }
+
+    if (!this.newWarning.level) {
+      errors['level'] = 'يرجى اختيار درجة الأهمية.';
+    }
+
+    const evidenceText = (this.newWarning.evidence || '').trim();
+    if (!evidenceText) {
+      errors['evidence'] = 'يرجى كتابة أسباب وملاحظات الإنذار.';
+    } else if (evidenceText.length < 10) {
+      errors['evidence'] = 'يجب أن تحتوي الأسباب على 10 أحرف على الأقل.';
+    } else if (evidenceText.length > 1000) {
+      errors['evidence'] = 'يجب ألا تتجاوز الأسباب 1000 حرف.';
+    }
+
+    this.formErrors.set(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  markFieldTouched(field: string): void {
+    this.touchedFields.set({ ...this.touchedFields(), [field]: true });
+    this.validateForm();
+  }
+
   issue(): void {
+    // تعليم جميع الحقول كملموسة لإظهار الأخطاء عند الضغط
+    this.touchedFields.set({ companyId: true, type: true, level: true, evidence: true });
+
+    if (!this.validateForm() || this.isSubmitting()) return;
+
+    this.isSubmitting.set(true);
     this.api.createWarning({
       scope: 'Company',
-      companyId: this.newWarning.companyId,
+      companyId: this.newWarning.companyId!,
       type: this.newWarning.type,
       level: this.newWarning.level,
       evidence: this.newWarning.evidence,
       raisedByUserId: 1
-    }).subscribe(() => {
-      this.showIssue.set(false);
-      this.load();
+    }).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
+        this.showIssue.set(false);
+        this.load();
+      },
+      error: () => {
+        this.isSubmitting.set(false);
+      }
     });
   }
 
-  // البحث والتصفية بحسب اسم الشركة أو كود الإنذار
   filteredWarnings(): WarningDto[] {
     const term = this.searchTerm.trim().toLowerCase();
     if (!term) return this.warnings();
@@ -66,7 +126,6 @@ export class AdminWarnings implements OnInit {
     });
   }
 
-  // إحصائيات الحالات (تتعامل مع القيم الرقمية والنصية)
   getCountByStatus(statusKey: string): number {
     return this.warnings().filter(w => {
       const st = String(w.status);
