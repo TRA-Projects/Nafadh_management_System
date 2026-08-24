@@ -1,7 +1,6 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AnnouncementDto } from '../../../../core/models/dtos';
@@ -14,7 +13,6 @@ interface NotificationViewModel {
   message: string;
   isRead: boolean;
   dateLabel: string;
-  iconClass: string;
   isNew: boolean;
 }
 
@@ -25,180 +23,163 @@ interface NotificationViewModel {
   styleUrl: './notifications.css',
 })
 export class AdminNotifications implements OnInit {
+  private readonly api = inject(AdminApi);
+  private readonly auth = inject(AuthService);
+
   notifications = signal<AnnouncementDto[]>([]);
+  activeFilter = signal<NotificationFilter>('all');
+  loading = signal(true);
+  error = signal<string | null>(null);
+
   showAnnounce = signal(false);
   announceMsg = '';
   posting = signal(false);
   announceError = signal<string | null>(null);
 
-  activeFilter = signal<NotificationFilter>('all');
-
-  private filteredRaw = computed(() => {
-    const list = this.notifications();
-    const filter = this.activeFilter();
-
-    if (filter === 'unread') {
-      return list.filter((n) => {
-        const readIds = JSON.parse(localStorage.getItem('admin_read_announcements') || '[]');
-        return !readIds.includes(n.announcementId ?? n.id);
-      });
+  private readIds(): number[] {
+    try {
+      return JSON.parse(localStorage.getItem('admin_read_announcements') || '[]');
+    } catch {
+      return [];
     }
-    return list;
-  });
+  }
 
-  filteredNotifications = computed<NotificationViewModel[]>(() =>
-    this.filteredRaw().map((n) => this.toViewModel(n))
-  );
+  filteredNotifications = computed<NotificationViewModel[]>(() => {
+    const readIds = this.readIds();
+    return this.notifications()
+      .filter((n) => this.activeFilter() === 'all' || !readIds.includes(Number(n.announcementId ?? n.id ?? 0)))
+      .map((n) => this.toViewModel(n));
+  });
 
   unreadCount = computed(() => {
-    const list = this.notifications();
-    const readIds = JSON.parse(localStorage.getItem('admin_read_announcements') || '[]');
-    return list.filter((n) => !readIds.includes(n.announcementId ?? n.id)).length;
+    const readIds = this.readIds();
+    return this.notifications().filter((n) => !readIds.includes(Number(n.announcementId ?? n.id ?? 0))).length;
   });
 
-  constructor(
-    private api: AdminApi,
-    private auth: AuthService,
-    private router: Router
-  ) { }
+  ngOnInit(): void {
+    this.load();
+  }
 
-  ngOnInit() {
+  load(): void {
+    this.loading.set(true);
+    this.error.set(null);
     this.api.getAnnouncements().subscribe({
-      next: (d: AnnouncementDto[]) => {
-        // ترتيب الإعلانات والأحدث أولاً مع حماية ضد القيم الفارغة
-        const sorted = (d || []).sort((a, b) => {
-          const timeA = new Date(a.createdAt || a.date || Date.now()).getTime();
-          const timeB = new Date(b.createdAt || b.date || Date.now()).getTime();
-          return timeB - timeA;
+      next: (data: AnnouncementDto[]) => {
+        const sorted = (data ?? []).sort((a, b) => {
+          const aTime = new Date(a.createdAt || a.date || Date.now()).getTime();
+          const bTime = new Date(b.createdAt || b.date || Date.now()).getTime();
+          return bTime - aTime;
         });
         this.notifications.set(sorted);
+        this.loading.set(false);
       },
       error: (err) => {
-        console.error('فشل في جلب الإعلانات:', err);
-      }
+        console.error('Failed to load admin notifications.', err);
+        this.error.set('تعذر تحميل الإشعارات.');
+        this.loading.set(false);
+      },
     });
   }
 
-  setFilter(filter: NotificationFilter) {
+  setFilter(filter: NotificationFilter): void {
     this.activeFilter.set(filter);
   }
 
-  private getTimeAgo(dateString?: string | Date): { label: string; isNew: boolean } {
-    if (!dateString) return { label: 'وقت غير محدد', isNew: false };
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return { label: String(dateString), isNew: false };
+  markRead(item: NotificationViewModel): void {
+    if (item.isRead) return;
+    const readIds = this.readIds();
+    if (!readIds.includes(item.notificationId)) {
+      readIds.push(item.notificationId);
+      localStorage.setItem('admin_read_announcements', JSON.stringify(readIds));
+      this.notifications.update((list) => [...list]);
+    }
+  }
 
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  markAllRead(): void {
+    const ids = this.notifications().map((n) => Number(n.announcementId ?? n.id ?? 0));
+    localStorage.setItem('admin_read_announcements', JSON.stringify(ids));
+    this.notifications.update((list) => [...list]);
+  }
 
-    let label = '';
-    if (diffMins < 1) label = 'منذ لحظات';
-    else if (diffMins < 60) label = `منذ ${diffMins} دقيقة`;
-    else if (diffHours < 24) label = `منذ ${diffHours} ${diffHours === 1 ? 'ساعة' : 'ساعات'}`;
-    else if (diffDays === 1) label = 'أمس';
-    else label = `منذ ${diffDays} أيام`;
+  trackById(_: number, item: NotificationViewModel): number {
+    return item.notificationId;
+  }
 
-    const isNew = diffMins < 60;
-    return { label, isNew };
+  timeAgo(value?: string | Date): string {
+    if (!value) return 'وقت غير محدد';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    const diff = Math.max(0, Date.now() - date.getTime());
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return 'منذ لحظات';
+    if (minutes < 60) return `منذ ${minutes} دقيقة`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `منذ ${hours} ساعة`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return 'أمس';
+    if (days < 30) return `منذ ${days} يوم`;
+    return date.toLocaleDateString('ar-OM');
   }
 
   private toViewModel(n: AnnouncementDto): NotificationViewModel {
+    const id = Number(n.announcementId ?? n.id ?? 0);
+    const isRead = this.readIds().includes(id);
     const rawDate = n.createdAt || n.date;
-    const timeInfo = this.getTimeAgo(rawDate);
-    const readIds = JSON.parse(localStorage.getItem('admin_read_announcements') || '[]');
-    const notificationId = Number(n.announcementId ?? n.id ?? 0);
-    const isRead = readIds.includes(notificationId);
-
     return {
-      notificationId: notificationId,
+      notificationId: id,
       title: n.title || 'إعلان نظامي جديد',
       message: n.message || n.description || '',
-      isRead: isRead,
-      dateLabel: timeInfo.label,
-      isNew: timeInfo.isNew && !isRead,
-      iconClass: 'info',
+      isRead,
+      dateLabel: this.timeAgo(rawDate),
+      isNew: !isRead,
     };
   }
 
-  markRead(vm: NotificationViewModel) {
-    if (vm.isRead) return;
-    const readIds = JSON.parse(localStorage.getItem('admin_read_announcements') || '[]');
-    if (!readIds.includes(vm.notificationId)) {
-      readIds.push(vm.notificationId);
-      localStorage.setItem('admin_read_announcements', JSON.stringify(readIds));
-    }
-    this.notifications.update((list) => [...list]);
-  }
-
-  markAllRead() {
-    const allIds = this.notifications().map((n) => Number(n.announcementId ?? n.id ?? 0));
-    localStorage.setItem('admin_read_announcements', JSON.stringify(allIds));
-    this.notifications.update((list) => [...list]);
-  }
-
-  onNotificationClick(vm: NotificationViewModel) {
-    this.markRead(vm);
-  }
-
-  postAnnouncement() {
+  postAnnouncement(): void {
     if (!this.announceMsg.trim() || this.posting()) return;
 
-    const uid = this.auth.userId ?? 1;
+    const uid = this.auth.userId;
+    if (!uid) {
+      this.announceError.set('تعذر تحديد المستخدم الحالي.');
+      return;
+    }
+
     this.posting.set(true);
     this.announceError.set(null);
 
-    const payload = {
+    this.api.createAnnouncement({
       scopeType: 0,
       scopeId: null,
       message: this.announceMsg.trim(),
-      createdByUserId: uid
-    };
-
-    console.log('Sending announcement payload:', payload);
-
-    this.api.createAnnouncement(payload).subscribe({
+      createdByUserId: uid,
+    }).subscribe({
       next: () => {
         this.posting.set(false);
         this.showAnnounce.set(false);
         this.announceMsg = '';
-        this.ngOnInit();
+        this.load();
       },
       error: (err) => {
-        if (err.status === 200 || err.name === 'HttpErrorResponse' && (err.error?.text || err.statusText === 'OK')) {
-          this.posting.set(false);
-          this.showAnnounce.set(false);
-          this.announceMsg = '';
-          this.ngOnInit();
-          return;
-        }
-
+        console.error('Failed to publish announcement.', err);
         this.posting.set(false);
-        console.error('تفاصيل خطأ الباك إند الكاملة:', err);
-
-        const serverError = err?.error?.message || err?.error?.title || err?.message;
-        this.announceError.set(
-          serverError ? `خطأ من الخادم: ${serverError}` : 'تعذر نشر الإعلان، تأكد من الاتصال بالخادم.'
-        );
+        this.announceError.set(err?.error?.message || 'تعذر نشر الإعلان، تأكد من الاتصال بالخادم.');
       },
     });
   }
 
-  exportAll() {
+  exportAll(): void {
     const rows = this.filteredNotifications();
     const header = ['العنوان', 'الرسالة', 'الحالة', 'التاريخ'];
-    const lines = rows.map((n) => {
-      const status = n.isRead ? 'مقروء' : 'غير مقروء';
-      return [n.title, n.message, status, n.dateLabel].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',');
-    });
-    const csv = '\uFEFF' + [header.join(','), ...lines].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const lines = rows.map((n) =>
+      [n.title, n.message, n.isRead ? 'مقروء' : 'غير مقروء', n.dateLabel]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(','),
+    );
+    const blob = new Blob(['\uFEFF' + [header.join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'الإعلانات.csv';
+    a.download = 'الإشعارات.csv';
     a.click();
     URL.revokeObjectURL(url);
   }

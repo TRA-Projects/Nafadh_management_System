@@ -1,3 +1,4 @@
+
 /* ==========================================================
    1. General & Shared Styles (Modal Overlay & Font)
    ========================================================== */
@@ -22,6 +23,16 @@
 
 .text-right {
   text-align: right;
+}
+
+.input-error {
+  border-color: #dc2626 !important;
+  background-color: #fef2f2 !important;
+}
+
+.error-msg {
+  color: #dc2626;
+  font-weight: 500;
 }
 
 /* ==========================================================
