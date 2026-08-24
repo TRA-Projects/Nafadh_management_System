@@ -1072,7 +1072,7 @@
         </div>
       }
 
-      <!-- التنبيهات الأخيرة -->
+      <!-- التنبيهات الأخيرة - مع تصغير الخط وجعل كل شيء في سطر واحد -->
       <div
         style="
           background: #ffffff;
@@ -1104,13 +1104,13 @@
             <h3
               style="
                 margin: 0;
-                font-size: 1.05rem;
+                font-size: 1rem;
                 font-weight: 700;
                 color: #1e293b;
                 font-family: 'Cairo', sans-serif;
               "
             >
-              <i class="fas fa-bell" style="margin-left: 8px;"></i>
+              <i class="fas fa-bell" style="margin-left: 6px;"></i>
               التنبيهات الأخيرة
             </h3>
             @if (getUnreadNotificationsCount() > 0) {
@@ -1118,10 +1118,10 @@
                 style="
                   background: #ef4444;
                   color: white;
-                  font-size: 0.7rem;
-                  padding: 2px 8px;
+                  font-size: 0.65rem;
+                  padding: 1px 8px;
                   border-radius: 12px;
-                  font-weight: 600;
+                  font-weight: 500;
                   font-family: 'Cairo', sans-serif;
                 "
               >
@@ -1130,7 +1130,7 @@
             }
           </div>
           <div
-            style="display: flex; gap: 8px; align-items: center; font-family: 'Cairo', sans-serif"
+            style="display: flex; gap: 6px; align-items: center; font-family: 'Cairo', sans-serif"
           >
             @if (getUnreadNotificationsCount() > 0) {
               <button
@@ -1140,14 +1140,14 @@
                   background: none;
                   border: none;
                   color: #64748b;
-                  font-size: 0.75rem;
+                  font-size: 0.55rem;
                   cursor: pointer;
                   text-decoration: underline;
                   font-family: 'Cairo', sans-serif;
                 "
               >
-                <i class="fas fa-check-double" style="margin-left: 4px;"></i>
-                تحديد الكل
+                <i class="fas fa-check-double" style="margin-left: 3px;"></i>
+                تحديد الكل كمقروء
               </button>
             }
             <button
@@ -1156,30 +1156,35 @@
                 background: none;
                 border: none;
                 color: #2563eb;
-                font-size: 0.85rem;
+                font-size: 0.75rem;
                 font-weight: 600;
                 cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 3px;
+                font-family: 'Cairo', sans-serif;
               "
             >
-              عرض الكل <i class="fas fa-arrow-left" style="margin-right: 4px;"></i>
+              عرض الكل <i class="fas fa-arrow-left"></i>
             </button>
           </div>
         </div>
 
         <div
-          style="display: flex; flex-direction: column; gap: 10px; font-family: 'Cairo', sans-serif"
+          style="display: flex; flex-direction: column; gap: 6px; font-family: 'Cairo', sans-serif"
         >
           @if (loadingNotifications()) {
             <div
               style="
                 display: flex;
                 justify-content: center;
-                padding: 30px;
+                padding: 20px;
                 color: #94a3b8;
                 font-family: 'Cairo', sans-serif;
+                font-size: 0.8rem;
               "
             >
-              <i class="fas fa-spinner fa-spin" style="margin-left: 8px;"></i>
+              <i class="fas fa-spinner fa-spin" style="margin-left: 6px;"></i>
               جاري تحميل التنبيهات...
             </div>
           } @else {
@@ -1189,85 +1194,50 @@
                   (click)="markNotificationAsRead(notif.notificationId, $event)"
                   style="
                     display: flex;
-                    align-items: flex-start;
-                    gap: 12px;
-                    padding: 10px 12px;
-                    padding-bottom: 10px;
-                    border-bottom: 1px solid #f1f5f9;
-                    cursor: pointer;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 6px 10px;
                     border-radius: 8px;
-                    transition: background 0.2s;
+                    cursor: pointer;
+                    transition: background 0.15s;
                   "
                   [style.background]="notif.isRead ? 'transparent' : '#f8faff'"
                 >
-                  <div
-                    style="
-                      display: flex;
-                      align-items: center;
-                      gap: 12px;
-                      min-width: 0;
-                      flex: 1;
-                      font-family: 'Cairo', sans-serif;
-                    "
-                  >
-                    <span style="font-size: 20px; flex-shrink: 0">
-                      @if ($index === 0) {
-                        <i class="fas fa-clipboard-list"></i>
-                      } @else if ($index === 1) {
-                        <i class="fas fa-clock"></i>
-                      } @else if ($index === 2) {
-                        <i class="fas fa-bullhorn"></i>
-                      } @else if ($index === 3) {
-                        <i class="fas fa-star"></i>
-                      } @else {
-                        <i class="fas fa-bell"></i>
-                      }
+                  <span style="font-size: 16px; flex-shrink: 0; width: 20px; text-align: center;">
+                    @if ($index === 0) {
+                      <i class="fas fa-clipboard-list"></i>
+                    } @else if ($index === 1) {
+                      <i class="fas fa-clock"></i>
+                    } @else if ($index === 2) {
+                      <i class="fas fa-bullhorn"></i>
+                    } @else if ($index === 3) {
+                      <i class="fas fa-star"></i>
+                    } @else {
+                      <i class="fas fa-bell"></i>
+                    }
+                  </span>
+
+                  <div style="min-width: 0; flex: 1; display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow: hidden;">
+                    <span
+                      [style.color]="notif.isRead ? '#94a3b8' : '#1d4ed8'"
+                      style="font-weight: 600; font-size: 0.7rem; white-space: nowrap; flex-shrink: 0;"
+                    >
+                      <i class="fas" [class.fa-check-circle]="notif.isRead" [class.fa-circle]="!notif.isRead" style="margin-left: 3px; font-size: 0.55rem;"></i>
+                      {{ notif.isRead ? 'مقروء' : 'جديد' }}
                     </span>
-                    <div style="min-width: 0; flex: 1; font-family: 'Cairo', sans-serif">
-                      <div
-                        style="
-                          display: flex;
-                          align-items: center;
-                          justify-content: space-between;
-                          margin-bottom: 4px;
-                          font-family: 'Cairo', sans-serif;
-                        "
-                      >
-                        <span
-                          [style.color]="notif.isRead ? '#64748b' : '#1d4ed8'"
-                          style="
-                            font-weight: 700;
-                            font-size: 0.75rem;
-                            font-family: 'Cairo', sans-serif;
-                          "
-                        >
-                          <i class="fas" [class.fa-check-circle]="notif.isRead" [class.fa-circle]="!notif.isRead" style="margin-left: 4px;"></i>
-                          {{ notif.isRead ? 'مقروء' : 'تنبيه جديد' }}
-                        </span>
-                        <small
-                          style="
-                            font-size: 0.7rem;
-                            color: #94a3b8;
-                            font-weight: 500;
-                            font-family: 'Cairo', sans-serif;
-                          "
-                        >
-                          <i class="far fa-calendar-alt" style="margin-left: 4px;"></i>
-                          {{ notif.date | date: 'mediumDate' }}
-                        </small>
-                      </div>
-                      <div
-                        style="
-                          font-size: 0.85rem;
-                          color: #1e293b;
-                          font-weight: 600;
-                          line-height: 1.4;
-                          font-family: 'Cairo', sans-serif;
-                        "
-                      >
-                        {{ notif.message }}
-                      </div>
-                    </div>
+
+                    <span
+                      style="font-size: 0.75rem; color: #1e293b; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                    >
+                      {{ notif.message }}
+                    </span>
+
+                    <span
+                      style="font-size: 0.6rem; color: #94a3b8; white-space: nowrap; flex-shrink: 0; margin-right: auto;"
+                    >
+                      <i class="far fa-calendar-alt" style="margin-left: 3px;"></i>
+                      {{ notif.date | date: 'dd/MM' }}
+                    </span>
                   </div>
                 </div>
               }
@@ -1277,14 +1247,14 @@
                   display: flex;
                   justify-content: center;
                   align-items: center;
-                  padding: 40px;
+                  padding: 24px;
                   color: #94a3b8;
-                  font-size: 0.9rem;
+                  font-size: 0.8rem;
                   font-family: 'Cairo', sans-serif;
                 "
               >
-                <i class="fas fa-inbox" style="margin-left: 8px;"></i>
-                لا توجد تنبيهات حالياً
+                <i class="fas fa-inbox" style="margin-left: 6px;"></i>
+                لا توجد تنبيهات
               </div>
             }
 
@@ -1296,21 +1266,21 @@
                   background: none;
                   border: none;
                   color: #2563eb;
-                  font-size: 0.85rem;
+                  font-size: 0.75rem;
                   font-weight: 600;
                   cursor: pointer;
                   display: flex;
                   align-items: center;
-                  gap: 6px;
+                  gap: 4px;
                   justify-content: center;
-                  padding: 8px;
+                  padding: 6px;
                   font-family: 'Cairo', sans-serif;
                   width: 100%;
                   border-top: 1px solid #f1f5f9;
                   margin-top: 4px;
                 "
               >
-                <i class="fas" [class.fa-chevron-up]="showAllNotifications()" [class.fa-chevron-down]="!showAllNotifications()"></i>
+                <i class="fas" [class.fa-chevron-up]="showAllNotifications()" [class.fa-chevron-down]="!showAllNotifications()" style="font-size: 0.7rem;"></i>
                 {{ showAllNotifications() ? 'عرض أقل' : 'عرض المزيد' }}
               </button>
             }
