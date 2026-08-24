@@ -146,7 +146,7 @@ namespace Nafadh_Backend.Services
                 BatchName = entity.Enrollment?.Batch?.BatchName
             };
         }
-
+        //***
         public async Task<bool> ConfirmAbsenceAsync(int id)
         {
             NFD_DailyAttendance? entity =

@@ -61,6 +61,7 @@ namespace Nafadh_Backend.Repositories
             return result;
         }
 
+        // *** 
         public async Task<NFD_DailyAttendance?> GetByIdWithDetailsAsync(int id)
         {
             return await _context.NFD_DailyAttendances
@@ -85,5 +86,6 @@ namespace Nafadh_Backend.Repositories
                 .ThenBy(d => d.DailyAttendanceId)
                 .ToListAsync();
         }
+        //***
     }
 }
