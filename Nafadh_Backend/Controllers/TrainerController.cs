@@ -77,17 +77,17 @@ namespace Nafadh_Backend.Controllers
         [Consumes("multipart/form-data")]
         [RequestSizeLimit(6 * 1024 * 1024)]
         public async Task<IActionResult> UploadProfileImage(
-            int id,
-            [FromForm] IFormFile file
-        )
+    int id,
+    [FromForm] ProfileImageUploadDto dto
+)
         {
             try
             {
                 var profileImageUrl =
-                    await _service.UploadProfileImageAsync(
-                        id,
-                        file
-                    );
+                   await _service.UploadProfileImageAsync(
+    id,
+    dto.File
+);
 
 
                 // Trainer does not exist.
