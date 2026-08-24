@@ -15,6 +15,7 @@
       font-weight: 700 !important;
     "
   >
+    <i class="fas fa-bell" style="margin-left: 8px;"></i>
     التنبيهات والإنذارات
   </h2>
 
@@ -44,7 +45,7 @@
       onmouseover="this.style.backgroundColor = '#f1f5f9'"
       onmouseout="this.style.backgroundColor = '#f8fafc'"
     >
-      <span>📬</span>
+      <i class="fas fa-envelope-open-text"></i>
       تحديد الكل كمقروء ({{ getUnreadCount() }})
     </button>
 
@@ -83,27 +84,17 @@
         [value]="displayFilter()"
         (change)="onFilterChange($any($event.target).value)"
       >
-        <option value="all" style="color: #000; background: #fff; font-size: 12px">الكل</option>
+        <option value="all" style="color: #000; background: #fff; font-size: 12px">
+          <i class="fas fa-list"></i> الكل
+        </option>
         <option value="notification" style="color: #000; background: #fff; font-size: 12px">
-          تنبيه
+          <i class="fas fa-info-circle"></i> تنبيه
         </option>
         <option value="warning" style="color: #000; background: #fff; font-size: 12px">
-          إنذار
+          <i class="fas fa-exclamation-triangle"></i> إنذار
         </option>
       </select>
-      <svg
-        width="12"
-        height="12"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="#64748b"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        style="position: absolute; right: 10px; pointer-events: none"
-      >
-        <polyline points="6 9 12 15 18 9"></polyline>
-      </svg>
+      <i class="fas fa-chevron-down" style="position: absolute; left: 10px; color: #64748b; font-size: 12px; pointer-events: none;"></i>
     </div>
 
     <!-- زر غير مقروء (مستقل) -->
@@ -119,12 +110,16 @@
         cursor: pointer;
         border: 1px solid;
         transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
       "
       [style.background-color]="filter() === 'unread' ? '#1e3b8a' : 'transparent'"
       [style.color]="filter() === 'unread' ? '#ffffff' : '#334155'"
       [style.border-color]="filter() === 'unread' ? '#1e3b8a' : '#cbd5e1'"
       (click)="setUnreadFilter()"
     >
+      <i class="fas fa-envelope"></i>
       غير مقروء
     </button>
   </div>
@@ -203,17 +198,17 @@
                 "
               >
                 @if (!n.isRead) {
-                  📋
+                  <i class="fas fa-clipboard-list"></i>
                 } @else if (n.title?.includes('إنذار') || n.title?.includes('تحذير')) {
-                  ⚠️
+                  <i class="fas fa-exclamation-triangle" style="color: #dc2626;"></i>
                 } @else if (n.title?.includes('مهمة') || n.title?.includes('تسليم')) {
-                  ⏰
+                  <i class="fas fa-clock" style="color: #f59e0b;"></i>
                 } @else if (n.title?.includes('تقييم') || n.title?.includes('درجة')) {
-                  ⭐
+                  <i class="fas fa-star" style="color: #f59e0b;"></i>
                 } @else if (n.title?.includes('إعلان')) {
-                  📢
+                  <i class="fas fa-bullhorn" style="color: #3b82f6;"></i>
                 } @else {
-                  📁
+                  <i class="fas fa-folder" style="color: #64748b;"></i>
                 }
               </span>
 
@@ -240,15 +235,7 @@
                         font-size: 9px;
                       "
                     >
-                      <span
-                        style="
-                          width: 3px;
-                          height: 3px;
-                          background: #dc2626;
-                          border-radius: 50%;
-                          display: inline-block;
-                        "
-                      ></span>
+                      <i class="fas fa-circle" style="font-size: 6px; color: #dc2626;"></i>
                       إنذار
                     </span>
                   } @else {
@@ -256,11 +243,13 @@
                       [style.color]="!n.isRead ? '#2563eb' : '#94a3b8'"
                       style="font-weight: 600; font-size: 10px"
                     >
-                      {{ !n.isRead ? '🔵 جديد' : 'تنبيه' }}
+                      <i class="fas" [class.fa-circle]="!n.isRead" [class.fa-bell]="n.isRead" style="font-size: 8px; margin-left: 3px;"></i>
+                      {{ !n.isRead ? 'جديد' : 'تنبيه' }}
                     </span>
                   }
 
                   <small class="nfd-muted" style="font-size: 9px; color: #94a3b8; font-weight: 500">
+                    <i class="far fa-clock" style="margin-left: 3px;"></i>
                     {{ n.createdAt | date: 'short' }}
                   </small>
                 </div>
@@ -293,18 +282,7 @@
                   "
                 ></span>
               }
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#94a3b8"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
+              <i class="fas fa-chevron-down" style="font-size: 10px; color: #94a3b8;"></i>
             </div>
           </div>
         </summary>
@@ -322,6 +300,7 @@
                 "
               >
                 <div style="color: #991b1b; font-size: 11px; font-weight: 700; margin-bottom: 2px">
+                  <i class="fas fa-exclamation-circle" style="margin-left: 4px;"></i>
                   سبب الإنذار
                 </div>
                 <div style="color: #7f1d1d; font-size: 11px; line-height: 1.3">
@@ -330,6 +309,7 @@
               </div>
 
               <div style="color: #334155; font-size: 11px; font-weight: 700; margin-bottom: 2px">
+                <i class="fas fa-info-circle" style="margin-left: 4px;"></i>
                 التفاصيل
               </div>
               <ul
@@ -355,6 +335,7 @@
                     detailsRef.open = false; $event.preventDefault(); $event.stopPropagation()
                   "
                 >
+                  <i class="fas fa-times" style="margin-left: 3px;"></i>
                   إغلاق
                 </button>
                 @if (!n.isRead) {
@@ -368,6 +349,9 @@
                       color: white;
                       border: none;
                       border-radius: 4px;
+                      display: flex;
+                      align-items: center;
+                      gap: 3px;
                     "
                     (click)="
                       markRead(n);
@@ -376,12 +360,14 @@
                       $event.stopPropagation()
                     "
                   >
+                    <i class="fas fa-check"></i>
                     تحديد كمقروء
                   </button>
                 }
               </div>
             } @else {
               <div style="color: #334155; font-size: 11px; font-weight: 500; margin-bottom: 2px">
+                <i class="fas fa-file-alt" style="margin-left: 4px; color: #64748b;"></i>
                 {{ n.message }}
               </div>
 
@@ -394,6 +380,7 @@
                     detailsRef.open = false; $event.preventDefault(); $event.stopPropagation()
                   "
                 >
+                  <i class="fas fa-times" style="margin-left: 3px;"></i>
                   إغلاق
                 </button>
                 @if (!n.isRead) {
@@ -407,6 +394,9 @@
                       color: white;
                       border: none;
                       border-radius: 4px;
+                      display: flex;
+                      align-items: center;
+                      gap: 3px;
                     "
                     (click)="
                       markRead(n);
@@ -415,6 +405,7 @@
                       $event.stopPropagation()
                     "
                   >
+                    <i class="fas fa-check"></i>
                     تحديد كمقروء
                   </button>
                 }
