@@ -34,9 +34,11 @@
 
         h2 {
           margin: 0;
-          font-size: 1.4rem;
-          font-weight: 800;
-          color: #0f172a;
+          font-family: 'Cairo', sans-serif !important;
+          font-size: 24px !important;
+          font-weight: 800 !important;
+          color: #0A1172 !important;
+          line-height: 1.3;
         }
 
         p {
@@ -473,7 +475,7 @@
         }
       }
 
-      /* سجل النشاطات (إضافة حدود وتحسين التنسيق لكل عنصر) */
+      /* سجل النشاطات */
       .timeline-list {
         list-style: none;
         padding: 0;
@@ -537,5 +539,3 @@
     }
   }
 }
-/* Unified company portal page title */
-.account-page .page-top-header .header-content .header-text h2{font-family:'Cairo',sans-serif;font-size:24px;font-weight:800;color:#0f172a;line-height:1.3}
