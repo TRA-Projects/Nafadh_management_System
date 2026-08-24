@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { NfdIcon } from '../icon/icon';
+import { NotificationCenterService } from '../../services/notification-center.service';
 
 export interface ShellNavItem {
   path: string;
@@ -34,15 +35,53 @@ export class AppShell {
   fontSize = signal(16);
   fontScale = computed(() => this.fontSize() / 16);
 
+  // Feature availability is derived from the portal navigation instead of
+  // hardcoding portal names, so the same shell works across all portals.
+  hasNotificationCenter = computed(() =>
+    this.navItems().some((item) => item.path === 'notifications')
+  );
+
+  hasCommunication = computed(() =>
+    this.navItems().some((item) =>
+      ['contact', 'communications', 'messages', 'support'].includes(item.path)
+    )
+  );
+
+  bellCount = computed(() => {
+    const summary = this.notificationCenter.summary();
+    const notificationCount = this.hasNotificationCenter()
+      ? summary.notificationsCount
+      : 0;
+    const communicationCount = this.hasCommunication()
+      ? summary.directMessagesCount + summary.conversationsCount
+      : 0;
+
+    return notificationCount + communicationCount;
+  });
+
   // Back-to-top: shows once the page is scrolled down past a small
   // threshold, so the user never has to grab the mouse and drag the
   // scrollbar back up manually — one click/tap jumps to the top.
   showBackToTop = signal(false);
 
-  constructor(public auth: AuthService) {}
+  constructor(
+    public auth: AuthService,
+    public notificationCenter: NotificationCenterService
+  ) {
+    // The shell is shared, so every portal automatically starts the same
+    // authenticated unread-count synchronization.
+    if (this.auth.isAuthenticated()) {
+      this.notificationCenter.load();
+    }
+  }
 
   toggleDark() { this.dark.update((v) => !v); }
   toggleLang() { this.lang.update((v) => (v === 'ar' ? 'en' : 'ar')); }
+
+  toggleNotifications() {
+    this.notifOpen.update((open) => !open);
+    this.notificationCenter.refresh();
+  }
 
   @HostListener('window:scroll')
   onWindowScroll() {

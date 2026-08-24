@@ -17,14 +17,31 @@
       <button class="icon-btn" (click)="accessOpen.set(!accessOpen())" title="أدوات التسهيل"><nfd-icon name="access" /></button>
 
       <div class="notif-wrap">
-        <button class="icon-btn" (click)="notifOpen.set(!notifOpen())" title="الإشعارات">
+        <button
+          class="icon-btn"
+          (click)="toggleNotifications()"
+          title="الإشعارات"
+          aria-label="الإشعارات">
           <nfd-icon name="bell" />
-          <span class="notif-dot"></span>
+          @if (bellCount() > 0) {
+            <span class="notif-badge">{{ bellCount() > 99 ? '99+' : bellCount() }}</span>
+          }
         </button>
         @if (notifOpen()) {
           <div class="notif-panel">
-            <div class="notif-head"><span>الإشعارات</span></div>
-            <div class="notif-empty">لا توجد إشعارات جديدة</div>
+            <div class="notif-head">
+              <span>الإشعارات</span>
+              @if (bellCount() > 0) {
+                <strong>{{ bellCount() }}</strong>
+              }
+            </div>
+            <div class="notif-empty">
+              @if (bellCount() > 0) {
+                لديك {{ bellCount() }} تنبيهًا أو محادثة جديدة
+              } @else {
+                لا توجد إشعارات أو محادثات جديدة
+              }
+            </div>
           </div>
         }
       </div>

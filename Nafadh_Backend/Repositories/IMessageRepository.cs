@@ -14,6 +14,7 @@ namespace Nafadh_Backend.Repositories
         Task<List<NFD_Message>> GetUserInboxAsync(int userId);
         Task AddAsync(NFD_Message message);
         Task UpdateStatusAsync(int messageId, NFD_MessageStatus status);
-        Task<int> GetUnreadCountAsync(int userId);   
+        Task<int> GetUnreadCountAsync(int userId);
+        Task<int> GetUnreadDirectMessageCountAsync(int userId);
     }
 }
