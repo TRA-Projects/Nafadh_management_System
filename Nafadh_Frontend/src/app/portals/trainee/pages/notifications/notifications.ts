@@ -1,160 +1,103 @@
-import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TraineeApi } from '../../services/trainee-api';
-import { AuthService } from '../../../../core/auth/auth.service';
-import { NotificationDto, WarningDto } from '../../../../core/models/dtos';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { NotificationDto, NotificationService } from '../../../../shared/services/notification.service';
+import { NotificationSummaryService } from '../../../../shared/services/notification-summary.service';
+
+type NotificationFilter = 'all' | 'unread';
 
 @Component({
   selector: 'app-trainee-notifications',
   imports: [CommonModule],
   templateUrl: './notifications.html',
+  styleUrl: './notifications.css',
 })
 export class TraineeNotifications implements OnInit {
-  userId = 0; // سيتم تعيينه من AuthService
+  private readonly notificationService = inject(NotificationService);
+  private readonly summaryService = inject(NotificationSummaryService);
 
   notifications = signal<NotificationDto[]>([]);
-  warnings = signal<WarningDto[]>([]);
+  activeFilter = signal<NotificationFilter>('all');
+  loading = signal(true);
+  error = signal<string | null>(null);
 
-  // تعريف قيم الفلتر المتاحة
-  filter = signal<'all' | 'unread' | 'notification' | 'warning'>('all');
-  
-  // متغير للتحكم في عرض القائمة المنسدلة فقط
-  displayFilter = signal<string>('all');
-
-  constructor(
-    private api: TraineeApi,
-    private auth: AuthService,
-  ) {}
-
-  ngOnInit() {
-    // الحصول على userId من AuthService
-    this.userId = this.auth.userId ?? 4;
-
-    // جلب الإشعارات باستخدام userId
-    this.api.getNotifications(this.userId).subscribe((d) => {
-      const processed = (d ?? []).map((item) => ({
-        ...item,
-        isRead: item.isRead ?? false, // استخدام القيمة الفعلية من الخادم
-      }));
-      this.notifications.set(processed);
-    });
-
-    // جلب الإنذارات - سيتم تعديلها لاستخدام userId
-    this.api.getMyWarnings(this.userId).subscribe((d) => {
-      this.warnings.set(d ?? []);
-    });
-  }
-
-  /**
-   * الحصول على العناصر المفلترة
-   */
-  filtered() {
-    const currentFilter = this.filter();
+  filteredNotifications = computed(() => {
     const list = this.notifications();
+    return this.activeFilter() === 'unread' ? list.filter((n) => !n.isRead) : list;
+  });
 
-    if (currentFilter === 'unread') {
-      return list.filter((n) => !n.isRead);
-    }
-    if (currentFilter === 'warning') {
-      // إرجاع العناصر التي تحتوي على إنذار أو تحذير
-      return list.filter((n) => n.title?.includes('إنذار') || n.title?.includes('تحذير'));
-    }
-    if (currentFilter === 'notification') {
-      // إرجاع العناصر التي لا تحتوي على إنذار أو تحذير
-      return list.filter((n) => !n.title?.includes('إنذار') && !n.title?.includes('تحذير'));
-    }
+  unreadCount = computed(() => this.notifications().filter((n) => !n.isRead).length);
 
-    return list;
+  ngOnInit(): void {
+    this.load();
   }
 
-  /**
-   * تغيير الفلتر من القائمة المنسدلة
-   */
-  onFilterChange(value: string) {
-    this.filter.set(value as 'all' | 'notification' | 'warning');
-    this.displayFilter.set(value);
-  }
-
-  /**
-   * تعيين فلتر "غير مقروء"
-   */
-  setUnreadFilter() {
-    this.filter.set('unread');
-    // لا نغير displayFilter، فيبقى على آخر قيمة مختارة
-  }
-
-  /**
-   * تحديد تنبيه كمقروء
-   */
-  markRead(n: NotificationDto) {
-    // تحديث محلياً أولاً لتجربة أفضل
-    this.notifications.update((list) =>
-      list.map((x) => (x.notificationId === n.notificationId ? { ...x, isRead: true } : x)),
-    );
-
-    // إرسال الطلب إلى الخادم
-    this.api.markRead(n.notificationId).subscribe({
-      next: () => {
-        console.log('Notification marked as read:', n.notificationId);
+  load(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.notificationService.getMine().subscribe({
+      next: (data) => {
+        this.notifications.set(data ?? []);
+        this.loading.set(false);
       },
-      error: (error: any) => {
-        console.error('Error marking notification as read:', error);
-        // في حالة الخطأ، نعيد تحميل البيانات
-        this.api.getNotifications(this.userId).subscribe((d) => {
-          const processed = (d ?? []).map((item) => ({
-            ...item,
-            isRead: item.isRead ?? false,
-          }));
-          this.notifications.set(processed);
-        });
+      error: (err) => {
+        console.error('Failed to load trainee notifications.', err);
+        this.error.set('تعذر تحميل الإشعارات.');
+        this.loading.set(false);
       },
     });
   }
 
-  /**
-   * تحديد جميع التنبيهات كمقروءة
-   */
-  markAllAsRead() {
-    const unreadNotifications = this.notifications().filter((n) => !n.isRead);
+  setFilter(filter: NotificationFilter): void {
+    this.activeFilter.set(filter);
+  }
 
-    if (unreadNotifications.length === 0) {
-      return;
-    }
+  markRead(notification: NotificationDto): void {
+    if (notification.isRead) return;
 
-    // تحديث محلياً أولاً لتجربة أفضل
-    this.notifications.update((list) => list.map((x) => ({ ...x, isRead: true })));
-
-    // إرسال الطلب إلى الخادم
-    this.api.markAllNotificationsAsRead(this.userId).subscribe({
+    this.notificationService.markAsRead(notification.notificationId).subscribe({
       next: () => {
-        console.log('All notifications marked as read');
+        this.notifications.update((list) =>
+          list.map((n) =>
+            n.notificationId === notification.notificationId ? { ...n, isRead: true } : n,
+          ),
+        );
+        this.summaryService.refresh();
       },
-      error: (error: any) => {
-        console.error('Error marking all notifications as read:', error);
-        // في حالة الخطأ، نعيد تحميل البيانات
-        this.api.getNotifications(this.userId).subscribe((d) => {
-          const processed = (d ?? []).map((item) => ({
-            ...item,
-            isRead: item.isRead ?? false,
-          }));
-          this.notifications.set(processed);
-        });
-      },
+      error: (err) => console.error('Failed to mark notification as read.', err),
     });
   }
 
-  /**
-   * الحصول على عدد التنبيهات غير المقروءة
-   */
-  getUnreadCount(): number {
-    return this.notifications().filter((n) => !n.isRead).length;
+  markAllRead(): void {
+    if (!this.unreadCount()) return;
+
+    this.notificationService.markAllAsRead().subscribe({
+      next: () => {
+        this.notifications.update((list) => list.map((n) => ({ ...n, isRead: true })));
+        this.summaryService.refresh();
+      },
+      error: (err) => console.error('Failed to mark all notifications as read.', err),
+    });
   }
 
-  /**
-   * التواصل مع المشرف بخصوص الإنذار
-   */
-  contactSupervisor(n: NotificationDto) {
-    console.log('التواصل بخصوص الإنذار:', n);
-    // يمكنك إضافة منطق للتواصل مع المشرف هنا
+  trackById(_: number, item: NotificationDto): number {
+    return item.notificationId;
+  }
+
+  timeAgo(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+
+    const diff = Math.max(0, Date.now() - date.getTime());
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return 'منذ لحظات';
+    if (minutes < 60) return `منذ ${minutes} دقيقة`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `منذ ${hours} ساعة`;
+
+    const days = Math.floor(hours / 24);
+    if (days === 1) return 'أمس';
+    if (days < 30) return `منذ ${days} يوم`;
+    return date.toLocaleDateString('ar-OM');
   }
 }

@@ -1,116 +1,55 @@
-<div class="page" dir="rtl">
-
-  <!-- رأس الصفحة: العنوان + الوصف + زر إعلان جديد لكل النظام (لا يُحذف) -->
-  <div class="notif-header-card">
-    <div class="notif-header-top">
-      <h2 class="notif-header-title">الإشعارات</h2>
-      <p class="notif-header-subtitle">مركز الإشعارات والتنبيهات</p>
+<section class="page" dir="rtl">
+  <header class="page-header">
+    <div>
+      <h1>الإشعارات</h1>
+      <p>مركز الإشعارات والتنبيهات الخاصة بحساب الإدارة.</p>
     </div>
-    <div class="notif-header-action-bar">
-      <p class="notif-header-desc">
-        إعلانات نظام الإدارة تصل تلقائياً لكل الشركات والمتدربين (نطاق النظام بالكامل)
-      </p>
-      <button class="btn btn-new-announcement" (click)="showAnnounce.set(true)">
-        + إعلان جديد لكل النظام
-      </button>
+    <div class="header-actions">
+      <button type="button" class="secondary" (click)="exportAll()">تصدير</button>
+      <button type="button" class="secondary" (click)="showAnnounce.set(true)">إعلان جديد</button>
+      <button type="button" class="mark-all" [disabled]="!unreadCount()" (click)="markAllRead()">تعليم الكل كمقروء</button>
     </div>
-  </div>
+  </header>
 
-  <!-- شريط الأدوات العلوي: تصدير / تعليم الكل كمقروء + تبويبات الفلترة -->
   <div class="toolbar">
-    <div class="toolbar-actions">
-      <button class="btn btn-export" (click)="exportAll()">
-        تصدير
-      </button>
-      <button class="btn btn-mark-all" (click)="markAllRead()">
-        تعليم الكل كمقروء
-      </button>
-    </div>
-
-    <div class="toolbar-tabs">
-      <button
-        class="tab"
-        [class.active]="activeFilter() === 'unread'"
-        (click)="setFilter('unread')">
-        غير مقروءة
-        <span class="tab-count" *ngIf="unreadCount() > 0">{{ unreadCount() }}</span>
-      </button>
-      <button
-        class="tab"
-        [class.active]="activeFilter() === 'all'"
-        (click)="setFilter('all')">
-        الكل
-      </button>
+    <div class="tabs">
+      <button type="button" [class.active]="activeFilter() === 'all'" (click)="setFilter('all')">الكل <span>{{ notifications().length }}</span></button>
+      <button type="button" [class.active]="activeFilter() === 'unread'" (click)="setFilter('unread')">غير مقروءة <span>{{ unreadCount() }}</span></button>
     </div>
   </div>
 
-  <div class="notifications-header">
-    <span>{{ filteredNotifications().length }} إشعار</span>
-  </div>
-
-  <!-- المحتوى الرئيسي: قائمة الإشعارات -->
-  <main class="notifications-card">
-
-    <div *ngIf="filteredNotifications().length; else emptyState" class="notifications-list">
-
-      <div
-        class="notification-row"
-        *ngFor="let item of filteredNotifications()"
-        [class.unread]="!item.isRead"
-        (click)="onNotificationClick(item)"
-        tabindex="0"
-        role="button"
-        (keyup.enter)="onNotificationClick(item)">
-
-        <!-- جهة اليمين: الأيقونة والنقطة الخضراء (في الواجهة العربية) -->
-        <div class="notification-icon-side">
-          <div class="icon-wrapper">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  @if (loading()) {
+    <div class="state">جاري تحميل الإشعارات...</div>
+  } @else if (error()) {
+    <div class="state error">{{ error() }} <button type="button" (click)="load()">إعادة المحاولة</button></div>
+  } @else if (!filteredNotifications().length) {
+    <div class="state empty"><span class="bell">🔔</span><strong>لا توجد إشعارات</strong><span>{{ activeFilter() === 'unread' ? 'لا توجد إشعارات غير مقروءة.' : 'ستظهر هنا الإشعارات الجديدة.' }}</span></div>
+  } @else {
+    <div class="notification-list">
+      @for (item of filteredNotifications(); track trackById($index, item)) {
+        <article class="notification" [class.unread]="!item.isRead" (click)="markRead(item)" tabindex="0" (keyup.enter)="markRead(item)">
+          <div class="icon">🔔</div>
+          <div class="body">
+            <div class="title-row"><h2>{{ item.title }}</h2>@if (!item.isRead) {<span class="new">جديد</span>}</div>
+            <p>{{ item.message }}</p>
           </div>
-          <span class="unread-dot" *ngIf="!item.isRead"></span>
-        </div>
-
-        <!-- الوسط: العنوان والرسالة -->
-        <div class="notif-content">
-          <div class="notif-title">{{ item.title }}</div>
-          <div class="notif-desc">{{ item.message }}</div>
-        </div>
-
-        <!-- جهة اليسار: الوقت وشارة جديد -->
-        <div class="notif-time-col">
-          <div class="notif-time">{{ item.dateLabel }}</div>
-          <span class="badge-new" *ngIf="!item.isRead">جديد</span>
-        </div>
-
-      </div>
-
+          <time>{{ item.dateLabel }}</time>
+        </article>
+      }
     </div>
+  }
 
-    <ng-template #emptyState>
-      <div class="empty-state">لا توجد إشعارات حالياً</div>
-    </ng-template>
-
-  </main>
-
-  <!-- نافذة إضافة إعلان جديد -->
-  <div class="modal-overlay" *ngIf="showAnnounce()">
-    <div class="modal">
-      <h3>إعلان جديد</h3>
-      <textarea
-        class="modal-textarea"
-        rows="4"
-        placeholder="اكتب نص الإعلان..."
-        [(ngModel)]="announceMsg"
-        name="announceMsg">
-      </textarea>
-      <p class="modal-error" *ngIf="announceError()">{{ announceError() }}</p>
-      <div class="modal-actions">
-        <button class="btn btn-cancel" (click)="showAnnounce.set(false)">إلغاء</button>
-        <button class="btn btn-primary" (click)="postAnnouncement()" [disabled]="!announceMsg.trim() || posting()">
-          {{ posting() ? 'جاري النشر...' : 'نشر' }}
-        </button>
+  @if (showAnnounce()) {
+    <div class="modal-backdrop" (click)="showAnnounce.set(false)">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <h3>إعلان جديد</h3>
+        <textarea [(ngModel)]="announceMsg" rows="5" placeholder="اكتب نص الإعلان..."></textarea>
+        @if (announceError()) { <p class="modal-error">{{ announceError() }}</p> }
+        <div class="modal-actions">
+          <button type="button" class="secondary" (click)="showAnnounce.set(false)">إلغاء</button>
+          <button type="button" class="primary" [disabled]="!announceMsg.trim() || posting()" (click)="postAnnouncement()">{{ posting() ? 'جاري النشر...' : 'نشر' }}</button>
+        </div>
       </div>
     </div>
-  </div>
-
-</div>
+  }
+</section>

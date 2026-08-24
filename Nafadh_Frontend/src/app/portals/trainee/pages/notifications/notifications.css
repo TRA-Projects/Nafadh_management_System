@@ -25,14 +25,3 @@ time { color:#94a3b8; font-size:12px; white-space:nowrap; }
 .state.error { color:#b91c1c; }
 .state.error button { border:0; background:#2563eb; color:#fff; border-radius:8px; padding:7px 12px; }
 @media (max-width:700px) { .page{padding:18px;} .page-header{align-items:flex-start; flex-direction:column;} .notification{grid-template-columns:38px 1fr;} time{grid-column:2;} }
-.header-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-.secondary { border:1px solid #cbd5e1; background:#fff; border-radius:10px; padding:10px 15px; color:#334155; }
-.secondary:hover { background:#f8fafc; }
-.modal-backdrop { position:fixed; inset:0; background:rgba(15,23,42,.35); display:grid; place-items:center; padding:20px; z-index:1000; }
-.modal { width:min(520px,100%); background:#fff; border-radius:16px; padding:22px; box-shadow:0 20px 60px rgba(15,23,42,.2); }
-.modal h3 { margin:0 0 14px; }
-.modal textarea { width:100%; resize:vertical; border:1px solid #cbd5e1; border-radius:10px; padding:12px; box-sizing:border-box; font:inherit; }
-.modal-actions { display:flex; justify-content:flex-start; gap:8px; margin-top:14px; }
-.primary { border:0; background:#2563eb; color:#fff; border-radius:10px; padding:10px 16px; }
-.primary:disabled { opacity:.5; cursor:not-allowed; }
-.modal-error { color:#b91c1c; margin:10px 0 0; }
