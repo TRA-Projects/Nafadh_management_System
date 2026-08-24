@@ -171,7 +171,23 @@ export class TrainerProfile
 
   hasUnsavedChanges =
     signal(false);
+// =====================================================
+// EDIT MODE
+// =====================================================
 
+isEditing =
+  signal(false);
+
+
+// =====================================================
+// PROFILE IMAGE
+// =====================================================
+
+profileImagePreview =
+  signal<string | null>(null);
+
+selectedProfileImage:
+  File | null = null;
   showSuccessToast =
     signal(false);
 
@@ -365,8 +381,96 @@ export class TrainerProfile
       });
 
   }
+// =====================================================
+// EDIT PROFILE
+// =====================================================
+
+startEditing(): void {
+
+  this.isEditing.set(true);
+
+  this.showSuccessToast.set(false);
+  this.showErrorToast.set(false);
+
+}
+// =====================================================
+// PROFILE IMAGE SELECT
+// =====================================================
+
+onProfileImageSelected(
+  event: Event
+): void {
+
+  const input =
+    event.target as HTMLInputElement;
+
+  const file =
+    input.files?.[0] ?? null;
 
 
+  if (!file) {
+    return;
+  }
+
+
+  if (
+    !file.type.startsWith('image/')
+  ) {
+
+    this.showError(
+      'اختاري ملف صورة صحيح.'
+    );
+
+    input.value = '';
+
+    return;
+  }
+
+
+  const maxSize =
+    5 * 1024 * 1024;
+
+
+  if (
+    file.size > maxSize
+  ) {
+
+    this.showError(
+      'حجم الصورة يجب ألا يتجاوز 5 MB.'
+    );
+
+    input.value = '';
+
+    return;
+  }
+
+
+  this.selectedProfileImage =
+    file;
+
+
+  const reader =
+    new FileReader();
+
+
+  reader.onload = () => {
+
+    this.profileImagePreview.set(
+      typeof reader.result === 'string'
+        ? reader.result
+        : null
+    );
+
+    this.markProfileChanged();
+
+  };
+
+
+  reader.readAsDataURL(
+    file
+  );
+
+}
   // =====================================================
   // PROFILE CHANGE STATE
   // =====================================================
@@ -604,7 +708,9 @@ export class TrainerProfile
           this.hasUnsavedChanges.set(
             false
           );
-
+this.isEditing.set(
+  false
+);
 
           this.showSuccess();
 
