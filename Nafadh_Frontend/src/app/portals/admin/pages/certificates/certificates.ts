@@ -39,6 +39,12 @@ export interface ActiveCertificateModal {
   fileUrl?: string;
 }
 
+export interface CertificateMessage {
+  type: 'error' | 'warning' | 'success';
+  title: string;
+  message: string;
+}
+
 @Component({
   selector: 'app-admin-certificates',
   standalone: true,
@@ -59,9 +65,17 @@ export class AdminCertificates implements OnInit {
   readonly loading = signal<boolean>(false);
   readonly loadingTrainees = signal<boolean>(false);
 
+  // ==================== Certificate Message ====================
+
+  readonly certificateMessage =
+    signal<CertificateMessage | null>(null);
+
+  private messageTimeout: ReturnType<typeof setTimeout> | null = null;
+
   // ==================== Modal ====================
 
   readonly isModalOpen = signal<boolean>(false);
+
   readonly activeCertData =
     signal<ActiveCertificateModal | null>(null);
 
@@ -92,9 +106,45 @@ export class AdminCertificates implements OnInit {
     this.fetchBatches();
   }
 
+  // ============================================================
+  // CERTIFICATE MESSAGE
+  // ============================================================
+
+  private showCertificateMessage(
+    type: 'error' | 'warning' | 'success',
+    title: string,
+    message: string
+  ): void {
+
+    if (this.messageTimeout) {
+      clearTimeout(this.messageTimeout);
+    }
+
+    this.certificateMessage.set({
+      type,
+      title,
+      message
+    });
+
+    this.messageTimeout = setTimeout(() => {
+      this.certificateMessage.set(null);
+    }, 5000);
+  }
+
+  closeCertificateMessage(): void {
+
+    if (this.messageTimeout) {
+      clearTimeout(this.messageTimeout);
+      this.messageTimeout = null;
+    }
+
+    this.certificateMessage.set(null);
+  }
+
   // ==================== Helper ====================
 
   private cleanId(val: any): number {
+
     if (!val) {
       return 0;
     }
@@ -166,11 +216,9 @@ export class AdminCertificates implements OnInit {
                     return {
                       ...normalized,
 
-                      // العدد الحقيقي من API
                       totalTraineesCount:
                         trainees.length,
 
-                      // العدد الحقيقي للشهادات
                       issuedCertificatesCount:
                         issuedCount
                     };
@@ -201,7 +249,6 @@ export class AdminCertificates implements OnInit {
 
           next: (finalBatches) => {
 
-            // المصدر الأساسي
             this.allBatches = finalBatches;
 
             this.applyFilters();
@@ -503,6 +550,7 @@ export class AdminCertificates implements OnInit {
                   t.grade != null
                     ? `${Number(t.grade).toFixed(2)}%`
                     : undefined
+
               };
 
             });
@@ -523,12 +571,12 @@ export class AdminCertificates implements OnInit {
           this.selectedBatch.update(
             b => b
               ? {
-                  ...b,
-                  totalTraineesCount:
-                    realTotal,
-                  issuedCertificatesCount:
-                    realIssued
-                }
+                ...b,
+                totalTraineesCount:
+                  realTotal,
+                issuedCertificatesCount:
+                  realIssued
+              }
               : null
           );
 
@@ -541,12 +589,12 @@ export class AdminCertificates implements OnInit {
                   b.id === bId
                 )
                   ? {
-                      ...b,
-                      totalTraineesCount:
-                        realTotal,
-                      issuedCertificatesCount:
-                        realIssued
-                    }
+                    ...b,
+                    totalTraineesCount:
+                      realTotal,
+                    issuedCertificatesCount:
+                      realIssued
+                  }
                   : b
               )
           );
@@ -559,12 +607,12 @@ export class AdminCertificates implements OnInit {
                 b.id === bId
               )
                 ? {
-                    ...b,
-                    totalTraineesCount:
-                      realTotal,
-                    issuedCertificatesCount:
-                      realIssued
-                  }
+                  ...b,
+                  totalTraineesCount:
+                    realTotal,
+                  issuedCertificatesCount:
+                    realIssued
+                }
                 : b
             );
 
@@ -655,6 +703,7 @@ export class AdminCertificates implements OnInit {
     } else {
 
       window.print();
+
     }
   }
 
@@ -674,17 +723,56 @@ export class AdminCertificates implements OnInit {
 
     if (!eId) {
 
-      alert(
-        'خطأ: لم يتم العثور على رقم التسجيل (enrollmentId) الخاص بالمتدرب.'
+      this.showCertificateMessage(
+        'error',
+        'تعذر إصدار الشهادة',
+        'لم يتم العثور على رقم التسجيل (Enrollment ID) الخاص بالمتدرب.'
       );
 
       return;
     }
 
+    // =========================================================
+    // التحقق من الدرجة قبل إصدار الشهادة
+    // =========================================================
+
+    const grade =
+      trainee.grade != null
+        ? Number(
+          String(trainee.grade)
+            .replace('%', '')
+            .trim()
+        )
+        : NaN;
+
+    if (isNaN(grade)) {
+
+      this.showCertificateMessage(
+        'warning',
+        'لا يمكن إصدار الشهادة',
+        `لم يتم العثور على درجة صحيحة للمتدرب ${trainee.fullName}.`
+      );
+
+      return;
+    }
+
+    if (grade < 50) {
+
+      this.showCertificateMessage(
+        'error',
+        'لا يمكن إصدار الشهادة',
+        `درجة ${trainee.fullName} الحالية هي ${grade.toFixed(2)}%، والحد الأدنى المطلوب لإصدار الشهادة هو 50%.`
+      );
+
+      return;
+    }
+
+    // =========================================================
+    // إصدار الشهادة
+    // =========================================================
+
     const payload = {
-
       enrollmentId: eId,
-
       type: 0
     };
 
@@ -720,9 +808,7 @@ export class AdminCertificates implements OnInit {
             newFileUrl
           );
 
-          // 🔥 أهم شيء:
-          // لا نحسب العدد يدويًا.
-          // نقرأ العدد الحقيقي من قاعدة البيانات.
+          // تحديث العدد من قاعدة البيانات
           const batch =
             this.selectedBatch();
 
@@ -732,7 +818,15 @@ export class AdminCertificates implements OnInit {
               batch.batchId ||
               batch.id
             );
+
           }
+
+          // رسالة نجاح
+          this.showCertificateMessage(
+            'success',
+            'تم إصدار الشهادة بنجاح',
+            `تم إصدار شهادة ${trainee.fullName} بنجاح، وأصبحت جاهزة للعرض والتنزيل.`
+          );
 
           if (autoOpenModal) {
 
@@ -742,10 +836,12 @@ export class AdminCertificates implements OnInit {
 
               isIssued: true,
 
-              fileUrl:
-                newFileUrl
+              fileUrl: newFileUrl
+
             });
+
           }
+
         },
 
         error: (err) => {
@@ -760,9 +856,16 @@ export class AdminCertificates implements OnInit {
             err?.error
           );
 
-          alert(
-            `حدث خطأ أثناء إصدار الشهادة للمتدرب (${trainee.fullName}).`
+          const message =
+            err?.error?.message ||
+            'حدث خطأ أثناء إصدار الشهادة.';
+
+          this.showCertificateMessage(
+            'error',
+            'فشل إصدار الشهادة',
+            `${trainee.fullName}: ${message}`
           );
+
         }
 
       });
@@ -782,7 +885,9 @@ export class AdminCertificates implements OnInit {
 
     if (unissued.length === 0) {
 
-      alert(
+      this.showCertificateMessage(
+        'warning',
+        'لا توجد شهادات للإصدار',
         'جميع الشهادات لهذه الدفعة صُدرت بالفعل.'
       );
 
@@ -806,6 +911,7 @@ export class AdminCertificates implements OnInit {
             trainee.enrollmentId,
 
           type: 0
+
         };
 
         return this.api
@@ -820,8 +926,11 @@ export class AdminCertificates implements OnInit {
               );
 
               return of(null);
+
             })
+
           );
+
       });
 
     // ننتظر انتهاء كل عمليات الإصدار
@@ -844,7 +953,15 @@ export class AdminCertificates implements OnInit {
               batch.batchId ||
               batch.id
             );
+
           }
+
+          this.showCertificateMessage(
+            'success',
+            'تمت العملية بنجاح',
+            `تم الانتهاء من معالجة إصدار الشهادات لـ ${unissued.length} متدربين.`
+          );
+
         },
 
         error: (err) => {
@@ -852,6 +969,12 @@ export class AdminCertificates implements OnInit {
           console.error(
             '❌ Error issuing certificates:',
             err
+          );
+
+          this.showCertificateMessage(
+            'error',
+            'حدث خطأ',
+            'حدث خطأ أثناء إصدار الشهادات.'
           );
 
         }
@@ -917,6 +1040,7 @@ export class AdminCertificates implements OnInit {
                 t.grade != null
                   ? `${Number(t.grade).toFixed(2)}%`
                   : undefined
+
             }));
 
           this.selectedBatchTrainees.set(
@@ -935,12 +1059,12 @@ export class AdminCertificates implements OnInit {
           this.selectedBatch.update(
             batch => batch
               ? {
-                  ...batch,
-                  totalTraineesCount:
-                    totalTrainees,
-                  issuedCertificatesCount:
-                    issuedCertificates
-                }
+                ...batch,
+                totalTraineesCount:
+                  totalTrainees,
+                issuedCertificatesCount:
+                  issuedCertificates
+              }
               : null
           );
 
@@ -952,12 +1076,12 @@ export class AdminCertificates implements OnInit {
                 batch.id === bId
               )
                 ? {
-                    ...batch,
-                    totalTraineesCount:
-                      totalTrainees,
-                    issuedCertificatesCount:
-                      issuedCertificates
-                  }
+                  ...batch,
+                  totalTraineesCount:
+                    totalTrainees,
+                  issuedCertificatesCount:
+                    issuedCertificates
+                }
                 : batch
             );
 
@@ -975,6 +1099,7 @@ export class AdminCertificates implements OnInit {
           );
 
           this.loadingTrainees.set(false);
+
         }
 
       });
@@ -1019,12 +1144,12 @@ export class AdminCertificates implements OnInit {
           this.selectedBatch.update(
             batch => batch
               ? {
-                  ...batch,
-                  totalTraineesCount:
-                    totalTrainees,
-                  issuedCertificatesCount:
-                    issuedCertificates
-                }
+                ...batch,
+                totalTraineesCount:
+                  totalTrainees,
+                issuedCertificatesCount:
+                  issuedCertificates
+              }
               : null
           );
 
@@ -1036,17 +1161,18 @@ export class AdminCertificates implements OnInit {
                 batch.id === bId
               )
                 ? {
-                    ...batch,
-                    totalTraineesCount:
-                      totalTrainees,
-                    issuedCertificatesCount:
-                      issuedCertificates
-                  }
+                  ...batch,
+                  totalTraineesCount:
+                    totalTrainees,
+                  issuedCertificatesCount:
+                    issuedCertificates
+                }
                 : batch
             );
 
           // القائمة الظاهرة
           this.applyFilters();
+
         },
 
         error: (err) => {
@@ -1055,6 +1181,7 @@ export class AdminCertificates implements OnInit {
             '❌ Failed to refresh batch status:',
             err
           );
+
         }
 
       });
@@ -1158,6 +1285,7 @@ export class AdminCertificates implements OnInit {
       st === '1' ||
       st === 'active'
     ) {
+
       return 'جارية';
     }
 
@@ -1165,6 +1293,7 @@ export class AdminCertificates implements OnInit {
       st === 'completed' ||
       st === '2'
     ) {
+
       return 'مكتملة';
     }
 
@@ -1182,12 +1311,12 @@ export class AdminCertificates implements OnInit {
         list.map(t =>
           t.enrollmentId === enrollmentId
             ? {
-                ...t,
-                isIssued,
-                fileUrl:
-                  fileUrl ||
-                  t.fileUrl
-              }
+              ...t,
+              isIssued,
+              fileUrl:
+                fileUrl ||
+                t.fileUrl
+            }
             : t
         )
     );
