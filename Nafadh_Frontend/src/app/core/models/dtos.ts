@@ -118,31 +118,6 @@ export interface CompanyDto {
   status: CompanyStatus;
   approvalDate?: string;
   userId?: number;
-  // Real, company-scoped counts computed server-side from actual Enrollments
-  // (see CompanyService.MapToOutputDTO) — no client-side estimation needed.
-  programsCount?: number;
-  batchesCount?: number;
-  traineesCount?: number;
-  programs?: CompanyReportProgramDto[];
-}
-
-// Real per-program breakdown for a company, used by the admin Reports screen.
-export interface CompanyReportProgramDto {
-  companyId: number;
-  programId: number;
-  title?: string;
-  track?: string;
-  batchesCount: number;
-  traineesCount: number;
-  batches: CompanyReportBatchDto[];
-}
-
-export interface CompanyReportBatchDto {
-  batchId: number;
-  batchName: string;
-  startDate: string;
-  endDate: string;
-  traineesCount: number;
 }
 
 export interface CompanyBranchDto {
@@ -241,6 +216,7 @@ export interface TrainerBatchDto {
   enrolledTraineesCount?: number;
   attendanceRate?: number;
   progressPercentage?: number;
+  
 }
 
 // ---- Academic structure ----
@@ -326,10 +302,10 @@ export interface BatchDto {
   batchId: number;
   programId: number;
   batchName: string;
-  companyName?: string;
   programName?: string;
-  InstructorName?: string; 
+  companyName?: string;
   trackName?: string;
+  InstructorName?: string; 
   startDate: string;
   endDate: string;
   capacity: number;
@@ -463,6 +439,8 @@ export interface EnrollmentDto {
   completionStatus: string;
   batchId: number;
   batchName: string;
+  batchStartDate?: string;
+  batchEndDate?: string;
   traineeId: number;
   traineeName: string;
   companyId: number;
@@ -472,6 +450,7 @@ export interface EnrollmentDto {
   supervisorId?: number;
   supervisorName?: string;
   traineeGitHubUrl?: string;
+  programId?: number;
   programTitle?: string;
   programDescription?: string;
   trackName?: string;
@@ -583,9 +562,17 @@ export interface EvaluationDto {
   evaluationId: number;
   enrollmentId: number;
   trainerId?: number;
+  trainerName?: string;
   templateId: number;
+  stage?: number;
+  moduleId?: number;
+  moduleTitle?: string;
+  templateType?: string;
   score: number;
   notes?: string;
+  evaluationDate: string;
+  evaluatorUserId: number;
+  evaluatorName?: string;
   criteriaBreakdown: EvaluationCriterionScoreDto[];
 }
 

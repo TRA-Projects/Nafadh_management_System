@@ -1,15 +1,22 @@
 <div class="profile-container">
 
-  <!-- الهيدر -->
   <div class="header-row">
-    <h1 class="page-title">ملف المتدرب: {{ fullName() }}</h1>
     <button class="back-btn" (click)="goBack()">
-      رجوع للقائمة
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 12h14"/>
-        <path d="m12 5 7 7-7 7"/>
+        <path d="M19 12H5"/>
+        <path d="m12 19-7-7 7-7"/>
       </svg>
+      رجوع للقائمة
     </button>
+
+    @if (enrollment()?.traineeGitHubUrl || trainee()?.gitHubUrl) {
+      <button class="github-btn" (click)="openGitHub()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.1 3.29 9.4 7.86 10.93.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.43-2.7 5.4-5.27 5.69.42.36.78 1.07.78 2.17 0 1.57-.01 2.83-.01 3.22 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12c0-6.35-5.15-11.5-11.5-11.5Z"/>
+        </svg>
+        {{ enrollment()?.companyName || 'GitHub' }}
+      </button>
+    }
   </div>
 
   @if (isLoading()) {
@@ -18,58 +25,166 @@
     <div class="state-box state-error">{{ loadError() }}</div>
   } @else {
 
-    <!-- بطاقة معلومات المتدرب -->
+    <!-- بطاقة هوية المتدرب -->
     <div class="nfd-card identity-card">
-      <div class="avatar-circle">{{ getInitials(fullName()) }}</div>
-      <h2 class="user-name">{{ fullName() }}</h2>
-      @if (trainee()?.email) {
-        <p class="user-email">{{ trainee()?.email }}</p>
-      }
-      <div class="badge-row">
-        <span class="pill pill-status">{{ statusLabel() }}</span>
-        @if (universityMajor()) {
-          <span class="pill pill-muted">{{ universityMajor() }}</span>
+      <div class="identity-text">
+        <h1 class="user-name">{{ fullName() }}</h1>
+        @if (programLine()) {
+          <p class="program-line">
+            @if (enrollmentCode()) { <span class="code-chip">{{ enrollmentCode() }}</span> · }
+            {{ programLine() }}
+          </p>
         }
-      </div>
-    </div>
-
-    <!-- كروت الإحصائيات -->
-    <div class="stats-grid">
-      <div class="nfd-card stat-card">
-        <span class="stat-title">حالات التأخير</span>
-        <div class="stat-value text-amber">{{ lateCount() }}</div>
-        <span class="stat-sub">مرات التأخير</span>
-      </div>
-
-      <div class="nfd-card stat-card">
-        <span class="stat-title">أيام الغياب</span>
-        <div class="stat-value text-rose">{{ absentDays() }}</div>
-        <span class="stat-sub">أيام غياب</span>
-      </div>
-
-      <div class="nfd-card stat-card">
-        <span class="stat-title">أيام الحضور</span>
-        <div class="stat-value text-blue">{{ presentDays() }}</div>
-        <span class="stat-sub">أيام مسجلة</span>
-      </div>
-
-      <div class="nfd-card stat-card">
-        <span class="stat-title">نسبة الحضور</span>
-        <div class="stat-value text-teal">{{ attendanceRate() }}%</div>
-        <span class="stat-sub">معدل الالتزام</span>
-      </div>
-    </div>
-
-    <!-- نسبة الإنجاز -->
-    <div class="nfd-card section-card">
-      <h3 class="section-title">نسبة الإنجاز في التدريب</h3>
-      <div class="progress-row">
-        <span class="progress-percent">{{ completionPercentage() }}%</span>
-        <div class="progress-track">
-          <div class="progress-fill" [style.width.%]="completionPercentage()"></div>
+        @if (batchDatesLabel()) {
+          <p class="batch-dates">مدة الدفعة: {{ batchDatesLabel() }}</p>
+        }
+        <div class="badge-row">
+          @if (enrollment()?.supervisorName) {
+            <span class="pill pill-muted">المشرف: {{ enrollment()?.supervisorName }}</span>
+          }
+          @if (enrollment()?.departmentName) {
+            <span class="pill pill-muted">القسم: {{ enrollment()?.departmentName }}</span>
+          }
+          <span class="pill pill-status">
+            <span class="status-dot"></span>{{ enrollmentStatusLabel() }}
+          </span>
         </div>
       </div>
+      <div class="avatar-circle">{{ getInitials(fullName()) }}</div>
     </div>
+
+    <!-- كروت الملخص العلوية -->
+    <div class="summary-grid">
+      <div class="nfd-card summary-card">
+        <span class="summary-title">الفترة الحالية</span>
+        <div class="summary-value summary-value-sm">{{ currentStageLabel() }}</div>
+      </div>
+      <div class="nfd-card summary-card">
+        <span class="summary-title">تقييمات معلقة</span>
+        <div class="summary-value">{{ pendingEvaluationsCount() }}</div>
+      </div>
+      <div class="nfd-card summary-card">
+        <span class="summary-title">متوسط التقييم</span>
+        <div class="summary-value text-blue">
+          {{ overallAverageScore() !== null ? (overallAverageScore() + '%') : '—' }}
+        </div>
+      </div>
+      <div class="nfd-card summary-card">
+        <span class="summary-title">نسبة الإنجاز</span>
+        <div class="summary-value text-teal">{{ completionPercentage() }}%</div>
+      </div>
+    </div>
+
+    <!-- كروت الحضور والانضباط -->
+    <div class="summary-grid">
+      <div class="nfd-card summary-card">
+        <span class="summary-title">نسبة الحضور</span>
+        <div class="summary-value text-teal">{{ attendanceRate() }}%</div>
+        <span class="summary-sub">معدل الالتزام</span>
+      </div>
+      <div class="nfd-card summary-card">
+        <span class="summary-title">أيام الحضور</span>
+        <div class="summary-value text-blue">{{ presentDays() }}</div>
+        <span class="summary-sub">أيام مسجلة</span>
+      </div>
+      <div class="nfd-card summary-card">
+        <span class="summary-title">أيام الغياب</span>
+        <div class="summary-value text-rose">{{ absentDays() }}</div>
+        <span class="summary-sub">أيام غياب</span>
+      </div>
+      <div class="nfd-card summary-card">
+        <span class="summary-title">حالات التأخير</span>
+        <div class="summary-value text-amber">{{ lateCount() }}</div>
+        <span class="summary-sub">مرات التأخير</span>
+      </div>
+    </div>
+
+    <!-- متوسط التقييم عبر وحدات البرنامج -->
+    @if (stages().length > 0) {
+      <div class="nfd-card section-card">
+        <h3 class="section-title">متوسط التقييم عبر وحدات البرنامج</h3>
+        <div class="donut-row">
+          <div class="donut-legend">
+            @for (s of stages(); track s.module.moduleId) {
+              <div class="legend-row">
+                <span class="legend-dot" [style.background]="s.averageScore !== null ? '#2563eb' : '#cbd5e1'"></span>
+                <span class="legend-label">الوحدة {{ s.orderIndex }}: {{ s.module.title }}</span>
+                <span class="legend-value">{{ s.averageScore !== null ? (s.averageScore + '%') : '—' }}</span>
+              </div>
+            }
+          </div>
+          <div class="donut-chart" [style.background]="'conic-gradient(#2563eb ' + (overallAverageScore() ?? 0) + '%, #eef2f7 0)'">
+            <div class="donut-inner">
+              <span class="donut-percent">{{ overallAverageScore() !== null ? (overallAverageScore() + '%') : '—' }}</span>
+              <span class="donut-caption">المتوسط العام</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- مراحل/وحدات التدريب -->
+    @if (stages().length > 0) {
+      <div class="nfd-card section-card">
+        <h3 class="section-title">وحدات البرنامج التدريبي</h3>
+
+        <div class="stages-list">
+          @for (s of stages(); track s.module.moduleId) {
+            <div class="stage-block">
+              <div class="stage-head">
+                <div class="stage-head-text">
+                  <span class="stage-percent">{{ s.averageScore !== null ? (s.averageScore + '%') : '—' }}</span>
+                  <span class="stage-name">الوحدة {{ s.orderIndex }}: {{ s.module.title }}</span>
+                </div>
+                <span class="pill" [class.pill-done]="s.statusRaw === 'Completed'" [class.pill-progress]="s.statusRaw === 'InProgress'" [class.pill-muted]="s.statusRaw === 'NotStarted'">
+                  {{ s.statusLabel }}
+                </span>
+              </div>
+              <div class="stage-progress-track">
+                <div class="stage-progress-fill" [style.width.%]="s.progressPercent"></div>
+              </div>
+
+              @if (s.evaluations.length === 0) {
+                <p class="empty-note">لا يوجد تقييم مسجل لهذه الوحدة بعد.</p>
+              } @else {
+                <div class="eval-boxes">
+                  @for (ev of s.evaluations; track ev.evaluationId) {
+                    <div class="eval-box">
+                      <div class="eval-box-head">
+                        <span class="eval-score-badge">{{ ev.score }}%</span>
+                        <div class="eval-box-meta">
+                          <span class="eval-type">{{ evalTypeLabel(ev.templateType) }}</span>
+                          <span class="eval-by">بواسطة: {{ ev.evaluatorName || ev.trainerName || 'الهيئة التدريبية' }}</span>
+                        </div>
+                        <span class="eval-date">{{ ev.evaluationDate | date:'yyyy-MM-dd' }}</span>
+                      </div>
+
+                      @if (ev.criteriaBreakdown.length > 0) {
+                        <div class="criteria-list">
+                          @for (c of ev.criteriaBreakdown; track c.criteriaId) {
+                            <div class="criteria-row">
+                              <span class="criteria-score">{{ c.score }}/{{ c.maxPoints }}</span>
+                              <div class="criteria-track">
+                                <div class="criteria-fill" [style.width.%]="c.maxPoints > 0 ? (c.score / c.maxPoints * 100) : 0"></div>
+                              </div>
+                              <span class="criteria-name">{{ c.criterionName }}</span>
+                            </div>
+                          }
+                        </div>
+                      }
+
+                      @if (ev.notes) {
+                        <p class="eval-note">ملاحظة المدرب: "{{ ev.notes }}"</p>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
 
     <!-- سجل الإنذارات -->
     <div class="nfd-card section-card">

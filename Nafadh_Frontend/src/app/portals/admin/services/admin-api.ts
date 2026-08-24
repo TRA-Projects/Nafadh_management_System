@@ -6,7 +6,7 @@ import {
   AnnouncementDto, AuditLogDto, BatchDto, BatchPerformanceReportDto, CertificateDto, CompanyDto,
   ConversationDetailDto, ConversationListItemDto, ConversationMessageDto, EvaluationBucketRollupDto,
   EvaluationDto, NotificationDto, ProgramDto, TraineeListItemDto, TraineeProfileDto,
-  TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto,
+  TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto, ModuleDto,
 } from '../../../core/models/dtos';
 
 export interface TraineeCertificateStatusDto {
@@ -117,6 +117,23 @@ getUsers(): Observable<UserResponseDto[]> {
   getTraineeProgressPercentage(traineeId: number): Observable<{ traineeId: number; percentage: number }> {
     const cleanId = this.sanitizeId(traineeId);
     return this.http.get<{ traineeId: number; percentage: number }>(`${this.base}/TraineeModuleProgress/trainee/${cleanId}/percentage`);
+  }
+
+  /**
+   * وحدات (Modules) برنامج تدريبي معيّن، مرتبة حسب OrderIndex — تُستخدم
+   * لعرض "فترات/مراحل التدريب" الحقيقية في ملف المتدرب.
+   */
+  getModulesByProgram(programId: number): Observable<ModuleDto[]> {
+    const cleanId = this.sanitizeId(programId);
+    return this.http.get<ModuleDto[]>(`${this.base}/Module/program/${cleanId}`);
+  }
+
+  /**
+   * حالة تقدّم المتدرب في كل وحدة (مكتملة / قيد التنفيذ / لم تبدأ)
+   */
+  getTraineeModuleProgress(traineeId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(traineeId);
+    return this.http.get<any[]>(`${this.base}/TraineeModuleProgress/trainee/${cleanId}`);
   }
 
 // ---- Attendance & Evaluation Real Endpoints ----

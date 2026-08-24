@@ -97,3 +97,24 @@ export const WARNING_STATUS_LABELS: Record<WarningStatus, string> = {
   Resolved: 'تم الحل',
   Escalated: 'تم التصعيد',
 };
+
+export const MODULE_PROGRESS_LABELS: Record<ModuleProgressStatus, string> = {
+  NotStarted: 'لم تبدأ',
+  InProgress: 'قيد التنفيذ',
+  Completed: 'مكتملة',
+};
+
+export const EVALUATION_TYPE_LABELS: Record<EvaluationType, string> = {
+  Technical: 'تقييم تقني',
+  Behavioral: 'تقييم سلوكي',
+  CompanyEvaluation: 'تقييم الشركة',
+  Final: 'تقييم نهائي',
+  TrainerPerformance: 'تقييم أداء المدرب',
+};
+
+export const ENROLLMENT_STATUS_LABELS: Record<EnrollmentCompletionStatus, string> = {
+  InProgress: 'نشط',
+  Completed: 'مكتمل',
+  Dropped: 'منسحب',
+  Failed: 'راسب',
+};
