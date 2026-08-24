@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
 <div
   class="dashboard-viewport-container"
   style="
@@ -27,6 +29,7 @@
         font-family: 'Cairo', sans-serif;
       "
     >
+      <i class="fas fa-spinner fa-spin" style="margin-left: 10px;"></i>
       جاري تحميل البيانات...
     </div>
   } @else if (errorMessage()) {
@@ -42,6 +45,7 @@
         font-family: 'Cairo', sans-serif;
       "
     >
+      <i class="fas fa-exclamation-circle" style="margin-left: 10px;"></i>
       {{ errorMessage() }}
     </div>
   } @else {
@@ -67,6 +71,7 @@
           <h2
             style="margin: 0; font-size: 1.6rem; font-weight: 800; font-family: 'Cairo', sans-serif"
           >
+            <i class="fas fa-hand-wave" style="margin-left: 10px;"></i>
             مرحباً،
             {{
               auth.session()?.fullName ||
@@ -74,7 +79,6 @@
                 summary()?.fullName ||
                 'المتدرب'
             }}
-            👋
           </h2>
         </div>
         <p
@@ -85,6 +89,7 @@
             font-family: 'Cairo', sans-serif;
           "
         >
+          <i class="fas fa-graduation-cap" style="margin-left: 6px;"></i>
           {{ programName() || 'برنامج تدريبي' }} — {{ batchName() || 'دفعة تدريبية' }}
         </p>
         <div
@@ -108,6 +113,7 @@
               font-family: 'Cairo', sans-serif;
             "
           >
+            <i class="fas fa-check-circle" style="margin-left: 4px;"></i>
             {{ calculatedStatus() }}
           </span>
           <span
@@ -117,6 +123,7 @@
               font-family: 'Cairo', sans-serif;
             "
           >
+            <i class="far fa-calendar-alt" style="margin-left: 4px;"></i>
             تاريخ الانتهاء: {{ (programEndDate() | date: 'MMM yyyy') || 'غير محدد' }}
           </span>
         </div>
@@ -151,8 +158,10 @@
               color: rgba(255, 255, 255, 0.75);
               font-family: 'Cairo', sans-serif;
             "
-            >نسبة الإنجاز الإجمالية</span
           >
+            <i class="fas fa-chart-line" style="margin-left: 4px;"></i>
+            نسبة الإنجاز الإجمالية
+          </span>
 
           <button
             routerLink="/trainee/program"
@@ -170,6 +179,7 @@
               font-family: 'Cairo', sans-serif;
             "
           >
+            <i class="fas fa-arrow-left" style="margin-left: 6px;"></i>
             عرض التفاصيل
           </button>
         </div>
@@ -242,8 +252,10 @@
             font-weight: 600;
             font-family: 'Cairo', sans-serif;
           "
-          >الوحدات المكتملة</span
         >
+          <i class="fas fa-book" style="margin-left: 6px;"></i>
+          الوحدات المكتملة
+        </span>
         <span
           style="
             background: #eff6ff;
@@ -280,8 +292,10 @@
             font-weight: 600;
             font-family: 'Cairo', sans-serif;
           "
-          >المهام المسلّمة</span
         >
+          <i class="fas fa-tasks" style="margin-left: 6px;"></i>
+          المهام المسلّمة
+        </span>
         <span
           style="
             background: #f0fdf4;
@@ -298,83 +312,86 @@
           }}
         </span>
       </div>
-<!-- نسبة الحضور -->
-<div
-  style="
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 16px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-    font-family: 'Cairo', sans-serif;
-  "
->
-  <span
-    style="
-      font-size: 0.85rem;
-      color: #64748b;
-      font-weight: 600;
-      font-family: 'Cairo', sans-serif;
-    "
-    >نسبة الحضور</span
-  >
-  <span
-    style="
-      background: #fdf4ff;
-      color: #9333ea;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      font-family: 'Cairo', sans-serif;
-    "
-  >
-    <!-- استخدام attendanceRate بدلاً من summary()?.attendanceRate -->
-    {{ attendanceRate() | number: '1.0-0' }}%
-  </span>
-</div>
 
-<!-- الإنذارات -->
-<div
-  style="
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 16px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-    font-family: 'Cairo', sans-serif;
-  "
->
-  <span
-    style="
-      font-size: 0.85rem;
-      color: #64748b;
-      font-weight: 600;
-      font-family: 'Cairo', sans-serif;
-    "
-    >الإنذارات</span
-  >
-  <span
-    style="
-      background: #fef2f2;
-      color: #dc2626;
-      padding: 4px 14px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      font-family: 'Cairo', sans-serif;
-    "
-  >
-    <!-- استخدام warningsCount بدلاً من summary()?.warningsCount -->
-    {{ warningsCount() }}
-  </span>
-</div>
+      <!-- نسبة الحضور -->
+      <div
+        style="
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 16px 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+          font-family: 'Cairo', sans-serif;
+        "
+      >
+        <span
+          style="
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
+            font-family: 'Cairo', sans-serif;
+          "
+        >
+          <i class="fas fa-user-check" style="margin-left: 6px;"></i>
+          نسبة الحضور
+        </span>
+        <span
+          style="
+            background: #fdf4ff;
+            color: #9333ea;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+          "
+        >
+          {{ attendanceRate() | number: '1.0-0' }}%
+        </span>
+      </div>
+
+      <!-- الإنذارات -->
+      <div
+        style="
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 16px 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+          font-family: 'Cairo', sans-serif;
+        "
+      >
+        <span
+          style="
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
+            font-family: 'Cairo', sans-serif;
+          "
+        >
+          <i class="fas fa-exclamation-triangle" style="margin-left: 6px;"></i>
+          الإنذارات
+        </span>
+        <span
+          style="
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+          "
+        >
+          {{ warningsCount() }}
+        </span>
+      </div>
     </div>
 
     <!-- 3. الشبكة الرئيسية (الصف الأوسط: فريق الإشراف + المهام القريبة) -->
@@ -409,6 +426,7 @@
             font-family: 'Cairo', sans-serif;
           "
         >
+          <i class="fas fa-users" style="margin-left: 8px;"></i>
           فريق الإشراف
         </h3>
 
@@ -443,7 +461,7 @@
                   font-family: 'Cairo', sans-serif;
                 "
               >
-                ...
+                <i class="fas fa-spinner fa-pulse"></i>
               </div>
               <div
                 style="
@@ -487,7 +505,7 @@
                 "
               >
                 <span style="font-size: 0.75rem; color: #64748b; font-family: 'Cairo', sans-serif"
-                  >المدرب</span
+                  ><i class="fas fa-chalkboard-teacher" style="margin-left: 4px;"></i>المدرب</span
                 >
                 <strong style="font-size: 0.9rem; color: #1e293b; font-family: 'Cairo', sans-serif">
                   {{ trainerData()?.fullName || summary()?.trainerName || 'لم يتم التعيين' }}
@@ -527,7 +545,7 @@
                   font-family: 'Cairo', sans-serif;
                 "
               >
-                ...
+                <i class="fas fa-spinner fa-pulse"></i>
               </div>
               <div
                 style="
@@ -571,7 +589,7 @@
                 "
               >
                 <span style="font-size: 0.75rem; color: #64748b; font-family: 'Cairo', sans-serif"
-                  >المشرف</span
+                  ><i class="fas fa-user-tie" style="margin-left: 4px;"></i>المشرف</span
                 >
                 <strong style="font-size: 0.9rem; color: #1e293b; font-family: 'Cairo', sans-serif">
                   {{
@@ -621,6 +639,7 @@
               font-family: 'Cairo', sans-serif;
             "
           >
+            <i class="fas fa-clock" style="margin-left: 8px;"></i>
             المهام القريبة من موعد التسليم
           </h3>
           <button
@@ -635,7 +654,7 @@
               font-family: 'Cairo', sans-serif;
             "
           >
-            عرض الكل
+            عرض الكل <i class="fas fa-arrow-left" style="margin-right: 4px;"></i>
           </button>
         </div>
 
@@ -652,6 +671,7 @@
                 font-family: 'Cairo', sans-serif;
               "
             >
+              <i class="fas fa-spinner fa-spin" style="margin-left: 8px;"></i>
               جاري تحميل المهام...
             </div>
           } @else {
@@ -694,7 +714,7 @@
                     "
                   >
                     <span
-                      >📅 الموعد النهائي:
+                      ><i class="far fa-calendar-alt" style="margin-left: 4px;"></i> الموعد النهائي:
                       {{ t.dueDate ? (t.dueDate | date: 'mediumDate') : 'غير محدد' }}</span
                     >
                     @if (t.dueDate) {
@@ -702,7 +722,9 @@
                         [style.color]="isTaskOverdue(t.dueDate) ? '#dc2626' : '#16a34a'"
                         style="font-family: 'Cairo', sans-serif"
                       >
-                        {{ isTaskOverdue(t.dueDate) ? '⏰ منتهي' : '' }}
+                        @if (isTaskOverdue(t.dueDate)) {
+                          <i class="fas fa-hourglass-end" style="margin-left: 4px;"></i> منتهي
+                        }
                       </span>
                     }
                   </div>
@@ -711,7 +733,8 @@
                     <span
                       style="font-size: 0.7rem; color: #94a3b8; font-family: 'Cairo', sans-serif"
                     >
-                      📤 التسليم: {{ getTaskStatusDisplay(t.submissionStatus) }}
+                      <i class="fas fa-paper-plane" style="margin-left: 4px;"></i>
+                      التسليم: {{ getTaskStatusDisplay(t.submissionStatus) }}
                     </span>
                   }
                 </div>
@@ -768,6 +791,7 @@
                         font-family: 'Cairo', sans-serif;
                       "
                     >
+                      <i class="fas fa-star" style="margin-left: 3px;"></i>
                       {{ t.grade }}%
                     </span>
                   }
@@ -787,7 +811,7 @@
                   font-family: 'Cairo', sans-serif;
                 "
               >
-                <span style="font-size: 2rem">📋</span>
+                <i class="fas fa-clipboard-list" style="font-size: 2rem;"></i>
                 <span>لا توجد مهام حالياً</span>
                 <span style="font-size: 0.75rem; color: #cbd5e1"
                   >سيتم عرض المهام المخصصة لك هنا</span
@@ -810,7 +834,6 @@
         align-items: start;
       "
     >
-     <!-- الإعلانات -->
       <!-- الإعلانات -->
       <div
         style="
@@ -827,7 +850,10 @@
           font-family: 'Cairo', sans-serif;
         "
       >
-        <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b">الإعلانات</h3>
+        <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b">
+          <i class="fas fa-bullhorn" style="margin-left: 8px;"></i>
+          الإعلانات
+        </h3>
 
         <div
           style="display: flex; flex-direction: column; gap: 10px; font-family: 'Cairo', sans-serif"
@@ -842,6 +868,7 @@
                 font-family: 'Cairo', sans-serif;
               "
             >
+              <i class="fas fa-spinner fa-spin" style="margin-left: 8px;"></i>
               جاري تحميل الإعلانات...
             </div>
           } @else {
@@ -873,7 +900,7 @@
                     font-family: 'Cairo', sans-serif;
                   "
                 >
-                  <span style="font-size: 20px; flex-shrink: 0">🔔</span>
+                  <span style="font-size: 20px; flex-shrink: 0"><i class="fas fa-bell"></i></span>
 
                   <div style="min-width: 0; flex: 1; font-family: 'Cairo', sans-serif">
                     <div
@@ -893,6 +920,7 @@
                           font-family: 'Cairo', sans-serif;
                         "
                       >
+                        <i class="fas fa-flag" style="margin-left: 4px;"></i>
                         إعلان رسمي - ({{ ann.source }})
                       </span>
 
@@ -912,6 +940,7 @@
                           font-family: 'Cairo', sans-serif;
                         "
                       >
+                        <i class="fas fa-info-circle" style="margin-left: 4px;"></i>
                         التفاصيل
                       </button>
                     </div>
@@ -942,6 +971,7 @@
                   font-family: 'Cairo', sans-serif;
                 "
               >
+                <i class="fas fa-inbox" style="margin-left: 8px;"></i>
                 لا توجد إعلانات حالياً
               </div>
             }
@@ -968,7 +998,8 @@
                   margin-top: 4px;
                 "
               >
-                {{ showAllAnnouncements() ? 'عرض أقل ▲' : 'عرض المزيد ▼' }}
+                <i class="fas" [class.fa-chevron-up]="showAllAnnouncements()" [class.fa-chevron-down]="!showAllAnnouncements()"></i>
+                {{ showAllAnnouncements() ? 'عرض أقل' : 'عرض المزيد' }}
               </button>
             }
           }
@@ -1001,8 +1032,13 @@
             direction: rtl;
           ">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-              <h4 style="margin: 0; font-size: 1.1rem; color: #1e293b; font-weight: 700;">تفاصيل الإعلان</h4>
-              <button (click)="closeAnnouncementPopup()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b;">✕</button>
+              <h4 style="margin: 0; font-size: 1.1rem; color: #1e293b; font-weight: 700;">
+                <i class="fas fa-info-circle" style="margin-left: 8px;"></i>
+                تفاصيل الإعلان
+              </h4>
+              <button (click)="closeAnnouncementPopup()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b;">
+                <i class="fas fa-times"></i>
+              </button>
             </div>
 
             <!-- رابط صورة ثابتة -->
@@ -1011,16 +1047,26 @@
             </div>
 
             <div style="margin-bottom: 12px;">
-              <span style="color: #1d4ed8; font-weight: 700; font-size: 0.8rem;">إعلان رسمي - ({{ selectedAnnouncement()?.source }})</span>
-              <p style="color: #94a3b8; font-size: 0.75rem; margin: 4px 0 12px 0;">{{ selectedAnnouncement()?.date | date: 'mediumDate' }}</p>
+              <span style="color: #1d4ed8; font-weight: 700; font-size: 0.8rem;">
+                <i class="fas fa-flag" style="margin-left: 4px;"></i>
+                إعلان رسمي - ({{ selectedAnnouncement()?.source }})
+              </span>
+              <p style="color: #94a3b8; font-size: 0.75rem; margin: 4px 0 12px 0;">
+                <i class="far fa-calendar-alt" style="margin-left: 4px;"></i>
+                {{ selectedAnnouncement()?.date | date: 'mediumDate' }}
+              </p>
             </div>
 
             <p style="font-size: 0.9rem; color: #334155; line-height: 1.5; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <i class="fas fa-quote-right" style="margin-left: 6px; color: #94a3b8;"></i>
               {{ selectedAnnouncement()?.message }}
             </p>
 
             <div style="text-align: left; margin-top: 20px;">
-              <button (click)="closeAnnouncementPopup()" style="background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: 'Cairo', sans-serif; font-size: 0.85rem;">إغلاق</button>
+              <button (click)="closeAnnouncementPopup()" style="background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: 'Cairo', sans-serif; font-size: 0.85rem;">
+                <i class="fas fa-check" style="margin-left: 6px;"></i>
+                إغلاق
+              </button>
             </div>
           </div>
         </div>
@@ -1064,6 +1110,7 @@
                 font-family: 'Cairo', sans-serif;
               "
             >
+              <i class="fas fa-bell" style="margin-left: 8px;"></i>
               التنبيهات الأخيرة
             </h3>
             @if (getUnreadNotificationsCount() > 0) {
@@ -1099,6 +1146,7 @@
                   font-family: 'Cairo', sans-serif;
                 "
               >
+                <i class="fas fa-check-double" style="margin-left: 4px;"></i>
                 تحديد الكل
               </button>
             }
@@ -1113,7 +1161,7 @@
                 cursor: pointer;
               "
             >
-              عرض الكل
+              عرض الكل <i class="fas fa-arrow-left" style="margin-right: 4px;"></i>
             </button>
           </div>
         </div>
@@ -1131,6 +1179,7 @@
                 font-family: 'Cairo', sans-serif;
               "
             >
+              <i class="fas fa-spinner fa-spin" style="margin-left: 8px;"></i>
               جاري تحميل التنبيهات...
             </div>
           } @else {
@@ -1163,15 +1212,15 @@
                   >
                     <span style="font-size: 20px; flex-shrink: 0">
                       @if ($index === 0) {
-                        📋
+                        <i class="fas fa-clipboard-list"></i>
                       } @else if ($index === 1) {
-                        ⏰
+                        <i class="fas fa-clock"></i>
                       } @else if ($index === 2) {
-                        📢
+                        <i class="fas fa-bullhorn"></i>
                       } @else if ($index === 3) {
-                        ⭐
+                        <i class="fas fa-star"></i>
                       } @else {
-                        🔔
+                        <i class="fas fa-bell"></i>
                       }
                     </span>
                     <div style="min-width: 0; flex: 1; font-family: 'Cairo', sans-serif">
@@ -1192,6 +1241,7 @@
                             font-family: 'Cairo', sans-serif;
                           "
                         >
+                          <i class="fas" [class.fa-check-circle]="notif.isRead" [class.fa-circle]="!notif.isRead" style="margin-left: 4px;"></i>
                           {{ notif.isRead ? 'مقروء' : 'تنبيه جديد' }}
                         </span>
                         <small
@@ -1202,6 +1252,7 @@
                             font-family: 'Cairo', sans-serif;
                           "
                         >
+                          <i class="far fa-calendar-alt" style="margin-left: 4px;"></i>
                           {{ notif.date | date: 'mediumDate' }}
                         </small>
                       </div>
@@ -1232,6 +1283,7 @@
                   font-family: 'Cairo', sans-serif;
                 "
               >
+                <i class="fas fa-inbox" style="margin-left: 8px;"></i>
                 لا توجد تنبيهات حالياً
               </div>
             }
@@ -1258,7 +1310,8 @@
                   margin-top: 4px;
                 "
               >
-                {{ showAllNotifications() ? 'عرض أقل ▲' : 'عرض المزيد ▼' }}
+                <i class="fas" [class.fa-chevron-up]="showAllNotifications()" [class.fa-chevron-down]="!showAllNotifications()"></i>
+                {{ showAllNotifications() ? 'عرض أقل' : 'عرض المزيد' }}
               </button>
             }
           }
