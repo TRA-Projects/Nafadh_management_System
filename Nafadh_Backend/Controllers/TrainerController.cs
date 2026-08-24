@@ -69,6 +69,71 @@ namespace Nafadh_Backend.Controllers
             if (!ok) return NotFound();
             return NoContent();
         }
+        // =====================================================
+        // UPLOAD TRAINER PROFILE IMAGE
+        // =====================================================
+
+        [HttpPost("{id}/profile-image")]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(6 * 1024 * 1024)]
+        public async Task<IActionResult> UploadProfileImage(
+            int id,
+            [FromForm] IFormFile file
+        )
+        {
+            try
+            {
+                var profileImageUrl =
+                    await _service.UploadProfileImageAsync(
+                        id,
+                        file
+                    );
+
+
+                // Trainer does not exist.
+                if (profileImageUrl == null)
+                {
+                    return NotFound(
+                        new
+                        {
+                            message = "Trainer not found."
+                        }
+                    );
+                }
+
+
+                // Return the public image URL
+                // to the frontend.
+                return Ok(
+                    new
+                    {
+                        profileImageUrl
+                    }
+                );
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid image type, extension,
+                // empty file, or file too large.
+                return BadRequest(
+                    new
+                    {
+                        message = ex.Message
+                    }
+                );
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Storage or database operation failed.
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new
+                    {
+                        message = ex.Message
+                    }
+                );
+            }
+        }
 
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] TrainerStatusUpdateDto dto)
