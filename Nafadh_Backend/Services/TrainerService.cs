@@ -60,6 +60,9 @@ namespace Nafadh_Backend.Services
 
                 CVUrl = t.CVUrl,
 
+                // Public URL of the trainer profile image.
+                ProfileImageUrl = t.ProfileImageUrl,
+
                 Status = t.Status
             };
         }
@@ -82,6 +85,10 @@ namespace Nafadh_Backend.Services
                 ExperienceYears = t.ExperienceYears,
                 Biography = t.Biography,
                 CVUrl = t.CVUrl,
+
+                // Public URL of the trainer profile image.
+                ProfileImageUrl = t.ProfileImageUrl,
+
                 Status = t.Status
             };
         }
