@@ -164,26 +164,26 @@ export class TraineeDashboard implements OnInit {
   // التنبيهات الأخيرة - معالجتها للعرض
   // =========================================================
 
-  latestNotifications = computed(() => {
-    const notifs = this.notifications();
-    if (!notifs || notifs.length === 0) return [];
+latestNotifications = computed(() => {
+  const notifs = this.notifications();
+  if (!notifs || notifs.length === 0) return [];
 
-    // ترتيب حسب التاريخ (الأحدث أولاً)
-    const sorted = [...notifs].sort((a, b) => {
-      const dateA = new Date(a.createdAt);
-      const dateB = new Date(b.createdAt);
-      return dateB.getTime() - dateA.getTime();
-    });
-
-    // أخذ أول 5 تنبيهات فقط
-    return sorted.slice(0, 5).map((notif) => ({
-      message: notif.message || notif.title || '',
-      date: notif.createdAt,
-      isRead: notif.isRead,
-      notificationId: notif.notificationId,
-    }));
+  // ترتيب حسب التاريخ (الأحدث أولاً)
+  const sorted = [...notifs].sort((a, b) => {
+    const dateA = new Date(a.createdAt);
+    const dateB = new Date(b.createdAt);
+    return dateB.getTime() - dateA.getTime();
   });
 
+  // أخذ أول 5 تنبيهات فقط
+  // أخذ أول 5 تنبيهات فقط
+return sorted.slice(0, 5).map((notif) => ({
+  message: notif.title || notif.message || '',  // <-- العنوان فقط (مع fallback للوصف إذا لم يوجد عنوان)
+  date: notif.createdAt,
+  isRead: notif.isRead,
+  notificationId: notif.notificationId,
+}));
+});
   // =========================================================
   // الإعلانات المعروضة (3 أو الكل)
   // =========================================================
