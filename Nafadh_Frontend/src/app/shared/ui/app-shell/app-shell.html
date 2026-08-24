@@ -1,95 +1,260 @@
-<div class="shell" [class.dark]="dark()" [style.fontSize.px]="fontSize()" [style.--font-scale]="fontScale()">
+<div
+  class="shell"
+  [class.dark]="dark()"
+  [style.fontSize.px]="fontSize()"
+  [style.--font-scale]="fontScale()"
+>
   <header class="topbar">
-    <!-- Logo (right / RTL start) -->
-    <div class="logo" [routerLink]="navItems()?.[0]?.path || '/company/dashboard'">
-      <img src="assets/logo.png" alt="نفاذ" class="logo-img" />
-      <div class="logo-sub">{{ portalTitle() }}</div>
+    <!-- Shared logo area -->
+    <div
+      class="logo"
+      [routerLink]="navItems()?.[0]?.path || '/company/dashboard'"
+    >
+      <img
+        src="assets/logo.png"
+        alt="نفاذ"
+        class="logo-img"
+      />
+
+      <div class="logo-sub">
+        {{ portalTitle() }}
+      </div>
     </div>
 
-    <!-- Search (center) -->
+    <!-- Shared search -->
     <div class="search-wrap">
-      <nfd-icon name="search" size="sm" />
-      <input class="search-input" placeholder="ابحث..." />
+      <nfd-icon
+        name="search"
+        size="sm"
+      />
+
+      <input
+        class="search-input"
+        placeholder="ابحث..."
+      />
     </div>
 
-    <!-- Actions (left / RTL end) -->
+    <!-- Shared actions -->
     <div class="actions">
-      <button class="icon-btn" (click)="accessOpen.set(!accessOpen())" title="أدوات التسهيل"><nfd-icon name="access" /></button>
+      <button
+        class="icon-btn"
+        (click)="accessOpen.set(!accessOpen())"
+        title="أدوات التسهيل"
+        aria-label="أدوات التسهيل"
+      >
+        <nfd-icon name="access" />
+      </button>
 
+      <!-- Shared notification bell -->
       <div class="notif-wrap">
         <button
           class="icon-btn"
           (click)="toggleNotifications()"
           title="الإشعارات"
-          aria-label="الإشعارات">
+          aria-label="الإشعارات"
+          [attr.aria-expanded]="notifOpen()"
+        >
           <nfd-icon name="bell" />
-          @if (bellCount() > 0) {
-            <span class="notif-badge">{{ bellCount() > 99 ? '99+' : bellCount() }}</span>
+
+          @if (notificationSummary().totalCount > 0) {
+            <span class="notif-badge">
+              {{
+                notificationSummary().totalCount > 99
+                  ? '99+'
+                  : notificationSummary().totalCount
+              }}
+            </span>
           }
         </button>
+
         @if (notifOpen()) {
           <div class="notif-panel">
             <div class="notif-head">
               <span>الإشعارات</span>
-              @if (bellCount() > 0) {
-                <strong>{{ bellCount() }}</strong>
+
+              @if (notificationSummary().totalCount > 0) {
+                <span class="notif-total">
+                  {{ notificationSummary().totalCount }} جديد
+                </span>
               }
             </div>
-            <div class="notif-empty">
-              @if (bellCount() > 0) {
-                لديك {{ bellCount() }} تنبيهًا أو محادثة جديدة
-              } @else {
-                لا توجد إشعارات أو محادثات جديدة
-              }
-            </div>
+
+            @if (notificationSummary().totalCount === 0) {
+              <div class="notif-empty">
+                <nfd-icon name="bell" />
+                <span>لا توجد إشعارات جديدة</span>
+              </div>
+            } @else {
+              <div class="notif-summary-list">
+                @if (notificationSummary().notificationsCount > 0) {
+                  <button
+                    type="button"
+                    class="notif-summary-item"
+                    [class.notif-summary-item-clickable]="!!notificationRoute()"
+                    (click)="openBellItem('notifications')"
+                  >
+                    <span class="notif-summary-icon">
+                      <nfd-icon name="bell" />
+                    </span>
+
+                    <span class="notif-summary-content">
+                      <strong>الإشعارات</strong>
+                      <small>
+                        {{ notificationSummary().notificationsCount }}
+                        إشعار جديد
+                      </small>
+                    </span>
+
+                    <span class="notif-count">
+                      {{ notificationSummary().notificationsCount }}
+                    </span>
+                  </button>
+                }
+
+                @if (notificationSummary().conversationsCount > 0) {
+                  <button
+                    type="button"
+                    class="notif-summary-item notif-summary-item-clickable"
+                    (click)="openBellItem('communication')"
+                  >
+                    <span class="notif-summary-icon">
+                      <nfd-icon name="chat" />
+                    </span>
+
+                    <span class="notif-summary-content">
+                      <strong>التواصل والمراسلات</strong>
+                      <small>
+                        {{ notificationSummary().conversationsCount }}
+                        محادثة تحتاج متابعة
+                      </small>
+                    </span>
+
+                    <span class="notif-count">
+                      {{ notificationSummary().conversationsCount }}
+                    </span>
+                  </button>
+                }
+
+                @if (notificationSummary().directMessagesCount > 0) {
+                  <button
+                    type="button"
+                    class="notif-summary-item notif-summary-item-clickable"
+                    (click)="openBellItem('messages')"
+                  >
+                    <span class="notif-summary-icon">
+                      <nfd-icon name="chat" />
+                    </span>
+
+                    <span class="notif-summary-content">
+                      <strong>الرسائل</strong>
+                      <small>
+                        {{ notificationSummary().directMessagesCount }}
+                        رسالة جديدة
+                      </small>
+                    </span>
+
+                    <span class="notif-count">
+                      {{ notificationSummary().directMessagesCount }}
+                    </span>
+                  </button>
+                }
+              </div>
+            }
           </div>
         }
       </div>
 
+      <!-- Shared profile -->
       <div class="profile-chip">
-        <div class="avatar">{{ auth.session()?.fullName?.charAt(0) }}</div>
+        <div class="avatar">
+          {{ auth.session()?.fullName?.charAt(0) }}
+        </div>
+
         <div class="who">
-          <div class="name">{{ auth.session()?.fullName }}</div>
-          <div class="role">{{ accountLabel() }}</div>
+          <div class="name">
+            {{ auth.session()?.fullName }}
+          </div>
+
+          <div class="role">
+            {{ accountLabel() }}
+          </div>
         </div>
       </div>
     </div>
   </header>
 
+  <!-- Shared sidebar -->
   <aside class="sidebar">
     <nav>
       @for (item of navItems(); track item.path) {
-        <a [routerLink]="item.path" routerLinkActive="active" class="nav-item">
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          class="nav-item"
+        >
           <nfd-icon [name]="item.icon" />
           <span>{{ item.label }}</span>
         </a>
       }
     </nav>
+
     <div class="sidebar-foot">
-      <button class="nav-item logout" (click)="auth.logout()">
+      <button
+        class="nav-item logout"
+        (click)="auth.logout()"
+      >
         <nfd-icon name="logout" />
         <span>تسجيل الخروج</span>
       </button>
     </div>
   </aside>
 
+  <!-- Portal content -->
   <main class="content">
     <router-outlet />
   </main>
 
+  <!-- Back to top -->
   @if (showBackToTop()) {
-    <button class="back-to-top" (click)="scrollToTop()" title="الرجوع لأعلى الصفحة" aria-label="الرجوع لأعلى الصفحة">
-      <nfd-icon name="arrow-up" size="sm" />
+    <button
+      class="back-to-top"
+      (click)="scrollToTop()"
+      title="الرجوع لأعلى الصفحة"
+      aria-label="الرجوع لأعلى الصفحة"
+    >
+      <nfd-icon
+        name="arrow-up"
+        size="sm"
+      />
     </button>
   }
 
+  <!-- Accessibility panel -->
   @if (accessOpen()) {
     <div class="access-panel">
-      <div class="access-head"><strong>أدوات التسهيل</strong><button (click)="accessOpen.set(false)">✕</button></div>
-      <p class="access-label">حجم الخط</p>
+      <div class="access-head">
+        <strong>أدوات التسهيل</strong>
+
+        <button
+          (click)="accessOpen.set(false)"
+          aria-label="إغلاق أدوات التسهيل"
+        >
+          ✕
+        </button>
+      </div>
+
+      <p class="access-label">
+        حجم الخط
+      </p>
+
       <div class="access-row">
-        @for (s of [14,16,18]; track s) {
-          <button [class.active]="fontSize() === s" (click)="fontSize.set(s)">{{ s === 14 ? 'A-' : s === 16 ? 'A' : 'A+' }}</button>
+        @for (s of [14, 16, 18]; track s) {
+          <button
+            [class.active]="fontSize() === s"
+            (click)="fontSize.set(s)"
+          >
+            {{ s === 14 ? 'A-' : s === 16 ? 'A' : 'A+' }}
+          </button>
         }
       </div>
     </div>
