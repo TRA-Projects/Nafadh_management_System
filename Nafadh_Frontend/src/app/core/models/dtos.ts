@@ -403,6 +403,7 @@ export interface CompanyDashboardTraineeDto {
   fullName?: string;
   major?: string;
   gitHubUrl?: string;
+  linkedInUrl?: string;
   performancePercent: number;
   attendancePercent: number;
 }
@@ -413,6 +414,7 @@ export interface CompanyDashboardWarningDto {
   traineeId: number;
   traineeName?: string;
   gitHubUrl?: string;
+  linkedInUrl?: string;
   type: string;
   level: string;
   status: string;
@@ -433,7 +435,7 @@ export interface CompanyDashboardDto {
 // ---- Enrollment ----
 export interface EnrollmentDto {
   trainee?: any;
-  traineeLinkedInUrl?: any;
+  traineeLinkedInUrl?: string;
   enrollmentId: number;
   enrollmentDate: string;
   completionStatus: string;

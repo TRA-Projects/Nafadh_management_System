@@ -8,9 +8,6 @@ import { NfdIcon } from '../../../../shared/ui/icon/icon';
 const STATUS_LABELS: Record<string, string> = { InProgress: 'نشط', Completed: 'مكتمل', Dropped: 'موقوف', Failed: 'متعثر' };
 const STATUS_CHIP_CLASS: Record<string, string> = { InProgress: 'ok', Completed: 'info', Dropped: 'bad', Failed: 'warn' };
 
-// Static training-period definitions, ported from the approved reference
-// design — these four phases are the same for every trainee regardless of
-// track (weights sum to 100%).
 const PHASE_DEFS = [
   { n: 1, name: 'الاندماج والتأسيس', weight: 15, weeks: 'الأسابيع 1–8' },
   { n: 2, name: 'بناء المهارات', weight: 25, weeks: 'الأسابيع 9–16' },
@@ -38,6 +35,13 @@ export class CompanyTraineeProgress implements OnInit {
   phaseDefs = PHASE_DEFS;
   donutCirc = DONUT_CIRC;
 
+  // متغير لتحديد التبويب (الفترة) النشط حالياً (الافتراضي الفترة الأولى رقم 1)
+  activeTab: number = 1;
+
+  selectPhase(phaseNum: number) {
+    this.activeTab = phaseNum;
+  }
+
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.api.getEnrollment(id).subscribe((d) => this.enrollment.set(d));
@@ -45,7 +49,6 @@ export class CompanyTraineeProgress implements OnInit {
     this.api.getProgressSummary(id).subscribe((d) => this.progressSummary.set(d));
   }
 
-  // Each evaluation maps to one training period, in order.
   phases = computed(() => {
     const evals = this.evaluations();
     return this.phaseDefs.map((def, i) => {
@@ -54,6 +57,11 @@ export class CompanyTraineeProgress implements OnInit {
       return { def, ev, status };
     });
   });
+
+  // دالة لجلب بيانات الفترة النشطة حالياً في التبويبات
+  getSelectedPhaseData() {
+    return this.phases().find(p => p.def.n === this.activeTab) || null;
+  }
 
   avgScore = computed(() => {
     const scored = this.evaluations().filter((e) => e.score > 0);
@@ -83,6 +91,12 @@ export class CompanyTraineeProgress implements OnInit {
     let hash = 0;
     for (let i = 0; i < name.length; i++) hash = (hash + name.charCodeAt(i)) % AVATAR_PALETTE.length;
     return AVATAR_PALETTE[hash];
+  }
+
+  ensureUrl(url?: string): string | null {
+    if (!url?.trim()) return null;
+    const value = url.trim();
+    return /^https?:\/\//i.test(value) ? value : `https://${value}`;
   }
 
   criterionPct(score: number, maxPoints: number) { return maxPoints ? Math.round((score / maxPoints) * 100) : 0; }

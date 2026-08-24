@@ -21,8 +21,11 @@
         </div>
       </div>
       <div class="pg-company">🏢 {{ e.companyName }}</div>
-      <a class="gh-icon-btn" [class.disabled]="!e.traineeGitHubUrl" [href]="e.traineeGitHubUrl || null" target="_blank" rel="noopener noreferrer" title="حساب GitHub">
+      <a class="social-icon-btn github" [class.disabled]="!e.traineeGitHubUrl" [href]="ensureUrl(e.traineeGitHubUrl)" target="_blank" rel="noopener noreferrer" title="حساب GitHub">
         <nfd-icon name="github" size="sm" />
+      </a>
+      <a class="social-icon-btn linkedin" [class.disabled]="!e.traineeLinkedInUrl" [href]="ensureUrl(e.traineeLinkedInUrl)" target="_blank" rel="noopener noreferrer" title="حساب LinkedIn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14M8.3 18.5v-8.3H5.5v8.3h2.8ZM6.9 9.1a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Zm12.1 9.4v-4.8c0-2.6-1.4-3.8-3.3-3.8-1.5 0-2.2.8-2.6 1.4v-1.1h-2.8v8.3h2.8v-4.6c0-1.2.2-2.3 1.7-2.3 1.5 0 1.5 1.4 1.5 2.4v4.5H19Z"/></svg>
       </a>
     </div>
   </div>
@@ -41,7 +44,7 @@
         <svg viewBox="0 0 150 150" width="150" height="150">
           <circle cx="75" cy="75" r="65" fill="none" stroke="#e9eef2" stroke-width="14"/>
           <circle cx="75" cy="75" r="65" fill="none" stroke="#00338d" stroke-width="14" stroke-linecap="round"
-                  [attr.stroke-dasharray]="donutCirc" [attr.stroke-dashoffset]="donutOffset()"/>
+                [attr.stroke-dasharray]="donutCirc" [attr.stroke-dashoffset]="donutOffset()"/>
         </svg>
         <div class="center"><b>{{ avgScore() }}%</b><span>المتوسط العام</span></div>
       </div>
@@ -56,53 +59,78 @@
     </div>
   </div>
 
+  <!-- قسم التبويبات الأفقية الحديثة لفترات التدريب -->
   <div class="card card-pad">
-    <div class="card-title">فترات التدريب الأربع</div>
-    <div class="stepper">
+    <div class="card-title" style="margin-bottom: 16px;">فترات التدريب الأربع</div>
+    
+    <!-- شريط التبويبات (Tabs Header) -->
+    <div style="display: flex; gap: 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 20px; overflow-x: auto;">
       @for (p of phases(); track p.def.n) {
-        <div class="step" [class.done]="p.status === 'done'">
-          <div class="step-rail"><div class="step-node" [ngClass]="p.status">{{ p.status === 'done' ? '✓' : p.def.n }}</div></div>
-          <div class="step-body">
-            <div class="step-head">
-              <b>الفترة {{ p.def.n }}: {{ p.def.name }}</b>
-              <span class="hint">{{ p.def.weeks }} · وزنها {{ p.def.weight }}% من التقييم</span>
-              @if (p.status === 'done') { <span class="chip ok"><span class="dot"></span>مكتملة</span> }
-              @else if (p.status === 'cur') { <span class="chip warn"><span class="dot"></span>قيد التنفيذ</span> }
-              @else { <span class="chip gray"><span class="dot"></span>لم تبدأ</span> }
-              <span class="step-pct">{{ p.ev ? p.ev.score + '%' : '—' }}</span>
-            </div>
-            
-            <!-- تم تعديل هذا السطر ليستخدم || لتجاوز تحذير الـ nullish coalescing -->
-            <div class="bar" style="margin-top:8px"><i [class.amber]="p.status === 'cur'" [style.width.%]="p.ev.score || 0"></i></div>
-
-            @if (p.ev) {
-              <div class="eval-box">
-                <div class="eval-top">
-                  <div class="eval-score">{{ p.ev.score }}<small>%</small></div>
-                  <div><b>تقييم المدرب</b><br><span class="eval-by">بواسطة: {{ p.ev.trainerId ? 'مدرب #' + p.ev.trainerId : 'الهيئة التدريبية' }}</span></div>
-                  <span class="chip ok" style="margin-inline-start:auto"><span class="dot"></span>تم الاعتماد</span>
-                </div>
-                <div class="rubrics">
-                  @for (c of p.ev.criteriaBreakdown; track c.criteriaId) {
-                    <div class="rubric-row">
-                      <span class="r-lbl">{{ c.criterionName }}</span>
-                      <div class="dim-trk"><i [style.width.%]="criterionPct(c.score, c.maxPoints)"></i></div>
-                      <b class="r-val">{{ c.score }}/{{ c.maxPoints }}</b>
-                    </div>
-                  }
-                </div>
-                @if (p.ev.notes) { <div class="eval-note"><b>ملاحظة المدرب:</b> "{{ p.ev.notes }}"</div> }
-              </div>
-            } @else {
-              <div class="eval-pending">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-                تقييم المدرب لهذه الفترة يُحتسب بعد اكتمالها.
-              </div>
-            }
-          </div>
-        </div>
+        <button
+          type="button"
+          (click)="selectPhase(p.def.n)"
+          [style.background]="activeTab === p.def.n ? '#00338d' : '#f8fafc'"
+          [style.color]="activeTab === p.def.n ? '#ffffff' : '#334155'"
+          [style.border-color]="activeTab === p.def.n ? '#00338d' : '#cbd5e1'"
+          style="padding: 10px 16px; border-radius: 8px; border: 1px solid; cursor: pointer; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; white-space: nowrap;">
+          
+          <span style="width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px;"
+                [style.background]="activeTab === p.def.n ? 'rgba(255,255,255,0.2)' : '#e2e8f0'"
+                [style.color]="activeTab === p.def.n ? '#ffffff' : '#475569'">
+            {{ p.status === 'done' ? '✓' : p.def.n }}
+          </span>
+          
+          <span>الفترة {{ p.def.n }}</span>
+          
+          <span style="font-size: 12px; opacity: 0.8;">({{ p.ev ? p.ev.score + '%' : '—' }})</span>
+        </button>
       }
     </div>
+
+    <!-- محتوى التبويب النشط (Active Tab Content) -->
+    @if (getSelectedPhaseData(); as currentP) {
+      <div style="background: #ffffff; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div>
+            <h4 style="margin: 0; font-size: 16px; color: #1e293b;">الفترة {{ currentP.def.n }}: {{ currentP.def.name }}</h4>
+            <span class="hint" style="font-size: 13px; color: #64748b;">{{ currentP.def.weeks }} · وزنها {{ currentP.def.weight }}% من التقييم</span>
+          </div>
+          <div>
+            @if (currentP.status === 'done') { <span class="chip ok"><span class="dot"></span>مكتملة</span> }
+            @else if (currentP.status === 'cur') { <span class="chip warn"><span class="dot"></span>قيد التنفيذ</span> }
+            @else { <span class="chip gray"><span class="dot"></span>لم تبدأ</span> }
+          </div>
+        </div>
+
+        <div class="bar" style="margin-bottom: 20px;"><i [class.amber]="currentP.status === 'cur'" [style.width.%]="currentP.ev?.score || 0"></i></div>
+
+        @if (currentP.ev) {
+          <div class="eval-box">
+            <div class="eval-top">
+              <div class="eval-score">{{ currentP.ev.score }}<small>%</small></div>
+              <div><b>تقييم المدرب</b><br><span class="eval-by">بواسطة: {{ currentP.ev.trainerId ? 'مدرب #' + currentP.ev.trainerId : 'الهيئة التدريبية' }}</span></div>
+              <span class="chip ok" style="margin-inline-start:auto"><span class="dot"></span>تم الاعتماد</span>
+            </div>
+            <div class="rubrics">
+              @for (c of currentP.ev.criteriaBreakdown; track c.criteriaId) {
+                <div class="rubric-row">
+                  <span class="r-lbl">{{ c.criterionName }}</span>
+                  <div class="dim-trk"><i [style.width.%]="criterionPct(c.score, c.maxPoints)"></i></div>
+                  <b class="r-val">{{ c.score }}/{{ c.maxPoints }}</b>
+                </div>
+              }
+            </div>
+            @if (currentP.ev.notes) { <div class="eval-note"><b>ملاحظة المدرب:</b> "{{ currentP.ev.notes }}"</div> }
+          </div>
+        } @else {
+          <div class="eval-pending">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            تقييم المدرب لهذه الفترة يُحتسب بعد اكتمالها.
+          </div>
+        }
+      </div>
+    }
+
   </div>
 } @else {
   <div class="card card-pad">جارِ التحميل…</div>
