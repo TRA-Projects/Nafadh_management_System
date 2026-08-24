@@ -774,7 +774,7 @@ export class TrainerAttendance implements OnInit {
       });
       return;
     }
-    this.notify('تم تأكيد سجل اليوم بنجاح.', 'ok');
+    this.notify('سجل اليوم مؤكد ومحفوظ مسبقاً.', 'ok');
   }
 
   askReportAllRepeatedAbsence() {

@@ -1,6 +1,65 @@
 <div class="trainees-page">
 
   <!-- =====================================================
+       CUSTOM EVALUATION NOTIFICATION
+  ====================================================== -->
+
+  @if (evaluationNotice(); as notice) {
+
+    <div
+      class="evaluation-notice"
+      [class.notice-success]="notice.tone === 'success'"
+      [class.notice-warning]="notice.tone === 'warning'"
+      [class.notice-error]="notice.tone === 'error'"
+      role="status"
+      aria-live="polite"
+    >
+
+      <div class="evaluation-notice-icon">
+
+        @if (notice.tone === 'success') {
+          <i class="fa-solid fa-circle-check"></i>
+        }
+        @else if (notice.tone === 'warning') {
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        }
+        @else {
+          <i class="fa-solid fa-circle-exclamation"></i>
+        }
+
+      </div>
+
+
+      <div class="evaluation-notice-copy">
+
+        <strong>
+          {{ notice.title }}
+        </strong>
+
+        <span>
+          {{ notice.message }}
+        </span>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="evaluation-notice-close"
+        (click)="closeEvaluationNotice()"
+        aria-label="إغلاق الإشعار"
+        title="إغلاق"
+      >
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+    </div>
+
+  }
+
+
+
+  <!-- =====================================================
        PAGE HEADER
   ====================================================== -->
 
@@ -116,7 +175,16 @@
 
   <section class="trainees-kpis">
 
-    <article class="trainee-kpi">
+  <article
+  class="trainee-kpi"
+  role="button"
+  tabindex="0"
+  style="cursor:pointer;"
+  [class.active-filter]="
+    traineeListFilter() === 'all'
+  "
+  (click)="showAllTrainees()"
+>
 
       <div class="kpi-info">
 
@@ -197,7 +265,16 @@
     </article>
 
 
-    <article class="trainee-kpi">
+  <article
+  class="trainee-kpi"
+  role="button"
+  tabindex="0"
+  style="cursor:pointer;"
+  [class.active-filter]="
+    traineeListFilter() === 'high'
+  "
+  (click)="showHighPerformers()"
+>
 
       <div class="kpi-info">
 
@@ -242,7 +319,16 @@
     </article>
 
 
-    <article class="trainee-kpi danger">
+<article
+  class="trainee-kpi danger"
+  role="button"
+  tabindex="0"
+  style="cursor:pointer;"
+  [class.active-filter]="
+    traineeListFilter() === 'support'
+  "
+  (click)="showSupportTrainees()"
+>
 
       <div class="kpi-info">
 
@@ -352,7 +438,7 @@
         <tbody>
 
           @for (
-            e of enrollments();
+           e of filteredEnrollments();
             track e.enrollmentId;
             let i = $index
           ) {
@@ -406,36 +492,37 @@
               </td>
 
 
-              <!-- Status -->
+            <!-- Status -->
 
-              <td>
+<td>
 
-                <span
-                  class="status-badge"
-                  [ngClass]="
-                    enrollmentStatusClass(
-                      e.completionStatus
-                    )
-                  "
-                >
-                  {{
-                    enrollmentStatusLabel(
-                      e.completionStatus
-                    )
-                  }}
-                </span>
+  <span
+    class="status-badge"
+    [ngClass]="
+      enrollmentStatusClass(
+        effectiveEnrollmentStatus(e)
+      )
+    "
+  >
+    {{
+      enrollmentStatusLabel(
+        effectiveEnrollmentStatus(e)
+      )
+    }}
+  </span>
 
-              </td>
+</td>
 
 
               <!-- Technical -->
 
               <td>
 
-                @if (
-                  e.completionStatus !== 'Dropped' &&
-                  technicalScore(e.enrollmentId) !== null
-                ) {
+             @if (
+  canShowTrainingMetrics(e) &&
+  e.completionStatus !== 'Dropped' &&
+  technicalScore(e.enrollmentId) !== null
+) {
 
                   <div class="progress-cell">
 
@@ -499,11 +586,12 @@
 
               <td>
 
-                @if (
-                  attendancePercentage(
-                    e.enrollmentId
-                  ) !== null
-                ) {
+               @if (
+  canShowTrainingMetrics(e) &&
+  attendancePercentage(
+    e.enrollmentId
+  ) !== null
+) {
 
                   <span class="metric-value">
                     {{
@@ -530,10 +618,11 @@
 
               <td>
 
-                @if (
-                  e.completionStatus !== 'Dropped' &&
-                  technicalScore(e.enrollmentId) !== null
-                ) {
+             @if (
+  canShowTrainingMetrics(e) &&
+  e.completionStatus !== 'Dropped' &&
+  technicalScore(e.enrollmentId) !== null
+) {
 
                   <span class="metric-value">
                     {{
@@ -562,44 +651,58 @@
 
                 <div class="table-actions">
 
-                  <div
-                    class="evaluation-action-wrapper"
-                    [class.disabled-evaluation]="
-                      e.completionStatus === 'Dropped'
-                    "
-                  >
+               <div
+  class="evaluation-action-wrapper"
+  [class.disabled-evaluation]="
+    !canEvaluateEnrollment(e)
+  "
+>
 
-                    <button
-                      type="button"
-                      class="small-action-btn"
-                      (click)="openEval(e.enrollmentId)"
-                      [disabled]="
-                        e.completionStatus === 'Dropped'
-                      "
-                    >
-                      تقييم
-                    </button>
+  <button
+    type="button"
+    class="small-action-btn"
+    (click)="openEval(e.enrollmentId)"
+    [disabled]="
+      !canEvaluateEnrollment(e)
+    "
+  >
+    تقييم
+  </button>
 
 
-                    @if (
-                      e.completionStatus === 'Dropped'
-                    ) {
+  @if (
+    !canEvaluateEnrollment(e)
+  ) {
 
-                      <div class="evaluation-tooltip">
+    <div class="evaluation-tooltip">
 
-                        <span class="evaluation-tooltip-icon">
-                          !
-                        </span>
+      <span class="evaluation-tooltip-icon">
+        !
+      </span>
 
-                        <span>
-                          المتدرب منسحب ولا يمكن إضافة تقييم جديد
-                        </span>
+      <span>
 
-                      </div>
+        @if (
+          effectiveEnrollmentStatus(e) === 'NotStarted'
+        ) {
+          الدفعة لم تبدأ بعد ولا يمكن إضافة تقييم
+        }
+        @else if (
+          effectiveEnrollmentStatus(e) === 'Dropped'
+        ) {
+          المتدرب منسحب ولا يمكن إضافة تقييم جديد
+        }
+        @else {
+          لا يمكن إضافة تقييم لهذا المتدرب
+        }
 
-                    }
+      </span>
 
-                  </div>
+    </div>
+
+  }
+
+</div>
 
 
                   <button
@@ -771,19 +874,19 @@
             </span>
 
             <span
-              class="status-badge"
-              [ngClass]="
-                enrollmentStatusClass(
-                  profile.completionStatus
-                )
-              "
-            >
-              {{
-                enrollmentStatusLabel(
-                  profile.completionStatus
-                )
-              }}
-            </span>
+  class="status-badge"
+  [ngClass]="
+    enrollmentStatusClass(
+      effectiveEnrollmentStatus(profile)
+    )
+  "
+>
+  {{
+    enrollmentStatusLabel(
+      effectiveEnrollmentStatus(profile)
+    )
+  }}
+</span>
 
           </div>
 
@@ -798,12 +901,12 @@
                 نسبة الحضور
               </span>
 
-
-              @if (
-                attendancePercentage(
-                  profile.enrollmentId
-                ) !== null
-              ) {
+@if (
+  canShowTrainingMetrics(profile) &&
+  attendancePercentage(
+    profile.enrollmentId
+  ) !== null
+) {
 
                 <strong>
                   {{
@@ -834,11 +937,12 @@
 
 
               @if (
-                profile.completionStatus !== 'Dropped' &&
-                technicalScore(
-                  profile.enrollmentId
-                ) !== null
-              ) {
+  canShowTrainingMetrics(profile) &&
+  profile.completionStatus !== 'Dropped' &&
+  technicalScore(
+    profile.enrollmentId
+  ) !== null
+) {
 
                 <strong>
                   {{
@@ -876,21 +980,22 @@
               <strong>
 
                 @if (
-                  profile.completionStatus !== 'Dropped'
-                ) {
+  canShowTrainingMetrics(profile) &&
+  profile.completionStatus !== 'Dropped'
+) {
 
-                  {{
-                    technicalLevel(
-                      profile.enrollmentId
-                    )
-                  }}
+  {{
+    technicalLevel(
+      profile.enrollmentId
+    )
+  }}
 
-                }
-                @else {
+}
+@else {
 
-                  —
+  —
 
-                }
+}
 
               </strong>
 
@@ -901,24 +1006,26 @@
 
               <div
                 class="profile-progress-fill"
-                [style.width.%]="
-                  profile.completionStatus !== 'Dropped'
-                    ? technicalProgress(
-                        profile.enrollmentId
-                      )
-                    : 0
-                ">
+           [style.width.%]="
+  canShowTrainingMetrics(profile) &&
+  profile.completionStatus !== 'Dropped'
+    ? technicalProgress(
+        profile.enrollmentId
+      )
+    : 0
+">
               </div>
 
             </div>
 
 
-            @if (
-              profile.completionStatus !== 'Dropped' &&
-              technicalScore(
-                profile.enrollmentId
-              ) !== null
-            ) {
+           @if (
+  canShowTrainingMetrics(profile) &&
+  profile.completionStatus !== 'Dropped' &&
+  technicalScore(
+    profile.enrollmentId
+  ) !== null
+) {
 
               <span class="profile-level-score">
 
@@ -952,26 +1059,26 @@
 
             <div
               class="evaluation-action-wrapper profile-evaluation-wrapper"
-              [class.disabled-evaluation]="
-                profile.completionStatus === 'Dropped'
-              "
+ [class.disabled-evaluation]="
+  !canEvaluateEnrollment(profile)
+"
             >
 
               <button
                 type="button"
                 class="nfd-btn primary"
                 (click)="startEvaluationFromProfile()"
-                [disabled]="
-                  profile.completionStatus === 'Dropped'
-                "
+              [disabled]="
+  !canEvaluateEnrollment(profile)
+"
               >
                 بدء تقييم
               </button>
 
 
-              @if (
-                profile.completionStatus === 'Dropped'
-              ) {
+          @if (
+  !canEvaluateEnrollment(profile)
+) {
 
                 <div class="evaluation-tooltip">
 
@@ -979,9 +1086,23 @@
                     !
                   </span>
 
-                  <span>
-                    المتدرب منسحب ولا يمكن إضافة تقييم جديد
-                  </span>
+                 <span>
+
+  @if (
+    effectiveEnrollmentStatus(profile) === 'NotStarted'
+  ) {
+    الدفعة لم تبدأ بعد ولا يمكن إضافة تقييم
+  }
+  @else if (
+    effectiveEnrollmentStatus(profile) === 'Dropped'
+  ) {
+    المتدرب منسحب ولا يمكن إضافة تقييم جديد
+  }
+  @else {
+    لا يمكن إضافة تقييم لهذا المتدرب
+  }
+
+</span>
 
                 </div>
 
@@ -1040,7 +1161,47 @@
 
         </div>
 
+<!-- =====================================================
+     EVALUATION BATCH
+====================================================== -->
 
+<div
+  class="modal-field"
+  style="margin-bottom:16px;"
+>
+
+  <label>
+    الدفعة
+  </label>
+
+  <select
+    class="nfd-input"
+    [ngModel]="selectedEvaluationBatchId()"
+    (ngModelChange)="
+      selectedEvaluationBatchId.set($event)
+    "
+  >
+
+    <option [ngValue]="null">
+      اختر الدفعة
+    </option>
+
+    @for (
+      batch of evaluationBatchOptions();
+      track batch.batchId
+    ) {
+
+      <option
+        [ngValue]="batch.batchId"
+      >
+        {{ batch.batchName }}
+      </option>
+
+    }
+
+  </select>
+
+</div>
         <div class="trainee-picker-list">
 
           @for (
@@ -1138,14 +1299,30 @@
               </div>
 
 
-              <strong>
-                لا يوجد متدربون
-              </strong>
+             @if (
+  selectedEvaluationBatchId() === null
+) {
 
-              <span>
-                لا يوجد متدربون متاحون للتقييم في الدفعات الحالية.
-              </span>
+  <strong>
+    اختر الدفعة أولًا
+  </strong>
 
+  <span>
+    اختر الدفعة لعرض المتدربين المتاحين للتقييم.
+  </span>
+
+}
+@else {
+
+  <strong>
+    لا يوجد متدربون متاحون
+  </strong>
+
+  <span>
+    لا يوجد متدربون متاحون للتقييم في هذه الدفعة.
+  </span>
+
+}
             </div>
 
           }
@@ -1202,37 +1379,64 @@
 
         <div class="eval-config-grid">
 
-          <div class="modal-field">
+       <div class="modal-field">
 
-            <label>
-              الوحدة
-            </label>
+  <label>
+    الوحدة
+  </label>
 
-            <input
-              class="nfd-input"
-              type="number"
-              [(ngModel)]="selectedModuleId"
-              (change)="loadTemplates()"
-            />
+  <select
+    class="nfd-input"
+    [(ngModel)]="selectedModuleId"
+    (change)="loadEvaluationStages()"
+  >
 
-          </div>
+    @for (
+      module of evaluationModules();
+      track module.moduleId
+    ) {
+
+      <option
+        [ngValue]="module.moduleId"
+      >
+        {{ module.title }}
+      </option>
+
+    }
+
+  </select>
+
+</div>
 
 
-          <div class="modal-field">
+         <div class="modal-field">
 
-            <label>
-              الفترة
-            </label>
+  <label>
+    الفترة
+  </label>
 
-            <input
-              class="nfd-input"
-              type="number"
-              [(ngModel)]="selectedStage"
-              (change)="loadTemplates()"
-            />
+  <select
+    class="nfd-input"
+    [(ngModel)]="selectedStage"
+    (change)="loadTemplates()"
+  >
 
-          </div>
+    @for (
+      stage of evaluationStages();
+      track stage
+    ) {
 
+      <option
+        [ngValue]="stage"
+      >
+        الفترة {{ stage }}
+      </option>
+
+    }
+
+  </select>
+
+</div>
         </div>
 
 
@@ -1245,20 +1449,164 @@
 
             <div class="criterion-card">
 
-              <div class="criterion-heading">
+             <div class="criterion-heading">
 
-                <label>
-                  {{ c.name }}
-                </label>
+  <div>
 
-                <span>
-                  وزن {{ c.weight }}%
-                  ·
-                  من {{ c.maxPoints }}
-                </span>
+    <label>
+      {{ c.name }}
+    </label>
 
-              </div>
+    <span>
+      وزن {{ c.weight }}%
+      ·
+      من {{ c.maxPoints }}
+    </span>
 
+  </div>
+
+
+  <div
+    style="
+      display:flex;
+      align-items:center;
+      gap:6px;
+    "
+  >
+
+    <button
+      type="button"
+      (click)="
+        startEditCriterion(c)
+      "
+      title="تعديل المعيار"
+      style="
+        border:none;
+        background:transparent;
+        cursor:pointer;
+        font-size:18px;
+        padding:4px 6px;
+      "
+    >
+      <i class="fa-solid fa-pen-to-square"></i>
+    </button>
+
+
+    <button
+      type="button"
+      (click)="
+        deleteCriterion(
+          c.criteriaId,
+          c.name
+        )
+      "
+      title="حذف المعيار"
+      style="
+        border:none;
+        background:transparent;
+        cursor:pointer;
+        font-size:18px;
+        padding:4px 6px;
+      "
+    >
+      <i class="fa-solid fa-trash-can"></i>
+    </button>
+
+  </div>
+
+</div>
+@if (
+  editingCriterionId() ===
+  c.criteriaId
+) {
+
+  <div
+    class="new-criterion-box"
+    style="margin:10px 0 12px;"
+  >
+
+    <input
+      class="nfd-input"
+      placeholder="اسم المعيار"
+      [(ngModel)]="
+        criterionEditForm.name
+      "
+      [name]="
+        'editCriterionName' +
+        c.criteriaId
+      "
+    />
+
+
+    <div class="new-criterion-grid">
+
+      <input
+        class="nfd-input"
+        type="number"
+        min="1"
+        max="100"
+        placeholder="الوزن %"
+        [(ngModel)]="
+          criterionEditForm.weight
+        "
+        [name]="
+          'editCriterionWeight' +
+          c.criteriaId
+        "
+      />
+
+
+      <input
+        class="nfd-input"
+        type="number"
+        min="1"
+        placeholder="الحد الأقصى"
+        [(ngModel)]="
+          criterionEditForm.maxPoints
+        "
+        [name]="
+          'editCriterionMax' +
+          c.criteriaId
+        "
+      />
+
+    </div>
+
+
+    <div
+      style="
+        display:flex;
+        gap:8px;
+        margin-top:10px;
+      "
+    >
+
+      <button
+        type="button"
+        class="nfd-btn primary"
+        (click)="
+          saveCriterionEdit(
+            c.criteriaId
+          )
+        "
+      >
+        حفظ التعديل
+      </button>
+
+
+     <button
+  type="button"
+  class="nfd-btn secondary"
+  (click)="cancelCriterionEdit()"
+>
+  إلغاء التعديل
+</button>
+
+    </div>
+
+  </div>
+
+}
 
               <input
                 class="nfd-input"
@@ -1334,14 +1682,32 @@
             </div>
 
 
-            <button
-              type="button"
-              class="nfd-btn secondary"
-              (click)="addCriterion()">
+            <div
+  style="
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  "
+>
 
-              إضافة المعيار
+  <button
+    type="button"
+    class="nfd-btn primary"
+    (click)="addCriterion()"
+  >
+    إضافة المعيار
+  </button>
 
-            </button>
+
+  <button
+    type="button"
+    class="nfd-btn secondary"
+    (click)="cancelAddCriterion()"
+  >
+    إلغاء الإضافة
+  </button>
+
+</div>
 
           </div>
 
@@ -1350,14 +1716,13 @@
 
         <div class="nfd-modal-actions">
 
-          <button
-            type="button"
-            class="nfd-btn secondary"
-            (click)="showEvalModal.set(false)">
-
-            إلغاء
-
-          </button>
+        <button
+  type="button"
+  class="nfd-btn secondary"
+  (click)="showEvalModal.set(false)"
+>
+  إغلاق التقييم
+</button>
 
 
           <button
@@ -1366,6 +1731,81 @@
             (click)="submitEvaluation()">
 
             حفظ التقييم
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+
+
+  <!-- =====================================================
+       DELETE CRITERION CONFIRMATION MODAL
+  ====================================================== -->
+
+  @if (criterionToDelete(); as target) {
+
+    <div
+      class="criterion-delete-overlay"
+      (click)="closeDeleteCriterionModal()"
+    >
+
+      <div
+        class="criterion-delete-modal"
+        (click)="$event.stopPropagation()"
+      >
+
+        <div class="criterion-delete-icon">
+          <i class="fa-solid fa-trash-can"></i>
+        </div>
+
+        <h3>
+          حذف معيار التقييم؟
+        </h3>
+
+        <p>
+          هل تريدين حذف معيار
+          <strong>
+            {{ target.criterionName }}
+          </strong>
+          ؟
+        </p>
+
+        <span class="criterion-delete-warning">
+          لن تتمكني من التراجع عن هذه العملية بعد الحذف.
+        </span>
+
+        <div class="criterion-delete-actions">
+
+          <button
+            type="button"
+            class="criterion-cancel-btn"
+            (click)="closeDeleteCriterionModal()"
+            [disabled]="criterionDeleting()"
+          >
+            إلغاء
+          </button>
+
+          <button
+            type="button"
+            class="criterion-confirm-delete-btn"
+            (click)="confirmDeleteCriterion()"
+            [disabled]="criterionDeleting()"
+          >
+
+            @if (criterionDeleting()) {
+              <i class="fa-solid fa-spinner fa-spin"></i>
+              <span>جاري الحذف...</span>
+            }
+            @else {
+              <i class="fa-solid fa-trash-can"></i>
+              <span>حذف المعيار</span>
+            }
 
           </button>
 

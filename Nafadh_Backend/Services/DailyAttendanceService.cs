@@ -3,6 +3,7 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 using static Nafadh_Backend.DTOs.DailyAttendanceDto;
@@ -12,10 +13,14 @@ namespace Nafadh_Backend.Services
     public class DailyAttendanceService : IDailyAttendanceService
     {
         private readonly IDailyAttendanceRepository _repository;
+        private readonly IAbsenceWarningService _absenceWarningService;
 
-        public DailyAttendanceService(IDailyAttendanceRepository repository)
+        public DailyAttendanceService(
+            IDailyAttendanceRepository repository,
+            IAbsenceWarningService absenceWarningService)
         {
             _repository = repository;
+            _absenceWarningService = absenceWarningService;
         }
 
         public async Task<DailyAttendanceReadDto?> GetByIdAsync(int id)
@@ -140,6 +145,45 @@ namespace Nafadh_Backend.Services
                 TraineeName = entity.Enrollment?.Trainee?.User?.FullName, 
                 BatchName = entity.Enrollment?.Batch?.BatchName
             };
+        }
+        //***
+        public async Task<bool> ConfirmAbsenceAsync(int id)
+        {
+            NFD_DailyAttendance? entity =
+                await _repository.GetByIdWithDetailsAsync(id);
+
+            if (entity == null)
+                return false;
+
+            if (entity.Status != NFD_AttendanceStatus.Absent)
+            {
+                throw new InvalidOperationException(
+                    "Only absent attendance records can be confirmed.");
+            }
+
+            bool hasPendingExcuse =
+                entity.Excuses.Any(e =>
+                    e.Status == NFD_ExcuseStatus.Pending);
+
+            if (hasPendingExcuse)
+            {
+                throw new InvalidOperationException(
+                    "Cannot confirm absence while an excuse is pending review.");
+            }
+
+            bool hasApprovedExcuse =
+                entity.Excuses.Any(e =>
+                    e.Status == NFD_ExcuseStatus.Approved);
+
+            if (hasApprovedExcuse)
+            {
+                throw new InvalidOperationException(
+                    "Cannot confirm absence because the excuse was approved.");
+            }
+
+            await _absenceWarningService.ProcessConfirmedAbsenceAsync(id);
+
+            return true;
         }
     }
 }

@@ -130,6 +130,14 @@ export class TrainerContent implements OnInit {
 
 
   // =====================================================
+  // PROGRAM CONTENT ACCORDION
+  // =====================================================
+
+  expandedModuleId =
+    signal<number | null>(null);
+
+
+  // =====================================================
   // PAGE STATE
   // =====================================================
 
@@ -675,6 +683,24 @@ showDeleteMaterialModal =
             null;
 
 
+          const currentExpandedModuleId =
+            this.expandedModuleId();
+
+          const currentExpandedStillActive =
+            currentExpandedModuleId !== null &&
+            sortedModules.some(
+              module =>
+                module.moduleId === currentExpandedModuleId &&
+                !module.isArchived
+            );
+
+          if (!currentExpandedStillActive) {
+            this.expandedModuleId.set(
+              firstActiveModule?.moduleId ?? null
+            );
+          }
+
+
           this.loadAllLessons(
             sortedModules
           );
@@ -1002,6 +1028,8 @@ showDeleteMaterialModal =
 
     this.referenceLessonId =
       null;
+
+    this.expandedModuleId.set(null);
 
     this.loading.set(false);
 
@@ -1339,7 +1367,263 @@ showDeleteMaterialModal =
     );
 
   }
+// =====================================================
+// ARCHIVE MODULE
+// =====================================================
 
+archiveModule(
+  module: ModuleDto
+): void {
+
+  if (this.saving()) {
+    return;
+  }
+
+
+  const confirmed =
+    window.confirm(
+      `هل تريدين أرشفة الوحدة "${module.title}"؟`
+    );
+
+
+  if (!confirmed) {
+    return;
+  }
+
+
+  this.saving.set(
+    true
+  );
+
+  this.errorMessage.set(
+    ''
+  );
+
+  this.successMessage.set(
+    ''
+  );
+
+
+  this.api
+    .updateModule(
+      module.moduleId,
+      {
+        title:
+          module.title,
+
+        orderIndex:
+          module.orderIndex,
+
+        availableFrom:
+          module.availableFrom ?? null,
+
+        availableTo:
+          module.availableTo ?? null,
+
+        isArchived:
+          true,
+
+        prerequisiteModuleId:
+          module.prerequisiteModuleId ?? null
+      }
+    )
+    .subscribe({
+
+      next: () => {
+
+        // Update the local module immediately.
+        this.modules.update(
+          modules =>
+            modules.map(
+              item =>
+                item.moduleId ===
+                module.moduleId
+                  ? {
+                      ...item,
+                      isArchived: true
+                    }
+                  : item
+            )
+        );
+
+
+        // If the archived module was selected,
+        // select another active module.
+        if (
+          this.selectedModuleId ===
+          module.moduleId
+        ) {
+
+          this.selectedModuleId =
+            this.activeModules()[0]
+              ?.moduleId ??
+            null;
+
+        }
+
+
+        if (
+          this.expandedModuleId() ===
+          module.moduleId
+        ) {
+
+          this.expandedModuleId.set(
+            this.activeModules()[0]
+              ?.moduleId ??
+            null
+          );
+
+        }
+
+
+        this.saving.set(
+          false
+        );
+
+
+        this.successMessage.set(
+          'تمت أرشفة الوحدة بنجاح.'
+        );
+
+      },
+
+
+      error: (error) => {
+
+        console.error(
+          'Error archiving module:',
+          error
+        );
+
+
+        this.saving.set(
+          false
+        );
+
+
+        this.errorMessage.set(
+          'تعذر أرشفة الوحدة.'
+        );
+
+      }
+
+    });
+
+}
+
+
+// =====================================================
+// RESTORE MODULE
+// =====================================================
+
+restoreModule(
+  module: ModuleDto
+): void {
+
+  if (this.saving()) {
+    return;
+  }
+
+
+  this.saving.set(
+    true
+  );
+
+  this.errorMessage.set(
+    ''
+  );
+
+  this.successMessage.set(
+    ''
+  );
+
+
+  this.api
+    .updateModule(
+      module.moduleId,
+      {
+        title:
+          module.title,
+
+        orderIndex:
+          module.orderIndex,
+
+        availableFrom:
+          module.availableFrom ?? null,
+
+        availableTo:
+          module.availableTo ?? null,
+
+        isArchived:
+          false,
+
+        prerequisiteModuleId:
+          module.prerequisiteModuleId ?? null
+      }
+    )
+    .subscribe({
+
+      next: () => {
+
+        // Move the restored module
+        // back to the active modules list.
+        this.modules.update(
+          modules =>
+            modules.map(
+              item =>
+                item.moduleId ===
+                module.moduleId
+                  ? {
+                      ...item,
+                      isArchived: false
+                    }
+                  : item
+            )
+        );
+
+
+        this.selectedModuleId =
+          module.moduleId;
+
+        this.expandedModuleId.set(
+          module.moduleId
+        );
+
+
+        this.saving.set(
+          false
+        );
+
+
+        this.successMessage.set(
+          'تمت استعادة الوحدة بنجاح.'
+        );
+
+      },
+
+
+      error: (error) => {
+
+        console.error(
+          'Error restoring module:',
+          error
+        );
+
+
+        this.saving.set(
+          false
+        );
+
+
+        this.errorMessage.set(
+          'تعذر استعادة الوحدة.'
+        );
+
+      }
+
+    });
+
+}
 
   // =====================================================
   // FILE SELECTED
@@ -1808,6 +2092,62 @@ confirmDeleteMaterial(): void {
 
 }
   // =====================================================
+  // PROGRAM ACCORDION HELPERS
+  // =====================================================
+
+  toggleModule(
+    moduleId: number
+  ): void {
+
+    this.expandedModuleId.update(
+      current =>
+        current === moduleId
+          ? null
+          : moduleId
+    );
+
+  }
+
+
+  isModuleExpanded(
+    moduleId: number
+  ): boolean {
+
+    return (
+      this.expandedModuleId() ===
+      moduleId
+    );
+
+  }
+
+
+  getModuleMaterialCount(
+    moduleId: number
+  ): number {
+
+    const lessonIds =
+      this.getLessonsForModule(
+        moduleId
+      )
+        .map(
+          lesson =>
+            lesson.lessonId
+        );
+
+    const materialsMap =
+      this.materialsByLesson();
+
+    return lessonIds.reduce(
+      (total, lessonId) =>
+        total +
+        (materialsMap[lessonId]?.length ?? 0),
+      0
+    );
+
+  }
+
+
+  // =====================================================
   // HELPERS
   // =====================================================
 
@@ -1866,27 +2206,25 @@ confirmDeleteMaterial(): void {
     fileType: TrainingMaterialDto['fileType']
   ): string {
 
-    switch (
-      fileType
-    ) {
+    switch (fileType) {
 
       case 'Pdf':
-        return '📕';
+        return 'fa-solid fa-file-pdf';
 
       case 'Video':
-        return '🎬';
+        return 'fa-solid fa-file-video';
 
       case 'Image':
-        return '🖼️';
+        return 'fa-solid fa-file-image';
 
       case 'Document':
-        return '📄';
+        return 'fa-solid fa-file-lines';
 
       case 'Link':
-        return '🔗';
+        return 'fa-solid fa-link';
 
       default:
-        return '📎';
+        return 'fa-solid fa-paperclip';
 
     }
 

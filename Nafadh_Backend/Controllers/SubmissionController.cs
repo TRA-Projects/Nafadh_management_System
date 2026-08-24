@@ -13,12 +13,17 @@ namespace Nafadh_Backend.Controllers
 
         private readonly ISubmissionService _service;
         private readonly IBadgeEvaluationService _badgeEvaluationService;
+        private readonly IConfiguration _configuration;
 
-
-        public SubmissionController(ISubmissionService service, IBadgeEvaluationService badgeEvaluationService)
+        public SubmissionController(
+      ISubmissionService service,
+      IBadgeEvaluationService badgeEvaluationService,
+      IConfiguration configuration
+  )
         {
             _service = service;
             _badgeEvaluationService = badgeEvaluationService;
+            _configuration = configuration;
         }
 
 
@@ -170,8 +175,300 @@ namespace Nafadh_Backend.Controllers
             );
 
         }
+        // ======================================================
+        // POST: api/Submission/upload
+        // Upload a real trainee submission file
+        // ======================================================
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadSubmission(
+            [FromForm] IFormFile file,
+            [FromForm] int taskId,
+            [FromForm] int traineeId
+        )
+        {
+            if (
+                file == null ||
+                file.Length == 0
+            )
+            {
+                return BadRequest(
+                    "Submission file is required."
+                );
+            }
 
 
+            var submissionsFolder =
+                _configuration[
+                    "Storage:SubmissionsPath"
+                ];
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    submissionsFolder
+                )
+            )
+            {
+                return StatusCode(
+                    500,
+                    "Submissions storage path is not configured."
+                );
+            }
+
+
+            Directory.CreateDirectory(
+                submissionsFolder
+            );
+
+
+            var extension =
+                Path.GetExtension(
+                    file.FileName
+                );
+
+
+            var fileName =
+                $"submission-{taskId}-{traineeId}-{DateTime.Now:yyyyMMddHHmmssfff}{extension}";
+
+
+            var fullPath =
+                Path.Combine(
+                    submissionsFolder,
+                    fileName
+                );
+
+
+            await using (
+                var stream =
+                    new FileStream(
+                        fullPath,
+                        FileMode.Create
+                    )
+            )
+            {
+                await file.CopyToAsync(
+                    stream
+                );
+            }
+
+
+            var submission =
+                new NFD_Submission
+                {
+                    FileUrl =
+                        fullPath,
+
+                    SubmittedAt =
+                        DateTime.Now,
+
+                    Status =
+                        NFD_SubmissionStatus.Submitted,
+
+                    TaskId =
+                        taskId,
+
+                    TraineeId =
+                        traineeId
+                };
+
+
+            await _service.AddSubmissionAsync(
+                submission
+            );
+
+
+            return Ok(
+                new SubmissionResponseDto
+                {
+                    SubmissionId =
+                        submission.SubmissionId,
+
+                    FileUrl =
+                        submission.FileUrl,
+
+                    SubmittedAt =
+                        submission.SubmittedAt,
+
+                    Status =
+                        submission.Status,
+
+                    Grade =
+                        submission.Grade,
+
+                    Feedback =
+                        submission.Feedback,
+
+                    TaskId =
+                        submission.TaskId,
+
+                    TraineeId =
+                        submission.TraineeId
+                }
+            );
+        }
+        // ======================================================
+        // GET: api/Submission/{id}/file
+        // Open the real submitted file
+        // ======================================================
+
+        [HttpGet("{id}/file")]
+        public async Task<IActionResult> GetSubmissionFile(
+            int id
+        )
+        {
+            var submission =
+                await _service
+                    .GetSubmissionByIdAsync(
+                        id
+                    );
+
+
+            if (
+                submission == null ||
+                string.IsNullOrWhiteSpace(
+                    submission.FileUrl
+                )
+            )
+            {
+                return NotFound(
+                    "Submission file not found."
+                );
+            }
+
+
+            var submissionsFolder =
+                _configuration[
+                    "Storage:SubmissionsPath"
+                ];
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    submissionsFolder
+                )
+            )
+            {
+                return NotFound(
+                    "Submission storage is not configured."
+                );
+            }
+
+
+            var storageRoot =
+                Path.GetFullPath(
+                    submissionsFolder
+                );
+
+
+            string filePath;
+
+
+            try
+            {
+                filePath =
+                    Path.GetFullPath(
+                        submission.FileUrl
+                    );
+            }
+            catch
+            {
+                return NotFound(
+                    "Invalid submission file path."
+                );
+            }
+
+
+            var rootWithSeparator =
+                storageRoot.TrimEnd(
+                    Path.DirectorySeparatorChar,
+                    Path.AltDirectorySeparatorChar
+                )
+                + Path.DirectorySeparatorChar;
+
+
+            if (
+                !filePath.StartsWith(
+                    rootWithSeparator,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return NotFound(
+                    "Submission file is outside the allowed storage folder."
+                );
+            }
+
+
+            if (
+                !System.IO.File.Exists(
+                    filePath
+                )
+            )
+            {
+                return NotFound(
+                    "Submission file does not exist."
+                );
+            }
+
+
+            var fileBytes =
+                await System.IO.File
+                    .ReadAllBytesAsync(
+                        filePath
+                    );
+
+
+            var contentType =
+                Path.GetExtension(
+                    filePath
+                )
+                .ToLowerInvariant()
+                switch
+                {
+                    ".pdf" =>
+                        "application/pdf",
+
+                    ".doc" =>
+                        "application/msword",
+
+                    ".docx" =>
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+
+                    ".xls" =>
+                        "application/vnd.ms-excel",
+
+                    ".xlsx" =>
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+
+                    ".png" =>
+                        "image/png",
+
+                    ".jpg" =>
+                        "image/jpeg",
+
+                    ".jpeg" =>
+                        "image/jpeg",
+
+                    ".txt" =>
+                        "text/plain",
+
+                    ".zip" =>
+                        "application/zip",
+
+                    _ =>
+                        "application/octet-stream"
+                };
+
+
+            return File(
+                fileBytes,
+                contentType,
+                Path.GetFileName(
+                    filePath
+                )
+            );
+        }
 
 
 
