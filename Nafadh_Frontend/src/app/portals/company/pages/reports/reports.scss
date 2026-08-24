@@ -53,14 +53,17 @@
   align-items: center;
   justify-content: center;
   border-radius: 13px;
+
   background:
     linear-gradient(
       135deg,
       #1769e0,
       #0b4cb8
     );
+
   color: white;
   font-size: 24px;
+
   box-shadow:
     0 8px 20px rgba(23, 105, 224, .20);
 }
@@ -92,13 +95,16 @@
   padding: 0 18px;
   border-radius: 10px;
   border: 1px solid transparent;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
+
   cursor: pointer;
   transition: .2s ease;
 }
@@ -155,11 +161,14 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
+
   padding: 6px;
   margin-bottom: 22px;
+
   background: rgba(255,255,255,.8);
   border: 1px solid #dfe7f2;
   border-radius: 14px;
+
   box-shadow:
     0 4px 15px rgba(28, 52, 84, .04);
 }
@@ -167,17 +176,22 @@
 .tab-btn {
   position: relative;
   min-height: 64px;
+
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
+
   border: 0;
   border-radius: 10px;
+
   background: transparent;
   color: #4a5970;
+
   font-family: inherit;
   font-size: 15px;
   font-weight: 700;
+
   cursor: pointer;
   transition: .2s ease;
 }
@@ -197,6 +211,7 @@
 .tab-btn.active {
   background: #fff;
   color: #1769e0;
+
   box-shadow:
     0 3px 12px rgba(34, 65, 105, .08);
 }
@@ -217,11 +232,14 @@
   display: flex;
   align-items: center;
   gap: 16px;
+
   padding: 22px;
   margin-bottom: 22px;
+
   background: #fff;
   border: 1px solid #e2e8f1;
   border-radius: 14px;
+
   box-shadow:
     0 5px 18px rgba(29, 54, 88, .05);
 }
@@ -244,38 +262,48 @@
 .loading-spinner {
   width: 36px;
   height: 36px;
+
   border: 3px solid #e3ebf6;
   border-top-color: #1769e0;
   border-radius: 50%;
+
   animation: spin .8s linear infinite;
 }
 
 .error-card {
-  border-color: #ffd8d8;
+  border-color: #d8e7ff;
 }
 
 .error-card .state-icon {
   width: 38px;
   height: 38px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   border-radius: 50%;
-  background: #fff0f0;
-  color: #dc3545;
+
+  background: #eef4ff;
+  color: #315fd6;
+
   font-weight: 800;
 }
 
 .retry-btn {
   margin-right: auto;
   padding: 10px 18px;
+
   border: 0;
   border-radius: 8px;
+
   background: #1769e0;
   color: white;
+
   font-family: inherit;
   font-size: 13px;
   font-weight: 700;
+
   cursor: pointer;
 }
 
@@ -298,9 +326,11 @@
 
 .kpi-card {
   padding: 20px;
+
   background: #fff;
   border: 1px solid #e1e8f2;
   border-radius: 14px;
+
   box-shadow:
     0 5px 18px rgba(31, 56, 90, .05);
 }
@@ -315,10 +345,13 @@
 .kpi-icon {
   width: 42px;
   height: 42px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   border-radius: 10px;
+
   font-weight: 800;
   font-size: 18px;
 }
@@ -333,19 +366,22 @@
   color: #7856d9;
 }
 
+/* الأحمر أصبح أزرق */
 .red-icon {
-  background: #fff0f0;
-  color: #df4c59;
+  background: #eef2ff;
+  color: #315fd6;
 }
 
+/* البرتقالي أصبح أزرق */
 .orange-icon {
-  background: #fff5e8;
-  color: #e58a19;
+  background: #eaf3ff;
+  color: #2563eb;
 }
 
 .kpi-status {
   padding: 6px 11px;
   border-radius: 20px;
+
   font-size: 11px;
   font-weight: 700;
 }
@@ -360,14 +396,16 @@
   color: #55657d;
 }
 
+/* الأحمر أصبح أزرق */
 .danger {
-  background: #fff0f0;
-  color: #df4c59;
+  background: #eef2ff;
+  color: #315fd6;
 }
 
+/* الأصفر أصبح أزرق */
 .warning {
-  background: #fff4e6;
-  color: #dc8418;
+  background: #eaf3ff;
+  color: #2563eb;
 }
 
 .kpi-title {
@@ -380,6 +418,7 @@
 .kpi-value {
   display: block;
   margin: 8px 0;
+
   font-size: 32px;
   line-height: 1;
   font-weight: 800;
@@ -393,12 +432,14 @@
   color: #1b2638;
 }
 
+/* الأحمر أصبح أزرق */
 .kpi-value.red {
-  color: #dc4756;
+  color: #315fd6;
 }
 
+/* البرتقالي أصبح أزرق */
 .kpi-value.orange {
-  color: #e48717;
+  color: #1769e0;
 }
 
 .kpi-subtext {
@@ -412,13 +453,17 @@
 
 .overview-strip {
   display: grid;
+
   grid-template-columns:
     1fr auto
     1fr auto
     1fr auto
     1fr;
+
   align-items: center;
+
   padding: 18px 24px;
+
   background: #fff;
   border: 1px solid #e1e8f2;
   border-radius: 14px;
@@ -431,6 +476,7 @@
 .overview-item span {
   display: block;
   margin-bottom: 6px;
+
   color: #65748b;
   font-size: 12px;
   font-weight: 600;
@@ -441,18 +487,14 @@
   font-weight: 800;
 }
 
-.overview-divider {
-  width: 1px;
-  height: 36px;
-  background: #e8edf4;
-}
-
+/* الأحمر أصبح أزرق */
 .red-text {
-  color: #dc4756;
+  color: #315fd6;
 }
 
+/* البرتقالي أصبح أزرق */
 .orange-text {
-  color: #df881a;
+  color: #2563eb;
 }
 
 .green-text {
@@ -463,6 +505,12 @@
   color: #1769e0;
 }
 
+.overview-divider {
+  width: 1px;
+  height: 36px;
+  background: #e8edf4;
+}
+
 /* =========================================================
    PANELS
    ========================================================= */
@@ -471,10 +519,13 @@
 .table-panel,
 .program-capacity-panel {
   background: #fff;
+
   border: 1px solid #e1e8f2;
   border-radius: 14px;
+
   box-shadow:
     0 5px 18px rgba(31, 56, 90, .05);
+
   overflow: hidden;
 }
 
@@ -482,12 +533,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   padding: 20px 24px;
+
   border-bottom: 1px solid #edf1f6;
 }
 
 .panel-header h2 {
   margin: 0;
+
   color: #1d2b40;
   font-size: 18px;
   font-weight: 800;
@@ -495,6 +549,7 @@
 
 .panel-header p {
   margin: 5px 0 0;
+
   color: #70809a;
   font-size: 12px;
 }
@@ -505,6 +560,7 @@
 
 .chart-summary span {
   display: block;
+
   color: #70809a;
   font-size: 11px;
   font-weight: 600;
@@ -513,6 +569,7 @@
 .chart-summary strong {
   display: block;
   margin-top: 3px;
+
   color: #1769e0;
   font-size: 26px;
   font-weight: 800;
@@ -529,7 +586,9 @@
 .bar-row {
   display: grid;
   grid-template-columns: 110px 1fr 65px;
+
   align-items: center;
+
   gap: 14px;
   margin-bottom: 18px;
 }
@@ -546,83 +605,113 @@
 
 .bar-track {
   position: relative;
+
   width: 100%;
   height: 18px;
+
   background: #edf1f6;
   border-radius: 20px;
+
   overflow: hidden;
 }
 
 .progress-bar-fill {
   position: relative;
+
   height: 100%;
   min-width: 4px;
+
   border-radius: 20px;
+
   transition:
     width .5s ease,
     background .25s ease;
-  overflow: hidden;
-  background: linear-gradient(
-    90deg,
-    #1769e0,
-    #3b82f6
-  );
+
+  background:
+    linear-gradient(
+      90deg,
+      #1769e0,
+      #3b82f6
+    );
+
   box-shadow:
     0 2px 7px rgba(23, 105, 224, .20);
+
+  overflow: hidden;
 }
 
 .progress-bar-fill.high {
-  background: linear-gradient(
-    90deg,
-    #4f8df7 0%,
-    #1769e0 100%
-  );
+  background:
+    linear-gradient(
+      90deg,
+      #4f8df7 0%,
+      #1769e0 100%
+    );
+
   box-shadow:
     0 2px 8px rgba(23, 105, 224, .22);
 }
 
+/* الأصفر أصبح تدرج أزرق */
 .progress-bar-fill.medium {
-  background: linear-gradient(
-    90deg,
-    #e38a18 0%,
-    #f5b63f 100%
-  );
+  background:
+    linear-gradient(
+      90deg,
+      #60a5fa 0%,
+      #2563eb 50%,
+      #1e40af 100%
+    );
+
   box-shadow:
-    0 2px 8px rgba(239, 166, 45, .22);
+    0 2px 8px rgba(37, 99, 235, .22);
 }
 
+/* الأحمر أصبح تدرج أزرق */
 .progress-bar-fill.low {
-  background: linear-gradient(
-    90deg,
-    #d94352 0%,
-    #ed6874 100%
-  );
+  background:
+    linear-gradient(
+      90deg,
+      #93c5fd 0%,
+      #3b82f6 50%,
+      #1d4ed8 100%
+    );
+
   box-shadow:
-    0 2px 8px rgba(226, 77, 90, .22);
+    0 2px 8px rgba(59, 130, 246, .22);
 }
 
 .progress-bar-fill::after {
   content: "";
+
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(255,255,255,.22),
-    transparent 60%
-  );
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.22),
+      transparent 60%
+    );
+
   pointer-events: none;
 }
 
 .bar-badge {
   position: absolute;
+
   top: 50%;
   left: 9px;
+
   transform: translateY(-50%);
+
   color: #fff;
+
   font-size: 11px;
   font-weight: 800;
   line-height: 1;
+
   z-index: 2;
+
   text-shadow:
     0 1px 2px rgba(0,0,0,.18);
 }
@@ -650,7 +739,9 @@ table {
 table th,
 table td {
   padding: 15px 18px;
+
   border-bottom: 1px solid #edf1f5;
+
   text-align: right;
   white-space: nowrap;
 }
@@ -658,12 +749,14 @@ table td {
 table th {
   background: #f8fafc;
   color: #4a5a72;
+
   font-size: 12px;
   font-weight: 800;
 }
 
 table td {
   color: #34445c;
+
   font-size: 13px;
   font-weight: 500;
 }
@@ -682,9 +775,12 @@ table tbody tr:last-child td {
 
 .records-count {
   padding: 6px 12px;
+
   border-radius: 20px;
+
   background: #f1f5fa;
   color: #4c5c74;
+
   font-size: 11px;
   font-weight: 700;
 }
@@ -698,19 +794,25 @@ table tbody tr:last-child td {
 .trainee-cell .avatar {
   width: 36px;
   height: 36px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   border-radius: 50%;
+
   background: #eaf3ff;
   color: #1769e0;
+
   font-size: 13px;
   font-weight: 800;
 }
 
 .trainee-cell strong {
   display: block;
+
   color: #1d2b40;
+
   font-size: 13px;
   font-weight: 700;
 }
@@ -718,35 +820,44 @@ table tbody tr:last-child td {
 .trainee-cell small {
   display: block;
   margin-top: 3px;
+
   color: #70809a;
+
   font-size: 11px;
 }
 
 .number-badge {
   min-width: 28px;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   padding: 5px 8px;
+
   border-radius: 7px;
+
   font-size: 12px;
   font-weight: 800;
 }
 
+/* الأحمر أصبح أزرق */
 .number-badge.red {
-  background: #fff0f0;
-  color: #dc4756;
+  background: #eef2ff;
+  color: #315fd6;
 }
 
+/* البرتقالي أصبح أزرق */
 .number-badge.orange {
-  background: #fff5e8;
-  color: #dc8418;
+  background: #eaf3ff;
+  color: #2563eb;
 }
 
 .table-progress,
 .capacity-table-progress {
   display: flex;
   align-items: center;
+
   gap: 10px;
   min-width: 160px;
 }
@@ -759,21 +870,27 @@ table tbody tr:last-child td {
 .table-progress strong,
 .capacity-table-progress strong {
   min-width: 42px;
+
   font-size: 12px;
   font-weight: 800;
 }
 
 .progress-track {
   height: 9px;
+
   background: #edf1f5;
   border-radius: 20px;
+
   overflow: hidden;
 }
 
 .progress-track span {
   display: block;
+
   height: 100%;
+
   border-radius: inherit;
+
   transition: width .4s ease;
 }
 
@@ -782,20 +899,35 @@ table tbody tr:last-child td {
   background: #19ad64;
 }
 
+/* الأصفر أصبح أزرق */
 .progress-track span.warning,
 .progress-track span.medium {
-  background: #efa62d;
+  background:
+    linear-gradient(
+      90deg,
+      #60a5fa,
+      #2563eb
+    );
 }
 
+/* الأحمر أصبح أزرق */
 .progress-track span.danger,
 .progress-track span.low {
-  background: #e24d5a;
+  background:
+    linear-gradient(
+      90deg,
+      #93c5fd,
+      #1d4ed8
+    );
 }
 
 .status-pill {
   display: inline-flex;
+
   padding: 6px 12px;
+
   border-radius: 20px;
+
   font-size: 11px;
   font-weight: 700;
 }
@@ -805,14 +937,16 @@ table tbody tr:last-child td {
   color: #16509b;
 }
 
+/* الأصفر أصبح أزرق */
 .warning-pill {
-  background: #fff5e7;
-  color: #d98718;
+  background: #eaf3ff;
+  color: #2563eb;
 }
 
+/* الأحمر أصبح أزرق */
 .danger-pill {
-  background: #fff0f1;
-  color: #d94855;
+  background: #eef2ff;
+  color: #315fd6;
 }
 
 /* =========================================================
@@ -825,11 +959,16 @@ table tbody tr:last-child td {
 
 .achievement-chart-card {
   position: relative;
+
   width: 100%;
+
   padding: 24px;
+
   background: #fff;
+
   border: 1px solid #dfe7f1;
   border-radius: 14px;
+
   box-shadow:
     0 8px 25px rgba(30, 55, 90, .06);
 }
@@ -838,74 +977,102 @@ table tbody tr:last-child td {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   gap: 20px;
+
   padding-bottom: 20px;
+
   border-bottom: 1px solid #edf1f6;
 }
 
 .achievement-chart-header h2 {
   margin: 0;
+
   color: #1d2b40;
+
   font-size: 19px;
   font-weight: 800;
 }
 
 .achievement-chart-header p {
   margin: 5px 0 0;
+
   color: #70809a;
+
   font-size: 12px;
 }
 
 .achievement-summary-badge {
   min-width: 130px;
+
   padding: 12px 18px;
+
   text-align: center;
+
   background: #eef5ff;
+
   border: 1px solid #d8e7ff;
   border-radius: 12px;
 }
 
 .achievement-summary-badge span {
   display: block;
+
   color: #556680;
+
   font-size: 11px;
   font-weight: 600;
 }
 
 .achievement-summary-badge strong {
   display: block;
+
   margin-top: 4px;
+
   color: #1769e0;
+
   font-size: 26px;
   line-height: 1;
   font-weight: 800;
 }
 
-/* INSIGHTS */
+/* =========================================================
+   INSIGHTS
+   ========================================================= */
 
 .achievement-insights {
   display: grid;
+
   grid-template-columns:
     repeat(3, minmax(0, 1fr));
+
   gap: 12px;
+
   margin-top: 18px;
 }
 
 .insight-item {
   display: flex;
   align-items: center;
+
   gap: 12px;
+
   min-width: 0;
+
   padding: 14px 16px;
+
   background: #f9fbfd;
+
   border: 1px solid #edf1f5;
   border-radius: 10px;
 }
 
 .insight-item .insight-dot {
   flex: 0 0 auto;
+
   width: 11px;
   height: 11px;
+
   border-radius: 50%;
 }
 
@@ -914,7 +1081,7 @@ table tbody tr:last-child td {
 }
 
 .insight-item .insight-dot.orange {
-  background: #efa62d;
+  background: #2563eb;
 }
 
 .insight-item .insight-dot.blue {
@@ -928,18 +1095,25 @@ table tbody tr:last-child td {
 
 .insight-item small {
   display: block;
+
   margin-bottom: 4px;
+
   color: #70809a;
+
   font-size: 11px;
   font-weight: 600;
 }
 
 .insight-item strong {
   display: block;
+
   overflow: hidden;
+
   color: #1d2b40;
+
   font-size: 13px;
   font-weight: 700;
+
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -948,164 +1122,234 @@ table tbody tr:last-child td {
   font-size: 15px;
 }
 
-/* CHART */
+/* =========================================================
+   CHART
+   ========================================================= */
 
 .achievement-chart {
   position: relative;
+
   height: 430px;
+
   margin-top: 24px;
+
   padding:
     15px
     25px
     0
     75px;
+
   background:
     linear-gradient(
       180deg,
       #fcfdff 0%,
       #f8fafc 100%
     );
+
   border: 1px solid #edf1f5;
   border-radius: 14px;
+
   overflow: hidden;
 }
 
-/* Y AXIS */
+/* =========================================================
+   Y AXIS
+   ========================================================= */
 
 .chart-y-axis {
   position: absolute;
+
   top: 18px;
   bottom: 60px;
+
   right: auto;
   left: 12px;
+
   width: 45px;
+
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+
   z-index: 4;
 }
 
 .chart-y-axis span {
   color: #5d6d85;
+
   font-size: 11px;
   font-weight: 700;
+
   text-align: right;
 }
 
-/* GRID */
+/* =========================================================
+   GRID
+   ========================================================= */
 
 .chart-grid {
   position: absolute;
+
   inset:
     20px
     20px
     62px
     75px;
+
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+
   pointer-events: none;
+
   z-index: 0;
 }
 
 .grid-line {
   width: 100%;
   height: 1px;
+
   background: #e5eaf1;
+
   border-top: 1px dashed #e2e8f0;
 }
 
-/* TARGET 90% */
+/* =========================================================
+   TARGET 90%
+   ========================================================= */
 
 .target-indicator {
   position: absolute;
+
   top: calc(10% + 20px);
+
   right: 20px;
   left: 75px;
+
   height: 0;
+
   border-top: 2px dashed #1769e0;
+
   z-index: 2;
+
   pointer-events: none;
 }
 
 .target-label {
   position: absolute;
+
   top: -24px;
   right: 0;
+
   padding: 5px 9px;
+
   border-radius: 6px;
+
   background: #eaf3ff;
   color: #1769e0;
+
   font-size: 11px;
   font-weight: 800;
 }
 
-/* BARS AREA */
+/* =========================================================
+   BARS AREA
+   ========================================================= */
 
 .bars-area {
   position: absolute;
+
   top: 20px;
   right: 25px;
   bottom: 0;
   left: 75px;
+
   display: flex;
+
   align-items: flex-end;
   justify-content: space-around;
+
   gap: 25px;
+
   z-index: 3;
 }
 
-/* BAR COLUMN */
+/* =========================================================
+   BAR COLUMN
+   ========================================================= */
 
 .achievement-bar-column {
   position: relative;
+
   width: 100%;
   max-width: 120px;
   height: 350px;
+
   display: flex;
   flex-direction: column;
+
   align-items: center;
   justify-content: flex-end;
+
   --bar-height: 0%;
   --bar-delay: 0s;
 }
 
-/* VALUE ABOVE */
+/* =========================================================
+   VALUE ABOVE
+   ========================================================= */
 
 .bar-percentage {
   position: absolute;
-  bottom: calc(
-    var(--bar-height) + 12px
-  );
+
+  bottom:
+    calc(
+      var(--bar-height) + 12px
+    );
+
   color: #1d2b40;
+
   font-size: 13px;
   font-weight: 800;
+
   z-index: 6;
+
   transition: bottom .7s ease;
 }
 
-/* BAR */
+/* =========================================================
+   BAR
+   ========================================================= */
 
 .achievement-bar {
   position: absolute;
+
   bottom: 42px;
+
   width: 62px;
   height: var(--bar-height);
+
   min-height: 5px;
+
   border-radius:
     10px
     10px
     4px
     4px;
+
   overflow: hidden;
+
   transform-origin: bottom;
+
   animation:
     growBar .8s
     cubic-bezier(.2,.8,.2,1)
     var(--bar-delay)
     both;
+
   box-shadow:
     0 8px 18px rgba(20, 80, 160, .13);
+
   transition:
     filter .2s ease,
     transform .2s ease;
@@ -1113,110 +1357,143 @@ table tbody tr:last-child td {
 
 .achievement-bar:hover {
   filter: brightness(1.05);
+
   transform:
     translateY(-3px);
 }
 
 /* =========================================================
    ACHIEVEMENT BAR COLORS
+   جميعها تدرجات أزرق
    ========================================================= */
 
 .achievement-bar.blue {
-  background: linear-gradient(
-    180deg,
-    #3b82f6 0%,
-    #1e40af 100%
-  ) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #3b82f6 0%,
+      #1e40af 100%
+    ) !important;
 }
 
 .achievement-bar.cyan {
-  background: linear-gradient(
-    180deg,
-    #06b6d4 0%,
-    #0e7490 100%
-  ) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #38bdf8 0%,
+      #0369a1 100%
+    ) !important;
 }
 
 .achievement-bar.purple {
-  background: linear-gradient(
-    180deg,
-    #6366f1 0%,
-    #3730a3 100%
-  ) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #818cf8 0%,
+      #4338ca 100%
+    ) !important;
 }
 
+/* كان اسمه orange لكن أصبح أزرق */
 .achievement-bar.orange {
-  background: linear-gradient(
-    180deg,
-    #93c5fd 0%,
-    #2563eb 100%
-  ) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #60a5fa 0%,
+      #2563eb 100%
+    ) !important;
 }
 
+/* كان اسمه red لكن أصبح أزرق */
 .achievement-bar.red {
-  background: linear-gradient(
-    180deg,
-    #818cf8 0%,
-    #1e1b4b 100%
-  ) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #93c5fd 0%,
+      #1d4ed8 100%
+    ) !important;
 }
 
 .achievement-bar.green {
-  background: linear-gradient(
-    180deg,
-    #2563eb 0%,
-    #172554 100%
-  ) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #2563eb 0%,
+      #172554 100%
+    ) !important;
 }
 
-/* SHINE */
+/* =========================================================
+   SHINE
+   ========================================================= */
 
 .bar-shine {
   position: absolute;
+
   top: 0;
   left: 0;
+
   width: 100%;
   height: 35%;
+
   background:
     linear-gradient(
       180deg,
       rgba(255,255,255,.35),
       transparent
     );
+
   pointer-events: none;
 }
 
-/* VALUE INSIDE */
+/* =========================================================
+   VALUE INSIDE
+   ========================================================= */
 
 .bar-value-inside {
   position: absolute;
+
   left: 50%;
   top: 50%;
+
   transform:
     translate(-50%, -50%)
     rotate(0deg);
+
   color: rgba(255,255,255,.98);
+
   font-size: 11px;
   font-weight: 800;
+
   writing-mode: vertical-rl;
+
   text-shadow:
     0 1px 3px rgba(0,0,0,.15);
 }
 
-/* LABEL */
+/* =========================================================
+   LABEL
+   ========================================================= */
 
 .bar-program-name {
   position: absolute;
+
   bottom: 10px;
+
   width: 115px;
+
   color: #34445c;
+
   font-size: 11px;
   font-weight: 700;
   line-height: 1.4;
+
   text-align: center;
 }
 
-/* HIGHLIGHT */
+/* =========================================================
+   HIGHLIGHT
+   ========================================================= */
 
 .achievement-bar-column.highlighted .achievement-bar {
   box-shadow:
@@ -1227,6 +1504,10 @@ table tbody tr:last-child td {
 .achievement-bar-column.highlighted .bar-percentage {
   color: #159b59;
 }
+
+/* =========================================================
+   ANIMATION
+   ========================================================= */
 
 @keyframes growBar {
   from {
@@ -1240,22 +1521,30 @@ table tbody tr:last-child td {
   }
 }
 
-/* FOOTER */
+/* =========================================================
+   FOOTER
+   ========================================================= */
 
 .achievement-chart-footer {
   display: flex;
   align-items: center;
   justify-content: center;
+
   flex-wrap: wrap;
+
   gap: 24px;
+
   padding-top: 20px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
+
   gap: 8px;
+
   color: #556680;
+
   font-size: 11px;
   font-weight: 600;
 }
@@ -1263,6 +1552,7 @@ table tbody tr:last-child td {
 .legend-dot {
   width: 10px;
   height: 10px;
+
   border-radius: 50%;
 }
 
@@ -1270,12 +1560,14 @@ table tbody tr:last-child td {
   background: #19ad64;
 }
 
+/* الأصفر أصبح أزرق */
 .legend-dot.normal {
-  background: #efa62d;
+  background: #2563eb;
 }
 
 .legend-line {
   width: 24px;
+
   border-top:
     2px dashed #1769e0;
 }
@@ -1296,42 +1588,57 @@ table tbody tr:last-child td {
 
 .capacity-top h2 {
   margin: 0;
+
   font-size: 19px;
   font-weight: 800;
 }
 
 .capacity-top p {
   margin: 5px 0 0;
+
   color: #70809a;
+
   font-size: 12px;
 }
 
 .tag {
   padding: 8px 14px;
+
   border-radius: 20px;
+
   background: #eaf3ff;
   color: #1769e0;
+
   font-size: 11px;
   font-weight: 700;
 }
 
 .capacity-overview {
   display: grid;
+
   grid-template-columns:
     1fr 300px;
+
   align-items: center;
+
   gap: 30px;
+
   padding: 28px;
+
   background: #fff;
+
   border: 1px solid #e1e8f2;
   border-radius: 14px;
+
   box-shadow:
     0 5px 18px rgba(31, 56, 90, .05);
 }
 
 .capacity-big-number strong {
   display: block;
+
   color: #1769e0;
+
   font-size: 46px;
   line-height: 1;
   font-weight: 800;
@@ -1339,8 +1646,11 @@ table tbody tr:last-child td {
 
 .capacity-big-number span {
   display: block;
+
   margin-top: 8px;
+
   color: #70809a;
+
   font-size: 12px;
   font-weight: 600;
 }
@@ -1352,8 +1662,11 @@ table tbody tr:last-child td {
 .capacity-progress-top {
   display: flex;
   justify-content: space-between;
+
   margin-bottom: 9px;
+
   color: #53637a;
+
   font-size: 12px;
   font-weight: 600;
 }
@@ -1365,39 +1678,50 @@ table tbody tr:last-child td {
 
 .capacity-progress-track {
   height: 12px;
+
   overflow: hidden;
+
   background: #edf1f6;
+
   border-radius: 20px;
 }
 
 .capacity-progress-track span {
   display: block;
+
   height: 100%;
+
   background:
     linear-gradient(
       90deg,
       #1769e0,
       #23a9ca
     );
+
   border-radius: inherit;
+
   transition: width .6s ease;
 }
 
 .capacity-stats {
   display: flex;
+
   gap: 35px;
+
   margin-top: 28px;
 }
 
 .capacity-stat {
   display: flex;
   align-items: center;
+
   gap: 10px;
 }
 
 .capacity-stat .stat-dot {
   width: 10px;
   height: 10px;
+
   border-radius: 50%;
 }
 
@@ -1409,67 +1733,89 @@ table tbody tr:last-child td {
   background: #b8c1cc;
 }
 
+/* الأصفر أصبح أزرق */
 .capacity-stat .stat-dot.orange {
-  background: #efa62d;
+  background: #2563eb;
 }
 
 .capacity-stat small {
   display: block;
+
   color: #70809a;
+
   font-size: 11px;
   font-weight: 600;
 }
 
 .capacity-stat strong {
   display: block;
+
   margin-top: 3px;
+
   color: #1d2b40;
+
   font-size: 16px;
   font-weight: 800;
 }
 
-/* DONUT */
+/* =========================================================
+   DONUT
+   ========================================================= */
 
 .donut-wrap {
   position: relative;
+
   width: 230px;
   height: 230px;
+
   margin: auto;
 }
 
 .donut-svg {
   width: 100%;
   height: 100%;
+
   transform: rotate(-90deg);
 }
 
 .donut-bg {
   fill: none;
+
   stroke: #e9eef5;
+
   stroke-width: 14;
 }
 
 .donut-ring {
   fill: none;
+
   stroke: #1769e0;
+
   stroke-width: 14;
+
   stroke-linecap: round;
+
   transition:
     stroke-dashoffset .6s ease;
 }
 
 .donut-center {
   position: absolute;
+
   inset: 0;
+
   display: flex;
   flex-direction: column;
+
   align-items: center;
   justify-content: center;
+
   pointer-events: none;
 }
 
 .donut-center strong {
   color: #1769e0;
+
   font-size: 32px;
   line-height: 1;
   font-weight: 800;
@@ -1477,7 +1823,9 @@ table tbody tr:last-child td {
 
 .donut-center span {
   margin-top: 6px;
+
   color: #70809a;
+
   font-size: 11px;
   font-weight: 600;
 }
@@ -1485,13 +1833,16 @@ table tbody tr:last-child td {
 .program-dot {
   width: 8px;
   height: 8px;
+
   border-radius: 50%;
+
   background: #1769e0;
 }
 
 .program-table-name {
   display: flex;
   align-items: center;
+
   gap: 10px;
 }
 
@@ -1500,8 +1851,9 @@ table tbody tr:last-child td {
   font-weight: 800;
 }
 
+/* الأحمر أصبح أزرق */
 .remaining-value.low {
-  color: #df4d5b;
+  color: #315fd6;
 }
 
 /* =========================================================
@@ -1510,18 +1862,24 @@ table tbody tr:last-child td {
 
 .empty-state {
   padding: 40px 20px;
+
   color: #70809a;
+
   font-size: 13px;
   font-weight: 600;
+
   text-align: center;
 }
 
 .large-empty {
   min-height: 200px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   background: #fff;
+
   border: 1px solid #e1e8f2;
   border-radius: 14px;
 }
@@ -1531,6 +1889,7 @@ table tbody tr:last-child td {
    ========================================================= */
 
 @media (max-width: 1100px) {
+
   .kpi-grid {
     grid-template-columns:
       repeat(2, 1fr);
@@ -1546,6 +1905,7 @@ table tbody tr:last-child td {
 }
 
 @media (max-width: 800px) {
+
   .reports-page {
     padding: 14px;
   }
@@ -1579,6 +1939,7 @@ table tbody tr:last-child td {
   .bars-area {
     left: 60px;
     right: 15px;
+
     gap: 12px;
   }
 
@@ -1606,6 +1967,7 @@ table tbody tr:last-child td {
 }
 
 @media (max-width: 550px) {
+
   .kpi-grid {
     grid-template-columns: 1fr;
   }
@@ -1642,7 +2004,7 @@ table tbody tr:last-child td {
 }
 
 /* =========================================================
-   Unified company portal page title
+   UNIFIED COMPANY PORTAL PAGE TITLE
    نفس لون عنوان "المتدربون"
    ========================================================= */
 

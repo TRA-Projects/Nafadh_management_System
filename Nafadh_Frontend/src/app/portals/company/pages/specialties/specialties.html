@@ -65,7 +65,43 @@
   @if (!loading() && cards().length) {
     <div class="content-split-layout">
 
-      <!-- عمود الكروت (يأخذ المساحة الأكبر) -->
+      <!-- صندوق الرسم البياني في الأعلى -->
+      <aside class="sidebar-chart-area">
+        <div class="visual-chart-box">
+          <div class="chart-header">
+            <h3>توزيع البرامج</h3>
+            <span>حسب التخصصات</span>
+          </div>
+
+          <div class="chart-main-container">
+            <!-- الرسم الدائري -->
+            <div class="donut-container">
+              <div class="donut-ring" [style.background]="getDonutGradient()"></div>
+              <div class="chart-center-hole">
+                <span class="total-label">إجمالي البرامج</span>
+                <strong class="total-value">{{ cards().length }}</strong>
+                <span class="sub-label">نشط الآن</span>
+              </div>
+            </div>
+
+            <!-- مفتاح الأقسام -->
+            <div class="chart-legend">
+              @for (item of getDepartmentDistribution(); track item.name) {
+                <div class="legend-item">
+                  <div class="legend-info">
+                    <span class="dot" [style.background-color]="item.color"></span>
+                    <span class="dept-name">{{ item.name }}</span>
+                  </div>
+                  <span class="dept-count">{{ item.count }} برامج</span>
+                </div>
+              }
+            </div>
+          </div>
+
+        </div>
+      </aside>
+
+      <!-- عمود الكروت -->
       <div class="specialties-main-area">
         <div class="section-title-bar">
           <h3>البرامج التدريبية المتاحة</h3>
@@ -119,40 +155,6 @@
         </div>
       </div>
 
-      <aside class="sidebar-chart-area">
-        <div class="visual-chart-box">
-          <div class="chart-header">
-            <h3>توزيع البرامج</h3>
-            <span>حسب التخصصات</span>
-          </div>
-
-          <div class="chart-main-container">
-            <!-- الرسم الدائري في الأعلى أو الوسط -->
-            <div class="donut-container">
-              <div class="donut-ring" [style.background]="getDonutGradient()"></div>
-              <div class="chart-center-hole">
-                <span class="total-label">إجمالي البرامج</span>
-                <strong class="total-value">{{ cards().length }}</strong>
-                <span class="sub-label">نشط الآن</span>
-              </div>
-            </div>
-
-            <!-- مفتاح الأقسام مرتب ومنظم بشكل عريض ومرتب -->
-            <div class="chart-legend">
-              @for (item of getDepartmentDistribution(); track item.name) {
-                <div class="legend-item">
-                  <div class="legend-info">
-                    <span class="dot" [style.background-color]="item.color"></span>
-                    <span class="dept-name">{{ item.name }}</span>
-                  </div>
-                  <span class="dept-count">{{ item.count }} برامج</span>
-                </div>
-              }
-            </div>
-          </div>
-
-        </div>
-      </aside>
     </div>
   }
 

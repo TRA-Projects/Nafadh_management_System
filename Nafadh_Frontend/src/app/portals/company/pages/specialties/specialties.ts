@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
 import { catchError, of } from 'rxjs';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -29,6 +30,7 @@ export class CompanySpecialties implements OnInit {
   private readonly api = inject(CompanyApi);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   readonly companyId: number = this.auth.companyId ?? 0;
   readonly loading = signal(true);
@@ -101,21 +103,28 @@ export class CompanySpecialties implements OnInit {
     return total ? Math.round((this.usedCapacity() / total) * 100) : 0;
   }
 
-  getDepartmentDistribution(): { name: string; count: number; color: string }[] {
+ getDepartmentDistribution(): { name: string; count: number; color: string }[] {
     const counts = new Map<string, number>();
+
+    // استخدام مصفوفة ألوان واضحة ومتنوعة لكل برنامج/قسم يتم إيجاده
+    const defaultColors = ['#00338d', '#007cae', '#efbb20', '#1ebbf0', '#5b6fb8', '#16a34a'];
+    let colorIndex = 0;
 
     for (const card of this.cards()) {
       const department = card.department || 'غير محدد';
       counts.set(department, (counts.get(department) ?? 0) + 1);
     }
-
-    return Array.from(counts.entries()).map(([name, count]) => ({
-      name,
-      count,
-      color: this.departmentColors[name] || '#64748b',
-    }));
+//
+    return Array.from(counts.entries()).map(([name, count]) => {
+      const assignedColor = this.departmentColors[name] || defaultColors[colorIndex % defaultColors.length];
+      colorIndex++;
+      return {
+        name,
+        count,
+        color: assignedColor,
+      };
+    });
   }
-
   openDetails(card: SpecialtyCard): void {
     this.router.navigate(['/company/specialties', card.programId]);
   }
@@ -124,22 +133,25 @@ export class CompanySpecialties implements OnInit {
     return card.programId;
   }
 
-  getDonutGradient(): string {
+  getDonutGradient(): SafeStyle {
     const distribution = this.getDepartmentDistribution();
     const total = this.cards().length;
-    if (!total) return '#e2e8f0';
+    if (!total || !distribution.length) {
+      return this.sanitizer.bypassSecurityTrustStyle('conic-gradient(#e2e8f0 0deg 360deg)');
+    }
 
     let currentAngle = 0;
     const gradients: string[] = [];
 
     distribution.forEach((item) => {
-      const percentage = (item.count / total) * 100;
-      const nextAngle = currentAngle + percentage;
-      gradients.push(`${item.color} ${currentAngle}% ${nextAngle}%`);
+      const angle = (item.count / total) * 360;
+      const nextAngle = currentAngle + angle;
+      gradients.push(`${item.color} ${currentAngle}deg ${nextAngle}deg`);
       currentAngle = nextAngle;
     });
 
-    return `conic-gradient(${gradients.join(', ')})`;
+    const gradientString = `conic-gradient(${gradients.join(', ')})`;
+    return this.sanitizer.bypassSecurityTrustStyle(gradientString);
   }
 
   private hoursToWeeks(hours: number): number {
