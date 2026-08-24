@@ -90,16 +90,20 @@
         <button class="close-icon-btn" (click)="closeIssueModal()">✕</button>
       </div>
 
-      <!-- رقم الشركة -->
+      <!-- الشركة المستضيفة (تم التحديث إلى قائمة منسدلة) -->
       <div class="form-group">
-        <label>رقم الشركة/الجهة المستضيفة *</label>
-        <input 
+        <label>الشركة المستضيفة *</label>
+        <select 
           class="nfd-input" 
-          type="number" 
           [class.is-invalid]="touchedFields()['companyId'] && formErrors()['companyId']"
           [(ngModel)]="newWarning.companyId" 
           (blur)="markFieldTouched('companyId')"
-        />
+        >
+          <option [ngValue]="null" disabled selected>– اختر الشركة المستضيفة –</option>
+          <option *ngFor="let comp of companies()" [value]="comp.companyId">
+            {{ comp.companyName }}
+          </option>
+        </select>
         <span class="field-error" *ngIf="touchedFields()['companyId'] && formErrors()['companyId']">
           {{ formErrors()['companyId'] }}
         </span>
@@ -114,6 +118,7 @@
           [(ngModel)]="newWarning.type"
           (blur)="markFieldTouched('type')"
         >
+          <option value="" disabled selected>– اختر تصنيف المخالفة –</option>
           <option value="Attendance">إخلال بالتزامات الحضور والمتابعة</option>
           <option value="Performance">عدم الالتزام ببيئة التدريب المعتمدة</option>
           <option value="Behavioral">مخالفة الضوابط والسلوك الميداني</option>
@@ -133,6 +138,7 @@
           [(ngModel)]="newWarning.level"
           (blur)="markFieldTouched('level')"
         >
+          <option value="" disabled selected>– اختر مستوى الأهمية –</option>
           <option value="Low">منخفض (تنبيه)</option>
           <option value="Medium">متوسط (إنذار أول)</option>
           <option value="High">مرتفع (إنذار ثانٍ)</option>

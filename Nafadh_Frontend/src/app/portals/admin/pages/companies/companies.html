@@ -21,7 +21,7 @@
       }
     </div>
 
-<!-- عرض مؤشر التحميل الخاص -->
+    <!-- عرض مؤشر التحميل الخاص -->
     @if (isLoading()) {
       <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px; width: 100%;">
         <div class="custom-spinner"></div>
@@ -83,6 +83,9 @@
         </table>
       </div>
     }
+  </div>
+</div>
+
 <!-- نافذة إضافة شركة مستضيفة (Modal) -->
 @if (showAddModal()) {
 <div class="nfd-modal-overlay">
@@ -100,16 +103,27 @@
       <!-- بيانات الشركة -->
       <div class="nfd-modal-section-title">بيانات الشركة</div>
 
+      <!-- اسم الشركة -->
       <div class="nfd-field">
         <label>اسم الشركة <span class="req">*</span></label>
-        <input type="text" class="form-control" [(ngModel)]="newCompany.companyName" placeholder="اسم الشركة الكامل">
+        <input type="text" class="form-control" [(ngModel)]="newCompany.companyName" placeholder="اسم الشركة الكامل"
+          [style.border-color]="(submitted() && !newCompany.companyName) ? '#dc2626' : ''">
+        @if (submitted() && !newCompany.companyName) {
+          <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">اسم الشركة مطلوب</small>
+        }
       </div>
 
       <div class="nfd-field-row">
+        <!-- المجال -->
         <div class="nfd-field">
           <label>المجال <span class="req">*</span></label>
-          <input type="text" class="form-control" [(ngModel)]="newCompany.workField" placeholder="تقنية المعلومات">
+          <input type="text" class="form-control" [(ngModel)]="newCompany.workField" placeholder="تقنية المعلومات"
+            [style.border-color]="(submitted() && !newCompany.workField) ? '#dc2626' : ''">
+          @if (submitted() && !newCompany.workField) {
+            <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">المجال مطلوب</small>
+          }
         </div>
+        <!-- المدينة -->
         <div class="nfd-field">
           <label>المدينة</label>
           <input type="text" class="form-control" [(ngModel)]="newCompany.address" placeholder="مسقط">
@@ -117,11 +131,18 @@
       </div>
 
       <div class="nfd-field-row">
+        <!-- الطاقة الاستيعابية -->
         <div class="nfd-field">
           <label>الطاقة الاستيعابية <span class="req">*</span></label>
           <input type="number" min="1" class="form-control" [(ngModel)]="newCompany.capacity" placeholder="0"
-            oninput="if(this.value < 1) this.value = 1;">
+            [style.border-color]="(submitted() && (!newCompany.capacity || newCompany.capacity <= 0)) ? '#dc2626' : ''">
+          @if (submitted() && !newCompany.capacity) {
+            <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">الطاقة الاستيعابية مطلوبة</small>
+          } @else if (submitted() && newCompany.capacity <= 0) {
+            <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">يجب أن تكون أكبر من الصفر</small>
+          }
         </div>
+        <!-- الحالة -->
         <div class="nfd-field">
           <label>الحالة</label>
           <input type="text" class="form-control" [value]="statusLabel(newCompany.status)" disabled>
@@ -131,16 +152,29 @@
       <!-- بيانات التواصل -->
       <div class="nfd-modal-section-title">بيانات التواصل</div>
 
+      <!-- اسم جهة الاتصال -->
       <div class="nfd-field">
         <label>اسم جهة الاتصال <span class="req">*</span></label>
-        <input type="text" class="form-control" [(ngModel)]="newCompany.contactName" placeholder="الاسم الكامل">
+        <input type="text" class="form-control" [(ngModel)]="newCompany.contactName" placeholder="الاسم الكامل"
+          [style.border-color]="(submitted() && !newCompany.contactName) ? '#dc2626' : ''">
+        @if (submitted() && !newCompany.contactName) {
+          <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">اسم جهة الاتصال مطلوب</small>
+        }
       </div>
 
       <div class="nfd-field-row">
+        <!-- البريد الإلكتروني -->
         <div class="nfd-field">
           <label>البريد الإلكتروني <span class="req">*</span></label>
-          <input type="email" class="form-control" [(ngModel)]="newCompany.email" placeholder="name@company.om">
+          <input type="email" class="form-control" [(ngModel)]="newCompany.email" placeholder="name@company.om"
+            [style.border-color]="(submitted() && (!newCompany.email || !(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/).test(newCompany.email))) ? '#dc2626' : ''">
+          @if (submitted() && !newCompany.email) {
+            <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">البريد الإلكتروني مطلوب</small>
+          } @else if (submitted() && !(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/).test(newCompany.email)) {
+            <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">البريد الإلكتروني غير صحيح</small>
+          }
         </div>
+        <!-- رقم الجوال -->
         <div class="nfd-field">
           <label>رقم الجوال</label>
           <input type="text" class="form-control" [(ngModel)]="newCompany.phone" placeholder="9XXX XXXX 968+">

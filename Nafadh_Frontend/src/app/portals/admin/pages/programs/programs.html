@@ -104,20 +104,6 @@
         </select>
       </div>
 
-      <!-- المدرب -->
-      <div class="form-group">
-        <label class="form-label">
-          المدرب <span class="required-star">*</span>
-        </label>
-        <input type="text" formControlName="instructorName" placeholder="اسم المدرب" class="form-input text-right"
-          [class.input-error]="batchForm.get('instructorName')?.touched && batchForm.get('instructorName')?.invalid">
-        
-        <!-- رسالة الخطأ للمدرب -->
-        <div *ngIf="batchForm.get('instructorName')?.touched && batchForm.get('instructorName')?.invalid" class="error-msg text-right" style="color: #dc2626; font-size: 12px; margin-top: 4px;">
-          <small>اسم المدرب مطلوب</small>
-        </div>
-      </div>
-
       <!-- التواريخ (بداية ونهاية) -->
       <div class="form-row">
         <div class="form-group">
@@ -198,7 +184,7 @@
     <!-- Form -->
     <form [formGroup]="programForm" (ngSubmit)="onSubmitProgram()" class="modal-form-program">
 
-      <!-- اسم البرنامج (تم تعديله إلى title ليطابق قاعدة البيانات والـ TS) -->
+      <!-- اسم البرنامج -->
       <div class="form-group">
         <label class="form-label">
           اسم البرنامج <span class="required-star">*</span>
@@ -294,7 +280,6 @@
           <th scope="col" class="nfd-th">الدفعة</th>
           <th scope="col" class="nfd-th">البرنامج</th>
           <th scope="col" class="nfd-th">الشركة المستضيفة</th>
-          <th scope="col" class="nfd-th">المدرب</th>
           <th scope="col" class="nfd-th text-center">البداية</th>
           <th scope="col" class="nfd-th text-center">النهاية</th>
           <th scope="col" class="nfd-th text-center">الإشغال</th>
@@ -328,22 +313,17 @@
             {{ batch.companyName || '-' }}
           </td>
 
-          <!-- 4. المدرب -->
-          <td class="nfd-td">
-            {{ $any(batch).instructorName || '-' }}
-          </td>
-
-          <!-- 5. البداية -->
+          <!-- 4. البداية -->
           <td class="nfd-td text-center">
             {{ batch.startDate ? (batch.startDate | date:'dd/MM/yyyy') : '-' }}
           </td>
 
-          <!-- 6. النهاية -->
+          <!-- 5. النهاية -->
           <td class="nfd-td text-center">
             {{ batch.endDate ? (batch.endDate | date:'dd/MM/yyyy') : '-' }}
           </td>
 
-          <!-- 7. الإشغال -->
+          <!-- 6. الإشغال -->
           <td class="nfd-td text-center">
             <div class="nfd-occupancy-wrapper">
               <span class="nfd-occupancy-text" dir="ltr">
@@ -356,14 +336,14 @@
             </div>
           </td>
 
-          <!-- 8. الحالة -->
+          <!-- 7. الحالة -->
           <td class="nfd-td text-center">
             <span class="nfd-status-badge" [ngClass]="getStatusBadgeClass(batch.status)">
               {{ getStatusLabel(batch.status) }}
             </span>
           </td>
 
-          <!-- 9. الإجراءات -->
+          <!-- 8. الإجراءات -->
           <td class="nfd-td text-center">
             <div class="nfd-actions-wrapper">
               <button type="button" (click)="onEdit(batch)" title="تعديل" aria-label="تعديل الدفعة"
@@ -381,7 +361,7 @@
 
         <!-- Empty State -->
         <tr *ngIf="!batchesError() && filteredBatches().length === 0">
-          <td colspan="9" class="nfd-empty-state">
+          <td colspan="8" class="nfd-empty-state">
             <i class="fa-regular fa-folder-open"></i>
             <span>لا توجد دفعات متوفرة حالياً.</span>
           </td>
@@ -480,17 +460,6 @@
           <option value="">– اختر شركة –</option>
           <option *ngFor="let comp of companies()" [value]="comp.companyId">{{ comp.companyName }}</option>
         </select>
-      </div>
-
-      <!-- المدرب -->
-      <div class="form-group">
-        <label class="form-label">المدرب <span class="required-star">*</span></label>
-        <input type="text" formControlName="instructorName" placeholder="اسم المدرب" class="form-input text-right"
-          [class.input-error]="editBatchForm.get('instructorName')?.touched && editBatchForm.get('instructorName')?.invalid">
-        
-        <div *ngIf="editBatchForm.get('instructorName')?.touched && editBatchForm.get('instructorName')?.invalid" class="error-msg text-right">
-          <small>اسم المدرب مطلوب</small>
-        </div>
       </div>
 
       <!-- التواريخ -->

@@ -103,8 +103,7 @@ export class AdminPrograms implements OnInit {
     this.batchForm = this.fb.group({
       batchName: ['', [Validators.required]],
       programId: ['', [Validators.required]],
-      companyId: ['', [Validators.required]],
-      instructorName: ['', [Validators.required]],
+      companyId: ['', []],
       startDate: ['', [Validators.required]],
       endDate: ['', [Validators.required]],
       capacity: [15, [Validators.required, Validators.min(1)]]
@@ -115,8 +114,7 @@ export class AdminPrograms implements OnInit {
     this.editBatchForm = this.fb.group({
       batchName: ['', [Validators.required]],
       programId: ['', [Validators.required]],
-      companyId: ['', [Validators.required]],
-      instructorName: ['', [Validators.required]],
+      companyId: ['', []],
       startDate: ['', [Validators.required]],
       endDate: ['', [Validators.required]],
       capacity: [15, [Validators.required, Validators.min(1)]]
@@ -125,7 +123,7 @@ export class AdminPrograms implements OnInit {
 
   private initProgramForm(): void {
     this.programForm = this.fb.group({
-      title: ['', [Validators.required, Validators.minLength(2)]], // تم التعديل إلى title ليطابق قاعدة البيانات
+      title: ['', [Validators.required, Validators.minLength(2)]],
       trackId: [null, [Validators.required]],
       durationWeeks: [10, [Validators.required, Validators.min(1)]],
       description: ['']
@@ -207,7 +205,6 @@ export class AdminPrograms implements OnInit {
       batchName: batch.batchName,
       programId: batch.programId,
       companyId: batch.companyId || '',
-      instructorName: batch.instructorName,
       startDate: batch.startDate ? batch.startDate.split('T')[0] : '',
       endDate: batch.endDate ? batch.endDate.split('T')[0] : '',
       capacity: batch.capacity

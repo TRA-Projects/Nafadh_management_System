@@ -13,6 +13,7 @@ import { WarningDto } from '../../../../core/models/dtos';
 })
 export class AdminWarnings implements OnInit {
   warnings = signal<WarningDto[]>([]);
+  companies = signal<any[]>([]); // أضفنا إشارة الشركات لتغذية القائمة المنسدلة
   showIssue = signal(false);
   selectedWarning = signal<any | null>(null);
   searchTerm = '';
@@ -28,6 +29,7 @@ export class AdminWarnings implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.loadCompanies(); // جلب الشركات عند تحميل الصفحة
   }
 
   load(): void {
@@ -40,6 +42,16 @@ export class AdminWarnings implements OnInit {
       );
       this.warnings.set(companyWarnings);
     });
+  }
+
+  // دالة لجلب قائمة الشركات المتاحة
+  loadCompanies(): void {
+    if (this.api.getCompanies && typeof this.api.getCompanies === 'function') {
+      this.api.getCompanies().subscribe((res: any) => {
+        const list = Array.isArray(res) ? res : (res?.items || res?.data || []);
+        this.companies.set(list);
+      });
+    }
   }
 
   // فتح وإغلاق النافذة مع إعادة تعيين النموذج
@@ -60,7 +72,7 @@ export class AdminWarnings implements OnInit {
     const errors: { [key: string]: string } = {};
 
     if (!this.newWarning.companyId || this.newWarning.companyId <= 0) {
-      errors['companyId'] = 'يرجى إدخال رقم شركة صحيح وموجود.';
+      errors['companyId'] = 'يرجى اختيار الشركة المستضيفة من القائمة.';
     }
 
     if (!this.newWarning.type) {
