@@ -2,52 +2,63 @@
  <!-- رأس الصفحة -->
 <header class="page-heading">
 
-  <!-- جهة العنوان -->
-  <div class="heading-copy">
+<!-- جهة العنوان -->
+<div class="heading-copy">
 
-    <div class="heading-icon" aria-hidden="true">
-      ✓
-    </div>
-
-    <div class="heading-text">
-      <h1>الحضور اليومي</h1>
-      <p>تسجيل حضور المتدربين — {{ todayLabel }}</p>
-    </div>
-
+  <div class="heading-icon" aria-hidden="true">
+    <i class="fa-solid fa-calendar-check"></i>
   </div>
 
-  <!-- جهة الأزرار -->
-  <div class="heading-actions">
-
-    <button
-      type="button"
-      class="btn btn-primary"
-      (click)="confirmToday()"
-      [disabled]="loading()">
-
-      <span class="btn-icon" aria-hidden="true">✓</span>
-      <span>تأكيد سجل اليوم</span>
-    </button>
-
-    <button
-      type="button"
-      class="btn btn-outline"
-      (click)="showRegister('monthly')">
-
-      <span class="btn-icon" aria-hidden="true">↓</span>
-      <span>السجل الشهري</span>
-    </button>
-
-    <button
-      type="button"
-      class="btn btn-outline"
-      (click)="showRegister('weekly')">
-
-      <span class="btn-icon" aria-hidden="true">▣</span>
-      <span>السجل الأسبوعي</span>
-    </button>
-
+  <div class="heading-text">
+    <h1>الحضور اليومي</h1>
+    <p>تسجيل حضور المتدربين — {{ todayLabel }}</p>
   </div>
+
+</div>
+
+<!-- جهة الأزرار -->
+<div class="heading-actions">
+
+  <button
+    type="button"
+    class="btn btn-primary"
+    (click)="confirmToday()"
+    [disabled]="loading()">
+
+    <span class="btn-icon" aria-hidden="true">
+      <i class="fa-solid fa-check"></i>
+    </span>
+
+    <span>تأكيد سجل اليوم</span>
+  </button>
+
+
+  <button
+    type="button"
+    class="btn btn-outline"
+    (click)="showRegister('monthly')">
+
+    <span class="btn-icon" aria-hidden="true">
+      <i class="fa-solid fa-calendar-days"></i>
+    </span>
+
+    <span>السجل الشهري</span>
+  </button>
+
+
+  <button
+    type="button"
+    class="btn btn-outline"
+    (click)="showRegister('weekly')">
+
+    <span class="btn-icon" aria-hidden="true">
+      <i class="fa-solid fa-calendar-week"></i>
+    </span>
+
+    <span>السجل الأسبوعي</span>
+  </button>
+
+</div>
 
 </header>
 
