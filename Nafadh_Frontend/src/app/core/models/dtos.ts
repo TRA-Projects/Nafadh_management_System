@@ -204,6 +204,8 @@ export interface TrainerDto {
   experienceYears: number;
   biography?: string;
   cvUrl?: string;
+  // Public URL of the trainer profile image.
+profileImageUrl?: string | null;
   status: TrainerStatus;
   userId: number;
 }
