@@ -51,19 +51,17 @@
 
 </div>
 
-<!-- Modal Overlay: إنشاء دفعة جديدة -->
-<div *ngIf="isBatchModalOpen" (click)="onCancel()" class="modal-overlay" dir="rtl">
 
-  <!-- Modal Container -->
+<!-- ========================================== -->
+<!-- Modal: إنشاء دفعة جديدة (Batch Modal)       -->
+<!-- ========================================== -->
+<div *ngIf="isBatchModalOpen" (click)="onCloseBatchModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container">
-
-    <!-- Modal Header -->
     <div class="modal-header">
       <h3 class="modal-title">إنشاء دفعة جديدة</h3>
-      <button type="button" (click)="onCancel()" class="modal-close-btn">&times;</button>
+      <button type="button" (click)="onCloseBatchModal()" class="modal-close-btn">&times;</button>
     </div>
 
-    <!-- Form -->
     <form [formGroup]="batchForm" (ngSubmit)="onSubmit()" class="modal-form">
 
       <!-- اسم الدفعة -->
@@ -71,7 +69,13 @@
         <label class="form-label">
           اسم الدفعة <span class="required-star">*</span>
         </label>
-        <input type="text" formControlName="batchName" placeholder="e.g. ASP.NET Core Bootcamp" class="form-input">
+        <input type="text" formControlName="batchName" placeholder="e.g. ASP.NET Core Bootcamp" class="form-input text-right"
+          [class.input-error]="batchForm.get('batchName')?.touched && batchForm.get('batchName')?.invalid">
+        
+        <!-- رسائل الخطأ لاسم الدفعة -->
+        <div *ngIf="batchForm.get('batchName')?.touched && batchForm.get('batchName')?.invalid" class="error-msg text-right">
+          <small *ngIf="batchForm.get('batchName')?.errors?.['required']">اسم الدفعة مطلوب</small>
+        </div>
       </div>
 
       <!-- البرنامج -->
@@ -79,17 +83,23 @@
         <label class="form-label">
           البرنامج <span class="required-star">*</span>
         </label>
-        <select formControlName="programId" class="form-select">
+        <select formControlName="programId" class="form-select text-right"
+          [class.input-error]="batchForm.get('programId')?.touched && batchForm.get('programId')?.invalid">
           <option value="" disabled selected>– اختر برنامجاً –</option>
-          <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title }}</option>
+          <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title || prog.name }}</option>
         </select>
+        
+        <!-- رسالة الخطأ للبرنامج -->
+        <div *ngIf="batchForm.get('programId')?.touched && batchForm.get('programId')?.invalid" class="error-msg text-right">
+          <small>يجب اختيار البرنامج</small>
+        </div>
       </div>
 
       <!-- الشركة المستضيفة -->
       <div class="form-group">
         <label class="form-label">الشركة المستضيفة</label>
-        <select formControlName="companyId" class="form-select">
-          <option value="" disabled selected>– اختر شركة –</option>
+        <select formControlName="companyId" class="form-select text-right">
+          <option value="">– اختر شركة –</option>
           <option *ngFor="let comp of companies()" [value]="comp.companyId">{{ comp.companyName }}</option>
         </select>
       </div>
@@ -97,29 +107,29 @@
       <!-- المدرب -->
       <div class="form-group">
         <label class="form-label">المدرب</label>
-        <input type="text" formControlName="instructorName" placeholder="اسم المدرب" class="form-input">
+        <input type="text" formControlName="instructorName" placeholder="اسم المدرب" class="form-input text-right">
       </div>
 
       <!-- التواريخ (بداية ونهاية) -->
       <div class="form-row">
-
         <div class="form-group">
           <label class="form-label">
             تاريخ البداية <span class="required-star">*</span>
           </label>
-          <input type="date" formControlName="startDate" class="form-input">
+          <input type="date" formControlName="startDate" class="form-input"
+            [class.input-error]="batchForm.get('startDate')?.touched && batchForm.get('startDate')?.invalid">
         </div>
 
         <div class="form-group">
           <label class="form-label">
             تاريخ النهاية <span class="required-star">*</span>
           </label>
-          <input type="date" formControlName="endDate" class="form-input">
+          <input type="date" formControlName="endDate" class="form-input"
+            [class.input-error]="batchForm.get('endDate')?.touched && batchForm.get('endDate')?.invalid">
         </div>
-
       </div>
 
-      <!-- الطاقة الاستيعابية (تمت إضافة الفاليديشن هنا) -->
+      <!-- الطاقة الاستيعابية -->
       <div class="form-group">
         <label class="form-label">
           الطاقة الاستيعابية <span class="required-star">*</span>
@@ -128,39 +138,27 @@
           class="form-input text-right"
           [class.input-error]="batchForm.get('capacity')?.touched && batchForm.get('capacity')?.invalid">
 
-        <!-- رسائل الخطأ -->
-        <div *ngIf="batchForm.get('capacity')?.touched && batchForm.get('capacity')?.invalid"
-          class="error-msg text-right">
+        <div *ngIf="batchForm.get('capacity')?.touched && batchForm.get('capacity')?.invalid" class="error-msg text-right">
           <small *ngIf="batchForm.get('capacity')?.errors?.['required']">الطاقة الاستيعابية مطلوبة</small>
-          <small *ngIf="batchForm.get('capacity')?.errors?.['min']">يجب أن تكون الطاقة الاستيعابية رقماً موجباً أكبر من
-            الصفر</small>
+          <small *ngIf="batchForm.get('capacity')?.errors?.['min']">يجب أن تكون الطاقة الاستيعابية 1 على الأقل</small>
         </div>
       </div>
 
       <!-- Footer Buttons -->
       <div class="modal-footer-buttons">
-
-        <!-- زر إنشاء الدفعة -->
-        <button type="submit" class="btn-submit-batch">
-          إنشاء الدفعة
-        </button>
-
-        <!-- زر إلغاء -->
-        <button type="button" (click)="onCancel()" class="btn-cancel-batch">
-          إلغاء
-        </button>
-
+        <button type="submit" class="btn-submit-batch">إنشاء الدفعة</button>
+        <button type="button" (click)="onCloseBatchModal()" class="btn-cancel-batch">إلغاء</button>
       </div>
 
     </form>
-
   </div>
 </div>
 
-<!-- Modal: إنشاء برنامج جديد -->
-<div *ngIf="isProgramModalOpen" (click)="onCloseProgramModal()" class="modal-overlay" dir="rtl">
 
-  <!-- Modal Container -->
+<!-- ========================================== -->
+<!-- Modal: إنشاء برنامج جديد (Program Modal)    -->
+<!-- ========================================== -->
+<div *ngIf="isProgramModalOpen" (click)="onCloseProgramModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container-program">
 
     <!-- زر الإغلاق -->
@@ -220,8 +218,7 @@
         <!-- Validation Message -->
         <div *ngIf="pf['durationWeeks'].touched && pf['durationWeeks'].invalid" class="error-msg text-right">
           <small *ngIf="pf['durationWeeks'].errors?.['required']">مدة البرنامج مطلوبة</small>
-          <small *ngIf="pf['durationWeeks'].errors?.['min']">يجب أن تكون المدة أسبوعاً واحداً على الأقل (بدون أرقام
-            سالبة)</small>
+          <small *ngIf="pf['durationWeeks'].errors?.['min']">يجب أن تكون المدة أسبوعاً واحداً على الأقل</small>
         </div>
       </div>
 
@@ -239,21 +236,16 @@
 
       <!-- Footer Buttons -->
       <div class="modal-footer-buttons-program">
-
-        <!-- زر إنشاء البرنامج -->
         <button type="submit" [disabled]="isSubmittingProgram" class="btn-submit-program">
           {{ isSubmittingProgram ? 'جاري الحفظ...' : 'إنشاء البرنامج' }}
         </button>
 
-        <!-- زر إلغاء -->
         <button type="button" (click)="onCloseProgramModal()" class="btn-cancel-program">
           إلغاء
         </button>
-
       </div>
 
     </form>
-
   </div>
 </div>
 
@@ -373,7 +365,10 @@
   </div>
 </div>
 
-<!-- Modal: تفاصيل الدفعة -->
+
+<!-- ========================================== -->
+<!-- Modal: تفاصيل الدفعة (View Modal)          -->
+<!-- ========================================== -->
 <div *ngIf="isViewModalOpen" (click)="onCloseViewModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container-details">
     <div class="details-header">
@@ -415,7 +410,9 @@
 </div>
 
 
-<!-- Modal: تعديل الدفعة (Edit Modal) - تم إضافة حقل الطاقة الاستيعابية هنا أيضاً -->
+<!-- ========================================== -->
+<!-- Modal: تعديل الدفعة (Edit Modal)          -->
+<!-- ========================================== -->
 <div *ngIf="isEditModalOpen" (click)="onCloseEditModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container">
     <div class="modal-header">
@@ -428,21 +425,30 @@
       <!-- اسم الدفعة -->
       <div class="form-group">
         <label class="form-label">اسم الدفعة <span class="required-star">*</span></label>
-        <input type="text" formControlName="batchName" class="form-input">
+        <input type="text" formControlName="batchName" class="form-input text-right"
+          [class.input-error]="hasError(editBatchForm, 'batchName')">
+        <div *ngIf="hasError(editBatchForm, 'batchName')" class="error-msg text-right">
+          <small>اسم الدفعة مطلوب</small>
+        </div>
       </div>
 
       <!-- البرنامج -->
       <div class="form-group">
         <label class="form-label">البرنامج <span class="required-star">*</span></label>
-        <select formControlName="programId" class="form-select">
-          <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title }}</option>
+        <select formControlName="programId" class="form-select text-right"
+          [class.input-error]="hasError(editBatchForm, 'programId')">
+          <option value="" disabled>– اختر برنامجاً –</option>
+          <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title || prog.name }}</option>
         </select>
+        <div *ngIf="hasError(editBatchForm, 'programId')" class="error-msg text-right">
+          <small>يجب اختيار البرنامج</small>
+        </div>
       </div>
 
       <!-- الشركة المستضيفة -->
       <div class="form-group">
         <label class="form-label">الشركة المستضيفة</label>
-        <select formControlName="companyId" class="form-select">
+        <select formControlName="companyId" class="form-select text-right">
           <option value="">– اختر شركة –</option>
           <option *ngFor="let comp of companies()" [value]="comp.companyId">{{ comp.companyName }}</option>
         </select>
@@ -451,36 +457,36 @@
       <!-- المدرب -->
       <div class="form-group">
         <label class="form-label">المدرب</label>
-        <input type="text" formControlName="instructorName" class="form-input">
+        <input type="text" formControlName="instructorName" class="form-input text-right">
       </div>
 
       <!-- التواريخ -->
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">تاريخ البداية <span class="required-star">*</span></label>
-          <input type="date" formControlName="startDate" class="form-input">
+          <input type="date" formControlName="startDate" class="form-input"
+            [class.input-error]="hasError(editBatchForm, 'startDate')">
         </div>
         <div class="form-group">
           <label class="form-label">تاريخ النهاية <span class="required-star">*</span></label>
-          <input type="date" formControlName="endDate" class="form-input">
+          <input type="date" formControlName="endDate" class="form-input"
+            [class.input-error]="hasError(editBatchForm, 'endDate')">
         </div>
       </div>
 
-      <!-- الطاقة الاستيعابية (تمت إضافة الفاليديشن هنا) -->
+      <!-- الطاقة الاستيعابية -->
       <div class="form-group">
         <label class="form-label">
           الطاقة الاستيعابية <span class="required-star">*</span>
         </label>
         <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="capacity" placeholder="15"
           class="form-input text-right"
-          [class.input-error]="editBatchForm.get('capacity')?.touched && editBatchForm.get('capacity')?.invalid">
+          [class.input-error]="hasError(editBatchForm, 'capacity')">
 
         <!-- رسائل الخطأ -->
-        <div *ngIf="editBatchForm.get('capacity')?.touched && editBatchForm.get('capacity')?.invalid"
-          class="error-msg text-right">
+        <div *ngIf="hasError(editBatchForm, 'capacity')" class="error-msg text-right">
           <small *ngIf="editBatchForm.get('capacity')?.errors?.['required']">الطاقة الاستيعابية مطلوبة</small>
-          <small *ngIf="editBatchForm.get('capacity')?.errors?.['min']">لا يمكن أن تكون الطاقة الاستيعابية سالبة أو
-            صفر</small>
+          <small *ngIf="editBatchForm.get('capacity')?.errors?.['min']">لا يمكن أن تكون الطاقة الاستيعابية سالبة أو صفر</small>
         </div>
       </div>
 
@@ -493,6 +499,7 @@
     </form>
   </div>
 </div>
+
 
 <!-- pagination -->
 @if (totalPages() > 1) {
