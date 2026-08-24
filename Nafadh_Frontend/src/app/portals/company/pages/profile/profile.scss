@@ -2,23 +2,27 @@
 
 :host {
   display: block;
+
   --profile-border: #e2e8f3;
   --profile-border-light: #edf1f7;
-  --profile-soft: #f8fafc;
+  --profile-soft: #f6f9fe;
   --profile-text-muted: #64748b;
   --profile-capacity-remaining: #d8dee8;
-  
-  --profile-blue-primary: #1b56fd;
-  --profile-blue-dark: #0a1172;
-  --profile-blue-soft: #eff6ff;
-  --profile-blue-hover-border: #bfdbfe;
-  --profile-blue-glow: rgba(27, 86, 253, 0.07);
-  
+  --profile-gold: #c9932f;
+  --profile-gold-light: #f6e6c3;
+  --profile-teal: #0aa8a0;
+  --profile-purple: #7c5cff;
+  --profile-green: #1d8f4a;
+
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --smooth: cubic-bezier(0.22, 1, 0.36, 1);
   
   font-family: 'Rubik', 'Noto Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif;
 }
+
+/* =========================================================
+   Header Component Style
+   ========================================================= */
 
 .page-header-wrap {
   display: flex;
@@ -34,13 +38,13 @@
   gap: 4px;
 }
 
-/* العنوان الرئيسي "الملف الشخصي" - تم توحيد اللون ليكون نفس باقي العناوين */
+/* العنوان الرئيسي - مطابق تماماً لصفحة المتدربون */
 .nfd-page-title {
   margin: 0;
-  font-family: 'Cairo', sans-serif;
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--color-navy) !important;
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 24px !important;
+  font-weight: 800 !important;
+  color: #0A1172 !important;
   line-height: 1.3;
 }
 
@@ -62,7 +66,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 6px 18px -4px rgba(27, 86, 253, 0.3);
+  box-shadow: 0 8px 22px -6px rgba(27, 86, 253, 0.45);
 }
 
 .section-title {
@@ -82,17 +86,27 @@
   width: 4px;
   height: 16px;
   border-radius: 3px;
-  background: var(--profile-blue-primary);
-  transition: height 0.25s ease;
+  background: linear-gradient(
+    180deg,
+    var(--color-brand),
+    var(--profile-purple)
+  );
+  transition:
+    height 0.3s var(--spring),
+    background 0.3s ease;
 }
 
 .nfd-card:hover .section-title::before {
-  height: 18px;
+  height: 22px;
 }
 
 h3.section-title {
   display: flex;
 }
+
+/* =========================================================
+   Company Profile Page
+   ========================================================= */
 
 .company-profile-page {
   display: block;
@@ -120,16 +134,28 @@ h3.section-title {
   animation: profile-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.company-profile-kpis { animation-delay: 0.05s; }
-.company-profile-info-wrap { animation-delay: 0.1s; }
-.company-profile-sections { animation-delay: 0.15s; }
-.company-profile-page > .nfd-card:last-child { animation-delay: 0.2s; }
+.company-profile-kpis {
+  animation-delay: 0.05s;
+}
+
+.company-profile-info-wrap {
+  animation-delay: 0.1s;
+}
+
+.company-profile-sections {
+  animation-delay: 0.15s;
+}
+
+.company-profile-page > .nfd-card:last-child {
+  animation-delay: 0.2s;
+}
 
 @keyframes profile-rise {
   from {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -145,10 +171,14 @@ h3.section-title {
   }
 }
 
+/* =========================================================
+   Cards
+   ========================================================= */
+
 .nfd-card {
   background: var(--color-surface, #ffffff);
   border: 1px solid var(--profile-border);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-card, 14px);
   box-shadow: 0 8px 24px rgba(10, 17, 114, 0.045);
   transition:
     border-color 0.3s ease,
@@ -159,14 +189,18 @@ h3.section-title {
 .company-profile-page > .nfd-card:not(.company-profile-hero-card):hover,
 .company-profile-sections .nfd-card:hover,
 .company-profile-info-card:hover {
-  border-color: var(--profile-blue-hover-border);
-  box-shadow: 0 8px 20px -6px var(--profile-blue-glow);
-  transform: translateY(-2px);
+  border-color: #cbd8eb;
+  box-shadow: 0 20px 40px -12px rgba(10, 17, 114, 0.16);
+  transform: translateY(-4px);
 }
 
 .company-profile-hero-card:hover {
-  box-shadow: 0 12px 30px rgba(10, 17, 114, 0.1);
+  box-shadow: 0 26px 54px rgba(10, 17, 114, 0.2);
 }
+
+/* =========================================================
+   Buttons
+   ========================================================= */
 
 .nfd-btn {
   min-height: 38px;
@@ -176,50 +210,58 @@ h3.section-title {
   font-family: 'Cairo', sans-serif;
   font-size: 13px;
   font-weight: 700;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.3s var(--spring),
+    box-shadow 0.3s var(--smooth),
+    background 0.2s ease,
+    border-color 0.2s ease;
   position: relative;
 }
 
 .nfd-btn:active {
-  transform: translateY(0) scale(0.98) !important;
+  transform: translateY(-1px) scale(0.96) !important;
   transition-duration: 0.1s;
 }
 
 .nfd-btn.primary {
-  background: linear-gradient(135deg, var(--color-navy), #1b2f9b);
+  background: linear-gradient(135deg, var(--color-navy, #00338d), #1b2f9b);
   color: #fff;
-  box-shadow: 0 4px 12px -4px rgba(10, 17, 114, 0.3);
+  box-shadow: 0 8px 16px -10px rgba(10, 17, 114, 0.7);
 }
 
 .nfd-btn.primary:hover {
   opacity: 1;
-  transform: translateY(-1.5px);
-  box-shadow: 0 8px 18px -6px rgba(10, 17, 114, 0.4);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 18px 30px -12px rgba(10, 17, 114, 0.95);
 }
 
 .nfd-btn.ghost {
   background: #fff;
-  color: var(--color-navy);
+  color: var(--color-navy, #00338d);
   border-color: #dfe8f7;
 }
 
 .nfd-btn.ghost:hover {
-  background: var(--profile-blue-soft);
-  border-color: var(--profile-blue-hover-border);
-  transform: translateY(-1.5px);
-  box-shadow: 0 6px 14px -6px var(--profile-blue-glow);
+  background: #f4f8ff;
+  border-color: var(--color-brand);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 14px 26px -12px rgba(10, 17, 114, 0.4);
 }
 
 .nfd-btn.secondary {
   background: rgba(255, 255, 255, 0.96);
-  color: var(--color-navy);
+  color: var(--color-navy, #00338d);
   border-color: rgba(255, 255, 255, 0.8);
 }
 
 .nfd-btn.secondary:hover {
-  transform: translateY(-1.5px);
-  box-shadow: 0 6px 16px -6px rgba(10, 17, 114, 0.2);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 16px 28px -12px rgba(10, 17, 114, 0.55);
 }
+
+/* =========================================================
+   Input
+   ========================================================= */
 
 .nfd-input {
   border: 1px solid var(--profile-border);
@@ -233,23 +275,27 @@ h3.section-title {
 }
 
 .nfd-input:focus {
-  border-color: var(--profile-blue-primary);
-  box-shadow: 0 0 0 3px rgba(27, 86, 253, 0.1);
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(0, 102, 196, 0.08);
 }
+
+/* =========================================================
+   Hero Card
+   ========================================================= */
 
 .company-profile-hero-card {
   margin-top: 10px !important;
   overflow: hidden;
   border-radius: 22px;
   border: 1px solid var(--profile-border);
-  box-shadow: 0 8px 24px rgba(10, 17, 114, 0.06);
-  position: relative;
+  box-shadow: 0 14px 34px rgba(10, 17, 114, 0.08);
 }
 
 .company-profile-cover {
   position: relative;
   height: 228px;
   overflow: hidden;
+
   background:
     radial-gradient(
       circle at 12% 20%,
@@ -263,8 +309,8 @@ h3.section-title {
     ),
     linear-gradient(
       135deg,
-      var(--color-navy),
-      var(--color-navy-light)
+      var(--color-navy, #00338d),
+      var(--color-navy-light, #002768)
     );
 }
 
@@ -273,19 +319,24 @@ h3.section-title {
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.4s ease;
+  transition: transform 0.5s ease;
 }
 
 .company-profile-hero-card:hover .company-profile-cover-img {
-  transform: scale(1.015);
+  transform: scale(1.03);
 }
 
 .company-profile-cover-pattern {
   position: absolute;
   inset: 0;
-  opacity: 0.3;
+  opacity: 0.5;
+
   background-image:
-    radial-gradient(rgba(255, 255, 255, 0.14) 1.5px, transparent 1.5px);
+    radial-gradient(
+      rgba(255, 255, 255, 0.14) 1.5px,
+      transparent 1.5px
+    );
+
   background-size: 18px 18px;
 }
 
@@ -296,30 +347,53 @@ h3.section-title {
   top: -60%;
   width: 70%;
   height: 220%;
-  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+
   transform: rotate(12deg);
 }
 
 .company-profile-cover-overlay {
   position: absolute;
   inset: 0;
+
   background:
-    linear-gradient(90deg, rgba(10, 17, 114, 0.08), rgba(10, 17, 114, 0.32)),
-    linear-gradient(180deg, rgba(10, 17, 114, 0.04), rgba(10, 17, 114, 0.6));
+    linear-gradient(
+      90deg,
+      rgba(10, 17, 114, 0.08),
+      rgba(10, 17, 114, 0.32)
+    ),
+    linear-gradient(
+      180deg,
+      rgba(10, 17, 114, 0.04),
+      rgba(10, 17, 114, 0.7)
+    );
 }
+
+/* =========================================================
+   Loading
+   ========================================================= */
 
 .company-profile-media-loading {
   position: absolute;
   inset: 0;
   z-index: 2;
+
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+
   color: #fff;
   font-family: 'Cairo', sans-serif;
   font-size: 13px;
   font-weight: 700;
+
   background: rgba(10, 17, 114, 0.45);
   backdrop-filter: blur(2px);
 }
@@ -344,6 +418,10 @@ h3.section-title {
     transform: rotate(360deg);
   }
 }
+
+/* =========================================================
+   Upload / Remove
+   ========================================================= */
 
 .company-profile-remove-btn {
   gap: 6px;
@@ -370,26 +448,36 @@ h3.section-title {
   padding: 0;
 }
 
+/* =========================================================
+   Cover Content
+   ========================================================= */
+
 .company-profile-cover-content {
   position: absolute;
   inset-inline-start: 28px;
   bottom: 22px;
   z-index: 1;
+
   color: #fff;
   text-align: start;
+
   max-width: min(62%, 560px);
 }
 
 .company-profile-cover-kicker {
   display: inline-flex;
   align-items: center;
+
   min-height: 26px;
   padding: 4px 10px;
+
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: var(--radius-full, 999px);
+  border-radius: var(--radius-full);
+
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(8px);
 
+  font-family: 'Cairo', sans-serif;
   font-size: 11px;
   font-weight: 700;
 }
@@ -398,9 +486,11 @@ h3.section-title {
   margin: 10px 0 2px;
   color: #fff;
 
+  font-family: 'Cairo', sans-serif;
   font-size: clamp(24px, 3vw, 38px);
   line-height: 1.2;
   font-weight: 800;
+
   text-shadow: 0 3px 18px rgba(4, 8, 58, 0.3);
 }
 
@@ -417,56 +507,88 @@ h3.section-title {
   left: 22px;
   right: 22px;
   bottom: 28px;
+
   display: flex;
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 10px;
+
   z-index: 1;
+}
+
+.company-profile-hero-card {
+  position: relative;
 }
 
 .company-profile-hero-card::before {
   content: '';
   position: absolute;
   inset: 0;
+
   border-radius: inherit;
   padding: 1.5px;
-  background: linear-gradient(120deg, var(--profile-blue-soft), var(--profile-blue-primary), var(--color-navy, #0a1172));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+
+  background: linear-gradient(
+    120deg,
+    var(--profile-teal),
+    var(--color-brand),
+    var(--profile-purple)
+  );
+
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  opacity: 0.3;
+
+  opacity: 0.5;
   pointer-events: none;
   z-index: 3;
-  transition: opacity 0.3s ease;
+
+  transition: opacity 0.4s ease;
 }
 
 .company-profile-hero-card:hover::before {
-  opacity: 0.7;
+  opacity: 1;
 }
 
 .company-profile-upload-btn {
   background: rgba(255, 255, 255, 0.96) !important;
   border: 1px solid rgba(255, 255, 255, 0.8) !important;
+
   gap: 8px;
   cursor: pointer;
   display: inline-flex;
 
-  color: var(--color-navy);
+  color: var(--color-navy, #00338d);
+  font-family: 'Cairo', sans-serif;
   font-weight: 700;
-  box-shadow: 0 4px 12px -4px rgba(10, 17, 114, 0.4);
+
+  box-shadow: 0 8px 18px -12px rgba(10, 17, 114, 0.9);
 }
+
+/* =========================================================
+   Company Header
+   ========================================================= */
 
 .company-profile-header {
   display: flex;
   align-items: center;
   gap: 18px;
+
   padding: 18px 22px 12px;
   background: #fff;
+
   margin-top: -14px;
   position: relative;
   z-index: 2;
 }
+
+/* =========================================================
+   Company Logo
+   ========================================================= */
 
 .company-profile-logo-wrap {
   flex-shrink: 0;
@@ -474,31 +596,44 @@ h3.section-title {
 
 .company-profile-logo {
   position: relative;
+
   width: 88px;
   height: 88px;
   border-radius: 20px;
 
   background: linear-gradient(
     135deg,
-    var(--color-navy),
+    var(--color-navy, #00338d),
     var(--color-brand)
   );
 
   color: #fff;
+
   display: flex;
   align-items: center;
   justify-content: center;
 
+  font-family: 'Cairo', sans-serif;
   font-size: 30px;
   font-weight: 800;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9), 0 8px 20px rgba(24, 39, 131, 0.12);
+
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.9),
+    0 12px 30px rgba(24, 39, 131, 0.18);
+
   overflow: hidden;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+  transition:
+    transform 0.35s var(--spring),
+    box-shadow 0.3s var(--smooth);
 }
 
 .company-profile-logo:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9), 0 12px 24px rgba(24, 39, 131, 0.18);
+  transform: translateY(-4px) scale(1.03);
+
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.9),
+    0 20px 40px rgba(24, 39, 131, 0.3);
 }
 
 .company-profile-logo img {
@@ -512,50 +647,69 @@ h3.section-title {
   position: absolute;
   bottom: -6px;
   left: -6px;
+
   width: 30px;
   height: 30px;
   border-radius: 50%;
 
   background: linear-gradient(
     135deg,
-    var(--color-navy),
+    var(--color-navy, #00338d),
     var(--profile-purple)
   );
 
   color: #fff;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 0 3px #fff, 0 4px 12px rgba(11, 17, 84, 0.2);
+
+  box-shadow:
+    0 0 0 3px #fff,
+    0 6px 16px rgba(11, 17, 84, 0.32);
+
   cursor: pointer;
   line-height: 1;
-  transition: transform 0.25s ease;
+
+  transition: transform 0.3s var(--spring);
 }
 
 .company-profile-logo-button:hover {
-  transform: scale(1.1);
+  transform: scale(1.2) rotate(8deg);
 }
 
 .company-profile-logo-remove {
   position: absolute;
   top: -6px;
   right: -6px;
+
   width: 22px;
   height: 22px;
   border-radius: 50%;
   border: 0;
+
   background: #fff;
   color: #b3261e;
-  box-shadow: 0 0 0 3px #fff, 0 4px 10px rgba(11, 17, 84, 0.2);
+
+  box-shadow:
+    0 0 0 3px #fff,
+    0 4px 10px rgba(11, 17, 84, 0.2);
+
   cursor: pointer;
 
+  font-family: 'Cairo', sans-serif;
   font-size: 11px;
   font-weight: 800;
   line-height: 1;
+
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
+/* =========================================================
+   Company Name
+   ========================================================= */
 
 .company-profile-title-wrap {
   min-width: 0;
@@ -565,18 +719,20 @@ h3.section-title {
 .company-profile-name {
   margin: 0;
 
+  font-family: 'Cairo', sans-serif;
   font-size: 28px;
   line-height: 1.2;
 
-  color: var(--color-navy);
+  color: var(--color-navy, #00338d);
   font-weight: 800;
+
   letter-spacing: -0.02em;
 }
 
 .company-profile-name-gradient {
   background: linear-gradient(
     100deg,
-    var(--color-navy) 30%,
+    var(--color-navy, #00338d) 30%,
     var(--color-brand) 70%,
     var(--profile-purple) 100%
   );
@@ -585,6 +741,10 @@ h3.section-title {
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* =========================================================
+   Badges
+   ========================================================= */
 
 .company-profile-badges {
   display: flex;
@@ -596,25 +756,39 @@ h3.section-title {
 
 .company-profile-badge {
   min-height: 28px;
+
   display: inline-flex;
   align-items: center;
   gap: 6px;
 
+  font-family: 'Cairo', sans-serif;
   font-size: 11.5px;
   font-weight: 700;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  transition:
+    transform 0.3s var(--spring),
+    box-shadow 0.3s var(--smooth);
 }
 
 .company-profile-badge:hover {
-  transform: translateY(-1.5px);
-  box-shadow: 0 4px 10px -4px rgba(10, 17, 114, 0.2);
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 10px 18px -8px rgba(10, 17, 114, 0.45);
 }
 
 .company-profile-badge-gold {
-  background: var(--profile-blue-soft) !important;
-  color: var(--profile-blue-primary) !important;
-  border: 1px solid var(--profile-blue-hover-border) !important;
+  background: linear-gradient(
+    135deg,
+    var(--profile-gold-light),
+    #fbf3e0
+  ) !important;
+
+  color: #8a6410 !important;
+  border: 1px solid #ecd8a3 !important;
 }
+
+/* =========================================================
+   KPI
+   ========================================================= */
 
 .company-profile-kpis {
   display: grid;
@@ -625,58 +799,105 @@ h3.section-title {
 
 .kpi-card {
   padding: 16px;
+
   border: 1px solid var(--profile-border);
-  background: #ffffff;
+
+  background: linear-gradient(
+    180deg,
+    #fff,
+    var(--profile-soft)
+  );
+
   position: relative;
   overflow: hidden;
-  --kpi-accent: var(--profile-blue-primary);
-  --kpi-accent-soft: var(--profile-blue-soft);
+
+  --kpi-accent: var(--color-brand);
+  --kpi-accent-soft: #eaf2ff;
+
   cursor: default;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+
+  transition:
+    transform 0.35s var(--spring),
+    box-shadow 0.3s var(--smooth),
+    border-color 0.3s ease;
 }
 
 .kpi-card::before {
   content: '';
   position: absolute;
+
   inset-inline-start: 0;
   top: 0;
-  width: 3px;
+
+  width: 4px;
   height: 100%;
+
   background: var(--kpi-accent);
-  opacity: 0.7;
-  transition: opacity 0.25s ease;
+  opacity: 0.85;
+
+  transition: width 0.3s var(--smooth);
 }
 
 .kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px var(--profile-blue-glow);
-  border-color: var(--profile-blue-hover-border);
+  transform: translateY(-7px) scale(1.015);
+
+  box-shadow:
+    0 22px 38px -14px
+    color-mix(
+      in srgb,
+      var(--kpi-accent) 50%,
+      transparent
+    );
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--kpi-accent) 40%,
+      var(--profile-border)
+    );
 }
 
 .kpi-card:hover::before {
-  width: 3px;
-  opacity: 1;
+  width: 100%;
+  opacity: 0.06;
 }
 
 .kpi-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+
+  width: 34px;
+  height: 34px;
   border-radius: 10px;
+
   color: var(--kpi-accent);
   background: var(--kpi-accent-soft);
+
   margin-bottom: 10px;
-  transition: background 0.25s ease, color 0.25s ease;
+
+  transition:
+    transform 0.35s var(--spring),
+    box-shadow 0.3s ease,
+    background 0.3s ease,
+    color 0.3s ease;
+
   position: relative;
 }
 
 .kpi-card:hover .kpi-icon {
-  transform: none;
+  transform: scale(1.15) rotate(-6deg);
+
   background: var(--kpi-accent);
-  color: #ffffff;
-  box-shadow: none;
+  color: #fff;
+
+  box-shadow:
+    0 10px 20px -6px
+    color-mix(
+      in srgb,
+      var(--kpi-accent) 65%,
+      transparent
+    );
 }
 
 .kpi-value {
@@ -684,23 +905,29 @@ h3.section-title {
   font-size: 26px;
   font-weight: 800;
 
-  color: var(--color-navy);
+  color: var(--color-navy, #00338d);
 
   letter-spacing: -0.01em;
   display: inline-block;
-  transition: color 0.25s ease;
+
+  transition:
+    color 0.3s ease,
+    transform 0.3s var(--spring);
 }
 
 .kpi-card:hover .kpi-value {
   color: var(--kpi-accent);
+  transform: translateY(-1px);
 }
 
 .kpi-label {
   display: block;
   margin-bottom: 6px;
 
+  font-family: 'Cairo', sans-serif;
   font-size: 11px;
   font-weight: 700;
+
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -713,21 +940,43 @@ h3.section-title {
 }
 
 .kpi-error {
-  color: var(--status-cancelled-fg);
+  color: var(--status-cancelled-fg, #dc2626);
+  font-family: 'Cairo', sans-serif;
   font-size: 12px;
 }
 
-.kpi-blue, 
-.kpi-teal, 
-.kpi-purple, 
-.kpi-gold, 
-.kpi-green {
-  --kpi-accent: #1b56fd;
-  --kpi-accent-soft: #eff6ff;
+.kpi-blue {
+  --kpi-accent: var(--color-brand);
+  --kpi-accent-soft: #eaf2ff;
 }
+
+.kpi-teal {
+  --kpi-accent: var(--profile-teal);
+  --kpi-accent-soft: #e2f8f6;
+}
+
+.kpi-purple {
+  --kpi-accent: var(--profile-purple);
+  --kpi-accent-soft: #f0edff;
+}
+
+.kpi-gold {
+  --kpi-accent: var(--profile-gold);
+  --kpi-accent-soft: var(--profile-gold-light);
+}
+
+.kpi-green {
+  --kpi-accent: var(--profile-green);
+  --kpi-accent-soft: #e8f9ee;
+}
+
+/* =========================================================
+   Information Card
+   ========================================================= */
 
 .company-profile-info-card {
   padding: 18px 20px;
+
   background: #fff;
   border: 1px solid var(--profile-border);
 }
@@ -741,8 +990,10 @@ h3.section-title {
 .company-profile-row {
   display: grid;
   grid-template-columns: 1fr auto;
+
   align-items: center;
   gap: 12px;
+
   min-height: 42px;
   padding: 10px 0;
 }
@@ -757,7 +1008,8 @@ h3.section-title {
   text-align: left;
   word-break: break-word;
 
-  color: var(--color-navy);
+  color: var(--color-navy, #00338d);
+  font-family: 'Cairo', sans-serif;
   font-size: 13.5px;
 }
 
@@ -765,27 +1017,45 @@ h3.section-title {
   border-bottom: 1px solid var(--profile-border-light);
   padding-block: 11px;
   border-radius: 8px;
-  transition: background 0.2s ease, padding-inline 0.2s ease;
+
+  transition:
+    background 0.25s ease,
+    padding-inline 0.3s var(--spring);
 }
 
 .company-profile-info-grid .nfd-row:hover {
   background: var(--profile-soft);
-  padding-inline: 8px;
+  padding-inline: 10px;
 }
+
+/* =========================================================
+   List Tiles
+   ========================================================= */
 
 .list-tile {
   padding: 12px 14px;
-  border: 1px solid var(--profile-border);
+
+  border: 1px solid var(--color-border);
   border-radius: 12px;
+
   background: var(--profile-soft);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+
+  transition:
+    transform 0.3s var(--spring),
+    box-shadow 0.3s var(--smooth),
+    border-color 0.25s ease,
+    background 0.25s ease;
 }
 
 .list-tile:hover {
-  transform: translateY(-1.5px);
-  box-shadow: 0 6px 14px -4px var(--profile-blue-glow);
-  border-color: var(--profile-blue-hover-border);
-  background: #ffffff;
+  transform: translateX(-6px) scale(1.01);
+
+  box-shadow:
+    0 16px 30px -16px
+    rgba(10, 17, 114, 0.55);
+
+  border-color: #cbd8eb;
+  background: #fff;
 }
 
 .branch-tile {
@@ -802,11 +1072,11 @@ h3.section-title {
 }
 
 .specialty-tile.is-approved {
-  border-inline-start: 3px solid var(--profile-blue-primary);
+  border-inline-start: 3px solid var(--profile-green);
 }
 
 .specialty-tile:not(.is-approved) {
-  border-inline-start: 3px solid #93c5fd;
+  border-inline-start: 3px solid var(--profile-gold);
 }
 
 .contact-tile {
@@ -815,6 +1085,10 @@ h3.section-title {
   gap: 12px;
 }
 
+/* =========================================================
+   Contact Avatar
+   ========================================================= */
+
 .contact-avatar {
   width: 38px;
   height: 38px;
@@ -822,91 +1096,136 @@ h3.section-title {
 
   background: linear-gradient(
     135deg,
-    var(--color-navy),
+    var(--color-navy, #00338d),
     var(--profile-purple)
   );
 
   color: #fff;
+
   display: flex;
   align-items: center;
   justify-content: center;
 
+  font-family: 'Cairo', sans-serif;
   font-weight: 800;
   font-size: 13px;
+
   flex-shrink: 0;
-  transition: transform 0.25s ease;
+
+  transition: transform 0.35s var(--spring);
 }
 
 .list-tile:hover .contact-avatar {
-  transform: scale(1.05);
+  transform: scale(1.15) rotate(-8deg);
 }
+
+/* =========================================================
+   List Icons
+   ========================================================= */
 
 .list-tile-icon {
   display: flex;
   align-items: center;
   justify-content: center;
+
   width: 30px;
   height: 30px;
   border-radius: 9px;
-  background: var(--profile-blue-soft);
-  color: var(--profile-blue-primary);
+
+  background: #e2f8f6;
+  color: var(--profile-teal);
+
   flex-shrink: 0;
-  transition: background 0.25s ease, color 0.25s ease;
+
+  transition:
+    transform 0.35s var(--spring),
+    background 0.3s ease,
+    color 0.3s ease;
 }
 
 .list-tile:hover .list-tile-icon {
-  background: var(--profile-blue-primary);
-  color: #ffffff;
+  transform: scale(1.15) rotate(-8deg);
+  background: var(--profile-teal);
+  color: #fff;
 }
+
+/* =========================================================
+   Workfield
+   ========================================================= */
 
 .workfield-chip {
   background: #eef4ff;
-  color: var(--color-navy);
+  color: var(--color-navy, #00338d);
 
   display: inline-flex;
   align-items: center;
   gap: 8px;
 
   border: 1px solid #d8e4ff;
+  font-family: 'Cairo', sans-serif;
 }
 
 .workfield-chip-remove {
   border: 0;
   background: none;
   cursor: pointer;
+
   color: var(--color-text-tertiary);
+
   display: flex;
   padding: 0;
-  transition: color 0.2s ease, transform 0.2s ease;
+
+  transition:
+    color 0.2s ease,
+    transform 0.3s var(--spring);
 }
 
 .workfield-chip-remove:hover {
   color: #b3261e;
-  transform: scale(1.15);
+  transform: scale(1.3) rotate(90deg);
 }
+
+/* =========================================================
+   Capacity Ring
+   ========================================================= */
 
 .capacity-ring-wrap {
   position: relative;
+
   width: 150px;
   height: 150px;
+
   flex-shrink: 0;
-  transition: transform 0.25s ease;
+
+  transition: transform 0.35s var(--spring);
 }
 
 .capacity-ring-wrap:hover {
-  transform: scale(1.02);
+  transform: scale(1.06);
 }
 
 .capacity-ring-progress {
-  stroke: var(--color-navy, #0a1172) !important;
-  transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-  filter: drop-shadow(0 2px 6px rgba(10, 17, 114, 0.25));
+  transition:
+    stroke-dashoffset 0.6s
+    cubic-bezier(0.22, 1, 0.36, 1);
+
+  filter:
+    drop-shadow(
+      0 4px 10px rgba(0, 102, 196, 0.3)
+    );
 }
+
+/* =========================================================
+   Profile Sections
+   ========================================================= */
 
 .company-profile-sections {
   display: grid;
+
   grid-template-columns: 1fr 1fr;
+
   gap: 16px;
+
   margin-top: 16px;
 }
 
@@ -914,6 +1233,10 @@ h3.section-title {
   background: #fff;
   border: 1px solid var(--profile-border);
 }
+
+/* =========================================================
+   Inline Style Overrides
+   ========================================================= */
 
 .company-profile-page [style*="background:#f8faff"],
 .company-profile-page [style*="background:#fafbff"] {
@@ -930,12 +1253,20 @@ h3.section-title {
   font-family: 'Cairo', sans-serif;
 }
 
+/* =========================================================
+   Focus
+   ========================================================= */
+
 .company-profile-page button:focus-visible,
 .company-profile-page label:focus-visible,
 .company-profile-page input:focus-visible {
-  outline: 3px solid rgba(27, 86, 253, 0.2);
+  outline: 3px solid rgba(0, 102, 196, 0.22);
   outline-offset: 2px;
 }
+
+/* =========================================================
+   Responsive
+   ========================================================= */
 
 @media (max-width: 1200px) {
   .company-profile-kpis {
@@ -991,8 +1322,9 @@ h3.section-title {
     font-size: 23px;
   }
 
+  /* العنوان الرئيسي في الشاشات الصغيرة */
   .nfd-page-title {
-    font-size: 22px;
-    color: var(--color-navy) !important;
+    font-size: 22px !important;
+    color: #0A1172 !important;
   }
 }
