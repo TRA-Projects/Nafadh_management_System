@@ -1,5 +1,60 @@
 <div class="certificates-container">
 
+
+    <!-- ========================================================= -->
+  <!-- Certificate Message -->
+  <!-- ========================================================= -->
+
+  @if (certificateMessage()) {
+
+    <div
+      class="certificate-message"
+      [ngClass]="certificateMessage()?.type">
+
+      <div class="certificate-message-icon">
+
+        @if (certificateMessage()?.type === 'error') {
+          <i class="fas fa-exclamation-circle"></i>
+        }
+
+        @if (certificateMessage()?.type === 'warning') {
+          <i class="fas fa-exclamation-triangle"></i>
+        }
+
+        @if (certificateMessage()?.type === 'success') {
+          <i class="fas fa-check-circle"></i>
+        }
+
+      </div>
+
+
+      <div class="certificate-message-content">
+
+        <h4 class="certificate-message-title">
+          {{ certificateMessage()?.title }}
+        </h4>
+
+        <p class="certificate-message-text">
+          {{ certificateMessage()?.message }}
+        </p>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="certificate-message-close"
+        (click)="closeCertificateMessage()">
+
+        &times;
+
+      </button>
+
+    </div>
+
+  }
+
+  
   <!-- ========================================================= -->
   <!-- 1. الشاشة الأولى: قائمة بطاقات الدفعات -->
   <!-- ========================================================= -->

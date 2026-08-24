@@ -13,10 +13,15 @@ namespace Nafadh_Backend.Services
     public class CertificateService : ICertificateService
     {
         private readonly ICertificateRepository _repository;
+        private readonly IEvaluationRepository _evaluationRepository;
 
-        public CertificateService(ICertificateRepository repository)
+        public CertificateService(ICertificateRepository repository,
+                                 IEvaluationRepository evaluationRepository)
+
         {
             _repository = repository;
+            _evaluationRepository = evaluationRepository;
+
         }
 
         // TODO: implement business-logic contract methods for this entity
@@ -44,12 +49,33 @@ namespace Nafadh_Backend.Services
         }
 
         // Create certificate
-        public async Task<CertificateOutputDTO> AddCertificateAsync(CertificateInputDTO dto)
+        public async Task<CertificateOutputDTO> AddCertificateAsync(
+            CertificateInputDTO dto)
         {
-            var existing = await _repository
-                .GetCertificateByEnrollmentIdAsync(dto.EnrollmentId);
+            // =========================================================
+            // 1. التحقق من درجة المتدرب قبل إصدار الشهادة
+            // =========================================================
 
-            // منع إصدار شهادة مكررة
+            var averageScore =
+                await _evaluationRepository
+                    .GetAverageScoreByEnrollmentIdAsync(dto.EnrollmentId);
+
+            // إذا كانت الدرجة أقل من 50% يمنع إصدار الشهادة
+            if (averageScore < 50)
+            {
+                throw new InvalidOperationException(
+                    $"لا يمكن إصدار الشهادة. درجة المتدرب {averageScore:F2}% وهي أقل من الحد الأدنى المطلوب 50%."
+                );
+            }
+
+            // =========================================================
+            // 2. منع إصدار شهادة مكررة
+            // =========================================================
+
+            var existing =
+                await _repository
+                    .GetCertificateByEnrollmentIdAsync(dto.EnrollmentId);
+
             if (existing != null)
             {
                 return new CertificateOutputDTO
@@ -61,6 +87,10 @@ namespace Nafadh_Backend.Services
                     FileUrl = existing.FileUrl
                 };
             }
+
+            // =========================================================
+            // 3. إنشاء الشهادة
+            // =========================================================
 
             var certificate = new NFD_Certificate
             {
@@ -74,6 +104,10 @@ namespace Nafadh_Backend.Services
 
             await _repository.AddCertificateAsync(certificate);
 
+            // =========================================================
+            // 4. إرجاع الشهادة
+            // =========================================================
+
             return new CertificateOutputDTO
             {
                 CertificateId = certificate.CertificateId,
@@ -83,7 +117,6 @@ namespace Nafadh_Backend.Services
                 FileUrl = certificate.FileUrl
             };
         }
-
 
 
         // Download certificate file

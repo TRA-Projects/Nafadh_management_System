@@ -37,23 +37,36 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(result);
         }
+        
         // Create certificate
         [HttpPost]
-        public async Task<IActionResult> AddCertificate(CertificateInputDTO dto)
+        public async Task<IActionResult> AddCertificate( [FromBody] CertificateInputDTO dto)
         {
-
-            var result = await _service.AddCertificateAsync(dto);
-            if (result == null)
+            try
             {
-                return BadRequest("Unable to issue certificate.");
+                var result =
+                    await _service.AddCertificateAsync(dto);
+
+                if (result == null)
+                {
+                    return BadRequest("Unable to issue certificate.");
+                }
+
+                return Ok(new
+                {
+                    Message = "Certificate issued successfully",
+                    Certificate = result
+                });
             }
-
-            return Ok(new
+            catch (InvalidOperationException ex)
             {
-                Message = "Certificate issued successfully",
-                Certificate = result
-            });
+                return BadRequest(new
+                {
+                    Message = ex.Message
+                });
+            }
         }
+
 
         // GET Certificate/{id}/download
         [HttpGet("{id}/download")]
