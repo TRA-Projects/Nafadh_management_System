@@ -1041,31 +1041,45 @@ export class TrainerAttendance implements OnInit {
 
   reviewExcuse(ex: Excuse, approve: boolean) {
     if (this.reviewingId() !== null) return;
+
+    const reviewedByUserId = this.auth.userId;
+
+    if (reviewedByUserId == null) {
+      this.notify(
+        'تعذر تحديد المستخدم الحالي. أعد تسجيل الدخول ثم حاول مرة أخرى.',
+        'err'
+      );
+      return;
+    }
+
     this.reviewingId.set(ex.excuseId);
-    const snapshot = this.excuses();
 
-    const code = approve ? EXCUSE_STATUS.approved : EXCUSE_STATUS.rejected;
-    const value = this.excuseShape === 'name' ? (approve ? 'Approved' : 'Rejected')
-                : this.excuseShape === 'numeric-text' ? String(code) : code;
+    this.api
+      .reviewExcuse(ex.excuseId, {
+        isApproved: approve,
+        reviewedByUserId,
+      })
+      .subscribe({
+        next: () => {
+          this.reviewingId.set(null);
+          this.notify(
+            approve ? 'قُبل العذر.' : 'رُفض العذر.',
+            'ok'
+          );
 
-    this.api.reviewExcuse(ex.excuseId, { status: value } as any).subscribe({
-      next: () => {
-        this.excuses.update((list) =>
-          list.map((e) =>
-            e.excuseId === ex.excuseId
-              ? ({ ...e, status: value } as Excuse)
-              : e
-          )
-        );
-        this.reviewingId.set(null);
-        this.notify(approve ? 'قُبل العذر.' : 'رُفض العذر.', 'ok');
-      },
-      error: () => {
-        this.excuses.set(snapshot);
-        this.reviewingId.set(null);
-        this.notify('لم تُسجَّل المراجعة. حاول مرة أخرى.', 'err');
-      },
-    });
+          // الـ Backend يحدّث حالة العذر وحالة الحضور معاً،
+          // لذلك نعيد تحميل الكشف حتى تظهر الحالة الجديدة مباشرة.
+          this.reload();
+        },
+        error: (error) => {
+          console.error('تعذر مراجعة العذر:', error);
+          this.reviewingId.set(null);
+          this.notify(
+            'لم تُسجَّل المراجعة. حاول مرة أخرى.',
+            'err'
+          );
+        },
+      });
   }
 
   // ── الإبلاغ عن الغياب ───────────────────────────────────

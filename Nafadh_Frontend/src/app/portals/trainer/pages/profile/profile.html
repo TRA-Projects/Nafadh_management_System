@@ -87,11 +87,18 @@
 
   @if (profileImagePreview()) {
 
-    <img
-      [src]="profileImagePreview()"
-      [alt]="t.fullName || 'صورة المدرب'"
-      class="profile-avatar-image"
-    />
+    <button
+  type="button"
+  class="profile-avatar-button"
+  (click)="openProfileImage()"
+  title="عرض الصورة"
+>
+  <img
+    [src]="profileImagePreview()"
+    [alt]="t.fullName || 'صورة المدرب'"
+    class="profile-avatar-image"
+  />
+</button>
 
   }
   @else {
@@ -816,25 +823,66 @@
   ====================================================== -->
 
   @if (
-  !loading() &&
-  !trainer()
+    !loading() &&
+    !trainer()
   ) {
 
-  <section class="profile-empty">
+    <section class="profile-empty">
 
-    <div class="empty-icon">
-      !
+      <div class="empty-icon">
+        !
+      </div>
+
+      <strong>
+        تعذر عرض الملف الشخصي
+      </strong>
+
+      <p>
+        لم نتمكن من تحميل بيانات المدرب الحالي.
+      </p>
+
+    </section>
+
+  }
+
+
+  <!-- =====================================================
+       PROFILE IMAGE MODAL
+  ====================================================== -->
+
+  @if (
+    isProfileImageOpen() &&
+    profileImagePreview()
+  ) {
+
+    <div
+      class="profile-image-modal"
+      (click)="closeProfileImage()"
+    >
+
+      <div
+        class="profile-image-modal-content"
+        (click)="$event.stopPropagation()"
+      >
+
+        <button
+          type="button"
+          class="profile-image-close"
+          (click)="closeProfileImage()"
+          title="إغلاق"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <img
+          [src]="profileImagePreview()"
+          alt="صورة المدرب"
+          class="profile-image-large"
+        />
+
+      </div>
+
     </div>
-
-    <strong>
-      تعذر عرض الملف الشخصي
-    </strong>
-
-    <p>
-      لم نتمكن من تحميل بيانات المدرب الحالي.
-    </p>
-
-  </section>
 
   }
 

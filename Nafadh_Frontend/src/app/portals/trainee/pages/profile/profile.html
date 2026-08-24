@@ -1,8 +1,14 @@
-<h2 class="nfd-page-title">الملف الشخصي</h2>
+<h2 class="nfd-page-title">
+  الملف الشخصي
+</h2>
+
 
 @if (trainee(); as t) {
 
-<!-- الهيدر العلوي -->
+<!-- =========================================================
+     PROFILE HEADER
+========================================================= -->
+
 <div
   class="nfd-card"
   style="
@@ -18,27 +24,64 @@
   "
 >
 
-  <!-- الجهة اليمنى: الرمز الشخصي والبيانات -->
-  <div style="display: flex; align-items: center; gap: 16px;">
+  <!-- الجهة اليمنى -->
+  <div
+    style="
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    "
+  >
 
-    <!-- الصورة الشخصية -->
-    <div style="position: relative;">
+    <!-- =====================================================
+         PROFILE IMAGE
+    ====================================================== -->
+
+    <div
+      style="
+        position: relative;
+        width: 70px;
+        height: 70px;
+        flex: 0 0 70px;
+      "
+    >
 
       @if (avatarUrl()) {
 
-        <img
-          [src]="avatarUrl()"
+        <!-- الضغط على الصورة يفتح المعاينة الكبيرة -->
+        <button
+          type="button"
+          (click)="openAvatarViewer()"
+          title="عرض الصورة"
           style="
             width: 70px;
             height: 70px;
-            border-radius: 18px;
-            object-fit: cover;
             display: block;
+            padding: 0;
+            overflow: hidden;
+            border: none;
+            border-radius: 18px;
+            background: transparent;
+            cursor: zoom-in;
           "
-          alt="Profile Picture"
-        />
+        >
 
-      } @else {
+          <img
+            [src]="avatarUrl()"
+            [alt]="t.fullName || 'صورة المتدرب'"
+            style="
+              width: 100%;
+              height: 100%;
+              border-radius: inherit;
+              object-fit: cover;
+              display: block;
+            "
+          />
+
+        </button>
+
+      }
+      @else {
 
         <div
           style="
@@ -46,7 +89,7 @@
             height: 70px;
             border-radius: 18px;
             background: linear-gradient(135deg, #0284c7, #06b6d4);
-            color: #fff;
+            color: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -59,31 +102,34 @@
 
       }
 
-      <!-- زر الصورة يظهر فقط أثناء التعديل -->
+
+      <!-- زر تغيير الصورة يظهر فقط أثناء التعديل -->
+
       @if (editing()) {
 
         <label
+          title="تغيير الصورة الشخصية"
           style="
             position: absolute;
             bottom: -4px;
             left: -4px;
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             background: #ffffff;
-            border: 1.5px solid #06b6d4;
+            border: 2px solid #06b6d4;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+            z-index: 3;
           "
-          title="تغيير الصورة الشخصية"
         >
 
           <svg
-            width="12"
-            height="12"
+            width="13"
+            height="13"
             viewBox="0 0 24 24"
             fill="none"
             stroke="#06b6d4"
@@ -91,14 +137,22 @@
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            <path
+              d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+            ></path>
+
+            <circle
+              cx="12"
+              cy="13"
+              r="4"
+            ></circle>
           </svg>
+
 
           <input
             type="file"
+            accept="image/jpeg,image/png,image/webp"
             (change)="onAvatarUpload($event)"
-            accept="image/*"
             style="display: none;"
           />
 
@@ -108,8 +162,14 @@
 
     </div>
 
+
     <!-- البيانات الشخصية -->
-    <div style="text-align: right;">
+
+    <div
+      style="
+        text-align: right;
+      "
+    >
 
       <div
         style="
@@ -130,6 +190,7 @@
           {{ t.fullName }}
         </strong>
 
+
         <span
           style="
             background: #e6f7f0;
@@ -146,6 +207,7 @@
 
       </div>
 
+
       <p
         style="
           margin: 0;
@@ -154,20 +216,27 @@
           font-weight: 500;
         "
       >
-        متدرب — {{ t.major || '  لا يوجد برنامج' }}
+        متدرب —
+        {{ t.major || 'لا يوجد برنامج' }}
       </p>
 
     </div>
 
   </div>
 
+
   <!-- زر تعديل / حفظ -->
+
   <div>
 
     <button
       class="nfd-btn"
       (click)="toggleEdit()"
-      [style.background]="editing() ? '#10b981' : '#0A1172'"
+      [style.background]="
+        editing()
+          ? '#10b981'
+          : '#0A1172'
+      "
       style="
         color: #ffffff;
         border: none;
@@ -179,7 +248,11 @@
         transition: all 0.2s ease;
       "
     >
-      {{ editing() ? 'حفظ التعديلات' : 'تعديل الملف' }}
+      {{
+        editing()
+          ? 'حفظ التعديلات'
+          : 'تعديل الملف'
+      }}
     </button>
 
   </div>
@@ -187,7 +260,10 @@
 </div>
 
 
-<!-- شبكة البيانات -->
+<!-- =========================================================
+     DATA GRID
+========================================================= -->
+
 <div
   style="
     display: grid;
@@ -199,6 +275,7 @@
 >
 
   <!-- البيانات الشخصية -->
+
   <div
     class="nfd-card"
     style="
@@ -221,9 +298,15 @@
       البيانات الشخصية والمؤهل
     </h3>
 
+
     <!-- الاسم -->
+
     <label
-      [style.color]="editing() ? '#94a3b8' : '#64748b'"
+      [style.color]="
+        editing()
+          ? '#94a3b8'
+          : '#64748b'
+      "
       style="
         display: block;
         font-size: 12px;
@@ -238,11 +321,27 @@
       [value]="t.fullName || ''"
       readonly
       tabindex="-1"
-      [style.background]="editing() ? '#f1f5f9' : '#ffffff'"
+      [style.background]="
+        editing()
+          ? '#f1f5f9'
+          : '#ffffff'
+      "
       [style.border-color]="'#e2e8f0'"
-      [style.color]="editing() ? '#94a3b8' : '#1e293b'"
-      [style.opacity]="editing() ? '0.75' : '1'"
-      [style.cursor]="editing() ? 'not-allowed' : 'default'"
+      [style.color]="
+        editing()
+          ? '#94a3b8'
+          : '#1e293b'
+      "
+      [style.opacity]="
+        editing()
+          ? '0.75'
+          : '1'
+      "
+      [style.cursor]="
+        editing()
+          ? 'not-allowed'
+          : 'default'
+      "
       style="
         width: 100%;
         text-align: center;
@@ -254,9 +353,15 @@
       "
     />
 
+
     <!-- الرقم المدني -->
+
     <label
-      [style.color]="editing() ? '#94a3b8' : '#64748b'"
+      [style.color]="
+        editing()
+          ? '#94a3b8'
+          : '#64748b'
+      "
       style="
         display: block;
         font-size: 12px;
@@ -271,10 +376,26 @@
       [value]="t.nationalId || ''"
       readonly
       tabindex="-1"
-      [style.background]="editing() ? '#f1f5f9' : '#ffffff'"
-      [style.color]="editing() ? '#94a3b8' : '#1e293b'"
-      [style.opacity]="editing() ? '0.75' : '1'"
-      [style.cursor]="editing() ? 'not-allowed' : 'default'"
+      [style.background]="
+        editing()
+          ? '#f1f5f9'
+          : '#ffffff'
+      "
+      [style.color]="
+        editing()
+          ? '#94a3b8'
+          : '#1e293b'
+      "
+      [style.opacity]="
+        editing()
+          ? '0.75'
+          : '1'
+      "
+      [style.cursor]="
+        editing()
+          ? 'not-allowed'
+          : 'default'
+      "
       style="
         width: 100%;
         text-align: center;
@@ -286,9 +407,15 @@
       "
     />
 
+
     <!-- الجامعة -->
+
     <label
-      [style.color]="editing() ? '#94a3b8' : '#64748b'"
+      [style.color]="
+        editing()
+          ? '#94a3b8'
+          : '#64748b'
+      "
       style="
         display: block;
         font-size: 12px;
@@ -303,10 +430,26 @@
       [value]="t.university || ''"
       readonly
       tabindex="-1"
-      [style.background]="editing() ? '#f1f5f9' : '#ffffff'"
-      [style.color]="editing() ? '#94a3b8' : '#1e293b'"
-      [style.opacity]="editing() ? '0.75' : '1'"
-      [style.cursor]="editing() ? 'not-allowed' : 'default'"
+      [style.background]="
+        editing()
+          ? '#f1f5f9'
+          : '#ffffff'
+      "
+      [style.color]="
+        editing()
+          ? '#94a3b8'
+          : '#1e293b'
+      "
+      [style.opacity]="
+        editing()
+          ? '0.75'
+          : '1'
+      "
+      [style.cursor]="
+        editing()
+          ? 'not-allowed'
+          : 'default'
+      "
       style="
         width: 100%;
         text-align: center;
@@ -318,9 +461,15 @@
       "
     />
 
+
     <!-- التخصص -->
+
     <label
-      [style.color]="editing() ? '#94a3b8' : '#64748b'"
+      [style.color]="
+        editing()
+          ? '#94a3b8'
+          : '#64748b'
+      "
       style="
         display: block;
         font-size: 12px;
@@ -335,10 +484,26 @@
       [value]="t.major || ''"
       readonly
       tabindex="-1"
-      [style.background]="editing() ? '#f1f5f9' : '#ffffff'"
-      [style.color]="editing() ? '#94a3b8' : '#1e293b'"
-      [style.opacity]="editing() ? '0.75' : '1'"
-      [style.cursor]="editing() ? 'not-allowed' : 'default'"
+      [style.background]="
+        editing()
+          ? '#f1f5f9'
+          : '#ffffff'
+      "
+      [style.color]="
+        editing()
+          ? '#94a3b8'
+          : '#1e293b'
+      "
+      [style.opacity]="
+        editing()
+          ? '0.75'
+          : '1'
+      "
+      [style.cursor]="
+        editing()
+          ? 'not-allowed'
+          : 'default'
+      "
       style="
         width: 100%;
         text-align: center;
@@ -350,7 +515,9 @@
       "
     />
 
+
     <!-- المستوى الأكاديمي -->
+
     <label
       style="
         display: block;
@@ -362,6 +529,7 @@
     >
       المستوى الأكاديمي
     </label>
+
 
     @if (editing()) {
 
@@ -382,22 +550,43 @@
         "
       >
 
-        <option value="" disabled>
+        <option
+          value=""
+          disabled
+        >
           اختر المستوى الأكاديمي
         </option>
 
-        <option value="دبلوم">دبلوم</option>
-        <option value="بكالوريوس">بكالوريوس</option>
-        <option value="ماجستير">ماجستير</option>
-        <option value="دكتوراه">دكتوراه</option>
-        <option value="خريج">خريج</option>
+        <option value="دبلوم">
+          دبلوم
+        </option>
+
+        <option value="بكالوريوس">
+          بكالوريوس
+        </option>
+
+        <option value="ماجستير">
+          ماجستير
+        </option>
+
+        <option value="دكتوراه">
+          دكتوراه
+        </option>
+
+        <option value="خريج">
+          خريج
+        </option>
 
       </select>
 
-    } @else {
+    }
+    @else {
 
       <input
-        [value]="$any(t).academicLevel || 'غير محدد'"
+        [value]="
+          $any(t).academicLevel ||
+          'غير محدد'
+        "
         readonly
         style="
           width: 100%;
@@ -417,7 +606,10 @@
   </div>
 
 
-  <!-- معلومات التواصل -->
+  <!-- =====================================================
+       CONTACT INFORMATION
+  ====================================================== -->
+
   <div
     class="nfd-card"
     style="
@@ -440,9 +632,15 @@
       معلومات التواصل
     </h3>
 
+
     <!-- الإيميل -->
+
     <label
-      [style.color]="editing() ? '#94a3b8' : '#64748b'"
+      [style.color]="
+        editing()
+          ? '#94a3b8'
+          : '#64748b'
+      "
       style="
         display: block;
         font-size: 12px;
@@ -458,10 +656,26 @@
       readonly
       tabindex="-1"
       dir="ltr"
-      [style.background]="editing() ? '#f1f5f9' : '#ffffff'"
-      [style.color]="editing() ? '#94a3b8' : '#1e293b'"
-      [style.opacity]="editing() ? '0.75' : '1'"
-      [style.cursor]="editing() ? 'not-allowed' : 'default'"
+      [style.background]="
+        editing()
+          ? '#f1f5f9'
+          : '#ffffff'
+      "
+      [style.color]="
+        editing()
+          ? '#94a3b8'
+          : '#1e293b'
+      "
+      [style.opacity]="
+        editing()
+          ? '0.75'
+          : '1'
+      "
+      [style.cursor]="
+        editing()
+          ? 'not-allowed'
+          : 'default'
+      "
       style="
         width: 100%;
         text-align: center;
@@ -473,7 +687,9 @@
       "
     />
 
+
     <!-- الهاتف -->
+
     <label
       style="
         display: block;
@@ -486,6 +702,7 @@
       رقم الهاتف
     </label>
 
+
     @if (editing()) {
 
       <div>
@@ -497,7 +714,11 @@
           dir="ltr"
           type="tel"
           placeholder="+968 XXXXXXXX"
-          [style.border-color]="phoneError() ? '#ef4444' : '#0284c7'"
+          [style.border-color]="
+            phoneError()
+              ? '#ef4444'
+              : '#0284c7'
+          "
           style="
             width: 100%;
             text-align: center;
@@ -511,6 +732,7 @@
             cursor: text;
           "
         />
+
 
         @if (phoneError()) {
 
@@ -529,7 +751,8 @@
 
       </div>
 
-    } @else {
+    }
+    @else {
 
       <input
         [value]="t.phone || ''"
@@ -553,6 +776,7 @@
 
 
     <!-- الحسابات المهنية -->
+
     <div
       style="
         margin-top: 20px;
@@ -575,7 +799,12 @@
 
 
       <!-- GitHub -->
-      <div style="margin-bottom: 12px;">
+
+      <div
+        style="
+          margin-bottom: 12px;
+        "
+      >
 
         <div
           style="
@@ -597,7 +826,9 @@
             "
             viewBox="0 0 24 24"
           >
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"></path>
+            <path
+              d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"
+            ></path>
           </svg>
 
           <span
@@ -612,6 +843,7 @@
 
         </div>
 
+
         @if (editing()) {
 
           <div>
@@ -622,7 +854,11 @@
               (input)="validateGitHub(t.gitHubUrl)"
               dir="ltr"
               placeholder="https://github.com/username"
-              [style.border-color]="gitHubError() ? '#ef4444' : '#0284c7'"
+              [style.border-color]="
+                gitHubError()
+                  ? '#ef4444'
+                  : '#0284c7'
+              "
               style="
                 width: 100%;
                 text-align: left;
@@ -635,6 +871,7 @@
                 outline: none;
               "
             />
+
 
             @if (gitHubError()) {
 
@@ -653,11 +890,13 @@
 
           </div>
 
-        } @else {
+        }
+        @else {
 
           <input
             [value]="t.gitHubUrl || ''"
             readonly
+            dir="ltr"
             style="
               width: 100%;
               text-align: left;
@@ -668,7 +907,6 @@
               font-size: 13px;
               color: #1e293b;
             "
-            dir="ltr"
           />
 
         }
@@ -677,7 +915,12 @@
 
 
       <!-- LinkedIn -->
-      <div style="margin-bottom: 8px;">
+
+      <div
+        style="
+          margin-bottom: 8px;
+        "
+      >
 
         <div
           style="
@@ -699,7 +942,9 @@
             "
             viewBox="0 0 24 24"
           >
-            <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.25V10.9H6.46M7.86 6.7a1.63 1.63 0 1 0 0 3.26 1.63 1.63 0 0 0 0-3.26z"></path>
+            <path
+              d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.25V10.9H6.46M7.86 6.7a1.63 1.63 0 1 0 0 3.26 1.63 1.63 0 0 0 0-3.26z"
+            ></path>
           </svg>
 
           <span
@@ -714,6 +959,7 @@
 
         </div>
 
+
         @if (editing()) {
 
           <div>
@@ -724,7 +970,11 @@
               (input)="validateLinkedIn(t.linkedInUrl)"
               dir="ltr"
               placeholder="https://www.linkedin.com/in/username"
-              [style.border-color]="linkedInError() ? '#ef4444' : '#0284c7'"
+              [style.border-color]="
+                linkedInError()
+                  ? '#ef4444'
+                  : '#0284c7'
+              "
               style="
                 width: 100%;
                 text-align: left;
@@ -737,6 +987,7 @@
                 outline: none;
               "
             />
+
 
             @if (linkedInError()) {
 
@@ -755,11 +1006,13 @@
 
           </div>
 
-        } @else {
+        }
+        @else {
 
           <input
             [value]="t.linkedInUrl || ''"
             readonly
+            dir="ltr"
             style="
               width: 100%;
               text-align: left;
@@ -770,7 +1023,6 @@
               font-size: 13px;
               color: #1e293b;
             "
-            dir="ltr"
           />
 
         }
@@ -784,7 +1036,10 @@
 </div>
 
 
-<!-- قسم المهارات -->
+<!-- =========================================================
+     SKILLS
+========================================================= -->
+
 <div
   class="nfd-card"
   style="
@@ -803,6 +1058,7 @@
   >
     المهارات
   </h3>
+
 
   <div
     style="
@@ -839,7 +1095,11 @@
 
     }
 
-    @for (skill of getSkillsList(t.skills); track $index) {
+
+    @for (
+      skill of getSkillsList(t.skills);
+      track $index
+    ) {
 
       <div
         style="
@@ -872,7 +1132,9 @@
 
         }
 
-        <span>{{ skill }}</span>
+        <span>
+          {{ skill }}
+        </span>
 
       </div>
 
@@ -883,10 +1145,15 @@
 </div>
 
 
-<!-- قسم السيرة الذاتية -->
+<!-- =========================================================
+     CV
+========================================================= -->
+
 <div
   class="nfd-card"
-  style="text-align: right;"
+  style="
+    text-align: right;
+  "
 >
 
   <h3
@@ -900,9 +1167,9 @@
     السيرة الذاتية
   </h3>
 
+
   @if (editing()) {
 
-    <!-- رفع CV فقط أثناء التعديل -->
     <label
       style="
         border: 2px dashed #cbd5e1;
@@ -943,12 +1210,24 @@
           stroke-linecap="round"
           stroke-linejoin="round"
         >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="17 8 12 3 7 8"></polyline>
-          <line x1="12" y1="3" x2="12" y2="15"></line>
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          ></path>
+
+          <polyline
+            points="17 8 12 3 7 8"
+          ></polyline>
+
+          <line
+            x1="12"
+            y1="3"
+            x2="12"
+            y2="15"
+          ></line>
         </svg>
 
       </div>
+
 
       <p
         style="
@@ -961,6 +1240,7 @@
         اسحب وأرفق ملف PDF هنا أو
       </p>
 
+
       <span
         style="
           color: #0284c7;
@@ -972,6 +1252,7 @@
         انقر للاختيار
       </span>
 
+
       <small
         style="
           color: #94a3b8;
@@ -980,6 +1261,7 @@
       >
         PDF, DOCX — الحجم الأقصى 5 ميغا
       </small>
+
 
       <input
         type="file"
@@ -992,7 +1274,7 @@
 
   }
 
-  <!-- الملف الموجود -->
+
   <div
     style="
       background: #f0fdf4;
@@ -1014,16 +1296,21 @@
       dir="ltr"
     >
       📄
-      {{ $any(t).cvFileName || $any(t).resumeUrl || 'لا يوجد ملف مرفق' }}
+      {{
+        $any(t).cvFileName ||
+        $any(t).resumeUrl ||
+        'لا يوجد ملف مرفق'
+      }}
     </span>
 
-    <!-- زر تحميل -->
+
     @if ($any(t).resumeUrl) {
 
       <a
         [href]="$any(t).resumeUrl"
         target="_blank"
         download
+        title="تحميل السيرة الذاتية"
         style="
           cursor: pointer;
           color: #166534;
@@ -1031,7 +1318,6 @@
           align-items: center;
           text-decoration: none;
         "
-        title="تحميل السيرة الذاتية"
       >
 
         <svg
@@ -1044,9 +1330,20 @@
           stroke-linecap="round"
           stroke-linejoin="round"
         >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="7 10 12 15 17 10"></polyline>
-          <line x1="12" y1="15" x2="12" y2="3"></line>
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          ></path>
+
+          <polyline
+            points="7 10 12 15 17 10"
+          ></polyline>
+
+          <line
+            x1="12"
+            y1="15"
+            x2="12"
+            y2="3"
+          ></line>
         </svg>
 
       </a>
@@ -1060,9 +1357,97 @@
 }
 
 
-<!-- ========================================================= -->
-<!-- POPUP -->
-<!-- ========================================================= -->
+<!-- =========================================================
+     PROFILE IMAGE VIEWER
+========================================================= -->
+
+@if (
+  avatarViewerOpen() &&
+  avatarUrl()
+) {
+
+  <div
+    (click)="closeAvatarViewer()"
+    style="
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(10, 24, 40, 0.78);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+    "
+  >
+
+    <div
+      (click)="$event.stopPropagation()"
+      style="
+        position: relative;
+        width: min(82vw, 480px);
+        max-height: 88vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px;
+        border-radius: 20px;
+        background: #ffffff;
+        box-shadow: 0 24px 70px rgba(0,0,0,0.28);
+      "
+    >
+
+      <button
+        type="button"
+        (click)="closeAvatarViewer()"
+        title="إغلاق"
+        style="
+          position: absolute;
+          top: -13px;
+          right: -13px;
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 3px solid #ffffff;
+          border-radius: 50%;
+          background: #153c67;
+          color: #ffffff;
+          cursor: pointer;
+          box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+          z-index: 2;
+          font-size: 20px;
+          line-height: 1;
+        "
+      >
+        ×
+      </button>
+
+
+      <img
+        [src]="avatarUrl()"
+        alt="صورة المتدرب"
+        style="
+          width: 100%;
+          max-height: calc(88vh - 28px);
+          display: block;
+          object-fit: contain;
+          border-radius: 14px;
+        "
+      />
+
+    </div>
+
+  </div>
+
+}
+
+
+<!-- =========================================================
+     GENERAL POPUP
+========================================================= -->
 
 @if (popupVisible()) {
 
@@ -1072,7 +1457,7 @@
       position: fixed;
       inset: 0;
       z-index: 9999;
-      background: rgba(15, 23, 42, 0.35);
+      background: rgba(15,23,42,0.35);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1089,13 +1474,12 @@
         max-width: 430px;
         background: #ffffff;
         border-radius: 18px;
-        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
+        box-shadow: 0 20px 50px rgba(15,23,42,0.18);
         overflow: hidden;
         animation: nfdPopupIn 0.2s ease-out;
       "
     >
 
-      <!-- Popup Header -->
       <div
         style="
           padding: 18px 20px;
@@ -1132,7 +1516,9 @@
             "
           >
 
-            @if (popupType() === 'success') {
+            @if (
+              popupType() === 'success'
+            ) {
 
               <svg
                 width="20"
@@ -1144,10 +1530,15 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <path d="M20 6L9 17l-5-5"></path>
+                <path
+                  d="M20 6L9 17l-5-5"
+                ></path>
               </svg>
 
-            } @else if (popupType() === 'error') {
+            }
+            @else if (
+              popupType() === 'error'
+            ) {
 
               <svg
                 width="20"
@@ -1159,12 +1550,29 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <circle cx="12" cy="12" r="9"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                ></circle>
+
+                <line
+                  x1="12"
+                  y1="8"
+                  x2="12"
+                  y2="12"
+                ></line>
+
+                <line
+                  x1="12"
+                  y1="16"
+                  x2="12.01"
+                  y2="16"
+                ></line>
               </svg>
 
-            } @else {
+            }
+            @else {
 
               <svg
                 width="20"
@@ -1176,14 +1584,31 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <circle cx="12" cy="12" r="9"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                ></circle>
+
+                <line
+                  x1="12"
+                  y1="8"
+                  x2="12"
+                  y2="12"
+                ></line>
+
+                <line
+                  x1="12"
+                  y1="16"
+                  x2="12.01"
+                  y2="16"
+                ></line>
               </svg>
 
             }
 
           </div>
+
 
           <strong
             style="
@@ -1196,6 +1621,7 @@
           </strong>
 
         </div>
+
 
         <button
           type="button"
@@ -1220,7 +1646,6 @@
       </div>
 
 
-      <!-- Popup Body -->
       <div
         style="
           padding: 20px;
@@ -1245,10 +1670,13 @@
         }
 
 
-        <!-- Input إضافة المهارة -->
         @if (popupInputMode()) {
 
-          <div style="margin-top: 15px;">
+          <div
+            style="
+              margin-top: 15px;
+            "
+          >
 
             <label
               style="
@@ -1288,7 +1716,6 @@
       </div>
 
 
-      <!-- Popup Footer -->
       <div
         style="
           padding: 0 20px 20px;
@@ -1317,6 +1744,7 @@
             إضافة
           </button>
 
+
           <button
             type="button"
             (click)="closePopup()"
@@ -1334,7 +1762,8 @@
             إلغاء
           </button>
 
-        } @else {
+        }
+        @else {
 
           <button
             type="button"
@@ -1365,15 +1794,23 @@
 
 
 <style>
+
   @keyframes nfdPopupIn {
+
     from {
       opacity: 0;
-      transform: translateY(-10px) scale(0.98);
+      transform:
+        translateY(-10px)
+        scale(0.98);
     }
 
     to {
       opacity: 1;
-      transform: translateY(0) scale(1);
+      transform:
+        translateY(0)
+        scale(1);
     }
+
   }
+
 </style>

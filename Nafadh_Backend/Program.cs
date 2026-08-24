@@ -387,6 +387,45 @@ namespace Nafadh_Backend
                     }
                 );
             }
+            // =====================================================
+            // EXCUSE PROOF FILES
+            // =====================================================
+
+            var excuseProofsPath =
+                builder.Configuration[
+                    "Storage:ExcuseProofsPath"
+                ];
+
+            var excuseProofsRequestPath =
+                builder.Configuration[
+                    "Storage:ExcuseProofsRequestPath"
+                ]
+                ?? "/uploads/excuse-proofs";
+
+
+            if (
+                !string.IsNullOrWhiteSpace(
+                    excuseProofsPath
+                )
+            )
+            {
+                Directory.CreateDirectory(
+                    excuseProofsPath
+                );
+
+                app.UseStaticFiles(
+                    new StaticFileOptions
+                    {
+                        FileProvider =
+                            new PhysicalFileProvider(
+                                excuseProofsPath
+                            ),
+
+                        RequestPath =
+                            excuseProofsRequestPath
+                    }
+                );
+            }
 
             // Enable CORS middleware here
             app.UseCors("AllowAll");
