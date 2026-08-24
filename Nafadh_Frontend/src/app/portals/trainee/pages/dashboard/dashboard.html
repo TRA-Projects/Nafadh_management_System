@@ -253,7 +253,7 @@
             font-family: 'Cairo', sans-serif;
           "
         >
-          <i class="fas fa-book" style="margin-left: 6px;"></i>
+          <i class="fas fa-book" style="margin-left: 6px;color: #2563eb;"></i>
           الوحدات المكتملة
         </span>
         <span
@@ -293,7 +293,7 @@
             font-family: 'Cairo', sans-serif;
           "
         >
-          <i class="fas fa-tasks" style="margin-left: 6px;"></i>
+          <i class="fas fa-tasks" style="margin-left: 6px; color: #2563eb;"></i>
           المهام المسلّمة
         </span>
         <span
@@ -335,7 +335,8 @@
             font-family: 'Cairo', sans-serif;
           "
         >
-          <i class="fas fa-user-check" style="margin-left: 6px;"></i>
+          <i class="fas fa-user-check" style="margin-left: 6px; color: #2563eb;"></i>
+   
           نسبة الحضور
         </span>
         <span
@@ -353,45 +354,56 @@
         </span>
       </div>
 
-      <!-- الإنذارات -->
-      <div
-        style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 14px;
-          padding: 16px 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-          font-family: 'Cairo', sans-serif;
-        "
-      >
-        <span
-          style="
-            font-size: 0.85rem;
-            color: #64748b;
-            font-weight: 600;
-            font-family: 'Cairo', sans-serif;
-          "
-        >
-          <i class="fas fa-exclamation-triangle" style="margin-left: 6px;"></i>
-          الإنذارات
-        </span>
-        <span
-          style="
-            background: #fef2f2;
-            color: #dc2626;
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            font-family: 'Cairo', sans-serif;
-          "
-        >
-          {{ warningsCount() }}
-        </span>
-      </div>
+   
+<!-- التواصل والدعم -->
+<div
+
+  routerLink="/trainee/support"
+  style="
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    font-family: 'Cairo', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  "
+>
+  <span
+    style="
+      font-size: 0.85rem;
+      color: #64748b;
+      font-weight: 600;
+      font-family: 'Cairo', sans-serif;
+    "
+  >
+    <i
+      class="fas fa-headset"
+      style="margin-left: 6px; color: #2563eb;"
+    ></i>
+    التواصل والدعم
+  </span>
+
+  <span
+    style="
+      background: #eff6ff;
+      color: #2563eb;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: 'Cairo', sans-serif;
+    "
+  >
+    <i class="fas fa-arrow-left" style="margin-left: 4px;"></i>
+    تواصل معنا
+  </span>
+
+    </div>
     </div>
 
     <!-- 3. الشبكة الرئيسية (الصف الأوسط: فريق الإشراف + المهام القريبة) -->
