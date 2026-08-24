@@ -35,6 +35,9 @@ export class AdminUsers implements OnInit {
   isEditModalOpen: boolean = false;
   isResetPasswordModalOpen: boolean = false;
 
+  // متغير رسالة الخطأ داخل نموذج إنشاء الحساب
+  createErrorMsg: string = '';
+
   newUser = {
     fullName: '',
     email: '',
@@ -90,7 +93,7 @@ export class AdminUsers implements OnInit {
   constructor(
     private api: AdminApi,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadData();
@@ -140,7 +143,6 @@ export class AdminUsers implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // دالة تحويل اسم الدور للعربي
   getRoleArabicName(roleInput: any): string {
     if (!roleInput) return 'غير محدد';
     const str = String(roleInput).trim().toLowerCase();
@@ -153,7 +155,6 @@ export class AdminUsers implements OnInit {
     return String(roleInput);
   }
 
-  // دالة جلب كلاس التنسيق الخاص بالدور
   getRoleClass(roleInput: any): string {
     const norm = this.normalizeRole(roleInput);
     return norm.toLowerCase();
@@ -161,12 +162,14 @@ export class AdminUsers implements OnInit {
 
   // Modal: Create
   openCreateModal(): void {
+    this.createErrorMsg = '';
     this.isCreateModalOpen = true;
     this.cdr.detectChanges();
   }
 
   closeCreateModal(): void {
     this.isCreateModalOpen = false;
+    this.createErrorMsg = '';
     this.resetForm();
     this.cdr.detectChanges();
   }
@@ -183,13 +186,17 @@ export class AdminUsers implements OnInit {
   }
 
   createUser(): void {
+    this.createErrorMsg = '';
+
     if (!this.newUser.fullName || !this.newUser.email || !this.newUser.password || !this.newUser.roleId) {
-      alert('يرجى تعبئة جميع الحقول المطلوبة (*)');
+      this.createErrorMsg = 'يرجى تعبئة جميع الحقول الإجبارية المعلمة بـ (*)ا';
+      this.cdr.detectChanges();
       return;
     }
 
     if (this.newUser.password !== this.newUser.confirmPassword) {
-      alert('كلمة المرور وتأكيد كلمة المرور غير متطابقين');
+      this.createErrorMsg = 'كلمة المرور وتأكيد كلمة المرور غير متطابقين';
+      this.cdr.detectChanges();
       return;
     }
 
@@ -203,13 +210,23 @@ export class AdminUsers implements OnInit {
 
     this.api.createUser(payload).subscribe({
       next: () => {
-        alert('تم إنشاء الحساب بنجاح!');
         this.closeCreateModal();
         this.loadData();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('تفاصيل خطأ إنشاء الحساب:', err);
-        alert('حدث خطأ أثناء إضافة الحساب، تأكد من استيفاء البيانات الشروط المطلوب.');
+
+        // التحقق إذا كان الخطأ بسبب تكرار البريد الإلكتروني (Conflict / 409)
+        if (err.status === 409 || (err.error && typeof err.error === 'string' && err.error.includes('already exists'))) {
+          this.createErrorMsg = 'البريد الإلكتروني مستخدم مسبقاً، يرجى استخدام بريد آخر.';
+        } else if (err.error && err.error.message) {
+          this.createErrorMsg = err.error.message;
+        } else {
+          this.createErrorMsg = 'حدث خطأ أثناء إضافة الحساب، تأكد من استيفاء البيانات للشروط المطلوبة.';
+        }
+
+        this.cdr.detectChanges();
       }
     });
   }
