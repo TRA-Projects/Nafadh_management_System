@@ -139,5 +139,19 @@ namespace Nafadh_Backend.Repositories
                 .Where(w => w.Level == level)
                 .ToListAsync();
         }
+
+        //***
+        public async Task<bool> AutoAbsenceWarningExistsAsync(int enrollmentId, int absenceNumber)
+        {
+            string marker = $"[AUTO-ABSENCE-{absenceNumber}]";
+
+            return await _context.NFD_Warnings
+                .AnyAsync(w =>
+                    w.Scope == NFD_WarningScope.Trainee &&
+                    w.EnrollmentId == enrollmentId &&
+                    w.Type == NFD_WarningType.Attendance &&
+                    w.Evidence != null &&
+                    w.Evidence.StartsWith(marker));
+        }
     }
 }

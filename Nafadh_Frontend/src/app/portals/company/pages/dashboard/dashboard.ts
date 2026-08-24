@@ -1,11 +1,4 @@
-import {
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal
-} from '@angular/core';
-
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -30,14 +23,11 @@ import {
   styleUrls: ['./dashboard.scss'],
 })
 export class CompanyDashboard implements OnInit {
-
   private readonly api = inject(CompanyApi);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  readonly companyId = computed(
-    () => this.auth.companyId ?? 0
-  );
+  readonly companyId = computed(() => this.auth.companyId ?? 0);
 
   loading = signal(false);
   loadError = signal(false);

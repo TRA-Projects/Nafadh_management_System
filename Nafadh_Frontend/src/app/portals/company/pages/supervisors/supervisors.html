@@ -1,0 +1,197 @@
+<!-- القسم العلوي: العنوان، زر الإضافة، وزر التحديث -->
+<div class="page-header-section">
+  <div class="page-head-text">
+    <h1>إدارة المشرفين</h1>
+    <p>المشرفون المعتمدون في الشركة — الصلاحيات وتوزيع المتدربين</p>
+  </div>
+  
+  <div class="header-actions">
+    <button class="btn-refresh" type="button" (click)="refreshData()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.73-5.73"/></svg>
+      تحديث
+    </button>
+    <button class="btn-add" type="button" (click)="openAddModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      إضافة مشرف شركة
+    </button>
+  </div>
+</div>
+
+<!-- بطاقات الإحصائيات العلوية -->
+<div class="top-stats-container">
+  <div class="top-stat-card">
+    <div class="stat-icon navy">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div class="stat-content">
+      <span class="stat-num">{{ supervisors.length }}</span>
+      <span class="stat-label">المشرفون المعتمدون</span>
+    </div>
+  </div>
+
+  <div class="top-stat-card">
+    <div class="stat-icon cyan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <div class="stat-content">
+      <span class="stat-num">{{ totalAssignedTrainees }}</span>
+      <span class="stat-label">إجمالي المتدربين الموزعين</span>
+    </div>
+  </div>
+
+  <div class="top-stat-card">
+    <div class="stat-icon gold">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div class="stat-content">
+      <span class="stat-num">{{ averageAttendance }}%</span>
+      <span class="stat-label">متوسط الحضور العام</span>
+    </div>
+  </div>
+</div>
+
+<!-- شريط البحث والفلترة -->
+<div class="filters-bar">
+  <div class="search-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" placeholder="البحث باسم المشرف أو البريد الإلكتروني..." [(ngModel)]="searchQuery">
+  </div>
+
+  <div class="department-filters">
+    <button type="button" [class.active]="selectedDept === 'all'" (click)="selectedDept = 'all'">الكل</button>
+    <button type="button" [class.active]="selectedDept === 'الأمن السيبراني'" (click)="selectedDept = 'الأمن السيبراني'">الأمن السيبراني</button>
+    <button type="button" [class.active]="selectedDept === 'تقنية المعلومات'" (click)="selectedDept = 'تقنية المعلومات'">تقنية المعلومات</button>
+    <button type="button" [class.active]="selectedDept === 'الموارد البشرية'" (click)="selectedDept = 'الموارد البشرية'">الموارد البشرية</button>
+    <button type="button" [class.active]="selectedDept === 'التسويق'" (click)="selectedDept = 'التسويق'">التسويق</button>
+  </div>
+</div>
+
+<!-- شبكة البطاقات -->
+<div class="grid">
+  @for (s of filteredSupervisors; track (s.supervisorId ?? s.id)) {
+    <div class="card" [class.inactive]="s.isInactive">
+      <div class="card-head">
+        <div class="avatar-wrapper">
+          <div class="avatar" [ngClass]="s.avatarColor || 'navy'">{{ initials(s.fullName) }}</div>
+          <span class="status-dot" [class.offline]="s.isInactive"></span>
+        </div>
+
+        <div class="card-head-info">
+          <div class="person-text">
+            <span class="name">{{ s.fullName }}</span>
+            <span class="role">{{ s.department || '—' }} — {{ s.position || '—' }}</span>
+            <span class="email">
+              {{ s.email || '—' }}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="dropdown-container">
+          <button class="icon-box" type="button" (click)="toggleDropdown(s, $event)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+          @if (s.showMenu) {
+            <div class="dropdown-menu">
+              <button type="button" (click)="editSupervisor(s)">تعديل البيانات</button>
+              <button type="button" (click)="toggleStatus(s)">{{ s.isInactive ? 'تنشيط الحساب' : 'تجميد الحساب' }}</button>
+              <button type="button" class="danger" (click)="deleteSupervisor(s)">حذف المشرف</button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-box"><strong>{{ s.stats?.monthlyEvaluations ?? 0 }}</strong><span>تقييمات هذا الشهر</span></div>
+        <div class="stat-box"><strong>{{ s.stats?.attendanceRate ?? '—%' }}</strong><span>متوسط الحضور</span></div>
+        <div class="stat-box"><strong>{{ s.stats?.assignedTrainees ?? 0 }}</strong><span>متدرب موزع</span></div>
+      </div>
+
+      <div class="chips">
+        <span class="chip">الإخطارات</span>
+        <span class="chip">المهام</span>
+        <span class="chip">التقييمات</span>
+        <span class="chip">الحضور</span>
+      </div>
+
+      <div class="card-actions">
+        <button class="btn btn-primary-soft" type="button" (click)="openDistributeModal(s)">توزيع المتدربين</button>
+        <a class="btn btn-outline" [routerLink]="['/supervisors', s.supervisorId ?? s.id]">الملف</a>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- نافذة إضافة مشرف -->
+@if (showAddModal) {
+  <div class="modal-backdrop" (click)="closeAddModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <button class="close-btn" type="button" (click)="closeAddModal()">✕</button>
+        <h2>إضافة مشرف شركة</h2>
+      </div>
+
+      <form (submit)="$event.preventDefault(); submitNewSupervisor();">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">الاسم الكامل</label>
+          <input type="text" class="form-input" placeholder="مثال: سالم بن حمد الخروصي" [(ngModel)]="newSupervisor.fullName" name="fullName" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">المنصب</label>
+            <input type="text" class="form-input" placeholder="مثال: رئيس قسم" [(ngModel)]="newSupervisor.position" name="position" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;">القسم</label>
+            <input type="text" class="form-input" placeholder="القسم في الشركة" [(ngModel)]="newSupervisor.department" name="department" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="submit" style="flex: 1; padding: 10px; background: #1e1b4b; color: #fff; border: none; border-radius: 10px; font-weight: 600; cursor: pointer;">إضافة المشرف</button>
+          <button type="button" (click)="closeAddModal()" style="flex: 1; padding: 10px; background: #f1f5f9; color: #475569; border: none; border-radius: 10px; font-weight: 600; cursor: pointer;">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- نافذة توزيع المتدربين المنبثقة -->
+@if (isDistributeModalOpen && selectedSupervisor) {
+  <div class="modal-backdrop" (click)="closeDistributeModal()">
+    <div class="modal-card large-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <button class="close-btn" type="button" (click)="closeDistributeModal()">✕</button>
+        <h2>توزيع المتدربين على المشرفين</h2>
+      </div>
+
+      <div class="modal-subtext">
+        توزيع المتدربين النشطين على <strong>{{ selectedSupervisor.fullName }}</strong> ({{ selectedSupervisor.department || 'القسم العام' }})
+      </div>
+
+      <div class="trainees-list">
+        @for (t of traineesList; track t.id) {
+          <div class="trainee-row">
+            <div class="trainee-info">
+              <div class="avatar cyan" [ngClass]="t.color">{{ t.initials }}</div>
+              <div class="trainee-details">
+                <span class="name">{{ t.name }}</span>
+                <span class="track">{{ t.track }} — الدفعة {{ t.batch }}</span>
+              </div>
+            </div>
+            <label class="assign-checkbox-label">
+              <span>تعيين</span>
+              <input type="checkbox" [(ngModel)]="t.assigned">
+            </label>
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer-actions">
+        <button type="button" class="btn-cancel-modal" (click)="closeDistributeModal()">إلغاء</button>
+        <button type="button" class="btn-save-modal" (click)="saveDistribution()">حفظ التوزيع</button>
+      </div>
+    </div>
+  </div>
+}

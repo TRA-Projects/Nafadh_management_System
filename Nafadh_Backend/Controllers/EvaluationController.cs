@@ -96,5 +96,30 @@ namespace Nafadh_Backend.Controllers
                 return NotFound(new { message = ex.Message });
             }
         }
+
+
+        // DELETE: api/evaluation/3756
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteEvaluation(int id)
+        {
+            try
+            {
+                await _service.DeleteEvaluationAsync(id);
+
+                return Ok(new
+                {
+                    message = "Evaluation deleted successfully."
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
+
     }
 }

@@ -37,23 +37,36 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(result);
         }
+        
         // Create certificate
         [HttpPost]
-        public async Task<IActionResult> AddCertificate(CertificateInputDTO dto)
+        public async Task<IActionResult> AddCertificate( [FromBody] CertificateInputDTO dto)
         {
-
-            var result = await _service.AddCertificateAsync(dto);
-            if (result == null)
+            try
             {
-                return BadRequest("Unable to issue certificate.");
+                var result =
+                    await _service.AddCertificateAsync(dto);
+
+                if (result == null)
+                {
+                    return BadRequest("Unable to issue certificate.");
+                }
+
+                return Ok(new
+                {
+                    Message = "Certificate issued successfully",
+                    Certificate = result
+                });
             }
-
-            return Ok(new
+            catch (InvalidOperationException ex)
             {
-                Message = "Certificate issued successfully",
-                Certificate = result
-            });
+                return BadRequest(new
+                {
+                    Message = ex.Message
+                });
+            }
         }
+
 
         // GET Certificate/{id}/download
         [HttpGet("{id}/download")]
@@ -61,27 +74,12 @@ namespace Nafadh_Backend.Controllers
         {
             var fileUrl = await _service.DownloadCertificateAsync(id);
 
-            if (fileUrl == null)
-                return NotFound();
-
-            var filePath = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "wwwroot",
-                fileUrl
-            );
-
-            if (!System.IO.File.Exists(filePath))
+            if (string.IsNullOrWhiteSpace(fileUrl))
                 return NotFound("Certificate file not found.");
 
-            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+            var fileName = Path.GetFileName(new Uri(fileUrl).AbsolutePath);
 
-            var fileName = Path.GetFileName(filePath);
-
-            return File(
-                fileBytes,
-                "application/pdf",
-                fileName
-            );
+            return Redirect(fileUrl);
         }
 
         // Get all certificates for trainee

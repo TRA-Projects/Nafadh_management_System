@@ -74,6 +74,10 @@ export class CompanyApi {
     return this.http.get<CompanySupervisorDto[]>(`${this.base}/CompanySupervisor/company/${companyId}`);
   }
   addSupervisor(dto: unknown) { return this.http.post(`${this.base}/CompanySupervisor`, dto); }
+  deleteSupervisor(id: number) { return this.http.delete(`${this.base}/CompanySupervisor/${id}`); }
+  getSupervisorAssignedTrainees(id: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/CompanySupervisor/${id}/trainees`);
+  }
 
   // My Account
   getCurrentAccount(): Observable<CompanyAccountDto> {
@@ -87,6 +91,10 @@ export class CompanyApi {
   // Trainee Progress
   getEnrollment(enrollmentId: number): Observable<EnrollmentDto> {
     return this.http.get<EnrollmentDto>(`${this.base}/Enrollment/${enrollmentId}`);
+  }
+  // Distribute trainees to supervisors — updates the enrollment's department/supervisor assignment.
+  updateEnrollmentAssignment(enrollmentId: number, dto: { departmentId?: number | null; supervisorId?: number | null }): Observable<EnrollmentDto> {
+    return this.http.put<EnrollmentDto>(`${this.base}/Enrollment/${enrollmentId}`, dto);
   }
   getProgressSummary(enrollmentId: number): Observable<ProgressSummaryDto> {
     return this.http.get<ProgressSummaryDto>(`${this.base}/Enrollment/${enrollmentId}/progress-summary`);

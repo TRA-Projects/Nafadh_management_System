@@ -25,9 +25,12 @@ namespace Nafadh_Backend.Repositories
         public async Task<IEnumerable<NFD_Evaluation>> GetEvaluationsByEnrollmentIdAsync(int enrollmentId)
         {
             return await _context.NFD_Evaluations
-                .Include(e => e.EvaluationTemplate)
+                .Include(e => e.EvaluationTemplate).ThenInclude(t => t.Module)
                 .Include(e => e.CriterionScores)
                     .ThenInclude(cs => cs.Criterion)
+                .Include(e => e.User)
+                .Include(e => e.Trainer)
+                    .ThenInclude(t => t.User)
                 .Where(e => e.EnrollmentId == enrollmentId)
                 .ToListAsync();
         }
@@ -35,9 +38,12 @@ namespace Nafadh_Backend.Repositories
         public async Task<IEnumerable<NFD_Evaluation>> GetEvaluationsByTrainerIdAsync(int trainerId)
         {
             return await _context.NFD_Evaluations
-                .Include(e => e.EvaluationTemplate)
+                .Include(e => e.EvaluationTemplate).ThenInclude(t => t.Module)
                 .Include(e => e.CriterionScores)
                     .ThenInclude(cs => cs.Criterion)
+                .Include(e => e.User)
+                .Include(e => e.Trainer)
+                    .ThenInclude(t => t.User)
                 .Where(e => e.TrainerId == trainerId)
                 .ToListAsync();
         }
@@ -46,9 +52,12 @@ namespace Nafadh_Backend.Repositories
         public async Task<NFD_Evaluation?> GetEvaluationByIdAsync(int evaluationId)
         {
             return await _context.NFD_Evaluations
-                .Include(e => e.EvaluationTemplate)
+                .Include(e => e.EvaluationTemplate).ThenInclude(t => t.Module)
                 .Include(e => e.CriterionScores)
                     .ThenInclude(cs => cs.Criterion)
+                .Include(e => e.User)
+                .Include(e => e.Trainer)
+                    .ThenInclude(t => t.User)
                 .FirstOrDefaultAsync(e => e.EvaluationId == evaluationId);
         }
 
@@ -57,7 +66,7 @@ namespace Nafadh_Backend.Repositories
         public async Task<NFD_Evaluation?> GetEvaluationWithScoresAsync(int evaluationId)
         {
             return await _context.NFD_Evaluations
-                .Include(e => e.EvaluationTemplate)
+                .Include(e => e.EvaluationTemplate).ThenInclude(t => t.Module)
                 .Include(e => e.CriterionScores)
                 .FirstOrDefaultAsync(e => e.EvaluationId == evaluationId);
         }
@@ -109,6 +118,24 @@ namespace Nafadh_Backend.Repositories
                 return 0.0;
             }
             return (double)evaluations.Average(e => e.Score);
+        }
+
+        public async Task<NFD_Evaluation?> GetEvaluationByEnrollmentAndTemplateAsync(int enrollmentId, int templateId)
+        {
+            return await _context.NFD_Evaluations
+                .Include(e => e.EvaluationTemplate)
+                .Include(e => e.CriterionScores)
+                .FirstOrDefaultAsync(e => e.EnrollmentId == enrollmentId && e.TemplateId == templateId);
+        }
+
+        public async Task DeleteEvaluationAsync(int evaluationId)
+        {
+            var evaluation = await _context.NFD_Evaluations.FindAsync(evaluationId);
+            if (evaluation != null)
+            {
+                _context.NFD_Evaluations.Remove(evaluation);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

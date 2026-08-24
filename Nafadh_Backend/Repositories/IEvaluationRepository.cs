@@ -23,5 +23,9 @@ namespace Nafadh_Backend.Repositories
         // NEW: replace all NFD_EvaluationCriterionScore rows for an evaluation
         // (used by UpdateEvaluationAsync's re-scoring flow).
         Task ReplaceCriterionScoresAsync(int evaluationId, List<NFD_EvaluationCriterionScore> scores);
+        Task<NFD_Evaluation?> GetEvaluationByEnrollmentAndTemplateAsync( int enrollmentId,int templateId);
+        Task DeleteEvaluationAsync(int evaluationId);
+
+
     }
 }

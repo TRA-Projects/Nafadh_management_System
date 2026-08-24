@@ -183,7 +183,29 @@ createModule(
     dto
   );
 }
+// =====================================================
+// UPDATE MODULE
+// Used for archiving and restoring modules.
+// =====================================================
 
+updateModule(
+  moduleId: number,
+  dto: {
+    title: string;
+    orderIndex: number;
+    availableFrom?: string | null;
+    availableTo?: string | null;
+    isArchived: boolean;
+    prerequisiteModuleId?: number | null;
+  }
+): Observable<void> {
+
+  return this.http.put<void>(
+    `${this.base}/Module/${moduleId}`,
+    dto
+  );
+
+}
 
 createLesson(
   dto: {
@@ -456,7 +478,22 @@ deleteTrainingMaterial(
     );
   }
 
+// =====================================================
+// GET REAL SUBMISSION FILE
+// =====================================================
 
+getSubmissionFile(
+  submissionId: number
+): Observable<Blob> {
+
+  return this.http.get(
+    `${this.base}/Submission/${submissionId}/file`,
+    {
+      responseType: 'blob'
+    }
+  );
+
+}
 
   // =====================================================
   // Trainee Evaluation
@@ -571,7 +608,25 @@ deleteTrainingMaterial(
       `${this.base}/EvaluationTemplate/GetTemplateById/${templateId}`
     );
   }
+// =====================================================
+// CHECK EVALUATION TEMPLATE WEIGHTS
+// =====================================================
 
+checkTemplateWeights(
+  templateId: number
+): Observable<{
+  templateId: number;
+  isValid: boolean;
+}> {
+
+  return this.http.get<{
+    templateId: number;
+    isValid: boolean;
+  }>(
+    `${this.base}/EvaluationCriterion/CheckWeights/${templateId}`
+  );
+
+}
 
   createTemplate(
     dto: unknown
@@ -585,15 +640,58 @@ deleteTrainingMaterial(
 
 
   createCriterion(
-    dto: unknown
-  ) {
+  dto: unknown
+): Observable<string> {
 
-    return this.http.post(
-      `${this.base}/EvaluationCriterion/CreateCriterion`,
-      dto
-    );
+  return this.http.post(
+    `${this.base}/EvaluationCriterion/CreateCriterion`,
+    dto,
+    {
+      responseType: 'text'
+    }
+  );
+}
+// =====================================================
+// UPDATE EVALUATION CRITERION
+// =====================================================
+
+updateCriterion(
+  criteriaId: number,
+  dto: {
+    templateId: number;
+    name: string;
+    weight: number;
+    maxPoints: number;
   }
+): Observable<string> {
 
+  return this.http.put(
+    `${this.base}/EvaluationCriterion/UpdateCriterion/${criteriaId}`,
+    dto,
+    {
+      responseType: 'text'
+    }
+  );
+
+}
+
+
+// =====================================================
+// DELETE EVALUATION CRITERION
+// =====================================================
+
+deleteCriterion(
+  criteriaId: number
+): Observable<string> {
+
+  return this.http.delete(
+    `${this.base}/EvaluationCriterion/DeleteCriterion/${criteriaId}`,
+    {
+      responseType: 'text'
+    }
+  );
+
+}
 
   submitEvaluation(
     dto: unknown

@@ -39,5 +39,9 @@ namespace Nafadh_Backend.Repositories
         /// Retrieves today's attendance roster for all trainees hosted under a specific company.
         /// </summary>
         Task<List<NFD_DailyAttendance>> GetTodayByCompanyIdAsync(int companyId, DateTime today);
+
+        Task<NFD_DailyAttendance?> GetByIdWithDetailsAsync(int id); //***
+
+        Task<List<NFD_DailyAttendance>> GetByEnrollmentIdWithDetailsAsync(int enrollmentId); // ***
     }
 }

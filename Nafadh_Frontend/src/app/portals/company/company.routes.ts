@@ -9,6 +9,7 @@ export const COMPANY_ROUTES: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.CompanyDashboard) },
+      { path: 'supervisors', loadComponent: () => import('./pages/supervisors/supervisors').then((m) => m.CompanySupervisors) },
       { path: 'trainees', loadComponent: () => import('./pages/trainees/trainees').then((m) => m.CompanyTrainees) },
       { path: 'trainees/:id/progress', loadComponent: () => import('./pages/trainee-progress/trainee-progress').then((m) => m.CompanyTraineeProgress) },
       { path: 'specialties', loadComponent: () => import('./pages/specialties/specialties').then((m) => m.CompanySpecialties) },

@@ -104,7 +104,6 @@ export class CompanyProfile implements OnInit {
 
   ngOnInit() {
     this.companyId = this.auth.companyId ?? 0;
-    
     this.api.getCompany(this.companyId).subscribe({
       next: (response) => {
         const normalizedCompany = this.normalizeCompany(response);

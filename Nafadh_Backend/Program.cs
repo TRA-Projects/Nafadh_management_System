@@ -13,6 +13,7 @@ using Nafadh_Backend.Services;
 using System.Security.Claims;
 using System.Text;
 using QuestPDF.Infrastructure;
+using Nafadh_Backend.Settings;
 
 namespace Nafadh_Backend
 {
@@ -206,6 +207,14 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IBadgeRepository, BadgeRepository>();
             builder.Services.AddScoped<IBadgeService, BadgeService>();
             builder.Services.AddScoped<IBadgeEvaluationService, BadgeEvaluationService>();
+
+            // Email settings
+            builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+            builder.Services.Configure<AbsenceWarningSettings>(builder.Configuration.GetSection("AbsenceWarnings"));
+
+            // Automatic absence warnings
+            builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddScoped<IAbsenceWarningService,AbsenceWarningService>();
 
             // ── Swagger with JWT support ───────────────────────────────────────
             builder.Services.AddEndpointsApiExplorer();

@@ -9,9 +9,23 @@ namespace Nafadh_Backend.DTOs
         public int EvaluationId { get; set; }
         public int EnrollmentId { get; set; }
         public int? TrainerId { get; set; }
+        public string? TrainerName { get; set; }
         public int TemplateId { get; set; }
+        // NEW: raw Stage value carried on the template. NOTE: current seed data
+        // leaves this at 1 for every template, so it is not yet a reliable way
+        // to bucket evaluations — ModuleId/ModuleTitle below is the real,
+        // populated grouping key the trainee-profile page uses instead.
+        public int? Stage { get; set; }
+        // NEW: the real module this evaluation is scoped to (module-level
+        // evaluations only — null for standalone templates like TrainerPerformance).
+        public int? ModuleId { get; set; }
+        public string? ModuleTitle { get; set; }
+        public string? TemplateType { get; set; }
         public decimal Score { get; set; }
         public string? Notes { get; set; }
+        public DateTime EvaluationDate { get; set; }
+        public int EvaluatorUserId { get; set; }
+        public string? EvaluatorName { get; set; }
 
         // NEW: per-criterion breakdown behind the computed Score above.
         public List<EvaluationCriterionScoreDTO> CriteriaBreakdown { get; set; }

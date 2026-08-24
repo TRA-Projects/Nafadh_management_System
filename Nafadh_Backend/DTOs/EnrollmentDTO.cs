@@ -11,6 +11,10 @@ namespace Nafadh_Backend.DTOs
 
         public int BatchId { get; set; }
         public string BatchName { get; set; } = string.Empty;
+        // NEW: batch's overall duration, needed by the trainee-profile page
+        // ("بداية الدفعة ونهايتها") without a second round-trip to /api/Batch.
+        public DateTime BatchStartDate { get; set; }
+        public DateTime BatchEndDate { get; set; }
 
         public int TraineeId { get; set; }
         public string TraineeName { get; set; } = string.Empty;
@@ -26,6 +30,7 @@ namespace Nafadh_Backend.DTOs
 
         public string? TraineeGitHubUrl { get; set; }
         public string? TraineeLinkedInUrl { get; set; }
+        public int? ProgramId { get; set; }
         public string? ProgramTitle { get; set; }
         public string? ProgramDescription { get; set; }
         public string? TrackName { get; set; }

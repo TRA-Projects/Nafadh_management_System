@@ -60,5 +60,32 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
             return result;
         }
+
+        // *** 
+        public async Task<NFD_DailyAttendance?> GetByIdWithDetailsAsync(int id)
+        {
+            return await _context.NFD_DailyAttendances
+                .Include(d => d.Excuses)
+                .Include(d => d.Enrollment)
+                    .ThenInclude(e => e.Trainee)
+                    .ThenInclude(t => t.User)
+                .FirstOrDefaultAsync(
+                    d => d.DailyAttendanceId == id);
+        }
+
+        public async Task<List<NFD_DailyAttendance>>
+            GetByEnrollmentIdWithDetailsAsync(int enrollmentId)
+        {
+            return await _context.NFD_DailyAttendances
+                .Include(d => d.Excuses)
+                .Include(d => d.Enrollment)
+                    .ThenInclude(e => e.Trainee)
+                    .ThenInclude(t => t.User)
+                .Where(d => d.EnrollmentId == enrollmentId)
+                .OrderBy(d => d.Date)
+                .ThenBy(d => d.DailyAttendanceId)
+                .ToListAsync();
+        }
+        //***
     }
 }

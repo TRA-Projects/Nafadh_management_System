@@ -82,39 +82,45 @@
       </div> 
     </div> 
 
-    <!-- Donut Chart (تقسيم المسارات) --> 
-    <div class="chart-card"> 
-      <div class="chart-header"> 
-        <div> 
-          <h3 class="chart-title">تقسيم المسارات</h3> 
-          <p class="chart-subtitle">بناءً على الدفعة المختارة</p> 
-        </div> 
-        <select class="batch-select" [value]="selectedBatch()" (change)="onBatchChange($event)"> 
-          <option value="12">الدفعة 12</option> 
-          <option value="11">الدفعة 11</option> 
-          <option value="10">الدفعة 10</option> 
-        </select> 
-      </div> 
-      <div class="chart-body donut-body"> 
-        <canvas id="tracksDonutChart"></canvas> 
-      </div> 
-    </div> 
+    <!-- Donut Chart (تقسيم المسارات بالسنوات) -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <h3 class="chart-title">تقسيم المسارات</h3>
+          <p class="chart-subtitle">بناءً على السنة المختارة</p>
+        </div>
+        <select class="batch-select" [value]="selectedYear()" (change)="onYearChange($event)">
+          @for (year of availableYears(); track year) {
+            <option [value]="year">{{ year }}</option>
+          } @empty {
+            <option [value]="selectedYear()">{{ selectedYear() }}</option>
+          }
+        </select>
+      </div>
+      <div class="chart-body donut-body">
+        <canvas id="tracksDonutChart"></canvas>
+      </div>
+    </div>
 
   </div> 
 
   <!-- Recent Activity Section --> 
   <div class="activity-card"> 
-    <div class="activity-header"> 
+    <div class="activity-header" style="display: flex; justify-content: space-between; align-items: center;"> 
       <h3 class="chart-title">سجل الأنشطة الأخيرة</h3> 
+
+      @if (allActivity().length > 10) {
+        <button type="button" class="btn-link" (click)="toggleShowAllActivity()" style="background: none; border: none; color: #0A1172; cursor: pointer; font-weight: 600;">
+          {{ showAllActivity() ? 'عرض أقل' : 'عرض الكل (' + allActivity().length + ')' }}
+        </button>
+      }
     </div> 
 
     <div class="activity-list"> 
       @for (item of recentActivity(); track item.logId ?? item.id ?? $index) { 
         <div class="activity-item"> 
-          <!-- جهة اليمين: النقطة الملونة، العنوان والوصف -->
           <div class="activity-content"> 
             <div class="activity-action-title"> 
-              <!-- ربط كلاس النقطة الملونة ديناميكياً بناءً على نوع الحدث -->
               <span class="status-dot" [ngClass]="getActivityClass(item.action, item.entityName)"></span> 
               <span>{{ item.action }}</span> 
             </div> 
@@ -123,9 +129,8 @@
             </div> 
           </div> 
 
-          <!-- جهة اليسار: الوقت -->
           <div class="activity-time"> 
-            {{ (item.timestamp || item.createdAt) | date:'shortTime' }} 
+            {{ (item.timestamp || item.createdAt) | date:'medium' }} 
           </div> 
         </div> 
       } 
