@@ -84,6 +84,10 @@ namespace Nafadh_Backend.Controllers
                 ResumeUrl = t.ResumeUrl,
                 GitHubUrl = t.GitHubUrl,
                 LinkedInUrl = t.LinkedInUrl,
+
+                // Public URL of the trainee profile image.
+                ProfileImageUrl = t.ProfileImageUrl,
+
                 Status = t.Status,
                 VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
@@ -400,6 +404,10 @@ namespace Nafadh_Backend.Controllers
                 ResumeUrl = t.ResumeUrl,
                 GitHubUrl = t.GitHubUrl,
                 LinkedInUrl = t.LinkedInUrl,
+
+                // Public URL of the trainee profile image.
+                ProfileImageUrl = t.ProfileImageUrl,
+
                 Status = t.Status,
                 VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
@@ -510,6 +518,10 @@ namespace Nafadh_Backend.Controllers
                     ResumeUrl = trainee.ResumeUrl,
                     GitHubUrl = trainee.GitHubUrl,
                     LinkedInUrl = trainee.LinkedInUrl,
+
+                    // Public URL of the trainee profile image.
+                    ProfileImageUrl = trainee.ProfileImageUrl,
+
                     Status = trainee.Status,
                     VerificationStatus = trainee.VerificationStatus,
                     CompanyId = trainee.CompanyId,

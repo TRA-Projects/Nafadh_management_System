@@ -35,6 +35,16 @@ namespace Nafadh_Backend.DTOs
         public string? GitHubUrl { get; set; }
         public string? LinkedInUrl { get; set; }
 
+
+        // =====================================================
+        // TRAINEE PROFILE IMAGE
+        // =====================================================
+
+        // Public URL of the trainee profile image.
+        // The physical image file is stored in external storage.
+        public string? ProfileImageUrl { get; set; }
+
+
         // Current trainee status
         public NFD_TraineeStatus Status { get; set; }
 
