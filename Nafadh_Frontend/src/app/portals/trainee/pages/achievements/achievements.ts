@@ -917,8 +917,10 @@ export class TraineeAchievements implements OnInit {
 
   progressPercentage = computed(() => this.stats().overallProgress || 0);
 
+  // ✅ التعديل: زر التحميل يعتمد فقط على نسبة الإنجاز (50%)
+  // ✅ بغض النظر عن وجود شهادة في قاعدة البيانات
   canDownloadCertificate = computed(() => {
-    return this.progressPercentage() >= 85 && this.certificates().length > 0;
+    return this.progressPercentage() >= 50;
   });
 
   traineeName = computed(() => {
@@ -1438,8 +1440,18 @@ export class TraineeAchievements implements OnInit {
 
   downloadCertificate() {
     if (!this.canDownloadCertificate()) return;
+    
+    // ✅ البحث عن شهادة، وإذا لم توجد ننشئها أو نعطي رسالة
     const cert = this.certificates()[0];
-    if (!cert) return;
+    if (!cert) {
+      // يمكن إظهار رسالة للمستخدم أو إنشاء شهادة مؤقتة
+      this.showSuccessToast.set(true);
+      this.successMessage.set('⚠️ لم يتم العثور على شهادة، يرجى التواصل مع الدعم');
+      setTimeout(() => {
+        this.showSuccessToast.set(false);
+      }, 3000);
+      return;
+    }
 
     this.api.downloadCertificate(cert.certificateId).subscribe({
       next: (blob: Blob) => {
@@ -1452,6 +1464,11 @@ export class TraineeAchievements implements OnInit {
       },
       error: (err: any) => {
         console.error('❌ فشل تحميل الشهادة:', err);
+        this.showSuccessToast.set(true);
+        this.successMessage.set('❌ فشل تحميل الشهادة، يرجى المحاولة مرة أخرى');
+        setTimeout(() => {
+          this.showSuccessToast.set(false);
+        }, 3000);
       },
     });
   }

@@ -42,14 +42,7 @@
         </div>
       </div>
 
-      <!-- الشهادات -->
-      <div class="summary-item">
-        <div class="summary-icon certificate-icon"><i class="fas fa-scroll"></i></div>
-        <div>
-          <span>الشهادات</span>
-          <strong>{{ certificates().length }}</strong>
-        </div>
-      </div>
+
 
     </div>
 
@@ -277,17 +270,17 @@
           <h3>شهادة إتمام التدريب</h3>
 
           <p>
-            @if (progressPercentage() >= 85 && certificates().length > 0) {
+            @if (progressPercentage() >= 50 && certificates().length > 0) {
 
               <i class="fas fa-graduation-cap"></i> 🎉 أصبحت الشهادة متاحة للتحميل
 
-            } @else if (progressPercentage() >= 85 && certificates().length === 0) {
+            } @else if (progressPercentage() >= 50 && certificates().length === 0) {
 
               <i class="fas fa-spinner fa-pulse"></i> ⏳ جاري تجهيز الشهادة...
 
             } @else {
 
-              <i class="fas fa-hourglass-half"></i> أكمل 85% من البرنامج للحصول على الشهادة
+              <i class="fas fa-hourglass-half"></i> أكمل 50% من البرنامج للحصول على الشهادة
 
             }
           </p>
@@ -298,7 +291,7 @@
 
       <div class="certificate-status">
 
-        @if (progressPercentage() >= 85 && certificates().length > 0) {
+        @if (progressPercentage() >= 50 && certificates().length > 0) {
 
           <span class="available">
             <i class="fas fa-check-circle"></i> متاحة للتحميل
