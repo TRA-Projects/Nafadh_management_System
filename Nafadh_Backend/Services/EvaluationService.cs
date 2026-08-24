@@ -55,41 +55,6 @@ namespace Nafadh_Backend.Services
             if (template == null)
                 throw new Exception("Evaluation Template not found.");
 
-            // Make sure all template criteria are submitted
-            var templateCriteriaIds = template.EvaluationCriteria
-                .Select(c => c.CriteriaId)
-                .OrderBy(id => id)
-                .ToList();
-
-            var submittedCriteriaIds = createDto.CriteriaScores
-                .Select(c => c.CriteriaId)
-                .Distinct()
-                .OrderBy(id => id)
-                .ToList();
-
-            if (!templateCriteriaIds.SequenceEqual(submittedCriteriaIds))
-            {
-                throw new Exception(
-                    "All evaluation criteria must be submitted before creating the evaluation."
-                );
-            }
-
-                    var existingEvaluation =
-            await _repository.GetEvaluationByEnrollmentAndTemplateAsync(
-                createDto.EnrollmentId,
-                createDto.TemplateId);
-
-                    if (existingEvaluation != null)
-                    {
-                        throw new Exception(
-                            "An evaluation already exists for this trainee and template."
-                        );
-                    }
-
-
-
-
-
             var computedScore = ComputeWeightedScore(template.EvaluationCriteria, createDto.CriteriaScores);
 
             var evaluation = new NFD_Evaluation
@@ -202,7 +167,14 @@ namespace Nafadh_Backend.Services
 
             return Math.Round(total, 2);
         }
+        public async Task DeleteEvaluationAsync(int evaluationId)
+        {
+            var existing = await _repository.GetEvaluationByIdAsync(evaluationId);
+            if (existing == null)
+                throw new InvalidOperationException("The specified evaluation does not exist.");
 
+            await _repository.DeleteEvaluationAsync(evaluationId);
+        }
         // Convert Entity to DTO, including the per-criterion breakdown.
         private EvaluationDTO MapToDTO(NFD_Evaluation e)
         {
@@ -211,9 +183,17 @@ namespace Nafadh_Backend.Services
                 EvaluationId = e.EvaluationId,
                 EnrollmentId = e.EnrollmentId ?? 0,
                 TrainerId = e.TrainerId,
+                TrainerName = e.Trainer?.User?.FullName,
                 TemplateId = e.TemplateId,
+                Stage = e.EvaluationTemplate?.Stage,
+                ModuleId = e.EvaluationTemplate?.ModuleId,
+                ModuleTitle = e.EvaluationTemplate?.Module?.Title,
+                TemplateType = e.EvaluationTemplate?.Type.ToString(),
                 Score = e.Score,
                 Notes = e.Notes,
+                EvaluationDate = e.EvaluationDate,
+                EvaluatorUserId = e.EvaluatorUserId,
+                EvaluatorName = e.User?.FullName,
                 CriteriaBreakdown = e.CriterionScores?.Select(cs => new EvaluationCriterionScoreDTO
                 {
                     CriteriaId = cs.CriteriaId,
@@ -223,18 +203,6 @@ namespace Nafadh_Backend.Services
                     Weight = cs.Criterion?.Weight ?? 0
                 }).ToList() ?? new List<EvaluationCriterionScoreDTO>()
             };
-        }
-
-
-        public async Task DeleteEvaluationAsync(int evaluationId)
-        {
-            var evaluation = await _repository.GetEvaluationByIdAsync(evaluationId);
-
-            if (evaluation == null)
-                throw new InvalidOperationException(
-                    "The specified evaluation does not exist.");
-
-            await _repository.DeleteEvaluationAsync(evaluationId);
         }
     }
 }

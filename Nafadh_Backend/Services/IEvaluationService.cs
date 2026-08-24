@@ -20,5 +20,6 @@ namespace Nafadh_Backend.Services
         // evaluations by their template's Type and averages each bucket.
         Task<EvaluationBucketRollupDTO> GetBucketRollupByEnrollmentIdAsync(int enrollmentId);
         Task DeleteEvaluationAsync(int evaluationId);
+
     }
 }
