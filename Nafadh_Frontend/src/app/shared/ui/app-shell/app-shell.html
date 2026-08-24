@@ -1,6 +1,16 @@
 <div
   class="shell"
   [class.dark]="dark()"
+  [class.access-links]="accessibilityOptionActive('links')"
+  [class.access-simple-font]="accessibilityOptionActive('simpleFont')"
+  [class.access-large-text]="accessibilityOptionActive('largeText')"
+  [class.access-letter-spacing]="accessibilityOptionActive('letterSpacing')"
+  [class.access-line-spacing]="accessibilityOptionActive('lineSpacing')"
+  [class.access-word-spacing]="accessibilityOptionActive('wordSpacing')"
+  [class.access-low-saturation]="accessibilityOptionActive('saturation')"
+  [class.access-high-contrast]="accessibilityOptionActive('contrast')"
+  [class.access-align-center]="accessibility().textAlign === 'center'"
+  [class.access-align-left]="accessibility().textAlign === 'left'"
   [style.fontSize.px]="fontSize()"
   [style.--font-scale]="fontScale()"
 >
@@ -36,13 +46,20 @@
 
     <!-- Shared actions -->
     <div class="actions">
+      <!-- Accessibility -->
       <button
-        class="icon-btn"
-        (click)="accessOpen.set(!accessOpen())"
-        title="أدوات التسهيل"
-        aria-label="أدوات التسهيل"
+        class="icon-btn accessibility-trigger"
+        [class.is-active]="accessOpen()"
+        (click)="toggleAccessibility()"
+        title="إعدادات إمكانية الوصول"
+        aria-label="إعدادات إمكانية الوصول"
+        [attr.aria-expanded]="accessOpen()"
       >
-        <nfd-icon name="access" />
+        <img
+          src="assets/accessibility-icon.png"
+          alt=""
+          aria-hidden="true"
+        />
       </button>
 
       <!-- Shared notification bell -->
@@ -231,32 +248,151 @@
 
   <!-- Accessibility panel -->
   @if (accessOpen()) {
-    <div class="access-panel">
-      <div class="access-head">
-        <strong>أدوات التسهيل</strong>
+    <section
+      class="access-panel"
+      role="dialog"
+      aria-label="إعدادات إمكانية الوصول"
+      dir="rtl"
+    >
+      <div class="access-panel-scroll">
+        <div class="access-section">
+          <button
+            type="button"
+            class="access-section-head"
+            (click)="toggleContentSettings()"
+            [attr.aria-expanded]="contentSettingsOpen()"
+          >
+            <span class="access-section-title">
+              <span class="access-section-icon">☷</span>
+              <strong>ضبط المحتوى</strong>
+            </span>
+            <span class="access-chevron">⌃</span>
+          </button>
+
+          @if (contentSettingsOpen()) {
+            <div class="access-grid">
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibilityOptionActive('links')"
+                (click)="toggleAccessibilityOption('links')"
+              >
+                <span class="option-icon">↗</span>
+                <span>تمييز الروابط</span>
+              </button>
+
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibilityOptionActive('simpleFont')"
+                (click)="toggleAccessibilityOption('simpleFont')"
+              >
+                <span class="option-icon text-icon">Aa</span>
+                <span>خط بسيط</span>
+              </button>
+
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibility().textAlign !== 'right'"
+                (click)="cycleTextAlignment()"
+              >
+                <span class="option-icon">≡</span>
+                <span>محاذاة النص</span>
+                <small>{{ textAlignLabel() }}</small>
+              </button>
+
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibilityOptionActive('largeText')"
+                (click)="toggleAccessibilityOption('largeText')"
+              >
+                <span class="option-icon large-text-icon">Tᵀ</span>
+                <span>نص أكبر</span>
+              </button>
+
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibilityOptionActive('letterSpacing')"
+                (click)="toggleAccessibilityOption('letterSpacing')"
+              >
+                <span class="option-icon">T↔</span>
+                <span>تباعد الأحرف</span>
+              </button>
+
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibilityOptionActive('lineSpacing')"
+                (click)="toggleAccessibilityOption('lineSpacing')"
+              >
+                <span class="option-icon">↕</span>
+                <span>تباعد الأسطر</span>
+              </button>
+
+              <button
+                type="button"
+                class="access-option access-option-wide"
+                [class.active]="accessibilityOptionActive('wordSpacing')"
+                (click)="toggleAccessibilityOption('wordSpacing')"
+              >
+                <span class="option-icon">↔</span>
+                <span>تباعد الكلمات</span>
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="access-section">
+          <button
+            type="button"
+            class="access-section-head"
+            (click)="toggleColorSettings()"
+            [attr.aria-expanded]="colorSettingsOpen()"
+          >
+            <span class="access-section-title">
+              <span class="access-section-icon">▦</span>
+              <strong>ضبط الألوان</strong>
+            </span>
+            <span class="access-chevron">⌃</span>
+          </button>
+
+          @if (colorSettingsOpen()) {
+            <div class="access-grid access-grid-colors">
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibilityOptionActive('saturation')"
+                (click)="toggleAccessibilityOption('saturation')"
+              >
+                <span class="option-icon">◐</span>
+                <span>التحكم بالتشبع</span>
+              </button>
+
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibilityOptionActive('contrast')"
+                (click)="toggleAccessibilityOption('contrast')"
+              >
+                <span class="option-icon">◒</span>
+                <span>تباين الصفحة</span>
+              </button>
+            </div>
+          }
+        </div>
 
         <button
-          (click)="accessOpen.set(false)"
-          aria-label="إغلاق أدوات التسهيل"
+          type="button"
+          class="access-reset"
+          (click)="resetAccessibility()"
         >
-          ✕
+          <span>إعادة ضبط الإعدادات</span>
+          <span class="reset-icon">↻</span>
         </button>
       </div>
-
-      <p class="access-label">
-        حجم الخط
-      </p>
-
-      <div class="access-row">
-        @for (s of [14, 16, 18]; track s) {
-          <button
-            [class.active]="fontSize() === s"
-            (click)="fontSize.set(s)"
-          >
-            {{ s === 14 ? 'A-' : s === 16 ? 'A' : 'A+' }}
-          </button>
-        }
-      </div>
-    </div>
+    </section>
   }
 </div>

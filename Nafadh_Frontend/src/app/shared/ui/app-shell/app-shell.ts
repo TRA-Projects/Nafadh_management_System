@@ -26,6 +26,31 @@ export interface ShellNavItem {
 }
 
 type BellSource = 'notifications' | 'communication' | 'messages';
+type TextAlign = 'right' | 'center' | 'left';
+
+interface AccessibilityPreferences {
+  links: boolean;
+  simpleFont: boolean;
+  largeText: boolean;
+  letterSpacing: boolean;
+  lineSpacing: boolean;
+  wordSpacing: boolean;
+  saturation: boolean;
+  contrast: boolean;
+  textAlign: TextAlign;
+}
+
+const DEFAULT_ACCESSIBILITY: AccessibilityPreferences = {
+  links: false,
+  simpleFont: false,
+  largeText: false,
+  letterSpacing: false,
+  lineSpacing: false,
+  wordSpacing: false,
+  saturation: false,
+  contrast: false,
+  textAlign: 'right',
+};
 
 @Component({
   selector: 'app-shell',
@@ -51,6 +76,10 @@ export class AppShell {
   fontSize = signal(16);
   fontScale = computed(() => this.fontSize() / 16);
   showBackToTop = signal(false);
+
+  readonly accessibility = signal<AccessibilityPreferences>(this.loadAccessibilityPreferences());
+  readonly contentSettingsOpen = signal(true);
+  readonly colorSettingsOpen = signal(true);
 
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -168,6 +197,59 @@ export class AppShell {
     });
   }
 
+  toggleAccessibility(): void {
+    this.accessOpen.update((value) => !value);
+  }
+
+  toggleContentSettings(): void {
+    this.contentSettingsOpen.update((value) => !value);
+  }
+
+  toggleColorSettings(): void {
+    this.colorSettingsOpen.update((value) => !value);
+  }
+
+  toggleAccessibilityOption(option: Exclude<keyof AccessibilityPreferences, 'textAlign'>): void {
+    this.accessibility.update((preferences) => ({
+      ...preferences,
+      [option]: !preferences[option],
+    }));
+    this.persistAccessibilityPreferences();
+  }
+
+  cycleTextAlignment(): void {
+    const next: Record<TextAlign, TextAlign> = {
+      right: 'center',
+      center: 'left',
+      left: 'right',
+    };
+
+    this.accessibility.update((preferences) => ({
+      ...preferences,
+      textAlign: next[preferences.textAlign],
+    }));
+    this.persistAccessibilityPreferences();
+  }
+
+  resetAccessibility(): void {
+    this.accessibility.set({ ...DEFAULT_ACCESSIBILITY });
+    this.fontSize.set(16);
+    this.persistAccessibilityPreferences();
+  }
+
+  accessibilityOptionActive(option: Exclude<keyof AccessibilityPreferences, 'textAlign'>): boolean {
+    return this.accessibility()[option];
+  }
+
+  textAlignLabel(): string {
+    const labels: Record<TextAlign, string> = {
+      right: 'يمين',
+      center: 'وسط',
+      left: 'يسار',
+    };
+    return labels[this.accessibility().textAlign];
+  }
+
   @HostListener('window:scroll')
   onWindowScroll(): void {
     this.showBackToTop.set(
@@ -180,5 +262,41 @@ export class AppShell {
       top: 0,
       behavior: 'smooth',
     });
+  }
+
+  private loadAccessibilityPreferences(): AccessibilityPreferences {
+    if (typeof localStorage === 'undefined') {
+      return { ...DEFAULT_ACCESSIBILITY };
+    }
+
+    try {
+      const stored = localStorage.getItem('nafadh-accessibility-preferences');
+      if (!stored) {
+        return { ...DEFAULT_ACCESSIBILITY };
+      }
+
+      const parsed = JSON.parse(stored) as Partial<AccessibilityPreferences>;
+      return {
+        ...DEFAULT_ACCESSIBILITY,
+        ...parsed,
+        textAlign:
+          parsed.textAlign === 'left' || parsed.textAlign === 'center' || parsed.textAlign === 'right'
+            ? parsed.textAlign
+            : DEFAULT_ACCESSIBILITY.textAlign,
+      };
+    } catch {
+      return { ...DEFAULT_ACCESSIBILITY };
+    }
+  }
+
+  private persistAccessibilityPreferences(): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
+    localStorage.setItem(
+      'nafadh-accessibility-preferences',
+      JSON.stringify(this.accessibility())
+    );
   }
 }
