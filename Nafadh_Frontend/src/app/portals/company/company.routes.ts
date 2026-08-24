@@ -18,6 +18,7 @@ export const COMPANY_ROUTES: Routes = [
       { path: 'my-account', loadComponent: () => import('./pages/my-account/my-account').then((m) => m.CompanyMyAccount) },
       { path: 'reports', loadComponent: () => import('./pages/reports/reports').then((m) => m.ReportsComponent) },
       { path: 'contact', loadComponent: () => import('./pages/contact/contact').then((m) => m.CompanyContact) },
+      { path: 'notifications', loadComponent: () => import('./pages/notifications/notifications').then((m) => m.CompanyNotifications) },
     ],
   },
 ];

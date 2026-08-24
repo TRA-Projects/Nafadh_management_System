@@ -16,6 +16,7 @@ export const TRAINER_ROUTES: Routes = [
       { path: 'trainees', loadComponent: () => import('./pages/trainees/trainees').then((m) => m.TrainerTrainees) },
       { path: 'reports', loadComponent: () => import('./pages/reports/reports').then((m) => m.TrainerReports) },
       { path: 'profile', loadComponent: () => import('./pages/profile/profile').then((m) => m.TrainerProfile) },
+      { path: 'notifications', loadComponent: () => import('./pages/notifications/notifications').then((m) => m.TrainerNotifications) },
     ],
   },
 ];
