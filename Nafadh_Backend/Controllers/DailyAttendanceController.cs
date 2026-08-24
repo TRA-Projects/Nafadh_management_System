@@ -42,7 +42,7 @@ namespace Nafadh_Backend.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
+        //***
         // POST /api/DailyAttendance/{id}/confirm-absence
         [HttpPost("{id}/confirm-absence")]
         public async Task<IActionResult> ConfirmAbsence(int id)
@@ -65,6 +65,7 @@ namespace Nafadh_Backend.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        //***
 
         // PUT /api/DailyAttendance/{id}/check-out
         [HttpPut("{id}/check-out")]

@@ -18,7 +18,7 @@ namespace Nafadh_Backend.Services
         Task<bool> UpdateAsync(int id, UpdateDailyAttendanceDto dto);
         Task<List<DailyAttendanceReadDto>> GetTodayByCompanyIdAsync(int companyId);
         Task<ComplianceRateDto> GetComplianceRateAsync(int enrollmentId);
-        Task<bool> ConfirmAbsenceAsync(int id);
+        Task<bool> ConfirmAbsenceAsync(int id); //*** 
 
     }
 }

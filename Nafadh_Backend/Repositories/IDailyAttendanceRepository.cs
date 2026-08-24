@@ -40,8 +40,8 @@ namespace Nafadh_Backend.Repositories
         /// </summary>
         Task<List<NFD_DailyAttendance>> GetTodayByCompanyIdAsync(int companyId, DateTime today);
 
-        Task<NFD_DailyAttendance?> GetByIdWithDetailsAsync(int id);
+        Task<NFD_DailyAttendance?> GetByIdWithDetailsAsync(int id); //***
 
-        Task<List<NFD_DailyAttendance>> GetByEnrollmentIdWithDetailsAsync(int enrollmentId);
+        Task<List<NFD_DailyAttendance>> GetByEnrollmentIdWithDetailsAsync(int enrollmentId); // ***
     }
 }
