@@ -84,6 +84,10 @@ namespace Nafadh_Backend.Controllers
                 ResumeUrl = t.ResumeUrl,
                 GitHubUrl = t.GitHubUrl,
                 LinkedInUrl = t.LinkedInUrl,
+
+                // Public URL of the trainee profile image.
+                ProfileImageUrl = t.ProfileImageUrl,
+
                 Status = t.Status,
                 VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
@@ -129,6 +133,63 @@ namespace Nafadh_Backend.Controllers
             return NoContent();
         }
 
+        // =====================================================
+        // UPLOAD TRAINEE PROFILE IMAGE
+        // =====================================================
+
+        [HttpPost("{id}/profile-image")]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(6 * 1024 * 1024)]
+        public async Task<IActionResult> UploadProfileImage(
+            int id,
+            [FromForm] ProfileImageUploadDto dto
+        )
+        {
+            try
+            {
+                var profileImageUrl =
+                    await _service.UploadProfileImageAsync(
+                        id,
+                        dto.File
+                    );
+
+                if (profileImageUrl == null)
+                {
+                    return NotFound(
+                        new
+                        {
+                            message = "Trainee not found."
+                        }
+                    );
+                }
+
+                return Ok(
+                    new
+                    {
+                        profileImageUrl
+                    }
+                );
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(
+                    new
+                    {
+                        message = ex.Message
+                    }
+                );
+            }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new
+                    {
+                        message = ex.Message
+                    }
+                );
+            }
+        }
         // POST: api/trainee
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] TraineeCreateDTO create)
@@ -400,6 +461,10 @@ namespace Nafadh_Backend.Controllers
                 ResumeUrl = t.ResumeUrl,
                 GitHubUrl = t.GitHubUrl,
                 LinkedInUrl = t.LinkedInUrl,
+
+                // Public URL of the trainee profile image.
+                ProfileImageUrl = t.ProfileImageUrl,
+
                 Status = t.Status,
                 VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
@@ -510,6 +575,10 @@ namespace Nafadh_Backend.Controllers
                     ResumeUrl = trainee.ResumeUrl,
                     GitHubUrl = trainee.GitHubUrl,
                     LinkedInUrl = trainee.LinkedInUrl,
+
+                    // Public URL of the trainee profile image.
+                    ProfileImageUrl = trainee.ProfileImageUrl,
+
                     Status = trainee.Status,
                     VerificationStatus = trainee.VerificationStatus,
                     CompanyId = trainee.CompanyId,
