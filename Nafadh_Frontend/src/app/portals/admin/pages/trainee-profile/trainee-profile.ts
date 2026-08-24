@@ -1,43 +1,131 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { AdminApi } from '../../services/admin-api';
+import {
+  TraineeProfileDto,
+  WarningDto,
+  EnrollmentDto,
+  ModuleDto,
+  EvaluationDto,
+} from '../../../../core/models/dtos';
+import {
+  TRAINEE_STATUS_LABELS,
+  WARNING_TYPE_LABELS,
+  WARNING_LEVEL_LABELS,
+  MODULE_PROGRESS_LABELS,
+  EVALUATION_TYPE_LABELS,
+  ENROLLMENT_STATUS_LABELS,
+  TraineeStatus,
+  AttendanceStatus,
+  ModuleProgressStatus,
+  EnrollmentCompletionStatus,
+} from '../../../../core/models/enums';
 
-export interface EvaluationRecord {
-  id: number;
-  period: number;
-  score: number;
-  date: string;
+/** سجل حضور خام كما يعود من DailyAttendance (بعد تطبيع الأسماء) */
+interface RawAttendanceRow {
+  status: AttendanceStatus | string;
+  isLate: boolean;
 }
 
-export interface AttendanceRecord {
-  date: string;
-  checkIn: string;
-  checkOut: string;
-  status: string;
-  isLate: number;
-  notes: string;
+interface RawModuleProgressRow {
+  moduleId: number;
+  status: ModuleProgressStatus | string;
+  completedAt?: string | null;
+}
+
+/** بطاقة "مرحلة" واحدة معروضة بالصفحة — وحدة حقيقية من البرنامج + تقييماتها */
+interface StageCard {
+  module: ModuleDto;
+  orderIndex: number;
+  statusRaw: string;
+  statusLabel: string;
+  progressPercent: number; // 0 / 50 / 100 لعرض شريط التقدم
+  evaluations: EvaluationDto[];
+  averageScore: number | null; // متوسط تقييمات هذي الوحدة (تقني + سلوكي)
 }
 
 @Component({
   selector: 'app-admin-trainee-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule],
   templateUrl: './trainee-profile.html',
-  styleUrls: ['./trainee-profile.css']
+  styleUrls: ['./trainee-profile.css'],
 })
 export class AdminTraineeProfile implements OnInit {
-  trainee = signal<any>(null);
+  // -------------------- الحالة العامة --------------------
+  isLoading = signal<boolean>(true);
+  loadError = signal<string | null>(null);
 
-  // إحصائيات تحسب تلقائياً
-  attendanceRate = signal<string>('0%');
-  totalAbsence = signal<number>(0);
-  totalPresent = signal<number>(0);
+  trainee = signal<TraineeProfileDto | null>(null);
+  enrollment = signal<EnrollmentDto | null>(null);
 
-  // مصفوفات البيانات
-  evaluations = signal<EvaluationRecord[]>([]);
-  attendanceLogs = signal<AttendanceRecord[]>([]);
+  // -------------------- إحصائيات الحضور --------------------
+  lateCount = signal<number>(0);
+  absentDays = signal<number>(0);
+  presentDays = signal<number>(0);
+  attendanceRate = signal<number>(0); // بنفس معادلة الـ Backend: حاضر / إجمالي
+
+  // -------------------- نسبة الإنجاز والتقييمات --------------------
+  completionPercentage = signal<number>(0);
+  stages = signal<StageCard[]>([]);
+  overallAverageScore = signal<number | null>(null);
+
+  // -------------------- سجل الإنذارات --------------------
+  warnings = signal<WarningDto[]>([]);
+
+  // -------------------- خرائط الترجمة --------------------
+  statusLabels = TRAINEE_STATUS_LABELS;
+  warningTypeLabels = WARNING_TYPE_LABELS;
+  warningLevelLabels = WARNING_LEVEL_LABELS;
+  evaluationTypeLabels = EVALUATION_TYPE_LABELS;
+  enrollmentStatusLabels = ENROLLMENT_STATUS_LABELS;
+
+  // -------------------- قيم محسوبة (computed) --------------------
+  fullName = computed(() => this.trainee()?.fullName || '—');
+
+  enrollmentCode = computed(() => {
+    const id = this.enrollment()?.enrollmentId;
+    return id ? `#${String(id).padStart(4, '0')}` : '';
+  });
+
+  enrollmentStatusLabel = computed(() => {
+    const s = this.enrollment()?.completionStatus as EnrollmentCompletionStatus | undefined;
+    return s ? (this.enrollmentStatusLabels[s] ?? s) : '—';
+  });
+
+  programLine = computed(() => {
+    const e = this.enrollment();
+    if (!e) return '';
+    const parts = [e.batchName, [e.programTitle, e.trackName].filter((p) => !!p).join('، ')]
+      .filter((p) => !!p);
+    return parts.join(' — ');
+  });
+
+  batchDatesLabel = computed(() => {
+    const e = this.enrollment();
+    if (!e?.batchStartDate || !e?.batchEndDate) return '';
+    const start = new Date(e.batchStartDate).toLocaleDateString('ar-OM');
+    const end = new Date(e.batchEndDate).toLocaleDateString('ar-OM');
+    return `${start} إلى ${end}`;
+  });
+
+  // "الفترة الحالية": أول وحدة لم تكتمل بعد، أو "مكتملة" إذا خلصت كل الوحدات
+  currentStageLabel = computed(() => {
+    const list = this.stages();
+    if (list.length === 0) return '—';
+    const current = list.find((s) => s.statusRaw !== 'Completed');
+    return current ? current.module.title : 'مكتملة';
+  });
+
+  // "تقييمات معلقة": عدد الوحدات اللي بدأ فيها المتدرب (أو خلصها) بدون أي تقييم مسجل
+  pendingEvaluationsCount = computed(() => {
+    return this.stages().filter(
+      (s) => s.statusRaw !== 'NotStarted' && s.evaluations.length === 0
+    ).length;
+  });
 
   constructor(
     private route: ActivatedRoute,
@@ -45,135 +133,191 @@ export class AdminTraineeProfile implements OnInit {
     private location: Location
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (id) {
       this.loadProfileData(id);
+    } else {
+      this.isLoading.set(false);
+      this.loadError.set('معرّف المتدرب غير صالح.');
     }
   }
 
-  goBack() {
+  goBack(): void {
     this.location.back();
   }
 
-  getInitials(name: string): string {
-    if (!name) return 'ح ج';
-    const parts = name.trim().split(' ');
+  getInitials(name: string | undefined | null): string {
+    if (!name) return '؟';
+    const parts = name.trim().split(/\s+/);
     if (parts.length >= 2) {
-      return `${parts[0][0]} ${parts[1][0]}`;
+      return `${parts[0][0]}${parts[1][0]}`;
     }
-    return parts[0][0] || 'ح';
+    return parts[0][0] || '؟';
   }
 
-  private loadProfileData(traineeId: number) {
+  /** يفتح رابط GitHub الخاص بالمتدرب (إن وُجد) بتبويب جديد */
+  openGitHub(): void {
+    const url = this.enrollment()?.traineeGitHubUrl || this.trainee()?.gitHubUrl;
+    if (url) window.open(url, '_blank', 'noopener');
+  }
+
+  evalTypeLabel(type: string | undefined | null): string {
+    if (!type) return 'تقييم';
+    return (this.evaluationTypeLabels as Record<string, string>)[type] ?? type;
+  }
+
+  // -------------------- تحميل البيانات --------------------
+  private loadProfileData(traineeId: number): void {
+    this.isLoading.set(true);
+    this.loadError.set(null);
+
     this.api.getTrainee(traineeId).subscribe({
-      next: (res: any) => {
-        this.trainee.set(res);
-        const enrollmentId = res?.enrollmentId || res?.EnrollmentId || res?.enrollment?.id;
+      next: (profile) => {
+        this.trainee.set(profile);
 
-        // جلب التقييمات عبر enrollmentId أو traineeId كخيار بديل
-        const evalIdTarget = (enrollmentId && enrollmentId > 0) ? enrollmentId : traineeId;
-        this.fetchEvaluations(evalIdTarget);
-
-        // جلب سجل الحضور
-        if (enrollmentId && enrollmentId > 0) {
-          this.fetchDailyAttendance(enrollmentId);
-        } else {
-          this.fetchSessionAttendance(traineeId);
-        }
-      },
-      error: (err) => console.error('Error fetching trainee profile:', err)
-    });
-  }
-
-  private fetchEvaluations(id: number) {
-    this.api.getEvaluationsByEnrollment(id).subscribe({
-      next: (res: any[]) => {
-        const mapped = (res || []).map((item, idx) => {
-          const rawDate = item.evaluationDate ?? item.EvaluationDate ?? item.createdOn ?? item.CreatedOn ?? item.date ?? item.Date;
-          return {
-            id: item.id ?? item.Id ?? item.evaluationId ?? item.EvaluationId ?? idx + 1,
-            period: item.period ?? item.Period ?? item.term ?? 1,
-            score: Number(item.score ?? item.Score ?? item.totalScore ?? 0),
-            date: rawDate ? String(rawDate).split('T')[0] : '-'
-          };
+        this.api.getEnrollmentsByTrainee(traineeId).subscribe({
+          next: (enrollments) => {
+            const active =
+              enrollments?.find((e) => e.completionStatus === 'InProgress') ??
+              enrollments?.[0] ??
+              null;
+            this.enrollment.set(active);
+            this.loadDependentData(traineeId, active);
+          },
+          error: (err) => {
+            console.error('Error fetching trainee enrollments:', err);
+            this.isLoading.set(false);
+            this.loadError.set('تعذّر تحميل بيانات التسجيل الخاصة بالمتدرب.');
+          },
         });
-        this.evaluations.set(mapped);
       },
-      error: (err) => console.error('Error fetching evaluations:', err)
+      error: (err) => {
+        console.error('Error fetching trainee profile:', err);
+        this.isLoading.set(false);
+        this.loadError.set('تعذّر تحميل بيانات المتدرب.');
+      },
     });
   }
 
-  private fetchDailyAttendance(enrollmentId: number) {
-    this.api.getAttendance(enrollmentId).subscribe({
-      next: (res: any[]) => {
-        this.processAttendanceData(res);
+  private loadDependentData(traineeId: number, enrollment: EnrollmentDto | null): void {
+    const enrollmentId = enrollment?.enrollmentId ?? null;
+    const programId = enrollment?.programId ?? null;
+
+    forkJoin({
+      attendance: enrollmentId
+        ? this.api.getDailyAttendanceByEnrollment(enrollmentId).pipe(catchError(() => of([])))
+        : of([]),
+      progress: this.api.getTraineeProgressPercentage(traineeId).pipe(
+        catchError(() => of({ traineeId, percentage: 0 }))
+      ),
+      warnings: enrollmentId
+        ? this.api.getWarnings({ scope: 'Trainee', enrollmentId }).pipe(catchError(() => of([])))
+        : of([]),
+      modules: programId
+        ? this.api.getModulesByProgram(programId).pipe(catchError(() => of([])))
+        : of([]),
+      moduleProgress: this.api.getTraineeModuleProgress(traineeId).pipe(catchError(() => of([]))),
+      evaluations: enrollmentId
+        ? this.api.getEvaluationsForEnrollment(enrollmentId).pipe(catchError(() => of([])))
+        : of([]),
+    }).subscribe({
+      next: ({ attendance, progress, warnings, modules, moduleProgress, evaluations }) => {
+        this.processAttendance(attendance as RawAttendanceRow[]);
+        this.completionPercentage.set(Math.round(progress?.percentage ?? 0));
+        this.warnings.set(warnings ?? []);
+        this.buildStages(
+          modules as ModuleDto[],
+          moduleProgress as RawModuleProgressRow[],
+          evaluations as EvaluationDto[]
+        );
+        this.isLoading.set(false);
       },
-      error: (err) => console.error('Error fetching daily attendance:', err)
+      error: (err) => {
+        console.error('Error fetching trainee dependent data:', err);
+        this.isLoading.set(false);
+      },
     });
   }
 
-  private fetchSessionAttendance(traineeId: number) {
-    this.api.getSessionAttendanceByTrainee(traineeId).subscribe({
-      next: (res: any[]) => {
-        this.processAttendanceData(res);
-      },
-      error: (err) => console.error('Error fetching session attendance:', err)
-    });
+  /**
+   * يحسب مرات التأخير / أيام الغياب / أيام الحضور / نسبة الحضور
+   * بنفس منطق الـ Backend تماماً (DailyAttendanceService.GetComplianceRateAsync):
+   * نسبة الحضور = (عدد سجلات "حاضر" / إجمالي السجلات) × 100
+   */
+  private processAttendance(rows: RawAttendanceRow[]): void {
+    const list = rows || [];
+
+    const present = list.filter((r) => String(r.status) === 'Present').length;
+    const absent = list.filter((r) => String(r.status) === 'Absent').length;
+    const late = list.filter((r) => !!r.isLate).length;
+    const total = list.length;
+
+    this.presentDays.set(present);
+    this.absentDays.set(absent);
+    this.lateCount.set(late);
+    this.attendanceRate.set(total > 0 ? Math.round((present / total) * 1000) / 10 : 0);
   }
 
-  private processAttendanceData(res: any[]) {
-    let presentCount = 0;
-    let absentCount = 0;
+  /**
+   * يبني بطاقات "مراحل التدريب" من الوحدات الحقيقية للبرنامج (Module) +
+   * حالة تقدّم المتدرب بكل وحدة + التقييمات المرتبطة بها (تقني/سلوكي).
+   */
+  private buildStages(
+    modules: ModuleDto[],
+    progressRows: RawModuleProgressRow[],
+    evaluations: EvaluationDto[]
+  ): void {
+    const sortedModules = [...(modules || [])].sort((a, b) => a.orderIndex - b.orderIndex);
 
-    const mapped: AttendanceRecord[] = (res || []).map((item) => {
-      // 1. معالجة حالة الحضور والغياب (Enum/String/Number)
-      const rawStatus = item.status ?? item.Status ?? item.attendanceStatus;
-      const statusStr = String(rawStatus ?? '').toLowerCase();
+    const progressByModule = new Map<number, RawModuleProgressRow>();
+    for (const p of progressRows || []) {
+      progressByModule.set(p.moduleId, p);
+    }
 
-      const isPresent = statusStr.includes('present') || statusStr.includes('حاضر') || rawStatus === 0;
-      const isAbsent = statusStr.includes('absent') || statusStr.includes('غائب') || rawStatus === 2;
+    const evalsByModule = new Map<number, EvaluationDto[]>();
+    for (const ev of evaluations || []) {
+      if (ev.moduleId == null) continue;
+      const arr = evalsByModule.get(ev.moduleId) ?? [];
+      arr.push(ev);
+      evalsByModule.set(ev.moduleId, arr);
+    }
 
-      if (isPresent) presentCount++;
-      if (isAbsent) absentCount++;
+    const cards: StageCard[] = sortedModules.map((m) => {
+      const progress = progressByModule.get(m.moduleId);
+      const statusRaw = String(progress?.status ?? 'NotStarted');
+      const moduleEvals = (evalsByModule.get(m.moduleId) ?? []).sort(
+        (a, b) => new Date(b.evaluationDate).getTime() - new Date(a.evaluationDate).getTime()
+      );
 
-      // 2. قراءة الحقول بحسب DTO الـ Backend
-      const rawDate = item.date ?? item.Date ?? item.attendanceDate ?? item.AttendanceDate;
-      const rawCheckIn = item.checkInTime ?? item.CheckInTime ?? item.checkIn ?? item.CheckIn;
-      const rawCheckOut = item.checkOutTime ?? item.CheckOutTime ?? item.checkOut ?? item.CheckOut;
-      const rawNotes = item.note ?? item.Note ?? item.notes ?? item.Notes;
+      const avg =
+        moduleEvals.length > 0
+          ? Math.round(
+              (moduleEvals.reduce((sum, e) => sum + Number(e.score), 0) / moduleEvals.length) * 10
+            ) / 10
+          : null;
 
-      // 3. تنسيق استخراج الوقت HH:mm
-      const extractTime = (val: any) => {
-        if (!val || val === 'NULL' || val === 'null') return '-';
-        const str = String(val).trim();
-        if (str.includes('T')) {
-          const timePart = str.split('T')[1];
-          return timePart ? timePart.substring(0, 5) : '-';
-        }
-        return str.length >= 5 ? str.substring(0, 5) : str;
-      };
+      const progressPercent =
+        statusRaw === 'Completed' ? 100 : statusRaw === 'InProgress' ? 50 : 0;
 
       return {
-        date: rawDate ? String(rawDate).split('T')[0] : '-',
-        checkIn: extractTime(rawCheckIn),
-        checkOut: extractTime(rawCheckOut),
-        status: isPresent ? 'حاضر' : isAbsent ? 'غائب' : 'متأخر',
-        isLate: (item.isLate || item.IsLate) ? 1 : 0,
-        notes: (rawNotes && String(rawNotes) !== 'NULL') ? String(rawNotes) : '-'
+        module: m,
+        orderIndex: m.orderIndex,
+        statusRaw,
+        statusLabel: MODULE_PROGRESS_LABELS[statusRaw as ModuleProgressStatus] ?? statusRaw,
+        progressPercent,
+        evaluations: moduleEvals,
+        averageScore: avg,
       };
     });
 
-    this.attendanceLogs.set(mapped);
-    this.totalPresent.set(presentCount);
-    this.totalAbsence.set(absentCount);
+    this.stages.set(cards);
 
-    const totalDays = presentCount + absentCount;
-    if (totalDays > 0) {
-      const rate = ((presentCount / totalDays) * 100).toFixed(1);
-      this.attendanceRate.set(`${rate}%`);
-    } else {
-      this.attendanceRate.set('0%');
-    }
+    const allScores = (evaluations || []).map((e) => Number(e.score));
+    this.overallAverageScore.set(
+      allScores.length > 0
+        ? Math.round((allScores.reduce((a, b) => a + b, 0) / allScores.length) * 10) / 10
+        : null
+    );
   }
 }

@@ -216,6 +216,7 @@ export interface TrainerBatchDto {
   enrolledTraineesCount?: number;
   attendanceRate?: number;
   progressPercentage?: number;
+  
 }
 
 // ---- Academic structure ----
@@ -301,6 +302,7 @@ export interface BatchDto {
   batchId: number;
   programId: number;
   batchName: string;
+  programName?: string;
   companyName?: string;
   trackName?: string;
   InstructorName?: string; 
@@ -437,6 +439,8 @@ export interface EnrollmentDto {
   completionStatus: string;
   batchId: number;
   batchName: string;
+  batchStartDate?: string;
+  batchEndDate?: string;
   traineeId: number;
   traineeName: string;
   companyId: number;
@@ -446,6 +450,7 @@ export interface EnrollmentDto {
   supervisorId?: number;
   supervisorName?: string;
   traineeGitHubUrl?: string;
+  programId?: number;
   programTitle?: string;
   programDescription?: string;
   trackName?: string;
@@ -557,9 +562,17 @@ export interface EvaluationDto {
   evaluationId: number;
   enrollmentId: number;
   trainerId?: number;
+  trainerName?: string;
   templateId: number;
+  stage?: number;
+  moduleId?: number;
+  moduleTitle?: string;
+  templateType?: string;
   score: number;
   notes?: string;
+  evaluationDate: string;
+  evaluatorUserId: number;
+  evaluatorName?: string;
   criteriaBreakdown: EvaluationCriterionScoreDto[];
 }
 

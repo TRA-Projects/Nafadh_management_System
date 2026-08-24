@@ -1,40 +1,43 @@
-
 <div class="trainees-container">
-  <!-- 1. الهيدر وأزرار التحكم -->
+  <!-- Page Header -->
   <div class="page-header">
     <div>
       <h1 class="page-title">إدارة المتدربين</h1>
-      <p class="page-subtitle">إدارة وتتبع بيانات المتدربين وحالاتهم الأكاديمية</p>
+      <p class="page-subtitle">عرض، إضافة، واستيراد بيانات المتدربين في النظام</p>
     </div>
     <div class="header-actions">
       <button class="btn btn-secondary" (click)="showImportModal.set(true)">
-        <i class="fas fa-file-import"></i> استيراد من Excel
+        <i class="fas fa-file-import"></i> استيراد ملف Excel
       </button>
       <button class="btn btn-primary" (click)="showRegisterModal.set(true)">
-        <i class="fas fa-plus"></i> إضافة متدرب
+        <i class="fas fa-plus"></i> إضافة متدرب جديد
       </button>
     </div>
   </div>
 
-  <!-- 2. شريط الفلترة -->
+  <!-- Filter Card -->
   <div class="filter-card">
     <div class="filter-group">
-      <label for="statusFilter">تصفية حسب الحالة:</label>
-      <select id="statusFilter" [ngModel]="statusFilter()" (ngModelChange)="onStatusFilterChange($event)">
+      <label for="statusSelect">حالة التدريب:</label>
+      <select id="statusSelect" [ngModel]="statusFilter()" (ngModelChange)="onStatusFilterChange($event)">
         <option value="ALL">الكل</option>
         <option value="0">لم يوزّع بعد</option>
         <option value="1">قيد التدريب</option>
         <option value="2">مكتمل</option>
       </select>
     </div>
+    <div class="pagination-info">
+      إجمالي السجلات: <strong>{{ totalCount() }}</strong>
+    </div>
   </div>
 
-  <!-- 3. الجدول الرئيسي -->
+  <!-- Data Table -->
   <div class="table-card">
     <table class="data-table">
       <thead>
         <tr>
           <th>المتدرب</th>
+          <th>البريد الإلكتروني</th>
           <th>الجامعة والتخصص</th>
           <th>الحالة</th>
           <th>نسبة الإنجاز</th>
@@ -42,181 +45,256 @@
         </tr>
       </thead>
       <tbody>
-        @for (t of trainees(); track t.traineeId) {
-          <tr>
-            <td>
-
-              <div class="trainee-info">
-                <div class="avatar">{{ t.fullName ? t.fullName.charAt(0) : '?' }}</div>
-                <div>
-                  <div class="font-bold">{{ t.fullName || 'بدون اسم' }}</div>
-                  @if (t.email) {
-                    <div class="text-sm text-gray">{{ t.email }}</div>
-                  }
+        <tr *ngFor="let item of filtered()">
+          <td>
+            <div class="trainee-info">
+              <div class="avatar">{{ item.fullName.charAt(0) }}</div>
+              <div>
+                <div class="font-bold">{{ item.fullName }}</div>
+              </div>
+            </div>
+          </td>
+          <td>{{ item.email || '-' }}</td>
+          <td>
+            <div class="font-bold">{{ item.university || '-' }}</div>
+            <div class="text-sm text-gray">{{ item.major || '-' }}</div>
+          </td>
+          <td>
+            <span class="status-badge" [ngStyle]="getStatusStyle(item.status)">
+              {{ labelFor(item.status) }}
+            </span>
+          </td>
+          <td>
+            <div class="progress-bar-container">
+              <div class="progress-track">
+                <div 
+                  class="progress-fill" 
+                  [class.completed]="getProgressValue(item) === 100" 
+                  [style.width.%]="getProgressValue(item)">
                 </div>
               </div>
-            </td>
-            <td>
-              <div>{{ t.university || '-' }}</div>
-              <div class="text-sm text-gray">{{ t.major || '-' }}</div>
-            </td>
-            <td>
-              <span class="status-badge" [ngStyle]="getStatusStyle(t.status)">
-                {{ labelFor(t.status) }}
-              </span>
-            </td>
-            <td>
-              <div class="progress-bar-container">
-                <div class="progress-track">
-                  <div 
-                    class="progress-fill" 
-                    [class.completed]="getProgressValue(t) === 100"
-                    [style.width.%]="getProgressValue(t)">
-                  </div>
-                </div>
-                <span class="progress-text">{{ getProgressValue(t) }}%</span>
-              </div>
-            </td>
-            <td>
-              <div class="actions">
-                <a [routerLink]="['/admin/trainees', t.traineeId]" class="icon-view-btn" title="معاينة الملف">
-                  <i class="fas fa-eye"></i>
-                </a>
-              </div>
-            </td>
-          </tr>
-        } @empty {
-          @if (!isLoading()) {
-            <tr>
-              <td colspan="5" class="empty-state">لا يوجد متدربون متاحون حالياً.</td>
-            </tr>
-          }
-        }
+              <span class="progress-text">{{ getProgressValue(item) }}%</span>
+            </div>
+          </td>
+          <td>
+            <button class="action-btn" (click)="viewTraineeDetails(item.traineeId)" title="عرض التفاصيل">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </td>
+        </tr>
 
-        @if (isLoading()) {
-          <tr>
-            <td colspan="5" class="empty-state">جاري تحميل البيانات...</td>
-          </tr>
-        }
+        <tr *ngIf="filtered().length === 0 && !isLoading()">
+          <td colspan="6" class="empty-state">
+            لا توجد بيانات متدربين للعرض.
+          </td>
+        </tr>
+
+        <tr *ngIf="isLoading()">
+          <td colspan="6" class="empty-state">
+            جاري تحميل البيانات...
+          </td>
+        </tr>
       </tbody>
     </table>
 
-    <!-- 4. الترقيم والتنقل (Pagination) -->
-    <div class="pagination-container">
+    <!-- Pagination -->
+    <div class="pagination-container" *ngIf="totalCount() > 0">
       <div class="pagination-info">
-        عرض <b>{{ trainees().length }}</b> من إجمالي <b>{{ totalCount() }}</b> متدرب
+        الصفحة {{ currentPage() }} من {{ totalPages }}
       </div>
       <div class="pagination-controls">
         <button class="pagination-btn" [disabled]="currentPage() === 1" (click)="prevPage()">السابق</button>
-        <span class="page-number">صفحة {{ currentPage() }} من {{ totalPages }}</span>
+        <span class="page-number">{{ currentPage() }}</span>
         <button class="pagination-btn" [disabled]="currentPage() * pageSize() >= totalCount()" (click)="nextPage()">التالي</button>
       </div>
     </div>
   </div>
 
-  <!-- 5. Modal: استيراد Excel -->
-  @if (showImportModal()) {
-    <div class="modal-backdrop" (click)="closeImportModal()">
-      <div class="modal-card" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h3>استيراد ملف Excel</h3>
-          <button class="close-btn" (click)="closeImportModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-          @if (importStep() === 1) {
-            <div class="upload-zone">
-              <input type="file" id="excelFile" accept=".xlsx, .xls" (change)="onFileSelected($event)" hidden />
-              <label for="excelFile" class="upload-label">
-                <i class="fas fa-cloud-upload-alt fa-2x"></i>
-                <p>اضغط هنا لاختيار ملف Excel للرفع</p>
-              </label>
-            </div>
-          } @else if (importStep() === 2) {
-            <div class="preview-zone">
-              <p>تم تحميل الملف: <b>{{ selectedFileName() }}</b> (عدد السجلات: {{ importedRecords().length }})</p>
-              <div class="table-wrapper">
-                <table class="preview-table">
-                  <thead>
-                    <tr>
-                      <th>الاسم</th>
-                      <th>البريد</th>
-                      <th>الجامعة</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (rec of importedRecords().slice(0, 5); track $index) {
-                      <tr>
-                        <td>{{ rec.fullName }}</td>
-                        <td>{{ rec.email }}</td>
-                        <td>{{ rec.university }}</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          }
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeImportModal()">إلغاء</button>
-          @if (importStep() === 2) {
-            <button class="btn btn-primary" [disabled]="isSubmitting()" (click)="confirmImport()">
-              {{ isSubmitting() ? 'جاري الاستيراد...' : 'تأكيد الاستيراد' }}
-            </button>
-          }
-        </div>
+  <!-- 1. Modal: استيراد ملف Excel -->
+  <div class="modal-backdrop" *ngIf="showImportModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>استيراد ملف Excel</h3>
+        <button type="button" class="close-btn" (click)="closeImportModal()">×</button>
       </div>
-    </div>
-  }
 
-  <!-- 6. Modal: إضافة متدرب -->
-  @if (showRegisterModal()) {
-    <div class="modal-backdrop" (click)="showRegisterModal.set(false)">
-      <div class="modal-card" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h3>إضافة متدرب جديد</h3>
-          <button class="close-btn" (click)="showRegisterModal.set(false)">&times;</button>
+      <div class="modal-body">
+        <div class="alert-danger" *ngIf="importError()">
+          {{ importError() }}
         </div>
-        <form (ngSubmit)="submitNewTrainee()">
-          <div class="modal-body">
-            @if (errorMessage()) {
-              <div class="alert-danger">{{ errorMessage() }}</div>
-            }
-            <div class="form-grid">
-              <div class="form-group">
-                <label>الاسم الكامل *</label>
-                <input type="text" class="form-control" [ngModel]="newTrainee().fullName" (ngModelChange)="updateFormField('fullName', $event)" name="fullName" required />
-              </div>
-              <div class="form-group">
-                <label>البريد الإلكتروني *</label>
-                <input type="email" class="form-control" [ngModel]="newTrainee().email" (ngModelChange)="updateFormField('email', $event)" name="email" required />
-              </div>
-              <div class="form-group">
-                <label>رقم الهوية</label>
-                <input type="number" class="form-control" [ngModel]="newTrainee().nationalId" (ngModelChange)="updateFormField('nationalId', $event)" name="nationalId" />
-              </div>
-              <div class="form-group">
-                <label>الجامعة</label>
-                <input type="text" class="form-control" [ngModel]="newTrainee().university" (ngModelChange)="updateFormField('university', $event)" name="university" />
-              </div>
-              <div class="form-group">
-                <label>التخصص</label>
-                <input type="text" class="form-control" [ngModel]="newTrainee().major" (ngModelChange)="updateFormField('major', $event)" name="major" />
-              </div>
-              <div class="form-group">
-                <label>المستوى الأكاديمي</label>
-                <input type="text" class="form-control" [ngModel]="newTrainee().academicLevel" (ngModelChange)="updateFormField('academicLevel', $event)" name="academicLevel" />
-              </div>
+
+        <div *ngIf="importStep() === 1">
+          <div class="upload-zone" (click)="fileInput.click()">
+            <input #fileInput type="file" accept=".xlsx, .xls" hidden (change)="onFileSelected($event)">
+            <div class="upload-label">
+              <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              </svg>
+              <p>اضغط هنا لاختيار ملف Excel للرفع</p>
+              <span class="text-sm text-gray">الملفات المتاحة: .xlsx, .xls (الحد الأقصى 5MB)</span>
             </div>
           </div>
+        </div>
+
+        <div *ngIf="importStep() === 2" class="preview-zone">
+          <p class="font-bold">الملف المختار: {{ selectedFileName() }}</p>
+
+          <div class="alert-danger" *ngIf="invalidRows().length > 0">
+            <strong>تنبيه:</strong> تم تجاهل {{ invalidRows().length }} صفوف تحتوي على بيانات غير صالحة:
+            <ul style="margin: 6px 0 0 0; padding-right: 18px;">
+              <li *ngFor="let item of invalidRows()">
+                صف رقم {{ item.rowNumber }}: {{ item.errors.join('، ') }}
+              </li>
+            </ul>
+          </div>
+
+          <p class="text-sm">السجلات الصالحة للاستيراد ({{ importedRecords().length }}):</p>
+          <div class="table-wrapper">
+            <table class="preview-table">
+              <thead>
+                <tr>
+                  <th>الاسم</th>
+                  <th>البريد الإلكتروني</th>
+                  <th>رقم الهوية</th>
+                  <th>الجامعة</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let rec of importedRecords()">
+                  <td>{{ rec.fullName }}</td>
+                  <td>{{ rec.email }}</td>
+                  <td>{{ rec.nationalId || '-' }}</td>
+                  <td>{{ rec.university || '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeImportModal()">إلغاء</button>
+        <button *ngIf="importStep() === 2" type="button" class="btn btn-primary" [disabled]="isSubmitting()" (click)="confirmImport()">
+          {{ isSubmitting() ? 'جاري الاستيراد...' : 'تأكيد الاستيراد' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Modal: إضافة متدرب جديد -->
+  <div class="modal-backdrop" *ngIf="showRegisterModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>إضافة متدرب جديد</h3>
+        <button type="button" class="close-btn" (click)="showRegisterModal.set(false)">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="alert-danger" *ngIf="errorMessage()">
+          {{ errorMessage() }}
+        </div>
+
+        <form (ngSubmit)="submitNewTrainee()">
+          <div class="form-grid">
+            <!-- Full Name -->
+            <div class="form-group">
+              <label>الاسم الكامل *</label>
+              <input 
+                type="text" 
+                class="form-control"
+                [class.is-invalid]="touchedFields()['fullName'] && formErrors()['fullName']"
+                [ngModel]="newTrainee().fullName"
+                (ngModelChange)="updateFormField('fullName', $event)"
+                (blur)="markFieldTouched('fullName')"
+                name="fullName"
+              >
+              <span class="field-error" *ngIf="touchedFields()['fullName'] && formErrors()['fullName']">
+                {{ formErrors()['fullName'] }}
+              </span>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+              <label>البريد الإلكتروني *</label>
+              <input 
+                type="email" 
+                class="form-control"
+                [class.is-invalid]="touchedFields()['email'] && formErrors()['email']"
+                [ngModel]="newTrainee().email"
+                (ngModelChange)="updateFormField('email', $event)"
+                (blur)="markFieldTouched('email')"
+                name="email"
+              >
+              <span class="field-error" *ngIf="touchedFields()['email'] && formErrors()['email']">
+                {{ formErrors()['email'] }}
+              </span>
+            </div>
+
+            <!-- National ID -->
+            <div class="form-group">
+              <label>رقم الهوية</label>
+              <input 
+                type="number" 
+                class="form-control"
+                [class.is-invalid]="touchedFields()['nationalId'] && formErrors()['nationalId']"
+                [ngModel]="newTrainee().nationalId"
+                (ngModelChange)="updateFormField('nationalId', $event)"
+                (blur)="markFieldTouched('nationalId')"
+                name="nationalId"
+              >
+              <span class="field-error" *ngIf="touchedFields()['nationalId'] && formErrors()['nationalId']">
+                {{ formErrors()['nationalId'] }}
+              </span>
+            </div>
+
+            <!-- University -->
+            <div class="form-group">
+              <label>الجامعة</label>
+              <input 
+                type="text" 
+                class="form-control"
+                [ngModel]="newTrainee().university"
+                (ngModelChange)="updateFormField('university', $event)"
+                name="university"
+              >
+            </div>
+
+            <!-- Major -->
+            <div class="form-group">
+              <label>التخصص</label>
+              <input 
+                type="text" 
+                class="form-control"
+                [ngModel]="newTrainee().major"
+                (ngModelChange)="updateFormField('major', $event)"
+                name="major"
+              >
+            </div>
+
+            <!-- Academic Level -->
+            <div class="form-group">
+              <label>المستوى الأكاديمي</label>
+              <input 
+                type="text" 
+                class="form-control"
+                [ngModel]="newTrainee().academicLevel"
+                (ngModelChange)="updateFormField('academicLevel', $event)"
+                name="academicLevel"
+              >
+            </div>
+          </div>
+
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" (click)="showRegisterModal.set(false)">إلغاء</button>
             <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
-              {{ isSubmitting() ? 'جاري الحفظ...' : 'حفظ البيانات' }}
+              {{ isSubmitting() ? 'جاري الحفظ...' : 'حفظ المتدرب' }}
             </button>
           </div>
         </form>
       </div>
     </div>
-  }
+  </div>
 </div>

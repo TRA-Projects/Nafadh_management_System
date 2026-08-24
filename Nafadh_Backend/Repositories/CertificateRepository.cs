@@ -70,15 +70,13 @@ namespace Nafadh_Backend.Repositories
 
                     // Type = Final (بُعد "الدرجة الإجمالية النهائية")، مو Period = Final (توقيت زمني)
                     Grade = _context.NFD_Evaluations
-                        .Where(ev => ev.EnrollmentId == e.EnrollmentId
-                                  && ev.EvaluationTemplate.Type == NFD_EvaluationType.Final)
-                        .OrderByDescending(ev => ev.EvaluationDate)
+                        .Where(ev => ev.EnrollmentId == e.EnrollmentId)
                         .Select(ev => (decimal?)ev.Score)
-                        .FirstOrDefault()
+                        .Average()
                 })
-                .ToListAsync();
+                        .ToListAsync();
 
-            return result;
+                        return result;
         }
 
         public async Task<bool> DeleteCertificateByEnrollmentIdAsync(int enrollmentId)

@@ -141,6 +141,8 @@ namespace Nafadh_Backend.Services
                 CompletionStatus = e.CompletionStatus.ToString(),
                 BatchId = e.BatchId,
                 BatchName = e.Batch.BatchName,
+                BatchStartDate = e.Batch.StartDate,
+                BatchEndDate = e.Batch.EndDate,
                 TraineeId = e.TraineeId,
                 TraineeName = e.Trainee.User.FullName,
                 CompanyId = e.CompanyId,
@@ -151,6 +153,7 @@ namespace Nafadh_Backend.Services
                 SupervisorName = e.CompanySupervisor?.User.FullName,
                 TraineeGitHubUrl = e.Trainee.GitHubUrl,
                 TraineeLinkedInUrl = e.Trainee.LinkedInUrl, // ربط اللينكد إن هنا
+                ProgramId = e.Batch.ProgramId,
                 ProgramTitle = e.Batch.Program?.Title,
                 ProgramDescription = e.Batch.Program?.Description,
                 TrackName = e.Batch.Program?.Track?.Name

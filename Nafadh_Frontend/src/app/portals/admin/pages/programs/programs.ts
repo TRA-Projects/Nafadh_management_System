@@ -2,6 +2,7 @@ import { Component, OnInit, DestroyRef, inject, signal, computed } from '@angula
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs/operators';
 
 import { AdminApi } from '../../services/admin-api';
 import { BatchDto, ProgramDto, CompanyDto} from '../../../../core/models/dtos';
@@ -33,6 +34,7 @@ const STATUS_BADGE_CLASSES: Record<BatchStatusKey, string> = {
   styleUrls: ['./programs.css']
 })
 export class AdminPrograms implements OnInit {
+  [x: string]: any;
   private readonly api = inject(AdminApi);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
@@ -42,7 +44,7 @@ export class AdminPrograms implements OnInit {
   readonly programs = signal<ProgramDto[]>([]);
   readonly tracks = signal<any[]>([]);
   readonly companies = signal<CompanyDto[]>([]);
-  readonly trainers = signal<any[]>([]); // <--- Signal لجلب المدربين
+  readonly trainers = signal<any[]>([]);
   readonly statusFilter = signal<string>('الكل');
 
   // Pagination Signals & Constants
@@ -110,6 +112,13 @@ export class AdminPrograms implements OnInit {
     this.loadInitialData();
   }
 
+  // --- Validation Helper Methods ---
+  // تتحقق عما إذا كان الحقل في نموذج معين يحتوي على خطأ وتم لمسه لتطبيق كلاس الأخطاء (.input-error)
+  hasError(form: FormGroup, controlName: string): boolean {
+    const control = form.get(controlName);
+    return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
   // --- Status Filter Handler ---
   setStatusFilter(filter: string): void {
     this.statusFilter.set(filter);
@@ -130,6 +139,8 @@ export class AdminPrograms implements OnInit {
 
   selectCompany(company: any): void {
     this.editBatchForm.patchValue({ companyId: company.companyId });
+    this.editBatchForm.get('companyId')?.markAsDirty();
+    this.editBatchForm.get('companyId')?.markAsTouched();
     this.isCompanyDropdownOpen = false;
   }
 
@@ -146,6 +157,8 @@ export class AdminPrograms implements OnInit {
 
   selectProgram(program: ProgramDto): void {
     this.editBatchForm.patchValue({ programId: program.programId });
+    this.editBatchForm.get('programId')?.markAsDirty();
+    this.editBatchForm.get('programId')?.markAsTouched();
     this.isProgramDropdownOpen = false;
   }
 
@@ -161,7 +174,9 @@ export class AdminPrograms implements OnInit {
   }
 
   selectTrainer(trainer: any): void {
-    this.editBatchForm.patchValue({ instructorName: trainer.name }); // أو trainer.instructorId حسب تصميم الـ Backend
+    this.editBatchForm.patchValue({ instructorName: trainer.name }); 
+    this.editBatchForm.get('instructorName')?.markAsDirty();
+    this.editBatchForm.get('instructorName')?.markAsTouched();
     this.isTrainerDropdownOpen = false;
   }
 
@@ -170,7 +185,6 @@ export class AdminPrograms implements OnInit {
     return selectedName ? selectedName : 'اختر المدرب';
   }
 
-  // إغلاق كافة القوائم المنسدلة عند النقر في أي مكان
   closeAllDropdowns(): void {
     this.isCompanyDropdownOpen = false;
     this.isProgramDropdownOpen = false;
@@ -318,7 +332,7 @@ export class AdminPrograms implements OnInit {
     this.fetchPrograms();
     this.fetchTracks();
     this.fetchCompanies();
-    this.fetchTrainers(); // <--- جلب المدربين عند تحميل الصفحة
+    this.fetchTrainers();
   }
 
   private fetchBatches(): void {
@@ -400,9 +414,24 @@ export class AdminPrograms implements OnInit {
     });
   }
 
+  getProgramName(batch: BatchDto | null | undefined): string {
+    if (!batch) return '-';
+    if (batch.programName) {
+      return batch.programName;
+    }
+    const programsList = this.programs();
+    if (batch.programId && programsList?.length) {
+      const foundProgram = programsList.find(p => p.programId === batch.programId);
+      if (foundProgram) {
+        return foundProgram.title || foundProgram.name || '-';
+      }
+    }
+    return '-';
+  }
+
   private initProgramForm(): void {
     this.programForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(3)]],
+      name: ['', [Validators.required, Validators.minLength(2)]],
       trackId: [null, [Validators.required]],
       durationWeeks: [null, [Validators.required, Validators.min(1)]],
       description: ['']
@@ -415,19 +444,27 @@ export class AdminPrograms implements OnInit {
 
   // --- Actions: Program Modal ---
   onCreateProgram(): void {
-    this.programForm.reset();
+    this.programForm.reset({
+      name: '',
+      trackId: null,
+      durationWeeks: null,
+      description: ''
+    });
     this.programErrorMessage = null;
+    this.isSubmittingProgram = false;
     this.isProgramModalOpen = true;
   }
 
   onCloseProgramModal(): void {
     this.isProgramModalOpen = false;
     this.programErrorMessage = null;
+    this.isSubmittingProgram = false;
   }
 
   onSubmitProgram(): void {
+    this.programForm.markAllAsTouched();
     if (this.programForm.invalid) {
-      this.programForm.markAllAsTouched();
+      console.warn('الفورم غير صالح:', this.programForm.errors);
       return;
     }
 
@@ -445,19 +482,33 @@ export class AdminPrograms implements OnInit {
     };
 
     this.api.createProgram(payload)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.isSubmittingProgram = false;
+        })
+      )
       .subscribe({
         next: () => {
-          this.isSubmittingProgram = false;
-          this.fetchPrograms();
-          this.onCloseProgramModal();
+          this.fetchPrograms();        
+          this.onCloseProgramModal();  
         },
         error: (err) => {
-          this.isSubmittingProgram = false;
-          this.programErrorMessage = 'حدث خطأ أثناء إنشاء البرنامج.';
-          console.error('Error creating program:', err);
+          if (err.status === 200 || err.status === 201 || err.status === 204) {
+            this.fetchPrograms();
+            this.onCloseProgramModal();
+          } else {
+            this.programErrorMessage = 'حدث خطأ أثناء حفظ البرنامج في قاعدة البيانات.';
+            console.error('Error creating program:', err);
+          }
         }
       });
+  }
+
+  preventNegative(event: KeyboardEvent): void {
+    if (event.key === '-' || event.key === 'e' || event.key === 'E' || event.key === '+') {
+      event.preventDefault();
+    }
   }
 
   // --- Actions: Batch Modal ---

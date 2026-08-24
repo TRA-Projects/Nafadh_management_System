@@ -19,5 +19,7 @@ namespace Nafadh_Backend.Services
         // NEW: fixed-bucket rollup for Admin Reports — groups this enrollment's
         // evaluations by their template's Type and averages each bucket.
         Task<EvaluationBucketRollupDTO> GetBucketRollupByEnrollmentIdAsync(int enrollmentId);
+        Task DeleteEvaluationAsync(int evaluationId);
+
     }
 }

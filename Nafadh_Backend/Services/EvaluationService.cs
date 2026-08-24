@@ -167,7 +167,14 @@ namespace Nafadh_Backend.Services
 
             return Math.Round(total, 2);
         }
+        public async Task DeleteEvaluationAsync(int evaluationId)
+        {
+            var existing = await _repository.GetEvaluationByIdAsync(evaluationId);
+            if (existing == null)
+                throw new InvalidOperationException("The specified evaluation does not exist.");
 
+            await _repository.DeleteEvaluationAsync(evaluationId);
+        }
         // Convert Entity to DTO, including the per-criterion breakdown.
         private EvaluationDTO MapToDTO(NFD_Evaluation e)
         {
@@ -176,9 +183,17 @@ namespace Nafadh_Backend.Services
                 EvaluationId = e.EvaluationId,
                 EnrollmentId = e.EnrollmentId ?? 0,
                 TrainerId = e.TrainerId,
+                TrainerName = e.Trainer?.User?.FullName,
                 TemplateId = e.TemplateId,
+                Stage = e.EvaluationTemplate?.Stage,
+                ModuleId = e.EvaluationTemplate?.ModuleId,
+                ModuleTitle = e.EvaluationTemplate?.Module?.Title,
+                TemplateType = e.EvaluationTemplate?.Type.ToString(),
                 Score = e.Score,
                 Notes = e.Notes,
+                EvaluationDate = e.EvaluationDate,
+                EvaluatorUserId = e.EvaluatorUserId,
+                EvaluatorName = e.User?.FullName,
                 CriteriaBreakdown = e.CriterionScores?.Select(cs => new EvaluationCriterionScoreDTO
                 {
                     CriteriaId = cs.CriteriaId,

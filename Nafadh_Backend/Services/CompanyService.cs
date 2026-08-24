@@ -30,15 +30,18 @@ namespace Nafadh_Backend.Services
             if (company == null)
                 return null;
 
-            return MapToOutputDTO(company);
+            var links = await _repository.GetEnrollmentLinksAsync();
+            return MapToOutputDTO(company, BuildEnrollmentLookup(links));
         }
 
         // Get all Companies
         public async Task<IEnumerable<NFD_CompanyOutputDTO>> GetAllCompaniesAsync()
         {
             var companies = await _repository.GetAllCompaniesAsync();
+            var links = await _repository.GetEnrollmentLinksAsync();
+            var lookup = BuildEnrollmentLookup(links);
 
-            return companies.Select(MapToOutputDTO);
+            return companies.Select(c => MapToOutputDTO(c, lookup));
         }
 
         // Get Companies filtered by Status and/or Work Field
@@ -50,7 +53,19 @@ namespace Nafadh_Backend.Services
             status,
             workField);
 
-            return companies.Select(MapToOutputDTO);
+            var links = await _repository.GetEnrollmentLinksAsync();
+            var lookup = BuildEnrollmentLookup(links);
+
+            return companies.Select(c => MapToOutputDTO(c, lookup));
+        }
+
+        // Groups raw enrollment links by CompanyId for O(1) lookup while mapping.
+        private static Dictionary<int, List<CompanyEnrollmentLinkDTO>> BuildEnrollmentLookup(
+            List<CompanyEnrollmentLinkDTO> links)
+        {
+            return links
+                .GroupBy(l => l.CompanyId)
+                .ToDictionary(g => g.Key, g => g.ToList());
         }
 
         // Add a new Company
@@ -197,9 +212,24 @@ namespace Nafadh_Backend.Services
             return true;
         }
 
-        // Mapping Company Model to Output DTO
-        private static NFD_CompanyOutputDTO MapToOutputDTO(NFD_Company company)
+        // Mapping Company Model to Output DTO.
+        // enrollmentLookup (CompanyId -> its enrollment links) is optional: when
+        // omitted (e.g. right after Add/Update, before any trainee is enrolled)
+        // counts simply fall back to 0 instead of throwing.
+        private static NFD_CompanyOutputDTO MapToOutputDTO(
+            NFD_Company company,
+            Dictionary<int, List<CompanyEnrollmentLinkDTO>>? enrollmentLookup = null)
         {
+            // Enrollments belonging to THIS company only — this is the authoritative
+            // source of truth (a Program/Batch is typically shared across many
+            // companies, so counting Program.Batches directly would badly overcount).
+            var myEnrollments = (enrollmentLookup != null && enrollmentLookup.TryGetValue(company.CompanyId, out var list))
+                ? list
+                : new List<CompanyEnrollmentLinkDTO>();
+
+            var myBatchIds = myEnrollments.Select(e => e.BatchId).Distinct().ToHashSet();
+            var myTraineeIds = myEnrollments.Select(e => e.TraineeId).Distinct().ToHashSet();
+
             return new NFD_CompanyOutputDTO
             {
                 CompanyId = company.CompanyId,
@@ -215,10 +245,11 @@ namespace Nafadh_Backend.Services
                 ApprovalDate = company.ApprovalDate,
                 UserId = company.UserId,
 
-                // الأعداد
+                // الأعداد الحقيقية — مبنية على تسجيلات (Enrollments) هذه الشركة فعلياً،
+                // وليست مساوية لعدد البرامج ولا صفراً ثابتاً   
                 ProgramsCount = company.CompanyPrograms?.Count ?? 0,
-                BatchesCount = company.CompanyPrograms?.Count ?? 0,
-                TraineesCount = 0,
+                BatchesCount = myBatchIds.Count,
+                TraineesCount = myTraineeIds.Count,
 
                 Branches = company.CompanyBranches?.Select(b => new NFD_CompanyBranchOutputDTO
                 {
@@ -241,10 +272,32 @@ namespace Nafadh_Backend.Services
                     CompanyId = s.CompanyId
                 }).ToList() ?? new(),
 
-                Programs = company.CompanyPrograms?.Select(p => new NFD_CompanyProgramOutputDTO
+                Programs = company.CompanyPrograms?.Select(p =>
                 {
-                    CompanyId = p.CompanyId,
-                    ProgramId = p.ProgramId
+                    // Only the batches of this program where OUR company actually
+                    // has enrolled trainees — a program/batch can be shared with
+                    // other companies, so we must not show their trainees here.
+                    var ourBatchesInProgram = (p.Program?.Batches ?? new List<NFD_Batch>())
+                        .Where(b => myBatchIds.Contains(b.BatchId))
+                        .Select(b => new NFD_CompanyProgramBatchDTO
+                        {
+                            BatchId = b.BatchId,
+                            BatchName = b.BatchName,
+                            StartDate = b.StartDate,
+                            EndDate = b.EndDate,
+                            TraineesCount = myEnrollments.Count(e => e.BatchId == b.BatchId)
+                        }).ToList();
+
+                    return new NFD_CompanyProgramOutputDTO
+                    {
+                        CompanyId = p.CompanyId,
+                        ProgramId = p.ProgramId,
+                        Title = p.Program?.Title,
+                        Track = p.Program?.Track?.Name,
+                        BatchesCount = ourBatchesInProgram.Count,
+                        TraineesCount = ourBatchesInProgram.Sum(b => b.TraineesCount),
+                        Batches = ourBatchesInProgram
+                    };
                 }).ToList() ?? new(),
 
                 Payments = company.CompanyPayments?.Select(p => new CompanyPaymentResponseDto
