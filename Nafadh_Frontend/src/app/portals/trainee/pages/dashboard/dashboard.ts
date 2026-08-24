@@ -15,6 +15,8 @@ import {
   CompanySupervisorDto,
   SubmissionDto,
   NotificationDto,
+  DailyAttendanceDto,
+  WarningDto,
 } from '../../../../core/models/dtos';
 import { AnnouncementScopeType, TRAINEE_STATUS_LABELS, TaskStatus } from '../../../../core/models/enums';
 
@@ -84,6 +86,15 @@ export class TraineeDashboard implements OnInit {
 
   announcements = signal<(AnnouncementDto & { source: string })[]>([]);
   notifications = signal<NotificationDto[]>([]);
+
+  // =========================================================
+  // بيانات نسبة الحضور والإنذارات (جلب باستخدام userId)
+  // =========================================================
+
+  attendanceRate = signal<number>(0);
+  warningsCount = signal<number>(0);
+  loadingAttendance = signal(false);
+  loadingWarnings = signal(false);
 
   // =========================================================
   // حالات التحميل
@@ -377,6 +388,86 @@ export class TraineeDashboard implements OnInit {
   }
 
   // =========================================================
+  // تحميل نسبة الحضور باستخدام userId
+  // =========================================================
+
+  loadAttendanceRate(userId: number): void {
+    this.loadingAttendance.set(true);
+    this.api.getAttendanceRateByUserId(userId).subscribe({
+      next: (rate: number) => {
+        this.attendanceRate.set(rate);
+        this.loadingAttendance.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error loading attendance rate by userId:', error);
+        this.loadingAttendance.set(false);
+        // في حالة الخطأ، نحاول استخدام الطريقة القديمة كبديل
+        this.loadAttendanceRateFallback();
+      },
+    });
+  }
+
+  // دالة احتياطية في حالة فشل الدالة الجديدة
+  private loadAttendanceRateFallback(): void {
+    const traineeId = this.traineeId();
+    if (traineeId) {
+      this.api.getAttendance(traineeId).subscribe({
+        next: (attendanceList: DailyAttendanceDto[]) => {
+          if (attendanceList && attendanceList.length > 0) {
+            const total = attendanceList.length;
+            const present = attendanceList.filter(
+              (a) => a.status === 'Present' 
+            ).length;
+            const rate = total > 0 ? (present / total) * 100 : 0;
+            this.attendanceRate.set(rate);
+          }
+          this.loadingAttendance.set(false);
+        },
+        error: () => {
+          this.loadingAttendance.set(false);
+        }
+      });
+    } else {
+      this.loadingAttendance.set(false);
+    }
+  }
+// =========================================================
+// تحميل عدد الإنذارات الخاصة بالمستخدم فقط
+// =========================================================
+
+loadWarningsCount(userId: number): void {
+  this.loadingWarnings.set(true);
+  // استخدام getUserWarningsCount بدلاً من getWarningsCountByUserId
+  this.api.getUserWarningsCount(userId).subscribe({
+    next: (count: number) => {
+      this.warningsCount.set(count);
+      this.loadingWarnings.set(false);
+    },
+    error: (error: any) => {
+      console.error('Error loading user warnings count:', error);
+      this.loadingWarnings.set(false);
+      // في حالة الخطأ، نحاول استخدام الطريقة القديمة كبديل
+      this.loadWarningsCountFallback(userId);
+    },
+  });
+}
+
+// دالة احتياطية في حالة فشل الدالة الجديدة
+private loadWarningsCountFallback(userId: number): void {
+  // استخدام getUserWarnings بدلاً من getMyWarnings
+  this.api.getUserWarnings(userId).subscribe({
+    next: (warnings: WarningDto[]) => {
+      this.warningsCount.set(warnings?.length || 0);
+      this.loadingWarnings.set(false);
+    },
+    error: (error: any) => {
+      console.error('Error loading user warnings (fallback):', error);
+      this.loadingWarnings.set(false);
+    }
+  });
+}
+
+  // =========================================================
   // تحميل تسجيلات المتدرب
   // GET /api/Enrollment/trainee/{traineeId}
   // =========================================================
@@ -418,11 +509,13 @@ export class TraineeDashboard implements OnInit {
           this.loadTasks(activeEnrollment.batchId);
 
           // =========================================================
-          // تحميل الإعلانات والتنبيهات باستخدام userId
+          // تحميل الإعلانات والتنبيهات ونسبة الحضور والإنذارات باستخدام userId
           // =========================================================
           if (userId) {
             this.loadUserAnnouncements(userId);
             this.loadUserNotifications(userId);
+            this.loadAttendanceRate(userId);
+            this.loadWarningsCount(userId);
           }
         } else {
           this.loading.set(false);
@@ -843,6 +936,8 @@ export class TraineeDashboard implements OnInit {
     if (userId) {
       this.loadUserAnnouncements(userId);
       this.loadUserNotifications(userId);
+      this.loadAttendanceRate(userId);
+      this.loadWarningsCount(userId);
     }
   }
 

@@ -298,82 +298,83 @@
           }}
         </span>
       </div>
+<!-- نسبة الحضور -->
+<div
+  style="
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    font-family: 'Cairo', sans-serif;
+  "
+>
+  <span
+    style="
+      font-size: 0.85rem;
+      color: #64748b;
+      font-weight: 600;
+      font-family: 'Cairo', sans-serif;
+    "
+    >نسبة الحضور</span
+  >
+  <span
+    style="
+      background: #fdf4ff;
+      color: #9333ea;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-family: 'Cairo', sans-serif;
+    "
+  >
+    <!-- استخدام attendanceRate بدلاً من summary()?.attendanceRate -->
+    {{ attendanceRate() | number: '1.0-0' }}%
+  </span>
+</div>
 
-      <!-- نسبة الحضور -->
-      <div
-        style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 14px;
-          padding: 16px 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-          font-family: 'Cairo', sans-serif;
-        "
-      >
-        <span
-          style="
-            font-size: 0.85rem;
-            color: #64748b;
-            font-weight: 600;
-            font-family: 'Cairo', sans-serif;
-          "
-          >نسبة الحضور</span
-        >
-        <span
-          style="
-            background: #fdf4ff;
-            color: #9333ea;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            font-family: 'Cairo', sans-serif;
-          "
-        >
-          {{ summary()?.attendanceRate ?? 0 | number: '1.0-0' }}%
-        </span>
-      </div>
-
-      <!-- الإنذارات -->
-      <div
-        style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 14px;
-          padding: 16px 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-          font-family: 'Cairo', sans-serif;
-        "
-      >
-        <span
-          style="
-            font-size: 0.85rem;
-            color: #64748b;
-            font-weight: 600;
-            font-family: 'Cairo', sans-serif;
-          "
-          >الإنذارات</span
-        >
-        <span
-          style="
-            background: #fef2f2;
-            color: #dc2626;
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            font-family: 'Cairo', sans-serif;
-          "
-        >
-          {{ summary()?.warningsCount ?? 0 }}
-        </span>
-      </div>
+<!-- الإنذارات -->
+<div
+  style="
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    font-family: 'Cairo', sans-serif;
+  "
+>
+  <span
+    style="
+      font-size: 0.85rem;
+      color: #64748b;
+      font-weight: 600;
+      font-family: 'Cairo', sans-serif;
+    "
+    >الإنذارات</span
+  >
+  <span
+    style="
+      background: #fef2f2;
+      color: #dc2626;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-family: 'Cairo', sans-serif;
+    "
+  >
+    <!-- استخدام warningsCount بدلاً من summary()?.warningsCount -->
+    {{ warningsCount() }}
+  </span>
+</div>
     </div>
 
     <!-- 3. الشبكة الرئيسية (الصف الأوسط: فريق الإشراف + المهام القريبة) -->

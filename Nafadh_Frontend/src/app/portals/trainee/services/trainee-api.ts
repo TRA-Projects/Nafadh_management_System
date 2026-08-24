@@ -79,8 +79,40 @@ export class TraineeApi {
   getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
     return this.http.get<SubmissionDto[]>(`${this.base}/Submission/trainee/${traineeId}`);
   }
+// =========================================================
+// Attendance - جلب نسبة الحضور باستخدام userId
+// =========================================================
 
-  // =========================================================
+/**
+ * جلب نسبة الحضور للمتدرب باستخدام userId
+ * GET /api/DailyAttendance/user/{userId}/compliance-rate
+ */
+getAttendanceRateByUserId(userId: number): Observable<number> {
+  return this.http.get<number>(
+    `${this.base}/DailyAttendance/user/${userId}/compliance-rate`,
+  );
+}
+
+// =========================================================
+// Warnings - جلب الإنذارات الخاصة بالمستخدم فقط
+// =========================================================
+
+/**
+ * جلب الإنذارات الخاصة بالمستخدم فقط باستخدام userId
+ * GET /api/Warning/user/{userId}
+ */
+getUserWarnings(userId: number): Observable<WarningDto[]> {
+  return this.http.get<WarningDto[]>(`${this.base}/Warning/user/${userId}`);
+}
+
+/**
+ * جلب عدد الإنذارات الخاصة بالمستخدم فقط
+ * GET /api/Warning/user/{userId}/count
+ */
+getUserWarningsCount(userId: number): Observable<number> {
+  return this.http.get<number>(`${this.base}/Warning/user/${userId}/count`);
+}
+//=====================================================
   // Profile
   // =========================================================
 
@@ -409,10 +441,7 @@ submitFeedback(dto: unknown): Observable<any> {
   return this.http.post(`${this.base}/Feedback`, dto);
 }
   // =========================================================
-  // =========================================================
-  // الإعلانات والتنبيهات - دوال جديدة مضافة
-  // =========================================================
-  // =========================================================
+
 
   // =========================================================
   // Announcements - جلب الإعلانات بناءً على userId
