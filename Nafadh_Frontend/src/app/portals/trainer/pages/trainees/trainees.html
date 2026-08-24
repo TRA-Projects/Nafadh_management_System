@@ -1,6 +1,65 @@
 <div class="trainees-page">
 
   <!-- =====================================================
+       CUSTOM EVALUATION NOTIFICATION
+  ====================================================== -->
+
+  @if (evaluationNotice(); as notice) {
+
+    <div
+      class="evaluation-notice"
+      [class.notice-success]="notice.tone === 'success'"
+      [class.notice-warning]="notice.tone === 'warning'"
+      [class.notice-error]="notice.tone === 'error'"
+      role="status"
+      aria-live="polite"
+    >
+
+      <div class="evaluation-notice-icon">
+
+        @if (notice.tone === 'success') {
+          <i class="fa-solid fa-circle-check"></i>
+        }
+        @else if (notice.tone === 'warning') {
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        }
+        @else {
+          <i class="fa-solid fa-circle-exclamation"></i>
+        }
+
+      </div>
+
+
+      <div class="evaluation-notice-copy">
+
+        <strong>
+          {{ notice.title }}
+        </strong>
+
+        <span>
+          {{ notice.message }}
+        </span>
+
+      </div>
+
+
+      <button
+        type="button"
+        class="evaluation-notice-close"
+        (click)="closeEvaluationNotice()"
+        aria-label="إغلاق الإشعار"
+        title="إغلاق"
+      >
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+    </div>
+
+  }
+
+
+
+  <!-- =====================================================
        PAGE HEADER
   ====================================================== -->
 
@@ -1429,7 +1488,7 @@
         padding:4px 6px;
       "
     >
-      ✏️
+      <i class="fa-solid fa-pen-to-square"></i>
     </button>
 
 
@@ -1450,7 +1509,7 @@
         padding:4px 6px;
       "
     >
-      🗑️
+      <i class="fa-solid fa-trash-can"></i>
     </button>
 
   </div>
@@ -1672,6 +1731,81 @@
             (click)="submitEvaluation()">
 
             حفظ التقييم
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+
+
+  <!-- =====================================================
+       DELETE CRITERION CONFIRMATION MODAL
+  ====================================================== -->
+
+  @if (criterionToDelete(); as target) {
+
+    <div
+      class="criterion-delete-overlay"
+      (click)="closeDeleteCriterionModal()"
+    >
+
+      <div
+        class="criterion-delete-modal"
+        (click)="$event.stopPropagation()"
+      >
+
+        <div class="criterion-delete-icon">
+          <i class="fa-solid fa-trash-can"></i>
+        </div>
+
+        <h3>
+          حذف معيار التقييم؟
+        </h3>
+
+        <p>
+          هل تريدين حذف معيار
+          <strong>
+            {{ target.criterionName }}
+          </strong>
+          ؟
+        </p>
+
+        <span class="criterion-delete-warning">
+          لن تتمكني من التراجع عن هذه العملية بعد الحذف.
+        </span>
+
+        <div class="criterion-delete-actions">
+
+          <button
+            type="button"
+            class="criterion-cancel-btn"
+            (click)="closeDeleteCriterionModal()"
+            [disabled]="criterionDeleting()"
+          >
+            إلغاء
+          </button>
+
+          <button
+            type="button"
+            class="criterion-confirm-delete-btn"
+            (click)="confirmDeleteCriterion()"
+            [disabled]="criterionDeleting()"
+          >
+
+            @if (criterionDeleting()) {
+              <i class="fa-solid fa-spinner fa-spin"></i>
+              <span>جاري الحذف...</span>
+            }
+            @else {
+              <i class="fa-solid fa-trash-can"></i>
+              <span>حذف المعيار</span>
+            }
 
           </button>
 

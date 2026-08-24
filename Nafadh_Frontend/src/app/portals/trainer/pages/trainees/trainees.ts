@@ -846,6 +846,111 @@ criterionEditForm = {
   maxPoints: 0
 };
 
+// =====================================================
+// DELETE CRITERION MODAL STATE
+// =====================================================
+
+criterionToDelete =
+  signal<{
+    criteriaId: number;
+    criterionName: string;
+  } | null>(
+    null
+  );
+
+criterionDeleting =
+  signal(false);
+
+// =====================================================
+// CUSTOM EVALUATION NOTIFICATION
+// =====================================================
+
+evaluationNotice =
+  signal<{
+    tone:
+      'success' |
+      'warning' |
+      'error';
+
+    title: string;
+
+    message: string;
+  } | null>(
+    null
+  );
+
+private evaluationNoticeTimer:
+  ReturnType<typeof setTimeout> |
+  null = null;
+
+
+private showEvaluationNotice(
+  tone:
+    'success' |
+    'warning' |
+    'error',
+  title: string,
+  message: string
+): void {
+
+  if (
+    this.evaluationNoticeTimer
+  ) {
+
+    clearTimeout(
+      this.evaluationNoticeTimer
+    );
+
+  }
+
+
+  this.evaluationNotice.set({
+    tone,
+    title,
+    message
+  });
+
+
+  this.evaluationNoticeTimer =
+    setTimeout(
+      () => {
+
+        this.evaluationNotice.set(
+          null
+        );
+
+        this.evaluationNoticeTimer =
+          null;
+
+      },
+      4500
+    );
+
+}
+
+
+closeEvaluationNotice(): void {
+
+  if (
+    this.evaluationNoticeTimer
+  ) {
+
+    clearTimeout(
+      this.evaluationNoticeTimer
+    );
+
+    this.evaluationNoticeTimer =
+      null;
+
+  }
+
+
+  this.evaluationNotice.set(
+    null
+  );
+
+}
+
   // =====================================================
   // CONSTRUCTOR
   // =====================================================
@@ -1964,7 +2069,9 @@ addCriterion(): void {
 
   if (!name) {
 
-    window.alert(
+    this.showEvaluationNotice(
+      'warning',
+      'بيانات غير مكتملة',
       'أدخلي اسم المعيار.'
     );
 
@@ -1978,7 +2085,9 @@ addCriterion(): void {
     weight > 100
   ) {
 
-    window.alert(
+    this.showEvaluationNotice(
+      'warning',
+      'الوزن غير صحيح',
       'أدخلي وزنًا صحيحًا من 1 إلى 100.'
     );
 
@@ -1991,7 +2100,9 @@ addCriterion(): void {
     maxPoints <= 0
   ) {
 
-    window.alert(
+    this.showEvaluationNotice(
+      'warning',
+      'الدرجة القصوى غير صحيحة',
       'أدخلي الحد الأقصى للدرجة بشكل صحيح.'
     );
 
@@ -2008,7 +2119,9 @@ if (
   currentWeight + weight > 100
 ) {
 
-  window.alert(
+  this.showEvaluationNotice(
+    'warning',
+    'الوزن غير مسموح',
     `لا يمكن إضافة المعيار. الوزن المتبقي هو ${remainingWeight}% فقط.`
   );
 
@@ -2043,7 +2156,9 @@ if (
         };
 
 
-        window.alert(
+        this.showEvaluationNotice(
+          'success',
+          'تمت الإضافة',
           'تمت إضافة معيار التقييم بنجاح.'
         );
 
@@ -2085,8 +2200,10 @@ if (
         );
 
 
-        window.alert(
-          'تعذر إضافة معيار التقييم.'
+        this.showEvaluationNotice(
+          'error',
+          'تعذر إضافة المعيار',
+          'حدث خطأ أثناء إضافة معيار التقييم.'
         );
 
       }
@@ -2120,34 +2237,91 @@ deleteCriterion(
   criterionName: string
 ): void {
 
+  if (
+    !this.templateDetail()
+      ?.templateId
+  ) {
+    return;
+  }
+
+
+  this.criterionToDelete.set({
+    criteriaId,
+    criterionName
+  });
+
+}
+
+
+// =====================================================
+// CLOSE DELETE CRITERION MODAL
+// =====================================================
+
+closeDeleteCriterionModal(): void {
+
+  if (
+    this.criterionDeleting()
+  ) {
+    return;
+  }
+
+
+  this.criterionToDelete.set(
+    null
+  );
+
+}
+
+
+// =====================================================
+// CONFIRM DELETE CRITERION
+// =====================================================
+
+confirmDeleteCriterion(): void {
+
+  const target =
+    this.criterionToDelete();
+
   const templateId =
     this.templateDetail()
       ?.templateId;
 
 
-  if (!templateId) {
+  if (
+    !target ||
+    !templateId ||
+    this.criterionDeleting()
+  ) {
     return;
   }
 
 
-  const confirmed =
-    window.confirm(
-      `هل تريدين حذف معيار "${criterionName}"؟`
-    );
-
-
-  if (!confirmed) {
-    return;
-  }
+  this.criterionDeleting.set(
+    true
+  );
 
 
   this.api
     .deleteCriterion(
-      criteriaId
+      target.criteriaId
     )
     .subscribe({
 
       next: () => {
+
+        delete this.criteriaScores[
+          target.criteriaId
+        ];
+
+
+        this.criterionDeleting.set(
+          false
+        );
+
+        this.criterionToDelete.set(
+          null
+        );
+
 
         // Reload the template so the deleted
         // criterion disappears immediately.
@@ -2164,9 +2338,11 @@ deleteCriterion(
               );
 
 
-              delete this.criteriaScores[
-                criteriaId
-              ];
+              this.showEvaluationNotice(
+                'success',
+                'تم حذف المعيار',
+                'تم حذف معيار التقييم بنجاح.'
+              );
 
             },
 
@@ -2193,8 +2369,15 @@ deleteCriterion(
         );
 
 
-        window.alert(
-          'تعذر حذف المعيار. قد يكون مستخدمًا في تقييم محفوظ.'
+        this.criterionDeleting.set(
+          false
+        );
+
+
+        this.showEvaluationNotice(
+          'error',
+          'تعذر حذف المعيار',
+          'قد يكون هذا المعيار مستخدمًا في تقييم محفوظ.'
         );
 
       }
@@ -2202,6 +2385,7 @@ deleteCriterion(
     });
 
 }
+
 // =====================================================
 // START EDIT CRITERION
 // =====================================================
@@ -2294,7 +2478,9 @@ saveCriterionEdit(
     maxPoints <= 0
   ) {
 
-    window.alert(
+    this.showEvaluationNotice(
+      'warning',
+      'تحققي من بيانات المعيار',
       'تأكدي من اسم المعيار والوزن والحد الأقصى.'
     );
 
@@ -2314,8 +2500,10 @@ if (
   otherCriteriaWeight + weight > 100
 ) {
 
-  window.alert(
-    `لا يمكن حفظ التعديل. أقصى وزن مسموح لهذا المعيار هو ${remainingWeight}%.`
+  this.showEvaluationNotice(
+    'warning',
+    'لا يمكن حفظ التعديل',
+    `أقصى وزن مسموح لهذا المعيار هو ${remainingWeight}%.`
   );
 
   return;
@@ -2349,6 +2537,13 @@ if (
 
               this.cancelCriterionEdit();
 
+
+              this.showEvaluationNotice(
+                'success',
+                'تم حفظ التعديل',
+                'تم تحديث معيار التقييم بنجاح.'
+              );
+
             },
 
 
@@ -2374,8 +2569,10 @@ if (
         );
 
 
-        window.alert(
-          'تعذر تعديل المعيار.'
+        this.showEvaluationNotice(
+          'error',
+          'تعذر تعديل المعيار',
+          'حدث خطأ أثناء حفظ تعديلات المعيار.'
         );
 
       }
@@ -2424,7 +2621,9 @@ submitEvaluation(): void {
     )
   ) {
 
-    window.alert(
+    this.showEvaluationNotice(
+      'warning',
+      'التقييم غير متاح',
       'لا يمكن تقييم هذا المتدرب حاليًا.'
     );
 
@@ -2444,7 +2643,9 @@ submitEvaluation(): void {
 
         if (!result.isValid) {
 
-          window.alert(
+          this.showEvaluationNotice(
+            'warning',
+            'مجموع الأوزان غير مكتمل',
             'مجموع أوزان معايير التقييم يجب أن يساوي 100%.'
           );
 
@@ -2459,7 +2660,9 @@ submitEvaluation(): void {
         // There must be at least one criterion.
         if (criteria.length === 0) {
 
-          window.alert(
+          this.showEvaluationNotice(
+            'warning',
+            'لا توجد معايير',
             'لا توجد معايير تقييم لهذا النموذج.'
           );
 
@@ -2488,7 +2691,9 @@ submitEvaluation(): void {
 
         if (hasMissingScore) {
 
-          window.alert(
+          this.showEvaluationNotice(
+            'warning',
+            'درجات غير مكتملة',
             'يجب إدخال درجة لكل معيار قبل حفظ التقييم.'
           );
 
@@ -2522,7 +2727,9 @@ submitEvaluation(): void {
 
         if (hasInvalidScore) {
 
-          window.alert(
+          this.showEvaluationNotice(
+            'warning',
+            'درجة غير صحيحة',
             'تأكدي أن كل درجة بين 0 والحد الأقصى للمعيار.'
           );
 
@@ -2585,8 +2792,10 @@ submitEvaluation(): void {
               );
 
 
-              window.alert(
-                'تم حفظ التقييم بنجاح.'
+              this.showEvaluationNotice(
+                'success',
+                'تم حفظ التقييم',
+                'تم حفظ تقييم المتدرب بنجاح.'
               );
 
             },
@@ -2600,8 +2809,10 @@ submitEvaluation(): void {
               );
 
 
-              window.alert(
-                'تعذر حفظ التقييم.'
+              this.showEvaluationNotice(
+                'error',
+                'تعذر حفظ التقييم',
+                'حدث خطأ أثناء حفظ تقييم المتدرب.'
               );
 
             }
@@ -2619,8 +2830,10 @@ submitEvaluation(): void {
         );
 
 
-        window.alert(
-          'تعذر التحقق من مجموع أوزان معايير التقييم.'
+        this.showEvaluationNotice(
+          'error',
+          'تعذر التحقق من الأوزان',
+          'حدث خطأ أثناء التحقق من مجموع أوزان معايير التقييم.'
         );
 
       }
