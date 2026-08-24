@@ -25,7 +25,9 @@
 
     <div class="message error-message">
 
-      <span>!</span>
+      <span>
+        <i class="fa-solid fa-circle-exclamation"></i>
+      </span>
 
       <p>
         {{ errorMessage() }}
@@ -40,7 +42,9 @@
 
     <div class="message success-message">
 
-      <span>✓</span>
+      <span>
+        <i class="fa-solid fa-check"></i>
+      </span>
 
       <p>
         {{ successMessage() }}
@@ -129,7 +133,7 @@
               </div>
 
               <span class="conversation-arrow">
-                ‹
+                <i class="fa-solid fa-chevron-left"></i>
               </span>
 
             </button>
@@ -141,7 +145,7 @@
             <div class="empty-conversations">
 
               <div class="empty-icon">
-                💬
+                <i class="fa-solid fa-comments"></i>
               </div>
 
               <strong>
@@ -251,7 +255,8 @@
               [disabled]="!replyText.trim()"
               (click)="send()"
             >
-              إرسال
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>إرسال</span>
             </button>
 
           </div>
@@ -263,7 +268,7 @@
           <div class="conversation-placeholder">
 
             <div class="placeholder-icon">
-              💬
+              <i class="fa-solid fa-comments"></i>
             </div>
 
             <h3>
@@ -414,35 +419,7 @@
         >
 
           <div class="upload-icon">
-
-            <svg
-              width="21"
-              height="21"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-
-              <path
-                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
-              />
-
-              <polyline
-                points="17 8 12 3 7 8"
-              />
-
-              <line
-                x1="12"
-                y1="3"
-                x2="12"
-                y2="15"
-              />
-
-            </svg>
-
+            <i class="fa-solid fa-cloud-arrow-up"></i>
           </div>
 
 
@@ -480,9 +457,10 @@
             <button
               type="button"
               class="remove-file"
+              aria-label="حذف الملف"
               (click)="removeFile($event)"
             >
-              ×
+              <i class="fa-solid fa-xmark"></i>
             </button>
 
           }
@@ -521,6 +499,8 @@
         }
 
         @else {
+
+          <i class="fa-solid fa-paper-plane"></i>
 
           <span>
             إرسال الطلب
@@ -648,6 +628,11 @@
   border-radius: 50%;
 
   font-weight: 700;
+}
+
+.message > span i {
+
+  font-size: 10px;
 }
 
 .error-message {
@@ -925,6 +910,17 @@
   color: #0066cc;
 
   font-size: 20px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+}
+
+.conversation-arrow i {
+
+  font-size: 11px;
 }
 
 
@@ -955,9 +951,28 @@
 
 .empty-icon {
 
-  font-size: 25px;
+  width: 50px;
+
+  height: 50px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
 
   margin-bottom: 4px;
+
+  border-radius: 50%;
+
+  background: #eef2ff;
+
+  color: #0066cc;
+}
+
+.empty-icon i {
+
+  font-size: 22px;
 }
 
 .empty-conversations strong {
@@ -1169,7 +1184,15 @@
 
 .reply-button {
 
-  width: 75px;
+  width: 85px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 6px;
 
   border: none;
 
@@ -1186,6 +1209,11 @@
   font-weight: 700;
 
   cursor: pointer;
+}
+
+.reply-button i {
+
+  font-size: 10px;
 }
 
 .reply-button:disabled {
@@ -1239,7 +1267,14 @@
 
   background: #eef2ff;
 
+  color: #0066cc;
+
   font-size: 20px;
+}
+
+.placeholder-icon i {
+
+  font-size: 21px;
 }
 
 .conversation-placeholder h3 {
@@ -1524,6 +1559,11 @@
   color: #0066cc;
 }
 
+.upload-icon i {
+
+  font-size: 17px;
+}
+
 .upload-text {
 
   display: flex;
@@ -1582,6 +1622,11 @@
   cursor: pointer;
 }
 
+.remove-file i {
+
+  font-size: 10px;
+}
+
 .file-hint {
 
   margin: 4px 0 0;
@@ -1629,6 +1674,11 @@
   cursor: pointer;
 
   transition: 0.2s;
+}
+
+.submit-button i {
+
+  font-size: 10px;
 }
 
 .submit-button:hover:not(:disabled) {
