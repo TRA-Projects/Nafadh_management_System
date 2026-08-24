@@ -926,5 +926,28 @@ getTrainerPortalReportFile(
       dto
     );
   }
+// =====================================================
+// TRAINER PROFILE IMAGE
+// =====================================================
 
+uploadTrainerProfileImage(
+  trainerId: number,
+  file: File
+): Observable<{ profileImageUrl: string }> {
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    'File',
+    file
+  );
+
+  return this.http.post<{
+    profileImageUrl: string;
+  }>(
+    `${this.base}/Trainer/${trainerId}/profile-image`,
+    formData
+  );
+}
 }
