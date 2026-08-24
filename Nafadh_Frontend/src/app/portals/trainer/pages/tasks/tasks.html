@@ -10,14 +10,25 @@
 
     <div class="tasks-header-copy">
 
-      <h2>
-        <span>📋</span>
-        <span>المهام والمشروعات</span>
-      </h2>
+      <div class="tasks-title-row">
 
-      <p>
-        إنشاء الواجبات والمشاريع الميدانية ومتابعة التسليم والدرجات
-      </p>
+        <div class="tasks-title-icon">
+          <i class="fa-solid fa-clipboard-list"></i>
+        </div>
+
+        <div class="tasks-title-text">
+
+          <h2>
+            المهام والمشروعات
+          </h2>
+
+          <p>
+            إنشاء الواجبات والمشاريع الميدانية ومتابعة التسليم والدرجات
+          </p>
+
+        </div>
+
+      </div>
 
 
       <!-- ================= BATCH SELECTOR ================= -->
@@ -1296,61 +1307,62 @@
                       "
                     >
 
-                      @if (submission.fileUrl) {
+                     @if (submission.fileUrl) {
 
-                        <a
-                          [href]="submission.fileUrl"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style="
-                            min-height:38px;
-                            padding:0 15px;
-                            display:inline-flex;
-                            align-items:center;
-                            justify-content:center;
-                            gap:7px;
-                            background:#0056b8;
-                            color:#ffffff;
-                            border-radius:9px;
-                            font-size:11px;
-                            font-weight:700;
-                            text-decoration:none;
-                          "
-                        >
+  <button
+    type="button"
+    (click)="openSubmissionFile(submission)"
+    style="
+      min-height:38px;
+      padding:0 15px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
+      background:#0056b8;
+      color:#ffffff;
+      border:0;
+      border-radius:9px;
+      font-family:inherit;
+      font-size:11px;
+      font-weight:700;
+      cursor:pointer;
+    "
+  >
 
-                          <svg
-                            viewBox="0 0 24 24"
-                            width="15"
-                            height="15"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                          >
-                            <path
-                              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                            </path>
+    <svg
+      viewBox="0 0 24 24"
+      width="15"
+      height="15"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+    >
+      <path
+        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
+      </path>
 
-                            <polyline
-                              points="14 2 14 8 20 8">
-                            </polyline>
+      <polyline
+        points="14 2 14 8 20 8">
+      </polyline>
 
-                            <line
-                              x1="12"
-                              y1="18"
-                              x2="12"
-                              y2="12">
-                            </line>
+      <line
+        x1="12"
+        y1="18"
+        x2="12"
+        y2="12">
+      </line>
 
-                            <polyline
-                              points="9 15 12 12 15 15">
-                            </polyline>
-                          </svg>
+      <polyline
+        points="9 15 12 12 15 15">
+      </polyline>
+    </svg>
 
-                          عرض التسليم
+    عرض التسليم
 
-                        </a>
+  </button>
 
-                      }
+}
 
                       @else {
 

@@ -20,7 +20,6 @@
       #f4f8fd 0%,
       #eef3f9 100%
     );
-
   color: #172033;
   font-family:
     "Cairo",
@@ -28,7 +27,6 @@
     Arial,
     sans-serif;
 }
-
 
 /* =========================================================
    HEADER
@@ -39,7 +37,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-
   margin-bottom: 20px;
 }
 
@@ -52,11 +49,9 @@
 .title-icon {
   width: 50px;
   height: 50px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 13px;
 
   background:
@@ -67,27 +62,25 @@
     );
 
   color: white;
-
   font-size: 24px;
 
   box-shadow:
     0 8px 20px rgba(23, 105, 224, .20);
 }
 
+/* نفس لون عنوان "المتدربون" */
 .header-title-wrap h1 {
   margin: 0;
-
-  font-size: 26px;
+  font-family: 'Cairo', sans-serif;
+  font-size: 24px;
   font-weight: 800;
-
-  color: #172033;
+  color: #0A1172 !important;
+  line-height: 1.3;
 }
 
 .header-title-wrap p {
   margin: 5px 0 0;
-
   color: #65748b;
-
   font-size: 14px;
 }
 
@@ -99,11 +92,8 @@
 
 .btn {
   min-height: 42px;
-
   padding: 0 18px;
-
   border-radius: 10px;
-
   border: 1px solid transparent;
 
   display: inline-flex;
@@ -116,49 +106,45 @@
   font-weight: 700;
 
   cursor: pointer;
+  transition: .2s ease;
+}
 
-  transition:
-    .2s ease;
-
-  &:disabled {
-    opacity: .55;
-    cursor: not-allowed;
-  }
+.btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
 }
 
 .btn-primary {
   background: #1769e0;
   color: #fff;
+}
 
-  &:hover:not(:disabled) {
-    background: #0f59c7;
-  }
+.btn-primary:hover:not(:disabled) {
+  background: #0f59c7;
 }
 
 .btn-secondary {
   background: #fff;
   color: #2d3c54;
-
   border-color: #dce4ef;
+}
 
-  &:hover:not(:disabled) {
-    background: #f6f9fc;
-  }
+.btn-secondary:hover:not(:disabled) {
+  background: #f6f9fc;
 }
 
 .btn-refresh {
   background: #fff;
   color: #1769e0;
-
   border-color: #dce4ef;
 }
 
 .refresh-icon {
   font-size: 19px;
+}
 
-  &.spinning {
-    animation: spin .8s linear infinite;
-  }
+.refresh-icon.spinning {
+  animation: spin .8s linear infinite;
 }
 
 @keyframes spin {
@@ -167,7 +153,6 @@
   }
 }
 
-
 /* =========================================================
    TABS
    ========================================================= */
@@ -175,17 +160,13 @@
 .tabs-wrapper {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-
   gap: 10px;
 
   padding: 6px;
-
   margin-bottom: 22px;
 
   background: rgba(255,255,255,.8);
-
   border: 1px solid #dfe7f2;
-
   border-radius: 14px;
 
   box-shadow:
@@ -194,20 +175,17 @@
 
 .tab-btn {
   position: relative;
-
   min-height: 64px;
 
   display: flex;
   align-items: center;
   justify-content: center;
-
   gap: 12px;
 
   border: 0;
   border-radius: 10px;
 
   background: transparent;
-
   color: #4a5970;
 
   font-family: inherit;
@@ -215,42 +193,36 @@
   font-weight: 700;
 
   cursor: pointer;
-
   transition: .2s ease;
+}
 
-  small {
-    display: block;
+.tab-btn small {
+  display: block;
+  margin-top: 4px;
+  color: #7b889d;
+  font-size: 12px;
+  font-weight: 600;
+}
 
-    margin-top: 4px;
+.tab-btn:hover {
+  background: #f5f8fc;
+}
 
-    color: #7b889d;
+.tab-btn.active {
+  background: #fff;
+  color: #1769e0;
 
-    font-size: 12px;
-    font-weight: 600;
-  }
+  box-shadow:
+    0 3px 12px rgba(34, 65, 105, .08);
+}
 
-  &:hover {
-    background: #f5f8fc;
-  }
-
-  &.active {
-    background: #fff;
-
-    color: #1769e0;
-
-    box-shadow:
-      0 3px 12px rgba(34, 65, 105, .08);
-
-    small {
-      color: #5a6b82;
-    }
-  }
+.tab-btn.active small {
+  color: #5a6b82;
 }
 
 .tab-icon {
   font-size: 20px;
 }
-
 
 /* =========================================================
    STATE
@@ -259,36 +231,32 @@
 .state-card {
   display: flex;
   align-items: center;
-
   gap: 16px;
 
   padding: 22px;
-
   margin-bottom: 22px;
 
   background: #fff;
-
   border: 1px solid #e2e8f1;
-
   border-radius: 14px;
 
   box-shadow:
     0 5px 18px rgba(29, 54, 88, .05);
+}
 
-  strong,
-  span {
-    display: block;
-  }
+.state-card strong,
+.state-card span {
+  display: block;
+}
 
-  strong {
-    margin-bottom: 5px;
-    font-size: 16px;
-  }
+.state-card strong {
+  margin-bottom: 5px;
+  font-size: 16px;
+}
 
-  span {
-    color: #65748b;
-    font-size: 13px;
-  }
+.state-card span {
+  color: #65748b;
+  font-size: 13px;
 }
 
 .loading-spinner {
@@ -297,35 +265,33 @@
 
   border: 3px solid #e3ebf6;
   border-top-color: #1769e0;
-
   border-radius: 50%;
 
   animation: spin .8s linear infinite;
 }
 
 .error-card {
-  border-color: #ffd8d8;
+  border-color: #d8e7ff;
+}
 
-  .state-icon {
-    width: 38px;
-    height: 38px;
+.error-card .state-icon {
+  width: 38px;
+  height: 38px;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-    border-radius: 50%;
+  border-radius: 50%;
 
-    background: #fff0f0;
-    color: #dc3545;
+  background: #eef4ff;
+  color: #315fd6;
 
-    font-weight: 800;
-  }
+  font-weight: 800;
 }
 
 .retry-btn {
   margin-right: auto;
-
   padding: 10px 18px;
 
   border: 0;
@@ -341,7 +307,6 @@
   cursor: pointer;
 }
 
-
 /* =========================================================
    GENERAL
    ========================================================= */
@@ -354,10 +319,8 @@
 
 .kpi-grid {
   display: grid;
-
   grid-template-columns:
     repeat(4, minmax(0, 1fr));
-
   gap: 16px;
 }
 
@@ -365,9 +328,7 @@
   padding: 20px;
 
   background: #fff;
-
   border: 1px solid #e1e8f2;
-
   border-radius: 14px;
 
   box-shadow:
@@ -378,7 +339,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   margin-bottom: 14px;
 }
 
@@ -406,19 +366,20 @@
   color: #7856d9;
 }
 
+/* الأحمر أصبح أزرق */
 .red-icon {
-  background: #fff0f0;
-  color: #df4c59;
+  background: #eef2ff;
+  color: #315fd6;
 }
 
+/* البرتقالي أصبح أزرق */
 .orange-icon {
-  background: #fff5e8;
-  color: #e58a19;
+  background: #eaf3ff;
+  color: #2563eb;
 }
 
 .kpi-status {
   padding: 6px 11px;
-
   border-radius: 20px;
 
   font-size: 11px;
@@ -435,33 +396,31 @@
   color: #55657d;
 }
 
+/* الأحمر أصبح أزرق */
 .danger {
-  background: #fff0f0;
-  color: #df4c59;
+  background: #eef2ff;
+  color: #315fd6;
 }
 
+/* الأصفر أصبح أزرق */
 .warning {
-  background: #fff4e6;
-  color: #dc8418;
+  background: #eaf3ff;
+  color: #2563eb;
 }
 
 .kpi-title {
   display: block;
-
   color: #53637a;
-
   font-size: 13px;
   font-weight: 600;
 }
 
 .kpi-value {
   display: block;
-
   margin: 8px 0;
 
   font-size: 32px;
   line-height: 1;
-
   font-weight: 800;
 }
 
@@ -473,12 +432,14 @@
   color: #1b2638;
 }
 
+/* الأحمر أصبح أزرق */
 .kpi-value.red {
-  color: #dc4756;
+  color: #315fd6;
 }
 
+/* البرتقالي أصبح أزرق */
 .kpi-value.orange {
-  color: #e48717;
+  color: #1769e0;
 }
 
 .kpi-subtext {
@@ -486,13 +447,13 @@
   font-size: 11px;
 }
 
-
 /* =========================================================
    OVERVIEW
    ========================================================= */
 
 .overview-strip {
   display: grid;
+
   grid-template-columns:
     1fr auto
     1fr auto
@@ -504,45 +465,36 @@
   padding: 18px 24px;
 
   background: #fff;
-
   border: 1px solid #e1e8f2;
-
   border-radius: 14px;
 }
 
 .overview-item {
   text-align: center;
-
-  span {
-    display: block;
-
-    margin-bottom: 6px;
-
-    color: #65748b;
-
-    font-size: 12px;
-    font-weight: 600;
-  }
-
-  strong {
-    font-size: 20px;
-    font-weight: 800;
-  }
 }
 
-.overview-divider {
-  width: 1px;
-  height: 36px;
+.overview-item span {
+  display: block;
+  margin-bottom: 6px;
 
-  background: #e8edf4;
+  color: #65748b;
+  font-size: 12px;
+  font-weight: 600;
 }
 
+.overview-item strong {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* الأحمر أصبح أزرق */
 .red-text {
-  color: #dc4756;
+  color: #315fd6;
 }
 
+/* البرتقالي أصبح أزرق */
 .orange-text {
-  color: #df881a;
+  color: #2563eb;
 }
 
 .green-text {
@@ -553,6 +505,11 @@
   color: #1769e0;
 }
 
+.overview-divider {
+  width: 1px;
+  height: 36px;
+  background: #e8edf4;
+}
 
 /* =========================================================
    PANELS
@@ -564,7 +521,6 @@
   background: #fff;
 
   border: 1px solid #e1e8f2;
-
   border-radius: 14px;
 
   box-shadow:
@@ -581,49 +537,43 @@
   padding: 20px 24px;
 
   border-bottom: 1px solid #edf1f6;
+}
 
-  h2 {
-    margin: 0;
+.panel-header h2 {
+  margin: 0;
 
-    color: #1d2b40;
+  color: #1d2b40;
+  font-size: 18px;
+  font-weight: 800;
+}
 
-    font-size: 18px;
-    font-weight: 800;
-  }
+.panel-header p {
+  margin: 5px 0 0;
 
-  p {
-    margin: 5px 0 0;
-
-    color: #70809a;
-
-    font-size: 12px;
-  }
+  color: #70809a;
+  font-size: 12px;
 }
 
 .chart-summary {
   text-align: left;
-
-  span {
-    display: block;
-
-    color: #70809a;
-
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  strong {
-    display: block;
-
-    margin-top: 3px;
-
-    color: #1769e0;
-
-    font-size: 26px;
-    font-weight: 800;
-  }
 }
 
+.chart-summary span {
+  display: block;
+
+  color: #70809a;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.chart-summary strong {
+  display: block;
+  margin-top: 3px;
+
+  color: #1769e0;
+  font-size: 26px;
+  font-weight: 800;
+}
 
 /* =========================================================
    ATTENDANCE BARS
@@ -636,13 +586,15 @@
 .bar-row {
   display: grid;
   grid-template-columns: 110px 1fr 65px;
+
   align-items: center;
+
   gap: 14px;
   margin-bottom: 18px;
+}
 
-  &:last-child {
-    margin-bottom: 0;
-  }
+.bar-row:last-child {
+  margin-bottom: 0;
 }
 
 .week-label {
@@ -653,15 +605,19 @@
 
 .bar-track {
   position: relative;
+
   width: 100%;
   height: 18px;
+
   background: #edf1f6;
   border-radius: 20px;
+
   overflow: hidden;
 }
 
 .progress-bar-fill {
   position: relative;
+
   height: 100%;
   min-width: 4px;
 
@@ -671,49 +627,57 @@
     width .5s ease,
     background .25s ease;
 
-  overflow: hidden;
-
-  background: linear-gradient(
-    90deg,
-    #1769e0,
-    #3b82f6
-  );
+  background:
+    linear-gradient(
+      90deg,
+      #1769e0,
+      #3b82f6
+    );
 
   box-shadow:
     0 2px 7px rgba(23, 105, 224, .20);
+
+  overflow: hidden;
 }
 
 .progress-bar-fill.high {
-  background: linear-gradient(
-    90deg,
-    #4f8df7 0%,
-    #1769e0 100%
-  );
+  background:
+    linear-gradient(
+      90deg,
+      #4f8df7 0%,
+      #1769e0 100%
+    );
 
   box-shadow:
     0 2px 8px rgba(23, 105, 224, .22);
 }
 
+/* الأصفر أصبح تدرج أزرق */
 .progress-bar-fill.medium {
-  background: linear-gradient(
-    90deg,
-    #e38a18 0%,
-    #f5b63f 100%
-  );
+  background:
+    linear-gradient(
+      90deg,
+      #60a5fa 0%,
+      #2563eb 50%,
+      #1e40af 100%
+    );
 
   box-shadow:
-    0 2px 8px rgba(239, 166, 45, .22);
+    0 2px 8px rgba(37, 99, 235, .22);
 }
 
+/* الأحمر أصبح تدرج أزرق */
 .progress-bar-fill.low {
-  background: linear-gradient(
-    90deg,
-    #d94352 0%,
-    #ed6874 100%
-  );
+  background:
+    linear-gradient(
+      90deg,
+      #93c5fd 0%,
+      #3b82f6 50%,
+      #1d4ed8 100%
+    );
 
   box-shadow:
-    0 2px 8px rgba(226, 77, 90, .22);
+    0 2px 8px rgba(59, 130, 246, .22);
 }
 
 .progress-bar-fill::after {
@@ -722,11 +686,12 @@
   position: absolute;
   inset: 0;
 
-  background: linear-gradient(
-    180deg,
-    rgba(255,255,255,.22),
-    transparent 60%
-  );
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.22),
+      transparent 60%
+    );
 
   pointer-events: none;
 }
@@ -743,7 +708,6 @@
 
   font-size: 11px;
   font-weight: 800;
-
   line-height: 1;
 
   z-index: 2;
@@ -758,7 +722,6 @@
   font-weight: 800;
 }
 
-
 /* =========================================================
    TABLE
    ========================================================= */
@@ -770,47 +733,44 @@
 
 table {
   width: 100%;
-
   border-collapse: collapse;
+}
 
-  th,
-  td {
-    padding: 15px 18px;
+table th,
+table td {
+  padding: 15px 18px;
 
-    border-bottom: 1px solid #edf1f5;
+  border-bottom: 1px solid #edf1f5;
 
-    text-align: right;
+  text-align: right;
+  white-space: nowrap;
+}
 
-    white-space: nowrap;
-  }
+table th {
+  background: #f8fafc;
+  color: #4a5a72;
 
-  th {
-    background: #f8fafc;
+  font-size: 12px;
+  font-weight: 800;
+}
 
-    color: #4a5a72;
+table td {
+  color: #34445c;
 
-    font-size: 12px;
-    font-weight: 800;
-  }
+  font-size: 13px;
+  font-weight: 500;
+}
 
-  td {
-    color: #34445c;
+table tbody tr {
+  transition: background .15s ease;
+}
 
-    font-size: 13px;
-    font-weight: 500;
-  }
+table tbody tr:hover {
+  background: #fafcff;
+}
 
-  tbody tr {
-    transition: background .15s ease;
-
-    &:hover {
-      background: #fafcff;
-    }
-
-    &:last-child td {
-      border-bottom: 0;
-    }
-  }
+table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 .records-count {
@@ -819,7 +779,6 @@ table {
   border-radius: 20px;
 
   background: #f1f5fa;
-
   color: #4c5c74;
 
   font-size: 11px;
@@ -829,44 +788,42 @@ table {
 .trainee-cell {
   display: flex;
   align-items: center;
-
   gap: 11px;
+}
 
-  .avatar {
-    width: 36px;
-    height: 36px;
+.trainee-cell .avatar {
+  width: 36px;
+  height: 36px;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-    border-radius: 50%;
+  border-radius: 50%;
 
-    background: #eaf3ff;
-    color: #1769e0;
+  background: #eaf3ff;
+  color: #1769e0;
 
-    font-size: 13px;
-    font-weight: 800;
-  }
+  font-size: 13px;
+  font-weight: 800;
+}
 
-  strong {
-    display: block;
+.trainee-cell strong {
+  display: block;
 
-    color: #1d2b40;
+  color: #1d2b40;
 
-    font-size: 13px;
-    font-weight: 700;
-  }
+  font-size: 13px;
+  font-weight: 700;
+}
 
-  small {
-    display: block;
+.trainee-cell small {
+  display: block;
+  margin-top: 3px;
 
-    margin-top: 3px;
+  color: #70809a;
 
-    color: #70809a;
-
-    font-size: 11px;
-  }
+  font-size: 11px;
 }
 
 .number-badge {
@@ -882,16 +839,18 @@ table {
 
   font-size: 12px;
   font-weight: 800;
+}
 
-  &.red {
-    background: #fff0f0;
-    color: #dc4756;
-  }
+/* الأحمر أصبح أزرق */
+.number-badge.red {
+  background: #eef2ff;
+  color: #315fd6;
+}
 
-  &.orange {
-    background: #fff5e8;
-    color: #dc8418;
-  }
+/* البرتقالي أصبح أزرق */
+.number-badge.orange {
+  background: #eaf3ff;
+  color: #2563eb;
 }
 
 .table-progress,
@@ -900,53 +859,66 @@ table {
   align-items: center;
 
   gap: 10px;
-
   min-width: 160px;
+}
 
-  .progress-track {
-    flex: 1;
-  }
+.table-progress .progress-track,
+.capacity-table-progress .progress-track {
+  flex: 1;
+}
 
-  strong {
-    min-width: 42px;
-    font-size: 12px;
-    font-weight: 800;
-  }
+.table-progress strong,
+.capacity-table-progress strong {
+  min-width: 42px;
+
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .progress-track {
   height: 9px;
 
   background: #edf1f5;
-
   border-radius: 20px;
 
   overflow: hidden;
+}
 
-  span {
-    display: block;
+.progress-track span {
+  display: block;
 
-    height: 100%;
+  height: 100%;
 
-    border-radius: inherit;
+  border-radius: inherit;
 
-    transition: width .4s ease;
+  transition: width .4s ease;
+}
 
-    &.good,
-    &.high {
-      background: #19ad64;
-    }
+.progress-track span.good,
+.progress-track span.high {
+  background: #19ad64;
+}
 
-    &.warning,
-    &.medium {
-      background: #efa62d;
-    }
+/* الأصفر أصبح أزرق */
+.progress-track span.warning,
+.progress-track span.medium {
+  background:
+    linear-gradient(
+      90deg,
+      #60a5fa,
+      #2563eb
+    );
+}
 
-    &.danger,
-    &.low {
-      background: #e24d5a;
-    }
-  }
+/* الأحمر أصبح أزرق */
+.progress-track span.danger,
+.progress-track span.low {
+  background:
+    linear-gradient(
+      90deg,
+      #93c5fd,
+      #1d4ed8
+    );
 }
 
 .status-pill {
@@ -965,16 +937,17 @@ table {
   color: #16509b;
 }
 
+/* الأصفر أصبح أزرق */
 .warning-pill {
-  background: #fff5e7;
-  color: #d98718;
+  background: #eaf3ff;
+  color: #2563eb;
 }
 
+/* الأحمر أصبح أزرق */
 .danger-pill {
-  background: #fff0f1;
-  color: #d94855;
+  background: #eef2ff;
+  color: #315fd6;
 }
-
 
 /* =========================================================
    ACHIEVEMENT CHART
@@ -994,15 +967,11 @@ table {
   background: #fff;
 
   border: 1px solid #dfe7f1;
-
   border-radius: 14px;
 
   box-shadow:
     0 8px 25px rgba(30, 55, 90, .06);
 }
-
-
-/* HEADER */
 
 .achievement-chart-header {
   display: flex;
@@ -1014,23 +983,23 @@ table {
   padding-bottom: 20px;
 
   border-bottom: 1px solid #edf1f6;
+}
 
-  h2 {
-    margin: 0;
+.achievement-chart-header h2 {
+  margin: 0;
 
-    color: #1d2b40;
+  color: #1d2b40;
 
-    font-size: 19px;
-    font-weight: 800;
-  }
+  font-size: 19px;
+  font-weight: 800;
+}
 
-  p {
-    margin: 5px 0 0;
+.achievement-chart-header p {
+  margin: 5px 0 0;
 
-    color: #70809a;
+  color: #70809a;
 
-    font-size: 12px;
-  }
+  font-size: 12px;
 }
 
 .achievement-summary-badge {
@@ -1043,33 +1012,33 @@ table {
   background: #eef5ff;
 
   border: 1px solid #d8e7ff;
-
   border-radius: 12px;
-
-  span {
-    display: block;
-
-    color: #556680;
-
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  strong {
-    display: block;
-
-    margin-top: 4px;
-
-    color: #1769e0;
-
-    font-size: 26px;
-    line-height: 1;
-    font-weight: 800;
-  }
 }
 
+.achievement-summary-badge span {
+  display: block;
 
-/* INSIGHTS */
+  color: #556680;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.achievement-summary-badge strong {
+  display: block;
+
+  margin-top: 4px;
+
+  color: #1769e0;
+
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+/* =========================================================
+   INSIGHTS
+   ========================================================= */
 
 .achievement-insights {
   display: grid;
@@ -1095,67 +1064,67 @@ table {
   background: #f9fbfd;
 
   border: 1px solid #edf1f5;
-
   border-radius: 10px;
-
-  .insight-dot {
-    flex: 0 0 auto;
-
-    width: 11px;
-    height: 11px;
-
-    border-radius: 50%;
-
-    &.green {
-      background: #19ad64;
-    }
-
-    &.orange {
-      background: #efa62d;
-    }
-
-    &.blue {
-      background: #1769e0;
-    }
-  }
-
-  div {
-    flex: 1;
-    min-width: 0;
-  }
-
-  small {
-    display: block;
-
-    margin-bottom: 4px;
-
-    color: #70809a;
-
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  strong {
-    display: block;
-
-    overflow: hidden;
-
-    color: #1d2b40;
-
-    font-size: 13px;
-    font-weight: 700;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  b {
-    font-size: 15px;
-  }
 }
 
+.insight-item .insight-dot {
+  flex: 0 0 auto;
 
-/* CHART */
+  width: 11px;
+  height: 11px;
+
+  border-radius: 50%;
+}
+
+.insight-item .insight-dot.green {
+  background: #19ad64;
+}
+
+.insight-item .insight-dot.orange {
+  background: #2563eb;
+}
+
+.insight-item .insight-dot.blue {
+  background: #1769e0;
+}
+
+.insight-item div {
+  flex: 1;
+  min-width: 0;
+}
+
+.insight-item small {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #70809a;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.insight-item strong {
+  display: block;
+
+  overflow: hidden;
+
+  color: #1d2b40;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.insight-item b {
+  font-size: 15px;
+}
+
+/* =========================================================
+   CHART
+   ========================================================= */
 
 .achievement-chart {
   position: relative;
@@ -1178,20 +1147,21 @@ table {
     );
 
   border: 1px solid #edf1f5;
-
   border-radius: 14px;
 
   overflow: hidden;
 }
 
-
-/* Y AXIS */
+/* =========================================================
+   Y AXIS
+   ========================================================= */
 
 .chart-y-axis {
   position: absolute;
 
   top: 18px;
   bottom: 60px;
+
   right: auto;
   left: 12px;
 
@@ -1202,19 +1172,20 @@ table {
   justify-content: space-between;
 
   z-index: 4;
-
-  span {
-    color: #5d6d85;
-
-    font-size: 11px;
-    font-weight: 700;
-
-    text-align: right;
-  }
 }
 
+.chart-y-axis span {
+  color: #5d6d85;
 
-/* GRID */
+  font-size: 11px;
+  font-weight: 700;
+
+  text-align: right;
+}
+
+/* =========================================================
+   GRID
+   ========================================================= */
 
 .chart-grid {
   position: absolute;
@@ -1243,8 +1214,9 @@ table {
   border-top: 1px dashed #e2e8f0;
 }
 
-
-/* TARGET 90% */
+/* =========================================================
+   TARGET 90%
+   ========================================================= */
 
 .target-indicator {
   position: absolute;
@@ -1274,15 +1246,15 @@ table {
   border-radius: 6px;
 
   background: #eaf3ff;
-
   color: #1769e0;
 
   font-size: 11px;
   font-weight: 800;
 }
 
-
-/* BARS AREA */
+/* =========================================================
+   BARS AREA
+   ========================================================= */
 
 .bars-area {
   position: absolute;
@@ -1293,6 +1265,7 @@ table {
   left: 75px;
 
   display: flex;
+
   align-items: flex-end;
   justify-content: space-around;
 
@@ -1301,19 +1274,20 @@ table {
   z-index: 3;
 }
 
-
-/* BAR COLUMN */
+/* =========================================================
+   BAR COLUMN
+   ========================================================= */
 
 .achievement-bar-column {
   position: relative;
 
   width: 100%;
   max-width: 120px;
-
   height: 350px;
 
   display: flex;
   flex-direction: column;
+
   align-items: center;
   justify-content: flex-end;
 
@@ -1321,15 +1295,17 @@ table {
   --bar-delay: 0s;
 }
 
-
-/* VALUE ABOVE */
+/* =========================================================
+   VALUE ABOVE
+   ========================================================= */
 
 .bar-percentage {
   position: absolute;
 
-  bottom: calc(
-    var(--bar-height) + 12px
-  );
+  bottom:
+    calc(
+      var(--bar-height) + 12px
+    );
 
   color: #1d2b40;
 
@@ -1341,8 +1317,9 @@ table {
   transition: bottom .7s ease;
 }
 
-
-/* BAR */
+/* =========================================================
+   BAR
+   ========================================================= */
 
 .achievement-bar {
   position: absolute;
@@ -1350,7 +1327,6 @@ table {
   bottom: 42px;
 
   width: 62px;
-
   height: var(--bar-height);
 
   min-height: 5px;
@@ -1386,61 +1362,70 @@ table {
     translateY(-3px);
 }
 
-
 /* =========================================================
-   ACHIEVEMENT BAR COLORS (Harmonious Luxury Blue Palette)
+   ACHIEVEMENT BAR COLORS
+   جميعها تدرجات أزرق
    ========================================================= */
 
 .achievement-bar.blue {
-  background: linear-gradient(
-    180deg,
-    #3b82f6 0%,
-    #1e40af 100%
-  ) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #3b82f6 0%,
+      #1e40af 100%
+    ) !important;
 }
 
 .achievement-bar.cyan {
-  background: linear-gradient(
-    180deg,
-    #06b6d4 0%,
-    #0e7490 100%
-  ) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #38bdf8 0%,
+      #0369a1 100%
+    ) !important;
 }
 
 .achievement-bar.purple {
-  background: linear-gradient(
-    180deg,
-    #6366f1 0%,
-    #3730a3 100%
-  ) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #818cf8 0%,
+      #4338ca 100%
+    ) !important;
 }
 
+/* كان اسمه orange لكن أصبح أزرق */
 .achievement-bar.orange {
-  background: linear-gradient(
-    180deg,
-    #93c5fd 0%,
-    #2563eb 100%
-  ) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #60a5fa 0%,
+      #2563eb 100%
+    ) !important;
 }
 
+/* كان اسمه red لكن أصبح أزرق */
 .achievement-bar.red {
-  background: linear-gradient(
-    180deg,
-    #818cf8 0%,
-    #1e1b4b 100%
-  ) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #93c5fd 0%,
+      #1d4ed8 100%
+    ) !important;
 }
 
 .achievement-bar.green {
-  background: linear-gradient(
-    180deg,
-    #2563eb 0%,
-    #172554 100%
-  ) !important;
+  background:
+    linear-gradient(
+      180deg,
+      #2563eb 0%,
+      #172554 100%
+    ) !important;
 }
 
-
-/* SHINE */
+/* =========================================================
+   SHINE
+   ========================================================= */
 
 .bar-shine {
   position: absolute;
@@ -1461,14 +1446,14 @@ table {
   pointer-events: none;
 }
 
-
-/* VALUE INSIDE */
+/* =========================================================
+   VALUE INSIDE
+   ========================================================= */
 
 .bar-value-inside {
   position: absolute;
 
   left: 50%;
-
   top: 50%;
 
   transform:
@@ -1486,8 +1471,9 @@ table {
     0 1px 3px rgba(0,0,0,.15);
 }
 
-
-/* LABEL */
+/* =========================================================
+   LABEL
+   ========================================================= */
 
 .bar-program-name {
   position: absolute;
@@ -1500,29 +1486,30 @@ table {
 
   font-size: 11px;
   font-weight: 700;
-
   line-height: 1.4;
 
   text-align: center;
 }
 
+/* =========================================================
+   HIGHLIGHT
+   ========================================================= */
 
-/* HIGHLIGHT */
-.achievement-bar-column.highlighted {
-
-  .achievement-bar {
-    box-shadow:
-      0 0 0 2px rgba(25,173,100,.12),
-      0 10px 22px rgba(25,173,100,.18);
-  }
-
-  .bar-percentage {
-    color: #159b59;
-  }
+.achievement-bar-column.highlighted .achievement-bar {
+  box-shadow:
+    0 0 0 2px rgba(25,173,100,.12),
+    0 10px 22px rgba(25,173,100,.18);
 }
 
-@keyframes growBar {
+.achievement-bar-column.highlighted .bar-percentage {
+  color: #159b59;
+}
 
+/* =========================================================
+   ANIMATION
+   ========================================================= */
+
+@keyframes growBar {
   from {
     height: 0;
     opacity: .3;
@@ -1532,11 +1519,11 @@ table {
     height: var(--bar-height);
     opacity: 1;
   }
-
 }
 
-
-/* FOOTER */
+/* =========================================================
+   FOOTER
+   ========================================================= */
 
 .achievement-chart-footer {
   display: flex;
@@ -1567,14 +1554,15 @@ table {
   height: 10px;
 
   border-radius: 50%;
+}
 
-  &.target {
-    background: #19ad64;
-  }
+.legend-dot.target {
+  background: #19ad64;
+}
 
-  &.normal {
-    background: #efa62d;
-  }
+/* الأصفر أصبح أزرق */
+.legend-dot.normal {
+  background: #2563eb;
 }
 
 .legend-line {
@@ -1583,7 +1571,6 @@ table {
   border-top:
     2px dashed #1769e0;
 }
-
 
 /* =========================================================
    CAPACITY
@@ -1597,21 +1584,21 @@ table {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
 
-  h2 {
-    margin: 0;
+.capacity-top h2 {
+  margin: 0;
 
-    font-size: 19px;
-    font-weight: 800;
-  }
+  font-size: 19px;
+  font-weight: 800;
+}
 
-  p {
-    margin: 5px 0 0;
+.capacity-top p {
+  margin: 5px 0 0;
 
-    color: #70809a;
+  color: #70809a;
 
-    font-size: 12px;
-  }
+  font-size: 12px;
 }
 
 .tag {
@@ -1620,7 +1607,6 @@ table {
   border-radius: 20px;
 
   background: #eaf3ff;
-
   color: #1769e0;
 
   font-size: 11px;
@@ -1642,34 +1628,31 @@ table {
   background: #fff;
 
   border: 1px solid #e1e8f2;
-
   border-radius: 14px;
 
   box-shadow:
     0 5px 18px rgba(31, 56, 90, .05);
 }
 
-.capacity-big-number {
-  strong {
-    display: block;
+.capacity-big-number strong {
+  display: block;
 
-    color: #1769e0;
+  color: #1769e0;
 
-    font-size: 46px;
-    line-height: 1;
-    font-weight: 800;
-  }
+  font-size: 46px;
+  line-height: 1;
+  font-weight: 800;
+}
 
-  span {
-    display: block;
+.capacity-big-number span {
+  display: block;
 
-    margin-top: 8px;
+  margin-top: 8px;
 
-    color: #70809a;
+  color: #70809a;
 
-    font-size: 12px;
-    font-weight: 600;
-  }
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .capacity-progress {
@@ -1686,11 +1669,11 @@ table {
 
   font-size: 12px;
   font-weight: 600;
+}
 
-  strong {
-    color: #1d2b40;
-    font-weight: 800;
-  }
+.capacity-progress-top strong {
+  color: #1d2b40;
+  font-weight: 800;
 }
 
 .capacity-progress-track {
@@ -1701,23 +1684,23 @@ table {
   background: #edf1f6;
 
   border-radius: 20px;
+}
 
-  span {
-    display: block;
+.capacity-progress-track span {
+  display: block;
 
-    height: 100%;
+  height: 100%;
 
-    background:
-      linear-gradient(
-        90deg,
-        #1769e0,
-        #23a9ca
-      );
+  background:
+    linear-gradient(
+      90deg,
+      #1769e0,
+      #23a9ca
+    );
 
-    border-radius: inherit;
+  border-radius: inherit;
 
-    transition: width .6s ease;
-  }
+  transition: width .6s ease;
 }
 
 .capacity-stats {
@@ -1733,49 +1716,51 @@ table {
   align-items: center;
 
   gap: 10px;
-
-  .stat-dot {
-    width: 10px;
-    height: 10px;
-
-    border-radius: 50%;
-
-    &.blue {
-      background: #1769e0;
-    }
-
-    &.gray {
-      background: #b8c1cc;
-    }
-
-    &.orange {
-      background: #efa62d;
-    }
-  }
-
-  small {
-    display: block;
-
-    color: #70809a;
-
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  strong {
-    display: block;
-
-    margin-top: 3px;
-
-    color: #1d2b40;
-
-    font-size: 16px;
-    font-weight: 800;
-  }
 }
 
+.capacity-stat .stat-dot {
+  width: 10px;
+  height: 10px;
 
-/* DONUT */
+  border-radius: 50%;
+}
+
+.capacity-stat .stat-dot.blue {
+  background: #1769e0;
+}
+
+.capacity-stat .stat-dot.gray {
+  background: #b8c1cc;
+}
+
+/* الأصفر أصبح أزرق */
+.capacity-stat .stat-dot.orange {
+  background: #2563eb;
+}
+
+.capacity-stat small {
+  display: block;
+
+  color: #70809a;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.capacity-stat strong {
+  display: block;
+
+  margin-top: 3px;
+
+  color: #1d2b40;
+
+  font-size: 16px;
+  font-weight: 800;
+}
+
+/* =========================================================
+   DONUT
+   ========================================================= */
 
 .donut-wrap {
   position: relative;
@@ -1804,9 +1789,6 @@ table {
 .donut-ring {
   fill: none;
 
-  stroke:
-    url(#capacityGradient);
-
   stroke: #1769e0;
 
   stroke-width: 14;
@@ -1824,27 +1806,28 @@ table {
 
   display: flex;
   flex-direction: column;
+
   align-items: center;
   justify-content: center;
 
   pointer-events: none;
+}
 
-  strong {
-    color: #1769e0;
+.donut-center strong {
+  color: #1769e0;
 
-    font-size: 32px;
-    line-height: 1;
-    font-weight: 800;
-  }
+  font-size: 32px;
+  line-height: 1;
+  font-weight: 800;
+}
 
-  span {
-    margin-top: 6px;
+.donut-center span {
+  margin-top: 6px;
 
-    color: #70809a;
+  color: #70809a;
 
-    font-size: 11px;
-    font-weight: 600;
-  }
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .program-dot {
@@ -1866,12 +1849,12 @@ table {
 .remaining-value {
   color: #2d3c54;
   font-weight: 800;
-
-  &.low {
-    color: #df4d5b;
-  }
 }
 
+/* الأحمر أصبح أزرق */
+.remaining-value.low {
+  color: #315fd6;
+}
 
 /* =========================================================
    EMPTY
@@ -1898,10 +1881,8 @@ table {
   background: #fff;
 
   border: 1px solid #e1e8f2;
-
   border-radius: 14px;
 }
-
 
 /* =========================================================
    RESPONSIVE
@@ -1921,7 +1902,6 @@ table {
   .donut-wrap {
     margin: 0 auto;
   }
-
 }
 
 @media (max-width: 800px) {
@@ -1937,10 +1917,10 @@ table {
 
   .header-actions {
     justify-content: stretch;
+  }
 
-    .btn {
-      flex: 1;
-    }
+  .header-actions .btn {
+    flex: 1;
   }
 
   .tabs-wrapper {
@@ -1969,7 +1949,6 @@ table {
 
   .bar-program-name {
     width: 90px;
-
     font-size: 10px;
   }
 
@@ -1979,14 +1958,12 @@ table {
 
   .overview-strip {
     grid-template-columns: 1fr 1fr;
-
     gap: 16px;
   }
 
   .overview-divider {
     display: none;
   }
-
 }
 
 @media (max-width: 550px) {
@@ -1997,10 +1974,10 @@ table {
 
   .header-actions {
     flex-wrap: wrap;
+  }
 
-    .btn {
-      flex: 1 1 100%;
-    }
+  .header-actions .btn {
+    flex: 1 1 100%;
   }
 
   .achievement-chart {
@@ -2017,7 +1994,6 @@ table {
 
   .bar-program-name {
     width: 70px;
-
     font-size: 9px;
   }
 
@@ -2025,5 +2001,17 @@ table {
     flex-direction: column;
     gap: 14px;
   }
+}
 
+/* =========================================================
+   UNIFIED COMPANY PORTAL PAGE TITLE
+   نفس لون عنوان "المتدربون"
+   ========================================================= */
+
+.header-title-wrap h1 {
+  font-family: 'Cairo', sans-serif !important;
+  font-size: 24px !important;
+  font-weight: 800 !important;
+  color: #0A1172 !important;
+  line-height: 1.3;
 }

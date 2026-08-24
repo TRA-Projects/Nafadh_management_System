@@ -964,3 +964,55 @@
   }
 
 }
+
+/* =========================================================
+   FONT AWESOME ICONS / LOADING
+========================================================= */
+
+.loading-state strong {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.loading-state span {
+  color: #8b98a8;
+  font-size: 11px;
+}
+
+.loading-icon,
+.empty-icon {
+  color: #0098aa;
+}
+
+.batch-dates .date-icon {
+  color: #0098aa;
+  font-size: 11px;
+}
+
+.select-batch-btn i {
+  font-size: 11px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.action-icon.blue {
+  color: #2563eb;
+}
+
+.action-icon.orange {
+  color: #d97706;
+}
+
+.action-icon.green {
+  color: #16a34a;
+}
+
+.action-icon.purple {
+  color: #7c3aed;
+}

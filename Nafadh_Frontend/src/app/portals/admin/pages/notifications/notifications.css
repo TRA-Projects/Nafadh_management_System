@@ -7,7 +7,7 @@
   --title-color: #1f2430;
   --desc-color: #8a8f9c;
   --time-color: #8a8f9c;
-  --accent: #12b3a8;
+  --accent: #0A1172;
   --hover-bg: #f7f8fb;
   --unread-dot: #0e9f8b;
   --unread-bg: #eef9f7;
@@ -190,7 +190,7 @@
 }
 
 .btn-export:hover:not(:disabled) {
-  background: #0f9d93;
+  background: #191f74b7;
 }
 
 .btn-mark-all {

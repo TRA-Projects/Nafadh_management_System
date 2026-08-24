@@ -13,10 +13,15 @@ namespace Nafadh_Backend.Services
     public class CertificateService : ICertificateService
     {
         private readonly ICertificateRepository _repository;
+        private readonly IEvaluationRepository _evaluationRepository;
 
-        public CertificateService(ICertificateRepository repository)
+        public CertificateService(ICertificateRepository repository,
+                                 IEvaluationRepository evaluationRepository)
+
         {
             _repository = repository;
+            _evaluationRepository = evaluationRepository;
+
         }
 
         // TODO: implement business-logic contract methods for this entity
@@ -44,20 +49,64 @@ namespace Nafadh_Backend.Services
         }
 
         // Create certificate
-        public async Task<CertificateOutputDTO> AddCertificateAsync(CertificateInputDTO dto)
+        public async Task<CertificateOutputDTO> AddCertificateAsync(
+            CertificateInputDTO dto)
         {
+            // =========================================================
+            // 1. التحقق من درجة المتدرب قبل إصدار الشهادة
+            // =========================================================
 
-            NFD_Certificate certificate = new NFD_Certificate
+            var averageScore =
+                await _evaluationRepository
+                    .GetAverageScoreByEnrollmentIdAsync(dto.EnrollmentId);
+
+            // إذا كانت الدرجة أقل من 50% يمنع إصدار الشهادة
+            if (averageScore < 50)
             {
-                Type = dto.Type,
-                IssueDate = dto.IssueDate,
-                FileUrl = dto.FileUrl,
-                EnrollmentId = dto.EnrollmentId
-            };
+                throw new InvalidOperationException(
+                    $"لا يمكن إصدار الشهادة. درجة المتدرب {averageScore:F2}% وهي أقل من الحد الأدنى المطلوب 50%."
+                );
+            }
 
+            // =========================================================
+            // 2. منع إصدار شهادة مكررة
+            // =========================================================
+
+            var existing =
+                await _repository
+                    .GetCertificateByEnrollmentIdAsync(dto.EnrollmentId);
+
+            if (existing != null)
+            {
+                return new CertificateOutputDTO
+                {
+                    CertificateId = existing.CertificateId,
+                    EnrollmentId = existing.EnrollmentId,
+                    IssueDate = existing.IssueDate,
+                    Type = existing.Type,
+                    FileUrl = existing.FileUrl
+                };
+            }
+
+            // =========================================================
+            // 3. إنشاء الشهادة
+            // =========================================================
+
+            var certificate = new NFD_Certificate
+            {
+                EnrollmentId = dto.EnrollmentId,
+                Type = dto.Type,
+                IssueDate = dto.IssueDate == default
+                    ? DateTime.UtcNow
+                    : dto.IssueDate,
+                FileUrl = dto.FileUrl
+            };
 
             await _repository.AddCertificateAsync(certificate);
 
+            // =========================================================
+            // 4. إرجاع الشهادة
+            // =========================================================
 
             return new CertificateOutputDTO
             {

@@ -2,7 +2,7 @@ import { Component, OnInit, AfterViewInit, OnDestroy, signal } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
-import { AuditLogDto, DashboardChartsDto } from '../../../../core/models/dtos';
+import { AuditLogDto, DashboardChartsDto, BatchDto } from '../../../../core/models/dtos';
 import Chart, { TooltipItem } from 'chart.js/auto';
 
 @Component({
@@ -14,11 +14,18 @@ import Chart, { TooltipItem } from 'chart.js/auto';
 })
 export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   recentActivity = signal<AuditLogDto[]>([]);
+  allActivity = signal<AuditLogDto[]>([]);
+  showAllActivity = signal<boolean>(false);
+
   charts = signal<DashboardChartsDto | null>(null);
   traineeCount = signal(3891);
   companyCount = signal(94);
   batchCount = signal(32);
-  selectedBatch = signal('12');
+  
+  // إدارة السنوات والدفعات ديناميكياً
+  allBatches = signal<BatchDto[]>([]);
+  availableYears = signal<string[]>([]);
+  selectedYear = signal<string>(new Date().getFullYear().toString());
 
   private barChartInstance: Chart | null = null;
   private donutChartInstance: Chart | null = null;
@@ -30,12 +37,15 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit() {
     this.api.getRecentAudit().subscribe((data) => {
+      // ترتيب سجل الأنشطة تنازلياً من الأحدث إلى الأقدم
       const sorted = (data || []).sort((a: any, b: any) => {
         const timeA = new Date(a.timestamp ?? a.createdAt ?? 0).getTime();
         const timeB = new Date(b.timestamp ?? b.createdAt ?? 0).getTime();
         return timeB - timeA;
       });
-      this.recentActivity.set(sorted.slice(0, 10));
+      
+      this.allActivity.set(sorted);
+      this.updateDisplayedActivity();
     });
 
     this.api.getDashboardCharts().subscribe((c) => {
@@ -45,7 +55,28 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
 
     this.api.getTrainees({ pageSize: 1 }).subscribe((r) => this.traineeCount.set(r.totalCount ?? 3891));
     this.api.getCompanies().subscribe((c) => this.companyCount.set(c.length || 94));
-    this.api.getBatches().subscribe((b) => this.batchCount.set(b.length || 32));
+    
+    // جلب الدفعات وحساب السنوات والمسارات ديناميكياً
+    this.api.getBatches().subscribe((b) => {
+      const list = b || [];
+      this.batchCount.set(list.length || 32);
+      this.allBatches.set(list);
+
+      // استخراج السنوات الفريدة من startDate وتجميعها
+      const years = Array.from(
+        new Set(
+          list
+            .map((batch) => batch.startDate ? new Date(batch.startDate).getFullYear().toString() : null)
+            .filter((y): y is string => y !== null)
+        )
+      ).sort((a, b) => b.localeCompare(a));
+
+      if (years.length > 0) {
+        this.availableYears.set(years);
+        this.selectedYear.set(years[0]);
+        this.updateDonutChartData(years[0]);
+      }
+    });
   }
 
   ngAfterViewInit() {
@@ -58,9 +89,23 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     if (this.donutChartInstance) this.donutChartInstance.destroy();
   }
 
-  onBatchChange(event: Event) {
+  // التبديل بين التوب 10 وعرض كافة السجلات
+  toggleShowAllActivity() {
+    this.showAllActivity.update(val => !val);
+    this.updateDisplayedActivity();
+  }
+
+  private updateDisplayedActivity() {
+    if (this.showAllActivity()) {
+      this.recentActivity.set(this.allActivity());
+    } else {
+      this.recentActivity.set(this.allActivity().slice(0, 10));
+    }
+  }
+
+  onYearChange(event: Event) {
     const val = (event.target as HTMLSelectElement).value;
-    this.selectedBatch.set(val);
+    this.selectedYear.set(val);
     this.updateDonutChartData(val);
   }
 
@@ -163,10 +208,10 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.donutChartInstance = new Chart(ctx, {
       type: 'doughnut',
       data: {
-        labels: ['أمن معلومات', 'علوم حاسب', 'نظم معلومات', 'هندسة برمجيات', 'هندسة شبكات'],
+        labels: [],
         datasets: [{
-          data: [30, 20, 25, 15, 10],
-          backgroundColor: ['#ef4444', '#3b82f6', '#eab308', '#10b981', '#1e293b']
+          data: [],
+          backgroundColor: ['#ef4444', '#3b82f6', '#eab308', '#10b981', '#1e293b', '#8b5cf6', '#ec4899']
         }]
       },
       options: {
@@ -184,10 +229,10 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
             displayColors: false,
             callbacks: {
               title: () => '',
-              label: (context: TooltipItem<'doughnut'>) => `${context.label || ''} : ${context.raw || 0} متدرب`,
+              label: (context: TooltipItem<'doughnut'>) => `${context.label || ''} : ${context.raw || 0}`,
               labelTextColor: (context: TooltipItem<'doughnut'>) => {
                 const colors = context.dataset.backgroundColor as string[];
-                return colors[context.dataIndex];
+                return colors[context.dataIndex % colors.length];
               }
             }
           }
@@ -204,14 +249,30 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.barChartInstance.update();
   }
 
-  private updateDonutChartData(batchId: string) {
+  private updateDonutChartData(year: string) {
     if (!this.donutChartInstance) return;
-    const dummyData: Record<string, number[]> = {
-      '12': [30, 20, 25, 15, 10],
-      '11': [15, 25, 30, 20, 10],
-      '10': [20, 20, 20, 20, 20]
-    };
-    this.donutChartInstance.data.datasets[0].data = dummyData[batchId] || [20, 20, 20, 20, 20];
+
+    const yearBatches = this.allBatches().filter(b => 
+      b.startDate && new Date(b.startDate).getFullYear().toString() === year
+    );
+
+    const trackCounts: Record<string, number> = {};
+    yearBatches.forEach(b => {
+      const track = b.trackName || 'غير محدد';
+      trackCounts[track] = (trackCounts[track] || 0) + 1;
+    });
+
+    const labels = Object.keys(trackCounts);
+    const dataValues = Object.values(trackCounts);
+
+    if (labels.length > 0) {
+      this.donutChartInstance.data.labels = labels;
+      this.donutChartInstance.data.datasets[0].data = dataValues;
+    } else {
+      this.donutChartInstance.data.labels = ['لا توجد بيانات'];
+      this.donutChartInstance.data.datasets[0].data = [0];
+    }
+
     this.donutChartInstance.update();
   }
 

@@ -1,137 +1,303 @@
-<section class="program-details-page" dir="rtl">
-  <button type="button" class="back-btn" (click)="goBack()">
-    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-    العودة إلى البرامج
-  </button>
+<div class="program-details-page">
 
-  <div class="state-card" *ngIf="loading()">
-    <span class="spinner"></span> جاري تحميل تفاصيل البرنامج...
+
+ <!-- زر العودة مع تفعيل التنقل -->
+<button class="back-btn" type="button" (click)="goBack()">
+  <span>العودة للبرامج</span>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+</button>
+
+  <!-- الهيدر أو البطل (Hero Section) -->
+  <div class="card card-pad hero" style="--program-color: #00338d;">
+    <div class="program-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <div class="hero-copy">
+      <h2>تطوير الواجهات البرمجية والأنظمة</h2>
+      <p>برنامج تدريبي متقدم يركز على بناء وتطوير الأنظمة الخلفية وإدارتها بكفاءة عالية.</p>
+      <div class="chips">
+        <span class="chip"><i></i> دبلوم تقني</span>
+        <span class="chip pending"><i></i> قيد التنفيذ</span>
+        <span class="chip gray">النسخة 2.0</span>
+      </div>
+    </div>
   </div>
 
-  <div class="state-card error" *ngIf="!loading() && error()">
-    {{ error() }}
-    <button type="button" (click)="goBack()">العودة</button>
+  <!-- الإحصائيات السريعة (Stats Grid) -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <small>إجمالي المتدربين</small>
+      <strong>42</strong>
+      <span>متدرب مسجل</span>
+    </div>
+    <div class="stat-card">
+      <small>نسبة الإنجاز</small>
+      <strong class="ok">88%</strong>
+      <span>معدل عام ممتاز</span>
+    </div>
+    <div class="stat-card">
+      <small>عدد المشاريع</small>
+      <strong>12</strong>
+      <span>مشروع برمجتي</span>
+    </div>
+    <div class="stat-card">
+      <small>الساعات التدريبية</small>
+      <strong>160</strong>
+      <span>ساعة معتمدة</span>
+    </div>
+    <div class="stat-card">
+      <small>التقييم العام</small>
+      <strong class="ok">4.9</strong>
+      <span>من 5.0 نجوم</span>
+    </div>
   </div>
 
-  <ng-container *ngIf="!loading() && !error() && program() as p">
-    <article class="card hero" [style.--program-color]="p.color">
-      <div class="program-icon">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M12 3v18M2 9h20"/></svg>
+  <!-- قسم تفاصيل الطاقة الاستيعابية والتوزيع -->
+  <div class="two-col">
+    <!-- بطاقة الطاقة الاستيعابية -->
+    <div class="card card-pad capacity-card-modern">
+      <div class="card-title">
+        استخدام الطاقة الاستيعابية
+        <span class="pulse-badge">متاح للتسجيل</span>
       </div>
-      <div class="hero-copy">
-        <h2>{{ p.title }}</h2>
-        <p>{{ p.description }}</p>
-        <div class="chips">
-          <span class="chip" [class.pending]="!p.approved"><i></i>{{ p.approved ? 'معتمد من الهيئة' : 'قيد الاعتماد' }}</span>
-          <span class="chip gray">{{ p.department }}</span>
-          <span class="chip gray">{{ p.durationWeeks }} أسبوعًا</span>
+      
+      <div class="capacity-bar-wrapper">
+        <div class="bar-info">
+          <span>تم شغل 42 من 50 مقعد</span>
+          <span>84%</span>
+        </div>
+        <div class="main-progress-bar">
+          <div class="progress-fill-gradient" style="width: 84%; background: linear-gradient(90deg, #00338d, #0ea5e9);"></div>
         </div>
       </div>
-    </article>
 
-    <div class="stats-grid">
-      <article class="stat-card"><span>الطاقة الاستيعابية</span><strong>{{ p.capacity }}</strong><small>مقعد معتمد</small></article>
-      <article class="stat-card"><span>الإشغال الحالي</span><strong [style.color]="p.color">{{ p.occupied }}</strong><small>{{ p.percent }}% من الطاقة</small></article>
-      <article class="stat-card"><span>المقاعد المتاحة</span><strong class="ok">{{ p.available }}</strong><small>يمكن استقبال مرشحين</small></article>
-      <article class="stat-card"><span>المشرفون</span><strong>{{ supervisorCount() }}</strong><small>{{ supervisorCount() ? 'مشرفون مرتبطون بالبرنامج' : 'لم يُسند مشرف' }}</small></article>
-      <article class="stat-card"><span>متوسط الأداء</span><strong>{{ averageProgress() }}%</strong><small>{{ trainees().length }} متدربًا مسجلًا</small></article>
+      <div class="colored-bars-grid">
+        <div class="bar-card-item used-col">
+          <div class="bar-header">
+            <span class="dot-indicator" style="background: #00338d;"></span>
+            <span class="label">المقاعد المشغولة</span>
+          </div>
+          <div class="bar-body">
+            <strong>42</strong>
+            <small>متدرب</small>
+          </div>
+          <div class="mini-col-progress">
+            <i style="width: 84%; background: #00338d;"></i>
+          </div>
+        </div>
+
+        <div class="bar-card-item available-col">
+          <div class="bar-header">
+            <span class="dot-indicator bg-emerald"></span>
+            <span class="label">المقاعد المتاحة</span>
+          </div>
+          <div class="bar-body">
+            <strong class="ok">8</strong>
+            <small>مقاعد فارغة</small>
+          </div>
+          <div class="mini-col-progress">
+            <i class="bg-emerald" style="width: 16%;"></i>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="two-col">
-      <article class="card card-pad capacity-card-modern">
-        <div class="card-title">
-          استخدام الطاقة الاستيعابية والتوزيع
-          <span class="pulse-badge">محدث فوراً</span>
-        </div>
-        
-        <div class="capacity-bar-wrapper">
-          <div class="bar-info">
-            <span>معدل الإشغال الكلي</span>
-            <b class="text-gradient" [style.color]="p.color">{{ p.percent }}% مشغول</b>
-          </div>
-          <div class="main-progress-bar">
-            <div class="progress-fill-gradient" [style.width.%]="p.percent" [style.background]="p.color"></div>
-          </div>
-        </div>
-
-        <div class="colored-bars-grid">
-          <div class="bar-card-item used-col">
-            <div class="bar-header">
-              <span class="dot-indicator" [style.background]="p.color"></span>
-              <span class="label">المقاعد المشغولة</span>
-            </div>
-            <div class="bar-body">
-              <strong [style.color]="p.color">{{ p.occupied }}</strong>
-              <small>مقعد مخصص</small>
-            </div>
-            <div class="mini-col-progress">
-              <i [style.width.%]="p.percent" [style.background]="p.color"></i>
-            </div>
-          </div>
-
-          <div class="bar-card-item available-col">
-            <div class="bar-header">
-              <span class="dot-indicator bg-emerald"></span>
-              <span class="label">المقاعد المتاحة</span>
-            </div>
-            <div class="bar-body">
-              <strong class="ok">{{ p.available }}</strong>
-              <small>جاهزة للاستقبال</small>
-            </div>
-            <div class="mini-col-progress">
-              <i class="bg-emerald" [style.width.%]="100 - p.percent"></i>
-            </div>
+    <!-- بطاقة الرسم البياني الدائري (Donut Chart) -->
+    <div class="card card-pad">
+      <div class="card-title">
+        توزيع البرامج النشطة
+        <span>نظرة عامة</span>
+      </div>
+      
+      <div class="distribution-chart-container">
+        <!-- الدائرة الملونة مع التنسيق المباشر لضمان ظهور الألوان -->
+        <div class="donut-chart-ring" style="background: conic-gradient(#0ea5e9 0deg 120deg, #6366f1 120deg 240deg, #10b981 240deg 360deg) !important;">
+          <div class="donut-inner-content">
+            <small>إجمالي البرامج</small>
+            <strong>3</strong>
+            <span class="badge-active">نشط الآن</span>
           </div>
         </div>
-      </article>
-
-      <article class="card card-pad">
-        <div class="card-title">التخصصات الأكاديمية المناسبة</div>
-        <div class="major-tags">
-          <span class="major-tag-btn" *ngIf="p.category">{{ p.category }}</span>
-          @for (department of p.department.split('، '); track department) {
-            @if (department && department !== 'غير محدد') {
-              <span class="major-tag-btn">{{ department }}</span>
-            }
-          }
-          @if (!p.category && p.department === 'غير محدد') {
-            <span class="major-tag-btn">لا توجد تخصصات محددة</span>
-          }
-        </div>
-      </article>
+      </div>
     </div>
+  </div>
 
-    <!-- مراحل الخطة التدريبية كبطاقات شبكية عصرية بدلاً من الخطوط -->
-    <article class="card card-pad section-card">
-      <div class="card-title">مراحل الخطة التدريبية <span>{{ modules().length }} مراحل · {{ p.durationWeeks }} أسبوعًا</span></div>
-      <div class="plan-cards-grid" *ngIf="modules().length; else noModules">
-        <div class="plan-step-card" *ngFor="let module of modules(); let i = index">
-          <span class="pnum" [style.background]="p.soft" [style.color]="p.color">{{ i + 1 }}</span>
-          <div class="plan-content">
-            <b>{{ module.title || module.name || ('المرحلة ' + (i + 1)) }}</b>
-            <small>المرحلة {{ i + 1 }} من {{ modules().length }}</small>
-          </div>
+  <!-- قسم خطة التدريب -->
+  <div class="card card-pad section-card">
+    <div class="card-title">مراحل الخطة التدريبية</div>
+    <div class="plan-cards-grid">
+      <div class="plan-step-card">
+        <div class="pnum" style="background: #e2f2fb; color: #00507f;">01</div>
+        <div class="plan-content">
+          <b>الأساسيات البرمجية وهياكل البيانات</b>
+          <small>المدة: 4 أسابيع - التركيز على المنطق البرمجي</small>
         </div>
       </div>
-      <ng-template #noModules><div class="empty"><b>لا توجد مراحل معرّفة</b><span>ستظهر مراحل الخطة هنا عند ربطها بالبرنامج.</span></div></ng-template>
-    </article>
-
-    <article class="card card-pad section-card">
-      <div class="card-title">متدربو البرنامج <span>{{ trainees().length }} متدربًا مسجلًا</span></div>
-      <div class="table-wrap" *ngIf="trainees().length; else noTrainees">
-        <table>
-          <thead><tr><th>المتدرب</th><th>الدفعة</th><th>المشرف</th><th>التقدم</th><th>الحالة</th></tr></thead>
-          <tbody>
-            <tr *ngFor="let trainee of trainees()">
-              <td><div class="trainee-name"><span class="avatar">{{ trainee.name.charAt(0) }}</span><b>{{ trainee.name }}</b></div></td>
-              <td>{{ trainee.cohort }}</td><td>{{ trainee.supervisor }}</td>
-              <td><div class="progress-cell"><div class="progress"><i [style.width.%]="trainee.progress" [style.background]="p.color"></i></div><b>{{ trainee.progress }}%</b></div></td>
-              <td><span class="status" [class.done]="trainee.status === 'مكتمل'">{{ trainee.status }}</span></td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="plan-step-card">
+        <div class="pnum" style="background: #e6f7f1; color: #047857;">02</div>
+        <div class="plan-content">
+          <b>تطوير قواعد البيانات والربط</b>
+          <small>المدة: 6 أسابيع - بناء الجداول والتعامل مع الاستعلامات</small>
+        </div>
       </div>
-      <ng-template #noTrainees><div class="empty"><b>لا يوجد متدربون في هذا البرنامج</b><span>ابدأ باستقبال مرشحين ضمن المقاعد المتاحة.</span></div></ng-template>
-    </article>
-  </ng-container>
-</section>
+    </div>
+  </div>
+
+  <!-- جدول المتدربين -->
+  <div class="card card-pad">
+    <div class="card-title">قائمة المتدربين المسجلين</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>المتدرب</th>
+            <th>البريد الإلكتروني</th>
+            <th>نسبة الإنجاز</th>
+            <th>الحالة</th>
+            <th>روابط التواصل</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- المتدرب 1 -->
+          <tr>
+            <td>
+              <div class="trainee-name">
+                <span class="avatar" style="background: #00338d;">إ</span>
+                <span>إبتسام الزعابي</span>
+              </div>
+            </td>
+            <td>ebtesam@example.com</td>
+            <td>
+              <div class="progress-cell">
+                <span>95%</span>
+                <div class="progress"><i style="width: 95%; background: #059669;"></i></div>
+              </div>
+            </td>
+            <td><span class="status done">مكتمل</span></td>
+            <td>
+              <div class="trainee-socials">
+                <a href="https://github.com" class="social-icon-btn github" target="_blank" title="GitHub">
+                  <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                </a>
+                <a href="https://linkedin.com" class="social-icon-btn linkedin" target="_blank" title="LinkedIn">
+                  <svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                </a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- المتدرب 2 -->
+          <tr>
+            <td>
+              <div class="trainee-name">
+                <span class="avatar" style="background: #0ea5e9;">أ</span>
+                <span>أحمد البلوشي</span>
+              </div>
+            </td>
+            <td>ahmed@example.com</td>
+            <td>
+              <div class="progress-cell">
+                <span>92%</span>
+                <div class="progress"><i style="width: 92%; background: #059669;"></i></div>
+              </div>
+            </td>
+            <td><span class="status done">مكتمل</span></td>
+            <td>
+              <div class="trainee-socials">
+                <a href="https://github.com" class="social-icon-btn github" target="_blank" title="GitHub">
+                  <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                </a>
+                <a href="https://linkedin.com" class="social-icon-btn linkedin" target="_blank" title="LinkedIn">
+                  <svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                </a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- المتدرب 3 -->
+          <tr>
+            <td>
+              <div class="trainee-name">
+                <span class="avatar" style="background: #10b981;">ع</span>
+                <span>عائشة السعيدي</span>
+              </div>
+            </td>
+            <td>aisha@example.com</td>
+            <td>
+              <div class="progress-cell">
+                <span>88%</span>
+                <div class="progress"><i style="width: 88%; background: #059669;"></i></div>
+              </div>
+            </td>
+            <td><span class="status done">مكتمل</span></td>
+            <td>
+              <div class="trainee-socials">
+                <a href="https://github.com" class="social-icon-btn github" target="_blank" title="GitHub">
+                  <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                </a>
+                <a href="https://linkedin.com" class="social-icon-btn linkedin" target="_blank" title="LinkedIn">
+                  <svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                </a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- المتدرب 4 -->
+          <tr>
+            <td>
+              <div class="trainee-name">
+                <span class="avatar" style="background: #6366f1;">س</span>
+                <span>سعيد البوسعيدي</span>
+              </div>
+            </td>
+            <td>saeed@example.com</td>
+            <td>
+              <div class="progress-cell">
+                <span>70%</span>
+                <div class="progress"><i style="width: 70%; background: #eab308;"></i></div>
+              </div>
+            </td>
+            <td><span class="status pending" style="background: #fef3c7; color: #d97706;">قيد الإنجاز</span></td>
+            <td>
+              <div class="trainee-socials">
+                <a href="https://github.com" class="social-icon-btn github" target="_blank" title="GitHub">
+                  <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                </a>
+                <a href="https://linkedin.com" class="social-icon-btn linkedin" target="_blank" title="LinkedIn">
+                  <svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                </a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- المتدرب 5 -->
+          <tr>
+            <td>
+              <div class="trainee-name">
+                <span class="avatar" style="background: #f43f5e;">ع</span>
+                <span>عمر الفارسي</span>
+              </div>
+            </td>
+            <td>omar@example.com</td>
+            <td>
+              <div class="progress-cell">
+                <span>76%</span>
+                <div class="progress"><i style="width: 76%; background: #eab308;"></i></div>
+              </div>
+            </td>
+            <td><span class="status pending" style="background: #fef3c7; color: #d97706;">قيد الإنجاز</span></td>
+            <td>
+              <div class="trainee-socials">
+                <a href="https://github.com" class="social-icon-btn github" target="_blank" title="GitHub">
+                  <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                </a>
+                <a href="https://linkedin.com" class="social-icon-btn linkedin" target="_blank" title="LinkedIn">
+                  <svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                </a>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>

@@ -4,26 +4,30 @@
 >
 
   <!-- =====================================================
-       HEADER
+       PAGE HEADER
   ====================================================== -->
 
-  <div class="content-header">
+  <section class="content-header">
 
     <div class="content-header-copy">
 
-      <div class="content-header-icon" aria-hidden="true">
-        📁
+      <div class="content-header-icon">
+        <i class="fa-solid fa-folder-open"></i>
       </div>
 
       <div class="content-header-text">
 
-        <h2>
+        <span class="content-kicker">
+          المحتوى التدريبي
+        </span>
+
+        <h1>
           إدارة المحتوى
-        </h2>
+        </h1>
 
         <p>
-          إنشاء الوحدات والدروس ورفع الملفات والفيديوهات
-          ومشاركة الروابط والمراجع.
+          إنشاء الوحدات والدروس ورفع المواد التعليمية
+          وإدارة الروابط والمراجع الخاصة بالبرنامج.
         </p>
 
       </div>
@@ -39,7 +43,8 @@
         (click)="openCreateModal('module')"
         [disabled]="!batch()"
       >
-        + إنشاء وحدة
+        <i class="fa-solid fa-plus"></i>
+        <span>إنشاء وحدة</span>
       </button>
 
 
@@ -52,7 +57,8 @@
           activeModules().length === 0
         "
       >
-        + إنشاء درس
+        <i class="fa-solid fa-file-circle-plus"></i>
+        <span>إنشاء درس</span>
       </button>
 
 
@@ -62,29 +68,38 @@
         (click)="showArchiveModal.set(true)"
         [disabled]="!batch()"
       >
-        📁 الأرشيف
+        <i class="fa-solid fa-box-archive"></i>
+        <span>الأرشيف</span>
       </button>
 
     </div>
 
-  </div>
+  </section>
 
 
   <!-- =====================================================
        BATCH SELECTOR
   ====================================================== -->
 
-  <div class="batch-selector">
+  <section class="batch-selector">
 
-    <div class="batch-selector-text">
+    <div class="batch-selector-copy">
 
-      <strong>
-        الدفعة التدريبية
-      </strong>
+      <div class="batch-selector-icon">
+        <i class="fa-solid fa-layer-group"></i>
+      </div>
 
-      <span>
-        اختاري الدفعة التي تريدين إدارة محتواها.
-      </span>
+      <div class="batch-selector-text">
+
+        <strong>
+          الدفعة التدريبية
+        </strong>
+
+        <span>
+          اختاري الدفعة التي تريدين إدارة محتواها.
+        </span>
+
+      </div>
 
     </div>
 
@@ -93,49 +108,57 @@
 
       @if (loadingBatches()) {
 
-        <span class="loading-text">
-          جاري تحميل الدفعات...
-        </span>
+        <div class="select-loading">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <span>جاري تحميل الدفعات...</span>
+        </div>
 
-      } @else {
+      }
+      @else {
 
-        <select
-          [(ngModel)]="batchIdInput"
-          (ngModelChange)="onBatchChange()"
-          [disabled]="batches().length === 0"
-        >
+        <div class="select-wrapper">
 
-          <option
-            [ngValue]="0"
-            disabled
+          <i class="fa-solid fa-chevron-down select-icon"></i>
+
+          <select
+            [(ngModel)]="batchIdInput"
+            (ngModelChange)="onBatchChange()"
+            [disabled]="batches().length === 0"
           >
-            اختر الدفعة
-          </option>
-
-
-          @for (
-            item of batches();
-            track item.batchId
-          ) {
 
             <option
-              [ngValue]="item.batchId"
+              [ngValue]="0"
+              disabled
             >
-              {{
-                item.batchName ||
-                ('دفعة ' + item.batchId)
-              }}
+              اختر الدفعة
             </option>
 
-          }
 
-        </select>
+            @for (
+              item of batches();
+              track item.batchId
+            ) {
+
+              <option
+                [ngValue]="item.batchId"
+              >
+                {{
+                  item.batchName ||
+                  ('دفعة ' + item.batchId)
+                }}
+              </option>
+
+            }
+
+          </select>
+
+        </div>
 
       }
 
     </div>
 
-  </div>
+  </section>
 
 
   <!-- =====================================================
@@ -147,14 +170,20 @@
     <div class="current-context">
 
       <span class="context-badge batch-badge">
-        الدفعة:
-        {{ batch()?.batchName }}
+        <i class="fa-solid fa-users"></i>
+        <span>
+          الدفعة:
+          {{ batch()?.batchName }}
+        </span>
       </span>
 
 
       <span class="context-badge program-badge">
-        البرنامج:
-        {{ getProgramName() }}
+        <i class="fa-solid fa-book-open"></i>
+        <span>
+          البرنامج:
+          {{ getProgramName() }}
+        </span>
       </span>
 
     </div>
@@ -169,7 +198,8 @@
   @if (errorMessage()) {
 
     <div class="message error-message">
-      {{ errorMessage() }}
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ errorMessage() }}</span>
     </div>
 
   }
@@ -178,28 +208,42 @@
   @if (successMessage()) {
 
     <div class="message success-message">
-      ✓ {{ successMessage() }}
+      <i class="fa-solid fa-circle-check"></i>
+      <span>{{ successMessage() }}</span>
     </div>
 
   }
 
 
   <!-- =====================================================
-       LOADING CONTENT
+       LOADING / EMPTY
   ====================================================== -->
 
   @if (loading()) {
 
-    <div class="loading-box">
-      جاري تحميل محتوى الدفعة...
-    </div>
+    <section class="loading-box">
 
-  } @else if (!batch()) {
+      <div class="loading-icon">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+      </div>
 
-    <div class="empty-page">
+      <strong>
+        جاري تحميل المحتوى
+      </strong>
+
+      <span>
+        يتم تجهيز وحدات ودروس الدفعة المختارة.
+      </span>
+
+    </section>
+
+  }
+  @else if (!batch()) {
+
+    <section class="empty-page">
 
       <div class="empty-icon">
-        📚
+        <i class="fa-solid fa-book-open"></i>
       </div>
 
       <strong>
@@ -210,24 +254,25 @@
         اختاري إحدى الدفعات المسندة لك من القائمة أعلاه.
       </p>
 
-    </div>
+    </section>
 
-  } @else {
+  }
+  @else {
 
     <!-- ===================================================
-         CARDS
+         QUICK ACTION CARDS
     ==================================================== -->
 
-    <div class="content-grid">
+    <section class="content-grid">
 
-      <!-- MODULES -->
+      <!-- MODULES AND LESSONS -->
 
-      <div class="content-card">
+      <article class="content-card">
 
         <div class="card-image">
 
           <img
-            src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&q=80"
+            src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=900&q=85"
             alt="الوحدات والدروس"
           />
 
@@ -236,23 +281,19 @@
 
         <div class="card-body">
 
-          <div class="card-icon">
-            📖
+          <div class="card-icon blue">
+            <i class="fa-solid fa-book-open"></i>
           </div>
 
-          <h3>
+          <h2>
             الوحدات والدروس
-          </h3>
+          </h2>
 
           <p>
             لديك
-            <strong>
-              {{ activeModules().length }}
-            </strong>
+            <strong>{{ activeModules().length }}</strong>
             وحدة و
-            <strong>
-              {{ lessons().length }}
-            </strong>
+            <strong>{{ lessons().length }}</strong>
             درس في البرنامج الحالي.
           </p>
 
@@ -264,7 +305,8 @@
               class="card-btn"
               (click)="openCreateModal('module')"
             >
-              + وحدة
+              <i class="fa-solid fa-plus"></i>
+              <span>وحدة</span>
             </button>
 
 
@@ -274,24 +316,25 @@
               (click)="openCreateModal('lesson')"
               [disabled]="activeModules().length === 0"
             >
-              + درس
+              <i class="fa-solid fa-plus"></i>
+              <span>درس</span>
             </button>
 
           </div>
 
         </div>
 
-      </div>
+      </article>
 
 
       <!-- FILES -->
 
-      <div class="content-card">
+      <article class="content-card">
 
         <div class="card-image">
 
           <img
-            src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80"
+            src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=900&q=85"
             alt="الملفات والفيديوهات"
           />
 
@@ -300,17 +343,17 @@
 
         <div class="card-body">
 
-          <div class="card-icon">
-            🎬
+          <div class="card-icon violet">
+            <i class="fa-solid fa-photo-film"></i>
           </div>
 
-          <h3>
+          <h2>
             الملفات والفيديوهات
-          </h3>
+          </h2>
 
           <p>
-            رفع ملفات PDF والمستندات والصور
-            والفيديوهات وربطها بالدرس المناسب.
+            رفع ملفات PDF والمستندات والصور والفيديوهات
+            وربطها بالدرس المناسب.
           </p>
 
 
@@ -320,22 +363,23 @@
             (click)="showFileModal.set(true)"
             [disabled]="lessons().length === 0"
           >
-            ⬆ رفع مادة
+            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+            <span>رفع مادة</span>
           </button>
 
         </div>
 
-      </div>
+      </article>
 
 
       <!-- REFERENCES -->
 
-      <div class="content-card">
+      <article class="content-card">
 
         <div class="card-image">
 
           <img
-            src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80"
+            src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=900&q=85"
             alt="الروابط والمراجع"
           />
 
@@ -344,13 +388,13 @@
 
         <div class="card-body">
 
-          <div class="card-icon">
-            🔗
+          <div class="card-icon cyan">
+            <i class="fa-solid fa-link"></i>
           </div>
 
-          <h3>
+          <h2>
             الروابط والمراجع
-          </h3>
+          </h2>
 
           <p>
             إضافة روابط ومراجع تعليمية خارجية
@@ -364,33 +408,35 @@
             (click)="showRefModal.set(true)"
             [disabled]="lessons().length === 0"
           >
-            + إضافة مرجع
+            <i class="fa-solid fa-link"></i>
+            <span>إضافة مرجع</span>
           </button>
 
         </div>
 
-      </div>
+      </article>
 
-    </div>
+    </section>
 
 
     <!-- ===================================================
          PROGRAM CONTENT
     ==================================================== -->
 
-    <div class="program-content">
+    <section class="program-content">
 
-      <div class="section-heading">
+      <div class="section-heading program-heading">
 
-        <div>
+        <div class="section-heading-copy">
 
-          <h3>
-            محتوى البرنامج
-          </h3>
+          <div class="section-heading-icon">
+            <i class="fa-solid fa-list-check"></i>
+          </div>
 
-          <p>
-            {{ getProgramName() }}
-          </p>
+          <div>
+            <h2>محتوى البرنامج</h2>
+            <p>{{ getProgramName() }}</p>
+          </div>
 
         </div>
 
@@ -398,13 +444,13 @@
         <div class="section-counts">
 
           <span>
-            {{ activeModules().length }}
-            وحدة
+            <i class="fa-solid fa-layer-group"></i>
+            {{ activeModules().length }} وحدة
           </span>
 
           <span>
-            {{ lessons().length }}
-            درس
+            <i class="fa-solid fa-file-lines"></i>
+            {{ lessons().length }} درس
           </span>
 
         </div>
@@ -412,214 +458,289 @@
       </div>
 
 
-      <div class="modules-grid">
+      <div class="program-modules-list">
 
         @for (
           module of activeModules();
           track module.moduleId
         ) {
 
-          <div class="module-box">
+          <article
+            class="program-module-card"
+            [class.expanded]="isModuleExpanded(module.moduleId)"
+          >
 
-            <div class="module-header">
+            <div class="program-module-header">
 
-              <div class="module-title">
+              <button
+                type="button"
+                class="program-module-main"
+                (click)="toggleModule(module.moduleId)"
+                [attr.aria-expanded]="isModuleExpanded(module.moduleId)"
+              >
 
-                <span>
-                  📘
-                </span>
-
-                <strong>
-                  {{ module.title }}
-                </strong>
-
-              </div>
-
-
-              <span class="module-order">
-                ترتيب {{ module.orderIndex }}
-              </span>
-
-            </div>
+                <div class="module-number">
+                  {{ module.orderIndex }}
+                </div>
 
 
-            <div class="lesson-list">
+                <div class="module-summary-copy">
 
-              @for (
-                lesson of getLessonsForModule(module.moduleId);
-                track lesson.lessonId
-              ) {
+                  <div class="module-summary-title-line">
 
-                <div class="lesson-row">
+                    <span class="module-label">
+                      الوحدة {{ module.orderIndex }}
+                    </span>
 
-                  <span class="lesson-icon">
-                    📄
-                  </span>
-
-
-                  <div class="lesson-content">
-
-                    <strong class="lesson-title">
-                      {{
-                        lesson.title ||
-                        'درس بدون عنوان'
-                      }}
+                    <strong>
+                      {{ module.title }}
                     </strong>
 
+                    <span class="module-active-badge">
+                      نشطة
+                    </span>
 
-                    @if (lesson.contentBody) {
-
-                      <p>
-                        {{ lesson.contentBody }}
-                      </p>
-
-                    }
+                  </div>
 
 
-                    <!-- =====================================
-                         TRAINING MATERIALS
-                    ====================================== -->
+                  <div class="module-summary-meta">
 
-                    @if (
-                      (materialsByLesson()[lesson.lessonId] ?? []).length > 0
-                    ) {
+                    <span>
+                      <i class="fa-regular fa-file-lines"></i>
+                      {{ getLessonsForModule(module.moduleId).length }} درس
+                    </span>
 
-                      <div class="lesson-materials">
-
-                        <div class="materials-title">
-                          المواد التعليمية
-                        </div>
-
-
-                        @for (
-                          material of materialsByLesson()[lesson.lessonId] ?? [];
-                          track material.materialId
-                        ) {
-
-                          <div class="material-item">
-
-                            <span class="material-icon">
-                              {{ getMaterialIcon(material.fileType) }}
-                            </span>
-
-
-                            <div class="material-info">
-
-                              <a
-                                [href]="getMaterialUrl(material)"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="material-link"
-                              >
-                                {{
-                                  material.fileType === 'Link'
-                                    ? 'فتح المرجع'
-                                    : getMaterialName(material)
-                                }}
-                              </a>
-
-
-                              @if (material.fileType === 'Link') {
-
-                                <span class="material-url">
-                                  {{ material.fileUrl }}
-                                </span>
-
-                              }
-
-                            </div>
-
-
-                            <span class="material-type">
-
-                              @switch (material.fileType) {
-
-                                @case ('Pdf') {
-                                  PDF
-                                }
-
-                                @case ('Video') {
-                                  فيديو
-                                }
-
-                                @case ('Image') {
-                                  صورة
-                                }
-
-                                @case ('Document') {
-                                  مستند
-                                }
-
-                                @case ('Link') {
-                                  رابط
-                                }
-
-                                @default {
-                                  ملف
-                                }
-
-                              }
-
-                            </span>
-
-
-                            <button
-                              type="button"
-                              class="material-delete-btn"
-                              (click)="
-                                openDeleteMaterialModal(
-                                  material,
-                                  lesson.lessonId
-                                )
-                              "
-                              [disabled]="
-                                deletingMaterialId() === material.materialId
-                              "
-                              title="حذف المادة"
-                              aria-label="حذف المادة"
-                            >
-                              🗑️
-                            </button>
-
-                          </div>
-
-                        }
-
-                      </div>
-
-                    }
+                    <span>
+                      <i class="fa-solid fa-paperclip"></i>
+                      {{ getModuleMaterialCount(module.moduleId) }} مادة
+                    </span>
 
                   </div>
 
                 </div>
 
-              } @empty {
+              </button>
 
-                <div class="module-empty">
-                  لا توجد دروس داخل هذه الوحدة بعد.
-                </div>
 
-              }
+              <div class="module-header-tools">
+
+                <button
+                  type="button"
+                  class="module-archive-btn"
+                  (click)="archiveModule(module)"
+                  [disabled]="saving()"
+                  title="أرشفة الوحدة"
+                >
+                  <i class="fa-solid fa-box-archive"></i>
+                  <span>أرشفة</span>
+                </button>
+
+
+                <button
+                  type="button"
+                  class="module-chevron-btn"
+                  (click)="toggleModule(module.moduleId)"
+                  [attr.aria-label]="
+                    isModuleExpanded(module.moduleId)
+                      ? 'إغلاق الوحدة'
+                      : 'فتح الوحدة'
+                  "
+                >
+                  <i
+                    class="fa-solid fa-chevron-down"
+                    [class.rotated]="isModuleExpanded(module.moduleId)"
+                  ></i>
+                </button>
+
+              </div>
 
             </div>
 
-          </div>
 
-        } @empty {
+            @if (isModuleExpanded(module.moduleId)) {
+
+              <div class="program-module-body">
+
+                <div class="module-lessons-head">
+
+                  <span>دروس الوحدة</span>
+
+                  <span>
+                    {{ getLessonsForModule(module.moduleId).length }} درس
+                  </span>
+
+                </div>
+
+
+                <div class="program-lessons-list">
+
+                  @for (
+                    lesson of getLessonsForModule(module.moduleId);
+                    track lesson.lessonId
+                  ) {
+
+                    <div class="program-lesson-row">
+
+                      <div class="program-lesson-top">
+
+                        <div class="program-lesson-info">
+
+                          <div class="program-lesson-icon">
+                            <i class="fa-regular fa-file-lines"></i>
+                          </div>
+
+
+                          <div class="program-lesson-copy">
+
+                            <strong>
+                              {{ lesson.title || 'درس بدون عنوان' }}
+                            </strong>
+
+                            @if (lesson.contentBody) {
+                              <p>{{ lesson.contentBody }}</p>
+                            }
+                            @else {
+                              <p>لا يوجد وصف مضاف لهذا الدرس.</p>
+                            }
+
+                          </div>
+
+                        </div>
+
+
+                        <span class="program-lesson-order">
+                          درس {{ lesson.orderIndex ?? '-' }}
+                        </span>
+
+                      </div>
+
+
+                      @if (
+                        (materialsByLesson()[lesson.lessonId] ?? []).length > 0
+                      ) {
+
+                        <div class="lesson-materials accordion-materials">
+
+                          <div class="materials-title">
+                            <i class="fa-solid fa-paperclip"></i>
+                            <span>المواد التعليمية</span>
+                          </div>
+
+
+                          @for (
+                            material of materialsByLesson()[lesson.lessonId] ?? [];
+                            track material.materialId
+                          ) {
+
+                            <div class="material-item">
+
+                              <div class="material-file-icon">
+                                <i [class]="getMaterialIcon(material.fileType)"></i>
+                              </div>
+
+
+                              <div class="material-info">
+
+                                <a
+                                  [href]="getMaterialUrl(material)"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  class="material-link"
+                                >
+                                  {{
+                                    material.fileType === 'Link'
+                                      ? 'فتح المرجع'
+                                      : getMaterialName(material)
+                                  }}
+                                </a>
+
+                                @if (material.fileType === 'Link') {
+                                  <span class="material-url">
+                                    {{ material.fileUrl }}
+                                  </span>
+                                }
+
+                              </div>
+
+
+                              <span class="material-type">
+
+                                @switch (material.fileType) {
+                                  @case ('Pdf') { PDF }
+                                  @case ('Video') { فيديو }
+                                  @case ('Image') { صورة }
+                                  @case ('Document') { مستند }
+                                  @case ('Link') { رابط }
+                                  @default { ملف }
+                                }
+
+                              </span>
+
+
+                              <button
+                                type="button"
+                                class="material-delete-btn"
+                                (click)="openDeleteMaterialModal(material, lesson.lessonId)"
+                                [disabled]="
+                                  deletingMaterialId() === material.materialId
+                                "
+                                title="حذف المادة"
+                              >
+
+                                @if (
+                                  deletingMaterialId() === material.materialId
+                                ) {
+                                  <i class="fa-solid fa-spinner fa-spin"></i>
+                                }
+                                @else {
+                                  <i class="fa-solid fa-trash-can"></i>
+                                }
+
+                              </button>
+
+                            </div>
+
+                          }
+
+                        </div>
+
+                      }
+
+                    </div>
+
+                  }
+                  @empty {
+
+                    <div class="module-empty accordion-empty">
+                      <i class="fa-regular fa-file-lines"></i>
+                      <strong>لا توجد دروس داخل هذه الوحدة بعد</strong>
+                      <span>يمكنك إضافة أول درس من زر إنشاء درس.</span>
+                    </div>
+
+                  }
+
+                </div>
+
+              </div>
+
+            }
+
+          </article>
+
+        }
+        @empty {
 
           <div class="empty-content">
 
-            <div>
-              📘
+            <div class="empty-content-icon">
+              <i class="fa-solid fa-layer-group"></i>
             </div>
 
-            <strong>
-              لا توجد وحدات في هذا البرنامج بعد
-            </strong>
+            <strong>لا توجد وحدات في هذا البرنامج بعد</strong>
 
             <p>
               ابدئي بإنشاء أول وحدة، وبعدها يمكنك
-              إضافة الدروس والمواد.
+              إضافة الدروس والمواد التعليمية.
             </p>
 
             <button
@@ -627,7 +748,8 @@
               class="btn primary"
               (click)="openCreateModal('module')"
             >
-              + إنشاء أول وحدة
+              <i class="fa-solid fa-plus"></i>
+              <span>إنشاء أول وحدة</span>
             </button>
 
           </div>
@@ -636,7 +758,7 @@
 
       </div>
 
-    </div>
+    </section>
 
   }
 
@@ -659,13 +781,52 @@
       (click)="$event.stopPropagation()"
     >
 
-      <h3>
-        {{
-          createType === 'module'
-            ? 'إنشاء وحدة'
-            : 'إنشاء درس'
-        }}
-      </h3>
+      <div class="modal-header">
+
+        <div class="modal-title-group">
+
+          <div class="modal-title-icon">
+            <i
+              class="fa-solid"
+              [class.fa-layer-group]="createType === 'module'"
+              [class.fa-file-circle-plus]="createType === 'lesson'"
+            ></i>
+          </div>
+
+          <div>
+
+            <h3>
+              {{
+                createType === 'module'
+                  ? 'إنشاء وحدة جديدة'
+                  : 'إنشاء درس جديد'
+              }}
+            </h3>
+
+            <p>
+              {{
+                createType === 'module'
+                  ? 'أضيفي وحدة جديدة إلى البرنامج التدريبي.'
+                  : 'أضيفي درسًا إلى إحدى الوحدات الحالية.'
+              }}
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="showModal.set(false)"
+          [disabled]="saving()"
+          title="إغلاق"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+      </div>
 
 
       @if (createType === 'lesson') {
@@ -674,26 +835,31 @@
           الوحدة
         </label>
 
+        <div class="field-select-wrapper">
 
-        <select
-          [(ngModel)]="selectedModuleId"
-          class="form-control"
-        >
+          <i class="fa-solid fa-chevron-down"></i>
 
-          @for (
-            module of activeModules();
-            track module.moduleId
-          ) {
+          <select
+            [(ngModel)]="selectedModuleId"
+            class="form-control"
+          >
 
-            <option
-              [ngValue]="module.moduleId"
-            >
-              {{ module.title }}
-            </option>
+            @for (
+              module of activeModules();
+              track module.moduleId
+            ) {
 
-          }
+              <option
+                [ngValue]="module.moduleId"
+              >
+                {{ module.title }}
+              </option>
 
-        </select>
+            }
+
+          </select>
+
+        </div>
 
       }
 
@@ -724,12 +890,11 @@
           محتوى الدرس
         </label>
 
-
         <textarea
           [(ngModel)]="lessonContentBody"
           class="form-control textarea"
-          rows="4"
-          placeholder="اكتب وصفاً أو محتوى مختصراً للدرس"
+          rows="5"
+          placeholder="اكتبي وصفًا أو محتوى مختصرًا للدرس..."
         ></textarea>
 
       }
@@ -753,11 +918,16 @@
           (click)="create()"
           [disabled]="saving()"
         >
-          {{
-            saving()
-              ? 'جاري الحفظ...'
-              : 'حفظ'
-          }}
+
+          @if (saving()) {
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>جاري الحفظ...</span>
+          }
+          @else {
+            <i class="fa-solid fa-check"></i>
+            <span>حفظ</span>
+          }
+
         </button>
 
       </div>
@@ -770,7 +940,7 @@
 
 
 <!-- =====================================================
-     FILE UPLOAD MODAL
+     UPLOAD FILE MODAL
 ====================================================== -->
 
 @if (showFileModal()) {
@@ -785,40 +955,66 @@
       (click)="$event.stopPropagation()"
     >
 
-      <h3>
-        رفع ملف أو فيديو
-      </h3>
+      <div class="modal-header">
+
+        <div class="modal-title-group">
+
+          <div class="modal-title-icon">
+            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+          </div>
+
+          <div>
+            <h3>رفع مادة تعليمية</h3>
+            <p>اختاري الدرس ثم ارفعي الملف المطلوب.</p>
+          </div>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="showFileModal.set(false)"
+          [disabled]="saving()"
+          title="إغلاق"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+      </div>
 
 
       <label>
         الدرس
       </label>
 
+      <div class="field-select-wrapper">
 
-      <select
-        [(ngModel)]="fileLessonId"
-        class="form-control"
-      >
+        <i class="fa-solid fa-chevron-down"></i>
 
-        @for (
-          lesson of lessons();
-          track lesson.lessonId
-        ) {
+        <select
+          [(ngModel)]="fileLessonId"
+          class="form-control"
+        >
 
-          <option
-            [ngValue]="lesson.lessonId"
-          >
-            {{ getModuleTitle(lesson.moduleId) }}
-            -
-            {{
-              lesson.title ||
-              'درس بدون عنوان'
-            }}
-          </option>
+          @for (
+            lesson of lessons();
+            track lesson.lessonId
+          ) {
 
-        }
+            <option
+              [ngValue]="lesson.lessonId"
+            >
+              {{ getModuleTitle(lesson.moduleId) }}
+              —
+              {{ lesson.title }}
+            </option>
 
-      </select>
+          }
+
+        </select>
+
+      </div>
 
 
       <label>
@@ -826,25 +1022,40 @@
       </label>
 
 
-      <input
-        type="file"
-        class="form-control file-control"
-        (change)="onFileSelected($event)"
-      />
+      <div class="file-upload-box">
+
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+
+        <div>
+          <strong>اختاري ملفًا من جهازك</strong>
+          <span>PDF، مستندات، صور أو فيديوهات</span>
+        </div>
+
+        <input
+          type="file"
+          class="file-input"
+          accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.mp4,.mov,.avi,.mkv,.webm,.jpg,.jpeg,.png,.gif,.webp"
+          (change)="onFileSelected($event)"
+        />
+
+      </div>
 
 
       @if (selectedFile) {
 
         <div class="selected-file">
 
-          <strong>
-            {{ selectedFile.name }}
-          </strong>
+          <div class="selected-file-icon">
+            <i class="fa-solid fa-file-circle-check"></i>
+          </div>
 
-          <span>
-            النوع:
-            {{ selectedFileType }}
-          </span>
+          <div>
+            <strong>{{ selectedFile.name }}</strong>
+            <span>
+              النوع المكتشف:
+              {{ selectedFileType || 'غير محدد' }}
+            </span>
+          </div>
 
         </div>
 
@@ -869,11 +1080,16 @@
           (click)="uploadFile()"
           [disabled]="saving()"
         >
-          {{
-            saving()
-              ? 'جاري الرفع...'
-              : 'رفع'
-          }}
+
+          @if (saving()) {
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>جاري الرفع...</span>
+          }
+          @else {
+            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+            <span>رفع المادة</span>
+          }
+
         </button>
 
       </div>
@@ -901,40 +1117,66 @@
       (click)="$event.stopPropagation()"
     >
 
-      <h3>
-        إضافة مرجع أو رابط
-      </h3>
+      <div class="modal-header">
+
+        <div class="modal-title-group">
+
+          <div class="modal-title-icon">
+            <i class="fa-solid fa-link"></i>
+          </div>
+
+          <div>
+            <h3>إضافة مرجع</h3>
+            <p>أضيفي رابطًا خارجيًا واربطِيه بالدرس المناسب.</p>
+          </div>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="showRefModal.set(false)"
+          [disabled]="saving()"
+          title="إغلاق"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+      </div>
 
 
       <label>
         الدرس
       </label>
 
+      <div class="field-select-wrapper">
 
-      <select
-        [(ngModel)]="referenceLessonId"
-        class="form-control"
-      >
+        <i class="fa-solid fa-chevron-down"></i>
 
-        @for (
-          lesson of lessons();
-          track lesson.lessonId
-        ) {
+        <select
+          [(ngModel)]="referenceLessonId"
+          class="form-control"
+        >
 
-          <option
-            [ngValue]="lesson.lessonId"
-          >
-            {{ getModuleTitle(lesson.moduleId) }}
-            -
-            {{
-              lesson.title ||
-              'درس بدون عنوان'
-            }}
-          </option>
+          @for (
+            lesson of lessons();
+            track lesson.lessonId
+          ) {
 
-        }
+            <option
+              [ngValue]="lesson.lessonId"
+            >
+              {{ getModuleTitle(lesson.moduleId) }}
+              —
+              {{ lesson.title }}
+            </option>
 
-      </select>
+          }
+
+        </select>
+
+      </div>
 
 
       <label>
@@ -942,11 +1184,17 @@
       </label>
 
 
-      <input
-        [(ngModel)]="refLink"
-        class="form-control"
-        placeholder="https://example.com"
-      />
+      <div class="input-with-icon">
+
+        <i class="fa-solid fa-link"></i>
+
+        <input
+          [(ngModel)]="refLink"
+          class="form-control"
+          placeholder="https://example.com"
+        />
+
+      </div>
 
 
       <div class="modal-actions">
@@ -967,94 +1215,16 @@
           (click)="addReference()"
           [disabled]="saving()"
         >
-          {{
-            saving()
-              ? 'جاري الحفظ...'
-              : 'حفظ'
-          }}
-        </button>
 
-      </div>
+          @if (saving()) {
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>جاري الحفظ...</span>
+          }
+          @else {
+            <i class="fa-solid fa-check"></i>
+            <span>حفظ المرجع</span>
+          }
 
-    </div>
-
-  </div>
-
-}
-
-
-<!-- =====================================================
-     DELETE MATERIAL CONFIRMATION MODAL
-====================================================== -->
-
-@if (showDeleteMaterialModal()) {
-
-  <div
-    class="modal-bg"
-    (click)="closeDeleteMaterialModal()"
-  >
-
-    <div
-      class="modal-box delete-confirm-modal"
-      (click)="$event.stopPropagation()"
-    >
-
-      <div class="delete-confirm-icon">
-        🗑️
-      </div>
-
-
-      <h3>
-        حذف المادة التعليمية؟
-      </h3>
-
-
-      <p class="delete-confirm-text">
-        هل أنت متأكد من حذف هذه المادة؟
-        سيتم حذفها نهائيًا ولا يمكن التراجع عن العملية.
-      </p>
-
-
-      @if (materialToDelete(); as target) {
-
-        <div class="delete-material-name">
-
-          <span class="delete-material-icon">
-            {{ getMaterialIcon(target.material.fileType) }}
-          </span>
-
-          <strong>
-            {{ getMaterialName(target.material) }}
-          </strong>
-
-        </div>
-
-      }
-
-
-      <div class="modal-actions delete-actions">
-
-        <button
-          type="button"
-          class="btn cancel"
-          (click)="closeDeleteMaterialModal()"
-          [disabled]="deletingMaterialId() !== null"
-        >
-          إلغاء
-        </button>
-
-
-        <button
-          type="button"
-          class="btn delete-confirm-btn"
-          (click)="confirmDeleteMaterial()"
-          [disabled]="deletingMaterialId() !== null"
-        >
-          {{
-            deletingMaterialId() !== null
-              ? 'جاري الحذف...'
-              : 'حذف المادة'
-          }}
         </button>
 
       </div>
@@ -1082,14 +1252,33 @@
       (click)="$event.stopPropagation()"
     >
 
-      <h3>
-        📁 الأرشيف
-      </h3>
+      <div class="modal-header">
+
+        <div class="modal-title-group">
+
+          <div class="modal-title-icon archive-title-icon">
+            <i class="fa-solid fa-box-archive"></i>
+          </div>
+
+          <div>
+            <h3>أرشيف الوحدات</h3>
+            <p>الوحدات المؤرشفة التابعة للبرنامج الحالي.</p>
+          </div>
+
+        </div>
 
 
-      <p class="archive-description">
-        الوحدات المؤرشفة التابعة للبرنامج الحالي.
-      </p>
+        <button
+          type="button"
+          class="modal-close-btn"
+          (click)="showArchiveModal.set(false)"
+          [disabled]="saving()"
+          title="إغلاق"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+      </div>
 
 
       <div class="archive-list">
@@ -1101,20 +1290,47 @@
 
           <div class="archive-item">
 
-            <span>
-              📘
-            </span>
+            <div class="archive-item-copy">
 
-            <strong>
-              {{ module.title }}
-            </strong>
+              <div class="archive-item-icon">
+                <i class="fa-solid fa-book"></i>
+              </div>
+
+              <div>
+                <strong>{{ module.title }}</strong>
+                <span>ترتيب {{ module.orderIndex }}</span>
+              </div>
+
+            </div>
+
+
+            <button
+              type="button"
+              class="restore-btn"
+              (click)="restoreModule(module)"
+              [disabled]="saving()"
+            >
+              <i class="fa-solid fa-rotate-left"></i>
+              <span>استعادة</span>
+            </button>
 
           </div>
 
-        } @empty {
+        }
+        @empty {
 
           <div class="archive-empty">
-            لا توجد وحدات مؤرشفة في البرنامج الحالي.
+
+            <i class="fa-solid fa-box-open"></i>
+
+            <strong>
+              لا توجد وحدات مؤرشفة
+            </strong>
+
+            <span>
+              ستظهر الوحدات هنا بعد أرشفتها.
+            </span>
+
           </div>
 
         }
@@ -1128,11 +1344,98 @@
           type="button"
           class="btn cancel"
           (click)="showArchiveModal.set(false)"
+          [disabled]="saving()"
         >
           إغلاق
         </button>
 
       </div>
+
+    </div>
+
+  </div>
+
+}
+
+
+<!-- =====================================================
+     DELETE MATERIAL CONFIRMATION
+====================================================== -->
+
+@if (showDeleteMaterialModal()) {
+
+  <div
+    class="modal-bg"
+    (click)="closeDeleteMaterialModal()"
+  >
+
+    <div
+      class="modal-box delete-confirm-modal"
+      (click)="$event.stopPropagation()"
+    >
+
+      @if (materialToDelete(); as target) {
+
+        <div class="delete-confirm-icon">
+          <i class="fa-solid fa-trash-can"></i>
+        </div>
+
+        <h3>
+          حذف المادة التعليمية؟
+        </h3>
+
+        <p class="delete-confirm-text">
+          سيتم حذف المادة من هذا الدرس.
+          تأكدي من اختيار الملف الصحيح قبل المتابعة.
+        </p>
+
+
+        <div class="delete-material-name">
+
+          <div class="delete-material-icon">
+            <i [class]="getMaterialIcon(target.material.fileType)"></i>
+          </div>
+
+          <strong>
+            {{ getMaterialName(target.material) }}
+          </strong>
+
+        </div>
+
+
+        <div class="modal-actions delete-actions">
+
+          <button
+            type="button"
+            class="btn cancel"
+            (click)="closeDeleteMaterialModal()"
+            [disabled]="deletingMaterialId() !== null"
+          >
+            إلغاء
+          </button>
+
+
+          <button
+            type="button"
+            class="btn delete-confirm-btn"
+            (click)="confirmDeleteMaterial()"
+            [disabled]="deletingMaterialId() !== null"
+          >
+
+            @if (deletingMaterialId() !== null) {
+              <i class="fa-solid fa-spinner fa-spin"></i>
+              <span>جاري الحذف...</span>
+            }
+            @else {
+              <i class="fa-solid fa-trash-can"></i>
+              <span>حذف المادة</span>
+            }
+
+          </button>
+
+        </div>
+
+      }
 
     </div>
 

@@ -1,11 +1,11 @@
 :host {
-  --gov-blue-dark: #1e3a8a;    /* أزرق كحلي حكومي */
-  --gov-blue-primary: #2563eb; /* أزرق أساسي */
-  --gov-blue-light: #eff6ff;   /* أزرق فاتح جداً خلف دائرة البروفايل/الشارات */
-  --gov-bg-gray: #f8fafc;      /* رمادي فاتح خلفية الصفحة */
-  --gov-border: #e2e8f0;       /* حدود رمادية ناعمة */
-  --gov-text-dark: #0f172a;    /* نص داكن أساسي */
-  --gov-text-muted: #64748b;   /* نص فرعي رمادي */
+  --gov-blue-dark: #1e3a8a;
+  --gov-blue-primary: #2563eb;
+  --gov-blue-light: #eff6ff;
+  --gov-bg-gray: #f8fafc;
+  --gov-border: #e2e8f0;
+  --gov-text-dark: #0f172a;
+  --gov-text-muted: #64748b;
 }
 
 .profile-container {
@@ -17,24 +17,16 @@
   color: var(--gov-text-dark);
 }
 
-/* تنسيق الهيدر */
-.header-container {
+/* الهيدر */
+.header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
 }
 
-/* عنوان الصفحة */
-.page-title {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--gov-blue-dark);
-  margin: 0;
-}
-
-/* زر الرجوع */
-.back-btn {
+.back-btn,
+.github-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -54,11 +46,31 @@
   background-color: var(--gov-blue-light);
   border-color: var(--gov-blue-primary);
   color: var(--gov-blue-primary);
-  transform: translateY(-1px);
 }
 
-.back-btn svg {
-  transform: scaleX(-1); /* ليكون السهم لليمين في الـ RTL */
+.github-btn {
+  background-color: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.github-btn:hover {
+  background-color: #1e293b;
+}
+
+/* حالات التحميل / الخطأ */
+.state-box {
+  background: #ffffff;
+  border: 1px solid var(--gov-border);
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  color: var(--gov-text-muted);
+  font-weight: 600;
+}
+
+.state-error {
+  color: #dc2626;
 }
 
 /* الكروت العامة */
@@ -69,160 +81,467 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-/* Top Dashboard Layout */
-.top-dashboard-grid {
-  display: flex;
-  gap: 16px;
+/* بطاقة هوية المتدرب */
+.identity-card {
+  padding: 20px 24px;
   margin-bottom: 20px;
-}
-
-.user-card {
-  width: 280px;
-  padding: 24px 16px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-/* دائرة صورة البروفايل (الأحرف الأولى) */
-.avatar-circle {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background-color: var(--gov-blue-dark); /* خلفية كحلية رسمية */
-  color: #ffffff;
-  margin: 0 auto 12px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.2);
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.identity-text {
+  flex: 1;
+  min-width: 240px;
 }
 
 .user-name {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
-  color: var(--gov-blue-dark);
 }
 
-.user-subtext {
-  margin: 4px 0;
-  color: var(--gov-text-muted);
-  font-size: 14px;
-}
-
-.user-id {
-  display: inline-block;
-  margin-top: 4px;
-  background-color: var(--gov-blue-light);
-  color: var(--gov-blue-dark);
-  padding: 2px 10px;
-  border-radius: 12px;
+.program-line {
+  margin: 6px 0 0;
   font-size: 13px;
-  font-weight: 700;
-}
-
-.stats-row {
-  display: flex;
-  flex: 1;
-  gap: 16px;
-}
-
-.stat-card {
-  flex: 1;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  text-align: center;
-}
-
-.stat-title {
-  font-size: 14px;
-  font-weight: 700;
   color: var(--gov-text-muted);
 }
 
-.stat-value {
-  font-size: 32px;
-  font-weight: 800;
-  margin: 10px 0;
-}
-
-.stat-sub {
-  font-size: 13px;
-  color: #94a3b8;
-}
-
-/* ألوان الإحصائيات الحكومية */
-.text-teal { color: #059669; }             /* أخضر رسمي لنسبة الحضور */
-.text-rose { color: #dc2626; }             /* أحمر وواضح للغيابات */
-.text-blue { color: var(--gov-blue-primary); } /* أزرق لأيام الحضور */
-
-/* Tables Grid Layout */
-.tables-grid {
-  display: flex;
-  flex-direction: row-reverse; /* التقييم يمين، الحضور يسار */
-  gap: 16px;
-}
-
-.table-card {
-  flex: 1;
-  padding: 20px;
-}
-
-.card-header h3 {
-  margin: 0 0 16px 0;
-  font-size: 15px;
+.code-chip {
   font-weight: 700;
-  color: var(--gov-blue-dark);
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--gov-blue-light);
-}
-
-.table-wrapper {
-  overflow-x: auto;
-  max-height: 380px;
-  overflow-y: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: right;
-  font-size: 13px;
-}
-
-th {
-  background-color: #f1f5f9;
-  color: var(--gov-blue-dark);
-  padding: 12px 10px;
-  font-weight: 700;
-  border-bottom: 2px solid var(--gov-border);
-}
-
-td {
-  padding: 12px 10px;
-  border-bottom: 1px solid #f1f5f9;
   color: var(--gov-text-dark);
 }
 
-/* شارات الحالة */
-.badge-present {
-  color: #166534;
-  background-color: #dcfce7;
-  padding: 4px 10px;
-  border-radius: 6px;
+.batch-dates {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 13px;
   font-weight: 600;
 }
 
-.badge-absent {
-  color: #991b1b;
+.pill-status {
+  background-color: var(--gov-blue-light);
+  color: var(--gov-blue-primary);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--gov-blue-primary);
+}
+
+.pill-muted {
+  background-color: #f1f5f9;
+  color: var(--gov-text-muted);
+}
+
+.pill-done {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.pill-progress {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.avatar-circle {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background-color: var(--gov-blue-dark);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* كروت الملخص */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.summary-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gov-text-muted);
+}
+
+.summary-value {
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.summary-value-sm {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.summary-sub {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.text-amber { color: #d97706; }
+.text-rose  { color: #dc2626; }
+.text-blue  { color: var(--gov-blue-primary); }
+.text-teal  { color: #059669; }
+
+/* أقسام عامة */
+.section-card {
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  margin: 0 0 16px 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* الدونات */
+.donut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap-reverse;
+}
+
+.donut-legend {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-label {
+  flex: 1;
+  color: var(--gov-text-dark);
+}
+
+.legend-value {
+  font-weight: 700;
+  color: var(--gov-blue-primary);
+}
+
+.donut-chart {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.donut-inner {
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-percent {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--gov-blue-primary);
+}
+
+.donut-caption {
+  font-size: 11px;
+  color: var(--gov-text-muted);
+}
+
+/* مراحل/وحدات البرنامج */
+.stages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stage-block {
+  border: 1px solid var(--gov-border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.stage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.stage-head-text {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.stage-percent {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--gov-blue-primary);
+}
+
+.stage-name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.stage-progress-track {
+  height: 6px;
+  background-color: #f1f5f9;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.stage-progress-fill {
+  height: 100%;
+  background-color: var(--gov-blue-primary);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* صناديق التقييم داخل كل مرحلة */
+.eval-boxes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.eval-box {
+  background-color: #f8fafc;
+  border: 1px solid var(--gov-border);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.eval-box-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.eval-score-badge {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--gov-blue-primary);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eval-box-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.eval-type {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.eval-by {
+  font-size: 12px;
+  color: var(--gov-text-muted);
+}
+
+.eval-date {
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.criteria-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.criteria-row {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.criteria-score {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gov-text-muted);
+  text-align: left;
+}
+
+.criteria-track {
+  height: 6px;
+  background-color: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.criteria-fill {
+  height: 100%;
+  background-color: #0ea5a5;
+  border-radius: 999px;
+}
+
+.criteria-name {
+  font-size: 12px;
+  color: var(--gov-text-dark);
+  white-space: nowrap;
+}
+
+.eval-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--gov-text-muted);
+  font-style: italic;
+}
+
+/* حالات فارغة */
+.empty-note {
+  margin: 0;
+  color: var(--gov-text-muted);
+  font-size: 14px;
+  text-align: center;
+  padding: 12px 0;
+}
+
+/* سجل الإنذارات */
+.warnings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.warning-item {
+  border: 1px solid var(--gov-border);
+  border-right: 4px solid #94a3b8;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.warning-item[data-level='Low']      { border-right-color: #64748b; }
+.warning-item[data-level='Medium']   { border-right-color: #d97706; }
+.warning-item[data-level='High']     { border-right-color: #dc2626; }
+.warning-item[data-level='Critical'] { border-right-color: #991b1b; }
+
+.warning-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.warning-type {
+  font-weight: 700;
+  color: var(--gov-text-dark);
+  font-size: 14px;
+}
+
+.warning-level {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background-color: #f1f5f9;
+  color: var(--gov-text-muted);
+}
+
+.warning-level[data-level='High'],
+.warning-level[data-level='Critical'] {
   background-color: #fee2e2;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-weight: 600;
+  color: #991b1b;
+}
+
+.warning-level[data-level='Medium'] {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.warning-evidence {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--gov-text-muted);
+}
+
+.warning-date {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+@media (max-width: 900px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .donut-row {
+    flex-direction: column;
+  }
 }

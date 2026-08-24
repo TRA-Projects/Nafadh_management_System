@@ -1056,3 +1056,54 @@ button:disabled {
   font-weight: 700;
   line-height: 1.4;
 }
+
+.attendance-card {
+  position: relative;
+  min-height: 280px;
+}
+
+.attendance-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(2px);
+
+  text-align: center;
+}
+
+.loading-icon-box {
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 6px;
+
+  background: #eaf9fc;
+  border-radius: 13px;
+
+  color: #00a9c6;
+  font-size: 21px;
+}
+
+.attendance-loading strong {
+  color: #172554;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.attendance-loading span {
+  color: #94a3b8;
+  font-size: 12px;
+}

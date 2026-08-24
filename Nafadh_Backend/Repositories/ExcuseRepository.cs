@@ -29,9 +29,9 @@ namespace Nafadh_Backend.Repositories
         // جلب عذر محدد عن طريق معرف العذر (Primary Key).
         public async Task<NFD_Excuse?> GetByIdAsync(int id)
         {
-            NFD_Excuse? result = await _context.NFD_Excuses
+            return await _context.NFD_Excuses
+                .Include(e => e.DailyAttendance)
                 .FirstOrDefaultAsync(e => e.ExcuseId == id);
-            return result;
         }
 
         // إضافة عذر جديد وإعادة الكائن المُضاف بعد حفظ التغييرات في قاعدة البيانات.
@@ -52,10 +52,11 @@ namespace Nafadh_Backend.Repositories
         // جلب قائمة بجميع الأعذار التي ما زالت قيد الانتظار (Pending) ولم يتم البت فيها بعد.
         public async Task<List<NFD_Excuse>> GetPendingAsync()
         {
-            List<NFD_Excuse> result = await _context.NFD_Excuses
+            return await _context.NFD_Excuses
+                .Include(e => e.DailyAttendance)
                 .Where(e => e.Status == NFD_ExcuseStatus.Pending)
+                .OrderByDescending(e => e.ExcuseId)
                 .ToListAsync();
-            return result;
         }
 
     }

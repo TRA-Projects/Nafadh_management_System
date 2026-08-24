@@ -135,7 +135,7 @@
         </div>
         <div class="kpi-info">
           <span class="kpi-label">المتدربون المتميزون</span>
-          <strong class="kpi-value">{{ topPerformers().length }}</strong>
+          <strong class="kpi-value">{{ filteredTopPerformers().length }}</strong>
           <small>هذا الشهر</small>
         </div>
       </article>
@@ -245,7 +245,7 @@
     <div class="grid g2 g2-14 charts-row">
       <div class="card card-pad chart-card">
         <div class="card-title">
-          متوسط الحضور الأسبوعي
+          متوسط الحضور الأسبوعي للمتدربين 
           <span class="hint">
             المعدل العام: {{ attendanceAverage() | number:'1.1-1' }}%
           </span>
@@ -304,6 +304,7 @@
 
     <div class="bottom-lists-grid">
 
+      <!-- قسم المتدربون المتميزون (معدل ليستخدم القائمة المصفاة) -->
       <div class="card list-card">
         <div class="card-title">
           <span>
@@ -318,7 +319,7 @@
 
         <div class="lower-list">
           @for (
-            trainee of topPerformers().slice(0, 5);
+            trainee of filteredTopPerformers().slice(0, 5);
             track trainee.traineeId
           ) {
             <div class="top-row">
@@ -346,15 +347,13 @@
                   </svg>
                 </button>
 
-                <button
-                  class="icon-btn github"
-                  type="button"
-                  title="فتح ملف المتدرب"
-                  (click)="openGithub(trainee.gitHubUrl)">
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/>
-                  </svg>
-                </button>
+                <a class="social-icon-btn github" [class.disabled]="!trainee.gitHubUrl" [href]="ensureUrl(trainee.gitHubUrl)" target="_blank" rel="noopener noreferrer" title="حساب GitHub للمتدرب">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+                </a>
+
+                <a class="social-icon-btn linkedin" [class.disabled]="!trainee.linkedInUrl" [href]="ensureUrl(trainee.linkedInUrl)" target="_blank" rel="noopener noreferrer" title="حساب LinkedIn للمتدرب">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14M8.3 18.5v-8.3H5.5v8.3h2.8ZM6.9 9.1a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Zm12.1 9.4v-4.8c0-2.6-1.4-3.8-3.3-3.8-1.5 0-2.2.8-2.6 1.4v-1.1h-2.8v8.3h2.8v-4.6c0-1.2.2-2.3 1.7-2.3 1.5 0 1.5 1.4 1.5 2.4v4.5H19Z"/></svg>
+                </a>
               </div>
 
               <div class="performance">
@@ -368,62 +367,59 @@
         </div>
       </div>
 
+      <!-- قسم المتدربين المتعثرين -->
       <div class="card list-card">
         <div class="card-title warning-title">
           <span>
             <span class="icon-warn">⚠️</span>
-            متعثرون بحاجة إلى متابعة
+            المتدربون المتعثرون
           </span>
           <span class="list-count">{{ atRisk().length }}</span>
         </div>
 
         <div class="trainee-list">
           @for (trainee of atRisk(); track trainee.traineeId) {
-            <div class="trainee-row">
-              <div
-                class="avatar"
-                [style.background-color]="avatarColor(trainee.fullName)">
-                {{ initials(trainee.fullName) }}
-              </div>
-
-              <div class="trainee-meta">
-                <div class="name">
-                  {{ trainee.fullName || 'متدرب بدون اسم' }}
-                </div>
-                <div class="sub danger-text">
-                  {{ riskReason(trainee) }}
+            <div class="trainee-row" style="display: flex; align-items: center; justify-content: space-between;">
+              
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div
+                  class="avatar"
+                  [style.background-color]="avatarColor(trainee.fullName)"
+                  style="color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                  {{ initials(trainee.fullName) }}
                 </div>
 
-                <div class="row-actions">
-                  <button
-                    class="btn btn-soft btn-sm follow-btn"
-                    type="button"
-                    (click)="openProgress(trainee.enrollmentId)">
-                    متابعة
-                  </button>
-
-                  <button
-                    class="icon-btn github"
-                    type="button"
-                    title="فتح ملف المتدرب"
-                    (click)="openGithub(trainee.gitHubUrl)">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 .31-.01.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/>
-                    </svg>
-                  </button>
-
-                  <button
-                    class="icon-btn eye"
-                    type="button"
-                    title="عرض صفحة التقدم"
-                    (click)="openProgress(trainee.enrollmentId)">
-                    <svg viewBox="0 0 24 24">
-                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  </button>
+                <div class="trainee-meta" style="text-align: right;">
+                  <div class="name" style="font-weight: bold; color: #1e293b;">
+                    {{ trainee.fullName || 'متدرب بدون اسم' }}
+                  </div>
+                  <div class="sub danger-text" style="color: #e53e3e; font-size: 12px;">
+                    {{ riskReason(trainee) }}
+                  </div>
                 </div>
               </div>
+
+              <div class="row-actions" style="display: flex; align-items: center; gap: 8px;">
+                <button
+                  class="icon-btn eye"
+                  type="button"
+                  title="عرض صفحة التقدم"
+                  (click)="openProgress(trainee.enrollmentId)">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+
+                <a class="social-icon-btn github" [class.disabled]="!trainee.gitHubUrl" [href]="ensureUrl(trainee.gitHubUrl)" target="_blank" rel="noopener noreferrer" title="حساب GitHub للمتدرب">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+                </a>
+
+                <a class="social-icon-btn linkedin" [class.disabled]="!trainee.linkedInUrl" [href]="ensureUrl(trainee.linkedInUrl)" target="_blank" rel="noopener noreferrer" title="حساب LinkedIn للمتدرب">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14M8.3 18.5v-8.3H5.5v8.3h2.8ZM6.9 9.1a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Zm12.1 9.4v-4.8c0-2.6-1.4-3.8-3.3-3.8-1.5 0-2.2.8-2.6 1.4v-1.1h-2.8v8.3h2.8v-4.6c0-1.2.2-2.3 1.7-2.3 1.5 0 1.5 1.4 1.5 2.4v4.5H19Z"/></svg>
+                </a>
+              </div>
+
             </div>
           } @empty {
             <div class="empty">
@@ -434,6 +430,7 @@
         </div>
       </div>
 
+      <!-- أحدث الإنذارات -->
       <div class="card list-card">
         <div class="card-title">
           <span>
@@ -484,15 +481,13 @@
                   </svg>
                 </button>
 
-                <button
-                  class="icon-btn github"
-                  type="button"
-                  title="فتح GitHub"
-                  (click)="openGithub(warning.gitHubUrl)">
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2-.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 .31-.01.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/>
-                  </svg>
-                </button>
+                <a class="social-icon-btn github" [class.disabled]="!warning.gitHubUrl" [href]="ensureUrl(warning.gitHubUrl)" target="_blank" rel="noopener noreferrer" title="حساب GitHub للمتدرب">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.73.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+                </a>
+
+                <a class="social-icon-btn linkedin" [class.disabled]="!warning.linkedInUrl" [href]="ensureUrl(warning.linkedInUrl)" target="_blank" rel="noopener noreferrer" title="حساب LinkedIn للمتدرب">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14M8.3 18.5v-8.3H5.5v8.3h2.8ZM6.9 9.1a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Zm12.1 9.4v-4.8c0-2.6-1.4-3.8-3.3-3.8-1.5 0-2.2.8-2.6 1.4v-1.1h-2.8v8.3h2.8v-4.6c0-1.2.2-2.3 1.7-2.3 1.5 0 1.5 1.4 1.5 2.4v4.5H19Z"/></svg>
+                </a>
               </div>
             </div>
           } @empty {

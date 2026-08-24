@@ -54,54 +54,41 @@
 
 
   <!-- =======================================================
-       TABS
-       ======================================================= -->
+        TABS
+        ======================================================= -->
+<nav class="tabs-wrapper" role="tablist" aria-label="أقسام التقارير">
 
-  <nav class="tabs-wrapper" role="tablist" aria-label="أقسام التقارير">
-
+    <!-- 1. حضور المتدربين -->
     <button type="button" class="tab-btn" role="tab" [attr.aria-selected]="tab() === 'attendance'"
       [class.active]="tab() === 'attendance'" (click)="selectTab('attendance')">
-
       <span class="tab-icon">◉</span>
-
       <span>
         حضور المتدربين
         <small>الحضور والغياب</small>
       </span>
-
     </button>
 
-
+    <!-- 2. إنجاز المتدربين (الافتراضي في المنتصف) -->
     <button type="button" class="tab-btn" role="tab" [attr.aria-selected]="tab() === 'achievement'"
       [class.active]="tab() === 'achievement'" (click)="selectTab('achievement')">
-
       <span class="tab-icon">◆</span>
-
       <span>
-        إنجاز المتدربين
+         إنجاز المتدربين
         <small>الأداء والإنجاز</small>
       </span>
-
     </button>
 
-
+    <!-- 3. الطاقة الاستيعابية -->
     <button type="button" class="tab-btn" role="tab" [attr.aria-selected]="tab() === 'capacity'"
-      [class.active]="tab() === 'capacity'">
-
-      <span class="tab-icon" (click)="selectTab('capacity')">
-        ▥
-      </span>
-
-      <span (click)="selectTab('capacity')">
+      [class.active]="tab() === 'capacity'" (click)="selectTab('capacity')">
+      <span class="tab-icon">▥</span>
+      <span>
         الطاقة الاستيعابية
         <small>المقاعد والاستخدام</small>
       </span>
-
     </button>
 
   </nav>
-
-
   <!-- =======================================================
        LOADING / ERROR
        ======================================================= -->

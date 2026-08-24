@@ -1,8 +1,5 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CompanyBranchDto, CompanyDto, CompanySupervisorDto, EnrollmentDto } from '../../../../core/models/dtos';
@@ -36,11 +33,14 @@ export interface HostedSpecialtyDto {
 
 @Component({
   selector: 'app-company-profile',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })
 export class CompanyProfile implements OnInit {
+  private readonly api = inject(CompanyApi);
+  private readonly auth = inject(AuthService);
+
   companyId: number = 0;
   readonly coverInputId = 'company-cover-upload';
   readonly logoInputId = 'company-logo-upload';
@@ -83,10 +83,13 @@ export class CompanyProfile implements OnInit {
 
   companyInitial = computed(() => this.company()?.companyName?.trim()?.charAt(0)?.toUpperCase() ?? 'ش');
 
+  // حساب عدد المتدربين بناءً على العدد الفعلي من getEnrollmentsByCompany أو قيم Capacity
   usedCapacityValue = computed(() => {
+    if (this.trainees().length > 0) {
+      return this.trainees().length;
+    }
     const c = this.company();
-    if (typeof c?.usedCapacity === 'number') return c.usedCapacity;
-    return this.trainees().length;
+    return typeof c?.usedCapacity === 'number' ? c.usedCapacity : 0;
   });
 
   capacityPercent = computed(() => {
@@ -99,11 +102,8 @@ export class CompanyProfile implements OnInit {
   readonly ringCircumference = 2 * Math.PI * 62;
   ringDashoffset = computed(() => this.ringCircumference * (1 - this.capacityPercent() / 100));
 
-  constructor(private api: CompanyApi, private auth: AuthService) {
-    this.companyId = this.auth.companyId ?? 0;
-  }
-
   ngOnInit() {
+    this.companyId = this.auth.companyId ?? 0;
     this.api.getCompany(this.companyId).subscribe({
       next: (response) => {
         const normalizedCompany = this.normalizeCompany(response);
@@ -125,7 +125,7 @@ export class CompanyProfile implements OnInit {
     });
 
     this.api.getBranches(this.companyId).subscribe({
-      next: (items) => {
+      next: (items: CompanyBranchDto[]) => {
         this.branches.set(items ?? []);
         this.branchesLoadError.set(false);
       },
@@ -133,17 +133,26 @@ export class CompanyProfile implements OnInit {
     });
 
     this.api.getSupervisors(this.companyId).subscribe({
-      next: (items) => {
+      next: (items: CompanySupervisorDto[]) => {
         this.supervisors.set((items ?? []).map((supervisor) => this.normalizeSupervisor(supervisor)));
         this.supervisorsLoadError.set(false);
       },
       error: () => this.supervisorsLoadError.set(true),
     });
 
+    // جلب الطاقة الاستيعابية وحفظ القيمة القادمة من السيرفر
     this.api.getCapacity(this.companyId).subscribe({
       next: (cap) => {
-        this.company.update((c) => (c ? { ...c, usedCapacity: Number(cap?.used ?? 0) } : c));
-        this.trainees.set([]);
+        const used = Number(cap?.used ?? 0);
+        this.company.update((c) => (c ? { ...c, usedCapacity: used } : c));
+      },
+      error: (err) => console.error('Failed to load capacity:', err),
+    });
+
+    // جلب تسجيلات/متدربين الشركة باستخدام الميثود الصحيحة getEnrollmentsByCompany
+    this.api.getEnrollmentsByCompany(this.companyId).subscribe({
+      next: (items: EnrollmentDto[]) => {
+        this.trainees.set(items ?? []);
         this.traineesLoadError.set(false);
       },
       error: () => this.traineesLoadError.set(true),
@@ -395,8 +404,6 @@ export class CompanyProfile implements OnInit {
     const userId = Number(this.supervisorDraft.userId);
     if (!userId || !this.companyId) return;
 
-    // The current backend endpoint accepts a real supervisor creation DTO.
-    // Keep the UI contract small and let the API validate required fields.
     this.api.addSupervisor({
       userId,
       department: this.supervisorDraft.role.trim() || null,
@@ -407,7 +414,7 @@ export class CompanyProfile implements OnInit {
         this.supervisorDraft = { userId: '', name: '', role: '', phone: '', email: '' };
         this.supervisorFormOpen.set(false);
         this.api.getSupervisors(this.companyId).subscribe({
-          next: (items) => this.supervisors.set((items ?? []).map((x) => this.normalizeSupervisor(x))),
+          next: (items: CompanySupervisorDto[]) => this.supervisors.set((items ?? []).map((x) => this.normalizeSupervisor(x))),
           error: () => undefined,
         });
       },
@@ -471,11 +478,6 @@ export class CompanyProfile implements OnInit {
     uploadingSignal.set(true);
     errorSignal.set(false);
 
-    // The current backend schema stores only a Logo URL and has no binary
-    // file-upload endpoint/cover column. Keep the selected image usable in
-    // the Company Portal without sending an oversized base64 payload to an
-    // unrelated text field. A future storage endpoint can replace this block
-    // without changing the page design.
     try {
       localStorage.setItem(`nafadh-company-${c.companyId}-${kind}`, value);
     } catch (error) {

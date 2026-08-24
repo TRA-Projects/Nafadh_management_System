@@ -37,13 +37,15 @@ interface ProgramProgress { programName: string; shortName: string; progress: nu
 
 @Component({
   selector: 'app-company-reports',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './reports.html',
   styleUrl: './reports.scss'
 })
 export class ReportsComponent implements OnInit {
   private readonly elementRef = inject(ElementRef);
+  private readonly api = inject(CompanyApi);
+  private readonly auth = inject(AuthService);
+
   readonly tab = signal<'attendance' | 'achievement' | 'capacity'>('achievement');
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -51,8 +53,6 @@ export class ReportsComponent implements OnInit {
   readonly achievement = signal<AchievementReportDto | null>(null);
   readonly capacity = signal<CapacityReportDto | null>(null);
   readonly programProgressList = signal<ProgramProgress[]>([]);
-
-  constructor(private api: CompanyApi, private auth: AuthService) {}
 
   ngOnInit(): void { this.loadInitialData(); }
 

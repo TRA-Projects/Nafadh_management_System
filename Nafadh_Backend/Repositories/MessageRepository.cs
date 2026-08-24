@@ -66,6 +66,17 @@ namespace Nafadh_Backend.Repositories
         {
             return await _context.NFD_Messages
                 .CountAsync(m => m.ReceiverId == userId && m.Status == NFD_MessageStatus.Sent);
+        }
+
+        public async Task<int> GetUnreadDirectMessageCountAsync(int userId)
+        {
+            // Exclude threaded Communication messages so the shared summary
+            // cannot count the same message twice.
+            return await _context.NFD_Messages
+                .CountAsync(m =>
+                    m.TicketId == null &&
+                    m.ReceiverId == userId &&
+                    m.Status == NFD_MessageStatus.Sent);
         }   
 
     }

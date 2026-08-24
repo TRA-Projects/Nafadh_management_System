@@ -2,6 +2,7 @@ import {
   Component,
   OnDestroy,
   OnInit,
+  computed,
   signal
 } from '@angular/core';
 
@@ -10,7 +11,11 @@ import { FormsModule } from '@angular/forms';
 
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { TrainerDto } from '../../../../core/models/dtos';
+
+import {
+  TrainerBatchDto,
+  TrainerDto
+} from '../../../../core/models/dtos';
 
 
 @Component({
@@ -31,7 +36,127 @@ export class TrainerProfile
   // =====================================================
 
   trainer =
-    signal<TrainerDto | null>(null);
+    signal<TrainerDto | null>(
+      null
+    );
+
+  trainerBatches =
+    signal<TrainerBatchDto[]>(
+      []
+    );
+
+
+  // =====================================================
+  // PROFILE SUMMARY
+  // =====================================================
+
+  assignedBatchesCount =
+    computed(() => {
+
+      return this.trainerBatches()
+        .length;
+
+    });
+
+
+  ongoingBatchesCount =
+    computed(() => {
+
+      const today =
+        new Date();
+
+      today.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+
+      return this.trainerBatches()
+        .filter(
+          batch => {
+
+            if (!batch.startDate) {
+
+              return false;
+
+            }
+
+
+            const startDate =
+              new Date(
+                batch.startDate
+              );
+
+
+            if (
+              Number.isNaN(
+                startDate.getTime()
+              )
+            ) {
+
+              return false;
+
+            }
+
+
+            startDate.setHours(
+              0,
+              0,
+              0,
+              0
+            );
+
+
+            let endDate:
+              Date | null = null;
+
+
+            if (batch.endDate) {
+
+              endDate =
+                new Date(
+                  batch.endDate
+                );
+
+
+              if (
+                Number.isNaN(
+                  endDate.getTime()
+                )
+              ) {
+
+                endDate = null;
+
+              }
+              else {
+
+                endDate.setHours(
+                  0,
+                  0,
+                  0,
+                  0
+                );
+
+              }
+
+            }
+
+
+            return (
+              today >= startDate &&
+              (
+                !endDate ||
+                today <= endDate
+              )
+            );
+
+          }
+        )
+        .length;
+
+    });
 
 
   // =====================================================
@@ -44,6 +169,25 @@ export class TrainerProfile
   isSaving =
     signal(false);
 
+  hasUnsavedChanges =
+    signal(false);
+// =====================================================
+// EDIT MODE
+// =====================================================
+
+isEditing =
+  signal(false);
+
+
+// =====================================================
+// PROFILE IMAGE
+// =====================================================
+
+profileImagePreview =
+  signal<string | null>(null);
+
+selectedProfileImage:
+  File | null = null;
   showSuccessToast =
     signal(false);
 
@@ -105,7 +249,18 @@ export class TrainerProfile
       );
 
 
-      this.trainer.set(null);
+      this.trainer.set(
+        null
+      );
+
+      this.trainerBatches.set(
+        []
+      );
+
+      this.hasUnsavedChanges.set(
+        false
+      );
+
 
       this.showError(
         'تعذر تحديد المستخدم الحالي.'
@@ -115,11 +270,15 @@ export class TrainerProfile
     }
 
 
-    this.loading.set(true);
+    this.loading.set(
+      true
+    );
 
 
     this.api
-      .getTrainerByUserId(userId)
+      .getTrainerByUserId(
+        userId
+      )
       .subscribe({
 
         next: (data) => {
@@ -128,7 +287,20 @@ export class TrainerProfile
             data
           );
 
-          this.loading.set(false);
+
+          this.hasUnsavedChanges.set(
+            false
+          );
+
+
+          this.loading.set(
+            false
+          );
+
+
+          this.loadTrainerBatches(
+            data.trainerId
+          );
 
         },
 
@@ -141,9 +313,22 @@ export class TrainerProfile
           );
 
 
-          this.trainer.set(null);
+          this.trainer.set(
+            null
+          );
 
-          this.loading.set(false);
+          this.trainerBatches.set(
+            []
+          );
+
+          this.hasUnsavedChanges.set(
+            false
+          );
+
+          this.loading.set(
+            false
+          );
+
 
           this.showError(
             'تعذر تحميل بيانات الملف الشخصي.'
@@ -152,6 +337,158 @@ export class TrainerProfile
         }
 
       });
+
+  }
+
+
+  // =====================================================
+  // LOAD TRAINER BATCHES
+  // =====================================================
+
+  private loadTrainerBatches(
+    trainerId: number
+  ): void {
+
+    this.api
+      .getMyBatches(
+        trainerId
+      )
+      .subscribe({
+
+        next: (batches) => {
+
+          this.trainerBatches.set(
+            batches ?? []
+          );
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'خطأ في تحميل دفعات المدرب:',
+            err
+          );
+
+
+          this.trainerBatches.set(
+            []
+          );
+
+        }
+
+      });
+
+  }
+// =====================================================
+// EDIT PROFILE
+// =====================================================
+
+startEditing(): void {
+
+  this.isEditing.set(true);
+
+  this.showSuccessToast.set(false);
+  this.showErrorToast.set(false);
+
+}
+// =====================================================
+// PROFILE IMAGE SELECT
+// =====================================================
+
+onProfileImageSelected(
+  event: Event
+): void {
+
+  const input =
+    event.target as HTMLInputElement;
+
+  const file =
+    input.files?.[0] ?? null;
+
+
+  if (!file) {
+    return;
+  }
+
+
+  if (
+    !file.type.startsWith('image/')
+  ) {
+
+    this.showError(
+      'اختاري ملف صورة صحيح.'
+    );
+
+    input.value = '';
+
+    return;
+  }
+
+
+  const maxSize =
+    5 * 1024 * 1024;
+
+
+  if (
+    file.size > maxSize
+  ) {
+
+    this.showError(
+      'حجم الصورة يجب ألا يتجاوز 5 MB.'
+    );
+
+    input.value = '';
+
+    return;
+  }
+
+
+  this.selectedProfileImage =
+    file;
+
+
+  const reader =
+    new FileReader();
+
+
+  reader.onload = () => {
+
+    this.profileImagePreview.set(
+      typeof reader.result === 'string'
+        ? reader.result
+        : null
+    );
+
+    this.markProfileChanged();
+
+  };
+
+
+  reader.readAsDataURL(
+    file
+  );
+
+}
+  // =====================================================
+  // PROFILE CHANGE STATE
+  // =====================================================
+
+  markProfileChanged(): void {
+
+    this.hasUnsavedChanges.set(
+      true
+    );
+
+
+    this.showSuccessToast.set(
+      false
+    );
+
+    this.showErrorToast.set(
+      false
+    );
 
   }
 
@@ -168,7 +505,8 @@ export class TrainerProfile
 
     if (
       !trainer ||
-      this.isSaving()
+      this.isSaving() ||
+      !this.hasUnsavedChanges()
     ) {
 
       return;
@@ -176,10 +514,15 @@ export class TrainerProfile
     }
 
 
-    // Basic validation
-    if (
-      !trainer.fullName?.trim()
-    ) {
+    // ===================================================
+    // FULL NAME VALIDATION
+    // ===================================================
+
+    const fullName =
+      trainer.fullName?.trim() ?? '';
+
+
+    if (!fullName) {
 
       this.showError(
         'الاسم الكامل مطلوب.'
@@ -189,42 +532,118 @@ export class TrainerProfile
     }
 
 
+    // ===================================================
+    // EMAIL VALIDATION
+    // ===================================================
+
+    const email =
+      trainer.email?.trim() ?? '';
+
+
+    if (email) {
+
+      const emailPattern =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+      if (
+        !emailPattern.test(
+          email
+        )
+      ) {
+
+        this.showError(
+          'أدخلي بريدًا إلكترونيًا صحيحًا.'
+        );
+
+        return;
+      }
+
+    }
+
+
+    // ===================================================
+    // PHONE VALIDATION
+    // ===================================================
+
+    const phone =
+      trainer.phone?.trim() ?? '';
+
+
+    if (phone) {
+
+      const normalizedPhone =
+        phone.replace(
+          /[\s\-()]/g,
+          ''
+        );
+
+
+      const phonePattern =
+        /^\+?[0-9]{8,15}$/;
+
+
+      if (
+        !phonePattern.test(
+          normalizedPhone
+        )
+      ) {
+
+        this.showError(
+          'أدخلي رقم هاتف صحيحًا.'
+        );
+
+        return;
+      }
+
+    }
+
+
+    // ===================================================
+    // EXPERIENCE VALIDATION
+    // ===================================================
+
+    const experienceYears =
+      Number(
+        trainer.experienceYears
+      );
+
+
     if (
-      trainer.experienceYears < 0 ||
-      trainer.experienceYears > 100
+      !Number.isFinite(
+        experienceYears
+      ) ||
+      !Number.isInteger(
+        experienceYears
+      ) ||
+      experienceYears < 0 ||
+      experienceYears > 100
     ) {
 
       this.showError(
-        'سنوات الخبرة يجب أن تكون بين 0 و100.'
+        'سنوات الخبرة يجب أن تكون رقمًا صحيحًا بين 0 و100.'
       );
 
       return;
     }
 
 
-    this.isSaving.set(true);
-
-    this.showErrorToast.set(false);
-
-    this.showSuccessToast.set(false);
-
+    // ===================================================
+    // PAYLOAD
+    // ===================================================
 
     const payload = {
 
-      fullName:
-        trainer.fullName.trim(),
+      fullName,
 
-      email:
-        trainer.email?.trim() ?? '',
+      email,
 
-      phone:
-        trainer.phone?.trim() ?? '',
+      phone,
 
       specialty:
         trainer.specialty?.trim() ?? '',
 
-      experienceYears:
-        trainer.experienceYears ?? 0,
+      experienceYears,
 
       biography:
         trainer.biography?.trim() ?? '',
@@ -233,6 +652,23 @@ export class TrainerProfile
         trainer.cvUrl?.trim() ?? ''
 
     };
+
+
+    // ===================================================
+    // SAVE
+    // ===================================================
+
+    this.isSaving.set(
+      true
+    );
+
+    this.showSuccessToast.set(
+      false
+    );
+
+    this.showErrorToast.set(
+      false
+    );
 
 
     this.api
@@ -244,13 +680,39 @@ export class TrainerProfile
 
         next: () => {
 
-          this.isSaving.set(false);
+          // نحدث النسخة المحلية
+          // بدون إعادة تحميل الصفحة.
+          this.trainer.update(
+            current => {
+
+              if (!current) {
+
+                return current;
+
+              }
+
+
+              return {
+                ...current,
+                ...payload
+              };
+
+            }
+          );
+
+
+          this.isSaving.set(
+            false
+          );
+
+          this.hasUnsavedChanges.set(
+            false
+          );
+this.isEditing.set(
+  false
+);
 
           this.showSuccess();
-
-          // نجيب النسخة المحدثة
-          // من قاعدة البيانات
-          this.loadTrainer();
 
         },
 
@@ -263,7 +725,10 @@ export class TrainerProfile
           );
 
 
-          this.isSaving.set(false);
+          this.isSaving.set(
+            false
+          );
+
 
           this.showError(
             'حدث خطأ أثناء تحديث بيانات الملف الشخصي.'
@@ -277,16 +742,21 @@ export class TrainerProfile
 
 
   // =====================================================
-  // TOASTS
+  // SUCCESS TOAST
   // =====================================================
 
   private showSuccess(): void {
 
     this.clearToastTimer();
 
-    this.showErrorToast.set(false);
 
-    this.showSuccessToast.set(true);
+    this.showErrorToast.set(
+      false
+    );
+
+    this.showSuccessToast.set(
+      true
+    );
 
 
     this.toastTimer =
@@ -304,19 +774,29 @@ export class TrainerProfile
   }
 
 
+  // =====================================================
+  // ERROR TOAST
+  // =====================================================
+
   private showError(
     message: string
   ): void {
 
     this.clearToastTimer();
 
+
     this.errorToastMessage.set(
       message
     );
 
-    this.showSuccessToast.set(false);
 
-    this.showErrorToast.set(true);
+    this.showSuccessToast.set(
+      false
+    );
+
+    this.showErrorToast.set(
+      true
+    );
 
 
     this.toastTimer =
@@ -328,26 +808,32 @@ export class TrainerProfile
           );
 
         },
-        3000
+        3500
       );
 
   }
 
 
+  // =====================================================
+  // CLEAR TOAST TIMER
+  // =====================================================
+
   private clearToastTimer(): void {
 
-    if (
-      this.toastTimer
-    ) {
+    if (!this.toastTimer) {
 
-      clearTimeout(
-        this.toastTimer
-      );
-
-      this.toastTimer =
-        undefined;
+      return;
 
     }
+
+
+    clearTimeout(
+      this.toastTimer
+    );
+
+
+    this.toastTimer =
+      undefined;
 
   }
 

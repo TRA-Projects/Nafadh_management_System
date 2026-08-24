@@ -116,3 +116,22 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
 @media(max-width:900px){
   .page-head h3{font-size:16.5px}
 }
+
+
+/* Company portal social links: shared visual treatment */
+.social-icon-btn{
+  width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid #dbe6ef;border-radius:9px;text-decoration:none;cursor:pointer;
+  transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease;
+}
+.social-icon-btn:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(25,56,93,.12)}
+.social-icon-btn.disabled{opacity:.38;pointer-events:none;cursor:default}
+.social-icon-btn.github{background:#18181b;color:#fff}
+.social-icon-btn.github:hover{background:#27272a}
+.social-icon-btn.linkedin{background:#0a66c2;color:#fff}
+.social-icon-btn.linkedin:hover{background:#084f96}
+.social-icon-btn svg{width:16px;height:16px;fill:currentColor}
+.social-icon-btn nfd-icon{display:grid;place-items:center}
+
+/* Unified company portal page title */
+.nfd-page-title{font-family:'Cairo',sans-serif !important;font-size:24px !important;font-weight:800 !important;color:#0A1172 !important;line-height:1.3}

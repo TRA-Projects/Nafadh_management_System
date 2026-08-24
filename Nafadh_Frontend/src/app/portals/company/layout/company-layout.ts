@@ -9,6 +9,7 @@ import { AppShell, ShellNavItem } from '../../../shared/ui/app-shell/app-shell';
 export class CompanyLayout {
   navItems: ShellNavItem[] = [
     { path: 'dashboard', label: 'لوحة التحكم', icon: 'home' },
+    { path: 'supervisors', label: 'إدارة المشرفين', icon: 'shield' },
     { path: 'trainees', label: 'المتدربون', icon: 'graduation' },
     { path: 'specialties', label: 'البرامج', icon: 'book' },
     { path: 'profile', label: 'ملف الشركة', icon: 'building' },

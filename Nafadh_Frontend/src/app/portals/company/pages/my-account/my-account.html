@@ -76,44 +76,40 @@
   <!-- =========================================================
        Loading State
        ========================================================= -->
-  <div
-    class="account-state"
-    *ngIf="loading()">
-
-    جارٍ تحميل بيانات الحساب...
-
-  </div>
+  @if (loading()) {
+    <div class="account-state">
+      جارٍ تحميل بيانات الحساب...
+    </div>
+  }
 
 
   <!-- =========================================================
        Error State
        ========================================================= -->
-  <div
-    class="account-state error"
-    *ngIf="!loading() && loadError()">
+  @if (!loading() && loadError()) {
+    <div class="account-state error">
 
-    <span>
-      تعذر تحميل بيانات الحساب من الخادم.
-    </span>
+      <span>
+        تعذر تحميل بيانات الحساب من الخادم.
+      </span>
 
-    <button
-      type="button"
-      class="btn btn-outline"
-      (click)="loadAccount()">
+      <button
+        type="button"
+        class="btn btn-outline"
+        (click)="loadAccount()">
 
-      إعادة المحاولة
+        إعادة المحاولة
 
-    </button>
+      </button>
 
-  </div>
+    </div>
+  }
 
 
   <!-- =========================================================
        Real Account Data
        ========================================================= -->
-  <ng-container
-    *ngIf="!loading() && !loadError() && profile() as account">
-
+  @if (!loading() && !loadError() && profile(); as account) {
     <div class="main-dashboard-grid">
 
 
@@ -202,28 +198,17 @@
             الصلاحيات الرئيسية
           </span>
 
-
-          <ng-container
-            *ngIf="account.permissions.length > 0; else noSidebarPermissions">
-
-            <div
-              class="tag-chip"
-              *ngFor="let perm of account.permissions">
-
-              {{ perm.permissionKey }}
-
-            </div>
-
-          </ng-container>
-
-
-          <ng-template #noSidebarPermissions>
-
+          @if (account.permissions.length > 0) {
+            @for (perm of account.permissions; track perm.permissionKey) {
+              <div class="tag-chip">
+                {{ perm.permissionKey }}
+              </div>
+            }
+          } @else {
             <div class="tag-chip">
               لا توجد صلاحيات مسجلة
             </div>
-
-          </ng-template>
+          }
 
         </div>
 
@@ -337,359 +322,337 @@
           <!-- ===================================================
                TAB 1 — Personal Information
                =================================================== -->
-          <section
-            class="card-box full-width"
-            *ngIf="activeTab() === 'info'">
+          @if (activeTab() === 'info') {
+            <section class="card-box full-width">
 
-            <div class="card-title-bar">
-              <h4>
-                البيانات الشخصية
-              </h4>
-            </div>
-
-
-            <div class="info-grid">
-
-
-              <div class="info-cell">
-
-                <label>
-                  الاسم الكامل
-                </label>
-
-                <span class="val">
-                  {{ account.fullName || 'غير متوفر' }}
-                </span>
-
+              <div class="card-title-bar">
+                <h4>
+                  البيانات الشخصية
+                </h4>
               </div>
 
 
-              <div class="info-cell">
+              <div class="info-grid">
 
-                <label>
-                  البريد الإلكتروني
-                </label>
 
-                <span class="val ltr">
-                  {{ account.email || 'غير متوفر' }}
-                </span>
+                <div class="info-cell">
+
+                  <label>
+                    الاسم الكامل
+                  </label>
+
+                  <span class="val">
+                    {{ account.fullName || 'غير متوفر' }}
+                  </span>
+
+                </div>
+
+
+                <div class="info-cell">
+
+                  <label>
+                    البريد الإلكتروني
+                  </label>
+
+                  <span class="val ltr">
+                    {{ account.email || 'غير متوفر' }}
+                  </span>
+
+                </div>
+
+
+                <div class="info-cell">
+
+                  <label>
+                    رقم الجوال
+                  </label>
+
+                  <span class="val ltr">
+                    {{ account.phone || 'غير متوفر' }}
+                  </span>
+
+                </div>
+
+
+                <div class="info-cell">
+
+                  <label>
+                    المسمى الوظيفي
+                  </label>
+
+                  <span class="val">
+                    {{ account.position || 'غير محدد' }}
+                  </span>
+
+                </div>
+
+
+                <div class="info-cell">
+
+                  <label>
+                    القسم
+                  </label>
+
+                  <span class="val">
+                    {{ account.department || 'غير محدد' }}
+                  </span>
+
+                </div>
+
+
+                <div class="info-cell">
+
+                  <label>
+                    الجهة / الشركة
+                  </label>
+
+                  <span class="val">
+                    {{ account.companyName || 'غير محدد' }}
+                  </span>
+
+                </div>
+
+
+                <div class="info-cell">
+
+                  <label>
+                    الدور الوظيفي
+                  </label>
+
+                  <span class="val">
+                    {{ account.roleName || 'غير محدد' }}
+                  </span>
+
+                </div>
+
+
+                <div class="info-cell">
+
+                  <label>
+                    حالة الحساب
+                  </label>
+
+                  <span class="val">
+                    {{ account.userStatus || 'غير محدد' }}
+                  </span>
+
+                </div>
+
+
+                <div class="info-cell">
+
+                  <label>
+                    حالة المشرف
+                  </label>
+
+                  <span class="val">
+                    {{ account.supervisorStatus || 'غير محدد' }}
+                  </span>
+
+                </div>
+
+
+                <div class="info-cell">
+
+                  <label>
+                    حالة الشركة
+                  </label>
+
+                  <span class="val">
+                    {{ account.companyStatus || 'غير محدد' }}
+                  </span>
+
+                </div>
+
+
+                <div class="info-cell">
+
+                  <label>
+                    تاريخ إنشاء الحساب
+                  </label>
+
+                  <span class="val">
+                    {{
+                      account.createdAt
+                        ? (account.createdAt | date:'yyyy-MM-dd HH:mm')
+                        : 'غير متوفر'
+                    }}
+                  </span>
+
+                </div>
+
+
+                <div class="info-cell">
+
+                  <label>
+                    آخر نشاط مسجل
+                  </label>
+
+                  <span class="val">
+                    {{
+                      account.lastActivityAt
+                        ? (account.lastActivityAt | date:'yyyy-MM-dd HH:mm')
+                        : 'غير متوفر'
+                    }}
+                  </span>
+
+                </div>
 
               </div>
 
-
-              <div class="info-cell">
-
-                <label>
-                  رقم الجوال
-                </label>
-
-                <span class="val ltr">
-                  {{ account.phone || 'غير متوفر' }}
-                </span>
-
-              </div>
-
-
-              <div class="info-cell">
-
-                <label>
-                  المسمى الوظيفي
-                </label>
-
-                <span class="val">
-                  {{ account.position || 'غير محدد' }}
-                </span>
-
-              </div>
-
-
-              <div class="info-cell">
-
-                <label>
-                  القسم
-                </label>
-
-                <span class="val">
-                  {{ account.department || 'غير محدد' }}
-                </span>
-
-              </div>
-
-
-              <div class="info-cell">
-
-                <label>
-                  الجهة / الشركة
-                </label>
-
-                <span class="val">
-                  {{ account.companyName || 'غير محدد' }}
-                </span>
-
-              </div>
-
-
-              <div class="info-cell">
-
-                <label>
-                  الدور الوظيفي
-                </label>
-
-                <span class="val">
-                  {{ account.roleName || 'غير محدد' }}
-                </span>
-
-              </div>
-
-
-              <div class="info-cell">
-
-                <label>
-                  حالة الحساب
-                </label>
-
-                <span class="val">
-                  {{ account.userStatus || 'غير محدد' }}
-                </span>
-
-              </div>
-
-
-              <div class="info-cell">
-
-                <label>
-                  حالة المشرف
-                </label>
-
-                <span class="val">
-                  {{ account.supervisorStatus || 'غير محدد' }}
-                </span>
-
-              </div>
-
-
-              <div class="info-cell">
-
-                <label>
-                  حالة الشركة
-                </label>
-
-                <span class="val">
-                  {{ account.companyStatus || 'غير محدد' }}
-                </span>
-
-              </div>
-
-
-              <div class="info-cell">
-
-                <label>
-                  تاريخ إنشاء الحساب
-                </label>
-
-                <span class="val">
-                  {{
-                    account.createdAt
-                      ? (account.createdAt | date:'yyyy-MM-dd HH:mm')
-                      : 'غير متوفر'
-                  }}
-                </span>
-
-              </div>
-
-
-              <div class="info-cell">
-
-                <label>
-                  آخر نشاط مسجل
-                </label>
-
-                <span class="val">
-                  {{
-                    account.lastActivityAt
-                      ? (account.lastActivityAt | date:'yyyy-MM-dd HH:mm')
-                      : 'غير متوفر'
-                  }}
-                </span>
-
-              </div>
-
-            </div>
-
-          </section>
+            </section>
+          }
 
 
           <!-- ===================================================
                TAB 2 — Permissions
                =================================================== -->
-          <section
-            class="card-box full-width"
-            *ngIf="activeTab() === 'permissions'">
+          @if (activeTab() === 'permissions') {
+            <section class="card-box full-width">
 
-            <div class="card-title-bar">
+              <div class="card-title-bar">
 
-              <h4>
-                الصلاحيات الممنوحة
-              </h4>
+                <h4>
+                  الصلاحيات الممنوحة
+                </h4>
 
-              <span class="badge-count">
-                {{ account.permissions.length }}
-                مفعّلة
-              </span>
+                <span class="badge-count">
+                  {{ account.permissions.length }}
+                  مفعّلة
+                </span>
 
-            </div>
+              </div>
 
 
-            <div class="mini-perm-list">
+              <div class="mini-perm-list">
 
-              <ng-container
-                *ngIf="account.permissions.length > 0; else noPermissions">
+                @if (account.permissions.length > 0) {
+                  @for (perm of account.permissions; track perm.permissionKey) {
+                    <div class="perm-card">
 
-                <div
-                  class="perm-card"
-                  *ngFor="let perm of account.permissions">
+                      <div class="perm-icon">
 
-                  <div class="perm-icon">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2">
 
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2">
+                          <path
+                            d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z">
+                          </path>
 
-                      <path
-                        d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z">
-                      </path>
+                        </svg>
 
-                    </svg>
+                      </div>
 
+
+                      <div>
+
+                        <strong>
+                          {{ perm.permissionKey }}
+                        </strong>
+
+                        <p>
+                          {{
+                            perm.description ||
+                            'لا يوجد وصف للصلاحية'
+                          }}
+                        </p>
+
+                      </div>
+
+                    </div>
+                  }
+                } @else {
+                  <div class="empty-state">
+                    لا توجد صلاحيات مسجلة لهذا الحساب.
                   </div>
+                }
 
+              </div>
 
-                  <div>
-
-                    <strong>
-                      {{ perm.permissionKey }}
-                    </strong>
-
-                    <p>
-                      {{
-                        perm.description ||
-                        'لا يوجد وصف للصلاحية'
-                      }}
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </ng-container>
-
-
-              <ng-template #noPermissions>
-
-                <div class="empty-state">
-                  لا توجد صلاحيات مسجلة لهذا الحساب.
-                </div>
-
-              </ng-template>
-
-            </div>
-
-          </section>
+            </section>
+          }
 
 
           <!-- ===================================================
                TAB 3 — Activities
                =================================================== -->
-          <section
-            class="card-box full-width"
-            *ngIf="activeTab() === 'activities'">
+          @if (activeTab() === 'activities') {
+            <section class="card-box full-width">
 
-            <div class="card-title-bar">
+              <div class="card-title-bar">
 
-              <h4>
-                سجل النشاطات
-              </h4>
+                <h4>
+                  سجل النشاطات
+                </h4>
 
-            </div>
-
-
-            <ng-container
-              *ngIf="account.recentActivities.length > 0; else noActivities">
-
-              <ul class="timeline-list">
-
-                <li
-                  *ngFor="let activity of account.recentActivities">
-
-                  <span class="dot"></span>
-
-
-                  <div class="t-info">
-
-                    <strong>
-                      {{ activity.action }}
-                    </strong>
-
-
-                    <small>
-
-                      {{ activity.entityName }}
-
-                      <ng-container
-                        *ngIf="activity.entityId">
-
-                        — رقم:
-                        {{ activity.entityId }}
-
-                      </ng-container>
-
-
-                      <ng-container
-                        *ngIf="activity.details">
-
-                        —
-                        {{ activity.details }}
-
-                      </ng-container>
-
-
-                      —
-                      {{
-                        activity.timestamp
-                          | date:'yyyy-MM-dd HH:mm'
-                      }}
-
-                    </small>
-
-                  </div>
-
-                </li>
-
-              </ul>
-
-            </ng-container>
-
-
-            <ng-template #noActivities>
-
-              <div class="empty-state">
-                لا توجد نشاطات مسجلة لهذا الحساب.
               </div>
 
-            </ng-template>
 
-          </section>
+              @if (account.recentActivities.length > 0) {
+                <ul class="timeline-list">
+
+                  @for (activity of account.recentActivities; track activity.entityId + activity.action + activity.timestamp) {
+                    <li>
+
+                      <span class="dot"></span>
+
+
+                      <div class="t-info">
+
+                        <strong>
+                          {{ activity.action }}
+                        </strong>
+
+
+                        <small>
+
+                          {{ activity.entityName }}
+
+                          @if (activity.entityId) {
+                            — رقم:
+                            {{ activity.entityId }}
+                          }
+
+
+                          @if (activity.details) {
+                            —
+                            {{ activity.details }}
+                          }
+
+
+                          —
+                          {{
+                            activity.timestamp
+                              | date:'yyyy-MM-dd HH:mm'
+                          }}
+
+                        </small>
+
+                      </div>
+
+                    </li>
+                  }
+
+                </ul>
+              } @else {
+                <div class="empty-state">
+                  لا توجد نشاطات مسجلة لهذا الحساب.
+                </div>
+              }
+
+            </section>
+          }
 
         </div>
 
       </main>
 
     </div>
-
-  </ng-container>
+  }
 
 </div>

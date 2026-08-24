@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -13,6 +13,7 @@ const STATUS_LABELS: Record<string, string> = {
   Dropped: 'موقوف',
   Failed: 'متعثر',
 };
+
 const STATUS_CHIP_CLASS: Record<string, string> = {
   InProgress: 'ok',
   Completed: 'info',
@@ -29,17 +30,16 @@ const AVATAR_PALETTE = ['#00338d', '#007cae', '#00bbc2', '#efbb20', '#1ebbf0', '
   styleUrl: './trainees.scss',
 })
 export class CompanyTrainees implements OnInit {
-  companyId: number = 0;
+  private readonly api = inject(CompanyApi);
+  private readonly auth = inject(AuthService);
+
+  companyId: number = this.auth.companyId ?? 0;
   enrollments = signal<EnrollmentDto[]>([]);
-  
+
   search = signal('');
   statusFilter = signal('الكل');
   programFilter = signal('الكل');
   batchFilter = signal('الكل');
-
-  constructor(private api: CompanyApi, private auth: AuthService) {
-    this.companyId = this.auth.companyId ?? 0;
-  }
 
   ngOnInit() {
     this.loadTraineesData();
@@ -49,11 +49,8 @@ export class CompanyTrainees implements OnInit {
     if (!this.companyId) return;
 
     this.api.getEnrollmentsByCompany(this.companyId).subscribe({
-      next: (d) => {
-        console.log('Trainees loaded:', d);
-        this.enrollments.set(d ?? []);
-      },
-      error: (err) => console.error('API Error:', err)
+      next: (d) => this.enrollments.set(d ?? []),
+      error: (err) => console.error('Failed to load trainees:', err),
     });
   }
 
@@ -67,14 +64,46 @@ export class CompanyTrainees implements OnInit {
     return trimmed;
   }
 
-  statuses = computed(() => Array.from(new Set(this.enrollments().map((e) => e.completionStatus))));
+  /**
+   * دالة موحدة وحاسمة لتحديد الحالة برمجياً (لتكون متطابقة بين لوحة التحكم وصفحة المتدربين)
+   * المعيار يعتمد على: حالة السيرفر الأصلية، نسبة الإنجاز، أو متوسط التقييمات إن وجد.
+   */
+  getEffectiveStatus(e: EnrollmentDto & { progressPercentage?: number; averageRating?: number }): string {
+    // 1. إذا تم إيقاف المتدرب رسمياً من النظام
+    if (e.completionStatus === 'Dropped') {
+      return 'Dropped';
+    }
+
+    // 2. إذا تم اعتباره مكتملاً صراحةً أو بلغت نسبة الإنجاز 100%
+    const progress = e.progressPercentage ?? 0;
+    if (e.completionStatus === 'Completed' || progress >= 100) {
+      return 'Completed';
+    }
+
+    // 3. المنطق الموحد للتعثر (إذا كان السيرفر معتبره متعثراً أو انخفض متوسط التقييم عن 60% مع وجود تقدم)
+    const rating = e.averageRating ?? 100;
+    if (e.completionStatus === 'Failed' || (rating < 60 && progress > 15)) {
+      return 'Failed';
+    }
+
+    // 4. الافتراضي: نشط
+    return e.completionStatus || 'InProgress';
+  }
+
+  statuses = computed(() => {
+    const rawStatuses = this.enrollments().map((e) => this.getEffectiveStatus(e));
+    return Array.from(new Set(rawStatuses));
+  });
+
   programs = computed(() => Array.from(new Set(this.enrollments().map((e) => e.programTitle).filter((v): v is string => !!v))));
+  
   batches = computed(() => Array.from(new Set(this.enrollments().map((e) => e.batchName))));
 
   filtered = computed(() => {
     const q = this.search().trim();
     return this.enrollments().filter((e) => {
-      if (this.statusFilter() !== 'الكل' && e.completionStatus !== this.statusFilter()) return false;
+      const effectiveStatus = this.getEffectiveStatus(e);
+      if (this.statusFilter() !== 'الكل' && effectiveStatus !== this.statusFilter()) return false;
       if (this.programFilter() !== 'الكل' && e.programTitle !== this.programFilter()) return false;
       if (this.batchFilter() !== 'الكل' && e.batchName !== this.batchFilter()) return false;
       if (q && !(e.traineeName?.includes(q) || e.programTitle?.includes(q))) return false;
@@ -92,6 +121,16 @@ export class CompanyTrainees implements OnInit {
 
   statusLabel(status: string) { return STATUS_LABELS[status] ?? status; }
   statusChipClass(status: string) { return STATUS_CHIP_CLASS[status] ?? 'gray'; }
+
+  // دوال العرض المعتمدة على الحالة الموحدة
+  statusLabelFor(e: EnrollmentDto) { 
+    return this.statusLabel(this.getEffectiveStatus(e)); 
+  }
+
+  statusChipClassFor(e: EnrollmentDto) { 
+    return this.statusChipClass(this.getEffectiveStatus(e)); 
+  }
+
   padId(id: number) { return String(id).padStart(4, '0'); }
 
   initials(name?: string) {
@@ -110,7 +149,7 @@ export class CompanyTrainees implements OnInit {
   exportList() {
     const rows = this.filtered();
     const header = ['المتدرب', 'الدفعة', 'البرنامج', 'التخصص', 'الحالة'];
-    const lines = rows.map((e) => [e.traineeName, e.batchName, e.programTitle ?? '', e.trackName ?? '', this.statusLabel(e.completionStatus)]
+    const lines = rows.map((e) => [e.traineeName, e.batchName, e.programTitle ?? '', e.trackName ?? '', this.statusLabelFor(e)]
       .map((v) => `"${(v ?? '').toString().replace(/"/g, '""')}"`).join(','));
     const csv = '\uFEFF' + [header.join(','), ...lines].join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

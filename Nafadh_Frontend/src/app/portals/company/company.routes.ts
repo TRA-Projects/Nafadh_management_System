@@ -9,16 +9,14 @@ export const COMPANY_ROUTES: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.CompanyDashboard) },
+      { path: 'supervisors', loadComponent: () => import('./pages/supervisors/supervisors').then((m) => m.CompanySupervisors) },
       { path: 'trainees', loadComponent: () => import('./pages/trainees/trainees').then((m) => m.CompanyTrainees) },
       { path: 'trainees/:id/progress', loadComponent: () => import('./pages/trainee-progress/trainee-progress').then((m) => m.CompanyTraineeProgress) },
       { path: 'specialties', loadComponent: () => import('./pages/specialties/specialties').then((m) => m.CompanySpecialties) },
       { path: 'specialties/:id', loadComponent: () => import('./pages/program-details/program-details').then((m) => m.CompanyProgramDetails) },
       { path: 'profile', loadComponent: () => import('./pages/profile/profile').then((m) => m.CompanyProfile) },
       { path: 'my-account', loadComponent: () => import('./pages/my-account/my-account').then((m) => m.CompanyMyAccount) },
-      
-      // التعديل هنا: m.ReportsComponent بدلاً من m.CompanyReports
       { path: 'reports', loadComponent: () => import('./pages/reports/reports').then((m) => m.ReportsComponent) },
-      
       { path: 'contact', loadComponent: () => import('./pages/contact/contact').then((m) => m.CompanyContact) },
     ],
   },

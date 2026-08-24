@@ -1,80 +1,398 @@
-<div class="shell" [class.dark]="dark()" [style.fontSize.px]="fontSize()" [style.--font-scale]="fontScale()">
+<div
+  class="shell"
+  [class.dark]="dark()"
+  [class.access-links]="accessibilityOptionActive('links')"
+  [class.access-simple-font]="accessibilityOptionActive('simpleFont')"
+  [class.access-large-text]="accessibilityOptionActive('largeText')"
+  [class.access-letter-spacing]="accessibilityOptionActive('letterSpacing')"
+  [class.access-line-spacing]="accessibilityOptionActive('lineSpacing')"
+  [class.access-word-spacing]="accessibilityOptionActive('wordSpacing')"
+  [class.access-low-saturation]="accessibilityOptionActive('saturation')"
+  [class.access-high-contrast]="accessibilityOptionActive('contrast')"
+  [class.access-align-center]="accessibility().textAlign === 'center'"
+  [class.access-align-left]="accessibility().textAlign === 'left'"
+  [style.fontSize.px]="fontSize()"
+  [style.--font-scale]="fontScale()"
+>
   <header class="topbar">
-    <!-- Logo (right / RTL start) -->
-    <div class="logo" [routerLink]="navItems()?.[0]?.path || '/company/dashboard'">
-      <img src="assets/logo.png" alt="نفاذ" class="logo-img" />
-      <div class="logo-sub">{{ portalTitle() }}</div>
+    <!-- Shared logo area -->
+    <div
+      class="logo"
+      [routerLink]="navItems()?.[0]?.path || '/company/dashboard'"
+    >
+      <img
+        src="assets/logo.png"
+        alt="نفاذ"
+        class="logo-img"
+      />
+
+      <div class="logo-sub">
+        {{ portalTitle() }}
+      </div>
     </div>
 
-    <!-- Search (center) -->
+    <!-- Shared search -->
     <div class="search-wrap">
-      <nfd-icon name="search" size="sm" />
-      <input class="search-input" placeholder="ابحث..." />
+      <nfd-icon
+        name="search"
+        size="sm"
+      />
+
+      <input
+        class="search-input"
+        placeholder="ابحث..."
+      />
     </div>
 
-    <!-- Actions (left / RTL end) -->
+    <!-- Shared actions -->
     <div class="actions">
-      <button class="icon-btn" (click)="accessOpen.set(!accessOpen())" title="أدوات التسهيل"><nfd-icon name="access" /></button>
+      <!-- Accessibility -->
+      <button
+        class="icon-btn accessibility-trigger"
+        [class.is-active]="accessOpen()"
+        (click)="toggleAccessibility()"
+        title="إعدادات إمكانية الوصول"
+        aria-label="إعدادات إمكانية الوصول"
+        [attr.aria-expanded]="accessOpen()"
+      >
+        <img
+          src="assets/accessibility-icon.png"
+          alt=""
+          aria-hidden="true"
+        />
+      </button>
 
+      <!-- Shared notification bell -->
       <div class="notif-wrap">
-        <button class="icon-btn" (click)="notifOpen.set(!notifOpen())" title="الإشعارات">
+        <button
+          class="icon-btn"
+          (click)="toggleNotifications()"
+          title="الإشعارات"
+          aria-label="الإشعارات"
+          [attr.aria-expanded]="notifOpen()"
+        >
           <nfd-icon name="bell" />
-          <span class="notif-dot"></span>
+
+          @if (notificationSummary().totalCount > 0) {
+            <span class="notif-badge">
+              {{
+                notificationSummary().totalCount > 99
+                  ? '99+'
+                  : notificationSummary().totalCount
+              }}
+            </span>
+          }
         </button>
+
         @if (notifOpen()) {
           <div class="notif-panel">
-            <div class="notif-head"><span>الإشعارات</span></div>
-            <div class="notif-empty">لا توجد إشعارات جديدة</div>
+            <div class="notif-head">
+              <span>الإشعارات</span>
+
+              @if (notificationSummary().totalCount > 0) {
+                <span class="notif-total">
+                  {{ notificationSummary().totalCount }} جديد
+                </span>
+              }
+            </div>
+
+            @if (notificationSummary().totalCount === 0) {
+              <div class="notif-empty">
+                <nfd-icon name="bell" />
+                <span>لا توجد إشعارات جديدة</span>
+              </div>
+            } @else {
+              <div class="notif-summary-list">
+                @if (notificationSummary().notificationsCount > 0) {
+                  <button
+                    type="button"
+                    class="notif-summary-item"
+                    [class.notif-summary-item-clickable]="!!notificationRoute()"
+                    (click)="openBellItem('notifications')"
+                  >
+                    <span class="notif-summary-icon">
+                      <nfd-icon name="bell" />
+                    </span>
+
+                    <span class="notif-summary-content">
+                      <strong>الإشعارات</strong>
+                      <small>
+                        {{ notificationSummary().notificationsCount }}
+                        إشعار جديد
+                      </small>
+                    </span>
+
+                    <span class="notif-count">
+                      {{ notificationSummary().notificationsCount }}
+                    </span>
+                  </button>
+                }
+
+                @if (notificationSummary().conversationsCount > 0) {
+                  <button
+                    type="button"
+                    class="notif-summary-item notif-summary-item-clickable"
+                    (click)="openBellItem('communication')"
+                  >
+                    <span class="notif-summary-icon">
+                      <nfd-icon name="chat" />
+                    </span>
+
+                    <span class="notif-summary-content">
+                      <strong>التواصل والمراسلات</strong>
+                      <small>
+                        {{ notificationSummary().conversationsCount }}
+                        محادثة تحتاج متابعة
+                      </small>
+                    </span>
+
+                    <span class="notif-count">
+                      {{ notificationSummary().conversationsCount }}
+                    </span>
+                  </button>
+                }
+
+                @if (notificationSummary().directMessagesCount > 0) {
+                  <button
+                    type="button"
+                    class="notif-summary-item notif-summary-item-clickable"
+                    (click)="openBellItem('messages')"
+                  >
+                    <span class="notif-summary-icon">
+                      <nfd-icon name="chat" />
+                    </span>
+
+                    <span class="notif-summary-content">
+                      <strong>الرسائل</strong>
+                      <small>
+                        {{ notificationSummary().directMessagesCount }}
+                        رسالة جديدة
+                      </small>
+                    </span>
+
+                    <span class="notif-count">
+                      {{ notificationSummary().directMessagesCount }}
+                    </span>
+                  </button>
+                }
+              </div>
+            }
           </div>
         }
       </div>
 
+      <!-- Shared profile -->
       <div class="profile-chip">
-        <div class="avatar">{{ auth.session()?.fullName?.charAt(0) }}</div>
+        <div class="avatar">
+          {{ auth.session()?.fullName?.charAt(0) }}
+        </div>
+
         <div class="who">
-          <div class="name">{{ auth.session()?.fullName }}</div>
-          <div class="role">{{ accountLabel() }}</div>
+          <div class="name">
+            {{ auth.session()?.fullName }}
+          </div>
+
+          <div class="role">
+            {{ accountLabel() }}
+          </div>
         </div>
       </div>
     </div>
   </header>
 
+  <!-- Shared sidebar -->
   <aside class="sidebar">
     <nav>
       @for (item of navItems(); track item.path) {
-        <a [routerLink]="item.path" routerLinkActive="active" class="nav-item">
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          class="nav-item"
+        >
           <nfd-icon [name]="item.icon" />
           <span>{{ item.label }}</span>
         </a>
       }
     </nav>
+
     <div class="sidebar-foot">
-      <button class="nav-item logout" (click)="auth.logout()">
+      <button
+        class="nav-item logout"
+        (click)="auth.logout()"
+      >
         <nfd-icon name="logout" />
         <span>تسجيل الخروج</span>
       </button>
     </div>
   </aside>
 
+  <!-- Portal content -->
   <main class="content">
     <router-outlet />
   </main>
 
+  <!-- Back to top -->
   @if (showBackToTop()) {
-    <button class="back-to-top" (click)="scrollToTop()" title="الرجوع لأعلى الصفحة" aria-label="الرجوع لأعلى الصفحة">
-      <nfd-icon name="arrow-up" size="sm" />
+    <button
+      class="back-to-top"
+      (click)="scrollToTop()"
+      title="الرجوع لأعلى الصفحة"
+      aria-label="الرجوع لأعلى الصفحة"
+    >
+      <nfd-icon
+        name="arrow-up"
+        size="sm"
+      />
     </button>
   }
 
+  <!-- Accessibility panel -->
   @if (accessOpen()) {
-    <div class="access-panel">
-      <div class="access-head"><strong>أدوات التسهيل</strong><button (click)="accessOpen.set(false)">✕</button></div>
-      <p class="access-label">حجم الخط</p>
-      <div class="access-row">
-        @for (s of [14,16,18]; track s) {
-          <button [class.active]="fontSize() === s" (click)="fontSize.set(s)">{{ s === 14 ? 'A-' : s === 16 ? 'A' : 'A+' }}</button>
-        }
+    <section
+      class="access-panel"
+      role="dialog"
+      aria-label="إعدادات إمكانية الوصول"
+      dir="rtl"
+    >
+      <div class="access-panel-scroll">
+        <div class="access-section">
+          <button
+            type="button"
+            class="access-section-head"
+            (click)="toggleContentSettings()"
+            [attr.aria-expanded]="contentSettingsOpen()"
+          >
+            <span class="access-section-title">
+              <span class="access-section-icon">☷</span>
+              <strong>ضبط المحتوى</strong>
+            </span>
+            <span class="access-chevron">⌃</span>
+          </button>
+
+          @if (contentSettingsOpen()) {
+            <div class="access-grid">
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibilityOptionActive('links')"
+                (click)="toggleAccessibilityOption('links')"
+              >
+                <span class="option-icon">↗</span>
+                <span>تمييز الروابط</span>
+              </button>
+
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibilityOptionActive('simpleFont')"
+                (click)="toggleAccessibilityOption('simpleFont')"
+              >
+                <span class="option-icon text-icon">Aa</span>
+                <span>خط بسيط</span>
+              </button>
+
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibility().textAlign !== 'right'"
+                (click)="cycleTextAlignment()"
+              >
+                <span class="option-icon">≡</span>
+                <span>محاذاة النص</span>
+                <small>{{ textAlignLabel() }}</small>
+              </button>
+
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibilityOptionActive('largeText')"
+                (click)="toggleAccessibilityOption('largeText')"
+              >
+                <span class="option-icon large-text-icon">Tᵀ</span>
+                <span>نص أكبر</span>
+              </button>
+
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibilityOptionActive('letterSpacing')"
+                (click)="toggleAccessibilityOption('letterSpacing')"
+              >
+                <span class="option-icon">T↔</span>
+                <span>تباعد الأحرف</span>
+              </button>
+
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibilityOptionActive('lineSpacing')"
+                (click)="toggleAccessibilityOption('lineSpacing')"
+              >
+                <span class="option-icon">↕</span>
+                <span>تباعد الأسطر</span>
+              </button>
+
+              <button
+                type="button"
+                class="access-option access-option-wide"
+                [class.active]="accessibilityOptionActive('wordSpacing')"
+                (click)="toggleAccessibilityOption('wordSpacing')"
+              >
+                <span class="option-icon">↔</span>
+                <span>تباعد الكلمات</span>
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="access-section">
+          <button
+            type="button"
+            class="access-section-head"
+            (click)="toggleColorSettings()"
+            [attr.aria-expanded]="colorSettingsOpen()"
+          >
+            <span class="access-section-title">
+              <span class="access-section-icon">▦</span>
+              <strong>ضبط الألوان</strong>
+            </span>
+            <span class="access-chevron">⌃</span>
+          </button>
+
+          @if (colorSettingsOpen()) {
+            <div class="access-grid access-grid-colors">
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibilityOptionActive('saturation')"
+                (click)="toggleAccessibilityOption('saturation')"
+              >
+                <span class="option-icon">◐</span>
+                <span>التحكم بالتشبع</span>
+              </button>
+
+              <button
+                type="button"
+                class="access-option"
+                [class.active]="accessibilityOptionActive('contrast')"
+                (click)="toggleAccessibilityOption('contrast')"
+              >
+                <span class="option-icon">◒</span>
+                <span>تباين الصفحة</span>
+              </button>
+            </div>
+          }
+        </div>
+
+        <button
+          type="button"
+          class="access-reset"
+          (click)="resetAccessibility()"
+        >
+          <span>إعادة ضبط الإعدادات</span>
+          <span class="reset-icon">↻</span>
+        </button>
       </div>
-    </div>
+    </section>
   }
 </div>
