@@ -262,3 +262,21 @@
   cursor: pointer;
 }
 .btn-gov-submit:hover { background-color: #0d9488; }
+/* تنسيق حقول الأخطاء */
+.nfd-input.is-invalid {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+}
+
+.field-error {
+  display: block;
+  color: #dc2626;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.nfd-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
