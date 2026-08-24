@@ -1,0 +1,28 @@
+<section class="page" dir="rtl">
+  <header class="page-header">
+    <div><h1>الإشعارات</h1><p>مركز الإشعارات والتنبيهات الخاصة بحسابك.</p></div>
+    <button type="button" class="mark-all" [disabled]="!unreadCount()" (click)="markAllRead()">تعليم الكل كمقروء</button>
+  </header>
+
+  <div class="toolbar">
+    <div class="tabs">
+      <button type="button" [class.active]="activeFilter() === 'all'" (click)="setFilter('all')">الكل <span>{{ notifications().length }}</span></button>
+      <button type="button" [class.active]="activeFilter() === 'unread'" (click)="setFilter('unread')">غير مقروءة <span>{{ unreadCount() }}</span></button>
+    </div>
+  </div>
+
+  @if (loading()) { <div class="state">جاري تحميل الإشعارات...</div> }
+  @else if (error()) { <div class="state error">{{ error() }} <button type="button" (click)="load()">إعادة المحاولة</button></div> }
+  @else if (!filteredNotifications().length) { <div class="state empty"><span class="bell">♧</span><strong>لا توجد إشعارات</strong><span>{{ activeFilter() === 'unread' ? 'لا توجد إشعارات غير مقروءة.' : 'ستظهر هنا الإشعارات الجديدة الخاصة بك.' }}</span></div> }
+  @else {
+    <div class="notification-list">
+      @for (item of filteredNotifications(); track trackById($index, item)) {
+        <article class="notification" [class.unread]="!item.isRead" (click)="markRead(item)">
+          <div class="icon">🔔</div>
+          <div class="body"><div class="title-row"><h2>{{ item.title }}</h2>@if (!item.isRead) {<span class="new">جديد</span>}</div><p>{{ item.message }}</p>@if (item.relatedEntity) {<small>{{ item.relatedEntity }}</small>}</div>
+          <time>{{ timeAgo(item.createdAt) }}</time>
+        </article>
+      }
+    </div>
+  }
+</section>
