@@ -41,66 +41,31 @@ export class AdminReports implements OnInit {
     this.api.getCompanies().subscribe({
       next: (res: any) => {
         const rawData = res.items || res;
-        if (rawData && rawData.length > 0) {
-          this.companies = rawData.map((c: any) => {
-            const programsList = c.companyPrograms || c.CompanyPrograms || c.programs || c.Programs || [];
-            const traineesList = c.trainees || c.Trainees || [];
 
-            const programsCount = c.programsCount ?? c.ProgramsCount ?? programsList.length;
-            const batchesCount = c.batchesCount ?? c.BatchesCount ?? programsCount;
-
-            // حساب عدد المتدربين بطريقة آمنة تمنع ظهور الصفر في البطاقات
-            let traineesCount = c.traineesCount ?? c.TraineesCount ?? traineesList.length;
-            if (traineesCount === 0) {
-              const activeBatchesCount = batchesCount > 0 ? batchesCount : programsCount;
-              traineesCount = activeBatchesCount > 0 ? activeBatchesCount * 4 : 12; 
-            }
-
-            const mappedPrograms = programsList.map((p: any) => {
-              const progObj = p.nfd_Programs || p.program || p.Program || p;
-              const batchesList = progObj.batches || progObj.Batches || p.batches || p.Batches || [];
-
-              return {
-                name: progObj.title || progObj.Title || progObj.programName || progObj.ProgramName || 'البرنامج التدريبي',
-                track: progObj.track || progObj.Track || 'General Track',
-                batches: batchesList.length > 0 ? batchesList.map((b: any) => ({
-                  id: b.batchId || b.BatchId || b.id,
-                  dates: b.startDate || b.StartDate || '2026',
-                  endDate: b.endDate || b.EndDate || '30/08/2026',
-                  traineesCount: b.traineesCount || b.TraineesCount || traineesCount,
-                  programName: progObj.title || progObj.Title || 'البرنامج التدريبي'
-                })) : [
-                  {
-                    id: (c.companyId || c.id || 1) * 10 + 1,
-                    dates: '2026',
-                    endDate: '30/08/2026',
-                    traineesCount: traineesCount,
-                    programName: progObj.title || progObj.Title || 'البرنامج التدريبي'
-                  }
-                ]
-              };
-            });
-
-            return {
-              id: c.companyId || c.CompanyId || c.id,
-              name: c.companyName || c.CompanyName || c.name || 'شركة تدريبية',
-              programsCount: programsCount,
-              batchesCount: batchesCount,
-              traineesCount: traineesCount,
-              programs: mappedPrograms.length > 0 ? mappedPrograms : [
-                {
-                  name: 'البرنامج التدريبي العام',
-                  track: 'General Track',
-                  batches: [
-                    { id: (c.companyId || 1) * 10 + 1, dates: '2026', endDate: '30/08/2026', traineesCount: traineesCount, programName: 'البرنامج التدريبي العام' }
-                  ]
-                }
-              ]
-            };
-          });
-        } else {
-          this.companies = [];
-        }
+        // ملاحظة: البيانات هنا حقيقية بالكامل وتأتي جاهزة من الباك اند
+        // (CompanyService.MapToOutputDTO) — تُحسب من جدول Enrollments الفعلي،
+        // وليست تقديرية. لا حاجة لأي قيم افتراضية أو حسابات وهمية هنا بعد اليوم.
+        this.companies = (rawData || []).map((c: any) => ({
+          id: c.companyId,
+          name: c.companyName || 'شركة تدريبية',
+          programsCount: c.programsCount ?? 0,
+          batchesCount: c.batchesCount ?? 0,
+          traineesCount: c.traineesCount ?? 0,
+          programs: (c.programs || []).map((p: any) => ({
+            id: p.programId,
+            name: p.title || 'برنامج بدون اسم',
+            track: p.track || '—',
+            batchesCount: p.batchesCount ?? 0,
+            traineesCount: p.traineesCount ?? 0,
+            batches: (p.batches || []).map((b: any) => ({
+              id: b.batchId,
+              dates: b.startDate,
+              endDate: b.endDate,
+              traineesCount: b.traineesCount ?? 0,
+              programName: p.title || 'برنامج بدون اسم'
+            }))
+          }))
+        }));
 
         this.isLoading.set(false); // إيقاف التحميل بعد معالجة البيانات بنجاح
         this.cdr.detectChanges();

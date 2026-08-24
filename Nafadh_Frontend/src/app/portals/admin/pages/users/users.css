@@ -235,16 +235,13 @@ css
   transition: all 0.2s ease;
 }
 
-.btn-action.edit-btn:hover {
-  background-color: #f1f5f9;
-  border-color: #94a3b8;
-  color: #0f172a;
-}
-
-.btn-action.password-btn:hover {
-  background-color: #f0fdf4;
-  border-color: #86efac;
-  color: #166534;
+/* تعديل الهوفر ليصبح باللون المطلوب #0A1172 */
+.btn-action.edit-btn:hover,
+.btn-action.password-btn:hover,
+.btn-action:hover {
+  background-color: #0A1172 !important;
+  border-color: #0A1172 !important;
+  color: #ffffff !important;
 }
 
 .btn-action i {

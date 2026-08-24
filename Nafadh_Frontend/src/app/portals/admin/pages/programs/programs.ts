@@ -2,6 +2,7 @@ import { Component, OnInit, DestroyRef, inject, signal, computed } from '@angula
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs/operators';
 
 import { AdminApi } from '../../services/admin-api';
 import { BatchDto, ProgramDto, CompanyDto} from '../../../../core/models/dtos';
@@ -33,6 +34,7 @@ const STATUS_BADGE_CLASSES: Record<BatchStatusKey, string> = {
   styleUrls: ['./programs.css']
 })
 export class AdminPrograms implements OnInit {
+[x: string]: any;
   private readonly api = inject(AdminApi);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
@@ -161,7 +163,7 @@ export class AdminPrograms implements OnInit {
   }
 
   selectTrainer(trainer: any): void {
-    this.editBatchForm.patchValue({ instructorName: trainer.name }); // أو trainer.instructorId حسب تصميم الـ Backend
+    this.editBatchForm.patchValue({ instructorName: trainer.name }); 
     this.isTrainerDropdownOpen = false;
   }
 
@@ -170,7 +172,6 @@ export class AdminPrograms implements OnInit {
     return selectedName ? selectedName : 'اختر المدرب';
   }
 
-  // إغلاق كافة القوائم المنسدلة عند النقر في أي مكان
   closeAllDropdowns(): void {
     this.isCompanyDropdownOpen = false;
     this.isProgramDropdownOpen = false;
@@ -318,7 +319,7 @@ export class AdminPrograms implements OnInit {
     this.fetchPrograms();
     this.fetchTracks();
     this.fetchCompanies();
-    this.fetchTrainers(); // <--- جلب المدربين عند تحميل الصفحة
+    this.fetchTrainers();
   }
 
   private fetchBatches(): void {
@@ -400,9 +401,29 @@ export class AdminPrograms implements OnInit {
     });
   }
 
+  getProgramName(batch: BatchDto | null | undefined): string {
+  if (!batch) return '-';
+
+  // 1. إذا كان الـ Backend يرجع programName مباشرة
+  if (batch.programName) {
+    return batch.programName;
+  }
+
+  // 2. البحث في قائمة البرامج بواسطة programId
+  const programsList = this.programs();
+  if (batch.programId && programsList?.length) {
+    const foundProgram = programsList.find(p => p.programId === batch.programId);
+    if (foundProgram) {
+      return foundProgram.title || foundProgram.name || '-';
+    }
+  }
+
+  return '-';
+}
+
   private initProgramForm(): void {
     this.programForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(3)]],
+      name: ['', [Validators.required, Validators.minLength(2)]],
       trackId: [null, [Validators.required]],
       durationWeeks: [null, [Validators.required, Validators.min(1)]],
       description: ['']
@@ -415,50 +436,78 @@ export class AdminPrograms implements OnInit {
 
   // --- Actions: Program Modal ---
   onCreateProgram(): void {
-    this.programForm.reset();
+    this.programForm.reset({
+      name: '',
+      trackId: null,
+      durationWeeks: null,
+      description: ''
+    });
     this.programErrorMessage = null;
+    this.isSubmittingProgram = false;
     this.isProgramModalOpen = true;
   }
 
   onCloseProgramModal(): void {
     this.isProgramModalOpen = false;
     this.programErrorMessage = null;
+    this.isSubmittingProgram = false;
   }
 
-  onSubmitProgram(): void {
-    if (this.programForm.invalid) {
-      this.programForm.markAllAsTouched();
-      return;
-    }
+ onSubmitProgram(): void {
+  // 1. تفعيل إظهار أخطاء الـ Validation لجميع الحقول
+  this.programForm.markAllAsTouched();
 
-    this.isSubmittingProgram = true;
-    this.programErrorMessage = null;
-    const rawValues = this.programForm.value;
+  // 2. التوقف إذا كان هناك أي حقل غير صالح
+  if (this.programForm.invalid) {
+    console.warn('الفورم غير صالح:', this.programForm.errors);
+    return;
+  }
 
-    const payload: Partial<ProgramDto> = {
-      name: rawValues.name,
-      title: rawValues.name,
-      trackId: Number(rawValues.trackId),
-      durationHours: Number(rawValues.durationWeeks) * 40,
-      description: rawValues.description || '',
-      status: 'Active'
-    };
+  this.isSubmittingProgram = true;
+  this.programErrorMessage = null;
+  const rawValues = this.programForm.value;
 
-    this.api.createProgram(payload)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.isSubmittingProgram = false;
+  const payload: Partial<ProgramDto> = {
+    name: rawValues.name,
+    title: rawValues.name,
+    trackId: Number(rawValues.trackId),
+    durationHours: Number(rawValues.durationWeeks) * 40,
+    description: rawValues.description || '',
+    status: 'Active'
+  };
+
+  // 3. إرسال الطلب وحماية الزر بـ finalize
+  this.api.createProgram(payload)
+    .pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => {
+        // يتم إرجاع الزر لحالته الأصلية دائماً فور اكتمال الطلب
+        this.isSubmittingProgram = false;
+      })
+    )
+    .subscribe({
+      next: () => {
+        this.fetchPrograms();        // تحديث جدول البرامج
+        this.onCloseProgramModal();  // إغلاق المودال وتصفير الفورم
+      },
+      error: (err) => {
+        // التعامل مع حالة نجاح الـ Database حتى لو أرجع الـ Backend استجابة فارغة
+        if (err.status === 200 || err.status === 201 || err.status === 204) {
           this.fetchPrograms();
           this.onCloseProgramModal();
-        },
-        error: (err) => {
-          this.isSubmittingProgram = false;
-          this.programErrorMessage = 'حدث خطأ أثناء إنشاء البرنامج.';
+        } else {
+          this.programErrorMessage = 'حدث خطأ أثناء حفظ البرنامج في قاعدة البيانات.';
           console.error('Error creating program:', err);
         }
-      });
+      }
+    });
+}
+
+preventNegative(event: KeyboardEvent): void {
+  if (event.key === '-' || event.key === 'e' || event.key === 'E' || event.key === '+') {
+    event.preventDefault();
   }
+}
 
   // --- Actions: Batch Modal ---
   onCreateBatch(): void {
@@ -501,3 +550,4 @@ export class AdminPrograms implements OnInit {
     };
   }
 }
+

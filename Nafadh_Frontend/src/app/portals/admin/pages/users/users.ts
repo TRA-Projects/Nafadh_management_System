@@ -35,6 +35,13 @@ export class AdminUsers implements OnInit {
   isEditModalOpen: boolean = false;
   isResetPasswordModalOpen: boolean = false;
 
+  // متغير رسالة الخطأ داخل نموذج إنشاء الحساب
+  createErrorMsg: string = '';
+
+  // متغيرات الـ Pagination كـ Signals لضمان إعادة التقييم والتحديث الفوري
+  currentPage = signal<number>(1);
+  pageSize: number = 10;
+
   newUser = {
     fullName: '',
     email: '',
@@ -80,11 +87,30 @@ export class AdminUsers implements OnInit {
     ];
   });
 
+  // تصفية المستخدمين وتطبيق الـ Pagination بالاعتماد على signals
   filtered = computed(() => {
     const selected = this.roleFilter();
     const list = this.users();
-    if (selected === 'ALL') return list;
-    return list.filter((u) => this.normalizeRole(u.roleName || u.roleId) === selected);
+    const page = this.currentPage();
+    let result = list;
+
+    if (selected !== 'ALL') {
+      result = list.filter((u) => this.normalizeRole(u.roleName || u.roleId) === selected);
+    }
+
+    const startIndex = (page - 1) * this.pageSize;
+    return result.slice(startIndex, startIndex + this.pageSize);
+  });
+
+  // حساب إجمالي الصفحات بناءً على الفلتر الحالي
+  totalPages = computed(() => {
+    const selected = this.roleFilter();
+    const list = this.users();
+    const filteredList = selected === 'ALL' 
+      ? list 
+      : list.filter((u) => this.normalizeRole(u.roleName || u.roleId) === selected);
+
+    return Math.ceil(filteredList.length / this.pageSize) || 1;
   });
 
   constructor(
@@ -137,10 +163,22 @@ export class AdminUsers implements OnInit {
 
   setFilter(roleKey: string): void {
     this.roleFilter.set(roleKey);
+    this.currentPage.set(1); // إعادة تعيين الصفحة إلى الأولى عند تغيير الفلتر
     this.cdr.detectChanges();
   }
 
-  // دالة تحويل اسم الدور للعربي
+  nextPage(): void {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(p => p + 1);
+    }
+  }
+
+  prevPage(): void {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(p => p - 1);
+    }
+  }
+
   getRoleArabicName(roleInput: any): string {
     if (!roleInput) return 'غير محدد';
     const str = String(roleInput).trim().toLowerCase();
@@ -153,7 +191,6 @@ export class AdminUsers implements OnInit {
     return String(roleInput);
   }
 
-  // دالة جلب كلاس التنسيق الخاص بالدور
   getRoleClass(roleInput: any): string {
     const norm = this.normalizeRole(roleInput);
     return norm.toLowerCase();
@@ -161,12 +198,14 @@ export class AdminUsers implements OnInit {
 
   // Modal: Create
   openCreateModal(): void {
+    this.createErrorMsg = '';
     this.isCreateModalOpen = true;
     this.cdr.detectChanges();
   }
 
   closeCreateModal(): void {
     this.isCreateModalOpen = false;
+    this.createErrorMsg = '';
     this.resetForm();
     this.cdr.detectChanges();
   }
@@ -183,13 +222,17 @@ export class AdminUsers implements OnInit {
   }
 
   createUser(): void {
+    this.createErrorMsg = '';
+
     if (!this.newUser.fullName || !this.newUser.email || !this.newUser.password || !this.newUser.roleId) {
-      alert('يرجى تعبئة جميع الحقول المطلوبة (*)');
+      this.createErrorMsg = 'يرجى تعبئة جميع الحقول الإجبارية المعلمة بـ (*)ا';
+      this.cdr.detectChanges();
       return;
     }
 
     if (this.newUser.password !== this.newUser.confirmPassword) {
-      alert('كلمة المرور وتأكيد كلمة المرور غير متطابقين');
+      this.createErrorMsg = 'كلمة المرور وتأكيد كلمة المرور غير متطابقين';
+      this.cdr.detectChanges();
       return;
     }
 
@@ -203,13 +246,20 @@ export class AdminUsers implements OnInit {
 
     this.api.createUser(payload).subscribe({
       next: () => {
-        alert('تم إنشاء الحساب بنجاح!');
         this.closeCreateModal();
         this.loadData();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('تفاصيل خطأ إنشاء الحساب:', err);
-        alert('حدث خطأ أثناء إضافة الحساب، تأكد من استيفاء البيانات الشروط المطلوب.');
+        if (err.status === 409 || (err.error && typeof err.error === 'string' && err.error.includes('already exists'))) {
+          this.createErrorMsg = 'البريد الإلكتروني مستخدم مسبقاً، يرجى استخدام بريد آخر.';
+        } else if (err.error && err.error.message) {
+          this.createErrorMsg = err.error.message;
+        } else {
+          this.createErrorMsg = 'حدث خطأ أثناء إضافة الحساب، تأكد من استيفاء البيانات للشروط المطلوبة.';
+        }
+        this.cdr.detectChanges();
       }
     });
   }
@@ -277,7 +327,7 @@ export class AdminUsers implements OnInit {
         this.closeResetPasswordModal();
       },
       error: (err) => {
-        console.error('خطأ أثناء تغيير كلمة المرور:', err);
+        console.error('تعذر تغيير كلمة المرور:', err);
         alert('تعذر تغيير كلمة المرور');
       }
     });
