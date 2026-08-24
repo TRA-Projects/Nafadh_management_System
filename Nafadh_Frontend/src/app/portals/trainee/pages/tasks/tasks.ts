@@ -53,6 +53,16 @@ export class TraineeTasks implements OnInit {
 
   errorMessage = signal('');
 
+  // =========================================================
+  // NEW: Success Message
+  // =========================================================
+
+  successMessage = signal('');
+
+  // =========================================================
+  // On Init
+  // =========================================================
+
   ngOnInit(): void {
     this.loadTraineeData();
   }
@@ -65,6 +75,7 @@ export class TraineeTasks implements OnInit {
 
     this.loadingProfile.set(true);
     this.errorMessage.set('');
+    this.successMessage.set('');
 
     const userId = this.auth.userId;
 
@@ -337,7 +348,11 @@ export class TraineeTasks implements OnInit {
 
     this.selected.set(task);
     this.selectedProject.set(null);
+
     this.submissionLink = '';
+
+    this.errorMessage.set('');
+    this.successMessage.set('');
 
     const submission =
       this.submissionFor(task.taskId);
@@ -353,7 +368,9 @@ export class TraineeTasks implements OnInit {
 
     this.selected.set(null);
     this.submissionLink = '';
+
     this.errorMessage.set('');
+    this.successMessage.set('');
   }
 
   // =========================================================
@@ -383,6 +400,82 @@ export class TraineeTasks implements OnInit {
       data.submissionUrl ??
       ''
     );
+  }
+
+  // =========================================================
+  // URL VALIDATION
+  // =========================================================
+
+  isValidSubmissionUrl(
+    value: string
+  ): boolean {
+
+    if (!value) {
+      return false;
+    }
+
+    const url = value.trim();
+
+    if (!url) {
+      return false;
+    }
+
+    try {
+
+      const parsedUrl =
+        new URL(url);
+
+      if (
+        parsedUrl.protocol !== 'http:' &&
+        parsedUrl.protocol !== 'https:'
+      ) {
+        return false;
+      }
+
+      if (!parsedUrl.hostname) {
+        return false;
+      }
+
+      const hostname =
+        parsedUrl.hostname.toLowerCase();
+
+      if (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === '0.0.0.0'
+      ) {
+        return false;
+      }
+
+      return true;
+
+    } catch {
+
+      return false;
+    }
+  }
+
+  // =========================================================
+  // URL Error Message
+  // =========================================================
+
+  getSubmissionUrlError(): string {
+
+    const value =
+      this.submissionLink.trim();
+
+    if (!value) {
+      return 'يرجى إدخال رابط التسليم.';
+    }
+
+    if (!this.isValidSubmissionUrl(value)) {
+
+      return (
+        'الرابط غير صحيح. يرجى إدخال رابط يبدأ بـ https:// أو http:// مثل: https://github.com/...'
+      );
+    }
+
+    return '';
   }
 
   // =========================================================
@@ -608,12 +701,19 @@ export class TraineeTasks implements OnInit {
 
   submit(): void {
 
-    const task = this.selected();
-    const traineeId = this.traineeId();
+    const task =
+      this.selected();
+
+    const traineeId =
+      this.traineeId();
 
     if (!task || !traineeId) {
       return;
     }
+
+    // ---------------------------------------------------------
+    // Check deadline
+    // ---------------------------------------------------------
 
     if (!this.canSubmit(task)) {
 
@@ -624,8 +724,16 @@ export class TraineeTasks implements OnInit {
       return;
     }
 
+    // ---------------------------------------------------------
+    // Get link
+    // ---------------------------------------------------------
+
     const link =
       this.submissionLink.trim();
+
+    // ---------------------------------------------------------
+    // Empty link
+    // ---------------------------------------------------------
 
     if (!link) {
 
@@ -636,40 +744,129 @@ export class TraineeTasks implements OnInit {
       return;
     }
 
+    // ---------------------------------------------------------
+    // Validate URL
+    // ---------------------------------------------------------
+
+    if (!this.isValidSubmissionUrl(link)) {
+
+      this.errorMessage.set(
+        'الرابط غير صحيح. يرجى إدخال رابط صالح يبدأ بـ https:// أو http://'
+      );
+
+      return;
+    }
+
+    // ---------------------------------------------------------
+    // Start submitting
+    // ---------------------------------------------------------
+
     this.submitting.set(true);
+
     this.errorMessage.set('');
+    this.successMessage.set('');
+
+    console.log(
+      '📤 Sending valid submission URL:',
+      link
+    );
+
+    // ---------------------------------------------------------
+    // API
+    // ---------------------------------------------------------
 
     this.api.submitAssignment({
 
-      taskId: task.taskId,
-      traineeId: traineeId,
-      fileUrl: link
+      taskId:
+        task.taskId,
+
+      traineeId:
+        traineeId,
+
+      fileUrl:
+        link
 
     }).subscribe({
 
-      next: () => {
+      // =======================================================
+      // SUCCESS
+      // =======================================================
+
+      next: (response) => {
+
+        console.log(
+          '✅ Assignment submitted successfully:',
+          response
+        );
 
         this.submitting.set(false);
+
+        // رسالة النجاح
+        this.successMessage.set(
+          'تم إرسال المهمة بنجاح ✓'
+        );
+
+        // تنظيف الرابط
         this.submissionLink = '';
+
+        // إغلاق تفاصيل المهمة
         this.selected.set(null);
 
+        // تحديث التسليمات من الـ API
         this.loadSubmissions(
           traineeId
         );
+
+        // إخفاء رسالة النجاح بعد 4 ثوانٍ
+        setTimeout(() => {
+
+          this.successMessage.set('');
+
+        }, 4000);
       },
+
+      // =======================================================
+      // ERROR
+      // =======================================================
 
       error: (error) => {
 
         console.error(
-          'Error submitting assignment:',
+          '❌ Error submitting assignment:',
           error
         );
 
         this.submitting.set(false);
 
-        this.errorMessage.set(
-          'حدث خطأ أثناء تسليم المهمة.'
-        );
+        this.successMessage.set('');
+
+        // محاولة عرض رسالة Backend
+
+        if (
+          error?.error &&
+          typeof error.error === 'object' &&
+          error.error.message
+        ) {
+
+          this.errorMessage.set(
+            error.error.message
+          );
+
+        } else if (
+          error?.error &&
+          typeof error.error === 'string'
+        ) {
+
+          this.errorMessage.set(
+            error.error
+          );
+
+        } else {
+
+          this.errorMessage.set(
+            'حدث خطأ أثناء تسليم المهمة.'
+          );
+        }
       }
     });
   }
@@ -684,46 +881,17 @@ export class TraineeTasks implements OnInit {
 
     this.selectedProject.set(project);
     this.selected.set(null);
+
     this.errorMessage.set('');
+    this.successMessage.set('');
   }
 
   backToProjects(): void {
 
     this.selectedProject.set(null);
+
     this.errorMessage.set('');
-  }
-
-  // =========================================================
-  // Project Progress
-  // =========================================================
-
-  projectProgress(
-    project: ProjectDto
-  ): number {
-
-    const p = project as any;
-
-    const rawValue =
-      p.progressPercentage ??
-      p.progress ??
-      p.completionPercentage ??
-      p.completion ??
-      p.percentage ??
-      0;
-
-    const value = Number(rawValue);
-
-    if (!Number.isFinite(value)) {
-      return 0;
-    }
-
-    return Math.min(
-      100,
-      Math.max(
-        0,
-        Math.round(value)
-      )
-    );
+    this.successMessage.set('');
   }
 
   // =========================================================
@@ -779,44 +947,29 @@ export class TraineeTasks implements OnInit {
         .trim()
         .replace(/[\s_-]/g, '');
 
-    const progress =
-      this.projectProgress(project);
+    switch (rawStatus) {
 
-    if (
-      rawStatus === 'completed' ||
-      rawStatus === 'complete' ||
-      rawStatus === 'مكتمل' ||
-      progress === 100
-    ) {
-      return 'مكتمل';
+      case 'completed':
+      case 'complete':
+      case 'مكتمل':
+        return 'مكتمل';
+
+      case 'new':
+      case 'pending':
+      case 'جديد':
+        return 'جديد';
+
+      case 'active':
+      case 'inprogress':
+      case 'مستمر':
+      case 'قيدالتنفيذ':
+        return 'مستمر';
+
+      default:
+        return String(
+          p.status ?? 'غير محدد'
+        );
     }
-
-    if (
-      rawStatus === 'new' ||
-      rawStatus === 'pending' ||
-      rawStatus === 'جديد'
-    ) {
-      return 'جديد';
-    }
-
-    if (
-      rawStatus === 'active' ||
-      rawStatus === 'inprogress' ||
-      rawStatus === 'مستمر' ||
-      rawStatus === 'قيدالتنفيذ'
-    ) {
-      return 'مستمر';
-    }
-
-    if (progress === 0) {
-      return 'جديد';
-    }
-
-    if (progress > 0 && progress < 100) {
-      return 'مستمر';
-    }
-
-    return 'مستمر';
   }
 
   // =========================================================
@@ -866,25 +1019,26 @@ export class TraineeTasks implements OnInit {
   }
 
   // =========================================================
-  // Project Progress Ring
+  // Project Stages
   // =========================================================
 
-  projectProgressBackground(
-    progress: number
-  ): string {
+  projectStagesCompleted(
+    project: ProjectDto
+  ): boolean {
 
-    const angle =
-      Math.min(
-        100,
-        Math.max(0, progress)
-      ) * 3.6;
+    const p = project as any;
 
-    return `
-      conic-gradient(
-        var(--color-navy) 0deg ${angle}deg,
-        var(--color-tint-indigo) ${angle}deg 360deg
-      )
-    `;
+    const status =
+      String(p.status ?? '')
+        .toLowerCase()
+        .trim()
+        .replace(/[\s_-]/g, '');
+
+    return (
+      status === 'completed' ||
+      status === 'complete' ||
+      status === 'مكتمل'
+    );
   }
 
   // =========================================================
@@ -893,9 +1047,14 @@ export class TraineeTasks implements OnInit {
 
   refreshData(): void {
 
-    const batchId = this.batchId();
-    const traineeId = this.traineeId();
-    const programId = this.programId();
+    const batchId =
+      this.batchId();
+
+    const traineeId =
+      this.traineeId();
+
+    const programId =
+      this.programId();
 
     if (batchId) {
       this.loadTasks(batchId);

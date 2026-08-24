@@ -1,7 +1,5 @@
-<div
-  class="support-page"
-  dir="rtl"
->
+<div class="support-page" dir="rtl">
+
   <!-- =========================================================
        HEADER
        ========================================================= -->
@@ -9,278 +7,510 @@
   <div class="support-header">
 
     <h2 class="nfd-page-title">
-      الدعم والشكاوي
+      التواصل والدعم
     </h2>
 
     <p class="nfd-page-sub">
-      أرسل استفسارك أو شكواك مباشرة للجهة المختصة
+      أرسل استفسارك أو شكواك مباشرة للجهة المختصة وتابع الردود
     </p>
 
   </div>
 
 
   <!-- =========================================================
-       SUPPORT CARD
+       ALERT MESSAGES
        ========================================================= -->
 
-  <div class="support-card">
+  @if (errorMessage()) {
 
-    <h3 class="support-title">
-      تقديم استفسار أو شكوى
-    </h3>
+    <div class="message error-message">
 
+      <span>
+        <i class="fa-solid fa-circle-exclamation"></i>
+      </span>
 
-    <!-- =======================================================
-         RECEIVER
-         ======================================================= -->
-
-    <div class="form-group">
-
-      <label>
-        الجهة المستلمة
-      </label>
-
-      <div class="receiver-box">
-
-        <span>
-          هيئة تنظيم الاتصالات
-        </span>
-
-      </div>
+      <p>
+        {{ errorMessage() }}
+      </p>
 
     </div>
 
+  }
 
-    <!-- =======================================================
-         SUBJECT
-         ======================================================= -->
 
-    <div class="form-group">
+  @if (successMessage()) {
 
-      <label>
-        الموضوع
-      </label>
+    <div class="message success-message">
 
-      <select
-        [(ngModel)]="newConv.subject"
-        class="support-select"
-      >
+      <span>
+        <i class="fa-solid fa-check"></i>
+      </span>
 
-        <option
-          value=""
-          disabled
-        >
-          اختر موضوع الطلب
-        </option>
-
-        @for (s of subjects; track s) {
-
-          <option [value]="s">
-            {{ s }}
-          </option>
-
-        }
-
-      </select>
+      <p>
+        {{ successMessage() }}
+      </p>
 
     </div>
 
+  }
 
-    <!-- =======================================================
-         MESSAGE
-         ======================================================= -->
 
-    <div class="form-group">
+  <!-- =========================================================
+       MAIN CONTENT
+       ========================================================= -->
 
-      <label>
-        تفاصيل الطلب
-      </label>
-
-      <textarea
-        [(ngModel)]="newConv.firstMessage"
-        class="support-textarea"
-        rows="4"
-        placeholder="اكتب تفاصيل استفسارك أو شكواك هنا..."
-      ></textarea>
-
-    </div>
+  <div class="support-main-layout">
 
 
     <!-- =======================================================
-         FILE UPLOAD
+         CONVERSATIONS SECTION
          ======================================================= -->
 
-    <div class="form-group">
+    <section class="conversation-section">
 
-      <label>
-        إرفاق ملفات داعمة
-      </label>
 
-      <input
-        type="file"
-        #fileInput
-        hidden
-        accept=".pdf,.png,.jpg,.jpeg"
-        (change)="onFileSelected($event)"
-      />
+      <!-- =====================================================
+           CONVERSATION LIST
+           ===================================================== -->
 
-      <div
-        class="file-upload"
-        (click)="fileInput.click()"
-      >
+      <div class="conversation-list">
 
-        <div class="upload-icon">
+        <div class="list-header">
 
-          <svg
-            width="21"
-            height="21"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+          <div>
 
-            <path
-              d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
-            />
+            <h3>
+              الشكاوى والاستفسارات
+            </h3>
 
-            <polyline
-              points="17 8 12 3 7 8"
-            />
+            <p>
+              المحادثات السابقة
+            </p>
 
-            <line
-              x1="12"
-              y1="3"
-              x2="12"
-              y2="15"
-            />
+          </div>
 
-          </svg>
+          <span class="conversation-count">
+            {{ conversations().length }}
+          </span>
 
         </div>
 
 
-        <div class="upload-text">
+        <!-- ===================================================
+             CONVERSATIONS SCROLL
+             =================================================== -->
 
-          @if (selectedFile) {
+        <div class="conversation-items">
 
-            <strong>
-              {{ selectedFile.name }}
-            </strong>
+          @for (
+            c of conversations();
+            track c.conversationId
+          ) {
 
-            <span>
-              {{ formatFileSize(selectedFile.size) }}
-            </span>
+            <button
+              type="button"
+              class="conversation-item"
+              [class.active]="
+                active()?.conversationId === c.conversationId
+              "
+              (click)="open(c.conversationId)"
+            >
 
-          } @else {
+              <div class="conversation-item-content">
 
-            <strong>
-              اسحب وأفلت المستندات والصور هنا، أو
-            </strong>
+                <strong>
+                  {{ c.subject }}
+                </strong>
 
-            <span>
-              انقر للاختيار (اختياري)
-            </span>
+                <small>
+                  {{ c.startedByName }}
+                </small>
+
+                <p>
+                  {{ c.lastMessagePreview }}
+                </p>
+
+              </div>
+
+              <span class="conversation-arrow">
+                <i class="fa-solid fa-chevron-left"></i>
+              </span>
+
+            </button>
+
+          }
+
+          @empty {
+
+            <div class="empty-conversations">
+
+              <div class="empty-icon">
+                <i class="fa-solid fa-comments"></i>
+              </div>
+
+              <strong>
+                لا توجد شكاوى سابقة
+              </strong>
+
+              <span>
+                يمكنك تقديم شكوى أو استفسار من النموذج
+              </span>
+
+            </div>
 
           }
 
         </div>
 
+      </div>
 
-        @if (selectedFile) {
 
-          <button
-            type="button"
-            class="remove-file"
-            (click)="removeFile($event)"
-          >
-            ×
-          </button>
+      <!-- =====================================================
+           ACTIVE CHAT
+           ===================================================== -->
+
+      <div class="conversation-detail">
+
+        @if (active(); as conversation) {
+
+          <!-- =================================================
+               CHAT HEADER
+               ================================================= -->
+
+          <div class="conversation-detail-header">
+
+            <div>
+
+              <h3>
+                {{ conversation.subject }}
+              </h3>
+
+              <span>
+                {{ conversation.category || 'شكوى أو استفسار' }}
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <!-- =================================================
+               CHAT MESSAGES
+               ================================================= -->
+
+          <div class="messages-container">
+
+            @for (
+              message of conversation.messages;
+              track message.messageId
+            ) {
+
+              <div
+                class="message-bubble"
+                [class.mine]="
+                  message.senderId === auth.userId
+                "
+              >
+
+                <strong>
+                  {{ message.senderName }}
+                </strong>
+
+                <p>
+                  {{ message.content }}
+                </p>
+
+              </div>
+
+            }
+
+            @empty {
+
+              <div class="no-messages">
+                لا توجد رسائل في هذه المحادثة
+              </div>
+
+            }
+
+          </div>
+
+
+          <!-- =================================================
+               REPLY
+               ================================================= -->
+
+          <div class="reply-area">
+
+            <input
+              type="text"
+              class="reply-input"
+              [(ngModel)]="replyText"
+              placeholder="اكتب ردك هنا..."
+              (keydown.enter)="send()"
+            />
+
+            <button
+              type="button"
+              class="reply-button"
+              [disabled]="!replyText.trim()"
+              (click)="send()"
+            >
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>إرسال</span>
+            </button>
+
+          </div>
+
+        }
+
+        @else {
+
+          <div class="conversation-placeholder">
+
+            <div class="placeholder-icon">
+              <i class="fa-solid fa-comments"></i>
+            </div>
+
+            <h3>
+              اختر محادثة من القائمة
+            </h3>
+
+            <p>
+              اختر إحدى الشكاوى أو الاستفسارات لعرض تفاصيل المحادثة
+            </p>
+
+          </div>
 
         }
 
       </div>
 
-
-      <p class="file-hint">
-        PDF, PNG, JPG — Max 10MB
-      </p>
-
-    </div>
+    </section>
 
 
     <!-- =======================================================
-         ERROR MESSAGE
+         NEW COMPLAINT
          ======================================================= -->
 
-    @if (errorMessage()) {
+    <section class="support-card">
 
-      <div class="message error-message">
 
-        <span>
-          !
-        </span>
+      <!-- =====================================================
+           FORM HEADER
+           ===================================================== -->
 
-        <p>
-          {{ errorMessage() }}
+      <div class="support-title-row">
+
+        <div>
+
+          <h3 class="support-title">
+            تقديم استفسار أو شكوى
+          </h3>
+
+          <p class="support-description">
+            أرسل استفسارك أو شكواك مباشرة للجهة المختصة
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- =====================================================
+           RECEIVER
+           ===================================================== -->
+
+      <div class="form-group">
+
+        <label>
+          الجهة المستلمة
+        </label>
+
+        <div class="receiver-box">
+
+          <span>
+            هيئة تنظيم الاتصالات
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- =====================================================
+           SUBJECT
+           ===================================================== -->
+
+      <div class="form-group">
+
+        <label>
+          الموضوع
+        </label>
+
+        <select
+          [(ngModel)]="newConv.subject"
+          class="support-select"
+        >
+
+          <option
+            value=""
+            disabled
+          >
+            اختر موضوع الطلب
+          </option>
+
+          @for (
+            s of subjects;
+            track s
+          ) {
+
+            <option [value]="s">
+              {{ s }}
+            </option>
+
+          }
+
+        </select>
+
+      </div>
+
+
+      <!-- =====================================================
+           MESSAGE
+           ===================================================== -->
+
+      <div class="form-group">
+
+        <label>
+          تفاصيل الطلب
+        </label>
+
+        <textarea
+          [(ngModel)]="newConv.firstMessage"
+          class="support-textarea"
+          rows="4"
+          placeholder="اكتب تفاصيل استفسارك أو شكواك هنا..."
+        ></textarea>
+
+      </div>
+
+
+      <!-- =====================================================
+           FILE UPLOAD
+           ===================================================== -->
+
+      <div class="form-group">
+
+        <label>
+          إرفاق ملفات داعمة
+        </label>
+
+        <input
+          type="file"
+          #fileInput
+          hidden
+          accept=".pdf,.png,.jpg,.jpeg"
+          (change)="onFileSelected($event)"
+        />
+
+        <div
+          class="file-upload"
+          (click)="fileInput.click()"
+        >
+
+          <div class="upload-icon">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+          </div>
+
+
+          <div class="upload-text">
+
+            @if (selectedFile) {
+
+              <strong>
+                {{ selectedFile.name }}
+              </strong>
+
+              <span>
+                {{ formatFileSize(selectedFile.size) }}
+              </span>
+
+            }
+
+            @else {
+
+              <strong>
+                اسحب وأفلت المستندات والصور هنا، أو
+              </strong>
+
+              <span>
+                انقر للاختيار (اختياري)
+              </span>
+
+            }
+
+          </div>
+
+
+          @if (selectedFile) {
+
+            <button
+              type="button"
+              class="remove-file"
+              aria-label="حذف الملف"
+              (click)="removeFile($event)"
+            >
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+
+          }
+
+        </div>
+
+        <p class="file-hint">
+          PDF, PNG, JPG — Max 10MB
         </p>
 
       </div>
 
-    }
 
+      <!-- =====================================================
+           SUBMIT
+           ===================================================== -->
 
-    <!-- =======================================================
-         SUCCESS MESSAGE
-         ======================================================= -->
+      <button
+        type="button"
+        class="submit-button"
+        [disabled]="
+          isSubmitting() ||
+          !canSubmit()
+        "
+        (click)="startConversation()"
+      >
 
-    @if (successMessage()) {
+        @if (isSubmitting()) {
 
-      <div class="message success-message">
+          <span class="loader"></span>
 
-        <span>
-          ✓
-        </span>
+          <span>
+            جاري الإرسال...
+          </span>
 
-        <p>
-          {{ successMessage() }}
-        </p>
+        }
 
-      </div>
+        @else {
 
-    }
+          <i class="fa-solid fa-paper-plane"></i>
 
+          <span>
+            إرسال الطلب
+          </span>
 
-    <!-- =======================================================
-         SEND BUTTON
-         ======================================================= -->
+        }
 
-    <button
-      type="button"
-      class="submit-button"
-      [disabled]="isSubmitting() || !canSubmit()"
-      (click)="startConversation()"
-    >
+      </button>
 
-      @if (isSubmitting()) {
-
-        <span class="loader"></span>
-
-        <span>
-          جاري الإرسال...
-        </span>
-
-      } @else {
-
-        <span>
-          إرسال الطلب
-        </span>
-
-      }
-
-    </button>
+    </section>
 
   </div>
 
@@ -293,18 +523,31 @@
 
 <style>
 
+/* =========================================================
+   PAGE
+   ========================================================= */
+
 .support-page {
 
   width: 100%;
 
-  max-width: 850px;
+  max-width: 1400px;
+
+  height: 100vh;
+
+  min-height: 0;
 
   margin: 0 auto;
 
-  padding: 10px 20px 30px;
+  padding: 14px 28px 18px;
 
   box-sizing: border-box;
 
+  display: flex;
+
+  flex-direction: column;
+
+  overflow: hidden;
 }
 
 
@@ -314,23 +557,21 @@
 
 .support-header {
 
-  margin-bottom: 18px;
+  flex-shrink: 0;
 
+  margin-bottom: 12px;
 }
-
 
 .nfd-page-title {
 
   margin: 0 0 5px;
 
-  font-size: 27px;
+  font-size: 28px;
 
   font-weight: 700;
 
   color: #172033;
-
 }
-
 
 .nfd-page-sub {
 
@@ -339,365 +580,16 @@
   font-size: 13px;
 
   color: #8c98a5;
-
 }
 
 
 /* =========================================================
-   CARD
-   ========================================================= */
-
-.support-card {
-
-  background: #ffffff;
-
-  border: 1px solid #e7ebf0;
-
-  border-radius: 16px;
-
-  padding: 25px 28px;
-
-  box-shadow:
-    0 4px 18px rgba(15, 23, 42, 0.04);
-
-}
-
-
-.support-title {
-
-  margin: 0 0 22px;
-
-  font-size: 18px;
-
-  font-weight: 700;
-
-  color: #1e293b;
-
-}
-
-
-/* =========================================================
-   FORM
-   ========================================================= */
-
-.form-group {
-
-  margin-bottom: 16px;
-
-}
-
-
-.form-group label {
-
-  display: block;
-
-  margin-bottom: 7px;
-
-  font-size: 12px;
-
-  font-weight: 600;
-
-  color: #475569;
-
-}
-
-
-/* =========================================================
-   RECEIVER
-   ========================================================= */
-
-.receiver-box {
-
-  height: 44px;
-
-  display: flex;
-
-  align-items: center;
-
-  padding: 0 13px;
-
-  border: 1px solid #dbe4f0;
-
-  border-radius: 9px;
-
-  background: #eef2ff;
-
-  color: #334155;
-
-  font-size: 13px;
-
-  box-sizing: border-box;
-
-}
-
-
-/* =========================================================
-   SELECT
-   ========================================================= */
-
-.support-select {
-
-  width: 100%;
-
-  height: 44px;
-
-  padding: 0 13px;
-
-  border: 1px solid #dfe5e8;
-
-  border-radius: 9px;
-
-  background: #ffffff;
-
-  color: #334155;
-
-  font-family: inherit;
-
-  font-size: 12px;
-
-  outline: none;
-
-  box-sizing: border-box;
-
-  cursor: pointer;
-
-}
-
-
-.support-select:focus {
-
-  border-color: #0066cc;
-
-  box-shadow:
-    0 0 0 3px rgba(0, 102, 204, 0.08);
-
-}
-
-
-/* =========================================================
-   TEXTAREA
-   ========================================================= */
-
-.support-textarea {
-
-  width: 100%;
-
-  min-height: 105px;
-
-  padding: 11px 13px;
-
-  border: 1px solid #dfe5e8;
-
-  border-radius: 9px;
-
-  background: #ffffff;
-
-  color: #334155;
-
-  font-family: inherit;
-
-  font-size: 12px;
-
-  line-height: 1.7;
-
-  outline: none;
-
-  resize: vertical;
-
-  box-sizing: border-box;
-
-}
-
-
-.support-textarea:focus {
-
-  border-color: #0066cc;
-
-  box-shadow:
-    0 0 0 3px rgba(0, 102, 204, 0.08);
-
-}
-
-
-.support-textarea::placeholder {
-
-  color: #a5afb9;
-
-}
-
-
-/* =========================================================
-   FILE UPLOAD
-   ========================================================= */
-
-.file-upload {
-
-  min-height: 75px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 12px;
-
-  position: relative;
-
-  padding: 12px 18px;
-
-  border: 1.5px dashed #cbd6e5;
-
-  border-radius: 11px;
-
-  background: #fbfcff;
-
-  cursor: pointer;
-
-  box-sizing: border-box;
-
-  transition: 0.2s;
-
-}
-
-
-.file-upload:hover {
-
-  border-color: #0066cc;
-
-  background: #f5f8ff;
-
-}
-
-
-/* =========================================================
-   UPLOAD ICON
-   ========================================================= */
-
-.upload-icon {
-
-  width: 38px;
-
-  height: 38px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  border-radius: 10px;
-
-  background: #eef2ff;
-
-  color: #0066cc;
-
-}
-
-
-/* =========================================================
-   UPLOAD TEXT
-   ========================================================= */
-
-.upload-text {
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 3px;
-
-  text-align: right;
-
-}
-
-
-.upload-text strong {
-
-  font-size: 11px;
-
-  color: #475569;
-
-}
-
-
-.upload-text span {
-
-  font-size: 9px;
-
-  color: #0066cc;
-
-  font-weight: 600;
-
-}
-
-
-/* =========================================================
-   REMOVE FILE
-   ========================================================= */
-
-.remove-file {
-
-  position: absolute;
-
-  left: 10px;
-
-  top: 10px;
-
-  width: 24px;
-
-  height: 24px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  border: none;
-
-  border-radius: 50%;
-
-  background: #fff0f0;
-
-  color: #dc2626;
-
-  font-size: 15px;
-
-  cursor: pointer;
-
-}
-
-
-.remove-file:hover {
-
-  background: #fee2e2;
-
-}
-
-
-/* =========================================================
-   FILE HINT
-   ========================================================= */
-
-.file-hint {
-
-  margin: 5px 0 0;
-
-  font-size: 9px;
-
-  color: #9aa5af;
-
-}
-
-
-/* =========================================================
-   MESSAGES
+   ALERT MESSAGES
    ========================================================= */
 
 .message {
+
+  flex-shrink: 0;
 
   display: flex;
 
@@ -705,23 +597,19 @@
 
   gap: 8px;
 
-  padding: 9px 11px;
+  padding: 8px 11px;
 
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 
   border-radius: 8px;
 
   font-size: 11px;
-
 }
-
 
 .message p {
 
   margin: 0;
-
 }
-
 
 .message > span {
 
@@ -740,47 +628,1012 @@
   border-radius: 50%;
 
   font-weight: 700;
-
 }
 
+.message > span i {
 
-/* =========================================================
-   ERROR
-   ========================================================= */
+  font-size: 10px;
+}
 
 .error-message {
 
   background: #fff1f1;
 
   color: #dc2626;
-
 }
-
 
 .error-message > span {
 
   background: #ffdcdc;
-
 }
-
-
-/* =========================================================
-   SUCCESS
-   ========================================================= */
 
 .success-message {
 
   background: #eaf8f5;
 
   color: #0d9488;
-
 }
-
 
 .success-message > span {
 
   background: #d0f0ea;
+}
 
+
+/* =========================================================
+   MAIN CONTENT
+   ========================================================= */
+
+.support-main-layout {
+
+  flex: 1;
+
+  min-height: 0;
+
+  display: grid;
+
+  grid-template-columns: 1.45fr 1fr;
+
+  gap: 16px;
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   CONVERSATION SECTION
+   ========================================================= */
+
+.conversation-section {
+
+  min-width: 0;
+
+  min-height: 0;
+
+  display: grid;
+
+  grid-template-columns: 300px minmax(0, 1fr);
+
+  gap: 14px;
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   CONVERSATION LIST
+   ========================================================= */
+
+.conversation-list {
+
+  min-width: 0;
+
+  min-height: 0;
+
+  height: 600px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background: #fff;
+
+  border: 1px solid #e7ebf0;
+
+  border-radius: 15px;
+
+  box-shadow:
+    0 4px 18px rgba(15, 23, 42, 0.04);
+}
+
+
+/* =========================================================
+   LIST HEADER
+   ========================================================= */
+
+.list-header {
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding: 15px 17px;
+
+  background: #0066cc;
+
+  color: #fff;
+
+  border-radius: 15px 15px 0 0;
+}
+
+.list-header h3 {
+
+  margin: 0 0 4px;
+
+  color: #fff;
+
+  font-size: 15px;
+
+  font-weight: 700;
+}
+
+.list-header p {
+
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.78);
+
+  font-size: 10px;
+}
+
+.conversation-count {
+
+  min-width: 29px;
+
+  height: 29px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.18);
+
+  color: #fff;
+
+  border: 1px solid rgba(255, 255, 255, 0.25);
+
+  font-size: 11px;
+
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   CONVERSATION ITEMS - SCROLL
+   ========================================================= */
+
+.conversation-items {
+
+  flex: 1;
+
+  min-height: 0;
+
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+  padding: 7px;
+}
+
+
+/* =========================================================
+   CONVERSATION ITEM
+   ========================================================= */
+
+.conversation-item {
+
+  width: 100%;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  margin-bottom: 4px;
+
+  padding: 11px;
+
+  border: none;
+
+  border-radius: 9px;
+
+  background: transparent;
+
+  text-align: right;
+
+  font-family: inherit;
+
+  cursor: pointer;
+
+  transition: 0.15s;
+
+  box-sizing: border-box;
+}
+
+.conversation-item:hover,
+.conversation-item.active {
+
+  background: #eef2ff;
+}
+
+.conversation-item-content {
+
+  min-width: 0;
+
+  flex: 1;
+}
+
+.conversation-item strong {
+
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #1e293b;
+
+  font-size: 12px;
+
+  line-height: 1.5;
+}
+
+.conversation-item small {
+
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #8c98a5;
+
+  font-size: 9px;
+}
+
+.conversation-item p {
+
+  margin: 0;
+
+  overflow: hidden;
+
+  color: #64748b;
+
+  font-size: 9px;
+
+  line-height: 1.5;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.conversation-arrow {
+
+  color: #0066cc;
+
+  font-size: 20px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+}
+
+.conversation-arrow i {
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   EMPTY CONVERSATIONS
+   ========================================================= */
+
+.empty-conversations {
+
+  min-height: 250px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 5px;
+
+  padding: 20px;
+
+  color: #8c98a5;
+
+  text-align: center;
+}
+
+.empty-icon {
+
+  width: 50px;
+
+  height: 50px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  margin-bottom: 4px;
+
+  border-radius: 50%;
+
+  background: #eef2ff;
+
+  color: #0066cc;
+}
+
+.empty-icon i {
+
+  font-size: 22px;
+}
+
+.empty-conversations strong {
+
+  color: #475569;
+
+  font-size: 11px;
+}
+
+.empty-conversations span {
+
+  font-size: 9px;
+}
+
+
+/* =========================================================
+   CHAT DETAIL
+   ========================================================= */
+
+.conversation-detail {
+
+  min-width: 0;
+
+  min-height: 0;
+
+  height: 600px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background: #fff;
+
+  border: 1px solid #e7ebf0;
+
+  border-radius: 15px;
+
+  box-shadow:
+    0 4px 18px rgba(15, 23, 42, 0.04);
+}
+
+
+/* =========================================================
+   CHAT HEADER
+   ========================================================= */
+
+.conversation-detail-header {
+
+  flex-shrink: 0;
+
+  padding: 15px 18px;
+
+  border-bottom: 1px solid #edf0f4;
+
+  background: #fff;
+}
+
+.conversation-detail-header h3 {
+
+  margin: 0 0 4px;
+
+  color: #1e293b;
+
+  font-size: 14px;
+}
+
+.conversation-detail-header span {
+
+  color: #8c98a5;
+
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   CHAT MESSAGES - SCROLL
+   ========================================================= */
+
+.messages-container {
+
+  flex: 1;
+
+  min-height: 0;
+
+  max-height: none;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 9px;
+
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+  padding: 16px;
+
+  scroll-behavior: smooth;
+}
+
+
+/* =========================================================
+   MESSAGE BUBBLE
+   ========================================================= */
+
+.message-bubble {
+
+  max-width: 70%;
+
+  flex-shrink: 0;
+
+  align-self: flex-start;
+
+  padding: 9px 12px;
+
+  border-radius: 10px;
+
+  background: #eef2ff;
+
+  color: #334155;
+}
+
+.message-bubble.mine {
+
+  align-self: flex-end;
+
+  background: #172033;
+
+  color: #fff;
+}
+
+.message-bubble strong {
+
+  display: block;
+
+  margin-bottom: 3px;
+
+  font-size: 9px;
+}
+
+.message-bubble p {
+
+  margin: 0;
+
+  font-size: 11px;
+
+  line-height: 1.7;
+
+  overflow-wrap: anywhere;
+}
+
+.no-messages {
+
+  margin: auto;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   REPLY AREA
+   ========================================================= */
+
+.reply-area {
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  gap: 7px;
+
+  padding: 11px 14px;
+
+  border-top: 1px solid #edf0f4;
+
+  background: #fff;
+}
+
+.reply-input {
+
+  flex: 1;
+
+  height: 40px;
+
+  padding: 0 11px;
+
+  border: 1px solid #dfe5e8;
+
+  border-radius: 8px;
+
+  outline: none;
+
+  font-family: inherit;
+
+  font-size: 11px;
+
+  box-sizing: border-box;
+}
+
+.reply-input:focus {
+
+  border-color: #0066cc;
+}
+
+.reply-button {
+
+  width: 85px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 6px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: #0066cc;
+
+  color: #fff;
+
+  font-family: inherit;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.reply-button i {
+
+  font-size: 10px;
+}
+
+.reply-button:disabled {
+
+  background: #b8c7d9;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   CHAT PLACEHOLDER
+   ========================================================= */
+
+.conversation-placeholder {
+
+  flex: 1;
+
+  min-height: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 20px;
+
+  color: #8c98a5;
+
+  text-align: center;
+}
+
+.placeholder-icon {
+
+  width: 50px;
+
+  height: 50px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  margin-bottom: 9px;
+
+  border-radius: 50%;
+
+  background: #eef2ff;
+
+  color: #0066cc;
+
+  font-size: 20px;
+}
+
+.placeholder-icon i {
+
+  font-size: 21px;
+}
+
+.conversation-placeholder h3 {
+
+  margin: 0 0 5px;
+
+  color: #475569;
+
+  font-size: 13px;
+}
+
+.conversation-placeholder p {
+
+  max-width: 280px;
+
+  margin: 0;
+
+  font-size: 10px;
+
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   SUPPORT CARD - COMPLAINT FORM
+   ========================================================= */
+
+.support-card {
+
+  min-width: 0;
+
+  min-height: 0;
+
+  height: 600px;
+
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+  box-sizing: border-box;
+
+  padding: 22px 25px;
+
+  background: #fff;
+
+  border: 1px solid #e7ebf0;
+
+  border-radius: 15px;
+
+  box-shadow:
+    0 4px 18px rgba(15, 23, 42, 0.04);
+}
+
+
+/* =========================================================
+   FORM HEADER
+   ========================================================= */
+
+.support-title-row {
+
+  margin: -22px -25px 18px;
+
+  padding: 15px 20px;
+
+  background: #0066cc;
+
+  border-radius: 15px 15px 0 0;
+}
+
+.support-title {
+
+  margin: 0 0 4px;
+
+  color: #fff;
+
+  font-size: 17px;
+
+  font-weight: 700;
+}
+
+.support-description {
+
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.78);
+
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   FORM GROUP
+   ========================================================= */
+
+.form-group {
+
+  margin-bottom: 13px;
+}
+
+.form-group label {
+
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: #475569;
+
+  font-size: 11px;
+
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   RECEIVER
+   ========================================================= */
+
+.receiver-box {
+
+  height: 40px;
+
+  display: flex;
+
+  align-items: center;
+
+  padding: 0 12px;
+
+  border: 1px solid #dbe4f0;
+
+  border-radius: 8px;
+
+  background: #eef2ff;
+
+  color: #334155;
+
+  font-size: 11px;
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   SELECT
+   ========================================================= */
+
+.support-select {
+
+  width: 100%;
+
+  height: 40px;
+
+  padding: 0 12px;
+
+  border: 1px solid #dfe5e8;
+
+  border-radius: 8px;
+
+  background: #fff;
+
+  color: #334155;
+
+  font-family: inherit;
+
+  font-size: 11px;
+
+  outline: none;
+
+  box-sizing: border-box;
+}
+
+.support-select:focus {
+
+  border-color: #0066cc;
+
+  box-shadow:
+    0 0 0 3px rgba(0, 102, 204, 0.08);
+}
+
+
+/* =========================================================
+   TEXTAREA
+   ========================================================= */
+
+.support-textarea {
+
+  width: 100%;
+
+  height: 82px;
+
+  min-height: 82px;
+
+  padding: 9px 12px;
+
+  border: 1px solid #dfe5e8;
+
+  border-radius: 8px;
+
+  background: #fff;
+
+  color: #334155;
+
+  font-family: inherit;
+
+  font-size: 11px;
+
+  line-height: 1.6;
+
+  outline: none;
+
+  resize: none;
+
+  box-sizing: border-box;
+}
+
+.support-textarea:focus {
+
+  border-color: #0066cc;
+
+  box-shadow:
+    0 0 0 3px rgba(0, 102, 204, 0.08);
+}
+
+
+/* =========================================================
+   FILE UPLOAD
+   ========================================================= */
+
+.file-upload {
+
+  min-height: 65px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 10px;
+
+  position: relative;
+
+  padding: 9px 14px;
+
+  border: 1.5px dashed #cbd6e5;
+
+  border-radius: 9px;
+
+  background: #fbfcff;
+
+  cursor: pointer;
+
+  box-sizing: border-box;
+
+  transition: 0.2s;
+}
+
+.file-upload:hover {
+
+  border-color: #0066cc;
+
+  background: #f5f8ff;
+}
+
+.upload-icon {
+
+  width: 34px;
+
+  height: 34px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 8px;
+
+  background: #eef2ff;
+
+  color: #0066cc;
+}
+
+.upload-icon i {
+
+  font-size: 17px;
+}
+
+.upload-text {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+
+  text-align: right;
+}
+
+.upload-text strong {
+
+  color: #475569;
+
+  font-size: 10px;
+}
+
+.upload-text span {
+
+  color: #0066cc;
+
+  font-size: 9px;
+
+  font-weight: 600;
+}
+
+.remove-file {
+
+  position: absolute;
+
+  left: 8px;
+
+  top: 8px;
+
+  width: 22px;
+
+  height: 22px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background: #fff0f0;
+
+  color: #dc2626;
+
+  font-size: 14px;
+
+  cursor: pointer;
+}
+
+.remove-file i {
+
+  font-size: 10px;
+}
+
+.file-hint {
+
+  margin: 4px 0 0;
+
+  color: #9aa5af;
+
+  font-size: 8px;
 }
 
 
@@ -792,7 +1645,7 @@
 
   width: 100%;
 
-  height: 44px;
+  height: 40px;
 
   display: flex;
 
@@ -800,63 +1653,48 @@
 
   justify-content: center;
 
-  gap: 8px;
+  gap: 7px;
 
-  margin-top: 5px;
+  margin-top: 4px;
 
   border: none;
 
-  border-radius: 9px;
+  border-radius: 8px;
 
   background: #0066cc;
 
-  color: #ffffff;
+  color: #fff;
 
   font-family: inherit;
 
-  font-size: 12px;
+  font-size: 11px;
 
   font-weight: 700;
 
   cursor: pointer;
 
-  transition:
-    background 0.2s ease,
-    transform 0.15s ease;
-
+  transition: 0.2s;
 }
 
+.submit-button i {
+
+  font-size: 10px;
+}
 
 .submit-button:hover:not(:disabled) {
 
   background: #0052a3;
 
   transform: translateY(-1px);
-
 }
-
-
-.submit-button:active:not(:disabled) {
-
-  transform: translateY(0);
-
-}
-
-
-/* =========================================================
-   DISABLED BUTTON
-   ========================================================= */
 
 .submit-button:disabled {
 
   background: #b8c7d9;
 
-  color: #ffffff;
-
   cursor: not-allowed;
 
-  opacity: 0.85;
-
+  opacity: .85;
 }
 
 
@@ -866,63 +1704,214 @@
 
 .loader {
 
-  width: 14px;
+  width: 13px;
 
-  height: 14px;
+  height: 13px;
 
-  border: 2px solid rgba(255, 255, 255, 0.35);
+  border: 2px solid rgba(255, 255, 255, .35);
 
-  border-top-color: #ffffff;
+  border-top-color: #fff;
 
   border-radius: 50%;
 
-  animation: spin 0.7s linear infinite;
-
+  animation: spin .7s linear infinite;
 }
-
 
 @keyframes spin {
 
   to {
-
     transform: rotate(360deg);
-
   }
 
 }
 
 
 /* =========================================================
-   RESPONSIVE
+   SCROLLBAR
    ========================================================= */
 
-@media (max-width: 650px) {
+.conversation-items::-webkit-scrollbar,
+.messages-container::-webkit-scrollbar,
+.support-card::-webkit-scrollbar {
+
+  width: 5px;
+}
+
+.conversation-items::-webkit-scrollbar-track,
+.messages-container::-webkit-scrollbar-track,
+.support-card::-webkit-scrollbar-track {
+
+  background: transparent;
+}
+
+.conversation-items::-webkit-scrollbar-thumb,
+.messages-container::-webkit-scrollbar-thumb,
+.support-card::-webkit-scrollbar-thumb {
+
+  background: #d4dce8;
+
+  border-radius: 10px;
+}
+
+.conversation-items,
+.messages-container,
+.support-card {
+
+  scrollbar-width: thin;
+
+  scrollbar-color: #d4dce8 transparent;
+}
+
+
+/* =========================================================
+   LARGE SCREEN
+   ========================================================= */
+
+@media (min-width: 1500px) {
 
   .support-page {
 
-    padding: 10px 12px 25px;
+    max-width: 1500px;
 
+    padding-left: 35px;
+
+    padding-right: 35px;
   }
 
+}
+
+
+/* =========================================================
+   MEDIUM SCREEN
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+  .support-page {
+
+    padding: 12px 18px;
+  }
+
+  .support-main-layout {
+
+    grid-template-columns: 1.35fr 1fr;
+
+    gap: 12px;
+  }
+
+  .conversation-section {
+
+    grid-template-columns: 270px minmax(0, 1fr);
+
+    gap: 10px;
+  }
+
+  .conversation-list,
+  .conversation-detail,
+  .support-card {
+
+    height: 560px;
+  }
+
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 850px) {
+
+  .support-page {
+
+    height: auto;
+
+    min-height: 100vh;
+
+    overflow: visible;
+  }
+
+  .support-main-layout {
+
+    grid-template-columns: 1fr;
+
+    overflow: visible;
+  }
+
+  .conversation-section {
+
+    grid-template-columns: 1fr;
+
+    min-height: auto;
+
+    overflow: visible;
+  }
+
+  .conversation-list {
+
+    height: 300px;
+  }
+
+  .conversation-detail {
+
+    height: 450px;
+
+    min-height: 450px;
+  }
+
+  .messages-container {
+
+    max-height: none;
+  }
 
   .support-card {
 
-    padding: 20px;
+    height: auto;
 
+    max-height: none;
+
+    overflow: visible;
   }
 
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .support-page {
+
+    padding: 10px 12px 20px;
+  }
 
   .nfd-page-title {
 
     font-size: 23px;
-
   }
 
+  .nfd-page-sub {
 
-  .file-upload {
+    font-size: 11px;
+  }
 
-    padding: 12px;
+  .conversation-list {
 
+    height: 280px;
+  }
+
+  .conversation-detail {
+
+    height: 430px;
+
+    min-height: 430px;
+  }
+
+  .message-bubble {
+
+    max-width: 85%;
   }
 
 }

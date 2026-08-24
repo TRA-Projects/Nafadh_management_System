@@ -26,6 +26,8 @@ import {
   WarningDto,
   EnrollmentDto,
   BatchDto,
+  TrainingMaterialDto,
+  SessionDto,
   ProgramDto,
   TrainerDto,
   CompanySupervisorDto,
@@ -77,8 +79,40 @@ export class TraineeApi {
   getTraineeSubmissions(traineeId: number): Observable<SubmissionDto[]> {
     return this.http.get<SubmissionDto[]>(`${this.base}/Submission/trainee/${traineeId}`);
   }
+// =========================================================
+// Attendance - جلب نسبة الحضور باستخدام userId
+// =========================================================
 
-  // =========================================================
+/**
+ * جلب نسبة الحضور للمتدرب باستخدام userId
+ * GET /api/DailyAttendance/user/{userId}/compliance-rate
+ */
+getAttendanceRateByUserId(userId: number): Observable<number> {
+  return this.http.get<number>(
+    `${this.base}/DailyAttendance/user/${userId}/compliance-rate`,
+  );
+}
+
+// =========================================================
+// Warnings - جلب الإنذارات الخاصة بالمستخدم فقط
+// =========================================================
+
+/**
+ * جلب الإنذارات الخاصة بالمستخدم فقط باستخدام userId
+ * GET /api/Warning/user/{userId}
+ */
+getUserWarnings(userId: number): Observable<WarningDto[]> {
+  return this.http.get<WarningDto[]>(`${this.base}/Warning/user/${userId}`);
+}
+
+/**
+ * جلب عدد الإنذارات الخاصة بالمستخدم فقط
+ * GET /api/Warning/user/{userId}/count
+ */
+getUserWarningsCount(userId: number): Observable<number> {
+  return this.http.get<number>(`${this.base}/Warning/user/${userId}/count`);
+}
+//=====================================================
   // Profile
   // =========================================================
 
@@ -86,7 +120,7 @@ export class TraineeApi {
     return this.http.get<TraineeProfileDto>(`${this.base}/Trainee/traineeByUserID/${id}`);
   }
 
-  updateTrainee(id: number, dto: unknown) {
+  updateTrainee(id: number, dto: Partial<TraineeProfileDto>) {
     return this.http.put(`${this.base}/Trainee/traineeByUserID/${id}`, dto);
   }
 
@@ -165,7 +199,46 @@ export class TraineeApi {
   markAchievement(traineeId: number, programId: number): Observable<any> {
     return this.http.post(`${this.base}/Trainee/${traineeId}/program/${programId}/achievement`, {});
   }
+//
+// =========================================================
+// Training Materials
+// =========================================================
 
+/**
+ * جلب الملفات والمواد التدريبية الخاصة بالدرس
+ * GET /api/TrainingMaterial/lesson/{lessonId}
+ */
+getTrainingMaterials(lessonId: number): Observable<TrainingMaterialDto[]> {
+  return this.http.get<TrainingMaterialDto[]>(
+    `${this.base}/TrainingMaterial/lesson/${lessonId}`
+  );
+}
+
+// =========================================================
+// Sessions
+// =========================================================
+
+/**
+ * جلب جلسات الدفعة
+ * GET /api/Session/batch/{batchId}
+ *
+ * إذا كان Endpoint الـ Session عندك مختلف،
+ * نغيره فقط هنا.
+ */
+getSessionsByBatch(batchId: number): Observable<SessionDto[]> {
+  return this.http.get<SessionDto[]>(
+    `${this.base}/Session/batch/${batchId}`
+  );
+}
+/**
+ * جلب جلسة محددة
+ * GET /api/Session/{id}
+ */
+getSession(sessionId: number): Observable<SessionDto> {
+  return this.http.get<SessionDto>(
+    `${this.base}/Session/${sessionId}`
+  );
+}
   // =========================================================
   // Program Modules
   // =========================================================
@@ -368,10 +441,7 @@ submitFeedback(dto: unknown): Observable<any> {
   return this.http.post(`${this.base}/Feedback`, dto);
 }
   // =========================================================
-  // =========================================================
-  // الإعلانات والتنبيهات - دوال جديدة مضافة
-  // =========================================================
-  // =========================================================
+
 
   // =========================================================
   // Announcements - جلب الإعلانات بناءً على userId

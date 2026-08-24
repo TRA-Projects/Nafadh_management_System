@@ -1,8 +1,18 @@
 <div class="achievements-page" dir="rtl">
 
   <!-- =========================================================
-        HEADER
-        ========================================================= -->
+       TOAST / SUCCESS MESSAGE
+       ========================================================= -->
+  @if (showSuccessToast()) {
+    <div class="toast-success">
+      <!-- <span class="toast-icon">✅</span> -->
+      {{ successMessage() }}
+    </div>
+  }
+
+  <!-- =========================================================
+       HEADER
+       ========================================================= -->
   <div class="page-header">
 
     <div>
@@ -16,30 +26,23 @@
 
       <!-- نسبة الإكمال -->
       <div class="summary-item">
-        <div class="summary-icon progress-icon">%</div>
+        <div class="summary-icon progress-icon"><i class="fas fa-percent"></i></div>
         <div>
           <span>إكمال البرنامج</span>
-          <strong>{{ completionPercentage() }}%</strong>
+          <strong>{{ progressPercentage() }}%</strong>
         </div>
       </div>
 
       <!-- الأوسمة -->
       <div class="summary-item">
-        <div class="summary-icon badge-icon">🏅</div>
+        <div class="summary-icon badge-icon"><i class="fas fa-medal"></i></div>
         <div>
           <span>الأوسمة</span>
-          <strong>{{ myBadges().length }}</strong>
+          <strong>{{ earnedBadgesCount() }}</strong>
         </div>
       </div>
 
-      <!-- الشهادات -->
-      <div class="summary-item">
-        <div class="summary-icon certificate-icon">📜</div>
-        <div>
-          <span>الشهادات</span>
-          <strong>{{ certificates().length }}</strong>
-        </div>
-      </div>
+
 
     </div>
 
@@ -52,7 +55,7 @@
   <div class="feedback-strip">
 
     <div class="feedback-info">
-      <span class="feedback-icon">💬</span>
+      <span class="feedback-icon"><i class="fas fa-comment-dots"></i></span>
 
       <div>
         <strong>شاركنا تجربتك</strong>
@@ -64,13 +67,13 @@
       <button
         class="feedback-btn"
         (click)="openFeedback('TrainerRating')">
-        ⭐ تقييم المدرب
+        <i class="fas fa-star"></i> تقييم المدرب
       </button>
 
       <button
         class="feedback-btn"
         (click)="openFeedback('BatchExperienceRating')">
-        📊 تجربة الدفعة
+        <i class="fas fa-chart-bar"></i> تجربة الدفعة
       </button>
     </div>
 
@@ -90,30 +93,8 @@
       <div class="card-header">
 
         <div>
-          <h3>📚 تقدم البرنامج</h3>
+          <h3><i class="fas fa-book-open"></i> تقدم البرنامج</h3>
           <span>متابعة تقدمك في الوحدات التدريبية</span>
-        </div>
-
-        <div class="completion-circle">
-          <span>{{ completionPercentage() }}%</span>
-        </div>
-
-      </div>
-
-
-      <!-- Progress overview -->
-      <div class="overall-progress">
-
-        <div class="overall-progress-info">
-          <span>نسبة الإكمال الكلية</span>
-          <strong>{{ completionPercentage() }}%</strong>
-        </div>
-
-        <div class="progress-track">
-          <div
-            class="progress-fill"
-            [style.width]="completionPercentage() + '%'">
-          </div>
         </div>
 
       </div>
@@ -138,11 +119,11 @@
                 [class.in-progress]="status === 'InProgress'">
 
                 @if (status === 'Completed') {
-                  ✓
+                  <i class="fas fa-check"></i>
                 } @else if (status === 'InProgress') {
-                  ◐
+                  <i class="fas fa-circle-half-stroke"></i>
                 } @else {
-                  ○
+                  <i class="far fa-circle"></i>
                 }
 
               </div>
@@ -177,7 +158,7 @@
         @empty {
 
           <div class="empty-state">
-            <span>📭</span>
+            <span><i class="fas fa-inbox"></i></span>
             <p>لا توجد وحدات مسجلة بعد</p>
           </div>
 
@@ -196,12 +177,12 @@
       <div class="card-header">
 
         <div>
-          <h3>🏅 الأوسمة والإنجازات</h3>
+          <h3><i class="fas fa-award"></i> الأوسمة والإنجازات</h3>
           <span>إنجازاتك التي حققتها خلال التدريب</span>
         </div>
 
         <div class="badge-counter">
-          {{ myBadges().length }}/{{ allBadges().length }}
+          {{ earnedBadgesCount() }}/{{ totalBadges() }}
         </div>
 
       </div>
@@ -220,10 +201,14 @@
 
             <div class="badge-symbol">
 
-              {{ badge.icon || '🏅' }}
+              @if (badge.icon) {
+                <i class="{{ badge.icon }}"></i>
+              } @else {
+                <i class="fas fa-medal"></i>
+              }
 
               @if (earned) {
-                <span class="earned-check">✓</span>
+                <span class="earned-check"><i class="fas fa-check-circle"></i></span>
               }
 
             </div>
@@ -237,13 +222,13 @@
             @if (earned) {
 
               <span class="badge-status earned-status">
-                ✓ محقق
+                <i class="fas fa-check-circle"></i> محقق
               </span>
 
             } @else {
 
               <span class="badge-status locked-status">
-                🔒 غير محقق
+                <i class="fas fa-lock"></i> غير محقق
               </span>
 
             }
@@ -255,7 +240,7 @@
         @empty {
 
           <div class="empty-state">
-            <span>🏷️</span>
+            <span><i class="fas fa-tags"></i></span>
             <p>لا توجد أوسمة متاحة حالياً</p>
           </div>
 
@@ -278,20 +263,24 @@
       <div class="certificate-title">
 
         <div class="certificate-icon">
-          📜
+          <i class="fas fa-certificate"></i>
         </div>
 
         <div>
           <h3>شهادة إتمام التدريب</h3>
 
           <p>
-            @if (completionPercentage() >= 85) {
+            @if (progressPercentage() >= 50 && certificates().length > 0) {
 
-              🎉 أصبحت الشهادة متاحة للتحميل
+              <i class="fas fa-graduation-cap"></i> 🎉 أصبحت الشهادة متاحة للتحميل
+
+            } @else if (progressPercentage() >= 50 && certificates().length === 0) {
+
+              <i class="fas fa-spinner fa-pulse"></i> ⏳ جاري تجهيز الشهادة...
 
             } @else {
 
-              أكمل 85% من البرنامج للحصول على الشهادة
+              <i class="fas fa-hourglass-half"></i> أكمل 50% من البرنامج للحصول على الشهادة
 
             }
           </p>
@@ -302,16 +291,16 @@
 
       <div class="certificate-status">
 
-        @if (completionPercentage() >= 85) {
+        @if (progressPercentage() >= 50 && certificates().length > 0) {
 
           <span class="available">
-            ✓ متاحة للتحميل
+            <i class="fas fa-check-circle"></i> متاحة للتحميل
           </span>
 
         } @else {
 
           <span class="pending">
-            ⏳ {{ completionPercentage() }}% مكتمل
+            <i class="fas fa-clock"></i> {{ progressPercentage() }}% مكتمل
           </span>
 
         }
@@ -321,7 +310,9 @@
     </div>
 
 
-    <!-- Mini certificate -->
+    <!-- ==========================================================
+         معاينة الشهادة - كل النصوص في المنتصف
+         ========================================================== -->
     <div class="certificate-preview">
 
       <div class="certificate-brand">
@@ -333,18 +324,13 @@
         <span>شهادة إتمام التدريب</span>
 
         <strong>
-          {{ enrollment()?.traineeName || 'اسم المتدرب' }}
+          {{ traineeName() }}
         </strong>
 
         <small>
-          أتم برنامج
-          {{ enrollment()?.programTitle || 'التدريب' }}
+          أتم برنامج {{ programTitle() }}
         </small>
 
-      </div>
-
-      <div class="certificate-percent">
-        {{ completionPercentage() }}%
       </div>
 
     </div>
@@ -358,11 +344,11 @@
 
       @if (canDownloadCertificate()) {
 
-        <span>📥 تنزيل الشهادة</span>
+        <span><i class="fas fa-download"></i> تنزيل الشهادة</span>
 
       } @else {
 
-        <span>🔒 الشهادة غير متاحة بعد</span>
+        <span><i class="fas fa-lock"></i> الشهادة غير متاحة بعد</span>
 
       }
 
@@ -389,11 +375,11 @@
           <div>
 
             <h3>
-              {{
-                feedbackType() === 'TrainerRating'
-                  ? '⭐ تقييم المدرب'
-                  : '📊 تقييم تجربة الدفعة'
-              }}
+              @if (feedbackType() === 'TrainerRating') {
+                <i class="fas fa-star"></i> تقييم المدرب
+              } @else {
+                <i class="fas fa-chart-pie"></i> تقييم تجربة الدفعة
+              }
             </h3>
 
             <p>
@@ -405,7 +391,7 @@
           <button
             class="modal-close"
             (click)="showFeedback.set(false)">
-            ×
+            <i class="fas fa-times"></i>
           </button>
 
         </div>
@@ -429,9 +415,10 @@
                       ? '#F59E0B'
                       : '#dbe2ea'
                   "
-                  (click)="scores[c.criterionId] = s">
+                  (click)="scores[c.criterionId] = s"
+                  type="button">
 
-                  ★
+                  <i class="fas fa-star"></i>
 
                 </button>
 
@@ -445,7 +432,7 @@
 
 
         <label class="comment-label">
-          💬 تعليق إضافي
+          <i class="fas fa-comment"></i> تعليق إضافي
         </label>
 
         <textarea
@@ -459,14 +446,22 @@
 
           <button
             class="cancel-btn"
-            (click)="showFeedback.set(false)">
-            إلغاء
+            (click)="showFeedback.set(false)"
+            [disabled]="isSubmitting()">
+            <i class="fas fa-times"></i> إلغاء
           </button>
 
           <button
             class="submit-feedback-btn"
-            (click)="submitFeedback()">
-            📤 إرسال التقييم
+            (click)="submitFeedback()"
+            [disabled]="isSubmitting()">
+
+            @if (isSubmitting()) {
+              <i class="fas fa-spinner fa-pulse"></i> جاري الإرسال...
+            } @else {
+              <i class="fas fa-paper-plane"></i> إرسال التقييم
+            }
+
           </button>
 
         </div>
