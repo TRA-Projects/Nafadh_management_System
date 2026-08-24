@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
@@ -14,10 +15,14 @@ namespace Nafadh_Backend.Controllers
     public class NotificationController : ControllerBase
     {
         private readonly INotificationService _service;
+        private readonly INotificationSummaryService _summaryService;
 
-        public NotificationController(INotificationService service)
+        public NotificationController(
+            INotificationService service,
+            INotificationSummaryService summaryService)
         {
             _service = service;
+            _summaryService = summaryService;
         }
 
         // TODO: implement endpoints for this entity
@@ -55,6 +60,34 @@ namespace Nafadh_Backend.Controllers
 
             return Ok("All notifications marked as read.");
         }
+
+        // Shared bell summary: the authenticated user determines the scope.
+        [HttpGet("summary")]
+        public async Task<IActionResult> GetSummary()
+        {
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!int.TryParse(userIdValue, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            // Admin can see the central Communication hub, so its unread
+            // conversation count spans all threads. Other roles are scoped
+            // to conversations they own.
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            var includeAllConversations = string.Equals(
+                role,
+                "Admin",
+                StringComparison.OrdinalIgnoreCase);
+
+            var summary = await _summaryService.GetForUserAsync(
+                userId,
+                includeAllConversations);
+
+            return Ok(summary);
+        }
+
 
         //Get Unread Count
         [HttpGet("user/{userId}/unread-count")]

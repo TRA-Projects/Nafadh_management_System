@@ -33,5 +33,11 @@ namespace Nafadh_Backend.Repositories
             int conversationId,
             int readerUserId
         );
+
+        // Returns the number of conversations containing unread incoming replies.
+        Task<int> GetUnreadConversationCountAsync(
+            int userId,
+            bool includeAllConversations
+        );
     }
 }

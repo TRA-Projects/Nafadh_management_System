@@ -178,6 +178,23 @@ namespace Nafadh_Backend.Repositories
         // Mark conversation messages as read
         // ============================================================
 
+        public async Task<int> GetUnreadConversationCountAsync(
+            int userId,
+            bool includeAllConversations
+        )
+        {
+            // Count distinct threads, not every unread reply, because the bell
+            // represents new conversations in the Communication area.
+            return await _context.NFD_SupportTickets
+                .Where(t =>
+                    (includeAllConversations || t.UserId == userId) &&
+                    t.Messages.Any(m =>
+                        m.SenderId != userId &&
+                        m.Status != NFD_MessageStatus.Read))
+                .CountAsync();
+        }
+
+
         public async Task MarkMessagesAsReadAsync(
             int conversationId,
             int readerUserId
