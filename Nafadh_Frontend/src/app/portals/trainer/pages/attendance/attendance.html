@@ -261,101 +261,150 @@
 
                 <!-- السبب / الملاحظة -->
                 <td data-label="السبب / الملاحظة">
-                  @if (statusKey(r.status) === 'excused') {
-                    <div class="excuse-reason-row">
-                      @if (excuseFor(r); as ex) {
-                        <span class="reason-text">{{ ex.reason }}</span>
-                      } @else if (r.note) {
-                        <span class="reason-text">{{ r.note }}</span>
-                      } @else {
-                        <span class="reason-text muted-note">
-                          بانتظار رفع العذر من المتدرب
-                        </span>
-                      }
-                    </div>
 
-                  } @else if (statusKey(r.status) === 'absent') {
-                    @if (repeatedAbsenceIds().has(r.enrollmentId)) {
-                      <span class="reason reason-danger">غياب متكرر</span>
-                    } @else {
-                      <span class="reason reason-danger">غياب مسجل</span>
-                    }
+  @if (excuseFor(r); as ex) {
 
-                  } @else if (statusKey(r.status) === 'late') {
-                    <span class="reason reason-warn">تأخر عن موعد الحضور</span>
+    <div class="excuse-reason-row">
+      <span class="reason-text">
+        {{ ex.reason || 'عذر مرفق من المتدرب' }}
+      </span>
 
-                  } @else {
-                    <span class="muted-note">حاضر</span>
-                  }
-                </td>
+      @if (isExcusePending(ex)) {
+        <span class="no-proof">
+          بانتظار المراجعة
+        </span>
+      }
+    </div>
+
+  } @else if (statusKey(r.status) === 'absent') {
+
+    @if (repeatedAbsenceIds().has(r.enrollmentId)) {
+      <span class="reason reason-danger">
+        غياب متكرر
+      </span>
+    } @else {
+      <span class="reason reason-danger">
+        غياب مسجل
+      </span>
+    }
+
+  } @else if (statusKey(r.status) === 'late') {
+
+    <span class="reason reason-warn">
+      تأخر عن موعد الحضور
+    </span>
+
+  } @else if (statusKey(r.status) === 'excused') {
+
+    <span class="muted-note">
+      بانتظار رفع العذر من المتدرب
+    </span>
+
+  } @else {
+
+    <span class="muted-note">
+      حاضر
+    </span>
+
+  }
+
+</td>
 
                 <!-- الإثبات / الإنذار -->
-                <td data-label="إثبات العذر">
-                  @if (statusKey(r.status) === 'excused') {
+              <td data-label="إثبات العذر">
 
-                    @if (excuseFor(r); as ex) {
-                      <div class="proof-actions">
-                        @if (ex.proofUrl) {
-                          <a
-                            class="proof-btn"
-                            [href]="ex.proofUrl"
-                            target="_blank"
-                            rel="noopener">
-                            ▤ عرض الإثبات
-                          </a>
-                        } @else {
-                          <span class="no-proof">لا يوجد مرفق</span>
-                        }
+  @if (excuseFor(r); as ex) {
 
-                        @if (isExcusePending(ex)) {
-                          <button
-                            type="button"
-                            class="approve-btn"
-                            [disabled]="reviewingId() === ex.excuseId"
-                            (click)="reviewExcuse(ex, true)">
-                            ✓ قبول
-                          </button>
+    <div class="proof-actions">
 
-                          <button
-                            type="button"
-                            class="reject-btn"
-                            [disabled]="reviewingId() === ex.excuseId"
-                            (click)="reviewExcuse(ex, false)">
-                            ✕ رفض
-                          </button>
-                        } @else {
-                          <span class="reviewed-note">تمت مراجعة العذر</span>
-                        }
-                      </div>
+      @if (ex.proofUrl) {
 
-                    } @else {
-                      <span class="no-proof">بانتظار رفع العذر</span>
-                    }
+        <a
+          class="proof-btn"
+          [href]="ex.proofUrl"
+          target="_blank"
+          rel="noopener"
+        >
+          ▤ عرض الإثبات
+        </a>
 
-                  } @else if (statusKey(r.status) === 'absent') {
+      } @else {
 
-                    @if (
-                      r.dailyAttendanceId != null &&
-                      reportedIds().has(r.dailyAttendanceId)
-                    ) {
-                      <span class="reported">✓ أُبلغت الهيئة</span>
+        <span class="no-proof">
+          لا يوجد مرفق
+        </span>
 
-                    } @else if (repeatedAbsenceIds().has(r.enrollmentId)) {
-                      <button
-                        type="button"
-                        class="proof-btn"
-                        (click)="askReportAbsence(r)">
-                        إبلاغ الهيئة عن غياب متكرر
-                      </button>
+      }
 
-                    } @else {
-                      <span class="no-proof">غياب بدون عذر</span>
-                    }
 
-                  } @else {
-                    <span class="no-proof">—</span>
-                  }
-                </td>
+      @if (isExcusePending(ex)) {
+
+        <button
+          type="button"
+          class="approve-btn"
+          [disabled]="reviewingId() === ex.excuseId"
+          (click)="reviewExcuse(ex, true)"
+        >
+          ✓ قبول
+        </button>
+
+        <button
+          type="button"
+          class="reject-btn"
+          [disabled]="reviewingId() === ex.excuseId"
+          (click)="reviewExcuse(ex, false)"
+        >
+          ✕ رفض
+        </button>
+
+      } @else {
+
+        <span class="reviewed-note">
+          تمت مراجعة العذر
+        </span>
+
+      }
+
+    </div>
+
+  } @else if (statusKey(r.status) === 'absent') {
+
+    @if (
+      r.dailyAttendanceId != null &&
+      reportedIds().has(r.dailyAttendanceId)
+    ) {
+
+      <span class="reported">
+        ✓ أُبلغت الهيئة
+      </span>
+
+    } @else if (repeatedAbsenceIds().has(r.enrollmentId)) {
+
+      <button
+        type="button"
+        class="proof-btn"
+        (click)="askReportAbsence(r)"
+      >
+        إبلاغ الهيئة عن غياب متكرر
+      </button>
+
+    } @else {
+
+      <span class="no-proof">
+        غياب بدون عذر
+      </span>
+
+    }
+
+  } @else {
+
+    <span class="no-proof">
+      —
+    </span>
+
+  }
+
+</td>
               </tr>
             } @empty {
               <tr>
