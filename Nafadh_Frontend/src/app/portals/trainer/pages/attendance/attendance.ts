@@ -434,7 +434,13 @@ export class TrainerAttendance implements OnInit {
               ? response
               : response
                 ? [response]
-                : []) as Excuse[];
+                : [])
+              .map((ex) => ({
+                ...(ex as Excuse),
+                proofUrl: this.resolveBackendFileUrl(
+                  (ex as Excuse).proofUrl
+                ),
+              })) as Excuse[];
 
             if (!list.length) return;
 
@@ -465,6 +471,31 @@ export class TrainerAttendance implements OnInit {
           },
         });
     });
+  }
+
+  private resolveBackendFileUrl(
+    url?: string | null
+  ): string | undefined {
+    const value = String(url ?? '').trim();
+
+    if (!value) {
+      return undefined;
+    }
+
+    // Keep already-absolute URLs unchanged.
+    if (/^https?:\/\//i.test(value)) {
+      return value;
+    }
+
+    // environment.apiBaseUrl includes /api.
+    // Static files are served from the backend origin, not from /api.
+    const backendOrigin = this.base
+      .replace(/\/api\/?$/i, '')
+      .replace(/\/+$/, '');
+
+    const relativePath = value.replace(/^\/+/, '');
+
+    return `${backendOrigin}/${relativePath}`;
   }
 
   private loadRepeatedAbsenceForRows(rows: Row[]): void {
