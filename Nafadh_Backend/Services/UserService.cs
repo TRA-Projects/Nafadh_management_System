@@ -61,45 +61,53 @@ namespace Nafadh_Backend.Services
 
         public async Task<UserLoginResponseDTO> LoginAsync(UserLoginDTO dto)
         {
-            var user = await _repository.GetByEmailAsync(dto.Email)
-                ?? throw new AuthenticationException("Invalid email or password.");
-
-            if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+            try
             {
-                throw new AuthenticationException("Invalid email or password.");
-            }
+                var user = await _repository.GetByEmailAsync(dto.Email)
+                    ?? throw new AuthenticationException("Invalid email or password.");
 
-            if (user.Status != NFD_UserStatus.Active)
-            {
-                throw new AuthenticationException($"This account is {user.Status.ToString().ToLower()} and cannot sign in.");
-            }
-
-            var (token, expiresAtUtc) = _jwtTokenService.GenerateToken(user);
-
-            int? companyId = null;
-            int? supervisorId = null;
-            if (user.Role?.RoleName == "CompanySupervisor")
-            {
-                var supervisor = await _supervisorRepository.GetByUserIdAsync(user.UserId);
-                if (supervisor != null)
+                if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 {
-                    companyId = supervisor.CompanyId;
-                    supervisorId = supervisor.SupervisorId;
+                    throw new AuthenticationException("Invalid email or password.");
                 }
-            }
 
-            return new UserLoginResponseDTO
+                if (user.Status != NFD_UserStatus.Active)
+                {
+                    throw new AuthenticationException($"This account is {user.Status.ToString().ToLower()} and cannot sign in.");
+                }
+
+                var (token, expiresAtUtc) = _jwtTokenService.GenerateToken(user);
+
+                int? companyId = null;
+                int? supervisorId = null;
+                if (user.Role?.RoleName == "CompanySupervisor")
+                {
+                    var supervisor = await _supervisorRepository.GetByUserIdAsync(user.UserId);
+                    if (supervisor != null)
+                    {
+                        companyId = supervisor.CompanyId;
+                        supervisorId = supervisor.SupervisorId;
+                    }
+                }
+
+                return new UserLoginResponseDTO
+                {
+                    Token = token,
+                    ExpiresAtUtc = expiresAtUtc,
+                    UserId = user.UserId,
+                    FullName = user.FullName,
+                    Email = user.Email,
+                    RoleId = user.RoleId,
+                    RoleName = user.Role?.RoleName ?? string.Empty,
+                    CompanyId = companyId,
+                    SupervisorId = supervisorId
+                };
+            }
+            catch (Exception e)
             {
-                Token = token,
-                ExpiresAtUtc = expiresAtUtc,
-                UserId = user.UserId,
-                FullName = user.FullName,
-                Email = user.Email,
-                RoleId = user.RoleId,
-                RoleName = user.Role?.RoleName ?? string.Empty,
-                CompanyId = companyId,
-                SupervisorId = supervisorId
-            };
+                Console.WriteLine(e.Message);
+            }
+            return null;
         }
 
         public async Task<UserResponseDTO?> GetByIdAsync(int userId)
