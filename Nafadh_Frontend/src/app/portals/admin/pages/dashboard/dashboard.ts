@@ -18,10 +18,9 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   showAllActivity = signal<boolean>(false);
 
   charts = signal<DashboardChartsDto | null>(null);
-  traineeCount = signal(3891);
-  companyCount = signal(94);
-  batchCount = signal(32);
-  
+  traineeCount = signal<number | null>(null);
+  companyCount = signal<number | null>(null);
+  batchCount = signal<number | null>(null);
   // إدارة السنوات والدفعات ديناميكياً
   allBatches = signal<BatchDto[]>([]);
   availableYears = signal<string[]>([]);
@@ -33,7 +32,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private api: AdminApi,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.api.getRecentAudit().subscribe((data) => {
@@ -43,7 +42,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         const timeB = new Date(b.timestamp ?? b.createdAt ?? 0).getTime();
         return timeB - timeA;
       });
-      
+
       this.allActivity.set(sorted);
       this.updateDisplayedActivity();
     });
@@ -53,13 +52,17 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       this.updateBarChartData(c);
     });
 
-    this.api.getTrainees({ pageSize: 1 }).subscribe((r) => this.traineeCount.set(r.totalCount ?? 3891));
-    this.api.getCompanies().subscribe((c) => this.companyCount.set(c.length || 94));
-    
+    this.api.getTrainees({ pageSize: 1 }).subscribe((r) => {
+      this.traineeCount.set(r.totalCount ?? null);
+    });
+    this.api.getCompanies().subscribe((c) => {
+      this.companyCount.set(c?.length ?? null);
+    });
+
     // جلب الدفعات وحساب السنوات والمسارات ديناميكياً
     this.api.getBatches().subscribe((b) => {
       const list = b || [];
-      this.batchCount.set(list.length || 32);
+      this.batchCount.set(list.length);
       this.allBatches.set(list);
 
       // استخراج السنوات الفريدة من startDate وتجميعها
@@ -164,7 +167,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
           mode: 'index',
           intersect: false,
         },
-        plugins: { 
+        plugins: {
           legend: { display: false },
           tooltip: {
             enabled: true,
@@ -187,12 +190,12 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
           }
         },
         scales: {
-          y: { 
-            beginAtZero: true, 
+          y: {
+            beginAtZero: true,
             grid: { color: '#f1f5f9' },
             ticks: { color: '#64748b' }
           },
-          x: { 
+          x: {
             grid: { display: false },
             ticks: { color: '#64748b' }
           }
@@ -252,7 +255,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   private updateDonutChartData(year: string) {
     if (!this.donutChartInstance) return;
 
-    const yearBatches = this.allBatches().filter(b => 
+    const yearBatches = this.allBatches().filter(b =>
       b.startDate && new Date(b.startDate).getFullYear().toString() === year
     );
 
