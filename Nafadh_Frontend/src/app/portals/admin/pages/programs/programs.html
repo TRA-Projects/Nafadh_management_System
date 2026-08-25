@@ -53,7 +53,7 @@
 
 
 <!-- ========================================== -->
-<!-- Modal: إنشاء دفعة جديدة (Batch Modal)       -->
+<!-- Modal: إنشاء دفعة جديدة (Batch Modal)      -->
 <!-- ========================================== -->
 <div *ngIf="isBatchModalOpen" (click)="onCloseBatchModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container">
@@ -104,12 +104,6 @@
         </select>
       </div>
 
-      <!-- المدرب -->
-      <div class="form-group">
-        <label class="form-label">المدرب</label>
-        <input type="text" formControlName="instructorName" placeholder="اسم المدرب" class="form-input text-right">
-      </div>
-
       <!-- التواريخ (بداية ونهاية) -->
       <div class="form-row">
         <div class="form-group">
@@ -118,6 +112,9 @@
           </label>
           <input type="date" formControlName="startDate" class="form-input"
             [class.input-error]="batchForm.get('startDate')?.touched && batchForm.get('startDate')?.invalid">
+          <div *ngIf="batchForm.get('startDate')?.touched && batchForm.get('startDate')?.invalid" class="error-msg text-right">
+            <small>تاريخ البداية مطلوب</small>
+          </div>
         </div>
 
         <div class="form-group">
@@ -125,7 +122,15 @@
             تاريخ النهاية <span class="required-star">*</span>
           </label>
           <input type="date" formControlName="endDate" class="form-input"
-            [class.input-error]="batchForm.get('endDate')?.touched && batchForm.get('endDate')?.invalid">
+            [class.input-error]="batchForm.get('endDate')?.touched && (batchForm.get('endDate')?.invalid || batchForm.errors?.['dateRangeInvalid'])">
+          
+          <div *ngIf="batchForm.get('endDate')?.touched && batchForm.get('endDate')?.invalid" class="error-msg text-right">
+            <small *ngIf="batchForm.get('endDate')?.errors?.['required']">تاريخ النهاية مطلوب</small>
+          </div>
+          <!-- رسالة خطأ تطابق تاريخ النهاية مع البداية -->
+          <div *ngIf="batchForm.get('endDate')?.touched && batchForm.errors?.['dateRangeInvalid']" class="error-msg text-right" style="color: #dc2626; font-size: 12px; margin-top: 4px;">
+            <small>تاريخ النهاية يجب أن يكون بعد تاريخ البداية</small>
+          </div>
         </div>
       </div>
 
@@ -144,9 +149,16 @@
         </div>
       </div>
 
+      <!-- تنبيه خطأ الـ Server لإنشاء الدفعة -->
+      <div *ngIf="batchErrorMessage" class="error-msg text-center mb-2" style="color: #dc2626; font-size: 13px;">
+        <small>{{ batchErrorMessage }}</small>
+      </div>
+
       <!-- Footer Buttons -->
       <div class="modal-footer-buttons">
-        <button type="submit" class="btn-submit-batch">إنشاء الدفعة</button>
+        <button type="submit" [disabled]="isSubmittingBatch" class="btn-submit-batch">
+          {{ isSubmittingBatch ? 'جاري الحفظ...' : 'إنشاء الدفعة' }}
+        </button>
         <button type="button" (click)="onCloseBatchModal()" class="btn-cancel-batch">إلغاء</button>
       </div>
 
@@ -177,13 +189,13 @@
         <label class="form-label">
           اسم البرنامج <span class="required-star">*</span>
         </label>
-        <input type="text" formControlName="name" placeholder="e.g. .NET Track" class="form-input text-right"
-          [class.input-error]="pf['name'].touched && pf['name'].invalid">
+        <input type="text" formControlName="title" placeholder="e.g. .NET Track" class="form-input text-right"
+          [class.input-error]="pf['title'].touched && pf['title'].invalid">
 
         <!-- Validation Message -->
-        <div *ngIf="pf['name'].touched && pf['name'].invalid" class="error-msg text-right">
-          <small *ngIf="pf['name'].errors?.['required']">اسم البرنامج مطلوب</small>
-          <small *ngIf="pf['name'].errors?.['minlength']">الاسم يجب أن يكون حرفين على الأقل</small>
+        <div *ngIf="pf['title'].touched && pf['title'].invalid" class="error-msg text-right">
+          <small *ngIf="pf['title'].errors?.['required']">اسم البرنامج مطلوب</small>
+          <small *ngIf="pf['title'].errors?.['minlength']">الاسم يجب أن يكون حرفين على الأقل</small>
         </div>
       </div>
 
@@ -230,7 +242,7 @@
       </div>
 
       <!-- تنبيه خطأ الـ Server إذا فشل الحفظ -->
-      <div *ngIf="programErrorMessage" class="error-msg text-center mb-2">
+      <div *ngIf="programErrorMessage" class="error-msg text-center mb-2" style="color: #dc2626; font-size: 13px;">
         <small>{{ programErrorMessage }}</small>
       </div>
 
@@ -268,7 +280,6 @@
           <th scope="col" class="nfd-th">الدفعة</th>
           <th scope="col" class="nfd-th">البرنامج</th>
           <th scope="col" class="nfd-th">الشركة المستضيفة</th>
-          <th scope="col" class="nfd-th">المدرب</th>
           <th scope="col" class="nfd-th text-center">البداية</th>
           <th scope="col" class="nfd-th text-center">النهاية</th>
           <th scope="col" class="nfd-th text-center">الإشغال</th>
@@ -302,22 +313,17 @@
             {{ batch.companyName || '-' }}
           </td>
 
-          <!-- 4. المدرب -->
-          <td class="nfd-td">
-            {{ $any(batch).instructorName || '-' }}
-          </td>
-
-          <!-- 5. البداية -->
+          <!-- 4. البداية -->
           <td class="nfd-td text-center">
             {{ batch.startDate ? (batch.startDate | date:'dd/MM/yyyy') : '-' }}
           </td>
 
-          <!-- 6. النهاية -->
+          <!-- 5. النهاية -->
           <td class="nfd-td text-center">
             {{ batch.endDate ? (batch.endDate | date:'dd/MM/yyyy') : '-' }}
           </td>
 
-          <!-- 7. الإشغال -->
+          <!-- 6. الإشغال -->
           <td class="nfd-td text-center">
             <div class="nfd-occupancy-wrapper">
               <span class="nfd-occupancy-text" dir="ltr">
@@ -330,14 +336,14 @@
             </div>
           </td>
 
-          <!-- 8. الحالة -->
+          <!-- 7. الحالة -->
           <td class="nfd-td text-center">
             <span class="nfd-status-badge" [ngClass]="getStatusBadgeClass(batch.status)">
               {{ getStatusLabel(batch.status) }}
             </span>
           </td>
 
-          <!-- 9. الإجراءات -->
+          <!-- 8. الإجراءات -->
           <td class="nfd-td text-center">
             <div class="nfd-actions-wrapper">
               <button type="button" (click)="onEdit(batch)" title="تعديل" aria-label="تعديل الدفعة"
@@ -355,7 +361,7 @@
 
         <!-- Empty State -->
         <tr *ngIf="!batchesError() && filteredBatches().length === 0">
-          <td colspan="9" class="nfd-empty-state">
+          <td colspan="8" class="nfd-empty-state">
             <i class="fa-regular fa-folder-open"></i>
             <span>لا توجد دفعات متوفرة حالياً.</span>
           </td>
@@ -413,7 +419,7 @@
 <!-- ========================================== -->
 <!-- Modal: تعديل الدفعة (Edit Modal)          -->
 <!-- ========================================== -->
-<div *ngIf="isEditModalOpen" (click)="onCloseEditModal()" class="modal-overlay" dir="rtl">
+<div *ngIf="isEditModalOpen" (click)="onCloseEditModal()" class="modal-overlay" dir="rtl" role="dialog" aria-modal="true">
   <div (click)="$event.stopPropagation()" class="modal-container">
     <div class="modal-header">
       <h3 class="modal-title">تعديل الدفعة</h3>
@@ -426,9 +432,10 @@
       <div class="form-group">
         <label class="form-label">اسم الدفعة <span class="required-star">*</span></label>
         <input type="text" formControlName="batchName" class="form-input text-right"
-          [class.input-error]="hasError(editBatchForm, 'batchName')">
-        <div *ngIf="hasError(editBatchForm, 'batchName')" class="error-msg text-right">
-          <small>اسم الدفعة مطلوب</small>
+          [class.input-error]="editBatchForm.get('batchName')?.touched && editBatchForm.get('batchName')?.invalid">
+        
+        <div *ngIf="editBatchForm.get('batchName')?.touched && editBatchForm.get('batchName')?.invalid" class="error-msg text-right">
+          <small *ngIf="editBatchForm.get('batchName')?.errors?.['required']">اسم الدفعة مطلوب</small>
         </div>
       </div>
 
@@ -436,11 +443,12 @@
       <div class="form-group">
         <label class="form-label">البرنامج <span class="required-star">*</span></label>
         <select formControlName="programId" class="form-select text-right"
-          [class.input-error]="hasError(editBatchForm, 'programId')">
+          [class.input-error]="editBatchForm.get('programId')?.touched && editBatchForm.get('programId')?.invalid">
           <option value="" disabled>– اختر برنامجاً –</option>
           <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title || prog.name }}</option>
         </select>
-        <div *ngIf="hasError(editBatchForm, 'programId')" class="error-msg text-right">
+        
+        <div *ngIf="editBatchForm.get('programId')?.touched && editBatchForm.get('programId')?.invalid" class="error-msg text-right">
           <small>يجب اختيار البرنامج</small>
         </div>
       </div>
@@ -454,45 +462,56 @@
         </select>
       </div>
 
-      <!-- المدرب -->
-      <div class="form-group">
-        <label class="form-label">المدرب</label>
-        <input type="text" formControlName="instructorName" class="form-input text-right">
-      </div>
-
       <!-- التواريخ -->
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">تاريخ البداية <span class="required-star">*</span></label>
           <input type="date" formControlName="startDate" class="form-input"
-            [class.input-error]="hasError(editBatchForm, 'startDate')">
+            [class.input-error]="editBatchForm.get('startDate')?.touched && editBatchForm.get('startDate')?.invalid">
+          
+          <div *ngIf="editBatchForm.get('startDate')?.touched && editBatchForm.get('startDate')?.invalid" class="error-msg text-right">
+            <small>تاريخ البداية مطلوب</small>
+          </div>
         </div>
+
         <div class="form-group">
           <label class="form-label">تاريخ النهاية <span class="required-star">*</span></label>
           <input type="date" formControlName="endDate" class="form-input"
-            [class.input-error]="hasError(editBatchForm, 'endDate')">
+            [class.input-error]="editBatchForm.get('endDate')?.touched && (editBatchForm.get('endDate')?.invalid || editBatchForm.errors?.['dateRangeInvalid'])">
+          
+          <div *ngIf="editBatchForm.get('endDate')?.touched && editBatchForm.get('endDate')?.invalid" class="error-msg text-right">
+            <small *ngIf="editBatchForm.get('endDate')?.errors?.['required']">تاريخ النهاية مطلوب</small>
+          </div>
+          <!-- رسالة خطأ تطابق تاريخ النهاية مع البداية في نافذة التعديل -->
+          <div *ngIf="editBatchForm.get('endDate')?.touched && editBatchForm.errors?.['dateRangeInvalid']" class="error-msg text-right" style="color: #dc2626; font-size: 12px; margin-top: 4px;">
+            <small>تاريخ النهاية يجب أن يكون بعد تاريخ البداية</small>
+          </div>
         </div>
       </div>
 
       <!-- الطاقة الاستيعابية -->
       <div class="form-group">
-        <label class="form-label">
-          الطاقة الاستيعابية <span class="required-star">*</span>
-        </label>
+        <label class="form-label">الطاقة الاستيعابية <span class="required-star">*</span></label>
         <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="capacity" placeholder="15"
           class="form-input text-right"
-          [class.input-error]="hasError(editBatchForm, 'capacity')">
+          [class.input-error]="editBatchForm.get('capacity')?.touched && editBatchForm.get('capacity')?.invalid">
 
-        <!-- رسائل الخطأ -->
-        <div *ngIf="hasError(editBatchForm, 'capacity')" class="error-msg text-right">
+        <div *ngIf="editBatchForm.get('capacity')?.touched && editBatchForm.get('capacity')?.invalid" class="error-msg text-right">
           <small *ngIf="editBatchForm.get('capacity')?.errors?.['required']">الطاقة الاستيعابية مطلوبة</small>
-          <small *ngIf="editBatchForm.get('capacity')?.errors?.['min']">لا يمكن أن تكون الطاقة الاستيعابية سالبة أو صفر</small>
+          <small *ngIf="editBatchForm.get('capacity')?.errors?.['min']">لا يمكن أن تكون الطاقة الاستيعابية أقل من 1</small>
         </div>
+      </div>
+
+      <!-- تنبيه خطأ الـ Server لتعديل الدفعة -->
+      <div *ngIf="editBatchErrorMessage" class="error-msg text-center mb-2" style="color: #dc2626; font-size: 13px;">
+        <small>{{ editBatchErrorMessage }}</small>
       </div>
 
       <!-- Footer Buttons -->
       <div class="modal-footer-buttons">
-        <button type="submit" class="btn-submit-batch">حفظ التعديلات</button>
+        <button type="submit" [disabled]="isSubmittingEditBatch" class="btn-submit-batch">
+          {{ isSubmittingEditBatch ? 'جاري الحفظ...' : 'حفظ التعديلات' }}
+        </button>
         <button type="button" (click)="onCloseEditModal()" class="btn-cancel-batch">إلغاء</button>
       </div>
 

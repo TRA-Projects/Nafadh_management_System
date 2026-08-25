@@ -26,6 +26,13 @@ namespace Nafadh_Backend.DTOs
 
         // Link to the trainer's CV file
         public string? CVUrl { get; set; }
+        // =====================================================
+        // TRAINER PROFILE IMAGE
+        // =====================================================
+
+        // Public URL of the trainer profile image.
+        // The physical image file is stored in external storage.
+        public string? ProfileImageUrl { get; set; }
 
         // Current trainer status
         public NFD_TrainerStatus Status { get; set; }

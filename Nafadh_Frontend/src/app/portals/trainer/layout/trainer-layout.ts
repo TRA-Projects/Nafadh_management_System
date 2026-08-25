@@ -16,5 +16,6 @@ export class TrainerLayout {
     { path: 'trainees', label: 'تقييم ومتابعة المتدربين', icon: 'graduation' },
     { path: 'reports', label: 'التقارير', icon: 'chart' },
     { path: 'profile', label: 'ملفي الشخصي', icon: 'user' },
+    { path: 'notifications', label: 'الإشعارات', icon: 'bell' },
   ];
 }

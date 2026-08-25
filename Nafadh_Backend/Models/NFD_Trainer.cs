@@ -24,7 +24,19 @@ namespace Nafadh_Backend.Models
         public string? Biography { get; set; }
         [MaxLength(300)]
         public string? CVUrl { get; set; }
+        // =====================================================
+        // TRAINER PROFILE IMAGE
+        // =====================================================
+
+        // Stores the public URL of the trainer profile image.
+        // The physical image file will be stored outside
+        // the project folder in external storage.
+        [MaxLength(300)]
+        public string? ProfileImageUrl { get; set; }
+
+
         public NFD_TrainerStatus Status { get; set; }
+     
 
         public int UserId { get; set; }
         public NFD_User User { get; set; } = null!;

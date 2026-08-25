@@ -1,30 +1,7 @@
-import { Component, OnInit, DestroyRef, inject, signal, computed } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize } from 'rxjs/operators';
-
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AdminApi } from '../../services/admin-api';
-import { BatchDto, ProgramDto, CompanyDto} from '../../../../core/models/dtos';
-import {
-  BatchStatus
-} from '../../../../core/models/enums';
-
-type BatchStatusKey = 'Upcoming' | 'Ongoing' | 'Completed' | 'Cancelled';
-
-const STATUS_LABELS: Record<BatchStatusKey, string> = {
-  Upcoming: 'قادمة',
-  Ongoing: 'جارية',
-  Completed: 'مكتملة',
-  Cancelled: 'ملغاة',
-};
-
-const STATUS_BADGE_CLASSES: Record<BatchStatusKey, string> = {
-  Upcoming: 'bg-slate-100 text-slate-500 border-slate-200/70',
-  Ongoing: 'bg-blue-50/90 text-blue-500 border-blue-200/80',
-  Completed: 'bg-emerald-50/90 text-emerald-600 border-emerald-200/80',
-  Cancelled: 'bg-red-50/90 text-red-500 border-red-200/80',
-};
 
 @Component({
   selector: 'app-admin-programs',
@@ -34,217 +11,185 @@ const STATUS_BADGE_CLASSES: Record<BatchStatusKey, string> = {
   styleUrls: ['./programs.css']
 })
 export class AdminPrograms implements OnInit {
-  [x: string]: any;
-  private readonly api = inject(AdminApi);
-  private readonly fb = inject(FormBuilder);
-  private readonly destroyRef = inject(DestroyRef);
+  private fb = inject(FormBuilder);
+  private adminApi = inject(AdminApi);
 
-  // State Management (Signals)
-  readonly batches = signal<BatchDto[]>([]);
-  readonly programs = signal<ProgramDto[]>([]);
-  readonly tracks = signal<any[]>([]);
-  readonly companies = signal<CompanyDto[]>([]);
-  readonly trainers = signal<any[]>([]);
-  readonly statusFilter = signal<string>('الكل');
-
-  // Pagination Signals & Constants
-  readonly pageSize = signal<number>(8);
-  readonly currentPage = signal<number>(1);
-
-  // Error state
-  readonly batchesError = signal<string | null>(null);
-  readonly programsError = signal<string | null>(null);
-
-  // UI Modal & Form State - Batch Modal
+  // --- Signals & States ---
+  batches = signal<any[]>([]);
+  programs = signal<any[]>([]);
+  companies = signal<any[]>([]);
+  tracks = signal<any[]>([]);
+  
+  statusFilter = signal<string>('الكل');
+  batchesError = signal<string | null>(null);
+  
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
+  
   isBatchModalOpen = false;
-  batchForm!: FormGroup;
-
-  // UI Modal & Form State - Program Modal
   isProgramModalOpen = false;
-  isSubmittingProgram = false;
-  programForm!: FormGroup;
-  programErrorMessage: string | null = null;
-
-  // --- UI Modal State - View Details Modal ---
   isViewModalOpen = false;
-  selectedBatch: BatchDto | null = null;
-
-  // --- UI Modal State - Edit Modal ---
   isEditModalOpen = false;
+
+  selectedBatch: any = null;
+
+  // States & Error Messages
+  isSubmittingProgram = false;
+  programErrorMessage: string | null = null;
+  isSubmittingBatch = false; 
+  isSubmittingEditBatch = false;
+  batchErrorMessage: string | null = null;
+  editBatchErrorMessage: string | null = null;
+
+  // Forms
+  batchForm!: FormGroup;
   editBatchForm!: FormGroup;
-
-  // --- Custom Dropdowns States ---
-  isCompanyDropdownOpen = false;
-  isProgramDropdownOpen = false;
-  isTrainerDropdownOpen = false;
-
-  readonly Math = Math;
-
-  // Dynamic Filtering Computed Signal
-  readonly filteredBatches = computed(() => {
-    const filter = this.statusFilter();
-    if (filter === 'الكل') return this.batches();
-    return this.batches().filter((b) => {
-      if (filter === 'جارية') return this.isInProgress(b.status);
-      if (filter === 'قادمة') return this.isUpcoming(b.status);
-      return this.getStatusKey(b.status) === filter;
-    });
-  });
-
-  // --- Pagination Computed Signals ---
-  readonly totalBatchesCount = computed(() => this.filteredBatches().length);
-
-  readonly totalPages = computed(() => {
-    const total = this.totalBatchesCount();
-    return Math.max(1, Math.ceil(total / this.pageSize()));
-  });
-
-  readonly paginatedBatches = computed(() => {
-    const batches = this.filteredBatches();
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return batches.slice(start, start + this.pageSize());
-  });
+  programForm!: FormGroup;
 
   ngOnInit(): void {
     this.initBatchForm();
     this.initEditBatchForm();
     this.initProgramForm();
+    
+    // جلب البيانات من الـ API عند تحميل المكون
     this.loadInitialData();
   }
 
-  // --- Validation Helper Methods ---
-  // تتحقق عما إذا كان الحقل في نموذج معين يحتوي على خطأ وتم لمسه لتطبيق كلاس الأخطاء (.input-error)
-  hasError(form: FormGroup, controlName: string): boolean {
-    const control = form.get(controlName);
-    return !!(control && control.invalid && (control.dirty || control.touched));
-  }
+  // --- Data Loading from AdminApi ---
+  loadInitialData(): void {
+    this.adminApi.getBatches?.().subscribe({
+      next: (res: any) => this.batches.set(res || []),
+      error: () => this.batchesError.set('فشل تحميل قائمة الدفعات')
+    });
 
-  // --- Status Filter Handler ---
-  setStatusFilter(filter: string): void {
-    this.statusFilter.set(filter);
-    this.currentPage.set(1);
-  }
+    this.adminApi.getPrograms?.().subscribe({
+      next: (res: any) => this.programs.set(res || [])
+    });
 
-  // --- Pagination Handler ---
-  onPageChange(page: number): void {
-    if (page >= 1 && page <= this.totalPages()) {
-      this.currentPage.set(page);
-    }
-  }
+    this.adminApi.getCompanies?.().subscribe({
+      next: (res: any) => this.companies.set(res || [])
+    });
 
-  // --- Custom Dropdowns Handlers: Company ---
-  toggleCompanyDropdown(): void {
-    this.isCompanyDropdownOpen = !this.isCompanyDropdownOpen;
-  }
-
-  selectCompany(company: any): void {
-    this.editBatchForm.patchValue({ companyId: company.companyId });
-    this.editBatchForm.get('companyId')?.markAsDirty();
-    this.editBatchForm.get('companyId')?.markAsTouched();
-    this.isCompanyDropdownOpen = false;
-  }
-
-  getSelectedCompanyName(): string {
-    const selectedId = this.editBatchForm.get('companyId')?.value;
-    const company = this.companies().find(c => c.companyId == selectedId);
-    return company ? company.companyName : 'اختر الشركة';
-  }
-
-  // --- Custom Dropdowns Handlers: Program ---
-  toggleProgramDropdown(): void {
-    this.isProgramDropdownOpen = !this.isProgramDropdownOpen;
-  }
-
-  selectProgram(program: ProgramDto): void {
-    this.editBatchForm.patchValue({ programId: program.programId });
-    this.editBatchForm.get('programId')?.markAsDirty();
-    this.editBatchForm.get('programId')?.markAsTouched();
-    this.isProgramDropdownOpen = false;
-  }
-
-  getSelectedProgramName(): string {
-    const selectedId = this.editBatchForm.get('programId')?.value;
-    const program = this.programs().find(p => p.programId == selectedId);
-    return program?.name || program?.title || 'اختر البرنامج';
-  }
-
-  // --- Custom Dropdowns Handlers: Trainer ---
-  toggleTrainerDropdown(): void {
-    this.isTrainerDropdownOpen = !this.isTrainerDropdownOpen;
-  }
-
-  selectTrainer(trainer: any): void {
-    this.editBatchForm.patchValue({ instructorName: trainer.name }); 
-    this.editBatchForm.get('instructorName')?.markAsDirty();
-    this.editBatchForm.get('instructorName')?.markAsTouched();
-    this.isTrainerDropdownOpen = false;
-  }
-
-  getSelectedTrainerName(): string {
-    const selectedName = this.editBatchForm.get('instructorName')?.value;
-    return selectedName ? selectedName : 'اختر المدرب';
-  }
-
-  closeAllDropdowns(): void {
-    this.isCompanyDropdownOpen = false;
-    this.isProgramDropdownOpen = false;
-    this.isTrainerDropdownOpen = false;
-  }
-
-  // --- Table Helpers ---
-  onEdit(batch: BatchDto): void {
-    this.selectedBatch = batch;
-    this.isEditModalOpen = true;
-
-    this.editBatchForm.patchValue({
-      batchName: (batch as any).batchName || '',
-      programId: (batch as any).programId || '',
-      companyId: (batch as any).companyId || '',
-      instructorName: (batch as any).instructorName || '',
-      startDate: (batch as any).startDate ? (batch as any).startDate.split('T')[0] : '',
-      endDate: (batch as any).endDate ? (batch as any).endDate.split('T')[0] : '',
-      capacity: (batch as any).capacity || 15,
-      status: (batch as any).status || ''
+    this.adminApi.getTracks?.().subscribe({
+      next: (res: any) => this.tracks.set(res || [])
     });
   }
 
-  onCloseEditModal(): void {
-    this.isEditModalOpen = false;
-    this.selectedBatch = null;
-    this.closeAllDropdowns();
-    this.editBatchForm.reset();
-  }
-
-  onSaveBatch(): void {
-    if (this.editBatchForm.invalid) {
-      this.editBatchForm.markAllAsTouched();
-      return;
-    }
-
-    const rawValues = this.editBatchForm.value;
-    const batchId = (this.selectedBatch as any)?.batchId || (this.selectedBatch as any)?.id;
+  // --- Form Initializations & Validators ---
+  
+  dateRangeValidator(group: FormGroup) {
+    const start = group.get('startDate')?.value;
+    const end = group.get('endDate')?.value;
+    const endDateControl = group.get('endDate');
     
-    const payload = {
-      ...rawValues,
-      programId: Number(rawValues.programId),
-      companyId: rawValues.companyId ? Number(rawValues.companyId) : null,
-      capacity: Number(rawValues.capacity)
-    };
-
-    this.api.updateBatch(batchId, payload)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.fetchBatches();
-          this.onCloseEditModal();
-        },
-        error: (err) => {
-          console.error('Error updating batch:', err);
+    if (start && end) {
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      if (endDate < startDate) {
+        endDateControl?.setErrors({ ...(endDateControl.errors || {}), dateRangeInvalid: true });
+        return { dateRangeInvalid: true };
+      } else {
+        if (endDateControl?.hasError('dateRangeInvalid')) {
+          const errors = { ...endDateControl.errors };
+          delete errors['dateRangeInvalid'];
+          endDateControl.setErrors(Object.keys(errors).length ? errors : null);
         }
-      });
+      }
+    }
+    return null;
   }
 
-  onView(batch: BatchDto): void {
+  private initBatchForm(): void {
+    this.batchForm = this.fb.group({
+      batchName: ['', [Validators.required]],
+      programId: ['', [Validators.required]],
+      companyId: ['', []],
+      startDate: ['', [Validators.required]],
+      endDate: ['', [Validators.required]],
+      capacity: [15, [Validators.required, Validators.min(1)]]
+    }, { validators: this.dateRangeValidator });
+  }
+
+  private initEditBatchForm(): void {
+    this.editBatchForm = this.fb.group({
+      batchName: ['', [Validators.required]],
+      programId: ['', [Validators.required]],
+      companyId: ['', []],
+      startDate: ['', [Validators.required]],
+      endDate: ['', [Validators.required]],
+      capacity: [15, [Validators.required, Validators.min(1)]]
+    }, { validators: this.dateRangeValidator });
+  }
+
+  private initProgramForm(): void {
+    this.programForm = this.fb.group({
+      title: ['', [Validators.required, Validators.minLength(2)]],
+      trackId: [null, [Validators.required]],
+      durationWeeks: [10, [Validators.required, Validators.min(1)]],
+      description: ['']
+    });
+  }
+
+  get pf() {
+    return this.programForm.controls;
+  }
+
+  preventNegative(event: KeyboardEvent): void {
+    if (['-', 'e', 'E', '+'].includes(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  // --- Computed Properties & Filtering ---
+  
+  filteredBatches = computed(() => {
+    const filter = this.statusFilter();
+    const allBatches = this.batches();
+    if (filter === 'الكل') return allBatches;
+    return allBatches.filter(b => b.status === filter);
+  });
+
+  paginatedBatches = computed(() => {
+    const filtered = this.filteredBatches();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return filtered.slice(start, start + this.pageSize());
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.filteredBatches().length / this.pageSize()) || 1;
+  });
+
+  totalBatchesCount = computed(() => {
+    return this.filteredBatches().length;
+  });
+
+  getCountByStatus(status: string): number {
+    return this.batches().filter(b => b.status === status).length;
+  }
+
+  // --- Modal Handlers ---
+
+  onCreateBatch(): void {
+    this.batchForm.reset({ capacity: 15 });
+    this.batchErrorMessage = null;
+    this.isBatchModalOpen = true;
+  }
+
+  onCloseBatchModal(): void {
+    this.isBatchModalOpen = false;
+  }
+
+  onCreateProgram(): void {
+    this.programForm.reset({ durationWeeks: 10, trackId: null });
+    this.programErrorMessage = null;
+    this.isProgramModalOpen = true;
+  }
+
+  onCloseProgramModal(): void {
+    this.isProgramModalOpen = false;
+  }
+
+  onView(batch: any): void {
     this.selectedBatch = batch;
     this.isViewModalOpen = true;
   }
@@ -254,301 +199,139 @@ export class AdminPrograms implements OnInit {
     this.selectedBatch = null;
   }
 
-  trackByBatchId(_index: number, batch: BatchDto): number | string {
-    return (batch as any).batchId ?? (batch as any).id ?? _index;
-  }
-
-  getFormattedSubtext(dateString?: string): string {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-  }
-
-  getOccupancyPercentage(count: number | null | undefined, capacity: number | null | undefined): number {
-    const safeCount = count ?? 0;
-    const safeCapacity = capacity ?? 0;
-    if (safeCapacity <= 0) return 0;
-    return Math.min((safeCount / safeCapacity) * 100, 100);
-  }
-
-  private getStatusKey(status: BatchStatus | string | number | null | undefined): BatchStatusKey {
-    const s = status?.toString();
-    switch (s) {
-      case '0':
-      case 'Upcoming':
-        return 'Upcoming';
-      case '1':
-      case 'Ongoing':
-      case 'InProgress':
-      case 'جارية':
-        return 'Ongoing';
-      case '2':
-      case 'Completed':
-        return 'Completed';
-      case '3':
-      case 'Cancelled':
-        return 'Cancelled';
-      default:
-        return 'Upcoming';
-    }
-  }
-
-  isInProgress(status: BatchStatus | string | number | null | undefined): boolean {
-    return this.getStatusKey(status) === 'Ongoing';
-  }
-
-  isUpcoming(status: BatchStatus | string | number | null | undefined): boolean {
-    return this.getStatusKey(status) === 'Upcoming';
-  }
-
-  isCompleted(status: BatchStatus | string | number | null | undefined): boolean {
-    return this.getStatusKey(status) === 'Completed';
-  }
-
-  isCancelled(status: BatchStatus | string | number | null | undefined): boolean {
-    return this.getStatusKey(status) === 'Cancelled';
-  }
-
-  getStatusLabel(status: BatchStatus | string | number | null | undefined): string {
-    return STATUS_LABELS[this.getStatusKey(status)];
-  }
-
-  getStatusBadgeClass(status: BatchStatus | string | number | null | undefined): string {
-    return STATUS_BADGE_CLASSES[this.getStatusKey(status)];
-  }
-
-  getCountByStatus(status: string): number {
-    if (status === 'الكل') return this.batches().length;
-    return this.batches().filter((b) => {
-      if (status === 'جارية') return this.isInProgress(b.status);
-      if (status === 'قادمة') return this.isUpcoming(b.status);
-      return this.getStatusKey(b.status) === status;
-    }).length;
-  }
-
-  // --- Data Fetching ---
-  private loadInitialData(): void {
-    this.fetchBatches();
-    this.fetchPrograms();
-    this.fetchTracks();
-    this.fetchCompanies();
-    this.fetchTrainers();
-  }
-
-  private fetchBatches(): void {
-    this.batchesError.set(null);
-    this.api.getBatches()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (data) => this.batches.set(data),
-        error: (err) => {
-          console.error('Error fetching batches:', err);
-          this.batchesError.set('تعذّر تحميل الدفعات. حاول تحديث الصفحة.');
-        }
-      });
-  }
-
-  private fetchPrograms(): void {
-    this.programsError.set(null);
-    this.api.getPrograms()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (data) => this.programs.set(data),
-        error: (err) => {
-          console.error('Error fetching programs:', err);
-          this.programsError.set('تعذّر تحميل البرامج.');
-        }
-      });
-  }
-
-  private fetchTracks(): void {
-    this.api.getTracks()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (data) => this.tracks.set(data),
-        error: (err) => console.error('Error fetching tracks:', err)
-      });
-  }
-
-  private fetchCompanies(): void {
-    this.api.getCompanies()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (data) => this.companies.set(data),
-        error: (err) => console.error('Error fetching companies:', err)
-      });
-  }
-
-  private fetchTrainers(): void {
-    this.api.getTrainers()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (data: any[]) => this.trainers.set(data),
-        error: (err: any) => console.error('Error fetching trainers:', err)
-      });
-  }
-
-  // --- Form Initialization ---
-  private initBatchForm(): void {
-    this.batchForm = this.fb.group({
-      batchName: ['', Validators.required],
-      programId: ['', Validators.required],
-      companyId: [''],
-      instructorName: [''],
-      startDate: ['', Validators.required],
-      endDate: ['', Validators.required],
-      capacity: [15, [Validators.required, Validators.min(1)]]
+  onEdit(batch: any): void {
+    this.selectedBatch = batch;
+    this.editBatchForm.patchValue({
+      batchName: batch.batchName,
+      programId: batch.programId,
+      companyId: batch.companyId || '',
+      startDate: batch.startDate ? batch.startDate.split('T')[0] : '',
+      endDate: batch.endDate ? batch.endDate.split('T')[0] : '',
+      capacity: batch.capacity
     });
+    this.editBatchErrorMessage = null;
+    this.isEditModalOpen = true;
   }
 
-  private initEditBatchForm(): void {
-    this.editBatchForm = this.fb.group({
-      batchName: ['', Validators.required],
-      programId: ['', Validators.required],
-      companyId: [''],
-      instructorName: [''],
-      startDate: ['', Validators.required],
-      endDate: ['', Validators.required],
-      capacity: [15, [Validators.required, Validators.min(1)]],
-      status: ['']
-    });
+  onCloseEditModal(): void {
+    this.isEditModalOpen = false;
+    this.selectedBatch = null;
   }
 
-  getProgramName(batch: BatchDto | null | undefined): string {
-    if (!batch) return '-';
-    if (batch.programName) {
-      return batch.programName;
-    }
-    const programsList = this.programs();
-    if (batch.programId && programsList?.length) {
-      const foundProgram = programsList.find(p => p.programId === batch.programId);
-      if (foundProgram) {
-        return foundProgram.title || foundProgram.name || '-';
-      }
-    }
-    return '-';
-  }
-
-  private initProgramForm(): void {
-    this.programForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2)]],
-      trackId: [null, [Validators.required]],
-      durationWeeks: [null, [Validators.required, Validators.min(1)]],
-      description: ['']
-    });
-  }
-
-  get pf() {
-    return this.programForm.controls;
-  }
-
-  // --- Actions: Program Modal ---
-  onCreateProgram(): void {
-    this.programForm.reset({
-      name: '',
-      trackId: null,
-      durationWeeks: null,
-      description: ''
-    });
-    this.programErrorMessage = null;
-    this.isSubmittingProgram = false;
-    this.isProgramModalOpen = true;
-  }
-
-  onCloseProgramModal(): void {
-    this.isProgramModalOpen = false;
-    this.programErrorMessage = null;
-    this.isSubmittingProgram = false;
-  }
-
-  onSubmitProgram(): void {
-    this.programForm.markAllAsTouched();
-    if (this.programForm.invalid) {
-      console.warn('الفورم غير صالح:', this.programForm.errors);
-      return;
-    }
-
-    this.isSubmittingProgram = true;
-    this.programErrorMessage = null;
-    const rawValues = this.programForm.value;
-
-    const payload: Partial<ProgramDto> = {
-      name: rawValues.name,
-      title: rawValues.name,
-      trackId: Number(rawValues.trackId),
-      durationHours: Number(rawValues.durationWeeks) * 40,
-      description: rawValues.description || '',
-      status: 'Active'
-    };
-
-    this.api.createProgram(payload)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => {
-          this.isSubmittingProgram = false;
-        })
-      )
-      .subscribe({
-        next: () => {
-          this.fetchPrograms();        
-          this.onCloseProgramModal();  
-        },
-        error: (err) => {
-          if (err.status === 200 || err.status === 201 || err.status === 204) {
-            this.fetchPrograms();
-            this.onCloseProgramModal();
-          } else {
-            this.programErrorMessage = 'حدث خطأ أثناء حفظ البرنامج في قاعدة البيانات.';
-            console.error('Error creating program:', err);
-          }
-        }
-      });
-  }
-
-  preventNegative(event: KeyboardEvent): void {
-    if (event.key === '-' || event.key === 'e' || event.key === 'E' || event.key === '+') {
-      event.preventDefault();
-    }
-  }
-
-  // --- Actions: Batch Modal ---
-  onCreateBatch(): void {
-    this.isBatchModalOpen = true;
-  }
-
-  onCloseBatchModal(): void {
-    this.isBatchModalOpen = false;
-    this.batchForm.reset({ capacity: 15, programId: '', companyId: '' });
-  }
-
-  onCancel(): void {
-    this.onCloseBatchModal();
-  }
+  // --- Form Submissions ---
 
   onSubmit(): void {
     if (this.batchForm.invalid) {
       this.batchForm.markAllAsTouched();
       return;
     }
-
-    const payload = this.prepareBatchPayload();
-    this.api.createBatch(payload)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.fetchBatches();
-          this.onCloseBatchModal();
-        }
-      });
+    
+    this.isSubmittingBatch = true;
+    this.batchErrorMessage = null;
+    
+    this.adminApi.createBatch?.(this.batchForm.value).subscribe({
+      next: () => {
+        this.isSubmittingBatch = false;
+        this.loadInitialData();
+        this.onCloseBatchModal();
+      },
+      error: (err) => {
+        this.isSubmittingBatch = false;
+        this.batchErrorMessage = 'فشل إنشاء الدفعة، يرجى المحاولة لاحقاً.';
+        console.error('Failed to create batch', err);
+      }
+    });
   }
 
-  private prepareBatchPayload(): Partial<BatchDto> {
-    const rawValues = this.batchForm.value;
-    return {
-      ...rawValues,
-      programId: Number(rawValues.programId),
-      companyId: rawValues.companyId ? Number(rawValues.companyId) : null,
-      capacity: Number(rawValues.capacity)
-    };
+  onSubmitProgram(): void {
+    if (this.programForm.invalid) {
+      this.programForm.markAllAsTouched();
+      return;
+    }
+    this.isSubmittingProgram = true;
+    this.programErrorMessage = null;
+
+    this.adminApi.createProgram?.(this.programForm.value).subscribe({
+      next: () => {
+        this.isSubmittingProgram = false;
+        this.loadInitialData();
+        this.onCloseProgramModal();
+      },
+      error: (err) => {
+        this.isSubmittingProgram = false;
+        this.programErrorMessage = 'فشل حفظ البرنامج، يجدر المحاولة لاحقاً';
+        console.error('Failed to create program', err);
+      }
+    });
+  }
+
+  onSaveBatch(): void {
+    if (this.editBatchForm.invalid) {
+      this.editBatchForm.markAllAsTouched();
+      return;
+    }
+    
+    this.isSubmittingEditBatch = true;
+    this.editBatchErrorMessage = null;
+
+    const batchId = this.selectedBatch?.batchId || this.selectedBatch?.id;
+    this.adminApi.updateBatch?.(batchId, this.editBatchForm.value).subscribe({
+      next: () => {
+        this.isSubmittingEditBatch = false;
+        this.loadInitialData();
+        this.onCloseEditModal();
+      },
+      error: (err) => {
+        this.isSubmittingEditBatch = false;
+        this.editBatchErrorMessage = 'فشل تعديل الدفعة، يرجى المحاولة لاحقاً.';
+        console.error('Failed to update batch', err);
+      }
+    });
+  }
+
+  // --- Pagination Actions ---
+
+  onPageChange(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  // --- UI Helpers & Formatters ---
+
+  trackByBatchId(index: number, batch: any): any {
+    return batch.batchId || index;
+  }
+
+  getProgramName(batch: any): string {
+    if (!batch) return '-';
+    if (batch.programName) return batch.programName;
+    const prog = this.programs().find(p => p.programId === batch.programId);
+    return prog ? (prog.title || prog.name) : '-';
+  }
+
+  getFormattedSubtext(dateString: string): string {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? '' : date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  }
+
+  getOccupancyPercentage(current: number = 0, capacity: number = 1): number {
+    if (!capacity || capacity <= 0) return 0;
+    const percentage = (current / capacity) * 100;
+    return Math.min(Math.max(percentage, 0), 100);
+  }
+
+  getStatusBadgeClass(status: string): string {
+    switch (status) {
+      case 'جارية': return 'badge-ongoing';
+      case 'قادمة': return 'badge-upcoming';
+      case 'مكتملة': return 'badge-completed';
+      default: return 'badge-default';
+    }
+  }
+
+  getStatusLabel(status: string): string {
+    return status || 'غير محددة';
   }
 }

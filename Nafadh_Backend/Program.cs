@@ -289,7 +289,143 @@ namespace Nafadh_Backend
                 }
                 );
             }
+            // =====================================================
+            // EXTERNAL TRAINER PROFILE IMAGES
+            // =====================================================
 
+            // Physical folder where trainer profile images
+            // are stored outside the project.
+            var trainerProfileImagesPath =
+                builder.Configuration[
+                    "Storage:TrainerProfileImagesPath"
+                ];
+
+
+            // Public URL path used by the browser.
+            var trainerProfileImagesRequestPath =
+                builder.Configuration[
+                    "Storage:TrainerProfileImagesRequestPath"
+                ]
+                ?? "/uploads/trainer-profiles";
+
+
+            if (
+                !string.IsNullOrWhiteSpace(
+                    trainerProfileImagesPath
+                )
+            )
+            {
+                // Create the external folder
+                // if it does not exist yet.
+                Directory.CreateDirectory(
+                    trainerProfileImagesPath
+                );
+
+
+                // Map the public URL to the
+                // physical trainer image folder.
+                app.UseStaticFiles(
+                    new StaticFileOptions
+                    {
+                        FileProvider =
+                            new PhysicalFileProvider(
+                                trainerProfileImagesPath
+                            ),
+
+                        RequestPath =
+                            trainerProfileImagesRequestPath
+                    }
+                );
+            }
+
+
+            // =====================================================
+            // EXTERNAL TRAINEE PROFILE IMAGES
+            // =====================================================
+
+            // Physical folder where trainee profile images
+            // are stored outside the project.
+            var traineeProfileImagesPath =
+                builder.Configuration[
+                    "Storage:TraineeProfileImagesPath"
+                ];
+
+
+            // Public URL path used by the browser.
+            var traineeProfileImagesRequestPath =
+                builder.Configuration[
+                    "Storage:TraineeProfileImagesRequestPath"
+                ]
+                ?? "/uploads/trainee-profiles";
+
+
+            if (
+                !string.IsNullOrWhiteSpace(
+                    traineeProfileImagesPath
+                )
+            )
+            {
+                // Create the external folder
+                // if it does not exist yet.
+                Directory.CreateDirectory(
+                    traineeProfileImagesPath
+                );
+
+
+                // Map the public URL to the
+                // physical trainee image folder.
+                app.UseStaticFiles(
+                    new StaticFileOptions
+                    {
+                        FileProvider =
+                            new PhysicalFileProvider(
+                                traineeProfileImagesPath
+                            ),
+
+                        RequestPath =
+                            traineeProfileImagesRequestPath
+                    }
+                );
+            }
+            // =====================================================
+            // EXCUSE PROOF FILES
+            // =====================================================
+
+            var excuseProofsPath =
+                builder.Configuration[
+                    "Storage:ExcuseProofsPath"
+                ];
+
+            var excuseProofsRequestPath =
+                builder.Configuration[
+                    "Storage:ExcuseProofsRequestPath"
+                ]
+                ?? "/uploads/excuse-proofs";
+
+
+            if (
+                !string.IsNullOrWhiteSpace(
+                    excuseProofsPath
+                )
+            )
+            {
+                Directory.CreateDirectory(
+                    excuseProofsPath
+                );
+
+                app.UseStaticFiles(
+                    new StaticFileOptions
+                    {
+                        FileProvider =
+                            new PhysicalFileProvider(
+                                excuseProofsPath
+                            ),
+
+                        RequestPath =
+                            excuseProofsRequestPath
+                    }
+                );
+            }
 
             // Enable CORS middleware here
             app.UseCors("AllowAll");

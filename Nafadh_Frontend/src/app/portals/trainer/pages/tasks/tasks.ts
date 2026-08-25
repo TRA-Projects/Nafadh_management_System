@@ -1061,136 +1061,63 @@ export class TrainerTasks implements OnInit {
 // OPEN SUBMISSION FILE
 // =====================================================
 
+
+
+/**
+ * فتح رابط التسليم في نافذة جديدة
+ * بدلاً من محاولة فتح ملف، يتم فتح الرابط المخزن في fileUrl
+ */
 openSubmissionFile(
   submission: SubmissionDto
 ): void {
 
-  this.submissionsModalError.set(
-    ''
-  );
+  this.submissionsModalError.set('');
 
-
-  if (
-    !submission.submissionId
-  ) {
-
-    this.submissionsModalError.set(
-      'تعذر تحديد ملف التسليم.'
-    );
-
+  // ✅ التحقق من وجود submissionId
+  if (!submission.submissionId) {
+    this.submissionsModalError.set('تعذر تحديد ملف التسليم.');
     return;
   }
 
-
-  /*
-   * Open a blank tab immediately from the user's click.
-   * This prevents the browser from blocking the new tab
-   * while the real file is being loaded from the backend.
-   */
-  const previewWindow =
-    window.open(
-      '',
-      '_blank'
-    );
-
-
-  if (!previewWindow) {
-
-    this.submissionsModalError.set(
-      'تعذر فتح ملف التسليم. تأكدي من السماح بالنوافذ المنبثقة.'
-    );
-
+  // ✅ التحقق من وجود fileUrl
+  if (!submission.fileUrl) {
+    this.submissionsModalError.set('لا يوجد رابط تسليم لهذه المهمة.');
     return;
   }
 
+  // ✅ تنظيف الرابط من المسافات
+  const url = submission.fileUrl.trim();
 
-  previewWindow.opener =
-    null;
+  // ✅ التحقق من صحة الرابط
+  if (!url) {
+    this.submissionsModalError.set('رابط التسليم غير صالح.');
+    return;
+  }
 
+  // ✅ التحقق من أن الرابط يبدأ بـ http:// أو https://
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    this.submissionsModalError.set('رابط التسليم غير صحيح. يجب أن يبدأ بـ https:// أو http://');
+    return;
+  }
 
-  this.api
-    .getSubmissionFile(
-      submission.submissionId
-    )
-    .subscribe({
+  try {
+    // ✅ محاولة فتح الرابط في نافذة جديدة
+    const previewWindow = window.open(url, '_blank');
 
-      next: (blob) => {
+    if (!previewWindow) {
+      this.submissionsModalError.set(
+        'تعذر فتح الرابط. تأكدي من السماح بالنوافذ المنبثقة.'
+      );
+      return;
+    }
 
-        if (
-          !blob ||
-          blob.size === 0
-        ) {
+    // ✅ تحسين الأمان
+    previewWindow.opener = null;
 
-          previewWindow.close();
-
-
-          this.submissionsModalError.set(
-            'ملف التسليم فارغ أو غير متوفر.'
-          );
-
-          return;
-        }
-
-
-        const objectUrl =
-          window.URL.createObjectURL(
-            blob
-          );
-
-
-        previewWindow.location.href =
-          objectUrl;
-
-
-        /*
-         * Keep the Blob URL alive long enough
-         * for the browser to load the document.
-         */
-        window.setTimeout(
-          () => {
-
-            window.URL.revokeObjectURL(
-              objectUrl
-            );
-
-          },
-          60000
-        );
-
-      },
-
-
-      error: (error) => {
-
-        console.error(
-          'Error opening submission file:',
-          error
-        );
-
-
-        previewWindow.close();
-
-
-        if (
-          error?.status === 404
-        ) {
-
-          this.submissionsModalError.set(
-            'ملف هذا التسليم غير متوفر. قد يكون التسليم قديمًا أو يحتوي على رابط تجريبي.'
-          );
-
-          return;
-        }
-
-
-        this.submissionsModalError.set(
-          'تعذر تحميل ملف التسليم.'
-        );
-
-      }
-
-    });
-
+  } catch (error) {
+    console.error('Error opening submission link:', error);
+    this.submissionsModalError.set('تعذر فتح رابط التسليم.');
+  }
 }
   // =====================================================
   // FILTER

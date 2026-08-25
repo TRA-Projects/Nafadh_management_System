@@ -34,6 +34,9 @@ export class AdminCompanies implements OnInit {
   showAddModal = signal<boolean>(false);
   isSaving = signal<boolean>(false);
   addError = signal<string>('');
+  
+  // متغير لتتبع محاولة حفظ النموذج وإظهار أخطاء التحقق تحت الحقول
+  submitted = signal<boolean>(false);
 
   statusOptions: { value: string; label: string }[] = [
     { value: 'Approved', label: 'معتمدة' },
@@ -80,6 +83,7 @@ export class AdminCompanies implements OnInit {
   openAddModal() {
     this.newCompany = this.emptyCompanyForm();
     this.addError.set('');
+    this.submitted.set(false); // إعادة تعيين حالة الإرسال عند فتح النافذة
     this.showAddModal.set(true);
   }
 
@@ -94,22 +98,22 @@ export class AdminCompanies implements OnInit {
   }
 
   submitAddCompany() {
+    this.submitted.set(true); // تفعيل حالة محاولة الإرسال لتظهر الأخطاء تحت الحقول
     this.addError.set('');
 
-    if (!this.newCompany.companyName || !this.newCompany.workField || !this.newCompany.capacity || !this.newCompany.email || !this.newCompany.contactName) {
-      this.addError.set('يرجى تعبئة جميع الحقول الإجبارية المعلمة بـ (*)');
-      return;
-    }
-
-    if (this.newCompany.capacity <= 0) {
-      this.addError.set('لا يمكن أن تكون الطاقة الاستيعابية رقماً سالباً أو صفراً');
-      return;
-    }
-
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(this.newCompany.email)) {
-      this.addError.set('يرجى إدخال بريد إلكتروني صحيح (مثال: name@company.com)');
-      return;
+    
+    // التحقق من صحة الحقول الإجبارية
+    const isFormInvalid = !this.newCompany.companyName || 
+                          !this.newCompany.workField || 
+                          !this.newCompany.capacity || 
+                          this.newCompany.capacity <= 0 || 
+                          !this.newCompany.email || 
+                          !emailRegex.test(this.newCompany.email) || 
+                          !this.newCompany.contactName;
+
+    if (isFormInvalid) {
+      return; // إيقاف الإرسال إذا كان هناك خطأ، وستظهر الرسائل تحت الحقول تلقائياً
     }
 
     this.isSaving.set(true);

@@ -2,7 +2,7 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
+using Microsoft.AspNetCore.Http;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Enums;
 using System.Collections.Generic;
@@ -32,6 +32,16 @@ namespace Nafadh_Backend.Services
         Task AddRangeAsync(IEnumerable<NFD_Trainee> trainees);
 
         void Update(NFD_Trainee trainee);
+        // =====================================================
+        // TRAINEE PROFILE IMAGE
+        // =====================================================
+
+        // Uploads a new trainee profile image
+        // and returns its public URL after saving.
+        Task<string?> UploadProfileImageAsync(
+            int traineeId,
+            IFormFile file
+        );
 
         Task<bool> SaveChangesAsync();
         Task<NFD_Trainee?> GetTraineeIdByUserID(int userId);

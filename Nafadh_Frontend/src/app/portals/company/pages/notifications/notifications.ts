@@ -6,12 +6,12 @@ import { NotificationSummaryService } from '../../../../shared/services/notifica
 type NotificationFilter = 'all' | 'unread';
 
 @Component({
-  selector: 'app-trainee-notifications',
+  selector: 'app-company-notifications',
   imports: [CommonModule],
   templateUrl: './notifications.html',
-  styleUrl: './notifications.css',
+  styleUrl: './notifications.scss',
 })
-export class TraineeNotifications implements OnInit {
+export class CompanyNotifications implements OnInit {
   private readonly notificationService = inject(NotificationService);
   private readonly summaryService = inject(NotificationSummaryService);
 
@@ -22,10 +22,10 @@ export class TraineeNotifications implements OnInit {
 
   filteredNotifications = computed(() => {
     const list = this.notifications();
-    return this.activeFilter() === 'unread' ? list.filter((n) => !n.isRead) : list;
+    return this.activeFilter() === 'unread' ? list.filter(n => !n.isRead) : list;
   });
 
-  unreadCount = computed(() => this.notifications().filter((n) => !n.isRead).length);
+  unreadCount = computed(() => this.notifications().filter(n => !n.isRead).length);
 
   ngOnInit(): void {
     this.load();
@@ -35,66 +35,46 @@ export class TraineeNotifications implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     this.notificationService.getMine().subscribe({
-      next: (data) => {
-        this.notifications.set(data ?? []);
-        this.loading.set(false);
-      },
-      error: (err) => {
-        console.error('Failed to load trainee notifications.', err);
-        this.error.set('تعذر تحميل الإشعارات.');
-        this.loading.set(false);
-      },
+      next: data => { this.notifications.set(data ?? []); this.loading.set(false); },
+      error: err => { console.error('Failed to load notifications.', err); this.error.set('تعذر تحميل الإشعارات.'); this.loading.set(false); },
     });
   }
 
-  setFilter(filter: NotificationFilter): void {
-    this.activeFilter.set(filter);
-  }
+  setFilter(filter: NotificationFilter): void { this.activeFilter.set(filter); }
 
   markRead(notification: NotificationDto): void {
     if (notification.isRead) return;
-
     this.notificationService.markAsRead(notification.notificationId).subscribe({
       next: () => {
-        this.notifications.update((list) =>
-          list.map((n) =>
-            n.notificationId === notification.notificationId ? { ...n, isRead: true } : n,
-          ),
-        );
+        this.notifications.update(list => list.map(n => n.notificationId === notification.notificationId ? { ...n, isRead: true } : n));
         this.summaryService.refresh();
       },
-      error: (err) => console.error('Failed to mark notification as read.', err),
+      error: err => console.error('Failed to mark notification as read.', err),
     });
   }
 
   markAllRead(): void {
     if (!this.unreadCount()) return;
-
     this.notificationService.markAllAsRead().subscribe({
       next: () => {
-        this.notifications.update((list) => list.map((n) => ({ ...n, isRead: true })));
+        this.notifications.update(list => list.map(n => ({ ...n, isRead: true })));
         this.summaryService.refresh();
       },
-      error: (err) => console.error('Failed to mark all notifications as read.', err),
+      error: err => console.error('Failed to mark all notifications as read.', err),
     });
   }
 
-  trackById(_: number, item: NotificationDto): number {
-    return item.notificationId;
-  }
+  trackById(_: number, item: NotificationDto): number { return item.notificationId; }
 
   timeAgo(value: string): string {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-
     const diff = Math.max(0, Date.now() - date.getTime());
     const minutes = Math.floor(diff / 60000);
     if (minutes < 1) return 'منذ لحظات';
     if (minutes < 60) return `منذ ${minutes} دقيقة`;
-
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `منذ ${hours} ساعة`;
-
     const days = Math.floor(hours / 24);
     if (days === 1) return 'أمس';
     if (days < 30) return `منذ ${days} يوم`;

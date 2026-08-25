@@ -2,6 +2,7 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
+using Microsoft.AspNetCore.Http;
 
 using Nafadh_Backend.DTOs;
 
@@ -18,6 +19,16 @@ namespace Nafadh_Backend.Services
         Task<TrainerProfileDto?> CreateAsync(TrainerCreateDto dto);
 
         Task<bool> UpdateAsync(int id, TrainerUpdateDto dto);
+        // =====================================================
+        // TRAINER PROFILE IMAGE
+        // =====================================================
+
+        // Uploads a new trainer profile image
+        // and returns its public URL after saving.
+        Task<string?> UploadProfileImageAsync(
+            int trainerId,
+            IFormFile file
+        );
 
         Task<bool> UpdateStatusAsync(int id, TrainerStatusUpdateDto dto);
 

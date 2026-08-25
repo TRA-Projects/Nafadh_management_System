@@ -16,5 +16,6 @@ export class CompanyLayout {
     { path: 'my-account', label: 'حسابي', icon: 'user' },
     { path: 'reports', label: 'التقارير', icon: 'chart' },
     { path: 'contact', label: 'التواصل والمراسلات', icon: 'chat' },
+    { path: 'notifications', label: 'الإشعارات', icon: 'bell' },
   ];
 }

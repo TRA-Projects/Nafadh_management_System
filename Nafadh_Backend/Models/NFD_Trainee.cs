@@ -31,6 +31,15 @@ namespace Nafadh_Backend.Models
         public string? GitHubUrl { get; set; }
         [MaxLength(300)]
         public string? LinkedInUrl { get; set; }
+        // =====================================================
+        // TRAINEE PROFILE IMAGE
+        // =====================================================
+
+        // Stores the public URL of the trainee profile image.
+        // The physical image file will be stored outside
+        // the project folder in external storage.
+        [MaxLength(300)]
+        public string? ProfileImageUrl { get; set; }
         public NFD_TraineeStatus Status { get; set; }
         public NFD_VerificationStatus VerificationStatus { get; set; }
 

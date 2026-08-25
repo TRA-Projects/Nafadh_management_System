@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { environment } from '../../../../../environments/environment';
 
 import {
   TrainerBatchDto,
@@ -78,9 +79,7 @@ export class TrainerProfile
           batch => {
 
             if (!batch.startDate) {
-
               return false;
-
             }
 
 
@@ -95,9 +94,7 @@ export class TrainerProfile
                 startDate.getTime()
               )
             ) {
-
               return false;
-
             }
 
 
@@ -171,23 +168,38 @@ export class TrainerProfile
 
   hasUnsavedChanges =
     signal(false);
-// =====================================================
-// EDIT MODE
-// =====================================================
-
-isEditing =
-  signal(false);
 
 
-// =====================================================
-// PROFILE IMAGE
-// =====================================================
+  // =====================================================
+  // EDIT MODE
+  // =====================================================
 
-profileImagePreview =
-  signal<string | null>(null);
+  isEditing =
+    signal(false);
 
-selectedProfileImage:
-  File | null = null;
+
+  // =====================================================
+  // PROFILE IMAGE
+  // =====================================================
+
+  profileImagePreview =
+    signal<string | null>(
+      null
+    );
+
+  selectedProfileImage:
+    File | null = null;
+
+
+  // Controls the enlarged profile image viewer.
+  isProfileImageOpen =
+    signal(false);
+
+
+  // =====================================================
+  // TOASTS
+  // =====================================================
+
   showSuccessToast =
     signal(false);
 
@@ -257,6 +269,13 @@ selectedProfileImage:
         []
       );
 
+      this.profileImagePreview.set(
+        null
+      );
+
+      this.selectedProfileImage =
+        null;
+
       this.hasUnsavedChanges.set(
         false
       );
@@ -286,6 +305,21 @@ selectedProfileImage:
           this.trainer.set(
             data
           );
+
+
+          // Load the saved trainer profile image
+          // returned by the backend.
+          this.profileImagePreview.set(
+            this.getProfileImageUrl(
+              data.profileImageUrl
+            )
+          );
+
+
+          // No local image is selected
+          // after loading from the backend.
+          this.selectedProfileImage =
+            null;
 
 
           this.hasUnsavedChanges.set(
@@ -321,6 +355,13 @@ selectedProfileImage:
             []
           );
 
+          this.profileImagePreview.set(
+            null
+          );
+
+          this.selectedProfileImage =
+            null;
+
           this.hasUnsavedChanges.set(
             false
           );
@@ -337,6 +378,47 @@ selectedProfileImage:
         }
 
       });
+
+  }
+
+
+  // =====================================================
+  // PROFILE IMAGE URL
+  // =====================================================
+
+  private getProfileImageUrl(
+    imageUrl?: string | null
+  ): string | null {
+
+    if (!imageUrl) {
+      return null;
+    }
+
+
+    // Keep already absolute URLs unchanged.
+    if (
+      imageUrl.startsWith('http://') ||
+      imageUrl.startsWith('https://')
+    ) {
+      return imageUrl;
+    }
+
+
+    // apiBaseUrl ends with /api.
+    // Static profile images are served
+    // outside the API route.
+    const backendBaseUrl =
+      environment.apiBaseUrl.replace(
+        /\/api\/?$/,
+        ''
+      );
+
+
+    return `${backendBaseUrl}${
+      imageUrl.startsWith('/')
+        ? imageUrl
+        : `/${imageUrl}`
+    }`;
 
   }
 
@@ -381,96 +463,146 @@ selectedProfileImage:
       });
 
   }
-// =====================================================
-// EDIT PROFILE
-// =====================================================
-
-startEditing(): void {
-
-  this.isEditing.set(true);
-
-  this.showSuccessToast.set(false);
-  this.showErrorToast.set(false);
-
-}
-// =====================================================
-// PROFILE IMAGE SELECT
-// =====================================================
-
-onProfileImageSelected(
-  event: Event
-): void {
-
-  const input =
-    event.target as HTMLInputElement;
-
-  const file =
-    input.files?.[0] ?? null;
 
 
-  if (!file) {
-    return;
+  // =====================================================
+  // EDIT PROFILE
+  // =====================================================
+
+  startEditing(): void {
+
+    this.isEditing.set(
+      true
+    );
+
+    this.showSuccessToast.set(
+      false
+    );
+
+    this.showErrorToast.set(
+      false
+    );
+
   }
 
 
-  if (
-    !file.type.startsWith('image/')
-  ) {
+  // =====================================================
+  // PROFILE IMAGE SELECT
+  // =====================================================
 
-    this.showError(
-      'اختاري ملف صورة صحيح.'
+  onProfileImageSelected(
+    event: Event
+  ): void {
+
+    const input =
+      event.target as HTMLInputElement;
+
+    const file =
+      input.files?.[0] ?? null;
+
+
+    if (!file) {
+      return;
+    }
+
+
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp'
+    ];
+
+
+    if (
+      !allowedTypes.includes(
+        file.type
+      )
+    ) {
+
+      this.showError(
+        'اختاري صورة بصيغة JPG أو PNG أو WEBP.'
+      );
+
+      input.value = '';
+
+      return;
+    }
+
+
+    const maxSize =
+      5 * 1024 * 1024;
+
+
+    if (
+      file.size > maxSize
+    ) {
+
+      this.showError(
+        'حجم الصورة يجب ألا يتجاوز 5 MB.'
+      );
+
+      input.value = '';
+
+      return;
+    }
+
+
+    this.selectedProfileImage =
+      file;
+
+
+    const reader =
+      new FileReader();
+
+
+    reader.onload = () => {
+
+      this.profileImagePreview.set(
+        typeof reader.result === 'string'
+          ? reader.result
+          : null
+      );
+
+
+      this.markProfileChanged();
+
+    };
+
+
+    reader.readAsDataURL(
+      file
     );
 
-    input.value = '';
-
-    return;
   }
 
 
-  const maxSize =
-    5 * 1024 * 1024;
+  // =====================================================
+  // PROFILE IMAGE VIEWER
+  // =====================================================
+
+  openProfileImage(): void {
+
+    if (!this.profileImagePreview()) {
+      return;
+    }
 
 
-  if (
-    file.size > maxSize
-  ) {
-
-    this.showError(
-      'حجم الصورة يجب ألا يتجاوز 5 MB.'
+    this.isProfileImageOpen.set(
+      true
     );
 
-    input.value = '';
-
-    return;
   }
 
 
-  this.selectedProfileImage =
-    file;
+  closeProfileImage(): void {
 
-
-  const reader =
-    new FileReader();
-
-
-  reader.onload = () => {
-
-    this.profileImagePreview.set(
-      typeof reader.result === 'string'
-        ? reader.result
-        : null
+    this.isProfileImageOpen.set(
+      false
     );
 
-    this.markProfileChanged();
-
-  };
+  }
 
 
-  reader.readAsDataURL(
-    file
-  );
-
-}
   // =====================================================
   // PROFILE CHANGE STATE
   // =====================================================
@@ -508,9 +640,7 @@ onProfileImageSelected(
       this.isSaving() ||
       !this.hasUnsavedChanges()
     ) {
-
       return;
-
     }
 
 
@@ -680,15 +810,12 @@ onProfileImageSelected(
 
         next: () => {
 
-          // نحدث النسخة المحلية
-          // بدون إعادة تحميل الصفحة.
+          // Update profile information locally.
           this.trainer.update(
             current => {
 
               if (!current) {
-
                 return current;
-
               }
 
 
@@ -701,6 +828,119 @@ onProfileImageSelected(
           );
 
 
+          // ===================================================
+          // UPLOAD PROFILE IMAGE IF A NEW ONE WAS SELECTED
+          // ===================================================
+
+          if (this.selectedProfileImage) {
+
+            const selectedImage =
+              this.selectedProfileImage;
+
+
+            this.api
+              .uploadTrainerProfileImage(
+                trainer.trainerId,
+                selectedImage
+              )
+              .subscribe({
+
+                next: (result) => {
+
+                  const imageUrl =
+                    this.getProfileImageUrl(
+                      result.profileImageUrl
+                    );
+
+
+                  // Update stored image URL locally.
+                  this.trainer.update(
+                    current => {
+
+                      if (!current) {
+                        return current;
+                      }
+
+
+                      return {
+                        ...current,
+                        profileImageUrl:
+                          result.profileImageUrl
+                      };
+
+                    }
+                  );
+
+
+                  // Display the image returned
+                  // from the backend.
+                  this.profileImagePreview.set(
+                    imageUrl
+                  );
+
+
+                  // Image is now saved.
+                  this.selectedProfileImage =
+                    null;
+
+
+                  this.isSaving.set(
+                    false
+                  );
+
+                  this.hasUnsavedChanges.set(
+                    false
+                  );
+
+                  this.isEditing.set(
+                    false
+                  );
+
+
+                  this.showSuccess();
+
+                },
+
+
+                error: (err) => {
+
+                  console.error(
+                    'خطأ في رفع صورة المدرب:',
+                    err
+                  );
+
+
+                  this.isSaving.set(
+                    false
+                  );
+
+
+                  // Profile information was saved,
+                  // but the image still needs saving.
+                  this.hasUnsavedChanges.set(
+                    true
+                  );
+
+
+                  this.showError(
+                    'تم حفظ البيانات، ولكن تعذر رفع صورة الملف الشخصي.'
+                  );
+
+                }
+
+              });
+
+
+            // Wait for image upload before
+            // finishing the save process.
+            return;
+          }
+
+
+          // ===================================================
+          // NO NEW PROFILE IMAGE
+          // ===================================================
+
           this.isSaving.set(
             false
           );
@@ -708,9 +948,11 @@ onProfileImageSelected(
           this.hasUnsavedChanges.set(
             false
           );
-this.isEditing.set(
-  false
-);
+
+          this.isEditing.set(
+            false
+          );
+
 
           this.showSuccess();
 
@@ -821,9 +1063,7 @@ this.isEditing.set(
   private clearToastTimer(): void {
 
     if (!this.toastTimer) {
-
       return;
-
     }
 
 

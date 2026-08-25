@@ -14,62 +14,387 @@ namespace Nafadh_Backend.Controllers
     public class ExcuseController : ControllerBase
     {
         private readonly IExcuseService _service;
+        private readonly IConfiguration _configuration;
 
-        public ExcuseController(IExcuseService service)
+        public ExcuseController(
+            IExcuseService service,
+            IConfiguration configuration
+        )
         {
             _service = service;
+            _configuration = configuration;
         }
+
+
+        // =====================================================
+        // GET EXCUSE BY ATTENDANCE
+        // =====================================================
 
         // GET /api/Excuse/attendance/{dailyAttendanceId}
         [HttpGet("attendance/{dailyAttendanceId}")]
-        public async Task<IActionResult> GetByAttendanceId(int dailyAttendanceId)
+        public async Task<IActionResult> GetByAttendanceId(
+            int dailyAttendanceId
+        )
         {
-            ExcuseReadDto? result = await _service.GetByDailyAttendanceIdAsync(dailyAttendanceId);
+            ExcuseReadDto? result =
+                await _service.GetByDailyAttendanceIdAsync(
+                    dailyAttendanceId
+                );
+
             if (result == null)
+            {
                 return NotFound();
+            }
 
             return Ok(result);
         }
 
+
+        // =====================================================
+        // CREATE EXCUSE WITH OPTIONAL PROOF FILE
+        // =====================================================
+
         // POST /api/Excuse
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateExcuseDto dto)
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(6 * 1024 * 1024)]
+        public async Task<IActionResult> Create(
+            [FromForm] CreateExcuseFormDto form
+        )
         {
+            string? savedFilePath = null;
+
             try
             {
-                ExcuseReadDto created = await _service.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetByAttendanceId), new { dailyAttendanceId = created.DailyAttendanceId }, created);
+                if (
+                    string.IsNullOrWhiteSpace(
+                        form.Reason
+                    )
+                )
+                {
+                    return BadRequest(
+                        new
+                        {
+                            message =
+                                "Excuse reason is required."
+                        }
+                    );
+                }
+
+
+                // =================================================
+                // OPTIONAL PROOF FILE
+                // =================================================
+
+                string? proofUrl = null;
+
+
+                if (
+                    form.File != null &&
+                    form.File.Length > 0
+                )
+                {
+                    // Maximum file size: 5 MB.
+                    const long maxFileSize =
+                        5 * 1024 * 1024;
+
+
+                    if (
+                        form.File.Length >
+                        maxFileSize
+                    )
+                    {
+                        return BadRequest(
+                            new
+                            {
+                                message =
+                                    "Excuse attachment cannot exceed 5 MB."
+                            }
+                        );
+                    }
+
+
+                    var extension =
+                        Path.GetExtension(
+                            form.File.FileName
+                        )
+                        .ToLowerInvariant();
+
+
+                    var allowedExtensions =
+                        new HashSet<string>
+                        {
+                            ".pdf",
+                            ".jpg",
+                            ".jpeg",
+                            ".png",
+                            ".webp"
+                        };
+
+
+                    if (
+                        !allowedExtensions.Contains(
+                            extension
+                        )
+                    )
+                    {
+                        return BadRequest(
+                            new
+                            {
+                                message =
+                                    "Only PDF, JPG, JPEG, PNG and WEBP files are allowed."
+                            }
+                        );
+                    }
+
+
+                    var allowedContentTypes =
+                        new HashSet<string>
+                        {
+                            "application/pdf",
+                            "image/jpeg",
+                            "image/png",
+                            "image/webp"
+                        };
+
+
+                    if (
+                        !allowedContentTypes.Contains(
+                            form.File.ContentType
+                                .ToLowerInvariant()
+                        )
+                    )
+                    {
+                        return BadRequest(
+                            new
+                            {
+                                message =
+                                    "Invalid excuse attachment type."
+                            }
+                        );
+                    }
+
+
+                    // =================================================
+                    // STORAGE
+                    // =================================================
+
+                    var storagePath =
+                        _configuration[
+                            "Storage:ExcuseProofsPath"
+                        ];
+
+
+                    if (
+                        string.IsNullOrWhiteSpace(
+                            storagePath
+                        )
+                    )
+                    {
+                        throw new InvalidOperationException(
+                            "Excuse proof storage path is not configured."
+                        );
+                    }
+
+
+                    Directory.CreateDirectory(
+                        storagePath
+                    );
+
+
+                    var requestPath =
+                        _configuration[
+                            "Storage:ExcuseProofsRequestPath"
+                        ]
+                        ?? "/uploads/excuse-proofs";
+
+
+                    requestPath =
+                        requestPath.TrimEnd('/');
+
+
+                    var fileName =
+                        $"excuse-{form.DailyAttendanceId}-{Guid.NewGuid():N}{extension}";
+
+
+                    savedFilePath =
+                        Path.Combine(
+                            storagePath,
+                            fileName
+                        );
+
+
+                    await using (
+                        var stream =
+                            new FileStream(
+                                savedFilePath,
+                                FileMode.CreateNew
+                            )
+                    )
+                    {
+                        await form.File.CopyToAsync(
+                            stream
+                        );
+                    }
+
+
+                    proofUrl =
+                        $"{requestPath}/{fileName}";
+                }
+
+
+                // =================================================
+                // CREATE EXCUSE
+                // =================================================
+
+                var dto =
+                    new CreateExcuseDto
+                    {
+                        DailyAttendanceId =
+                            form.DailyAttendanceId,
+
+                        Reason =
+                            form.Reason.Trim(),
+
+                        ProofUrl =
+                            proofUrl
+                    };
+
+
+                ExcuseReadDto created =
+                    await _service.CreateAsync(
+                        dto
+                    );
+
+
+                return CreatedAtAction(
+                    nameof(
+                        GetByAttendanceId
+                    ),
+                    new
+                    {
+                        dailyAttendanceId =
+                            created.DailyAttendanceId
+                    },
+                    created
+                );
             }
-            catch (InvalidOperationException ex)
+            catch (
+                InvalidOperationException ex
+            )
             {
-                return BadRequest(ex.Message);
+                // Delete the physical file if
+                // creating the excuse failed.
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        savedFilePath
+                    ) &&
+                    System.IO.File.Exists(
+                        savedFilePath
+                    )
+                )
+                {
+                    System.IO.File.Delete(
+                        savedFilePath
+                    );
+                }
+
+
+                return BadRequest(
+                    new
+                    {
+                        message =
+                            ex.Message
+                    }
+                );
+            }
+            catch (
+                Exception ex
+            )
+            {
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        savedFilePath
+                    ) &&
+                    System.IO.File.Exists(
+                        savedFilePath
+                    )
+                )
+                {
+                    System.IO.File.Delete(
+                        savedFilePath
+                    );
+                }
+
+
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new
+                    {
+                        message =
+                            "Could not create excuse.",
+                        detail =
+                            ex.Message
+                    }
+                );
             }
         }
+
+
+        // =====================================================
+        // REVIEW EXCUSE
+        // =====================================================
 
         // PUT /api/Excuse/{id}/review
         [HttpPut("{id}/review")]
-        public async Task<IActionResult> Review(int id, [FromBody] ReviewExcuseDto dto)
+        public async Task<IActionResult> Review(
+            int id,
+            [FromBody] ReviewExcuseDto dto
+        )
         {
             try
             {
-                bool success = await _service.ReviewAsync(id, dto);
+                bool success =
+                    await _service.ReviewAsync(
+                        id,
+                        dto
+                    );
+
+
                 if (!success)
+                {
                     return NotFound();
+                }
+
 
                 return NoContent();
             }
-            catch (InvalidOperationException ex)
+            catch (
+                InvalidOperationException ex
+            )
             {
-                return BadRequest(ex.Message);
+                return BadRequest(
+                    ex.Message
+                );
             }
         }
+
+
+        // =====================================================
+        // GET PENDING EXCUSES
+        // =====================================================
 
         // GET /api/Excuse/pending
         [HttpGet("pending")]
         public async Task<IActionResult> GetPending()
         {
-            List<ExcuseReadDto> result = await _service.GetPendingAsync();
-            return Ok(result);
+            List<ExcuseReadDto> result =
+                await _service.GetPendingAsync();
+
+
+            return Ok(
+                result
+            );
         }
     }
 }

@@ -2,6 +2,7 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
+using Microsoft.AspNetCore.Http;
 
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
@@ -13,10 +14,16 @@ namespace Nafadh_Backend.Services
     public class TrainerService : ITrainerService
     {
         private readonly ITrainerRepository _repository;
+        private readonly IConfiguration _configuration;
 
-        public TrainerService(ITrainerRepository repository)
+
+        public TrainerService(
+            ITrainerRepository repository,
+            IConfiguration configuration
+        )
         {
             _repository = repository;
+            _configuration = configuration;
         }
 
         public async Task<(List<TrainerListItemDto> Items, int TotalCount)> GetAllAsync(TrainerFilterDto filter)
@@ -60,6 +67,9 @@ namespace Nafadh_Backend.Services
 
                 CVUrl = t.CVUrl,
 
+                // Public URL of the trainer profile image.
+                ProfileImageUrl = t.ProfileImageUrl,
+
                 Status = t.Status
             };
         }
@@ -82,6 +92,10 @@ namespace Nafadh_Backend.Services
                 ExperienceYears = t.ExperienceYears,
                 Biography = t.Biography,
                 CVUrl = t.CVUrl,
+
+                // Public URL of the trainer profile image.
+                ProfileImageUrl = t.ProfileImageUrl,
+
                 Status = t.Status
             };
         }
@@ -143,6 +157,331 @@ namespace Nafadh_Backend.Services
             _repository.Update(existing);
 
             return await _repository.SaveChangesAsync();
+        }
+        // =====================================================
+        // UPLOAD TRAINER PROFILE IMAGE
+        // =====================================================
+
+        public async Task<string?> UploadProfileImageAsync(
+            int trainerId,
+            IFormFile file
+        )
+        {
+            // ---------------------------------------------
+            // Find trainer
+            // ---------------------------------------------
+
+            var trainer =
+                await _repository.GetByIdAsync(
+                    trainerId
+                );
+
+
+            if (trainer == null)
+            {
+                return null;
+            }
+
+
+            // ---------------------------------------------
+            // Validate uploaded file
+            // ---------------------------------------------
+
+            if (
+                file == null ||
+                file.Length == 0
+            )
+            {
+                throw new ArgumentException(
+                    "Profile image is required."
+                );
+            }
+
+
+            // Maximum allowed size: 5 MB
+            const long maxFileSize =
+                5 * 1024 * 1024;
+
+
+            if (
+                file.Length > maxFileSize
+            )
+            {
+                throw new ArgumentException(
+                    "Profile image cannot exceed 5 MB."
+                );
+            }
+
+
+            // ---------------------------------------------
+            // Validate file extension
+            // ---------------------------------------------
+
+            var extension =
+                Path.GetExtension(
+                    file.FileName
+                )
+                .ToLowerInvariant();
+
+
+            var allowedExtensions =
+                new HashSet<string>
+                {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp"
+                };
+
+
+            if (
+                !allowedExtensions.Contains(
+                    extension
+                )
+            )
+            {
+                throw new ArgumentException(
+                    "Only JPG, JPEG, PNG and WEBP images are allowed."
+                );
+            }
+
+
+            // ---------------------------------------------
+            // Validate content type
+            // ---------------------------------------------
+
+            var allowedContentTypes =
+                new HashSet<string>
+                {
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+                };
+
+
+            if (
+                !allowedContentTypes.Contains(
+                    file.ContentType.ToLowerInvariant()
+                )
+            )
+            {
+                throw new ArgumentException(
+                    "Invalid image type."
+                );
+            }
+
+
+            // ---------------------------------------------
+            // Get physical storage folder
+            // ---------------------------------------------
+
+            var storagePath =
+                _configuration[
+                    "Storage:TrainerProfileImagesPath"
+                ];
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    storagePath
+                )
+            )
+            {
+                throw new InvalidOperationException(
+                    "Trainer profile image storage path is not configured."
+                );
+            }
+
+
+            Directory.CreateDirectory(
+                storagePath
+            );
+
+
+            // ---------------------------------------------
+            // Get public request path
+            // ---------------------------------------------
+
+            var requestPath =
+                _configuration[
+                    "Storage:TrainerProfileImagesRequestPath"
+                ]
+                ?? "/uploads/trainer-profiles";
+
+
+            requestPath =
+                requestPath.TrimEnd('/');
+
+
+            // ---------------------------------------------
+            // Generate unique safe filename
+            // ---------------------------------------------
+
+            var fileName =
+                $"trainer-{trainerId}-{Guid.NewGuid():N}{extension}";
+
+
+            var fullPath =
+                Path.Combine(
+                    storagePath,
+                    fileName
+                );
+
+
+            // Keep old image URL so we can delete
+            // the previous physical image later.
+            var oldProfileImageUrl =
+                trainer.ProfileImageUrl;
+
+
+            // ---------------------------------------------
+            // Save new image physically
+            // ---------------------------------------------
+
+            await using (
+                var stream =
+                    new FileStream(
+                        fullPath,
+                        FileMode.CreateNew
+                    )
+            )
+            {
+                await file.CopyToAsync(
+                    stream
+                );
+            }
+
+
+            // ---------------------------------------------
+            // Build public URL
+            // ---------------------------------------------
+
+            var profileImageUrl =
+                $"{requestPath}/{fileName}";
+
+
+            // ---------------------------------------------
+            // Save image URL in database
+            // ---------------------------------------------
+
+            trainer.ProfileImageUrl =
+                profileImageUrl;
+
+
+            _repository.Update(
+                trainer
+            );
+
+
+            // ---------------------------------------------
+            // Save database changes safely
+            // ---------------------------------------------
+
+            bool saved;
+
+
+            try
+            {
+                saved =
+                    await _repository.SaveChangesAsync();
+            }
+            catch
+            {
+                // If the database operation fails,
+                // remove the newly uploaded physical file
+                // to avoid leaving an orphan file.
+                if (
+                    File.Exists(
+                        fullPath
+                    )
+                )
+                {
+                    File.Delete(
+                        fullPath
+                    );
+                }
+
+
+                // Restore the old URL in the tracked entity.
+                trainer.ProfileImageUrl =
+                    oldProfileImageUrl;
+
+
+                throw;
+            }
+
+
+            if (!saved)
+            {
+                // Database did not save the new URL,
+                // so remove the newly uploaded file.
+                if (
+                    File.Exists(
+                        fullPath
+                    )
+                )
+                {
+                    File.Delete(
+                        fullPath
+                    );
+                }
+
+
+                trainer.ProfileImageUrl =
+                    oldProfileImageUrl;
+
+
+                throw new InvalidOperationException(
+                    "Could not save trainer profile image."
+                );
+            }
+
+            // ---------------------------------------------
+            // Delete previous profile image
+            // after the new one was saved successfully.
+            // ---------------------------------------------
+
+            if (
+                !string.IsNullOrWhiteSpace(
+                    oldProfileImageUrl
+                )
+            )
+            {
+                var oldFileName =
+                    Path.GetFileName(
+                        oldProfileImageUrl
+                    );
+
+
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        oldFileName
+                    )
+                )
+                {
+                    var oldFullPath =
+                        Path.Combine(
+                            storagePath,
+                            oldFileName
+                        );
+
+
+                    if (
+                        File.Exists(
+                            oldFullPath
+                        )
+                    )
+                    {
+                        File.Delete(
+                            oldFullPath
+                        );
+                    }
+                }
+            }
+
+
+            // Return URL that will also be stored in database.
+            return profileImageUrl;
         }
 
         public async Task<bool> UpdateStatusAsync(int id, TrainerStatusUpdateDto dto)
