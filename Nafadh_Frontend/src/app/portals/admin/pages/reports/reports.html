@@ -1,276 +1,379 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<!-- ==========================================
+     منصة نفاذ - شاشة التقارير والتحليلات المحدثة
+     تشمل 3 أقسام فرعية: company / trainer / trainee
+========================================== -->
+<div class="reports-container" dir="rtl">
 
-<head>
-  <meta charset="UTF-8">
-  <title>نظام التقارير التدريبية</title>
-</head>
-
-<body>
-
-  <!-- 1. صفحة عرض الشركات وتفاصيلها (الرئيسية للتقارير) -->
-  <div class="reports-container" *ngIf="currentView === 'companies'">
-    <div class="header-section" style="text-align: right; margin-bottom: 24px;">
-      <h2 style="color: #0D1C8C !important; font-weight: bold; font-size: 24px; margin-bottom: 8px;">التقارير حسب الشركة
-      </h2>
-      <p style="color: #64748b; font-size: 14px;">اختر شركة لعرض برامجها وتقارير دفعاتها</p>
+  <!-- شريط التبويبات الفرعية (Subsections Navigation) -->
+  <div class="subsections-tabs-bar">
+    <div class="subsections-header">
+      <div class="title-wrap">
+        <h2>التقارير والتحليلات</h2>
+        <p>نظام متابعة وتقييم البرامج التدريبية المعتمدة</p>
+      </div>
+      <div class="tabs-segmented-control">
+        <button 
+          class="tab-btn" 
+          [class.active]="currentSubSection === 'company'"
+          (click)="setSubSection('company')">
+          <i class="icon-company"></i> تقارير الشركات
+        </button>
+        <button 
+          class="tab-btn" 
+          [class.active]="currentSubSection === 'trainer'"
+          (click)="setSubSection('trainer')">
+          <i class="icon-trainer"></i> تقارير المدربين
+        </button>
+        <button 
+          class="tab-btn" 
+          [class.active]="currentSubSection === 'trainee'"
+          (click)="setSubSection('trainee')">
+          <i class="icon-trainee"></i> تقارير المتدربين
+        </button>
+      </div>
     </div>
+  </div>
 
-    <!-- عرض مؤشر التحميل أثناء جلب قائمة الشركات -->
-    <div *ngIf="isLoading()" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 300px; width: 100%;">
-      <div class="custom-spinner"></div>
-      <span style="color: #6c757d; font-size: 0.9rem;">جاري تحميل قائمة الشركات...</span>
-    </div>
+  <!-- =========================================================
+       القسم الأول: تقارير الشركات (Company SubSection)
+  ========================================================== -->
+  <ng-container *ngIf="currentSubSection === 'company'">
+    <!-- 1.1 عرض الشركات وتفاصيلها -->
+    <div *ngIf="currentView === 'companies'">
+      <div class="header-section">
+        <h2>التقارير حسب الشركة</h2>
+        <p>اختر شركة لعرض برامجها وتقارير دفعاتها</p>
+      </div>
 
-    <!-- شبكة الشركات تظهر فقط عند انتهاء التحميل ووجود بيانات -->
-    <div class="companies-grid" *ngIf="!isLoading() && companies.length > 0">
-      <div class="company-card" *ngFor="let company of companies" (click)="selectCompany(company)">
-        <div class="company-info" style="display: flex; align-items: center; justify-content: flex-start; gap: 16px;">
-          <div class="logo-box"
-            style="background: #0D1C8C; color: #ffffff; width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M9 3v4M15 3v4"></path>
-            </svg>
+      <!-- مؤشر التحميل -->
+      <div *ngIf="isLoading()" class="loading-state">
+        <div class="custom-spinner"></div>
+        <span>جاري تحميل قائمة الشركات...</span>
+      </div>
+
+      <!-- شبكة الشركات -->
+      <div class="companies-grid" *ngIf="!isLoading() && companies.length > 0">
+        <div class="company-card" *ngFor="let company of companies" (click)="selectCompany(company)">
+          <div class="company-info">
+            <div class="logo-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M9 3v4M15 3v4"></path>
+              </svg>
+            </div>
+            <div>
+              <h3>{{ company.name }}</h3>
+              <span>{{ company.programsCount || 0 }} برنامج تدريبي</span>
+            </div>
           </div>
-          <div style="text-align: right;">
-            <h3 style="color: #0D1C8C !important; font-size: 16px; font-weight: bold; margin: 0 0 4px 0;">{{
-              company.name }}</h3>
-            <span style="color: #64748b; font-size: 12px;">{{ company.programsCount || 0 }} برنامج تدريبي</span>
+          <div class="stats-row">
+            <div class="stat-box">
+              <strong>{{ company.traineesCount || 0 }}</strong>
+              <span>متدرب</span>
+            </div>
+            <div class="stat-box">
+              <strong>{{ company.batchesCount || 0 }}</strong>
+              <span>دفعة</span>
+            </div>
+            <div class="stat-box">
+              <strong>{{ company.programsCount || 0 }}</strong>
+              <span>برنامج</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            عرض البرامج والتقارير ←
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.2 برامج ودفعات الشركة المحددة -->
+    <div *ngIf="currentView === 'programs'">
+      <div class="top-nav-bar">
+        <button class="back-btn" (click)="currentView = 'companies'">
+          ← العودة إلى الشركات
+        </button>
+      </div>
+
+      <div class="selected-company-banner">
+        <div class="company-logo-large">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M9 3v4M15 3v4"></path>
+          </svg>
+        </div>
+        <div class="banner-info">
+          <h3>{{ selectedCompany?.name }}</h3>
+          <span>{{ selectedCompany?.programsCount || 0 }} برنامج</span>
+        </div>
+      </div>
+
+      <div class="programs-list" *ngFor="let prog of selectedCompany?.programs">
+        <div class="program-item-card">
+          <div class="program-header">
+            <h4>{{ prog.name }}</h4>
+            <span class="track-tag">{{ prog.track }}</span>
+          </div>
+          <div class="batch-row" *ngFor="let batch of prog.batches">
+            <div class="batch-info-right">
+              <span class="dot"></span>
+              <strong>الدفعة {{ batch.id }}</strong>
+              <span class="dates">{{ batch.dates }}</span>
+            </div>
+            <div class="batch-info-left">
+              <button class="view-report-btn" (click)="viewBatchReport(batch)">
+                عرض التقرير
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.3 تقرير نهاية الدفعة -->
+    <div *ngIf="currentView === 'batch-report'">
+      <div class="top-nav-bar">
+        <button class="back-btn" (click)="currentView = 'programs'">
+          ← العودة إلى البرامج
+        </button>
+      </div>
+
+      <div class="report-header-card">
+        <div class="report-title-right">
+          <span class="badge-tag">نهاية الدفعة</span>
+          <h2>تقرير نهاية الدفعة — الدفعة {{ selectedBatch?.id }}</h2>
+          <p>{{ selectedBatch?.programName }} · {{ selectedCompany?.name }}</p>
+          <small>{{ selectedBatch?.dates }} · تاريخ الانتهاء: {{ selectedBatch?.endDate }}</small>
+        </div>
+        <div class="actions-left">
+          <button class="btn-pdf" (click)="exportToPDF()">تصدير PDF</button>
+          <button class="btn-excel" (click)="exportToExcel()">Excel</button>
+        </div>
+      </div>
+
+      <!-- مؤشرات الدفعة -->
+      <div class="summary-metrics-grid">
+        <div class="metric-card">
+          <span class="metric-value">{{ selectedBatch?.traineesCount || 0 }}</span>
+          <span class="metric-label">عدد المتدربين</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value green">89%</span>
+          <span class="metric-label">متوسط الحضور</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value blue">100%</span>
+          <span class="metric-label">نسبة النجاح</span>
+        </div>
+      </div>
+
+      <!-- جدول النتائج -->
+      <div class="table-card">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>المتدرب</th>
+              <th>التخصص</th>
+              <th>الحضور</th>
+              <th>التقني</th>
+              <th>السلوكي</th>
+              <th>المستوى</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of report()?.rows">
+              <td class="bold">{{ t.traineeName }}</td>
+              <td>{{ t.major }}</td>
+              <td>
+                <span>{{ t.attendanceRate }}%</span>
+                <div class="progress-bar">
+                  <div class="fill green" [style.width.%]="t.attendanceRate"></div>
+                </div>
+              </td>
+              <td>
+                <span>{{ t.technicalScore }}%</span>
+                <div class="progress-bar">
+                  <div class="fill green" [style.width.%]="t.technicalScore"></div>
+                </div>
+              </td>
+              <td>
+                <span>{{ t.behavioralScore }}%</span>
+                <div class="progress-bar">
+                  <div class="fill blue" [style.width.%]="t.behavioralScore"></div>
+                </div>
+              </td>
+              <td>
+                <span class="status-pill" [ngClass]="levelClass(t.level)">{{ t.level }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- التصفح Pagination لقسم الدفعة -->
+        <div class="compact-pagination-wrapper">
+          <div class="pagination-info">
+            عرض الصفحة <strong>{{ report()?.pageNumber || 1 }}</strong> من <strong>{{ report()?.totalPages || 1 }}</strong>
+          </div>
+          <div class="pagination-compact-controls">
+            <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) <= 1" (click)="prevPage()">السابق</button>
+            <span class="page-indicator">{{ report()?.pageNumber || 1 }} / {{ report()?.totalPages || 1 }}</span>
+            <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) >= (report()?.totalPages ?? 1)" (click)="nextPage()">التالي</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- =========================================================
+       القسم الثاني: تقارير المدربين (Trainer SubSection)
+  ========================================================== -->
+  <ng-container *ngIf="currentSubSection === 'trainer'">
+    <div class="header-section">
+      <h2>تقارير وتحليلات المدربين</h2>
+      <p>تقييمات الأداء، الساعات المنجزة، ونسبة رضا المتدربين</p>
+    </div>
+
+    <!-- بطاقات إحصائيات المدربين -->
+    <div class="summary-metrics-grid">
+      <div class="metric-card">
+        <span class="metric-value">{{ trainersTotalCount || trainers.length }}</span>
+        <span class="metric-label">إجمالي المدربين النشطين</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-value" style="color: #f59e0b;">4.86 / 5.0</span>
+        <span class="metric-label">متوسط التقييم العام</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-value green">1,500+</span>
+        <span class="metric-label">ساعة تدريبية منجزة</span>
+      </div>
+    </div>
+
+    <!-- شبكة كروت المدربين -->
+    <div class="companies-grid" *ngIf="!isLoading() && trainers.length > 0">
+      <div class="company-card" *ngFor="let tr of trainers">
+        <div class="company-info">
+          <div class="logo-box" style="font-weight:bold; font-size: 1.2rem;">{{ tr.name?.charAt(0) || 'م' }}</div>
+          <div>
+            <h3>{{ tr.name }}</h3>
+            <span>{{ tr.specialization }}</span>
           </div>
         </div>
         <div class="stats-row">
-          <div class="stat-box trainees">
-            <strong style="color: #0D1C8C;">{{ company.traineesCount || 0 }}</strong>
-            <span>متدرب</span>
-          </div>
-          <div class="stat-box batches">
-            <strong style="color: #0D1C8C;">{{ company.batchesCount || 0 }}</strong>
-            <span>دفعة</span>
-          </div>
-          <div class="stat-box programs">
-            <strong style="color: #0D1C8C;">{{ company.programsCount || 0 }}</strong>
-            <span>برنامج</span>
-          </div>
+          <div class="stat-box"><strong>{{ tr.rating }} ★</strong><span>التقييم</span></div>
+          <div class="stat-box"><strong>{{ tr.totalHours }}</strong><span>ساعة</span></div>
+          <div class="stat-box"><strong>{{ tr.batchesCount || 1 }}</strong><span>دفعات</span></div>
         </div>
-        <div class="card-footer" style="text-align: right; color: #0D1C8C; font-weight: 600;">
-          <i class="icon-file"></i> عرض البرامج والتقارير
+        <div class="card-footer" (click)="openTrainerModal(tr)">
+          عرض تفاصيل تقييم المدرب ←
         </div>
       </div>
     </div>
 
-    <!-- رسالة في حال لم تقم قاعدة البيانات بإرجاع شركات -->
-    <div *ngIf="!isLoading() && companies.length === 0" style="text-align: center; padding: 40px; color: #94a3b8;">
-      لا توجد شركات مضافة حالياً.
-    </div>
-  </div>
-
-  <!-- 2. صفحة برامج ودفعات الشركة المحددة -->
-  <div class="reports-container" *ngIf="currentView === 'programs'">
-    <div class="top-nav-bar" style="text-align: right; margin-bottom: 16px;">
-      <button class="back-btn" (click)="currentView = 'companies'"
-        style="background: none; border: none; color: #0D1C8C; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-        <i class="arrow-right"></i> العودة إلى الشركات
-      </button>
+    <!-- مؤشر التحميل -->
+    <div *ngIf="isLoading()" class="loading-state">
+      <div class="custom-spinner"></div>
+      <span>جاري تحميل بيانات المدربين...</span>
     </div>
 
-    <div class="selected-company-banner"
-      style="display: flex; justify-content: flex-start; align-items: center; gap: 20px; text-align: right; background: #ffffff; border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
-      <div class="company-logo-large"
-        style="background: #0D1C8C; color: #ffffff; width: 60px; height: 60px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 21h18M3 7v14M21 7v14M6 11h4M6 15h4M14 11h4M14 15h4M9 3v4M15 3v4"></path>
-        </svg>
+    <!-- التصفح Pagination لقسم المدربين -->
+    <div class="compact-pagination-wrapper" *ngIf="!isLoading() && trainers.length > 0" style="margin-top: 24px;">
+      <div class="pagination-info">
+        عرض الصفحة <strong>{{ trainersCurrentPage }}</strong> من <strong>{{ trainersTotalPages }}</strong> (إجمالي {{ trainersTotalCount }} مدرب)
       </div>
-      <div class="banner-info" style="text-align: right;">
-        <h3 style="color: #0D1C8C !important; font-size: 20px; margin: 0 0 4px 0;">{{ selectedCompany?.name }}</h3>
-        <span style="color: #64748b; font-size: 13px;">{{ selectedCompany?.programsCount || 0 }} برنامج</span>
+      <div class="pagination-compact-controls">
+        <button class="compact-nav-btn" [disabled]="trainersCurrentPage <= 1" (click)="prevTrainerPage()">السابق</button>
+        <span class="page-indicator">{{ trainersCurrentPage }} / {{ trainersTotalPages }}</span>
+        <button class="compact-nav-btn" [disabled]="trainersCurrentPage >= trainersTotalPages" (click)="nextTrainerPage()">التالي</button>
       </div>
     </div>
+  </ng-container>
 
-    <div class="programs-list" *ngFor="let prog of selectedCompany?.programs">
-      <div class="program-item-card"
-        style="background: #ffffff; border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
-
-        <div class="program-header"
-          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px;">
-          <h4 style="color: #0D1C8C !important; font-size: 16px; margin: 0; text-align: right;">{{ prog.name }}</h4>
-          <span class="track-tag"
-            style="background: #eef2ff; color: #0D1C8C; padding: 4px 10px; border-radius: 6px; font-size: 12px;">{{
-            prog.track }}</span>
-        </div>
-
-        <div class="batch-row" *ngFor="let batch of prog.batches"
-          style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f8fafc;">
-
-          <div class="batch-info-right" style="display: flex; align-items: center; gap: 10px; text-align: right;">
-            <span class="dot"
-              style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
-            <strong style="color: #0D1C8C; font-size: 14px;">الدفعة {{ batch.id }}</strong>
-            <span class="dates" style="color: #64748b; font-size: 12px;">{{ batch.dates }}</span>
-          </div>
-
-          <div class="batch-info-left" style="display: flex; align-items: center; gap: 10px;">
-            <button class="view-report-btn" (click)="viewBatchReport(batch)"
-              style="background: #0D1C8C; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;">
-              <i class="icon-doc"></i> عرض التقرير
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 3. صفحة تقرير نهاية الدفعة التفصيلي -->
-  <div class="reports-container" *ngIf="currentView === 'batch-report'">
-    <div class="top-nav-bar" style="text-align: right; margin-bottom: 16px;">
-      <button class="back-btn" (click)="currentView = 'programs'"
-        style="background: none; border: none; color: #0D1C8C; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-        <i class="arrow-right"></i> العودة إلى البرامج
-      </button>
+  <!-- =========================================================
+       القسم الثالث: تقارير المتدربين (Trainee SubSection)
+  ========================================================== -->
+  <ng-container *ngIf="currentSubSection === 'trainee'">
+    <div class="header-section">
+      <h2>سجل ونتائج المتدربين الشامل</h2>
+      <p>كشف أداء المتدربين في كافة الدفعات والمسارات</p>
     </div>
 
-    <!-- الترويسة -->
-    <div class="report-header-card"
-      style="display: flex; justify-content: space-between; align-items: flex-start; text-align: right; background: #ffffff; border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
-
-      <div class="report-title-right" style="text-align: right;">
-        <span class="badge-tag"
-          style="background: #eef2ff; color: #0D1C8C; padding: 4px 10px; border-radius: 6px; font-size: 12px; display: inline-block; margin-bottom: 8px;">نهاية
-          الدفعة</span>
-        <h2 style="color: #0D1C8C !important; font-size: 20px; margin: 0 0 4px 0;">تقرير نهاية الدفعة — الدفعة {{
-          selectedBatch?.id }}</h2>
-        <p style="color: #334155; font-size: 14px; margin: 0 0 4px 0;">{{ selectedBatch?.programName }} · {{
-          selectedCompany?.name }}</p>
-        <small style="color: #64748b; font-size: 12px;">{{ selectedBatch?.dates }} · تاريخ الانتهاء: {{
-          selectedBatch?.endDate }}</small>
-      </div>
-
-      <!-- أزرار التصدير في اليسار -->
-      <div class="actions-left" style="display: flex; gap: 8px;">
-        <button class="btn-pdf" (click)="exportToPDF()"
-          style="background: #0D1C8C; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i
-            class="download-icon"></i> تصدير PDF</button>
-        <button class="btn-excel" (click)="exportToExcel()"
-          style="background: #10b981; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer;">Excel</button>
-      </div>
-
-    </div>
-
+    <!-- بطاقات إحصائيات المتدربين -->
     <div class="summary-metrics-grid">
-      <div class="metric-card" style="text-align: right;">
-        <span class="metric-value dark" style="color: #0D1C8C; font-size: 22px; font-weight: bold;">{{
-          selectedBatch?.traineesCount || 0 }}</span>
-        <span class="metric-label" style="color: #64748b; font-size: 13px; display: block; margin-top: 4px;">عدد
-          المتدربين</span>
+      <div class="metric-card">
+        <span class="metric-value">{{ traineesTotalCount || traineesList.length }}</span>
+        <span class="metric-label">إجمالي المتدربين</span>
       </div>
-      <div class="metric-card" style="text-align: right;">
-        <span class="metric-value green" style="color: #10b981; font-size: 22px; font-weight: bold;">89%</span>
-        <span class="metric-label" style="color: #64748b; font-size: 13px; display: block; margin-top: 4px;">متوسط
-          الحضور</span>
+      <div class="metric-card">
+        <span class="metric-value green">92%</span>
+        <span class="metric-label">متوسط الحضور العام</span>
       </div>
-      <div class="metric-card" style="text-align: right;">
-        <span class="metric-value blue" style="color: #0D1C8C; font-size: 22px; font-weight: bold;">100%</span>
-        <span class="metric-label" style="color: #64748b; font-size: 13px; display: block; margin-top: 4px;">نسبة
-          النجاح</span>
+      <div class="metric-card">
+        <span class="metric-value blue">88%</span>
+        <span class="metric-label">متوسط الدرجات التقنية</span>
       </div>
     </div>
 
-    <div class="table-card" style="text-align: right;">
-      <div class="table-header-title" style="margin-bottom: 16px; text-align: right;">
-        <h3 style="color: #0D1C8C !important; font-size: 18px; margin: 0 0 4px 0;">نتائج المتدربين</h3>
-        <span style="color: #64748b; font-size: 13px;">الدفعة {{ selectedBatch?.id }} · {{ selectedBatch?.programName
-          }}</span>
-      </div>
-
-      <table class="custom-table" style="width: 100%; text-align: right;">
+    <div class="table-card">
+      <table class="custom-table">
         <thead>
-          <tr style="border-bottom: 2px solid #e2e8f0;">
-            <th style="padding: 10px; color: #0D1C8C; text-align: right;">المتدرب</th>
-            <th style="padding: 10px; color: #0D1C8C; text-align: right;">التخصص</th>
-            <th style="padding: 10px; color: #0D1C8C; text-align: right;">الحضور</th>
-            <th style="padding: 10px; color: #0D1C8C; text-align: right;">التقني</th>
-            <th style="padding: 10px; color: #0D1C8C; text-align: right;">السلوكي</th>
-            <th style="padding: 10px; color: #0D1C8C; text-align: right;">المستوى</th>
+          <tr>
+            <th>المتدرب</th>
+            <th>الشركة</th>
+            <th>التخصص</th>
+            <th>الحضور</th>
+            <th>التقني</th>
+            <th>السلوكي</th>
+            <th>المستوى</th>
           </tr>
         </thead>
         <tbody>
-          <!-- عرض دائرة التحميل أثناء جلب البيانات -->
-          <tr *ngIf="isLoading()">
-            <td colspan="6" style="padding: 40px; text-align: center;">
-              <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
-                <div class="custom-spinner"></div>
-                <span style="color: #6c757d; font-size: 0.9rem;">جاري تحميل بيانات التقرير...</span>
+          <tr *ngFor="let tr of traineesList">
+            <td class="bold">{{ tr.traineeName }}</td>
+            <td>{{ tr.companyName }}</td>
+            <td>{{ tr.major }}</td>
+            <td>
+              <span>{{ tr.attendanceRate }}%</span>
+              <div class="progress-bar">
+                <div class="fill green" [style.width.%]="tr.attendanceRate"></div>
               </div>
             </td>
+            <td>
+              <span>{{ tr.technicalScore }}%</span>
+              <div class="progress-bar">
+                <div class="fill green" [style.width.%]="tr.technicalScore"></div>
+              </div>
+            </td>
+            <td>
+              <span>{{ tr.behavioralScore }}%</span>
+              <div class="progress-bar">
+                <div class="fill blue" [style.width.%]="tr.behavioralScore"></div>
+              </div>
+            </td>
+            <td>
+              <span class="status-pill" [ngClass]="levelClass(tr.level)">{{ tr.level }}</span>
+            </td>
           </tr>
-
-          <!-- عرض البيانات عند انتهائها -->
-          <ng-container *ngIf="!isLoading()">
-            <tr *ngFor="let t of report()?.rows" style="border-bottom: 1px solid #f1f5f9;">
-              <td class="bold" style="padding: 12px; color: #0D1C8C; font-weight: bold; text-align: right;">{{
-                t.traineeName }}</td>
-              <td style="padding: 12px; color: #64748b; text-align: right;">{{ t.major }}</td>
-              <td style="padding: 12px; text-align: right;">
-                <span>{{ t.attendanceRate }}%</span>
-                <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;">
-                  <div class="fill green" [style.width.%]="t.attendanceRate"
-                    style="background: #10b981; height: 100%; border-radius: 3px;"></div>
-                </div>
-              </td>
-              <td style="padding: 12px; text-align: right;">
-                <span>{{ t.technicalScore }}%</span>
-                <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;">
-                  <div class="fill green" [style.width.%]="t.technicalScore"
-                    style="background: #10b981; height: 100%; border-radius: 3px;"></div>
-                </div>
-              </td>
-              <td style="padding: 12px; text-align: right;">
-                <span>{{ t.behavioralScore }}%</span>
-                <div class="progress-bar" style="background: #e2e8f0; height: 6px; border-radius: 3px; margin-top: 4px;">
-                  <div class="fill blue" [style.width.%]="t.behavioralScore"
-                    style="background: #0D1C8C; height: 100%; border-radius: 3px;"></div>
-                </div>
-              </td>
-              <td style="padding: 12px; text-align: right;">
-                <span class="status-pill" [ngClass]="levelClass(t.level)"
-                  style="padding: 4px 8px; border-radius: 4px; font-size: 12px;">{{ t.level }}</span>
-              </td>
-            </tr>
-            <tr *ngIf="!report()?.rows?.length">
-              <td colspan="6" style="padding: 20px; text-align: center; color: #94a3b8;">لا توجد بيانات لعرضها</td>
-            </tr>
-          </ng-container>
         </tbody>
       </table>
 
-      <!-- شريط التنقل (Pagination) -->
-      <div class="compact-pagination-wrapper" *ngIf="!isLoading()"
-        style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
-        <div class="pagination-info" style="color: #64748b; font-size: 13px;">
-          عرض الصفحة <strong>{{ report()?.pageNumber || 1 }}</strong> من <strong>{{ report()?.totalPages || 1
-            }}</strong> (إجمالي {{ report()?.totalCount || 0 }} متدرب)
+      <!-- مؤشر التحميل -->
+      <div *ngIf="isLoading()" class="loading-state">
+        <div class="custom-spinner"></div>
+        <span>جاري تحميل بيانات المتدربين...</span>
+      </div>
+
+      <!-- التصفح Pagination لقسم المتدربين -->
+      <div class="compact-pagination-wrapper" *ngIf="!isLoading() && traineesList.length > 0">
+        <div class="pagination-info">
+          عرض الصفحة <strong>{{ traineesCurrentPage }}</strong> من <strong>{{ traineesTotalPages }}</strong> (إجمالي {{ traineesTotalCount }} متدرب)
         </div>
-
-        <div class="pagination-compact-controls" style="display: flex; align-items: center; gap: 8px;">
-          <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) <= 1" (click)="prevPage()"
-            style="padding: 6px 12px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; font-size: 12px;">
-            السابق
-          </button>
-
-          <span class="page-indicator" style="font-size: 13px; font-weight: bold; color: #0D1C8C;">
-            {{ report()?.pageNumber || 1 }} / {{ report()?.totalPages || 1 }}
-          </span>
-
-          <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) >= (report()?.totalPages ?? 1)" (click)="nextPage()"
-            style="padding: 6px 12px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; cursor: pointer; font-size: 12px;">
-            التالي
-          </button>
+        <div class="pagination-compact-controls">
+          <button class="compact-nav-btn" [disabled]="traineesCurrentPage <= 1" (click)="prevTraineePage()">السابق</button>
+          <span class="page-indicator">{{ traineesCurrentPage }} / {{ traineesTotalPages }}</span>
+          <button class="compact-nav-btn" [disabled]="traineesCurrentPage >= traineesTotalPages" (click)="nextTraineePage()">التالي</button>
         </div>
       </div>
     </div>
-  </div>
+  </ng-container>
 
-</body>
+</div>
 
-</html>
