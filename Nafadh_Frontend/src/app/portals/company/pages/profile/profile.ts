@@ -70,16 +70,14 @@ export class CompanyProfile implements OnInit {
     taxNumber: '',
     phone: '',
     email: '',
-    website: '',
-    accreditationValidUntil: '',
   };
   capacityDraft = 0;
   newFieldDraft = '';
 
   branchFormOpen = signal(false);
-  branchDraft = { location: '', contactPoint: '' };
+  branchDraft = { location: '', phone: '' };
   supervisorFormOpen = signal(false);
-  supervisorDraft = { userId: '', name: '', role: '', phone: '', email: '' };
+  supervisorDraft = { name: '', role: '', phone: '', email: '' };
 
   companyInitial = computed(() => this.company()?.companyName?.trim()?.charAt(0)?.toUpperCase() ?? 'ش');
 
@@ -261,8 +259,6 @@ export class CompanyProfile implements OnInit {
       taxNumber: c.taxNumber || '',
       phone: c.phone || '',
       email: c.email || '',
-      website: c.website || '',
-      accreditationValidUntil: c.accreditationValidUntil || '',
     };
     this.companyEditOpen.set(true);
   }
@@ -383,11 +379,11 @@ export class CompanyProfile implements OnInit {
     this.api.addBranch({
       companyId: this.companyId,
       location,
-      contactPoint: this.branchDraft.contactPoint.trim() || null,
+      contactPoint: this.branchDraft.phone.trim() || null,
     }).subscribe({
       next: (branch) => {
         this.branches.update((cur) => [...cur, branch as CompanyBranchDto]);
-        this.branchDraft = { location: '', contactPoint: '' };
+        this.branchDraft = { location: '', phone: '' };
         this.branchFormOpen.set(false);
       },
       error: (error) => {
@@ -401,17 +397,20 @@ export class CompanyProfile implements OnInit {
   }
 
   saveSupervisor() {
-    const userId = Number(this.supervisorDraft.userId);
-    if (!userId || !this.companyId) return;
+    const name = this.supervisorDraft.name.trim();
+    if (!name || !this.companyId) return;
 
     this.api.addSupervisor({
-      userId,
+      name,
+      fullName: name,
+      phone: this.supervisorDraft.phone.trim() || null,
+      email: this.supervisorDraft.email.trim() || null,
       department: this.supervisorDraft.role.trim() || null,
       position: this.supervisorDraft.role.trim() || null,
       companyId: this.companyId,
     }).subscribe({
       next: () => {
-        this.supervisorDraft = { userId: '', name: '', role: '', phone: '', email: '' };
+        this.supervisorDraft = { name: '', role: '', phone: '', email: '' };
         this.supervisorFormOpen.set(false);
         this.api.getSupervisors(this.companyId).subscribe({
           next: (items: CompanySupervisorDto[]) => this.supervisors.set((items ?? []).map((x) => this.normalizeSupervisor(x))),
