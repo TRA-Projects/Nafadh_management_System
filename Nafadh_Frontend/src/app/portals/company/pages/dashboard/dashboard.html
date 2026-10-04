@@ -135,7 +135,7 @@
         </div>
         <div class="kpi-info">
           <span class="kpi-label">المتدربون المتميزون</span>
-          <strong class="kpi-value">{{ filteredTopPerformers().length }}</strong>
+          <strong class="kpi-value">{{ topPerformers().length }}</strong>
           <small>هذا الشهر</small>
         </div>
       </article>
@@ -309,7 +309,7 @@
         <div class="card-title">
           <span>
             <span class="icon-star">★</span>
-            المتدربون المتميزون هذا الشهر
+            المتدربون المتميزون 
           </span>
           <button
             class="link-btn"
@@ -319,7 +319,7 @@
 
         <div class="lower-list">
           @for (
-            trainee of filteredTopPerformers().slice(0, 5);
+            trainee of topPerformers().slice(0, 5);
             track trainee.traineeId
           ) {
             <div class="top-row">
@@ -389,14 +389,25 @@
                   {{ initials(trainee.fullName) }}
                 </div>
 
-                <div class="trainee-meta" style="text-align: right;">
-                  <div class="name" style="font-weight: bold; color: #1e293b;">
-                    {{ trainee.fullName || 'متدرب بدون اسم' }}
-                  </div>
-                  <div class="sub danger-text" style="color: #e53e3e; font-size: 12px;">
-                    {{ riskReason(trainee) }}
-                  </div>
-                </div>
+               <div class="trainee-meta" style="text-align: right;">
+  <div
+    class="name"
+    style="font-weight: bold; color: #1e293b;">
+    {{ trainee.fullName || 'متدرب بدون اسم' }}
+  </div>
+
+  <div
+    class="sub"
+    style="color: #64748b; font-size: 12px; margin-top: 3px;">
+    {{ trainee.programName || 'البرنامج غير محدد' }}
+  </div>
+
+  <div
+    class="sub danger-text"
+    style="color: #e53e3e; font-size: 12px; margin-top: 2px;">
+    {{ riskReason(trainee) }}
+  </div>
+</div>
               </div>
 
               <div class="row-actions" style="display: flex; align-items: center; gap: 8px;">
