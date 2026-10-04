@@ -311,21 +311,7 @@
     <div class="nfd-card" style="margin-top:16px;">
       <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <span class="section-title">نقاط الاتصال</span>
-        <button class="nfd-btn ghost" type="button" (click)="addSupervisor()">+ إضافة</button>
       </h3>
-
-      @if (supervisorFormOpen()) {
-        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px;padding:12px;border:1px solid var(--color-border);border-radius:12px;background:#f8faff;">
-          <input class="nfd-input" placeholder="اسم جهة الاتصال" [(ngModel)]="supervisorDraft.name" />
-          <input class="nfd-input" placeholder="رقم الهاتف" type="tel" dir="rtl" [(ngModel)]="supervisorDraft.phone" />
-          <input class="nfd-input" placeholder="البريد الإلكتروني" type="email" [(ngModel)]="supervisorDraft.email" />
-          <input class="nfd-input" placeholder="المسمى الوظيفي" [(ngModel)]="supervisorDraft.role" />
-          <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;">
-            <button class="nfd-btn ghost" type="button" (click)="supervisorFormOpen.set(false)">إلغاء</button>
-            <button class="nfd-btn primary" type="button" (click)="saveSupervisor()">حفظ</button>
-          </div>
-        </div>
-      }
 
       @if (supervisorsLoadError()) {
         <p class="nfd-muted" style="color:var(--status-cancelled-fg);">تعذر تحميل نقاط الاتصال من الخادم — راجع الـ console.</p>
