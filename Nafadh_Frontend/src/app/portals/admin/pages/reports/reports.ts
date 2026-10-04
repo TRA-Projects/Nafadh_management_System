@@ -55,7 +55,7 @@ export class AdminReports implements OnInit {
     this.loadTraineesData();
   }
 
-  // --- دوال الشركات ---
+// --- دوال الشركات ---
   loadCompaniesData() {
     this.isLoading.set(true);
     this.api.getCompanies().subscribe({
@@ -75,8 +75,8 @@ export class AdminReports implements OnInit {
             traineesCount: p.traineesCount ?? 0,
             batches: (p.batches || []).map((b: any) => ({
               id: b.batchId,
-              dates: b.startDate,
-              endDate: b.endDate,
+              dates: b.startDate ? String(b.startDate).split('T')[0] : '—',     // ✅ حذف الوقت والثواني
+              endDate: b.endDate ? String(b.endDate).split('T')[0] : '—',       // ✅ حذف الوقت والثواني
               traineesCount: b.traineesCount ?? 0,
               programName: p.title || 'برنامج بدون اسم'
             }))
@@ -308,4 +308,6 @@ export class AdminReports implements OnInit {
     link.click();
     document.body.removeChild(link);
   }
+
+  
 }
