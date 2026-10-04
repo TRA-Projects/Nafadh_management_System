@@ -368,6 +368,12 @@ export class CompanyProfile implements OnInit {
     });
   }
 
+  branchPhoneLabel(value?: string | null): string {
+    const text = (value ?? '').trim();
+    if (!text) return 'لا يوجد هاتف مسجل';
+    return text.startsWith('هاتف الفرع') ? text : `هاتف الفرع: ${text}`;
+  }
+
   addBranch() {
     this.branchFormOpen.set(true);
   }

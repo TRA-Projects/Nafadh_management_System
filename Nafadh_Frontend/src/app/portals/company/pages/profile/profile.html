@@ -194,7 +194,7 @@
         @if (branchFormOpen()) {
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;padding:12px;border:1px solid var(--color-border);border-radius:12px;background:#f8faff;">
             <input class="nfd-input" placeholder="اسم الفرع أو الموقع" [(ngModel)]="branchDraft.location" />
-            <input class="nfd-input" placeholder="هاتف الفرع" type="tel" [(ngModel)]="branchDraft.phone" />
+            <input class="nfd-input" placeholder="هاتف الفرع" type="tel" dir="rtl" [(ngModel)]="branchDraft.phone" />
             <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;">
               <button class="nfd-btn ghost" type="button" (click)="branchFormOpen.set(false)">إلغاء</button>
               <button class="nfd-btn primary" type="button" (click)="saveBranch()">حفظ</button>
@@ -214,7 +214,7 @@
               </span>
               <div style="flex:1;min-width:0;">
                 <strong style="display:block;font-size:13.5px;color:var(--color-navy);">{{ branch.location }}</strong>
-                <span class="nfd-muted" style="display:block;margin-top:4px;">هاتف الفرع: {{ branch.contactPoint || '—' }}</span>
+                <span class="nfd-muted" style="display:block;margin-top:4px;">{{ branchPhoneLabel(branch.contactPoint) }}</span>
               </div>
             </div>
           } @empty {
@@ -317,7 +317,7 @@
       @if (supervisorFormOpen()) {
         <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px;padding:12px;border:1px solid var(--color-border);border-radius:12px;background:#f8faff;">
           <input class="nfd-input" placeholder="اسم جهة الاتصال" [(ngModel)]="supervisorDraft.name" />
-          <input class="nfd-input" placeholder="رقم الهاتف" type="tel" [(ngModel)]="supervisorDraft.phone" />
+          <input class="nfd-input" placeholder="رقم الهاتف" type="tel" dir="rtl" [(ngModel)]="supervisorDraft.phone" />
           <input class="nfd-input" placeholder="البريد الإلكتروني" type="email" [(ngModel)]="supervisorDraft.email" />
           <input class="nfd-input" placeholder="المسمى الوظيفي" [(ngModel)]="supervisorDraft.role" />
           <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;">
