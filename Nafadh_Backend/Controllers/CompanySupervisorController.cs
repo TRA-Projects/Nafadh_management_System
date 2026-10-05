@@ -9,6 +9,7 @@ using Nafadh_Backend.Models;
 using Nafadh_Backend.Interfaces;
 using Nafadh_Backend.DTOs;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -48,7 +49,15 @@ namespace Nafadh_Backend.Controllers
                 Phone = s.User?.Phone,
                 Email = s.User?.Email,
 
-                Status = s.Status.ToString()
+                // Supervisor status
+                Status = s.Status.ToString(),
+
+                // Permissions from Role -> RolePermissions -> Permission
+                Permissions = s.User?.Role?.RolePermissions?
+                    .Where(rp => rp.Permission != null)
+                    .Select(rp => rp.Permission.PermissionKey)
+                    .ToList()
+                    ?? new List<string>()
             });
 
             return Ok(dtos);
@@ -82,7 +91,14 @@ namespace Nafadh_Backend.Controllers
                 Position = supervisor.Position,
 
                 UserId = supervisor.UserId,
-                CompanyId = supervisor.CompanyId
+                CompanyId = supervisor.CompanyId,
+
+                // Permissions from Role -> RolePermissions -> Permission
+                Permissions = supervisor.User?.Role?.RolePermissions?
+                    .Where(rp => rp.Permission != null)
+                    .Select(rp => rp.Permission.PermissionKey)
+                    .ToList()
+                    ?? new List<string>()
             };
 
             return Ok(dto);
