@@ -54,11 +54,63 @@ export class AdminWarnings implements OnInit {
   touchedFields = signal<{ [key: string]: boolean }>({});
   newWarning = { companyId: null as number | null, type: 'Performance', level: 'Medium', evidence: '' };
 
+  // =========================================================================
+  // الجديد: قائمة أسباب ومخالفات البلاغ الجاهزة وإدارة الاختيارات المتعددة
+  // =========================================================================
+  violationReasons: string[] = [
+    'عدم الالتزام بالحضور',
+    'التأخر المتكرر',
+    'عدم الالتزام بمتطلبات التدريب',
+    'ضعف الأداء التدريبي',
+    'مخالفة السلوك والانضباط',
+    'عدم تسليم المهام',
+    'مخالفة أنظمة الجهة',
+    'مخالفة أخرى'
+  ];
+
+  selectedReasons = signal<string[]>([]);
+  otherReasonText = '';
+
   constructor(private api: AdminApi) {}
 
   ngOnInit(): void {
     this.load();
     this.loadCompanies();
+  }
+
+  // التبديل بين تحديد وإلغاء تحديد سبب المخالفة
+  toggleReason(reason: string): void {
+    const current = this.selectedReasons();
+    if (current.includes(reason)) {
+      this.selectedReasons.set(current.filter(r => r !== reason));
+    } else {
+      this.selectedReasons.set([...current, reason]);
+    }
+    this.updateEvidenceFromReasons();
+  }
+
+  // تحديد الأسباب الشائعة
+  selectAllReasons(): void {
+    this.selectedReasons.set([...this.violationReasons.filter(r => r !== 'مخالفة أخرى')]);
+    this.updateEvidenceFromReasons();
+  }
+
+  // مسح جميع الخيارات المحددة
+  clearAllReasons(): void {
+    this.selectedReasons.set([]);
+    this.otherReasonText = '';
+    this.updateEvidenceFromReasons();
+  }
+
+  // تحديث نص الأدلة والأسباب تلقائياً بناءً على الخيارات المحددة
+  updateEvidenceFromReasons(): void {
+    let reasons = [...this.selectedReasons()];
+    if (reasons.includes('مخالفة أخرى') && this.otherReasonText.trim()) {
+      reasons = reasons.map(r => r === 'مخالفة أخرى' ? 'مخالفة أخرى: ' + this.otherReasonText.trim() : r);
+    }
+    this.newWarning.evidence = reasons.join(' • ');
+    this.touchedFields.set({ ...this.touchedFields(), evidence: true });
+    this.validateForm();
   }
 
   toggleFilterMenu(): void {
@@ -215,6 +267,8 @@ export class AdminWarnings implements OnInit {
 
   openIssueModal(): void {
     this.newWarning = { companyId: null, type: 'Performance', level: 'Medium', evidence: '' };
+    this.selectedReasons.set([]);
+    this.otherReasonText = '';
     this.formErrors.set({});
     this.touchedFields.set({});
     this.showIssue.set(true);
@@ -238,13 +292,11 @@ export class AdminWarnings implements OnInit {
       errors['level'] = 'يرجى اختيار درجة الأهمية.';
     }
 
-    const evidenceText = (this.newWarning.evidence || '').trim();
-    if (!evidenceText) {
-      errors['evidence'] = 'يرجى كتابة أسباب وملاحظات الإنذار.';
-    } else if (evidenceText.length < 10) {
-      errors['evidence'] = 'يجب أن تحتوي الأسباب على 10 أحرف على الأقل.';
-    } else if (evidenceText.length > 1000) {
-      errors['evidence'] = 'يجب ألا تتجاوز الأسباب 1000 حرف.';
+    // التحقق من تحديد سبب واحد على الأقل من الخيارات الجاهزة
+    if (this.selectedReasons().length === 0) {
+      errors['evidence'] = 'يرجى تحديد سبب واحد على الأقل لإصدار البلاغ من الخيارات الجاهزة.';
+    } else if (this.selectedReasons().includes('مخالفة أخرى') && this.selectedReasons().length === 1 && !this.otherReasonText.trim()) {
+      errors['evidence'] = 'يرجى كتابة تفاصيل المخالفة الأخرى.';
     }
 
     this.formErrors.set(errors);
