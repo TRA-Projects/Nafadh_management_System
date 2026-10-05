@@ -1,3 +1,4 @@
+/* users.css */
 /* التنسيق الأساسي للصفحة */
 .nfd-page-header {
   margin-bottom: 24px;
@@ -68,7 +69,7 @@
 }
 
 .nfd-btn.primary-teal {
-  background-color:#0A1172;
+  background-color: #0A1172;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -133,17 +134,14 @@
   gap: 12px;
 }
 
+/* صورة المستخدم الحقيقية */
 .user-avatar {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background-color: #0A1172;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.85rem;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #e2e8f0;
 }
 
 .user-details {
@@ -184,7 +182,7 @@
   color: #9b2c2c;
 }
 
-/* --- ألوان وتصميم شارات الأدوار المطابقة للصورة --- */
+/* شارات الأدوار */
 .nfd-badge.role.admin {
   background-color: #f0f5ff;
   border: 1px solid #adc6ff;
@@ -194,7 +192,7 @@
 .nfd-badge.role.trainer {
   background-color: #e6fffb;
   border: 1px solid #87e8de;
-  color: #13c2c2; /* مدرب - تركواز/أخضر ناعم */
+  color: #13c2c2; /* مدرب - تركواز */
 }
 
 .nfd-badge.role.companysupervisor {
@@ -233,17 +231,12 @@
   transition: all 0.2s ease;
 }
 
-/* تعديل الهوفر ليصبح باللون المطلوب #0A1172 */
 .btn-action.edit-btn:hover,
 .btn-action.password-btn:hover,
 .btn-action:hover {
   background-color: #0A1172 !important;
   border-color: #0A1172 !important;
   color: #ffffff !important;
-}
-
-.btn-action i {
-  font-size: 0.9rem;
 }
 
 /* RBAC Table */
@@ -334,33 +327,24 @@
   border-radius: 6px;
   cursor: pointer;
 }
-/* =========================================================
-   Validation - Create User Form
-   ========================================================= */
 
-/* النجمة الحمراء للحقول المطلوبة */
+/* Validation */
 .required-star {
   color: #dc2626;
   font-weight: 600;
 }
 
-
-/* الحقل عندما يكون فيه خطأ */
 .nfd-input.input-error {
   border: 1px solid #dc2626 !important;
   background-color: #fff5f5 !important;
 }
 
-
-/* عند الضغط داخل الحقل الذي فيه خطأ */
 .nfd-input.input-error:focus {
   border-color: #dc2626 !important;
   box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.12) !important;
   outline: none;
 }
 
-
-/* رسالة الخطأ تحت الحقل */
 .field-error {
   color: #dc2626 !important;
   font-size: 0.78rem;
@@ -370,8 +354,6 @@
   line-height: 1.5;
 }
 
-
-/* رسالة الخطأ العامة داخل المودال */
 .create-error {
   background-color: #fef2f2;
   border: 1px solid #fecaca;
@@ -382,8 +364,6 @@
   font-size: 0.85rem;
 }
 
-
-/* أيقونة/نص شروط كلمة المرور */
 .password-rules {
   margin-top: 7px;
   font-size: 0.75rem;
@@ -391,18 +371,105 @@
   color: #dc2626;
 }
 
-
-/* الشرط الصحيح */
 .password-rules .rule-valid {
   color: #16a34a;
   font-weight: 500;
 }
 
-
-/* زر الحفظ عندما تكون البيانات غير صحيحة */
 .nfd-btn.primary-teal:disabled,
 .nfd-btn.primary-teal.btn-disabled {
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+/* شريط البحث والتصفية المتقدمة */
+.nfd-filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.nfd-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 7px 12px;
+  flex: 1 1 220px;
+  min-width: 200px;
+}
+
+.nfd-search-box i {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.nfd-search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.85rem;
+  color: #334155;
+  flex: 1;
+  min-width: 0;
+}
+
+.nfd-filter-select {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.85rem;
+  color: #334155;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.nfd-date-range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nfd-filter-date {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  color: #334155;
+}
+
+.date-sep {
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.nfd-clear-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nfd-clear-filters-btn:hover {
+  background: #fee2e2;
+}
+
+.nfd-results-count {
+  color: #64748b;
+  font-size: 0.82rem;
+  margin-bottom: 12px;
 }

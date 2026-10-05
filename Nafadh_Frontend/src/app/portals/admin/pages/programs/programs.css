@@ -1,4 +1,3 @@
-
 /* ==========================================================
    1. General & Shared Styles (Modal Overlay & Font)
    ========================================================== */
@@ -79,21 +78,24 @@
   border-color: #0D1C8C;
 }
 
+/* كبسولة العداد المرنة المتسعة لأي رقم */
 .filter-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 9999px;
   font-size: 12px;
   font-weight: 700;
   background-color: #f1f5f9;
   color: #64748b;
+  box-sizing: border-box;
 }
 
 .filter-btn.active .filter-badge {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.25);
   color: #ffffff;
 }
 
@@ -274,7 +276,6 @@
   box-shadow: 0 0 0 3px rgba(13, 28, 140, 0.1);
 }
 
-/* Modal Buttons */
 .modal-footer-buttons,
 .modal-footer-buttons-program {
   display: flex;
@@ -329,7 +330,7 @@
 
 /* ==========================================================
    4. Error Alert Styles
-   ========================================================== */
+   ========================================================= */
 .error-alert {
   width: 100%;
   margin-bottom: 12px;
@@ -423,6 +424,32 @@
   color: #64748b;
 }
 
+/* شارة المسار التابع للبرنامج من الداتابيس */
+.nfd-track-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #eef2ff;
+  border: 1px solid #e0e7ff;
+  color: #4338ca;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  width: fit-content;
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+.track-label {
+  color: #6366f1;
+  font-weight: 600;
+}
+
+.track-name {
+  color: #312e81;
+  font-weight: 700;
+}
+
 /* Occupancy & Progress Bar */
 .nfd-occupancy-wrapper {
   display: flex;
@@ -433,10 +460,26 @@
   margin: 0 auto;
 }
 
+.occupancy-numbers-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .nfd-occupancy-text {
   font-size: 12.5px;
   font-weight: 600;
   color: #475569;
+}
+
+.badge-almost-full {
+  font-size: 10px;
+  font-weight: 700;
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  padding: 1px 5px;
+  border-radius: 4px;
 }
 
 .nfd-progress-bar-bg {
@@ -452,6 +495,10 @@
   background: linear-gradient(to left, #0D1C8C, #06b6d4);
   border-radius: 9999px;
   transition: width 0.3s ease;
+}
+
+.nfd-progress-bar-fill.fill-warning {
+  background: linear-gradient(to left, #f59e0b, #ef4444) !important;
 }
 
 /* Status Badges */
@@ -530,7 +577,7 @@
 }
 
 /* ==========================================================
-   6. Details Modal & Cards Styles
+   6. Details Modal Styles
    ========================================================== */
 .details-top-card,
 .details-progress-card {
@@ -625,145 +672,8 @@
   text-align: left;
 }
 
-.details-rows-container {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 24px;
-}
-
-.details-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.details-row:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.details-row-label {
-  font-size: 13.5px;
-  color: #64748b;
-}
-
-.details-row-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.details-footer {
-  display: flex;
-}
-
-.details-btn-close {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffffff;
-  background-color: #0D1C8C;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.details-btn-close:hover {
-  background-color: #0B1770;
-}
-
 /* ==========================================================
-   7. Edit Form & Custom Dropdown Styles
-   ========================================================== */
-.edit-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  max-height: 75vh;
-  overflow-y: auto;
-  padding: 0 4px 20px 4px;
-  position: relative;
-}
-
-.custom-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  background: white;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  margin-top: 5px;
-  z-index: 9999;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.dropdown-item {
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.dropdown-item:hover {
-  background-color: #f1f5f9;
-}
-
-.form-row-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.edit-modal-footer {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
-  padding-top: 4px;
-}
-
-.btn-save {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffffff;
-  background-color: #0D1C8C;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-save:hover {
-  background-color: #091463;
-}
-
-.btn-cancel {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #475569;
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-cancel:hover {
-  background-color: #f8fafc;
-}
-
-/* ==========================================================
-   8. Compact Pagination Styles
+   7. Compact Pagination Styles
    ========================================================== */
 .compact-pagination-wrapper {
   display: flex;
@@ -830,4 +740,264 @@
   background-color: #f1f5f9;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
+}
+
+/* ==========================================================
+   8. Search & Filter Card Styles
+   ========================================================== */
+.nfd-search-filter-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-top: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  font-family: 'Cairo', sans-serif;
+}
+
+.filter-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-card-presets {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-presets-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  margin-left: 4px;
+}
+
+.preset-pill {
+  padding: 4px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.preset-pill:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.preset-pill.active {
+  background-color: #0D1C8C;
+  color: #ffffff;
+  border-color: #0D1C8C;
+}
+
+.filter-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.results-badge {
+  font-size: 12px;
+  color: #64748b;
+  background-color: #f8fafc;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.results-badge strong {
+  color: #0D1C8C;
+}
+
+.btn-reset-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.btn-reset-filters:hover {
+  background-color: #fee2e2;
+}
+
+.reset-count {
+  background-color: #dc2626;
+  color: #ffffff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+/* Fields Grid Layout */
+.filter-fields-grid {
+  display: grid;
+  grid-template-columns: 2.2fr 1.6fr 1fr 1.1fr 1.1fr;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+@media (max-width: 1024px) {
+  .filter-fields-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .col-search {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .filter-fields-grid {
+    grid-template-columns: 1fr;
+  }
+  .col-search {
+    grid-column: span 1;
+  }
+}
+
+.filter-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-field-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0D1C8C;
+  margin: 0;
+}
+
+.filter-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.filter-input-ctrl,
+.filter-select-ctrl,
+.filter-date-ctrl {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px 0 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1e293b;
+  background-color: #ffffff;
+  outline: none;
+  font-family: 'Cairo', sans-serif;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.filter-input-ctrl:focus,
+.filter-select-ctrl:focus,
+.filter-date-ctrl:focus {
+  border-color: #0D1C8C;
+  box-shadow: 0 0 0 3px rgba(13, 28, 140, 0.12);
+}
+
+.filter-select-ctrl {
+  appearance: none;
+  cursor: pointer;
+  padding-left: 28px;
+}
+
+.filter-date-ctrl {
+  font-family: monospace, 'Cairo', sans-serif;
+  cursor: pointer;
+}
+
+.filter-icon-left {
+  position: absolute;
+  left: 10px;
+  color: #94a3b8;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.clear-input-btn {
+  position: absolute;
+  left: 30px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.clear-input-btn:hover {
+  color: #475569;
+}
+
+/* Active Tags */
+.active-tags-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.active-tags-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.tag-close-btn {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  line-height: 1;
+}
+
+.tag-close-btn:hover {
+  color: #dc2626;
 }
