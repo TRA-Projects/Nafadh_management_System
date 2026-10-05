@@ -28,7 +28,8 @@ namespace Nafadh_Backend.Repositories
 
         Task<List<DTOs.TrainerTraineesReportRowDto>> GetTrainerTraineesReportRowsAsync(
     int trainerId,
-    int? batchId
+    int? batchId,
+    int? traineeId
 );
     }
 }
