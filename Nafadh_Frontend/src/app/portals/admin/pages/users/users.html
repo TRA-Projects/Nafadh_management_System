@@ -3,10 +3,8 @@
   <p class="nfd-page-sub">عرض وإدارة حسابات المستخدمين وصلاحياتهم في النظام</p>
 </div>
 
-<!-- بطاقة المحتوى الرئيسية -->
 <div class="nfd-card">
 
-  <!-- شريط الأدوات والفلاتر -->
   <div class="nfd-toolbar">
     <div class="nfd-chips">
       @for (r of roles(); track r.key) {
@@ -22,7 +20,47 @@
     </button>
   </div>
 
-  <!-- رسالة الخطأ العامة إن وجدت -->
+  <!-- جديد: شريط البحث والتصفية المتقدمة -->
+  <div class="nfd-filters-bar">
+    <div class="nfd-search-box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input
+        type="text"
+        class="nfd-search-input"
+        placeholder="ابحث بالاسم أو البريد الإلكتروني..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchChange($event)" />
+    </div>
+
+    <select class="nfd-filter-select" [ngModel]="yearFilter()" (ngModelChange)="setYearFilter($event)">
+      <option value="ALL">كل السنوات</option>
+      @for (y of availableYears(); track y) {
+        <option [value]="y">{{ y }}</option>
+      }
+    </select>
+
+    <div class="nfd-date-range">
+      <input type="date" class="nfd-filter-date" [ngModel]="dateFrom()" (ngModelChange)="onDateFromChange($event)" />
+      <span class="date-sep">إلى</span>
+      <input type="date" class="nfd-filter-date" [ngModel]="dateTo()" (ngModelChange)="onDateToChange($event)" />
+    </div>
+
+    <select class="nfd-filter-select" [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)">
+      <option value="ALL">كل الحالات</option>
+      <option value="Active">نشط</option>
+      <option value="Suspended">موقوف</option>
+    </select>
+
+    @if (hasActiveFilters()) {
+      <button type="button" class="nfd-clear-filters-btn" (click)="clearAllFilters()">
+        <i class="fa-solid fa-xmark"></i>
+        مسح الفلاتر
+      </button>
+    }
+  </div>
+
+  <div class="nfd-results-count">{{ resultsCount() }} نتيجة</div>
+
   @if (usersError()) {
   <div class="nfd-inline-error">
     <span>{{ usersError() }}</span>
@@ -30,7 +68,6 @@
   </div>
   }
 
-  <!-- جدول المستخدمين -->
   <div style="overflow-x: auto;">
     <table class="nfd-table">
       <thead>
@@ -49,7 +86,7 @@
         </tr>
         } @else if (filtered().length === 0) {
         <tr>
-          <td colspan="5" style="text-align: center; padding: 30px; color: #64748b;">لا توجد بيانات متاحة</td>
+          <td colspan="5" style="text-align: center; padding: 30px; color: #64748b;">لا توجد بيانات مطابقة لمعايير البحث</td>
         </tr>
         } @else {
         @for (u of filtered(); track u.userId) {
@@ -69,7 +106,12 @@
             </span>
           </td>
           <td>
-            <span class="nfd-badge status active">نشط</span>
+            <span
+              class="nfd-badge status"
+              [class.active]="(u.status | lowercase) !== 'suspended'"
+              [class.suspended]="(u.status | lowercase) === 'suspended'">
+              {{ (u.status | lowercase) === 'suspended' ? 'موقوف' : 'نشط' }}
+            </span>
           </td>
           <td>{{ (u.createdAt | date:'dd/MM/yyyy') || '---' }}</td>
           <td>
@@ -89,7 +131,6 @@
     </table>
   </div>
 
-  <!-- أزرار التنقل بين الصفحات (Pagination) بالترتيب المطلوب -->
   <div class="nfd-pagination-container"
     style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 20px; padding: 10px 0;">
     <button class="btn-action" type="button" (click)="prevPage()" [disabled]="currentPage() <= 1"
@@ -121,128 +162,71 @@
     </div>
     }
 
-    <!-- الاسم الكامل -->
     <div class="form-group">
-      <label>
-        الاسم الكامل <span class="required-star">*</span>
-      </label>
-
+      <label>الاسم الكامل <span class="required-star">*</span></label>
       <input type="text" class="nfd-input" [(ngModel)]="newUser.fullName" (blur)="validateCreateField('fullName')"
         [class.input-error]="createTouched.fullName && getCreateFieldError('fullName')" placeholder="أدخل الاسم الكامل">
-
       @if (createTouched.fullName && getCreateFieldError('fullName')) {
-      <div class="field-error">
-        {{ getCreateFieldError('fullName') }}
-      </div>
+      <div class="field-error">{{ getCreateFieldError('fullName') }}</div>
       }
     </div>
 
-    <!-- البريد الإلكتروني -->
     <div class="form-group">
-      <label>
-        البريد الإلكتروني <span class="required-star">*</span>
-      </label>
-
+      <label>البريد الإلكتروني <span class="required-star">*</span></label>
       <input type="email" class="nfd-input" [(ngModel)]="newUser.email" (blur)="validateCreateField('email')"
         [class.input-error]="createTouched.email && getCreateFieldError('email')" placeholder="example@domain.com">
-
       @if (createTouched.email && getCreateFieldError('email')) {
-      <div class="field-error">
-        {{ getCreateFieldError('email') }}
-      </div>
+      <div class="field-error">{{ getCreateFieldError('email') }}</div>
       }
     </div>
 
-    <!-- الدور -->
     <div class="form-group">
-      <label>
-        الدور <span class="required-star">*</span>
-      </label>
-
+      <label>الدور <span class="required-star">*</span></label>
       <select class="nfd-input" [(ngModel)]="newUser.roleId" (change)="validateCreateField('roleId')"
         [class.input-error]="createTouched.roleId && getCreateFieldError('roleId')">
         <option [ngValue]="null">اختر الدور</option>
-
         @for (role of rolesList(); track role.roleId) {
-        <option [ngValue]="role.roleId">
-          {{ role.roleName }}
-        </option>
+        <option [ngValue]="role.roleId">{{ role.roleName }}</option>
         }
       </select>
-
       @if (createTouched.roleId && getCreateFieldError('roleId')) {
-      <div class="field-error">
-        {{ getCreateFieldError('roleId') }}
-      </div>
+      <div class="field-error">{{ getCreateFieldError('roleId') }}</div>
       }
     </div>
 
-    <!-- كلمة المرور -->
     <div class="form-group">
-      <label>
-        كلمة المرور <span class="required-star">*</span>
-      </label>
-
+      <label>كلمة المرور <span class="required-star">*</span></label>
       <input type="password" class="nfd-input" [(ngModel)]="newUser.password" (blur)="validateCreateField('password')"
         [class.input-error]="createTouched.password && getCreateFieldError('password')" placeholder="أدخل كلمة المرور">
-
       @if (createTouched.password && getCreateFieldError('password')) {
-      <div class="field-error">
-        {{ getCreateFieldError('password') }}
-      </div>
+      <div class="field-error">{{ getCreateFieldError('password') }}</div>
       }
-
       @if (newUser.password) {
       <div class="password-rules">
-        <div [class.rule-valid]="passwordHasMinLength()">
-          {{ passwordHasMinLength() ? '✓' : '•' }} 8 أحرف على الأقل
-        </div>
-
-        <div [class.rule-valid]="passwordHasUppercase()">
-          {{ passwordHasUppercase() ? '✓' : '•' }} حرف إنجليزي كبير
-        </div>
-
-        <div [class.rule-valid]="passwordHasLowercase()">
-          {{ passwordHasLowercase() ? '✓' : '•' }} حرف إنجليزي صغير
-        </div>
-
-        <div [class.rule-valid]="passwordHasNumber()">
-          {{ passwordHasNumber() ? '✓' : '•' }} رقم واحد على الأقل
-        </div>
+        <div [class.rule-valid]="passwordHasMinLength()">{{ passwordHasMinLength() ? '✓' : '•' }} 8 أحرف على الأقل</div>
+        <div [class.rule-valid]="passwordHasUppercase()">{{ passwordHasUppercase() ? '✓' : '•' }} حرف إنجليزي كبير</div>
+        <div [class.rule-valid]="passwordHasLowercase()">{{ passwordHasLowercase() ? '✓' : '•' }} حرف إنجليزي صغير</div>
+        <div [class.rule-valid]="passwordHasNumber()">{{ passwordHasNumber() ? '✓' : '•' }} رقم واحد على الأقل</div>
       </div>
       }
     </div>
 
-    <!-- تأكيد كلمة المرور -->
     <div class="form-group">
-      <label>
-        تأكيد كلمة المرور <span class="required-star">*</span>
-      </label>
-
+      <label>تأكيد كلمة المرور <span class="required-star">*</span></label>
       <input type="password" class="nfd-input" [(ngModel)]="newUser.confirmPassword"
         (blur)="validateCreateField('confirmPassword')"
         [class.input-error]="createTouched.confirmPassword && getCreateFieldError('confirmPassword')"
         placeholder="أعد إدخال كلمة المرور">
-
       @if (createTouched.confirmPassword && getCreateFieldError('confirmPassword')) {
-      <div class="field-error">
-        {{ getCreateFieldError('confirmPassword') }}
-      </div>
+      <div class="field-error">{{ getCreateFieldError('confirmPassword') }}</div>
       }
     </div>
 
-    <!-- الأزرار -->
     <div class="nfd-modal-actions">
-      <button type="button" class="nfd-btn secondary" (click)="closeCreateModal()">
-        إلغاء
-      </button>
-
+      <button type="button" class="nfd-btn secondary" (click)="closeCreateModal()">إلغاء</button>
       <button type="button" class="nfd-btn primary-teal" (click)="createUser()" [disabled]="!isCreateFormValid()"
-        [class.btn-disabled]="!isCreateFormValid()">
-        حفظ
-      </button>
+        [class.btn-disabled]="!isCreateFormValid()">حفظ</button>
     </div>
-
   </div>
 </div>
 }
@@ -259,37 +243,24 @@
     </div>
     }
 
-    <!-- الاسم الكامل -->
     <div class="form-group">
-      <label>
-        الاسم الكامل <span class="required-star">*</span>
-      </label>
+      <label>الاسم الكامل <span class="required-star">*</span></label>
       <input type="text" class="nfd-input" [(ngModel)]="selectedUser.fullName" (blur)="validateEditField('fullName')"
         [class.input-error]="editTouched.fullName && getEditFieldError('fullName')" placeholder="أدخل الاسم الكامل">
-
       @if (editTouched.fullName && getEditFieldError('fullName')) {
-      <div class="field-error">
-        {{ getEditFieldError('fullName') }}
-      </div>
+      <div class="field-error">{{ getEditFieldError('fullName') }}</div>
       }
     </div>
 
-    <!-- البريد الإلكتروني -->
     <div class="form-group">
-      <label>
-        البريد الإلكتروني <span class="required-star">*</span>
-      </label>
+      <label>البريد الإلكتروني <span class="required-star">*</span></label>
       <input type="email" class="nfd-input" [(ngModel)]="selectedUser.email" (blur)="validateEditField('email')"
         [class.input-error]="editTouched.email && getEditFieldError('email')" placeholder="example@domain.com">
-
       @if (editTouched.email && getEditFieldError('email')) {
-      <div class="field-error">
-        {{ getEditFieldError('email') }}
-      </div>
+      <div class="field-error">{{ getEditFieldError('email') }}</div>
       }
     </div>
 
-    <!-- الأزرار -->
     <div class="nfd-modal-actions">
       <button type="button" class="nfd-btn secondary" (click)="closeEditModal()">إلغاء</button>
       <button type="button" class="nfd-btn primary-teal" (click)="updateUser()" [disabled]="!isEditFormValid()"
@@ -312,44 +283,24 @@
     </div>
     }
 
-    <!-- كلمة المرور الجديدة -->
     <div class="form-group">
-      <label>
-        كلمة المرور الجديدة <span class="required-star">*</span>
-      </label>
+      <label>كلمة المرور الجديدة <span class="required-star">*</span></label>
       <input type="password" class="nfd-input" [(ngModel)]="newPassword" (blur)="validateResetPasswordField()"
         [class.input-error]="resetPasswordTouched.newPassword && getResetPasswordError()"
         placeholder="أدخل كلمة المرور الجديدة">
-
       @if (resetPasswordTouched.newPassword && getResetPasswordError()) {
-      <div class="field-error">
-        {{ getResetPasswordError() }}
-      </div>
+      <div class="field-error">{{ getResetPasswordError() }}</div>
       }
-
-      <!-- شروط قوة كلمة المرور -->
       @if (newPassword) {
       <div class="password-rules">
-        <div [class.rule-valid]="passwordHasMinLengthFor(newPassword)">
-          {{ passwordHasMinLengthFor(newPassword) ? '✓' : '•' }} 8 أحرف على الأقل
-        </div>
-
-        <div [class.rule-valid]="passwordHasUppercaseFor(newPassword)">
-          {{ passwordHasUppercaseFor(newPassword) ? '✓' : '•' }} حرف إنجليزي كبير
-        </div>
-
-        <div [class.rule-valid]="passwordHasLowercaseFor(newPassword)">
-          {{ passwordHasLowercaseFor(newPassword) ? '✓' : '•' }} حرف إنجليزي صغير
-        </div>
-
-        <div [class.rule-valid]="passwordHasNumberFor(newPassword)">
-          {{ passwordHasNumberFor(newPassword) ? '✓' : '•' }} رقم واحد على الأقل
-        </div>
+        <div [class.rule-valid]="passwordHasMinLengthFor(newPassword)">{{ passwordHasMinLengthFor(newPassword) ? '✓' : '•' }} 8 أحرف على الأقل</div>
+        <div [class.rule-valid]="passwordHasUppercaseFor(newPassword)">{{ passwordHasUppercaseFor(newPassword) ? '✓' : '•' }} حرف إنجليزي كبير</div>
+        <div [class.rule-valid]="passwordHasLowercaseFor(newPassword)">{{ passwordHasLowercaseFor(newPassword) ? '✓' : '•' }} حرف إنجليزي صغير</div>
+        <div [class.rule-valid]="passwordHasNumberFor(newPassword)">{{ passwordHasNumberFor(newPassword) ? '✓' : '•' }} رقم واحد على الأقل</div>
       </div>
       }
     </div>
 
-    <!-- الأزرار -->
     <div class="nfd-modal-actions">
       <button type="button" class="nfd-btn secondary" (click)="closeResetPasswordModal()">إلغاء</button>
       <button type="button" class="nfd-btn primary-teal" (click)="confirmResetPassword()"
