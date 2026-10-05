@@ -1,10 +1,9 @@
 <!-- ==========================================
-     منصة نفاذ - شاشة التقارير والتحليلات المحدثة
-     تشمل 3 أقسام فرعية: company / trainer / trainee
+     منصة نفاذ - شاشة التقارير والتحليلات المتكاملة (ملء الشاشة 100%)
 ========================================== -->
 <div class="reports-container" dir="rtl">
 
-  <!-- شريط التبويبات الفرعية (Subsections Navigation) -->
+  <!-- شريط التبويبات العلوي للتبديل بين الشركات والمدربين والمتدربين -->
   <div class="subsections-tabs-bar">
     <div class="subsections-header">
       <div class="title-wrap">
@@ -12,46 +11,35 @@
         <p>نظام متابعة وتقييم البرامج التدريبية المعتمدة</p>
       </div>
       <div class="tabs-segmented-control">
-        <button 
-          class="tab-btn" 
-          [class.active]="currentSubSection === 'company'"
-          (click)="setSubSection('company')">
-          <i class="icon-company"></i> تقارير الشركات
+        <button class="tab-btn" [class.active]="currentSubSection === 'company'" (click)="setSubSection('company')">
+          🏢 تقارير الشركات
         </button>
-        <button 
-          class="tab-btn" 
-          [class.active]="currentSubSection === 'trainer'"
-          (click)="setSubSection('trainer')">
-          <i class="icon-trainer"></i> تقارير المدربين
+        <button class="tab-btn" [class.active]="currentSubSection === 'trainer'" (click)="setSubSection('trainer')">
+          👥 تقارير المدربين
         </button>
-        <button 
-          class="tab-btn" 
-          [class.active]="currentSubSection === 'trainee'"
-          (click)="setSubSection('trainee')">
-          <i class="icon-trainee"></i> تقارير المتدربين
+        <button class="tab-btn" [class.active]="currentSubSection === 'trainee'" (click)="setSubSection('trainee')">
+          🎓 تقارير المتدربين
         </button>
       </div>
     </div>
   </div>
 
   <!-- =========================================================
-       القسم الأول: تقارير الشركات (Company SubSection)
+       القسم الأول: تقارير الشركات
   ========================================================== -->
   <ng-container *ngIf="currentSubSection === 'company'">
-    <!-- 1.1 عرض الشركات وتفاصيلها -->
+    <!-- 1.1 عرض قائمة الشركات من الداتابيز -->
     <div *ngIf="currentView === 'companies'">
       <div class="header-section">
         <h2>التقارير حسب الشركة</h2>
         <p>اختر شركة لعرض برامجها وتقارير دفعاتها</p>
       </div>
 
-      <!-- مؤشر التحميل -->
       <div *ngIf="isLoading()" class="loading-state">
         <div class="custom-spinner"></div>
-        <span>جاري تحميل قائمة الشركات...</span>
+        <span>جاري تحميل قائمة الشركات من قاعدة البيانات...</span>
       </div>
 
-      <!-- شبكة الشركات -->
       <div class="companies-grid" *ngIf="!isLoading() && companies.length > 0">
         <div class="company-card" *ngFor="let company of companies" (click)="selectCompany(company)">
           <div class="company-info">
@@ -66,18 +54,9 @@
             </div>
           </div>
           <div class="stats-row">
-            <div class="stat-box">
-              <strong>{{ company.traineesCount || 0 }}</strong>
-              <span>متدرب</span>
-            </div>
-            <div class="stat-box">
-              <strong>{{ company.batchesCount || 0 }}</strong>
-              <span>دفعة</span>
-            </div>
-            <div class="stat-box">
-              <strong>{{ company.programsCount || 0 }}</strong>
-              <span>برنامج</span>
-            </div>
+            <div class="stat-box"><strong>{{ company.traineesCount || 0 }}</strong><span>متدرب</span></div>
+            <div class="stat-box"><strong>{{ company.batchesCount || 0 }}</strong><span>دفعة</span></div>
+            <div class="stat-box"><strong>{{ company.programsCount || 0 }}</strong><span>برنامج</span></div>
           </div>
           <div class="card-footer">
             عرض البرامج والتقارير ←
@@ -128,7 +107,7 @@
       </div>
     </div>
 
-    <!-- 1.3 تقرير نهاية الدفعة -->
+    <!-- 1.3 تقرير نهاية الدفعة التفصيلي -->
     <div *ngIf="currentView === 'batch-report'">
       <div class="top-nav-bar">
         <button class="back-btn" (click)="currentView = 'programs'">
@@ -213,9 +192,11 @@
             عرض الصفحة <strong>{{ report()?.pageNumber || 1 }}</strong> من <strong>{{ report()?.totalPages || 1 }}</strong>
           </div>
           <div class="pagination-compact-controls">
-            <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) <= 1" (click)="prevPage()">السابق</button>
+            <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) <= 1"
+              (click)="prevPage()">السابق</button>
             <span class="page-indicator">{{ report()?.pageNumber || 1 }} / {{ report()?.totalPages || 1 }}</span>
-            <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) >= (report()?.totalPages ?? 1)" (click)="nextPage()">التالي</button>
+            <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) >= (report()?.totalPages ?? 1)"
+              (click)="nextPage()">التالي</button>
           </div>
         </div>
       </div>
@@ -223,84 +204,206 @@
   </ng-container>
 
   <!-- =========================================================
-       القسم الثاني: تقارير المدربين (Trainer SubSection)
+       القسم الثاني: تقارير المدربين (جميع المدربين مع التصفح المرقم)
   ========================================================== -->
   <ng-container *ngIf="currentSubSection === 'trainer'">
-    <div class="header-section">
-      <h2>تقارير وتحليلات المدربين</h2>
-      <p>تقييمات الأداء، الساعات المنجزة، ونسبة رضا المتدربين</p>
-    </div>
 
-    <!-- بطاقات إحصائيات المدربين -->
-    <div class="summary-metrics-grid">
-      <div class="metric-card">
-        <span class="metric-value">{{ trainersTotalCount || trainers.length }}</span>
-        <span class="metric-label">إجمالي المدربين النشطين</span>
+    <!-- 2.1 شبكة المدربين من قاعدة البيانات -->
+    <div *ngIf="trainerView === 'grid'">
+      <div class="header-section">
+        <h2>تقارير وتحليلات المدربين المعتمدين</h2>
+        <p>عرض مؤشرات وتقييمات جميع المدربين المعتمدين في النظام (إجمالي {{ trainersTotalCount }} مدرباً)</p>
       </div>
-      <div class="metric-card">
-        <span class="metric-value" style="color: #f59e0b;">4.86 / 5.0</span>
-        <span class="metric-label">متوسط التقييم العام</span>
-      </div>
-      <div class="metric-card">
-        <span class="metric-value green">1,500+</span>
-        <span class="metric-label">ساعة تدريبية منجزة</span>
-      </div>
-    </div>
 
-    <!-- شبكة كروت المدربين -->
-    <div class="companies-grid" *ngIf="!isLoading() && trainers.length > 0">
-      <div class="company-card" *ngFor="let tr of trainers">
-        <div class="company-info">
-          <div class="logo-box" style="font-weight:bold; font-size: 1.2rem;">{{ tr.name?.charAt(0) || 'م' }}</div>
-          <div>
-            <h3>{{ tr.name }}</h3>
-            <span>{{ tr.specialization }}</span>
+      <!-- إحصائيات المدربين العامة -->
+      <div class="summary-metrics-grid">
+        <div class="metric-card">
+          <span class="metric-value">{{ trainersTotalCount }}</span>
+          <span class="metric-label">إجمالي المدربين المعتمدين في النظام</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value" style="color: #f59e0b;">★ 4.9 / 5.0</span>
+          <span class="metric-label">متوسط التقييم العام للمدربين</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value green">3,200+</span>
+          <span class="metric-label">إجمالي الساعات التدريبية المنجزة</span>
+        </div>
+      </div>
+
+      <!-- شبكة كروت المدربين -->
+      <div class="companies-grid" *ngIf="!isLoading() && trainers.length > 0">
+        <div class="company-card" *ngFor="let tr of trainers">
+          <div class="company-info">
+            <div class="logo-box">{{ tr.name?.charAt(0) || 'م' }}</div>
+            <div>
+              <h3>{{ tr.name }}</h3>
+              <span>{{ tr.specialization }}</span>
+            </div>
+          </div>
+          <div class="stats-row">
+            <div class="stat-box"><strong>★ {{ formatRating(tr.rating) }}</strong><span>التقييم</span></div>
+            <div class="stat-box"><strong>{{ tr.totalHours }}</strong><span>ساعة</span></div>
+            <div class="stat-box"><strong>{{ tr.batchesCount }}</strong><span>دفعات</span></div>
+          </div>
+          <div class="card-footer" (click)="openTrainerModal(tr)">
+            عرض تفاصيل المدرب ←
           </div>
         </div>
-        <div class="stats-row">
-          <div class="stat-box"><strong>{{ tr.rating }} ★</strong><span>التقييم</span></div>
-          <div class="stat-box"><strong>{{ tr.totalHours }}</strong><span>ساعة</span></div>
-          <div class="stat-box"><strong>{{ tr.batchesCount || 1 }}</strong><span>دفعات</span></div>
+      </div>
+
+      <!-- مؤشر التحميل -->
+      <div *ngIf="isLoading()" class="loading-state">
+        <div class="custom-spinner"></div>
+        <span>جاري تحميل بيانات المدربين من قاعدة البيانات...</span>
+      </div>
+
+      <!-- ⭐ شريط التصفح المرقم المتقدم لجميع المدربين ⭐ -->
+      <div class="compact-pagination-wrapper" *ngIf="!isLoading() && trainers.length > 0">
+        <div class="pagination-info">
+          عرض الصفحة <strong>{{ trainersCurrentPage }}</strong> من <strong>{{ trainersTotalPages }}</strong> (إجمالي {{ trainersTotalCount }} مدرباً مسجلاً)
         </div>
-        <div class="card-footer" (click)="openTrainerModal(tr)">
-          عرض تفاصيل تقييم المدرب ←
+        
+        <div class="pagination-compact-controls">
+          <button class="compact-nav-btn" [disabled]="trainersCurrentPage <= 1" (click)="prevTrainerPage()">
+            ← السابق
+          </button>
+
+          <!-- أزرار أرقام الصفحات المباشرة مع تمييز الصفحة النشطة باللون الأزرق -->
+          <button 
+            *ngFor="let page of getTrainerPageNumbers()" 
+            class="compact-page-number-btn" 
+            [class.active]="page === trainersCurrentPage"
+            (click)="goToTrainerPage(page)">
+            {{ page }}
+          </button>
+
+          <button class="compact-nav-btn" [disabled]="trainersCurrentPage >= trainersTotalPages" (click)="nextTrainerPage()">
+            التالي →
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- مؤشر التحميل -->
-    <div *ngIf="isLoading()" class="loading-state">
-      <div class="custom-spinner"></div>
-      <span>جاري تحميل بيانات المدربين...</span>
-    </div>
+    <!-- 2.2 صفحة تفاصيل المدرب الكاملة ملء الشاشة -->
+    <div *ngIf="trainerView === 'details'">
 
-    <!-- التصفح Pagination لقسم المدربين -->
-    <div class="compact-pagination-wrapper" *ngIf="!isLoading() && trainers.length > 0" style="margin-top: 24px;">
-      <div class="pagination-info">
-        عرض الصفحة <strong>{{ trainersCurrentPage }}</strong> من <strong>{{ trainersTotalPages }}</strong> (إجمالي {{ trainersTotalCount }} مدرب)
+      <!-- شريط العودة -->
+      <div class="top-nav-bar">
+        <button class="back-btn" (click)="backToTrainersList()">
+          ← العودة إلى قائمة المدربين
+        </button>
       </div>
-      <div class="pagination-compact-controls">
-        <button class="compact-nav-btn" [disabled]="trainersCurrentPage <= 1" (click)="prevTrainerPage()">السابق</button>
-        <span class="page-indicator">{{ trainersCurrentPage }} / {{ trainersTotalPages }}</span>
-        <button class="compact-nav-btn" [disabled]="trainersCurrentPage >= trainersTotalPages" (click)="nextTrainerPage()">التالي</button>
+
+      <!-- كارت المدرب الرئيسي -->
+      <div class="trainer-full-banner">
+        <div class="trainer-avatar-huge">{{ selectedTrainer?.name?.charAt(0) || 'م' }}</div>
+        <div class="trainer-banner-info">
+          <div class="banner-title-row">
+            <h2>{{ selectedTrainer?.name }}</h2>
+            <span class="status-pill level-excellent">{{ selectedTrainer?.status || 'معتمد ونشط' }}</span>
+          </div>
+          <p class="trainer-track-sub">
+            مسار التخصص: <strong>{{ selectedTrainer?.specialization }}</strong> · سنوات الخبرة: {{ selectedTrainer?.experienceYears }} سنوات · معرف المدرب: #{{ selectedTrainer?.id }}
+          </p>
+        </div>
       </div>
+
+      <!-- إحصائيات تقييم المتدربين للمدرب -->
+      <div class="summary-metrics-grid">
+        <div class="metric-card">
+          <!-- ✅ التقييم هنا نظيف ومختصر بدون أي رقم طويل -->
+          <span class="metric-value star" style="color: #f59e0b;">★ {{ formatRating(selectedTrainer?.rating) }} / 5.0</span>
+          <span class="metric-label">متوسط تقييم المتدربين العام للمدرب</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value green">98%</span>
+          <span class="metric-label">نسبة رضا المتدربين عن المدرب</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value blue">{{ selectedTrainer?.totalHours }} ساعة</span>
+          <span class="metric-label">إجمالي الساعات التدريبية المنجزة</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value">{{ selectedTrainer?.batchesCount || 1 }} دفعات</span>
+          <span class="metric-label">عدد الدفعات التي دربها</span>
+        </div>
+      </div>
+
+      <!-- نبذة وسيرة المدرب -->
+      <div class="table-card" style="margin-bottom: 24px;">
+        <h3 class="section-card-title">النبذة المهنية للمدرب</h3>
+        <p class="trainer-bio-text">{{ selectedTrainer?.biography }}</p>
+      </div>
+
+      <!-- جدول تفصيلي كامل: تقييمات المتدربين لهذا المدرب -->
+      <div class="table-card">
+        <div class="section-badge-header">
+          <div>
+            <h3 class="section-card-title" style="margin-bottom: 4px;">تقييم المتدربين للمدرب (سجل استبيانات المتدربين)</h3>
+            <p class="section-desc-hint">التقييمات المباشرة الواردة من المتدربين حول جودة الشرح والتفاعل للمدرب {{ selectedTrainer?.name }}</p>
+          </div>
+          <span class="status-pill level-excellent">إجمالي التقييمات: {{ selectedTrainer?.allReviews?.length || 0 }} متدربين</span>
+        </div>
+
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>المتدرب</th>
+              <th>الشركة والمسار والدفعة</th>
+              <th>وضوح الشرح</th>
+              <th>التفاعل والدعم</th>
+              <th>التقييم الإجمالي</th>
+              <th>رأي وملاحظة المتدرب عن المدرب</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let rev of selectedTrainer?.traineeReviews">
+              <td class="bold">{{ rev.traineeName }}</td>
+              <td>
+                <div style="font-weight: 700; color: #0D1C8C;">🏢 {{ rev.companyName }}</div>
+                <div style="font-size: 12.5px; color: #334155; margin: 2px 0;">
+                  مسار: <strong>{{ rev.track }}</strong> ({{ rev.major }})
+                </div>
+                <small style="color: #64748b; font-weight: 600;">{{ rev.batchName }}</small>
+              </td>
+              <td><span class="eval-score green">5 / {{ rev.clarityScore }}</span></td>
+              <td><span class="eval-score blue">5 / {{ rev.supportScore }}</span></td>
+              <td><span class="star-rating">★ {{ rev.rating }}.0</span></td>
+              <td><span class="trainee-feedback-quote">"{{ rev.comment }}"</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- تصفح تقييمات المتدربين داخل المدرب المختار -->
+        <div class="compact-pagination-wrapper" *ngIf="(selectedTrainer?.allReviews?.length || 0) > trainerReviewsPageSize">
+          <div class="pagination-info">
+            صفحة تقييمات المتدربين: <strong>{{ trainerReviewsPage }}</strong>
+          </div>
+          <div class="pagination-compact-controls">
+            <button class="compact-nav-btn" [disabled]="trainerReviewsPage <= 1" (click)="prevTrainerReviewPage()">السابق</button>
+            <button class="compact-nav-btn" (click)="nextTrainerReviewPage()">التالي</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </ng-container>
 
   <!-- =========================================================
-       القسم الثالث: تقارير المتدربين (Trainee SubSection)
+       القسم الثالث: تقارير المتدربين (مع تقييم ورأي المدرب)
   ========================================================== -->
   <ng-container *ngIf="currentSubSection === 'trainee'">
     <div class="header-section">
       <h2>سجل ونتائج المتدربين الشامل</h2>
-      <p>كشف أداء المتدربين في كافة الدفعات والمسارات</p>
+      <p>كشف أداء المتدربين وتقييمات المدربين المشرفين</p>
     </div>
 
     <!-- بطاقات إحصائيات المتدربين -->
     <div class="summary-metrics-grid">
       <div class="metric-card">
         <span class="metric-value">{{ traineesTotalCount || traineesList.length }}</span>
-        <span class="metric-label">إجمالي المتدربين</span>
+        <span class="metric-label">إجمالي المتدربين المسجلين</span>
       </div>
       <div class="metric-card">
         <span class="metric-value green">92%</span>
@@ -312,42 +415,61 @@
       </div>
     </div>
 
+    <!-- جدول تقارير المتدربين (شاملاً تقييم المدرب المباشر ورأيه) -->
     <div class="table-card">
+      <div class="section-badge-header" style="margin-bottom: 16px;">
+        <div>
+          <h3 class="section-card-title" style="margin-bottom: 4px;">كشف نتائج المتدربين وتقييمات المدربين المشرفين</h3>
+          <p class="section-desc-hint">يعرض الدرجات الفنية والسلوكية وملاحظات وتوصيات المدرب المعتمد لكل متدرب</p>
+        </div>
+        <span class="status-pill level-excellent">إجمالي المتدربين: {{ traineesTotalCount }}</span>
+      </div>
+
       <table class="custom-table">
         <thead>
           <tr>
             <th>المتدرب</th>
-            <th>الشركة</th>
-            <th>التخصص</th>
-            <th>الحضور</th>
-            <th>التقني</th>
-            <th>السلوكي</th>
-            <th>المستوى</th>
+            <th>الشركة والتخصص</th>
+            <th>المدرب المشرف</th>
+            <th>تقييم المدرب للمتدرب</th>
+            <th>رأي وملاحظة المدرب في المتدرب</th>
+            <th>المستوى العام</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let tr of traineesList">
+            <!-- 1. اسم المتدرب -->
             <td class="bold">{{ tr.traineeName }}</td>
-            <td>{{ tr.companyName }}</td>
-            <td>{{ tr.major }}</td>
+
+            <!-- 2. التخصص والشركة -->
             <td>
-              <span>{{ tr.attendanceRate }}%</span>
-              <div class="progress-bar">
-                <div class="fill green" [style.width.%]="tr.attendanceRate"></div>
+              <div style="font-weight: 700; color: #0D1C8C;">{{ tr.major }}</div>
+              <small style="color: #64748b;">{{ tr.companyName }}</small>
+            </td>
+
+            <!-- 3. اسم المدرب المشرف المعتمد -->
+            <td>
+              <span class="trainer-tag">👨‍🏫 {{ tr.assignedTrainer }}</span>
+            </td>
+
+            <!-- 4. درجات تقييم المدرب لهذا المتدرب (مع مسافات وألوان واضحة) -->
+            <td>
+              <div class="trainer-eval-box">
+                <span class="eval-chip green">التقني: {{ tr.trainerToTrainee?.technicalScore }}%</span>
+                <span class="eval-chip blue">السلوكي: {{ tr.trainerToTrainee?.behavioralScore }}%</span>
+                <span class="eval-chip gray">الحضور: {{ tr.trainerToTrainee?.attendanceRate }}%</span>
               </div>
             </td>
+
+            <!-- 5. خانة تقييم ورأي المدرب في هذا المتدرب -->
             <td>
-              <span>{{ tr.technicalScore }}%</span>
-              <div class="progress-bar">
-                <div class="fill green" [style.width.%]="tr.technicalScore"></div>
+              <div class="trainer-feedback-cell">
+                <p class="feedback-quote">"{{ tr.trainerToTrainee?.notes }}"</p>
+                <span class="rec-badge">✓ {{ tr.trainerToTrainee?.recommendation }}</span>
               </div>
             </td>
-            <td>
-              <span>{{ tr.behavioralScore }}%</span>
-              <div class="progress-bar">
-                <div class="fill blue" [style.width.%]="tr.behavioralScore"></div>
-              </div>
-            </td>
+
+            <!-- 6. المستوى العام -->
             <td>
               <span class="status-pill" [ngClass]="levelClass(tr.level)">{{ tr.level }}</span>
             </td>
@@ -361,7 +483,7 @@
         <span>جاري تحميل بيانات المتدربين...</span>
       </div>
 
-      <!-- التصفح Pagination لقسم المتدربين -->
+      <!-- أزرار التصفح Pagination -->
       <div class="compact-pagination-wrapper" *ngIf="!isLoading() && traineesList.length > 0">
         <div class="pagination-info">
           عرض الصفحة <strong>{{ traineesCurrentPage }}</strong> من <strong>{{ traineesTotalPages }}</strong> (إجمالي {{ traineesTotalCount }} متدرب)
@@ -376,4 +498,3 @@
   </ng-container>
 
 </div>
-
