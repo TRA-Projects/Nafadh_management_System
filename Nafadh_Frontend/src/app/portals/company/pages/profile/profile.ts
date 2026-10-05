@@ -62,6 +62,7 @@ export class CompanyProfile implements OnInit {
 
   uploadingCover = signal(false);
   uploadingLogo = signal(false);
+  logoFailed = signal(false);
   coverUploadError = signal(false);
   logoUploadError = signal(false);
   readonly maxImageSizeMb = 5;

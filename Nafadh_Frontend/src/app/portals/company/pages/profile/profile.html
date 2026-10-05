@@ -24,8 +24,8 @@
     <div class="company-profile-glow"></div>
     <div class="nfd-card company-profile-hero-card" style="padding:0;overflow:hidden;margin-top:16px;border-radius:22px">
       <div class="company-profile-cover">
-        @if (c.logoUrl) {
-          <img [src]="c.logoUrl" alt="غلاف {{ c.companyName }}" class="company-profile-cover-img" />
+        @if (c.logoUrl && !logoFailed()) {
+          <img [src]="c.logoUrl" alt="غلاف {{ c.companyName }}" class="company-profile-cover-img" (error)="logoFailed.set(true)" />
         }
         <div class="company-profile-cover-overlay"></div>
       </div>
@@ -33,8 +33,8 @@
       <div class="company-profile-header">
         <div class="company-profile-logo-wrap">
           <div class="company-profile-logo">
-            @if (c.logoUrl) {
-              <img [src]="c.logoUrl" alt="شعار {{ c.companyName }}" />
+            @if (c.logoUrl && !logoFailed()) {
+              <img [src]="c.logoUrl" alt="شعار {{ c.companyName }}" (error)="logoFailed.set(true)" />
             } @else {
               <span>{{ (c.companyName || 'ش').charAt(0) }}</span>
             }
