@@ -24,38 +24,20 @@
     <div class="company-profile-glow"></div>
     <div class="nfd-card company-profile-hero-card" style="padding:0;overflow:hidden;margin-top:16px;border-radius:22px">
       <div class="company-profile-cover">
-        <img [src]="c.coverImageUrl || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzOLJGVaUAdS6gRAHcCEFDKqSenVyJ0ihHQbbbnZWFLRbT4_8ix68D7ow&s=10'" alt="غلاف {{ c.companyName }}" class="company-profile-cover-img" />
-        <div class="company-profile-cover-overlay"></div>
-
-        @if (uploadingCover()) {
-          <div class="company-profile-media-loading">
-            <span class="company-profile-spinner"></span>
-            <span>جارِ رفع الغلاف...</span>
-          </div>
+        @if (c.logoUrl && !logoFailed()) {
+          <img [src]="c.logoUrl" alt="غلاف {{ c.companyName }}" class="company-profile-cover-img" (error)="logoFailed.set(true)" />
         }
-
-        <div class="company-profile-cover-actions">
-          @if (coverUploadError()) {
-            <span class="company-profile-upload-error">تعذر رفع الصورة، تحقق من النوع والحجم (حتى {{ maxImageSizeMb }}MB)</span>
-          }
-          @if (c.coverImageUrl) {
-            <button type="button" class="nfd-btn secondary company-profile-remove-btn" (click)="removeCoverImage()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-              إزالة
-            </button>
-          }
-          <input [id]="coverInputId" type="file" accept="image/*" hidden (change)="onCoverSelected($event)" />
-          <label [for]="coverInputId" class="nfd-btn secondary company-profile-upload-btn" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z"/><circle cx="12" cy="13" r="3.5"/></svg>
-            تغيير الغلاف
-          </label>
-        </div>
+        <div class="company-profile-cover-overlay"></div>
       </div>
 
       <div class="company-profile-header">
         <div class="company-profile-logo-wrap">
           <div class="company-profile-logo">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJsUyJnAI3l5HKgmuhL8SQoS_633l4lx1WZ2250dcVUA&s=10" alt="شعار {{ c.companyName }}" />
+            @if (c.logoUrl && !logoFailed()) {
+              <img [src]="c.logoUrl" alt="شعار {{ c.companyName }}" (error)="logoFailed.set(true)" />
+            } @else {
+              <span>{{ (c.companyName || 'ش').charAt(0) }}</span>
+            }
           </div>
         </div>
 
@@ -252,7 +234,7 @@
       <div class="nfd-card">
         <h3 style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
           <span class="section-title">الطاقة الاستيعابية</span>
-          <span class="nfd-muted">المستخدم: {{ usedCapacityValue() }} متدرب</span>
+          <a class="nfd-btn ghost" routerLink="/company/trainees" style="text-decoration:none;">المتدربون: {{ usedCapacityValue() }} متدرب</a>
         </h3>
 
         <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;margin-top:8px;">
