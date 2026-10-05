@@ -603,6 +603,201 @@
 
     }
 
+
+    <!-- =====================================================
+         معلومات العنوان
+    ====================================================== -->
+
+    <div
+      style="
+        margin-top: 20px;
+        border-top: 1px solid #f1f5f9;
+        padding-top: 12px;
+      "
+    >
+
+      <span
+        style="
+          display: block;
+          font-size: 12px;
+          font-weight: 700;
+          color: #475569;
+          margin-bottom: 12px;
+        "
+      >
+        معلومات العنوان
+      </span>
+
+
+      <!-- المحافظة -->
+
+      <label
+        style="
+          display: block;
+          font-size: 12px;
+          font-weight: 600;
+          margin: 12px 0 6px;
+          color: #64748b;
+        "
+      >
+        المحافظة
+      </label>
+
+
+      @if (editing()) {
+
+        <input
+          class="nfd-input"
+          [(ngModel)]="$any(t).governorate"
+          type="text"
+          style="
+            width: 100%;
+            text-align: center;
+            background: #ffffff;
+            border: 1px solid #0284c7;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 13px;
+            color: #1e293b;
+            outline: none;
+          "
+        />
+
+      }
+      @else {
+
+        <input
+          [value]="$any(t).governorate || ''"
+          readonly
+          style="
+            width: 100%;
+            text-align: center;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 13px;
+            color: #1e293b;
+            outline: none;
+          "
+        />
+
+      }
+
+
+      <!-- الولاية -->
+
+      <label
+        style="
+          display: block;
+          font-size: 12px;
+          font-weight: 600;
+          margin: 12px 0 6px;
+          color: #64748b;
+        "
+      >
+        الولاية
+      </label>
+
+
+      @if (editing()) {
+
+        <input
+          class="nfd-input"
+          [(ngModel)]="$any(t).wilaya"
+          type="text"
+          style="
+            width: 100%;
+            text-align: center;
+            background: #ffffff;
+            border: 1px solid #0284c7;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 13px;
+            color: #1e293b;
+            outline: none;
+          "
+        />
+
+      }
+      @else {
+
+        <input
+          [value]="$any(t).wilaya || ''"
+          readonly
+          style="
+            width: 100%;
+            text-align: center;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 13px;
+            color: #1e293b;
+            outline: none;
+          "
+        />
+
+      }
+
+
+      <!-- القرية / المنطقة -->
+
+      <label
+        style="
+          display: block;
+          font-size: 12px;
+          font-weight: 600;
+          margin: 12px 0 6px;
+          color: #64748b;
+        "
+      >
+        القرية / المنطقة
+      </label>
+
+
+      @if (editing()) {
+
+        <input
+          class="nfd-input"
+          [(ngModel)]="$any(t).village"
+          type="text"
+          style="
+            width: 100%;
+            text-align: center;
+            background: #ffffff;
+            border: 1px solid #0284c7;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 13px;
+            color: #1e293b;
+            outline: none;
+          "
+        />
+
+      }
+      @else {
+
+        <input
+          [value]="$any(t).village || ''"
+          readonly
+          style="
+            width: 100%;
+            text-align: center;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 13px;
+            color: #1e293b;
+            outline: none;
+          "
+        />
+
+      }
+
+    </div>
+
   </div>
 
 
@@ -1022,6 +1217,318 @@
               padding: 10px;
               font-size: 13px;
               color: #1e293b;
+            "
+          />
+
+        }
+
+      </div>
+
+
+      <!-- =====================================================
+           الحساب البنكي
+      ====================================================== -->
+
+      <div
+        style="
+          margin-top: 20px;
+          border-top: 1px solid #f1f5f9;
+          padding-top: 12px;
+        "
+      >
+
+        <span
+          style="
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 12px;
+          "
+        >
+          الحساب البنكي
+        </span>
+
+
+        <!-- اسم البنك -->
+
+        <label
+          style="
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 12px 0 6px;
+            color: #64748b;
+          "
+        >
+          اسم البنك
+        </label>
+
+
+        @if (editing()) {
+
+          <input
+            class="nfd-input"
+            [(ngModel)]="$any(t).bankName"
+            type="text"
+            style="
+              width: 100%;
+              text-align: center;
+              background: #ffffff;
+              border: 1px solid #0284c7;
+              border-radius: 8px;
+              padding: 10px;
+              font-size: 13px;
+              color: #1e293b;
+              outline: none;
+            "
+          />
+
+        }
+        @else {
+
+          <input
+            [value]="$any(t).bankName || ''"
+            readonly
+            style="
+              width: 100%;
+              text-align: center;
+              background: #ffffff;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 10px;
+              font-size: 13px;
+              color: #1e293b;
+              outline: none;
+            "
+          />
+
+        }
+
+
+        <!-- اسم صاحب الحساب -->
+
+        <label
+          style="
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 12px 0 6px;
+            color: #64748b;
+          "
+        >
+          اسم صاحب الحساب
+        </label>
+
+
+        @if (editing()) {
+
+          <input
+            class="nfd-input"
+            [(ngModel)]="$any(t).accountHolderName"
+            type="text"
+            style="
+              width: 100%;
+              text-align: center;
+              background: #ffffff;
+              border: 1px solid #0284c7;
+              border-radius: 8px;
+              padding: 10px;
+              font-size: 13px;
+              color: #1e293b;
+              outline: none;
+            "
+          />
+
+        }
+        @else {
+
+          <input
+            [value]="$any(t).accountHolderName || ''"
+            readonly
+            style="
+              width: 100%;
+              text-align: center;
+              background: #ffffff;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 10px;
+              font-size: 13px;
+              color: #1e293b;
+              outline: none;
+            "
+          />
+
+        }
+
+
+        <!-- رقم الحساب -->
+
+        <label
+          style="
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 12px 0 6px;
+            color: #64748b;
+          "
+        >
+          رقم الحساب
+        </label>
+
+
+        @if (editing()) {
+
+          <input
+            class="nfd-input"
+            [(ngModel)]="$any(t).accountNumber"
+            type="text"
+            dir="ltr"
+            style="
+              width: 100%;
+              text-align: center;
+              background: #ffffff;
+              border: 1px solid #0284c7;
+              border-radius: 8px;
+              padding: 10px;
+              font-size: 13px;
+              color: #1e293b;
+              outline: none;
+            "
+          />
+
+        }
+        @else {
+
+          <input
+            [value]="$any(t).accountNumber || ''"
+            readonly
+            dir="ltr"
+            style="
+              width: 100%;
+              text-align: center;
+              background: #ffffff;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 10px;
+              font-size: 13px;
+              color: #1e293b;
+              outline: none;
+            "
+          />
+
+        }
+
+
+        <!-- IBAN -->
+
+        <label
+          style="
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 12px 0 6px;
+            color: #64748b;
+          "
+        >
+          IBAN
+        </label>
+
+
+        @if (editing()) {
+
+          <input
+            class="nfd-input"
+            [(ngModel)]="$any(t).iban"
+            type="text"
+            dir="ltr"
+            placeholder="OMXXXXXXXXXXXXXXXXXXXXXXXX"
+            style="
+              width: 100%;
+              text-align: center;
+              background: #ffffff;
+              border: 1px solid #0284c7;
+              border-radius: 8px;
+              padding: 10px;
+              font-size: 13px;
+              color: #1e293b;
+              outline: none;
+            "
+          />
+
+        }
+        @else {
+
+          <input
+            [value]="$any(t).iban || ''"
+            readonly
+            dir="ltr"
+            style="
+              width: 100%;
+              text-align: center;
+              background: #ffffff;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 10px;
+              font-size: 13px;
+              color: #1e293b;
+              outline: none;
+            "
+          />
+
+        }
+
+
+        <!-- الفرع -->
+
+        <label
+          style="
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 12px 0 6px;
+            color: #64748b;
+          "
+        >
+          الفرع
+        </label>
+
+
+        @if (editing()) {
+
+          <input
+            class="nfd-input"
+            [(ngModel)]="$any(t).bankBranch"
+            type="text"
+            style="
+              width: 100%;
+              text-align: center;
+              background: #ffffff;
+              border: 1px solid #0284c7;
+              border-radius: 8px;
+              padding: 10px;
+              font-size: 13px;
+              color: #1e293b;
+              outline: none;
+            "
+          />
+
+        }
+        @else {
+
+          <input
+            [value]="$any(t).bankBranch || ''"
+            readonly
+            style="
+              width: 100%;
+              text-align: center;
+              background: #ffffff;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 10px;
+              font-size: 13px;
+              color: #1e293b;
+              outline: none;
             "
           />
 

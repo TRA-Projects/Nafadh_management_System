@@ -31,6 +31,22 @@ interface TraineeUpdateDto {
 
   academicLevel?: string;
 
+  governorate?: string;
+
+  wilaya?: string;
+
+  village?: string;
+
+  bankName?: string;
+
+  accountHolderName?: string;
+
+  accountNumber?: string;
+
+  iban?: string;
+
+  bankBranch?: string;
+
 }
 
 
@@ -689,6 +705,46 @@ export class TraineeProfile implements OnInit {
       linkedInUrl:
         t.linkedInUrl
           ?.toString()
+          .trim() || '',
+
+      governorate:
+        t.governorate
+          ?.toString()
+          .trim() || '',
+
+      wilaya:
+        t.wilaya
+          ?.toString()
+          .trim() || '',
+
+      village:
+        t.village
+          ?.toString()
+          .trim() || '',
+
+      bankName:
+        t.bankName
+          ?.toString()
+          .trim() || '',
+
+      accountHolderName:
+        t.accountHolderName
+          ?.toString()
+          .trim() || '',
+
+      accountNumber:
+        t.accountNumber
+          ?.toString()
+          .trim() || '',
+
+      iban:
+        t.iban
+          ?.toString()
+          .trim() || '',
+
+      bankBranch:
+        t.bankBranch
+          ?.toString()
           .trim() || ''
 
     };
@@ -744,7 +800,31 @@ export class TraineeProfile implements OnInit {
         original.gitHubUrl ||
 
       current.linkedInUrl !==
-        original.linkedInUrl
+        original.linkedInUrl ||
+
+      current.governorate !==
+        original.governorate ||
+
+      current.wilaya !==
+        original.wilaya ||
+
+      current.village !==
+        original.village ||
+
+      current.bankName !==
+        original.bankName ||
+
+      current.accountHolderName !==
+        original.accountHolderName ||
+
+      current.accountNumber !==
+        original.accountNumber ||
+
+      current.iban !==
+        original.iban ||
+
+      current.bankBranch !==
+        original.bankBranch
 
     );
 
@@ -1072,6 +1152,30 @@ export class TraineeProfile implements OnInit {
 
             academicLevel:
               t.academicLevel ?? '',
+
+            governorate:
+              (t as any).governorate ?? '',
+
+            wilaya:
+              (t as any).wilaya ?? '',
+
+            village:
+              (t as any).village ?? '',
+
+            bankName:
+              (t as any).bankName ?? '',
+
+            accountHolderName:
+              (t as any).accountHolderName ?? '',
+
+            accountNumber:
+              (t as any).accountNumber ?? '',
+
+            iban:
+              (t as any).iban ?? '',
+
+            bankBranch:
+              (t as any).bankBranch ?? '',
 
             profileImageUrl
 
@@ -1490,7 +1594,31 @@ export class TraineeProfile implements OnInit {
         currentProfile.linkedInUrl,
 
       academicLevel:
-        currentProfile.academicLevel
+        currentProfile.academicLevel,
+
+      governorate:
+        currentProfile.governorate,
+
+      wilaya:
+        currentProfile.wilaya,
+
+      village:
+        currentProfile.village,
+
+      bankName:
+        currentProfile.bankName,
+
+      accountHolderName:
+        currentProfile.accountHolderName,
+
+      accountNumber:
+        currentProfile.accountNumber,
+
+      iban:
+        currentProfile.iban,
+
+      bankBranch:
+        currentProfile.bankBranch
 
     };
 
@@ -1614,6 +1742,70 @@ export class TraineeProfile implements OnInit {
                 ?.academicLevel ??
               currentData
                 ?.academicLevel ??
+              '',
+
+
+            governorate:
+              updatedTrainee
+                ?.governorate ??
+              currentData
+                ?.governorate ??
+              '',
+
+
+            wilaya:
+              updatedTrainee
+                ?.wilaya ??
+              currentData
+                ?.wilaya ??
+              '',
+
+
+            village:
+              updatedTrainee
+                ?.village ??
+              currentData
+                ?.village ??
+              '',
+
+
+            bankName:
+              updatedTrainee
+                ?.bankName ??
+              currentData
+                ?.bankName ??
+              '',
+
+
+            accountHolderName:
+              updatedTrainee
+                ?.accountHolderName ??
+              currentData
+                ?.accountHolderName ??
+              '',
+
+
+            accountNumber:
+              updatedTrainee
+                ?.accountNumber ??
+              currentData
+                ?.accountNumber ??
+              '',
+
+
+            iban:
+              updatedTrainee
+                ?.iban ??
+              currentData
+                ?.iban ??
+              '',
+
+
+            bankBranch:
+              updatedTrainee
+                ?.bankBranch ??
+              currentData
+                ?.bankBranch ??
               '',
 
 
@@ -2014,9 +2206,11 @@ export class TraineeProfile implements OnInit {
       null
     );
 
+
     this.gitHubError.set(
       null
     );
+
 
     this.linkedInError.set(
       null
