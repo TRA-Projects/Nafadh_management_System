@@ -24,12 +24,27 @@ export interface RoleDto {
   displayName?: string;
 }
 
-// قائمة الأدوار الافتراضية لمنع فراغ القائمة المنسدلة في حال تعثر استدعاء الـ API
+// قائمة الأدوار الافتراضية لضمان ظهور الخيارات في حال تعثر استدعاء الـ API
 export const DEFAULT_ROLES: RoleDto[] = [
   { roleId: 1, roleName: 'هيئة', displayName: 'Admin' },
   { roleId: 2, roleName: 'شركة', displayName: 'CompanySupervisor' },
   { roleId: 3, roleName: 'مدرب', displayName: 'Trainer' },
   { roleId: 4, roleName: 'متدرب', displayName: 'Trainee' }
+];
+
+export interface PresetAvatar {
+  id: string;
+  name: string;
+  url: string;
+}
+
+export const PRESET_AVATARS: PresetAvatar[] = [
+  { id: 'p1', name: 'مسؤول هيئة', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80' },
+  { id: 'p2', name: 'مشرف شركة', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80' },
+  { id: 'p3', name: 'مدرب أكاديمي', url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80' },
+  { id: 'p4', name: 'مدربة / مشرفة', url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80' },
+  { id: 'p5', name: 'متدرب تقني', url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80' },
+  { id: 'p6', name: 'متدرب حاسب', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80' }
 ];
 
 @Component({
@@ -44,7 +59,6 @@ export class AdminUsers implements OnInit {
   // USERS
   // =========================================================
   users = signal<UserResponseDto[]>([]);
-  // تم تزويد rolesList بالأدوار الافتراضية فوراً لضمان ظهور الخيارات دائماً
   rolesList = signal<RoleDto[]>(DEFAULT_ROLES);
   roleFilter = signal<string>('ALL');
   loadingUsers = signal<boolean>(true);
@@ -171,6 +185,12 @@ export class AdminUsers implements OnInit {
   isCreateModalOpen = false;
   isEditModalOpen = false;
   isResetPasswordModalOpen = false;
+
+  presetAvatars = PRESET_AVATARS;
+  createAvatarMode = signal<'file' | 'url' | 'presets'>('file');
+  createAvatarFileName = signal<string>('');
+  editAvatarMode = signal<'file' | 'url' | 'presets'>('file');
+  editAvatarFileName = signal<string>('');
 
   // =========================================================
   // CREATE USER
@@ -363,6 +383,86 @@ export class AdminUsers implements OnInit {
     return `https://api.dicebear.com/7.x/initials/svg?seed=${seed}&backgroundType=gradientLinear&fontFamily=Arial&fontWeight=600`;
   }
 
+  setCreateAvatarMode(mode: 'file' | 'url' | 'presets'): void {
+    this.createAvatarMode.set(mode);
+  }
+
+  setEditAvatarMode(mode: 'file' | 'url' | 'presets'): void {
+    this.editAvatarMode.set(mode);
+  }
+
+  handleCreateFileSelected(event: any): void {
+    const file = event?.target?.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('حجم الصورة يجب أن لا يتجاوز 5 ميجابايت');
+        return;
+      }
+      this.createAvatarFileName.set(`${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.newUser.avatarUrl = reader.result as string;
+        this.cdr.detectChanges();
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  handleEditFileSelected(event: any): void {
+    const file = event?.target?.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('حجم الصورة يجب أن لا يتجاوز 5 ميجابايت');
+        return;
+      }
+      this.editAvatarFileName.set(`${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.selectedUser.avatarUrl = reader.result as string;
+        this.cdr.detectChanges();
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  selectCreatePreset(url: string, name: string): void {
+    this.newUser.avatarUrl = url;
+    this.createAvatarFileName.set(`صورة رمزية: ${name}`);
+    this.cdr.detectChanges();
+  }
+
+  selectEditPreset(url: string, name: string): void {
+    this.selectedUser.avatarUrl = url;
+    this.editAvatarFileName.set(`صورة رمزية: ${name}`);
+    this.cdr.detectChanges();
+  }
+
+  generateCreateInitialsAvatar(): void {
+    const seed = encodeURIComponent((this.newUser.fullName || 'User').trim() + '-' + Date.now());
+    this.newUser.avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${seed}&backgroundType=gradientLinear&fontFamily=Arial&fontWeight=600`;
+    this.createAvatarFileName.set('رمز تلقائي مشتق من الاسم');
+    this.cdr.detectChanges();
+  }
+
+  generateEditInitialsAvatar(): void {
+    const seed = encodeURIComponent((this.selectedUser.fullName || 'User').trim() + '-' + Date.now());
+    this.selectedUser.avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${seed}&backgroundType=gradientLinear&fontFamily=Arial&fontWeight=600`;
+    this.editAvatarFileName.set('رمز تلقائي مشتق من الاسم');
+    this.cdr.detectChanges();
+  }
+
+  removeCreateAvatar(): void {
+    this.newUser.avatarUrl = '';
+    this.createAvatarFileName.set('');
+    this.cdr.detectChanges();
+  }
+
+  removeEditAvatar(): void {
+    this.selectedUser.avatarUrl = '';
+    this.editAvatarFileName.set('');
+    this.cdr.detectChanges();
+  }
+
   openCreateModal(): void {
     this.createErrorMsg = '';
     this.resetCreateTouched();
@@ -388,6 +488,8 @@ export class AdminUsers implements OnInit {
       confirmPassword: '',
       avatarUrl: ''
     };
+    this.createAvatarFileName.set('');
+    this.createAvatarMode.set('file');
   }
 
   resetCreateTouched(): void {
@@ -489,10 +591,21 @@ export class AdminUsers implements OnInit {
     });
   }
 
-  openEditModal(user: UserResponseDto): void {
+  openEditModal(user: any): void {
     this.selectedUser = { ...user };
     this.editTouched = { fullName: false, email: false };
     this.editErrorMsg = '';
+    this.editAvatarFileName.set('');
+    const avatar = (user as any)?.avatarUrl || '';
+    this.editAvatarMode.set(
+      avatar
+        ? String(avatar).startsWith('data:')
+          ? 'file'
+          : this.presetAvatars.some((p) => p.url === avatar)
+          ? 'presets'
+          : 'url'
+        : 'file'
+    );
     this.isEditModalOpen = true;
     this.cdr.detectChanges();
   }
@@ -500,6 +613,7 @@ export class AdminUsers implements OnInit {
   closeEditModal(): void {
     this.isEditModalOpen = false;
     this.editErrorMsg = '';
+    this.editAvatarFileName.set('');
     this.editTouched = { fullName: false, email: false };
     this.cdr.detectChanges();
   }
@@ -676,7 +790,7 @@ export class AdminUsers implements OnInit {
 
   isValidEmail(email: string): boolean {
     if (!email) return false;
-    const emailPattern = /^[^s@]+@[^s@]+.[^s@]{2,}$/;
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     return emailPattern.test(email.trim());
   }
 

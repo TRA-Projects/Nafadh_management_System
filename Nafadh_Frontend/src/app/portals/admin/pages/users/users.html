@@ -186,10 +186,70 @@
       }
     </div>
 
-    <!-- رابط الصورة الشخصية (اختياري) -->
-    <div class="form-group">
-      <label>رابط الصورة الشخصية الخاصة (اختياري)</label>
-      <input type="url" class="nfd-input" [(ngModel)]="newUser.avatarUrl" placeholder="https://example.com/avatar.jpg">
+    <!-- بطاقة الصورة الشخصية مع خيارات الرفع والرابط ومعرض الصور الجاهزة -->
+    <div class="avatar-section-wrapper">
+      <div class="avatar-preview-box">
+        <div class="avatar-preview-sizes">
+          <img class="avatar-preview-img-lg" [src]="getAvatarUrl(newUser)" alt="معاينة الصورة" />
+          <img class="avatar-preview-img-sm" [src]="getAvatarUrl(newUser)" alt="معاينة الجدول" />
+        </div>
+        <div class="avatar-preview-info">
+          <div class="avatar-preview-title">الصورة الشخصية للحساب</div>
+          <div class="avatar-preview-sub">
+            {{ newUser.avatarUrl ? (createAvatarFileName() || 'تم تعيين صورة خاصة') : 'صورة رمزية تلقائية حسب الاسم' }}
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <button type="button" class="btn-action" style="padding: 2px 8px; font-size: 0.75rem;" (click)="generateCreateInitialsAvatar()">
+              ✨ بالاسم
+            </button>
+            @if (newUser.avatarUrl) {
+              <button type="button" class="avatar-remove-btn" (click)="removeCreateAvatar()">
+                إزالة الصورة
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- قائمة منسدلة مع سهم لاختيار طريقة تحديد الصورة -->
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label>طريقة تحديد الصورة</label>
+        <select class="nfd-input avatar-type-select" [ngModel]="createAvatarMode()" (ngModelChange)="setCreateAvatarMode($event)">
+          <option value="file">📁 رفع صورة من الجهاز</option>
+          <option value="url">🔗 إدخال رابط صورة (URL)</option>
+          <option value="presets">🎨 اختيار صورة رمزية جاهزة</option>
+        </select>
+      </div>
+
+      @if (createAvatarMode() === 'file') {
+        <div>
+          <label for="createFilePicker" class="avatar-file-drop">
+            <span>اضغط هنا لاختيار ملف من جهازك</span>
+            <small>يدعم JPG, PNG, WEBP, SVG حتى 5MB</small>
+          </label>
+          <input id="createFilePicker" type="file" accept="image/*" style="display: none;" (change)="handleCreateFileSelected($event)">
+          @if (createAvatarFileName()) {
+            <div class="avatar-file-loaded-info">
+              <span>✓ {{ createAvatarFileName() }}</span>
+              <button type="button" style="color: #b91c1c; background: transparent; border: none; cursor: pointer;" (click)="removeCreateAvatar()">إلغاء</button>
+            </div>
+          }
+        </div>
+      }
+
+      @if (createAvatarMode() === 'url') {
+        <input type="url" class="nfd-input" [(ngModel)]="newUser.avatarUrl" placeholder="https://example.com/avatar.jpg" dir="ltr">
+      }
+
+      @if (createAvatarMode() === 'presets') {
+        <div class="avatar-presets-grid">
+          @for (preset of presetAvatars; track preset.id) {
+            <button type="button" class="avatar-preset-item" [class.selected]="newUser.avatarUrl === preset.url" (click)="selectCreatePreset(preset.url, preset.name)">
+              <img [src]="preset.url" [alt]="preset.name" />
+            </button>
+          }
+        </div>
+      }
     </div>
 
     <!-- الدور -->
@@ -276,10 +336,70 @@
       }
     </div>
 
-    <!-- تعديل رابط الصورة الشخصية الخاصة -->
-    <div class="form-group">
-      <label>رابط الصورة الشخصية الخاصة</label>
-      <input type="url" class="nfd-input" [(ngModel)]="selectedUser.avatarUrl" placeholder="https://example.com/avatar.jpg">
+    <!-- بطاقة تعديل الصورة الشخصية -->
+    <div class="avatar-section-wrapper">
+      <div class="avatar-preview-box">
+        <div class="avatar-preview-sizes">
+          <img class="avatar-preview-img-lg" [src]="getAvatarUrl(selectedUser)" alt="معاينة الصورة" />
+          <img class="avatar-preview-img-sm" [src]="getAvatarUrl(selectedUser)" alt="معاينة الجدول" />
+        </div>
+        <div class="avatar-preview-info">
+          <div class="avatar-preview-title">صورة الحساب</div>
+          <div class="avatar-preview-sub">
+            {{ selectedUser.avatarUrl ? (editAvatarFileName() || 'تم تعيين صورة خاصة') : 'صورة رمزية تلقائية حسب الاسم' }}
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <button type="button" class="btn-action" style="padding: 2px 8px; font-size: 0.75rem;" (click)="generateEditInitialsAvatar()">
+              ✨ بالاسم
+            </button>
+            @if (selectedUser.avatarUrl) {
+              <button type="button" class="avatar-remove-btn" (click)="removeEditAvatar()">
+                إزالة الصورة
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- قائمة منسدلة مع سهم لاختيار طريقة تحديد الصورة -->
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label>طريقة تحديد الصورة</label>
+        <select class="nfd-input avatar-type-select" [ngModel]="editAvatarMode()" (ngModelChange)="setEditAvatarMode($event)">
+          <option value="file">📁 رفع صورة من الجهاز</option>
+          <option value="url">🔗 إدخال رابط صورة (URL)</option>
+          <option value="presets">🎨 اختيار صورة رمزية جاهزة</option>
+        </select>
+      </div>
+
+      @if (editAvatarMode() === 'file') {
+        <div>
+          <label for="editFilePicker" class="avatar-file-drop">
+            <span>اضغط هنا لاختيار ملف من جهازك</span>
+            <small>JPG, PNG, WEBP (حتى 5MB)</small>
+          </label>
+          <input id="editFilePicker" type="file" accept="image/*" style="display: none;" (change)="handleEditFileSelected($event)">
+          @if (editAvatarFileName()) {
+            <div class="avatar-file-loaded-info">
+              <span>✓ {{ editAvatarFileName() }}</span>
+              <button type="button" style="color: #b91c1c; background: transparent; border: none; cursor: pointer;" (click)="removeEditAvatar()">إلغاء</button>
+            </div>
+          }
+        </div>
+      }
+
+      @if (editAvatarMode() === 'url') {
+        <input type="url" class="nfd-input" [(ngModel)]="selectedUser.avatarUrl" placeholder="https://example.com/avatar.jpg" dir="ltr">
+      }
+
+      @if (editAvatarMode() === 'presets') {
+        <div class="avatar-presets-grid">
+          @for (preset of presetAvatars; track preset.id) {
+            <button type="button" class="avatar-preset-item" [class.selected]="selectedUser.avatarUrl === preset.url" (click)="selectEditPreset(preset.url, preset.name)">
+              <img [src]="preset.url" [alt]="preset.name" />
+            </button>
+          }
+        </div>
+      }
     </div>
 
     <!-- تعديل الدور -->
