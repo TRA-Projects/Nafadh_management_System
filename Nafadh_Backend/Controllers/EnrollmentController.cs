@@ -2,7 +2,6 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
@@ -51,7 +50,6 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(enrollment);
         }
-
 
         // POST /api/Enrollment  -> enroll a trainee into a batch/company/department
         [HttpPost]
@@ -133,6 +131,20 @@ namespace Nafadh_Backend.Controllers
                 return NotFound(new { message = $"Enrollment with ID {id} was not found." });
 
             return Ok(summary);
+        }
+
+        // POST /api/Enrollment/trainee/{traineeId}/upload-image -> رفع وتحديث صورة المتدرب
+        [HttpPost("trainee/{traineeId:int}/upload-image")]
+        public async Task<IActionResult> UploadProfileImage(int traineeId, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "الرجاء اختيار ملف صورة صحيح." });
+
+            var success = await _service.UploadTraineeProfileImageAsync(traineeId, file);
+            if (!success)
+                return NotFound(new { message = $"Trainee with ID {traineeId} was not found." });
+
+            return Ok(new { message = "تم رفع وتحديث الصورة الشخصية بنجاح." });
         }
     }
 }
