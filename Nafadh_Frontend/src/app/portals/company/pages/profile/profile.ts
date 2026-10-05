@@ -105,16 +105,6 @@ export class CompanyProfile implements OnInit {
     this.api.getCompany(this.companyId).subscribe({
       next: (response) => {
         const normalizedCompany = this.normalizeCompany(response);
-        if (normalizedCompany) {
-          try {
-            const storedCover = localStorage.getItem(`nafadh-company-${normalizedCompany.companyId}-cover`);
-            const storedLogo = localStorage.getItem(`nafadh-company-${normalizedCompany.companyId}-logo`);
-            if (storedCover) normalizedCompany.coverImageUrl = storedCover;
-            if (storedLogo) normalizedCompany.logoUrl = storedLogo;
-          } catch {
-            // Ignore local storage read failures.
-          }
-        }
         this.company.set(normalizedCompany);
         this.capacityDraft = normalizedCompany?.capacity ?? 0;
         this.companyLoadError.set(false);
@@ -301,6 +291,7 @@ export class CompanyProfile implements OnInit {
       phone: c.phone || null,
       email: c.email || null,
       logo: c.logoUrl || c.logo || null,
+      coverImage: c.coverImageUrl || null,
       capacity: Number(patch['capacity'] ?? c.capacity ?? 0),
       status: c.status,
       approvalDate: c.approvalDate || null,
@@ -466,11 +457,12 @@ export class CompanyProfile implements OnInit {
 
     this.readFileAsDataUrl(file)
       .then((dataUrl) => this.persistImage(kind, dataUrl, previousUrl))
-      .catch(() => this.revertImage(kind, previousUrl))
-      .finally(() => {
-        URL.revokeObjectURL(previewUrl);
+      .catch(() => {
+        this.revertImage(kind, previousUrl);
         (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(false);
-      });
+        (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(true);
+      })
+      .finally(() => URL.revokeObjectURL(previewUrl));
   }
 
   private persistImage(kind: 'cover' | 'logo', value: string, fallbackUrl?: string) {
@@ -483,19 +475,20 @@ export class CompanyProfile implements OnInit {
     uploadingSignal.set(true);
     errorSignal.set(false);
 
-    try {
-      localStorage.setItem(`nafadh-company-${c.companyId}-${kind}`, value);
-    } catch (error) {
-      console.error(`Failed to store ${kind} preview locally:`, error);
-      this.revertImage(kind, fallbackUrl);
-      errorSignal.set(true);
-    }
+    const patch = kind === 'cover' ? { coverImage: value || null } : { logo: value || null };
 
-    if (!errorSignal()) {
-      this.applyImageToCompany(kind, value);
-    }
-
-    uploadingSignal.set(false);
+    this.api.updateCompany(c.companyId, this.buildCompanyUpdatePayload(c, patch)).subscribe({
+      next: () => {
+        this.applyImageToCompany(kind, value);
+        uploadingSignal.set(false);
+      },
+      error: (error) => {
+        console.error(`Failed to save company ${kind}:`, error);
+        this.revertImage(kind, fallbackUrl);
+        errorSignal.set(true);
+        uploadingSignal.set(false);
+      },
+    });
   }
 
   private applyImageToCompany(kind: 'cover' | 'logo', value: string) {

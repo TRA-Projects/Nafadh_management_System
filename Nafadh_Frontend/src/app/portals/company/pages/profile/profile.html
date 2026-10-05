@@ -24,7 +24,9 @@
     <div class="company-profile-glow"></div>
     <div class="nfd-card company-profile-hero-card" style="padding:0;overflow:hidden;margin-top:16px;border-radius:22px">
       <div class="company-profile-cover">
-        <img [src]="c.coverImageUrl || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzOLJGVaUAdS6gRAHcCEFDKqSenVyJ0ihHQbbbnZWFLRbT4_8ix68D7ow&s=10'" alt="غلاف {{ c.companyName }}" class="company-profile-cover-img" />
+        @if (c.coverImageUrl) {
+          <img [src]="c.coverImageUrl" alt="غلاف {{ c.companyName }}" class="company-profile-cover-img" />
+        }
         <div class="company-profile-cover-overlay"></div>
 
         @if (uploadingCover()) {
@@ -55,7 +57,11 @@
       <div class="company-profile-header">
         <div class="company-profile-logo-wrap">
           <div class="company-profile-logo">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJsUyJnAI3l5HKgmuhL8SQoS_633l4lx1WZ2250dcVUA&s=10" alt="شعار {{ c.companyName }}" />
+            @if (c.logoUrl) {
+              <img [src]="c.logoUrl" alt="شعار {{ c.companyName }}" />
+            } @else {
+              <span>{{ (c.companyName || 'ش').charAt(0) }}</span>
+            }
           </div>
         </div>
 
