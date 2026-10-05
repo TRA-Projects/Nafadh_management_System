@@ -149,11 +149,11 @@
               </div>
 
               <strong>
-                لا توجد شكاوى سابقة
+                لا توجد محادثات سابقة
               </strong>
 
               <span>
-                يمكنك تقديم شكوى أو استفسار من النموذج
+                يمكنك بدء محادثة جديدة من النموذج
               </span>
 
             </div>
@@ -188,6 +188,10 @@
               <span>
                 {{ conversation.category || 'شكوى أو استفسار' }}
               </span>
+
+              <small class="conversation-receiver">
+                الجهة: {{ getReceiverLabel(conversation) }}
+              </small>
 
             </div>
 
@@ -326,13 +330,33 @@
           الجهة المستلمة
         </label>
 
-        <div class="receiver-box">
+        <select
+          [(ngModel)]="newConv.receiverType"
+          (ngModelChange)="onReceiverChange()"
+          class="support-select receiver-select"
+          aria-label="الجهة المستلمة"
+        >
 
-          <span>
+          <option
+            value=""
+            disabled
+          >
+            اختر الجهة المستلمة
+          </option>
+
+          <option value="Authority">
             هيئة تنظيم الاتصالات
-          </span>
+          </option>
 
-        </div>
+          <option value="Trainer">
+            المدرب
+          </option>
+
+          <option value="Company">
+            الشركة
+          </option>
+
+        </select>
 
       </div>
 
@@ -344,33 +368,53 @@
       <div class="form-group">
 
         <label>
-          الموضوع
+          {{ newConv.receiverType === 'Authority' ? 'الموضوع' : 'نوع الموضوع' }}
         </label>
 
-        <select
-          [(ngModel)]="newConv.subject"
-          class="support-select"
-        >
+        @if (newConv.receiverType === 'Authority') {
 
-          <option
-            value=""
-            disabled
+          <select
+            [(ngModel)]="newConv.subject"
+            class="support-select"
           >
-            اختر موضوع الطلب
-          </option>
 
-          @for (
-            s of subjects;
-            track s
-          ) {
-
-            <option [value]="s">
-              {{ s }}
+            <option
+              value=""
+              disabled
+            >
+              اختر موضوع الطلب
             </option>
 
-          }
+            @for (
+              s of subjects;
+              track s
+            ) {
 
-        </select>
+              <option [value]="s">
+                {{ s }}
+              </option>
+
+            }
+
+          </select>
+
+        }
+
+        @else {
+
+          <input
+            type="text"
+            [(ngModel)]="newConv.subject"
+            class="support-input"
+            [placeholder]="
+              newConv.receiverType
+                ? 'اكتب نوع الموضوع هنا...'
+                : 'اختر الجهة المستلمة أولاً'
+            "
+            [disabled]="!newConv.receiverType"
+          />
+
+        }
 
       </div>
 
@@ -1451,6 +1495,60 @@
 
   box-shadow:
     0 0 0 3px rgba(0, 102, 204, 0.08);
+}
+
+.support-input {
+
+  width: 100%;
+
+  height: 40px;
+
+  padding: 0 12px;
+
+  border: 1px solid #dfe5e8;
+
+  border-radius: 8px;
+
+  background: #fff;
+
+  color: #334155;
+
+  font-family: inherit;
+
+  font-size: 11px;
+
+  outline: none;
+
+  box-sizing: border-box;
+}
+
+.support-input:focus {
+
+  border-color: #0066cc;
+
+  box-shadow:
+    0 0 0 3px rgba(0, 102, 204, 0.08);
+}
+
+.support-input:disabled {
+
+  background: #f8fafc;
+
+  color: #94a3b8;
+
+  cursor: not-allowed;
+}
+
+.receiver-select {
+  cursor: pointer;
+}
+
+.conversation-receiver {
+  display: block;
+  margin-top: 4px;
+  color: #0066cc;
+  font-size: 9px;
+  font-weight: 600;
 }
 
 

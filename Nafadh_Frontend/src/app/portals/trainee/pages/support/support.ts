@@ -70,6 +70,8 @@ export class TraineeSupport implements OnInit {
 
   newConv = {
 
+    receiverType: '',
+
     subject: '',
 
     firstMessage: ''
@@ -424,12 +426,62 @@ export class TraineeSupport implements OnInit {
 
 
   // =========================================================
+  // Receiver
+  // =========================================================
+
+  onReceiverChange(): void {
+
+    // هيئة تنظيم الاتصالات تستخدم المواضيع الجاهزة،
+    // بينما المدرب والشركة يكتبان نوع الموضوع يدوياً.
+    this.newConv.subject = '';
+
+    this.errorMessage.set('');
+
+  }
+
+
+  getReceiverLabel(conversation: any): string {
+
+    const receiverType =
+      conversation?.receiverType ??
+      conversation?.recipientType ??
+      conversation?.targetType ??
+      conversation?.assignedToType ??
+      conversation?.receiverRole ??
+      conversation?.recipientRole ??
+      '';
+
+    switch (receiverType) {
+
+      case 'Authority':
+      case 'authority':
+      case ' الهيئة':
+        return 'هيئة تنظيم الاتصالات';
+
+      case 'Trainer':
+      case 'trainer':
+        return 'المدرب';
+
+      case 'Company':
+      case 'company':
+        return 'الشركة';
+
+      default:
+        return 'الجهة المختصة';
+    }
+
+  }
+
+
+  // =========================================================
   // Validate Form
   // =========================================================
 
   canSubmit(): boolean {
 
     return (
+
+      !!this.newConv.receiverType &&
 
       !!this.newConv.subject &&
 
@@ -558,6 +610,19 @@ export class TraineeSupport implements OnInit {
     this.successMessage.set('');
 
 
+    // Validate Receiver
+
+    if (!this.newConv.receiverType) {
+
+      this.errorMessage.set(
+        'يرجى اختيار الجهة المستلمة'
+      );
+
+      return;
+
+    }
+
+
     // Validate Subject
 
     if (!this.newConv.subject) {
@@ -613,6 +678,9 @@ export class TraineeSupport implements OnInit {
 
       type: 'TraineeComplaint',
 
+      receiverType:
+        this.newConv.receiverType,
+
       subject:
         this.newConv.subject,
 
@@ -626,7 +694,7 @@ export class TraineeSupport implements OnInit {
 
 
     console.log(
-      '📤 Sending trainee complaint:',
+      '📤 Sending trainee support request:',
       payload
     );
 
@@ -643,7 +711,7 @@ export class TraineeSupport implements OnInit {
         next: (response) => {
 
           console.log(
-            '✅ تم إرسال الشكوى:',
+            '✅ تم إرسال الطلب:',
             response
           );
 
@@ -656,6 +724,8 @@ export class TraineeSupport implements OnInit {
           // Reset form
 
           this.newConv = {
+
+            receiverType: '',
 
             subject: '',
 
