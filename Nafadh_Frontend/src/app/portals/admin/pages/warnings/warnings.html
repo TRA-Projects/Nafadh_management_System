@@ -264,15 +264,48 @@
         </span>
       </div>
 
+      <!-- ========================================================================= -->
+      <!-- التعديل المنفذ: استبدال مربع النص بخيارات جاهزة مع دعم التحديد المتعدد     -->
+      <!-- ========================================================================= -->
       <div class="form-group">
-        <label>المستندات المؤيدة والأسباب *</label>
-        <textarea 
-          class="nfd-input textarea" 
-          [class.is-invalid]="touchedFields()['evidence'] && formErrors()['evidence']"
-          [(ngModel)]="newWarning.evidence" 
-          (blur)="markFieldTouched('evidence')"
-          rows="3"
-        ></textarea>
+        <div class="reasons-header-actions">
+          <label>سبب إصدار البلاغ / نوع المخالفة *</label>
+          <div class="reasons-tools" *ngIf="selectedReasons().length > 0">
+            <span class="reasons-count-badge">تم اختيار: {{ selectedReasons().length }}</span>
+            <button type="button" class="btn-clear-reasons" (click)="clearAllReasons()">إلغاء التحديد</button>
+          </div>
+        </div>
+
+        <div class="reasons-selection-container" [class.has-error]="touchedFields()['evidence'] && formErrors()['evidence']">
+          <div class="reasons-grid">
+            <div 
+              *ngFor="let reason of violationReasons" 
+              class="reason-option-card"
+              [class.selected]="selectedReasons().includes(reason)"
+              (click)="toggleReason(reason)"
+            >
+              <div class="reason-checkbox">
+                <svg *ngIf="selectedReasons().includes(reason)" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+              <span class="reason-label">{{ reason }}</span>
+            </div>
+          </div>
+
+          <!-- تفاصيل إضافية عند اختيار مخالفة أخرى -->
+          <div class="custom-reason-input-group" *ngIf="selectedReasons().includes('مخالفة أخرى')">
+            <label>تفاصيل المخالفة الأخرى *</label>
+            <input 
+              type="text" 
+              class="nfd-input" 
+              placeholder="يرجى كتابة تفاصيل المخالفة الأخرى هنا..."
+              [(ngModel)]="otherReasonText"
+              (input)="updateEvidenceFromReasons()"
+            />
+          </div>
+        </div>
+
         <span class="field-error" *ngIf="touchedFields()['evidence'] && formErrors()['evidence']">
           {{ formErrors()['evidence'] }}
         </span>
@@ -319,7 +352,7 @@
         </div>
 
         <div class="detail-row">
-          <span class="detail-label">الأدلة والمستندات:</span>
+          <span class="detail-label">أسباب المخالفة والأدلة:</span>
           <span class="detail-value text-blue">{{ item.evidence || 'تقرير المتابعة الميدانية' }}</span>
         </div>
 
