@@ -39,6 +39,18 @@ import {
   styleUrl: './trainees.scss',
 })
 export class TrainerTrainees implements OnInit {
+  showStudentSearch: boolean = false;
+  showBatchSearch: boolean = false;
+  studentSearchQuery = signal<string>('');
+  batchSearchQuery = signal<string>('');
+
+  toggleStudentSearch() {
+    this.showStudentSearch = !this.showStudentSearch;
+  }
+
+  toggleBatchSearch() {
+    this.showBatchSearch = !this.showBatchSearch;
+  }
 
   // =====================================================
   // STATE
@@ -212,103 +224,63 @@ traineeListFilter =
   );
 
 
-filteredEnrollments =
-  computed(() => {
+get filteredEnrollments() {
+    const filter = this.traineeListFilter();
+    const averages = this.evaluationAverages();
 
-    const filter =
-      this.traineeListFilter();
+    const studentQuery = this.studentSearchQuery().trim().toLowerCase();
+    const batchQuery = this.batchSearchQuery().trim().toLowerCase();
 
-    const averages =
-      this.evaluationAverages();
+    let list = this.enrollments() || [];
 
+    // 1. فلترة حسب اسم المتدرب
+    if (studentQuery) {
+      list = list.filter(enrollment => {
+        const name = (enrollment as any).traineeName || (enrollment as any).fullName || (enrollment as any).name || '';
+        return name.toLowerCase().includes(studentQuery);
+      });
+    }
+    
+    // 2. فلترة حسب الدفعة
+    if (batchQuery) {
+      list = list.filter(enrollment => {
+        const batchName = (enrollment as any).batchName || '';
+        const batchId = (enrollment as any).batchId?.toString() || '';
+        return batchName.toLowerCase().includes(batchQuery) || batchId.includes(batchQuery);
+      });
+    }
 
     // =========================
     // NEEDS SUPPORT
     // =========================
-
     if (filter === 'support') {
-
-      return this.enrollments()
-        .filter(
-          enrollment => {
-
-            if (
-              enrollment.completionStatus ===
-                'Dropped' ||
-              !this.canShowTrainingMetrics(
-                enrollment
-              )
-            ) {
-              return false;
-            }
-
-
-            const score =
-              averages[
-                enrollment.enrollmentId
-              ];
-
-
-            return (
-              typeof score === 'number' &&
-              Number.isFinite(score) &&
-              score < 60
-            );
-
-          }
-        );
-
+      return list.filter(enrollment => {
+        if (enrollment.completionStatus === 'Dropped' || !this.canShowTrainingMetrics(enrollment)) {
+          return false;
+        }
+        const score = averages[enrollment.enrollmentId];
+        return typeof score === 'number' && Number.isFinite(score) && score < 60;
+      });
     }
-
 
     // =========================
     // HIGH PERFORMERS
     // =========================
-
     if (filter === 'high') {
-
-      return this.enrollments()
-        .filter(
-          enrollment => {
-
-            if (
-              enrollment.completionStatus ===
-                'Dropped' ||
-              !this.canShowTrainingMetrics(
-                enrollment
-              )
-            ) {
-              return false;
-            }
-
-
-            const score =
-              averages[
-                enrollment.enrollmentId
-              ];
-
-
-            return (
-              typeof score === 'number' &&
-              Number.isFinite(score) &&
-              score >= 85
-            );
-
-          }
-        );
-
+      return list.filter(enrollment => {
+        if (enrollment.completionStatus === 'Dropped' || !this.canShowTrainingMetrics(enrollment)) {
+          return false;
+        }
+        const score = averages[enrollment.enrollmentId];
+        return typeof score === 'number' && Number.isFinite(score) && score >= 85;
+      });
     }
 
-
     // =========================
-    // ALL TRAINEES
+    // ALL TRAINEES (الافتراضي)
     // =========================
-
-    return this.enrollments();
-
-  });
-
-
+    return list;
+  }
 // =====================================================
 // SHOW SUPPORT TRAINEES
 // =====================================================

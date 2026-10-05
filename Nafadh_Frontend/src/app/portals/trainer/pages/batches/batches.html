@@ -199,9 +199,7 @@
 
                     <div class="progress-inner">
 
-                      {{
-                        getTimeProgress(b)
-                      }}%
+                      {{ contentProgress()[b.batchId] ?? 0 }}%
 
                     </div>
 
@@ -209,7 +207,7 @@
 
 
                   <span>
-                    التقدم الزمني
+                   نسبة تقدم المحتوى
                   </span>
 
                 </div>
@@ -222,7 +220,7 @@
                   <strong>
 
                     {{
-                      getBatchTimeLabel(b)
+                      contentProgress()[b.batchId] ?? 0
                     }}
 
                   </strong>
