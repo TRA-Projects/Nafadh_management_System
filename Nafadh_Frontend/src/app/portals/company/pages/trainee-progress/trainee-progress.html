@@ -10,11 +10,27 @@
 @if (enrollment(); as e) {
   <div class="card card-pad" style="margin-bottom:16px">
     <div class="prog-hero">
-      <div class="pg-avatar" [style.background]="avatarColor(e.traineeName)">{{ initials(e.traineeName) }}</div>
+      
+      <!-- input مخفي لرفع الصورة من الجهاز عند الضغط على الأيقونة -->
+      <input type="file" #fileInput (change)="onFileSelected($event, e.traineeId)" accept="image/*" style="display: none;" />
+
+      <!-- المربع الشخصي: بالضغط عليه يفتح استعراض الملفات لتغيير الصورة -->
+      <div (click)="fileInput.click()" style="cursor: pointer; position: relative;" title="اضغط لتغيير الصورة الشخصية">
+        @if (e.profileImageUrl) {
+          <img [src]="e.profileImageUrl" alt="{{ e.traineeName }}" class="pg-avatar" style="object-fit: cover; width: 64px; height: 64px; border-radius: 50%; display: block;" />
+        } @else {
+          <div class="pg-avatar" [style.background]="avatarColor(e.traineeName)">{{ initials(e.traineeName) }}</div>
+        }
+        <!-- أيقونة الكاميرا التوضيحية عند المرور -->
+        <div style="position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px;">
+          📷
+        </div>
+      </div>
+
       <div style="flex:1;min-width:220px">
         <h3>{{ e.traineeName }}</h3>
         <div class="pg-sub">#{{ padId(e.enrollmentId) }} · {{ e.batchName }} · {{ e.programTitle || '—' }}</div>
-        <div class="pg-actions">
+        <div class="pg-actions" style="margin-top: 10px;">
           <span class="chip" [ngClass]="statusChipClass(e.completionStatus)"><span class="dot"></span>{{ statusLabel(e.completionStatus) }}</span>
           <span class="chip gray">القسم: {{ e.departmentName || 'غير محدد' }}</span>
           @if (e.supervisorName) { <span class="chip gray">المشرف: {{ e.supervisorName }}</span> }
