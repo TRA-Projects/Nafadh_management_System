@@ -1,3 +1,4 @@
+<!-- users.html -->
 <div class="nfd-page-header">
   <h1 class="nfd-page-title">إدارة المستخدمين</h1>
   <p class="nfd-page-sub">عرض وإدارة حسابات المستخدمين وصلاحياتهم في النظام</p>
@@ -20,7 +21,7 @@
     </button>
   </div>
 
-  <!-- جديد: شريط البحث والتصفية المتقدمة -->
+  <!-- شريط البحث والتصفية المتقدمة -->
   <div class="nfd-filters-bar">
     <div class="nfd-search-box">
       <i class="fa-solid fa-magnifying-glass"></i>
@@ -68,6 +69,7 @@
   </div>
   }
 
+  <!-- جدول المستخدمين -->
   <div style="overflow-x: auto;">
     <table class="nfd-table">
       <thead>
@@ -93,7 +95,8 @@
         <tr>
           <td>
             <div class="user-info">
-              <div class="user-avatar">{{ getInitials(u.fullName) }}</div>
+              <!-- يدعم الصورة الخاصة للمستخدم أو توليد صورة ثابتة تلقائياً -->
+              <img class="user-avatar" [src]="getAvatarUrl(u)" [alt]="u.fullName" />
               <div class="user-details">
                 <span class="user-name">{{ u.fullName }}</span>
                 <span class="user-email">{{ u.email }}</span>
@@ -116,10 +119,10 @@
           <td>{{ (u.createdAt | date:'dd/MM/yyyy') || '---' }}</td>
           <td>
             <div class="action-buttons-wrapper">
-              <button class="btn-action" (click)="openResetPasswordModal(u)">
+              <button class="btn-action password-btn" (click)="openResetPasswordModal(u)">
                 كلمة المرور
               </button>
-              <button class="btn-action" (click)="openEditModal(u)">
+              <button class="btn-action edit-btn" (click)="openEditModal(u)">
                 تعديل البيانات
               </button>
             </div>
@@ -131,6 +134,7 @@
     </table>
   </div>
 
+  <!-- الترقيم -->
   <div class="nfd-pagination-container"
     style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 20px; padding: 10px 0;">
     <button class="btn-action" type="button" (click)="prevPage()" [disabled]="currentPage() <= 1"
@@ -162,6 +166,7 @@
     </div>
     }
 
+    <!-- الاسم الكامل -->
     <div class="form-group">
       <label>الاسم الكامل <span class="required-star">*</span></label>
       <input type="text" class="nfd-input" [(ngModel)]="newUser.fullName" (blur)="validateCreateField('fullName')"
@@ -171,6 +176,7 @@
       }
     </div>
 
+    <!-- البريد الإلكتروني -->
     <div class="form-group">
       <label>البريد الإلكتروني <span class="required-star">*</span></label>
       <input type="email" class="nfd-input" [(ngModel)]="newUser.email" (blur)="validateCreateField('email')"
@@ -180,11 +186,18 @@
       }
     </div>
 
+    <!-- رابط الصورة الشخصية (اختياري) -->
+    <div class="form-group">
+      <label>رابط الصورة الشخصية الخاصة (اختياري)</label>
+      <input type="url" class="nfd-input" [(ngModel)]="newUser.avatarUrl" placeholder="https://example.com/avatar.jpg">
+    </div>
+
+    <!-- الدور -->
     <div class="form-group">
       <label>الدور <span class="required-star">*</span></label>
       <select class="nfd-input" [(ngModel)]="newUser.roleId" (change)="validateCreateField('roleId')"
         [class.input-error]="createTouched.roleId && getCreateFieldError('roleId')">
-        <option [ngValue]="null">اختر الدور</option>
+        <option [ngValue]="null" disabled>اختر الدور</option>
         @for (role of rolesList(); track role.roleId) {
         <option [ngValue]="role.roleId">{{ role.roleName }}</option>
         }
@@ -194,6 +207,7 @@
       }
     </div>
 
+    <!-- كلمة المرور -->
     <div class="form-group">
       <label>كلمة المرور <span class="required-star">*</span></label>
       <input type="password" class="nfd-input" [(ngModel)]="newUser.password" (blur)="validateCreateField('password')"
@@ -211,6 +225,7 @@
       }
     </div>
 
+    <!-- تأكيد كلمة المرور -->
     <div class="form-group">
       <label>تأكيد كلمة المرور <span class="required-star">*</span></label>
       <input type="password" class="nfd-input" [(ngModel)]="newUser.confirmPassword"
@@ -259,6 +274,22 @@
       @if (editTouched.email && getEditFieldError('email')) {
       <div class="field-error">{{ getEditFieldError('email') }}</div>
       }
+    </div>
+
+    <!-- تعديل رابط الصورة الشخصية الخاصة -->
+    <div class="form-group">
+      <label>رابط الصورة الشخصية الخاصة</label>
+      <input type="url" class="nfd-input" [(ngModel)]="selectedUser.avatarUrl" placeholder="https://example.com/avatar.jpg">
+    </div>
+
+    <!-- تعديل الدور -->
+    <div class="form-group">
+      <label>الدور <span class="required-star">*</span></label>
+      <select class="nfd-input" [(ngModel)]="selectedUser.roleId">
+        @for (role of rolesList(); track role.roleId) {
+        <option [ngValue]="role.roleId">{{ role.roleName }}</option>
+        }
+      </select>
     </div>
 
     <div class="nfd-modal-actions">

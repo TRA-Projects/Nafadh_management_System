@@ -24,6 +24,14 @@ export interface RoleDto {
   displayName?: string;
 }
 
+// قائمة الأدوار الافتراضية لمنع فراغ القائمة المنسدلة في حال تعثر استدعاء الـ API
+export const DEFAULT_ROLES: RoleDto[] = [
+  { roleId: 1, roleName: 'هيئة', displayName: 'Admin' },
+  { roleId: 2, roleName: 'شركة', displayName: 'CompanySupervisor' },
+  { roleId: 3, roleName: 'مدرب', displayName: 'Trainer' },
+  { roleId: 4, roleName: 'متدرب', displayName: 'Trainee' }
+];
+
 @Component({
   selector: 'app-admin-users',
   standalone: true,
@@ -36,13 +44,14 @@ export class AdminUsers implements OnInit {
   // USERS
   // =========================================================
   users = signal<UserResponseDto[]>([]);
-  rolesList = signal<RoleDto[]>([]);
+  // تم تزويد rolesList بالأدوار الافتراضية فوراً لضمان ظهور الخيارات دائماً
+  rolesList = signal<RoleDto[]>(DEFAULT_ROLES);
   roleFilter = signal<string>('ALL');
   loadingUsers = signal<boolean>(true);
   usersError = signal<string>('');
 
   // =========================================================
-  // جديد: البحث والتصفية المتقدمة
+  // البحث والتصفية المتقدمة
   // =========================================================
   searchQuery = signal<string>('');
   statusFilter = signal<string>('ALL'); // ALL | Active | Suspended
@@ -109,7 +118,6 @@ export class AdminUsers implements OnInit {
     this.currentPage.set(1);
   }
 
-  // منطق التصفية المشترك (بدون ترقيم) - يُستخدم من filtered() و totalPages() و resultsCount()
   private getFilteredList(): UserResponseDto[] {
     const selectedRole = this.roleFilter();
     const status = this.statusFilter();
@@ -181,7 +189,8 @@ export class AdminUsers implements OnInit {
     email: '',
     roleId: 4,
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    avatarUrl: ''
   };
 
   // =========================================================
@@ -265,24 +274,15 @@ export class AdminUsers implements OnInit {
     return Math.ceil(filteredList.length / this.pageSize) || 1;
   });
 
-  // =========================================================
-  // CONSTRUCTOR
-  // =========================================================
   constructor(
     private api: AdminApi,
     private cdr: ChangeDetectorRef
   ) {}
 
-  // =========================================================
-  // INIT
-  // =========================================================
   ngOnInit(): void {
     this.loadData();
   }
 
-  // =========================================================
-  // LOAD DATA
-  // =========================================================
   loadData(): void {
     this.loadingUsers.set(true);
     this.usersError.set('');
@@ -320,17 +320,11 @@ export class AdminUsers implements OnInit {
     });
   }
 
-  // =========================================================
-  // FILTER (دور)
-  // =========================================================
   setFilter(roleKey: string): void {
     this.roleFilter.set(roleKey);
     this.currentPage.set(1);
   }
 
-  // =========================================================
-  // PAGINATION
-  // =========================================================
   nextPage(): void {
     if (this.currentPage() < this.totalPages()) {
       this.currentPage.update((page) => page + 1);
@@ -343,32 +337,32 @@ export class AdminUsers implements OnInit {
     }
   }
 
-  // =========================================================
-  // ROLE ARABIC NAME
-  // =========================================================
   getRoleArabicName(roleInput: any): string {
     if (!roleInput) return 'غير محدد';
-
     const role = String(roleInput).trim().toLowerCase();
-
     if (role === '1' || role === 'admin' || role.includes('هيئة')) return 'هيئة';
     if (role === '2' || role === 'companysupervisor' || role.includes('شركة')) return 'شركة';
     if (role === '3' || role === 'trainer' || role.includes('مدرب')) return 'مدرب';
     if (role === '4' || role === 'trainee' || role.includes('متدرب')) return 'متدرب';
-
     return String(roleInput);
   }
 
-  // =========================================================
-  // ROLE CSS CLASS
-  // =========================================================
   getRoleClass(roleInput: any): string {
     return this.normalizeRole(roleInput).toLowerCase();
   }
 
   // =========================================================
-  // CREATE MODAL
+  // AVATAR: يعرض الصورة الخاصة إن توفرت أو صورة رمزية ثابتة وتلقائية
   // =========================================================
+  getAvatarUrl(user: any): string {
+    if (user?.avatarUrl && String(user.avatarUrl).trim().length > 0) {
+      return String(user.avatarUrl).trim();
+    }
+    const name = (user?.fullName || user || 'user').trim();
+    const seed = encodeURIComponent(name);
+    return `https://api.dicebear.com/7.x/initials/svg?seed=${seed}&backgroundType=gradientLinear&fontFamily=Arial&fontWeight=600`;
+  }
+
   openCreateModal(): void {
     this.createErrorMsg = '';
     this.resetCreateTouched();
@@ -386,13 +380,13 @@ export class AdminUsers implements OnInit {
 
   resetForm(): void {
     const defaultRoleId = this.rolesList().length > 0 ? this.rolesList()[0].roleId : 4;
-
     this.newUser = {
       fullName: '',
       email: '',
       roleId: defaultRoleId,
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      avatarUrl: ''
     };
   }
 
@@ -406,9 +400,6 @@ export class AdminUsers implements OnInit {
     };
   }
 
-  // =========================================================
-  // CREATE VALIDATION
-  // =========================================================
   validateCreateField(field: 'fullName' | 'email' | 'roleId' | 'password' | 'confirmPassword'): void {
     this.createTouched[field] = true;
   }
@@ -442,9 +433,6 @@ export class AdminUsers implements OnInit {
     }
   }
 
-  // =========================================================
-  // CREATE FORM VALID
-  // =========================================================
   isCreateFormValid(): boolean {
     return (
       !!this.newUser.fullName?.trim() &&
@@ -456,12 +444,8 @@ export class AdminUsers implements OnInit {
     );
   }
 
-  // =========================================================
-  // CREATE USER
-  // =========================================================
   createUser(): void {
     this.createErrorMsg = '';
-
     this.createTouched = {
       fullName: true,
       email: true,
@@ -480,7 +464,8 @@ export class AdminUsers implements OnInit {
       userName: this.newUser.email.trim(),
       email: this.newUser.email.trim(),
       password: this.newUser.password,
-      roleId: Number(this.newUser.roleId)
+      roleId: Number(this.newUser.roleId),
+      avatarUrl: this.newUser.avatarUrl?.trim() || null
     };
 
     this.api.createUser(payload).subscribe({
@@ -504,9 +489,6 @@ export class AdminUsers implements OnInit {
     });
   }
 
-  // =========================================================
-  // EDIT MODAL
-  // =========================================================
   openEditModal(user: UserResponseDto): void {
     this.selectedUser = { ...user };
     this.editTouched = { fullName: false, email: false };
@@ -522,9 +504,6 @@ export class AdminUsers implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // =========================================================
-  // EDIT VALIDATION
-  // =========================================================
   validateEditField(field: 'fullName' | 'email'): void {
     this.editTouched[field] = true;
   }
@@ -546,9 +525,6 @@ export class AdminUsers implements OnInit {
     }
   }
 
-  // =========================================================
-  // EDIT FORM VALID
-  // =========================================================
   isEditFormValid(): boolean {
     return (
       !!this.selectedUser.fullName?.trim() &&
@@ -557,9 +533,6 @@ export class AdminUsers implements OnInit {
     );
   }
 
-  // =========================================================
-  // UPDATE USER
-  // =========================================================
   updateUser(): void {
     this.editTouched = { fullName: true, email: true };
     this.editErrorMsg = '';
@@ -573,7 +546,8 @@ export class AdminUsers implements OnInit {
       fullName: this.selectedUser.fullName.trim(),
       email: this.selectedUser.email.trim(),
       phone: this.selectedUser.phone,
-      roleId: Number(this.selectedUser.roleId)
+      roleId: Number(this.selectedUser.roleId),
+      avatarUrl: this.selectedUser.avatarUrl?.trim() || null
     };
 
     this.api.updateUser(this.selectedUser.userId, payload).subscribe({
@@ -598,9 +572,6 @@ export class AdminUsers implements OnInit {
     });
   }
 
-  // =========================================================
-  // RESET PASSWORD MODAL
-  // =========================================================
   openResetPasswordModal(user: UserResponseDto): void {
     this.selectedUser = { ...user };
     this.newPassword = '';
@@ -618,9 +589,6 @@ export class AdminUsers implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // =========================================================
-  // RESET PASSWORD VALIDATION
-  // =========================================================
   validateResetPasswordField(): void {
     this.resetPasswordTouched.newPassword = true;
   }
@@ -633,9 +601,6 @@ export class AdminUsers implements OnInit {
     return this.isValidPassword(this.newPassword);
   }
 
-  // =========================================================
-  // CONFIRM RESET PASSWORD
-  // =========================================================
   confirmResetPassword(): void {
     this.resetPasswordTouched.newPassword = true;
     this.resetPasswordErrorMsg = '';
@@ -658,9 +623,6 @@ export class AdminUsers implements OnInit {
     });
   }
 
-  // =========================================================
-  // PASSWORD VALIDATION
-  // =========================================================
   getPasswordError(password: string): string {
     if (!password) return 'كلمة المرور مطلوبة';
     if (!this.passwordHasMinLengthFor(password)) return 'كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل';
@@ -680,9 +642,6 @@ export class AdminUsers implements OnInit {
     );
   }
 
-  // =========================================================
-  // PASSWORD RULES - تستخدم مباشرة بالـ HTML
-  // =========================================================
   passwordHasMinLength(): boolean {
     return (this.newUser.password || '').length >= 8;
   }
@@ -699,9 +658,6 @@ export class AdminUsers implements OnInit {
     return /\d/.test(this.newUser.password || '');
   }
 
-  // =========================================================
-  // GENERIC PASSWORD RULES
-  // =========================================================
   passwordHasMinLengthFor(password: string): boolean {
     return (password || '').length >= 8;
   }
@@ -718,18 +674,12 @@ export class AdminUsers implements OnInit {
     return /\d/.test(password || '');
   }
 
-  // =========================================================
-  // EMAIL VALIDATION
-  // =========================================================
   isValidEmail(email: string): boolean {
     if (!email) return false;
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    const emailPattern = /^[^s@]+@[^s@]+.[^s@]{2,}$/;
     return emailPattern.test(email.trim());
   }
 
-  // =========================================================
-  // INITIALS
-  // =========================================================
   getInitials(name: string): string {
     if (!name) return '';
     const parts = name.trim().split(/\s+/);
@@ -737,25 +687,16 @@ export class AdminUsers implements OnInit {
     return parts[0].slice(0, 2);
   }
 
-  // =========================================================
-  // NORMALIZE ROLE
-  // =========================================================
   public normalizeRole(roleInput: any): string {
     if (!roleInput) return '';
-
     const role = String(roleInput).trim().toLowerCase();
-
     if (role === '1' || role === 'admin' || role.includes('هيئة')) return 'Admin';
     if (role === '2' || role === 'companysupervisor' || role.includes('شركة')) return 'CompanySupervisor';
     if (role === '3' || role === 'trainer' || role.includes('مدرب')) return 'Trainer';
     if (role === '4' || role === 'trainee' || role.includes('متدرب')) return 'Trainee';
-
     return role;
   }
 
-  // =========================================================
-  // COUNT BY ROLE
-  // =========================================================
   private countByRole(list: UserResponseDto[], targetRole: string): number {
     return list.filter((u) => this.normalizeRole(u.roleName || u.roleId) === targetRole).length;
   }
