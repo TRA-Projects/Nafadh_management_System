@@ -14,7 +14,7 @@ export class AdminPrograms implements OnInit {
   private fb = inject(FormBuilder);
   private adminApi = inject(AdminApi);
 
-  // --- Signals & States ---
+  // --- Signals & States السابقة كاملة ---
   batches = signal<any[]>([]);
   programs = signal<any[]>([]);
   companies = signal<any[]>([]);
@@ -46,6 +46,13 @@ export class AdminPrograms implements OnInit {
   editBatchForm!: FormGroup;
   programForm!: FormGroup;
 
+  // --- الإضافات: Signals الخاصة بشريط الفلترة المتقدم ---
+  searchTerm = signal<string>('');
+  selectedYear = signal<string>('الكل');
+  selectedProgram = signal<string>('الكل');
+  fromDate = signal<string>('');
+  toDate = signal<string>('');
+
   ngOnInit(): void {
     this.initBatchForm();
     this.initEditBatchForm();
@@ -76,7 +83,6 @@ export class AdminPrograms implements OnInit {
   }
 
   // --- Form Initializations & Validators ---
-  
   dateRangeValidator(group: FormGroup) {
     const start = group.get('startDate')?.value;
     const end = group.get('endDate')?.value;
@@ -140,13 +146,140 @@ export class AdminPrograms implements OnInit {
     }
   }
 
-  // --- Computed Properties & Filtering ---
-  
+  // --- استخراج السنوات المتاحة تلقائياً ---
+  availableYears = computed(() => {
+    const set = new Set<string>();
+    this.batches().forEach(b => {
+      if (b.startDate) {
+        const y = new Date(b.startDate).getFullYear().toString();
+        if (!isNaN(Number(y))) set.add(y);
+      }
+    });
+    ['2027', '2026', '2025', '2024'].forEach(y => set.add(y));
+    return Array.from(set).sort().reverse();
+  });
+
+  // --- عدد الفلاتر النشطة ---
+  activeFiltersCount = computed(() => {
+    let count = 0;
+    if (this.searchTerm().trim()) count++;
+    if (this.selectedYear() !== 'الكل') count++;
+    if (this.selectedProgram() !== 'الكل') count++;
+    if (this.fromDate()) count++;
+    if (this.toDate()) count++;
+    return count;
+  });
+
+  // --- دوال التحكم في حقول الفلترة ---
+  onSearchInput(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.searchTerm.set(val);
+    this.currentPage.set(1);
+  }
+
+  onYearChange(event: Event): void {
+    const val = (event.target as HTMLSelectElement).value;
+    this.selectedYear.set(val);
+    this.currentPage.set(1);
+  }
+
+  onProgramFilterChange(event: Event): void {
+    const val = (event.target as HTMLSelectElement).value;
+    this.selectedProgram.set(val);
+    this.currentPage.set(1);
+  }
+
+  onFromDateChange(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.fromDate.set(val);
+    this.currentPage.set(1);
+  }
+
+  onToDateChange(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.toDate.set(val);
+    this.currentPage.set(1);
+  }
+
+  onResetFilters(): void {
+    this.searchTerm.set('');
+    this.selectedYear.set('الكل');
+    this.selectedProgram.set('الكل');
+    this.fromDate.set('');
+    this.toDate.set('');
+    this.statusFilter.set('الكل');
+    this.currentPage.set(1);
+  }
+
+  setQuickPreset(preset: 'all' | '2026' | '2027'): void {
+    if (preset === 'all') {
+      this.onResetFilters();
+    } else {
+      this.selectedYear.set(preset);
+      this.fromDate.set('');
+      this.toDate.set('');
+      this.currentPage.set(1);
+    }
+  }
+
+  // --- دالة التصفية الحسابية الشاملة (تدمج فلاتر الحالة + البحث + السنة + التواريخ) ---
   filteredBatches = computed(() => {
-    const filter = this.statusFilter();
-    const allBatches = this.batches();
-    if (filter === 'الكل') return allBatches;
-    return allBatches.filter(b => b.status === filter);
+    const status = this.statusFilter();
+    const search = this.searchTerm().trim().toLowerCase();
+    const year = this.selectedYear();
+    const prog = this.selectedProgram();
+    const from = this.fromDate();
+    const to = this.toDate();
+
+    return this.batches().filter(batch => {
+      // 1. فلتر الحالة السابق
+      if (status !== 'الكل' && batch.status !== status) {
+        return false;
+      }
+
+      // 2. البحث النصي العام
+      if (search) {
+        const batchName = (batch.batchName || '').toLowerCase();
+        const progName = this.getProgramName(batch).toLowerCase();
+        const compName = (batch.companyName || '').toLowerCase();
+        if (!batchName.includes(search) && !progName.includes(search) && !compName.includes(search)) {
+          return false;
+        }
+      }
+
+      // 3. فلتر البرنامج
+      if (prog !== 'الكل') {
+        if (batch.programId?.toString() !== prog && batch.programName !== prog) {
+          return false;
+        }
+      }
+
+      // 4. فلتر السنة
+      if (year !== 'الكل' && batch.startDate) {
+        const batchYear = new Date(batch.startDate).getFullYear().toString();
+        if (batchYear !== year) {
+          return false;
+        }
+      }
+
+      // 5. فلتر من تاريخ
+      if (from && batch.startDate) {
+        const bStart = batch.startDate.split('T')[0];
+        if (bStart < from) {
+          return false;
+        }
+      }
+
+      // 6. فلتر إلى تاريخ
+      if (to && batch.startDate) {
+        const bDate = batch.startDate.split('T')[0];
+        if (bDate > to) {
+          return false;
+        }
+      }
+
+      return true;
+    });
   });
 
   paginatedBatches = computed(() => {
@@ -167,8 +300,7 @@ export class AdminPrograms implements OnInit {
     return this.batches().filter(b => b.status === status).length;
   }
 
-  // --- Modal Handlers ---
-
+  // --- Modal Handlers السابقة كاملة ---
   onCreateBatch(): void {
     this.batchForm.reset({ capacity: 15 });
     this.batchErrorMessage = null;
@@ -218,8 +350,7 @@ export class AdminPrograms implements OnInit {
     this.selectedBatch = null;
   }
 
-  // --- Form Submissions ---
-
+  // --- Form Submissions السابقة كاملة ---
   onSubmit(): void {
     if (this.batchForm.invalid) {
       this.batchForm.markAllAsTouched();
@@ -235,7 +366,7 @@ export class AdminPrograms implements OnInit {
         this.loadInitialData();
         this.onCloseBatchModal();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isSubmittingBatch = false;
         this.batchErrorMessage = 'فشل إنشاء الدفعة، يرجى المحاولة لاحقاً.';
         console.error('Failed to create batch', err);
@@ -257,7 +388,7 @@ export class AdminPrograms implements OnInit {
         this.loadInitialData();
         this.onCloseProgramModal();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isSubmittingProgram = false;
         this.programErrorMessage = 'فشل حفظ البرنامج، يجدر المحاولة لاحقاً';
         console.error('Failed to create program', err);
@@ -281,7 +412,7 @@ export class AdminPrograms implements OnInit {
         this.loadInitialData();
         this.onCloseEditModal();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isSubmittingEditBatch = false;
         this.editBatchErrorMessage = 'فشل تعديل الدفعة، يرجى المحاولة لاحقاً.';
         console.error('Failed to update batch', err);
@@ -290,7 +421,6 @@ export class AdminPrograms implements OnInit {
   }
 
   // --- Pagination Actions ---
-
   onPageChange(page: number): void {
     if (page >= 1 && page <= this.totalPages()) {
       this.currentPage.set(page);
@@ -298,7 +428,6 @@ export class AdminPrograms implements OnInit {
   }
 
   // --- UI Helpers & Formatters ---
-
   trackByBatchId(index: number, batch: any): any {
     return batch.batchId || index;
   }
@@ -324,10 +453,10 @@ export class AdminPrograms implements OnInit {
 
   getStatusBadgeClass(status: string): string {
     switch (status) {
-      case 'جارية': return 'badge-ongoing';
-      case 'قادمة': return 'badge-upcoming';
-      case 'مكتملة': return 'badge-completed';
-      default: return 'badge-default';
+      case 'جارية': return 'status-ongoing';
+      case 'قادمة': return 'status-upcoming';
+      case 'مكتملة': return 'status-completed';
+      default: return 'status-completed';
     }
   }
 
