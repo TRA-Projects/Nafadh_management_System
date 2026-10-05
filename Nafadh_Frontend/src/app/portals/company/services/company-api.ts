@@ -29,7 +29,6 @@ import {
   CompanyProgramDetailsDto,
 } from '../../../core/models/dtos';
 
-
 @Injectable({ providedIn: 'root' })
 export class CompanyApi {
   private readonly http = inject(HttpClient);
@@ -39,37 +38,22 @@ export class CompanyApi {
   // Dashboard
   // ============================================================
 
-  /**
-   * Loads the complete Company Dashboard from the backend.
-   *
-   * The response contains:
-   * - company name
-   * - capacity
-   * - average attendance
-   * - attendance chart
-   * - program distribution
-   * - top performers
-   * - at-risk trainees
-   * - warnings
-   * - trainee counts
-   *
-   * The Dashboard page should use this endpoint as its
-   * single source of truth for dashboard statistics.
-   */
-  getDashboard(companyId: number): Observable<CompanyDashboardDto> {
+  getDashboard(
+    companyId: number
+  ): Observable<CompanyDashboardDto> {
     return this.http.get<CompanyDashboardDto>(
       `${this.base}/CompanyDashboard/${companyId}`
     );
   }
 
-
-  getCapacity(companyId: number): Observable<CompanyCapacityDto> {
+  getCapacity(
+    companyId: number
+  ): Observable<CompanyCapacityDto> {
     return this.http.get<CompanyCapacityDto>(
       `${this.base}/Company/${companyId}/capacity`
     );
   }
 
- 
   getAttendanceChart(
     companyId: number
   ): Observable<{ weeks: ChartPointDto[] }> {
@@ -77,7 +61,6 @@ export class CompanyApi {
       `${this.base}/Report/company-attendance-chart/${companyId}`
     );
   }
-
 
   getProgramDistribution(
     companyId: number
@@ -87,7 +70,6 @@ export class CompanyApi {
     );
   }
 
-
   getTopPerformers(
     companyId: number
   ): Observable<TraineeListItemDto[]> {
@@ -95,7 +77,6 @@ export class CompanyApi {
       `${this.base}/Report/company-top-performers/${companyId}`
     );
   }
-
 
   getAtRiskTrainees(
     companyId: number
@@ -105,8 +86,9 @@ export class CompanyApi {
     );
   }
 
-
-  getCompanyWarnings(companyId: number): Observable<WarningDto[]> {
+  getCompanyWarnings(
+    companyId: number
+  ): Observable<WarningDto[]> {
     return this.http.get<WarningDto[]>(
       `${this.base}/Warning`,
       {
@@ -118,7 +100,6 @@ export class CompanyApi {
     );
   }
 
-  
   getPlatformAnnouncements(): Observable<AnnouncementDto[]> {
     return this.http.get<AnnouncementDto[]>(
       `${this.base}/Announcement/scope/Platform`
@@ -198,7 +179,9 @@ export class CompanyApi {
     );
   }
 
-  getModulesByProgram(programId: number): Observable<any[]> {
+  getModulesByProgram(
+    programId: number
+  ): Observable<any[]> {
     return this.http.get<any[]>(
       `${this.base}/Module/program/${programId}`
     );
@@ -216,7 +199,9 @@ export class CompanyApi {
   // Company Profile
   // ============================================================
 
-  getCompany(id: number): Observable<CompanyDto> {
+  getCompany(
+    id: number
+  ): Observable<CompanyDto> {
     return this.http.get<CompanyDto>(
       `${this.base}/Company/${id}`
     );
@@ -280,15 +265,44 @@ export class CompanyApi {
   // My Account
   // ============================================================
 
-  /**
-   * Kept because the Company Profile / Account area may use it.
-   *
-   * Dashboard no longer calls this endpoint just to obtain
-   * the company name.
-   */
-  getCurrentAccount(): Observable<CompanyAccountDto> {
-    return this.http.get<CompanyAccountDto>(
-      `${this.base}/CompanyAccount/me`
+ // ============================================================
+// My Account
+// ============================================================
+
+getCurrentAccount(): Observable<CompanyAccountDto> {
+  return this.http.get<CompanyAccountDto>(
+    `${this.base}/CompanyAccount/me`
+  );
+}
+
+downloadMyAccountPdf(): Observable<Blob> {
+  return this.http.get(
+    `${this.base}/CompanyAccount/me/pdf`,
+    {
+      responseType: 'blob',
+    }
+  );
+}
+
+getSupervisorProfile(
+  id: number
+): Observable<CompanySupervisorDto> {
+  return this.http.get<CompanySupervisorDto>(
+    `${this.base}/CompanySupervisor/${id}`
+  );
+}
+
+
+  // ============================================================
+  // PDF - Backend
+  // ============================================================
+
+  exportCurrentAccountPdf(): Observable<Blob> {
+    return this.http.get(
+      `${this.base}/CompanyAccount/me/pdf`,
+      {
+        responseType: 'blob',
+      }
     );
   }
 
@@ -322,9 +336,6 @@ export class CompanyApi {
     );
   }
 
-  /**
-   * Updates department/supervisor assignment for an enrollment.
-   */
   updateEnrollmentAssignment(
     enrollmentId: number,
     dto: {
@@ -427,7 +438,7 @@ export class CompanyApi {
   }
 
   // ============================================================
-  // Announcements — send to own trainees
+  // Announcements
   // ============================================================
 
   postAnnouncement(dto: unknown) {
@@ -438,7 +449,7 @@ export class CompanyApi {
   }
 
   // ============================================================
-  // Issue warnings to trainees
+  // Warnings
   // ============================================================
 
   createWarning(dto: unknown) {
@@ -449,7 +460,7 @@ export class CompanyApi {
   }
 
   // ============================================================
-  // Feedback visibility
+  // Feedback
   // ============================================================
 
   getTrainerFeedback(
