@@ -1,5 +1,6 @@
 /* =========================================================
-   منصة نفاذ - شاشة التقارير والتحليلات (ملء الشاشة بالكامل 100%)
+   منصة نفاذ - شاشة التقارير والتحليلات (reports.css الكامل)
+   تصميم متكامل ملء الشاشة 100% مع تمييز الصفحات والشارات
 ========================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
@@ -14,7 +15,7 @@
   box-sizing: border-box;
 }
 
-/* ✅ جعل الحاوية ملء الشاشة بنسبة 100% بدون أي تقييد */
+/* الحاوية الرئيسية ملء الشاشة 100% */
 .reports-container {
   width: 100% !important;
   max-width: 100% !important;
@@ -23,7 +24,7 @@
   box-sizing: border-box;
 }
 
-/* 1. شريط التبويبات الفرعية (Full Width) */
+/* 1. شريط التبويبات العلوي */
 .subsections-tabs-bar {
   width: 100%;
   background: #ffffff;
@@ -149,7 +150,7 @@
   margin-top: 6px;
 }
 
-/* 4. شبكة الكروت للمدربين والشركات (تتوزع على الشاشة بأكملها) */
+/* 4. شبكة الكروت للمدربين والشركات */
 .companies-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -193,6 +194,8 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  font-size: 20px;
+  font-weight: 800;
 }
 
 .company-info h3 {
@@ -245,6 +248,13 @@
   border-top: 1px solid #f1f5f9;
   padding-top: 14px;
   margin-top: auto;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.card-footer:hover {
+  color: #2563eb;
+  text-decoration: underline;
 }
 
 /* 5. شاشات البرامج وتفاصيل الدفعة */
@@ -464,7 +474,7 @@
   cursor: pointer;
 }
 
-/* 7. الجداول ملء الشاشة (Tables 100% Width) */
+/* 7. الجداول ملء الشاشة */
 .table-card {
   width: 100%;
   background: #ffffff;
@@ -558,7 +568,9 @@
   color: #475569;
 }
 
-/* 8. شريط التصفح السفلي (Compact Pagination Full Width) */
+/* =========================================================
+   8. شريط التصفح (Pagination) مع تمييز الصفحة النشطة
+========================================================= */
 .compact-pagination-wrapper {
   width: 100%;
   display: flex;
@@ -584,15 +596,15 @@
 .pagination-compact-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
 }
 
 .compact-nav-btn {
   background: #ffffff;
   border: 1px solid #cbd5e1;
   color: #334155;
-  padding: 8px 18px;
-  border-radius: 10px;
+  padding: 8px 16px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -610,11 +622,36 @@
   cursor: not-allowed;
 }
 
-.page-indicator {
-  font-size: 14px;
-  font-weight: 800;
-  color: #0D1C8C;
-  padding: 0 6px;
+/* زر رقم الصفحة */
+.compact-page-number-btn {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+}
+
+.compact-page-number-btn:hover {
+  border-color: #0D1C8C !important;
+  color: #0D1C8C !important;
+  background: #f1f5f9 !important;
+}
+
+/* ⭐ زر الصفحة النشطة المحدد بلون كحلي فخم وواضح ⭐ */
+.compact-page-number-btn.active {
+  background-color: #0D1C8C !important;
+  color: #ffffff !important;
+  border-color: #0D1C8C !important;
+  box-shadow: 0 4px 10px rgba(13, 28, 140, 0.35) !important;
+  font-weight: 800 !important;
 }
 
 /* 9. مؤشر التحميل */
@@ -647,3 +684,192 @@
   }
 }
 
+/* =========================================================
+   10. صفحة تفاصيل المدرب الكاملة ملء الشاشة
+========================================================= */
+.trainer-full-banner {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.trainer-avatar-huge {
+  width: 72px;
+  height: 72px;
+  background: #0D1C8C;
+  color: #ffffff;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+  box-shadow: 0 4px 15px rgba(13, 28, 140, 0.25);
+  flex-shrink: 0;
+}
+
+.trainer-banner-info {
+  flex: 1;
+}
+
+.banner-title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 6px;
+}
+
+.banner-title-row h2 {
+  color: #0D1C8C;
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.trainer-track-sub {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0;
+}
+
+.trainer-track-sub strong {
+  color: #334155;
+}
+
+.section-card-title {
+  color: #0D1C8C;
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0 0 16px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.trainer-bio-text {
+  color: #475569;
+  font-size: 14.5px;
+  line-height: 1.8;
+  margin: 0 0 18px 0;
+}
+
+.section-badge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-desc-hint {
+  color: #64748b;
+  font-size: 13.5px;
+  margin: 0 0 16px 0;
+}
+
+.star-rating {
+  color: #f59e0b;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.trainee-feedback-quote {
+  color: #334155;
+  font-size: 13px;
+  font-style: italic;
+  display: inline-block;
+  max-width: 380px;
+}
+
+/* =========================================================
+   11. خانة درجات وملاحظات تقييم المدرب للمتدرب (مع مسافات وألوان واضحة)
+========================================================= */
+.trainer-tag {
+  background: #eef2ff;
+  color: #0D1C8C;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.trainer-eval-box {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  align-items: flex-start !important;
+}
+
+.eval-chip {
+  display: inline-block !important;
+  padding: 3px 9px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+
+.eval-chip.green {
+  background-color: #dcfce7 !important;
+  color: #15803d !important;
+  border: 1px solid #bbf7d0 !important;
+}
+
+.eval-chip.blue {
+  background-color: #e0e7ff !important;
+  color: #3730a3 !important;
+  border: 1px solid #c7d2fe !important;
+}
+
+.eval-chip.gray {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.trainer-feedback-cell {
+  max-width: 320px;
+  text-align: right;
+}
+
+.feedback-quote {
+  color: #334155;
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin: 0 0 6px 0;
+  background: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border-right: 3px solid #0D1C8C;
+}
+
+.rec-badge {
+  color: #15803d;
+  font-size: 11.5px;
+  font-weight: 700;
+  display: block;
+}
+
+.eval-score {
+  font-weight: 700;
+  font-size: 13px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.eval-score.green {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.eval-score.blue {
+  background: #e0e7ff;
+  color: #3730a3;
+}

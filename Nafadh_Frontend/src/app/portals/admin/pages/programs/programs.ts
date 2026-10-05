@@ -14,11 +14,13 @@ export class AdminPrograms implements OnInit {
   private fb = inject(FormBuilder);
   private adminApi = inject(AdminApi);
 
-  // --- مصفوفات البيانات من الـ Database حصراً ---
+  // --- مصفوفات البيانات من الـ Database ---
   batches = signal<any[]>([]);
   programs = signal<any[]>([]);
   companies = signal<any[]>([]);
   tracks = signal<any[]>([]);
+  trainees = signal<any[]>([]); 
+  selectedBatchTrainees = signal<any[]>([]); 
   
   statusFilter = signal<string>('الكل');
   batchesError = signal<string | null>(null);
@@ -26,10 +28,12 @@ export class AdminPrograms implements OnInit {
   currentPage = signal<number>(1);
   pageSize = signal<number>(10);
   
+  // Modals Visibility
   isBatchModalOpen = false;
   isProgramModalOpen = false;
   isViewModalOpen = false;
   isEditModalOpen = false;
+  isTraineesModalOpen = signal<boolean>(false); // نافذة متدربي الدفعة
 
   selectedBatch: any = null;
 
@@ -46,7 +50,7 @@ export class AdminPrograms implements OnInit {
   editBatchForm!: FormGroup;
   programForm!: FormGroup;
 
-  // --- Signals الخاصة بشريط الفلترة ---
+  // --- Signals الخاصة بشريط الفلترة والبحث ---
   searchTerm = signal<string>('');
   selectedYear = signal<string>('الكل');
   selectedProgram = signal<string>('الكل');
@@ -58,29 +62,29 @@ export class AdminPrograms implements OnInit {
     this.initEditBatchForm();
     this.initProgramForm();
     
-    // جلب كل البيانات مباشرة من جداول الداتابيس
+    // جلب كل البيانات مباشرة من جداول الداتابيس عبر الـ API
     this.loadInitialData();
   }
 
-  // --- دوال الربط مع الداتابيس عبر AdminApi ---
+  // --- دوال استدعاء الداتابيس عبر AdminApi ---
   loadInitialData(): void {
-    // 1. جلب الدفعات من جدول Batches
+    // 1. الدفعات
     this.adminApi.getBatches?.().subscribe({
       next: (res: any) => this.batches.set(res || []),
-      error: () => this.batchesError.set('فشل تحميل قائمة الدفعات')
+      error: () => this.batchesError.set('فشل تحميل قائمة الدفعات من قاعدة البيانات')
     });
 
-    // 2. جلب البرامج من جدول Programs
+    // 2. البرامج
     this.adminApi.getPrograms?.().subscribe({
       next: (res: any) => this.programs.set(res || [])
     });
 
-    // 3. جلب الشركات من جدول Companies
+    // 3. الشركات المستضيفة
     this.adminApi.getCompanies?.().subscribe({
       next: (res: any) => this.companies.set(res || [])
     });
 
-    // 4. جلب المسارات من جدول Tracks
+    // 4. المسارات التدريبية
     this.adminApi.getTracks?.().subscribe({
       next: (res: any) => this.tracks.set(res || [])
     });
@@ -150,7 +154,7 @@ export class AdminPrograms implements OnInit {
     }
   }
 
-  // --- دالة توحيد الحالات (تطابق الحالات المسجلة بالإنجليزية والعربية بالداتابيس) ---
+  // --- دالة توحيد الحالات ---
   normalizeStatus(status: any): string {
     if (!status) return '';
     const s = String(status).trim().toLowerCase();
@@ -160,7 +164,7 @@ export class AdminPrograms implements OnInit {
     return status;
   }
 
-  // --- استخراج السنوات ديناميكياً من تواريخ الداتابيس الفعالة ---
+  // --- استخراج السنوات ديناميكياً من تواريخ الداتابيس ---
   availableYears = computed(() => {
     const yearsSet = new Set<string>();
     this.batches().forEach(b => {
@@ -179,7 +183,7 @@ export class AdminPrograms implements OnInit {
     return this.batches().filter(b => this.normalizeStatus(b.status) === status).length;
   }
 
-  // --- عدد الفلاتر المطبقة ---
+  // --- عدد الفلاتر المطبقة حالياً ---
   activeFiltersCount = computed(() => {
     let count = 0;
     if (this.searchTerm().trim()) count++;
@@ -335,12 +339,40 @@ export class AdminPrograms implements OnInit {
       `"${this.getStatusLabel(b.status)}"`
     ]);
 
-    // تضمين BOM لضمان قراءة اللغة العربية بامتياز في Excel
     const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const link = document.createElement('a');
     link.href = encodeURI(csvContent);
     link.download = `batches_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
+  }
+
+  // --- دالة عرض متدربي الدفعة من الـ API مباشرة ---
+  onViewTrainees(batch: any): void {
+    this.selectedBatch = batch;
+    this.isTraineesModalOpen.set(true);
+    this.selectedBatchTrainees.set([]);
+
+    const bId = batch?.batchId || batch?.id;
+
+    // استدعاء الـ API مع تمرير batchId لفلترة متدربي الدفعة من الداتابيس
+    this.adminApi.getTrainees({ batchId: bId, pageSize: 100 }).subscribe({
+      next: (res: any) => {
+        const list = res?.items || (Array.isArray(res) ? res : []);
+        this.selectedBatchTrainees.set(list);
+      },
+      error: () => {
+        this.selectedBatchTrainees.set([]);
+      }
+    });
+  }
+
+  onCloseTraineesModal(): void {
+    this.isTraineesModalOpen.set(false);
+    this.selectedBatchTrainees.set([]);
+  }
+
+  onMessageTrainee(trainee: any): void {
+    alert(`سيتم فتح محادثة مراسلة فورية مع: ${trainee.fullName || trainee.name}`);
   }
 
   // --- Modal Handlers ---
@@ -409,10 +441,9 @@ export class AdminPrograms implements OnInit {
         this.loadInitialData();
         this.onCloseBatchModal();
       },
-      error: (err: any) => {
+      error: () => {
         this.isSubmittingBatch = false;
         this.batchErrorMessage = 'فشل إنشاء الدفعة في قاعدة البيانات، يرجى المحاولة لاحقاً.';
-        console.error('Failed to create batch', err);
       }
     });
   }
@@ -431,10 +462,9 @@ export class AdminPrograms implements OnInit {
         this.loadInitialData();
         this.onCloseProgramModal();
       },
-      error: (err: any) => {
+      error: () => {
         this.isSubmittingProgram = false;
         this.programErrorMessage = 'فشل حفظ البرنامج في قاعدة البيانات';
-        console.error('Failed to create program', err);
       }
     });
   }
@@ -455,10 +485,9 @@ export class AdminPrograms implements OnInit {
         this.loadInitialData();
         this.onCloseEditModal();
       },
-      error: (err: any) => {
+      error: () => {
         this.isSubmittingEditBatch = false;
         this.editBatchErrorMessage = 'فشل تحديث بيانات الدفعة في قاعدة البيانات';
-        console.error('Failed to update batch', err);
       }
     });
   }
@@ -473,9 +502,8 @@ export class AdminPrograms implements OnInit {
     return batch.batchId || index;
   }
 
-  // --- دوال الربط الديناميكي مع بيانات الداتابيس ---
+  // --- دوال الربط مع الداتابيس ---
 
-  // 1. جلب اسم البرنامج
   getProgramName(batch: any): string {
     if (!batch) return '-';
     if (batch.programName) return batch.programName;
@@ -483,12 +511,10 @@ export class AdminPrograms implements OnInit {
     return prog ? (prog.title || prog.name) : '-';
   }
 
-  // 2. جلب اسم المسار من جدول Tracks في الداتابيس عبر program.trackId أو batch.trackId
   getTrackName(batch: any): string {
     if (!batch) return '-';
     if (batch.trackName) return batch.trackName;
 
-    // البحث في جدول المسارات عبر البرنامج
     const prog = this.programs().find(p => p.programId === batch.programId || p.id === batch.programId);
     if (prog) {
       if (prog.trackName) return prog.trackName;
@@ -496,7 +522,6 @@ export class AdminPrograms implements OnInit {
       if (track) return track.name || track.title;
     }
 
-    // أو إذا كانت الدفعة تحوي trackId مباشرة
     if (batch.trackId) {
       const track = this.tracks().find(t => (t.trackId && t.trackId === batch.trackId) || (t.id && t.id === batch.trackId));
       if (track) return track.name || track.title;
