@@ -1,10 +1,11 @@
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
+using Nafadh_Backend.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Nafadh_Backend.Enums;
-using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -77,6 +78,71 @@ namespace Nafadh_Backend.Repositories
         {
             _context.NFD_Batches.Remove(batch);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<BatchProgressDto?> GetProgressAsync(int batchId)
+        {
+            var batch = await _context.NFD_Batches
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.BatchId == batchId);
+
+            if (batch == null)
+                return null;
+
+            // المتدربون الموجودون في هذه الدفعة
+            var traineeIds = await _context.NFD_Enrollments
+                .Where(e => e.BatchId == batchId)
+                .Select(e => e.TraineeId)
+                .Distinct()
+                .ToListAsync();
+
+            // الوحدات الخاصة ببرنامج هذه الدفعة فقط
+            var moduleIds = await _context.NFD_Modules
+                .Where(m =>
+                    m.ProgramId == batch.ProgramId &&
+                    !m.IsArchived)
+                .Select(m => m.ModuleId)
+                .ToListAsync();
+
+            int totalTrainees = traineeIds.Count;
+            int totalModules = moduleIds.Count;
+
+            if (totalTrainees == 0 || totalModules == 0)
+            {
+                return new BatchProgressDto
+                {
+                    BatchId = batchId,
+                    TotalTrainees = totalTrainees,
+                    TotalModules = totalModules,
+                    CompletedModules = 0,
+                    ProgressPercentage = 0
+                };
+            }
+
+            // عدد الوحدات المكتملة فعليًا
+            var completedModules = await _context.NFD_TraineeModuleProgresses
+                .CountAsync(p =>
+                    traineeIds.Contains(p.TraineeId) &&
+                    moduleIds.Contains(p.ModuleId) &&
+                    p.Status == NFD_ModuleProgressStatus.Completed);
+
+            int totalPossibleCompletions =
+                totalTrainees * totalModules;
+
+            double percentage =
+                totalPossibleCompletions == 0
+                    ? 0
+                    : (double)completedModules /
+                      totalPossibleCompletions * 100;
+
+            return new BatchProgressDto
+            {
+                BatchId = batchId,
+                TotalTrainees = totalTrainees,
+                TotalModules = totalModules,
+                CompletedModules = completedModules,
+                ProgressPercentage = Math.Round(percentage, 2)
+            };
         }
     }
 }

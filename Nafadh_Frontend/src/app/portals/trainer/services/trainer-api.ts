@@ -146,6 +146,26 @@ createSession(dto: unknown) {
 // =====================================================
 // Content
 // =====================================================
+getBatchProgress(
+  batchId: number
+): Observable<{
+  batchId: number;
+  totalTrainees: number;
+  totalModules: number;
+  completedModules: number;
+  progressPercentage: number;
+}> {
+
+  return this.http.get<{
+    batchId: number;
+    totalTrainees: number;
+    totalModules: number;
+    completedModules: number;
+    progressPercentage: number;
+  }>(
+    `${this.base}/Batch/${batchId}/progress`
+  );
+}
 
 getModulesByProgram(
   programId: number
@@ -951,3 +971,4 @@ uploadTrainerProfileImage(
   );
 }
 }
+
