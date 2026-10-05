@@ -1,3 +1,4 @@
+```html
 <div class="achievements-page" dir="rtl">
 
   <!-- =========================================================
@@ -10,6 +11,7 @@
     </div>
   }
 
+
   <!-- =========================================================
        HEADER
        ========================================================= -->
@@ -17,32 +19,43 @@
 
     <div>
       <h2 class="nfd-page-title">الإنجازات والشهادات</h2>
+
       <p class="nfd-page-sub">
         تابع تقدمك، إنجازاتك وشهاداتك التدريبية
       </p>
     </div>
 
+
     <div class="achievement-summary">
 
       <!-- نسبة الإكمال -->
       <div class="summary-item">
-        <div class="summary-icon progress-icon"><i class="fas fa-percent"></i></div>
+
+        <div class="summary-icon progress-icon">
+          <i class="fas fa-percent"></i>
+        </div>
+
         <div>
           <span>إكمال البرنامج</span>
           <strong>{{ progressPercentage() }}%</strong>
         </div>
+
       </div>
+
 
       <!-- الأوسمة -->
       <div class="summary-item">
-        <div class="summary-icon badge-icon"><i class="fas fa-medal"></i></div>
+
+        <div class="summary-icon badge-icon">
+          <i class="fas fa-medal"></i>
+        </div>
+
         <div>
           <span>الأوسمة</span>
           <strong>{{ earnedBadgesCount() }}</strong>
         </div>
+
       </div>
-
-
 
     </div>
 
@@ -50,51 +63,80 @@
 
 
   <!-- =========================================================
-        FEEDBACK
-        ========================================================= -->
+       FEEDBACK
+       ========================================================= -->
   <div class="feedback-strip">
 
     <div class="feedback-info">
-      <span class="feedback-icon"><i class="fas fa-comment-dots"></i></span>
+
+      <span class="feedback-icon">
+        <i class="fas fa-comment-dots"></i>
+      </span>
 
       <div>
         <strong>شاركنا تجربتك</strong>
         <small>أكملت وحدة مؤخراً؟ نود معرفة رأيك</small>
       </div>
+
     </div>
 
+
     <div class="feedback-buttons">
-      <button
-        class="feedback-btn"
-        (click)="openFeedback('TrainerRating')">
-        <i class="fas fa-star"></i> تقييم المدرب
-      </button>
+
+      <!-- =====================================================
+           UPDATE:
+           تقييم المدرب يظهر دائماً
+           ويتفعل فقط في نهاية الأسبوع أو نهاية الشهر
+           ===================================================== -->
 
       <button
         class="feedback-btn"
-        (click)="openFeedback('BatchExperienceRating')">
-        <i class="fas fa-chart-bar"></i> تجربة الدفعة
+        [disabled]="!isTrainerEvaluationOpen()"
+        (click)="openFeedback('TrainerRating')"
+      >
+        <i class="fas fa-star"></i>
+        تقييم المدرب
       </button>
+
+
+      <!-- تجربة الدفعة بدون تغيير -->
+      <button
+        class="feedback-btn"
+        (click)="openFeedback('BatchExperienceRating')"
+      >
+        <i class="fas fa-chart-bar"></i>
+        تجربة الدفعة
+      </button>
+
     </div>
 
   </div>
 
 
   <!-- =========================================================
-        MAIN CONTENT
-        ========================================================= -->
+       MAIN CONTENT
+       ========================================================= -->
   <div class="main-grid">
 
+
     <!-- =======================================================
-          PROGRESS
-          ======================================================= -->
+         PROGRESS
+         ======================================================= -->
     <div class="nfd-card progress-card">
 
       <div class="card-header">
 
         <div>
-          <h3><i class="fas fa-book-open"></i> تقدم البرنامج</h3>
-          <span>متابعة تقدمك في الوحدات التدريبية</span>
+
+          <h3>
+            <i class="fas fa-book-open"></i>
+            تقدم البرنامج
+          </h3>
+
+          <span>
+            متابعة تقدمك في الوحدات التدريبية
+          </span>
+
         </div>
 
       </div>
@@ -109,6 +151,7 @@
           @let status = module.status;
           @let title = module.title;
 
+
           <div class="module-row">
 
             <div class="module-name">
@@ -116,19 +159,29 @@
               <div
                 class="module-status"
                 [class.completed]="status === 'Completed'"
-                [class.in-progress]="status === 'InProgress'">
+                [class.in-progress]="status === 'InProgress'"
+              >
 
                 @if (status === 'Completed') {
+
                   <i class="fas fa-check"></i>
+
                 } @else if (status === 'InProgress') {
+
                   <i class="fas fa-circle-half-stroke"></i>
+
                 } @else {
+
                   <i class="far fa-circle"></i>
+
                 }
 
               </div>
 
-              <span>{{ title }}</span>
+
+              <span>
+                {{ title }}
+              </span>
 
             </div>
 
@@ -140,10 +193,12 @@
                 <div
                   class="module-fill"
                   [style.width]="progress + '%'"
-                  [style.background]="getBarColor(progress)">
+                  [style.background]="getBarColor(progress)"
+                >
                 </div>
 
               </div>
+
 
               <strong>
                 {{ progress }}%
@@ -155,11 +210,19 @@
 
         }
 
+
         @empty {
 
           <div class="empty-state">
-            <span><i class="fas fa-inbox"></i></span>
-            <p>لا توجد وحدات مسجلة بعد</p>
+
+            <span>
+              <i class="fas fa-inbox"></i>
+            </span>
+
+            <p>
+              لا توجد وحدات مسجلة بعد
+            </p>
+
           </div>
 
         }
@@ -170,16 +233,25 @@
 
 
     <!-- =======================================================
-          BADGES
-          ======================================================= -->
+         BADGES
+         ======================================================= -->
     <div class="nfd-card badges-card">
 
       <div class="card-header">
 
         <div>
-          <h3><i class="fas fa-award"></i> الأوسمة والإنجازات</h3>
-          <span>إنجازاتك التي حققتها خلال التدريب</span>
+
+          <h3>
+            <i class="fas fa-award"></i>
+            الأوسمة والإنجازات
+          </h3>
+
+          <span>
+            إنجازاتك التي حققتها خلال التدريب
+          </span>
+
         </div>
+
 
         <div class="badge-counter">
           {{ earnedBadgesCount() }}/{{ totalBadges() }}
@@ -194,41 +266,63 @@
 
           @let earned = isEarned(badge.badgeId);
 
+
           <div
             class="badge-item"
             [class.earned]="earned"
-            [class.locked]="!earned">
+            [class.locked]="!earned"
+          >
 
             <div class="badge-symbol">
 
               @if (badge.icon) {
+
                 <i class="{{ badge.icon }}"></i>
+
               } @else {
+
                 <i class="fas fa-medal"></i>
+
               }
 
+
               @if (earned) {
-                <span class="earned-check"><i class="fas fa-check-circle"></i></span>
+
+                <span class="earned-check">
+                  <i class="fas fa-check-circle"></i>
+                </span>
+
               }
 
             </div>
 
-            <strong>{{ badge.name }}</strong>
+
+            <strong>
+              {{ badge.name }}
+            </strong>
+
 
             <small>
               {{ badge.description }}
             </small>
 
+
             @if (earned) {
 
               <span class="badge-status earned-status">
-                <i class="fas fa-check-circle"></i> محقق
+
+                <i class="fas fa-check-circle"></i>
+                محقق
+
               </span>
 
             } @else {
 
               <span class="badge-status locked-status">
-                <i class="fas fa-lock"></i> غير محقق
+
+                <i class="fas fa-lock"></i>
+                غير محقق
+
               </span>
 
             }
@@ -237,11 +331,19 @@
 
         }
 
+
         @empty {
 
           <div class="empty-state">
-            <span><i class="fas fa-tags"></i></span>
-            <p>لا توجد أوسمة متاحة حالياً</p>
+
+            <span>
+              <i class="fas fa-tags"></i>
+            </span>
+
+            <p>
+              لا توجد أوسمة متاحة حالياً
+            </p>
+
           </div>
 
         }
@@ -254,8 +356,8 @@
 
 
   <!-- =========================================================
-        CERTIFICATE
-        ========================================================= -->
+       CERTIFICATE
+       ========================================================= -->
   <div class="certificate-card nfd-card">
 
     <div class="certificate-info">
@@ -266,24 +368,35 @@
           <i class="fas fa-certificate"></i>
         </div>
 
+
         <div>
-          <h3>شهادة إتمام التدريب</h3>
+
+          <h3>
+            شهادة إتمام التدريب
+          </h3>
+
 
           <p>
+
             @if (progressPercentage() >= 50 && certificates().length > 0) {
 
-              <i class="fas fa-graduation-cap"></i> 🎉 أصبحت الشهادة متاحة للتحميل
+              <i class="fas fa-graduation-cap"></i>
+              🎉 أصبحت الشهادة متاحة للتحميل
 
             } @else if (progressPercentage() >= 50 && certificates().length === 0) {
 
-              <i class="fas fa-spinner fa-pulse"></i> ⏳ جاري تجهيز الشهادة...
+              <i class="fas fa-spinner fa-pulse"></i>
+              ⏳ جاري تجهيز الشهادة...
 
             } @else {
 
-              <i class="fas fa-hourglass-half"></i> أكمل 50% من البرنامج للحصول على الشهادة
+              <i class="fas fa-hourglass-half"></i>
+              أكمل 50% من البرنامج للحصول على الشهادة
 
             }
+
           </p>
+
         </div>
 
       </div>
@@ -294,13 +407,19 @@
         @if (progressPercentage() >= 50 && certificates().length > 0) {
 
           <span class="available">
-            <i class="fas fa-check-circle"></i> متاحة للتحميل
+
+            <i class="fas fa-check-circle"></i>
+            متاحة للتحميل
+
           </span>
 
         } @else {
 
           <span class="pending">
-            <i class="fas fa-clock"></i> {{ progressPercentage() }}% مكتمل
+
+            <i class="fas fa-clock"></i>
+            {{ progressPercentage() }}% مكتمل
+
           </span>
 
         }
@@ -319,13 +438,18 @@
         NAFADH
       </div>
 
+
       <div class="certificate-text">
 
-        <span>شهادة إتمام التدريب</span>
+        <span>
+          شهادة إتمام التدريب
+        </span>
+
 
         <strong>
           {{ traineeName() }}
         </strong>
+
 
         <small>
           أتم برنامج {{ programTitle() }}
@@ -340,15 +464,22 @@
       class="download-btn"
       [class.enabled]="canDownloadCertificate()"
       [disabled]="!canDownloadCertificate()"
-      (click)="downloadCertificate()">
+      (click)="downloadCertificate()"
+    >
 
       @if (canDownloadCertificate()) {
 
-        <span><i class="fas fa-download"></i> تنزيل الشهادة</span>
+        <span>
+          <i class="fas fa-download"></i>
+          تنزيل الشهادة
+        </span>
 
       } @else {
 
-        <span><i class="fas fa-lock"></i> الشهادة غير متاحة بعد</span>
+        <span>
+          <i class="fas fa-lock"></i>
+          الشهادة غير متاحة بعد
+        </span>
 
       }
 
@@ -358,29 +489,41 @@
 
 
   <!-- =========================================================
-        FEEDBACK MODAL
-        ========================================================= -->
+       FEEDBACK MODAL
+       ========================================================= -->
   @if (showFeedback()) {
 
     <div
       class="nfd-modal-bg"
-      (click)="showFeedback.set(false)">
+      (click)="showFeedback.set(false)"
+    >
 
       <div
         class="nfd-modal"
-        (click)="$event.stopPropagation()">
+        (click)="$event.stopPropagation()"
+      >
+
 
         <div class="modal-header">
 
           <div>
 
             <h3>
+
               @if (feedbackType() === 'TrainerRating') {
-                <i class="fas fa-star"></i> تقييم المدرب
+
+                <i class="fas fa-star"></i>
+                تقييم المدرب
+
               } @else {
-                <i class="fas fa-chart-pie"></i> تقييم تجربة الدفعة
+
+                <i class="fas fa-chart-pie"></i>
+                تقييم تجربة الدفعة
+
               }
+
             </h3>
+
 
             <p>
               ساعدنا في تحسين تجربتك التدريبية
@@ -388,78 +531,202 @@
 
           </div>
 
+
           <button
             class="modal-close"
-            (click)="showFeedback.set(false)">
+            (click)="showFeedback.set(false)"
+          >
+
             <i class="fas fa-times"></i>
+
           </button>
 
         </div>
 
 
-        @for (c of criteria(); track c.criterionId) {
+        <!-- =====================================================
+             UPDATE:
+             تقييم المدرب + بيانات المدرب والكورس
+             ===================================================== -->
 
-          <div class="criterion-row">
+        @if (feedbackType() === 'TrainerRating') {
 
-            <label>
-              {{ c.name }}
-            </label>
 
-            <div class="stars">
+          <!-- بيانات المدرب والكورس -->
+          <div class="feedback-details">
 
-              @for (s of [1,2,3,4,5]; track s) {
 
-                <button
-                  [style.color]="
-                    (scores[c.criterionId] || 0) >= s
-                      ? '#F59E0B'
-                      : '#dbe2ea'
-                  "
-                  (click)="scores[c.criterionId] = s"
-                  type="button">
+            <!-- اسم المدرب -->
+            <div class="feedback-field">
 
-                  <i class="fas fa-star"></i>
+              <label>
 
-                </button>
+                <i class="fas fa-user-tie"></i>
+                اسم المدرب / المشرف
 
-              }
+              </label>
+
+
+              <div class="feedback-value">
+
+                {{ enrollment()?.supervisorName || 'غير محدد' }}
+
+              </div>
+
+            </div>
+
+
+            <!-- اسم الكورس -->
+            <div class="feedback-field">
+
+              <label>
+
+                <i class="fas fa-book"></i>
+                اسم الكورس
+
+              </label>
+
+
+              <select
+                [ngModel]="selectedModuleId()"
+                (ngModelChange)="selectedModuleId.set($event ? +$event : null)"
+              >
+
+                <option [ngValue]="null">
+                  اختر الكورس
+                </option>
+
+
+                @for (module of modules(); track module.moduleId) {
+
+                  <option [ngValue]="module.moduleId">
+                    {{ module.title }}
+                  </option>
+
+                }
+
+              </select>
 
             </div>
 
           </div>
 
+
+          <!-- =================================================
+               تقييم المدرب - نص فقط
+               بدون نجوم وبدون درجات
+               ================================================= -->
+
+          <label class="comment-label">
+
+            <i class="fas fa-comment"></i>
+            اكتب تقييمك للمدرب
+
+          </label>
+
+
+          <textarea
+            [(ngModel)]="comment"
+            rows="5"
+            placeholder="اكتب تقييمك للمدرب، أسلوب الشرح، التعامل، والاستفادة من التدريب..."
+          ></textarea>
+
+
+        } @else {
+
+
+          <!-- ===================================================
+               تقييم تجربة الدفعة - بدون تغيير
+               =================================================== -->
+
+          @for (c of criteria(); track c.criterionId) {
+
+            <div class="criterion-row">
+
+              <label>
+                {{ c.name }}
+              </label>
+
+
+              <div class="stars">
+
+                @for (s of [1,2,3,4,5]; track s) {
+
+                  <button
+                    [style.color]="
+                      (scores[c.criterionId] || 0) >= s
+                        ? '#F59E0B'
+                        : '#dbe2ea'
+                    "
+                    (click)="scores[c.criterionId] = s"
+                    type="button"
+                  >
+
+                    <i class="fas fa-star"></i>
+
+                  </button>
+
+                }
+
+              </div>
+
+            </div>
+
+          }
+
+
+          <label class="comment-label">
+
+            <i class="fas fa-comment"></i>
+            تعليق إضافي
+
+          </label>
+
+
+          <textarea
+            [(ngModel)]="comment"
+            rows="3"
+            placeholder="أضف تعليقك هنا..."
+          ></textarea>
+
         }
 
 
-        <label class="comment-label">
-          <i class="fas fa-comment"></i> تعليق إضافي
-        </label>
-
-        <textarea
-          [(ngModel)]="comment"
-          rows="3"
-          placeholder="أضف تعليقك هنا...">
-        </textarea>
-
+        <!-- =====================================================
+             MODAL ACTIONS
+             ===================================================== -->
 
         <div class="modal-actions">
+
 
           <button
             class="cancel-btn"
             (click)="showFeedback.set(false)"
-            [disabled]="isSubmitting()">
-            <i class="fas fa-times"></i> إلغاء
+            [disabled]="isSubmitting()"
+          >
+
+            <i class="fas fa-times"></i>
+            إلغاء
+
           </button>
+
 
           <button
             class="submit-feedback-btn"
             (click)="submitFeedback()"
-            [disabled]="isSubmitting()">
+            [disabled]="isSubmitting()"
+          >
 
             @if (isSubmitting()) {
-              <i class="fas fa-spinner fa-pulse"></i> جاري الإرسال...
+
+              <i class="fas fa-spinner fa-pulse"></i>
+              جاري الإرسال...
+
             } @else {
-              <i class="fas fa-paper-plane"></i> إرسال التقييم
+
+              <i class="fas fa-paper-plane"></i>
+              إرسال التقييم
+
             }
 
           </button>
@@ -473,3 +740,4 @@
   }
 
 </div>
+```
