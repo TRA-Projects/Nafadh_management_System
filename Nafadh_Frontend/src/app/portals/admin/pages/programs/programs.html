@@ -47,18 +47,22 @@
 
   <!-- أزرار الإجراءات (اليسار) -->
   <div class="action-buttons-group">
+    <button type="button" (click)="exportToExcel()" class="btn-secondary-custom">
+      <i class="fa-solid fa-file-excel" style="color: #10b981; margin-left: 6px;"></i>
+      <span>تصدير Excel</span>
+    </button>
     <button type="button" (click)="onCreateBatch()" class="btn-primary-custom">
       <span class="btn-icon">+</span>
       <span>إنشاء دفعة</span>
     </button>
-
+  
     <button type="button" (click)="onCreateProgram()" class="btn-secondary-custom">
       <span class="btn-icon">+</span>
       <span>إنشاء برنامج</span>
     </button>
   </div>
-
-</div>
+  
+  </div>
 
 
 <!-- ========================================================== -->
@@ -442,7 +446,13 @@
 
           <!-- 2. البرنامج -->
           <td class="nfd-td">
-            {{ getProgramName(batch) }}
+            <div class="nfd-cell-flex">
+              <span class="nfd-batch-name">{{ getProgramName(batch) }}</span>
+              <span *ngIf="getTrackName(batch) !== '-'" class="nfd-track-badge">
+                <span class="track-label">مسار:</span>
+                <span class="track-name">{{ getTrackName(batch) }}</span>
+              </span>
+            </div>
           </td>
 
           <!-- 3. الشركة المستضيفة -->

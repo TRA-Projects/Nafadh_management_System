@@ -432,6 +432,40 @@ export class AdminPrograms implements OnInit {
     });
   }
 
+  getTrackName(batch: any): string {
+  if (!batch) return '-';
+  if (batch.trackName) return batch.trackName;
+  const prog = this.programs().find(p => p.programId === batch.programId || p.id === batch.programId);
+  if (prog) {
+    if (prog.trackName) return prog.trackName;
+    const track = this.tracks().find(t => t.trackId === prog.trackId || t.id === prog.trackId);
+    if (track) return track.name || track.title;
+  }
+  return '-';
+}
+
+exportToExcel(): void {
+  const data = this.filteredBatches();
+  if (!data.length) return;
+  const headers = ['الدفعة', 'البرنامج', 'المسار', 'الشركة المستضيفة', 'البداية', 'النهاية', 'المسجلين', 'الطاقة', 'الحالة'];
+  const rows = data.map(b => [
+    `"${b.batchName}"`,
+    `"${this.getProgramName(b)}"`,
+    `"${this.getTrackName(b)}"`,
+    `"${b.companyName || '-'}"`,
+    `"${b.startDate ? b.startDate.split('T')[0] : ''}"`,
+    `"${b.endDate ? b.endDate.split('T')[0] : ''}"`,
+    b.totalTraineesCount || 0,
+    b.capacity || 0,
+    `"${this.getStatusLabel(b.status)}"`
+  ]);
+  const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const link = document.createElement('a');
+  link.href = encodeURI(csvContent);
+  link.download = `batches_${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+}
+
   // --- Pagination Actions ---
   onPageChange(page: number): void {
     if (page >= 1 && page <= this.totalPages()) {
