@@ -45,7 +45,7 @@
 
   </div>
 
-  <!-- أزرار الإجراءات مع زر التصدير الجديد -->
+  <!-- أزرار الإجراءات مع زر تصدير Excel -->
   <div class="action-buttons-group">
     
     <!-- زر تصدير الدفعات المفلترة إلى Excel -->
@@ -123,7 +123,7 @@
       </div>
     </div>
 
-    <!-- 3. السنة (مستخرجة من تواريخ الداتابيس) -->
+    <!-- 3. السنة -->
     <div class="filter-col col-year">
       <label class="filter-field-label">السنة</label>
       <div class="filter-input-wrapper">
@@ -193,214 +193,6 @@
     </span>
   </div>
 
-</div>
-
-
-<!-- ========================================== -->
-<!-- Modal: إنشاء دفعة جديدة (Batch Modal)      -->
-<!-- ========================================== -->
-<div *ngIf="isBatchModalOpen" (click)="onCloseBatchModal()" class="modal-overlay" dir="rtl">
-  <div (click)="$event.stopPropagation()" class="modal-container">
-    <div class="modal-header">
-      <h3 class="modal-title">إنشاء دفعة جديدة</h3>
-      <button type="button" (click)="onCloseBatchModal()" class="modal-close-btn">&times;</button>
-    </div>
-
-    <form [formGroup]="batchForm" (ngSubmit)="onSubmit()" class="modal-form">
-
-      <!-- اسم الدفعة -->
-      <div class="form-group">
-        <label class="form-label">
-          اسم الدفعة <span class="required-star">*</span>
-        </label>
-        <input type="text" formControlName="batchName" placeholder="e.g. ASP.NET Core Bootcamp" class="form-input text-right"
-          [class.input-error]="batchForm.get('batchName')?.touched && batchForm.get('batchName')?.invalid">
-        
-        <div *ngIf="batchForm.get('batchName')?.touched && batchForm.get('batchName')?.invalid" class="error-msg text-right">
-          <small *ngIf="batchForm.get('batchName')?.errors?.['required']">اسم الدفعة مطلوب</small>
-        </div>
-      </div>
-
-      <!-- البرنامج القادم من الداتابيس -->
-      <div class="form-group">
-        <label class="form-label">
-          البرنامج <span class="required-star">*</span>
-        </label>
-        <select formControlName="programId" class="form-select text-right"
-          [class.input-error]="batchForm.get('programId')?.touched && batchForm.get('programId')?.invalid">
-          <option value="" disabled selected>– اختر برنامجاً –</option>
-          <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title || prog.name }}</option>
-        </select>
-        
-        <div *ngIf="batchForm.get('programId')?.touched && batchForm.get('programId')?.invalid" class="error-msg text-right">
-          <small>يجب اختيار البرنامج</small>
-        </div>
-      </div>
-
-      <!-- الشركة المستضيفة من الداتابيس -->
-      <div class="form-group">
-        <label class="form-label">الشركة المستضيفة</label>
-        <select formControlName="companyId" class="form-select text-right">
-          <option value="">– اختر شركة –</option>
-          <option *ngFor="let comp of companies()" [value]="comp.companyId">{{ comp.companyName }}</option>
-        </select>
-      </div>
-
-      <!-- التواريخ -->
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">
-            تاريخ البداية <span class="required-star">*</span>
-          </label>
-          <input type="date" formControlName="startDate" class="form-input"
-            [class.input-error]="batchForm.get('startDate')?.touched && batchForm.get('startDate')?.invalid">
-          <div *ngIf="batchForm.get('startDate')?.touched && batchForm.get('startDate')?.invalid" class="error-msg text-right">
-            <small>تاريخ البداية مطلوب</small>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">
-            تاريخ النهاية <span class="required-star">*</span>
-          </label>
-          <input type="date" formControlName="endDate" class="form-input"
-            [class.input-error]="batchForm.get('endDate')?.touched && (batchForm.get('endDate')?.invalid || batchForm.errors?.['dateRangeInvalid'])">
-          
-          <div *ngIf="batchForm.get('endDate')?.touched && batchForm.get('endDate')?.invalid" class="error-msg text-right">
-            <small *ngIf="batchForm.get('endDate')?.errors?.['required']">تاريخ النهاية مطلوب</small>
-          </div>
-          <div *ngIf="batchForm.get('endDate')?.touched && batchForm.errors?.['dateRangeInvalid']" class="error-msg text-right" style="color: #dc2626; font-size: 12px; margin-top: 4px;">
-            <small>تاريخ النهاية يجب أن يكون بعد تاريخ البداية</small>
-          </div>
-        </div>
-      </div>
-
-      <!-- الطاقة الاستيعابية -->
-      <div class="form-group">
-        <label class="form-label">
-          الطاقة الاستيعابية <span class="required-star">*</span>
-        </label>
-        <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="capacity" placeholder="15"
-          class="form-input text-right"
-          [class.input-error]="batchForm.get('capacity')?.touched && batchForm.get('capacity')?.invalid">
-
-        <div *ngIf="batchForm.get('capacity')?.touched && batchForm.get('capacity')?.invalid" class="error-msg text-right">
-          <small *ngIf="batchForm.get('capacity')?.errors?.['required']">الطاقة الاستيعابية مطلوبة</small>
-          <small *ngIf="batchForm.get('capacity')?.errors?.['min']">يجب أن تكون الطاقة الاستيعابية 1 على الأقل</small>
-        </div>
-      </div>
-
-      <!-- تنبيه خطأ الـ Server -->
-      <div *ngIf="batchErrorMessage" class="error-msg text-center mb-2" style="color: #dc2626; font-size: 13px;">
-        <small>{{ batchErrorMessage }}</small>
-      </div>
-
-      <!-- Footer Buttons -->
-      <div class="modal-footer-buttons">
-        <button type="submit" [disabled]="isSubmittingBatch" class="btn-submit-batch">
-          {{ isSubmittingBatch ? 'جاري الحفظ...' : 'إنشاء الدفعة' }}
-        </button>
-        <button type="button" (click)="onCloseBatchModal()" class="btn-cancel-batch">إلغاء</button>
-      </div>
-
-    </form>
-  </div>
-</div>
-
-
-<!-- ========================================== -->
-<!-- Modal: إنشاء برنامج جديد (Program Modal)    -->
-<!-- ========================================== -->
-<div *ngIf="isProgramModalOpen" (click)="onCloseProgramModal()" class="modal-overlay" dir="rtl">
-  <div (click)="$event.stopPropagation()" class="modal-container-program">
-
-    <button type="button" (click)="onCloseProgramModal()" class="modal-close-absolute">&times;</button>
-
-    <div class="modal-title-wrapper">
-      <h3 class="modal-title">إنشاء برنامج جديد</h3>
-    </div>
-
-    <form [formGroup]="programForm" (ngSubmit)="onSubmitProgram()" class="modal-form-program">
-
-      <!-- اسم البرنامج -->
-      <div class="form-group">
-        <label class="form-label">
-          اسم البرنامج <span class="required-star">*</span>
-        </label>
-        <input type="text" formControlName="title" placeholder="e.g. .NET Track" class="form-input text-right"
-          [class.input-error]="pf['title'].touched && pf['title'].invalid">
-
-        <div *ngIf="pf['title'].touched && pf['title'].invalid" class="error-msg text-right">
-          <small *ngIf="pf['title'].errors?.['required']">اسم البرنامج مطلوب</small>
-          <small *ngIf="pf['title'].errors?.['minlength']">الاسم يجب أن يكون حرفين على الأقل</small>
-        </div>
-      </div>
-
-      <!-- المسار القادم من جدول tracks بالداتابيس -->
-      <div class="form-group">
-        <label class="form-label">
-          المسار <span class="required-star">*</span>
-        </label>
-        <select formControlName="trackId" class="form-select text-right"
-          [class.input-error]="pf['trackId'].touched && pf['trackId'].invalid">
-          <option [ngValue]="null" disabled selected>– اختر مساراً –</option>
-          <option *ngFor="let track of tracks()" [value]="track.trackId || track.id">
-            {{ track.name || track.title }}
-          </option>
-        </select>
-
-        <div *ngIf="pf['trackId'].touched && pf['trackId'].invalid" class="error-msg text-right">
-          <small *ngIf="pf['trackId'].errors?.['required']">يرجى اختيار المسار</small>
-        </div>
-      </div>
-
-      <!-- مدة البرنامج (بالأسابيع) -->
-      <div class="form-group">
-        <label class="form-label">
-          مدة البرنامج (بالأسابيع) <span class="required-star">*</span>
-        </label>
-        <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="durationWeeks"
-          placeholder="10" class="form-input text-right"
-          [class.input-error]="pf['durationWeeks'].touched && pf['durationWeeks'].invalid">
-
-        <div *ngIf="pf['durationWeeks'].touched && pf['durationWeeks'].invalid" class="error-msg text-right">
-          <small *ngIf="pf['durationWeeks'].errors?.['required']">مدة البرنامج مطلوبة</small>
-          <small *ngIf="pf['durationWeeks'].errors?.['min']">يجب أن تكون المدة أسبوعاً واحداً على الأقل</small>
-        </div>
-      </div>
-
-      <!-- وصف البرنامج -->
-      <div class="form-group">
-        <label class="form-label">وصف البرنامج</label>
-        <textarea formControlName="description" rows="3" placeholder="وصف مختصر عن محتوى البرنامج وأهدافه..."
-          class="form-textarea text-right"></textarea>
-      </div>
-
-      <!-- تنبيه خطأ الـ Server -->
-      <div *ngIf="programErrorMessage" class="error-msg text-center mb-2" style="color: #dc2626; font-size: 13px;">
-        <small>{{ programErrorMessage }}</small>
-      </div>
-
-      <!-- Footer Buttons -->
-      <div class="modal-footer-buttons-program">
-        <button type="submit" [disabled]="isSubmittingProgram" class="btn-submit-program">
-          {{ isSubmittingProgram ? 'جاري الحفظ...' : 'إنشاء البرنامج' }}
-        </button>
-
-        <button type="button" (click)="onCloseProgramModal()" class="btn-cancel-program">
-          إلغاء
-        </button>
-      </div>
-
-    </form>
-  </div>
-</div>
-
-
-<!-- رسالة خطأ عند فشل تحميل الدفعات -->
-<div *ngIf="batchesError()" class="error-alert" dir="rtl">
-  <i class="fa-solid fa-triangle-exclamation error-icon"></i>
-  {{ batchesError() }}
 </div>
 
 
@@ -494,9 +286,19 @@
             </span>
           </td>
 
-          <!-- 8. الإجراءات -->
+          <!-- 8. الإجراءات (مع زر متدربي الدفعة) -->
           <td class="nfd-td text-center">
             <div class="nfd-actions-wrapper">
+              
+              <!-- زر استعراض متدربي هذه الدفعة ومراسلتهم -->
+              <button type="button" 
+                (click)="onViewTrainees(batch); $event.stopPropagation();" 
+                title="متدربو هذه الدفعة والمراسلة" 
+                aria-label="عرض متدربي الدفعة"
+                class="nfd-action-icon-btn action-trainees-btn">
+                <i class="fa-solid fa-users"></i>
+              </button>
+
               <button type="button" (click)="onEdit(batch)" title="تعديل" aria-label="تعديل الدفعة"
                 class="nfd-action-icon-btn">
                 <i class="fa-regular fa-pen-to-square"></i>
@@ -522,6 +324,121 @@
         </tr>
       </tbody>
     </table>
+  </div>
+</div>
+
+
+<!-- ========================================================== -->
+<!-- Modal: قائمة متدربي الدفعة المختارة من الداتابيس            -->
+<!-- ========================================================== -->
+<div *ngIf="isTraineesModalOpen()" (click)="onCloseTraineesModal()" class="modal-overlay" dir="rtl">
+  <div (click)="$event.stopPropagation()" class="modal-container-trainees">
+    
+    <!-- Modal Header -->
+    <div class="details-header">
+      <div>
+        <div class="modal-title-with-pill">
+          <h3 class="details-title">متدربو {{ selectedBatch?.batchName }}</h3>
+          <span class="trainees-count-pill">
+            {{ selectedBatchTrainees().length }} متدرب مسجل
+          </span>
+        </div>
+        <p class="trainees-modal-subtext">
+          {{ getProgramName(selectedBatch) }} · {{ selectedBatch?.companyName || 'شركة مستضيفة' }}
+        </p>
+      </div>
+      <button type="button" (click)="onCloseTraineesModal()" class="details-close-btn">&times;</button>
+    </div>
+
+    <!-- شريط معلومات توضيحي للمزايا -->
+    <div class="trainees-features-banner">
+      <i class="fa-solid fa-circle-check text-indigo-600"></i>
+      <span>بيانات حقيقية من الداتابيس: الصور الشخصية، روابط LinkedIn، والمراسلة الفورية للمتدربين.</span>
+    </div>
+
+    <!-- جدول المتدربين -->
+    <div class="trainees-table-scroll">
+      <table class="trainees-modal-table">
+        <thead>
+          <tr>
+            <th>المتدرب</th>
+            <th>الهوية / التواصل</th>
+            <th class="text-center">LinkedIn</th>
+            <th class="text-center">مراسلة فورية</th>
+            <th class="text-center">نسبة الحضور</th>
+            <th class="text-center">الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of selectedBatchTrainees()">
+            
+            <!-- 1. صورة المتدرب والاسم -->
+            <td>
+              <div class="trainee-user-cell">
+                <img [src]="t.avatarUrl || 'https://api.dicebear.com/7.x/initials/svg?seed=' + (t.fullName || t.name)" 
+                     [alt]="t.fullName || t.name" class="trainee-avatar" />
+                <div>
+                  <div class="trainee-name">{{ t.fullName || t.name }}</div>
+                  <div class="trainee-email">{{ t.email || '-' }}</div>
+                </div>
+              </div>
+            </td>
+
+            <!-- 2. الهوية والتواصل -->
+            <td>
+              <div class="trainee-id-val">{{ t.nationalId || '-' }}</div>
+              <div class="trainee-phone-val">{{ t.phone || '-' }}</div>
+            </td>
+
+            <!-- 3. رابط LinkedIn -->
+            <td class="text-center">
+              <a *ngIf="t.linkedinUrl" [href]="t.linkedinUrl" target="_blank" rel="noreferrer" title="زيارة حساب LinkedIn" class="linkedin-btn">
+                <i class="fa-brands fa-linkedin"></i>
+              </a>
+              <span *ngIf="!t.linkedinUrl" class="text-slate-300">-</span>
+            </td>
+
+            <!-- 4. زر المراسلة المباشرة -->
+            <td class="text-center">
+              <button type="button" (click)="onMessageTrainee(t)" title="مراسلة المتدرب مباشرة" class="message-trainee-btn">
+                <i class="fa-regular fa-comment-dots"></i>
+                <span>مراسلة</span>
+              </button>
+            </td>
+
+            <!-- 5. نسبة الحضور -->
+            <td class="text-center">
+              <span class="trainee-attendance">{{ (t.attendancePercentage || t.attendanceRate) ? (t.attendancePercentage || t.attendanceRate) + '%' : '-' }}</span>
+            </td>
+
+            <!-- 6. الحالة -->
+            <td class="text-center">
+              <span class="trainee-status-pill">{{ t.status || 'نشط' }}</span>
+            </td>
+
+          </tr>
+
+          <!-- عند عدم وجود متدربين بعد في الدفعة -->
+          <tr *ngIf="selectedBatchTrainees().length === 0">
+            <td colspan="6" class="trainees-empty-row">
+              <i class="fa-regular fa-folder-open"></i>
+              <span>لا يوجد متدربون مسجلون في هذه الدفعة في قاعدة البيانات حتى الآن.</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="trainees-modal-footer">
+      <span class="footer-occupancy-note">
+        طاقة الدفعة: {{ selectedBatch?.totalTraineesCount || 0 }} من أصل {{ selectedBatch?.capacity || 0 }} مقعد
+      </span>
+      <button type="button" (click)="onCloseTraineesModal()" class="btn-close-trainees-modal">
+        إغلاق النافذة
+      </button>
+    </div>
+
   </div>
 </div>
 
@@ -583,7 +500,6 @@
 
     <form [formGroup]="editBatchForm" (ngSubmit)="onSaveBatch()" class="modal-form">
 
-      <!-- اسم الدفعة -->
       <div class="form-group">
         <label class="form-label">اسم الدفعة <span class="required-star">*</span></label>
         <input type="text" formControlName="batchName" class="form-input text-right"
@@ -594,7 +510,6 @@
         </div>
       </div>
 
-      <!-- البرنامج من الداتابيس -->
       <div class="form-group">
         <label class="form-label">البرنامج <span class="required-star">*</span></label>
         <select formControlName="programId" class="form-select text-right"
@@ -608,7 +523,6 @@
         </div>
       </div>
 
-      <!-- الشركة المستضيفة من الداتابيس -->
       <div class="form-group">
         <label class="form-label">الشركة المستضيفة</label>
         <select formControlName="companyId" class="form-select text-right">
@@ -617,7 +531,6 @@
         </select>
       </div>
 
-      <!-- التواريخ -->
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">تاريخ البداية <span class="required-star">*</span></label>
@@ -643,7 +556,6 @@
         </div>
       </div>
 
-      <!-- الطاقة الاستيعابية -->
       <div class="form-group">
         <label class="form-label">الطاقة الاستيعابية <span class="required-star">*</span></label>
         <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="capacity" placeholder="15"
@@ -656,12 +568,10 @@
         </div>
       </div>
 
-      <!-- تنبيه خطأ الـ Server -->
       <div *ngIf="editBatchErrorMessage" class="error-msg text-center mb-2" style="color: #dc2626; font-size: 13px;">
         <small>{{ editBatchErrorMessage }}</small>
       </div>
 
-      <!-- Footer Buttons -->
       <div class="modal-footer-buttons">
         <button type="submit" [disabled]="isSubmittingEditBatch" class="btn-submit-batch">
           {{ isSubmittingEditBatch ? 'جاري الحفظ...' : 'حفظ التعديلات' }}
@@ -674,6 +584,127 @@
 </div>
 
 
+<!-- Modal: إنشاء دفعة جديدة -->
+<div *ngIf="isBatchModalOpen" (click)="onCloseBatchModal()" class="modal-overlay" dir="rtl">
+  <div (click)="$event.stopPropagation()" class="modal-container">
+    <div class="modal-header">
+      <h3 class="modal-title">إنشاء دفعة جديدة</h3>
+      <button type="button" (click)="onCloseBatchModal()" class="modal-close-btn">&times;</button>
+    </div>
+
+    <form [formGroup]="batchForm" (ngSubmit)="onSubmit()" class="modal-form">
+      <div class="form-group">
+        <label class="form-label">اسم الدفعة <span class="required-star">*</span></label>
+        <input type="text" formControlName="batchName" placeholder="e.g. ASP.NET Core Bootcamp" class="form-input text-right"
+          [class.input-error]="batchForm.get('batchName')?.touched && batchForm.get('batchName')?.invalid">
+        <div *ngIf="batchForm.get('batchName')?.touched && batchForm.get('batchName')?.invalid" class="error-msg text-right">
+          <small *ngIf="batchForm.get('batchName')?.errors?.['required']">اسم الدفعة مطلوب</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">البرنامج <span class="required-star">*</span></label>
+        <select formControlName="programId" class="form-select text-right"
+          [class.input-error]="batchForm.get('programId')?.touched && batchForm.get('programId')?.invalid">
+          <option value="" disabled selected>– اختر برنامجاً –</option>
+          <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title || prog.name }}</option>
+        </select>
+        <div *ngIf="batchForm.get('programId')?.touched && batchForm.get('programId')?.invalid" class="error-msg text-right">
+          <small>يجب اختيار البرنامج</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">الشركة المستضيفة</label>
+        <select formControlName="companyId" class="form-select text-right">
+          <option value="">– اختر شركة –</option>
+          <option *ngFor="let comp of companies()" [value]="comp.companyId">{{ comp.companyName }}</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">تاريخ البداية <span class="required-star">*</span></label>
+          <input type="date" formControlName="startDate" class="form-input"
+            [class.input-error]="batchForm.get('startDate')?.touched && batchForm.get('startDate')?.invalid">
+          <div *ngIf="batchForm.get('startDate')?.touched && batchForm.get('startDate')?.invalid" class="error-msg text-right">
+            <small>تاريخ البداية مطلوب</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">تاريخ النهاية <span class="required-star">*</span></label>
+          <input type="date" formControlName="endDate" class="form-input"
+            [class.input-error]="batchForm.get('endDate')?.touched && (batchForm.get('endDate')?.invalid || batchForm.errors?.['dateRangeInvalid'])">
+          <div *ngIf="batchForm.get('endDate')?.touched && batchForm.get('endDate')?.invalid" class="error-msg text-right">
+            <small *ngIf="batchForm.get('endDate')?.errors?.['required']">تاريخ النهاية مطلوب</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">الطاقة الاستيعابية <span class="required-star">*</span></label>
+        <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="capacity" placeholder="15"
+          class="form-input text-right"
+          [class.input-error]="batchForm.get('capacity')?.touched && batchForm.get('capacity')?.invalid">
+      </div>
+
+      <div *ngIf="batchErrorMessage" class="error-msg text-center mb-2" style="color: #dc2626; font-size: 13px;">
+        <small>{{ batchErrorMessage }}</small>
+      </div>
+
+      <div class="modal-footer-buttons">
+        <button type="submit" [disabled]="isSubmittingBatch" class="btn-submit-batch">
+          {{ isSubmittingBatch ? 'جاري الحفظ...' : 'إنشاء الدفعة' }}
+        </button>
+        <button type="button" (click)="onCloseBatchModal()" class="btn-cancel-batch">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: إنشاء برنامج جديد -->
+<div *ngIf="isProgramModalOpen" (click)="onCloseProgramModal()" class="modal-overlay" dir="rtl">
+  <div (click)="$event.stopPropagation()" class="modal-container-program">
+    <button type="button" (click)="onCloseProgramModal()" class="modal-close-absolute">&times;</button>
+    <div class="modal-title-wrapper"><h3 class="modal-title">إنشاء برنامج جديد</h3></div>
+
+    <form [formGroup]="programForm" (ngSubmit)="onSubmitProgram()" class="modal-form-program">
+      <div class="form-group">
+        <label class="form-label">اسم البرنامج <span class="required-star">*</span></label>
+        <input type="text" formControlName="title" placeholder="e.g. .NET Track" class="form-input text-right"
+          [class.input-error]="pf['title'].touched && pf['title'].invalid">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">المسار <span class="required-star">*</span></label>
+        <select formControlName="trackId" class="form-select text-right"
+          [class.input-error]="pf['trackId'].touched && pf['trackId'].invalid">
+          <option [ngValue]="null" disabled selected>– اختر مساراً –</option>
+          <option *ngFor="let track of tracks()" [value]="track.trackId || track.id">{{ track.name || track.title }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">مدة البرنامج (بالأسابيع) <span class="required-star">*</span></label>
+        <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="durationWeeks" placeholder="10" class="form-input text-right">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">وصف البرنامج</label>
+        <textarea formControlName="description" rows="3" class="form-textarea text-right"></textarea>
+      </div>
+
+      <div class="modal-footer-buttons-program">
+        <button type="submit" [disabled]="isSubmittingProgram" class="btn-submit-program">
+          {{ isSubmittingProgram ? 'جاري الحفظ...' : 'إنشاء البرنامج' }}
+        </button>
+        <button type="button" (click)="onCloseProgramModal()" class="btn-cancel-program">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- pagination -->
 @if (totalPages() > 1) {
 <div class="compact-pagination-wrapper">
@@ -683,16 +714,9 @@
   </div>
 
   <div class="pagination-compact-controls">
-    <button class="compact-nav-btn" [disabled]="currentPage() === 1" (click)="onPageChange(currentPage() - 1)">
-      السابق
-    </button>
-
+    <button class="compact-nav-btn" [disabled]="currentPage() === 1" (click)="onPageChange(currentPage() - 1)">السابق</button>
     <span class="page-indicator">{{ currentPage() }} / {{ totalPages() }}</span>
-
-    <button class="compact-nav-btn" [disabled]="currentPage() === totalPages()"
-      (click)="onPageChange(currentPage() + 1)">
-      التالي
-    </button>
+    <button class="compact-nav-btn" [disabled]="currentPage() === totalPages()" (click)="onPageChange(currentPage() + 1)">التالي</button>
   </div>
 </div>
 }
