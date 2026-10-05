@@ -48,15 +48,12 @@
     width: 58px;
     height: 58px;
     flex: 0 0 58px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     border-radius: 16px;
     background: #eaf8fb;
     border: 1px solid #d3edf2;
-
     color: #0098aa;
     font-size: 23px;
   }
@@ -127,7 +124,7 @@
 
 
 /* =====================================================
-   ORIGINAL PAGE STYLES
+   PAGE STYLES
    ===================================================== */
 
 .tasks-page .tasks-inline-001 {
@@ -135,89 +132,8 @@
   border: 1px solid #e2e8f0;
   border-radius: 20px;
   padding: 30px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
   box-sizing: border-box;
-}
-
-.tasks-page .tasks-inline-002 {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 24px;
-  padding-bottom: 20px;
-  margin-bottom: 28px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.tasks-page .tasks-inline-003 {
-  flex: 1;
-  min-width: 0;
-  text-align: right;
-}
-
-.tasks-page .tasks-inline-004 {
-  margin: 0 0 6px 0;
-  font-size: 24px;
-  font-weight: 800;
-  color: #0b192c;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.tasks-page .tasks-inline-005 {
-  margin: 0;
-  font-size: 13px;
-  color: #64748b;
-  line-height: 1.7;
-}
-
-.tasks-page .tasks-inline-006 {
-  margin-top: 18px;
-  width: 300px;
-  max-width: 100%;
-}
-
-.tasks-page .tasks-inline-007 {
-  display: block;
-  margin-bottom: 7px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #334155;
-}
-
-.tasks-page .tasks-inline-008 {
-  width: 100%;
-  height: 44px;
-  box-sizing: border-box;
-  padding: 0 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  outline: none;
-  font-family: inherit;
-  font-size: 13px;
-  color: #0f172a;
-  background: #ffffff;
-  cursor: pointer;
-}
-
-.tasks-page .tasks-inline-009 {
-  min-width: 190px;
-  height: 46px;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 7px;
-  padding: 0 20px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.tasks-page .tasks-inline-010 {
-  font-size: 19px;
-  line-height: 1;
 }
 
 .tasks-page .tasks-inline-011 {
@@ -261,7 +177,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
   box-sizing: border-box;
   transition: all 0.3s ease;
 }
@@ -297,23 +213,12 @@
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-.tasks-page .tasks-inline-017 {
-  background: #e8f8fb;
-  color: #0b8fa5;
-}
-
-.tasks-page .tasks-inline-018 {
-  background: #fff2d9;
-  color: #d58b00;
-}
-
-.tasks-page .tasks-inline-019 {
-  background: #e4f7ed;
-  color: #15945a;
-}
+.tasks-page .tasks-inline-017 { background: #e8f8fb; color: #0b8fa5; }
+.tasks-page .tasks-inline-018 { background: #fff2d9; color: #d58b00; }
+.tasks-page .tasks-inline-019 { background: #e4f7ed; color: #15945a; }
 
 .tasks-page .tasks-inline-020 {
   flex: 1;
@@ -406,6 +311,50 @@
   font-size: 11px;
   font-weight: 600;
   color: #16a34a;
+}
+
+
+/* =====================================================
+   LATE INDICATORS
+   ===================================================== */
+
+/* شريط التأخير على بطاقة المهمة */
+.tasks-page .task-card-late {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* مدة التأخير داخل نافذة التسليمات */
+.tasks-page .submission-late-duration {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+
+  span {
+    color: #b91c1c;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  strong {
+    color: #dc2626;
+    font-size: 11px;
+    font-weight: 800;
+  }
 }
 
 
@@ -593,7 +542,7 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(15,35,70,0.38);
+  background: rgba(15, 35, 70, 0.38);
   backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
@@ -603,13 +552,13 @@
 }
 
 .tasks-page .tasks-inline-047 {
-  width: min(720px,100%);
+  width: min(720px, 100%);
   max-height: calc(100vh - 48px);
   background: #ffffff;
   border-radius: 18px;
   border: 1px solid #e2e8f0;
   overflow: auto;
-  box-shadow: 0 24px 70px rgba(15,35,70,0.22);
+  box-shadow: 0 24px 70px rgba(15, 35, 70, 0.22);
 }
 
 .tasks-page .tasks-inline-048 {
@@ -836,13 +785,8 @@
   background: #fafcfe;
 }
 
-.tasks-page .tasks-inline-063 {
-  min-width: 80px;
-}
-
-.tasks-page .tasks-inline-064 {
-  min-width: 120px;
-}
+.tasks-page .tasks-inline-063 { min-width: 80px; }
+.tasks-page .tasks-inline-064 { min-width: 120px; }
 
 
 /* =====================================================
@@ -867,12 +811,10 @@
    ===================================================== */
 
 @media (max-width: 1200px) {
-
   .tasks-page .tasks-inline-013 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;
   }
-
 }
 
 
@@ -881,7 +823,6 @@
    ===================================================== */
 
 @media (max-width: 950px) {
-
   .tasks-page .tasks-header {
     align-items: stretch;
     flex-direction: column;
@@ -901,19 +842,6 @@
   .tasks-page .tasks-header-action {
     width: 100%;
   }
-
-  .tasks-page .tasks-inline-002 {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-
-  .tasks-page .tasks-inline-006,
-  .tasks-page .tasks-inline-009 {
-    width: 100%;
-    min-width: 0;
-  }
-
 }
 
 
@@ -922,7 +850,6 @@
    ===================================================== */
 
 @media (max-width: 760px) {
-
   .tasks-page .tasks-inline-013 {
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
@@ -967,7 +894,6 @@
   .tasks-page .submission-item > div:nth-child(2) {
     grid-template-columns: minmax(0, 1fr) !important;
   }
-
 }
 
 
@@ -976,7 +902,6 @@
    ===================================================== */
 
 @media (max-width: 560px) {
-
   .tasks-page .tasks-header {
     padding: 15px;
     border-radius: 14px;
@@ -1069,6 +994,11 @@
 
   .tasks-page .tasks-inline-025 {
     font-size: 12px;
+  }
+
+  .tasks-page .task-card-late {
+    font-size: 10px;
+    padding: 7px 10px;
   }
 
   .tasks-page .tasks-inline-031 {
@@ -1175,7 +1105,6 @@
     font-size: 12px;
   }
 
-
   /* Schedule */
 
   .tasks-page .task-schedule-section {
@@ -1197,7 +1126,6 @@
     height: 32px;
   }
 
-
   /* Footer */
 
   .tasks-page .tasks-inline-062 {
@@ -1212,7 +1140,6 @@
     width: 100%;
     min-width: 0;
   }
-
 
   /* Submission cards */
 
@@ -1229,7 +1156,6 @@
   .tasks-page .submission-status-badge {
     align-self: flex-start;
   }
-
 }
 
 
@@ -1238,7 +1164,6 @@
    ===================================================== */
 
 @media (max-width: 380px) {
-
   .tasks-page .tasks-header {
     padding: 12px;
   }
@@ -1280,5 +1205,4 @@
   .tasks-page .task-field-hint {
     font-size: 9px;
   }
-
 }
