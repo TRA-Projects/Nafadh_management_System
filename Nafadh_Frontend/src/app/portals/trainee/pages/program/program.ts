@@ -1,3 +1,4 @@
+
 import {
   Component,
   OnInit,
@@ -23,6 +24,7 @@ import {
   TrainingMaterialDto,
   SessionDto
 } from '../../../../core/models/dtos';
+
 
 // =====================================================
 // Extended DTOs
@@ -51,6 +53,7 @@ export interface ProgramStatsDto {
   experienceYears: number;
 }
 
+
 // =====================================================
 // COMPONENT
 // =====================================================
@@ -71,6 +74,7 @@ export class TraineeProgram implements OnInit {
   private auth = inject(AuthService);
   private router = inject(Router);
 
+
   // =====================================================
   // IDs
   // =====================================================
@@ -85,6 +89,7 @@ export class TraineeProgram implements OnInit {
 
   enrollmentId = signal<number | null>(null);
 
+
   // =====================================================
   // SESSION / TRAINING MATERIALS
   // =====================================================
@@ -94,12 +99,14 @@ export class TraineeProgram implements OnInit {
   lessonMaterials =
     signal<Record<number, TrainingMaterialDto[]>>({});
 
+
   // =====================================================
   // USER / TRAINEE
   // =====================================================
 
   traineeData =
     signal<TraineeProfileDto | null>(null);
+
 
   // =====================================================
   // MAIN DATA
@@ -120,6 +127,7 @@ export class TraineeProgram implements OnInit {
   moduleProgress =
     signal<TraineeModuleProgressDto[]>([]);
 
+
   // =====================================================
   // STATE
   // =====================================================
@@ -128,6 +136,24 @@ export class TraineeProgram implements OnInit {
 
   error =
     signal<string | null>(null);
+
+
+  // =====================================================
+  // TOAST NOTIFICATION
+  // =====================================================
+
+  notificationMessage =
+    signal('');
+
+  notificationType =
+    signal<'success' | 'error'>('success');
+
+  notificationVisible =
+    signal(false);
+
+  private notificationTimer?:
+    ReturnType<typeof setTimeout>;
+
 
   // =====================================================
   // STATISTICS
@@ -144,6 +170,7 @@ export class TraineeProgram implements OnInit {
       totalAssignments: 0,
       experienceYears: 0
     });
+
 
   // =====================================================
   // COMPUTED
@@ -169,6 +196,7 @@ export class TraineeProgram implements OnInit {
     this.stats().completedLessons || 0
   );
 
+
   // =====================================================
   // INIT
   // =====================================================
@@ -181,6 +209,49 @@ export class TraineeProgram implements OnInit {
 
     this.loadCurrentTrainee();
   }
+
+
+  // =====================================================
+  // SHOW NOTIFICATION
+  // =====================================================
+
+  showNotification(
+    message: string,
+    type: 'success' | 'error' = 'success'
+  ): void {
+
+    this.notificationMessage.set(
+      message
+    );
+
+    this.notificationType.set(
+      type
+    );
+
+    this.notificationVisible.set(
+      true
+    );
+
+
+    if (this.notificationTimer) {
+
+      clearTimeout(
+        this.notificationTimer
+      );
+
+    }
+
+
+    this.notificationTimer =
+      setTimeout(() => {
+
+        this.notificationVisible.set(
+          false
+        );
+
+      }, 3000);
+  }
+
 
   // =====================================================
   // LOAD CURRENT TRAINEE
@@ -207,7 +278,9 @@ export class TraineeProgram implements OnInit {
 
       currentUserId =
         this.getUserIdFromStorage();
+
     }
+
 
     if (
       !currentUserId ||
@@ -227,19 +300,23 @@ export class TraineeProgram implements OnInit {
       return;
     }
 
+
     this.userId.set(
       currentUserId
     );
+
 
     console.log(
       '✅ Current User ID:',
       currentUserId
     );
 
+
     this.loadTrainee(
       currentUserId
     );
   }
+
 
   // =====================================================
   // LOAD TRAINEE
@@ -265,14 +342,17 @@ export class TraineeProgram implements OnInit {
               trainee
             );
 
+
             this.traineeData.set(
               trainee
             );
+
 
             const id =
               Number(
                 trainee.traineeId
               );
+
 
             if (
               !id ||
@@ -284,26 +364,32 @@ export class TraineeProgram implements OnInit {
                 trainee
               );
 
+
               this.error.set(
                 'لم يتم العثور على معرف المتدرب.'
               );
+
 
               this.loading.set(false);
 
               return;
             }
 
+
             this.traineeId.set(
               id
             );
+
 
             console.log(
               '✅ Trainee ID:',
               id
             );
 
+
             this.loadEnrollment(id);
           },
+
 
         error:
           error => {
@@ -313,14 +399,18 @@ export class TraineeProgram implements OnInit {
               error
             );
 
+
             this.error.set(
               'تعذر تحميل بيانات المتدرب.'
             );
 
+
             this.loading.set(false);
           }
+
       });
   }
+
 
   // =====================================================
   // LOAD ENROLLMENT
@@ -335,6 +425,7 @@ export class TraineeProgram implements OnInit {
       '📚 Loading enrollments for trainee:',
       traineeId
     );
+
 
     this.api
       .getEnrollmentsByTrainee(
@@ -353,6 +444,7 @@ export class TraineeProgram implements OnInit {
               enrollments
             );
 
+
             if (
               !enrollments ||
               enrollments.length === 0
@@ -362,10 +454,12 @@ export class TraineeProgram implements OnInit {
                 'لا توجد تسجيلات للمتدرب.'
               );
 
+
               this.loading.set(false);
 
               return;
             }
+
 
             const activeEnrollment =
               enrollments.find(
@@ -380,18 +474,22 @@ export class TraineeProgram implements OnInit {
                     status === 'active' ||
                     status === 'inprogress'
                   );
+
                 }
               ) ||
               enrollments[0];
+
 
             console.log(
               '✅ Selected enrollment:',
               activeEnrollment
             );
 
+
             this.enrollment.set(
               activeEnrollment
             );
+
 
             this.enrollmentId.set(
               Number(
@@ -399,24 +497,29 @@ export class TraineeProgram implements OnInit {
               )
             );
 
+
             const batchId =
               Number(
                 activeEnrollment.batchId
               );
 
+
             this.batchId.set(
               batchId
             );
 
-            // تحميل جلسات الدفعة
+
             this.loadBatchSessions(
               batchId
             );
 
+
             this.loadBatchAndProgram(
               batchId
             );
+
           },
+
 
         error:
           error => {
@@ -426,14 +529,18 @@ export class TraineeProgram implements OnInit {
               error
             );
 
+
             this.error.set(
               'تعذر تحميل تسجيل المتدرب.'
             );
 
+
             this.loading.set(false);
           }
+
       });
   }
+
 
   // =====================================================
   // LOAD BATCH
@@ -446,7 +553,7 @@ export class TraineeProgram implements OnInit {
 
     if (
       !batchId ||
-      Number.isNaN(batchId)
+      Number.isNaN(Number(batchId))
     ) {
 
       console.error(
@@ -454,19 +561,23 @@ export class TraineeProgram implements OnInit {
         batchId
       );
 
+
       this.error.set(
         'لم يتم العثور على الدفعة.'
       );
+
 
       this.loading.set(false);
 
       return;
     }
 
+
     console.log(
       '📦 Loading batch:',
       batchId
     );
+
 
     this.api
       .getBatch(batchId)
@@ -480,10 +591,12 @@ export class TraineeProgram implements OnInit {
               batch
             );
 
+
             const programId =
               Number(
                 batch.programId
               );
+
 
             if (
               !programId ||
@@ -495,28 +608,34 @@ export class TraineeProgram implements OnInit {
                 batch
               );
 
+
               this.error.set(
                 'لم يتم العثور على البرنامج المرتبط بالدفعة.'
               );
+
 
               this.loading.set(false);
 
               return;
             }
 
+
             this.programId.set(
               programId
             );
+
 
             console.log(
               '🎯 Program ID:',
               programId
             );
 
+
             this.loadProgramData(
               programId
             );
           },
+
 
         error:
           error => {
@@ -526,14 +645,18 @@ export class TraineeProgram implements OnInit {
               error
             );
 
+
             this.error.set(
               'تعذر تحميل بيانات الدفعة.'
             );
 
+
             this.loading.set(false);
           }
+
       });
   }
+
 
   // =====================================================
   // LOAD PROGRAM
@@ -548,6 +671,7 @@ export class TraineeProgram implements OnInit {
       programId ??
       this.programId();
 
+
     if (
       !id ||
       Number.isNaN(Number(id))
@@ -558,23 +682,28 @@ export class TraineeProgram implements OnInit {
         id
       );
 
+
       this.error.set(
         'لم يتم العثور على معرف البرنامج.'
       );
+
 
       this.loading.set(false);
 
       return;
     }
 
+
     this.programId.set(
       Number(id)
     );
+
 
     console.log(
       '🎓 Loading Program:',
       id
     );
+
 
     this.api
       .getProgram(Number(id))
@@ -588,12 +717,15 @@ export class TraineeProgram implements OnInit {
               program
             );
 
+
             this.program.set(
               program
             );
 
+
             this.loadModules();
           },
+
 
         error:
           error => {
@@ -603,14 +735,18 @@ export class TraineeProgram implements OnInit {
               error
             );
 
+
             this.error.set(
               'تعذر تحميل بيانات البرنامج.'
             );
 
+
             this.loading.set(false);
           }
+
       });
   }
+
 
   // =====================================================
   // LOAD MODULES
@@ -622,6 +758,7 @@ export class TraineeProgram implements OnInit {
     const programId =
       this.programId();
 
+
     if (
       !programId ||
       Number.isNaN(Number(programId))
@@ -631,15 +768,18 @@ export class TraineeProgram implements OnInit {
         '❌ Cannot load modules. Program ID missing.'
       );
 
+
       this.loading.set(false);
 
       return;
     }
 
+
     console.log(
       '📚 Loading modules for program:',
       programId
     );
+
 
     this.api
       .getProgramModules(programId)
@@ -656,6 +796,7 @@ export class TraineeProgram implements OnInit {
               modules
             );
 
+
             if (
               !modules ||
               modules.length === 0
@@ -668,10 +809,12 @@ export class TraineeProgram implements OnInit {
               return;
             }
 
+
             this.loadModuleLessons(
               modules
             );
           },
+
 
         error:
           error => {
@@ -681,12 +824,15 @@ export class TraineeProgram implements OnInit {
               error
             );
 
+
             this.modules.set([]);
 
             this.loadModuleProgress();
           }
+
       });
   }
+
 
   // =====================================================
   // LOAD LESSONS
@@ -708,6 +854,7 @@ export class TraineeProgram implements OnInit {
       return;
     }
 
+
     const requests =
       modules.map(
         module =>
@@ -715,6 +862,7 @@ export class TraineeProgram implements OnInit {
             module.moduleId
           )
       );
+
 
     import('rxjs')
       .then(({ forkJoin }) => {
@@ -735,6 +883,7 @@ export class TraineeProgram implements OnInit {
 
                       const lessons =
                         lessonsData[index] ?? [];
+
 
                       return {
 
@@ -760,21 +909,27 @@ export class TraineeProgram implements OnInit {
 
                             })
                           )
+
                       };
+
                     }
                   );
+
 
                 this.modules.set(
                   result
                 );
+
 
                 console.log(
                   '✅ Modules + Lessons:',
                   result
                 );
 
+
                 this.loadModuleProgress();
               },
+
 
             error:
               error => {
@@ -783,6 +938,7 @@ export class TraineeProgram implements OnInit {
                   '❌ Lessons API Error:',
                   error
                 );
+
 
                 const result =
                   modules.map(
@@ -805,15 +961,20 @@ export class TraineeProgram implements OnInit {
                     })
                   );
 
+
                 this.modules.set(
                   result
                 );
 
+
                 this.loadModuleProgress();
               }
+
           });
+
       });
   }
+
 
   // =====================================================
   // LOAD MODULE PROGRESS
@@ -824,6 +985,7 @@ export class TraineeProgram implements OnInit {
     const traineeId =
       this.traineeId();
 
+
     if (
       !traineeId ||
       Number.isNaN(Number(traineeId))
@@ -833,12 +995,14 @@ export class TraineeProgram implements OnInit {
         '⚠️ traineeId missing.'
       );
 
+
       this.calculateStats();
 
       this.loading.set(false);
 
       return;
     }
+
 
     this.api
       .getModuleProgress(traineeId)
@@ -855,16 +1019,20 @@ export class TraineeProgram implements OnInit {
               progressData
             );
 
+
             this.moduleProgress.set(
               progressData ?? []
             );
+
 
             this.updateModulesWithProgress(
               progressData ?? []
             );
 
+
             this.loadEnrollmentProgress();
           },
+
 
         error:
           error => {
@@ -874,12 +1042,15 @@ export class TraineeProgram implements OnInit {
               error
             );
 
+
             this.calculateStats();
 
             this.loading.set(false);
           }
+
       });
   }
+
 
   // =====================================================
   // LOAD ENROLLMENT PROGRESS
@@ -891,6 +1062,7 @@ export class TraineeProgram implements OnInit {
     const enrollmentId =
       this.enrollmentId();
 
+
     if (
       !enrollmentId ||
       Number.isNaN(Number(enrollmentId))
@@ -900,12 +1072,14 @@ export class TraineeProgram implements OnInit {
         '⚠️ Enrollment ID missing.'
       );
 
+
       this.calculateStats();
 
       this.loading.set(false);
 
       return;
     }
+
 
     this.api
       .getEnrollmentProgress(
@@ -924,14 +1098,17 @@ export class TraineeProgram implements OnInit {
               summary
             );
 
+
             this.progress.set(
               summary
             );
+
 
             this.calculateStats();
 
             this.loading.set(false);
           },
+
 
         error:
           error => {
@@ -941,12 +1118,15 @@ export class TraineeProgram implements OnInit {
               error
             );
 
+
             this.calculateStats();
 
             this.loading.set(false);
           }
+
       });
   }
+
 
   // =====================================================
   // UPDATE MODULE PROGRESS
@@ -968,7 +1148,9 @@ export class TraineeProgram implements OnInit {
                 module.moduleId
             );
 
+
           let percentage = 0;
+
 
           if (progress) {
 
@@ -976,6 +1158,7 @@ export class TraineeProgram implements OnInit {
               String(
                 progress.status ?? ''
               ).toLowerCase();
+
 
             if (
               status === 'completed'
@@ -993,11 +1176,15 @@ export class TraineeProgram implements OnInit {
             } else {
 
               percentage = 0;
+
             }
+
           }
+
 
           const lessons =
             module.lessons ?? [];
+
 
           const completedCount =
             percentage === 100
@@ -1011,6 +1198,7 @@ export class TraineeProgram implements OnInit {
                     lessons.length
                   )
                 : 0;
+
 
           const updatedLessons =
             lessons.map(
@@ -1029,6 +1217,7 @@ export class TraineeProgram implements OnInit {
               })
             );
 
+
           return {
 
             ...module,
@@ -1040,15 +1229,19 @@ export class TraineeProgram implements OnInit {
               updatedLessons
 
           };
+
         }
       );
+
 
     this.modules.set(
       updatedModules
     );
 
+
     this.checkModulePrerequisites();
   }
+
 
   // =====================================================
   // PREREQUISITES
@@ -1059,12 +1252,15 @@ export class TraineeProgram implements OnInit {
     const traineeId =
       this.traineeId();
 
+
     if (!traineeId) {
       return;
     }
 
+
     const modules =
       this.modules();
+
 
     modules.forEach(
       (
@@ -1082,6 +1278,7 @@ export class TraineeProgram implements OnInit {
           return;
         }
 
+
         this.api
           .checkPrerequisite(
             module.moduleId,
@@ -1096,7 +1293,9 @@ export class TraineeProgram implements OnInit {
                   module.moduleId,
                   passed
                 );
+
               },
+
 
             error:
               error => {
@@ -1106,15 +1305,20 @@ export class TraineeProgram implements OnInit {
                   error
                 );
 
+
                 this.updateModuleLock(
                   module.moduleId,
                   true
                 );
+
               }
+
           });
+
       }
     );
   }
+
 
   // =====================================================
   // UPDATE LOCK
@@ -1149,6 +1353,7 @@ export class TraineeProgram implements OnInit {
     );
   }
 
+
   // =====================================================
   // CALCULATE STATS
   // =====================================================
@@ -1158,14 +1363,17 @@ export class TraineeProgram implements OnInit {
     const modules =
       this.modules();
 
+
     const totalModules =
       modules.length;
+
 
     const completedModules =
       modules.filter(
         m =>
           m.progressPercentage === 100
       ).length;
+
 
     const totalLessons =
       modules.reduce(
@@ -1179,6 +1387,7 @@ export class TraineeProgram implements OnInit {
           ),
         0
       );
+
 
     const completedLessons =
       modules.reduce(
@@ -1197,10 +1406,13 @@ export class TraineeProgram implements OnInit {
         0
       );
 
+
     let overallProgress = 0;
+
 
     const summary =
       this.progress();
+
 
     if (summary) {
 
@@ -1221,7 +1433,9 @@ export class TraineeProgram implements OnInit {
           ) *
           100
         );
+
     }
+
 
     this.stats.set({
 
@@ -1247,7 +1461,9 @@ export class TraineeProgram implements OnInit {
         )
 
     });
+
   }
+
 
   // =====================================================
   // TOTAL DAYS
@@ -1260,6 +1476,7 @@ export class TraineeProgram implements OnInit {
         this.program()?.durationHours ?? 0
       );
 
+
     if (
       durationHours > 0
     ) {
@@ -1267,10 +1484,13 @@ export class TraineeProgram implements OnInit {
       return Math.ceil(
         durationHours / 8
       );
+
     }
+
 
     return this.modules().length * 2;
   }
+
 
   // =====================================================
   // TOTAL ASSIGNMENTS
@@ -1290,6 +1510,7 @@ export class TraineeProgram implements OnInit {
       0
     );
   }
+
 
   // =====================================================
   // EXPERIENCE
@@ -1318,6 +1539,7 @@ export class TraineeProgram implements OnInit {
     return 1;
   }
 
+
   // =====================================================
   // SESSIONS
   // GET /api/Session/batch/{batchId}
@@ -1334,6 +1556,7 @@ export class TraineeProgram implements OnInit {
       return;
     }
 
+
     this.api
       .getSessionsByBatch(batchId)
       .subscribe({
@@ -1346,10 +1569,12 @@ export class TraineeProgram implements OnInit {
               sessions
             );
 
+
             this.sessions.set(
               sessions ?? []
             );
           },
+
 
         error:
           error => {
@@ -1359,24 +1584,18 @@ export class TraineeProgram implements OnInit {
               error
             );
 
+
             this.sessions.set([]);
           }
+
       });
   }
+
 
   // =====================================================
   // ATTEND LESSON
   // =====================================================
 
-  /**
-   * زر "حضور الدرس"
-   *
-   * 1. نأخذ جلسات الدفعة.
-   * 2. نحدد sessionId.
-   * 3. نستدعي GET /api/Session/{sessionId}.
-   * 4. نفتح meetingLink.
-   * 5. إذا لم يوجد meetingLink نفتح recordingUrl.
-   */
   attendLesson(
     lesson: LessonWithProgressDto,
     module: ModuleWithLessonsDto
@@ -1391,8 +1610,10 @@ export class TraineeProgram implements OnInit {
       return;
     }
 
+
     const batchId =
       this.batchId();
+
 
     if (!batchId) {
 
@@ -1400,19 +1621,20 @@ export class TraineeProgram implements OnInit {
         '⚠️ Batch ID is missing'
       );
 
+
       alert(
         'لم يتم العثور على الدفعة.'
       );
 
+
       return;
     }
+
 
     const sessions =
       this.sessions();
 
-    /*
-     * إذا كانت Sessions موجودة بالفعل
-     */
+
     if (sessions.length) {
 
       this.findAndOpenSession(
@@ -1420,13 +1642,11 @@ export class TraineeProgram implements OnInit {
         lesson
       );
 
+
       return;
     }
 
-    /*
-     * إذا لم تكن Sessions محملة
-     * نعيد استدعاء API الخاص بالدفعة.
-     */
+
     this.api
       .getSessionsByBatch(batchId)
       .subscribe({
@@ -1439,18 +1659,23 @@ export class TraineeProgram implements OnInit {
               data
             );
 
+
             const sessionData =
               data ?? [];
+
 
             this.sessions.set(
               sessionData
             );
 
+
             this.findAndOpenSession(
               sessionData,
               lesson
             );
+
           },
+
 
         error:
           error => {
@@ -1460,12 +1685,16 @@ export class TraineeProgram implements OnInit {
               error
             );
 
+
             alert(
               'تعذر تحميل جلسات الدرس حاليًا.'
             );
+
           }
+
       });
   }
+
 
   // =====================================================
   // FIND SESSION + GET SESSION DETAILS
@@ -1485,13 +1714,7 @@ export class TraineeProgram implements OnInit {
       return;
     }
 
-    /*
-     * الأولوية:
-     *
-     * 1. Scheduled
-     * 2. أي Session لديها meetingLink
-     * 3. Completed
-     */
+
     const selectedSession =
       sessions.find(
         session =>
@@ -1505,6 +1728,7 @@ export class TraineeProgram implements OnInit {
         session =>
           session.status === 'Completed'
       );
+
 
     if (
       !selectedSession ||
@@ -1521,17 +1745,21 @@ export class TraineeProgram implements OnInit {
         }
       );
 
+
       alert(
         'لا توجد جلسة مرتبطة بهذا الدرس حاليًا.'
       );
 
+
       return;
     }
+
 
     const sessionId =
       Number(
         selectedSession.sessionId
       );
+
 
     if (
       !sessionId ||
@@ -1543,23 +1771,22 @@ export class TraineeProgram implements OnInit {
         selectedSession
       );
 
+
       alert(
         'معرف الجلسة غير صالح.'
       );
 
+
       return;
     }
+
 
     console.log(
       '🎯 Selected Session ID:',
       sessionId
     );
 
-    /*
-     * IMPORTANT
-     *
-     * GET /api/Session/{id}
-     */
+
     this.api
       .getSession(sessionId)
       .subscribe({
@@ -1572,10 +1799,7 @@ export class TraineeProgram implements OnInit {
               session
             );
 
-            /*
-             * حالة الجلسة Scheduled
-             * ومعها meetingLink
-             */
+
             if (
               session.status === 'Scheduled' &&
               session.meetingLink
@@ -1586,19 +1810,18 @@ export class TraineeProgram implements OnInit {
                 session.meetingLink
               );
 
+
               window.open(
                 session.meetingLink,
                 '_blank',
                 'noopener,noreferrer'
               );
 
+
               return;
             }
 
-            /*
-             * إذا كانت Completed
-             * نفتح التسجيل إذا كان موجودًا.
-             */
+
             if (
               session.status === 'Completed' &&
               session.recordingUrl
@@ -1609,19 +1832,18 @@ export class TraineeProgram implements OnInit {
                 session.recordingUrl
               );
 
+
               window.open(
                 session.recordingUrl,
                 '_blank',
                 'noopener,noreferrer'
               );
 
+
               return;
             }
 
-            /*
-             * fallback:
-             * إذا كان meetingLink موجودًا مهما كانت الحالة
-             */
+
             if (
               session.meetingLink
             ) {
@@ -1631,18 +1853,18 @@ export class TraineeProgram implements OnInit {
                 session.meetingLink
               );
 
+
               window.open(
                 session.meetingLink,
                 '_blank',
                 'noopener,noreferrer'
               );
 
+
               return;
             }
 
-            /*
-             * fallback للتسجيل
-             */
+
             if (
               session.recordingUrl
             ) {
@@ -1652,14 +1874,17 @@ export class TraineeProgram implements OnInit {
                 session.recordingUrl
               );
 
+
               window.open(
                 session.recordingUrl,
                 '_blank',
                 'noopener,noreferrer'
               );
 
+
               return;
             }
+
 
             console.warn(
               '⚠️ No meetingLink or recordingUrl available',
@@ -1671,10 +1896,13 @@ export class TraineeProgram implements OnInit {
               }
             );
 
+
             alert(
               'لا يوجد رابط حضور أو تسجيل متاح لهذه الجلسة حاليًا.'
             );
+
           },
+
 
         error:
           error => {
@@ -1684,12 +1912,16 @@ export class TraineeProgram implements OnInit {
               error
             );
 
+
             alert(
               'تعذر تحميل بيانات الجلسة حاليًا.'
             );
+
           }
+
       });
   }
+
 
   // =====================================================
   // TRAINING MATERIALS
@@ -1710,10 +1942,12 @@ export class TraineeProgram implements OnInit {
       return;
     }
 
+
     const lessonId =
       Number(
         lesson.lessonId
       );
+
 
     if (
       !lessonId ||
@@ -1724,13 +1958,16 @@ export class TraineeProgram implements OnInit {
         '⚠️ Invalid lesson ID'
       );
 
+
       return;
     }
+
 
     console.log(
       '📥 Loading training materials for lesson:',
       lessonId
     );
+
 
     this.api
       .getTrainingMaterials(lessonId)
@@ -1744,6 +1981,7 @@ export class TraineeProgram implements OnInit {
               materials
             );
 
+
             if (
               !materials ||
               materials.length === 0
@@ -1753,8 +1991,10 @@ export class TraineeProgram implements OnInit {
                 'لا توجد مواد تدريبية متاحة لهذا الدرس.'
               );
 
+
               return;
             }
+
 
             this.lessonMaterials.update(
               current => ({
@@ -1767,6 +2007,7 @@ export class TraineeProgram implements OnInit {
               })
             );
 
+
             materials.forEach(
               material => {
 
@@ -1774,14 +2015,18 @@ export class TraineeProgram implements OnInit {
                   return;
                 }
 
+
                 window.open(
                   material.fileUrl,
                   '_blank',
                   'noopener,noreferrer'
                 );
+
               }
             );
+
           },
+
 
         error:
           error => {
@@ -1791,12 +2036,289 @@ export class TraineeProgram implements OnInit {
               error
             );
 
+
             alert(
               'تعذر تحميل مادة الدرس حاليًا.'
             );
+
           }
+
       });
   }
+
+
+  // =====================================================
+  // LESSON DETAILS SIDEBAR
+  // =====================================================
+
+  showLessonSidebar =
+    signal(false);
+
+  selectedLesson =
+    signal<LessonWithProgressDto | null>(null);
+
+  selectedModule =
+    signal<ModuleWithLessonsDto | null>(null);
+
+  lessonSidebarTab =
+    signal<'notes' | 'rating'>('notes');
+
+  lessonNote =
+    signal('');
+
+  lessonRating =
+    signal(0);
+
+
+  // =====================================================
+  // OPEN LESSON NOTES
+  // =====================================================
+
+  openLessonNotes(
+    lesson: LessonWithProgressDto,
+    module: ModuleWithLessonsDto
+  ): void {
+
+    if (module.isLocked) {
+
+      console.warn(
+        '🔒 Module is locked'
+      );
+
+      return;
+    }
+
+
+    this.selectedLesson.set(
+      lesson
+    );
+
+
+    this.selectedModule.set(
+      module
+    );
+
+
+    this.lessonSidebarTab.set(
+      'notes'
+    );
+
+
+    // سيتم تحميل الملاحظة من Backend لاحقًا
+
+    this.lessonNote.set('');
+
+
+    this.showLessonSidebar.set(
+      true
+    );
+  }
+
+
+  // =====================================================
+  // OPEN LESSON RATING
+  // =====================================================
+
+  openLessonRating(
+    lesson: LessonWithProgressDto,
+    module: ModuleWithLessonsDto
+  ): void {
+
+    if (module.isLocked) {
+
+      console.warn(
+        '🔒 Module is locked'
+      );
+
+      return;
+    }
+
+
+    this.selectedLesson.set(
+      lesson
+    );
+
+
+    this.selectedModule.set(
+      module
+    );
+
+
+    this.lessonSidebarTab.set(
+      'rating'
+    );
+
+
+    // سيتم تحميل التقييم من Backend لاحقًا
+
+    this.lessonRating.set(0);
+
+
+    this.showLessonSidebar.set(
+      true
+    );
+  }
+
+
+  // =====================================================
+  // SWITCH SIDEBAR TAB
+  // =====================================================
+
+  switchLessonSidebarTab(
+    tab: 'notes' | 'rating'
+  ): void {
+
+    this.lessonSidebarTab.set(
+      tab
+    );
+  }
+
+
+  // =====================================================
+  // CLOSE SIDEBAR
+  // =====================================================
+
+  closeLessonSidebar(): void {
+
+    this.showLessonSidebar.set(
+      false
+    );
+
+
+    this.selectedLesson.set(
+      null
+    );
+
+
+    this.selectedModule.set(
+      null
+    );
+
+
+    this.lessonNote.set('');
+
+
+    this.lessonRating.set(0);
+  }
+
+
+  // =====================================================
+  // UPDATE NOTE
+  // =====================================================
+
+  updateLessonNote(
+    event: Event
+  ): void {
+
+    const textarea =
+      event.target as HTMLTextAreaElement;
+
+
+    this.lessonNote.set(
+      textarea.value
+    );
+  }
+
+
+  // =====================================================
+  // SAVE NOTE
+  // =====================================================
+
+  saveLessonNote(): void {
+
+    const lesson =
+      this.selectedLesson();
+
+
+    if (!lesson) {
+      return;
+    }
+
+
+    const note =
+      this.lessonNote().trim();
+
+
+    if (!note) {
+
+      this.showNotification(
+        'يرجى كتابة ملاحظتك أولاً.',
+        'error'
+      );
+
+
+      return;
+    }
+
+
+    // سيتم ربط Backend لاحقًا
+
+    this.showNotification(
+      'تم حفظ ملاحظتك بنجاح.',
+      'success'
+    );
+
+
+    this.closeLessonSidebar();
+  }
+
+
+  // =====================================================
+  // SELECT RATING
+  // =====================================================
+
+  selectLessonRating(
+    rating: number
+  ): void {
+
+    this.lessonRating.set(
+      rating
+    );
+  }
+
+
+  // =====================================================
+  // SAVE RATING
+  // =====================================================
+
+  saveLessonRating(): void {
+
+    const lesson =
+      this.selectedLesson();
+
+
+    const rating =
+      this.lessonRating();
+
+
+    if (!lesson) {
+      return;
+    }
+
+
+    if (!rating) {
+
+      this.showNotification(
+        'يرجى اختيار تقييم الدرس.',
+        'error'
+      );
+
+
+      return;
+    }
+
+
+    // سيتم ربط Backend لاحقًا
+
+    this.showNotification(
+      'تم إرسال تقييمك بنجاح.',
+      'success'
+    );
+
+
+    this.closeLessonSidebar();
+  }
+
 
   // =====================================================
   // OPEN MODULE
@@ -1812,14 +2334,17 @@ export class TraineeProgram implements OnInit {
         '🔒 Prerequisite not completed'
       );
 
+
       return;
     }
+
 
     console.log(
       '📚 Module selected:',
       module.moduleId
     );
   }
+
 
   // =====================================================
   // ACHIEVEMENT
@@ -1830,8 +2355,10 @@ export class TraineeProgram implements OnInit {
     const traineeId =
       this.traineeId();
 
+
     const programId =
       this.programId();
+
 
     if (!traineeId) {
 
@@ -1839,8 +2366,10 @@ export class TraineeProgram implements OnInit {
         '⚠️ No trainee ID'
       );
 
+
       return;
     }
+
 
     if (!programId) {
 
@@ -1848,8 +2377,10 @@ export class TraineeProgram implements OnInit {
         '⚠️ No program ID'
       );
 
+
       return;
     }
+
 
     this.api
       .markAchievement(
@@ -1866,10 +2397,12 @@ export class TraineeProgram implements OnInit {
               response
             );
 
+
             this.loadProgramData(
               programId
             );
           },
+
 
         error:
           error => {
@@ -1878,9 +2411,12 @@ export class TraineeProgram implements OnInit {
               '❌ Achievement Error:',
               error
             );
+
           }
+
       });
   }
+
 
   // =====================================================
   // USER ID FROM STORAGE
@@ -1893,10 +2429,12 @@ export class TraineeProgram implements OnInit {
         'userId'
       );
 
+
     if (localUserId) {
 
       const id =
         Number(localUserId);
+
 
       if (
         id &&
@@ -1905,17 +2443,21 @@ export class TraineeProgram implements OnInit {
 
         return id;
       }
+
     }
+
 
     const sessionUserId =
       sessionStorage.getItem(
         'userId'
       );
 
+
     if (sessionUserId) {
 
       const id =
         Number(sessionUserId);
+
 
       if (
         id &&
@@ -1924,12 +2466,15 @@ export class TraineeProgram implements OnInit {
 
         return id;
       }
+
     }
+
 
     const userData =
       localStorage.getItem(
         'userData'
       );
+
 
     if (userData) {
 
@@ -1940,11 +2485,13 @@ export class TraineeProgram implements OnInit {
             userData
           );
 
+
         const id =
           Number(
             user.userId ??
             user.id
           );
+
 
         if (
           id &&
@@ -1954,14 +2501,20 @@ export class TraineeProgram implements OnInit {
           return id;
         }
 
+
       } catch {
 
         console.warn(
           '⚠️ Invalid userData'
         );
+
       }
+
     }
+
 
     return null;
   }
+
 }
+
