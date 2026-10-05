@@ -333,7 +333,7 @@
 <!-- ========================================================== -->
 <div *ngIf="isTraineesModalOpen()" (click)="onCloseTraineesModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container-trainees">
-    
+
     <!-- Modal Header -->
     <div class="details-header">
       <div>
@@ -350,11 +350,7 @@
       <button type="button" (click)="onCloseTraineesModal()" class="details-close-btn">&times;</button>
     </div>
 
-    <!-- شريط معلومات توضيحي للمزايا -->
-    <div class="trainees-features-banner">
-      <i class="fa-solid fa-circle-check text-indigo-600"></i>
-      <span>بيانات حقيقية من الداتابيس: الصور الشخصية، روابط LinkedIn، والمراسلة الفورية للمتدربين.</span>
-    </div>
+
 
     <!-- جدول المتدربين -->
     <div class="trainees-table-scroll">
@@ -362,67 +358,60 @@
         <thead>
           <tr>
             <th>المتدرب</th>
-            <th>الهوية / التواصل</th>
-            <th class="text-center">LinkedIn</th>
-            <th class="text-center">مراسلة فورية</th>
-            <th class="text-center">نسبة الحضور</th>
+            <th>الجامعة والتخصص</th>
+            <th>الشركة المستضيفة</th>
             <th class="text-center">الحالة</th>
+            <th class="text-center">الإجراء</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let t of selectedBatchTrainees()">
-            
-            <!-- 1. صورة المتدرب والاسم -->
+
+            <!-- 1. المتدرب -->
             <td>
               <div class="trainee-user-cell">
-                <img [src]="t.avatarUrl || 'https://api.dicebear.com/7.x/initials/svg?seed=' + (t.fullName || t.name)" 
-                     [alt]="t.fullName || t.name" class="trainee-avatar" />
+                <img [src]="t.fileUrl || 'https://api.dicebear.com/7.x/initials/svg?seed=' + t.fullName"
+                  [alt]="t.fullName" class="trainee-avatar" />
                 <div>
-                  <div class="trainee-name">{{ t.fullName || t.name }}</div>
-                  <div class="trainee-email">{{ t.email || '-' }}</div>
+                  <div class="trainee-name">{{ t.fullName }}</div>
+                  <div class="trainee-email" style="font-size: 11px; color: #94a3b8;">رقم المتدرب: #{{ t.traineeId }}
+                  </div>
                 </div>
               </div>
             </td>
 
-            <!-- 2. الهوية والتواصل -->
+            <!-- 2. الجامعة والتخصص (بيانات حقيقية من الداتابيس) -->
             <td>
-              <div class="trainee-id-val">{{ t.nationalId || '-' }}</div>
-              <div class="trainee-phone-val">{{ t.phone || '-' }}</div>
+              <div style="font-weight: 600; color: #1e293b;">{{ t.university || '-' }}</div>
+              <div style="font-size: 11.5px; color: #64748b;">{{ t.major || '-' }}</div>
             </td>
 
-            <!-- 3. رابط LinkedIn -->
-            <td class="text-center">
-              <a *ngIf="t.linkedinUrl" [href]="t.linkedinUrl" target="_blank" rel="noreferrer" title="زيارة حساب LinkedIn" class="linkedin-btn">
-                <i class="fa-brands fa-linkedin"></i>
-              </a>
-              <span *ngIf="!t.linkedinUrl" class="text-slate-300">-</span>
+            <!-- 1. الشركة المستضيفة -->
+            <td>
+              <span style="color: #334155; font-weight: 500;">
+                {{ t.companyName || 'قيد التوزيع' }}
+              </span>
             </td>
-
-            <!-- 4. زر المراسلة المباشرة -->
+            
+            <!-- 2. الحالة -->
             <td class="text-center">
-              <button type="button" (click)="onMessageTrainee(t)" title="مراسلة المتدرب مباشرة" class="message-trainee-btn">
+              <span class="trainee-status-pill" [ngClass]="t.status">
+                {{ t.status === 'InTraining' ? 'قيد التدريب' : (t.status === 'NotAssigned' ? 'قيد التوزيع' : (t.status || 'نشط')) }}
+              </span>
+            </td>
+            <!-- 5. زر المراسلة المباشرة -->
+            <td class="text-center">
+              <button type="button" (click)="onMessageTrainee(t)" class="message-trainee-btn">
                 <i class="fa-regular fa-comment-dots"></i>
                 <span>مراسلة</span>
               </button>
             </td>
 
-            <!-- 5. نسبة الحضور -->
-            <td class="text-center">
-              <span class="trainee-attendance">{{ (t.attendancePercentage || t.attendanceRate) ? (t.attendancePercentage || t.attendanceRate) + '%' : '-' }}</span>
-            </td>
-
-            <!-- 6. الحالة -->
-            <td class="text-center">
-              <span class="trainee-status-pill">{{ t.status || 'نشط' }}</span>
-            </td>
-
           </tr>
 
-          <!-- عند عدم وجود متدربين بعد في الدفعة -->
           <tr *ngIf="selectedBatchTrainees().length === 0">
-            <td colspan="6" class="trainees-empty-row">
-              <i class="fa-regular fa-folder-open"></i>
-              <span>لا يوجد متدربون مسجلون في هذه الدفعة في قاعدة البيانات حتى الآن.</span>
+            <td colspan="5" class="trainees-empty-row">
+              لا يوجد متدربون مسجلون في هذه الدفعة حالياً.
             </td>
           </tr>
         </tbody>

@@ -148,12 +148,17 @@
 .modal-container-details,
 .modal-container-trainees {
   background-color: #ffffff;
-  width: 100%;
+  flex-direction: column;
+  display: flex;
+  width: 92vw !important;
+  max-width: 1250px !important; 
+  max-height: 88vh !important; 
   border-radius: 20px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
   padding: 24px;
   box-sizing: border-box;
   position: relative;
+  overflow: hidden;
 }
 
 .modal-container { max-width: 450px; }
@@ -473,10 +478,12 @@
 }
 
 .trainees-table-scroll {
-  max-height: 380px;
+   flex: 1;
+  max-height: 58vh;
   overflow-y: auto;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 12px;
+  margin-top: 14px;
 }
 
 .trainees-modal-table {
@@ -495,7 +502,7 @@
 }
 
 .trainees-modal-table th,
-.trainees-modal-table td { padding: 10px 14px; vertical-align: middle; }
+.trainees-modal-table td { padding: 14px 20px; vertical-align: middle; }
 .trainees-modal-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background-color 0.15s ease; }
 .trainees-modal-table tbody tr:hover { background-color: #f8fafc; }
 
