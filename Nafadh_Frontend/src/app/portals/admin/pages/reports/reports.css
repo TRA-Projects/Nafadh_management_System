@@ -1,6 +1,6 @@
 /* =========================================================
    منصة نفاذ - شاشة التقارير والتحليلات (reports.css الكامل)
-   تصميم متكامل ملء الشاشة 100% مع تمييز الصفحات والشارات
+   مع تنسيقات أشرطة البحث، القوائم المنسدلة، والـ Pagination
 ========================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
@@ -90,7 +90,157 @@
   box-shadow: 0 3px 10px rgba(13, 28, 140, 0.25);
 }
 
-/* 2. ترويسة الأقسام */
+/* =========================================================
+   2. كروت وأشرطة البحث والفلترة الذكية (Filter Toolbars)
+========================================================= */
+.filter-toolbar-card {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.filter-toolbar-card.mini-toolbar {
+  padding: 12px 16px;
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+.search-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  right: 14px;
+  font-size: 15px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.search-input-wrap input {
+  width: 100%;
+  padding: 11px 40px 11px 36px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.search-input-wrap input:focus {
+  border-color: #0D1C8C;
+  box-shadow: 0 0 0 3px rgba(13, 28, 140, 0.1);
+}
+
+.clear-search-btn {
+  position: absolute;
+  left: 12px;
+  background: #e2e8f0;
+  border: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 11px;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filters-actions-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.custom-select-filter {
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: #334155;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.custom-select-filter:focus {
+  border-color: #0D1C8C;
+}
+
+.btn-reset-filters {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-reset-filters:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+/* شاشة عدم وجود نتائج */
+.no-results-box {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 40px 20px;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+  margin-top: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.no-results-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.no-results-box h4 {
+  color: #0D1C8C;
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 6px 0;
+}
+
+.no-results-box p {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+
+/* 3. ترويسة الأقسام */
 .header-section {
   text-align: right;
   margin-bottom: 24px;
@@ -109,7 +259,7 @@
   margin: 0;
 }
 
-/* 3. بطاقات الإحصائيات (تتوزع على كامل العرض) */
+/* 4. بطاقات الإحصائيات (تتوزع على كامل العرض) */
 .summary-metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -150,7 +300,7 @@
   margin-top: 6px;
 }
 
-/* 4. شبكة الكروت للمدربين والشركات */
+/* 5. شبكة الكروت للمدربين والشركات */
 .companies-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -257,7 +407,7 @@
   text-decoration: underline;
 }
 
-/* 5. شاشات البرامج وتفاصيل الدفعة */
+/* 6. شاشات البرامج وتفاصيل الدفعة */
 .top-nav-bar {
   margin-bottom: 20px;
   text-align: right;
@@ -402,7 +552,7 @@
   background: #091361;
 }
 
-/* 6. تقرير نهاية الدفعة */
+/* 7. تقرير نهاية الدفعة */
 .report-header-card {
   width: 100%;
   background: #ffffff;
@@ -474,7 +624,7 @@
   cursor: pointer;
 }
 
-/* 7. الجداول ملء الشاشة */
+/* 8. الجداول ملء الشاشة */
 .table-card {
   width: 100%;
   background: #ffffff;
@@ -569,7 +719,7 @@
 }
 
 /* =========================================================
-   8. شريط التصفح (Pagination) مع تمييز الصفحة النشطة
+   9. شريط التصفح (Pagination) مع تمييز الصفحة النشطة
 ========================================================= */
 .compact-pagination-wrapper {
   width: 100%;
@@ -645,7 +795,7 @@
   background: #f1f5f9 !important;
 }
 
-/* ⭐ زر الصفحة النشطة المحدد بلون كحلي فخم وواضح ⭐ */
+/* زر الصفحة النشطة المحدد بلون كحلي فخم وواضح */
 .compact-page-number-btn.active {
   background-color: #0D1C8C !important;
   color: #ffffff !important;
@@ -654,7 +804,7 @@
   font-weight: 800 !important;
 }
 
-/* 9. مؤشر التحميل */
+/* 10. مؤشر التحميل */
 .loading-state {
   display: flex;
   flex-direction: column;
@@ -685,7 +835,7 @@
 }
 
 /* =========================================================
-   10. صفحة تفاصيل المدرب الكاملة ملء الشاشة
+   11. صفحة تفاصيل المدرب الكاملة ملء الشاشة
 ========================================================= */
 .trainer-full-banner {
   width: 100%;
@@ -788,7 +938,7 @@
 }
 
 /* =========================================================
-   11. خانة درجات وملاحظات تقييم المدرب للمتدرب (مع مسافات وألوان واضحة)
+   12. خانة درجات وملاحظات تقييم المدرب للمتدرب
 ========================================================= */
 .trainer-tag {
   background: #eef2ff;

@@ -422,9 +422,11 @@
   background: #ffffff;
   border-radius: 16px;
   width: 100%;
-  max-width: 520px;
+  max-width: 580px;
   padding: 24px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .nfd-modal.details-modal {
@@ -506,6 +508,134 @@
   justify-content: flex-end;
   gap: 12px;
   margin-top: 24px;
+}
+
+/* ==========================================================================
+   التنسيق الجديد: قائمة خيارات أسباب ومخالفات البلاغ الجاهزة
+   ========================================================================== */
+.reasons-selection-container {
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 14px;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.reasons-selection-container.has-error {
+  border-color: #ef4444;
+  background-color: #fffafb;
+}
+
+.reasons-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.reasons-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reasons-count-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 2px 10px;
+  border-radius: 20px;
+}
+
+.btn-clear-reasons {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-clear-reasons:hover {
+  text-decoration: underline;
+}
+
+.reasons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.reason-option-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease-in-out;
+}
+
+.reason-option-card:hover {
+  border-color: #93c5fd;
+  background-color: #f0f7ff;
+}
+
+.reason-option-card.selected {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.1);
+}
+
+.reason-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background-color: #ffffff;
+  transition: all 0.15s;
+}
+
+.reason-option-card.selected .reason-checkbox {
+  background-color: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.reason-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  line-height: 1.3;
+}
+
+.reason-option-card.selected .reason-label {
+  font-weight: 600;
+  color: #1e3a8a;
+}
+
+.custom-reason-input-group {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.custom-reason-input-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 4px;
+  display: block;
 }
 
 /* تفاصيل البطاقة داخل Modal التفاصيل */
