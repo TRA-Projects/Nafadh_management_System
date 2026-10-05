@@ -46,6 +46,73 @@ export class TrainerProfile
       []
     );
 
+    skills =
+  signal<any[]>(
+    []
+  );
+  showSkillInput =
+  signal(false);
+
+newSkillName =
+  '';
+
+    certificates = signal<any[]>([]);
+    saveSkill(): void {
+
+  const skillName =
+    this.newSkillName.trim();
+
+  if (!skillName) {
+    this.showError(
+      'اكتب اسم المهارة أولًا.'
+    );
+
+    return;
+  }
+
+  const exists =
+    this.skills().some(
+      skill =>
+        skill.skillName?.trim().toLowerCase() ===
+        skillName.toLowerCase()
+    );
+
+  if (exists) {
+    this.showError(
+      'هذه المهارة مضافة مسبقًا.'
+    );
+
+    return;
+  }
+
+  this.skills.update(
+    currentSkills => [
+      ...currentSkills,
+      {
+        trainerSkillId: Date.now(),
+        skillName
+      }
+    ]
+  );
+
+  this.newSkillName = '';
+
+  this.showSkillInput.set(false);
+
+  this.markProfileChanged();
+
+}
+cancelSkill(): void {
+
+  this.newSkillName = '';
+
+  this.showSkillInput.set(false);
+
+}
+
+
+
+
 
   // =====================================================
   // PROFILE SUMMARY
@@ -190,10 +257,82 @@ export class TrainerProfile
   selectedProfileImage:
     File | null = null;
 
+    // =====================================================
+    // TRAINER CERTIFICATE
+    // =====================================================
+    selectedCertificateFile: File | null = null;
+
+isCertificateFormOpen = signal(false);
+
+isUploadingCertificate = signal(false);
+
+certificateForm = {
+  certificateName: '',
+  issuingOrganization: '',
+  certificateNumber: '',
+  issueDate: '',
+  expiryDate: ''
+};
+
+openCertificateForm(): void {
+  this.isCertificateFormOpen.set(true);
+}
+
+closeCertificateForm(): void {
+  this.isCertificateFormOpen.set(false);
+  this.selectedCertificateFile = null;
+}
+
+onCertificateFileSelected(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0] ?? null;
+
+  if (!file) {
+    return;
+  }
+
+  const allowedTypes = [
+    'application/pdf',
+    'image/jpeg',
+    'image/png',
+    'image/webp'
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    this.showError(
+      'يرجى اختيار ملف PDF أو صورة بصيغة JPG أو PNG أو WEBP.'
+    );
+
+    input.value = '';
+    return;
+  }
+
+  const maxSize = 10 * 1024 * 1024;
+
+  if (file.size > maxSize) {
+    this.showError(
+      'حجم ملف الشهادة يجب ألا يتجاوز 10 MB.'
+    );
+
+    input.value = '';
+    return;
+  }
+
+  this.selectedCertificateFile = file;
+}
+
+submitCertificate(): void {
+  // سيتم ربطها بالـ API لاحقًا
+}
+
+
 
   // Controls the enlarged profile image viewer.
   isProfileImageOpen =
     signal(false);
+
+
+
 
 
   // =====================================================
@@ -484,6 +623,61 @@ export class TrainerProfile
     );
 
   }
+  openSkillInput(): void {
+
+  if (!this.isEditing()) {
+    return;
+  }
+
+  this.newSkillName = '';
+
+  this.showSkillInput.set(true);
+
+}
+
+
+  // =====================================================
+// ADD TRAINER SKILL
+// =====================================================
+
+addSkill(): void {
+
+  if (!this.isEditing()) {
+    return;
+  }
+
+  this.newSkillName = '';
+
+  this.showSkillInput.set(true);
+
+}
+
+
+// =====================================================
+// REMOVE TRAINER SKILL
+// =====================================================
+
+removeSkill(
+  skillId: number
+): void {
+
+  if (!this.isEditing()) {
+    return;
+  }
+
+  this.skills.update(
+    currentSkills =>
+      currentSkills.filter(
+        skill =>
+          skill.trainerSkillId !== skillId
+      )
+  );
+
+  this.markProfileChanged();
+
+}
+
+
 
 
   // =====================================================
@@ -574,6 +768,7 @@ export class TrainerProfile
     );
 
   }
+  
 
 
   // =====================================================
