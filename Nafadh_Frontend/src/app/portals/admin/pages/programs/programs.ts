@@ -14,7 +14,7 @@ export class AdminPrograms implements OnInit {
   private fb = inject(FormBuilder);
   private adminApi = inject(AdminApi);
 
-  // --- Signals & States السابقة كاملة ---
+  // --- Signals & States ---
   batches = signal<any[]>([]);
   programs = signal<any[]>([]);
   companies = signal<any[]>([]);
@@ -46,7 +46,7 @@ export class AdminPrograms implements OnInit {
   editBatchForm!: FormGroup;
   programForm!: FormGroup;
 
-  // --- الإضافات: Signals الخاصة بشريط الفلترة المتقدم ---
+  // --- Signals الخاصة بشريط البحث والتصفية المتقدم ---
   searchTerm = signal<string>('');
   selectedYear = signal<string>('الكل');
   selectedProgram = signal<string>('الكل');
@@ -146,20 +146,36 @@ export class AdminPrograms implements OnInit {
     }
   }
 
-  // --- استخراج السنوات المتاحة تلقائياً ---
+  // --- دالة توحيد الحالات (تحل مشكلة الصفر وتطابق الإنجليزي والعربي تلقائياً) ---
+  normalizeStatus(status: any): string {
+    if (!status) return '';
+    const s = String(status).trim().toLowerCase();
+    if (s === 'ongoing' || s === 'جارية' || s === 'جاري' || s === 'active') return 'جارية';
+    if (s === 'upcoming' || s === 'قادمة' || s === 'قادم' || s === 'pending') return 'قادمة';
+    if (s === 'completed' || s === 'مكتملة' || s === 'مكتمل') return 'مكتملة';
+    return status;
+  }
+
+  // --- استخراج قائمة السنوات المتاحة تلقائيًا من البيانات ---
   availableYears = computed(() => {
-    const set = new Set<string>();
+    const yearsSet = new Set<string>();
     this.batches().forEach(b => {
       if (b.startDate) {
-        const y = new Date(b.startDate).getFullYear().toString();
-        if (!isNaN(Number(y))) set.add(y);
+        const year = new Date(b.startDate).getFullYear().toString();
+        if (!isNaN(Number(year))) yearsSet.add(year);
       }
     });
-    ['2027', '2026', '2025', '2024'].forEach(y => set.add(y));
-    return Array.from(set).sort().reverse();
+    ['2027', '2026', '2025', '2024'].forEach(y => yearsSet.add(y));
+    return Array.from(yearsSet).sort().reverse();
   });
 
-  // --- عدد الفلاتر النشطة ---
+  // --- حساب عدد الدفعات الحقيقي حسب الحالة ---
+  getCountByStatus(status: string): number {
+    if (status === 'الكل') return this.batches().length;
+    return this.batches().filter(b => this.normalizeStatus(b.status) === status).length;
+  }
+
+  // --- حساب عدد الفلاتر النشطة حالياً ---
   activeFiltersCount = computed(() => {
     let count = 0;
     if (this.searchTerm().trim()) count++;
@@ -170,7 +186,81 @@ export class AdminPrograms implements OnInit {
     return count;
   });
 
-  // --- دوال التحكم في حقول الفلترة ---
+  // --- محرك التصفية المتقدم الشامل ---
+  filteredBatches = computed(() => {
+    const status = this.statusFilter();
+    const search = this.searchTerm().trim().toLowerCase();
+    const year = this.selectedYear();
+    const prog = this.selectedProgram();
+    const from = this.fromDate();
+    const to = this.toDate();
+
+    return this.batches().filter(batch => {
+      // 1. فلتر الحالة (يطابق الإنجليزي والعربي بدقة)
+      if (status !== 'الكل' && this.normalizeStatus(batch.status) !== status) {
+        return false;
+      }
+
+      // 2. البحث العام (اسم الدفعة، اسم البرنامج، اسم الشركة)
+      if (search) {
+        const batchName = (batch.batchName || '').toLowerCase();
+        const progName = this.getProgramName(batch).toLowerCase();
+        const compName = (batch.companyName || '').toLowerCase();
+        if (!batchName.includes(search) && !progName.includes(search) && !compName.includes(search)) {
+          return false;
+        }
+      }
+
+      // 3. فلتر البرنامج
+      if (prog !== 'الكل') {
+        if (batch.programId?.toString() !== prog && batch.programName !== prog) {
+          return false;
+        }
+      }
+
+      // 4. فلتر السنة
+      if (year !== 'الكل' && batch.startDate) {
+        const batchYear = new Date(batch.startDate).getFullYear().toString();
+        if (batchYear !== year) {
+          return false;
+        }
+      }
+
+      // 5. فلتر من تاريخ (Start Date >= From Date)
+      if (from && batch.startDate) {
+        const bStart = batch.startDate.split('T')[0];
+        if (bStart < from) {
+          return false;
+        }
+      }
+
+      // 6. فلتر إلى تاريخ (Start Date <= To Date)
+      if (to && batch.startDate) {
+        const bDate = batch.startDate.split('T')[0];
+        if (bDate > to) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  });
+
+  paginatedBatches = computed(() => {
+    const filtered = this.filteredBatches();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return filtered.slice(start, start + this.pageSize());
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.filteredBatches().length / this.pageSize()) || 1;
+  });
+
+  totalBatchesCount = computed(() => {
+    return this.filteredBatches().length;
+  });
+
+  // --- دوال التحكم في الفلاتر ---
   onSearchInput(event: Event): void {
     const val = (event.target as HTMLInputElement).value;
     this.searchTerm.set(val);
@@ -222,85 +312,7 @@ export class AdminPrograms implements OnInit {
     }
   }
 
-  // --- دالة التصفية الحسابية الشاملة (تدمج فلاتر الحالة + البحث + السنة + التواريخ) ---
-  filteredBatches = computed(() => {
-    const status = this.statusFilter();
-    const search = this.searchTerm().trim().toLowerCase();
-    const year = this.selectedYear();
-    const prog = this.selectedProgram();
-    const from = this.fromDate();
-    const to = this.toDate();
-
-    return this.batches().filter(batch => {
-      // 1. فلتر الحالة السابق
-      if (status !== 'الكل' && batch.status !== status) {
-        return false;
-      }
-
-      // 2. البحث النصي العام
-      if (search) {
-        const batchName = (batch.batchName || '').toLowerCase();
-        const progName = this.getProgramName(batch).toLowerCase();
-        const compName = (batch.companyName || '').toLowerCase();
-        if (!batchName.includes(search) && !progName.includes(search) && !compName.includes(search)) {
-          return false;
-        }
-      }
-
-      // 3. فلتر البرنامج
-      if (prog !== 'الكل') {
-        if (batch.programId?.toString() !== prog && batch.programName !== prog) {
-          return false;
-        }
-      }
-
-      // 4. فلتر السنة
-      if (year !== 'الكل' && batch.startDate) {
-        const batchYear = new Date(batch.startDate).getFullYear().toString();
-        if (batchYear !== year) {
-          return false;
-        }
-      }
-
-      // 5. فلتر من تاريخ
-      if (from && batch.startDate) {
-        const bStart = batch.startDate.split('T')[0];
-        if (bStart < from) {
-          return false;
-        }
-      }
-
-      // 6. فلتر إلى تاريخ
-      if (to && batch.startDate) {
-        const bDate = batch.startDate.split('T')[0];
-        if (bDate > to) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  });
-
-  paginatedBatches = computed(() => {
-    const filtered = this.filteredBatches();
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return filtered.slice(start, start + this.pageSize());
-  });
-
-  totalPages = computed(() => {
-    return Math.ceil(this.filteredBatches().length / this.pageSize()) || 1;
-  });
-
-  totalBatchesCount = computed(() => {
-    return this.filteredBatches().length;
-  });
-
-  getCountByStatus(status: string): number {
-    return this.batches().filter(b => b.status === status).length;
-  }
-
-  // --- Modal Handlers السابقة كاملة ---
+  // --- Modal Handlers ---
   onCreateBatch(): void {
     this.batchForm.reset({ capacity: 15 });
     this.batchErrorMessage = null;
@@ -350,7 +362,7 @@ export class AdminPrograms implements OnInit {
     this.selectedBatch = null;
   }
 
-  // --- Form Submissions السابقة كاملة ---
+  // --- Form Submissions ---
   onSubmit(): void {
     if (this.batchForm.invalid) {
       this.batchForm.markAllAsTouched();
@@ -452,7 +464,8 @@ export class AdminPrograms implements OnInit {
   }
 
   getStatusBadgeClass(status: string): string {
-    switch (status) {
+    const s = this.normalizeStatus(status);
+    switch (s) {
       case 'جارية': return 'status-ongoing';
       case 'قادمة': return 'status-upcoming';
       case 'مكتملة': return 'status-completed';
@@ -461,6 +474,6 @@ export class AdminPrograms implements OnInit {
   }
 
   getStatusLabel(status: string): string {
-    return status || 'غير محددة';
+    return this.normalizeStatus(status) || status || 'غير محددة';
   }
 }
