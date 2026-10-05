@@ -920,7 +920,7 @@ export class TraineeAchievements implements OnInit {
   // ✅ التعديل: زر التحميل يعتمد فقط على نسبة الإنجاز (50%)
   // ✅ بغض النظر عن وجود شهادة في قاعدة البيانات
   canDownloadCertificate = computed(() => {
-    return this.progressPercentage() >= 50;
+    return this.progressPercentage() >= 85;
   });
 
   traineeName = computed(() => {
