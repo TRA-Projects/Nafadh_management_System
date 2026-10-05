@@ -35,6 +35,10 @@ export class AdminApi {
   }
 
   // ---- Dashboard ----
+
+   getAdminDashboardSummary(): Observable<any> {
+    return this.http.get<any>(`${this.base}/AdminDashboard`);
+  }
   getDashboardCharts(): Observable<DashboardChartsDto> {
     return this.http.get<DashboardChartsDto>(`${this.base}/Report/dashboard-charts`);
   }
