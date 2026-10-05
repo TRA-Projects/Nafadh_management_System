@@ -30,6 +30,7 @@ namespace Nafadh_Backend.Controllers
 
             var enrollments = await _context.NFD_Enrollments
                 .AsNoTracking()
+                .AsSplitQuery() // <--- تمت إضافتها هنا لتسريع الاستعلام ومنع البطء
                 .Include(e => e.Trainee).ThenInclude(t => t.User)
                 .Include(e => e.Company)
                 .Include(e => e.Batch).ThenInclude(b => b.Program)
