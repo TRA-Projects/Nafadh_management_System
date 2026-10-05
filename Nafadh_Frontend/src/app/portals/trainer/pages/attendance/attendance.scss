@@ -1107,3 +1107,15 @@ button:disabled {
   color: #94a3b8;
   font-size: 12px;
 }
+.history-tools {
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-tools .search-box {
+  flex: 0 1 390px;
+  max-width: 390px;
+}
