@@ -291,7 +291,6 @@ export class CompanyProfile implements OnInit {
       phone: c.phone || null,
       email: c.email || null,
       logo: c.logoUrl || c.logo || null,
-      coverImage: c.coverImageUrl || null,
       capacity: Number(patch['capacity'] ?? c.capacity ?? 0),
       status: c.status,
       approvalDate: c.approvalDate || null,

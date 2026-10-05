@@ -24,34 +24,10 @@
     <div class="company-profile-glow"></div>
     <div class="nfd-card company-profile-hero-card" style="padding:0;overflow:hidden;margin-top:16px;border-radius:22px">
       <div class="company-profile-cover">
-        @if (c.coverImageUrl) {
-          <img [src]="c.coverImageUrl" alt="غلاف {{ c.companyName }}" class="company-profile-cover-img" />
+        @if (c.logoUrl) {
+          <img [src]="c.logoUrl" alt="غلاف {{ c.companyName }}" class="company-profile-cover-img" />
         }
         <div class="company-profile-cover-overlay"></div>
-
-        @if (uploadingCover()) {
-          <div class="company-profile-media-loading">
-            <span class="company-profile-spinner"></span>
-            <span>جارِ رفع الغلاف...</span>
-          </div>
-        }
-
-        <div class="company-profile-cover-actions">
-          @if (coverUploadError()) {
-            <span class="company-profile-upload-error">تعذر رفع الصورة، تحقق من النوع والحجم (حتى {{ maxImageSizeMb }}MB)</span>
-          }
-          @if (c.coverImageUrl) {
-            <button type="button" class="nfd-btn secondary company-profile-remove-btn" (click)="removeCoverImage()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-              إزالة
-            </button>
-          }
-          <input [id]="coverInputId" type="file" accept="image/*" hidden (change)="onCoverSelected($event)" />
-          <label [for]="coverInputId" class="nfd-btn secondary company-profile-upload-btn" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z"/><circle cx="12" cy="13" r="3.5"/></svg>
-            تغيير الغلاف
-          </label>
-        </div>
       </div>
 
       <div class="company-profile-header">
