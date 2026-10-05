@@ -3,13 +3,18 @@
     <h2 class="nfd-page-title">إشارات ومخالفات الشركات</h2>
     <p class="nfd-page-sub">متابعة وإدارة الامتثال للشركات المستضيفة للبرامج التدريبية</p>
   </div>
-  <button class="nfd-btn primary-btn" (click)="openIssueModal()">
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-    إصدار إنذار تنظيمي
-  </button>
+  <div class="header-actions">
+    <button class="nfd-btn secondary-btn" (click)="exportToCSV()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      تحميل كافة الإنذارات (CSV)
+    </button>
+    <button class="nfd-btn primary-btn" (click)="openIssueModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      إصدار إنذار تنظيمي
+    </button>
+  </div>
 </div>
 
-<!-- كروت إحصائية -->
 <div class="stats-grid">
   <div class="stat-card">
     <span class="stat-title">إجمالي إنذارات الشركات</span>
@@ -30,14 +35,127 @@
 </div>
 
 <div class="nfd-card">
-  <!-- شريط البحث -->
-  <div class="nfd-toolbar">
+  <!-- شريط البحث والفلترة الموحد -->
+  <div class="nfd-toolbar-multi">
     <div class="search-box">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input type="text" placeholder="البحث باسم الشركة أو الكود..." [(ngModel)]="searchTerm" />
     </div>
+
+    <!-- زر القائمة المنسدلة المدمجة -->
+    <div class="filter-dropdown-container">
+      <button class="nfd-filter-trigger-btn" [class.active]="hasActiveFilters()" (click)="toggleFilterMenu()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        تخصيص الفلترة
+        <span class="arrow-icon">▼</span>
+      </button>
+
+      <!-- القائمة المنسدلة الحاوية للخيارات الفرعية -->
+      @if (isFilterDropdownOpen) {
+        <div class="filter-dropdown-menu">
+          
+          <!-- خيارات الفلترة السريعة -->
+          <div class="filter-menu-item" (click)="openFilterTab('PRESETS')">
+            <span class="menu-label">• الفلترة السريعة</span>
+            <span class="selected-value">خيارات سريعة</span>
+          </div>
+          @if (activeFilterTab === 'PRESETS') {
+            <div class="filter-sub-options">
+              <div class="sub-option" (click)="applyPreset('THIS_MONTH')">• هذا الشهر</div>
+              <div class="sub-option" (click)="applyPreset('THIS_YEAR')">• السنة الحالية (2026)</div>
+            </div>
+          }
+
+          <!-- خيار الفلترة بالسنة -->
+          <div class="filter-menu-item" (click)="openFilterTab('YEAR')">
+            <span class="menu-label">• الفلترة حسب السنة</span>
+            <span class="selected-value">{{ selectedYear === 'ALL' ? 'الكل' : selectedYear }}</span>
+          </div>
+          @if (activeFilterTab === 'YEAR') {
+            <div class="filter-sub-options">
+              <div class="sub-option" [class.active]="selectedYear === 'ALL'" (click)="selectFilterOption('YEAR', 'ALL')">جميع السنوات</div>
+              @for (year of getAvailableYears(); track year) {
+                <div class="sub-option" [class.active]="selectedYear === year" (click)="selectFilterOption('YEAR', year)">{{ year }}</div>
+              }
+            </div>
+          }
+
+          <!-- خيار الفلترة بالشهر -->
+          <div class="filter-menu-item" (click)="openFilterTab('MONTH')">
+            <span class="menu-label">• الفلترة حسب الشهر</span>
+            <span class="selected-value">{{ selectedMonth === 'ALL' ? 'الكل' : getMonthName(selectedMonth) }}</span>
+          </div>
+          @if (activeFilterTab === 'MONTH') {
+            <div class="filter-sub-options grid-2">
+              <div class="sub-option" [class.active]="selectedMonth === 'ALL'" (click)="selectFilterOption('MONTH', 'ALL')">جميع الأشهر</div>
+              @for (m of getAvailableMonthsForSelectedYear(); track m.value) {
+                <div class="sub-option" [class.active]="selectedMonth === m.value" (click)="selectFilterOption('MONTH', m.value)">{{ m.name }}</div>
+              }
+            </div>
+          }
+
+          <!-- خيار الفلترة بالحالة -->
+          <div class="filter-menu-item" (click)="openFilterTab('STATUS')">
+            <span class="menu-label">• الفلترة حسب الحالة</span>
+            <span class="selected-value">{{ selectedStatus === 'ALL' ? 'الكل' : getStatusLabel(selectedStatus) }}</span>
+          </div>
+          @if (activeFilterTab === 'STATUS') {
+            <div class="filter-sub-options">
+              <div class="sub-option" [class.active]="selectedStatus === 'ALL'" (click)="selectFilterOption('STATUS', 'ALL')">الكل</div>
+              <div class="sub-option" [class.active]="selectedStatus === 'Open'" (click)="selectFilterOption('STATUS', 'Open')">نشط</div>
+              <div class="sub-option" [class.active]="selectedStatus === 'UnderReview'" (click)="selectFilterOption('STATUS', 'UnderReview')">قيد المراجعة</div>
+              <div class="sub-option" [class.active]="selectedStatus === 'Resolved'" (click)="selectFilterOption('STATUS', 'Resolved')">مكتمل</div>
+            </div>
+          }
+
+          <!-- خيار الفلترة بالمستوى -->
+          <div class="filter-menu-item" (click)="openFilterTab('LEVEL')">
+            <span class="menu-label">• الفلترة حسب المستوى</span>
+            <span class="selected-value">{{ selectedLevel === 'ALL' ? 'الكل' : getLevelLabel(selectedLevel) }}</span>
+          </div>
+          @if (activeFilterTab === 'LEVEL') {
+            <div class="filter-sub-options">
+              <div class="sub-option" [class.active]="selectedLevel === 'ALL'" (click)="selectFilterOption('LEVEL', 'ALL')">الكل</div>
+              <div class="sub-option" [class.active]="selectedLevel === 'Low'" (click)="selectFilterOption('LEVEL', 'Low')">منخفض</div>
+              <div class="sub-option" [class.active]="selectedLevel === 'Medium'" (click)="selectFilterOption('LEVEL', 'Medium')">متوسط</div>
+              <div class="sub-option" [class.active]="selectedLevel === 'High'" (click)="selectFilterOption('LEVEL', 'High')">مرتفع</div>
+              <div class="sub-option" [class.active]="selectedLevel === 'Critical'" (click)="selectFilterOption('LEVEL', 'Critical')">حرج جداً</div>
+            </div>
+          }
+
+          <!-- زر إعادة الضبط الكامل داخل المنيو -->
+          <div class="filter-menu-footer">
+            <button class="btn-reset-filters" (click)="resetAllFilters()">إعادة ضبط كل الفلاتر</button>
+          </div>
+        </div>
+      }
+    </div>
   </div>
 
+  <!-- شارات الفلاتر النشطة -->
+  @if (hasActiveFilters()) {
+    <div class="active-chips-bar">
+      <span class="chips-label">الفلاتر المطبقة:</span>
+      @if (selectedYear !== 'ALL') {
+        <span class="filter-chip">السنة: {{ selectedYear }} <b (click)="selectFilterOption('YEAR', 'ALL')">✕</b></span>
+      }
+      @if (selectedMonth !== 'ALL') {
+        <span class="filter-chip">الشهر: {{ getMonthName(selectedMonth) }} <b (click)="selectFilterOption('MONTH', 'ALL')">✕</b></span>
+      }
+      @if (selectedStatus !== 'ALL') {
+        <span class="filter-chip">الحالة: {{ getStatusLabel(selectedStatus) }} <b (click)="selectFilterOption('STATUS', 'ALL')">✕</b></span>
+      }
+      @if (selectedLevel !== 'ALL') {
+        <span class="filter-chip">المستوى: {{ getLevelLabel(selectedLevel) }} <b (click)="selectFilterOption('LEVEL', 'ALL')">✕</b></span>
+      }
+      @if (searchTerm.trim()) {
+        <span class="filter-chip">البحث: {{ searchTerm }} <b (click)="searchTerm = ''">✕</b></span>
+      }
+      <button class="clear-all-btn" (click)="resetAllFilters()">مسح الكل</button>
+    </div>
+  }
+
+  <!-- جدول عرض البيانات -->
   <table class="nfd-table">
     <thead>
       <tr>
@@ -47,7 +165,7 @@
         <th>المستوى</th>
         <th>الحالة التنظيمية</th>
         <th>تاريخ الإصدار</th>
-        <th class="text-center">التفاصيل</th>
+        <th class="text-center">التفاصيل / الإجراء</th>
       </tr>
     </thead>
     <tbody>
@@ -68,29 +186,28 @@
           </td>
           <td>{{ (w.issuedDate | date:'dd/MM/yyyy') || '-' }}</td>
           <td class="text-center">
-            <button class="icon-btn" (click)="openDetailsModal(w)" title="عرض التفاصيل">
+            <button class="icon-btn" (click)="openDetailsModal(w)" title="عرض التفاصيل وإدارة الإجراء">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
           </td>
         </tr>
       }
       @empty {
-        <tr><td colspan="7" class="empty-msg">لا توجد سجلات إنذارات متاحة للشركات حالياً</td></tr>
+        <tr><td colspan="7" class="empty-msg">لا توجد سجلات إنذارات مطابقة لمعايير البحث والفلترة المختارة</td></tr>
       }
     </tbody>
   </table>
 </div>
 
-<!-- مودال إصدار إنذار مع التحققات -->
+<!-- Modal إصدار إنذار جديد -->
 @if (showIssue()) {
   <div class="nfd-modal-bg" (click)="closeIssueModal()">
     <div class="nfd-modal" (click)="$event.stopPropagation()">
       <div class="modal-title-bar">
-        <h3>إصدار إشعار مخالفة تنظيمي</h3>
+        <h3>إصدار إشعار مخالفة تنظيمي (قالب موحد)</h3>
         <button class="close-icon-btn" (click)="closeIssueModal()">✕</button>
       </div>
 
-      <!-- الشركة المستضيفة (تم التحديث إلى قائمة منسدلة) -->
       <div class="form-group">
         <label>الشركة المستضيفة *</label>
         <select 
@@ -109,7 +226,6 @@
         </span>
       </div>
 
-      <!-- تصنيف المخالفة -->
       <div class="form-group">
         <label>تصنيف المخالفة التدريبية *</label>
         <select 
@@ -129,7 +245,6 @@
         </span>
       </div>
 
-      <!-- درجة الأهمية -->
       <div class="form-group">
         <label>درجة الأهمية / المستوى *</label>
         <select 
@@ -149,16 +264,48 @@
         </span>
       </div>
 
-      <!-- الأسباب والمستندات -->
+      <!-- ========================================================================= -->
+      <!-- التعديل المنفذ: استبدال مربع النص بخيارات جاهزة مع دعم التحديد المتعدد     -->
+      <!-- ========================================================================= -->
       <div class="form-group">
-        <label>المستندات المؤيدة والأسباب *</label>
-        <textarea 
-          class="nfd-input textarea" 
-          [class.is-invalid]="touchedFields()['evidence'] && formErrors()['evidence']"
-          [(ngModel)]="newWarning.evidence" 
-          (blur)="markFieldTouched('evidence')"
-          rows="3"
-        ></textarea>
+        <div class="reasons-header-actions">
+          <label>سبب إصدار البلاغ / نوع المخالفة *</label>
+          <div class="reasons-tools" *ngIf="selectedReasons().length > 0">
+            <span class="reasons-count-badge">تم اختيار: {{ selectedReasons().length }}</span>
+            <button type="button" class="btn-clear-reasons" (click)="clearAllReasons()">إلغاء التحديد</button>
+          </div>
+        </div>
+
+        <div class="reasons-selection-container" [class.has-error]="touchedFields()['evidence'] && formErrors()['evidence']">
+          <div class="reasons-grid">
+            <div 
+              *ngFor="let reason of violationReasons" 
+              class="reason-option-card"
+              [class.selected]="selectedReasons().includes(reason)"
+              (click)="toggleReason(reason)"
+            >
+              <div class="reason-checkbox">
+                <svg *ngIf="selectedReasons().includes(reason)" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+              <span class="reason-label">{{ reason }}</span>
+            </div>
+          </div>
+
+          <!-- تفاصيل إضافية عند اختيار مخالفة أخرى -->
+          <div class="custom-reason-input-group" *ngIf="selectedReasons().includes('مخالفة أخرى')">
+            <label>تفاصيل المخالفة الأخرى *</label>
+            <input 
+              type="text" 
+              class="nfd-input" 
+              placeholder="يرجى كتابة تفاصيل المخالفة الأخرى هنا..."
+              [(ngModel)]="otherReasonText"
+              (input)="updateEvidenceFromReasons()"
+            />
+          </div>
+        </div>
+
         <span class="field-error" *ngIf="touchedFields()['evidence'] && formErrors()['evidence']">
           {{ formErrors()['evidence'] }}
         </span>
@@ -174,13 +321,13 @@
   </div>
 }
 
-<!-- مودال تفاصيل الإنذار -->
+<!-- Modal عرض التفاصيل والإغلاق -->
 @if (selectedWarning(); as item) {
   <div class="nfd-modal-bg" (click)="closeDetailsModal()">
-    <div class="nfd-modal details-modal" (click)="$event.stopPropagation()">
+    <div class="nfd-modal details-modal print-area" (click)="$event.stopPropagation()">
       <div class="details-header">
-        <button class="close-icon-btn" (click)="closeDetailsModal()">✕</button>
-        <h3>تفاصيل الإشعار التنظيمي</h3>
+        <button class="close-icon-btn no-print" (click)="closeDetailsModal()">✕</button>
+        <h3>تفاصيل نموذج الإشعار التنظيمي</h3>
       </div>
 
       <div class="company-card-header">
@@ -194,7 +341,7 @@
           </div>
         </div>
         <span class="nfd-badge" [ngClass]="getLevelClass(item.level)">
-          ● {{ getLevelLabel(item.level) }}
+          • {{ getLevelLabel(item.level) }}
         </span>
       </div>
 
@@ -205,7 +352,7 @@
         </div>
 
         <div class="detail-row">
-          <span class="detail-label">الأدلة والمستندات:</span>
+          <span class="detail-label">أسباب المخالفة والأدلة:</span>
           <span class="detail-value text-blue">{{ item.evidence || 'تقرير المتابعة الميدانية' }}</span>
         </div>
 
@@ -224,12 +371,34 @@
         </div>
       </div>
 
-      <div class="notes-box">
-        <span class="notes-label">ملاحظات والتوصيات التنفيذية</span>
-        <p class="notes-text">{{ getItemProp(item, 'notes', 'تأخر تسليم التقارير الدورية للمتدربين وفق الجدول الزمني المعتمد.') }}</p>
+      <div class="corrective-section">
+        <label class="section-label">الإجراءات التصحيحية المطلوبة / المتخذة *</label>
+        <textarea 
+          class="nfd-input textarea" 
+          rows="3" 
+          placeholder="أدخل الإجراء التصحيحي المتبع من قبل الشركة..."
+          [(ngModel)]="correctiveActionInput"
+        ></textarea>
+        
+        @if (getStatusLabel(item.status) !== 'مكتمل') {
+          <button class="btn-resolve" (click)="resolveWarning()" [disabled]="isResolving()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            {{ isResolving() ? 'جاري حفظ الإجراء وإغلاق الإنذار...' : 'إغلاق الإنذار وإتمامه' }}
+          </button>
+        } @else {
+          <div class="resolved-notice">
+            ✓ تم إغلاق هذا الإنذار بنجاح بعد استيفاء الإجراءات التصحيحية.
+          </div>
+        }
       </div>
 
-      <button class="btn-gov-submit" (click)="closeDetailsModal()">إغلاق النافذة</button>
+      <div class="modal-footer-actions no-print">
+        <button class="nfd-btn secondary" (click)="printWarningTemplate()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          طباعة النموذج
+        </button>
+        <button class="btn-gov-submit" (click)="closeDetailsModal()">إغلاق</button>
+      </div>
     </div>
   </div>
 }

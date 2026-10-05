@@ -34,6 +34,8 @@ namespace Nafadh_Backend.Models
         public int RoleId { get; set; }
         public NFD_Role Role { get; set; } = null!;
 
+        
+
         public ICollection<NFD_AuditLog> AuditLogs { get; set; } = new List<NFD_AuditLog>();
 
     }

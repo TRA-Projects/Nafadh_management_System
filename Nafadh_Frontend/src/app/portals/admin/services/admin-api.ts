@@ -22,6 +22,7 @@ export interface TraineeCertificateStatusDto {
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private base = environment.apiBaseUrl;
+  
 
   constructor(private http: HttpClient) {}
 

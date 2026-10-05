@@ -1,4 +1,3 @@
-
 /* ==========================================================
    1. General & Shared Styles (Modal Overlay & Font)
    ========================================================== */
@@ -17,13 +16,8 @@
   font-family: 'Cairo', sans-serif;
 }
 
-.text-center {
-  text-align: center;
-}
-
-.text-right {
-  text-align: right;
-}
+.text-center { text-align: center; }
+.text-right { text-align: right; }
 
 .input-error {
   border-color: #dc2626 !important;
@@ -83,17 +77,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 9999px;
   font-size: 12px;
   font-weight: 700;
   background-color: #f1f5f9;
   color: #64748b;
+  box-sizing: border-box;
 }
 
 .filter-btn.active .filter-badge {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.25);
   color: #ffffff;
 }
 
@@ -119,9 +115,7 @@
   transition: background-color 0.2s ease;
 }
 
-.btn-primary-custom:hover {
-  background-color: #0B1770;
-}
+.btn-primary-custom:hover { background-color: #0B1770; }
 
 .btn-secondary-custom {
   display: inline-flex;
@@ -144,38 +138,33 @@
   border-color: #94a3b8;
 }
 
-.btn-icon {
-  font-size: 16px;
-  line-height: 1;
-}
+.btn-icon { font-size: 16px; line-height: 1; }
 
 /* ==========================================================
-   3. Modal & Form Common Styles
+   3. Modal Styles
    ========================================================== */
 .modal-container,
 .modal-container-program,
-.modal-container-details {
+.modal-container-details,
+.modal-container-trainees {
   background-color: #ffffff;
-  width: 100%;
+  flex-direction: column;
+  display: flex;
+  width: 92vw !important;
+  max-width: 1250px !important; 
+  max-height: 88vh !important; 
   border-radius: 20px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
   padding: 24px;
   box-sizing: border-box;
   position: relative;
+  overflow: hidden;
 }
 
-.modal-container {
-  max-width: 450px;
-}
-
-.modal-container-program {
-  max-width: 440px;
-  padding-top: 28px;
-}
-
-.modal-container-details {
-  max-width: 480px;
-}
+.modal-container { max-width: 450px; }
+.modal-container-program { max-width: 440px; padding-top: 28px; }
+.modal-container-details { max-width: 480px; }
+.modal-container-trainees { max-width: 720px; padding: 20px 24px; }
 
 .modal-header,
 .details-header {
@@ -226,10 +215,7 @@
   flex: 1;
 }
 
-.form-row {
-  display: flex;
-  gap: 12px;
-}
+.form-row { display: flex; gap: 12px; }
 
 .form-label {
   font-size: 13.5px;
@@ -238,10 +224,7 @@
   margin: 0;
 }
 
-.required-star {
-  color: #ef4444;
-  margin-right: 2px;
-}
+.required-star { color: #ef4444; margin-right: 2px; }
 
 .form-input,
 .form-select,
@@ -259,13 +242,8 @@
   font-family: 'Cairo', sans-serif;
 }
 
-.form-select {
-  color: #475569;
-}
-
-.form-textarea {
-  resize: none;
-}
+.form-select { color: #475569; }
+.form-textarea { resize: none; }
 
 .form-input:focus,
 .form-select:focus,
@@ -274,7 +252,6 @@
   box-shadow: 0 0 0 3px rgba(13, 28, 140, 0.1);
 }
 
-/* Modal Buttons */
 .modal-footer-buttons,
 .modal-footer-buttons-program {
   display: flex;
@@ -297,14 +274,8 @@
 }
 
 .btn-submit-batch:hover,
-.btn-submit-program:hover:not(:disabled) {
-  background-color: #0B1770;
-}
-
-.btn-submit-program:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
+.btn-submit-program:hover:not(:disabled) { background-color: #0B1770; }
+.btn-submit-program:disabled { opacity: 0.7; cursor: not-allowed; }
 
 .btn-cancel-batch,
 .btn-cancel-program {
@@ -328,51 +299,21 @@
 }
 
 /* ==========================================================
-   4. Error Alert Styles
-   ========================================================== */
-.error-alert {
-  width: 100%;
-  margin-bottom: 12px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
-  font-size: 14px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-}
-
-.error-icon {
-  margin-left: 6px;
-}
-
-/* ==========================================================
-   5. Table Styles
+   4. Table Styles
    ========================================================== */
 .nfd-table-container {
   width: 100%;
   background-color: #ffffff;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
   overflow: hidden;
   box-sizing: border-box;
   font-family: 'Cairo', sans-serif;
 }
 
-.nfd-table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.nfd-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: right;
-  white-space: nowrap;
-}
+.nfd-table-wrapper { width: 100%; overflow-x: auto; }
+.nfd-table { width: 100%; border-collapse: collapse; text-align: right; white-space: nowrap; }
 
 .nfd-tr-header {
   background-color: #f8fafc;
@@ -384,7 +325,6 @@
   font-size: 13px;
   font-weight: 700;
   color: #475569;
-  letter-spacing: -0.2px;
 }
 
 .nfd-tbody .nfd-tr-row {
@@ -392,13 +332,7 @@
   transition: background-color 0.15s ease;
 }
 
-.nfd-tbody .nfd-tr-row:last-child {
-  border-bottom: none;
-}
-
-.nfd-tbody .nfd-tr-row:hover {
-  background-color: #f8fafc;
-}
+.nfd-tbody .nfd-tr-row:hover { background-color: #f8fafc; }
 
 .nfd-td {
   padding: 14px 16px;
@@ -407,23 +341,28 @@
   vertical-align: middle;
 }
 
-.nfd-cell-flex {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+.nfd-cell-flex { display: flex; flex-direction: column; gap: 3px; }
+.nfd-batch-name { font-weight: 600; color: #0f172a; }
+.nfd-batch-subtext { font-size: 12px; color: #64748b; }
+
+.nfd-track-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #eef2ff;
+  border: 1px solid #e0e7ff;
+  color: #4338ca;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  width: fit-content;
+  margin-top: 3px;
+  font-weight: 500;
 }
 
-.nfd-batch-name {
-  font-weight: 600;
-  color: #0f172a;
-}
+.track-label { color: #6366f1; font-weight: 600; }
+.track-name { color: #312e81; font-weight: 700; }
 
-.nfd-batch-subtext {
-  font-size: 12px;
-  color: #64748b;
-}
-
-/* Occupancy & Progress Bar */
 .nfd-occupancy-wrapper {
   display: flex;
   flex-direction: column;
@@ -433,10 +372,17 @@
   margin: 0 auto;
 }
 
-.nfd-occupancy-text {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #475569;
+.occupancy-numbers-row { display: flex; align-items: center; gap: 6px; }
+.nfd-occupancy-text { font-size: 12.5px; font-weight: 600; color: #475569; }
+
+.badge-almost-full {
+  font-size: 10px;
+  font-weight: 700;
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  padding: 1px 5px;
+  border-radius: 4px;
 }
 
 .nfd-progress-bar-bg {
@@ -454,7 +400,10 @@
   transition: width 0.3s ease;
 }
 
-/* Status Badges */
+.nfd-progress-bar-fill.fill-warning {
+  background: linear-gradient(to left, #f59e0b, #ef4444) !important;
+}
+
 .nfd-status-badge {
   display: inline-block;
   padding: 6px 14px;
@@ -464,36 +413,11 @@
   text-align: center;
 }
 
-.status-ongoing {
-  background-color: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
-}
+.status-ongoing { background-color: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+.status-upcoming { background-color: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.status-completed { background-color: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
 
-.status-upcoming {
-  background-color: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
-}
-
-.status-completed {
-  background-color: #f8fafc;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
-}
-
-.status-cancelled {
-  background-color: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
-}
-
-/* Table Actions */
-.nfd-actions-wrapper {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
+.nfd-actions-wrapper { display: flex; justify-content: center; gap: 8px; }
 
 .nfd-action-icon-btn {
   background: none;
@@ -515,22 +439,166 @@
   border-color: #cbd5e1;
 }
 
-.nfd-empty-state {
-  text-align: center;
-  padding: 40px 16px;
-  color: #94a3b8;
-  font-size: 14px;
+.action-trainees-btn:hover {
+  background-color: #ecfdf5 !important;
+  color: #059669 !important;
+  border-color: #a7f3d0 !important;
 }
 
-.nfd-empty-state i {
-  font-size: 28px;
-  display: block;
-  margin-bottom: 8px;
-  color: #cbd5e1;
-}
+.nfd-empty-state { text-align: center; padding: 40px 16px; color: #94a3b8; font-size: 14px; }
+.nfd-empty-state i { font-size: 28px; display: block; margin-bottom: 8px; color: #cbd5e1; }
 
 /* ==========================================================
-   6. Details Modal & Cards Styles
+   5. Trainees Modal Styles
+   ========================================================== */
+.modal-title-with-pill { display: flex; align-items: center; gap: 10px; }
+
+.trainees-count-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  background-color: #e0e7ff;
+  color: #3730a3;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.trainees-modal-subtext { font-size: 12.5px; color: #64748b; margin: 4px 0 0 0; }
+
+.trainees-features-banner {
+  background-color: #eef2ff;
+  border: 1px solid #e0e7ff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #312e81;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.trainees-table-scroll {
+   flex: 1;
+  max-height: 58vh;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-top: 14px;
+}
+
+.trainees-modal-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.trainees-modal-table thead tr {
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 12px;
+}
+
+.trainees-modal-table th,
+.trainees-modal-table td { padding: 14px 20px; vertical-align: middle; }
+.trainees-modal-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background-color 0.15s ease; }
+.trainees-modal-table tbody tr:hover { background-color: #f8fafc; }
+
+.trainee-user-cell { display: flex; align-items: center; gap: 10px; }
+
+.trainee-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #cbd5e1;
+}
+
+.trainee-name { font-weight: 700; color: #0f172a; font-size: 13px; }
+.trainee-email { font-size: 11px; color: #94a3b8; }
+.trainee-id-val { font-family: monospace; font-weight: 600; color: #334155; font-size: 12px; }
+.trainee-phone-val { font-size: 11px; color: #94a3b8; font-family: monospace; }
+
+.linkedin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background-color: #eff6ff;
+  color: #0077b5;
+  border: 1px solid #bfdbfe;
+  transition: all 0.2s ease;
+}
+
+.linkedin-btn:hover { background-color: #0077b5; color: #ffffff; }
+
+.message-trainee-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #059669;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.message-trainee-btn:hover { background-color: #059669; color: #ffffff; }
+
+.trainee-attendance {
+  font-family: monospace;
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 12px;
+}
+
+.trainee-status-pill {
+  display: inline-block;
+  background-color: #eff6ff;
+  color: #2563eb;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.trainees-empty-row { text-align: center; padding: 30px !important; color: #94a3b8; }
+
+.trainees-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.footer-occupancy-note { font-size: 12.5px; color: #64748b; }
+
+.btn-close-trainees-modal {
+  padding: 8px 18px;
+  background-color: #0D1C8C;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-close-trainees-modal:hover { background-color: #0B1770; }
+
+/* ==========================================================
+   6. Details Modal & Compact Pagination Styles
    ========================================================== */
 .details-top-card,
 .details-progress-card {
@@ -541,15 +609,8 @@
   margin-bottom: 16px;
 }
 
-.details-progress-card {
-  margin-bottom: 20px;
-}
-
-.details-batch-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+.details-progress-card { margin-bottom: 20px; }
+.details-batch-info { display: flex; flex-direction: column; gap: 6px; }
 
 .details-status-badge {
   display: inline-block;
@@ -560,18 +621,8 @@
   width: fit-content;
 }
 
-.details-batch-name {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.details-batch-subtext {
-  margin: 0;
-  font-size: 12.5px;
-  color: #64748b;
-}
+.details-batch-name { margin: 0; font-size: 17px; font-weight: 700; color: #0f172a; }
+.details-batch-subtext { margin: 0; font-size: 12.5px; color: #64748b; }
 
 .details-icon-box {
   width: 48px;
@@ -593,14 +644,8 @@
   font-size: 13.5px;
 }
 
-.details-progress-title {
-  color: #64748b;
-}
-
-.details-progress-numbers {
-  font-weight: 700;
-  color: #0f172a;
-}
+.details-progress-title { color: #64748b; }
+.details-progress-numbers { font-weight: 700; color: #0f172a; }
 
 .details-progress-bg {
   width: 100%;
@@ -618,153 +663,8 @@
   transition: width 0.3s ease;
 }
 
-.details-progress-hint {
-  margin: 0;
-  font-size: 12px;
-  color: #64748b;
-  text-align: left;
-}
+.details-progress-hint { margin: 0; font-size: 12px; color: #64748b; text-align: left; }
 
-.details-rows-container {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 24px;
-}
-
-.details-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.details-row:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.details-row-label {
-  font-size: 13.5px;
-  color: #64748b;
-}
-
-.details-row-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.details-footer {
-  display: flex;
-}
-
-.details-btn-close {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffffff;
-  background-color: #0D1C8C;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.details-btn-close:hover {
-  background-color: #0B1770;
-}
-
-/* ==========================================================
-   7. Edit Form & Custom Dropdown Styles
-   ========================================================== */
-.edit-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  max-height: 75vh;
-  overflow-y: auto;
-  padding: 0 4px 20px 4px;
-  position: relative;
-}
-
-.custom-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  background: white;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  margin-top: 5px;
-  z-index: 9999;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.dropdown-item {
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.dropdown-item:hover {
-  background-color: #f1f5f9;
-}
-
-.form-row-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.edit-modal-footer {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
-  padding-top: 4px;
-}
-
-.btn-save {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffffff;
-  background-color: #0D1C8C;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-save:hover {
-  background-color: #091463;
-}
-
-.btn-cancel {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #475569;
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-cancel:hover {
-  background-color: #f8fafc;
-}
-
-/* ==========================================================
-   8. Compact Pagination Styles
-   ========================================================== */
 .compact-pagination-wrapper {
   display: flex;
   align-items: center;
@@ -779,21 +679,9 @@
   font-family: 'Cairo', sans-serif;
 }
 
-.pagination-info {
-  font-size: 14px;
-  color: #64748b;
-}
-
-.pagination-info strong {
-  color: #1e293b;
-  font-weight: 600;
-}
-
-.pagination-compact-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+.pagination-info { font-size: 14px; color: #64748b; }
+.pagination-info strong { color: #1e293b; font-weight: 600; }
+.pagination-compact-controls { display: flex; align-items: center; gap: 10px; }
 
 .compact-nav-btn {
   padding: 6px 14px;
@@ -808,19 +696,8 @@
   outline: none;
 }
 
-.compact-nav-btn:hover:not(:disabled) {
-  background-color: #f8fafc;
-  border-color: #94a3b8;
-  color: #0f172a;
-}
-
-.compact-nav-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: #f1f5f9;
-  border-color: #e2e8f0;
-  color: #94a3b8;
-}
+.compact-nav-btn:hover:not(:disabled) { background-color: #f8fafc; border-color: #94a3b8; color: #0f172a; }
+.compact-nav-btn:disabled { opacity: 0.5; cursor: not-allowed; background-color: #f1f5f9; border-color: #e2e8f0; color: #94a3b8; }
 
 .page-indicator {
   padding: 6px 12px;
@@ -831,3 +708,197 @@
   border-radius: 8px;
   border: 1px solid #e2e8f0;
 }
+
+/* ==========================================================
+   7. Search & Filter Card Styles
+   ========================================================== */
+.nfd-search-filter-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-top: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  font-family: 'Cairo', sans-serif;
+}
+
+.filter-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-card-presets { display: flex; align-items: center; gap: 6px; }
+.filter-presets-label { font-size: 12px; font-weight: 600; color: #64748b; margin-left: 4px; }
+
+.preset-pill {
+  padding: 4px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.preset-pill:hover { background-color: #f1f5f9; border-color: #cbd5e1; }
+.preset-pill.active { background-color: #0D1C8C; color: #ffffff; border-color: #0D1C8C; }
+
+.filter-card-stats { display: flex; align-items: center; gap: 12px; }
+
+.results-badge {
+  font-size: 12px;
+  color: #64748b;
+  background-color: #f8fafc;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.results-badge strong { color: #0D1C8C; }
+
+.btn-reset-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.btn-reset-filters:hover { background-color: #fee2e2; }
+
+.reset-count {
+  background-color: #dc2626;
+  color: #ffffff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.filter-fields-grid {
+  display: grid;
+  grid-template-columns: 2.2fr 1.6fr 1fr 1.1fr 1.1fr;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+@media (max-width: 1024px) {
+  .filter-fields-grid { grid-template-columns: 1fr 1fr; }
+  .col-search { grid-column: span 2; }
+}
+
+@media (max-width: 640px) {
+  .filter-fields-grid { grid-template-columns: 1fr; }
+  .col-search { grid-column: span 1; }
+}
+
+.filter-col { display: flex; flex-direction: column; gap: 6px; }
+.filter-field-label { font-size: 12.5px; font-weight: 700; color: #0D1C8C; margin: 0; }
+
+.filter-input-wrapper { position: relative; display: flex; align-items: center; }
+
+.filter-input-ctrl,
+.filter-select-ctrl,
+.filter-date-ctrl {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px 0 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1e293b;
+  background-color: #ffffff;
+  outline: none;
+  font-family: 'Cairo', sans-serif;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.filter-input-ctrl:focus,
+.filter-select-ctrl:focus,
+.filter-date-ctrl:focus {
+  border-color: #0D1C8C;
+  box-shadow: 0 0 0 3px rgba(13, 28, 140, 0.12);
+}
+
+.filter-select-ctrl { appearance: none; cursor: pointer; padding-left: 28px; }
+.filter-date-ctrl { font-family: monospace, 'Cairo', sans-serif; cursor: pointer; }
+
+.filter-icon-left {
+  position: absolute;
+  left: 10px;
+  color: #94a3b8;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.clear-input-btn {
+  position: absolute;
+  left: 30px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.clear-input-btn:hover { color: #475569; }
+
+.active-tags-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.active-tags-title { font-size: 11px; font-weight: 600; color: #64748b; }
+
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.tag-close-btn {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  line-height: 1;
+}
+
+.tag-close-btn:hover { color: #dc2626; }

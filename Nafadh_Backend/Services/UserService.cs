@@ -1,6 +1,4 @@
-
 // Implemented by Noura
-
 
 using Nafadh_Backend.Common;
 using Nafadh_Backend.DTOs;
@@ -121,10 +119,29 @@ namespace Nafadh_Backend.Services
             var user = await _repository.GetByIdWithRoleAsync(userId)
                 ?? throw new NotFoundException($"User {userId} was not found.");
 
+            if (!string.Equals(
+                    user.Email,
+                    dto.Email.Trim(),
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                if (await _repository.EmailExistsAsync(dto.Email.Trim()))
+                {
+                    throw new ConflictException(
+                        $"A user with email '{dto.Email.Trim()}' already exists.");
+                }
+            }
+
+            var role = await _roleRepository.GetByIdAsync(dto.RoleId)
+                ?? throw new ValidationException($"RoleId {dto.RoleId} does not exist.");
+
             user.FullName = dto.FullName.Trim();
+            user.Email = dto.Email.Trim().ToLower();
             user.Phone = dto.Phone;
+            user.RoleId = dto.RoleId;
+            user.Role = role;
 
             await _repository.UpdateAsync(user);
+
             return MapToResponseDTO(user);
         }
 
@@ -148,18 +165,23 @@ namespace Nafadh_Backend.Services
         }
 
         public async Task<PagedResult<UserResponseDTO>> SearchAsync(
-                                                              int? roleId,
-                                                              NFD_UserStatus? status,
-                                                              string? search,
-                                                              int page,
-                                                              int pageSize)
+            int? roleId,
+            NFD_UserStatus? status,
+            string? search,
+            int page,
+            int pageSize)
         {
             page = page < 1 ? 1 : page;
 
             // تم السماح بقيمpageSize تصل إلى 10000 بدلاً من التقييد عند 200
             pageSize = pageSize < 1 ? 20 : (pageSize > 10000 ? 10000 : pageSize);
 
-            var (items, totalCount) = await _repository.SearchAsync(roleId, status, search, page, pageSize);
+            var (items, totalCount) = await _repository.SearchAsync(
+                roleId,
+                status,
+                search,
+                page,
+                pageSize);
 
             return new PagedResult<UserResponseDTO>
             {
@@ -186,7 +208,6 @@ namespace Nafadh_Backend.Services
             user.Status = NFD_UserStatus.Inactive;
             await _repository.UpdateAsync(user);
         }
-
 
         private static UserResponseDTO MapToResponseDTO(NFD_User user)
         {

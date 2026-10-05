@@ -19,8 +19,6 @@ export class AdminCompanies implements OnInit {
   }
 
   companies = signal<CompanyDto[]>([]);
-  
-  // إضافة متغير للتحميل
   isLoading = signal<boolean>(false);
 
   filtered = computed(() => {
@@ -34,9 +32,12 @@ export class AdminCompanies implements OnInit {
   showAddModal = signal<boolean>(false);
   isSaving = signal<boolean>(false);
   addError = signal<string>('');
-  
-  // متغير لتتبع محاولة حفظ النموذج وإظهار أخطاء التحقق تحت الحقول
+
+  // تتبع محاولة الإرسال (لإظهار كل الأخطاء دفعة وحدة عند الضغط على زر الإضافة)
   submitted = signal<boolean>(false);
+
+  // تتبع الحقول التي "لمسها" المستخدم (فقدت التركيز/blur) لإظهار خطأها فوراً
+  touchedFields = signal<Set<string>>(new Set());
 
   statusOptions: { value: string; label: string }[] = [
     { value: 'Approved', label: 'معتمدة' },
@@ -47,81 +48,150 @@ export class AdminCompanies implements OnInit {
 
   newCompany: any = this.emptyCompanyForm();
 
-  constructor(private adminApi: AdminApi) {}
+  private emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$/;
+  // رقم عماني اختياري: +968 متبوع بـ 8 أرقام (أو بدون +968 مع 8 أرقام)
+  private phoneRegex = /^(\+968)?\s?\d{8}$/;
+
+  constructor(private adminApi: AdminApi) { }
 
   ngOnInit(): void {
     this.loadCompanies();
   }
 
   loadCompanies() {
-    this.isLoading.set(true); // تشغيل التحميل
+    this.isLoading.set(true);
     this.adminApi.getCompanies().subscribe({
       next: (data) => {
         this.companies.set(data);
-        this.isLoading.set(false); // إيقاف التحميل عند النجاح
+        this.isLoading.set(false);
       },
       error: (err) => {
         console.error('خطأ في جلب البيانات:', err);
-        this.isLoading.set(false); // إيقاف التحميل حتى لو حدث خطأ
+        this.isLoading.set(false);
       }
     });
   }
 
   private emptyCompanyForm() {
-    return { 
-      companyName: '', 
-      workField: '', 
-      address: '', 
-      capacity: null, 
-      status: 'PendingApproval', 
-      email: '', 
-      phone: '', 
-      contactName: '' 
+    return {
+      companyName: '',
+      workField: '',
+      address: '',
+      capacity: null,
+      status: 'PendingApproval',
+      email: '',
+      phone: '',
+      contactName: ''
     };
   }
 
   openAddModal() {
     this.newCompany = this.emptyCompanyForm();
     this.addError.set('');
-    this.submitted.set(false); // إعادة تعيين حالة الإرسال عند فتح النافذة
+    this.submitted.set(false);
+    this.touchedFields.set(new Set());
     this.showAddModal.set(true);
   }
 
-  closeAddModal() { 
-    this.showAddModal.set(false); 
+  closeAddModal() {
+    this.showAddModal.set(false);
   }
 
-  closeAllDropdowns() {}
+  closeAllDropdowns() { }
 
   statusLabel(val: any): string {
     return this.statusOptions.find(o => o.value === String(val))?.label ?? val;
   }
 
+  // يُستدعى عند خروج المستخدم من أي حقل (blur)
+  markTouched(field: string) {
+    this.touchedFields.update(set => {
+      const newSet = new Set(set);
+      newSet.add(field);
+      return newSet;
+    });
+  }
+
+  // يحدد هل نعرض خطأ هذا الحقل الآن (إما لُمس أو تمت محاولة إرسال النموذج)
+  showError(field: string): boolean {
+    return this.touchedFields().has(field) || this.submitted();
+  }
+
+  // ============ دوال التحقق الفردية لكل حقل ============
+
+  companyNameError(): string {
+    const name = this.newCompany.companyName?.trim() ?? '';
+    if (!name) return 'اسم الشركة مطلوب';
+    if (name.length < 3) return 'يجب أن يكون اسم الشركة 3 أحرف على الأقل';
+    return '';
+  }
+
+  workFieldError(): string {
+    const field = this.newCompany.workField?.trim() ?? '';
+    if (!field) return 'المجال مطلوب';
+    if (field.length < 3) return 'يجب أن يكون المجال 3 أحرف على الأقل';
+    return '';
+  }
+
+  capacityError(): string {
+    const val = this.newCompany.capacity;
+    if (val === null || val === undefined || val === '') return 'الطاقة الاستيعابية مطلوبة';
+    if (Number(val) <= 0) return 'يجب أن تكون أكبر من الصفر';
+    if (!Number.isInteger(Number(val))) return 'يجب أن تكون قيمة صحيحة';
+    return '';
+  }
+
+  contactNameError(): string {
+    const name = this.newCompany.contactName?.trim() ?? '';
+    if (!name) return 'اسم جهة الاتصال مطلوب';
+    if (name.length < 6) return 'يجب أن يكون اسم جهة الاتصال 6 أحرف على الأقل (يفضل الاسم الثلاثي)';
+    return '';
+  }
+
+  emailError(): string {
+    const email = this.newCompany.email?.trim();
+    if (!email) return 'البريد الإلكتروني مطلوب';
+    if (!this.emailRegex.test(email)) return 'البريد الإلكتروني غير صحيح (مثال: admin@nafadh.om)';
+    return '';
+  }
+
+  phoneError(): string {
+    const phone = this.newCompany.phone?.trim();
+    if (!phone) return ''; // اختياري
+    if (!this.phoneRegex.test(phone)) return 'رقم الجوال غير صحيح (مثال: 968+ 9XXX XXXX)';
+    return '';
+  }
+
+  // تجميع كل الأخطاء للتحقق من صحة النموذج ككل
+  private getAllErrors(): string[] {
+    return [
+      this.companyNameError(),
+      this.workFieldError(),
+      this.capacityError(),
+      this.contactNameError(),
+      this.emailError(),
+      this.phoneError()
+    ].filter(err => err !== '');
+  }
+
+  isFormValid(): boolean {
+    return this.getAllErrors().length === 0;
+  }
+
   submitAddCompany() {
-    this.submitted.set(true); // تفعيل حالة محاولة الإرسال لتظهر الأخطاء تحت الحقول
+    this.submitted.set(true);
     this.addError.set('');
 
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    
-    // التحقق من صحة الحقول الإجبارية
-    const isFormInvalid = !this.newCompany.companyName || 
-                          !this.newCompany.workField || 
-                          !this.newCompany.capacity || 
-                          this.newCompany.capacity <= 0 || 
-                          !this.newCompany.email || 
-                          !emailRegex.test(this.newCompany.email) || 
-                          !this.newCompany.contactName;
-
-    if (isFormInvalid) {
-      return; // إيقاف الإرسال إذا كان هناك خطأ، وستظهر الرسائل تحت الحقول تلقائياً
+    if (!this.isFormValid()) {
+      return;
     }
 
     this.isSaving.set(true);
 
     this.adminApi.createCompany(this.newCompany).subscribe({
-      next: (res: any) => { 
-        this.companies.update(list => [res, ...list]); 
-        this.closeAddModal(); 
+      next: (res: any) => {
+        this.companies.update(list => [res, ...list]);
+        this.closeAddModal();
         this.isSaving.set(false);
       },
       error: (err) => {
@@ -135,7 +205,7 @@ export class AdminCompanies implements OnInit {
   updateCompanyStatus(company: any, newStatus: any) {
     this.adminApi.updateCompany(company.companyId, { ...company, status: newStatus }).subscribe({
       next: () => {
-        this.companies.update(list => 
+        this.companies.update(list =>
           list.map(c => c.companyId === company.companyId ? { ...c, status: newStatus } : c)
         );
       },
