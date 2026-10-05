@@ -3,10 +3,11 @@
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
 
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -18,5 +19,6 @@ namespace Nafadh_Backend.Repositories
         Task<NFD_Batch> AddAsync(NFD_Batch batch);
         Task UpdateAsync(NFD_Batch batch);
         Task DeleteAsync(NFD_Batch batch);
+        Task<BatchProgressDto?> GetProgressAsync(int batchId);
     }
 }

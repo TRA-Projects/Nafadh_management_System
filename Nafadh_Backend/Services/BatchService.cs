@@ -177,6 +177,11 @@ namespace Nafadh_Backend.Services
             };
         }
 
+        public async Task<BatchProgressDto?> GetProgressAsync(int batchId)
+        {
+            return await _repository.GetProgressAsync(batchId);
+        }
+
 
     }
 }
