@@ -78,7 +78,7 @@
   border-color: #0D1C8C;
 }
 
-/* تحسين شكل الكبسولة لتتسع للأرقام الكبيرة مثل 127 بكل أريحية */
+/* كبسولة العداد المرنة المتسعة لأي رقم */
 .filter-badge {
   display: inline-flex;
   align-items: center;
@@ -276,7 +276,6 @@
   box-shadow: 0 0 0 3px rgba(13, 28, 140, 0.1);
 }
 
-/* Modal Buttons */
 .modal-footer-buttons,
 .modal-footer-buttons-program {
   display: flex;
@@ -331,7 +330,7 @@
 
 /* ==========================================================
    4. Error Alert Styles
-   ========================================================== */
+   ========================================================= */
 .error-alert {
   width: 100%;
   margin-bottom: 12px;
@@ -425,6 +424,32 @@
   color: #64748b;
 }
 
+/* شارة المسار التابع للبرنامج من الداتابيس */
+.nfd-track-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #eef2ff;
+  border: 1px solid #e0e7ff;
+  color: #4338ca;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  width: fit-content;
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+.track-label {
+  color: #6366f1;
+  font-weight: 600;
+}
+
+.track-name {
+  color: #312e81;
+  font-weight: 700;
+}
+
 /* Occupancy & Progress Bar */
 .nfd-occupancy-wrapper {
   display: flex;
@@ -435,10 +460,26 @@
   margin: 0 auto;
 }
 
+.occupancy-numbers-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .nfd-occupancy-text {
   font-size: 12.5px;
   font-weight: 600;
   color: #475569;
+}
+
+.badge-almost-full {
+  font-size: 10px;
+  font-weight: 700;
+  background-color: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  padding: 1px 5px;
+  border-radius: 4px;
 }
 
 .nfd-progress-bar-bg {
@@ -454,6 +495,10 @@
   background: linear-gradient(to left, #0D1C8C, #06b6d4);
   border-radius: 9999px;
   transition: width 0.3s ease;
+}
+
+.nfd-progress-bar-fill.fill-warning {
+  background: linear-gradient(to left, #f59e0b, #ef4444) !important;
 }
 
 /* Status Badges */
@@ -532,7 +577,7 @@
 }
 
 /* ==========================================================
-   6. Details Modal & Cards Styles
+   6. Details Modal Styles
    ========================================================== */
 .details-top-card,
 .details-progress-card {
@@ -627,145 +672,8 @@
   text-align: left;
 }
 
-.details-rows-container {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 24px;
-}
-
-.details-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.details-row:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.details-row-label {
-  font-size: 13.5px;
-  color: #64748b;
-}
-
-.details-row-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.details-footer {
-  display: flex;
-}
-
-.details-btn-close {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffffff;
-  background-color: #0D1C8C;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.details-btn-close:hover {
-  background-color: #0B1770;
-}
-
 /* ==========================================================
-   7. Edit Form & Custom Dropdown Styles
-   ========================================================== */
-.edit-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  max-height: 75vh;
-  overflow-y: auto;
-  padding: 0 4px 20px 4px;
-  position: relative;
-}
-
-.custom-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  background: white;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  margin-top: 5px;
-  z-index: 9999;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.dropdown-item {
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.dropdown-item:hover {
-  background-color: #f1f5f9;
-}
-
-.form-row-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.edit-modal-footer {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
-  padding-top: 4px;
-}
-
-.btn-save {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffffff;
-  background-color: #0D1C8C;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-save:hover {
-  background-color: #091463;
-}
-
-.btn-cancel {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #475569;
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-cancel:hover {
-  background-color: #f8fafc;
-}
-
-/* ==========================================================
-   8. Compact Pagination Styles
+   7. Compact Pagination Styles
    ========================================================== */
 .compact-pagination-wrapper {
   display: flex;
@@ -835,7 +743,7 @@
 }
 
 /* ==========================================================
-   9. New Filter Card Styles (شريط الفلترة المتطابق مع الصورة)
+   8. Search & Filter Card Styles
    ========================================================== */
 .nfd-search-filter-card {
   background-color: #ffffff;

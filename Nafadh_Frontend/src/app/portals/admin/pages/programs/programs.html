@@ -4,7 +4,7 @@
 <!-- Action Header Bar -->
 <div class="action-header-bar" dir="rtl">
 
-  <!-- أزرار الفلترة حسب الحالة مع العدادات الحقيقية -->
+  <!-- أزرار الفلترة حسب الحالة مع العدادات الحقيقية من الداتابيس -->
   <div class="filter-buttons-group">
 
     <!-- الدفعات (الكل) -->
@@ -34,7 +34,7 @@
       <span>قادمة</span>
     </button>
 
-    <!-- مكتملة (إضافة مهمة لتوزيع الـ 127 دفعة) -->
+    <!-- مكتملة -->
     <button type="button" (click)="statusFilter.set('مكتملة')" [class.active]="statusFilter() === 'مكتملة'"
       class="filter-btn">
       <span class="filter-badge">
@@ -45,28 +45,31 @@
 
   </div>
 
-  <!-- أزرار الإجراءات (اليسار) -->
+  <!-- أزرار الإجراءات مع زر التصدير الجديد -->
   <div class="action-buttons-group">
-    <button type="button" (click)="exportToExcel()" class="btn-secondary-custom">
+    
+    <!-- زر تصدير الدفعات المفلترة إلى Excel -->
+    <button type="button" (click)="exportToExcel()" class="btn-secondary-custom" title="تصدير نتائج الجدول لملف Excel">
       <i class="fa-solid fa-file-excel" style="color: #10b981; margin-left: 6px;"></i>
       <span>تصدير Excel</span>
     </button>
+
     <button type="button" (click)="onCreateBatch()" class="btn-primary-custom">
       <span class="btn-icon">+</span>
       <span>إنشاء دفعة</span>
     </button>
-  
+
     <button type="button" (click)="onCreateProgram()" class="btn-secondary-custom">
       <span class="btn-icon">+</span>
       <span>إنشاء برنامج</span>
     </button>
   </div>
-  
-  </div>
+
+</div>
 
 
 <!-- ========================================================== -->
-<!-- شريط البحث والتصفية المتقدم (مطابق للصورة المرفقة)          -->
+<!-- شريط البحث والتصفية المتقدم                                 -->
 <!-- ========================================================== -->
 <div class="nfd-search-filter-card" dir="rtl">
 
@@ -99,19 +102,19 @@
           type="text" 
           [value]="searchTerm()" 
           (input)="onSearchInput($event)" 
-          placeholder="ابحث باسم المستخدم، الكيان، الإجراء..." 
+          placeholder="ابحث باسم الدفعة، البرنامج، أو الشركة المستضيفة..." 
           class="filter-input-ctrl">
         <i class="fa-solid fa-magnifying-glass filter-icon-left"></i>
         <button *ngIf="searchTerm()" type="button" (click)="searchTerm.set('')" class="clear-input-btn">&times;</button>
       </div>
     </div>
 
-    <!-- 2. نوع الإجراء / البرنامج -->
+    <!-- 2. البرنامج التدريبي من الداتابيس -->
     <div class="filter-col col-program">
-      <label class="filter-field-label">نوع الإجراء / البرنامج</label>
+      <label class="filter-field-label">البرنامج التدريبي</label>
       <div class="filter-input-wrapper">
         <select [value]="selectedProgram()" (change)="onProgramFilterChange($event)" class="filter-select-ctrl">
-          <option value="الكل">كل البرامج والإجراءات</option>
+          <option value="الكل">كل البرامج التدريبية</option>
           <option *ngFor="let prog of programs()" [value]="prog.programId">
             {{ prog.title || prog.name }}
           </option>
@@ -120,7 +123,7 @@
       </div>
     </div>
 
-    <!-- 3. السنة -->
+    <!-- 3. السنة (مستخرجة من تواريخ الداتابيس) -->
     <div class="filter-col col-year">
       <label class="filter-field-label">السنة</label>
       <div class="filter-input-wrapper">
@@ -213,13 +216,12 @@
         <input type="text" formControlName="batchName" placeholder="e.g. ASP.NET Core Bootcamp" class="form-input text-right"
           [class.input-error]="batchForm.get('batchName')?.touched && batchForm.get('batchName')?.invalid">
         
-        <!-- رسائل الخطأ لاسم الدفعة -->
         <div *ngIf="batchForm.get('batchName')?.touched && batchForm.get('batchName')?.invalid" class="error-msg text-right">
           <small *ngIf="batchForm.get('batchName')?.errors?.['required']">اسم الدفعة مطلوب</small>
         </div>
       </div>
 
-      <!-- البرنامج -->
+      <!-- البرنامج القادم من الداتابيس -->
       <div class="form-group">
         <label class="form-label">
           البرنامج <span class="required-star">*</span>
@@ -230,13 +232,12 @@
           <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title || prog.name }}</option>
         </select>
         
-        <!-- رسالة الخطأ للبرنامج -->
         <div *ngIf="batchForm.get('programId')?.touched && batchForm.get('programId')?.invalid" class="error-msg text-right">
           <small>يجب اختيار البرنامج</small>
         </div>
       </div>
 
-      <!-- الشركة المستضيفة -->
+      <!-- الشركة المستضيفة من الداتابيس -->
       <div class="form-group">
         <label class="form-label">الشركة المستضيفة</label>
         <select formControlName="companyId" class="form-select text-right">
@@ -245,7 +246,7 @@
         </select>
       </div>
 
-      <!-- التواريخ (بداية ونهاية) -->
+      <!-- التواريخ -->
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">
@@ -268,7 +269,6 @@
           <div *ngIf="batchForm.get('endDate')?.touched && batchForm.get('endDate')?.invalid" class="error-msg text-right">
             <small *ngIf="batchForm.get('endDate')?.errors?.['required']">تاريخ النهاية مطلوب</small>
           </div>
-          <!-- رسالة خطأ تطابق تاريخ النهاية مع البداية -->
           <div *ngIf="batchForm.get('endDate')?.touched && batchForm.errors?.['dateRangeInvalid']" class="error-msg text-right" style="color: #dc2626; font-size: 12px; margin-top: 4px;">
             <small>تاريخ النهاية يجب أن يكون بعد تاريخ البداية</small>
           </div>
@@ -290,7 +290,7 @@
         </div>
       </div>
 
-      <!-- تنبيه خطأ الـ Server لإنشاء الدفعة -->
+      <!-- تنبيه خطأ الـ Server -->
       <div *ngIf="batchErrorMessage" class="error-msg text-center mb-2" style="color: #dc2626; font-size: 13px;">
         <small>{{ batchErrorMessage }}</small>
       </div>
@@ -314,15 +314,12 @@
 <div *ngIf="isProgramModalOpen" (click)="onCloseProgramModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container-program">
 
-    <!-- زر الإغلاق -->
     <button type="button" (click)="onCloseProgramModal()" class="modal-close-absolute">&times;</button>
 
-    <!-- Modal Title -->
     <div class="modal-title-wrapper">
       <h3 class="modal-title">إنشاء برنامج جديد</h3>
     </div>
 
-    <!-- Form -->
     <form [formGroup]="programForm" (ngSubmit)="onSubmitProgram()" class="modal-form-program">
 
       <!-- اسم البرنامج -->
@@ -333,14 +330,13 @@
         <input type="text" formControlName="title" placeholder="e.g. .NET Track" class="form-input text-right"
           [class.input-error]="pf['title'].touched && pf['title'].invalid">
 
-        <!-- Validation Message -->
         <div *ngIf="pf['title'].touched && pf['title'].invalid" class="error-msg text-right">
           <small *ngIf="pf['title'].errors?.['required']">اسم البرنامج مطلوب</small>
           <small *ngIf="pf['title'].errors?.['minlength']">الاسم يجب أن يكون حرفين على الأقل</small>
         </div>
       </div>
 
-      <!-- المسار -->
+      <!-- المسار القادم من جدول tracks بالداتابيس -->
       <div class="form-group">
         <label class="form-label">
           المسار <span class="required-star">*</span>
@@ -353,7 +349,6 @@
           </option>
         </select>
 
-        <!-- Validation Message -->
         <div *ngIf="pf['trackId'].touched && pf['trackId'].invalid" class="error-msg text-right">
           <small *ngIf="pf['trackId'].errors?.['required']">يرجى اختيار المسار</small>
         </div>
@@ -368,7 +363,6 @@
           placeholder="10" class="form-input text-right"
           [class.input-error]="pf['durationWeeks'].touched && pf['durationWeeks'].invalid">
 
-        <!-- Validation Message -->
         <div *ngIf="pf['durationWeeks'].touched && pf['durationWeeks'].invalid" class="error-msg text-right">
           <small *ngIf="pf['durationWeeks'].errors?.['required']">مدة البرنامج مطلوبة</small>
           <small *ngIf="pf['durationWeeks'].errors?.['min']">يجب أن تكون المدة أسبوعاً واحداً على الأقل</small>
@@ -382,7 +376,7 @@
           class="form-textarea text-right"></textarea>
       </div>
 
-      <!-- تنبيه خطأ الـ Server إذا فشل الحفظ -->
+      <!-- تنبيه خطأ الـ Server -->
       <div *ngIf="programErrorMessage" class="error-msg text-center mb-2" style="color: #dc2626; font-size: 13px;">
         <small>{{ programErrorMessage }}</small>
       </div>
@@ -419,7 +413,7 @@
       <thead>
         <tr class="nfd-tr-header">
           <th scope="col" class="nfd-th">الدفعة</th>
-          <th scope="col" class="nfd-th">البرنامج</th>
+          <th scope="col" class="nfd-th">البرنامج والمسار</th>
           <th scope="col" class="nfd-th">الشركة المستضيفة</th>
           <th scope="col" class="nfd-th text-center">البداية</th>
           <th scope="col" class="nfd-th text-center">النهاية</th>
@@ -432,6 +426,7 @@
       <!-- Table Body -->
       <tbody class="nfd-tbody">
         <tr *ngFor="let batch of paginatedBatches(); trackBy: trackByBatchId" class="nfd-tr-row">
+          
           <!-- 1. الدفعة -->
           <td class="nfd-td">
             <div class="nfd-cell-flex">
@@ -444,10 +439,13 @@
             </div>
           </td>
 
-          <!-- 2. البرنامج -->
+          <!-- 2. البرنامج والمسار التابع له من الداتابيس -->
           <td class="nfd-td">
             <div class="nfd-cell-flex">
-              <span class="nfd-batch-name">{{ getProgramName(batch) }}</span>
+              <span class="nfd-batch-name">
+                {{ getProgramName(batch) }}
+              </span>
+              <!-- جلب المسار من الداتابيس -->
               <span *ngIf="getTrackName(batch) !== '-'" class="nfd-track-badge">
                 <span class="track-label">مسار:</span>
                 <span class="track-name">{{ getTrackName(batch) }}</span>
@@ -470,14 +468,20 @@
             {{ batch.endDate ? (batch.endDate | date:'dd/MM/yyyy') : '-' }}
           </td>
 
-          <!-- 6. الإشغال -->
+          <!-- 6. الإشغال مع تنبيه لوني عند الامتلاء -->
           <td class="nfd-td text-center">
             <div class="nfd-occupancy-wrapper">
-              <span class="nfd-occupancy-text" dir="ltr">
-                {{ batch.totalTraineesCount || 0 }} / {{ batch.capacity }}
-              </span>
+              <div class="occupancy-numbers-row">
+                <span class="nfd-occupancy-text" dir="ltr">
+                  {{ batch.totalTraineesCount || 0 }} / {{ batch.capacity }}
+                </span>
+                <span *ngIf="getOccupancyPercentage(batch.totalTraineesCount, batch.capacity) >= 90" class="badge-almost-full">
+                  ممتلئة
+                </span>
+              </div>
               <div class="nfd-progress-bar-bg">
                 <div class="nfd-progress-bar-fill"
+                  [class.fill-warning]="getOccupancyPercentage(batch.totalTraineesCount, batch.capacity) >= 90"
                   [style.width.%]="getOccupancyPercentage(batch.totalTraineesCount, batch.capacity)"></div>
               </div>
             </div>
@@ -540,6 +544,7 @@
         <h4 class="details-batch-name">{{ selectedBatch?.batchName }}</h4>
         <p class="details-batch-subtext">
           {{ selectedBatch?.startDate | date:'MMM yyyy' }} · {{ getProgramName(selectedBatch) }}
+          <span *ngIf="getTrackName(selectedBatch) !== '-'"> · {{ getTrackName(selectedBatch) }}</span>
         </p>
       </div>
       <div class="details-icon-box">
@@ -589,7 +594,7 @@
         </div>
       </div>
 
-      <!-- البرنامج -->
+      <!-- البرنامج من الداتابيس -->
       <div class="form-group">
         <label class="form-label">البرنامج <span class="required-star">*</span></label>
         <select formControlName="programId" class="form-select text-right"
@@ -603,7 +608,7 @@
         </div>
       </div>
 
-      <!-- الشركة المستضيفة -->
+      <!-- الشركة المستضيفة من الداتابيس -->
       <div class="form-group">
         <label class="form-label">الشركة المستضيفة</label>
         <select formControlName="companyId" class="form-select text-right">
@@ -632,7 +637,6 @@
           <div *ngIf="editBatchForm.get('endDate')?.touched && editBatchForm.get('endDate')?.invalid" class="error-msg text-right">
             <small *ngIf="editBatchForm.get('endDate')?.errors?.['required']">تاريخ النهاية مطلوب</small>
           </div>
-          <!-- رسالة خطأ تطابق تاريخ النهاية مع البداية في نافذة التعديل -->
           <div *ngIf="editBatchForm.get('endDate')?.touched && editBatchForm.errors?.['dateRangeInvalid']" class="error-msg text-right" style="color: #dc2626; font-size: 12px; margin-top: 4px;">
             <small>تاريخ النهاية يجب أن يكون بعد تاريخ البداية</small>
           </div>
@@ -652,7 +656,7 @@
         </div>
       </div>
 
-      <!-- تنبيه خطأ الـ Server لتعديل الدفعة -->
+      <!-- تنبيه خطأ الـ Server -->
       <div *ngIf="editBatchErrorMessage" class="error-msg text-center mb-2" style="color: #dc2626; font-size: 13px;">
         <small>{{ editBatchErrorMessage }}</small>
       </div>

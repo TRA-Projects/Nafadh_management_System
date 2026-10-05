@@ -14,7 +14,7 @@ export class AdminPrograms implements OnInit {
   private fb = inject(FormBuilder);
   private adminApi = inject(AdminApi);
 
-  // --- Signals & States ---
+  // --- مصفوفات البيانات من الـ Database حصراً ---
   batches = signal<any[]>([]);
   programs = signal<any[]>([]);
   companies = signal<any[]>([]);
@@ -46,7 +46,7 @@ export class AdminPrograms implements OnInit {
   editBatchForm!: FormGroup;
   programForm!: FormGroup;
 
-  // --- Signals الخاصة بشريط البحث والتصفية المتقدم ---
+  // --- Signals الخاصة بشريط الفلترة ---
   searchTerm = signal<string>('');
   selectedYear = signal<string>('الكل');
   selectedProgram = signal<string>('الكل');
@@ -58,31 +58,35 @@ export class AdminPrograms implements OnInit {
     this.initEditBatchForm();
     this.initProgramForm();
     
-    // جلب البيانات من الـ API عند تحميل المكون
+    // جلب كل البيانات مباشرة من جداول الداتابيس
     this.loadInitialData();
   }
 
-  // --- Data Loading from AdminApi ---
+  // --- دوال الربط مع الداتابيس عبر AdminApi ---
   loadInitialData(): void {
+    // 1. جلب الدفعات من جدول Batches
     this.adminApi.getBatches?.().subscribe({
       next: (res: any) => this.batches.set(res || []),
       error: () => this.batchesError.set('فشل تحميل قائمة الدفعات')
     });
 
+    // 2. جلب البرامج من جدول Programs
     this.adminApi.getPrograms?.().subscribe({
       next: (res: any) => this.programs.set(res || [])
     });
 
+    // 3. جلب الشركات من جدول Companies
     this.adminApi.getCompanies?.().subscribe({
       next: (res: any) => this.companies.set(res || [])
     });
 
+    // 4. جلب المسارات من جدول Tracks
     this.adminApi.getTracks?.().subscribe({
       next: (res: any) => this.tracks.set(res || [])
     });
   }
 
-  // --- Form Initializations & Validators ---
+  // --- التحقق من صحة تاريخ النهاية والبداية ---
   dateRangeValidator(group: FormGroup) {
     const start = group.get('startDate')?.value;
     const end = group.get('endDate')?.value;
@@ -146,7 +150,7 @@ export class AdminPrograms implements OnInit {
     }
   }
 
-  // --- دالة توحيد الحالات (تحل مشكلة الصفر وتطابق الإنجليزي والعربي تلقائياً) ---
+  // --- دالة توحيد الحالات (تطابق الحالات المسجلة بالإنجليزية والعربية بالداتابيس) ---
   normalizeStatus(status: any): string {
     if (!status) return '';
     const s = String(status).trim().toLowerCase();
@@ -156,7 +160,7 @@ export class AdminPrograms implements OnInit {
     return status;
   }
 
-  // --- استخراج قائمة السنوات المتاحة تلقائيًا من البيانات ---
+  // --- استخراج السنوات ديناميكياً من تواريخ الداتابيس الفعالة ---
   availableYears = computed(() => {
     const yearsSet = new Set<string>();
     this.batches().forEach(b => {
@@ -169,13 +173,13 @@ export class AdminPrograms implements OnInit {
     return Array.from(yearsSet).sort().reverse();
   });
 
-  // --- حساب عدد الدفعات الحقيقي حسب الحالة ---
+  // --- حساب أعداد الدفعات من قاعدة البيانات ---
   getCountByStatus(status: string): number {
     if (status === 'الكل') return this.batches().length;
     return this.batches().filter(b => this.normalizeStatus(b.status) === status).length;
   }
 
-  // --- حساب عدد الفلاتر النشطة حالياً ---
+  // --- عدد الفلاتر المطبقة ---
   activeFiltersCount = computed(() => {
     let count = 0;
     if (this.searchTerm().trim()) count++;
@@ -186,7 +190,7 @@ export class AdminPrograms implements OnInit {
     return count;
   });
 
-  // --- محرك التصفية المتقدم الشامل ---
+  // --- محرك التصفية الشامل للبيانات ---
   filteredBatches = computed(() => {
     const status = this.statusFilter();
     const search = this.searchTerm().trim().toLowerCase();
@@ -196,29 +200,30 @@ export class AdminPrograms implements OnInit {
     const to = this.toDate();
 
     return this.batches().filter(batch => {
-      // 1. فلتر الحالة (يطابق الإنجليزي والعربي بدقة)
+      // 1. فلترة الحالة
       if (status !== 'الكل' && this.normalizeStatus(batch.status) !== status) {
         return false;
       }
 
-      // 2. البحث العام (اسم الدفعة، اسم البرنامج، اسم الشركة)
+      // 2. البحث النصي العام
       if (search) {
         const batchName = (batch.batchName || '').toLowerCase();
         const progName = this.getProgramName(batch).toLowerCase();
+        const trackName = this.getTrackName(batch).toLowerCase();
         const compName = (batch.companyName || '').toLowerCase();
-        if (!batchName.includes(search) && !progName.includes(search) && !compName.includes(search)) {
+        if (!batchName.includes(search) && !progName.includes(search) && !trackName.includes(search) && !compName.includes(search)) {
           return false;
         }
       }
 
-      // 3. فلتر البرنامج
+      // 3. فلترة البرنامج
       if (prog !== 'الكل') {
         if (batch.programId?.toString() !== prog && batch.programName !== prog) {
           return false;
         }
       }
 
-      // 4. فلتر السنة
+      // 4. فلترة السنة
       if (year !== 'الكل' && batch.startDate) {
         const batchYear = new Date(batch.startDate).getFullYear().toString();
         if (batchYear !== year) {
@@ -226,7 +231,7 @@ export class AdminPrograms implements OnInit {
         }
       }
 
-      // 5. فلتر من تاريخ (Start Date >= From Date)
+      // 5. فلترة من تاريخ
       if (from && batch.startDate) {
         const bStart = batch.startDate.split('T')[0];
         if (bStart < from) {
@@ -234,7 +239,7 @@ export class AdminPrograms implements OnInit {
         }
       }
 
-      // 6. فلتر إلى تاريخ (Start Date <= To Date)
+      // 6. فلترة إلى تاريخ
       if (to && batch.startDate) {
         const bDate = batch.startDate.split('T')[0];
         if (bDate > to) {
@@ -260,7 +265,7 @@ export class AdminPrograms implements OnInit {
     return this.filteredBatches().length;
   });
 
-  // --- دوال التحكم في الفلاتر ---
+  // --- دوال أزرار الفلترة ---
   onSearchInput(event: Event): void {
     const val = (event.target as HTMLInputElement).value;
     this.searchTerm.set(val);
@@ -310,6 +315,32 @@ export class AdminPrograms implements OnInit {
       this.toDate.set('');
       this.currentPage.set(1);
     }
+  }
+
+  // --- دالة تصدير بيانات الداتابيس المفلترة إلى Excel / CSV ---
+  exportToExcel(): void {
+    const data = this.filteredBatches();
+    if (!data.length) return;
+
+    const headers = ['الدفعة', 'البرنامج', 'المسار', 'الشركة المستضيفة', 'تاريخ البداية', 'تاريخ النهاية', 'المسجلين', 'الطاقة الاستيعابية', 'الحالة'];
+    const rows = data.map(b => [
+      `"${b.batchName}"`,
+      `"${this.getProgramName(b)}"`,
+      `"${this.getTrackName(b)}"`,
+      `"${b.companyName || '-'}"`,
+      `"${b.startDate ? b.startDate.split('T')[0] : ''}"`,
+      `"${b.endDate ? b.endDate.split('T')[0] : ''}"`,
+      b.totalTraineesCount || 0,
+      b.capacity || 0,
+      `"${this.getStatusLabel(b.status)}"`
+    ]);
+
+    // تضمين BOM لضمان قراءة اللغة العربية بامتياز في Excel
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const link = document.createElement('a');
+    link.href = encodeURI(csvContent);
+    link.download = `batches_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
   }
 
   // --- Modal Handlers ---
@@ -362,7 +393,7 @@ export class AdminPrograms implements OnInit {
     this.selectedBatch = null;
   }
 
-  // --- Form Submissions ---
+  // --- Form Submissions للـ API والداتابيس ---
   onSubmit(): void {
     if (this.batchForm.invalid) {
       this.batchForm.markAllAsTouched();
@@ -380,7 +411,7 @@ export class AdminPrograms implements OnInit {
       },
       error: (err: any) => {
         this.isSubmittingBatch = false;
-        this.batchErrorMessage = 'فشل إنشاء الدفعة، يرجى المحاولة لاحقاً.';
+        this.batchErrorMessage = 'فشل إنشاء الدفعة في قاعدة البيانات، يرجى المحاولة لاحقاً.';
         console.error('Failed to create batch', err);
       }
     });
@@ -402,7 +433,7 @@ export class AdminPrograms implements OnInit {
       },
       error: (err: any) => {
         this.isSubmittingProgram = false;
-        this.programErrorMessage = 'فشل حفظ البرنامج، يجدر المحاولة لاحقاً';
+        this.programErrorMessage = 'فشل حفظ البرنامج في قاعدة البيانات';
         console.error('Failed to create program', err);
       }
     });
@@ -426,63 +457,52 @@ export class AdminPrograms implements OnInit {
       },
       error: (err: any) => {
         this.isSubmittingEditBatch = false;
-        this.editBatchErrorMessage = 'فشل تعديل الدفعة، يرجى المحاولة لاحقاً.';
+        this.editBatchErrorMessage = 'فشل تحديث بيانات الدفعة في قاعدة البيانات';
         console.error('Failed to update batch', err);
       }
     });
   }
 
-  getTrackName(batch: any): string {
-  if (!batch) return '-';
-  if (batch.trackName) return batch.trackName;
-  const prog = this.programs().find(p => p.programId === batch.programId || p.id === batch.programId);
-  if (prog) {
-    if (prog.trackName) return prog.trackName;
-    const track = this.tracks().find(t => t.trackId === prog.trackId || t.id === prog.trackId);
-    if (track) return track.name || track.title;
-  }
-  return '-';
-}
-
-exportToExcel(): void {
-  const data = this.filteredBatches();
-  if (!data.length) return;
-  const headers = ['الدفعة', 'البرنامج', 'المسار', 'الشركة المستضيفة', 'البداية', 'النهاية', 'المسجلين', 'الطاقة', 'الحالة'];
-  const rows = data.map(b => [
-    `"${b.batchName}"`,
-    `"${this.getProgramName(b)}"`,
-    `"${this.getTrackName(b)}"`,
-    `"${b.companyName || '-'}"`,
-    `"${b.startDate ? b.startDate.split('T')[0] : ''}"`,
-    `"${b.endDate ? b.endDate.split('T')[0] : ''}"`,
-    b.totalTraineesCount || 0,
-    b.capacity || 0,
-    `"${this.getStatusLabel(b.status)}"`
-  ]);
-  const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-  const link = document.createElement('a');
-  link.href = encodeURI(csvContent);
-  link.download = `batches_${new Date().toISOString().slice(0, 10)}.csv`;
-  link.click();
-}
-
-  // --- Pagination Actions ---
   onPageChange(page: number): void {
     if (page >= 1 && page <= this.totalPages()) {
       this.currentPage.set(page);
     }
   }
 
-  // --- UI Helpers & Formatters ---
   trackByBatchId(index: number, batch: any): any {
     return batch.batchId || index;
   }
 
+  // --- دوال الربط الديناميكي مع بيانات الداتابيس ---
+
+  // 1. جلب اسم البرنامج
   getProgramName(batch: any): string {
     if (!batch) return '-';
     if (batch.programName) return batch.programName;
-    const prog = this.programs().find(p => p.programId === batch.programId);
+    const prog = this.programs().find(p => p.programId === batch.programId || p.id === batch.programId);
     return prog ? (prog.title || prog.name) : '-';
+  }
+
+  // 2. جلب اسم المسار من جدول Tracks في الداتابيس عبر program.trackId أو batch.trackId
+  getTrackName(batch: any): string {
+    if (!batch) return '-';
+    if (batch.trackName) return batch.trackName;
+
+    // البحث في جدول المسارات عبر البرنامج
+    const prog = this.programs().find(p => p.programId === batch.programId || p.id === batch.programId);
+    if (prog) {
+      if (prog.trackName) return prog.trackName;
+      const track = this.tracks().find(t => (t.trackId && t.trackId === prog.trackId) || (t.id && t.id === prog.trackId));
+      if (track) return track.name || track.title;
+    }
+
+    // أو إذا كانت الدفعة تحوي trackId مباشرة
+    if (batch.trackId) {
+      const track = this.tracks().find(t => (t.trackId && t.trackId === batch.trackId) || (t.id && t.id === batch.trackId));
+      if (track) return track.name || track.title;
+    }
+
+    return '-';
   }
 
   getFormattedSubtext(dateString: string): string {
