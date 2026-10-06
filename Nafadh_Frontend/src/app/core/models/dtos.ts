@@ -520,6 +520,7 @@ export interface EnrollmentDto {
   batchEndDate?: string;
   traineeId: number;
   traineeName: string;
+  profileImageUrl?: string;
   companyId: number;
   companyName: string;
   departmentId?: number;
