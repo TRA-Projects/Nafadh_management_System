@@ -497,28 +497,61 @@ onMessageTrainee(trainee: any): void {
     });
   }
 
-  onSaveBatch(): void {
-    if (this.editBatchForm.invalid) {
-      this.editBatchForm.markAllAsTouched();
-      return;
-    }
-    
-    this.isSubmittingEditBatch = true;
-    this.editBatchErrorMessage = null;
-
-    const batchId = this.selectedBatch?.batchId || this.selectedBatch?.id;
-    this.adminApi.updateBatch?.(batchId, this.editBatchForm.value).subscribe({
-      next: () => {
-        this.isSubmittingEditBatch = false;
-        this.loadInitialData();
-        this.onCloseEditModal();
-      },
-      error: () => {
-        this.isSubmittingEditBatch = false;
-        this.editBatchErrorMessage = 'فشل تحديث بيانات الدفعة في قاعدة البيانات';
-      }
-    });
+  // دالة حفظ التعديلات المعقمة والمتوافقة 100% مع سيرفر C#
+onSaveBatch(): void {
+  if (this.editBatchForm.invalid) {
+    this.editBatchForm.markAllAsTouched();
+    return;
   }
+
+  // 1. استخراج معرّف الدفعة
+  const batchId = Number(this.selectedBatch?.batchId || this.selectedBatch?.id);
+  if (!batchId) {
+    this.editBatchErrorMessage = 'لم يتم العثور على معرّف الدفعة.';
+    return;
+  }
+
+  // 2. التحقق الذكي من الطاقة الاستيعابية
+  const currentEnrolled = Number(this.selectedBatch?.totalTraineesCount || 0);
+  const newCapacity = Number(this.editBatchForm.get('capacity')?.value);
+
+  if (newCapacity < currentEnrolled) {
+    this.editBatchErrorMessage = `لا يمكن تقليل الطاقة الاستيعابية إلى (${newCapacity})، لأن الدفعة تحتوي بالفعل على (${currentEnrolled}) متدرب مسجل.`;
+    return;
+  }
+
+  this.isSubmittingEditBatch = true;
+  this.editBatchErrorMessage = null;
+
+  // 3. تجهيز البيانات بالشكل الصارم الذي ينتظره C# Backend بالضبط:
+  const formRaw = this.editBatchForm.value;
+  
+  const payload: any = {
+    batchId: batchId,
+    batchName: String(formRaw.batchName).trim(),
+    programId: Number(formRaw.programId),
+    // إذا لم تُختر شركة، نرسل null وليس نصاً فارغاً "" لمنع خطأ 400
+    companyId: formRaw.companyId && formRaw.companyId !== '' ? Number(formRaw.companyId) : null,
+    startDate: formRaw.startDate,
+    endDate: formRaw.endDate,
+    capacity: Number(formRaw.capacity),
+    status: this.selectedBatch?.status || 'Ongoing' // إرفاق الحالة لتجنب رفض السيرفر
+  };
+
+  // 4. إرسال الطلب للسيرفر
+  this.adminApi.updateBatch(batchId, payload).subscribe({
+    next: () => {
+      this.isSubmittingEditBatch = false;
+      // إعادة تحميل قائمة الدفعات من قاعدة البيانات فوراً لتحديث الجدول
+      this.loadInitialData();
+      this.onCloseEditModal();
+    },
+    error: (err: any) => {
+      this.isSubmittingEditBatch = false;
+      this.editBatchErrorMessage = err?.error?.message || err?.error?.title || 'فشل تحديث بيانات الدفعة في قاعدة البيانات، تأكد من صحة المدخلات.';
+    }
+  });
+}
 
   onPageChange(page: number): void {
     if (page >= 1 && page <= this.totalPages()) {

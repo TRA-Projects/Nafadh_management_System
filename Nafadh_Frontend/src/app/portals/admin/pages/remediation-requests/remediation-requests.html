@@ -1,0 +1,589 @@
+<p>remediation-requests works!</p>
+<div class="warnings-page">
+
+  <!-- ================================
+       PAGE HEADER
+  ================================= -->
+
+  <div class="page-header">
+
+    <div>
+      <h1 class="nfd-page-title">
+        طلبات معالجة وتصحيح الإنذارات
+      </h1>
+
+      <p class="nfd-page-sub">
+        إدارة ومراجعة طلبات الشركات المستضيفة للبرامج التدريبية لتسوية الإنذارات الصادرة
+      </p>
+    </div>
+
+  </div>
+
+
+  <!-- ================================
+       STATISTICS
+  ================================= -->
+
+  <div class="stats-grid">
+
+    <!-- Total -->
+    <div class="stat-card">
+
+      <div class="stat-title">
+        إجمالي الطلبات الواردة
+      </div>
+
+      <div class="stat-value">
+        {{ requests().length }}
+      </div>
+
+    </div>
+
+
+    <!-- Pending -->
+    <div class="stat-card border-amber">
+
+      <div class="stat-title">
+        قيد المراجعة
+      </div>
+
+      <div class="stat-value text-amber">
+        {{ getCountByStatus('Pending') }}
+      </div>
+
+    </div>
+
+
+    <!-- Approved -->
+    <div class="stat-card border-green">
+
+      <div class="stat-title">
+        طلبات مقبولة
+      </div>
+
+      <div class="stat-value text-green">
+        {{ getCountByStatus('Approved') }}
+      </div>
+
+    </div>
+
+
+    <!-- Needs Modification -->
+    <div class="stat-card border-purple">
+
+      <div class="stat-title">
+        تحتاج إلى تعديل / إفادة
+      </div>
+
+      <div class="stat-value text-purple">
+        {{ getCountByStatus('NeedsModification') }}
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================================
+       FILTER CARD
+  ================================= -->
+
+  <div class="nfd-card">
+
+    <div class="nfd-toolbar-multi">
+
+      <!-- Search -->
+      <div class="search-box">
+
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle
+            cx="11"
+            cy="11"
+            r="8"
+          ></circle>
+
+          <path
+            d="m21 21-4.35-4.35"
+          ></path>
+        </svg>
+
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="البحث باسم الشركة أو رقم الطلب..."
+        />
+
+      </div>
+
+
+      <!-- Status -->
+      <select
+        class="nfd-select"
+        [(ngModel)]="selectedStatus"
+      >
+
+        <option value="ALL">
+          جميع الحالات
+        </option>
+
+        <option value="Pending">
+          قيد المراجعة
+        </option>
+
+        <option value="Approved">
+          مقبول
+        </option>
+
+        <option value="Rejected">
+          مرفوض
+        </option>
+
+        <option value="NeedsModification">
+          يحتاج إلى تعديل
+        </option>
+
+      </select>
+
+
+      <!-- Action Type -->
+      <select
+        class="nfd-select"
+        [(ngModel)]="selectedActionType"
+      >
+
+        <option value="ALL">
+          جميع الإجراءات
+        </option>
+
+        <option value="طلب إصلاح المخالفة">
+          طلب إصلاح المخالفة
+        </option>
+
+        <option value="طلب تصحيح الوضع">
+          طلب تصحيح الوضع
+        </option>
+
+        <option value="طلب إعادة النظر في الإنذار">
+          طلب إعادة النظر في الإنذار
+        </option>
+
+        <option value="طلب تمديد المهلة">
+          طلب تمديد المهلة
+        </option>
+
+        <option value="طلب إلغاء الإنذار">
+          طلب إلغاء الإنذار
+        </option>
+
+        <option value="طلب آخر">
+          طلب آخر
+        </option>
+
+      </select>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================================
+       REQUESTS TABLE
+  ================================= -->
+
+  <div class="nfd-card">
+
+    <div class="table-wrapper">
+
+      <table class="nfd-table">
+
+        <thead>
+
+          <tr>
+
+            <th>
+              كود الطلب
+            </th>
+
+            <th>
+              الشركة المستضيفة
+            </th>
+
+            <th>
+              الإنذار المرتبط
+            </th>
+
+            <th>
+              نوع المخالفة الأصلية
+            </th>
+
+            <th>
+              الإجراء المطلوب
+            </th>
+
+            <th>
+              تاريخ التقديم
+            </th>
+
+            <th>
+              حالة الطلب
+            </th>
+
+            <th class="text-center">
+              معاينة واتخاذ القرار
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody>
+
+          <tr
+            *ngFor="let req of filteredRequests()"
+          >
+
+            <!-- Request ID -->
+            <td class="font-mono font-bold">
+              REQ-{{ req.requestId }}
+            </td>
+
+
+            <!-- Company -->
+            <td>
+              <span class="font-bold">
+                {{ req.companyName }}
+              </span>
+            </td>
+
+
+            <!-- Warning -->
+            <td class="font-mono text-blue">
+              CW-{{ req.warningId }}
+            </td>
+
+
+            <!-- Reasons -->
+            <td>
+
+              <div class="reasons-pill-group">
+
+                <span
+                  class="reason-tag"
+                  *ngFor="let reason of req.violationReasons"
+                >
+                  {{ reason }}
+                </span>
+
+              </div>
+
+            </td>
+
+
+            <!-- Action -->
+            <td>
+
+              <span class="action-tag">
+                {{ req.actionType }}
+              </span>
+
+            </td>
+
+
+            <!-- Date -->
+            <td>
+              {{ req.requestDate | date:'dd/MM/yyyy' }}
+            </td>
+
+
+            <!-- Status -->
+            <td>
+
+              <span
+                class="status-pill"
+                [ngClass]="getStatusClass(req.status)"
+              >
+                {{ getStatusLabel(req.status) }}
+              </span>
+
+            </td>
+
+
+            <!-- Action Button -->
+            <td class="text-center">
+
+              <button
+                type="button"
+                class="nfd-btn"
+                (click)="openDecisionModal(req)"
+              >
+                عرض واتخاذ القرار
+              </button>
+
+            </td>
+
+          </tr>
+
+
+          <!-- Empty -->
+          <tr
+            *ngIf="filteredRequests().length === 0"
+          >
+
+            <td
+              colspan="8"
+              class="empty-msg"
+            >
+              لا توجد طلبات مطابقة للبحث أو الفلاتر الحالية.
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================================
+       DETAILS / DECISION MODAL
+  ================================= -->
+
+  <div
+    class="nfd-modal-bg"
+    *ngIf="selectedRequest()"
+  >
+
+    <div class="nfd-modal">
+
+
+      <!-- Modal Header -->
+      <div class="modal-title-bar">
+
+        <div>
+
+          <h2>
+            تفاصيل طلب معالجة إنذار
+          </h2>
+
+          <span>
+            #REQ-{{ selectedRequest()?.requestId }}
+          </span>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="close-icon-btn"
+          (click)="closeModal()"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <!-- Company Header -->
+      <div class="company-card-header">
+
+        <div class="company-text">
+
+          <h4>
+            {{ selectedRequest()?.companyName }}
+          </h4>
+
+          <span>
+            رقم الإنذار:
+            CW-{{ selectedRequest()?.warningId }}
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- Details -->
+      <div class="details-list">
+
+
+        <!-- Request Date -->
+        <div class="detail-row">
+
+          <span class="detail-label">
+            تاريخ تقديم الطلب
+          </span>
+
+          <span>
+            {{ selectedRequest()?.requestDate | date:'dd/MM/yyyy' }}
+          </span>
+
+        </div>
+
+
+        <!-- Warning Date -->
+        <div class="detail-row">
+
+          <span class="detail-label">
+            تاريخ إصدار الإنذار
+          </span>
+
+          <span>
+            {{ selectedRequest()?.warningIssuedDate | date:'dd/MM/yyyy' }}
+          </span>
+
+        </div>
+
+
+        <!-- Action -->
+        <div class="detail-row">
+
+          <span class="detail-label">
+            الإجراء المطلوب
+          </span>
+
+          <span class="action-tag action-tag-large">
+            {{ selectedRequest()?.actionType }}
+          </span>
+
+        </div>
+
+
+        <!-- Violation Reasons -->
+        <div class="detail-row flex-col">
+
+          <span class="detail-label">
+            أسباب / أنواع المخالفة
+          </span>
+
+          <div class="reasons-pill-group">
+
+            <span
+              class="reason-tag"
+              *ngFor="let reason of selectedRequest()?.violationReasons"
+            >
+              {{ reason }}
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- Company Explanation -->
+        <div class="detail-row flex-col">
+
+          <span class="detail-label">
+            إفادة الشركة
+          </span>
+
+          <div class="explanation-box">
+
+            {{ selectedRequest()?.companyExplanation }}
+
+          </div>
+
+        </div>
+
+
+        <!-- Previous Decision -->
+        <div
+          class="detail-row flex-col"
+          *ngIf="selectedRequest()?.adminDecision"
+        >
+
+          <span class="detail-label">
+            آخر قرار إداري
+          </span>
+
+          <div class="decision-history">
+
+            {{ selectedRequest()?.adminDecision }}
+
+          </div>
+
+        </div>
+
+
+        <!-- Admin Decision -->
+        <div class="admin-decision-box">
+
+          <label class="decision-label">
+            قرار الإدارة / الملاحظات
+          </label>
+
+          <textarea
+            class="nfd-input textarea"
+            [(ngModel)]="adminNote"
+            rows="4"
+            placeholder="اكتب ملاحظات القرار أو التبرير الموجه للشركة..."
+          ></textarea>
+
+        </div>
+
+      </div>
+
+
+      <!-- Footer -->
+      <div class="modal-footer-actions">
+
+        <div class="decision-buttons-row">
+
+          <button
+            type="button"
+            class="btn-decision approve"
+            [disabled]="isProcessing()"
+            (click)="applyDecision('Approved')"
+          >
+            قبول الطلب ✅
+          </button>
+
+
+          <button
+            type="button"
+            class="btn-decision reject"
+            [disabled]="isProcessing()"
+            (click)="applyDecision('Rejected')"
+          >
+            رفض الطلب ❌
+          </button>
+
+
+          <button
+            type="button"
+            class="btn-decision modify"
+            [disabled]="isProcessing()"
+            (click)="applyDecision('NeedsModification')"
+          >
+            طلب تعديل / معلومات إضافية 🔄
+          </button>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="nfd-btn secondary"
+          [disabled]="isProcessing()"
+          (click)="closeModal()"
+        >
+          إغلاق
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router'; // 👈 إضافة Router
 import { AdminApi } from '../../services/admin-api';
 import { WarningDto } from '../../../../core/models/dtos';
 
@@ -54,9 +55,7 @@ export class AdminWarnings implements OnInit {
   touchedFields = signal<{ [key: string]: boolean }>({});
   newWarning = { companyId: null as number | null, type: 'Performance', level: 'Medium', evidence: '' };
 
-  // =========================================================================
-  // الجديد: قائمة أسباب ومخالفات البلاغ الجاهزة وإدارة الاختيارات المتعددة
-  // =========================================================================
+  // قائمة أسباب ومخالفات البلاغ الجاهزة وإدارة الاختيارات المتعددة
   violationReasons: string[] = [
     'عدم الالتزام بالحضور',
     'التأخر المتكرر',
@@ -71,11 +70,19 @@ export class AdminWarnings implements OnInit {
   selectedReasons = signal<string[]>([]);
   otherReasonText = '';
 
-  constructor(private api: AdminApi) {}
+  constructor(
+    private api: AdminApi,
+    private router: Router // 👈 حقن الـ Router
+  ) {}
 
   ngOnInit(): void {
     this.load();
     this.loadCompanies();
+  }
+
+  // 👈 دالة التوجيه إلى صفحة طلبات المعالجة والتصحيح
+  goToRemediationRequests(): void {
+    this.router.navigate(['/admin/remediation-requests']); // تعديل المسار حسب المعتمد في الـ Routes لديكِ
   }
 
   // التبديل بين تحديد وإلغاء تحديد سبب المخالفة
@@ -86,12 +93,6 @@ export class AdminWarnings implements OnInit {
     } else {
       this.selectedReasons.set([...current, reason]);
     }
-    this.updateEvidenceFromReasons();
-  }
-
-  // تحديد الأسباب الشائعة
-  selectAllReasons(): void {
-    this.selectedReasons.set([...this.violationReasons.filter(r => r !== 'مخالفة أخرى')]);
     this.updateEvidenceFromReasons();
   }
 
@@ -292,7 +293,6 @@ export class AdminWarnings implements OnInit {
       errors['level'] = 'يرجى اختيار درجة الأهمية.';
     }
 
-    // التحقق من تحديد سبب واحد على الأقل من الخيارات الجاهزة
     if (this.selectedReasons().length === 0) {
       errors['evidence'] = 'يرجى تحديد سبب واحد على الأقل لإصدار البلاغ من الخيارات الجاهزة.';
     } else if (this.selectedReasons().includes('مخالفة أخرى') && this.selectedReasons().length === 1 && !this.otherReasonText.trim()) {

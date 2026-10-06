@@ -69,6 +69,11 @@ namespace Nafadh_Backend.Services
             var batch = await _repository.GetByIdAsync(id);
             if (batch == null) return false;
 
+            if (!string.IsNullOrEmpty(dto.BatchName))
+            {
+                batch.BatchName = dto.BatchName;
+            }
+
             batch.StartDate = dto.StartDate;
             batch.EndDate = dto.EndDate;
             batch.Capacity = dto.Capacity;
