@@ -1,205 +1,718 @@
-<div class="container-fluid py-3" dir="rtl" (click)="closeAllDropdowns()">
-  <!-- الهيدر -->
-  <div class="header-container mb-4 d-flex justify-content-between align-items-center">
-    <div class="title-section">
-      <h2 class="nfd-page-title mb-1">الشركات المستضيفة</h2>
-    </div>
-    <button class="add-company-btn shadow-sm" (click)="openAddModal()">
-      <span class="plus-icon">+</span>
-      <span>إضافة شركة</span>
-    </button>
-  </div>
+<div class="nfd-page-container" dir="rtl" (click)="closeAllDropdowns()">
 
-  <!-- البطاقة البيضاء والجدول -->
-  <div class="nfd-card card border-0 shadow-sm rounded-4 p-3 bg-white mt-4">
-    <!-- أزرار الفلتر -->
-    <div class="nfd-chips d-flex gap-2 mb-3 flex-wrap">
-      @for (s of ['الكل','PendingApproval','Approved','Suspended','Rejected']; track s) {
-        <button class="filter-btn" [class.active]="statusFilter() === s" (click)="setFilter(s)">
-          {{ s === 'الكل' ? 'الكل' : statusLabel(s) }}
+<!-- =========================================================
+       ⭐ 1. صفحة تفاصيل الشركة الكاملة ملء الشاشة (تصميم نفاذ المستقل)
+  ========================================================== -->
+  @if (currentView === 'details' && selectedCompanyDetails) {
+  <div class="nfd-details-container pb-5">
+    
+    <!-- 1. شريط التحكم والعودة العلوي -->
+    <div class="nfd-details-topbar mb-4">
+      <div class="nfd-topbar-right">
+        <button type="button" class="nfd-btn-back" (click)="closeCompanyDetails()">
+          <span class="back-arrow">←</span>
+          <span>العودة إلى قائمة الشركات</span>
         </button>
-      }
+        <div class="nfd-id-badge">معرّف السجل: #{{ selectedCompanyDetails?.companyId }}</div>
+      </div>
+
+      <div class="nfd-topbar-actions">
+        <button type="button" class="nfd-btn-print" onclick="window.print()">
+          🖨️ طباعة ملف المنشأة
+        </button>
+        @if (selectedCompanyDetails?.status === 'PendingApproval') {
+          <button class="nfd-btn-approve" (click)="updateCompanyStatus(selectedCompanyDetails, 'Approved')">
+            ✓ اعتماد الشركة
+          </button>
+          <button class="nfd-btn-reject" (click)="openRejectModal(selectedCompanyDetails!)">
+            ✕ رفض الطلب
+          </button>
+        }
+        @if (selectedCompanyDetails?.status === 'Approved') {
+          <button class="nfd-btn-suspend" (click)="updateCompanyStatus(selectedCompanyDetails, 'Suspended')">
+            ⏸️ إيقاف مؤقت
+          </button>
+        }
+        @if (selectedCompanyDetails?.status === 'Suspended') {
+          <button class="nfd-btn-approve" (click)="updateCompanyStatus(selectedCompanyDetails, 'Approved')">
+            تفعيل واعتماد
+          </button>
+        }
+      </div>
     </div>
 
-    <!-- عرض مؤشر التحميل الخاص -->
-    @if (isLoading()) {
-      <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px; width: 100%;">
-        <div class="custom-spinner"></div>
-        <span style="color: #6c757d; font-size: 0.9rem; font-family: inherit;">جاري تحميل البيانات...</span>
+    <!-- 2. بطاقة الشركة التعريفية الكبرى (Hero Card) -->
+    <div class="nfd-hero-card mb-4">
+      <div class="nfd-hero-main">
+        <div class="nfd-hero-logo">
+          {{ selectedCompanyDetails?.companyName?.charAt(0) || 'ش' }}
+        </div>
+        <div class="nfd-hero-text">
+          <div class="nfd-hero-title-row">
+            <h1 class="nfd-hero-company-name">{{ selectedCompanyDetails?.companyName }}</h1>
+            <span class="nfd-badge px-3 py-1 rounded-pill" [ngStyle]="{
+              'background': selectedCompanyDetails?.status === 'Approved' ? '#e8f5e9' : selectedCompanyDetails?.status === 'Rejected' ? '#ffebee' : selectedCompanyDetails?.status === 'Suspended' ? '#fff3e0' : '#fff8e1',
+              'color': selectedCompanyDetails?.status === 'Approved' ? '#2e7d32' : selectedCompanyDetails?.status === 'Rejected' ? '#c62828' : selectedCompanyDetails?.status === 'Suspended' ? '#e65100' : '#b45309'
+            }">
+              {{ statusLabel(selectedCompanyDetails?.status) }}
+            </span>
+          </div>
+          <p class="nfd-hero-meta">
+            <span>المجال: <strong class="text-navy">{{ selectedCompanyDetails?.workField }}</strong></span>
+            <span class="meta-dot">·</span>
+            <span>المقر الرئيسي: <strong class="text-navy">📍 {{ selectedCompanyDetails?.address || 'مسقط' }}</strong></span>
+            <span class="meta-dot">·</span>
+            <span>السجل التجاري: <strong class="nfd-cr-chip">CR-1049281-OM</strong></span>
+          </p>
+        </div>
       </div>
-    } @else {
-      <!-- الجدول يظهر بعد اكتمال التحميل -->
-      <div class="table-responsive">
-        <table class="nfd-table table align-middle mb-0 text-end">
+
+      <div class="nfd-hero-rating-box">
+        <div class="rating-number">★ 4.9 <small>/ 5.0</small></div>
+        <div class="rating-sub">تقييم المتدربين للمنشأة</div>
+      </div>
+    </div>
+
+    <!-- تنبيه إذا كانت الشركة مرفوضة -->
+    @if (selectedCompanyDetails?.status === 'Rejected') {
+      <div class="nfd-rejection-banner mb-4">
+        <div class="rejection-icon">⚠️</div>
+        <div>
+          <h4 class="rejection-title">تم رفض طلب انضمام هذه الشركة</h4>
+          <p class="rejection-desc">{{ selectedCompanyDetails?.rejectionReason || 'لم يتم تسجيل ملاحظات إضافية' }}</p>
+        </div>
+      </div>
+    }
+
+    <!-- 3. شبكة المؤشرات الرقمية الأربعة (KPIs) -->
+    <div class="nfd-kpi-grid mb-4">
+      <div class="nfd-kpi-box blue">
+        <div class="kpi-top">
+          <span class="kpi-label">الطاقة الاستيعابية</span>
+          <span class="kpi-icon">👥</span>
+        </div>
+        <div class="kpi-value text-blue">{{ selectedCompanyDetails?.capacity || 0 }} <small>متدرب</small></div>
+        <div class="kpi-footer text-green">● مقاعد مجهزة ومعتمدة بالكامل</div>
+      </div>
+
+      <div class="nfd-kpi-box green">
+        <div class="kpi-top">
+          <span class="kpi-label">البرامج التدريبية المنفذة</span>
+          <span class="kpi-icon">📚</span>
+        </div>
+        <div class="kpi-value text-green">{{ selectedCompanyDetails?.programsCount || 2 }} <small>برامج</small></div>
+        <div class="kpi-footer text-muted">مسارات معتمدة في البرنامج</div>
+      </div>
+
+      <div class="nfd-kpi-box indigo">
+        <div class="kpi-top">
+          <span class="kpi-label">المتدربون النشطون حالياً</span>
+          <span class="kpi-icon">🎓</span>
+        </div>
+        <div class="kpi-value text-indigo">{{ Math.floor((selectedCompanyDetails?.capacity || 10) * 0.7) }} <small>متدرب</small></div>
+        <div class="kpi-footer text-muted">نسبة إشغال المقاعد 70%</div>
+      </div>
+
+      <div class="nfd-kpi-box amber">
+        <div class="kpi-top">
+          <span class="kpi-label">نسبة إكمال التدريب والنجاح</span>
+          <span class="kpi-icon">🏆</span>
+        </div>
+        <div class="kpi-value text-amber">95%</div>
+        <div class="kpi-footer text-green">نسبة التزام واجتياز عالية</div>
+      </div>
+    </div>
+
+    <!-- 4. التبويبات الداخلية للمعلومات التفصيلية -->
+    <div class="nfd-profile-card">
+      <div class="nfd-profile-tabs-nav">
+        <button class="nfd-tab-nav-btn" [class.active]="detailsTab === 'overview'" (click)="detailsTab = 'overview'">
+          📑 البيانات الرسمية والاتصال
+        </button>
+        <button class="nfd-tab-nav-btn" [class.active]="detailsTab === 'programs'" (click)="detailsTab = 'programs'">
+          📚 البرامج التدريبية المعتمدة
+        </button>
+        <button class="nfd-tab-nav-btn" [class.active]="detailsTab === 'facilities'" (click)="detailsTab = 'facilities'">
+          🏢 المعامل والمرافق التدريبية
+        </button>
+        <button class="nfd-tab-nav-btn" [class.active]="detailsTab === 'supervisors'" (click)="detailsTab = 'supervisors'">
+          👔 المشرفون الميدانيون
+        </button>
+      </div>
+
+      <!-- تبويب 1: البيانات الرسمية والاتصال -->
+      <div class="nfd-profile-tab-body" *ngIf="detailsTab === 'overview'">
+        <div class="nfd-two-col-grid">
+          <div>
+            <h3 class="nfd-section-heading">بيانات المنشأة والسجل القانوني</h3>
+            <table class="nfd-info-table">
+              <tbody>
+                <tr>
+                  <td class="info-label">اسم الشركة:</td>
+                  <td class="info-val"><strong>{{ selectedCompanyDetails?.companyName }}</strong></td>
+                </tr>
+                <tr>
+                  <td class="info-label">رقم السجل التجاري:</td>
+                  <td class="info-val"><bdo dir="ltr">CR-1049281-OM</bdo></td>
+                </tr>
+                <tr>
+                  <td class="info-label">مجال وتخصص العمل:</td>
+                  <td class="info-val">{{ selectedCompanyDetails?.workField }}</td>
+                </tr>
+                <tr>
+                  <td class="info-label">المقر والمدينة:</td>
+                  <td class="info-val">📍 {{ selectedCompanyDetails?.address || 'مسقط، سلطنة عمان' }}</td>
+                </tr>
+                <tr>
+                  <td class="info-label">الموقع الإلكتروني:</td>
+                  <td class="info-val"><a href="javascript:void(0)" class="nfd-link" dir="ltr">https://company-om.test</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <h3 class="nfd-section-heading">بيانات مسؤول وجهة الاتصال الرسمية</h3>
+            <div class="nfd-contact-card">
+              <div class="contact-header">
+                <div class="contact-avatar-lg">
+                  {{ selectedCompanyDetails?.contactName?.charAt(0) || 'م' }}
+                </div>
+                <div>
+                  <h4 class="contact-name-lg">{{ selectedCompanyDetails?.contactName || 'غير مسجل' }}</h4>
+                  <span class="contact-role-lg">مدير التدريب والتطوير المؤسسي</span>
+                </div>
+              </div>
+              <div class="contact-rows-list">
+                <div class="contact-row-item">
+                  <span class="row-label">البريد الإلكتروني المعتمد:</span>
+                  <strong class="row-value email">{{ selectedCompanyDetails?.email || '—' }}</strong>
+                </div>
+                <div class="contact-row-item">
+                  <span class="row-label">رقم الهاتف / الجوال:</span>
+                  <strong class="row-value phone" dir="ltr">{{ selectedCompanyDetails?.phone || '+968 24000000' }}</strong>
+                </div>
+                <div class="contact-row-item">
+                  <span class="row-label">حالة التواصل:</span>
+                  <span class="status-chip-active">● متاح للتواصل المباشر</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- تبويب 2: البرامج التدريبية المعتمدة -->
+      <div class="nfd-profile-tab-body" *ngIf="detailsTab === 'programs'">
+        <h3 class="nfd-section-heading">البرامج التدريبية المنفذة والمعتمدة داخل المنشأة</h3>
+        <table class="nfd-data-table">
           <thead>
             <tr>
-              <th>الشركة</th>
-              <th>المجال</th>
-              <th>الطاقة</th>
+              <th>اسم البرنامج التدريبي</th>
+              <th>المسار التخصصي</th>
+              <th>المدة</th>
+              <th>عدد المتدربين</th>
+              <th>نسبة الحضور</th>
               <th>الحالة</th>
-              <th>الإجراءات</th>
             </tr>
           </thead>
           <tbody>
-            @for (c of filtered(); track c.companyId) {
-              <tr>
-                <td><strong>{{ c.companyName }}</strong></td>
-                <td>{{ c.workField }}</td>
-                <td>{{ c.capacity }}</td>
-                <td>
-                  <span class="nfd-badge px-3 py-2 rounded-pill"
-                        [ngStyle]="{
-                          'background': c.status === 'Approved' ? '#e8f5e9' : c.status === 'Rejected' ? '#ffebee' : c.status === 'Suspended' ? '#fff3e0' : '#fff8e1',
-                          'color': c.status === 'Approved' ? '#2e7d32' : c.status === 'Rejected' ? '#c62828' : c.status === 'Suspended' ? '#e65100' : '#f57c00'
-                        }">
-                    {{ statusLabel(c.status) }}
-                  </span>
-                </td>
-                <td>
-                  <div style="display: flex; gap: 8px; align-items: center;">
-                    @if (c.status !== 'Approved') {
-                      <button style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 4px 12px; border-radius: 50px; cursor: pointer; font-size: 0.8rem;"
-                              (click)="updateCompanyStatus(c, 'Approved')">
-                        اعتماد
-                      </button>
-                    }
-                    @if (c.status !== 'Suspended') {
-                      <button style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 4px 12px; border-radius: 50px; cursor: pointer; font-size: 0.8rem;"
-                              (click)="updateCompanyStatus(c, 'Suspended')">
-                        إيقاف
-                      </button>
-                    }
-                    @if (c.status !== 'Rejected') {
-                      <button style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 4px 12px; border-radius: 50px; cursor: pointer; font-size: 0.8rem;"
-                              (click)="updateCompanyStatus(c, 'Rejected')">
-                        رفض
-                      </button>
-                    }
-                  </div>
-                </td>
-              </tr>
-            }
+            <tr>
+              <td><strong>هندسة البرمجيات والأنظمة السحابية</strong></td>
+              <td><span class="pill-chip blue">تقنية المعلومات</span></td>
+              <td>12 أسبوعاً (360 ساعة)</td>
+              <td>18 متدرباً</td>
+              <td><strong class="text-green">96%</strong></td>
+              <td><span class="status-chip-active">نشط حالياً</span></td>
+            </tr>
+            <tr>
+              <td><strong>الأمن السيبراني وحماية البنية التحتية</strong></td>
+              <td><span class="pill-chip purple">أمن المعلومات</span></td>
+              <td>10 أسابيع (300 ساعة)</td>
+              <td>14 متدرباً</td>
+              <td><strong class="text-green">94%</strong></td>
+              <td><span class="status-chip-active">نشط حالياً</span></td>
+            </tr>
           </tbody>
         </table>
       </div>
-    }
+
+      <!-- تبويب 3: المعامل والمرافق -->
+      <div class="nfd-profile-tab-body" *ngIf="detailsTab === 'facilities'">
+        <h3 class="nfd-section-heading">المعامل والبيئة التدريبية المجهزة</h3>
+        <div class="nfd-three-col-grid">
+          <div class="nfd-feature-card">
+            <span class="feature-icon">💻</span>
+            <h4 class="feature-title">معامل حاسب مجهزة بالكامل</h4>
+            <p class="feature-desc">محطات عمل بمواصفات عالية مجهزة لبيئات التطوير وهندسة البرمجيات.</p>
+          </div>
+          <div class="nfd-feature-card">
+            <span class="feature-icon">📶</span>
+            <h4 class="feature-title">شبكات إنترنت فائقة السرعة</h4>
+            <p class="feature-desc">اتصال فايبر مخصص مع شبكات سحابية آمنة (VPN / Dedicated Line).</p>
+          </div>
+          <div class="nfd-feature-card">
+            <span class="feature-icon">👥</span>
+            <h4 class="feature-title">قاعات ورش عمل واجتماعات</h4>
+            <p class="feature-desc">شاشات ذكية مجهزة لتمارين العمل الجماعي الرشيق والتدريب التفاعلي.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- تبويب 4: المشرفون -->
+      <div class="nfd-profile-tab-body" *ngIf="detailsTab === 'supervisors'">
+        <h3 class="nfd-section-heading">المشرفون والمدربون الميدانيون المعتمدون</h3>
+        <div class="nfd-two-col-grid">
+          <div class="nfd-supervisor-card">
+            <div class="supervisor-avatar blue">م.س</div>
+            <div>
+              <h4 class="supervisor-name">م. سالم بن ناصر المعمري</h4>
+              <span class="supervisor-role">مشرف التدريب التقني الميداني</span>
+              <div class="supervisor-score">★ 4.9 تقييم المدرب الميداني</div>
+            </div>
+          </div>
+          <div class="nfd-supervisor-card">
+            <div class="supervisor-avatar green">أ.ف</div>
+            <div>
+              <h4 class="supervisor-name">أ. فاطمة بنت حمد البلوشية</h4>
+              <span class="supervisor-role">أخصائية تحليل النظم والمتابعة السلوكية</span>
+              <div class="supervisor-score">★ 4.8 تقييم المشرفة الميدانية</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
+  }
+  <!-- =========================================================
+       ⭐ 2. الشاشة الرئيسية لجدول الشركات (Current View: List)
+  ========================================================== -->
+  @else {
 
-<!-- نافذة إضافة شركة مستضيفة (Modal) -->
-@if (showAddModal()) {
-  <div class="nfd-modal-overlay">
-    <div class="nfd-modal-card">
-      <div class="nfd-modal-header">
-        <h5 class="m-0">إضافة شركة مستضيفة</h5>
-        <button type="button" class="nfd-modal-close" (click)="closeAddModal()">×</button>
+  <!-- 1. الهيدر الرئيسي -->
+  <div class="header-container mb-4">
+    <div class="title-section">
+      <h2 class="nfd-page-title">إدارة الشركات المستضيفة</h2>
+      <p class="nfd-page-subtitle">متابعة واعتماد وتأهيل الشركاء ومؤسسات التدريب في منظومة نفاذ</p>
+    </div>
+
+    <div class="header-actions-group">
+      <button class="toggle-requests-btn" [class.active]="activeTab() === 'pending'" (click)="setActiveTab('pending')">
+        <span class="bell-icon">🔔</span>
+        <span>طلبات التسجيل الجديدة</span>
+        <span class="pending-counter-badge" *ngIf="pendingRequestsCount() > 0">
+          {{ pendingRequestsCount() }}
+        </span>
+      </button>
+
+      <button class="add-company-btn shadow-sm" (click)="openAddModal()">
+        <span class="plus-icon">+</span>
+        <span>إضافة شركة جديدة</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. كروت المؤشرات الإحصائية العامة -->
+  <div class="nfd-stats-grid mb-4">
+    <div class="nfd-stat-card" [class.active-card]="activeTab() === 'all' && statusFilter() === 'الكل'"
+      (click)="setActiveTab('all'); setFilter('الكل')">
+      <div class="stat-icon-wrap navy">🏢</div>
+      <div class="stat-data">
+        <span class="stat-number">{{ companies().length }}</span>
+        <span class="stat-text">إجمالي الشركات المسجلة</span>
       </div>
+    </div>
 
-      <div class="nfd-modal-body">
-        @if (addError()) {
-          <div class="nfd-modal-error">{{ addError() }}</div>
-        }
-
-        <!-- بيانات الشركة -->
-        <div class="nfd-modal-section-title">بيانات الشركة</div>
-
-        <!-- اسم الشركة -->
-        <div class="nfd-field">
-          <label>اسم الشركة <span class="req">*</span></label>
-          <input type="text" class="form-control" [(ngModel)]="newCompany.companyName"
-            placeholder="اسم الشركة الكامل"
-            (blur)="markTouched('companyName')"
-            [style.border-color]="(showError('companyName') && companyNameError()) ? '#dc2626' : ''">
-          @if (showError('companyName') && companyNameError()) {
-            <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">{{ companyNameError() }}</small>
-          }
-        </div>
-
-        <div class="nfd-field-row">
-          <!-- المجال -->
-          <div class="nfd-field">
-            <label>المجال <span class="req">*</span></label>
-            <input type="text" class="form-control" [(ngModel)]="newCompany.workField"
-              placeholder="تقنية المعلومات"
-              (blur)="markTouched('workField')"
-              [style.border-color]="(showError('workField') && workFieldError()) ? '#dc2626' : ''">
-            @if (showError('workField') && workFieldError()) {
-              <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">{{ workFieldError() }}</small>
-            }
-          </div>
-          <!-- المدينة -->
-          <div class="nfd-field">
-            <label>المدينة</label>
-            <input type="text" class="form-control" [(ngModel)]="newCompany.address" placeholder="مسقط">
-          </div>
-        </div>
-
-        <div class="nfd-field-row">
-          <!-- الطاقة الاستيعابية -->
-          <div class="nfd-field">
-            <label>الطاقة الاستيعابية <span class="req">*</span></label>
-            <input type="number" min="1" class="form-control" [(ngModel)]="newCompany.capacity"
-              placeholder="0"
-              (blur)="markTouched('capacity')"
-              [style.border-color]="(showError('capacity') && capacityError()) ? '#dc2626' : ''">
-            @if (showError('capacity') && capacityError()) {
-              <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">{{ capacityError() }}</small>
-            }
-          </div>
-          <!-- الحالة -->
-          <div class="nfd-field">
-            <label>الحالة</label>
-            <input type="text" class="form-control" [value]="statusLabel(newCompany.status)" disabled>
-          </div>
-        </div>
-
-        <!-- بيانات التواصل -->
-        <div class="nfd-modal-section-title">بيانات التواصل</div>
-
-        <!-- اسم جهة الاتصال -->
-        <div class="nfd-field">
-          <label>اسم جهة الاتصال <span class="req">*</span></label>
-          <input type="text" class="form-control" [(ngModel)]="newCompany.contactName"
-            placeholder="الاسم الكامل"
-            (blur)="markTouched('contactName')"
-            [style.border-color]="(showError('contactName') && contactNameError()) ? '#dc2626' : ''">
-          @if (showError('contactName') && contactNameError()) {
-            <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">{{ contactNameError() }}</small>
-          }
-        </div>
-
-        <div class="nfd-field-row">
-          <!-- البريد الإلكتروني -->
-          <div class="nfd-field">
-            <label>البريد الإلكتروني <span class="req">*</span></label>
-            <input type="email" class="form-control" [(ngModel)]="newCompany.email"
-              placeholder="name@company.om"
-              (blur)="markTouched('email')"
-              [style.border-color]="(showError('email') && emailError()) ? '#dc2626' : ''">
-            @if (showError('email') && emailError()) {
-              <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">{{ emailError() }}</small>
-            }
-          </div>
-          <!-- رقم الجوال -->
-          <div class="nfd-field">
-            <label>رقم الجوال</label>
-            <input type="text" class="form-control" [(ngModel)]="newCompany.phone"
-              placeholder="9XXX XXXX 968+"
-              (blur)="markTouched('phone')"
-              [style.border-color]="(showError('phone') && phoneError()) ? '#dc2626' : ''">
-            @if (showError('phone') && phoneError()) {
-              <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">{{ phoneError() }}</small>
-            }
-          </div>
-        </div>
+    <div class="nfd-stat-card highlight" [class.active-card]="activeTab() === 'pending'"
+      (click)="setActiveTab('pending')">
+      <div class="stat-icon-wrap orange">⏳</div>
+      <div class="stat-data">
+        <span class="stat-number">{{ pendingRequestsCount() }}</span>
+        <span class="stat-text">طلبات بانتظار الاعتماد</span>
       </div>
+    </div>
 
-      <div class="nfd-modal-actions">
-        <button type="button" class="nfd-cancel-btn" (click)="closeAddModal()">إلغاء</button>
-        <button type="button" class="nfd-submit-btn" (click)="submitAddCompany()" [disabled]="isSaving()">
-          {{ isSaving() ? 'جاري الإضافة...' : 'إضافة الشركة' }}
-        </button>
+    <div class="nfd-stat-card" [class.active-card]="statusFilter() === 'Approved' && activeTab() === 'all'"
+      (click)="setFilter('Approved')">
+      <div class="stat-icon-wrap green">✓</div>
+      <div class="stat-data">
+        <span class="stat-number">{{ approvedCompaniesCount() }}</span>
+        <span class="stat-text">شركات معتمدة ونشطة</span>
+      </div>
+    </div>
+
+    <div class="nfd-stat-card">
+      <div class="stat-icon-wrap purple">👥</div>
+      <div class="stat-data">
+        <span class="stat-number">{{ totalCapacityCount() }}</span>
+        <span class="stat-text">إجمالي الطاقة الاستيعابية</span>
       </div>
     </div>
   </div>
+
+  <!-- 3. كارت أدوات البحث والفلترة -->
+  <div class="filter-panel-card mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pb-3 border-bottom">
+      <div class="nfd-chips d-flex gap-2 flex-wrap">
+        <button class="filter-btn" [class.active]="activeTab() === 'all' && statusFilter() === 'الكل'"
+          (click)="setActiveTab('all'); setFilter('الكل')">
+          جميع الشركات
+        </button>
+        <button class="filter-btn" [class.active]="activeTab() === 'pending'" (click)="setActiveTab('pending')">
+          طلبات التسجيل الجديدة ({{ pendingRequestsCount() }})
+        </button>
+        <button class="filter-btn" [class.active]="activeTab() === 'all' && statusFilter() === 'Approved'"
+          (click)="setActiveTab('all'); setFilter('Approved')">
+          معتمدة
+        </button>
+        <button class="filter-btn" [class.active]="activeTab() === 'all' && statusFilter() === 'Suspended'"
+          (click)="setActiveTab('all'); setFilter('Suspended')">
+          موقوفة
+        </button>
+        <button class="filter-btn" [class.active]="activeTab() === 'all' && statusFilter() === 'Rejected'"
+          (click)="setActiveTab('all'); setFilter('Rejected')">
+          مرفوضة
+        </button>
+      </div>
+
+      <span class="results-count-text">
+        نتائج العرض: <strong>{{ filteredCompanies().length }}</strong> شركة
+      </span>
+    </div>
+
+    <div class="advanced-filter-row pt-3">
+      <div class="search-box-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-field" placeholder="ابحث باسم الشركة، المجال، جهة الاتصال، المدينة، الهاتف..."
+          [(ngModel)]="searchTerm" (input)="onFilterChange()">
+        <button class="clear-btn" *ngIf="searchTerm" (click)="searchTerm = ''; onFilterChange()">✕</button>
+      </div>
+
+      <div class="filter-dropdown-wrap">
+        <select class="custom-filter-select" [(ngModel)]="cityFilter" (change)="onFilterChange()">
+          <option value="ALL">📍 جميع المدن والمناطق</option>
+          <option *ngFor="let city of uniqueCities()" [value]="city">{{ city }}</option>
+        </select>
+      </div>
+
+      <div class="filter-dropdown-wrap">
+        <select class="custom-filter-select" [(ngModel)]="workFieldFilter" (change)="onFilterChange()">
+          <option value="ALL">🏢 جميع مجالات العمل</option>
+          <option *ngFor="let fld of uniqueWorkFields()" [value]="fld">{{ fld }}</option>
+        </select>
+      </div>
+
+      <div class="filter-dropdown-wrap">
+        <select class="custom-filter-select" [(ngModel)]="capacitySortFilter" (change)="onFilterChange()">
+          <option value="DEFAULT">⚡ الترتيب الافتراضي</option>
+          <option value="TOP_CAPACITY">الأعلى في الطاقة الاستيعابية</option>
+          <option value="LOW_CAPACITY">الأقل في الطاقة الاستيعابية</option>
+          <option value="TOP_PROGRAMS">الأكثر برامج معتمدة</option>
+        </select>
+      </div>
+
+      <button class="btn-reset-all" *ngIf="isAnyFilterActive()" (click)="resetAllFilters()">
+        تصفير الكل ↺
+      </button>
+    </div>
+  </div>
+
+  <!-- 4. كارت الجدول الرئيسي -->
+  <div class="nfd-card card border-0 shadow-sm rounded-4 p-4 bg-white">
+    @if (isLoading()) {
+    <div class="loading-state-wrapper">
+      <div class="custom-spinner"></div>
+      <span class="loading-text">جاري تحميل بيانات الشركات وقاعدة البيانات...</span>
+    </div>
+    } @else {
+
+    @if (activeTab() === 'pending') {
+    <div class="section-notice-banner mb-3">
+      <div class="d-flex align-items-center gap-2">
+        <span class="fs-5">📋</span>
+        <div>
+          <strong>طلبات انضمام وتسجيل الشركات الجديدة</strong>
+          <div class="text-muted fs-7">يمكنك مراجعة بيانات الشركة والممثل القانوني ثم اتخاذ قرار الاعتماد أو الرفض مع توضيح السبب.</div>
+        </div>
+      </div>
+      <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fs-7">قيد المراجعة: {{ pendingRequestsCount() }} طلب</span>
+    </div>
+    }
+
+    <div class="table-responsive">
+      <table class="nfd-table table align-middle mb-0 text-end">
+        <thead>
+          <tr>
+            <th>الشركة والمجال</th>
+            <th>المدينة والمقر</th>
+            <th>مسؤول الاتصال</th>
+            <th>الطاقة والبرامج</th>
+            <th>الحالة</th>
+            <th class="text-center">الإجراءات والقرار</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of pagedCompanies(); track c.companyId) {
+          <tr [class.highlight-row]="c.status === 'PendingApproval'">
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                <div class="company-logo-avatar">{{ c.companyName?.charAt(0) || 'ش' }}</div>
+                <div>
+                  <strong class="company-title-text">{{ c.companyName }}</strong>
+                  <div class="text-muted fs-7">قطاع: {{ c.workField || 'تقنية المعلومات' }}</div>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <span class="city-tag">📍 {{ c.address || 'مسقط' }}</span>
+            </td>
+
+            <td>
+              <div class="contact-person-info">
+                <strong class="contact-name">{{ c.contactName || 'غير محدد' }}</strong>
+                <span class="contact-email" *ngIf="c.email">{{ c.email }}</span>
+                <span class="contact-phone" *ngIf="c.phone"><bdo dir="ltr">{{ c.phone }}</bdo></span>
+              </div>
+            </td>
+
+            <td>
+              <div class="capacity-badge-box">
+                <span class="badge-item blue">👥 طاقة: {{ c.capacity || 0 }} متدرب</span>
+                <span class="badge-item gray" *ngIf="c.programsCount != null">📚 {{ c.programsCount }} برامج</span>
+              </div>
+            </td>
+
+            <td>
+              <span class="nfd-badge px-3 py-2 rounded-pill" [ngStyle]="{
+                          'background': c.status === 'Approved' ? '#e8f5e9' : c.status === 'Rejected' ? '#ffebee' : c.status === 'Suspended' ? '#fff3e0' : '#fff8e1',
+                          'color': c.status === 'Approved' ? '#2e7d32' : c.status === 'Rejected' ? '#c62828' : c.status === 'Suspended' ? '#e65100' : '#b45309'
+                        }">
+                {{ statusLabel(c.status) }}
+              </span>
+              <div *ngIf="c.status === 'Rejected' && c.rejectionReason" class="rejection-hint"
+                (click)="openCompanyDetails(c)">
+                عرض سبب الرفض ℹ️
+              </div>
+            </td>
+
+            <td>
+              <div class="d-flex gap-2 justify-content-center align-items-center">
+                <!-- زر فتح التفاصيل ملء الشاشة -->
+                <button class="action-btn details-btn" title="عرض تفاصيل الشركة ملء الشاشة" (click)="openCompanyDetails(c)">
+                  👁️ التفاصيل
+                </button>
+
+                @if (c.status === 'PendingApproval') {
+                <button class="action-btn approve-btn" (click)="updateCompanyStatus(c, 'Approved')">
+                  ✓ اعتماد
+                </button>
+                <button class="action-btn reject-btn" (click)="openRejectModal(c)">
+                  ✕ رفض
+                </button>
+                } @else {
+                @if (c.status !== 'Approved') {
+                <button class="action-btn approve-btn" (click)="updateCompanyStatus(c, 'Approved')">
+                  اعتماد
+                </button>
+                }
+                @if (c.status === 'Approved') {
+                <button class="action-btn suspend-btn" (click)="updateCompanyStatus(c, 'Suspended')">
+                  إيقاف
+                </button>
+                }
+                @if (c.status !== 'Rejected') {
+                <button class="action-btn reject-btn" (click)="openRejectModal(c)">
+                  رفض
+                </button>
+                }
+                }
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="empty-state-box p-5 text-center" *ngIf="pagedCompanies().length === 0">
+        <div class="fs-1 mb-2">📂</div>
+        <h5 class="fw-bold text-dark">لا توجد شركات مطابقة لخيارات البحث والفلترة</h5>
+        <p class="text-muted">جرّب تغيير كلمات البحث أو اختيار تصفير الكل</p>
+        <button class="btn-reset-all" style="margin: 0 auto;" (click)="resetAllFilters()">تصفير الفلاتر ↺</button>
+      </div>
+    </div>
+
+    <!-- التصفح Pagination -->
+    <div class="compact-pagination-wrapper" *ngIf="!isLoading() && filteredCompanies().length > 0">
+      <div class="pagination-info">
+        عرض الصفحة <strong>{{ currentPage() }}</strong> من <strong>{{ totalPages() }}</strong> (إجمالي {{ filteredCompanies().length }} شركة)
+      </div>
+
+      <div class="pagination-compact-controls">
+        <button class="compact-nav-btn" [disabled]="currentPage() <= 1" (click)="prevPage()">
+          ← السابق
+        </button>
+
+        <button *ngFor="let page of getPageNumbers()" class="compact-page-number-btn"
+          [class.active]="page === currentPage()" (click)="goToPage(page)">
+          {{ page }}
+        </button>
+
+        <button class="compact-nav-btn" [disabled]="currentPage() >= totalPages()" (click)="nextPage()">
+          التالي →
+        </button>
+      </div>
+    </div>
+    }
+  </div>
+  }
+
+</div>
+
+<!-- نافذة الرفض وإرسال السبب (Modal) -->
+@if (showRejectModal()) {
+<div class="nfd-modal-overlay">
+  <div class="nfd-modal-card reject-modal-card">
+    <div class="nfd-modal-header border-bottom pb-3">
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-danger fs-4">⚠️</span>
+        <h5 class="m-0 text-danger fw-bold">رفض طلب انضمام الشركة</h5>
+      </div>
+      <button type="button" class="nfd-modal-close" (click)="closeRejectModal()">×</button>
+    </div>
+
+    <div class="nfd-modal-body py-3">
+      <p class="fs-7 text-muted mb-3">
+        أنت على وشك رفض طلب شركة <strong>{{ selectedCompanyToReject?.companyName }}</strong>. يرجى كتابة سبب الرفض الرسمي:
+      </p>
+
+      <label class="form-label fw-bold fs-7 mb-2">الأسباب الشائعة:</label>
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <button type="button" class="quick-reason-chip"
+          (click)="setQuickReason('عدم استيفاء شروط ومواصفات الطاقة الاستيعابية المطلوبة للتدريب')">
+          عدم استيفاء الطاقة الاستيعابية
+        </button>
+        <button type="button" class="quick-reason-chip"
+          (click)="setQuickReason('البيانات والمستندات المقدمة أو السجل التجاري غير مكتمل')">
+          مستندات غير مكتملة
+        </button>
+      </div>
+
+      <div class="nfd-field">
+        <label class="fw-bold">نص سبب الرفض الرسمي <span class="req">*</span></label>
+        <textarea class="form-control" rows="4" [(ngModel)]="rejectionReasonText"
+          placeholder="اكتب هنا التوضيح أو الملاحظات التي ستصل لمسؤول الشركة..."></textarea>
+      </div>
+    </div>
+
+    <div class="nfd-modal-actions pt-3 border-top">
+      <button type="button" class="nfd-cancel-btn" (click)="closeRejectModal()">إلغاء والتراجع</button>
+      <button type="button" class="btn btn-danger px-4 py-2 fw-bold rounded-3" (click)="confirmRejectCompany()"
+        [disabled]="!rejectionReasonText.trim() || isSaving()">
+        {{ isSaving() ? 'جاري الحفظ...' : 'تأكيد الرفض' }}
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- نافذة إضافة شركة مستضيفة (Modal) -->
+@if (showAddModal()) {
+<div class="nfd-modal-overlay">
+  <div class="nfd-modal-card">
+    <div class="nfd-modal-header">
+      <h5 class="m-0">إضافة شركة مستضيفة جديدة</h5>
+      <button type="button" class="nfd-modal-close" (click)="closeAddModal()">×</button>
+    </div>
+
+    <div class="nfd-modal-body">
+      @if (addError()) {
+      <div class="nfd-modal-error">{{ addError() }}</div>
+      }
+
+      <div class="nfd-modal-section-title">بيانات الشركة الأساسية</div>
+
+      <div class="nfd-field">
+        <label>اسم الشركة <span class="req">*</span></label>
+        <input type="text" class="form-control" [(ngModel)]="newCompany.companyName" placeholder="اسم الشركة الكامل"
+          (blur)="markTouched('companyName')"
+          [style.border-color]="(showError('companyName') && companyNameError()) ? '#dc2626' : ''">
+        @if (showError('companyName') && companyNameError()) {
+        <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">{{ companyNameError() }}</small>
+        }
+      </div>
+
+      <div class="nfd-field-row">
+        <div class="nfd-field">
+          <label>المجال / قطاع العمل <span class="req">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="newCompany.workField"
+            placeholder="تقنية المعلومات / الاتصالات" (blur)="markTouched('workField')"
+            [style.border-color]="(showError('workField') && workFieldError()) ? '#dc2626' : ''">
+          @if (showError('workField') && workFieldError()) {
+          <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">{{ workFieldError() }}</small>
+          }
+        </div>
+        <div class="nfd-field">
+          <label>المدينة والمقر</label>
+          <input type="text" class="form-control" [(ngModel)]="newCompany.address" placeholder="مسقط / صلالة">
+        </div>
+      </div>
+
+      <div class="nfd-field-row">
+        <div class="nfd-field">
+          <label>الطاقة الاستيعابية <span class="req">*</span></label>
+          <input type="number" min="1" class="form-control" [(ngModel)]="newCompany.capacity"
+            placeholder="عدد المتدربين" (blur)="markTouched('capacity')"
+            [style.border-color]="(showError('capacity') && capacityError()) ? '#dc2626' : ''">
+          @if (showError('capacity') && capacityError()) {
+          <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">{{ capacityError() }}</small>
+          }
+        </div>
+        <div class="nfd-field">
+          <label>الحالة الأولية</label>
+          <select class="form-control" [(ngModel)]="newCompany.status">
+            <option value="Approved">معتمدة فوراً</option>
+            <option value="PendingApproval">قيد المراجعة</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="nfd-modal-section-title">بيانات ممثل وجهة الاتصال</div>
+
+      <div class="nfd-field">
+        <label>اسم جهة الاتصال <span class="req">*</span></label>
+        <input type="text" class="form-control" [(ngModel)]="newCompany.contactName" placeholder="الاسم الكامل للمسؤول"
+          (blur)="markTouched('contactName')"
+          [style.border-color]="(showError('contactName') && contactNameError()) ? '#dc2626' : ''">
+        @if (showError('contactName') && contactNameError()) {
+        <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">{{ contactNameError() }}</small>
+        }
+      </div>
+
+      <div class="nfd-field-row">
+        <div class="nfd-field">
+          <label>البريد الإلكتروني <span class="req">*</span></label>
+          <input type="email" class="form-control" [(ngModel)]="newCompany.email" placeholder="contact@company.om"
+            (blur)="markTouched('email')" [style.border-color]="(showError('email') && emailError()) ? '#dc2626' : ''">
+          @if (showError('email') && emailError()) {
+          <small style="color: #dc2626; font-size: 0.75rem; display: block; margin-top: 4px;">{{ emailError() }}</small>
+          }
+        </div>
+        <div class="nfd-field">
+          <label>رقم الجوال</label>
+          <input type="text" class="form-control" [(ngModel)]="newCompany.phone" placeholder="9XXXXXXX"
+            (blur)="markTouched('phone')">
+        </div>
+      </div>
+    </div>
+
+    <div class="nfd-modal-actions">
+      <button type="button" class="nfd-cancel-btn" (click)="closeAddModal()">إلغاء</button>
+      <button type="button" class="nfd-submit-btn" (click)="submitAddCompany()" [disabled]="isSaving()">
+        {{ isSaving() ? 'جاري الإضافة...' : 'حفظ وإضافة الشركة' }}
+      </button>
+    </div>
+  </div>
+</div>
 }
