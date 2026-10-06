@@ -66,19 +66,22 @@
               (click)="openOpportunityModal(item)">
               <div class="item-main">
                 <div class="item-title">
-                  {{ item.title || 'إعلان رسمي' }}
-                </div>
-                <div class="item-sub">
                   {{
+                    item.title ||
                     item.description ||
                     item.message ||
                     'انقر لعرض تفاصيل الإعلان.'
                   }}
                 </div>
+                @if (item.title && (item.description || item.message)) {
+                  <div class="item-sub">
+                    {{ item.description || item.message }}
+                  </div>
+                }
               </div>
 
               <div class="item-meta">
-                <span class="badge-type">{{ item.type || 'إعلان' }}</span>
+                <span class="badge-type">{{ item.type || 'إعلان رسمي' }}</span>
                 <span class="item-date">
                   {{ announcementDate(item) | date:'yyyy-MM-dd' }}
                 </span>
@@ -176,13 +179,6 @@
         <h3>لوحة تشغيل الاستضافة والتدريب</h3>
         <p>متابعة أداء المتدربين، الطاقة الاستيعابية والإنذارات</p>
       </div>
-      <button
-        class="btn btn-outline"
-        type="button"
-        (click)="refreshData()"
-        [disabled]="loading()">
-        {{ loading() ? 'جارٍ التحديث…' : 'تحديث البيانات' }}
-      </button>
     </div>
 
     @if (capacity(); as cap) {
@@ -548,9 +544,9 @@
       </div>
 
       <div class="modal-body flyer-body-content">
-        <h2 class="flyer-main-title">
-          {{ announcement.title || 'إعلان رسمي' }}
-        </h2>
+        @if (announcement.title) {
+          <h2 class="flyer-main-title">{{ announcement.title }}</h2>
+        }
 
         <div class="target-major-badge">
           {{ announcement.type || 'إعلان' }}
