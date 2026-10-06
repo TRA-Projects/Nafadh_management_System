@@ -2,6 +2,7 @@ using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using Microsoft.AspNetCore.Http;
 
 namespace Nafadh_Backend.Services
 {
@@ -9,24 +10,34 @@ namespace Nafadh_Backend.Services
     {
         private readonly IEnrollmentRepository _repository;
 
-        public EnrollmentService(IEnrollmentRepository repository)
+    public EnrollmentService(IEnrollmentRepository repository)
         {
             _repository = repository;
         }
 
-        public async Task<IEnumerable<EnrollmentDTO>> GetAllEnrollmentsAsync(EnrollmentFilterDto filter)
+        public async Task<IEnumerable<EnrollmentDTO>> GetAllEnrollmentsAsync(
+            EnrollmentFilterDto filter)
         {
-            var enrollments = await _repository.GetAllAsync(filter.BatchId, filter.TraineeId, filter.CompanyId, filter.Status);
+            var enrollments = await _repository.GetAllAsync(
+                filter.BatchId,
+                filter.TraineeId,
+                filter.CompanyId,
+                filter.Status);
+
             return enrollments.Select(MapToDto);
         }
 
         public async Task<EnrollmentDTO?> GetEnrollmentByIdAsync(int id)
         {
             var enrollment = await _repository.GetByIdAsync(id);
-            return enrollment is null ? null : MapToDto(enrollment);
+
+            return enrollment is null
+                ? null
+                : MapToDto(enrollment);
         }
 
-        public async Task<(EnrollmentDTO? result, string? error)> CreateEnrollmentAsync(CreateEnrollmentDto dto)
+        public async Task<(EnrollmentDTO? result, string? error)> CreateEnrollmentAsync(
+            CreateEnrollmentDto dto)
         {
             if (!await _repository.BatchExistsAsync(dto.BatchId))
                 return (null, $"Batch with ID {dto.BatchId} was not found.");
@@ -37,11 +48,19 @@ namespace Nafadh_Backend.Services
             if (!await _repository.CompanyExistsAsync(dto.CompanyId))
                 return (null, $"Company with ID {dto.CompanyId} was not found.");
 
-            if (dto.DepartmentId.HasValue && !await _repository.DepartmentExistsAsync(dto.DepartmentId.Value))
-                return (null, $"Department with ID {dto.DepartmentId} was not found.");
+            if (dto.DepartmentId.HasValue &&
+                !await _repository.DepartmentExistsAsync(dto.DepartmentId.Value))
+            {
+                return (null,
+                    $"Department with ID {dto.DepartmentId} was not found.");
+            }
 
-            if (dto.SupervisorId.HasValue && !await _repository.SupervisorExistsAsync(dto.SupervisorId.Value))
-                return (null, $"Supervisor with ID {dto.SupervisorId} was not found.");
+            if (dto.SupervisorId.HasValue &&
+                !await _repository.SupervisorExistsAsync(dto.SupervisorId.Value))
+            {
+                return (null,
+                    $"Supervisor with ID {dto.SupervisorId} was not found.");
+            }
 
             var enrollment = new NFD_Enrollment
             {
@@ -55,21 +74,36 @@ namespace Nafadh_Backend.Services
             };
 
             var created = await _repository.AddAsync(enrollment);
-            var full = await _repository.GetByIdAsync(created.EnrollmentId);
+
+            var full = await _repository.GetByIdAsync(
+                created.EnrollmentId);
+
             return (MapToDto(full!), null);
         }
 
-        public async Task<(EnrollmentDTO? result, string? error)> UpdateAssignmentAsync(int id, UpdateEnrollmentAssignmentDto dto)
+        public async Task<(EnrollmentDTO? result, string? error)> UpdateAssignmentAsync(
+            int id,
+            UpdateEnrollmentAssignmentDto dto)
         {
-            var enrollment = await _repository.GetByIdForTrackingAsync(id);
+            var enrollment =
+                await _repository.GetByIdForTrackingAsync(id);
+
             if (enrollment is null)
                 return (null, "not_found");
 
-            if (dto.DepartmentId.HasValue && !await _repository.DepartmentExistsAsync(dto.DepartmentId.Value))
-                return (null, $"Department with ID {dto.DepartmentId} was not found.");
+            if (dto.DepartmentId.HasValue &&
+                !await _repository.DepartmentExistsAsync(dto.DepartmentId.Value))
+            {
+                return (null,
+                    $"Department with ID {dto.DepartmentId} was not found.");
+            }
 
-            if (dto.SupervisorId.HasValue && !await _repository.SupervisorExistsAsync(dto.SupervisorId.Value))
-                return (null, $"Supervisor with ID {dto.SupervisorId} was not found.");
+            if (dto.SupervisorId.HasValue &&
+                !await _repository.SupervisorExistsAsync(dto.SupervisorId.Value))
+            {
+                return (null,
+                    $"Supervisor with ID {dto.SupervisorId} was not found.");
+            }
 
             enrollment.DepartmentId = dto.DepartmentId;
             enrollment.SupervisorId = dto.SupervisorId;
@@ -77,51 +111,77 @@ namespace Nafadh_Backend.Services
             await _repository.UpdateAsync(enrollment);
 
             var full = await _repository.GetByIdAsync(id);
+
             return (MapToDto(full!), null);
         }
 
-        public async Task<(EnrollmentDTO? result, string? error)> UpdateStatusAsync(int id, UpdateEnrollmentStatusDto dto)
+        public async Task<(EnrollmentDTO? result, string? error)> UpdateStatusAsync(
+            int id,
+            UpdateEnrollmentStatusDto dto)
         {
             var enrollment = await _repository.GetByIdAsync(id);
+
             if (enrollment is null)
                 return (null, "not_found");
 
             enrollment.CompletionStatus = dto.CompletionStatus;
+
             await _repository.UpdateAsync(enrollment);
 
             var full = await _repository.GetByIdAsync(id);
+
             return (MapToDto(full!), null);
         }
 
         public async Task<bool> WithdrawEnrollmentAsync(int id)
         {
             var enrollment = await _repository.GetByIdAsync(id);
-            if (enrollment is null) return false;
 
-            enrollment.CompletionStatus = NFD_EnrollmentCompletionStatus.Dropped;
+            if (enrollment is null)
+                return false;
+
+            enrollment.CompletionStatus =
+                NFD_EnrollmentCompletionStatus.Dropped;
+
             await _repository.UpdateAsync(enrollment);
+
             return true;
         }
 
-        public async Task<IEnumerable<EnrollmentDTO>> GetByTraineeIdAsync(int traineeId)
+        public async Task<IEnumerable<EnrollmentDTO>> GetByTraineeIdAsync(
+            int traineeId)
         {
-            var enrollments = await _repository.GetByTraineeIdAsync(traineeId);
+            var enrollments =
+                await _repository.GetByTraineeIdAsync(traineeId);
+
             return enrollments.Select(MapToDto);
         }
 
-        public async Task<IEnumerable<EnrollmentDTO>> GetByCompanyIdAsync(int companyId)
+        public async Task<IEnumerable<EnrollmentDTO>> GetByCompanyIdAsync(
+            int companyId)
         {
-            var enrollments = await _repository.GetByCompanyIdAsync(companyId);
+            var enrollments =
+                await _repository.GetByCompanyIdAsync(companyId);
+
             return enrollments.Select(MapToDto);
         }
 
-        public async Task<ProgressSummaryDto?> GetProgressSummaryAsync(int enrollmentId)
+        public async Task<ProgressSummaryDto?> GetProgressSummaryAsync(
+            int enrollmentId)
         {
-            var data = await _repository.GetProgressDataAsync(enrollmentId);
-            if (data is null) return null;
+            var data =
+                await _repository.GetProgressDataAsync(enrollmentId);
+
+            if (data is null)
+                return null;
 
             var (totalModules, completedModules) = data.Value;
-            var percentage = totalModules == 0 ? 0 : Math.Round((double)completedModules / totalModules * 100, 1);
+
+            var percentage = totalModules == 0
+                ? 0
+                : Math.Round(
+                    (double)completedModules / totalModules * 100,
+                    1);
 
             return new ProgressSummaryDto
             {
@@ -132,6 +192,91 @@ namespace Nafadh_Backend.Services
             };
         }
 
+        // ============================================================
+        // رفع صورة الملف الشخصي للمتدرب
+        // ============================================================
+        public async Task<bool> UploadTraineeProfileImageAsync(
+            int traineeId,
+            IFormFile file)
+        {
+            // التحقق من الملف
+            if (file == null || file.Length == 0)
+                return false;
+
+            // أنواع الصور المسموحة
+            var allowedExtensions = new[]
+            {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp"
+        };
+
+            var extension = Path
+                .GetExtension(file.FileName)
+                .ToLowerInvariant();
+
+            if (!allowedExtensions.Contains(extension))
+                return false;
+
+            // الحد الأقصى لحجم الصورة 5 MB
+            if (file.Length > 5 * 1024 * 1024)
+                return false;
+
+            // البحث عن المتدرب
+            var enrollments =
+                await _repository.GetByTraineeIdAsync(traineeId);
+
+            var enrollment = enrollments.FirstOrDefault();
+
+            if (enrollment == null || enrollment.Trainee == null)
+                return false;
+
+            // إنشاء مجلد الصور داخل wwwroot
+            var webRootPath = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot");
+
+            var uploadFolder = Path.Combine(
+                webRootPath,
+                "uploads",
+                "trainees");
+
+            if (!Directory.Exists(uploadFolder))
+                Directory.CreateDirectory(uploadFolder);
+
+            // إنشاء اسم فريد للصورة
+            var fileName = $"{Guid.NewGuid()}{extension}";
+
+            var filePath = Path.Combine(
+                uploadFolder,
+                fileName);
+
+            // حفظ الصورة
+            using (var stream = new FileStream(
+                filePath,
+                FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // الرابط الذي سيتم حفظه في قاعدة البيانات
+            var imageUrl =
+                $"/uploads/trainees/{fileName}";
+
+            // تحديث رابط الصورة للمتدرب
+            enrollment.Trainee.ProfileImageUrl = imageUrl;
+
+            // حفظ التعديل
+            await _repository.UpdateAsync(enrollment);
+
+            // نجاح العملية
+            return true;
+        }
+
+        // ============================================================
+        // تحويل Enrollment إلى DTO
+        // ============================================================
         private static EnrollmentDTO MapToDto(NFD_Enrollment e)
         {
             return new EnrollmentDTO
@@ -139,24 +284,30 @@ namespace Nafadh_Backend.Services
                 EnrollmentId = e.EnrollmentId,
                 EnrollmentDate = e.EnrollmentDate,
                 CompletionStatus = e.CompletionStatus.ToString(),
+
                 BatchId = e.BatchId,
                 BatchName = e.Batch.BatchName,
                 BatchStartDate = e.Batch.StartDate,
                 BatchEndDate = e.Batch.EndDate,
+
                 TraineeId = e.TraineeId,
                 TraineeName = e.Trainee.User.FullName,
 
-                // تم تعديل الربط ليكون مباشرة من جدول المتدربين كما هو موضح في قاعدة البيانات
+                // صورة المتدرب
                 ProfileImageUrl = e.Trainee.ProfileImageUrl,
 
                 CompanyId = e.CompanyId,
                 CompanyName = e.Company.CompanyName,
+
                 DepartmentId = e.DepartmentId,
                 DepartmentName = e.Department?.Name,
+
                 SupervisorId = e.SupervisorId,
                 SupervisorName = e.CompanySupervisor?.User.FullName,
+
                 TraineeGitHubUrl = e.Trainee.GitHubUrl,
                 TraineeLinkedInUrl = e.Trainee.LinkedInUrl,
+
                 ProgramId = e.Batch.ProgramId,
                 ProgramTitle = e.Batch.Program?.Title,
                 ProgramDescription = e.Batch.Program?.Description,
@@ -164,4 +315,6 @@ namespace Nafadh_Backend.Services
             };
         }
     }
+
+
 }
