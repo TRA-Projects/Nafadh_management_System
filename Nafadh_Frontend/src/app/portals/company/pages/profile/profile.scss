@@ -659,13 +659,15 @@ h3.section-title {
   font-size: 12px;
 }
 
-.kpi-blue, 
-.kpi-teal, 
-.kpi-purple, 
-.kpi-gold, 
-.kpi-green {
-  --kpi-accent: #1b56fd;
-  --kpi-accent-soft: #eff6ff;
+.kpi-blue { --kpi-accent: #1b56fd; --kpi-accent-soft: #eff6ff; }
+.kpi-teal { --kpi-accent: #0891b2; --kpi-accent-soft: #e0f7fa; }
+.kpi-purple { --kpi-accent: #7c3aed; --kpi-accent-soft: #f1eaff; }
+.kpi-gold { --kpi-accent: #f59e0b; --kpi-accent-soft: #fff4d6; }
+.kpi-green { --kpi-accent: #16a34a; --kpi-accent-soft: #dcfce7; }
+
+.approved-word {
+  color: #16a34a;
+  font-weight: 800;
 }
 
 .company-profile-info-card {
@@ -742,7 +744,7 @@ h3.section-title {
 }
 
 .specialty-tile.is-approved {
-  border-inline-start: 3px solid var(--profile-blue-primary);
+  border-inline-start: 3px solid #16a34a;
 }
 
 .specialty-tile:not(.is-approved) {
@@ -921,3 +923,13 @@ h3.section-title {
     font-size: 23px;
   }
 }
+/* Colorful accents for avatars and branch icons */
+.contact-tile:nth-child(4n + 2) .contact-avatar { background: linear-gradient(135deg, #0e7490, #22d3ee); }
+.contact-tile:nth-child(4n + 3) .contact-avatar { background: linear-gradient(135deg, #6d28d9, #a78bfa); }
+.contact-tile:nth-child(4n + 4) .contact-avatar { background: linear-gradient(135deg, #d97706, #fbbf24); }
+
+.branch-tile:nth-child(4n + 1) .list-tile-icon { background: #e0f2fe; color: #0284c7; }
+.branch-tile:nth-child(4n + 2) .list-tile-icon { background: #dcfce7; color: #16a34a; }
+.branch-tile:nth-child(4n + 3) .list-tile-icon { background: #f1eaff; color: #7c3aed; }
+.branch-tile:nth-child(4n + 4) .list-tile-icon { background: #fff4d6; color: #d97706; }
+.branch-tile:hover .list-tile-icon { filter: brightness(0.95); transform: scale(1.06); }
