@@ -17,7 +17,6 @@ import {
 } from 'rxjs/operators';
 
 import { TraineeApi } from '../../services/trainee-api';
-
 import { AuthService } from '../../../../core/auth/auth.service';
 
 import {
@@ -30,7 +29,6 @@ import {
 
 
 @Component({
-
   selector: 'app-trainee-support',
 
   standalone: true,
@@ -41,7 +39,6 @@ import {
   ],
 
   templateUrl: './support.html'
-
 })
 
 export class TraineeSupport implements OnInit {
@@ -122,7 +119,8 @@ export class TraineeSupport implements OnInit {
 
     receiverType: '',
 
-    trainerId: null as number | null,
+    trainerId:
+      null as number | null,
 
     subject: '',
 
@@ -306,7 +304,7 @@ export class TraineeSupport implements OnInit {
                     enrollment.completionStatus
                     ?? ''
                   )
-                  .toLowerCase();
+                    .toLowerCase();
 
 
                 return (
@@ -435,6 +433,7 @@ export class TraineeSupport implements OnInit {
 
 
           const requests =
+
             batchTrainers.map(
 
               batchTrainer => {
@@ -616,7 +615,7 @@ export class TraineeSupport implements OnInit {
                 (conversation: any) =>
 
                   conversation.conversationId ===
-                  current.conversationId
+                    current.conversationId
 
               );
 
@@ -1261,6 +1260,7 @@ export class TraineeSupport implements OnInit {
     if (
 
       (
+
         this.newConv.receiverType ===
           'Trainer'
 
@@ -1268,6 +1268,7 @@ export class TraineeSupport implements OnInit {
 
         this.newConv.receiverType ===
           'Company'
+
       )
 
       &&
@@ -1364,10 +1365,8 @@ export class TraineeSupport implements OnInit {
       type:
         'TraineeComplaint',
 
-
       receiverType:
         this.newConv.receiverType,
-
 
       receiverTrainerId:
 
@@ -1377,7 +1376,6 @@ export class TraineeSupport implements OnInit {
           ? this.newConv.trainerId
 
           : null,
-
 
       receiverTrainerName:
 
@@ -1391,14 +1389,13 @@ export class TraineeSupport implements OnInit {
 
           : null,
 
-
       subject:
         this.newConv.subject.trim(),
-
 
       note:
 
         (
+
           this.newConv.receiverType ===
             'Trainer'
 
@@ -1406,19 +1403,25 @@ export class TraineeSupport implements OnInit {
 
           this.newConv.receiverType ===
             'Company'
+
         )
 
           ? this.newConv.note.trim()
 
           : '',
 
-
       firstMessage:
         messageContent,
 
-
       startedByUserId:
-        uid
+        uid,
+
+      // ===================================================
+      // Attachment
+      // ===================================================
+
+      attachment:
+        this.selectedFile
 
     };
 
