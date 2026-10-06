@@ -1,172 +1,537 @@
-<div class="reports-container">
-  
-  <!-- رأس الصفحة والأزرار العلوية -->
-  <div class="page-header-actions">
-    <div class="title-group">
-      <span class="breadcrumb">نفاذ / التقارير</span>
-      <h1>التقارير</h1>
-      <p class="subtitle">تقارير الحضور والطاقة الاستيعابية والإنجاز والمهام - جاهزة للتصدير</p>
+<div class="reports-page" dir="rtl">
+
+  <!-- =========================
+       PAGE HEADER
+  ========================== -->
+  <div class="page-header">
+
+    <div class="page-title-area">
+
+      <h1>
+        التقارير
+      </h1>
+
+      <p>
+        تقارير الحضور والطاقة الاستيعابية والإنجاز والمهام — جاهزة للتصدير
+      </p>
+
     </div>
-    <div class="actions-group">
-      <button class="btn btn-light refresh-btn" type="button">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        تحديث
+
+
+    <div class="header-actions">
+
+      <!-- Export notice -->
+      <span
+        *ngIf="exportNotice"
+        class="export-notice"
+      >
+        {{ exportNotice }}
+      </span>
+
+
+      <!-- PDF -->
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="handleExportPdf()"
+      >
+        <span class="button-icon">↓</span>
+        <span>تصدير PDF</span>
       </button>
-      <button class="btn btn-outline" type="button">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        Excel تصدير
+
+
+      <!-- Excel -->
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="handleExportExcel()"
+      >
+        <span class="excel-icon">▦</span>
+        <span>تصدير Excel</span>
       </button>
-      <button class="btn btn-primary-export" type="button">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        PDF تصدير
-      </button>
+
     </div>
+
   </div>
 
-  <!-- تبويبات التنقل (مربوطة بالدالة والمتغير البرمجي لتستجيب للنقر) -->
-  <div class="nav-tabs-bar">
-    <button class="tab-item" [class.active]="activeTab === 'company-attendance'" (click)="selectTab('company-attendance')" type="button">حضور الشركة</button>
-    <button class="tab-item" [class.active]="activeTab === 'trainees-progress'" (click)="selectTab('trainees-progress')" type="button">إنجاز المتدربين</button>
-    <button class="tab-item" [class.active]="activeTab === 'capacity'" (click)="selectTab('capacity')" type="button">الطاقة الاستيعابية</button>
-    <button class="tab-item" [class.active]="activeTab === 'evaluations'" (click)="selectTab('evaluations')" type="button">التقييمات</button>
-    <button class="tab-item" [class.active]="activeTab === 'tasks'" (click)="selectTab('tasks')" type="button">المهام</button>
-    <button class="tab-item" [class.active]="activeTab === 'comparison'" (click)="selectTab('comparison')" type="button">مقارنة الأقسام والمشرفين</button>
+
+  <!-- =========================
+       REPORT TABS
+  ========================== -->
+  <div class="tabs-wrapper">
+
+    <div class="tabs-container">
+
+      <button
+        *ngFor="let tab of tabs"
+        type="button"
+        class="tab-button"
+        [class.active]="activeTab === tab.id"
+        (click)="setActiveTab(tab.id)"
+      >
+        {{ tab.label }}
+      </button>
+
+    </div>
+
   </div>
 
-  <!-- بطاقات مؤشرات الأداء (KPI Cards) -->
-  <div class="kpi-cards-grid">
-    <div class="kpi-card highlight-card">
-      <div class="kpi-header">
-        <span class="kpi-title">متوسط حضور الشركة</span>
-        <div class="kpi-icon-box bg-blue-light">
-          <svg width="20" height="20" fill="none" stroke="#1e3a8a" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+
+  <!-- =====================================================
+       TAB 1 - ATTENDANCE
+  ====================================================== -->
+  <ng-container *ngIf="activeTab === 'attendance'">
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid">
+
+      <!-- KPI 1 -->
+      <div class="kpi-card">
+
+        <span class="kpi-label">
+          متوسط حضور الشركة
+        </span>
+
+        <div class="kpi-value-row">
+
+          <strong class="kpi-value attendance-value">
+            94.2%
+          </strong>
+
+          <span class="positive-change">
+            ▲ 1.2% عن الشهر الماضي
+          </span>
+
         </div>
-      </div>
-      <div class="kpi-main-value">94.2%</div>
-      <div class="trend-up">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
-        1.2% عن الشهر الماضي
-      </div>
-    </div>
 
-    <div class="kpi-card">
-      <div class="kpi-header">
-        <span class="kpi-title">أيام الغياب (30 يوماً)</span>
-        <div class="kpi-icon-box bg-red-light">
-          <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6"/></svg>
+      </div>
+
+
+      <!-- KPI 2 -->
+      <div class="kpi-card">
+
+        <span class="kpi-label">
+          أيام الغياب (30 يوماً)
+        </span>
+
+        <div class="kpi-value-row">
+
+          <strong class="kpi-value absence-value">
+            17
+          </strong>
+
+          <span class="kpi-description">
+            6 متدربين
+          </span>
+
         </div>
-      </div>
-      <div class="kpi-sub-value">
-        <span class="badge-number">17</span> 
-        <span class="badge-desc">6 متدربين</span>
-      </div>
-    </div>
 
-    <div class="kpi-card">
-      <div class="kpi-header">
-        <span class="kpi-title">حالات التأخر</span>
-        <div class="kpi-icon-box bg-orange-light">
-          <svg width="20" height="20" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+
+
+      <!-- KPI 3 -->
+      <div class="kpi-card">
+
+        <span class="kpi-label">
+          حالات التأخر
+        </span>
+
+        <div class="kpi-value-row">
+
+          <strong class="kpi-value late-value">
+            27
+          </strong>
+
+          <span class="kpi-description">
+            أغلبها في الدفعة 1
+          </span>
+
         </div>
-      </div>
-      <div class="kpi-sub-value">
-        <span class="badge-number warning">27</span> 
-        <span class="badge-desc">أغلبها في الدفعة أ</span>
-      </div>
-    </div>
 
-    <div class="kpi-card">
-      <div class="kpi-header">
-        <span class="kpi-title">الانصراف المبكر</span>
-        <div class="kpi-icon-box bg-purple-light">
-          <svg width="20" height="20" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </div>
+
+
+      <!-- KPI 4 -->
+      <div class="kpi-card">
+
+        <span class="kpi-label">
+          الانصراف المبكر
+        </span>
+
+        <div class="kpi-value-row">
+
+          <strong class="kpi-value early-value">
+            6
+          </strong>
+
+          <span class="kpi-description">
+            حالة مسجلة
+          </span>
+
         </div>
-      </div>
-      <div class="kpi-sub-value">
-        <span class="badge-number">6</span> 
-        <span class="badge-desc">حالات مسجلة</span>
-      </div>
-    </div>
-  </div>
 
-  <!-- قسم الرسم البياني (باستخدام حلقة @for الحديثة في Angular) -->
-  <div class="chart-section-card">
-    <div class="chart-header">
-      <div class="chart-titles">
-        <h3>تقرير حضور الشركة - آخر 6 أسابيع</h3>
-        <p>متوسط نسب الحضور الأسبوعية لجميع المتدربين</p>
       </div>
-      <div class="chart-average-badge">
-        المتوسط العام: <strong>94.2%</strong>
-      </div>
+
     </div>
 
-    <div class="weekly-bars-container">
-      @for (week of weeklyAttendance; track week.weekName) {
-        <div class="week-row">
-          <span class="week-label">{{ week.weekName }}</span>
-          <div class="progress-bar-track">
-            <div class="progress-bar-fill" [style.width.%]="week.percentage">
-              <span class="progress-value">{{ week.percentage }}%</span>
+
+    <!-- =========================
+         WEEKLY ATTENDANCE
+    ========================== -->
+    <div class="report-card weekly-card">
+
+      <div class="card-header">
+
+        <h2>
+          تقرير حضور الشركة — آخر 6 أسابيع
+        </h2>
+
+        <span>
+          تحديث تلقائي أسبوعي
+        </span>
+
+      </div>
+
+
+      <div class="weekly-list">
+
+        <div
+          class="weekly-row"
+          *ngFor="let item of weeklyAttendanceReport"
+        >
+
+          <span class="week-name">
+            {{ item.week }}
+          </span>
+
+
+          <div class="progress-background">
+
+            <div
+              class="progress-fill"
+              [style.width.%]="item.rate"
+            >
+              {{ item.rate }}%
             </div>
+
           </div>
+
+
+          <strong class="week-rate">
+            {{ item.rate }}%
+          </strong>
+
         </div>
-      }
-    </div>
-  </div>
 
-  <!-- قسم الجدول -->
-  <div class="table-section-card">
-    <div class="table-header-flex">
-      <div class="table-titles">
-        <h3>الحضور حسب القسم</h3>
-        <p>تفاصيل الحضور والتأخر والغياب لكل قسم</p>
       </div>
-      <span class="sections-count-badge">4 أقسام نشطة</span>
+
     </div>
 
-    <div class="table-responsive">
-      <table class="custom-data-table">
-        <thead>
-          <tr>
-            <th>القسم</th>
-            <th>عدد المتدربين</th>
-            <th>معدل الحضور</th>
-            <th>الغياب</th>
-            <th>التأخر</th>
-            <th>التقييم</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (dept of departmentAttendance; track dept.name) {
+
+    <!-- =========================
+         DEPARTMENT TABLE
+    ========================== -->
+    <div class="report-card">
+
+      <div class="card-header">
+
+        <h2>
+          الحضور حسب القسم
+        </h2>
+
+      </div>
+
+
+      <div class="table-wrapper">
+
+        <table>
+
+          <thead>
+
             <tr>
-              <td class="font-weight-bold">
-                <div class="dept-name-wrapper">
-                  <span class="dept-dot"></span>
-                  {{ dept.name }}
-                </div>
-              </td>
-              <td><span class="count-badge-sub">{{ dept.traineesCount }} متدرب</span></td>
-              <td>
-                <div class="rate-indicator-cell">
-                  <div class="mini-progress">
-                    <div class="mini-fill" [style.width.%]="dept.attendanceRate" [style.background-color]="dept.color"></div>
-                  </div>
-                  <span class="rate-text" [style.color]="dept.color">{{ dept.attendanceRate }}%</span>
-                </div>
-              </td>
-              <td><span class="text-muted-val">{{ dept.absence }} أيام</span></td>
-              <td><span class="text-muted-val">{{ dept.lateCount }} حالات</span></td>
-              <td>
-                <span class="evaluation-pill" [ngClass]="dept.evalClass">
-                  {{ dept.evaluation }}
-                </span>
-              </td>
+
+              <th>
+                القسم
+              </th>
+
+              <th>
+                عدد المتدربين
+              </th>
+
+              <th>
+                معدل الحضور
+              </th>
+
+              <th>
+                الغياب
+              </th>
+
+              <th>
+                التأخر
+              </th>
+
+              <th>
+                التقييم
+              </th>
+
             </tr>
-          }
-        </tbody>
-      </table>
+
+          </thead>
+
+
+          <tbody>
+
+            <tr
+              *ngFor="let row of departmentAttendanceReport"
+            >
+
+              <td class="department-name">
+                {{ row.department }}
+              </td>
+
+              <td class="number-cell">
+                {{ row.traineesCount }}
+              </td>
+
+
+              <td>
+
+                <span
+                  class="attendance-badge"
+                  [ngClass]="getBadgeClass(row.tone)"
+                >
+
+                  <span class="badge-dot"></span>
+
+                  {{ row.attendanceRate }}%
+
+                </span>
+
+              </td>
+
+
+              <td class="muted-number">
+                {{ row.absences }}
+              </td>
+
+
+              <td class="muted-number">
+                {{ row.lateCount }}
+              </td>
+
+
+              <td class="rating">
+                {{ row.rating }}
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
     </div>
-  </div>
+
+  </ng-container>
+
+
+  <!-- =====================================================
+       TAB 2 + TAB 3
+       CAPACITY / PROGRESS
+  ====================================================== -->
+  <ng-container
+    *ngIf="
+      activeTab === 'capacity' ||
+      activeTab === 'progress'
+    "
+  >
+
+    <div class="report-card">
+
+      <div class="card-header">
+
+        <h2>
+
+          {{
+            activeTab === 'capacity'
+              ? 'تقرير الطاقة الاستيعابية للبرامج التدريبية'
+              : 'تقرير إنجاز المتدربين حسب البرنامج'
+
+          }}
+
+        </h2>
+
+        <span>
+          انقر على أي برنامج لعرض التفاصيل الكاملة
+        </span>
+
+      </div>
+
+
+      <div class="program-grid">
+
+        <div
+          *ngFor="let prog of programs"
+          class="program-card"
+          (click)="onSelectProgram(prog.id)"
+        >
+
+          <div class="program-header">
+
+            <strong>
+              {{ prog.title }}
+            </strong>
+
+            <span class="category-badge">
+              {{ prog.category }}
+            </span>
+
+          </div>
+
+
+          <p class="program-description">
+            {{ prog.description }}
+          </p>
+
+
+          <div class="program-stats">
+
+            <span>
+              المقاعد المشغولة:
+              {{ prog.occupied }}
+              من
+              {{ prog.capacity }}
+            </span>
+
+            <span class="program-percent">
+              {{ prog.percent }}%
+            </span>
+
+          </div>
+
+
+          <div class="program-progress">
+
+            <div
+              class="program-progress-fill"
+              [style.width.%]="prog.percent"
+              [style.background-color]="prog.color"
+            ></div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </ng-container>
+
+
+  <!-- =====================================================
+       TAB 4 + TAB 5 + TAB 6
+       EVALUATIONS / TASKS / COMPARISON
+  ====================================================== -->
+  <ng-container
+    *ngIf="
+      activeTab === 'comparison' ||
+      activeTab === 'evaluations' ||
+      activeTab === 'tasks'
+    "
+  >
+
+    <div class="report-card">
+
+      <div class="card-header">
+
+        <h2>
+          مقارنة أداء المشرفين والأقسام التدريبية
+        </h2>
+
+      </div>
+
+
+      <div class="table-wrapper">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>
+                المشرف
+              </th>
+
+              <th>
+                المسمى الوظيفي
+              </th>
+
+              <th>
+                القسم
+              </th>
+
+              <th>
+                عدد المتدربين
+              </th>
+
+              <th>
+                متوسط إنجاز المتدربين
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            <tr
+              *ngFor="let sup of supervisorsList"
+            >
+
+              <td class="supervisor-name">
+                {{ sup.name }}
+              </td>
+
+
+              <td class="muted-cell">
+                {{ sup.role }}
+              </td>
+
+
+              <td class="muted-cell">
+                {{ sup.department }}
+              </td>
+
+
+              <td class="number-cell">
+                {{ sup.traineesCount }}
+                متدرب
+              </td>
+
+
+              <td>
+
+                <span class="progress-badge">
+                  {{ sup.avgProgress }}%
+                </span>
+
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  </ng-container>
 
 </div>
