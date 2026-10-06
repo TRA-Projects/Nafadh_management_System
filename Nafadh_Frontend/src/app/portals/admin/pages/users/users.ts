@@ -64,7 +64,7 @@ export class AdminUsers implements OnInit {
   usersError = signal<string>('');
 
   // =========================================================
-  // جديد: تخزين الصورة محليًا (بما إن الباك اند لا يدعم avatarUrl)
+  // تخزين الصورة محليًا (الباك اند لا يدعم avatarUrl)
   // =========================================================
   private readonly AVATAR_STORAGE_PREFIX = 'nfd_avatar_';
 
@@ -73,7 +73,7 @@ export class AdminUsers implements OnInit {
     try {
       localStorage.setItem(this.AVATAR_STORAGE_PREFIX + userId, avatarUrl);
     } catch {
-      // تجاهل بصمت لو المتصفح يمنع localStorage (وضع التصفح الخاص مثلاً)
+      // تجاهل بصمت لو المتصفح يمنع localStorage
     }
   }
 
@@ -116,6 +116,34 @@ export class AdminUsers implements OnInit {
   });
 
   resultsCount = computed(() => this.getFilteredList().length);
+
+  // =========================================================
+  // بطاقات إحصائية بأعلى الصفحة
+  // =========================================================
+  statsTotal = computed(() => this.users().length);
+
+  statsActiveCount = computed(() =>
+    this.users().filter((u) => (u.status || '').toLowerCase() !== 'suspended').length
+  );
+
+  statsSuspendedCount = computed(() => this.statsTotal() - this.statsActiveCount());
+
+  statsActivePercentage = computed(() =>
+    this.statsTotal() === 0 ? 0 : Math.round((this.statsActiveCount() / this.statsTotal()) * 100)
+  );
+
+  statsSuspendedPercentage = computed(() =>
+    this.statsTotal() === 0 ? 0 : Math.round((this.statsSuspendedCount() / this.statsTotal()) * 100)
+  );
+
+  statsNewThisMonth = computed(() => {
+    const now = new Date();
+    return this.users().filter((u) => {
+      if (!u.createdAt) return false;
+      const d = new Date(u.createdAt);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    }).length;
+  });
 
   onSearchChange(value: string): void {
     this.searchQuery.set(value);
@@ -250,6 +278,7 @@ export class AdminUsers implements OnInit {
   selectedUser: any = {};
   editTouched = { fullName: false, email: false };
   editErrorMsg = '';
+  editSuccessMsg = signal<string>(''); // جديد: رسالة نجاح داخل النافذة بدل alert
 
   // =========================================================
   // RESET PASSWORD
@@ -257,6 +286,7 @@ export class AdminUsers implements OnInit {
   newPassword = '';
   resetPasswordTouched = { newPassword: false };
   resetPasswordErrorMsg = '';
+  resetPasswordSuccessMsg = signal<string>(''); // جديد: رسالة نجاح داخل النافذة بدل alert
 
   // =========================================================
   // PAGINATION
@@ -342,7 +372,6 @@ export class AdminUsers implements OnInit {
       next: (data) => {
         const list = Array.isArray(data) ? data : [];
 
-        // جديد: تعويض الصورة من localStorage لكل مستخدم (لأن الباك اند لا يرجعها)
         const merged = list.map((u) => ({
           ...u,
           avatarUrl: this.getLocalAvatar(u.userId) || (u as any).avatarUrl || ''
@@ -499,7 +528,6 @@ export class AdminUsers implements OnInit {
   removeEditAvatar(): void {
     this.selectedUser.avatarUrl = '';
     this.editAvatarFileName.set('');
-    // جديد: إزالة الصورة من localStorage فورًا أيضًا
     this.removeLocalAvatar(this.selectedUser.userId);
     this.cdr.detectChanges();
   }
@@ -602,8 +630,6 @@ export class AdminUsers implements OnInit {
       return;
     }
 
-    // مهم: الصورة لا تُرسل للباك اند إطلاقًا (الباك اند لا يدعمها أصلاً ولا يحتاج يعرفها،
-    // وإرسال صورة كبيرة (Base64) ضمن نفس طلب الإنشاء قد يسبب فشل الطلب بالكامل)
     const payload = {
       fullName: this.newUser.fullName.trim(),
       userName: this.newUser.email.trim(),
@@ -616,7 +642,6 @@ export class AdminUsers implements OnInit {
 
     this.api.createUser(payload).subscribe({
       next: (res: any) => {
-        // جديد: بعد نجاح الإنشاء، نخزن الصورة محليًا مربوطة بالـ userId الجديد
         const newUserId = res?.userId ?? res?.UserId ?? res?.id;
         if (newUserId && pendingAvatar) {
           this.saveAvatarLocally(Number(newUserId), pendingAvatar);
@@ -646,7 +671,6 @@ export class AdminUsers implements OnInit {
   openEditModal(user: any): void {
     this.selectedUser = { ...user };
 
-    // جديد: تأكيد تحميل الصورة المحلية المحفوظة لهذا المستخدم بالذات
     const localAvatar = this.getLocalAvatar(user.userId);
     if (localAvatar) {
       this.selectedUser.avatarUrl = localAvatar;
@@ -654,6 +678,7 @@ export class AdminUsers implements OnInit {
 
     this.editTouched = { fullName: false, email: false };
     this.editErrorMsg = '';
+    this.editSuccessMsg.set('');
     this.editAvatarFileName.set('');
 
     const avatar = this.selectedUser.avatarUrl || '';
@@ -674,6 +699,7 @@ export class AdminUsers implements OnInit {
   closeEditModal(): void {
     this.isEditModalOpen = false;
     this.editErrorMsg = '';
+    this.editSuccessMsg.set('');
     this.editAvatarFileName.set('');
     this.editTouched = { fullName: false, email: false };
     this.cdr.detectChanges();
@@ -711,13 +737,13 @@ export class AdminUsers implements OnInit {
   updateUser(): void {
     this.editTouched = { fullName: true, email: true };
     this.editErrorMsg = '';
+    this.editSuccessMsg.set('');
 
     if (!this.isEditFormValid()) {
       this.cdr.detectChanges();
       return;
     }
 
-    // مهم: الصورة لا تُرسل للباك اند، فقط البيانات اللي الباك اند يدعمها فعليًا
     const payload = {
       fullName: this.selectedUser.fullName.trim(),
       email: this.selectedUser.email.trim(),
@@ -730,16 +756,20 @@ export class AdminUsers implements OnInit {
 
     this.api.updateUser(userId, payload).subscribe({
       next: () => {
-        // جديد: تخزين الصورة محليًا بعد نجاح التحديث
         if (pendingAvatar) {
           this.saveAvatarLocally(userId, pendingAvatar);
         } else {
           this.removeLocalAvatar(userId);
         }
 
-        alert('تم تحديث بيانات الحساب بنجاح');
-        this.closeEditModal();
-        this.loadData();
+        // جديد: رسالة نجاح داخل النافذة بدل alert، ثم إغلاق تلقائي
+        this.editSuccessMsg.set('تم تحديث بيانات الحساب بنجاح');
+        this.cdr.detectChanges();
+
+        setTimeout(() => {
+          this.closeEditModal();
+          this.loadData();
+        }, 1300);
       },
       error: (err) => {
         console.error('خطأ أثناء تعديل البيانات:', err);
@@ -761,6 +791,7 @@ export class AdminUsers implements OnInit {
     this.selectedUser = { ...user };
     this.newPassword = '';
     this.resetPasswordErrorMsg = '';
+    this.resetPasswordSuccessMsg.set('');
     this.resetPasswordTouched = { newPassword: false };
     this.isResetPasswordModalOpen = true;
     this.cdr.detectChanges();
@@ -770,6 +801,7 @@ export class AdminUsers implements OnInit {
     this.isResetPasswordModalOpen = false;
     this.newPassword = '';
     this.resetPasswordErrorMsg = '';
+    this.resetPasswordSuccessMsg.set('');
     this.resetPasswordTouched = { newPassword: false };
     this.cdr.detectChanges();
   }
@@ -789,6 +821,7 @@ export class AdminUsers implements OnInit {
   confirmResetPassword(): void {
     this.resetPasswordTouched.newPassword = true;
     this.resetPasswordErrorMsg = '';
+    this.resetPasswordSuccessMsg.set('');
 
     if (!this.isResetPasswordValid()) {
       this.cdr.detectChanges();
@@ -797,8 +830,13 @@ export class AdminUsers implements OnInit {
 
     this.api.resetPassword(this.selectedUser.userId, { newPassword: this.newPassword }).subscribe({
       next: () => {
-        alert('تم تغيير كلمة المرور بنجاح');
-        this.closeResetPasswordModal();
+        // جديد: رسالة نجاح داخل النافذة بدل alert، ثم إغلاق تلقائي
+        this.resetPasswordSuccessMsg.set('تم تغيير كلمة المرور بنجاح');
+        this.cdr.detectChanges();
+
+        setTimeout(() => {
+          this.closeResetPasswordModal();
+        }, 1300);
       },
       error: (err) => {
         console.error('تعذر تغيير كلمة المرور:', err);
