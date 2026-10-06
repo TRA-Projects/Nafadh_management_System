@@ -120,7 +120,7 @@
           <th>الدور</th>
           <th>الحالة</th>
           <th>تاريخ الإنشاء</th>
-          <th>الإجراءات</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -160,8 +160,6 @@
           <td>{{ (u.createdAt | date:'dd/MM/yyyy') || '---' }}</td>
           <td>
             <div class="action-buttons-wrapper">
-              
-              <!-- معدّل: زر تفاصيل المستخدم بدل زر تعديل البيانات -->
               <button class="btn-action details-btn" (click)="openDetailsModal(u)">
                 تفاصيل المستخدم
               </button>
@@ -468,7 +466,7 @@
 </div>
 }
 
-<!-- مودال تغيير كلمة المرور -->
+<!-- مودال تغيير كلمة المرور (موجود بالكود، بدون زر يفتحه من الجدول حاليًا) -->
 @if (isResetPasswordModalOpen) {
 <div class="nfd-modal-bg">
   <div class="nfd-modal">
@@ -515,32 +513,39 @@
 </div>
 }
 
-<!-- جديد: مودال تفاصيل المستخدم (قراءة فقط) -->
+<!-- صفحة تفاصيل المستخدم كاملة الشاشة -->
 @if (isDetailsModalOpen) {
-<div class="nfd-modal-bg" (click)="closeDetailsModal()">
-  <div class="nfd-modal details-modal" (click)="$event.stopPropagation()">
-    <div class="details-header">
-      <img class="details-avatar" [src]="getAvatarUrl(detailsUser)" [alt]="detailsUser.fullName" />
-      <div class="details-header-info">
-        <h3>{{ detailsUser.fullName }}</h3>
+<div class="details-fullpage">
+  <div class="details-fullpage-header">
+    <button type="button" class="details-back-btn" (click)="closeDetailsModal()">
+      <i class="fa-solid fa-arrow-right"></i>
+      رجوع لقائمة المستخدمين
+    </button>
+  </div>
+
+  <div class="details-fullpage-body">
+    <div class="details-hero">
+      <img class="details-hero-avatar" [src]="getAvatarUrl(detailsUser)" [alt]="detailsUser.fullName" />
+      <div class="details-hero-info">
+        <h2>{{ detailsUser.fullName }}</h2>
         <span class="nfd-badge role {{ getRoleClass(detailsUser.roleName || detailsUser.roleId) }}">
           {{ getRoleArabicName(detailsUser.roleName || detailsUser.roleId) }}
         </span>
       </div>
     </div>
 
-    <div class="details-grid">
-      <div class="details-item">
+    <div class="details-fullpage-grid">
+      <div class="details-card">
         <span class="details-label">البريد الإلكتروني</span>
         <span class="details-value">{{ detailsUser.email || '---' }}</span>
       </div>
 
-      <div class="details-item">
+      <div class="details-card">
         <span class="details-label">رقم الهاتف</span>
         <span class="details-value">{{ detailsUser.phone || 'غير مسجل' }}</span>
       </div>
 
-      <div class="details-item">
+      <div class="details-card">
         <span class="details-label">حالة الحساب</span>
         <span
           class="nfd-badge status"
@@ -550,22 +555,22 @@
         </span>
       </div>
 
-      <div class="details-item">
+      <div class="details-card">
         <span class="details-label">تاريخ إنشاء الحساب</span>
         <span class="details-value">{{ (detailsUser.createdAt | date:'dd/MM/yyyy') || '---' }}</span>
       </div>
 
-      <div class="details-item">
+      <div class="details-card">
         <span class="details-label">User ID</span>
         <span class="details-value mono">{{ detailsUser.userId }}</span>
       </div>
 
-      <div class="details-item">
+      <div class="details-card">
         <span class="details-label">Role ID</span>
         <span class="details-value mono">{{ detailsUser.roleId }}</span>
       </div>
 
-      <div class="details-item">
+      <div class="details-card">
         <span class="details-label">عدد الصلاحيات</span>
         <span class="details-value">{{ getRolePermissionsCount(detailsUser.roleName || detailsUser.roleId) }} صلاحية</span>
       </div>
@@ -576,10 +581,6 @@
       <p class="details-permissions-text">
         {{ getRolePermissionsDescription(detailsUser.roleName || detailsUser.roleId) }}
       </p>
-    </div>
-
-    <div class="nfd-modal-actions">
-      <button type="button" class="nfd-btn secondary" (click)="closeDetailsModal()">إغلاق</button>
     </div>
   </div>
 </div>
