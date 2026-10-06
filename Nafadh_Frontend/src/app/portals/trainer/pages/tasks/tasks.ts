@@ -404,36 +404,21 @@ export class TrainerTasks implements OnInit {
     return Math.ceil((submitted - due) / 86400000);
   }
 
-  /** هل التسليم متأخر؟ (حسب حالة الباك إند أو حسب مقارنة التواريخ) */
+  /** ✅ هل التسليم متأخر؟ — يعتمد على مقارنة التواريخ فقط، يتجاهل status الباك إند */
   isSubmissionLate(task: TaskDto, submission: SubmissionDto): boolean {
-    return submission.status === 'Late' || this.lateDays(task, submission) > 0;
+    return this.lateDays(task, submission) > 0;
   }
 
-  /** مدة التأخير نصًا (أيام وساعات) للتسليم */
+  /** ✅ مدة التأخير نصًا — يعتمد على التواريخ فقط */
   lateDuration(task: TaskDto, submission: SubmissionDto): string {
     const due = new Date(task.dueDate).getTime();
     const submitted = new Date(submission.submittedAt).getTime();
 
-    if (Number.isNaN(due) || Number.isNaN(submitted)) {
+    if (Number.isNaN(due) || Number.isNaN(submitted) || submitted <= due) {
       return '';
     }
 
-    // تأخير دقيق (أيام وساعات)
-    if (submitted > due) {
-      return this.formatDuration(submitted - due);
-    }
-
-    // الباك إند اعتبره متأخرًا لكن الوقت لا يُظهر ذلك:
-    // نقارن بالأيام فقط (بدون الوقت)
-    const startOf = (ms: number) => {
-      const d = new Date(ms);
-      d.setHours(0, 0, 0, 0);
-      return d.getTime();
-    };
-
-    const dayDiff = Math.round((startOf(submitted) - startOf(due)) / 86400000);
-
-    return dayDiff > 0 ? `${dayDiff} يوم` : '';
+    return this.formatDuration(submitted - due);
   }
 
   /** هل تجاوزت المهمة موعد التسليم الآن؟ */
@@ -488,7 +473,6 @@ export class TrainerTasks implements OnInit {
     this.modalLoadingSubmissions.set(true);
     this.submissionsModalError.set('');
 
-    // نستخدم endpoint الخاص بالمدرب لأنه يرجع traineeName الحقيقي
     this.api.getTrainerTaskSubmissions(task.taskId).subscribe({
       next: (submissions) => {
         const currentMap = { ...this.submissionsByTask() };
@@ -567,10 +551,6 @@ export class TrainerTasks implements OnInit {
   // OPEN SUBMISSION FILE
   // =====================================================
 
-  /**
-   * فتح رابط التسليم في نافذة جديدة
-   * بدلاً من محاولة فتح ملف، يتم فتح الرابط المخزن في fileUrl
-   */
   openSubmissionFile(submission: SubmissionDto): void {
     this.submissionsModalError.set('');
 
