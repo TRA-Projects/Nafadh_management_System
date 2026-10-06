@@ -550,7 +550,7 @@ getSubmissionFile(
       { params }
     );
   }
-  
+
    getEvaluationAverage(
     enrollmentId: number
   ): Observable<{
@@ -955,7 +955,19 @@ getConversation(
     `${this.base}/Conversation/${conversationId}`
   );
 }
-
+createConversation(dto: {
+  type: string;
+  category: string;
+  subject: string;
+  startedByUserId: number;
+  firstMessage: string;
+  receiverUserId: number;
+}): Observable<any> {
+  return this.http.post<any>(
+    `${this.base}/Conversation`,
+    dto
+  );
+}
 
 sendMessage(
   conversationId: number,
