@@ -245,6 +245,10 @@ export class AdminUsers implements OnInit {
   isEditModalOpen = false;
   isResetPasswordModalOpen = false;
 
+  // جديد: نافذة تفاصيل المستخدم (قراءة فقط)
+  isDetailsModalOpen = false;
+  detailsUser: any = {};
+
   presetAvatars = PRESET_AVATARS;
   createAvatarMode = signal<'file' | 'url' | 'presets'>('file');
   createAvatarFileName = signal<string>('');
@@ -278,7 +282,7 @@ export class AdminUsers implements OnInit {
   selectedUser: any = {};
   editTouched = { fullName: false, email: false };
   editErrorMsg = '';
-  editSuccessMsg = signal<string>(''); // جديد: رسالة نجاح داخل النافذة بدل alert
+  editSuccessMsg = signal<string>('');
 
   // =========================================================
   // RESET PASSWORD
@@ -286,7 +290,7 @@ export class AdminUsers implements OnInit {
   newPassword = '';
   resetPasswordTouched = { newPassword: false };
   resetPasswordErrorMsg = '';
-  resetPasswordSuccessMsg = signal<string>(''); // جديد: رسالة نجاح داخل النافذة بدل alert
+  resetPasswordSuccessMsg = signal<string>('');
 
   // =========================================================
   // PAGINATION
@@ -303,6 +307,24 @@ export class AdminUsers implements OnInit {
     Trainer: 3,
     Trainee: 0
   };
+
+  // جديد: وصف صلاحيات كل دور (لنافذة التفاصيل)
+  private readonly permissionsDescriptionByRole: Record<string, string> = {
+    Admin: 'صلاحيات كاملة لإدارة النظام: إدارة المستخدمين والأدوار، الشركات، البرامج التدريبية، إصدار الشهادات، ومراجعة التقارير والتحليلات الشاملة.',
+    CompanySupervisor: 'إدارة بيانات الشركة التابعة له، متابعة المتدربين المسجلين فيها، ومراجعة تقارير الأداء الخاصة بالشركة.',
+    Trainer: 'إدارة البرامج والدفعات التدريبية، تسجيل الحضور، تقييم أداء المتدربين، ومتابعة تسليم المهام.',
+    Trainee: 'الوصول للمحتوى التدريبي، تسجيل الحضور، تسليم المهام والمشاريع، وعرض الشهادات الصادرة له.'
+  };
+
+  getRolePermissionsCount(roleInput: any): number {
+    const normalized = this.normalizeRole(roleInput);
+    return this.permissionsCountByRole[normalized] ?? 0;
+  }
+
+  getRolePermissionsDescription(roleInput: any): string {
+    const normalized = this.normalizeRole(roleInput);
+    return this.permissionsDescriptionByRole[normalized] || 'لا يوجد وصف متاح لهذا الدور حاليًا.';
+  }
 
   // =========================================================
   // RBAC SUMMARY
@@ -668,6 +690,25 @@ export class AdminUsers implements OnInit {
     });
   }
 
+  // =========================================================
+  // جديد: نافذة تفاصيل المستخدم (قراءة فقط)
+  // =========================================================
+  openDetailsModal(user: any): void {
+    const localAvatar = this.getLocalAvatar(user.userId);
+    this.detailsUser = {
+      ...user,
+      avatarUrl: localAvatar || user.avatarUrl || ''
+    };
+    this.isDetailsModalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeDetailsModal(): void {
+    this.isDetailsModalOpen = false;
+    this.detailsUser = {};
+    this.cdr.detectChanges();
+  }
+
   openEditModal(user: any): void {
     this.selectedUser = { ...user };
 
@@ -762,7 +803,6 @@ export class AdminUsers implements OnInit {
           this.removeLocalAvatar(userId);
         }
 
-        // جديد: رسالة نجاح داخل النافذة بدل alert، ثم إغلاق تلقائي
         this.editSuccessMsg.set('تم تحديث بيانات الحساب بنجاح');
         this.cdr.detectChanges();
 
@@ -830,7 +870,6 @@ export class AdminUsers implements OnInit {
 
     this.api.resetPassword(this.selectedUser.userId, { newPassword: this.newPassword }).subscribe({
       next: () => {
-        // جديد: رسالة نجاح داخل النافذة بدل alert، ثم إغلاق تلقائي
         this.resetPasswordSuccessMsg.set('تم تغيير كلمة المرور بنجاح');
         this.cdr.detectChanges();
 
