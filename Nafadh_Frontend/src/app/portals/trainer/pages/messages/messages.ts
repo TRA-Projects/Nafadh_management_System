@@ -56,7 +56,7 @@ get filteredTrainees() {
   // =====================================================
   // SELECTED TRAINEE
   // =====================================================
-
+  isNewMessage = false;
   selectedTraineeId =
     signal<number | null>(null);
 
@@ -244,7 +244,7 @@ messages = this.messagesByTrainee[1] ?? [];
 
 selectTrainee(traineeId: number): void {
   this.selectedTraineeId.set(traineeId);
-
+  this.isNewMessage = false;
   const trainee = this.trainees.find(
     (item) => item.traineeId === traineeId
   );
@@ -265,35 +265,38 @@ selectTrainee(traineeId: number): void {
   // SEND MESSAGE
   // =====================================================
 
-  sendMessage(): void {
+sendMessage(): void {
 
-    if (
-      !this.messageText.trim()
-    ) {
-      return;
-    }
+  const text = this.messageText.trim();
 
-    console.log(
-      'Message:',
-      this.messageText
-    );
-
-    this.messageText = '';
-
+  if (!text) {
+    return;
   }
+
+  this.messages.push({
+    sender: 'trainer',
+    text: text,
+    time: new Intl.DateTimeFormat('ar-OM', {
+      hour: 'numeric',
+      minute: '2-digit'
+    }).format(new Date())
+  });
+
+  this.messageText = '';
+}
 
   // =====================================================
   // NEW MESSAGE
   // =====================================================
 
-  newMessage(): void {
+ newMessage(): void {
 
-    this.selectedTraineeId.set(
-      null
-    );
+  this.isNewMessage = true;
 
-    this.messageText = '';
+  this.selectedTraineeId.set(null);
 
-  }
+  this.messageText = '';
+
+}
 
 }

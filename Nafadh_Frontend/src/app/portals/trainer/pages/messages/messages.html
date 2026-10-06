@@ -13,7 +13,7 @@
       </div>
 
       <div>
-        <h1>الرسائل</h1>
+       <h1>التواصل والدعم</h1>
 
         <p>
           تواصل مباشر وسريع مع المتدربين التابعين لك
@@ -184,6 +184,11 @@
       <!-- CHAT HEADER -->
 
       <header class="chat-header">
+        @if (isNewMessage) {
+  <div class="new-message-label">
+    اختر متدربًا لبدء محادثة جديدة
+  </div>
+}
 
         <div class="chat-user">
 
