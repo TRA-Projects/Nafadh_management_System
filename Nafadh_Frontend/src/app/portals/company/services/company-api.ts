@@ -31,430 +31,122 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class CompanyApi {
+
   private readonly http = inject(HttpClient);
   private readonly base = environment.apiBaseUrl;
 
-  // ============================================================
   // Dashboard
-  // ============================================================
-
-  getDashboard(
-    companyId: number
-  ): Observable<CompanyDashboardDto> {
-    return this.http.get<CompanyDashboardDto>(
-      `${this.base}/CompanyDashboard/${companyId}`
-    );
+  getDashboard(companyId: number): Observable<CompanyDashboardDto> {
+    return this.http.get<CompanyDashboardDto>(`${this.base}/CompanyDashboard/${companyId}`);
   }
-
-  getCapacity(
-    companyId: number
-  ): Observable<CompanyCapacityDto> {
-    return this.http.get<CompanyCapacityDto>(
-      `${this.base}/Company/${companyId}/capacity`
-    );
+  getCapacity(companyId: number): Observable<CompanyCapacityDto> {
+    return this.http.get<CompanyCapacityDto>(`${this.base}/Company/${companyId}/capacity`);
   }
-
-  getAttendanceChart(
-    companyId: number
-  ): Observable<{ weeks: ChartPointDto[] }> {
-    return this.http.get<{ weeks: ChartPointDto[] }>(
-      `${this.base}/Report/company-attendance-chart/${companyId}`
-    );
+  getAttendanceChart(companyId: number): Observable<{ weeks: ChartPointDto[] }> {
+    return this.http.get<{ weeks: ChartPointDto[] }>(`${this.base}/Report/company-attendance-chart/${companyId}`);
   }
-
-  getProgramDistribution(
-    companyId: number
-  ): Observable<ChartPointDto[]> {
-    return this.http.get<ChartPointDto[]>(
-      `${this.base}/Report/company-program-distribution/${companyId}`
-    );
+  getProgramDistribution(companyId: number): Observable<ChartPointDto[]> {
+    return this.http.get<ChartPointDto[]>(`${this.base}/Report/company-program-distribution/${companyId}`);
   }
-
-  getTopPerformers(
-    companyId: number
-  ): Observable<TraineeListItemDto[]> {
-    return this.http.get<TraineeListItemDto[]>(
-      `${this.base}/Report/company-top-performers/${companyId}`
-    );
+  getTopPerformers(companyId: number): Observable<TraineeListItemDto[]> {
+    return this.http.get<TraineeListItemDto[]>(`${this.base}/Report/company-top-performers/${companyId}`);
   }
-
-  getAtRiskTrainees(
-    companyId: number
-  ): Observable<TraineeListItemDto[]> {
-    return this.http.get<TraineeListItemDto[]>(
-      `${this.base}/Report/company-at-risk-trainees/${companyId}`
-    );
+  getAtRiskTrainees(companyId: number): Observable<TraineeListItemDto[]> {
+    return this.http.get<TraineeListItemDto[]>(`${this.base}/Report/company-at-risk-trainees/${companyId}`);
   }
-
-  getCompanyWarnings(
-    companyId: number
-  ): Observable<WarningDto[]> {
-    return this.http.get<WarningDto[]>(
-      `${this.base}/Warning`,
-      {
-        params: {
-          scope: 'Company',
-          companyId,
-        },
-      }
-    );
+  getCompanyWarnings(companyId: number): Observable<WarningDto[]> {
+    return this.http.get<WarningDto[]>(`${this.base}/Warning`, { params: { scope: 'Company', companyId } });
   }
-
   getPlatformAnnouncements(): Observable<AnnouncementDto[]> {
-    return this.http.get<AnnouncementDto[]>(
-      `${this.base}/Announcement/scope/Platform`
-    );
+    return this.http.get<AnnouncementDto[]>(`${this.base}/Announcement/scope/Platform`);
   }
 
-  // ============================================================
   // Trainees
-  // ============================================================
-
-  getEnrollmentsByCompany(
-    companyId: number
-  ): Observable<EnrollmentDto[]> {
-    const params = new HttpParams().set(
-      'companyId',
-      companyId
-    );
-
-    return this.http.get<EnrollmentDto[]>(
-      `${this.base}/Enrollment`,
-      { params }
-    );
+  getEnrollmentsByCompany(companyId: number): Observable<EnrollmentDto[]> {
+    let params = new HttpParams().set('companyId', companyId);
+    return this.http.get<EnrollmentDto[]>(`${this.base}/Enrollment`, { params });
   }
+  registerTrainee(dto: unknown) { return this.http.post(`${this.base}/Trainee`, dto); }
+  createEnrollment(dto: unknown) { return this.http.post(`${this.base}/Enrollment`, dto); }
 
-  registerTrainee(dto: unknown) {
-    return this.http.post(
-      `${this.base}/Trainee`,
-      dto
-    );
-  }
-
-  createEnrollment(dto: unknown) {
-    return this.http.post(
-      `${this.base}/Enrollment`,
-      dto
-    );
-  }
-
-  // ============================================================
   // Specialties / Programs
-  // ============================================================
-
-  getCompanyPrograms(
-    companyId: number
-  ): Observable<CompanyProgramLinkDto[]> {
-    return this.http.get<CompanyProgramLinkDto[]>(
-      `${this.base}/CompanyProgram/company/${companyId}`
-    );
+  getCompanyPrograms(companyId: number): Observable<CompanyProgramLinkDto[]> {
+    return this.http.get<CompanyProgramLinkDto[]>(`${this.base}/CompanyProgram/company/${companyId}`);
   }
-
-  getCompanyProgramSummaries(
-    companyId: number
-  ): Observable<CompanyProgramSummaryDto[]> {
-    return this.http.get<CompanyProgramSummaryDto[]>(
-      `${this.base}/CompanyProgram/company/${companyId}/details`
-    );
+  getCompanyProgramSummaries(companyId: number): Observable<CompanyProgramSummaryDto[]> {
+    return this.http.get<CompanyProgramSummaryDto[]>(`${this.base}/CompanyProgram/company/${companyId}/details`);
   }
-
-  getCompanyProgramDetails(
-    companyId: number,
-    programId: number
-  ): Observable<CompanyProgramDetailsDto> {
-    return this.http.get<CompanyProgramDetailsDto>(
-      `${this.base}/CompanyProgram/company/${companyId}/program/${programId}/details`
-    );
+  getCompanyProgramDetails(companyId: number, programId: number): Observable<CompanyProgramDetailsDto> {
+    return this.http.get<CompanyProgramDetailsDto>(`${this.base}/CompanyProgram/company/${companyId}/program/${programId}/details`);
   }
+  getProgram(id: number): Observable<ProgramDto> { return this.http.get<ProgramDto>(`${this.base}/Program/${id}`); }
+  getBatch(id: number): Observable<any> { return this.http.get<any>(`${this.base}/Batch/${id}`); }
+  getModulesByProgram(programId: number): Observable<any[]> { return this.http.get<any[]>(`${this.base}/Module/program/${programId}`); }
+  getEnrollmentProgressSummary(enrollmentId: number): Observable<any> { return this.http.get<any>(`${this.base}/Enrollment/${enrollmentId}/progress-summary`); }
 
-  getProgram(id: number): Observable<ProgramDto> {
-    return this.http.get<ProgramDto>(
-      `${this.base}/Program/${id}`
-    );
-  }
-
-  getBatch(id: number): Observable<any> {
-    return this.http.get<any>(
-      `${this.base}/Batch/${id}`
-    );
-  }
-
-  getModulesByProgram(
-    programId: number
-  ): Observable<any[]> {
-    return this.http.get<any[]>(
-      `${this.base}/Module/program/${programId}`
-    );
-  }
-
-  getEnrollmentProgressSummary(
-    enrollmentId: number
-  ): Observable<any> {
-    return this.http.get<any>(
-      `${this.base}/Enrollment/${enrollmentId}/progress-summary`
-    );
-  }
-
-  // ============================================================
   // Company Profile
-  // ============================================================
-
-  getCompany(
-    id: number
-  ): Observable<CompanyDto> {
-    return this.http.get<CompanyDto>(
-      `${this.base}/Company/${id}`
-    );
+  getCompany(id: number): Observable<CompanyDto> { return this.http.get<CompanyDto>(`${this.base}/Company/${id}`); }
+  updateCompany(id: number, dto: unknown) { return this.http.put(`${this.base}/Company/${id}`, dto); }
+  getBranches(companyId: number): Observable<CompanyBranchDto[]> {
+    return this.http.get<CompanyBranchDto[]>(`${this.base}/CompanyBranch/company/${companyId}`);
+  }
+  addBranch(dto: unknown) { return this.http.post(`${this.base}/CompanyBranch`, dto); }
+  getSupervisors(companyId: number): Observable<CompanySupervisorDto[]> {
+    return this.http.get<CompanySupervisorDto[]>(`${this.base}/CompanySupervisor/company/${companyId}`);
+  }
+  addSupervisor(dto: unknown) { return this.http.post(`${this.base}/CompanySupervisor`, dto); }
+  deleteSupervisor(id: number) { return this.http.delete(`${this.base}/CompanySupervisor/${id}`); }
+  getSupervisorAssignedTrainees(id: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/CompanySupervisor/${id}/trainees`);
   }
 
-  updateCompany(
-    id: number,
-    dto: unknown
-  ) {
-    return this.http.put(
-      `${this.base}/Company/${id}`,
-      dto
-    );
-  }
-
-  getBranches(
-    companyId: number
-  ): Observable<CompanyBranchDto[]> {
-    return this.http.get<CompanyBranchDto[]>(
-      `${this.base}/CompanyBranch/company/${companyId}`
-    );
-  }
-
-  addBranch(dto: unknown) {
-    return this.http.post(
-      `${this.base}/CompanyBranch`,
-      dto
-    );
-  }
-  getSupervisors(
-    companyId: number
-  ): Observable<CompanySupervisorDto[]> {
-    return this.http.get<CompanySupervisorDto[]>(
-      `${this.base}/CompanySupervisor/company/${companyId}`
-    );
-  }
-
-  addSupervisor(dto: unknown) {
-    return this.http.post(
-      `${this.base}/CompanySupervisor`,
-      dto
-    );
-  }
-
-  deleteSupervisor(id: number) {
-    return this.http.delete(
-      `${this.base}/CompanySupervisor/${id}`
-    );
-  }
-
-  getSupervisorAssignedTrainees(
-    id: number
-  ): Observable<any[]> {
-    return this.http.get<any[]>(
-      `${this.base}/CompanySupervisor/${id}/trainees`
-    );
-  }
-
-
-  // ============================================================
   // My Account
-  // ============================================================
-
   getCurrentAccount(): Observable<CompanyAccountDto> {
-    return this.http.get<CompanyAccountDto>(
-      `${this.base}/CompanyAccount/me`
-    );
+    return this.http.get<CompanyAccountDto>(`${this.base}/CompanyAccount/me`);
+  }
+  getSupervisorProfile(id: number): Observable<CompanySupervisorDto> {
+    return this.http.get<CompanySupervisorDto>(`${this.base}/CompanySupervisor/${id}`);
+  }
+  updateSupervisor(id: number, dto: unknown) { return this.http.put(`${this.base}/CompanySupervisor/${id}`, dto); }
+  exportMyAccountPdf(): Observable<Blob> {
+    return this.http.get(`${this.base}/CompanyAccount/pdf`, { responseType: 'blob' });
   }
 
-  downloadMyAccountPdf(): Observable<Blob> {
-    return this.http.get(
-      `${this.base}/CompanyAccount/me/pdf`,
-      {
-        responseType: 'blob',
-      }
-    );
-  }
-
-  // ============================================================
-  // PDF - Backend
-  // ============================================================
-
-  exportCurrentAccountPdf(): Observable<Blob> {
-    return this.http.get(
-      `${this.base}/CompanyAccount/me/pdf`,
-      {
-        responseType: 'blob',
-      }
-    );
-  }
-
-  getSupervisorProfile(
-    id: number
-  ): Observable<CompanySupervisorDto> {
-    return this.http.get<CompanySupervisorDto>(
-      `${this.base}/CompanySupervisor/${id}`
-    );
-  }
-
-  updateSupervisor(
-    id: number,
-    dto: unknown
-  ) {
-    return this.http.put(
-      `${this.base}/CompanySupervisor/${id}`,
-      dto
-    );
-  }
-
-  // ============================================================
   // Trainee Progress
-  // ============================================================
-
-  getEnrollment(
-    enrollmentId: number
-  ): Observable<EnrollmentDto> {
-    return this.http.get<EnrollmentDto>(
-      `${this.base}/Enrollment/${enrollmentId}`
-    );
+  getEnrollment(enrollmentId: number): Observable<EnrollmentDto> {
+    return this.http.get<EnrollmentDto>(`${this.base}/Enrollment/${enrollmentId}`);
+  }
+  updateEnrollmentAssignment(enrollmentId: number, dto: { departmentId?: number | null; supervisorId?: number | null }): Observable<EnrollmentDto> {
+    return this.http.put<EnrollmentDto>(`${this.base}/Enrollment/${enrollmentId}`, dto);
+  }
+  getProgressSummary(enrollmentId: number): Observable<ProgressSummaryDto> {
+    return this.http.get<ProgressSummaryDto>(`${this.base}/Enrollment/${enrollmentId}/progress-summary`);
+  }
+  getEvaluationsForEnrollment(enrollmentId: number): Observable<EvaluationDto[]> {
+    return this.http.get<EvaluationDto[]>(`${this.base}/Evaluation/enrollment/${enrollmentId}`);
   }
 
-  updateEnrollmentAssignment(
-    enrollmentId: number,
-    dto: {
-      departmentId?: number | null;
-      supervisorId?: number | null;
-    }
-  ): Observable<EnrollmentDto> {
-    return this.http.put<EnrollmentDto>(
-      `${this.base}/Enrollment/${enrollmentId}`,
-      dto
-    );
-  }
-
-  getProgressSummary(
-    enrollmentId: number
-  ): Observable<ProgressSummaryDto> {
-    return this.http.get<ProgressSummaryDto>(
-      `${this.base}/Enrollment/${enrollmentId}/progress-summary`
-    );
-  }
-
-  getEvaluationsForEnrollment(
-    enrollmentId: number
-  ): Observable<EvaluationDto[]> {
-    return this.http.get<EvaluationDto[]>(
-      `${this.base}/Evaluation/enrollment/${enrollmentId}`
-    );
-  }
-
-  // ============================================================
   // Reports
-  // ============================================================
-
-  getCompanyAttendanceReport(
-    companyId: number
-  ): Observable<AttendanceReportDto> {
-    return this.http.get<AttendanceReportDto>(
-      `${this.base}/Report/company-attendance/${companyId}`
-    );
+  getCompanyAttendanceReport(companyId: number): Observable<AttendanceReportDto> {
+    return this.http.get<AttendanceReportDto>(`${this.base}/Report/company-attendance/${companyId}`);
   }
 
-  // ============================================================
   // Contact — Company Conversations
-  // ============================================================
-
-  getConversations(
-    userId: number
-  ): Observable<ConversationListItemDto[]> {
-    return this.http.get<ConversationListItemDto[]>(
-      `${this.base}/Conversation`,
-      {
-        params: {
-          type: 'CompanyThread',
-          participantUserId: userId,
-        },
-      }
-    );
+  getConversations(userId: number): Observable<ConversationListItemDto[]> {
+    return this.http.get<ConversationListItemDto[]>(`${this.base}/Conversation`, { params: { type: 'CompanyThread', participantUserId: userId } });
   }
-
-  startConversation(
-    dto: unknown
-  ): Observable<ConversationDetailDto> {
-    return this.http.post<ConversationDetailDto>(
-      `${this.base}/Conversation`,
-      dto
-    );
+  startConversation(dto: unknown): Observable<ConversationDetailDto> {
+    return this.http.post<ConversationDetailDto>(`${this.base}/Conversation`, dto);
   }
-
-  getConversation(
-    id: number
-  ): Observable<ConversationDetailDto> {
-    return this.http.get<ConversationDetailDto>(
-      `${this.base}/Conversation/${id}`
-    );
+  getConversation(id: number): Observable<ConversationDetailDto> {
+    return this.http.get<ConversationDetailDto>(`${this.base}/Conversation/${id}`);
   }
-
-  sendMessage(
-    id: number,
-    dto: unknown
-  ): Observable<ConversationMessageDto> {
-    return this.http.post<ConversationMessageDto>(
-      `${this.base}/Conversation/${id}/messages`,
-      dto
-    );
+  sendMessage(id: number, dto: unknown): Observable<ConversationMessageDto> {
+    return this.http.post<ConversationMessageDto>(`${this.base}/Conversation/${id}/messages`, dto);
   }
-
-  markConversationRead(
-    id: number,
-    userId: number
-  ) {
-    return this.http.put(
-      `${this.base}/Conversation/${id}/read`,
-      {},
-      {
-        params: {
-          userId,
-        },
-      }
-    );
-  }
-
-  // ============================================================
-  // Announcements
-  // ============================================================
-
-  postAnnouncement(dto: unknown) {
-    return this.http.post(
-      `${this.base}/Announcement`,
-      dto
-    );
-  }
-
-  // ============================================================
-  // Warnings
-  // ============================================================
-
-  createWarning(dto: unknown) {
-    return this.http.post(
-      `${this.base}/Warning`,
-      dto
-    );
-  }
-
-  // ============================================================
-  // Feedback
-  // ============================================================
-
-  getTrainerFeedback(
-    trainerId: number
-  ): Observable<FeedbackSummaryDto> {
-    return this.http.get<FeedbackSummaryDto>(
-      `${this.base}/Feedback/trainer/${trainerId}`
-    );
+  markConversationRead(id: number, userId: number) {
+    return this.http.put(`${this.base}/Conversation/${id}/read`, {}, { params: { userId } });
   }
 }
+
+  // Announcements//

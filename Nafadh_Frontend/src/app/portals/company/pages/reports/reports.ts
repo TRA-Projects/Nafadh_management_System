@@ -5,6 +5,7 @@ import { catchError, map } from 'rxjs/operators';
 import * as XLSX from 'xlsx';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
+
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AttendanceReportDto, EnrollmentDto, CompanyProgramSummaryDto } from '../../../../core/models/dtos';
