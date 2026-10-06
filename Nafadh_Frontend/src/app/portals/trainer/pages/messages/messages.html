@@ -13,7 +13,7 @@
       </div>
 
       <div>
-       <h1>التواصل والدعم</h1>
+        <h1>التواصل والدعم</h1>
 
         <p>
           تواصل مباشر وسريع مع المتدربين التابعين لك
@@ -42,7 +42,7 @@
 
 
     <!-- ================================================= -->
-    <!-- CONVERSATIONS SIDEBAR -->
+    <!-- CONVERSATIONS PANEL -->
     <!-- ================================================= -->
 
     <aside class="conversations-panel">
@@ -50,20 +50,27 @@
       <div class="conversations-header">
 
         <div>
+
           <h2>
             المحادثات
-            <span>{{ trainees.length }}</span>
+
+            <span>
+              {{ trainees.length }}
+            </span>
           </h2>
 
           <p>
             تواصل مع متدربيك بسهولة
           </p>
+
         </div>
 
       </div>
 
 
+      <!-- ================================================= -->
       <!-- SEARCH -->
+      <!-- ================================================= -->
 
       <div class="search-box">
 
@@ -74,40 +81,49 @@
         <input
           type="text"
           placeholder="ابحث عن متدرب..."
-          [value]="searchText"
-          (input)="searchText = $any($event.target).value"
+          [(ngModel)]="searchText"
         />
 
       </div>
 
 
+      <!-- ================================================= -->
       <!-- FILTERS -->
+      <!-- ================================================= -->
 
       <div class="conversation-filters">
 
-       <button
-  class="filter-btn"
-  [class.active]="!unreadOnly"
-  (click)="unreadOnly = false"
->
-  الكل
-</button>
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="!unreadOnly"
+          (click)="unreadOnly = false"
+        >
+          الكل
+        </button>
 
         <button
-  class="filter-btn"
-  [class.active]="unreadOnly"
- (click)="unreadOnly = true"
->
-  غير مقروء
-</button>
+          type="button"
+          class="filter-btn"
+          [class.active]="unreadOnly"
+          (click)="unreadOnly = true"
+        >
+          غير مقروء
+        </button>
 
       </div>
 
 
+      <!-- ================================================= -->
       <!-- TRAINEES -->
+      <!-- ================================================= -->
 
       <div class="trainees-list">
-@for (trainee of filteredTrainees; track trainee.traineeId) {
+
+        @for (
+          trainee of filteredTrainees;
+          track trainee.traineeId
+        ) {
 
           <button
             type="button"
@@ -115,14 +131,18 @@
             [class.active]="
               selectedTraineeId() === trainee.traineeId
             "
-            (click)="
-              selectTrainee(trainee.traineeId)
-            "
+            (click)="selectTrainee(trainee.traineeId)"
           >
+
+            <!-- AVATAR -->
 
             <div class="trainee-avatar">
 
-              {{ trainee.name.charAt(0) }}
+              {{
+                trainee.name
+                  ? trainee.name.charAt(0)
+                  : 'م'
+              }}
 
               @if (trainee.online) {
                 <span class="online-dot"></span>
@@ -130,6 +150,8 @@
 
             </div>
 
+
+            <!-- TRAINEE INFO -->
 
             <div class="trainee-info">
 
@@ -139,16 +161,24 @@
                   {{ trainee.name }}
                 </strong>
 
-                <small>
-                  {{ trainee.time }}
-                </small>
+                @if (trainee.time) {
+
+                  <small>
+                    {{ trainee.time }}
+                  </small>
+
+                }
 
               </div>
+
 
               <div class="trainee-bottom">
 
                 <span>
-                  {{ trainee.lastMessage }}
+                  {{
+                    trainee.lastMessage ||
+                    'لا توجد رسائل بعد'
+                  }}
                 </span>
 
                 @if (trainee.unread) {
@@ -158,6 +188,7 @@
                 }
 
               </div>
+
 
               <small class="batch-name">
                 {{ trainee.batchName }}
@@ -169,50 +200,126 @@
 
         }
 
+        @empty {
+
+          <div class="empty-trainees">
+
+            <span>لا توجد نتائج</span>
+
+          </div>
+
+        }
+
       </div>
 
     </aside>
 
 
     <!-- ================================================= -->
-    <!-- CHAT AREA -->
+    <!-- CHAT PANEL -->
     <!-- ================================================= -->
 
     <main class="chat-panel">
 
 
+      <!-- ================================================= -->
       <!-- CHAT HEADER -->
+      <!-- ================================================= -->
 
       <header class="chat-header">
+
         @if (isNewMessage) {
-  <div class="new-message-label">
-    اختر متدربًا لبدء محادثة جديدة
-  </div>
-}
 
-        <div class="chat-user">
+          <div class="new-message-label">
 
-          <div class="chat-avatar">
-            أ
-          </div>
+            <span class="new-message-icon">
+              ✉
+            </span>
 
-          <div>
+            <div>
+              <strong>
+                رسالة جديدة
+              </strong>
 
-            <h2>
-          {{ selectedTrainee().name }}
-            </h2>
-
-            <p>
-              الدفعة الأولى
-              <span class="separator">•</span>
-              <span class="status-online">
-                متصل الآن
-              </span>
-            </p>
+              <small>
+                اختر متدربًا من القائمة لبدء المحادثة
+              </small>
+            </div>
 
           </div>
 
-        </div>
+        } @else if (selectedTrainee()) {
+
+          <div class="chat-user">
+
+            <div class="chat-avatar">
+
+              {{
+                selectedTrainee()?.name
+                  ? selectedTrainee()!.name.charAt(0)
+                  : 'م'
+              }}
+
+            </div>
+
+
+            <div>
+
+              <h2>
+                {{ selectedTrainee()?.name }}
+              </h2>
+
+              <p>
+
+                {{ selectedTrainee()?.batchName }}
+
+                @if (selectedTrainee()?.batchName) {
+                  <span class="separator">•</span>
+                }
+
+                @if (selectedTrainee()?.online) {
+
+                  <span class="status-online">
+                    متصل الآن
+                  </span>
+
+                } @else {
+
+                  <span>
+                    غير متصل
+                  </span>
+
+                }
+
+              </p>
+
+            </div>
+
+          </div>
+
+        } @else {
+
+          <div class="new-message-label">
+
+            <span class="new-message-icon">
+              ✉
+            </span>
+
+            <div>
+
+              <strong>
+                التواصل مع المتدربين
+              </strong>
+
+              <small>
+                اختر متدربًا من القائمة لعرض المحادثة
+              </small>
+
+            </div>
+
+          </div>
+
+        }
 
 
         <button
@@ -226,51 +333,101 @@
       </header>
 
 
+      <!-- ================================================= -->
       <!-- DATE -->
+      <!-- ================================================= -->
 
-      <div class="chat-date">
+      @if (!isNewMessage && selectedTrainee()) {
 
-        <span></span>
+        <div class="chat-date">
 
-        <small>
-       {{ todayDate }}
-        </small>
+          <span></span>
 
-        <span></span>
+          <small>
+            {{ todayDate }}
+          </small>
 
-      </div>
+          <span></span>
+
+        </div>
+
+      }
 
 
+      <!-- ================================================= -->
       <!-- MESSAGES -->
+      <!-- ================================================= -->
 
       <div class="chat-messages">
 
-        @for (
-          message of messages;
-          track $index
-        ) {
+        @if (!isNewMessage && selectedTrainee()) {
 
-          <div
-            class="message-row"
-            [class.trainer-message]="
-              message.sender === 'trainer'
-            "
-            [class.trainee-message]="
-              message.sender === 'trainee'
-            "
-          >
+          @for (
+            message of messages;
+            track $index
+          ) {
 
-            <div class="message-bubble">
+            <div
+              class="message-row"
+              [class.trainer-message]="
+                message.sender === 'trainer'
+              "
+              [class.trainee-message]="
+                message.sender === 'trainee'
+              "
+            >
 
-              <p>
-                {{ message.text }}
-              </p>
+              <div class="message-bubble">
 
-              <small>
-                {{ message.time }}
-              </small>
+                <p>
+                  {{ message.text }}
+                </p>
+
+                <small>
+                  {{ message.time }}
+                </small>
+
+              </div>
 
             </div>
+
+          }
+
+          @if (messages.length === 0) {
+
+            <div class="empty-chat">
+
+              <div class="empty-chat-icon">
+                💬
+              </div>
+
+              <strong>
+                لا توجد رسائل بعد
+              </strong>
+
+              <span>
+                ابدأ المحادثة بإرسال رسالة للمتدرب
+              </span>
+
+            </div>
+
+          }
+
+        } @else {
+
+          <div class="empty-chat">
+
+            <div class="empty-chat-icon">
+              ✉
+            </div>
+
+            <strong>
+              ابدأ محادثة جديدة
+            </strong>
+
+            <span>
+              اختر متدربًا من القائمة للبدء
+            </span>
 
           </div>
 
@@ -279,7 +436,9 @@
       </div>
 
 
-      <!-- MESSAGE INPUT -->
+      <!-- ================================================= -->
+      <!-- MESSAGE COMPOSER -->
+      <!-- ================================================= -->
 
       <footer class="message-composer">
 
@@ -294,13 +453,18 @@
             [(ngModel)]="messageText"
             placeholder="اكتب رسالتك هنا..."
             (keydown.enter)="sendMessage()"
+            [disabled]="isNewMessage || !selectedTrainee()"
           />
 
           <button
             type="button"
             class="send-btn"
             (click)="sendMessage()"
-            [disabled]="!messageText.trim()"
+            [disabled]="
+              !messageText.trim() ||
+              isNewMessage ||
+              !selectedTrainee()
+            "
           >
             ➤
           </button>

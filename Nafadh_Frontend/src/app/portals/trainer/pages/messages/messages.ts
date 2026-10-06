@@ -1,398 +1,687 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 
-import {
-  CommonModule
-} from '@angular/common';
+import { TrainerApi } from '../../services/trainer-api';
+import { AuthService } from '../../../../core/auth/auth.service';
 
-import {
-  FormsModule
-} from '@angular/forms';
+interface TrainerTrainee {
+  traineeId: number;
+  userId: number;
+  name: string;
+  batchName: string;
+  lastMessage: string;
+  time: string;
+  unread: boolean;
+  online: boolean;
+  conversationId: number | null;
+}
 
-import {
-  forkJoin
-} from 'rxjs';
-import {
-  TrainerApi
-} from '../../services/trainer-api';
-
-import {
-  AuthService
-}from '../../../../core/auth/auth.service';
+interface TrainerMessage {
+  sender: 'trainee' | 'trainer';
+  text: string;
+  time: string;
+}
 
 @Component({
   selector: 'app-trainer-messages',
-
   standalone: true,
-
   imports: [
     CommonModule,
     FormsModule
   ],
-
   templateUrl: './messages.html',
-
   styleUrl: './messages.scss'
 })
-export class TrainerMessages implements OnInit  {
-    constructor(
+export class TrainerMessages implements OnInit {
+
+  constructor(
     private api: TrainerApi,
     public auth: AuthService
   ) {}
-ngOnInit(): void {
-  const userId = this.auth.userId;
 
-  if (!userId) {
-    return;
+  // =====================================================
+  // INIT
+  // =====================================================
+
+  ngOnInit(): void {
+    const userId = this.auth.userId;
+
+    if (!userId) {
+      return;
+    }
+
+    this.api.getTrainerByUserId(userId).subscribe({
+      next: (trainer) => {
+        console.log('Trainer:', trainer);
+
+        this.loadTrainerTrainees(
+          trainer.trainerId,
+          userId
+        );
+      },
+
+      error: (error) => {
+        console.error(
+          'Failed to load trainer:',
+          error
+        );
+      }
+    });
   }
 
-  this.api.getTrainerByUserId(userId).subscribe({
-    next: (trainer) => {
-      console.log('Trainer:', trainer);
+  // =====================================================
+  // LOAD TRAINER TRAINEES
+  // =====================================================
 
-      this.loadTrainerTrainees(trainer.trainerId);
-    },
-    error: (error) => {
-      console.error('Failed to load trainer:', error);
-    }
-  });
-}
+  private loadTrainerTrainees(
+    trainerId: number,
+    userId: number
+  ): void {
 
-private loadTrainerTrainees(
-  trainerId: number
-): void {
+    this.api.getMyBatches(trainerId).subscribe({
+      next: (batches) => {
 
-  this.api.getMyBatches(trainerId).subscribe({
-    next: (batches) => {
+        const requests = (batches ?? []).map(
+          (batch) =>
+            this.api.getBatchTrainees(
+              batch.batchId
+            )
+        );
 
-      const requests = (batches ?? []).map(
-        (batch) =>
-          this.api.getBatchTrainees(
-            batch.batchId
-          )
-      );
+        if (requests.length === 0) {
+          this.trainees = [];
+          return;
+        }
 
-      if (requests.length === 0) {
-        this.trainees = [];
-        return;
-      }
+        forkJoin(requests).subscribe({
+          next: (results) => {
 
-      forkJoin(requests).subscribe({
-        next: (results) => {
-       console.log('Trainer trainees:', results);
-       console.log(
-  'Enrollment sample:',
-  (results[0] as any[])?.[0]
-);
-          const allTrainees = results.flatMap(
-            (batchTrainees, index) => {
+            console.log(
+              'Trainer trainees:',
+              results
+            );
 
-              const batch = batches[index];
+            const allTrainees: TrainerTrainee[] =
+              results.flatMap(
+                (batchTrainees, index) => {
 
-              return (batchTrainees as any[]).map(
-                (trainee) => ({
-                  traineeId:
-                    trainee.traineeId,
+                  const batch = batches[index];
 
-                  name:
-                    trainee.fullName,
+                  return (batchTrainees as any[]).map(
+                    (trainee) => ({
+                      traineeId:
+                        trainee.traineeId,
 
-                  batchName:
-                    batch.batchName ?? '',
+                      userId:
+                        trainee.userId,
 
-                  lastMessage: '',
-                  time: '',
-                  unread: false,
-                  online: false
-                })
+                      name:
+                        trainee.fullName,
+
+                      batchName:
+                        batch.batchName ?? '',
+
+                      lastMessage: '',
+                      time: '',
+                      unread: false,
+                      online: false,
+                      conversationId: null
+                    })
+                  );
+                }
+              );
+
+            this.trainees = allTrainees;
+
+            // تحميل المحادثات بعد تحميل المتدربين
+            this.loadTrainerConversations(
+              userId
+            );
+
+            // اختيار أول متدرب
+            if (allTrainees.length > 0) {
+              this.selectedTraineeId.set(
+                allTrainees[0].traineeId
               );
             }
+          },
+
+          error: (error) => {
+            console.error(
+              'Failed to load trainees:',
+              error
+            );
+          }
+        });
+      },
+
+      error: (error) => {
+        console.error(
+          'Failed to load trainer batches:',
+          error
+        );
+      }
+    });
+  }
+
+  // =====================================================
+  // LOAD REAL CONVERSATIONS
+  // =====================================================
+
+  private loadTrainerConversations(
+    userId: number
+  ): void {
+
+    this.api.getConversations(userId).subscribe({
+      next: (conversations) => {
+
+        // نحتاج فقط محادثات المدرب مع المتدرب
+        const trainerConversations =
+          (conversations ?? []).filter(
+            (conversation: any) =>
+              conversation.category ===
+              'TrainerTrainee'
           );
 
-          this.trainees = allTrainees;
-
-if (allTrainees.length > 0) {
-  this.selectedTraineeId.set(
-    allTrainees[0].traineeId
-  );
-}
+        if (
+          trainerConversations.length === 0
+        ) {
+          this.messages = [];
+          return;
         }
-      });
+
+        const requests =
+          trainerConversations.map(
+            (conversation: any) =>
+              this.api.getConversation(
+                conversation.conversationId
+              )
+          );
+
+        forkJoin(requests).subscribe({
+          next: (details) => {
+
+            details.forEach(
+              (conversation: any) => {
+
+                const messages =
+                  conversation.messages ?? [];
+
+                if (messages.length === 0) {
+                  return;
+                }
+
+                // استخراج المستخدمين المشاركين
+                const participantIds =
+                  messages
+                    .flatMap(
+                      (message: any) => [
+                        message.senderId,
+                        message.receiverId
+                      ]
+                    )
+                    .filter(
+                      (
+                        id: number | null
+                      ) =>
+                        id != null &&
+                        id !== userId
+                    );
+
+                // إيجاد المتدرب المرتبط بالمحادثة
+                const trainee =
+                  this.trainees.find(
+                    (item) =>
+                      participantIds.includes(
+                        item.userId
+                      )
+                  );
+
+                if (!trainee) {
+                  return;
+                }
+
+                // ترتيب الرسائل من الأقدم للأحدث
+                const sortedMessages =
+                  [...messages].sort(
+                    (a, b) =>
+                      new Date(
+                        a.sentDate
+                      ).getTime() -
+                      new Date(
+                        b.sentDate
+                      ).getTime()
+                  );
+
+                // ربط رقم المحادثة بالمتدرب
+                trainee.conversationId =
+                  conversation.conversationId;
+
+                // آخر رسالة
+                const lastMessage =
+                  sortedMessages[
+                    sortedMessages.length - 1
+                  ];
+
+                trainee.lastMessage =
+                  lastMessage?.content ?? '';
+
+                trainee.time =
+                  this.formatMessageTime(
+                    lastMessage?.sentDate
+                  );
+
+                // حالة الرسائل غير المقروءة
+                trainee.unread =
+                  messages.some(
+                    (message: any) =>
+                      message.senderId !== userId &&
+                      message.status !== 'Read'
+                  );
+
+                // تحويل رسائل الـ Backend
+                // إلى الشكل المستخدم في الواجهة
+                this.messagesByTrainee[
+                  trainee.traineeId
+                ] =
+                  sortedMessages.map(
+                    (message: any) => ({
+                      sender:
+                        message.senderId === userId
+                          ? 'trainer'
+                          : 'trainee',
+
+                      text:
+                        message.content ?? '',
+
+                      time:
+                        this.formatMessageTime(
+                          message.sentDate
+                        )
+                    })
+                  );
+
+                // إذا كان هذا هو المتدرب المحدد حاليًا
+                // اعرض رسائله مباشرة
+                if (
+                  this.selectedTraineeId() ===
+                  trainee.traineeId
+                ) {
+                  this.messages =
+                    this.messagesByTrainee[
+                      trainee.traineeId
+                    ] ?? [];
+                }
+              }
+            );
+          },
+
+          error: (error) => {
+            console.error(
+              'Failed to load conversations:',
+              error
+            );
+          }
+        });
+      },
+
+      error: (error) => {
+        console.error(
+          'Failed to load trainer conversations:',
+          error
+        );
+      }
+    });
+  }
+
+  // =====================================================
+  // FORMAT DATE
+  // =====================================================
+
+  private formatMessageTime(
+    dateValue: string | Date | undefined
+  ): string {
+
+    if (!dateValue) {
+      return '';
     }
-  });
-}
+
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    return new Intl.DateTimeFormat(
+      'ar-OM',
+      {
+        hour: 'numeric',
+        minute: '2-digit'
+      }
+    ).format(date);
+  }
+
   // =====================================================
   // SEARCH
   // =====================================================
 
   searchText = '';
+
   unreadOnly = false;
-  todayDate = new Intl.DateTimeFormat('ar-OM', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric'
-}).format(new Date());
-get filteredTrainees() {
-  const search = this.searchText.trim().toLowerCase();
 
-  return this.trainees.filter((trainee) => {
+  todayDate =
+    new Intl.DateTimeFormat(
+      'ar-OM',
+      {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }
+    ).format(new Date());
 
-    const matchesSearch =
-      !search ||
-      trainee.name.toLowerCase().includes(search) ||
-      trainee.batchName.toLowerCase().includes(search) ||
-      trainee.lastMessage.toLowerCase().includes(search);
+  get filteredTrainees() {
 
-    const matchesUnread =
-      !this.unreadOnly || trainee.unread;
+    const search =
+      this.searchText
+        .trim()
+        .toLowerCase();
 
-    return matchesSearch && matchesUnread;
-  });
-}
+    return this.trainees.filter(
+      (trainee) => {
+
+        const matchesSearch =
+          !search ||
+          trainee.name
+            .toLowerCase()
+            .includes(search) ||
+          trainee.batchName
+            .toLowerCase()
+            .includes(search) ||
+          trainee.lastMessage
+            .toLowerCase()
+            .includes(search);
+
+        const matchesUnread =
+          !this.unreadOnly ||
+          trainee.unread;
+
+        return (
+          matchesSearch &&
+          matchesUnread
+        );
+      }
+    );
+  }
+
+  // =====================================================
+  // TRAINEES
+  // =====================================================
+
+  trainees: TrainerTrainee[] = [];
 
   // =====================================================
   // SELECTED TRAINEE
   // =====================================================
+
   isNewMessage = false;
+
   selectedTraineeId =
     signal<number | null>(null);
 
+  selectedTrainee = computed(
+    () =>
+      this.trainees.find(
+        (trainee) =>
+          trainee.traineeId ===
+          this.selectedTraineeId()
+      ) ??
+      this.trainees[0]
+  );
+
   // =====================================================
-  // MESSAGE
+  // MESSAGES
   // =====================================================
 
   messageText = '';
 
-  // =====================================================
-  // TEMPORARY TRAINEES
-  // =====================================================
-  // سنربطهم بالـ Backend لاحقًا
+  messagesByTrainee:
+    Record<number, TrainerMessage[]> = {};
 
-  trainees = [
-    {
-      traineeId: 1,
-      name: 'أحمد محمد الزدجالي',
-      batchName: 'الدفعة الأولى',
-      lastMessage: 'عندي استفسار عن موعد التقييم',
-      time: '10:42 ص',
-      unread: true,
-      online: true
-    },
-
-    {
-      traineeId: 2,
-      name: 'سعيد الجابري',
-      batchName: 'الدفعة الأولى',
-      lastMessage: 'شكرًا أستاذ',
-      time: '9:15 ص',
-      unread: false,
-      online: false
-    },
-
-    {
-      traineeId: 3,
-      name: 'إباء العامري',
-      batchName: 'الدفعة الثانية',
-      lastMessage: 'أرسلت لك المشروع',
-      time: 'أمس',
-      unread: true,
-      online: true
-    },
-
-    {
-      traineeId: 4,
-      name: 'سلوى الهنائي',
-      batchName: 'الدفعة الثانية',
-      lastMessage: 'متى تظهر نتيجة التقييم؟',
-      time: 'الأحد',
-      unread: false,
-      online: false
-    },
-
-    {
-      traineeId: 5,
-      name: 'راشد الزدجالي',
-      batchName: 'الدفعة الثالثة',
-      lastMessage: 'حسنًا سأقوم بالتعديل',
-      time: 'السبت',
-      unread: false,
-      online: false
-    },
-
-    {
-      traineeId: 6,
-      name: 'أسماء العوفي',
-      batchName: 'الدفعة الثالثة',
-      lastMessage: 'تم استلام الرسالة',
-      time: 'السبت',
-      unread: false,
-      online: false
-    }
-  ];
-
-  // =====================================================
-  // CURRENT CONVERSATION
-  // =====================================================
-messagesByTrainee: Record<number, {
-  sender: 'trainee' | 'trainer';
-  text: string;
-  time: string;
-}[]> = {
-
-  1: [
-    {
-      sender: 'trainee',
-      text: 'السلام عليكم أستاذ، عندي استفسار عن موعد التقييم القادم.',
-      time: '10:38 ص'
-    },
-    {
-      sender: 'trainer',
-      text: 'وعليكم السلام أحمد، يمكنك مراجعة المهام المطلوبة من صفحة التقييمات.',
-      time: '10:40 ص'
-    },
-    {
-      sender: 'trainee',
-      text: 'تمام، وهل أحتاج إلى تسليم ملف المشروع قبل موعد التقييم؟',
-      time: '10:41 ص'
-    },
-    {
-      sender: 'trainer',
-      text: 'نعم، يفضل تسليمه قبل الموعد حتى أتمكن من مراجعته وإضافة الملاحظات.',
-      time: '10:42 ص'
-    }
-  ],
-
-  2: [
-    {
-      sender: 'trainee',
-      text: 'السلام عليكم أستاذ، هل تم اعتماد المهمة الأخيرة؟',
-      time: '9:10 ص'
-    },
-    {
-      sender: 'trainer',
-      text: 'وعليكم السلام سعيد، نعم تم اعتمادها.',
-      time: '9:13 ص'
-    },
-    {
-      sender: 'trainee',
-      text: 'شكرًا أستاذ.',
-      time: '9:15 ص'
-    }
-  ],
-
-  3: [
-    {
-      sender: 'trainee',
-      text: 'السلام عليكم، أرسلت لك المشروع بعد التعديل.',
-      time: '10:05 ص'
-    },
-    {
-      sender: 'trainer',
-      text: 'وعليكم السلام إباء، وصلتني النسخة الجديدة وسأراجعها.',
-      time: '10:12 ص'
-    }
-  ],
-
-  4: [
-    {
-      sender: 'trainee',
-      text: 'السلام عليكم، متى تظهر نتيجة التقييم؟',
-      time: '11:20 ص'
-    },
-    {
-      sender: 'trainer',
-      text: 'وعليكم السلام سلوى، ستظهر النتيجة بعد اكتمال المراجعة.',
-      time: '11:25 ص'
-    }
-  ],
-
-  5: [
-    {
-      sender: 'trainee',
-      text: 'حسنًا أستاذ، سأقوم بالتعديل المطلوب.',
-      time: '2:15 م'
-    },
-    {
-      sender: 'trainer',
-      text: 'ممتاز، أرسل النسخة الجديدة بعد الانتهاء.',
-      time: '2:18 م'
-    }
-  ],
-
-  6: [
-    {
-      sender: 'trainee',
-      text: 'السلام عليكم أستاذ، تم استلام الرسالة.',
-      time: '3:10 م'
-    },
-    {
-      sender: 'trainer',
-      text: 'وعليكم السلام أسماء، بالتوفيق.',
-      time: '3:12 م'
-    }
-  ]
-};
-
-messages = this.messagesByTrainee[1] ?? [];
+  messages: TrainerMessage[] = [];
 
   // =====================================================
   // SELECT TRAINEE
   // =====================================================
 
-selectTrainee(traineeId: number): void {
-  this.selectedTraineeId.set(traineeId);
-  this.isNewMessage = false;
-  const trainee = this.trainees.find(
-    (item) => item.traineeId === traineeId
-  );
+  selectTrainee(
+    traineeId: number
+  ): void {
 
-  if (trainee) {
+    this.selectedTraineeId.set(
+      traineeId
+    );
+
+    this.isNewMessage = false;
+
+    const trainee =
+      this.trainees.find(
+        (item) =>
+          item.traineeId ===
+          traineeId
+      );
+
+    if (!trainee) {
+      this.messages = [];
+      return;
+    }
+
+    // عرض الرسائل الموجودة محليًا
+    this.messages =
+      this.messagesByTrainee[
+        traineeId
+      ] ?? [];
+
+    // إزالة حالة غير مقروء محليًا
     trainee.unread = false;
-  }
 
-  this.messages = this.messagesByTrainee[traineeId] ?? [];
-}
-  selectedTrainee = computed(() =>
-  this.trainees.find(
-    (trainee) => trainee.traineeId === this.selectedTraineeId()
-  ) ?? this.trainees[0]
-);
+    // تعليم المحادثة كمقروءة في Backend
+    const userId =
+      this.auth.userId;
+
+    if (
+      userId &&
+      trainee.conversationId
+    ) {
+
+      this.api
+        .markConversationAsRead(
+          trainee.conversationId,
+          userId
+        )
+        .subscribe({
+          error: (error) => {
+            console.error(
+              'Failed to mark conversation as read:',
+              error
+            );
+          }
+        });
+    }
+  }
 
   // =====================================================
   // SEND MESSAGE
   // =====================================================
 
-sendMessage(): void {
+  sendMessage(): void {
 
-  const text = this.messageText.trim();
+    const text =
+      this.messageText.trim();
 
-  if (!text) {
-    return;
+    if (!text) {
+      return;
+    }
+
+    const userId =
+      this.auth.userId;
+
+    const trainee =
+      this.selectedTrainee();
+
+    if (!userId || !trainee) {
+      return;
+    }
+
+    // -------------------------------------------------
+    // إذا كانت هناك محادثة موجودة
+    // -------------------------------------------------
+
+    if (trainee.conversationId) {
+
+      this.api.sendMessage(
+        trainee.conversationId,
+        {
+          senderId: userId,
+          content: text
+        }
+      ).subscribe({
+
+        next: (savedMessage) => {
+
+          const newMessage:
+            TrainerMessage = {
+              sender: 'trainer',
+              text: savedMessage?.content ?? text,
+              time:
+                this.formatMessageTime(
+                  savedMessage?.sentDate
+                ) ||
+                this.formatMessageTime(
+                  new Date()
+                )
+            };
+
+          if (
+            !this.messagesByTrainee[
+              trainee.traineeId
+            ]
+          ) {
+            this.messagesByTrainee[
+              trainee.traineeId
+            ] = [];
+          }
+
+          this.messagesByTrainee[
+            trainee.traineeId
+          ].push(newMessage);
+
+          this.messages =
+            this.messagesByTrainee[
+              trainee.traineeId
+            ];
+
+          // تحديث آخر رسالة في القائمة
+          trainee.lastMessage =
+            text;
+
+          trainee.time =
+            newMessage.time;
+
+          trainee.unread =
+            false;
+
+          this.messageText = '';
+        },
+
+        error: (error) => {
+          console.error(
+            'Failed to send message:',
+            error
+          );
+        }
+      });
+
+      return;
+    }
+
+    // -------------------------------------------------
+    // إذا لم توجد محادثة
+    // ننشئ محادثة جديدة
+    // -------------------------------------------------
+
+    this.api.createConversation({
+      type: 'Other',
+      category: 'TrainerTrainee',
+      subject:
+        `محادثة مع ${trainee.name}`,
+      startedByUserId: userId,
+      firstMessage: text,
+      receiverUserId: trainee.userId
+    }).subscribe({
+
+      next: (conversation) => {
+
+        trainee.conversationId =
+          conversation.conversationId;
+
+        const newMessage:
+          TrainerMessage = {
+            sender: 'trainer',
+            text: text,
+            time:
+              this.formatMessageTime(
+                new Date()
+              )
+          };
+
+        this.messagesByTrainee[
+          trainee.traineeId
+        ] = [newMessage];
+
+        this.messages =
+          this.messagesByTrainee[
+            trainee.traineeId
+          ];
+
+        trainee.lastMessage =
+          text;
+
+        trainee.time =
+          newMessage.time;
+
+        trainee.unread =
+          false;
+
+        this.messageText = '';
+
+        this.isNewMessage = false;
+      },
+
+      error: (error) => {
+        console.error(
+          'Failed to create conversation:',
+          error
+        );
+      }
+    });
   }
-
-  this.messages.push({
-    sender: 'trainer',
-    text: text,
-    time: new Intl.DateTimeFormat('ar-OM', {
-      hour: 'numeric',
-      minute: '2-digit'
-    }).format(new Date())
-  });
-
-  this.messageText = '';
-}
 
   // =====================================================
   // NEW MESSAGE
   // =====================================================
 
- newMessage(): void {
+  newMessage(): void {
 
-  this.isNewMessage = true;
+    this.isNewMessage = true;
 
-  this.selectedTraineeId.set(null);
+    this.selectedTraineeId.set(
+      null
+    );
 
-  this.messageText = '';
+    this.messages = [];
 
-}
-
+    this.messageText = '';
+  }
 }
