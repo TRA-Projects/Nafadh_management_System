@@ -550,6 +550,7 @@ getSubmissionFile(
       { params }
     );
   }
+  
    getEvaluationAverage(
     enrollmentId: number
   ): Observable<{
@@ -921,7 +922,66 @@ getTrainerPortalReportFile(
     }
   );
 }
+// =====================================================
+// Messaging
+// =====================================================
 
+getConversations(
+  participantUserId: number
+): Observable<any[]> {
+
+  const params = new HttpParams()
+    .set(
+      'type',
+      'Other'
+    )
+    .set(
+      'participantUserId',
+      participantUserId.toString()
+    );
+
+  return this.http.get<any[]>(
+    `${this.base}/Conversation`,
+    { params }
+  );
+}
+
+
+getConversation(
+  conversationId: number
+): Observable<any> {
+
+  return this.http.get<any>(
+    `${this.base}/Conversation/${conversationId}`
+  );
+}
+
+
+sendMessage(
+  conversationId: number,
+  dto: {
+    senderId: number;
+    content: string;
+  }
+): Observable<any> {
+
+  return this.http.post<any>(
+    `${this.base}/Conversation/${conversationId}/messages`,
+    dto
+  );
+}
+
+
+markConversationAsRead(
+  conversationId: number,
+  userId: number
+): Observable<void> {
+
+  return this.http.put<void>(
+    `${this.base}/Conversation/${conversationId}/read?userId=${userId}`,
+    {}
+  );
+}
   // =====================================================
   // Profile
   // =====================================================

@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 
 import {
   CommonModule
@@ -7,6 +7,17 @@ import {
 import {
   FormsModule
 } from '@angular/forms';
+
+import {
+  forkJoin
+} from 'rxjs';
+import {
+  TrainerApi
+} from '../../services/trainer-api';
+
+import {
+  AuthService
+}from '../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-trainer-messages',
@@ -22,8 +33,93 @@ import {
 
   styleUrl: './messages.scss'
 })
-export class TrainerMessages {
+export class TrainerMessages implements OnInit  {
+    constructor(
+    private api: TrainerApi,
+    public auth: AuthService
+  ) {}
+ngOnInit(): void {
+  const userId = this.auth.userId;
 
+  if (!userId) {
+    return;
+  }
+
+  this.api.getTrainerByUserId(userId).subscribe({
+    next: (trainer) => {
+      console.log('Trainer:', trainer);
+
+      this.loadTrainerTrainees(trainer.trainerId);
+    },
+    error: (error) => {
+      console.error('Failed to load trainer:', error);
+    }
+  });
+}
+
+private loadTrainerTrainees(
+  trainerId: number
+): void {
+
+  this.api.getMyBatches(trainerId).subscribe({
+    next: (batches) => {
+
+      const requests = (batches ?? []).map(
+        (batch) =>
+          this.api.getBatchTrainees(
+            batch.batchId
+          )
+      );
+
+      if (requests.length === 0) {
+        this.trainees = [];
+        return;
+      }
+
+      forkJoin(requests).subscribe({
+        next: (results) => {
+       console.log('Trainer trainees:', results);
+       console.log(
+  'Enrollment sample:',
+  (results[0] as any[])?.[0]
+);
+          const allTrainees = results.flatMap(
+            (batchTrainees, index) => {
+
+              const batch = batches[index];
+
+              return (batchTrainees as any[]).map(
+                (trainee) => ({
+                  traineeId:
+                    trainee.traineeId,
+
+                  name:
+                    trainee.fullName,
+
+                  batchName:
+                    batch.batchName ?? '',
+
+                  lastMessage: '',
+                  time: '',
+                  unread: false,
+                  online: false
+                })
+              );
+            }
+          );
+
+          this.trainees = allTrainees;
+
+if (allTrainees.length > 0) {
+  this.selectedTraineeId.set(
+    allTrainees[0].traineeId
+  );
+}
+        }
+      });
+    }
+  });
+}
   // =====================================================
   // SEARCH
   // =====================================================
