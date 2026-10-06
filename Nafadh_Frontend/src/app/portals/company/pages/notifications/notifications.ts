@@ -38,16 +38,29 @@ const CATEGORIES: CategoryMeta[] = [
   { key: 'system', label: 'عام' },
 ];
 
-// Keyword rules used to infer the category from the notification's type / related entity / title.
-const CATEGORY_RULES: { key: NotificationCategory; pattern: RegExp }[] = [
-  { key: 'warning', pattern: /warn|alert|تحذير|إنذار|انذار/i },
-  { key: 'task', pattern: /task|submission|project|مهمة|مهام|تسليم|مشروع/i },
-  { key: 'message', pattern: /message|conversation|chat|ticket|support|محادثة|رسالة|رسائل|دعم|تذكرة/i },
-  { key: 'evaluation', pattern: /evaluation|feedback|rubric|rating|تقييم|تقييمات/i },
-  { key: 'attendance', pattern: /attendance|session|excuse|حضور|غياب|جلسة|عذر|أعذار/i },
-  { key: 'announcement', pattern: /announce|إعلان|اعلان|تعميم/i },
-  { key: 'payment', pattern: /payment|invoice|schedule|دفع|مدفوع|سداد|فاتورة|قسط/i },
-  { key: 'achievement', pattern: /badge|certificate|achievement|شهادة|وسام|إنجاز|انجاز/i },
+// NotificationDto has no "type" field, so the category comes from `relatedEntity`
+// (the backend entity name, e.g. Task, SupportTicket, Warning). Matching it first is
+// more reliable than guessing from free text; the title is only a fallback.
+const ENTITY_RULES: { key: NotificationCategory; pattern: RegExp }[] = [
+  { key: 'warning', pattern: /warning/i },
+  { key: 'task', pattern: /task|submission|project/i },
+  { key: 'message', pattern: /conversation|message|ticket|support/i },
+  { key: 'evaluation', pattern: /evaluation|feedback|rubric/i },
+  { key: 'attendance', pattern: /attendance|session|excuse/i },
+  { key: 'announcement', pattern: /announcement/i },
+  { key: 'payment', pattern: /payment|schedule|invoice/i },
+  { key: 'achievement', pattern: /badge|certificate/i },
+];
+
+const TEXT_RULES: { key: NotificationCategory; pattern: RegExp }[] = [
+  { key: 'warning', pattern: /تحذير|إنذار|انذار/ },
+  { key: 'task', pattern: /مهمة|مهام|تسليم|مشروع/ },
+  { key: 'message', pattern: /محادثة|رسالة|رسائل|دعم|تذكرة/ },
+  { key: 'evaluation', pattern: /تقييم|تقييمات/ },
+  { key: 'attendance', pattern: /حضور|غياب|جلسة|عذر|أعذار/ },
+  { key: 'announcement', pattern: /إعلان|اعلان|تعميم/ },
+  { key: 'payment', pattern: /دفع|مدفوع|سداد|فاتورة|قسط/ },
+  { key: 'achievement', pattern: /شهادة|وسام|إنجاز|انجاز/ },
 ];
 
 @Component({
@@ -154,12 +167,26 @@ export class CompanyNotifications implements OnInit {
     return item.notificationId;
   }
 
+  /**
+   * NotificationDto has no type field, so the category is read from `relatedEntity`
+   * (the backend entity the notification points to) first. Only when that is empty or
+   * unknown does it fall back to Arabic keywords in the title and message.
+   */
   categoryOf(item: NotificationDto): NotificationCategory {
-    const raw = item as unknown as Record<string, unknown>;
-    const text = [raw['type'], raw['notificationType'], raw['category'], item.relatedEntity, item.title]
-      .filter((value) => value !== null && value !== undefined)
-      .join(' ');
-    return CATEGORY_RULES.find((rule) => rule.pattern.test(text))?.key ?? 'system';
+    return (
+      this.matchCategory(item.relatedEntity, ENTITY_RULES) ??
+      this.matchCategory(`${item.title ?? ''} ${item.message ?? ''}`, TEXT_RULES) ??
+      'system'
+    );
+  }
+
+  private matchCategory(
+    text: string | null | undefined,
+    rules: { key: NotificationCategory; pattern: RegExp }[],
+  ): NotificationCategory | null {
+    const value = (text ?? '').trim();
+    if (!value) return null;
+    return rules.find((rule) => rule.pattern.test(value))?.key ?? null;
   }
 
   categoryLabel(key: NotificationCategory): string {
