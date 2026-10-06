@@ -231,7 +231,6 @@ export class CompanyApi {
       dto
     );
   }
-
   getSupervisors(
     companyId: number
   ): Observable<CompanySupervisorDto[]> {
@@ -261,37 +260,25 @@ export class CompanyApi {
     );
   }
 
+
   // ============================================================
   // My Account
   // ============================================================
 
- // ============================================================
-// My Account
-// ============================================================
+  getCurrentAccount(): Observable<CompanyAccountDto> {
+    return this.http.get<CompanyAccountDto>(
+      `${this.base}/CompanyAccount/me`
+    );
+  }
 
-getCurrentAccount(): Observable<CompanyAccountDto> {
-  return this.http.get<CompanyAccountDto>(
-    `${this.base}/CompanyAccount/me`
-  );
-}
-
-downloadMyAccountPdf(): Observable<Blob> {
-  return this.http.get(
-    `${this.base}/CompanyAccount/me/pdf`,
-    {
-      responseType: 'blob',
-    }
-  );
-}
-
-getSupervisorProfile(
-  id: number
-): Observable<CompanySupervisorDto> {
-  return this.http.get<CompanySupervisorDto>(
-    `${this.base}/CompanySupervisor/${id}`
-  );
-}
-
+  downloadMyAccountPdf(): Observable<Blob> {
+    return this.http.get(
+      `${this.base}/CompanyAccount/me/pdf`,
+      {
+        responseType: 'blob',
+      }
+    );
+  }
 
   // ============================================================
   // PDF - Backend

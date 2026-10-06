@@ -128,8 +128,7 @@ export class CompanySupervisors implements OnInit {
   ======================================================= */
 
   private readonly apiUrl =
-    'https://localhost:44383/api/CompanySupervisor';
-
+    'https://localhost:7082/api/CompanySupervisor';
   /*
    * مؤقتًا نستخدم CompanyId = 1.
    * لاحقًا نأخذه من المستخدم المسجل دخوله.
@@ -143,7 +142,7 @@ export class CompanySupervisors implements OnInit {
 
   constructor(
     private http: HttpClient
-  ) {}
+  ) { }
 
 
   /* =======================================================
@@ -812,8 +811,8 @@ export class CompanySupervisors implements OnInit {
       stats:
         supervisor.stats
           ? {
-              ...supervisor.stats
-            }
+            ...supervisor.stats
+          }
           : undefined
 
     };
