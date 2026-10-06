@@ -8,12 +8,16 @@ namespace Nafadh_Backend.Services
     public class ConversationService : IConversationService
     {
         private readonly IConversationRepository _repository;
+        private readonly IConfiguration _configuration;
+
 
         public ConversationService(
-            IConversationRepository repository
+            IConversationRepository repository,
+            IConfiguration configuration
         )
         {
             _repository = repository;
+            _configuration = configuration;
         }
 
 
@@ -120,6 +124,159 @@ namespace Nafadh_Backend.Services
                 };
 
 
+            // ========================================================
+            // Save optional attachment
+            // ========================================================
+
+            if (
+                dto.Attachment != null &&
+                dto.Attachment.Length > 0
+            )
+            {
+                // ----------------------------------------------------
+                // Validate maximum file size: 10 MB
+                // ----------------------------------------------------
+
+                const long maxFileSize =
+                    10 * 1024 * 1024;
+
+
+                if (dto.Attachment.Length > maxFileSize)
+                {
+                    throw new InvalidOperationException(
+                        "Attachment size cannot exceed 10 MB."
+                    );
+                }
+
+
+                // ----------------------------------------------------
+                // Validate extension
+                // ----------------------------------------------------
+
+                var extension =
+                    Path.GetExtension(
+                        dto.Attachment.FileName
+                    )
+                    .ToLowerInvariant();
+
+
+                var allowedExtensions =
+                    new[]
+                    {
+                        ".pdf",
+                        ".png",
+                        ".jpg",
+                        ".jpeg"
+                    };
+
+
+                if (!allowedExtensions.Contains(extension))
+                {
+                    throw new InvalidOperationException(
+                        "Only PDF, PNG, JPG and JPEG files are allowed."
+                    );
+                }
+
+
+                // ----------------------------------------------------
+                // Get storage folder
+                // ----------------------------------------------------
+
+                var uploadsFolder =
+                    _configuration[
+                        "Storage:ConversationAttachmentsPath"
+                    ];
+
+
+                if (string.IsNullOrWhiteSpace(uploadsFolder))
+                {
+                    throw new InvalidOperationException(
+                        "Conversation attachments storage path is not configured."
+                    );
+                }
+
+
+                Directory.CreateDirectory(
+                    uploadsFolder
+                );
+
+
+                // ----------------------------------------------------
+                // Generate unique file name
+                // ----------------------------------------------------
+
+                var generatedFileName =
+                    $"{Guid.NewGuid()}{extension}";
+
+
+                var fullPath =
+                    Path.Combine(
+                        uploadsFolder,
+                        generatedFileName
+                    );
+
+
+                // ----------------------------------------------------
+                // Save physical file
+                // ----------------------------------------------------
+
+                await using (
+                    var stream =
+                        new FileStream(
+                            fullPath,
+                            FileMode.Create
+                        )
+                )
+                {
+                    await dto.Attachment.CopyToAsync(
+                        stream
+                    );
+                }
+
+
+                // ----------------------------------------------------
+                // Create public/request URL
+                // ----------------------------------------------------
+
+                var requestPath =
+                    _configuration[
+                        "Storage:ConversationAttachmentsRequestPath"
+                    ];
+
+
+                if (string.IsNullOrWhiteSpace(requestPath))
+                {
+                    requestPath =
+                        "/uploads/conversation-attachments";
+                }
+
+
+                requestPath =
+                    requestPath.TrimEnd('/');
+
+
+                var attachmentUrl =
+                    $"{requestPath}/{generatedFileName}";
+
+
+                // ----------------------------------------------------
+                // Save attachment information in NFD_Message
+                // ----------------------------------------------------
+
+                firstMessage.AttachmentUrl =
+                    attachmentUrl;
+
+                firstMessage.AttachmentFileName =
+                    dto.Attachment.FileName;
+
+                firstMessage.AttachmentContentType =
+                    dto.Attachment.ContentType;
+
+                firstMessage.AttachmentFileSize =
+                    dto.Attachment.Length;
+            }
+
+
             var created =
                 await _repository.CreateAsync(
                     conversation,
@@ -216,7 +373,19 @@ namespace Nafadh_Backend.Services
                     created.ReceiverId,
 
                 TicketId =
-                    created.TicketId
+                    created.TicketId,
+
+                AttachmentUrl =
+                    created.AttachmentUrl,
+
+                AttachmentFileName =
+                    created.AttachmentFileName,
+
+                AttachmentContentType =
+                    created.AttachmentContentType,
+
+                AttachmentFileSize =
+                    created.AttachmentFileSize
             };
         }
 
@@ -411,7 +580,19 @@ namespace Nafadh_Backend.Services
                                         m.ReceiverId,
 
                                     TicketId =
-                                        m.TicketId
+                                        m.TicketId,
+
+                                    AttachmentUrl =
+                                        m.AttachmentUrl,
+
+                                    AttachmentFileName =
+                                        m.AttachmentFileName,
+
+                                    AttachmentContentType =
+                                        m.AttachmentContentType,
+
+                                    AttachmentFileSize =
+                                        m.AttachmentFileSize
                                 }
                         )
 

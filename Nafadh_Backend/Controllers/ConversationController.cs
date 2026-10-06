@@ -76,8 +76,9 @@ namespace Nafadh_Backend.Controllers
         // ============================================================
 
         [HttpPost]
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> Create(
-            [FromBody]
+            [FromForm]
             CreateConversationDTO dto
         )
         {
