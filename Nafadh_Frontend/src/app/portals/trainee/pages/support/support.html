@@ -1,55 +1,92 @@
 <div class="support-page" dir="rtl">
 
-  <!-- HEADER -->
+  <!-- =========================================================
+       HEADER
+       ========================================================= -->
+
   <div class="support-header">
-    <h2 class="nfd-page-title">التواصل والدعم</h2>
+
+    <h2 class="nfd-page-title">
+      التواصل والدعم
+    </h2>
 
     <p class="nfd-page-sub">
       أرسل استفسارك أو شكواك مباشرة للجهة المختصة وتابع الردود
     </p>
+
   </div>
 
 
-  <!-- ALERT MESSAGES -->
+  <!-- =========================================================
+       ALERT MESSAGES
+       ========================================================= -->
 
   @if (errorMessage()) {
+
     <div class="message error-message">
+
       <span>
         <i class="fa-solid fa-circle-exclamation"></i>
       </span>
 
-      <p>{{ errorMessage() }}</p>
+      <p>
+        {{ errorMessage() }}
+      </p>
+
     </div>
+
   }
 
 
   @if (successMessage()) {
+
     <div class="message success-message">
+
       <span>
         <i class="fa-solid fa-check"></i>
       </span>
 
-      <p>{{ successMessage() }}</p>
+      <p>
+        {{ successMessage() }}
+      </p>
+
     </div>
+
   }
 
 
-  <!-- MAIN CONTENT -->
+  <!-- =========================================================
+       MAIN CONTENT
+       ========================================================= -->
 
   <div class="support-main-layout">
 
 
-    <!-- CONVERSATIONS -->
+    <!-- =======================================================
+         CONVERSATIONS
+         ======================================================= -->
 
     <section class="conversation-section">
+
+
+      <!-- =====================================================
+           CONVERSATION LIST
+           ===================================================== -->
 
       <div class="conversation-list">
 
         <div class="list-header">
 
           <div>
-            <h3>الشكاوى والاستفسارات</h3>
-            <p>المحادثات السابقة</p>
+
+            <h3>
+              الشكاوى والاستفسارات
+            </h3>
+
+            <p>
+              المحادثات السابقة
+            </p>
+
           </div>
 
           <span class="conversation-count">
@@ -69,9 +106,7 @@
             <button
               type="button"
               class="conversation-item"
-              [class.active]="
-                active()?.conversationId === c.conversationId
-              "
+              [class.active]="active()?.conversationId === c.conversationId"
               (click)="open(c.conversationId)"
             >
 
@@ -124,7 +159,9 @@
       </div>
 
 
-      <!-- ACTIVE CHAT -->
+      <!-- =====================================================
+           ACTIVE CONVERSATION
+           ===================================================== -->
 
       <div class="conversation-detail">
 
@@ -151,8 +188,6 @@
           </div>
 
 
-          <!-- MESSAGES -->
-
           <div class="messages-container">
 
             @for (
@@ -162,9 +197,7 @@
 
               <div
                 class="message-bubble"
-                [class.mine]="
-                  message.senderId === auth.userId
-                "
+                [class.mine]="message.senderId === auth.userId"
               >
 
                 <strong>
@@ -190,8 +223,6 @@
           </div>
 
 
-          <!-- REPLY -->
-
           <div class="reply-area">
 
             <input
@@ -208,8 +239,13 @@
               [disabled]="!replyText.trim()"
               (click)="send()"
             >
+
               <i class="fa-solid fa-paper-plane"></i>
-              <span>إرسال</span>
+
+              <span>
+                إرسال
+              </span>
+
             </button>
 
           </div>
@@ -220,17 +256,21 @@
 
           <div class="conversation-placeholder">
 
-            <div class="placeholder-icon">
-              <i class="fa-solid fa-comments"></i>
+            <div class="conversation-placeholder-content">
+
+              <div class="placeholder-icon">
+                <i class="fa-solid fa-comments"></i>
+              </div>
+
+              <h3>
+                اختر محادثة من القائمة
+              </h3>
+
+              <p>
+                اختر إحدى الشكاوى أو الاستفسارات لعرض تفاصيل المحادثة
+              </p>
+
             </div>
-
-            <h3>
-              اختر محادثة من القائمة
-            </h3>
-
-            <p>
-              اختر إحدى الشكاوى أو الاستفسارات لعرض تفاصيل المحادثة
-            </p>
 
           </div>
 
@@ -241,9 +281,19 @@
     </section>
 
 
-    <!-- NEW COMPLAINT -->
+    <!-- =======================================================
+         NEW REQUEST
+         ======================================================= -->
 
-    <section class="support-card">
+    <section
+      class="support-card"
+      [class.receiver-only]="!newConv.receiverType"
+    >
+
+
+      <!-- =====================================================
+           TITLE
+           ===================================================== -->
 
       <div class="support-title-row">
 
@@ -262,9 +312,11 @@
       </div>
 
 
-      <!-- RECEIVER -->
+      <!-- =====================================================
+           RECEIVER
+           ===================================================== -->
 
-      <div class="form-group">
+      <div class="form-group receiver-form-group">
 
         <label>
           الجهة المستلمة
@@ -292,8 +344,11 @@
             المدرب
           </option>
 
-          <option value="Company">
-            الشركة
+          <option
+            value="Company"
+            [disabled]="!companyName()"
+          >
+            الشركة - {{ companyName() || 'جاري التحميل...' }}
           </option>
 
         </select>
@@ -301,38 +356,67 @@
       </div>
 
 
-      <!-- COMPANY NAME -->
-      <!-- يظهر فقط عند اختيار الشركة -->
+      <!-- =====================================================
+           TRAINER
+           ===================================================== -->
 
-      @if (newConv.receiverType === 'Company') {
+      @if (newConv.receiverType === 'Trainer') {
 
         <div class="form-group">
 
           <label>
-            الشركة
+            اسم المدرب
           </label>
 
           <select
+            [(ngModel)]="newConv.trainerId"
             class="support-select"
-            aria-label="اسم الشركة"
           >
 
-            @if (companyName()) {
+            <option
+              [ngValue]="null"
+              disabled
+            >
+              اختر المدرب
+            </option>
 
-              <option [value]="companyName()">
-                {{ companyName() }}
+
+            @if (loadingTrainers()) {
+
+              <option
+                [ngValue]="null"
+                disabled
+              >
+                جاري تحميل المدربين...
               </option>
 
             }
 
             @else {
 
-              <option
-                value=""
-                disabled
-              >
-                جاري تحميل اسم الشركة...
-              </option>
+              @for (
+                trainer of trainers();
+                track trainer.trainerId
+              ) {
+
+                <option
+                  [ngValue]="trainer.trainerId"
+                >
+                  {{ trainer.fullName }}
+                </option>
+
+              }
+
+              @empty {
+
+                <option
+                  [ngValue]="null"
+                  disabled
+                >
+                  لا يوجد مدربون مرتبطون بهذه الدفعة
+                </option>
+
+              }
 
             }
 
@@ -340,23 +424,264 @@
 
         </div>
 
+
+        <div class="form-group">
+
+          <label>
+            نوع الطلب
+          </label>
+
+          <input
+            type="text"
+            [(ngModel)]="newConv.subject"
+            class="support-input"
+            placeholder="اكتب نوع الطلب هنا..."
+          />
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            المرفق
+          </label>
+
+          <input
+            type="file"
+            #trainerFileInput
+            hidden
+            accept=".pdf,.png,.jpg,.jpeg,image/png,image/jpeg,application/pdf"
+            (change)="onFileSelected($event)"
+          />
+
+          <div
+            class="attachment-box"
+            (click)="trainerFileInput.click()"
+          >
+
+            <div class="attachment-icon">
+
+              <i
+                class="fa-solid"
+                [class.fa-image]="
+                  selectedFile &&
+                  selectedFile.type.startsWith('image/')
+                "
+                [class.fa-file-pdf]="
+                  selectedFile &&
+                  selectedFile.type === 'application/pdf'
+                "
+                [class.fa-paperclip]="!selectedFile"
+              ></i>
+
+            </div>
+
+
+            <div class="attachment-text">
+
+              @if (selectedFile) {
+
+                <strong>
+                  {{ selectedFile.name }}
+                </strong>
+
+                <span>
+                  {{ formatFileSize(selectedFile.size) }}
+                </span>
+
+              }
+
+              @else {
+
+                <strong>
+                  إرفاق صورة أو ملف
+                </strong>
+
+                <span>
+                  PNG, JPG, JPEG أو PDF
+                </span>
+
+              }
+
+            </div>
+
+
+            @if (selectedFile) {
+
+              <button
+                type="button"
+                class="remove-attachment"
+                aria-label="حذف المرفق"
+                (click)="removeFile($event)"
+              >
+
+                <i class="fa-solid fa-xmark"></i>
+
+              </button>
+
+            }
+
+          </div>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            الملاحظة
+          </label>
+
+          <textarea
+            [(ngModel)]="newConv.note"
+            class="support-textarea"
+            rows="4"
+            placeholder="اكتب ملاحظتك للمدرب هنا..."
+          ></textarea>
+
+        </div>
+
       }
 
 
-      <!-- SUBJECT -->
+      <!-- =====================================================
+           COMPANY
+           ===================================================== -->
 
-      <div class="form-group">
+      @else if (newConv.receiverType === 'Company') {
 
-        <label>
-          {{
-            newConv.receiverType === 'Authority'
-              ? 'الموضوع'
-              : 'نوع الموضوع'
-          }}
-        </label>
+        <div class="form-group">
+
+          <label>
+            نوع الطلب
+          </label>
+
+          <input
+            type="text"
+            [(ngModel)]="newConv.subject"
+            class="support-input"
+            placeholder="اكتب نوع الطلب هنا..."
+          />
+
+        </div>
 
 
-        @if (newConv.receiverType === 'Authority') {
+        <div class="form-group">
+
+          <label>
+            المرفق
+          </label>
+
+          <input
+            type="file"
+            #companyFileInput
+            hidden
+            accept=".pdf,.png,.jpg,.jpeg,image/png,image/jpeg,application/pdf"
+            (change)="onFileSelected($event)"
+          />
+
+          <div
+            class="attachment-box"
+            (click)="companyFileInput.click()"
+          >
+
+            <div class="attachment-icon">
+
+              <i
+                class="fa-solid"
+                [class.fa-image]="
+                  selectedFile &&
+                  selectedFile.type.startsWith('image/')
+                "
+                [class.fa-file-pdf]="
+                  selectedFile &&
+                  selectedFile.type === 'application/pdf'
+                "
+                [class.fa-paperclip]="!selectedFile"
+              ></i>
+
+            </div>
+
+
+            <div class="attachment-text">
+
+              @if (selectedFile) {
+
+                <strong>
+                  {{ selectedFile.name }}
+                </strong>
+
+                <span>
+                  {{ formatFileSize(selectedFile.size) }}
+                </span>
+
+              }
+
+              @else {
+
+                <strong>
+                  إرفاق صورة أو ملف
+                </strong>
+
+                <span>
+                  PNG, JPG, JPEG أو PDF
+                </span>
+
+              }
+
+            </div>
+
+
+            @if (selectedFile) {
+
+              <button
+                type="button"
+                class="remove-attachment"
+                aria-label="حذف المرفق"
+                (click)="removeFile($event)"
+              >
+
+                <i class="fa-solid fa-xmark"></i>
+
+              </button>
+
+            }
+
+          </div>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label>
+            الملاحظة
+          </label>
+
+          <textarea
+            [(ngModel)]="newConv.note"
+            class="support-textarea"
+            rows="4"
+            placeholder="اكتب ملاحظتك للشركة هنا..."
+          ></textarea>
+
+        </div>
+
+      }
+
+
+      <!-- =====================================================
+           AUTHORITY
+           ===================================================== -->
+
+      @else if (newConv.receiverType === 'Authority') {
+
+        <div class="form-group">
+
+          <label>
+            الموضوع
+          </label>
 
           <select
             [(ngModel)]="newConv.subject"
@@ -383,130 +708,113 @@
 
           </select>
 
-        }
-
-        @else {
-
-          <input
-            type="text"
-            [(ngModel)]="newConv.subject"
-            class="support-input"
-            [placeholder]="
-              newConv.receiverType
-                ? 'اكتب نوع الموضوع هنا...'
-                : 'اختر الجهة المستلمة أولاً'
-            "
-            [disabled]="!newConv.receiverType"
-          />
-
-        }
-
-      </div>
+        </div>
 
 
-      <!-- MESSAGE -->
+        <div class="form-group">
 
-      <div class="form-group">
+          <label>
+            تفاصيل الطلب
+          </label>
 
-        <label>
-          تفاصيل الطلب
-        </label>
-
-        <textarea
-          [(ngModel)]="newConv.firstMessage"
-          class="support-textarea"
-          rows="4"
-          placeholder="اكتب تفاصيل استفسارك أو شكواك هنا..."
-        ></textarea>
-
-      </div>
-
-
-      <!-- FILE UPLOAD -->
-
-      <div class="form-group">
-
-        <label>
-          إرفاق ملفات داعمة
-        </label>
-
-        <input
-          type="file"
-          #fileInput
-          hidden
-          accept=".pdf,.png,.jpg,.jpeg"
-          (change)="onFileSelected($event)"
-        />
-
-
-        <div
-          class="file-upload"
-          (click)="fileInput.click()"
-        >
-
-          <div class="upload-icon">
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-          </div>
-
-
-          <div class="upload-text">
-
-            @if (selectedFile) {
-
-              <strong>
-                {{ selectedFile.name }}
-              </strong>
-
-              <span>
-                {{ formatFileSize(selectedFile.size) }}
-              </span>
-
-            }
-
-            @else {
-
-              <strong>
-                اسحب وأفلت المستندات والصور هنا، أو
-              </strong>
-
-              <span>
-                انقر للاختيار (اختياري)
-              </span>
-
-            }
-
-          </div>
-
-
-          @if (selectedFile) {
-
-            <button
-              type="button"
-              class="remove-file"
-              aria-label="حذف الملف"
-              (click)="removeFile($event)"
-            >
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-
-          }
+          <textarea
+            [(ngModel)]="newConv.firstMessage"
+            class="support-textarea"
+            rows="4"
+            placeholder="اكتب تفاصيل استفسارك أو شكواك هنا..."
+          ></textarea>
 
         </div>
 
 
-        <p class="file-hint">
-          PDF, PNG, JPG — Max 10MB
-        </p>
+        <div class="form-group">
 
-      </div>
+          <label>
+            إرفاق ملفات داعمة
+          </label>
+
+          <input
+            type="file"
+            #fileInput
+            hidden
+            accept=".pdf,.png,.jpg,.jpeg,image/png,image/jpeg,application/pdf"
+            (change)="onFileSelected($event)"
+          />
+
+          <div
+            class="file-upload"
+            (click)="fileInput.click()"
+          >
+
+            <div class="upload-icon">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
 
 
-      <!-- SUBMIT -->
+            <div class="upload-text">
+
+              @if (selectedFile) {
+
+                <strong>
+                  {{ selectedFile.name }}
+                </strong>
+
+                <span>
+                  {{ formatFileSize(selectedFile.size) }}
+                </span>
+
+              }
+
+              @else {
+
+                <strong>
+                  اسحب وأفلت المستندات والصور هنا، أو
+                </strong>
+
+                <span>
+                  انقر للاختيار (اختياري)
+                </span>
+
+              }
+
+            </div>
+
+
+            @if (selectedFile) {
+
+              <button
+                type="button"
+                class="remove-file"
+                aria-label="حذف الملف"
+                (click)="removeFile($event)"
+              >
+
+                <i class="fa-solid fa-xmark"></i>
+
+              </button>
+
+            }
+
+          </div>
+
+          <p class="file-hint">
+            PDF, PNG, JPG, JPEG — Max 10MB
+          </p>
+
+        </div>
+
+      }
+
+
+      <!-- =====================================================
+           SUBMIT
+           ===================================================== -->
 
       <button
         type="button"
         class="submit-button"
         [disabled]="
+          !newConv.receiverType ||
           isSubmitting() ||
           !canSubmit()
         "
@@ -544,8 +852,6 @@
 
 <style>
 
-/* PAGE */
-
 .support-page {
   width: 100%;
   max-width: 1400px;
@@ -558,9 +864,6 @@
   flex-direction: column;
   overflow: hidden;
 }
-
-
-/* HEADER */
 
 .support-header {
   flex-shrink: 0;
@@ -581,7 +884,9 @@
 }
 
 
-/* ALERT MESSAGES */
+/* =========================================================
+   MESSAGES
+   ========================================================= */
 
 .message {
   flex-shrink: 0;
@@ -606,11 +911,6 @@
   justify-content: center;
   flex-shrink: 0;
   border-radius: 50%;
-  font-weight: 700;
-}
-
-.message > span i {
-  font-size: 10px;
 }
 
 .error-message {
@@ -618,21 +918,15 @@
   color: #dc2626;
 }
 
-.error-message > span {
-  background: #ffdcdc;
-}
-
 .success-message {
   background: #eaf8f5;
   color: #0d9488;
 }
 
-.success-message > span {
-  background: #d0f0ea;
-}
 
-
-/* MAIN CONTENT */
+/* =========================================================
+   MAIN LAYOUT
+   ========================================================= */
 
 .support-main-layout {
   flex: 1;
@@ -644,7 +938,9 @@
 }
 
 
-/* CONVERSATION SECTION */
+/* =========================================================
+   CONVERSATIONS SECTION
+   ========================================================= */
 
 .conversation-section {
   min-width: 0;
@@ -656,7 +952,9 @@
 }
 
 
-/* CONVERSATION LIST */
+/* =========================================================
+   CONVERSATION LIST
+   ========================================================= */
 
 .conversation-list {
   min-width: 0;
@@ -670,9 +968,6 @@
   border-radius: 15px;
   box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
 }
-
-
-/* LIST HEADER */
 
 .list-header {
   flex-shrink: 0;
@@ -707,19 +1002,22 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.18);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.25);
   font-size: 11px;
   font-weight: 700;
 }
 
-
-/* CONVERSATION ITEMS */
-
 .conversation-items {
+  position: relative;
+
   flex: 1;
   min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
   overflow-y: auto;
   overflow-x: hidden;
+
   padding: 7px;
 }
 
@@ -777,58 +1075,89 @@
 
 .conversation-arrow {
   color: #0066cc;
-  font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.conversation-arrow i {
-  font-size: 11px;
-}
 
-
-/* EMPTY */
+/* =========================================================
+   RIGHT CARD EMPTY CONTENT
+   ========================================================= */
 
 .empty-conversations {
-  min-height: 250px;
+  position: absolute;
+
+  top: 145px;
+  right: 7px;
+  left: 7px;
+
   display: flex;
   flex-direction: column;
+
   align-items: center;
-  justify-content: center;
+
   gap: 5px;
-  padding: 20px;
+
+  padding: 0 20px;
+
+  box-sizing: border-box;
+
   color: #8c98a5;
+
   text-align: center;
 }
 
 .empty-icon {
   width: 50px;
   height: 50px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 4px;
+
+  margin-bottom: 18px;
+
   border-radius: 50%;
+
   background: #eef2ff;
+
   color: #0066cc;
 }
 
 .empty-icon i {
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .empty-conversations strong {
-  color: #475569;
-  font-size: 11px;
+  display: block;
+
+  margin: 0 0 8px;
+
+  color: #8c98a5;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  line-height: 1.5;
 }
 
 .empty-conversations span {
-  font-size: 9px;
+  display: block;
+
+  margin: 0;
+
+  color: #8c98a5;
+
+  font-size: 14px;
+
+  line-height: 1.7;
 }
 
 
-/* CHAT DETAIL */
+/* =========================================================
+   CONVERSATION DETAIL
+   ========================================================= */
 
 .conversation-detail {
   min-width: 0;
@@ -847,7 +1176,6 @@
   flex-shrink: 0;
   padding: 15px 18px;
   border-bottom: 1px solid #edf0f4;
-  background: #fff;
 }
 
 .conversation-detail-header h3 {
@@ -861,20 +1189,23 @@
   font-size: 10px;
 }
 
-
-/* MESSAGES */
+.conversation-receiver {
+  display: block;
+  margin-top: 4px;
+  color: #0066cc;
+  font-size: 9px;
+  font-weight: 600;
+}
 
 .messages-container {
   flex: 1;
   min-height: 0;
-  max-height: none;
   display: flex;
   flex-direction: column;
   gap: 9px;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 16px;
-  scroll-behavior: smooth;
 }
 
 .message-bubble {
@@ -912,16 +1243,12 @@
   font-size: 11px;
 }
 
-
-/* REPLY */
-
 .reply-area {
   flex-shrink: 0;
   display: flex;
   gap: 7px;
   padding: 11px 14px;
   border-top: 1px solid #edf0f4;
-  background: #fff;
 }
 
 .reply-input {
@@ -956,102 +1283,156 @@
   cursor: pointer;
 }
 
-.reply-button i {
-  font-size: 10px;
-}
-
 .reply-button:disabled {
   background: #b8c7d9;
   cursor: not-allowed;
 }
 
 
-/* PLACEHOLDER */
+/* =========================================================
+   CENTER CARD EMPTY CONTENT
+   ========================================================= */
 
 .conversation-placeholder {
+  position: relative;
+
   flex: 1;
   min-height: 0;
+
+  padding: 0;
+
+  box-sizing: border-box;
+}
+
+.conversation-placeholder-content {
+  position: absolute;
+
+  top: 235px;
+  right: 20px;
+  left: 20px;
+
   display: flex;
   flex-direction: column;
+
   align-items: center;
-  justify-content: center;
-  padding: 20px;
-  color: #8c98a5;
+
   text-align: center;
+
+  color: #8c98a5;
 }
 
 .placeholder-icon {
   width: 50px;
   height: 50px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 9px;
+
+  margin: 0 0 18px;
+
   border-radius: 50%;
+
   background: #eef2ff;
+
   color: #0066cc;
-  font-size: 20px;
 }
 
 .placeholder-icon i {
-  font-size: 21px;
+  font-size: 20px;
 }
 
-.conversation-placeholder h3 {
-  margin: 0 0 5px;
-  color: #475569;
-  font-size: 13px;
+.conversation-placeholder-content h3 {
+  width: 100%;
+
+  margin: 0 0 18px;
+
+  color: #8c98a5;
+
+  font-size: 18px;
+
+  font-weight: 700;
+
+  line-height: 1.5;
+
+  text-align: center;
 }
 
-.conversation-placeholder p {
-  max-width: 280px;
+.conversation-placeholder-content p {
+  width: 100%;
+
+  max-width: 500px;
+
   margin: 0;
-  font-size: 10px;
+
+  color: #8c98a5;
+
+  font-size: 15px;
+
   line-height: 1.7;
+
+  text-align: center;
 }
 
 
-/* SUPPORT CARD */
+/* =========================================================
+   SUPPORT CARD
+   ========================================================= */
 
 .support-card {
   min-width: 0;
   min-height: 0;
+
   height: 600px;
+
   overflow-y: auto;
   overflow-x: hidden;
+
   box-sizing: border-box;
+
   padding: 22px 25px;
+
   background: #fff;
+
   border: 1px solid #e7ebf0;
+
   border-radius: 15px;
+
   box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
 }
 
-
-/* FORM HEADER */
-
 .support-title-row {
   margin: -22px -25px 18px;
+
   padding: 15px 20px;
+
   background: #0066cc;
+
   border-radius: 15px 15px 0 0;
 }
 
 .support-title {
   margin: 0 0 4px;
+
   color: #fff;
+
   font-size: 17px;
+
   font-weight: 700;
 }
 
 .support-description {
   margin: 0;
+
   color: rgba(255, 255, 255, 0.78);
+
   font-size: 10px;
 }
 
 
-/* FORM */
+/* =========================================================
+   FORM
+   ========================================================= */
 
 .form-group {
   margin-bottom: 13px;
@@ -1059,238 +1440,426 @@
 
 .form-group label {
   display: block;
+
   margin-bottom: 6px;
+
   color: #475569;
+
   font-size: 11px;
+
   font-weight: 600;
 }
 
-
-/* SELECT */
-
-.support-select {
-  width: 100%;
-  height: 40px;
-  padding: 0 12px;
-  border: 1px solid #dfe5e8;
-  border-radius: 8px;
-  background: #fff;
-  color: #334155;
-  font-family: inherit;
-  font-size: 11px;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.support-select:focus {
-  border-color: #0066cc;
-  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.08);
-}
-
+.support-select,
 .support-input {
   width: 100%;
+
   height: 40px;
+
   padding: 0 12px;
+
   border: 1px solid #dfe5e8;
+
   border-radius: 8px;
+
   background: #fff;
+
   color: #334155;
+
   font-family: inherit;
+
   font-size: 11px;
+
   outline: none;
+
   box-sizing: border-box;
 }
 
-.support-input:focus {
+.support-select:focus,
+.support-input:focus,
+.support-textarea:focus {
   border-color: #0066cc;
+
   box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.08);
 }
-
-.support-input:disabled {
-  background: #f8fafc;
-  color: #94a3b8;
-  cursor: not-allowed;
-}
-
-.receiver-select {
-  cursor: pointer;
-}
-
-.conversation-receiver {
-  display: block;
-  margin-top: 4px;
-  color: #0066cc;
-  font-size: 9px;
-  font-weight: 600;
-}
-
-
-/* TEXTAREA */
 
 .support-textarea {
   width: 100%;
+
   height: 82px;
+
   min-height: 82px;
+
   padding: 9px 12px;
+
   border: 1px solid #dfe5e8;
+
   border-radius: 8px;
+
   background: #fff;
+
   color: #334155;
+
   font-family: inherit;
+
   font-size: 11px;
+
   line-height: 1.6;
+
   outline: none;
+
   resize: none;
+
   box-sizing: border-box;
 }
 
-.support-textarea:focus {
+
+/* =========================================================
+   ATTACHMENT
+   ========================================================= */
+
+.attachment-box {
+  width: 100%;
+
+  min-height: 62px;
+
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 9px 12px;
+
+  border: 1px dashed #cbd6e5;
+
+  border-radius: 8px;
+
+  background: #fbfcff;
+
+  cursor: pointer;
+
+  box-sizing: border-box;
+}
+
+.attachment-box:hover {
   border-color: #0066cc;
-  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.08);
+
+  background: #f5f8ff;
+}
+
+.attachment-icon {
+  width: 34px;
+
+  height: 34px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 8px;
+
+  background: #eef2ff;
+
+  color: #0066cc;
+}
+
+.attachment-text {
+  min-width: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+.attachment-text strong {
+  color: #475569;
+
+  font-size: 10px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.attachment-text span {
+  color: #8c98a5;
+
+  font-size: 9px;
+}
+
+.remove-attachment {
+  position: absolute;
+
+  left: 8px;
+
+  top: 8px;
+
+  width: 22px;
+
+  height: 22px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background: #fff0f0;
+
+  color: #dc2626;
+
+  cursor: pointer;
 }
 
 
-/* FILE */
+/* =========================================================
+   AUTHORITY FILE
+   ========================================================= */
 
 .file-upload {
   min-height: 65px;
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   gap: 10px;
+
   position: relative;
+
   padding: 9px 14px;
+
   border: 1.5px dashed #cbd6e5;
+
   border-radius: 9px;
+
   background: #fbfcff;
+
   cursor: pointer;
+
   box-sizing: border-box;
+
   transition: 0.2s;
 }
 
 .file-upload:hover {
   border-color: #0066cc;
+
   background: #f5f8ff;
 }
 
 .upload-icon {
   width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: 8px;
-  background: #eef2ff;
-  color: #0066cc;
-}
 
-.upload-icon i {
-  font-size: 17px;
+  height: 34px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 8px;
+
+  background: #eef2ff;
+
+  color: #0066cc;
 }
 
 .upload-text {
   display: flex;
+
   flex-direction: column;
+
   gap: 2px;
-  text-align: right;
 }
 
 .upload-text strong {
   color: #475569;
+
   font-size: 10px;
 }
 
 .upload-text span {
   color: #0066cc;
+
   font-size: 9px;
-  font-weight: 600;
 }
 
 .remove-file {
   position: absolute;
-  left: 8px;
-  top: 8px;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 50%;
-  background: #fff0f0;
-  color: #dc2626;
-  font-size: 14px;
-  cursor: pointer;
-}
 
-.remove-file i {
-  font-size: 10px;
+  left: 8px;
+
+  top: 8px;
+
+  width: 22px;
+
+  height: 22px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background: #fff0f0;
+
+  color: #dc2626;
+
+  cursor: pointer;
 }
 
 .file-hint {
   margin: 4px 0 0;
+
   color: #9aa5af;
+
   font-size: 8px;
 }
 
 
-/* SUBMIT */
+/* =========================================================
+   SUBMIT
+   ========================================================= */
 
 .submit-button {
   width: 100%;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  margin-top: 4px;
-  border: none;
-  border-radius: 8px;
-  background: #0066cc;
-  color: #fff;
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.2s;
-}
 
-.submit-button i {
-  font-size: 10px;
+  height: 40px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 7px;
+
+  margin-top: 4px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: #0066cc;
+
+  color: #fff;
+
+  font-family: inherit;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.2s;
 }
 
 .submit-button:hover:not(:disabled) {
   background: #0052a3;
+
   transform: translateY(-1px);
 }
 
 .submit-button:disabled {
   background: #b8c7d9;
+
   cursor: not-allowed;
+
   opacity: .85;
 }
 
-
-/* LOADER */
-
 .loader {
   width: 13px;
+
   height: 13px;
+
   border: 2px solid rgba(255, 255, 255, .35);
+
   border-top-color: #fff;
+
   border-radius: 50%;
+
   animation: spin .7s linear infinite;
 }
 
 @keyframes spin {
+
   to {
     transform: rotate(360deg);
   }
+
 }
 
 
-/* SCROLLBAR */
+/* =========================================================
+   LEFT CARD INITIAL CONTENT
+   نفس مستوى باقي البطاقات
+   ========================================================= */
+
+.support-card.receiver-only {
+  position: relative;
+
+  display: block;
+}
+
+.support-card.receiver-only .support-title-row {
+  flex-shrink: 0;
+}
+
+.support-card.receiver-only .receiver-form-group {
+  position: absolute;
+
+  top: 235px;
+
+  right: 25px;
+
+  left: 25px;
+
+  margin: 0;
+}
+
+.support-card.receiver-only .submit-button {
+  position: absolute;
+
+  top: 315px;
+
+  right: 25px;
+
+  width: calc(100% - 50px);
+
+  margin: 0;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
 
 .conversation-items::-webkit-scrollbar,
 .messages-container::-webkit-scrollbar,
@@ -1308,6 +1877,7 @@
 .messages-container::-webkit-scrollbar-thumb,
 .support-card::-webkit-scrollbar-thumb {
   background: #d4dce8;
+
   border-radius: 10px;
 }
 
@@ -1315,19 +1885,27 @@
 .messages-container,
 .support-card {
   scrollbar-width: thin;
+
   scrollbar-color: #d4dce8 transparent;
 }
 
 
-/* RESPONSIVE */
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
 
 @media (min-width: 1500px) {
+
   .support-page {
     max-width: 1500px;
+
     padding-left: 35px;
+
     padding-right: 35px;
   }
+
 }
+
 
 @media (max-width: 1100px) {
 
@@ -1337,11 +1915,13 @@
 
   .support-main-layout {
     grid-template-columns: 1.35fr 1fr;
+
     gap: 12px;
   }
 
   .conversation-section {
     grid-template-columns: 270px minmax(0, 1fr);
+
     gap: 10px;
   }
 
@@ -1350,24 +1930,31 @@
   .support-card {
     height: 560px;
   }
+
 }
+
 
 @media (max-width: 850px) {
 
   .support-page {
     height: auto;
+
     min-height: 100vh;
+
     overflow: visible;
   }
 
   .support-main-layout {
     grid-template-columns: 1fr;
+
     overflow: visible;
   }
 
   .conversation-section {
     grid-template-columns: 1fr;
+
     min-height: auto;
+
     overflow: visible;
   }
 
@@ -1377,19 +1964,16 @@
 
   .conversation-detail {
     height: 450px;
+
     min-height: 450px;
   }
 
-  .messages-container {
-    max-height: none;
+  .support-card {
+    height: 560px;
   }
 
-  .support-card {
-    height: auto;
-    max-height: none;
-    overflow: visible;
-  }
 }
+
 
 @media (max-width: 600px) {
 
@@ -1411,12 +1995,13 @@
 
   .conversation-detail {
     height: 430px;
+
     min-height: 430px;
   }
 
   .message-bubble {
     max-width: 85%;
   }
-}
 
+}
 </style>
