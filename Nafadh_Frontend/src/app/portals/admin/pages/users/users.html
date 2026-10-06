@@ -160,11 +160,10 @@
           <td>{{ (u.createdAt | date:'dd/MM/yyyy') || '---' }}</td>
           <td>
             <div class="action-buttons-wrapper">
-              <button class="btn-action password-btn" (click)="openResetPasswordModal(u)">
-                كلمة المرور
-              </button>
-              <button class="btn-action edit-btn" (click)="openEditModal(u)">
-                تعديل البيانات
+              
+              <!-- معدّل: زر تفاصيل المستخدم بدل زر تعديل البيانات -->
+              <button class="btn-action details-btn" (click)="openDetailsModal(u)">
+                تفاصيل المستخدم
               </button>
             </div>
           </td>
@@ -347,7 +346,7 @@
 </div>
 }
 
-<!-- مودال تعديل البيانات -->
+<!-- مودال تعديل البيانات (موجود بالكود، بدون زر يفتحه من الجدول حاليًا) -->
 @if (isEditModalOpen) {
 <div class="nfd-modal-bg">
   <div class="nfd-modal">
@@ -511,6 +510,76 @@
       <button type="button" class="nfd-btn secondary" (click)="closeResetPasswordModal()">إلغاء</button>
       <button type="button" class="nfd-btn primary-teal" (click)="confirmResetPassword()"
         [disabled]="!isResetPasswordValid()" [class.btn-disabled]="!isResetPasswordValid()">حفظ</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- جديد: مودال تفاصيل المستخدم (قراءة فقط) -->
+@if (isDetailsModalOpen) {
+<div class="nfd-modal-bg" (click)="closeDetailsModal()">
+  <div class="nfd-modal details-modal" (click)="$event.stopPropagation()">
+    <div class="details-header">
+      <img class="details-avatar" [src]="getAvatarUrl(detailsUser)" [alt]="detailsUser.fullName" />
+      <div class="details-header-info">
+        <h3>{{ detailsUser.fullName }}</h3>
+        <span class="nfd-badge role {{ getRoleClass(detailsUser.roleName || detailsUser.roleId) }}">
+          {{ getRoleArabicName(detailsUser.roleName || detailsUser.roleId) }}
+        </span>
+      </div>
+    </div>
+
+    <div class="details-grid">
+      <div class="details-item">
+        <span class="details-label">البريد الإلكتروني</span>
+        <span class="details-value">{{ detailsUser.email || '---' }}</span>
+      </div>
+
+      <div class="details-item">
+        <span class="details-label">رقم الهاتف</span>
+        <span class="details-value">{{ detailsUser.phone || 'غير مسجل' }}</span>
+      </div>
+
+      <div class="details-item">
+        <span class="details-label">حالة الحساب</span>
+        <span
+          class="nfd-badge status"
+          [class.active]="(detailsUser.status | lowercase) !== 'suspended'"
+          [class.suspended]="(detailsUser.status | lowercase) === 'suspended'">
+          {{ (detailsUser.status | lowercase) === 'suspended' ? 'موقوف' : 'نشط' }}
+        </span>
+      </div>
+
+      <div class="details-item">
+        <span class="details-label">تاريخ إنشاء الحساب</span>
+        <span class="details-value">{{ (detailsUser.createdAt | date:'dd/MM/yyyy') || '---' }}</span>
+      </div>
+
+      <div class="details-item">
+        <span class="details-label">User ID</span>
+        <span class="details-value mono">{{ detailsUser.userId }}</span>
+      </div>
+
+      <div class="details-item">
+        <span class="details-label">Role ID</span>
+        <span class="details-value mono">{{ detailsUser.roleId }}</span>
+      </div>
+
+      <div class="details-item">
+        <span class="details-label">عدد الصلاحيات</span>
+        <span class="details-value">{{ getRolePermissionsCount(detailsUser.roleName || detailsUser.roleId) }} صلاحية</span>
+      </div>
+    </div>
+
+    <div class="details-permissions-box">
+      <div class="details-label">وصف صلاحيات الدور</div>
+      <p class="details-permissions-text">
+        {{ getRolePermissionsDescription(detailsUser.roleName || detailsUser.roleId) }}
+      </p>
+    </div>
+
+    <div class="nfd-modal-actions">
+      <button type="button" class="nfd-btn secondary" (click)="closeDetailsModal()">إغلاق</button>
     </div>
   </div>
 </div>

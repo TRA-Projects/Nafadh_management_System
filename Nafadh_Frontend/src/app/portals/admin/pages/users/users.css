@@ -765,3 +765,103 @@
   font-size: 0.85rem;
   font-weight: 500;
 }
+
+/* جديد: رسالة النجاح داخل النافذة (بديل alert) */
+.nfd-inline-success {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* جديد: زر "تفاصيل المستخدم" بنفس أسلوب الأزرار الموجودة */
+.btn-action.details-btn:hover {
+  background-color: #0A1172 !important;
+  border-color: #0A1172 !important;
+  color: #ffffff !important;
+}
+
+/* =========================================================
+   جديد: نافذة تفاصيل المستخدم
+   ========================================================= */
+
+.details-modal {
+  max-width: 480px;
+}
+
+.details-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 16px;
+}
+
+.details-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #0A1172;
+  flex-shrink: 0;
+}
+
+.details-header-info h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.details-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.details-label {
+  font-size: 0.76rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.details-value {
+  font-size: 0.9rem;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.details-value.mono {
+  font-family: 'Courier New', monospace;
+  direction: ltr;
+  text-align: right;
+}
+
+.details-permissions-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+
+.details-permissions-text {
+  font-size: 0.85rem;
+  color: #334155;
+  line-height: 1.7;
+  margin: 6px 0 0;
+}

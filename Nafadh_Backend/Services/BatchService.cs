@@ -69,14 +69,21 @@ namespace Nafadh_Backend.Services
             var batch = await _repository.GetByIdAsync(id);
             if (batch == null) return false;
 
+            // 1. تحديث اسم الدفعة
             if (!string.IsNullOrEmpty(dto.BatchName))
             {
                 batch.BatchName = dto.BatchName;
             }
 
+            // 2. تحديث البرنامج (ومعه سيتغير المسار والشركة تلقائياً)
+            if (dto.ProgramId > 0)
+            {
+                batch.ProgramId = dto.ProgramId;
+            }
+
             batch.StartDate = dto.StartDate;
             batch.EndDate = dto.EndDate;
-            batch.Capacity = dto.Capacity;
+            batch.Capacity = (int)dto.Capacity;
             batch.Status = dto.Status;
 
             await _repository.UpdateAsync(batch);
