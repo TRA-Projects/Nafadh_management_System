@@ -1,4 +1,3 @@
-
 import {
   Component,
   OnInit,
@@ -1603,49 +1602,67 @@ export class TraineeProgram implements OnInit {
 
     if (module.isLocked) {
 
-      console.warn(
-        '🔒 Module is locked'
+      this.showNotification(
+        'هذه الوحدة مقفلة حاليًا.',
+        'error'
       );
 
       return;
     }
 
+    const lessonId =
+      Number(lesson.lessonId);
+
+    if (
+      !lessonId ||
+      Number.isNaN(lessonId)
+    ) {
+
+      this.showNotification(
+        'معرف الدرس غير صالح.',
+        'error'
+      );
+
+      return;
+    }
 
     const batchId =
       this.batchId();
 
+    if (
+      !batchId ||
+      Number.isNaN(Number(batchId))
+    ) {
 
-    if (!batchId) {
-
-      console.warn(
-        '⚠️ Batch ID is missing'
+      this.showNotification(
+        'لم يتم العثور على الدفعة.',
+        'error'
       );
-
-
-      alert(
-        'لم يتم العثور على الدفعة.'
-      );
-
 
       return;
     }
 
+    console.log(
+      '🎓 Opening lesson:',
+      {
+        lessonId,
+        batchId,
+        lesson
+      }
+    );
 
     const sessions =
       this.sessions();
 
-
-    if (sessions.length) {
+    if (sessions.length > 0) {
 
       this.findAndOpenSession(
         sessions,
         lesson
       );
 
-
       return;
     }
-
 
     this.api
       .getSessionsByBatch(batchId)
@@ -1659,23 +1676,18 @@ export class TraineeProgram implements OnInit {
               data
             );
 
-
             const sessionData =
               data ?? [];
-
 
             this.sessions.set(
               sessionData
             );
 
-
             this.findAndOpenSession(
               sessionData,
               lesson
             );
-
           },
-
 
         error:
           error => {
@@ -1685,9 +1697,9 @@ export class TraineeProgram implements OnInit {
               error
             );
 
-
-            alert(
-              'تعذر تحميل جلسات الدرس حاليًا.'
+            this.showNotification(
+              'تعذر تحميل جلسات الدرس حاليًا.',
+              'error'
             );
 
           }
@@ -1697,7 +1709,7 @@ export class TraineeProgram implements OnInit {
 
 
   // =====================================================
-  // FIND SESSION + GET SESSION DETAILS
+  // FIND SESSION + OPEN LESSON
   // =====================================================
 
   private findAndOpenSession(
@@ -1705,28 +1717,103 @@ export class TraineeProgram implements OnInit {
     lesson: LessonWithProgressDto
   ): void {
 
-    if (!sessions.length) {
+    if (!sessions || sessions.length === 0) {
 
-      alert(
-        'لا توجد جلسات متاحة لهذا الدرس حاليًا.'
+      this.showNotification(
+        'لا توجد جلسات متاحة لهذا الدرس حاليًا.',
+        'error'
       );
 
       return;
     }
 
+    const lessonId =
+      Number(lesson.lessonId);
+
+    console.log(
+      '🔎 Searching session for lesson:',
+      lessonId
+    );
+
+    console.log(
+      '📚 Available sessions:',
+      sessions
+    );
+
+
+    /*
+     * Try to find a session directly related
+     * to the selected lesson.
+     *
+     * Different DTO versions may use different
+     * property names, so we check the common ones.
+     */
+
+    const lessonSessions =
+      sessions.filter(
+        session => {
+
+          const sessionData =
+            session as any;
+
+          const relatedLessonId =
+            Number(
+              sessionData.lessonId ??
+              sessionData.LessonId ??
+              sessionData.lesson?.lessonId ??
+              sessionData.Lesson?.lessonId
+            );
+
+          return (
+            relatedLessonId === lessonId
+          );
+
+        }
+      );
+
+
+    console.log(
+      '🎯 Sessions for selected lesson:',
+      lessonSessions
+    );
+
+
+    /*
+     * If there are lesson-specific sessions,
+     * use them.
+     *
+     * Otherwise fallback to the available sessions.
+     */
+
+    const availableSessions =
+      lessonSessions.length > 0
+        ? lessonSessions
+        : sessions;
+
 
     const selectedSession =
-      sessions.find(
+      availableSessions.find(
         session =>
-          session.status === 'Scheduled'
-      ) ??
-      sessions.find(
+          String(session.status ?? '')
+            .toLowerCase() === 'scheduled' &&
+          !!session.meetingLink
+      )
+      ??
+      availableSessions.find(
         session =>
           !!session.meetingLink
-      ) ??
-      sessions.find(
+      )
+      ??
+      availableSessions.find(
         session =>
-          session.status === 'Completed'
+          String(session.status ?? '')
+            .toLowerCase() === 'completed' &&
+          !!session.recordingUrl
+      )
+      ??
+      availableSessions.find(
+        session =>
+          !!session.recordingUrl
       );
 
 
@@ -1736,20 +1823,17 @@ export class TraineeProgram implements OnInit {
     ) {
 
       console.warn(
-        '⚠️ No valid session found',
+        '⚠️ No valid session found for lesson:',
         {
-          lessonId:
-            lesson.lessonId,
-
+          lessonId,
           sessions
         }
       );
 
-
-      alert(
-        'لا توجد جلسة مرتبطة بهذا الدرس حاليًا.'
+      this.showNotification(
+        'لا يوجد رابط حضور أو تسجيل متاح لهذا الدرس حاليًا.',
+        'error'
       );
-
 
       return;
     }
@@ -1766,26 +1850,24 @@ export class TraineeProgram implements OnInit {
       Number.isNaN(sessionId)
     ) {
 
-      console.warn(
-        '⚠️ Invalid sessionId:',
-        selectedSession
+      this.showNotification(
+        'معرف الجلسة غير صالح.',
+        'error'
       );
-
-
-      alert(
-        'معرف الجلسة غير صالح.'
-      );
-
 
       return;
     }
 
 
     console.log(
-      '🎯 Selected Session ID:',
-      sessionId
+      '🎯 Selected Session:',
+      selectedSession
     );
 
+
+    /*
+     * Load full session details.
+     */
 
     this.api
       .getSession(sessionId)
@@ -1800,8 +1882,18 @@ export class TraineeProgram implements OnInit {
             );
 
 
+            const status =
+              String(
+                session.status ?? ''
+              ).toLowerCase();
+
+
+            /*
+             * Scheduled session
+             */
+
             if (
-              session.status === 'Scheduled' &&
+              status === 'scheduled' &&
               session.meetingLink
             ) {
 
@@ -1818,12 +1910,19 @@ export class TraineeProgram implements OnInit {
               );
 
 
+              this.markLessonAsViewed(
+                lesson.lessonId
+              );
+
               return;
             }
 
 
+            /*
+             * Completed session / recording
+             */
+
             if (
-              session.status === 'Completed' &&
               session.recordingUrl
             ) {
 
@@ -1840,16 +1939,24 @@ export class TraineeProgram implements OnInit {
               );
 
 
+              this.markLessonAsViewed(
+                lesson.lessonId
+              );
+
               return;
             }
 
+
+            /*
+             * Meeting link fallback
+             */
 
             if (
               session.meetingLink
             ) {
 
               console.log(
-                '🎥 Opening available meeting link:',
+                '🎥 Opening meeting link:',
                 session.meetingLink
               );
 
@@ -1861,44 +1968,17 @@ export class TraineeProgram implements OnInit {
               );
 
 
-              return;
-            }
-
-
-            if (
-              session.recordingUrl
-            ) {
-
-              console.log(
-                '🎬 Opening available recording:',
-                session.recordingUrl
+              this.markLessonAsViewed(
+                lesson.lessonId
               );
-
-
-              window.open(
-                session.recordingUrl,
-                '_blank',
-                'noopener,noreferrer'
-              );
-
 
               return;
             }
 
 
-            console.warn(
-              '⚠️ No meetingLink or recordingUrl available',
-              {
-                lessonId:
-                  lesson.lessonId,
-
-                session
-              }
-            );
-
-
-            alert(
-              'لا يوجد رابط حضور أو تسجيل متاح لهذه الجلسة حاليًا.'
+            this.showNotification(
+              'لا يوجد رابط حضور أو تسجيل متاح لهذه الجلسة حاليًا.',
+              'error'
             );
 
           },
@@ -1913,13 +1993,80 @@ export class TraineeProgram implements OnInit {
             );
 
 
-            alert(
-              'تعذر تحميل بيانات الجلسة حاليًا.'
+            this.showNotification(
+              'تعذر تحميل بيانات الجلسة حاليًا.',
+              'error'
             );
 
           }
 
       });
+  }
+
+
+  // =====================================================
+  // MARK LESSON AS VIEWED
+  // FRONTEND ONLY
+  // =====================================================
+
+  private markLessonAsViewed(
+    lessonId: number
+  ): void {
+
+    const id =
+      Number(lessonId);
+
+    if (
+      !id ||
+      Number.isNaN(id)
+    ) {
+      return;
+    }
+
+
+    this.modules.update(
+      modules =>
+        modules.map(
+          module => ({
+
+            ...module,
+
+            lessons:
+              module.lessons?.map(
+                lesson =>
+
+                  Number(lesson.lessonId) === id
+
+                    ? {
+                        ...lesson,
+                        progressPercentage: 100
+                      }
+
+                    : lesson
+              )
+
+          })
+        )
+    );
+
+
+    /*
+     * Recalculate frontend statistics
+     */
+
+    this.calculateStats();
+
+
+    this.showNotification(
+      'تم فتح الدرس بنجاح.',
+      'success'
+    );
+
+
+    console.log(
+      '✅ Lesson marked as viewed:',
+      id
+    );
   }
 
 
@@ -2069,228 +2216,233 @@ export class TraineeProgram implements OnInit {
   lessonRating =
     signal(0);
 
-    lessonFeedbackExists =
-  signal(false);
+  lessonFeedbackExists =
+    signal(false);
 
-lessonFeedbackLoading =
-  signal(false);
+  lessonFeedbackLoading =
+    signal(false);
 
- // =====================================================
-// OPEN LESSON NOTES
-// =====================================================
 
-openLessonNotes(
-  lesson: LessonWithProgressDto,
-  module: ModuleWithLessonsDto
-): void {
-
-  if (module.isLocked) {
-
-    console.warn(
-      '🔒 Module is locked'
-    );
-
-    return;
-  }
-
-  if (lesson.progressPercentage !== 100) {
-
-    this.showNotification(
-      'يجب مشاهدة الدرس أولاً قبل إضافة ملاحظة.',
-      'error'
-    );
-
-    return;
-  }
-
-  this.selectedLesson.set(
-    lesson
-  );
-
-  this.selectedModule.set(
-    module
-  );
-
-  this.lessonSidebarTab.set(
-    'notes'
-  );
-
-  this.loadLessonFeedback(
-    lesson.lessonId
-  );
-
-  this.showLessonSidebar.set(
-    true
-  );
-}
   // =====================================================
-// OPEN LESSON RATING
-// =====================================================
+  // OPEN LESSON NOTES
+  // =====================================================
 
-openLessonRating(
-  lesson: LessonWithProgressDto,
-  module: ModuleWithLessonsDto
-): void {
+  openLessonNotes(
+    lesson: LessonWithProgressDto,
+    module: ModuleWithLessonsDto
+  ): void {
 
-  if (module.isLocked) {
+    if (module.isLocked) {
 
-    console.warn(
-      '🔒 Module is locked'
+      console.warn(
+        '🔒 Module is locked'
+      );
+
+      return;
+    }
+
+
+    if (lesson.progressPercentage !== 100) {
+
+      this.showNotification(
+        'يجب مشاهدة الدرس أولاً قبل إضافة ملاحظة.',
+        'error'
+      );
+
+      return;
+    }
+
+
+    this.selectedLesson.set(
+      lesson
     );
 
-    return;
-  }
-
-  if (lesson.progressPercentage !== 100) {
-
-    this.showNotification(
-      'يجب مشاهدة الدرس أولاً قبل تقييم الدرس.',
-      'error'
+    this.selectedModule.set(
+      module
     );
 
-    return;
-  }
-
-  this.selectedLesson.set(
-    lesson
-  );
-
-  this.selectedModule.set(
-    module
-  );
-
-  this.lessonSidebarTab.set(
-    'rating'
-  );
-
-  this.loadLessonFeedback(
-    lesson.lessonId
-  );
-
-  this.showLessonSidebar.set(
-    true
-  );
-}
-
-
-
-// =====================================================
-// LOAD LESSON FEEDBACK
-// GET /api/LessonFeedback/lesson/{lessonId}
-// =====================================================
-
-private loadLessonFeedback(
-  lessonId: number
-): void {
-
-  const id =
-    Number(
-      lessonId
+    this.lessonSidebarTab.set(
+      'notes'
     );
 
-
-  if (
-    !id ||
-    Number.isNaN(id)
-  ) {
-
-    console.warn(
-      '⚠️ Invalid lesson ID:',
-      lessonId
+    this.loadLessonFeedback(
+      lesson.lessonId
     );
 
-    return;
+    this.showLessonSidebar.set(
+      true
+    );
   }
 
 
-  this.lessonFeedbackLoading.set(
-    true
-  );
+  // =====================================================
+  // OPEN LESSON RATING
+  // =====================================================
+
+  openLessonRating(
+    lesson: LessonWithProgressDto,
+    module: ModuleWithLessonsDto
+  ): void {
+
+    if (module.isLocked) {
+
+      console.warn(
+        '🔒 Module is locked'
+      );
+
+      return;
+    }
 
 
-  this.api
-    .getLessonFeedback(id)
-    .subscribe({
+    if (lesson.progressPercentage !== 100) {
 
-      next:
-        feedback => {
+      this.showNotification(
+        'يجب مشاهدة الدرس أولاً قبل تقييم الدرس.',
+        'error'
+      );
 
-          console.log(
-            '✅ Lesson Feedback:',
-            feedback
-          );
+      return;
+    }
 
 
-          this.lessonFeedbackExists.set(
-            true
-          );
+    this.selectedLesson.set(
+      lesson
+    );
+
+    this.selectedModule.set(
+      module
+    );
+
+    this.lessonSidebarTab.set(
+      'rating'
+    );
+
+    this.loadLessonFeedback(
+      lesson.lessonId
+    );
+
+    this.showLessonSidebar.set(
+      true
+    );
+  }
 
 
-          this.lessonNote.set(
-            feedback.note ?? ''
-          );
+  // =====================================================
+  // LOAD LESSON FEEDBACK
+  // GET /api/LessonFeedback/lesson/{lessonId}
+  // =====================================================
+
+  private loadLessonFeedback(
+    lessonId: number
+  ): void {
+
+    const id =
+      Number(
+        lessonId
+      );
 
 
-          this.lessonRating.set(
-            feedback.rating ?? 0
-          );
+    if (
+      !id ||
+      Number.isNaN(id)
+    ) {
+
+      console.warn(
+        '⚠️ Invalid lesson ID:',
+        lessonId
+      );
+
+      return;
+    }
 
 
-          this.lessonFeedbackLoading.set(
-            false
-          );
-        },
+    this.lessonFeedbackLoading.set(
+      true
+    );
 
 
-      error:
-        error => {
+    this.api
+      .getLessonFeedback(id)
+      .subscribe({
 
-          console.log(
-            'ℹ️ No existing feedback for lesson:',
-            id,
-            error
-          );
+        next:
+          feedback => {
 
+            console.log(
+              '✅ Lesson Feedback:',
+              feedback
+            );
 
-          /*
-           * 404 means the trainee has not submitted
-           * feedback for this lesson yet.
-           */
-
-          if (error?.status === 404) {
 
             this.lessonFeedbackExists.set(
-              false
+              true
             );
 
 
             this.lessonNote.set(
-              ''
+              feedback.note ?? ''
             );
 
 
             this.lessonRating.set(
-              0
+              feedback.rating ?? 0
             );
 
-          } else {
 
-            console.error(
-              '❌ Lesson Feedback API Error:',
+            this.lessonFeedbackLoading.set(
+              false
+            );
+          },
+
+
+        error:
+          error => {
+
+            console.log(
+              'ℹ️ No existing feedback for lesson:',
+              id,
               error
             );
 
+
+            /*
+             * 404 means the trainee has not submitted
+             * feedback for this lesson yet.
+             */
+
+            if (error?.status === 404) {
+
+              this.lessonFeedbackExists.set(
+                false
+              );
+
+
+              this.lessonNote.set(
+                ''
+              );
+
+
+              this.lessonRating.set(
+                0
+              );
+
+            } else {
+
+              console.error(
+                '❌ Lesson Feedback API Error:',
+                error
+              );
+
+            }
+
+
+            this.lessonFeedbackLoading.set(
+              false
+            );
           }
 
-
-          this.lessonFeedbackLoading.set(
-            false
-          );
-        }
-
-    });
-}
-
+      });
+  }
 
 
   // =====================================================
@@ -2307,46 +2459,47 @@ private loadLessonFeedback(
   }
 
 
-// =====================================================
-// CLOSE SIDEBAR
-// =====================================================
+  // =====================================================
+  // CLOSE SIDEBAR
+  // =====================================================
 
-closeLessonSidebar(): void {
+  closeLessonSidebar(): void {
 
-  this.showLessonSidebar.set(
-    false
-  );
-
-
-  this.selectedLesson.set(
-    null
-  );
+    this.showLessonSidebar.set(
+      false
+    );
 
 
-  this.selectedModule.set(
-    null
-  );
+    this.selectedLesson.set(
+      null
+    );
 
 
-  this.lessonNote.set(
-    ''
-  );
+    this.selectedModule.set(
+      null
+    );
 
 
-  this.lessonRating.set(
-    0
-  );
+    this.lessonNote.set(
+      ''
+    );
 
 
-  this.lessonFeedbackExists.set(
-    false
-  );
+    this.lessonRating.set(
+      0
+    );
 
 
-  this.lessonFeedbackLoading.set(
-    false
-  );
-}
+    this.lessonFeedbackExists.set(
+      false
+    );
+
+
+    this.lessonFeedbackLoading.set(
+      false
+    );
+  }
+
 
   // =====================================================
   // UPDATE NOTE
@@ -2367,155 +2520,156 @@ closeLessonSidebar(): void {
 
 
   // =====================================================
-// SAVE NOTE
-// =====================================================
+  // SAVE NOTE
+  // =====================================================
 
-saveLessonNote(): void {
+  saveLessonNote(): void {
 
-  const lesson =
-    this.selectedLesson();
-
-
-  if (!lesson) {
-    return;
-  }
-
-   if (lesson.progressPercentage !== 100) {
-
-  this.showNotification(
-    'يجب مشاهدة الدرس أولاً قبل إضافة ملاحظة.',
-    'error'
-  );
-
-  return;
-}
+    const lesson =
+      this.selectedLesson();
 
 
-  const note =
-    this.lessonNote().trim();
+    if (!lesson) {
+      return;
+    }
 
 
-  const rating =
-    this.lessonRating();
+    if (lesson.progressPercentage !== 100) {
+
+      this.showNotification(
+        'يجب مشاهدة الدرس أولاً قبل إضافة ملاحظة.',
+        'error'
+      );
+
+      return;
+    }
 
 
-  if (!note) {
+    const note =
+      this.lessonNote().trim();
 
-    this.showNotification(
-      'يرجى كتابة ملاحظتك أولاً.',
-      'error'
+
+    const rating =
+      this.lessonRating();
+
+
+    if (!note) {
+
+      this.showNotification(
+        'يرجى كتابة ملاحظتك أولاً.',
+        'error'
+      );
+
+      return;
+    }
+
+
+    const dto = {
+
+      note:
+        note,
+
+      rating:
+        rating > 0
+          ? rating
+          : null
+
+    };
+
+
+    console.log(
+      '📝 Saving lesson feedback:',
+      {
+        lessonId:
+          lesson.lessonId,
+
+        dto,
+
+        exists:
+          this.lessonFeedbackExists()
+      }
     );
 
-    return;
-  }
 
+    const request =
+      this.lessonFeedbackExists()
 
-  const dto = {
+        ? this.api.updateLessonFeedback(
+            lesson.lessonId,
+            dto
+          )
 
-    note:
-      note,
-
-    rating:
-      rating > 0
-        ? rating
-        : null
-
-  };
-
-
-  console.log(
-    '📝 Saving lesson feedback:',
-    {
-      lessonId:
-        lesson.lessonId,
-
-      dto,
-
-      exists:
-        this.lessonFeedbackExists()
-    }
-  );
-
-
-  const request =
-    this.lessonFeedbackExists()
-
-      ? this.api.updateLessonFeedback(
-          lesson.lessonId,
-          dto
-        )
-
-      : this.api.createLessonFeedback(
-          lesson.lessonId,
-          dto
-        );
-
-
-  request.subscribe({
-
-    next:
-      feedback => {
-
-        console.log(
-          '✅ Lesson feedback saved:',
-          feedback
-        );
-
-
-        this.lessonFeedbackExists.set(
-          true
-        );
-
-
-        this.lessonNote.set(
-          feedback.note ?? ''
-        );
-
-
-        this.lessonRating.set(
-          feedback.rating ?? 0
-        );
-
-
-        this.showNotification(
-          'تم حفظ ملاحظتك بنجاح.',
-          'success'
-        );
-
-
-        this.closeLessonSidebar();
-      },
-
-
-    error:
-      error => {
-
-        console.error(
-          '❌ Save Lesson Feedback Error:',
-          error
-        );
-
-
-        if (error?.status === 409) {
-
-          this.showNotification(
-            'الملاحظات لهذا الدرس موجودة مسبقًا، يرجى إعادة فتح الدرس.',
-            'error'
+        : this.api.createLessonFeedback(
+            lesson.lessonId,
+            dto
           );
 
-        } else {
+
+    request.subscribe({
+
+      next:
+        feedback => {
+
+          console.log(
+            '✅ Lesson feedback saved:',
+            feedback
+          );
+
+
+          this.lessonFeedbackExists.set(
+            true
+          );
+
+
+          this.lessonNote.set(
+            feedback.note ?? ''
+          );
+
+
+          this.lessonRating.set(
+            feedback.rating ?? 0
+          );
+
 
           this.showNotification(
-            'تعذر حفظ الملاحظة حاليًا.',
-            'error'
+            'تم حفظ ملاحظتك بنجاح.',
+            'success'
           );
+
+
+          this.closeLessonSidebar();
+        },
+
+
+      error:
+        error => {
+
+          console.error(
+            '❌ Save Lesson Feedback Error:',
+            error
+          );
+
+
+          if (error?.status === 409) {
+
+            this.showNotification(
+              'الملاحظات لهذا الدرس موجودة مسبقًا، يرجى إعادة فتح الدرس.',
+              'error'
+            );
+
+          } else {
+
+            this.showNotification(
+              'تعذر حفظ الملاحظة حاليًا.',
+              'error'
+            );
+
+          }
 
         }
 
-      }
-
-  });
-}
+    });
+  }
 
 
   // =====================================================
@@ -2532,157 +2686,158 @@ saveLessonNote(): void {
   }
 
 
- // =====================================================
-// SAVE RATING
-// =====================================================
+  // =====================================================
+  // SAVE RATING
+  // =====================================================
 
-saveLessonRating(): void {
+  saveLessonRating(): void {
 
-  const lesson =
-    this.selectedLesson();
-
-
-  const rating =
-    this.lessonRating();
+    const lesson =
+      this.selectedLesson();
 
 
-  if (!lesson) {
-    return;
-  }
- 
+    const rating =
+      this.lessonRating();
 
-  if (lesson.progressPercentage !== 100) {
 
-  this.showNotification(
-    'يجب مشاهدة الدرس أولاً قبل تقييم الدرس.',
-    'error'
-  );
+    if (!lesson) {
+      return;
+    }
 
-  return;
-}
 
-  if (!rating) {
+    if (lesson.progressPercentage !== 100) {
 
-    this.showNotification(
-      'يرجى اختيار تقييم الدرس.',
-      'error'
+      this.showNotification(
+        'يجب مشاهدة الدرس أولاً قبل تقييم الدرس.',
+        'error'
+      );
+
+      return;
+    }
+
+
+    if (!rating) {
+
+      this.showNotification(
+        'يرجى اختيار تقييم الدرس.',
+        'error'
+      );
+
+
+      return;
+    }
+
+
+    const note =
+      this.lessonNote().trim();
+
+
+    const dto = {
+
+      note:
+        note
+          ? note
+          : null,
+
+      rating:
+        rating
+
+    };
+
+
+    console.log(
+      '⭐ Saving lesson rating:',
+      {
+        lessonId:
+          lesson.lessonId,
+
+        dto,
+
+        exists:
+          this.lessonFeedbackExists()
+      }
     );
 
 
-    return;
-  }
+    const request =
+      this.lessonFeedbackExists()
 
+        ? this.api.updateLessonFeedback(
+            lesson.lessonId,
+            dto
+          )
 
-  const note =
-    this.lessonNote().trim();
-
-
-  const dto = {
-
-    note:
-      note
-        ? note
-        : null,
-
-    rating:
-      rating
-
-  };
-
-
-  console.log(
-    '⭐ Saving lesson rating:',
-    {
-      lessonId:
-        lesson.lessonId,
-
-      dto,
-
-      exists:
-        this.lessonFeedbackExists()
-    }
-  );
-
-
-  const request =
-    this.lessonFeedbackExists()
-
-      ? this.api.updateLessonFeedback(
-          lesson.lessonId,
-          dto
-        )
-
-      : this.api.createLessonFeedback(
-          lesson.lessonId,
-          dto
-        );
-
-
-  request.subscribe({
-
-    next:
-      feedback => {
-
-        console.log(
-          '✅ Lesson rating saved:',
-          feedback
-        );
-
-
-        this.lessonFeedbackExists.set(
-          true
-        );
-
-
-        this.lessonNote.set(
-          feedback.note ?? ''
-        );
-
-
-        this.lessonRating.set(
-          feedback.rating ?? 0
-        );
-
-
-        this.showNotification(
-          'تم إرسال تقييمك بنجاح.',
-          'success'
-        );
-
-
-        this.closeLessonSidebar();
-      },
-
-
-    error:
-      error => {
-
-        console.error(
-          '❌ Save Lesson Rating Error:',
-          error
-        );
-
-
-        if (error?.status === 409) {
-
-          this.showNotification(
-            'التقييم لهذا الدرس موجود مسبقًا، يرجى إعادة فتح الدرس.',
-            'error'
+        : this.api.createLessonFeedback(
+            lesson.lessonId,
+            dto
           );
 
-        } else {
+
+    request.subscribe({
+
+      next:
+        feedback => {
+
+          console.log(
+            '✅ Lesson rating saved:',
+            feedback
+          );
+
+
+          this.lessonFeedbackExists.set(
+            true
+          );
+
+
+          this.lessonNote.set(
+            feedback.note ?? ''
+          );
+
+
+          this.lessonRating.set(
+            feedback.rating ?? 0
+          );
+
 
           this.showNotification(
-            'تعذر حفظ التقييم حاليًا.',
-            'error'
+            'تم إرسال تقييمك بنجاح.',
+            'success'
           );
+
+
+          this.closeLessonSidebar();
+        },
+
+
+      error:
+        error => {
+
+          console.error(
+            '❌ Save Lesson Rating Error:',
+            error
+          );
+
+
+          if (error?.status === 409) {
+
+            this.showNotification(
+              'التقييم لهذا الدرس موجود مسبقًا، يرجى إعادة فتح الدرس.',
+              'error'
+            );
+
+          } else {
+
+            this.showNotification(
+              'تعذر حفظ التقييم حاليًا.',
+              'error'
+            );
+
+          }
 
         }
 
-      }
-
-  });
-}
+    });
+  }
 
 
   // =====================================================
@@ -2882,4 +3037,3 @@ saveLessonRating(): void {
   }
 
 }
-
