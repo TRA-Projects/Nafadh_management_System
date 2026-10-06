@@ -46,69 +46,86 @@ export class TrainerProfile
       []
     );
 
-    skills =
-  signal<any[]>(
-    []
-  );
+  skills =
+    signal<any[]>(
+      []
+    );
   showSkillInput =
-  signal(false);
+    signal(false);
 
-newSkillName =
-  '';
+  newSkillName =
+    '';
 
-    certificates = signal<any[]>([]);
-    saveSkill(): void {
+  // جلب الشهادات المخزنة مسبقاً عند تحميل الصفحة لتجنب حذفها عند الـ Refresh
+  certificates = signal<any[]>(this.loadCertificatesFromStorage());
 
-  const skillName =
-    this.newSkillName.trim();
-
-  if (!skillName) {
-    this.showError(
-      'اكتب اسم المهارة أولًا.'
-    );
-
-    return;
-  }
-
-  const exists =
-    this.skills().some(
-      skill =>
-        skill.skillName?.trim().toLowerCase() ===
-        skillName.toLowerCase()
-    );
-
-  if (exists) {
-    this.showError(
-      'هذه المهارة مضافة مسبقًا.'
-    );
-
-    return;
-  }
-
-  this.skills.update(
-    currentSkills => [
-      ...currentSkills,
-      {
-        trainerSkillId: Date.now(),
-        skillName
+  loadCertificatesFromStorage(): any[] {
+    const saved = localStorage.getItem('trainer_certificates');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [];
       }
-    ]
-  );
+    }
+    return [];
+  }
 
-  this.newSkillName = '';
+  saveCertificatesToStorage(list: any[]): void {
+    localStorage.setItem('trainer_certificates', JSON.stringify(list));
+  }
+  saveSkill(): void {
 
-  this.showSkillInput.set(false);
+    const skillName =
+      this.newSkillName.trim();
 
-  this.markProfileChanged();
+    if (!skillName) {
+      this.showError(
+        'اكتب اسم المهارة أولًا.'
+      );
 
-}
-cancelSkill(): void {
+      return;
+    }
 
-  this.newSkillName = '';
+    const exists =
+      this.skills().some(
+        skill =>
+          skill.skillName?.trim().toLowerCase() ===
+          skillName.toLowerCase()
+      );
 
-  this.showSkillInput.set(false);
+    if (exists) {
+      this.showError(
+        'هذه المهارة مضافة مسبقًا.'
+      );
 
-}
+      return;
+    }
+
+    this.skills.update(
+      currentSkills => [
+        ...currentSkills,
+        {
+          trainerSkillId: Date.now(),
+          skillName
+        }
+      ]
+    );
+
+    this.newSkillName = '';
+
+    this.showSkillInput.set(false);
+
+    this.markProfileChanged();
+
+  }
+  cancelSkill(): void {
+
+    this.newSkillName = '';
+
+    this.showSkillInput.set(false);
+
+  }
 
 
 
@@ -257,75 +274,120 @@ cancelSkill(): void {
   selectedProfileImage:
     File | null = null;
 
-    // =====================================================
-    // TRAINER CERTIFICATE
-    // =====================================================
-    selectedCertificateFile: File | null = null;
+  // =====================================================
+  // TRAINER CERTIFICATE
+  // =====================================================
+  selectedCertificateFile: File | null = null;
 
-isCertificateFormOpen = signal(false);
+  isCertificateFormOpen = signal(false);
 
-isUploadingCertificate = signal(false);
+  isUploadingCertificate = signal(false);
 
-certificateForm = {
-  certificateName: '',
-  issuingOrganization: '',
-  certificateNumber: '',
-  issueDate: '',
-  expiryDate: ''
-};
+  certificateForm = {
+    certificateName: '',
+    issuingOrganization: '',
+    certificateNumber: '',
+    issueDate: '',
+    expiryDate: ''
+  };
 
-openCertificateForm(): void {
-  this.isCertificateFormOpen.set(true);
-}
-
-closeCertificateForm(): void {
-  this.isCertificateFormOpen.set(false);
-  this.selectedCertificateFile = null;
-}
-
-onCertificateFileSelected(event: Event): void {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0] ?? null;
-
-  if (!file) {
-    return;
+  openCertificateForm(): void {
+    this.isCertificateFormOpen.set(true);
   }
 
-  const allowedTypes = [
-    'application/pdf',
-    'image/jpeg',
-    'image/png',
-    'image/webp'
-  ];
-
-  if (!allowedTypes.includes(file.type)) {
-    this.showError(
-      'يرجى اختيار ملف PDF أو صورة بصيغة JPG أو PNG أو WEBP.'
-    );
-
-    input.value = '';
-    return;
+  closeCertificateForm(): void {
+    this.isCertificateFormOpen.set(false);
+    this.selectedCertificateFile = null;
   }
 
-  const maxSize = 10 * 1024 * 1024;
+  onCertificateFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
 
-  if (file.size > maxSize) {
-    this.showError(
-      'حجم ملف الشهادة يجب ألا يتجاوز 10 MB.'
-    );
+    if (!file) {
+      return;
+    }
 
-    input.value = '';
-    return;
+    const allowedTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/png',
+      'image/webp'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      this.showError(
+        'يرجى اختيار ملف PDF أو صورة بصيغة JPG أو PNG أو WEBP.'
+      );
+
+      input.value = '';
+      return;
+    }
+
+    const maxSize = 10 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      this.showError(
+        'حجم ملف الشهادة يجب ألا يتجاوز 10 MB.'
+      );
+
+      input.value = '';
+      return;
+    }
+
+    this.selectedCertificateFile = file;
   }
 
-  this.selectedCertificateFile = file;
-}
+  submitCertificate(): void {
+    if (!this.certificateForm.certificateName.trim() || !this.certificateForm.issuingOrganization.trim()) {
+      this.showError('يرجى تعبئة اسم الشهادة والجهة المانحة.');
+      return;
+    }
 
-submitCertificate(): void {
-  // سيتم ربطها بالـ API لاحقًا
-}
 
+    const currentFile = this.selectedCertificateFile;
+    if (!currentFile) {
+      this.showError('يرجى إرفاق ملف الشهادة.');
+      return;
+    }
 
+    const reader = new FileReader();
+    reader.onload = () => {
+      const newCert = {
+        id: Date.now(),
+        certificateName: this.certificateForm.certificateName,
+        issuingOrganization: this.certificateForm.issuingOrganization,
+        issueDate: this.certificateForm.issueDate,
+        // استخدام currentFile المضمون وجوده بدلاً من this
+        certificateUrl: URL.createObjectURL(currentFile)
+      };
+
+      this.certificates.update(list => {
+        const updatedList = [...list, newCert];
+        this.saveCertificatesToStorage(updatedList);
+        return updatedList;
+      });
+
+      this.closeCertificateForm();
+      if (typeof this.markProfileChanged === 'function') {
+        this.markProfileChanged();
+      }
+    };
+
+    reader.readAsDataURL(currentFile);
+  }
+
+  removeCertificate(id: number): void {
+    this.certificates.update(list => {
+      const updatedList = list.filter(c => c.id !== id);
+      this.saveCertificatesToStorage(updatedList); // تحديث التخزين المحلي بعد الحذف
+      return updatedList;
+    });
+
+    if (typeof this.markProfileChanged === 'function') {
+      this.markProfileChanged();
+    }
+  }
 
   // Controls the enlarged profile image viewer.
   isProfileImageOpen =
@@ -362,7 +424,7 @@ submitCertificate(): void {
   constructor(
     private api: TrainerApi,
     private auth: AuthService
-  ) {}
+  ) { }
 
 
   // =====================================================
@@ -553,11 +615,10 @@ submitCertificate(): void {
       );
 
 
-    return `${backendBaseUrl}${
-      imageUrl.startsWith('/')
+    return `${backendBaseUrl}${imageUrl.startsWith('/')
         ? imageUrl
         : `/${imageUrl}`
-    }`;
+      }`;
 
   }
 
@@ -625,57 +686,57 @@ submitCertificate(): void {
   }
   openSkillInput(): void {
 
-  if (!this.isEditing()) {
-    return;
+    if (!this.isEditing()) {
+      return;
+    }
+
+    this.newSkillName = '';
+
+    this.showSkillInput.set(true);
+
   }
-
-  this.newSkillName = '';
-
-  this.showSkillInput.set(true);
-
-}
 
 
   // =====================================================
-// ADD TRAINER SKILL
-// =====================================================
+  // ADD TRAINER SKILL
+  // =====================================================
 
-addSkill(): void {
+  addSkill(): void {
 
-  if (!this.isEditing()) {
-    return;
+    if (!this.isEditing()) {
+      return;
+    }
+
+    this.newSkillName = '';
+
+    this.showSkillInput.set(true);
+
   }
 
-  this.newSkillName = '';
 
-  this.showSkillInput.set(true);
+  // =====================================================
+  // REMOVE TRAINER SKILL
+  // =====================================================
 
-}
+  removeSkill(
+    skillId: number
+  ): void {
 
+    if (!this.isEditing()) {
+      return;
+    }
 
-// =====================================================
-// REMOVE TRAINER SKILL
-// =====================================================
+    this.skills.update(
+      currentSkills =>
+        currentSkills.filter(
+          skill =>
+            skill.trainerSkillId !== skillId
+        )
+    );
 
-removeSkill(
-  skillId: number
-): void {
+    this.markProfileChanged();
 
-  if (!this.isEditing()) {
-    return;
   }
-
-  this.skills.update(
-    currentSkills =>
-      currentSkills.filter(
-        skill =>
-          skill.trainerSkillId !== skillId
-      )
-  );
-
-  this.markProfileChanged();
-
-}
 
 
 
@@ -768,7 +829,7 @@ removeSkill(
     );
 
   }
-  
+
 
 
   // =====================================================
