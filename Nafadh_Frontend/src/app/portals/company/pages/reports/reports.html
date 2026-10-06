@@ -1,1150 +1,172 @@
-<main class="reports-page" dir="rtl">
-
-  <!-- =======================================================
-       HEADER
-       ======================================================= -->
-
-  <header class="reports-header">
-
-    <div class="header-title-wrap">
-
-      <div class="title-icon" aria-hidden="true">
-        <span>▥</span>
-      </div>
-
-      <div>
-        <h1>التقارير والإحصائيات</h1>
-        <p>
-          نظرة شاملة على أداء الشركة والمتدربين والطاقة الاستيعابية
-        </p>
-      </div>
-
+<div class="reports-container">
+  
+  <!-- رأس الصفحة والأزرار العلوية -->
+  <div class="page-header-actions">
+    <div class="title-group">
+      <span class="breadcrumb">نفاذ / التقارير</span>
+      <h1>التقارير</h1>
+      <p class="subtitle">تقارير الحضور والطاقة الاستيعابية والإنجاز والمهام - جاهزة للتصدير</p>
     </div>
-
-    <div class="header-actions">
-
-      <button type="button" class="btn btn-refresh" (click)="refreshReports()" [disabled]="loading()"
-        title="تحديث البيانات">
-
-        <span class="refresh-icon" [class.spinning]="loading()" aria-hidden="true">
-          ↻
-        </span>
-
+    <div class="actions-group">
+      <button class="btn btn-light refresh-btn" type="button">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         تحديث
-
       </button>
-
-      <button type="button" class="btn btn-secondary" (click)="exportExcel()" [disabled]="loading()">
-
-        <span class="btn-icon">▣</span>
-        تصدير Excel
-
+      <button class="btn btn-outline" type="button">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Excel تصدير
       </button>
-
-      <button type="button" class="btn btn-primary" (click)="exportPdf()" [disabled]="loading()">
-
-        <span class="btn-icon">▤</span>
-        تصدير PDF
-
+      <button class="btn btn-primary-export" type="button">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        PDF تصدير
       </button>
-
     </div>
-
-  </header>
-
-
-  <!-- =======================================================
-        TABS
-        ======================================================= -->
-<nav class="tabs-wrapper" role="tablist" aria-label="أقسام التقارير">
-
-    <!-- 1. حضور المتدربين -->
-    <button type="button" class="tab-btn" role="tab" [attr.aria-selected]="tab() === 'attendance'"
-      [class.active]="tab() === 'attendance'" (click)="selectTab('attendance')">
-      <span class="tab-icon">◉</span>
-      <span>
-        حضور المتدربين
-        <small>الحضور والغياب</small>
-      </span>
-    </button>
-
-    <!-- 2. إنجاز المتدربين (الافتراضي في المنتصف) -->
-    <button type="button" class="tab-btn" role="tab" [attr.aria-selected]="tab() === 'achievement'"
-      [class.active]="tab() === 'achievement'" (click)="selectTab('achievement')">
-      <span class="tab-icon">◆</span>
-      <span>
-         إنجاز المتدربين
-        <small>الأداء والإنجاز</small>
-      </span>
-    </button>
-
-    <!-- 3. الطاقة الاستيعابية -->
-    <button type="button" class="tab-btn" role="tab" [attr.aria-selected]="tab() === 'capacity'"
-      [class.active]="tab() === 'capacity'" (click)="selectTab('capacity')">
-      <span class="tab-icon">▥</span>
-      <span>
-        الطاقة الاستيعابية
-        <small>المقاعد والاستخدام</small>
-      </span>
-    </button>
-
-  </nav>
-  <!-- =======================================================
-       LOADING / ERROR
-       ======================================================= -->
-
-  @if (loading()) {
-
-  <div class="state-card loading-card" aria-live="polite">
-
-    <div class="loading-spinner" aria-hidden="true">
-    </div>
-
-    <div>
-      <strong>جاري تحميل البيانات</strong>
-      <span>يرجى الانتظار قليلاً...</span>
-    </div>
-
   </div>
 
-  }
-
-  @else if (errorMessage()) {
-
-  <div class="state-card error-card" role="alert">
-
-    <div class="state-icon">!</div>
-
-    <div>
-      <strong>حدث خطأ</strong>
-      <span>{{ errorMessage() }}</span>
-    </div>
-
-    <button type="button" class="retry-btn" (click)="refreshReports()">
-
-      إعادة المحاولة
-
-    </button>
-
+  <!-- تبويبات التنقل (مربوطة بالدالة والمتغير البرمجي لتستجيب للنقر) -->
+  <div class="nav-tabs-bar">
+    <button class="tab-item" [class.active]="activeTab === 'company-attendance'" (click)="selectTab('company-attendance')" type="button">حضور الشركة</button>
+    <button class="tab-item" [class.active]="activeTab === 'trainees-progress'" (click)="selectTab('trainees-progress')" type="button">إنجاز المتدربين</button>
+    <button class="tab-item" [class.active]="activeTab === 'capacity'" (click)="selectTab('capacity')" type="button">الطاقة الاستيعابية</button>
+    <button class="tab-item" [class.active]="activeTab === 'evaluations'" (click)="selectTab('evaluations')" type="button">التقييمات</button>
+    <button class="tab-item" [class.active]="activeTab === 'tasks'" (click)="selectTab('tasks')" type="button">المهام</button>
+    <button class="tab-item" [class.active]="activeTab === 'comparison'" (click)="selectTab('comparison')" type="button">مقارنة الأقسام والمشرفين</button>
   </div>
 
-  }
-
-  @else {
-
-
-  <!-- =====================================================
-         ATTENDANCE
-         ===================================================== -->
-
-  @if (tab() === 'attendance') {
-
-  @if (attendance(); as att) {
-
-  <section class="report-section attendance-section">
-
-
-    <!-- KPI -->
-    <div class="kpi-grid">
-
-      <article class="kpi-card">
-
-        <div class="kpi-top">
-
-          <div class="kpi-icon blue-icon">
-            ◉
-          </div>
-
-          <span class="kpi-status neutral">
-            الحالي
-          </span>
-
+  <!-- بطاقات مؤشرات الأداء (KPI Cards) -->
+  <div class="kpi-cards-grid">
+    <div class="kpi-card highlight-card">
+      <div class="kpi-header">
+        <span class="kpi-title">متوسط حضور الشركة</span>
+        <div class="kpi-icon-box bg-blue-light">
+          <svg width="20" height="20" fill="none" stroke="#1e3a8a" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
         </div>
-
-        <span class="kpi-title">
-          متوسط حضور الشركة
-        </span>
-
-        <strong class="kpi-value blue">
-          {{ attendanceRate() }}%
-        </strong>
-
-        <span class="kpi-subtext">
-          مقارنة بالشهر الماضي
-        </span>
-
-      </article>
-
-
-      <article class="kpi-card">
-
-        <div class="kpi-top">
-
-          <div class="kpi-icon purple-icon">
-            👥
-          </div>
-
-          <span class="kpi-status neutral">
-            إجمالي
-          </span>
-
-        </div>
-
-        <span class="kpi-title">
-          إجمالي المتدربين
-        </span>
-
-        <strong class="kpi-value dark">
-          {{ totalTrainees() }}
-        </strong>
-
-        <span class="kpi-subtext">
-          متدرب مسجل
-        </span>
-
-      </article>
-
-
-      <article class="kpi-card">
-
-        <div class="kpi-top">
-
-          <div class="kpi-icon red-icon">
-            !
-          </div>
-
-          <span class="kpi-status danger">
-            يحتاج متابعة
-          </span>
-
-        </div>
-
-        <span class="kpi-title">
-          أيام الغياب
-        </span>
-
-        <strong class="kpi-value red">
-          {{ totalAbsentDays() }}
-        </strong>
-
-        <span class="kpi-subtext">
-          إجمالي أيام الغياب
-        </span>
-
-      </article>
-
-
-      <article class="kpi-card">
-
-        <div class="kpi-top">
-
-          <div class="kpi-icon orange-icon">
-            ◷
-          </div>
-
-          <span class="kpi-status warning">
-            متابعة
-          </span>
-
-        </div>
-
-        <span class="kpi-title">
-          حالات التأخير
-        </span>
-
-        <strong class="kpi-value orange">
-          {{ totalLateDays() }}
-        </strong>
-
-        <span class="kpi-subtext">
-          حالة تأخير مسجلة
-        </span>
-
-      </article>
-
+      </div>
+      <div class="kpi-main-value">94.2%</div>
+      <div class="trend-up">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+        1.2% عن الشهر الماضي
+      </div>
     </div>
 
-
-    <!-- OVERVIEW -->
-
-    <div class="overview-strip">
-
-      <div class="overview-item">
-        <span>الحضور</span>
-        <strong>
-          {{ totalPresentDays() }}
-        </strong>
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">أيام الغياب (30 يوماً)</span>
+        <div class="kpi-icon-box bg-red-light">
+          <svg width="20" height="20" fill="none" stroke="#dc2626" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6"/></svg>
+        </div>
       </div>
-
-      <div class="overview-divider"></div>
-
-      <div class="overview-item">
-        <span>الغياب</span>
-        <strong class="red-text">
-          {{ totalAbsentDays() }}
-        </strong>
+      <div class="kpi-sub-value">
+        <span class="badge-number">17</span> 
+        <span class="badge-desc">6 متدربين</span>
       </div>
-
-      <div class="overview-divider"></div>
-
-      <div class="overview-item">
-        <span>التأخير</span>
-        <strong class="orange-text">
-          {{ totalLateDays() }}
-        </strong>
-      </div>
-
-      <div class="overview-divider"></div>
-
-      <div class="overview-item">
-        <span>الأيام المعذورة</span>
-        <strong>
-          {{ totalExcusedDays() }}
-        </strong>
-      </div>
-
     </div>
 
-
-    <!-- ATTENDANCE CHART -->
-
-    <div class="chart-panel">
-
-      <div class="panel-header">
-
-        <div>
-          <h2>مستوى الحضور</h2>
-          <p>
-            مقارنة معدل الحضور خلال الأسابيع الأخيرة
-          </p>
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">حالات التأخر</span>
+        <div class="kpi-icon-box bg-orange-light">
+          <svg width="20" height="20" fill="none" stroke="#d97706" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </div>
-
-        <div class="chart-summary">
-
-          <span>المتوسط</span>
-
-          <strong>
-            {{ attendanceRate() }}%
-          </strong>
-
-        </div>
-
       </div>
+      <div class="kpi-sub-value">
+        <span class="badge-number warning">27</span> 
+        <span class="badge-desc">أغلبها في الدفعة أ</span>
+      </div>
+    </div>
 
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <span class="kpi-title">الانصراف المبكر</span>
+        <div class="kpi-icon-box bg-purple-light">
+          <svg width="20" height="20" fill="none" stroke="#7c3aed" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </div>
+      </div>
+      <div class="kpi-sub-value">
+        <span class="badge-number">6</span> 
+        <span class="badge-desc">حالات مسجلة</span>
+      </div>
+    </div>
+  </div>
 
-      @if (attendanceChart().length) {
+  <!-- قسم الرسم البياني (باستخدام حلقة @for الحديثة في Angular) -->
+  <div class="chart-section-card">
+    <div class="chart-header">
+      <div class="chart-titles">
+        <h3>تقرير حضور الشركة - آخر 6 أسابيع</h3>
+        <p>متوسط نسب الحضور الأسبوعية لجميع المتدربين</p>
+      </div>
+      <div class="chart-average-badge">
+        المتوسط العام: <strong>94.2%</strong>
+      </div>
+    </div>
 
-      <div class="weekly-bars-container">
-
-        @for (
-        item of attendanceChart();
-        track item.label
-        ) {
-
-        <div class="bar-row">
-
-          <span class="week-label">
-            {{ item.label }}
-          </span>
-
-          <div class="bar-track">
-
-            <div class="progress-bar-fill" [class.high]="item.value >= 90" [class.medium]="
-    item.value >= 80 &&
-    item.value < 90
-  " [class.low]="item.value < 80" [style.width.%]="clampPercentage(item.value)">
-
-              <span class="bar-badge">
-                {{ item.value }}%
-              </span>
-
+    <div class="weekly-bars-container">
+      @for (week of weeklyAttendance; track week.weekName) {
+        <div class="week-row">
+          <span class="week-label">{{ week.weekName }}</span>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" [style.width.%]="week.percentage">
+              <span class="progress-value">{{ week.percentage }}%</span>
             </div>
           </div>
-
-          <strong class="bar-outer-val">
-            {{ item.value }}%
-          </strong>
-
         </div>
-
-        }
-
-      </div>
-
       }
+    </div>
+  </div>
 
-      @else {
-
-      <div class="empty-state">
-        لا توجد بيانات للحضور
+  <!-- قسم الجدول -->
+  <div class="table-section-card">
+    <div class="table-header-flex">
+      <div class="table-titles">
+        <h3>الحضور حسب القسم</h3>
+        <p>تفاصيل الحضور والتأخر والغياب لكل قسم</p>
       </div>
-
-      }
-
+      <span class="sections-count-badge">4 أقسام نشطة</span>
     </div>
 
-
-    <!-- ATTENDANCE TABLE -->
-
-    <div class="table-panel">
-
-      <div class="panel-header table-header">
-
-        <div>
-          <h2>تفاصيل حضور المتدربين</h2>
-          <p>
-            ملخص الحضور والغياب والتأخير لكل متدرب
-          </p>
-        </div>
-
-        <span class="records-count">
-          {{ att.rows.length }} سجلات
-        </span>
-
-      </div>
-
-
-      @if (att.rows.length > 0) {
-
-      <div class="table-wrap">
-
-        <table>
-
-          <thead>
+    <div class="table-responsive">
+      <table class="custom-data-table">
+        <thead>
+          <tr>
+            <th>القسم</th>
+            <th>عدد المتدربين</th>
+            <th>معدل الحضور</th>
+            <th>الغياب</th>
+            <th>التأخر</th>
+            <th>التقييم</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (dept of departmentAttendance; track dept.name) {
             <tr>
-              <th>المتدرب</th>
-              <th>أيام الحضور</th>
-              <th>الغياب</th>
-              <th>التأخير</th>
-              <th>الاعذار</th>
-              <th>معدل الحضور</th>
-              <th>التقييم</th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            @for (
-            row of att.rows;
-            track row.traineeId
-            ) {
-
-            <tr>
-
-              <td>
-
-                <div class="trainee-cell">
-
-                  <span class="avatar">
-                    {{ getInitials(row.traineeName) }}
-                  </span>
-
-                  <div>
-
-                    <strong>
-                      {{ row.traineeName || 'غير محدد' }}
-                    </strong>
-
-                    <small>
-                      #{{ row.traineeId }}
-                    </small>
-
-                  </div>
-
+              <td class="font-weight-bold">
+                <div class="dept-name-wrapper">
+                  <span class="dept-dot"></span>
+                  {{ dept.name }}
                 </div>
-
               </td>
-
+              <td><span class="count-badge-sub">{{ dept.traineesCount }} متدرب</span></td>
               <td>
-                {{ row.presentDays }}
-              </td>
-
-              <td>
-                <span class="number-badge red">
-                  {{ row.absentDays }}
-                </span>
-              </td>
-
-              <td>
-                <span class="number-badge orange">
-                  {{ row.lateDays }}
-                </span>
-              </td>
-
-              <td>
-                {{ row.excusedDays }}
-              </td>
-
-              <td>
-
-                <div class="table-progress">
-
-                  <div class="progress-track">
-
-                    <span [class.good]="row.attendanceRate >= 90" [class.warning]="
-                                  row.attendanceRate >= 75 &&
-                                  row.attendanceRate < 90
-                                " [class.danger]="
-                                  row.attendanceRate < 75
-                                " [style.width.%]="
-                                  clampPercentage(
-                                    row.attendanceRate
-                                  )
-                                ">
-                    </span>
-
+                <div class="rate-indicator-cell">
+                  <div class="mini-progress">
+                    <div class="mini-fill" [style.width.%]="dept.attendanceRate" [style.background-color]="dept.color"></div>
                   </div>
-
-                  <strong>
-                    {{ row.attendanceRate }}%
-                  </strong>
-
+                  <span class="rate-text" [style.color]="dept.color">{{ dept.attendanceRate }}%</span>
                 </div>
-
               </td>
-
+              <td><span class="text-muted-val">{{ dept.absence }} أيام</span></td>
+              <td><span class="text-muted-val">{{ dept.lateCount }} حالات</span></td>
               <td>
-
-                <span class="status-pill" [class.good-pill]="
-                              row.attendanceRate >= 90
-                            " [class.warning-pill]="
-                              row.attendanceRate >= 75 &&
-                              row.attendanceRate < 90
-                            " [class.danger-pill]="
-                              row.attendanceRate < 75
-                            ">
-
-                  {{
-                  attendanceLabel(
-                  row.attendanceRate
-                  )
-                  }}
-
+                <span class="evaluation-pill" [ngClass]="dept.evalClass">
+                  {{ dept.evaluation }}
                 </span>
-
               </td>
-
             </tr>
-
-            }
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-      }
-
-      @else {
-
-      <div class="empty-state">
-        لا توجد بيانات للمتدربين
-      </div>
-
-      }
-
-    </div>
-
-  </section>
-
-  }
-
-  }
-
-
-  <!-- =====================================================
-         ACHIEVEMENT
-         ===================================================== -->
-
-  @if (tab() === 'achievement') {
-
-  <section class="report-section achievement-section">
-
-    <div class="achievement-chart-card">
-
-
-      <!-- HEADER -->
-
-      <div class="achievement-chart-header">
-
-        <div>
-
-          <h2>
-            نسبة إنجاز المتدربين حسب البرنامج
-          </h2>
-
-          <p>
-            مقارنة مستوى الإنجاز بين البرامج التدريبية
-          </p>
-
-        </div>
-
-
-        <div class="achievement-summary-badge">
-
-          <span>
-            متوسط الإنجاز
-          </span>
-
-          <strong>
-            {{ achievementRate() }}%
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <!-- INSIGHTS -->
-
-      <div class="achievement-insights">
-
-
-        <div class="insight-item">
-
-          <span class="insight-dot green"></span>
-
-          <div>
-            <small>أفضل أداء</small>
-
-            <strong>
-              {{ bestProgram()?.programName || '—' }}
-            </strong>
-          </div>
-
-          <b class="green-text">
-            {{ bestProgram()?.progress || 0 }}%
-          </b>
-
-        </div>
-
-
-        <div class="insight-item">
-
-          <span class="insight-dot orange"></span>
-
-          <div>
-            <small>يحتاج متابعة</small>
-
-            <strong>
-              {{ weakestProgram()?.programName || '—' }}
-            </strong>
-          </div>
-
-          <b class="orange-text">
-            {{ weakestProgram()?.progress || 0 }}%
-          </b>
-
-        </div>
-
-
-        <div class="insight-item">
-
-          <span class="insight-dot blue"></span>
-
-          <div>
-            <small>الهدف المستهدف</small>
-
-            <strong>
-              مستوى الأداء
-            </strong>
-          </div>
-
-          <b class="blue-text">
-            90%
-          </b>
-
-        </div>
-
-      </div>
-
-
-      <!-- =================================================
-               VERTICAL CHART
-               ================================================= -->
-
-      <div class="achievement-chart">
-
-
-        <!-- Y AXIS -->
-
-        <div class="chart-y-axis">
-
-          <span>100%</span>
-          <span>80%</span>
-          <span>60%</span>
-          <span>40%</span>
-          <span>20%</span>
-          <span>0%</span>
-
-        </div>
-
-
-        <!-- GRID -->
-
-        <div class="chart-grid">
-
-          <div class="grid-line"></div>
-          <div class="grid-line"></div>
-          <div class="grid-line"></div>
-          <div class="grid-line"></div>
-          <div class="grid-line"></div>
-          <div class="grid-line"></div>
-
-        </div>
-
-
-        <!-- TARGET -->
-
-        <div class="target-indicator">
-
-          <span class="target-label">
-            الهدف 90%
-          </span>
-
-        </div>
-
-
-        <!-- BARS -->
-
-        <div class="bars-area">
-
-          @for (
-          item of programProgressList();
-          track item.programName;
-          let i = $index
-          ) {
-
-          <div class="achievement-bar-column" [class.highlighted]="item.progress >= 90" [style.--bar-height]="
-                    clampPercentage(item.progress) + '%'
-                  " [style.--bar-delay]="
-                    (i * 0.12) + 's'
-                  ">
-
-
-            <!-- VALUE -->
-
-            <div class="bar-percentage">
-              {{ item.progress }}%
-            </div>
-
-
-            <!-- BAR -->
-
-            <div class="achievement-bar" [ngClass]="item.colorClass">
-
-              <div class="bar-shine"></div>
-
-              <span class="bar-value-inside">
-                {{ item.progress }}%
-              </span>
-
-            </div>
-
-
-            <!-- LABEL -->
-
-            <div class="bar-program-name">
-
-              {{
-              item.shortName ||
-              item.programName
-              }}
-
-            </div>
-
-          </div>
-
           }
-
-          @empty {
-
-          <div class="empty-state">
-            لا توجد بيانات للبرامج
-          </div>
-
-          }
-
-        </div>
-
-      </div>
-
-
-      <!-- LEGEND -->
-
-      <div class="achievement-chart-footer">
-
-        <div class="legend-item">
-
-          <span class="legend-dot target"></span>
-
-          <span>
-            حقق الهدف أو تجاوزه
-          </span>
-
-        </div>
-
-
-        <div class="legend-item">
-
-          <span class="legend-dot normal"></span>
-
-          <span>
-            أقل من الهدف
-          </span>
-
-        </div>
-
-
-        <div class="legend-item">
-
-          <span class="legend-line"></span>
-
-          <span>
-            مستوى الهدف 90%
-          </span>
-
-        </div>
-
-      </div>
-
+        </tbody>
+      </table>
     </div>
-
-  </section>
-
-  }
-
-
-  <!-- =====================================================
-         CAPACITY
-         ===================================================== -->
-
-  @if (tab() === 'capacity') {
-
-  @if (capacity(); as cap) {
-
-  <section class="report-section capacity-section">
-
-
-    <div class="capacity-top">
-
-      <div>
-
-        <h2>
-          الطاقة الاستيعابية
-        </h2>
-
-        <p>
-          متابعة المقاعد المستخدمة والمتبقية حسب البرامج
-        </p>
-
-      </div>
-
-      <span class="tag">
-        الحصة المخصصة للشركة
-      </span>
-
-    </div>
-
-
-    <!-- OVERVIEW -->
-
-    <div class="capacity-overview">
-
-      <div class="capacity-info">
-
-
-        <div class="capacity-big-number">
-
-          <strong>
-            {{ capacityPercentage() }}%
-          </strong>
-
-          <span>
-            نسبة الاستخدام
-          </span>
-
-        </div>
-
-
-        <div class="capacity-progress">
-
-          <div class="capacity-progress-top">
-
-            <span>
-              استخدام الطاقة
-            </span>
-
-            <strong>
-              {{ cap.used }}
-              /
-              {{ cap.total }}
-            </strong>
-
-          </div>
-
-          <div class="capacity-progress-track">
-
-            <span [style.width.%]="
-                      capacityPercentage()
-                    ">
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <div class="capacity-stats">
-
-
-          <div class="capacity-stat">
-
-            <span class="stat-dot blue"></span>
-
-            <div>
-
-              <small>المستخدم</small>
-
-              <strong>
-                {{ cap.used }}
-              </strong>
-
-            </div>
-
-          </div>
-
-
-          <div class="capacity-stat">
-
-            <span class="stat-dot gray"></span>
-
-            <div>
-
-              <small>المتبقي</small>
-
-              <strong>
-                {{ cap.remaining }}
-              </strong>
-
-            </div>
-
-          </div>
-
-
-          <div class="capacity-stat">
-
-            <span class="stat-dot orange"></span>
-
-            <div>
-
-              <small>الإجمالي</small>
-
-              <strong>
-                {{ cap.total }}
-              </strong>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- DONUT -->
-
-      <div class="donut-wrap">
-
-        <svg viewBox="0 0 220 220" class="donut-svg" role="img" aria-label="نسبة استخدام الطاقة الاستيعابية">
-
-          <circle cx="110" cy="110" r="78" class="donut-bg">
-          </circle>
-
-          <circle cx="110" cy="110" r="78" class="donut-ring" [style.stroke-dasharray]="
-                    ringCircumference
-                  " [style.stroke-dashoffset]="
-                    ringDashoffset()
-                  ">
-          </circle>
-
-        </svg>
-
-
-        <div class="donut-center">
-
-          <strong>
-            {{ capacityPercentage() }}%
-          </strong>
-
-          <span>
-            مستخدمة
-          </span>
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- TABLE -->
-
-    <div class="program-capacity-panel">
-
-      <div class="panel-header">
-
-        <div>
-
-          <h2>
-            الطاقة حسب البرامج
-          </h2>
-
-          <p>
-            توزيع المقاعد والطاقة الاستيعابية لكل برنامج
-          </p>
-
-        </div>
-
-        <span class="records-count">
-          {{ cap.programs.length }}
-          برامج
-        </span>
-
-      </div>
-
-
-      @if (cap.programs.length > 0) {
-
-      <div class="table-wrap">
-
-        <table>
-
-          <thead>
-
-            <tr>
-              <th>البرنامج</th>
-              <th>الحصة</th>
-              <th>المستخدم</th>
-              <th>المتبقي</th>
-              <th>نسبة الاستخدام</th>
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            @for (
-            program of cap.programs;
-            track program.programName
-            ) {
-
-            <tr>
-
-              <td>
-
-                <div class="program-table-name">
-
-                  <span class="program-dot"></span>
-
-                  <strong>
-                    {{ program.programName }}
-                  </strong>
-
-                </div>
-
-              </td>
-
-              <td>
-                {{ program.allocatedQuota }}
-              </td>
-
-              <td>
-                <strong>
-                  {{ program.usedQuota }}
-                </strong>
-              </td>
-
-              <td>
-
-                <span class="remaining-value" [class.low]="
-                              program.remainingQuota <= 2
-                            ">
-
-                  {{ program.remainingQuota }}
-
-                </span>
-
-              </td>
-
-              <td>
-
-                <div class="capacity-table-progress">
-
-                  <div class="progress-track">
-
-                    <span [class.high]="
-                                  program.utilizationPercentage >= 90
-                                " [class.medium]="
-                                  program.utilizationPercentage >= 70 &&
-                                  program.utilizationPercentage < 90
-                                " [class.low]="
-                                  program.utilizationPercentage < 70
-                                " [style.width.%]="
-                                  clampPercentage(
-                                    program.utilizationPercentage
-                                  )
-                                ">
-                    </span>
-
-                  </div>
-
-                  <strong>
-                    {{ program.utilizationPercentage }}%
-                  </strong>
-
-                </div>
-
-              </td>
-
-            </tr>
-
-            }
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-      }
-
-      @else {
-
-      <div class="empty-state">
-        لا توجد بيانات للطاقة الاستيعابية
-      </div>
-
-      }
-
-    </div>
-
-  </section>
-
-  }
-
-  @else {
-
-  <div class="empty-state large-empty">
-    لا توجد بيانات للطاقة الاستيعابية حالياً
   </div>
 
-  }
-
-  }
-
-  }
-
-</main>
+</div>

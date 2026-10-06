@@ -231,6 +231,7 @@ export class CompanyApi {
       dto
     );
   }
+
   getSupervisors(
     companyId: number
   ): Observable<CompanySupervisorDto[]> {
@@ -259,7 +260,6 @@ export class CompanyApi {
       `${this.base}/CompanySupervisor/${id}/trainees`
     );
   }
-
 
   // ============================================================
   // My Account
@@ -363,6 +363,13 @@ export class CompanyApi {
       `${this.base}/Report/company-attendance/${companyId}`
     );
   }
+
+  // Get company tasks
+  getCompanyTasks(companyId: number): Observable<any[]> {
+  return this.http.get<any[]>(
+    `${this.base}/Task/company/${companyId}`
+  );
+}
 
   // ============================================================
   // Contact — Company Conversations
