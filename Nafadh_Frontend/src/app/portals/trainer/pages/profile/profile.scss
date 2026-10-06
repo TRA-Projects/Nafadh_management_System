@@ -1800,3 +1800,26 @@
 
 
 }
+/* =========================================================
+   TRAINER CERTIFICATES STYLES
+========================================================= */
+.certificates-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #edf1f5;
+}
+
+.certificate-form-box {
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px dashed #bfe5eb;
+  border-radius: 14px;
+  background: #f7fcfd;
+
+  h4 {
+    margin: 0 0 12px 0;
+    color: #087c90;
+    font-size: 13px;
+    font-weight: 800;
+  }
+}

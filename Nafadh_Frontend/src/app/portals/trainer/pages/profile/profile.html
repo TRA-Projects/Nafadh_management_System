@@ -710,7 +710,100 @@
   </div>
 
 </section>
+<!-- =====================================================
+     TRAINER CERTIFICATES SECTION
+====================================================== -->
+<section class="profile-section certificates-section">
 
+ <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <div>
+      <h3 style="margin: 0; color: #123d70; font-size: 16px;">الشهادات والاعتمادات المهنية</h3>
+      <p style="margin: 4px 0 0 0; color: #718096; font-size: 12px;">أضف شهاداتك العلمية والمهنية لتعزيز ملفك الشخصي.</p>
+    </div>
+
+    <!-- زر الإضافة (تم إزالة شرط isEditing مؤقتاً للتأكد من ظهوره، أو يمكنك إبقاؤه حسب منطق التطبيق) -->
+    <button
+      type="button"
+      class="add-item-btn"
+      (click)="openCertificateForm()"
+      style="background: #e6f4f8; color: #087c90; border: 1px solid #bfe5eb; padding: 6px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 600;">
+      <i class="fa-solid fa-plus"></i>
+      إضافة شهادة
+    </button>
+  </div>
+
+  <!-- نموذج إدخال شهادة جديدة -->
+  @if (isCertificateFormOpen()) {
+    <div class="certificate-form-box">
+      <h4>إضافة شهادة جديدة</h4>
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label>اسم الشهادة <span class="required-mark">*</span></label>
+          <input
+            type="text"
+            class="profile-input"
+            [(ngModel)]="certificateForm.certificateName"
+            placeholder="مثال: شهادة مدرب معتمد"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>الجهة المانحة <span class="required-mark">*</span></label>
+          <input
+            type="text"
+            class="profile-input"
+            [(ngModel)]="certificateForm.issuingOrganization"
+            placeholder="مثال: المؤسسة العامة للتدريب"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>تاريخ الإصدار</label>
+          <input
+            type="date"
+            class="profile-input"
+            [(ngModel)]="certificateForm.issueDate"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>ملف الشهادة (PDF أو صورة) <span class="required-mark">*</span></label>
+          <input
+            type="file"
+            class="profile-input"
+            accept=".pdf,image/jpeg,image/png,image/webp"
+            (change)="onCertificateFileSelected($event)"
+          />
+        </div>
+      </div>
+
+      <div class="certificate-form-actions" style="margin-top: 14px; display: flex; gap: 10px;">
+        <button type="button" class="skill-save-btn" (click)="submitCertificate()">حفظ الشهادة</button>
+        <button type="button" class="skill-cancel-btn" (click)="closeCertificateForm()">إلغاء</button>
+      </div>
+    </div>
+  }
+
+  <!-- عرض قائمة الشهادات -->
+  <div class="certificates-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 14px;">
+    @for (cert of certificates(); track cert.id) {
+      <div class="certificate-card" style="border: 1px solid #d4e2eb; padding: 14px; border-radius: 12px; background: #fbfdfe;">
+        <h4 style="margin: 0 0 6px 0; color: #123d70; font-size: 13px;">{{ cert.certificateName }}</h4>
+        <p style="margin: 0 0 4px 0; color: #718096; font-size: 11px;">الجهة: {{ cert.issuingOrganization }}</p>
+        <p style="margin: 0 0 10px 0; color: #718096; font-size: 11px;">التاريخ: {{ cert.issueDate }}</p>
+        
+        <div style="display: flex; gap: 8px; align-items: center; margin-top: 10px;">
+          @if (cert.certificateUrl) {
+            <a [href]="cert.certificateUrl" target="_blank" class="skill-save-btn" style="text-decoration: none; padding: 6px 12px; font-size: 11px;">عرض الملف</a>
+          }
+          <button type="button" class="skill-cancel-btn" (click)="removeCertificate(cert.id)" style="padding: 6px 12px; font-size: 11px; color: #b42323; background: #fff5f5; border: 1px solid #fed7d7; border-radius: 6px; cursor: pointer;">حذف</button>
+        </div>
+      </div>
+    }
+  </div>
+
+</section>
 
   <!-- =====================================================
          ACCOUNT SUMMARY
