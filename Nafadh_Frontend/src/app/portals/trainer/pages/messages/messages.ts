@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 
 import {
   CommonModule
@@ -7,6 +7,13 @@ import {
 import {
   FormsModule
 } from '@angular/forms';
+import {
+  TrainerApi
+} from '../../services/trainer-api';
+
+import {
+  AuthService
+}from '../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-trainer-messages',
@@ -22,7 +29,15 @@ import {
 
   styleUrl: './messages.scss'
 })
-export class TrainerMessages {
+export class TrainerMessages implements OnInit  {
+    constructor(
+    private api: TrainerApi,
+    public auth: AuthService
+  ) {}
+
+  ngOnInit(): void {
+    console.log('Trainer user id:', this.auth.userId);
+  }
 
   // =====================================================
   // SEARCH
