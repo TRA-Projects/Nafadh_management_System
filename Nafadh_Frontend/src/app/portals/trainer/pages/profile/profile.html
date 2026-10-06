@@ -618,6 +618,98 @@
     </div>
 
   </section>
+  <section class="profile-section skills-section">
+
+  <div class="section-heading">
+
+    <div>
+
+      <h3>المهارات المهنية</h3>
+
+      <p>أضف المهارات والخبرات التي تتميز بها كمدرب.</p>
+
+    </div>
+
+ 
+
+   <button
+  type="button"
+  class="add-item-btn"
+  (click)="addSkill()">
+
+  <i class="fa-solid fa-plus"></i>
+  إضافة مهارة
+
+</button>
+
+  </div>
+
+
+@if (showSkillInput()) {
+  <div class="skill-input-row">
+
+    <input
+      type="text"
+      class="profile-input"
+      [(ngModel)]="newSkillName"
+      (keyup.enter)="saveSkill()"
+      placeholder="اكتب اسم المهارة"
+    />
+
+    <button
+      type="button"
+      class="skill-save-btn"
+      (click)="saveSkill()">
+      حفظ
+    </button>
+
+    <button
+      type="button"
+      class="skill-cancel-btn"
+      (click)="cancelSkill()">
+      إلغاء
+    </button>
+
+  </div>
+}
+
+
+
+ 
+
+  <div class="skills-list">
+
+    @for (skill of skills(); track skill.trainerSkillId) {
+
+      <span class="skill-tag">
+
+        {{ skill.skillName }}
+
+ 
+
+        @if (isEditing()) {
+
+          <button
+
+            type="button"
+
+            (click)="removeSkill(skill.trainerSkillId)"
+
+            title="حذف المهارة">
+
+            <i class="fa-solid fa-xmark"></i>
+
+          </button>
+
+        }
+
+      </span>
+
+    }
+
+  </div>
+
+</section>
 
 
   <!-- =====================================================

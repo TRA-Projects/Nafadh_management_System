@@ -815,6 +815,183 @@
 
   font-size: 11px;
 }
+/* =========================================================
+   TRAINER SKILLS
+========================================================= */
+
+.profile-section {
+  width: 100%;
+  margin-top: 24px;
+  padding-top: 24px;
+
+  border-top: 1px solid #edf1f5;
+}
+
+.profile-section .section-heading {
+  margin-bottom: 16px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.add-item-btn {
+  min-height: 38px;
+  padding: 0 14px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  border: 1px solid #bfe5eb;
+  border-radius: 10px;
+
+  background: #effafb;
+  color: #087f92;
+
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.add-item-btn:hover:not(:disabled) {
+  border-color: #8ed3de;
+  background: #def5f8;
+  transform: translateY(-1px);
+}
+
+.add-item-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.add-item-btn i {
+  font-size: 12px;
+}
+
+/* قائمة المهارات */
+
+.skills-list {
+  min-height: 48px;
+  padding: 14px;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+
+  border: 1px dashed #d4e2eb;
+  border-radius: 12px;
+
+  background: #fbfdfe;
+}
+.skill-input-row {
+  margin-bottom: 14px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.skill-input-row .profile-input {
+  flex: 1;
+  padding: 0 14px;
+}
+
+.skill-save-btn,
+.skill-cancel-btn {
+  min-height: 40px;
+  padding: 0 14px;
+
+  border-radius: 9px;
+
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.skill-save-btn {
+  border: 1px solid #b9e4c9;
+  background: #edf9f1;
+  color: #16804a;
+}
+
+.skill-cancel-btn {
+  border: 1px solid #e0e6ec;
+  background: #f7f9fb;
+  color: #718096;
+}
+
+.skill-save-btn:hover {
+  background: #dff4e7;
+}
+
+.skill-cancel-btn:hover {
+  background: #edf1f5;
+}
+
+/* مهارة واحدة */
+
+.skill-tag {
+  min-height: 31px;
+  padding: 5px 10px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  border: 1px solid #c8e9ee;
+  border-radius: 999px;
+
+  background: #edfafa;
+  color: #087c90;
+
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.skill-tag button {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: transparent;
+  color: #5e9eaa;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.skill-tag button:hover {
+  background: #d5f0f3;
+  color: #b42323;
+}
+
+.skill-tag button i {
+  font-size: 10px;
+}
+
 
 
 /* =========================================================
@@ -1447,6 +1624,18 @@
 
 @media (max-width: 700px) {
 
+  .skill-input-row {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.skill-input-row .profile-input,
+.skill-save-btn,
+.skill-cancel-btn {
+  width: 100%;
+}
+
+
   .profile-container {
     padding: 15px;
 
@@ -1514,6 +1703,16 @@
   .summary-stat:last-child {
     grid-column: auto;
   }
+
+  .profile-section .section-heading {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.add-item-btn {
+  width: 100%;
+}
+
 
 }
 
@@ -1588,5 +1787,16 @@
   .readonly-label {
     display: none;
   }
+
+  .profile-section {
+  margin-top: 20px;
+  padding-top: 20px;
+}
+
+.skills-list {
+  padding: 11px;
+  gap: 7px;
+}
+
 
 }
