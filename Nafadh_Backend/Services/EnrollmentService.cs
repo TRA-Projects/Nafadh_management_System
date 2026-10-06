@@ -145,6 +145,10 @@ namespace Nafadh_Backend.Services
                 BatchEndDate = e.Batch.EndDate,
                 TraineeId = e.TraineeId,
                 TraineeName = e.Trainee.User.FullName,
+
+                // تم تعديل الربط ليكون مباشرة من جدول المتدربين كما هو موضح في قاعدة البيانات
+                ProfileImageUrl = e.Trainee.ProfileImageUrl,
+
                 CompanyId = e.CompanyId,
                 CompanyName = e.Company.CompanyName,
                 DepartmentId = e.DepartmentId,
@@ -152,7 +156,7 @@ namespace Nafadh_Backend.Services
                 SupervisorId = e.SupervisorId,
                 SupervisorName = e.CompanySupervisor?.User.FullName,
                 TraineeGitHubUrl = e.Trainee.GitHubUrl,
-                TraineeLinkedInUrl = e.Trainee.LinkedInUrl, // ربط اللينكد إن هنا
+                TraineeLinkedInUrl = e.Trainee.LinkedInUrl,
                 ProgramId = e.Batch.ProgramId,
                 ProgramTitle = e.Batch.Program?.Title,
                 ProgramDescription = e.Batch.Program?.Description,
