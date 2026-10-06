@@ -50,10 +50,12 @@ namespace Nafadh_Backend.Repositories
                             m =>
                                 m.SenderId ==
                                 participantUserId.Value
+                                ||
+                                m.ReceiverId ==
+                                participantUserId.Value
                         )
                 );
             }
-
 
             if (status.HasValue)
             {
