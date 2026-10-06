@@ -33,6 +33,9 @@ import {
   TrainerDto,
   CompanySupervisorDto,
   ProgressSummaryDto,
+  LessonFeedbackDto,
+LessonFeedbackCreateDto,
+LessonFeedbackUpdateDto,
 } from '../../../core/models/dtos';
 
 
@@ -365,6 +368,52 @@ export class TraineeApi {
       `${this.base}/Session/${sessionId}`
     );
   }
+
+
+  // =========================================================
+// Lesson Feedback
+// =========================================================
+
+getLessonFeedback(
+  lessonId: number
+): Observable<LessonFeedbackDto> {
+
+  return this.http.get<LessonFeedbackDto>(
+    `${this.base}/LessonFeedback/lesson/${lessonId}`
+  );
+}
+
+
+createLessonFeedback(
+  lessonId: number,
+  dto: LessonFeedbackCreateDto
+): Observable<LessonFeedbackDto> {
+
+  return this.http.post<LessonFeedbackDto>(
+    `${this.base}/LessonFeedback/lesson/${lessonId}`,
+    dto
+  );
+}
+
+
+updateLessonFeedback(
+  lessonId: number,
+  dto: LessonFeedbackUpdateDto
+): Observable<LessonFeedbackDto> {
+
+  return this.http.put<LessonFeedbackDto>(
+    `${this.base}/LessonFeedback/lesson/${lessonId}`,
+    dto
+  );
+}
+
+
+
+
+
+
+
+
 
 
   // =========================================================
