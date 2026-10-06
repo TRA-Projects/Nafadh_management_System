@@ -2093,32 +2093,36 @@ openLessonNotes(
     return;
   }
 
+  if (lesson.progressPercentage !== 100) {
+
+    this.showNotification(
+      'يجب مشاهدة الدرس أولاً قبل إضافة ملاحظة.',
+      'error'
+    );
+
+    return;
+  }
 
   this.selectedLesson.set(
     lesson
   );
 
-
   this.selectedModule.set(
     module
   );
-
 
   this.lessonSidebarTab.set(
     'notes'
   );
 
-
   this.loadLessonFeedback(
     lesson.lessonId
   );
-
 
   this.showLessonSidebar.set(
     true
   );
 }
-
   // =====================================================
 // OPEN LESSON RATING
 // =====================================================
@@ -2137,26 +2141,31 @@ openLessonRating(
     return;
   }
 
+  if (lesson.progressPercentage !== 100) {
+
+    this.showNotification(
+      'يجب مشاهدة الدرس أولاً قبل تقييم الدرس.',
+      'error'
+    );
+
+    return;
+  }
 
   this.selectedLesson.set(
     lesson
   );
 
-
   this.selectedModule.set(
     module
   );
-
 
   this.lessonSidebarTab.set(
     'rating'
   );
 
-
   this.loadLessonFeedback(
     lesson.lessonId
   );
-
 
   this.showLessonSidebar.set(
     true
@@ -2371,6 +2380,16 @@ saveLessonNote(): void {
     return;
   }
 
+   if (lesson.progressPercentage !== 100) {
+
+  this.showNotification(
+    'يجب مشاهدة الدرس أولاً قبل إضافة ملاحظة.',
+    'error'
+  );
+
+  return;
+}
+
 
   const note =
     this.lessonNote().trim();
@@ -2530,7 +2549,17 @@ saveLessonRating(): void {
   if (!lesson) {
     return;
   }
+ 
 
+  if (lesson.progressPercentage !== 100) {
+
+  this.showNotification(
+    'يجب مشاهدة الدرس أولاً قبل تقييم الدرس.',
+    'error'
+  );
+
+  return;
+}
 
   if (!rating) {
 
