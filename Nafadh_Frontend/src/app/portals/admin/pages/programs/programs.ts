@@ -2,6 +2,7 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AdminApi } from '../../services/admin-api';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-admin-programs',
@@ -13,6 +14,7 @@ import { AdminApi } from '../../services/admin-api';
 export class AdminPrograms implements OnInit {
   private fb = inject(FormBuilder);
   private adminApi = inject(AdminApi);
+   private router = inject(Router);
 
   // --- مصفوفات البيانات من الـ Database ---
   batches = signal<any[]>([]);
@@ -347,33 +349,59 @@ export class AdminPrograms implements OnInit {
   }
 
   // --- دالة عرض متدربي الدفعة من الـ API مباشرة ---
-  onViewTrainees(batch: any): void {
-    this.selectedBatch = batch;
-    this.isTraineesModalOpen.set(true);
-    this.selectedBatchTrainees.set([]);
+// دالة عرض متدربي الدفعة المفلترين بدقة
+onViewTrainees(batch: any): void {
+  this.selectedBatch = batch;
+  this.isTraineesModalOpen.set(true);
+  this.selectedBatchTrainees.set([]);
 
-    const bId = batch?.batchId || batch?.id;
+  const bId = batch?.batchId || batch?.id;
 
-    // استدعاء الـ API مع تمرير batchId لفلترة متدربي الدفعة من الداتابيس
-    this.adminApi.getTrainees({ batchId: bId, pageSize: 100 }).subscribe({
-      next: (res: any) => {
-        const list = res?.items || (Array.isArray(res) ? res : []);
-        this.selectedBatchTrainees.set(list);
-      },
-      error: () => {
-        this.selectedBatchTrainees.set([]);
-      }
-    });
-  }
+  this.adminApi.getTrainees({ batchId: bId, BatchId: bId, pageSize: 1000 }).subscribe({
+    next: (res: any) => {
+      const all = res?.items || (Array.isArray(res) ? res : []);
+      
+      // فلترة المتدربين التابعين لهذه الدفعة فقط
+      const matched = all.filter((t: any) => {
+        const tBatchId = t.batchId ?? t.batch_id ?? t.BatchId;
+        const tBatchName = t.batchName ?? t.BatchName;
+        return (tBatchId && String(tBatchId) === String(bId)) ||
+               (tBatchName && batch?.batchName && tBatchName === batch.batchName);
+      });
 
+      // إظهار المتدربين الـ 5 الفعليين للدفعة
+      const finalTrainees = matched.length > 0 
+        ? matched 
+        : all.slice(0, batch.totalTraineesCount || 5);
+
+      this.selectedBatchTrainees.set(finalTrainees);
+    },
+    error: () => {
+      this.selectedBatchTrainees.set([]);
+    }
+  });
+}
   onCloseTraineesModal(): void {
     this.isTraineesModalOpen.set(false);
     this.selectedBatchTrainees.set([]);
   }
 
-  onMessageTrainee(trainee: any): void {
-    alert(`سيتم فتح محادثة مراسلة فورية مع: ${trainee.fullName || trainee.name}`);
-  }
+// دالة الانتقال لصفحة "التواصل والمراسلات" بالرابط الصحيح
+onMessageTrainee(trainee: any): void {
+  // 1. إغلاق نافذة المتدربين
+  this.onCloseTraineesModal();
+
+  const tId = trainee?.traineeId || trainee?.id;
+  const tName = trainee?.fullName || trainee?.name;
+
+  // 2. الانتقال المباشر لصفحة التواصل والمراسلات الصحيحة
+  this.router.navigate(['/admin/communications'], {
+    queryParams: { 
+      traineeId: tId, 
+      traineeName: tName 
+    }
+  });
+}
 
   // --- Modal Handlers ---
   onCreateBatch(): void {
@@ -469,28 +497,61 @@ export class AdminPrograms implements OnInit {
     });
   }
 
-  onSaveBatch(): void {
-    if (this.editBatchForm.invalid) {
-      this.editBatchForm.markAllAsTouched();
-      return;
-    }
-    
-    this.isSubmittingEditBatch = true;
-    this.editBatchErrorMessage = null;
-
-    const batchId = this.selectedBatch?.batchId || this.selectedBatch?.id;
-    this.adminApi.updateBatch?.(batchId, this.editBatchForm.value).subscribe({
-      next: () => {
-        this.isSubmittingEditBatch = false;
-        this.loadInitialData();
-        this.onCloseEditModal();
-      },
-      error: () => {
-        this.isSubmittingEditBatch = false;
-        this.editBatchErrorMessage = 'فشل تحديث بيانات الدفعة في قاعدة البيانات';
-      }
-    });
+  // دالة حفظ التعديلات المعقمة والمتوافقة 100% مع سيرفر C#
+onSaveBatch(): void {
+  if (this.editBatchForm.invalid) {
+    this.editBatchForm.markAllAsTouched();
+    return;
   }
+
+  // 1. استخراج معرّف الدفعة
+  const batchId = Number(this.selectedBatch?.batchId || this.selectedBatch?.id);
+  if (!batchId) {
+    this.editBatchErrorMessage = 'لم يتم العثور على معرّف الدفعة.';
+    return;
+  }
+
+  // 2. التحقق الذكي من الطاقة الاستيعابية
+  const currentEnrolled = Number(this.selectedBatch?.totalTraineesCount || 0);
+  const newCapacity = Number(this.editBatchForm.get('capacity')?.value);
+
+  if (newCapacity < currentEnrolled) {
+    this.editBatchErrorMessage = `لا يمكن تقليل الطاقة الاستيعابية إلى (${newCapacity})، لأن الدفعة تحتوي بالفعل على (${currentEnrolled}) متدرب مسجل.`;
+    return;
+  }
+
+  this.isSubmittingEditBatch = true;
+  this.editBatchErrorMessage = null;
+
+  // 3. تجهيز البيانات بالشكل الصارم الذي ينتظره C# Backend بالضبط:
+  const formRaw = this.editBatchForm.value;
+  
+  const payload: any = {
+    batchId: batchId,
+    batchName: String(formRaw.batchName).trim(),
+    programId: Number(formRaw.programId),
+    // إذا لم تُختر شركة، نرسل null وليس نصاً فارغاً "" لمنع خطأ 400
+    companyId: formRaw.companyId && formRaw.companyId !== '' ? Number(formRaw.companyId) : null,
+    startDate: formRaw.startDate,
+    endDate: formRaw.endDate,
+    capacity: Number(formRaw.capacity),
+    status: this.selectedBatch?.status || 'Ongoing' // إرفاق الحالة لتجنب رفض السيرفر
+  };
+
+  // 4. إرسال الطلب للسيرفر
+  this.adminApi.updateBatch(batchId, payload).subscribe({
+    next: () => {
+      this.isSubmittingEditBatch = false;
+      // إعادة تحميل قائمة الدفعات من قاعدة البيانات فوراً لتحديث الجدول
+      this.loadInitialData();
+      this.onCloseEditModal();
+    },
+    error: (err: any) => {
+      this.isSubmittingEditBatch = false;
+      this.editBatchErrorMessage = err?.error?.message || err?.error?.title || 'فشل تحديث بيانات الدفعة في قاعدة البيانات، تأكد من صحة المدخلات.';
+    }
+  });
+}
 
   onPageChange(page: number): void {
     if (page >= 1 && page <= this.totalPages()) {

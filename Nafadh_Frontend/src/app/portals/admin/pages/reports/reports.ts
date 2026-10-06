@@ -32,31 +32,58 @@ export class AdminReports implements OnInit {
   isLoading = signal<boolean>(false);
 
   // =========================================================
-  // 2. بيانات قسم الشركات
+  // 2. بيانات وفلاتر قسم الشركات وبرامجها
   // =========================================================
+  allCompaniesData: any[] = [];
   companies: any[] = [];
+  companySearchTerm = '';
+  companyFilterSort = 'ALL';  // ALL | TOP_TRAINEES | TOP_PROGRAMS | TOP_BATCHES
+  companyFilterTrack = 'ALL';
+
+  // فلاتر برامج ودفعات الشركة المحددة
+  programSearchTerm = '';
+  programSortFilter = 'ALL';  // ALL | MOST_BATCHES | MOST_TRAINEES
+
   pageSize = 5;
   currentPageNumber = 1;
 
+  // فلاتر جدول تقرير نهاية الدفعة
+  batchTraineeSearch = '';
+  batchLevelFilter = 'ALL';
+
   // =========================================================
-  // 3. بيانات قسم المدربين (جميع المدربين مع التصفح)
+  // 3. بيانات وفلاتر قسم المدربين
   // =========================================================
   allTrainersData: any[] = [];
+  filteredTrainersList: any[] = [];
   trainers: any[] = [];
+  
+  trainerSearchTerm = '';
+  trainerSpecialtyFilter = 'ALL';
+  trainerRatingFilter = 'ALL';
+
   trainersCurrentPage = 1;
-  trainersPageSize = 6;       // 6 كروت في كل صفحة
+  trainersPageSize = 6;
   trainersTotalCount = 0;
   trainersTotalPages = 1;
 
-  // تصفح تقييمات المتدربين داخل المدرب
+  // فلاتر تقييمات المتدربين داخل المدرب
   trainerReviewsPage = 1;
   trainerReviewsPageSize = 5;
+  trainerReviewSearch = '';
 
   // =========================================================
-  // 4. بيانات قسم المتدربين (كافة المتدربين من الداتابيز)
+  // 4. بيانات وفلاتر قسم المتدربين
   // =========================================================
   allTraineesData: any[] = [];
+  filteredTraineesList: any[] = [];
   traineesList: any[] = [];
+
+  traineeSearchTerm = '';
+  traineeCompanyFilter = 'ALL';
+  traineeTrainerFilter = 'ALL';
+  traineeLevelFilter = 'ALL';
+
   traineesCurrentPage = 1;
   traineesPageSize = 10;
   traineesTotalCount = 0;
@@ -81,7 +108,7 @@ export class AdminReports implements OnInit {
     this.loadTraineesData();
   }
 
-  // ✅ دالة تضمن ظهور التقييم دائماً برقم عشري واحد فقط (مثل 4.9 أو 4.8)
+  // تقريب التقييم برقم واحد فقط
   formatRating(val: any): string {
     if (!val) return '4.9';
     const num = parseFloat(String(val));
@@ -89,14 +116,14 @@ export class AdminReports implements OnInit {
   }
 
   // =========================================================
-  // دوال قسم الشركات
+  // دوال وفلاتر قسم الشركات
   // =========================================================
   loadCompaniesData() {
     this.isLoading.set(true);
     this.api.getCompanies().subscribe({
       next: (res: any) => {
         const rawData = res.items || res;
-        this.companies = (rawData || []).map((c: any) => ({
+        this.allCompaniesData = (rawData || []).map((c: any) => ({
           id: c.companyId,
           name: c.companyName || 'شركة تدريبية',
           programsCount: c.programsCount ?? 0,
@@ -117,10 +144,12 @@ export class AdminReports implements OnInit {
             }))
           }))
         }));
+        this.applyCompanyFilters();
         this.isLoading.set(false);
         this.cdr.detectChanges();
       },
       error: () => {
+        this.allCompaniesData = [];
         this.companies = [];
         this.isLoading.set(false);
         this.cdr.detectChanges();
@@ -128,10 +157,68 @@ export class AdminReports implements OnInit {
     });
   }
 
+  applyCompanyFilters() {
+    let result = [...this.allCompaniesData];
+
+    if (this.companySearchTerm.trim()) {
+      const q = this.companySearchTerm.toLowerCase().trim();
+      result = result.filter(c => c.name.toLowerCase().includes(q));
+    }
+
+    const sortChoice = this.companyFilterSort !== 'ALL' ? this.companyFilterSort : this.companyFilterTrack;
+    if (sortChoice === 'TOP_TRAINEES') {
+      result = result.sort((a, b) => (b.traineesCount || 0) - (a.traineesCount || 0));
+    } else if (sortChoice === 'TOP_PROGRAMS') {
+      result = result.sort((a, b) => (b.programsCount || 0) - (a.programsCount || 0));
+    } else if (sortChoice === 'TOP_BATCHES') {
+      result = result.sort((a, b) => (b.batchesCount || 0) - (a.batchesCount || 0));
+    }
+
+    this.companies = result;
+  }
+
+  resetCompanyFilters() {
+    this.companySearchTerm = '';
+    this.companyFilterSort = 'ALL';
+    this.companyFilterTrack = 'ALL';
+    this.applyCompanyFilters();
+  }
+
   selectCompany(company: any) {
     this.selectedCompany = company;
+    this.programSearchTerm = '';
+    this.programSortFilter = 'ALL';
     this.currentView = 'programs';
     this.cdr.detectChanges();
+  }
+
+  // فلترة وبحث برامج ودفعات الشركة المحددة
+  get filteredCompanyPrograms(): any[] {
+    if (!this.selectedCompany?.programs) return [];
+    let list = [...this.selectedCompany.programs];
+
+    if (this.programSearchTerm.trim()) {
+      const q = this.programSearchTerm.toLowerCase().trim();
+      list = list.filter(prog => {
+        const matchName = prog.name && prog.name.toLowerCase().includes(q);
+        const matchTrack = prog.track && prog.track.toLowerCase().includes(q);
+        const matchBatch = (prog.batches || []).some((b: any) => String(b.id).includes(q));
+        return matchName || matchTrack || matchBatch;
+      });
+    }
+
+    if (this.programSortFilter === 'MOST_BATCHES') {
+      list = list.sort((a, b) => (b.batches?.length || 0) - (a.batches?.length || 0));
+    } else if (this.programSortFilter === 'MOST_TRAINEES') {
+      list = list.sort((a, b) => (b.traineesCount || 0) - (a.traineesCount || 0));
+    }
+
+    return list;
+  }
+
+  resetProgramFilters() {
+    this.programSearchTerm = '';
+    this.programSortFilter = 'ALL';
   }
 
   viewBatchReport(batch?: any) {
@@ -141,6 +228,8 @@ export class AdminReports implements OnInit {
       this.currentView = 'batch-report';
     }
     this.currentPageNumber = 1;
+    this.batchTraineeSearch = '';
+    this.batchLevelFilter = 'ALL';
     this.loadReportPage();
   }
 
@@ -168,6 +257,18 @@ export class AdminReports implements OnInit {
     });
   }
 
+  get filteredBatchReportRows(): any[] {
+    const rawRows = this.report()?.rows || [];
+    return rawRows.filter(t => {
+      const matchSearch = !this.batchTraineeSearch.trim() || 
+        (t.traineeName && t.traineeName.toLowerCase().includes(this.batchTraineeSearch.toLowerCase().trim())) ||
+        (t.major && t.major.toLowerCase().includes(this.batchTraineeSearch.toLowerCase().trim()));
+      
+      const matchLevel = this.batchLevelFilter === 'ALL' || (t.level && t.level.includes(this.batchLevelFilter));
+      return matchSearch && matchLevel;
+    });
+  }
+
   nextPage() {
     const r = this.report();
     const totalPages = r?.totalPages || Math.ceil((r?.totalCount || 0) / this.pageSize);
@@ -184,7 +285,7 @@ export class AdminReports implements OnInit {
   }
 
   // =========================================================
-  // دوال قسم المدربين
+  // دوال وفلاتر قسم المدربين
   // =========================================================
   loadTrainersData() {
     this.isLoading.set(true);
@@ -220,9 +321,7 @@ export class AdminReports implements OnInit {
           };
         });
 
-        this.trainersTotalCount = this.allTrainersData.length;
-        this.trainersTotalPages = Math.ceil(this.trainersTotalCount / this.trainersPageSize) || 1;
-        this.updateTrainersPage();
+        this.applyTrainerFilters();
         this.isLoading.set(false);
         this.cdr.detectChanges();
       },
@@ -233,10 +332,50 @@ export class AdminReports implements OnInit {
     });
   }
 
+  get uniqueTrainerSpecialties(): string[] {
+    const list = this.allTrainersData.map(t => t.specialization).filter(Boolean);
+    return Array.from(new Set(list));
+  }
+
+  applyTrainerFilters() {
+    let result = [...this.allTrainersData];
+
+    if (this.trainerSearchTerm.trim()) {
+      const q = this.trainerSearchTerm.toLowerCase().trim();
+      result = result.filter(t => 
+        t.name.toLowerCase().includes(q) ||
+        t.specialization.toLowerCase().includes(q) ||
+        String(t.id).includes(q)
+      );
+    }
+
+    if (this.trainerSpecialtyFilter !== 'ALL') {
+      result = result.filter(t => t.specialization === this.trainerSpecialtyFilter);
+    }
+
+    if (this.trainerRatingFilter !== 'ALL') {
+      const r = parseFloat(this.trainerRatingFilter);
+      result = result.filter(t => parseFloat(t.rating) >= r);
+    }
+
+    this.filteredTrainersList = result;
+    this.trainersTotalCount = result.length;
+    this.trainersTotalPages = Math.ceil(this.trainersTotalCount / this.trainersPageSize) || 1;
+    this.trainersCurrentPage = 1;
+    this.updateTrainersPage();
+  }
+
+  resetTrainerFilters() {
+    this.trainerSearchTerm = '';
+    this.trainerSpecialtyFilter = 'ALL';
+    this.trainerRatingFilter = 'ALL';
+    this.applyTrainerFilters();
+  }
+
   updateTrainersPage() {
     const startIndex = (this.trainersCurrentPage - 1) * this.trainersPageSize;
     const endIndex = startIndex + this.trainersPageSize;
-    this.trainers = this.allTrainersData.slice(startIndex, endIndex);
+    this.trainers = this.filteredTrainersList.slice(startIndex, endIndex);
   }
 
   nextTrainerPage() {
@@ -285,6 +424,7 @@ export class AdminReports implements OnInit {
       this.selectedTrainer.rating = this.formatRating(this.selectedTrainer.rating);
     }
     this.trainerReviewsPage = 1;
+    this.trainerReviewSearch = '';
 
     if (this.allTraineesData && this.allTraineesData.length > 0) {
       const trainerIndex = this.allTrainersData.findIndex(t => t.id === trainer.id);
@@ -312,14 +452,25 @@ export class AdminReports implements OnInit {
     this.cdr.detectChanges();
   }
 
+  get filteredTrainerReviewsList(): any[] {
+    const all = this.selectedTrainer?.allReviews || [];
+    if (!this.trainerReviewSearch.trim()) return all;
+    const q = this.trainerReviewSearch.toLowerCase().trim();
+    return all.filter((r: any) =>
+      r.traineeName.toLowerCase().includes(q) ||
+      r.companyName.toLowerCase().includes(q) ||
+      r.batchName.toLowerCase().includes(q)
+    );
+  }
+
   updateTrainerReviewsSlice() {
-    if (!this.selectedTrainer?.allReviews) return;
+    const list = this.filteredTrainerReviewsList;
     const start = (this.trainerReviewsPage - 1) * this.trainerReviewsPageSize;
-    this.selectedTrainer.traineeReviews = this.selectedTrainer.allReviews.slice(start, start + this.trainerReviewsPageSize);
+    this.selectedTrainer.traineeReviews = list.slice(start, start + this.trainerReviewsPageSize);
   }
 
   nextTrainerReviewPage() {
-    const total = Math.ceil((this.selectedTrainer?.allReviews?.length || 0) / this.trainerReviewsPageSize);
+    const total = Math.ceil(this.filteredTrainerReviewsList.length / this.trainerReviewsPageSize);
     if (this.trainerReviewsPage < total) {
       this.trainerReviewsPage++;
       this.updateTrainerReviewsSlice();
@@ -342,7 +493,7 @@ export class AdminReports implements OnInit {
   }
 
   // =========================================================
-  // دوال قسم المتدربين
+  // دوال وفلاتر قسم المتدربين
   // =========================================================
   loadTraineesData() {
     this.isLoading.set(true);
@@ -403,9 +554,7 @@ export class AdminReports implements OnInit {
           };
         });
 
-        this.traineesTotalCount = this.allTraineesData.length;
-        this.traineesTotalPages = Math.ceil(this.traineesTotalCount / this.traineesPageSize) || 1;
-        this.updateTraineesPage();
+        this.applyTraineeFilters();
         this.isLoading.set(false);
         this.cdr.detectChanges();
       },
@@ -416,10 +565,60 @@ export class AdminReports implements OnInit {
     });
   }
 
+  get uniqueTraineeCompanies(): string[] {
+    const list = this.allTraineesData.map(t => t.companyName).filter(Boolean);
+    return Array.from(new Set(list));
+  }
+
+  get uniqueTraineeTrainers(): string[] {
+    const list = this.allTraineesData.map(t => t.assignedTrainer).filter(Boolean);
+    return Array.from(new Set(list));
+  }
+
+  applyTraineeFilters() {
+    let result = [...this.allTraineesData];
+
+    if (this.traineeSearchTerm.trim()) {
+      const q = this.traineeSearchTerm.toLowerCase().trim();
+      result = result.filter(t =>
+        t.traineeName.toLowerCase().includes(q) ||
+        t.companyName.toLowerCase().includes(q) ||
+        t.major.toLowerCase().includes(q) ||
+        t.assignedTrainer.toLowerCase().includes(q)
+      );
+    }
+
+    if (this.traineeCompanyFilter !== 'ALL') {
+      result = result.filter(t => t.companyName === this.traineeCompanyFilter);
+    }
+
+    if (this.traineeTrainerFilter !== 'ALL') {
+      result = result.filter(t => t.assignedTrainer === this.traineeTrainerFilter);
+    }
+
+    if (this.traineeLevelFilter !== 'ALL') {
+      result = result.filter(t => t.level.includes(this.traineeLevelFilter));
+    }
+
+    this.filteredTraineesList = result;
+    this.traineesTotalCount = result.length;
+    this.traineesTotalPages = Math.ceil(this.traineesTotalCount / this.traineesPageSize) || 1;
+    this.traineesCurrentPage = 1;
+    this.updateTraineesPage();
+  }
+
+  resetTraineeFilters() {
+    this.traineeSearchTerm = '';
+    this.traineeCompanyFilter = 'ALL';
+    this.traineeTrainerFilter = 'ALL';
+    this.traineeLevelFilter = 'ALL';
+    this.applyTraineeFilters();
+  }
+
   updateTraineesPage() {
     const startIndex = (this.traineesCurrentPage - 1) * this.traineesPageSize;
     const endIndex = startIndex + this.traineesPageSize;
-    this.traineesList = this.allTraineesData.slice(startIndex, endIndex);
+    this.traineesList = this.filteredTraineesList.slice(startIndex, endIndex);
   }
 
   nextTraineePage() {
@@ -458,7 +657,7 @@ export class AdminReports implements OnInit {
   }
 
   exportToExcel() {
-    const rows = this.report()?.rows || [];
+    const rows = this.filteredBatchReportRows;
     if (rows.length === 0) {
       alert('لا توجد بيانات متدربين لتصديرها');
       return;

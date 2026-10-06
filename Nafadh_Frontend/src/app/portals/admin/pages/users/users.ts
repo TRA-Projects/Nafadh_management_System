@@ -24,7 +24,6 @@ export interface RoleDto {
   displayName?: string;
 }
 
-// قائمة الأدوار الافتراضية لضمان ظهور الخيارات في حال تعثر استدعاء الـ API
 export const DEFAULT_ROLES: RoleDto[] = [
   { roleId: 1, roleName: 'هيئة', displayName: 'Admin' },
   { roleId: 2, roleName: 'شركة', displayName: 'CompanySupervisor' },
@@ -65,10 +64,42 @@ export class AdminUsers implements OnInit {
   usersError = signal<string>('');
 
   // =========================================================
+  // تخزين الصورة محليًا (الباك اند لا يدعم avatarUrl)
+  // =========================================================
+  private readonly AVATAR_STORAGE_PREFIX = 'nfd_avatar_';
+
+  private saveAvatarLocally(userId: number | undefined, avatarUrl: string | undefined): void {
+    if (!userId || !avatarUrl) return;
+    try {
+      localStorage.setItem(this.AVATAR_STORAGE_PREFIX + userId, avatarUrl);
+    } catch {
+      // تجاهل بصمت لو المتصفح يمنع localStorage
+    }
+  }
+
+  private getLocalAvatar(userId: number | undefined): string | null {
+    if (!userId) return null;
+    try {
+      return localStorage.getItem(this.AVATAR_STORAGE_PREFIX + userId);
+    } catch {
+      return null;
+    }
+  }
+
+  private removeLocalAvatar(userId: number | undefined): void {
+    if (!userId) return;
+    try {
+      localStorage.removeItem(this.AVATAR_STORAGE_PREFIX + userId);
+    } catch {
+      // تجاهل
+    }
+  }
+
+  // =========================================================
   // البحث والتصفية المتقدمة
   // =========================================================
   searchQuery = signal<string>('');
-  statusFilter = signal<string>('ALL'); // ALL | Active | Suspended
+  statusFilter = signal<string>('ALL');
   yearFilter = signal<string>('ALL');
   dateFrom = signal<string>('');
   dateTo = signal<string>('');
@@ -85,6 +116,34 @@ export class AdminUsers implements OnInit {
   });
 
   resultsCount = computed(() => this.getFilteredList().length);
+
+  // =========================================================
+  // بطاقات إحصائية بأعلى الصفحة
+  // =========================================================
+  statsTotal = computed(() => this.users().length);
+
+  statsActiveCount = computed(() =>
+    this.users().filter((u) => (u.status || '').toLowerCase() !== 'suspended').length
+  );
+
+  statsSuspendedCount = computed(() => this.statsTotal() - this.statsActiveCount());
+
+  statsActivePercentage = computed(() =>
+    this.statsTotal() === 0 ? 0 : Math.round((this.statsActiveCount() / this.statsTotal()) * 100)
+  );
+
+  statsSuspendedPercentage = computed(() =>
+    this.statsTotal() === 0 ? 0 : Math.round((this.statsSuspendedCount() / this.statsTotal()) * 100)
+  );
+
+  statsNewThisMonth = computed(() => {
+    const now = new Date();
+    return this.users().filter((u) => {
+      if (!u.createdAt) return false;
+      const d = new Date(u.createdAt);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    }).length;
+  });
 
   onSearchChange(value: string): void {
     this.searchQuery.set(value);
@@ -219,6 +278,7 @@ export class AdminUsers implements OnInit {
   selectedUser: any = {};
   editTouched = { fullName: false, email: false };
   editErrorMsg = '';
+  editSuccessMsg = signal<string>(''); // جديد: رسالة نجاح داخل النافذة بدل alert
 
   // =========================================================
   // RESET PASSWORD
@@ -226,6 +286,7 @@ export class AdminUsers implements OnInit {
   newPassword = '';
   resetPasswordTouched = { newPassword: false };
   resetPasswordErrorMsg = '';
+  resetPasswordSuccessMsg = signal<string>(''); // جديد: رسالة نجاح داخل النافذة بدل alert
 
   // =========================================================
   // PAGINATION
@@ -309,7 +370,14 @@ export class AdminUsers implements OnInit {
 
     this.api.getUsers().subscribe({
       next: (data) => {
-        this.users.set(Array.isArray(data) ? data : []);
+        const list = Array.isArray(data) ? data : [];
+
+        const merged = list.map((u) => ({
+          ...u,
+          avatarUrl: this.getLocalAvatar(u.userId) || (u as any).avatarUrl || ''
+        }));
+
+        this.users.set(merged);
         this.loadingUsers.set(false);
         this.cdr.detectChanges();
       },
@@ -372,7 +440,7 @@ export class AdminUsers implements OnInit {
   }
 
   // =========================================================
-  // AVATAR: يعرض الصورة الخاصة إن توفرت أو صورة رمزية ثابتة وتلقائية
+  // AVATAR
   // =========================================================
   getAvatarUrl(user: any): string {
     if (user?.avatarUrl && String(user.avatarUrl).trim().length > 0) {
@@ -460,6 +528,7 @@ export class AdminUsers implements OnInit {
   removeEditAvatar(): void {
     this.selectedUser.avatarUrl = '';
     this.editAvatarFileName.set('');
+    this.removeLocalAvatar(this.selectedUser.userId);
     this.cdr.detectChanges();
   }
 
@@ -566,19 +635,27 @@ export class AdminUsers implements OnInit {
       userName: this.newUser.email.trim(),
       email: this.newUser.email.trim(),
       password: this.newUser.password,
-      roleId: Number(this.newUser.roleId),
-      avatarUrl: this.newUser.avatarUrl?.trim() || null
+      roleId: Number(this.newUser.roleId)
     };
 
+    const pendingAvatar = this.newUser.avatarUrl;
+
     this.api.createUser(payload).subscribe({
-      next: () => {
+      next: (res: any) => {
+        const newUserId = res?.userId ?? res?.UserId ?? res?.id;
+        if (newUserId && pendingAvatar) {
+          this.saveAvatarLocally(Number(newUserId), pendingAvatar);
+        }
+
         this.closeCreateModal();
         this.loadData();
       },
       error: (err) => {
         console.error('خطأ في إنشاء الحساب:', err);
 
-        if (err.status === 409) {
+        if (err.status === 413) {
+          this.createErrorMsg = 'حجم الصورة المرفوعة كبير جدًا، يرجى اختيار صورة أصغر أو استخدام رابط صورة بدلاً من الرفع.';
+        } else if (err.status === 409) {
           this.createErrorMsg = 'البريد الإلكتروني مستخدم مسبقاً، يرجى استخدام بريد آخر.';
         } else if (err.error?.message) {
           this.createErrorMsg = err.error.message;
@@ -593,10 +670,18 @@ export class AdminUsers implements OnInit {
 
   openEditModal(user: any): void {
     this.selectedUser = { ...user };
+
+    const localAvatar = this.getLocalAvatar(user.userId);
+    if (localAvatar) {
+      this.selectedUser.avatarUrl = localAvatar;
+    }
+
     this.editTouched = { fullName: false, email: false };
     this.editErrorMsg = '';
+    this.editSuccessMsg.set('');
     this.editAvatarFileName.set('');
-    const avatar = (user as any)?.avatarUrl || '';
+
+    const avatar = this.selectedUser.avatarUrl || '';
     this.editAvatarMode.set(
       avatar
         ? String(avatar).startsWith('data:')
@@ -606,6 +691,7 @@ export class AdminUsers implements OnInit {
           : 'url'
         : 'file'
     );
+
     this.isEditModalOpen = true;
     this.cdr.detectChanges();
   }
@@ -613,6 +699,7 @@ export class AdminUsers implements OnInit {
   closeEditModal(): void {
     this.isEditModalOpen = false;
     this.editErrorMsg = '';
+    this.editSuccessMsg.set('');
     this.editAvatarFileName.set('');
     this.editTouched = { fullName: false, email: false };
     this.cdr.detectChanges();
@@ -650,6 +737,7 @@ export class AdminUsers implements OnInit {
   updateUser(): void {
     this.editTouched = { fullName: true, email: true };
     this.editErrorMsg = '';
+    this.editSuccessMsg.set('');
 
     if (!this.isEditFormValid()) {
       this.cdr.detectChanges();
@@ -660,15 +748,28 @@ export class AdminUsers implements OnInit {
       fullName: this.selectedUser.fullName.trim(),
       email: this.selectedUser.email.trim(),
       phone: this.selectedUser.phone,
-      roleId: Number(this.selectedUser.roleId),
-      avatarUrl: this.selectedUser.avatarUrl?.trim() || null
+      roleId: Number(this.selectedUser.roleId)
     };
 
-    this.api.updateUser(this.selectedUser.userId, payload).subscribe({
+    const pendingAvatar = this.selectedUser.avatarUrl;
+    const userId = this.selectedUser.userId;
+
+    this.api.updateUser(userId, payload).subscribe({
       next: () => {
-        alert('تم تحديث بيانات الحساب بنجاح');
-        this.closeEditModal();
-        this.loadData();
+        if (pendingAvatar) {
+          this.saveAvatarLocally(userId, pendingAvatar);
+        } else {
+          this.removeLocalAvatar(userId);
+        }
+
+        // جديد: رسالة نجاح داخل النافذة بدل alert، ثم إغلاق تلقائي
+        this.editSuccessMsg.set('تم تحديث بيانات الحساب بنجاح');
+        this.cdr.detectChanges();
+
+        setTimeout(() => {
+          this.closeEditModal();
+          this.loadData();
+        }, 1300);
       },
       error: (err) => {
         console.error('خطأ أثناء تعديل البيانات:', err);
@@ -690,6 +791,7 @@ export class AdminUsers implements OnInit {
     this.selectedUser = { ...user };
     this.newPassword = '';
     this.resetPasswordErrorMsg = '';
+    this.resetPasswordSuccessMsg.set('');
     this.resetPasswordTouched = { newPassword: false };
     this.isResetPasswordModalOpen = true;
     this.cdr.detectChanges();
@@ -699,6 +801,7 @@ export class AdminUsers implements OnInit {
     this.isResetPasswordModalOpen = false;
     this.newPassword = '';
     this.resetPasswordErrorMsg = '';
+    this.resetPasswordSuccessMsg.set('');
     this.resetPasswordTouched = { newPassword: false };
     this.cdr.detectChanges();
   }
@@ -718,6 +821,7 @@ export class AdminUsers implements OnInit {
   confirmResetPassword(): void {
     this.resetPasswordTouched.newPassword = true;
     this.resetPasswordErrorMsg = '';
+    this.resetPasswordSuccessMsg.set('');
 
     if (!this.isResetPasswordValid()) {
       this.cdr.detectChanges();
@@ -726,8 +830,13 @@ export class AdminUsers implements OnInit {
 
     this.api.resetPassword(this.selectedUser.userId, { newPassword: this.newPassword }).subscribe({
       next: () => {
-        alert('تم تغيير كلمة المرور بنجاح');
-        this.closeResetPasswordModal();
+        // جديد: رسالة نجاح داخل النافذة بدل alert، ثم إغلاق تلقائي
+        this.resetPasswordSuccessMsg.set('تم تغيير كلمة المرور بنجاح');
+        this.cdr.detectChanges();
+
+        setTimeout(() => {
+          this.closeResetPasswordModal();
+        }, 1300);
       },
       error: (err) => {
         console.error('تعذر تغيير كلمة المرور:', err);
