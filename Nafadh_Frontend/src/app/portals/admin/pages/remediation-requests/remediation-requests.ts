@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // 👈 استيراد FormsModule
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
 
 export type RemediationActionType =
@@ -39,7 +40,7 @@ export interface RemediationRequestDto {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule // 👈 تم إضافة FormsModule هنا لإصلاح أخطاء ngModel
+    FormsModule
   ],
   templateUrl: './remediation-requests.html',
   styleUrls: ['./remediation-requests.css']
@@ -47,65 +48,105 @@ export interface RemediationRequestDto {
 export class AdminRemediationRequests implements OnInit {
 
   requests = signal<RemediationRequestDto[]>([]);
-  selectedRequest = signal<RemediationRequestDto | null>(null);
+
+  selectedRequest =
+    signal<RemediationRequestDto | null>(null);
 
   searchTerm = '';
+
   selectedStatus = 'ALL';
+
   selectedActionType = 'ALL';
 
   adminNote = '';
+
   isProcessing = signal(false);
 
-  constructor(private api: AdminApi) {}
+
+  constructor(
+    private api: AdminApi,
+    private router: Router
+  ) {}
+
 
   ngOnInit(): void {
     this.loadRequests();
   }
+
+
+  // ================================
+  // BACK TO WARNINGS
+  // ================================
+
+  goToWarnings(): void {
+    this.router.navigate(['/admin/warnings']);
+  }
+
 
   // ================================
   // LOAD REQUESTS
   // ================================
 
   loadRequests(): void {
+
     const apiAny = this.api as any;
 
     if (
       apiAny.getRemediationRequests &&
       typeof apiAny.getRemediationRequests === 'function'
     ) {
+
       apiAny.getRemediationRequests().subscribe({
+
         next: (res: any) => {
+
           const list = Array.isArray(res)
             ? res
             : (res?.items || []);
 
           this.requests.set(list);
+
         },
+
         error: (error: any) => {
-          console.error('Error loading remediation requests:', error);
+
+          console.error(
+            'Error loading remediation requests:',
+            error
+          );
+
           this.requests.set([]);
+
         }
+
       });
+
     } else {
+
       console.warn(
         'getRemediationRequests() is not implemented in AdminApi.'
       );
 
       this.requests.set([]);
+
     }
   }
+
 
   // ================================
   // FILTER
   // ================================
 
   filteredRequests(): RemediationRequestDto[] {
-    const term = this.searchTerm.trim().toLowerCase();
+
+    const term =
+      this.searchTerm.trim().toLowerCase();
 
     return this.requests().filter(request => {
 
       const companyName =
         request.companyName?.toLowerCase() || '';
+
 
       const matchSearch =
         !term ||
@@ -117,21 +158,26 @@ export class AdminRemediationRequests implements OnInit {
           .toLowerCase()
           .includes(term);
 
+
       const matchStatus =
         this.selectedStatus === 'ALL' ||
         request.status === this.selectedStatus;
 
+
       const matchAction =
         this.selectedActionType === 'ALL' ||
         request.actionType === this.selectedActionType;
+
 
       return (
         matchSearch &&
         matchStatus &&
         matchAction
       );
+
     });
   }
+
 
   // ================================
   // MODAL
@@ -140,14 +186,23 @@ export class AdminRemediationRequests implements OnInit {
   openDecisionModal(
     request: RemediationRequestDto
   ): void {
+
     this.selectedRequest.set(request);
-    this.adminNote = request.adminDecision || '';
+
+    this.adminNote =
+      request.adminDecision || '';
+
   }
 
+
   closeModal(): void {
+
     this.selectedRequest.set(null);
+
     this.adminNote = '';
+
   }
+
 
   // ================================
   // DECISION
@@ -157,25 +212,32 @@ export class AdminRemediationRequests implements OnInit {
     status: RemediationRequestStatus
   ): void {
 
-    const request = this.selectedRequest();
+    const request =
+      this.selectedRequest();
 
     if (!request) {
       return;
     }
 
+
     if (
       !this.adminNote.trim() &&
       status !== 'Approved'
     ) {
+
       alert(
         'يرجى تدوين ملاحظات القرار أو التبرير الموجه للشركة.'
       );
+
       return;
     }
 
+
     this.isProcessing.set(true);
 
+
     const updatePayload = {
+
       status: status,
 
       adminDecision:
@@ -187,9 +249,12 @@ export class AdminRemediationRequests implements OnInit {
 
       decisionBy:
         'أدمن الامتثال والرقابة'
+
     };
 
+
     const apiAny = this.api as any;
+
 
     if (
       apiAny.updateRemediationStatus &&
@@ -207,20 +272,29 @@ export class AdminRemediationRequests implements OnInit {
 
             this.isProcessing.set(false);
 
+
             request.status = status;
+
+
             request.adminDecision =
               updatePayload.adminDecision;
+
 
             request.decisionDate =
               updatePayload.decisionDate;
 
+
             request.decisionBy =
               updatePayload.decisionBy;
 
+
             this.closeModal();
 
+
             this.loadRequests();
+
           },
+
 
           error: (error: any) => {
 
@@ -229,12 +303,16 @@ export class AdminRemediationRequests implements OnInit {
               error
             );
 
+
             this.isProcessing.set(false);
+
 
             alert(
               'حدث خطأ أثناء تحديث حالة الطلب.'
             );
+
           }
+
         });
 
     } else {
@@ -243,22 +321,32 @@ export class AdminRemediationRequests implements OnInit {
         'updateRemediationStatus() is not implemented in AdminApi.'
       );
 
+
       // Temporary local update
+
       request.status = status;
+
+
       request.adminDecision =
         updatePayload.adminDecision;
+
 
       request.decisionDate =
         updatePayload.decisionDate;
 
+
       request.decisionBy =
         updatePayload.decisionBy;
 
+
       this.isProcessing.set(false);
 
+
       this.closeModal();
+
     }
   }
+
 
   // ================================
   // STATUS
@@ -284,8 +372,10 @@ export class AdminRemediationRequests implements OnInit {
 
       default:
         return status;
+
     }
   }
+
 
   getStatusClass(
     status: RemediationRequestStatus
@@ -307,8 +397,10 @@ export class AdminRemediationRequests implements OnInit {
 
       default:
         return '';
+
     }
   }
+
 
   // ================================
   // COUNTS
@@ -319,7 +411,12 @@ export class AdminRemediationRequests implements OnInit {
   ): number {
 
     return this.requests()
-      .filter(request => request.status === status)
+      .filter(
+        request =>
+          request.status === status
+      )
       .length;
+
   }
+
 }

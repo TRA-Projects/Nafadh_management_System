@@ -1,4 +1,3 @@
-<p>remediation-requests works!</p>
 <div class="warnings-page">
 
   <!-- ================================
@@ -7,7 +6,8 @@
 
   <div class="page-header">
 
-    <div>
+    <div class="page-header-content">
+
       <h1 class="nfd-page-title">
         طلبات معالجة وتصحيح الإنذارات
       </h1>
@@ -15,7 +15,29 @@
       <p class="nfd-page-sub">
         إدارة ومراجعة طلبات الشركات المستضيفة للبرامج التدريبية لتسوية الإنذارات الصادرة
       </p>
+
     </div>
+
+
+    <!-- ================================
+         BACK BUTTON
+    ================================= -->
+
+    <button
+      type="button"
+      class="back-to-warnings-btn"
+      (click)="goToWarnings()"
+    >
+
+      <span class="back-icon">
+        ←
+      </span>
+
+      <span>
+        الرجوع إلى الإنذارات
+      </span>
+
+    </button>
 
   </div>
 
@@ -26,7 +48,9 @@
 
   <div class="stats-grid">
 
+
     <!-- Total -->
+
     <div class="stat-card">
 
       <div class="stat-title">
@@ -41,6 +65,7 @@
 
 
     <!-- Pending -->
+
     <div class="stat-card border-amber">
 
       <div class="stat-title">
@@ -55,6 +80,7 @@
 
 
     <!-- Approved -->
+
     <div class="stat-card border-green">
 
       <div class="stat-title">
@@ -69,6 +95,7 @@
 
 
     <!-- Needs Modification -->
+
     <div class="stat-card border-purple">
 
       <div class="stat-title">
@@ -92,7 +119,9 @@
 
     <div class="nfd-toolbar-multi">
 
+
       <!-- Search -->
+
       <div class="search-box">
 
         <svg
@@ -103,6 +132,7 @@
           stroke="currentColor"
           stroke-width="2"
         >
+
           <circle
             cx="11"
             cy="11"
@@ -112,7 +142,9 @@
           <path
             d="m21 21-4.35-4.35"
           ></path>
+
         </svg>
+
 
         <input
           type="text"
@@ -124,6 +156,7 @@
 
 
       <!-- Status -->
+
       <select
         class="nfd-select"
         [(ngModel)]="selectedStatus"
@@ -153,6 +186,7 @@
 
 
       <!-- Action Type -->
+
       <select
         class="nfd-select"
         [(ngModel)]="selectedActionType"
@@ -250,27 +284,38 @@
             *ngFor="let req of filteredRequests()"
           >
 
+
             <!-- Request ID -->
+
             <td class="font-mono font-bold">
+
               REQ-{{ req.requestId }}
+
             </td>
 
 
             <!-- Company -->
+
             <td>
+
               <span class="font-bold">
                 {{ req.companyName }}
               </span>
+
             </td>
 
 
             <!-- Warning -->
+
             <td class="font-mono text-blue">
+
               CW-{{ req.warningId }}
+
             </td>
 
 
             <!-- Reasons -->
+
             <td>
 
               <div class="reasons-pill-group">
@@ -279,7 +324,9 @@
                   class="reason-tag"
                   *ngFor="let reason of req.violationReasons"
                 >
+
                   {{ reason }}
+
                 </span>
 
               </div>
@@ -288,35 +335,45 @@
 
 
             <!-- Action -->
+
             <td>
 
               <span class="action-tag">
+
                 {{ req.actionType }}
+
               </span>
 
             </td>
 
 
             <!-- Date -->
+
             <td>
+
               {{ req.requestDate | date:'dd/MM/yyyy' }}
+
             </td>
 
 
             <!-- Status -->
+
             <td>
 
               <span
                 class="status-pill"
                 [ngClass]="getStatusClass(req.status)"
               >
+
                 {{ getStatusLabel(req.status) }}
+
               </span>
 
             </td>
 
 
             <!-- Action Button -->
+
             <td class="text-center">
 
               <button
@@ -324,7 +381,9 @@
                 class="nfd-btn"
                 (click)="openDecisionModal(req)"
               >
+
                 عرض واتخاذ القرار
+
               </button>
 
             </td>
@@ -333,6 +392,7 @@
 
 
           <!-- Empty -->
+
           <tr
             *ngIf="filteredRequests().length === 0"
           >
@@ -341,7 +401,9 @@
               colspan="8"
               class="empty-msg"
             >
+
               لا توجد طلبات مطابقة للبحث أو الفلاتر الحالية.
+
             </td>
 
           </tr>
@@ -368,6 +430,7 @@
 
 
       <!-- Modal Header -->
+
       <div class="modal-title-bar">
 
         <div>
@@ -388,13 +451,16 @@
           class="close-icon-btn"
           (click)="closeModal()"
         >
+
           ×
+
         </button>
 
       </div>
 
 
       <!-- Company Header -->
+
       <div class="company-card-header">
 
         <div class="company-text">
@@ -404,8 +470,10 @@
           </h4>
 
           <span>
+
             رقم الإنذار:
             CW-{{ selectedRequest()?.warningId }}
+
           </span>
 
         </div>
@@ -414,10 +482,12 @@
 
 
       <!-- Details -->
+
       <div class="details-list">
 
 
         <!-- Request Date -->
+
         <div class="detail-row">
 
           <span class="detail-label">
@@ -425,13 +495,16 @@
           </span>
 
           <span>
+
             {{ selectedRequest()?.requestDate | date:'dd/MM/yyyy' }}
+
           </span>
 
         </div>
 
 
         <!-- Warning Date -->
+
         <div class="detail-row">
 
           <span class="detail-label">
@@ -439,13 +512,16 @@
           </span>
 
           <span>
+
             {{ selectedRequest()?.warningIssuedDate | date:'dd/MM/yyyy' }}
+
           </span>
 
         </div>
 
 
         <!-- Action -->
+
         <div class="detail-row">
 
           <span class="detail-label">
@@ -453,13 +529,16 @@
           </span>
 
           <span class="action-tag action-tag-large">
+
             {{ selectedRequest()?.actionType }}
+
           </span>
 
         </div>
 
 
         <!-- Violation Reasons -->
+
         <div class="detail-row flex-col">
 
           <span class="detail-label">
@@ -472,7 +551,9 @@
               class="reason-tag"
               *ngFor="let reason of selectedRequest()?.violationReasons"
             >
+
               {{ reason }}
+
             </span>
 
           </div>
@@ -481,6 +562,7 @@
 
 
         <!-- Company Explanation -->
+
         <div class="detail-row flex-col">
 
           <span class="detail-label">
@@ -497,6 +579,7 @@
 
 
         <!-- Previous Decision -->
+
         <div
           class="detail-row flex-col"
           *ngIf="selectedRequest()?.adminDecision"
@@ -516,6 +599,7 @@
 
 
         <!-- Admin Decision -->
+
         <div class="admin-decision-box">
 
           <label class="decision-label">
@@ -535,9 +619,13 @@
 
 
       <!-- Footer -->
+
       <div class="modal-footer-actions">
 
         <div class="decision-buttons-row">
+
+
+          <!-- Approve -->
 
           <button
             type="button"
@@ -545,9 +633,13 @@
             [disabled]="isProcessing()"
             (click)="applyDecision('Approved')"
           >
+
             قبول الطلب ✅
+
           </button>
 
+
+          <!-- Reject -->
 
           <button
             type="button"
@@ -555,9 +647,13 @@
             [disabled]="isProcessing()"
             (click)="applyDecision('Rejected')"
           >
+
             رفض الطلب ❌
+
           </button>
 
+
+          <!-- Modify -->
 
           <button
             type="button"
@@ -565,11 +661,15 @@
             [disabled]="isProcessing()"
             (click)="applyDecision('NeedsModification')"
           >
+
             طلب تعديل / معلومات إضافية 🔄
+
           </button>
 
         </div>
 
+
+        <!-- Close -->
 
         <button
           type="button"
@@ -577,7 +677,9 @@
           [disabled]="isProcessing()"
           (click)="closeModal()"
         >
+
           إغلاق
+
         </button>
 
       </div>
