@@ -33,6 +33,9 @@ import {
   TrainerDto,
   CompanySupervisorDto,
   ProgressSummaryDto,
+  LessonFeedbackDto,
+  LessonFeedbackCreateDto,
+  LessonFeedbackUpdateDto,
 } from '../../../core/models/dtos';
 
 
@@ -368,6 +371,44 @@ export class TraineeApi {
 
 
   // =========================================================
+  // Lesson Feedback
+  // =========================================================
+
+  getLessonFeedback(
+    lessonId: number
+  ): Observable<LessonFeedbackDto> {
+
+    return this.http.get<LessonFeedbackDto>(
+      `${this.base}/LessonFeedback/lesson/${lessonId}`
+    );
+  }
+
+
+  createLessonFeedback(
+    lessonId: number,
+    dto: LessonFeedbackCreateDto
+  ): Observable<LessonFeedbackDto> {
+
+    return this.http.post<LessonFeedbackDto>(
+      `${this.base}/LessonFeedback/lesson/${lessonId}`,
+      dto
+    );
+  }
+
+
+  updateLessonFeedback(
+    lessonId: number,
+    dto: LessonFeedbackUpdateDto
+  ): Observable<LessonFeedbackDto> {
+
+    return this.http.put<LessonFeedbackDto>(
+      `${this.base}/LessonFeedback/lesson/${lessonId}`,
+      dto
+    );
+  }
+
+
+  // =========================================================
   // Program Modules
   // =========================================================
 
@@ -625,12 +666,68 @@ export class TraineeApi {
 
 
   startConversation(
-    dto: unknown
+    dto: {
+      type: string;
+      category?: string | null;
+      subject: string;
+      startedByUserId: number;
+      firstMessage: string;
+      attachment?: File | null;
+    }
   ): Observable<ConversationDetailDto> {
+
+    const formData =
+      new FormData();
+
+
+    formData.append(
+      'Type',
+      dto.type
+    );
+
+
+    if (dto.category) {
+
+      formData.append(
+        'Category',
+        dto.category
+      );
+
+    }
+
+
+    formData.append(
+      'Subject',
+      dto.subject
+    );
+
+
+    formData.append(
+      'StartedByUserId',
+      dto.startedByUserId.toString()
+    );
+
+
+    formData.append(
+      'FirstMessage',
+      dto.firstMessage
+    );
+
+
+    if (dto.attachment) {
+
+      formData.append(
+        'Attachment',
+        dto.attachment,
+        dto.attachment.name
+      );
+
+    }
+
 
     return this.http.post<ConversationDetailDto>(
       `${this.base}/Conversation`,
-      dto
+      formData
     );
   }
 

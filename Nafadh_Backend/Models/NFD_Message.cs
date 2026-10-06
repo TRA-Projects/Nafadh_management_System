@@ -24,20 +24,39 @@ namespace Nafadh_Backend.Models
 
         [Required]
         public string Content { get; set; } = string.Empty;
+
         public DateTime SentDate { get; set; }
+
         public NFD_MessageStatus Status { get; set; }
 
         public int SenderId { get; set; }
+
         public NFD_User Sender { get; set; } = null!;
+
 
         // EDITED: now nullable
         public int? ReceiverId { get; set; }
+
         public NFD_User? Receiver { get; set; }
+
 
         // NEW: set when this message is a threaded reply within a Conversation
         // (NFD_SupportTicket); null for legacy direct messages.
         public int? TicketId { get; set; }
+
         public NFD_SupportTicket? Ticket { get; set; }
 
+
+        // NEW: optional attachment for conversation messages
+        [MaxLength(500)]
+        public string? AttachmentUrl { get; set; }
+
+        [MaxLength(255)]
+        public string? AttachmentFileName { get; set; }
+
+        [MaxLength(100)]
+        public string? AttachmentContentType { get; set; }
+
+        public long? AttachmentFileSize { get; set; }
     }
 }
