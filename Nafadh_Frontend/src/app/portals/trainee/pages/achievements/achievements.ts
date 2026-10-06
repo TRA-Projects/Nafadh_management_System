@@ -1,5 +1,5 @@
 // ============================================================
-// FILE: trainee-achievements.component.ts (معدّل - إضافة التقييمات)
+// FILE: trainee-achievements.component.ts
 // ============================================================
 
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TraineeApi } from '../../services/trainee-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+
 import {
   BadgeDto,
   CertificateDto,
@@ -43,9 +44,9 @@ export interface ModuleWithLessonsDto extends ModuleDto {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './achievements.html',
+
   styles: [
     `
-    
       .achievements-page {
         width: 100%;
         max-width: 2000px;
@@ -192,6 +193,23 @@ export interface ModuleWithLessonsDto extends ModuleDto {
       .feedback-btn:hover {
         background: #eff6ff;
         transform: translateY(-1px);
+      }
+
+      /* ============================================================
+         UPDATE:
+         زر تقييم المدرب يبقى ظاهر دائماً
+         ويصبح غير مفعّل خارج نهاية الأسبوع / الشهر
+         ============================================================ */
+
+      .feedback-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .feedback-btn:disabled:hover {
+        background: #fff;
+        transform: none;
       }
 
       .main-grid {
@@ -492,15 +510,16 @@ export interface ModuleWithLessonsDto extends ModuleDto {
         color: #b45309;
       }
 
-      /* ============================================================
-         تعديل معاينة الشهادة - كل النصوص في المنتصف
-         ============================================================ */
       .certificate-preview {
         min-height: 70px;
         border-radius: 10px;
         padding: 10px 20px;
         box-sizing: border-box;
-        background: radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.08), transparent 30%),
+        background: radial-gradient(
+            circle at 10% 20%,
+            rgba(255, 255, 255, 0.08),
+            transparent 30%
+          ),
           linear-gradient(120deg, #0b1f64, #030b2e);
         display: flex;
         flex-direction: column;
@@ -510,7 +529,6 @@ export interface ModuleWithLessonsDto extends ModuleDto {
         color: #fff;
       }
 
-      /* تنسيق اسم البرنامج */
       .certificate-brand {
         font-size: 17px;
         font-weight: 900;
@@ -518,7 +536,6 @@ export interface ModuleWithLessonsDto extends ModuleDto {
         margin-bottom: 4px;
       }
 
-      /* تنسيق نص الشهادة */
       .certificate-text {
         display: flex;
         flex-direction: column;
@@ -638,6 +655,88 @@ export interface ModuleWithLessonsDto extends ModuleDto {
         cursor: pointer;
       }
 
+      /* ============================================================
+         UPDATE:
+         تنسيق خاص لنافذة تقييم المدرب فقط
+         ============================================================ */
+
+      .feedback-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .feedback-field {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 9px;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+
+      .feedback-field label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #475569;
+      }
+
+      .feedback-field label i {
+        color: #0d9488;
+      }
+
+      .feedback-value,
+      .feedback-field select {
+        width: 100%;
+        min-height: 34px;
+        box-sizing: border-box;
+        border: 1px solid #e2e8f0;
+        border-radius: 7px;
+        background: #fff;
+        color: #172554;
+        padding: 7px 9px;
+        font-family: inherit;
+        font-size: 11px;
+        outline: none;
+      }
+
+      .feedback-value {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+      }
+
+      .feedback-field select {
+        cursor: pointer;
+      }
+
+      .feedback-field select:focus {
+        border-color: #0d9488;
+      }
+
+      .trainer-comment-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 9px;
+        padding: 11px;
+        margin-top: 2px;
+      }
+
+      .trainer-comment-box .comment-label {
+        margin-top: 0;
+        margin-bottom: 7px;
+      }
+
+      .trainer-comment-box textarea {
+        min-height: 120px;
+        line-height: 1.7;
+        background: #fff;
+      }
+
       .criterion-row {
         display: flex;
         align-items: center;
@@ -699,21 +798,23 @@ export interface ModuleWithLessonsDto extends ModuleDto {
         gap: 7px;
         margin-top: 15px;
       }
-.modal-close {
-  border: none;
-  background: #f1f5f9;
-  width: 28px;
-  height: 26px;
-  border-radius: 7px;
-  font-size: 20px;
-  color: #64748b;
-  cursor: pointer;
-  display: flex;        
-  align-items: center;     
-  justify-content: center; 
-  line-height: 1;          
-  padding: 0;              
-}
+
+      .modal-close {
+        border: none;
+        background: #f1f5f9;
+        width: 28px;
+        height: 26px;
+        border-radius: 7px;
+        font-size: 20px;
+        color: #64748b;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        padding: 0;
+      }
+
       .cancel-btn,
       .submit-feedback-btn {
         border-radius: 7px;
@@ -745,7 +846,6 @@ export interface ModuleWithLessonsDto extends ModuleDto {
         cursor: not-allowed;
       }
 
-      /* Toast / Success Message */
       .toast-success {
         position: fixed;
         bottom: 30px;
@@ -771,6 +871,7 @@ export interface ModuleWithLessonsDto extends ModuleDto {
           transform: translateX(-50%) translateY(20px);
           opacity: 0;
         }
+
         to {
           transform: translateX(-50%) translateY(0);
           opacity: 1;
@@ -835,9 +936,17 @@ export interface ModuleWithLessonsDto extends ModuleDto {
         .certificate-preview {
           padding: 10px;
         }
+
+        /* ========================================================
+           UPDATE: تقييم المدرب على الجوال
+           ======================================================== */
+
+        .feedback-details {
+          grid-template-columns: 1fr;
+        }
       }
     `,
-  ]
+  ],
 })
 export class TraineeAchievements implements OnInit {
   private api = inject(TraineeApi);
@@ -881,15 +990,57 @@ export class TraineeAchievements implements OnInit {
   // ============================================================
 
   showFeedback = signal(false);
-  feedbackType = signal<'TrainerRating' | 'BatchExperienceRating'>('TrainerRating');
+
+  feedbackType = signal<
+    'TrainerRating' | 'BatchExperienceRating'
+  >('TrainerRating');
+
   criteria = signal<FeedbackCriterionDto[]>([]);
+
   scores: Record<number, number> = {};
+
   comment = '';
+
   isSubmitting = signal(false);
+
   pendingFeedback = signal<FeedbackPendingDto | null>(null);
-  
-  // ✅ رسالة النجاح
+
+  // ============================================================
+  // UPDATE:
+  // تقييم المدرب يتفعل فقط في نهاية الأسبوع أو نهاية الشهر
+  // الزر نفسه يبقى ظاهر دائماً
+  // ============================================================
+
+  isTrainerEvaluationOpen = computed(() => {
+    const today = new Date();
+
+    // نهاية الأسبوع = الجمعة
+    const isEndOfWeek = today.getDay() === 5;
+
+    // نهاية الشهر = آخر يوم في الشهر
+    const tomorrow = new Date(today);
+
+    tomorrow.setDate(today.getDate() + 1);
+
+    const isEndOfMonth =
+      tomorrow.getMonth() !== today.getMonth();
+
+    return isEndOfWeek || isEndOfMonth;
+  });
+
+  // ============================================================
+  // UPDATE:
+  // الكورس المختار للتقييم
+  // ============================================================
+
+  selectedModuleId = signal<number | null>(null);
+
+  // ============================================================
+  // SUCCESS MESSAGE
+  // ============================================================
+
   showSuccessToast = signal(false);
+
   successMessage = signal('');
 
   // ============================================================
@@ -897,6 +1048,7 @@ export class TraineeAchievements implements OnInit {
   // ============================================================
 
   loading = signal(false);
+
   errorMessage = signal('');
 
   // ============================================================
@@ -915,12 +1067,17 @@ export class TraineeAchievements implements OnInit {
   // COMPUTED SIGNALS
   // ============================================================
 
-  progressPercentage = computed(() => this.stats().overallProgress || 0);
+  progressPercentage = computed(
+    () => this.stats().overallProgress || 0
+  );
 
-  // ✅ التعديل: زر التحميل يعتمد فقط على نسبة الإنجاز (50%)
-  // ✅ بغض النظر عن وجود شهادة في قاعدة البيانات
+  // ============================================================
+  // UPDATE:
+  // زر تحميل الشهادة يعتمد فقط على نسبة الإنجاز 85%
+  // ============================================================
+
   canDownloadCertificate = computed(() => {
-    return this.progressPercentage() >= 50;
+    return this.progressPercentage() >= 85;
   });
 
   traineeName = computed(() => {
@@ -937,10 +1094,20 @@ export class TraineeAchievements implements OnInit {
       if (profile.fullName) {
         return profile.fullName;
       }
+
       const profileAny = profile as any;
-      if (profileAny.name) return profileAny.name;
-      if (profileAny.user?.fullName) return profileAny.user?.fullName;
-      if (profileAny.user?.name) return profileAny.user?.name;
+
+      if (profileAny.name) {
+        return profileAny.name;
+      }
+
+      if (profileAny.user?.fullName) {
+        return profileAny.user?.fullName;
+      }
+
+      if (profileAny.user?.name) {
+        return profileAny.user?.name;
+      }
     }
 
     return 'اسم المتدرب';
@@ -954,14 +1121,20 @@ export class TraineeAchievements implements OnInit {
       if (enrollment.programTitle) {
         return enrollment.programTitle;
       }
+
       if (enrollment.batchName) {
         return enrollment.batchName;
       }
     }
 
     if (program) {
-      if (program.title) return program.title;
-      if (program.name) return program.name;
+      if (program.title) {
+        return program.title;
+      }
+
+      if (program.name) {
+        return program.name;
+      }
     }
 
     return 'التدريب';
@@ -977,26 +1150,44 @@ export class TraineeAchievements implements OnInit {
   });
 
   totalBadges = computed(() => this.allBadges().length);
+
   earnedBadgesCount = computed(() => this.myBadges().length);
 
   // ============================================================
   // HELPER FUNCTIONS
   // ============================================================
 
-  private getModuleStatus(module: ModuleWithLessonsDto): string {
+  private getModuleStatus(
+    module: ModuleWithLessonsDto
+  ): string {
     const progress = module.progressPercentage || 0;
-    if (progress >= 100) return 'Completed';
-    if (progress > 0) return 'InProgress';
+
+    if (progress >= 100) {
+      return 'Completed';
+    }
+
+    if (progress > 0) {
+      return 'InProgress';
+    }
+
     return 'NotStarted';
   }
 
   isEarned = (badgeId: number): boolean => {
-    return this.myBadges().some((b) => b.badgeId === badgeId);
+    return this.myBadges().some(
+      (b) => b.badgeId === badgeId
+    );
   };
 
   getBarColor = (progress: number): string => {
-    if (progress >= 80) return '#22c55e';
-    if (progress >= 50) return '#eab308';
+    if (progress >= 80) {
+      return '#22c55e';
+    }
+
+    if (progress >= 50) {
+      return '#eab308';
+    }
+
     return '#3b82f6';
   };
 
@@ -1006,16 +1197,23 @@ export class TraineeAchievements implements OnInit {
 
   ngOnInit() {
     const session = this.auth.session?.();
+
     if (session?.userId) {
       this.userId.set(session.userId);
+
       this.loadAllData();
     } else {
-      const userIdFromStorage = this.getUserIdFromStorage();
+      const userIdFromStorage =
+        this.getUserIdFromStorage();
+
       if (userIdFromStorage) {
         this.userId.set(userIdFromStorage);
+
         this.loadAllData();
       } else {
-        this.errorMessage.set('يرجى تسجيل الدخول أولاً.');
+        this.errorMessage.set(
+          'يرجى تسجيل الدخول أولاً.'
+        );
       }
     }
   }
@@ -1025,24 +1223,42 @@ export class TraineeAchievements implements OnInit {
   // ============================================================
 
   private getUserIdFromStorage(): number | null {
-    const localUserId = localStorage.getItem('userId');
+    const localUserId =
+      localStorage.getItem('userId');
+
     if (localUserId) {
       const id = Number(localUserId);
-      if (id && !Number.isNaN(id)) return id;
+
+      if (id && !Number.isNaN(id)) {
+        return id;
+      }
     }
 
-    const sessionUserId = sessionStorage.getItem('userId');
+    const sessionUserId =
+      sessionStorage.getItem('userId');
+
     if (sessionUserId) {
       const id = Number(sessionUserId);
-      if (id && !Number.isNaN(id)) return id;
+
+      if (id && !Number.isNaN(id)) {
+        return id;
+      }
     }
 
-    const userData = localStorage.getItem('userData');
+    const userData =
+      localStorage.getItem('userData');
+
     if (userData) {
       try {
         const user = JSON.parse(userData);
-        const id = Number(user.userId ?? user.id);
-        if (id && !Number.isNaN(id)) return id;
+
+        const id = Number(
+          user.userId ?? user.id
+        );
+
+        if (id && !Number.isNaN(id)) {
+          return id;
+        }
       } catch {
         console.warn('⚠️ Invalid userData');
       }
@@ -1057,49 +1273,98 @@ export class TraineeAchievements implements OnInit {
 
   loadAllData() {
     const userId = this.userId();
+
     if (!userId) {
-      this.errorMessage.set('يرجى تسجيل الدخول أولاً.');
+      this.errorMessage.set(
+        'يرجى تسجيل الدخول أولاً.'
+      );
+
       return;
     }
 
     this.loading.set(true);
+
     this.errorMessage.set('');
 
     // 1. جلب بيانات المتدرب
+
     this.api.getTrainee(userId).subscribe({
       next: (trainee: TraineeProfileDto) => {
         this.traineeProfile.set(trainee);
-        this.traineeId.set(trainee.traineeId);
-        this.loadEnrollment(trainee.traineeId);
+
+        this.traineeId.set(
+          trainee.traineeId
+        );
+
+        this.loadEnrollment(
+          trainee.traineeId
+        );
       },
+
       error: (err: any) => {
-        console.error('❌ فشل جلب بيانات المتدرب:', err);
+        console.error(
+          '❌ فشل جلب بيانات المتدرب:',
+          err
+        );
+
         this.loading.set(false);
-        this.errorMessage.set('تعذر تحميل بيانات المتدرب.');
+
+        this.errorMessage.set(
+          'تعذر تحميل بيانات المتدرب.'
+        );
       },
     });
 
     // 2. جلب جميع الأوسمة
+
     this.api.getAllBadges().subscribe({
-      next: (badges: BadgeDto[]) => this.allBadges.set(badges ?? []),
-      error: (err: any) => console.warn('⚠️ فشل جلب الأوسمة:', err),
+      next: (badges: BadgeDto[]) =>
+        this.allBadges.set(badges ?? []),
+
+      error: (err: any) =>
+        console.warn(
+          '⚠️ فشل جلب الأوسمة:',
+          err
+        ),
     });
 
     // 3. جلب أوسمة المتدرب
+
     this.api.getMyBadges(userId).subscribe({
-      next: (badges: TraineeBadgeDto[]) => this.myBadges.set(badges ?? []),
-      error: (err: any) => console.warn('⚠️ فشل جلب أوسمة المتدرب:', err),
+      next: (badges: TraineeBadgeDto[]) =>
+        this.myBadges.set(badges ?? []),
+
+      error: (err: any) =>
+        console.warn(
+          '⚠️ فشل جلب أوسمة المتدرب:',
+          err
+        ),
     });
 
     // 4. جلب الشهادات
+
     this.api.getCertificates(userId).subscribe({
-      next: (certs: CertificateDto[]) => this.certificates.set(certs ?? []),
-      error: (err: any) => console.warn('⚠️ فشل جلب الشهادات:', err),
+      next: (certs: CertificateDto[]) =>
+        this.certificates.set(certs ?? []),
+
+      error: (err: any) =>
+        console.warn(
+          '⚠️ فشل جلب الشهادات:',
+          err
+        ),
     });
 
     // 5. جلب التقييمات المعلقة
-    this.api.getFeedbackPending(1, userId).subscribe({
-      next: (d) => this.pendingFeedback.set(d ?? null),
+
+    this.api.getFeedbackPending(
+      1,
+      userId
+    ).subscribe({
+      next: (d) =>
+        this.pendingFeedback.set(
+          d ?? null
+        ),
+
       error: () => {},
     });
   }
@@ -1108,61 +1373,125 @@ export class TraineeAchievements implements OnInit {
   // LOAD ENROLLMENT
   // ============================================================
 
-  private loadEnrollment(traineeId: number): void {
-    this.api.getEnrollmentsByTrainee(traineeId).subscribe({
-      next: (enrollments: EnrollmentDto[]) => {
-        if (!enrollments || enrollments.length === 0) {
-          this.errorMessage.set('لا توجد تسجيلات للمتدرب.');
+  private loadEnrollment(
+    traineeId: number
+  ): void {
+    this.api
+      .getEnrollmentsByTrainee(traineeId)
+      .subscribe({
+        next: (
+          enrollments: EnrollmentDto[]
+        ) => {
+          if (
+            !enrollments ||
+            enrollments.length === 0
+          ) {
+            this.errorMessage.set(
+              'لا توجد تسجيلات للمتدرب.'
+            );
+
+            this.loading.set(false);
+
+            return;
+          }
+
+          const activeEnrollment =
+            enrollments.find((e) => {
+              const status = String(
+                e.completionStatus ?? ''
+              ).toLowerCase();
+
+              return (
+                status === 'active' ||
+                status === 'inprogress'
+              );
+            }) || enrollments[0];
+
+          this.enrollment.set(
+            activeEnrollment
+          );
+
+          this.enrollmentId.set(
+            activeEnrollment.enrollmentId
+          );
+
+          this.batchId.set(
+            activeEnrollment.batchId
+          );
+
+          this.loadBatchAndProgram(
+            activeEnrollment.batchId
+          );
+        },
+
+        error: (err: any) => {
+          console.error(
+            '❌ فشل جلب التسجيلات:',
+            err
+          );
+
+          this.errorMessage.set(
+            'تعذر تحميل تسجيل المتدرب.'
+          );
+
           this.loading.set(false);
-          return;
-        }
-
-        const activeEnrollment =
-          enrollments.find((e) => {
-            const status = String(e.completionStatus ?? '').toLowerCase();
-            return status === 'active' || status === 'inprogress';
-          }) || enrollments[0];
-
-        this.enrollment.set(activeEnrollment);
-        this.enrollmentId.set(activeEnrollment.enrollmentId);
-        this.batchId.set(activeEnrollment.batchId);
-
-        this.loadBatchAndProgram(activeEnrollment.batchId);
-      },
-      error: (err: any) => {
-        console.error('❌ فشل جلب التسجيلات:', err);
-        this.errorMessage.set('تعذر تحميل تسجيل المتدرب.');
-        this.loading.set(false);
-      },
-    });
+        },
+      });
   }
 
   // ============================================================
   // LOAD BATCH & PROGRAM
   // ============================================================
 
-  private loadBatchAndProgram(batchId: number): void {
-    if (!batchId || Number.isNaN(batchId)) {
-      this.errorMessage.set('لم يتم العثور على الدفعة.');
+  private loadBatchAndProgram(
+    batchId: number
+  ): void {
+    if (
+      !batchId ||
+      Number.isNaN(batchId)
+    ) {
+      this.errorMessage.set(
+        'لم يتم العثور على الدفعة.'
+      );
+
       this.loading.set(false);
+
       return;
     }
 
     this.api.getBatch(batchId).subscribe({
       next: (batch: BatchDto) => {
-        const programId = Number(batch.programId);
-        if (!programId || Number.isNaN(programId)) {
-          this.errorMessage.set('لم يتم العثور على البرنامج المرتبط بالدفعة.');
+        const programId =
+          Number(batch.programId);
+
+        if (
+          !programId ||
+          Number.isNaN(programId)
+        ) {
+          this.errorMessage.set(
+            'لم يتم العثور على البرنامج المرتبط بالدفعة.'
+          );
+
           this.loading.set(false);
+
           return;
         }
 
         this.programId.set(programId);
+
         this.loadProgram(programId);
       },
+
       error: (err: any) => {
-        console.error('❌ فشل جلب الدفعة:', err);
-        this.errorMessage.set('تعذر تحميل بيانات الدفعة.');
+        console.error(
+          '❌ فشل جلب الدفعة:',
+          err
+        );
+
+        this.errorMessage.set(
+          'تعذر تحميل بيانات الدفعة.'
+        );
+
         this.loading.set(false);
       },
     });
@@ -1172,15 +1501,26 @@ export class TraineeAchievements implements OnInit {
   // LOAD PROGRAM
   // ============================================================
 
-  private loadProgram(programId: number): void {
+  private loadProgram(
+    programId: number
+  ): void {
     this.api.getProgram(programId).subscribe({
       next: (program: ProgramDto) => {
         this.program.set(program);
+
         this.loadModules(programId);
       },
+
       error: (err: any) => {
-        console.error('❌ فشل جلب البرنامج:', err);
-        this.errorMessage.set('تعذر تحميل بيانات البرنامج.');
+        console.error(
+          '❌ فشل جلب البرنامج:',
+          err
+        );
+
+        this.errorMessage.set(
+          'تعذر تحميل بيانات البرنامج.'
+        );
+
         this.loading.set(false);
       },
     });
@@ -1190,63 +1530,106 @@ export class TraineeAchievements implements OnInit {
   // LOAD MODULES
   // ============================================================
 
-  private loadModules(programId: number): void {
-    this.api.getProgramModules(programId).subscribe({
-      next: (modules: ModuleDto[]) => {
-        if (!modules || modules.length === 0) {
+  private loadModules(
+    programId: number
+  ): void {
+    this.api
+      .getProgramModules(programId)
+      .subscribe({
+        next: (modules: ModuleDto[]) => {
+          if (
+            !modules ||
+            modules.length === 0
+          ) {
+            this.modules.set([]);
+
+            this.loadModuleProgress();
+
+            return;
+          }
+
+          this.loadLessons(modules);
+        },
+
+        error: (err: any) => {
+          console.error(
+            '❌ فشل جلب الوحدات:',
+            err
+          );
+
           this.modules.set([]);
+
           this.loadModuleProgress();
-          return;
-        }
-        this.loadLessons(modules);
-      },
-      error: (err: any) => {
-        console.error('❌ فشل جلب الوحدات:', err);
-        this.modules.set([]);
-        this.loadModuleProgress();
-      },
-    });
+        },
+      });
   }
 
   // ============================================================
   // LOAD LESSONS
   // ============================================================
 
-  private loadLessons(modules: ModuleDto[]): void {
-    const requests = modules.map((module) =>
-      this.api.getModuleLessons(module.moduleId)
+  private loadLessons(
+    modules: ModuleDto[]
+  ): void {
+    const requests = modules.map(
+      (module) =>
+        this.api.getModuleLessons(
+          module.moduleId
+        )
     );
 
     import('rxjs').then(({ forkJoin }) => {
       forkJoin(requests).subscribe({
         next: (lessonsData) => {
-          const result: ModuleWithLessonsDto[] = modules.map((module, index) => {
-            const lessons = lessonsData[index] ?? [];
-            return {
-              ...module,
-              progressPercentage: 0,
-              prerequisitePassed: true,
-              isLocked: false,
-              lessons: lessons.map((lesson) => ({
-                ...lesson,
+          const result: ModuleWithLessonsDto[] =
+            modules.map((module, index) => {
+              const lessons =
+                lessonsData[index] ?? [];
+
+              return {
+                ...module,
+
                 progressPercentage: 0,
-              })),
-            };
-          });
+
+                prerequisitePassed: true,
+
+                isLocked: false,
+
+                lessons: lessons.map(
+                  (lesson) => ({
+                    ...lesson,
+                    progressPercentage: 0,
+                  })
+                ),
+              };
+            });
 
           this.modules.set(result);
+
           this.loadModuleProgress();
         },
+
         error: (err: any) => {
-          console.error('❌ فشل جلب الدروس:', err);
-          const result = modules.map((module) => ({
-            ...module,
-            progressPercentage: 0,
-            prerequisitePassed: true,
-            isLocked: false,
-            lessons: [],
-          }));
+          console.error(
+            '❌ فشل جلب الدروس:',
+            err
+          );
+
+          const result =
+            modules.map((module) => ({
+              ...module,
+
+              progressPercentage: 0,
+
+              prerequisitePassed: true,
+
+              isLocked: false,
+
+              lessons: [],
+            }));
+
           this.modules.set(result);
+
           this.loadModuleProgress();
         },
       });
@@ -1259,66 +1642,120 @@ export class TraineeAchievements implements OnInit {
 
   private loadModuleProgress(): void {
     const traineeId = this.traineeId();
-    if (!traineeId || Number.isNaN(Number(traineeId))) {
+
+    if (
+      !traineeId ||
+      Number.isNaN(Number(traineeId))
+    ) {
       this.calculateStats();
+
       this.loading.set(false);
+
       return;
     }
 
-    this.api.getModuleProgress(traineeId).subscribe({
-      next: (progressData: TraineeModuleProgressDto[]) => {
-        this.moduleProgress.set(progressData ?? []);
-        this.updateModulesWithProgress(progressData ?? []);
-        this.calculateStats();
-        this.loading.set(false);
-      },
-      error: (err: any) => {
-        console.error('❌ فشل جلب تقدم الوحدات:', err);
-        this.calculateStats();
-        this.loading.set(false);
-      },
-    });
+    this.api
+      .getModuleProgress(traineeId)
+      .subscribe({
+        next: (
+          progressData: TraineeModuleProgressDto[]
+        ) => {
+          this.moduleProgress.set(
+            progressData ?? []
+          );
+
+          this.updateModulesWithProgress(
+            progressData ?? []
+          );
+
+          this.calculateStats();
+
+          this.loading.set(false);
+        },
+
+        error: (err: any) => {
+          console.error(
+            '❌ فشل جلب تقدم الوحدات:',
+            err
+          );
+
+          this.calculateStats();
+
+          this.loading.set(false);
+        },
+      });
   }
 
   // ============================================================
   // UPDATE MODULES WITH PROGRESS
   // ============================================================
 
-  private updateModulesWithProgress(progressData: TraineeModuleProgressDto[]): void {
-    const updatedModules = this.modules().map((module) => {
-      const progress = progressData.find((p) => p.moduleId === module.moduleId);
+  private updateModulesWithProgress(
+    progressData: TraineeModuleProgressDto[]
+  ): void {
+    const updatedModules =
+      this.modules().map((module) => {
+        const progress =
+          progressData.find(
+            (p) =>
+              p.moduleId ===
+              module.moduleId
+          );
 
-      let percentage = 0;
-      if (progress) {
-        const status = String(progress.status ?? '').toLowerCase();
-        if (status === 'completed') {
-          percentage = 100;
-        } else if (status === 'inprogress' || status === 'in_progress') {
-          percentage = 50;
+        let percentage = 0;
+
+        if (progress) {
+          const status = String(
+            progress.status ?? ''
+          ).toLowerCase();
+
+          if (status === 'completed') {
+            percentage = 100;
+          } else if (
+            status === 'inprogress' ||
+            status === 'in_progress'
+          ) {
+            percentage = 50;
+          }
         }
-      }
 
-      const lessons = module.lessons ?? [];
-      const completedCount =
-        percentage === 100
-          ? lessons.length
-          : percentage > 0
-          ? Math.round((percentage / 100) * lessons.length)
-          : 0;
+        const lessons =
+          module.lessons ?? [];
 
-      const updatedLessons = lessons.map((lesson, index) => ({
-        ...lesson,
-        progressPercentage: index < completedCount ? 100 : 0,
-      }));
+        const completedCount =
+          percentage === 100
+            ? lessons.length
+            : percentage > 0
+            ? Math.round(
+                (percentage / 100) *
+                  lessons.length
+              )
+            : 0;
 
-      return {
-        ...module,
-        progressPercentage: percentage,
-        lessons: updatedLessons,
-      };
-    });
+        const updatedLessons =
+          lessons.map(
+            (lesson, index) => ({
+              ...lesson,
 
-    this.modules.set(updatedModules);
+              progressPercentage:
+                index < completedCount
+                  ? 100
+                  : 0,
+            })
+          );
+
+        return {
+          ...module,
+
+          progressPercentage: percentage,
+
+          lessons: updatedLessons,
+        };
+      });
+
+    this.modules.set(
+      updatedModules
+    );
   }
 
   // ============================================================
@@ -1328,110 +1765,228 @@ export class TraineeAchievements implements OnInit {
   private calculateStats(): void {
     const modules = this.modules();
 
-    const totalModules = modules.length;
-    const completedModules = modules.filter((m) => m.progressPercentage === 100)
-      .length;
+    const totalModules =
+      modules.length;
 
-    const totalLessons = modules.reduce(
-      (sum, module) => sum + (module.lessons?.length ?? 0),
-      0
-    );
+    const completedModules =
+      modules.filter(
+        (m) =>
+          m.progressPercentage ===
+          100
+      ).length;
 
-    const completedLessons = modules.reduce(
-      (sum, module) =>
-        sum +
-        (module.lessons?.filter(
-          (lesson) => lesson.progressPercentage === 100
-        ).length ?? 0),
-      0
-    );
+    const totalLessons =
+      modules.reduce(
+        (sum, module) =>
+          sum +
+          (module.lessons?.length ??
+            0),
+        0
+      );
+
+    const completedLessons =
+      modules.reduce(
+        (sum, module) =>
+          sum +
+          (module.lessons?.filter(
+            (lesson) =>
+              lesson.progressPercentage ===
+              100
+          ).length ?? 0),
+        0
+      );
 
     let overallProgress = 0;
+
     if (totalModules > 0) {
-      overallProgress = Math.round((completedModules / totalModules) * 100);
+      overallProgress = Math.round(
+        (completedModules /
+          totalModules) *
+          100
+      );
     }
 
     this.stats.set({
       totalModules,
+
       completedModules,
+
       totalLessons,
+
       completedLessons,
+
       overallProgress,
     });
   }
 
   // ============================================================
-  // ✅ FEEDBACK METHODS (مأخوذة من الملف المرفق)
+  // UPDATE: FEEDBACK METHODS
   // ============================================================
 
-  openFeedback(type: 'TrainerRating' | 'BatchExperienceRating') {
+  openFeedback(
+    type:
+      | 'TrainerRating'
+      | 'BatchExperienceRating'
+  ) {
     this.feedbackType.set(type);
+
     this.scores = {};
+
     this.comment = '';
+
+    // ============================================================
+    // UPDATE:
+    // عند تقييم المدرب نستخدم أول كورس من البرنامج التدريبي
+    // ============================================================
+
+    if (type === 'TrainerRating') {
+      const firstModule =
+        this.modules()[0];
+
+      this.selectedModuleId.set(
+        firstModule
+          ? firstModule.moduleId
+          : null
+      );
+    } else {
+      this.selectedModuleId.set(null);
+    }
+
     this.showFeedback.set(true);
 
-    // جلب معايير التقييم حسب النوع
-    // في الـ API المرفق: getFeedbackCriteria(type)
-    this.api.getFeedbackCriteria(type).subscribe({
-      next: (criteria: FeedbackCriterionDto[]) => {
-        this.criteria.set(criteria ?? []);
-      },
-      error: (err: any) => {
-        console.warn('⚠️ فشل جلب معايير التقييم:', err);
-        this.criteria.set([]);
-      },
-    });
+    this.api
+      .getFeedbackCriteria(type)
+      .subscribe({
+        next: (
+          criteria: FeedbackCriterionDto[]
+        ) => {
+          this.criteria.set(
+            criteria ?? []
+          );
+        },
+
+        error: (err: any) => {
+          console.warn(
+            '⚠️ فشل جلب معايير التقييم:',
+            err
+          );
+
+          this.criteria.set([]);
+        },
+      });
   }
+
+  // ============================================================
+  // SUBMIT FEEDBACK
+  // ============================================================
 
   submitFeedback() {
     this.isSubmitting.set(true);
 
-    const scores = Object.entries(this.scores).map(([criterionId, score]) => ({
-      criterionId: Number(criterionId),
-      score,
-    }));
+    const scores =
+      Object.entries(
+        this.scores
+      ).map(
+        ([criterionId, score]) => ({
+          criterionId:
+            Number(criterionId),
+
+          score,
+        })
+      );
 
     const feedbackData = {
       type: this.feedbackType(),
-      traineeId: this.traineeId(),
-      enrollmentId: this.enrollmentId(),
-      moduleId: 1, // يمكن تعديله حسب الحاجة
+
+      traineeId:
+        this.traineeId(),
+
+      enrollmentId:
+        this.enrollmentId(),
+
+      // ========================================================
+      // UPDATE:
+      // إرسال الكورس المختار من البرنامج التدريبي
+      // ========================================================
+
+      moduleId:
+        this.selectedModuleId(),
+
       comment: this.comment,
+
       scores,
     };
 
-    this.api.submitFeedback(feedbackData).subscribe({
-      next: () => {
-        this.isSubmitting.set(false);
-        this.showFeedback.set(false);
-        this.comment = '';
-        this.scores = {};
+    this.api
+      .submitFeedback(feedbackData)
+      .subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
 
-        // ✅ عرض رسالة نجاح
-        this.showSuccessToast.set(true);
-        this.successMessage.set('تم إرسال التقييم بنجاح!');
+          this.showFeedback.set(false);
 
-        // إخفاء الرسالة بعد 3 ثواني
-        setTimeout(() => {
-          this.showSuccessToast.set(false);
-        }, 3000);
+          this.comment = '';
 
-        // تحديث حالة التقييمات المعلقة
-        this.api.getFeedbackPending(1, this.traineeId() || 0).subscribe({
-          next: (d) => this.pendingFeedback.set(d ?? null),
-          error: () => {},
-        });
-      },
-      error: (err: any) => {
-        console.error('❌ خطأ في إرسال التقييم:', err);
-        this.isSubmitting.set(false);
-        this.showSuccessToast.set(true);
-        this.successMessage.set('❌ حدث خطأ في إرسال التقييم، يرجى المحاولة مرة أخرى');
-        setTimeout(() => {
-          this.showSuccessToast.set(false);
-        }, 3000);
-      },
-    });
+          this.scores = {};
+
+          // رسالة النجاح
+
+          this.showSuccessToast.set(
+            true
+          );
+
+          this.successMessage.set(
+            'تم إرسال التقييم بنجاح!'
+          );
+
+          // إخفاء الرسالة بعد 3 ثواني
+
+          setTimeout(() => {
+            this.showSuccessToast.set(
+              false
+            );
+          }, 3000);
+
+          // تحديث حالة التقييمات المعلقة
+
+          this.api
+            .getFeedbackPending(
+              1,
+              this.traineeId() || 0
+            )
+            .subscribe({
+              next: (d) =>
+                this.pendingFeedback.set(
+                  d ?? null
+                ),
+
+              error: () => {},
+            });
+        },
+
+        error: (err: any) => {
+          console.error(
+            '❌ خطأ في إرسال التقييم:',
+            err
+          );
+
+          this.isSubmitting.set(false);
+
+          this.showSuccessToast.set(
+            true
+          );
+
+          this.successMessage.set(
+            '❌ حدث خطأ في إرسال التقييم، يرجى المحاولة مرة أخرى'
+          );
+
+          setTimeout(() => {
+            this.showSuccessToast.set(
+              false
+            );
+          }, 3000);
+        },
+      });
   }
 
   // ============================================================
@@ -1439,37 +1994,81 @@ export class TraineeAchievements implements OnInit {
   // ============================================================
 
   downloadCertificate() {
-    if (!this.canDownloadCertificate()) return;
-    
-    // ✅ البحث عن شهادة، وإذا لم توجد ننشئها أو نعطي رسالة
-    const cert = this.certificates()[0];
-    if (!cert) {
-      // يمكن إظهار رسالة للمستخدم أو إنشاء شهادة مؤقتة
-      this.showSuccessToast.set(true);
-      this.successMessage.set('⚠️ لم يتم العثور على شهادة، يرجى التواصل مع الدعم');
-      setTimeout(() => {
-        this.showSuccessToast.set(false);
-      }, 3000);
+    if (
+      !this.canDownloadCertificate()
+    ) {
       return;
     }
 
-    this.api.downloadCertificate(cert.certificateId).subscribe({
-      next: (blob: Blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `شهادة_إتمام_التدريب_${Date.now()}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
-      error: (err: any) => {
-        console.error('❌ فشل تحميل الشهادة:', err);
-        this.showSuccessToast.set(true);
-        this.successMessage.set('❌ فشل تحميل الشهادة، يرجى المحاولة مرة أخرى');
-        setTimeout(() => {
-          this.showSuccessToast.set(false);
-        }, 3000);
-      },
-    });
+    const cert =
+      this.certificates()[0];
+
+    if (!cert) {
+      this.showSuccessToast.set(
+        true
+      );
+
+      this.successMessage.set(
+        '⚠️ لم يتم العثور على شهادة، يرجى التواصل مع الدعم'
+      );
+
+      setTimeout(() => {
+        this.showSuccessToast.set(
+          false
+        );
+      }, 3000);
+
+      return;
+    }
+
+    this.api
+      .downloadCertificate(
+        cert.certificateId
+      )
+      .subscribe({
+        next: (blob: Blob) => {
+          const url =
+            window.URL.createObjectURL(
+              blob
+            );
+
+          const a =
+            document.createElement(
+              'a'
+            );
+
+          a.href = url;
+
+          a.download =
+            `شهادة_إتمام_التدريب_${Date.now()}.pdf`;
+
+          a.click();
+
+          window.URL.revokeObjectURL(
+            url
+          );
+        },
+
+        error: (err: any) => {
+          console.error(
+            '❌ فشل تحميل الشهادة:',
+            err
+          );
+
+          this.showSuccessToast.set(
+            true
+          );
+
+          this.successMessage.set(
+            '❌ فشل تحميل الشهادة، يرجى المحاولة مرة أخرى'
+          );
+
+          setTimeout(() => {
+            this.showSuccessToast.set(
+              false
+            );
+          }, 3000);
+        },
+      });
   }
 }
