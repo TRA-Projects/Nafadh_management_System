@@ -433,51 +433,6 @@
 
 
 <!-- ========================================== -->
-<!-- Modal: تفاصيل الدفعة (View Modal)          -->
-<!-- ========================================== -->
-<div *ngIf="isViewModalOpen" (click)="onCloseViewModal()" class="modal-overlay" dir="rtl">
-  <div (click)="$event.stopPropagation()" class="modal-container-details">
-    <div class="details-header">
-      <h3 class="details-title">تفاصيل الدفعة</h3>
-      <button type="button" (click)="onCloseViewModal()" class="details-close-btn">&times;</button>
-    </div>
-
-    <div class="details-top-card">
-      <div class="details-batch-info">
-        <span class="details-status-badge" [ngClass]="getStatusBadgeClass(selectedBatch?.status)">
-          {{ getStatusLabel(selectedBatch?.status) }}
-        </span>
-        <h4 class="details-batch-name">{{ selectedBatch?.batchName }}</h4>
-        <p class="details-batch-subtext">
-          {{ selectedBatch?.startDate | date:'MMM yyyy' }} · {{ getProgramName(selectedBatch) }}
-          <span *ngIf="getTrackName(selectedBatch) !== '-'"> · {{ getTrackName(selectedBatch) }}</span>
-        </p>
-      </div>
-      <div class="details-icon-box">
-        <i class="fa-regular fa-calendar-days"></i>
-      </div>
-    </div>
-
-    <div class="details-progress-card">
-      <div class="details-progress-header">
-        <span class="details-progress-title">الإشغال الحالي / الطاقة</span>
-        <span class="details-progress-numbers" dir="ltr">
-          {{ selectedBatch?.totalTraineesCount || 0 }} / {{ selectedBatch?.capacity }}
-        </span>
-      </div>
-      <div class="details-progress-bg">
-        <div class="details-progress-fill"
-          [style.width.%]="getOccupancyPercentage(selectedBatch?.totalTraineesCount, selectedBatch?.capacity)"></div>
-      </div>
-      <p class="details-progress-hint">
-        {{ (selectedBatch?.capacity || 0) - (selectedBatch?.totalTraineesCount || 0) }} مقعد متاحة
-      </p>
-    </div>
-  </div>
-</div>
-
-
-<!-- ========================================== -->
 <!-- Modal: تعديل الدفعة (Edit Modal)          -->
 <!-- ========================================== -->
 <div *ngIf="isEditModalOpen" (click)="onCloseEditModal()" class="modal-overlay" dir="rtl" role="dialog" aria-modal="true">
@@ -572,6 +527,147 @@
   </div>
 </div>
 
+<!-- ========================================== -->
+<!-- Modal: تفاصيل الدفعة (View Modal)          -->
+<!-- ========================================== -->
+<div *ngIf="isViewModalOpen" (click)="onCloseViewModal()" class="modal-overlay" dir="rtl" role="dialog" aria-modal="true">
+  <div (click)="$event.stopPropagation()" class="modal-container-details-pro">
+    
+    <!-- 1. Header -->
+    <div class="details-pro-header">
+      <div class="header-title-block">
+        <h3 class="details-pro-title">تفاصيل الدفعة</h3>
+        <span class="nfd-status-badge" [ngClass]="getStatusBadgeClass(selectedBatch?.status)">
+          {{ getStatusLabel(selectedBatch?.status) }}
+        </span>
+      </div>
+      <button type="button" (click)="onCloseViewModal()" class="details-pro-close">&times;</button>
+    </div>
+
+    <!-- 2. Hero Card -->
+    <div class="details-pro-hero">
+      <div class="hero-icon-box">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </div>
+      <div class="hero-info">
+        <h4 class="hero-batch-name">{{ selectedBatch?.batchName }}</h4>
+        <div class="hero-tags-row">
+          <span class="hero-program-tag">{{ getProgramName(selectedBatch) }}</span>
+          <span *ngIf="getTrackName(selectedBatch) !== '-'" class="hero-track-tag">
+            مسار: {{ getTrackName(selectedBatch) }}
+          </span>
+          <span class="hero-duration-tag">
+            <i class="fa-regular fa-clock"></i>
+            {{ getBatchDuration(selectedBatch?.startDate, selectedBatch?.endDate) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. شبكة المؤشرات الأربعة (KPIs) من الداتابيس -->
+    <div class="details-kpis-grid">
+      <!-- 1: المقاعد والإشغال -->
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-label">المقاعد والإشغال</span>
+          <i class="fa-solid fa-users kpi-icon text-indigo"></i>
+        </div>
+        <div class="kpi-val" dir="ltr">{{ selectedBatch?.totalTraineesCount || 0 }} / {{ selectedBatch?.capacity || 0 }}</div>
+        <div class="nfd-progress-bar-bg" style="margin: 8px 0;">
+          <div class="nfd-progress-bar-fill" [style.width.%]="getOccupancyPercentage(selectedBatch?.totalTraineesCount, selectedBatch?.capacity)"></div>
+        </div>
+        <div class="kpi-hint">
+          متاح: {{ (selectedBatch?.capacity || 0) - (selectedBatch?.totalTraineesCount || 0) }} مقعد
+        </div>
+      </div>
+
+      <!-- 2: نسبة التقدم الأكاديمي -->
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-label">نسبة الإنجاز</span>
+          <i class="fa-solid fa-chart-line kpi-icon text-cyan"></i>
+        </div>
+        <div class="kpi-val">{{ selectedBatch?.progressPercentage || 0 }}%</div>
+        <div class="kpi-bar-bg">
+          <div class="kpi-bar-fill bg-cyan" [style.width.%]="selectedBatch?.progressPercentage || 0"></div>
+        </div>
+        <div class="kpi-hint text-cyan">معدل إكمال المواد</div>
+      </div>
+
+      <!-- 3: معدل الحضور والانضباط -->
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-label">معدل الحضور</span>
+          <i class="fa-solid fa-user-check kpi-icon text-emerald"></i>
+        </div>
+        <div class="kpi-val">{{ selectedBatch?.attendanceRate || 0 }}%</div>
+        <div class="kpi-bar-bg">
+          <div class="kpi-bar-fill bg-emerald" [style.width.%]="selectedBatch?.attendanceRate || 0"></div>
+        </div>
+        <div class="kpi-hint text-emerald">متوسط انضباط الجلسات</div>
+      </div>
+
+      <!-- 4: الشهادات الصادرة -->
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-label">الشهادات الصادرة</span>
+          <i class="fa-solid fa-award kpi-icon text-amber"></i>
+        </div>
+        <div class="kpi-val">{{ selectedBatch?.issuedCertificatesCount || 0 }}</div>
+        <div class="kpi-bar-bg">
+          <div class="kpi-bar-fill bg-amber" [style.width.%]="selectedBatch?.issuedCertificatesCount ? 100 : 0"></div>
+        </div>
+        <div class="kpi-hint text-amber">متدربين أتموا المتطلبات</div>
+      </div>
+    </div>
+
+    <!-- 4. البيانات التنظيمية من الداتابيس -->
+    <div class="details-org-grid">
+      <div class="org-item">
+        <span class="org-label"><i class="fa-solid fa-chalkboard-user"></i> المدرب المسؤول:</span>
+        <span class="org-value">{{ selectedBatch?.InstructorName || 'بدون مدرب حالياً' }}</span>
+      </div>
+
+      <div class="org-item">
+        <span class="org-label"><i class="fa-solid fa-building"></i> الشركة المستضيفة:</span>
+        <span class="org-value">{{ selectedBatch?.companyName || 'لم تُحدد بعد' }}</span>
+      </div>
+
+      <div class="org-item">
+        <span class="org-label"><i class="fa-regular fa-calendar"></i> تاريخ البداية:</span>
+        <span class="org-value" dir="ltr">{{ selectedBatch?.startDate ? (selectedBatch.startDate | date:'dd/MM/yyyy') : '-' }}</span>
+      </div>
+
+      <div class="org-item">
+        <span class="org-label"><i class="fa-regular fa-calendar-check"></i> تاريخ التخرج المتوقع:</span>
+        <span class="org-value" dir="ltr">{{ selectedBatch?.endDate ? (selectedBatch.endDate | date:'dd/MM/yyyy') : '-' }}</span>
+      </div>
+
+      <div class="org-item full-width" *ngIf="selectedBatch?.department">
+        <span class="org-label"><i class="fa-solid fa-sitemap"></i> القسم التدريبي:</span>
+        <span class="org-value">{{ selectedBatch.department }}</span>
+      </div>
+    </div>
+
+    <!-- 5. شريط الإجراءات السريعة -->
+    <div class="details-pro-footer">
+      <div class="footer-actions-right">
+        <button type="button" (click)="onViewTraineesFromDetails()" class="btn-pro-trainees">
+          <i class="fa-solid fa-users"></i>
+          <span>متدربو الدفعة ({{ selectedBatch?.totalTraineesCount || 0 }})</span>
+        </button>
+
+        <button type="button" (click)="onEditFromDetails()" class="btn-pro-edit">
+          <i class="fa-regular fa-pen-to-square"></i>
+          <span>تعديل الدفعة</span>
+        </button>
+      </div>
+
+      <button type="button" (click)="onCloseViewModal()" class="btn-pro-close">إغلاق</button>
+    </div>
+
+  </div>
+</div>
 
 <!-- Modal: إنشاء دفعة جديدة -->
 <div *ngIf="isBatchModalOpen" (click)="onCloseBatchModal()" class="modal-overlay" dir="rtl">
