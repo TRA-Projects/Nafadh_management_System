@@ -59,6 +59,34 @@ export class AdminPrograms implements OnInit {
   fromDate = signal<string>('');
   toDate = signal<string>('');
 
+  // 1. فتح متدربي الدفعة من داخل نافذة التفاصيل
+  onViewTraineesFromDetails(): void {
+    const b = this.selectedBatch;
+    this.onCloseViewModal();
+    this.onViewTrainees(b);
+  }
+
+  // 2. فتح نافذة التعديل من داخل نافذة التفاصيل
+  onEditFromDetails(): void {
+    const b = this.selectedBatch;
+    this.onCloseViewModal();
+    this.onEdit(b);
+  }
+
+  // 3. حساب مدة الدفعة بالأشهر والأسابيع تلقائياً من التواريخ
+  getBatchDuration(startDate?: string, endDate?: string): string {
+    if (!startDate || !endDate) return '-';
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const months = Math.floor(diffDays / 30);
+    const weeks = Math.floor((diffDays % 30) / 7);
+    if (months > 0) {
+      return `${months} شهر ${weeks > 0 ? 'و ' + weeks + ' أسابيع' : ''}`;
+    }
+    return `${Math.ceil(diffDays / 7)} أسابيع`;
+  }
+
   ngOnInit(): void {
     this.initBatchForm();
     this.initEditBatchForm();
@@ -256,6 +284,7 @@ export class AdminPrograms implements OnInit {
       return true;
     });
   });
+
 
   paginatedBatches = computed(() => {
     const filtered = this.filteredBatches();
