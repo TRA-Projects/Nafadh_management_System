@@ -550,6 +550,7 @@ getSubmissionFile(
       { params }
     );
   }
+  
    getEvaluationAverage(
     enrollmentId: number
   ): Observable<{
