@@ -106,6 +106,27 @@ export interface SelectedTraineeDetailView {
   }[];
 }
 
+export interface SelectedWarningDetailView {
+  warningId: number;
+  scope: string;
+  targetName: string;
+  companyId?: number;
+  type: string;
+  typeArabic: string;
+  level: string;
+  levelArabic: string;
+  status: string;
+  statusArabic: string;
+  issuedDate: string;
+  evidence: string;
+  resolution: string;
+  companyCapacity: number;
+  companyContact: string;
+  companyEmail: string;
+  companyLocation: string;
+  totalWarningsForTarget: number;
+}
+
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
@@ -124,6 +145,9 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   // حالة عرض صفحة المتدرب التفصيلية الكاملة
   selectedTraineeProfile = signal<SelectedTraineeDetailView | null>(null);
 
+  // حالة عرض صفحة تفاصيل الإنذار للشركة المستضيفة
+  selectedWarningDetail = signal<SelectedWarningDetailView | null>(null);
+
   // قوائم المتميزين والمتعثرين الكاملة وحالة فتح صفحاتهم الخاصة
   allTopPerformers = signal<any[]>([]);
   showAllTopPerformersPage = signal<boolean>(false);
@@ -131,9 +155,29 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   showAllAtRiskPage = signal<boolean>(false);
   isProfileLoading = signal<boolean>(false);
 
+  // سجل الأنشطة الأخيرة + نظام الـ Pagination
   recentActivity = signal<AuditLogDto[]>([]);
   allActivity = signal<AuditLogDto[]>([]);
   showAllActivity = signal<boolean>(false);
+  activityPage = signal<number>(1);
+  readonly activityPageSize = 10;
+
+  totalActivityPages = computed(() => {
+    const total = this.allActivity().length;
+    return Math.max(1, Math.ceil(total / this.activityPageSize));
+  });
+
+  visibleActivityPages = computed(() => {
+    const total = this.totalActivityPages();
+    const current = this.activityPage();
+    const pages: number[] = [];
+    const start = Math.max(1, Math.min(current - 2, total - 4));
+    const end = Math.min(total, start + 4);
+    for (let i = Math.max(1, start); i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  });
 
   charts = signal<DashboardChartsDto | null>(null);
   traineeCount = signal<number | null>(null);
@@ -142,6 +186,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
 
   allBatches = signal<BatchDto[]>([]);
   allTraineesCache = signal<any[]>([]);
+  allCompaniesCache = signal<any[]>([]);
   allWarningsCache = signal<any[]>([]);
   availableYears = signal<string[]>([]);
   selectedYear = signal<string>(new Date().getFullYear().toString());
@@ -211,6 +256,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       const warningsList: any[] = Array.isArray(warnings) ? warnings : (warnings?.items || []);
 
       this.allTraineesCache.set(traineesList);
+      this.allCompaniesCache.set(companiesList);
       this.allWarningsCache.set(warningsList);
       this.traineeCount.set(totalTrainees);
       this.companyCount.set(companiesList.length);
@@ -493,17 +539,130 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  openTraineePreview(traineeItem: any, index: number = 0) {
-    const traineeId = traineeItem?.traineeId || traineeItem?.id || 0;
-    const cachedTrainee = this.allTraineesCache().find((t: any) => (t.traineeId ?? t.id) === traineeId) || {};
-    const fullName = traineeItem?.fullName || traineeItem?.targetName || cachedTrainee?.fullName || 'متدرب المنظومة';
-    const perf = Number(traineeItem?.performancePercent ?? 85);
-    const att = Number(traineeItem?.attendancePercent ?? 82);
+  onWarningItemPreview(w: any, index: number = 0) {
+    const target = String(w?.targetName || '');
+    const isCompanyWarning =
+      w?.scope === 'Company' ||
+      (!!w?.companyId && !w?.traineeId) ||
+      target.includes('شركة') ||
+      target.includes('مجموعة') ||
+      target.includes('مؤسسة');
 
-    const defaultAge = 22 + (traineeId % 4);
+    if (isCompanyWarning) {
+      this.openWarningPreview(w);
+    } else {
+      this.openTraineePreview(w, index);
+    }
+  }
+
+  openWarningPreview(w: any) {
+    const warningId = w?.warningId ?? w?.id ?? 0;
+    const rawFromCache = this.allWarningsCache().find((item: any) => (item.warningId ?? item.id) === warningId) || w;
+    const targetName = w?.targetName || rawFromCache?.companyName || 'شركة مستضيفة معتمدة';
+
+    const matchedCompany = this.allCompaniesCache().find((c: any) =>
+      (w?.companyId && (c.companyId ?? c.id) === w.companyId) ||
+      c.companyName === targetName ||
+      c.name === targetName
+    ) || {};
+
+    const countForTarget = this.allWarningsCache().filter((item: any) =>
+      (w?.companyId && item.companyId === w.companyId) ||
+      item.companyName === targetName ||
+      item.targetName === targetName
+    ).length || 1;
+
+    const typeRaw = String(w?.type || rawFromCache?.type || 'Performance');
+    const levelRaw = String(w?.level || rawFromCache?.level || 'First');
+    const statusRaw = String(w?.status || rawFromCache?.status || 'Active');
+
+    const typeArabic = typeRaw.toLowerCase().includes('attend')
+      ? 'التزام الحضور والمتابعة (Attendance)'
+      : typeRaw.toLowerCase().includes('behav')
+        ? 'الانضباط والالتزام التنظيمي (Behavioral)'
+        : 'مستوى الأداء وجودة التدريب (Performance)';
+
+    const levelArabic = levelRaw.toLowerCase().includes('second') || levelRaw === '2'
+      ? 'الإنذار الثاني (Second Warning)'
+      : levelRaw.toLowerCase().includes('final') || levelRaw.toLowerCase().includes('third') || levelRaw === '3'
+        ? 'إنذار نهائي (Final Warning)'
+        : 'الإنذار الأول (First Warning)';
+
+    const statusArabic = statusRaw.toLowerCase().includes('resolv') || statusRaw.toLowerCase().includes('clos')
+      ? 'تمت المعالجة والتسوية (Resolved)'
+      : 'نشط - قيد المتابعة (Active)';
+
+    this.selectedTraineeProfile.set(null);
+    this.showAllTopPerformersPage.set(false);
+    this.showAllAtRiskPage.set(false);
+
+    this.selectedWarningDetail.set({
+      warningId,
+      scope: 'Company',
+      targetName,
+      companyId: w?.companyId || matchedCompany?.companyId || matchedCompany?.id,
+      type: typeRaw,
+      typeArabic,
+      level: levelRaw,
+      levelArabic,
+      status: statusRaw,
+      statusArabic,
+      issuedDate: (w?.issuedDate || rawFromCache?.issuedDate || new Date().toISOString()).slice(0, 10),
+      evidence: rawFromCache?.evidence || rawFromCache?.reason || `تم رصد ملاحظة رقابية من فريق الإدارة المركزية بمنظومة نفاذ حول مستوى متابعة التقييمات الدورية أو الالتزام بمعايير الاستضافة التدريبية المعتمدة لدى (${targetName}).`,
+      resolution: rawFromCache?.resolution || 'مطلوب من مشرف الشركة المستضيفة رفع تقرير الإجراءات التصحيحية وتحديث سجلات التقييم والحضور للمتدربين الملتحقين خلال 5 أيام عمل.',
+      companyCapacity: Number(matchedCompany?.capacity ?? matchedCompany?.Capacity ?? 85),
+      companyContact: matchedCompany?.contactPerson || matchedCompany?.supervisorName || 'مسؤول التدريب والاستضافة بالشركة',
+      companyEmail: matchedCompany?.email || matchedCompany?.contactEmail || 'compliance@company.om',
+      companyLocation: matchedCompany?.location || matchedCompany?.city || 'سلطنة عُمان - مسقط',
+      totalWarningsForTarget: countForTarget
+    });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  closeWarningPreview() {
+    this.selectedWarningDetail.set(null);
+  }
+
+  openTraineePreview(traineeItem: any, index: number = 0) {
+    this.selectedWarningDetail.set(null);
+
+    const candidateName = traineeItem?.fullName || traineeItem?.targetName || '';
+    const cachedTrainee = this.allTraineesCache().find((t: any) =>
+      (traineeItem?.traineeId && (t.traineeId ?? t.id) === traineeItem.traineeId) ||
+      (candidateName && t.fullName === candidateName)
+    ) || {};
+
+    const traineeId = traineeItem?.traineeId || cachedTrainee?.traineeId || cachedTrainee?.id || 0;
+    const fullName = candidateName || cachedTrainee?.fullName || 'متدرب المنظومة';
+    const perf = Number(traineeItem?.performancePercent ?? 82);
+    const att = Number(traineeItem?.attendancePercent ?? 78);
+
+    const defaultAge = 22 + ((traineeId || index + 1) % 4);
     const totalDays = 60;
     const estPresent = Math.round((att / 100) * totalDays);
     const estAbsent = Math.max(0, totalDays - estPresent - 2);
+
+    const clickedWarningList: {
+      warningId: number;
+      type: string;
+      level: string;
+      status: string;
+      date: string;
+      reason: string;
+    }[] = [];
+
+    if (traineeItem?.warningId) {
+      const rawWarn = this.allWarningsCache().find((w: any) => (w.warningId ?? w.id) === traineeItem.warningId);
+      clickedWarningList.push({
+        warningId: traineeItem.warningId,
+        type: traineeItem.type || rawWarn?.type || 'Attendance',
+        level: traineeItem.level || rawWarn?.level || 'First',
+        status: traineeItem.status || rawWarn?.status || 'Active',
+        date: (traineeItem.issuedDate || rawWarn?.issuedDate || new Date().toISOString()).slice(0, 10),
+        reason: rawWarn?.evidence || rawWarn?.resolution || `إنذار مسجل بنوع (${traineeItem.type || 'Attendance'}) في منظومة المتابعة والالتزام.`
+      });
+    }
 
     const initialView: SelectedTraineeDetailView = {
       traineeId,
@@ -512,12 +671,12 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       initials: this.getInitials(fullName),
       avatarColor: this.getAvatarColor(index),
       age: defaultAge,
-      nationalId: String(cachedTrainee?.nationalId || (108000000 + traineeId * 137)),
+      nationalId: String(cachedTrainee?.nationalId || (108000000 + (traineeId || 7) * 137)),
       university: cachedTrainee?.university || 'جامعة السلطان قابوس',
       major: traineeItem?.major || cachedTrainee?.major || 'هندسة البرمجيات وتقنية المعلومات',
       academicLevel: cachedTrainee?.academicLevel || 'بكالوريوس',
-      email: cachedTrainee?.email || `trainee.${traineeId}@nafadh.om`,
-      phone: cachedTrainee?.phone || `+968 9${4000000 + (traineeId * 123) % 5000000}`,
+      email: cachedTrainee?.email || `trainee.${traineeId || 10}@nafadh.om`,
+      phone: cachedTrainee?.phone || `+968 9${4000000 + ((traineeId || 5) * 123) % 5000000}`,
       trackName: cachedTrainee?.trackName || 'Data & AI / Software Track',
       programName: cachedTrainee?.programName || 'البرنامج الوطني لتأهيل الكوادر التقنية (نفاذ)',
       batchName: cachedTrainee?.batchName || `دفعة ${this.selectedYear()} التدريبية`,
@@ -541,7 +700,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
       gitHubUrl: this.getSafeGitHubUrl(traineeItem?.gitHubUrl || cachedTrainee?.gitHubUrl, fullName),
       linkedInUrl: this.getSafeLinkedInUrl(traineeItem?.linkedInUrl || cachedTrainee?.linkedInUrl, fullName),
       resumeUrl: cachedTrainee?.resumeUrl,
-      warnings: []
+      warnings: clickedWarningList
     };
 
     this.selectedTraineeProfile.set(initialView);
@@ -600,6 +759,13 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
             reason: w.evidence || w.resolution || 'ملاحظة مسجلة في نظام المتابعة والالتزام.'
           }));
 
+        const finalWarnings = [...traineeWarnings];
+        clickedWarningList.forEach(cw => {
+          if (!finalWarnings.some(fw => fw.warningId === cw.warningId)) {
+            finalWarnings.unshift(cw);
+          }
+        });
+
         this.selectedTraineeProfile.set({
           ...initialView,
           enrollmentId,
@@ -625,7 +791,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
           skills: skillsArr.length > 0 ? skillsArr : initialView.skills,
           gitHubUrl: this.getSafeGitHubUrl(profile?.gitHubUrl || initialView.gitHubUrl, fullName),
           linkedInUrl: this.getSafeLinkedInUrl(profile?.linkedInUrl || initialView.linkedInUrl, fullName),
-          warnings: traineeWarnings
+          warnings: finalWarnings
         });
 
         this.isProfileLoading.set(false);
@@ -639,6 +805,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
 
   openTopPerformersPage(): void {
     this.selectedTraineeProfile.set(null);
+    this.selectedWarningDetail.set(null);
     this.showAllAtRiskPage.set(false);
     this.showAllTopPerformersPage.set(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -650,6 +817,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
 
   openAtRiskPage(): void {
     this.selectedTraineeProfile.set(null);
+    this.selectedWarningDetail.set(null);
     this.showAllTopPerformersPage.set(false);
     this.showAllAtRiskPage.set(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -696,16 +864,27 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.showAnnouncements.update(v => !v);
   }
 
+  // دوال التحكم في عرض وترقيم صفحات سجل الأنشطة الأخيرة
   toggleShowAllActivity() {
     this.showAllActivity.update(val => !val);
+    this.activityPage.set(1);
+    this.updateDisplayedActivity();
+  }
+
+  goToActivityPage(page: number) {
+    const max = this.totalActivityPages();
+    if (page < 1 || page > max) return;
+    this.activityPage.set(page);
     this.updateDisplayedActivity();
   }
 
   private updateDisplayedActivity() {
+    const all = this.allActivity();
     if (this.showAllActivity()) {
-      this.recentActivity.set(this.allActivity());
+      const start = (this.activityPage() - 1) * this.activityPageSize;
+      this.recentActivity.set(all.slice(start, start + this.activityPageSize));
     } else {
-      this.recentActivity.set(this.allActivity().slice(0, 10));
+      this.recentActivity.set(all.slice(0, 8));
     }
   }
 

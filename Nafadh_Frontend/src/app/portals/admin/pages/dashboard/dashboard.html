@@ -253,9 +253,131 @@
   }
 
   <!-- =========================================================================
-       2) صفحة المتدربين المتميزين لهذا الشهر فقط (تظهر عند الضغط على عرض الكل)
+       2) صفحة معاينة تفاصيل إنذار الشركة المستضيفة (تظهر عند الضغط على معاينة إنذار شركة)
        ========================================================================= -->
-  @if (showAllTopPerformersPage() && selectedTraineeProfile() === null) {
+  @if (selectedWarningDetail(); as wd) {
+    <div class="trainee-full-page">
+
+      <div class="tp-Topbar">
+        <div class="tp-breadcrumb">
+          <span class="tp-crumb-link" (click)="closeWarningPreview()">لوحة التحكم التنفيذية</span>
+          <span>/</span>
+          <span class="tp-crumb-active">تفاصيل الإنذار رقم #{{ wd.warningId }} — {{ wd.targetName }}</span>
+        </div>
+        <button type="button" class="tp-back-btn" (click)="closeWarningPreview()">
+          <span>→</span>
+          <span>العودة إلى لوحة التحكم</span>
+        </button>
+      </div>
+
+      <div class="tp-hero-card">
+        <div class="tp-hero-banner" style="background: linear-gradient(135deg, #7c2d12 0%, #b45309 55%, #d97706 100%);">
+          <div>
+            <div class="tp-banner-kicker" style="color: #fde68a;">بطاقة معاينة تفاصيل الإنذار · منظومة نفاذ الرقابية</div>
+            <h2 class="tp-banner-prog">🔔 إنذار مسجل على: {{ wd.targetName }}</h2>
+          </div>
+          <div class="tp-banner-meta">
+            <div>رقم الإنذار المرجعي: <strong>#{{ wd.warningId }}</strong></div>
+            <div>تاريخ إصدار الإنذار: <strong>{{ wd.issuedDate }}</strong></div>
+          </div>
+        </div>
+
+        <div class="tp-hero-body">
+          <div class="tp-identity">
+            <div class="tp-big-avatar" style="background-color: #d97706; font-size: 28px;">
+              🏢
+            </div>
+            <div class="tp-identity-text">
+              <div class="tp-name-row">
+                <h1 class="tp-fullname">{{ wd.targetName }}</h1>
+                <span class="tp-status-badge tp-status-risk">
+                  {{ wd.statusArabic }}
+                </span>
+              </div>
+              <div class="tp-info-line">
+                <span>📍 {{ wd.companyLocation }}</span>
+                <span>·</span>
+                <span>تصنيف الإنذار: <strong>{{ wd.type }}</strong></span>
+                <span>·</span>
+                <span>درجة الإنذار: <strong>{{ wd.levelArabic }}</strong></span>
+              </div>
+              <div class="tp-info-line">
+                <span>✉️ {{ wd.companyEmail }}</span>
+                <span>·</span>
+                <span>👤 {{ wd.companyContact }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-cards-grid four-cols">
+        <div class="stat-card card-danger">
+          <div class="stat-icon icon-red">🔔</div>
+          <div class="stat-info">
+            <div class="stat-label text-danger">رقم الإنذار</div>
+            <div class="stat-value">#{{ wd.warningId }}</div>
+            <div class="stat-subtext">تاريخ الإصدار: {{ wd.issuedDate }}</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-amber">⚠️</div>
+          <div class="stat-info">
+            <div class="stat-label">نوع ومجال الإنذار</div>
+            <div class="stat-value" style="font-size: 20px;">{{ wd.type }}</div>
+            <div class="stat-subtext">{{ wd.typeArabic }}</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-purple">📌</div>
+          <div class="stat-info">
+            <div class="stat-label">مستوى الإنذار</div>
+            <div class="stat-value" style="font-size: 20px;">{{ wd.level }}</div>
+            <div class="stat-subtext">{{ wd.levelArabic }}</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-teal">🏢</div>
+          <div class="stat-info">
+            <div class="stat-label">الطاقة الاستيعابية للشركة</div>
+            <div class="stat-value">{{ wd.companyCapacity }}</div>
+            <div class="stat-subtext">إجمالي الإنذارات المسجلة عليها: {{ wd.totalWarningsForTarget }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tp-two-cols">
+        <div class="tp-detail-box">
+          <div class="tp-box-header-flex">
+            <h3 class="tp-box-title" style="margin:0; border:none; padding:0;">📋 سبب وتفاصيل المخالفة المرصودة في الإنذار</h3>
+            <span class="tp-trainer-badge" style="background:#fef2f2; color:#dc2626;">#{{ wd.warningId }}</span>
+          </div>
+          <div class="tp-notes-quote" style="background:#fffbeb; border-color:#fde68a; color:#78350f;">
+            "{{ wd.evidence }}"
+          </div>
+        </div>
+
+        <div class="tp-detail-box">
+          <div class="tp-box-header-flex">
+            <h3 class="tp-box-title" style="margin:0; border:none; padding:0;">✅ الإجراء التصحيحي والمتابعة المطلوبة</h3>
+            <span class="tp-trainer-badge">{{ wd.statusArabic }}</span>
+          </div>
+          <div class="tp-notes-quote" style="background:#f0fdf4; border-color:#bbf7d0; color:#065f46;">
+            "{{ wd.resolution }}"
+          </div>
+        </div>
+      </div>
+
+    </div>
+  }
+
+  <!-- =========================================================================
+       3) صفحة المتدربين المتميزين لهذا الشهر فقط (تظهر عند الضغط على عرض الكل)
+       ========================================================================= -->
+  @if (showAllTopPerformersPage() && selectedTraineeProfile() === null && selectedWarningDetail() === null) {
     <div class="trainee-full-page">
 
       <div class="tp-Topbar">
@@ -349,9 +471,9 @@
   }
 
   <!-- =========================================================================
-       3) صفحة المتدربين المتعثرين فقط (تظهر عند الضغط على عرض الكل في المتعثرين)
+       4) صفحة المتدربين المتعثرين فقط (تظهر عند الضغط على عرض الكل في المتعثرين)
        ========================================================================= -->
-  @if (showAllAtRiskPage() && selectedTraineeProfile() === null) {
+  @if (showAllAtRiskPage() && selectedTraineeProfile() === null && selectedWarningDetail() === null) {
     <div class="trainee-full-page">
 
       <div class="tp-Topbar">
@@ -441,9 +563,9 @@
   }
 
   <!-- =========================================================================
-       4) صفحة لوحة التحكم التنفيذية (تبقى محفوظة في الـ DOM لعدم ضياع الشارتات)
+       5) صفحة لوحة التحكم التنفيذية (تبقى محفوظة في الـ DOM لعدم ضياع الشارتات)
        ========================================================================= -->
-  <div [hidden]="selectedTraineeProfile() !== null || showAllTopPerformersPage() || showAllAtRiskPage()">
+  <div [hidden]="selectedTraineeProfile() !== null || selectedWarningDetail() !== null || showAllTopPerformersPage() || showAllAtRiskPage()">
 
     <!-- 1. Hero Banner -->
     <div class="hero-banner">
@@ -636,7 +758,7 @@
       <div style="display: flex; align-items: center; gap: 12px;">
         @if (lastUpdated()) {
           <span style="font-size: 11px; color: #64748b;">
-            آخر تحديث: {{ lastUpdated() | date:'hh:mm:ss a' }}
+            آخر تحديث: {{ lastUpdated() | date:'hh:mm a' }}
           </span>
         }
         <button type="button" class="btn-outline-refresh" [disabled]="isLoading()" (click)="refreshData()">
@@ -870,7 +992,7 @@
         </div>
       </div>
 
-      <!-- العمود 3: أحدث الإنذارات -->
+      <!-- العمود 3: أحدث الإنذارات (بدون أيقونات GitHub و LinkedIn + معاينة ذكية للشركة أو المتدرب) -->
       <div class="list-panel-card">
         <div class="list-panel-header">
           <h3 class="list-panel-title">🔔 أحدث الإنذارات</h3>
@@ -892,27 +1014,12 @@
               </div>
 
               <div class="person-left-actions" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-                <button type="button" class="icon-action-btn eye-btn" (click)="w.scope === 'Company' ? goToWarningsList() : openTraineePreview(w, idx)" title="معاينة التفاصيل">
+                <button type="button" class="icon-action-btn eye-btn" (click)="onWarningItemPreview(w, idx)" [title]="'معاينة تفاصيل الإنذار #' + w.warningId">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
                     <circle cx="12" cy="12" r="3"/>
                   </svg>
                 </button>
-
-                <a [href]="getSafeGitHubUrl(w.gitHubUrl, w.targetName)" target="_blank" rel="noopener" class="icon-action-btn gh-btn" title="حساب GitHub">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
-                    <path d="M9 18c-4.51 2-5-2-7-2"/>
-                  </svg>
-                </a>
-
-                <a [href]="getSafeLinkedInUrl(w.linkedInUrl, w.targetName)" target="_blank" rel="noopener" class="icon-action-btn in-btn" title="ملف LinkedIn">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
-                    <rect width="4" height="12" x="2" y="9"/>
-                    <circle cx="4" cy="4" r="2"/>
-                  </svg>
-                </a>
               </div>
             </div>
           } @empty {
@@ -923,14 +1030,21 @@
 
     </div>
 
-    <!-- 9. سجل الأنشطة الأخيرة -->
+    <!-- =========================================================================
+         9. سجل الأنشطة الأخيرة (مع زر عرض الكل الموحد + بدون ثواني + Pagination)
+         ========================================================================= -->
     <div class="activity-card">
-      <div class="activity-header">
-        <h3 class="chart-title">سجل الأنشطة الأخيرة</h3>
+      <div class="list-panel-header" style="margin-bottom: 14px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <h3 class="list-panel-title">🕒 سجل الأنشطة الأخيرة</h3>
+          <span class="tp-trainer-badge" style="font-size:11px; padding:3px 10px;">
+            {{ allActivity().length | number }} نشاط مسجل
+          </span>
+        </div>
 
-        @if (allActivity().length > 10) {
-          <button type="button" class="btn-link" (click)="toggleShowAllActivity()">
-            {{ showAllActivity() ? 'عرض أقل' : 'عرض الكل (' + allActivity().length + ')' }}
+        @if (allActivity().length > 8) {
+          <button type="button" class="panel-link-btn" (click)="toggleShowAllActivity()">
+            {{ showAllActivity() ? 'عرض مختصر' : 'عرض الكل' }}
           </button>
         }
       </div>
@@ -944,18 +1058,54 @@
                 <span>{{ item.action }}</span>
               </div>
               <div class="activity-meta">
-                {{ item.userName }} • {{ item.entityName }}
+                <span>{{ item.userName }}</span>
+                <span>•</span>
+                <span class="activity-entity-pill">{{ item.entityName }}</span>
               </div>
             </div>
 
-            <div class="activity-time">
-              {{ (item.timestamp || item.createdAt) | date:'medium' }}
+            <!-- التاريخ والساعة والدقيقة فقط بدون ثوانٍ -->
+            <div class="activity-time" dir="ltr">
+              {{ (item.timestamp || item.createdAt) | date:'MMM d, y · h:mm a' }}
             </div>
           </div>
         } @empty {
           <div class="empty-state">لا يوجد نشاط بعد</div>
         }
       </div>
+
+      <!-- شريط ترقيم الصفحات (Pagination) يظهر عند الضغط على "عرض الكل" -->
+      @if (showAllActivity() && totalActivityPages() > 1) {
+        <div class="activity-pagination">
+          <div class="pagination-info">
+            الصفحة <strong>{{ activityPage() }}</strong> من <strong>{{ totalActivityPages() }}</strong>
+            <span style="color:#94a3b8; margin:0 6px;">|</span>
+            <span>عرض {{ ((activityPage() - 1) * activityPageSize) + 1 }} – {{ ((activityPage() - 1) * activityPageSize) + recentActivity().length }} من أصل {{ allActivity().length }}</span>
+          </div>
+
+          <div class="pagination-controls">
+            <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === 1" (click)="goToActivityPage(1)" title="الصفحة الأولى">
+              «
+            </button>
+            <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === 1" (click)="goToActivityPage(activityPage() - 1)">
+              السابق
+            </button>
+
+            @for (p of visibleActivityPages(); track p) {
+              <button type="button" class="page-btn" [class.active]="p === activityPage()" (click)="goToActivityPage(p)">
+                {{ p }}
+              </button>
+            }
+
+            <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === totalActivityPages()" (click)="goToActivityPage(activityPage() + 1)">
+              التالي
+            </button>
+            <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === totalActivityPages()" (click)="goToActivityPage(totalActivityPages())" title="الصفحة الأخيرة">
+              »
+            </button>
+          </div>
+        </div>
+      }
     </div>
 
   </div>
