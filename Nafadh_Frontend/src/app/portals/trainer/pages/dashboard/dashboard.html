@@ -366,381 +366,206 @@
 
 
     <!-- ===================================================
-         SESSIONS
-    ==================================================== -->
+     SESSIONS
+==================================================== -->
 
-    <div class="dashboard-card sessions-card">
+<div class="dashboard-card sessions-card">
 
-      <div class="card-heading">
+  <div class="card-heading">
 
-        <div>
+    <div>
 
-          <h3>
-            الجلسات القادمة
-          </h3>
+      <h3>
+        الجلسات القادمة
+      </h3>
 
-          <p>
-            مواعيد الجلسات التدريبية القادمة.
-          </p>
+      <p>
+        الجلسات المجدولة حسب خطة التدريب.
+      </p>
+
+    </div>
+
+    @if (upcomingSessions().length > 0) {
+
+      <span class="sessions-count">
+
+        {{
+          upcomingSessions().length
+        }}
+        جلسات
+
+      </span>
+
+    }
+
+  </div>
+
+
+  <div class="sessions-list">
+
+    @for (
+      session of upcomingSessions();
+      track session.sessionId
+    ) {
+
+      <div
+        class="session-row"
+        [class.completed]="session.status === 'Completed'"
+      >
+
+        <!-- التاريخ والوقت -->
+
+        <div class="session-time-box">
+
+          <strong>
+            {{
+              session.startTime ||
+              '—'
+            }}
+          </strong>
+
+          <span>
+            {{
+              session.sessionDate |
+              date:'MM/dd'
+            }}
+          </span>
 
         </div>
 
 
-        @if (
-        upcomingSessions().length > 0
-        ) {
+        <!-- معلومات الجلسة -->
 
+        <div class="session-info">
 
-        <span class="sessions-count">
-
-          {{
-          upcomingSessions().length
-          }}
-          جلسات
-
-        </span>
-
-
-        }
-
-      </div>
-
-
-      <div class="sessions-list">
-
-        @for (
-        session of upcomingSessions();
-        track session.sessionId
-        ) {
-
-        <div class="session-row">
-
-          <div class="session-time-box">
-
-            <strong>
-              {{
-              session.startTime ||
-              '—'
-              }}
-            </strong>
-
-            <span>
-              {{
-              session.sessionDate |
-              date:'MM/dd'
-              }}
-            </span>
-
-          </div>
-
-
-          <div class="session-info">
-
-            <strong>
-              {{
+          <strong>
+            {{
               session.topic ||
-              'جلسة تدريبية'
-              }}
-            </strong>
+              'درس تدريبي'
+            }}
+          </strong>
 
-            <span>
-              {{
+          <span>
+            {{
               session.sessionDate |
               date:'yyyy/MM/dd'
-              }}
-            </span>
+            }}
+          </span>
 
 
-            @if (
-            session.endTime
-            ) {
+          @if (session.endTime) {
 
             <small>
 
               من
               {{
-              session.startTime ||
-              '—'
+                session.startTime ||
+                '—'
               }}
 
               إلى
 
               {{
-              session.endTime
+                session.endTime
               }}
 
             </small>
 
-            }
+          }
 
-          </div>
+        </div>
 
 
-          <span class="session-status" [class.postponed]="
-                session.status ===
-                'Postponed'
-              ">
+        <!-- حالة الجلسة -->
+
+        <label
+          class="session-complete"
+          [class.completed]="session.status === 'Completed'"
+        >
+
+          <input
+            type="checkbox"
+            [checked]="session.status === 'Completed'"
+            [disabled]="session.status === 'Completed'"
+          />
+
+          <span class="checkmark"></span>
+
+          <span class="complete-label">
 
             {{
-            session.status ===
-            'Postponed'
-            ? 'مؤجلة'
-            : 'قادمة'
+              session.status === 'Completed'
+                ? 'مكتملة'
+                : 'تم إكمال الدرس'
             }}
 
           </span>
 
-        </div>
-
-        } @empty {
-
-        <div class="empty-state sessions-empty">
-
-          <div class="empty-icon">
-
-            <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor" stroke-width="2">
-
-              <rect x="3" y="4" width="18" height="17" rx="2"></rect>
-
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-
-            </svg>
-
-          </div>
-
-          <strong>
-            لا توجد جلسات قادمة
-          </strong>
-
-          <span>
-            ستظهر هنا الجلسات المجدولة
-            القادمة تلقائياً.
-          </span>
-
-        </div>
-
-        }
-
-
-      </div>
-      
-      <button type="button" class="view-all-btn" (click)="openCreateSession()">
-        + إنشاء جلسة جديدة
-      </button>
-
-    </div>
-
-  </section>
-  @if (showCreateSession()) {
-
-  <div class="session-modal-overlay" (click)="closeCreateSession()">
-
-    <div class="session-modal" (click)="$event.stopPropagation()">
-
-      <div class="session-modal-header">
-
-        <div>
-          <h3>إنشاء جلسة جديدة</h3>
-          <p>
-            أضف موعداً جديداً لإحدى الدفعات المسندة إليك.
-          </p>
-        </div>
-
-        <button type="button" class="modal-close-btn" (click)="closeCreateSession()">
-          ×
-        </button>
+        </label>
 
       </div>
 
+    } @empty {
 
-      <div class="session-form">
+      <div class="empty-state sessions-empty">
 
-        <!-- الدفعة -->
-        <div class="form-group full-width">
+        <div class="empty-icon">
 
-          <label>
-            الدفعة
-            <span>*</span>
-          </label>
+          <svg
+            viewBox="0 0 24 24"
+            width="27"
+            height="27"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
 
-          <select [ngModel]="newSession().batchId" (ngModelChange)="
-              newSession.update(
-                value => ({
-                  ...value,
-                  batchId: +$event
-                })
-              )
-            ">
+            <rect
+              x="3"
+              y="4"
+              width="18"
+              height="17"
+              rx="2"
+            ></rect>
 
-            <option [ngValue]="0" disabled>
-              اختر الدفعة
-            </option>
+            <line
+              x1="16"
+              y1="2"
+              x2="16"
+              y2="6"
+            ></line>
 
-            @for (
-            batch of batches();
-            track batch.batchId
-            ) {
+            <line
+              x1="8"
+              y1="2"
+              x2="8"
+              y2="6"
+            ></line>
 
-            <option [ngValue]="batch.batchId">
-              {{
-              batch.batchName ||
-              ('دفعة #' + batch.batchId)
-              }}
-            </option>
+            <line
+              x1="3"
+              y1="10"
+              x2="21"
+              y2="10"
+            ></line>
 
-            }
-
-          </select>
-
-        </div>
-
-
-        <!-- التاريخ -->
-        <div class="form-group">
-
-          <label>
-            تاريخ الجلسة
-            <span>*</span>
-          </label>
-
-          <input type="date" [ngModel]="newSession().sessionDate" (ngModelChange)="
-              newSession.update(
-                value => ({
-                  ...value,
-                  sessionDate: $event
-                })
-              )
-            " />
+          </svg>
 
         </div>
 
+        <strong>
+          لا توجد جلسات قادمة
+        </strong>
 
-        <!-- وقت البداية -->
-        <div class="form-group">
-
-          <label>
-            وقت البداية
-            <span>*</span>
-          </label>
-
-          <input type="time" [ngModel]="newSession().startTime" (ngModelChange)="
-              newSession.update(
-                value => ({
-                  ...value,
-                  startTime: $event
-                })
-              )
-            " />
-
-        </div>
-
-
-        <!-- وقت النهاية -->
-        <div class="form-group">
-
-          <label>
-            وقت النهاية
-            <span>*</span>
-          </label>
-
-          <input type="time" [ngModel]="newSession().endTime" (ngModelChange)="
-              newSession.update(
-                value => ({
-                  ...value,
-                  endTime: $event
-                })
-              )
-            " />
-
-        </div>
-
-
-        <!-- الرابط -->
-        <div class="form-group">
-
-          <label>
-            رابط الاجتماع
-          </label>
-
-          <input type="url" placeholder="https://..." [ngModel]="newSession().meetingLink" (ngModelChange)="
-              newSession.update(
-                value => ({
-                  ...value,
-                  meetingLink: $event
-                })
-              )
-            " />
-
-        </div>
-
-
-        <!-- الموضوع -->
-        <div class="form-group full-width">
-
-          <label>
-            عنوان الجلسة
-            <span>*</span>
-          </label>
-
-          <input type="text" placeholder="مثال: تطبيق عملي على Angular" [ngModel]="newSession().topic" (ngModelChange)="
-              newSession.update(
-                value => ({
-                  ...value,
-                  topic: $event
-                })
-              )
-            " />
-
-        </div>
-
-
-        <!-- الأهداف -->
-        <div class="form-group full-width">
-
-          <label>
-            أهداف الجلسة
-          </label>
-
-          <textarea rows="4" placeholder="اكتب أهداف الجلسة التعليمية..." [ngModel]="newSession().learningObjectives"
-            (ngModelChange)="
-              newSession.update(
-                value => ({
-                  ...value,
-                  learningObjectives: $event
-                })
-              )
-            "></textarea>
-
-        </div>
+        <span>
+          ستظهر هنا الجلسات المجدولة
+          حسب خطة التدريب.
+        </span>
 
       </div>
 
-
-      <div class="session-modal-actions">
-
-        <button type="button" class="cancel-session-btn" (click)="closeCreateSession()" [disabled]="creatingSession()">
-          إلغاء
-        </button>
-
-        <button type="button" class="save-session-btn" (click)="createSession()" [disabled]="creatingSession()">
-
-          @if (creatingSession()) {
-          جاري الحفظ...
-          } @else {
-          إنشاء الجلسة
-          }
-
-        </button>
-
-      </div>
-
-    </div>
+    }
 
   </div>
 
-  }
 </div>
