@@ -2382,159 +2382,286 @@ export class TraineeProfile implements OnInit {
 
   }
 
+// =========================================================
+// Skills
+// =========================================================
 
-  // =========================================================
-  // Skills
-  // =========================================================
+getSkillsList(
+  skills: any
+): string[] {
 
-  getSkillsList(
-    skills: any
-  ): string[] {
-
-    if (!skills) {
-
-      return [];
-
-    }
-
-
-    if (
-      Array.isArray(
-        skills
-      )
-    ) {
-
-      return skills;
-
-    }
-
-
-    if (
-      typeof skills ===
-      'string'
-    ) {
-
-      return skills
-        .split(',')
-        .map(
-          s => s.trim()
-        )
-        .filter(
-          Boolean
-        );
-
-    }
-
+  if (!skills) {
 
     return [];
 
   }
 
 
-  // =========================================================
-  // Add Skill
-  // =========================================================
+  if (
+    Array.isArray(
+      skills
+    )
+  ) {
 
-  addSkill(): void {
-
-    this.openSkillPopup();
+    return skills;
 
   }
 
 
-  // =========================================================
-  // Add Skill Value
-  // =========================================================
+  if (
+    typeof skills ===
+    'string'
+  ) {
 
-  private addSkillValue(
-    skill: string
-  ): void {
+    return skills
+      .split(',')
+      .map(
+        s => s.trim()
+      )
+      .filter(
+        Boolean
+      );
 
-    this.trainee.update(
-      current => {
-
-        if (!current) {
-
-          return current;
-
-        }
-
-
-        const skillsArr =
-          this.getSkillsList(
-            current.skills
-          );
+  }
 
 
-        const exists =
-          skillsArr.some(
+  return [];
 
-            item =>
-              item.toLowerCase() ===
-              skill.toLowerCase()
-
-          );
+}
 
 
-        if (
-          exists
-        ) {
+// =========================================================
+// NEW: Proof State (إثبات المهارة)
+// =========================================================
 
-          this.popupInputMode.set(
-            false
-          );
+proofMode =
+  signal<'file' | 'serial'>(
+    'file'
+  );
 
-          this.popupType.set(
-            'error'
-          );
+certificateFileName =
+  signal<string>('');
 
-          this.popupTitle.set(
-            'المهارة موجودة'
-          );
+certificateFile =
+  signal<File | null>(
+    null
+  );
 
-          this.popupMessage.set(
-            'هذه المهارة موجودة بالفعل.'
-          );
-
-          return current;
-
-        }
+certificateSerial =
+  signal<string>('');
 
 
-        return {
+// =========================================================
+// NEW: Set Proof Mode
+// =========================================================
 
-          ...current,
+setProofMode(
+  mode: 'file' | 'serial'
+): void {
 
-          skills:
-            [
-              ...skillsArr,
-              skill
-            ].join(', ')
+  this.proofMode.set(
+    mode
+  );
 
-        };
 
-      }
+  // مسح الحقول عند تغيير النوع
+  if (
+    mode === 'file'
+  ) {
+
+    this.certificateSerial.set(
+      ''
     );
 
+  }
+  else {
 
-    const current =
-      this.trainee();
+    this.certificateFileName.set(
+      ''
+    );
+
+    this.certificateFile.set(
+      null
+    );
+
+  }
+
+}
 
 
-    if (current) {
+// =========================================================
+// NEW: Certificate File Selected
+// =========================================================
 
-      const skills =
+onCertificateFileSelected(
+  event: Event
+): void {
+
+  const input =
+    event.target as HTMLInputElement;
+
+
+  if (
+    !input.files ||
+    input.files.length === 0
+  ) {
+
+    return;
+
+  }
+
+
+  const file =
+    input.files[0];
+
+
+  this.certificateFile.set(
+    file
+  );
+
+  this.certificateFileName.set(
+    file.name
+  );
+
+}
+
+
+// =========================================================
+// NEW: Reset Proof Fields
+// =========================================================
+
+private resetProofFields(): void {
+
+  this.proofMode.set(
+    'file'
+  );
+
+  this.certificateFileName.set(
+    ''
+  );
+
+  this.certificateFile.set(
+    null
+  );
+
+  this.certificateSerial.set(
+    ''
+  );
+
+}
+
+
+// =========================================================
+// NEW: Validate Proof
+// =========================================================
+
+private isProofValid(): boolean {
+
+  if (
+    this.proofMode() === 'file'
+  ) {
+
+    return (
+      this.certificateFile() !==
+      null
+    );
+
+  }
+
+
+  if (
+    this.proofMode() === 'serial'
+  ) {
+
+    return (
+      this.certificateSerial()
+        .trim()
+        .length > 0
+    );
+
+  }
+
+
+  return false;
+
+}
+
+
+// =========================================================
+// Add Skill
+// =========================================================
+
+addSkill(): void {
+
+  this.openSkillPopup();
+
+}
+
+
+// =========================================================
+// Add Skill Value
+// =========================================================
+
+private addSkillValue(
+  skill: string
+): void {
+
+  // ✅ التحقق من وجود إثبات
+  if (
+    !this.isProofValid()
+  ) {
+
+    this.popupInputMode.set(
+      false
+    );
+
+    this.popupType.set(
+      'error'
+    );
+
+    this.popupTitle.set(
+      'إثبات مطلوب'
+    );
+
+    this.popupMessage.set(
+      this.proofMode() === 'file'
+        ? 'الرجاء رفع شهادة المهارة.'
+        : 'الرجاء كتابة الرقم التسلسلي للشهادة.'
+    );
+
+    return;
+
+  }
+
+
+  this.trainee.update(
+    current => {
+
+      if (!current) {
+
+        return current;
+
+      }
+
+
+      const skillsArr =
         this.getSkillsList(
           current.skills
         );
 
 
-      if (
-        skills.some(
+      const exists =
+        skillsArr.some(
+
           item =>
             item.toLowerCase() ===
             skill.toLowerCase()
-        )
+
+        );
+
+
+      if (
+        exists
       ) {
 
         this.popupInputMode.set(
@@ -2542,66 +2669,152 @@ export class TraineeProfile implements OnInit {
         );
 
         this.popupType.set(
-          'success'
+          'error'
         );
 
         this.popupTitle.set(
-          'تمت الإضافة'
+          'المهارة موجودة'
         );
 
         this.popupMessage.set(
-          `تمت إضافة المهارة "${skill}" بنجاح.`
+          'هذه المهارة موجودة بالفعل.'
         );
 
+        return current;
+
       }
+
+
+      // =========================================================
+      // NEW: بناء كائن الإثبات
+      // =========================================================
+
+      const proofData =
+        this.proofMode() === 'file'
+          ? {
+              type: 'file',
+              fileName:
+                this.certificateFileName(),
+              file:
+                this.certificateFile()
+            }
+          : {
+              type: 'serial',
+              serial:
+                this.certificateSerial()
+            };
+
+
+      // ملاحظة: يمكنك تخزين proofData مع المهارة
+      // حسب هيكل البيانات لديك، مثلاً:
+      // skillsProof[skill] = proofData;
+
+
+      return {
+
+        ...current,
+
+        skills:
+          [
+            ...skillsArr,
+            skill
+          ].join(', ')
+
+      };
+
+    }
+  );
+
+
+  const current =
+    this.trainee();
+
+
+  if (current) {
+
+    const skills =
+      this.getSkillsList(
+        current.skills
+      );
+
+
+    if (
+      skills.some(
+        item =>
+          item.toLowerCase() ===
+          skill.toLowerCase()
+      )
+    ) {
+
+      this.popupInputMode.set(
+        false
+      );
+
+      this.popupType.set(
+        'success'
+      );
+
+      this.popupTitle.set(
+        'تمت الإضافة'
+      );
+
+      this.popupMessage.set(
+        `تمت إضافة المهارة "${skill}" بنجاح.`
+      );
 
     }
 
   }
 
 
-  // =========================================================
-  // Remove Skill
-  // =========================================================
+  // ✅ إعادة تعيين حقول الإثبات بعد الإضافة
+  this.resetProofFields();
 
-  removeSkill(
-    index: number
-  ): void {
-
-    this.trainee.update(
-      current => {
-
-        if (!current) {
-
-          return current;
-
-        }
+}
 
 
-        const skillsArr =
-          this.getSkillsList(
-            current.skills
-          );
+// =========================================================
+// Remove Skill
+// =========================================================
+
+removeSkill(
+  index: number
+): void {
+
+  this.trainee.update(
+    current => {
+
+      if (!current) {
+
+        return current;
+
+      }
 
 
-        skillsArr.splice(
-          index,
-          1
+      const skillsArr =
+        this.getSkillsList(
+          current.skills
         );
 
 
-        return {
+      skillsArr.splice(
+        index,
+        1
+      );
 
-          ...current,
 
-          skills:
-            skillsArr.join(', ')
+      return {
 
-        };
+        ...current,
 
-      }
-    );
+        skills:
+          skillsArr.join(', ')
 
-  }
+      };
+
+    }
+  );
+
+}
 
 }
