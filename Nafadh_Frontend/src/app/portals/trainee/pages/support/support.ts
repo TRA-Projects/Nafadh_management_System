@@ -13,7 +13,9 @@ import { AuthService } from '../../../../core/auth/auth.service';
 
 import {
   ConversationDetailDto,
-  ConversationListItemDto
+  ConversationListItemDto,
+  TraineeProfileDto,
+  EnrollmentDto
 } from '../../../../core/models/dtos';
 
 
@@ -29,6 +31,7 @@ import {
 
   templateUrl: './support.html'
 })
+
 export class TraineeSupport implements OnInit {
 
 
@@ -41,6 +44,20 @@ export class TraineeSupport implements OnInit {
 
   active =
     signal<ConversationDetailDto | null>(null);
+
+
+  // =========================================================
+  // Trainee Company
+  // =========================================================
+
+  traineeId =
+    signal<number | null>(null);
+
+  enrollment =
+    signal<EnrollmentDto | null>(null);
+
+  companyName =
+    signal('');
 
 
   // =========================================================
@@ -126,6 +143,180 @@ export class TraineeSupport implements OnInit {
 
     this.loadConversations();
 
+    this.loadCurrentTraineeCompany();
+
+  }
+
+
+  // =========================================================
+  // Load Current Trainee Company
+  // =========================================================
+
+  private loadCurrentTraineeCompany(): void {
+
+    const uid =
+      this.auth.userId;
+
+
+    if (!uid) {
+
+      return;
+
+    }
+
+
+    this.api
+      .getTrainee(uid)
+
+      .subscribe({
+
+        next: (
+          trainee: TraineeProfileDto
+        ) => {
+
+          const traineeId =
+            Number(
+              trainee.traineeId
+            );
+
+
+          if (
+            !traineeId ||
+            Number.isNaN(traineeId)
+          ) {
+
+            console.error(
+              '❌ Invalid traineeId:',
+              trainee
+            );
+
+            return;
+
+          }
+
+
+          this.traineeId.set(
+            traineeId
+          );
+
+
+          this.loadTraineeEnrollment(
+            traineeId
+          );
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            '❌ خطأ في جلب بيانات المتدرب:',
+            err
+          );
+
+          this.companyName.set('');
+
+        }
+
+      });
+
+  }
+
+
+  // =========================================================
+  // Load Trainee Enrollment
+  // =========================================================
+
+  private loadTraineeEnrollment(
+    traineeId: number
+  ): void {
+
+    this.api
+      .getEnrollmentsByTrainee(
+        traineeId
+      )
+
+      .subscribe({
+
+        next: (
+          enrollments: EnrollmentDto[]
+        ) => {
+
+
+          if (
+            !enrollments ||
+            enrollments.length === 0
+          ) {
+
+            this.enrollment.set(null);
+
+            this.companyName.set('');
+
+            return;
+
+          }
+
+
+          const activeEnrollment =
+
+            enrollments.find(
+
+              e => {
+
+                const status =
+
+                  String(
+                    e.completionStatus ?? ''
+                  ).toLowerCase();
+
+
+                return (
+
+                  status === 'active' ||
+
+                  status === 'inprogress'
+
+                );
+
+              }
+
+            )
+
+            ||
+
+            enrollments[0];
+
+
+          this.enrollment.set(
+            activeEnrollment
+          );
+
+
+          this.companyName.set(
+
+            activeEnrollment.companyName ?? ''
+
+          );
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            '❌ خطأ في جلب تسجيل المتدرب:',
+            err
+          );
+
+
+          this.enrollment.set(null);
+
+          this.companyName.set('');
+
+        }
+
+      });
+
   }
 
 
@@ -167,16 +358,14 @@ export class TraineeSupport implements OnInit {
           );
 
 
-          /*
-           * المتدرب يرى فقط شكاوى المتدربين.
-           */
-
           const complaints =
+
             all.filter((c: any) =>
 
               c.type === 'TraineeComplaint' ||
 
-              c.conversationType === 'TraineeComplaint'
+              c.conversationType ===
+                'TraineeComplaint'
 
             );
 
@@ -192,11 +381,6 @@ export class TraineeSupport implements OnInit {
           );
 
 
-          /*
-           * إذا كانت هناك محادثة مفتوحة
-           * نعيد تحميل تفاصيلها.
-           */
-
           const current =
             this.active();
 
@@ -204,10 +388,14 @@ export class TraineeSupport implements OnInit {
           if (current) {
 
             const stillExists =
+
               complaints.some(
+
                 (c: any) =>
+
                   c.conversationId ===
                   current.conversationId
+
               );
 
 
@@ -294,11 +482,8 @@ export class TraineeSupport implements OnInit {
 
 
     if (
-
       !input.files ||
-
       input.files.length === 0
-
     ) {
 
       return;
@@ -309,8 +494,6 @@ export class TraineeSupport implements OnInit {
     const file =
       input.files[0];
 
-
-    // Maximum 10 MB
 
     const maxSize =
       10 * 1024 * 1024;
@@ -333,8 +516,6 @@ export class TraineeSupport implements OnInit {
     }
 
 
-    // Allowed types
-
     const allowedTypes = [
 
       'application/pdf',
@@ -347,9 +528,7 @@ export class TraineeSupport implements OnInit {
 
 
     if (
-
       !allowedTypes.includes(file.type)
-
     ) {
 
       this.errorMessage.set(
@@ -431,8 +610,6 @@ export class TraineeSupport implements OnInit {
 
   onReceiverChange(): void {
 
-    // هيئة تنظيم الاتصالات تستخدم المواضيع الجاهزة،
-    // بينما المدرب والشركة يكتبان نوع الموضوع يدوياً.
     this.newConv.subject = '';
 
     this.errorMessage.set('');
@@ -440,34 +617,59 @@ export class TraineeSupport implements OnInit {
   }
 
 
-  getReceiverLabel(conversation: any): string {
+  getReceiverLabel(
+    conversation: any
+  ): string {
 
     const receiverType =
+
       conversation?.receiverType ??
+
       conversation?.recipientType ??
+
       conversation?.targetType ??
+
       conversation?.assignedToType ??
+
       conversation?.receiverRole ??
+
       conversation?.recipientRole ??
+
       '';
+
 
     switch (receiverType) {
 
       case 'Authority':
+
       case 'authority':
+
       case ' الهيئة':
+
         return 'هيئة تنظيم الاتصالات';
 
+
       case 'Trainer':
+
       case 'trainer':
+
         return 'المدرب';
 
+
       case 'Company':
+
       case 'company':
-        return 'الشركة';
+
+        return (
+          this.companyName() ||
+          'الشركة'
+        );
+
 
       default:
+
         return 'الجهة المختصة';
+
     }
 
   }
@@ -507,11 +709,8 @@ export class TraineeSupport implements OnInit {
 
 
     if (
-
       !conversation ||
-
       !this.replyText.trim()
-
     ) {
 
       return;
@@ -538,7 +737,6 @@ export class TraineeSupport implements OnInit {
 
 
     this.api
-
       .sendMessage(
 
         conversation.conversationId,
@@ -560,11 +758,6 @@ export class TraineeSupport implements OnInit {
 
           this.replyText = '';
 
-
-          /*
-           * إعادة تحميل المحادثة
-           * لإظهار الرسالة الجديدة.
-           */
 
           this.open(
             conversation.conversationId
@@ -639,11 +832,8 @@ export class TraineeSupport implements OnInit {
     // Validate Message
 
     if (
-
       !this.newConv.firstMessage ||
-
       !this.newConv.firstMessage.trim()
-
     ) {
 
       this.errorMessage.set(
@@ -703,7 +893,6 @@ export class TraineeSupport implements OnInit {
 
 
     this.api
-
       .startConversation(payload)
 
       .subscribe({
@@ -721,8 +910,6 @@ export class TraineeSupport implements OnInit {
           );
 
 
-          // Reset form
-
           this.newConv = {
 
             receiverType: '',
@@ -737,15 +924,11 @@ export class TraineeSupport implements OnInit {
           this.selectedFile = null;
 
 
-          // Refresh conversations
-
           this.loadConversations();
 
 
           this.isSubmitting.set(false);
 
-
-          // Hide success message
 
           setTimeout(() => {
 
@@ -765,6 +948,7 @@ export class TraineeSupport implements OnInit {
 
 
           let message =
+
             'حدث خطأ أثناء إرسال الطلب، يرجى المحاولة مرة أخرى';
 
 
