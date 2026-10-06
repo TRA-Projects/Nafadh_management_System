@@ -66,6 +66,8 @@ namespace Nafadh_Backend
         public DbSet<NFD_FeedbackScore> NFD_FeedbackScores { get; set; }
         public DbSet<NFD_Badge> NFD_Badges { get; set; }
         public DbSet<NFD_TraineeBadge> NFD_TraineeBadges { get; set; }
+        public DbSet<NFD_LessonFeedback> NFD_LessonFeedbacks { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -298,6 +300,55 @@ namespace Nafadh_Backend
                     .HasForeignKey(e => e.ModuleId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+            // ---- NFD_LessonFeedback ----
+
+            modelBuilder.Entity<NFD_LessonFeedback>(entity =>
+            {
+                entity.ToTable("NFD_LessonFeedbacks");
+
+                entity.HasKey(e => e.LessonFeedbackId);
+
+                entity.Property(e => e.Note)
+                    .HasMaxLength(2000);
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired();
+
+                entity.Property(e => e.UpdatedAt)
+                    .IsRequired(false);
+
+                // One trainee can have only one feedback record per lesson
+                entity.HasIndex(e => new
+                {
+                    e.TraineeId,
+                    e.LessonId
+                })
+                .IsUnique();
+
+                // Lesson relationship
+                entity.HasOne(e => e.Lesson)
+                    .WithMany(l => l.LessonFeedbacks)
+                    .HasForeignKey(e => e.LessonId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Trainee relationship
+                entity.HasOne(e => e.Trainee)
+                    .WithMany(t => t.LessonFeedbacks)
+                    .HasForeignKey(e => e.TraineeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+            //-------------------------
+
+
+
+
+
+
+
+
 
             // ---- NFD_TrainingMaterial ----
             modelBuilder.Entity<NFD_TrainingMaterial>(entity =>

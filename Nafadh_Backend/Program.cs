@@ -208,6 +208,12 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IBadgeService, BadgeService>();
             builder.Services.AddScoped<IBadgeEvaluationService, BadgeEvaluationService>();
 
+            // ── NEW registrations (backend upgrade - Phase 3 Contract Alignment) ──
+
+            builder.Services.AddScoped<ILessonFeedbackRepository, LessonFeedbackRepository>();
+            builder.Services.AddScoped<ILessonFeedbackService, LessonFeedbackService>();
+
+
             // Email settings
             builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
             builder.Services.Configure<AbsenceWarningSettings>(builder.Configuration.GetSection("AbsenceWarnings"));

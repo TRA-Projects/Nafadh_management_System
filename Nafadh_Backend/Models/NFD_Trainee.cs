@@ -58,5 +58,7 @@ namespace Nafadh_Backend.Models
         public ICollection<NFD_Feedback> Feedbacks { get; set; } = new List<NFD_Feedback>();
         public ICollection<NFD_TraineeBadge> TraineeBadges { get; set; } = new List<NFD_TraineeBadge>();
 
+        public ICollection<NFD_LessonFeedback> LessonFeedbacks { get; set; } = new List<NFD_LessonFeedback>();
+
     }
 }
