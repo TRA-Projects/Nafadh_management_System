@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <div class="achievements-page" dir="rtl">
 
   <!-- =========================================================
@@ -703,6 +704,715 @@
               outline: none;
               background: #fff;
               margin-bottom: 15px;
+=======
+<div class="achievements-page" dir="rtl"> 
+ 
+  <!-- ========================================================= 
+       TOAST / SUCCESS MESSAGE 
+       ========================================================= --> 
+  @if (showSuccessToast()) { 
+    <div class="toast-success"> 
+      <!-- <span class="toast-icon">✅</span> --> 
+      {{ successMessage() }} 
+    </div> 
+  } 
+ 
+ 
+  <!-- ========================================================= 
+       HEADER 
+       ========================================================= --> 
+  <div class="page-header"> 
+ 
+    <div> 
+ 
+      <h2 class="nfd-page-title">الإنجازات والشهادات</h2> 
+ 
+      <p class="nfd-page-sub"> 
+        تابع تقدمك، إنجازاتك وشهاداتك التدريبية 
+      </p> 
+ 
+    </div> 
+ 
+ 
+    <div class="achievement-summary"> 
+ 
+      <!-- نسبة الإكمال --> 
+      <div class="summary-item"> 
+ 
+        <div class="summary-icon progress-icon"> 
+          <i class="fas fa-percent"></i> 
+        </div> 
+ 
+        <div> 
+ 
+          <span>إكمال البرنامج</span> 
+ 
+          <strong> 
+            {{ progressPercentage() }}% 
+          </strong> 
+ 
+        </div> 
+ 
+      </div> 
+ 
+ 
+      <!-- الأوسمة --> 
+      <div class="summary-item"> 
+ 
+        <div class="summary-icon badge-icon"> 
+          <i class="fas fa-medal"></i> 
+        </div> 
+ 
+        <div> 
+ 
+          <span>الأوسمة</span> 
+ 
+          <strong> 
+            {{ earnedBadgesCount() }} 
+          </strong> 
+ 
+        </div> 
+ 
+      </div> 
+ 
+    </div> 
+ 
+  </div> 
+ 
+ 
+ 
+  <!-- ========================================================= 
+        FEEDBACK 
+        ========================================================= --> 
+  <div class="feedback-strip"> 
+ 
+    <div class="feedback-info"> 
+ 
+      <span class="feedback-icon"> 
+        <i class="fas fa-comment-dots"></i> 
+      </span> 
+ 
+      <div> 
+ 
+        <strong>شاركنا تجربتك</strong> 
+ 
+        <small> 
+          أكملت وحدة مؤخراً؟ نود معرفة رأيك 
+        </small> 
+ 
+      </div> 
+ 
+    </div> 
+ 
+ 
+    <div class="feedback-buttons"> 
+ 
+      <button 
+        class="feedback-btn" 
+        (click)="openFeedback('TrainerRating')"> 
+ 
+        <i class="fas fa-star"></i> 
+        تقييم المدرب 
+ 
+      </button> 
+ 
+ 
+      <button 
+        class="feedback-btn" 
+        (click)="openFeedback('BatchExperienceRating')"> 
+ 
+        <i class="fas fa-chart-bar"></i> 
+        تقييم البرنامج التدريبي 
+ 
+      </button> 
+ 
+    </div> 
+ 
+  </div> 
+ 
+ 
+ 
+  <!-- ========================================================= 
+        MAIN CONTENT 
+        ========================================================= --> 
+  <div class="main-grid"> 
+ 
+ 
+    <!-- ======================================================= 
+          PROGRESS 
+          ======================================================= --> 
+    <div class="nfd-card progress-card"> 
+ 
+      <div class="card-header"> 
+ 
+        <div> 
+ 
+          <h3> 
+            <i class="fas fa-book-open"></i> 
+            تقدم البرنامج 
+          </h3> 
+ 
+          <span> 
+            متابعة تقدمك في الوحدات التدريبية 
+          </span> 
+ 
+        </div> 
+ 
+      </div> 
+ 
+ 
+ 
+      <!-- Modules --> 
+      <div class="modules-list"> 
+ 
+        @for (module of displayModules(); track module.moduleId) { 
+ 
+          @let progress = module.progress; 
+          @let status = module.status; 
+          @let title = module.title; 
+ 
+ 
+          <div class="module-row"> 
+ 
+            <div class="module-name"> 
+ 
+              <div 
+                class="module-status" 
+                [class.completed]="status === 'Completed'" 
+                [class.in-progress]="status === 'InProgress'"> 
+ 
+                @if (status === 'Completed') { 
+ 
+                  <i class="fas fa-check"></i> 
+ 
+                } @else if (status === 'InProgress') { 
+ 
+                  <i class="fas fa-circle-half-stroke"></i> 
+ 
+                } @else { 
+ 
+                  <i class="far fa-circle"></i> 
+ 
+                } 
+ 
+              </div> 
+ 
+              <span> 
+                {{ title }} 
+              </span> 
+ 
+            </div> 
+ 
+ 
+ 
+            <div class="module-progress"> 
+ 
+              <div class="module-track"> 
+ 
+                <div 
+                  class="module-fill" 
+                  [style.width]="progress + '%'" 
+                  [style.background]="getBarColor(progress)"> 
+                </div> 
+ 
+              </div> 
+ 
+              <strong> 
+                {{ progress }}% 
+              </strong> 
+ 
+            </div> 
+ 
+          </div> 
+ 
+        } 
+ 
+ 
+        @empty { 
+ 
+          <div class="empty-state"> 
+ 
+            <span> 
+              <i class="fas fa-inbox"></i> 
+            </span> 
+ 
+            <p> 
+              لا توجد وحدات مسجلة بعد 
+            </p> 
+ 
+          </div> 
+ 
+        } 
+ 
+      </div> 
+ 
+    </div> 
+ 
+ 
+ 
+    <!-- ======================================================= 
+          BADGES 
+          ======================================================= --> 
+    <div class="nfd-card badges-card"> 
+ 
+      <div class="card-header"> 
+ 
+        <div> 
+ 
+          <h3> 
+            <i class="fas fa-award"></i> 
+            الأوسمة والإنجازات 
+          </h3> 
+ 
+          <span> 
+            إنجازاتك التي حققتها خلال التدريب 
+          </span> 
+ 
+        </div> 
+ 
+ 
+        <div class="badge-counter"> 
+          {{ earnedBadgesCount() }}/{{ totalBadges() }} 
+        </div> 
+ 
+      </div> 
+ 
+ 
+ 
+      <div class="badges-grid"> 
+ 
+        @for (badge of allBadges(); track badge.badgeId) { 
+ 
+          @let earned = isEarned(badge.badgeId); 
+ 
+ 
+          <div 
+            class="badge-item" 
+            [class.earned]="earned" 
+            [class.locked]="!earned"> 
+ 
+            <div class="badge-symbol"> 
+ 
+              @if (badge.icon) { 
+ 
+                <i class="{{ badge.icon }}"></i> 
+ 
+              } @else { 
+ 
+                <i class="fas fa-medal"></i> 
+ 
+              } 
+ 
+ 
+              @if (earned) { 
+ 
+                <span class="earned-check"> 
+                  <i class="fas fa-check-circle"></i> 
+                </span> 
+ 
+              } 
+ 
+            </div> 
+ 
+ 
+            <strong> 
+              {{ badge.name }} 
+            </strong> 
+ 
+ 
+            <small> 
+              {{ badge.description }} 
+            </small> 
+ 
+ 
+            @if (earned) { 
+ 
+              <span class="badge-status earned-status"> 
+ 
+                <i class="fas fa-check-circle"></i> 
+                محقق 
+ 
+              </span> 
+ 
+            } @else { 
+ 
+              <span class="badge-status locked-status"> 
+ 
+                <i class="fas fa-lock"></i> 
+                غير محقق 
+ 
+              </span> 
+ 
+            } 
+ 
+          </div> 
+ 
+        } 
+ 
+ 
+        @empty { 
+ 
+          <div class="empty-state"> 
+ 
+            <span> 
+              <i class="fas fa-tags"></i> 
+            </span> 
+ 
+            <p> 
+              لا توجد أوسمة متاحة حالياً 
+            </p> 
+ 
+          </div> 
+ 
+        } 
+ 
+      </div> 
+ 
+    </div> 
+ 
+  </div> 
+ 
+ 
+ 
+  <!-- ========================================================= 
+        CERTIFICATE 
+        ========================================================= --> 
+  <div class="certificate-card nfd-card"> 
+ 
+    <div class="certificate-info"> 
+ 
+      <div class="certificate-title"> 
+ 
+        <div class="certificate-icon"> 
+ 
+          <i class="fas fa-certificate"></i> 
+ 
+        </div> 
+ 
+ 
+        <div> 
+ 
+          <h3> 
+            شهادة إتمام التدريب 
+          </h3> 
+ 
+ 
+          <p> 
+ 
+            @if (progressPercentage() >= 85 && certificates().length > 0) { 
+ 
+              <i class="fas fa-graduation-cap"></i> 
+              🎉 أصبحت الشهادة متاحة للتحميل 
+ 
+            } @else if (progressPercentage() >= 16 && certificates().length === 0) { 
+ 
+              <i class="fas fa-spinner fa-pulse"></i> 
+              ⏳ جاري تجهيز الشهادة... 
+ 
+            } @else { 
+ 
+              <i class="fas fa-hourglass-half"></i> 
+              أكمل 85% من البرنامج للحصول على الشهادة 
+ 
+            } 
+ 
+          </p> 
+ 
+        </div> 
+ 
+      </div> 
+ 
+ 
+ 
+      <div class="certificate-status"> 
+ 
+        @if (progressPercentage() >= 85 && certificates().length > 0) { 
+ 
+          <span class="available"> 
+ 
+            <i class="fas fa-check-circle"></i> 
+            متاحة للتحميل 
+ 
+          </span> 
+ 
+        } @else { 
+ 
+          <span class="pending"> 
+ 
+            <i class="fas fa-clock"></i> 
+            {{ progressPercentage() }}% مكتمل 
+ 
+          </span> 
+ 
+        } 
+ 
+      </div> 
+ 
+    </div> 
+ 
+ 
+ 
+    <!-- ========================================================== 
+         معاينة الشهادة - كل النصوص في المنتصف 
+         ========================================================== --> 
+    <div class="certificate-preview"> 
+ 
+      <div class="certificate-brand"> 
+        NAFADH 
+      </div> 
+ 
+ 
+      <div class="certificate-text"> 
+ 
+        <span> 
+          شهادة إتمام التدريب 
+        </span> 
+ 
+ 
+        <strong> 
+          {{ traineeName() }} 
+        </strong> 
+ 
+ 
+        <small> 
+          أتم برنامج {{ programTitle() }} 
+        </small> 
+ 
+      </div> 
+ 
+    </div> 
+ 
+ 
+ 
+    <button 
+      class="download-btn" 
+      [class.enabled]="canDownloadCertificate()" 
+      [disabled]="!canDownloadCertificate()" 
+      (click)="downloadCertificate()"> 
+ 
+      @if (canDownloadCertificate()) { 
+ 
+        <span> 
+          <i class="fas fa-download"></i> 
+          تنزيل الشهادة 
+        </span> 
+ 
+      } @else { 
+ 
+        <span> 
+          <i class="fas fa-lock"></i> 
+          الشهادة غير متاحة بعد 
+        </span> 
+ 
+      } 
+ 
+    </button> 
+ 
+  </div> 
+ 
+ 
+ 
+  <!-- ========================================================= 
+        FEEDBACK MODAL 
+        ========================================================= --> 
+  @if (showFeedback()) { 
+ 
+    <div 
+      class="nfd-modal-bg" 
+      (click)="showFeedback.set(false)"> 
+ 
+      <div 
+        class="nfd-modal" 
+        (click)="$event.stopPropagation()"> 
+ 
+ 
+        <div class="modal-header"> 
+ 
+          <div> 
+ 
+            <h3> 
+ 
+              @if (feedbackType() === 'TrainerRating') { 
+ 
+                <i class="fas fa-star"></i> 
+                تقييم المدرب 
+ 
+              } @else { 
+ 
+                <i class="fas fa-chart-pie"></i> 
+                تقييم البرنامج التدريبي 
+ 
+              } 
+ 
+            </h3> 
+ 
+ 
+            <p> 
+              ساعدنا في تحسين تجربتك التدريبية 
+            </p> 
+ 
+          </div> 
+ 
+ 
+          <button 
+            class="modal-close" 
+            (click)="showFeedback.set(false)"> 
+ 
+            <i class="fas fa-times"></i> 
+ 
+          </button> 
+ 
+        </div> 
+ 
+ 
+ 
+        @if (feedbackType() === 'TrainerRating') { 
+ 
+ 
+          <!-- اختيار نوع التقييم --> 
+ 
+          <div style=" 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 8px; 
+            margin-bottom: 15px; 
+          "> 
+ 
+ 
+            <button 
+              type="button" 
+              (click)="onEvaluationPeriodChange('Weekly')" 
+              [style.background]=" 
+                evaluationPeriod() === 'Weekly' 
+                  ? '#0d9488' 
+                  : '#f8fafc' 
+              " 
+              [style.color]=" 
+                evaluationPeriod() === 'Weekly' 
+                  ? '#fff' 
+                  : '#334155' 
+              " 
+              style=" 
+                border: 1px solid #e2e8f0; 
+                border-radius: 8px; 
+                padding: 9px; 
+                cursor: pointer; 
+                font-family: inherit; 
+                font-size: 11px; 
+                font-weight: 700; 
+              "> 
+ 
+              <i class="fas fa-calendar-week"></i> 
+ 
+              تقييم أسبوعي 
+ 
+            </button> 
+ 
+ 
+ 
+            <button 
+              type="button" 
+              (click)="onEvaluationPeriodChange('Monthly')" 
+              [style.background]=" 
+                evaluationPeriod() === 'Monthly' 
+                  ? '#0d9488' 
+                  : '#f8fafc' 
+              " 
+              [style.color]=" 
+                evaluationPeriod() === 'Monthly' 
+                  ? '#fff' 
+                  : '#334155' 
+              " 
+              style=" 
+                border: 1px solid #e2e8f0; 
+                border-radius: 8px; 
+                padding: 9px; 
+                cursor: pointer; 
+                font-family: inherit; 
+                font-size: 11px; 
+                font-weight: 700; 
+              "> 
+ 
+              <i class="fas fa-calendar-alt"></i> 
+ 
+              تقييم شهري 
+ 
+            </button> 
+ 
+          </div> 
+ 
+ 
+ 
+          <!-- اختيار الكورس --> 
+ 
+          <label class="comment-label"> 
+ 
+            <i class="fas fa-book"></i> 
+ 
+            اختيار الكورس 
+ 
+          </label> 
+ 
+ 
+          <select 
+            [ngModel]="selectedModuleId()" 
+            (ngModelChange)="onModuleSelected($event ? +$event : null)" 
+            style=" 
+              width: 100%; 
+              box-sizing: border-box; 
+              border: 1px solid #e2e8f0; 
+              border-radius: 7px; 
+              padding: 9px; 
+              font-family: inherit; 
+              font-size: 11px; 
+              outline: none; 
+              background: #fff; 
+              margin-bottom: 12px; 
+            "> 
+ 
+            <option [ngValue]="null"> 
+              اختر الكورس 
+            </option> 
+ 
+ 
+            @for (module of modules(); track module.moduleId) { 
+ 
+              <option [ngValue]="module.moduleId"> 
+                {{ module.title }} 
+              </option> 
+ 
+            } 
+ 
+          </select> 
+ 
+ 
+ 
+          <!-- اختيار المدرب --> 
+ 
+          <label class="comment-label"> 
+ 
+            <i class="fas fa-user-tie"></i> 
+ 
+            اختيار المدرب 
+ 
+          </label> 
+ 
+ 
+          <select 
+            [ngModel]="selectedTrainerId()" 
+            disabled
+            style=" 
+              width: 100%; 
+              box-sizing: border-box; 
+              border: 1px solid #e2e8f0; 
+              border-radius: 7px; 
+              padding: 9px; 
+              font-family: inherit; 
+              font-size: 11px; 
+              outline: none; 
+              background: #f8fafc; 
+              margin-bottom: 15px; 
+>>>>>>> e5075cbdaf81f31cfd973ee711c5a2889a872ffe
               color: #64748b;
             ">
 
