@@ -2,6 +2,8 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
+
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
@@ -21,7 +23,8 @@ namespace Nafadh_Backend.Controllers
             _service = service;
         }
 
-        // GET /api/Enrollment?batchId=&traineeId=&companyId=&status=  (filters all optional)
+        // GET /api/Enrollment?batchId=&traineeId=&companyId=&status=
+        // جميع الفلاتر اختيارية
         [HttpGet]
         public async Task<ActionResult<IEnumerable<EnrollmentDTO>>> GetAll(
             [FromQuery] int? batchId,
@@ -36,7 +39,9 @@ namespace Nafadh_Backend.Controllers
                 CompanyId = companyId,
                 Status = status
             };
+
             var enrollments = await _service.GetAllEnrollmentsAsync(filter);
+
             return Ok(enrollments);
         }
 
@@ -45,106 +50,192 @@ namespace Nafadh_Backend.Controllers
         public async Task<ActionResult<EnrollmentDTO>> GetById(int id)
         {
             var enrollment = await _service.GetEnrollmentByIdAsync(id);
+
             if (enrollment is null)
-                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+                return NotFound(new
+                {
+                    message = $"Enrollment with ID {id} was not found."
+                });
 
             return Ok(enrollment);
         }
 
-        // POST /api/Enrollment  -> enroll a trainee into a batch/company/department
+        // POST /api/Enrollment
+        // تسجيل متدرب في دفعة / شركة / قسم
         [HttpPost]
-        public async Task<ActionResult<EnrollmentDTO>> Create([FromBody] CreateEnrollmentDto dto)
+        public async Task<ActionResult<EnrollmentDTO>> Create(
+            [FromBody] CreateEnrollmentDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var (result, error) = await _service.CreateEnrollmentAsync(dto);
-            if (error is not null)
-                return BadRequest(new { message = error });
+            var (result, error) =
+                await _service.CreateEnrollmentAsync(dto);
 
-            return CreatedAtAction(nameof(GetById), new { id = result!.EnrollmentId }, result);
+            if (error is not null)
+                return BadRequest(new
+                {
+                    message = error
+                });
+
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = result!.EnrollmentId },
+                result);
         }
 
-        // PUT /api/Enrollment/{id}  -> update department/supervisor assignment
+        // PUT /api/Enrollment/{id}
+        // تحديث القسم والمشرف
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<EnrollmentDTO>> UpdateAssignment(int id, [FromBody] UpdateEnrollmentAssignmentDto dto)
+        public async Task<ActionResult<EnrollmentDTO>> UpdateAssignment(
+            int id,
+            [FromBody] UpdateEnrollmentAssignmentDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var (result, error) = await _service.UpdateAssignmentAsync(id, dto);
+            var (result, error) =
+                await _service.UpdateAssignmentAsync(id, dto);
+
             if (error == "not_found")
-                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+                return NotFound(new
+                {
+                    message = $"Enrollment with ID {id} was not found."
+                });
+
             if (error is not null)
-                return BadRequest(new { message = error });
+                return BadRequest(new
+                {
+                    message = error
+                });
 
             return Ok(result);
         }
 
-        // PUT /api/Enrollment/{id}/status  -> update completion status
+        // PUT /api/Enrollment/{id}/status
+        // تحديث حالة التسجيل
         [HttpPut("{id:int}/status")]
-        public async Task<ActionResult<EnrollmentDTO>> UpdateStatus(int id, [FromBody] UpdateEnrollmentStatusDto dto)
+        public async Task<ActionResult<EnrollmentDTO>> UpdateStatus(
+            int id,
+            [FromBody] UpdateEnrollmentStatusDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var (result, error) = await _service.UpdateStatusAsync(id, dto);
+            var (result, error) =
+                await _service.UpdateStatusAsync(id, dto);
+
             if (error == "not_found")
-                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+                return NotFound(new
+                {
+                    message = $"Enrollment with ID {id} was not found."
+                });
+
+            if (error is not null)
+                return BadRequest(new
+                {
+                    message = error
+                });
 
             return Ok(result);
         }
 
-        // DELETE /api/Enrollment/{id}  -> cancel/withdraw
+        // DELETE /api/Enrollment/{id}
+        // إلغاء / انسحاب المتدرب
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Withdraw(int id)
         {
-            var withdrawn = await _service.WithdrawEnrollmentAsync(id);
+            var withdrawn =
+                await _service.WithdrawEnrollmentAsync(id);
+
             if (!withdrawn)
-                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+                return NotFound(new
+                {
+                    message = $"Enrollment with ID {id} was not found."
+                });
 
             return NoContent();
         }
 
-        // GET /api/Enrollment/trainee/{traineeId}  -> "My Programs"
+        // GET /api/Enrollment/trainee/{traineeId}
+        // برامج المتدرب
         [HttpGet("trainee/{traineeId:int}")]
-        public async Task<ActionResult<IEnumerable<EnrollmentDTO>>> GetByTrainee(int traineeId)
+        public async Task<ActionResult<IEnumerable<EnrollmentDTO>>> GetByTrainee(
+            int traineeId)
         {
-            var enrollments = await _service.GetByTraineeIdAsync(traineeId);
+            var enrollments =
+                await _service.GetByTraineeIdAsync(traineeId);
+
             return Ok(enrollments);
         }
 
         // GET /api/Enrollment/company/{companyId}
+        // تسجيلات الشركة
         [HttpGet("company/{companyId:int}")]
-        public async Task<ActionResult<IEnumerable<EnrollmentDTO>>> GetByCompany(int companyId)
+        public async Task<ActionResult<IEnumerable<EnrollmentDTO>>> GetByCompany(
+            int companyId)
         {
-            var enrollments = await _service.GetByCompanyIdAsync(companyId);
+            var enrollments =
+                await _service.GetByCompanyIdAsync(companyId);
+
             return Ok(enrollments);
         }
 
         // GET /api/Enrollment/{id}/progress-summary
+        // ملخص تقدم المتدرب
         [HttpGet("{id:int}/progress-summary")]
-        public async Task<ActionResult<ProgressSummaryDto>> GetProgressSummary(int id)
+        public async Task<ActionResult<ProgressSummaryDto>> GetProgressSummary(
+            int id)
         {
-            var summary = await _service.GetProgressSummaryAsync(id);
+            var summary =
+                await _service.GetProgressSummaryAsync(id);
+
             if (summary is null)
-                return NotFound(new { message = $"Enrollment with ID {id} was not found." });
+                return NotFound(new
+                {
+                    message = $"Enrollment with ID {id} was not found."
+                });
 
             return Ok(summary);
         }
 
-        // POST /api/Enrollment/trainee/{traineeId}/upload-image -> رفع وتحديث صورة المتدرب
+        // POST /api/Enrollment/trainee/{traineeId}/upload-image
+        // رفع وتحديث صورة المتدرب
         [HttpPost("trainee/{traineeId:int}/upload-image")]
-        public async Task<IActionResult> UploadProfileImage(int traineeId, IFormFile file)
+        public async Task<IActionResult> UploadProfileImage(
+            int traineeId,
+            IFormFile file)
         {
+            // التأكد من وجود الملف
             if (file == null || file.Length == 0)
-                return BadRequest(new { message = "الرجاء اختيار ملف صورة صحيح." });
+            {
+                return BadRequest(new
+                {
+                    message = "الرجاء اختيار ملف صورة صحيح."
+                });
+            }
 
-            var success = await _service.UploadTraineeProfileImageAsync(traineeId, file);
-            if (!success)
-                return NotFound(new { message = $"Trainee with ID {traineeId} was not found." });
+            // استدعاء خدمة رفع الصورة
+            var success =
+                await _service.UploadTraineeProfileImageAsync(
+                    traineeId,
+                    file);
 
-            return Ok(new { message = "تم رفع وتحديث الصورة الشخصية بنجاح." });
+            // إذا لم يتم العثور على المتدرب
+            if (success)
+            {
+                return NotFound(new
+                {
+                    message =
+                        $"Trainee with ID {traineeId} was not found."
+                });
+            }
+
+            // نجاح العملية
+            return Ok(new
+            {
+                message = "تم رفع وتحديث الصورة الشخصية بنجاح."
+            });
         }
     }
 }

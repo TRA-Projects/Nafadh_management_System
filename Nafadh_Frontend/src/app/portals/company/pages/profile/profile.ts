@@ -84,6 +84,10 @@ export class CompanyProfile implements OnInit {
   companyInitial = computed(() => this.company()?.companyName?.trim()?.charAt(0)?.toUpperCase() ?? 'ش');
 
   // حساب عدد المتدربين بناءً على العدد الفعلي من getEnrollmentsByCompany أو قيم Capacity
+  approvedSupervisors = computed(() =>
+    this.supervisors().filter((person) => this.isApprovedSupervisor(person.status)),
+  );
+
   usedCapacityValue = computed(() => {
     if (this.trainees().length > 0) {
       return this.trainees().length;
@@ -220,7 +224,7 @@ export class CompanyProfile implements OnInit {
       role: supervisor.role || supervisor.position || supervisor.department || '—',
       phone: supervisor.phone || '',
       email: supervisor.email || '',
-      status: supervisor.status || '—',
+      status: supervisor.status ?? '—',
     } as CompanySupervisorProfileDto;
   }
 
@@ -358,6 +362,13 @@ export class CompanyProfile implements OnInit {
       },
       error: (error) => console.error('Failed to remove work field:', error),
     });
+  }
+
+  private isApprovedSupervisor(status: unknown): boolean {
+    // NFD_SupervisorStatus: Active = 0, Inactive = 1, Suspended = 2
+    if (typeof status === 'number') return status === 0;
+    const value = String(status ?? '').trim().toLowerCase();
+    return value === 'active' || value === '0' || value === 'معتمد' || value === 'نشط';
   }
 
   branchPhoneLabel(value?: string | null): string {

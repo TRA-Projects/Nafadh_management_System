@@ -100,6 +100,21 @@ export class CompanyApi {
     return this.http.get<any[]>(`${this.base}/CompanySupervisor/${id}/trainees`);
   }
 
+  deleteSupervisor(id: number) {
+    return this.http.delete(
+      `${this.base}/CompanySupervisor/${id}`
+    );
+  }
+
+  getSupervisorAssignedTrainees(
+    id: number
+  ): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.base}/CompanySupervisor/${id}/trainees`
+    );
+  }
+
+  // ============================================================
   // My Account
   getCurrentAccount(): Observable<CompanyAccountDto> {
     return this.http.get<CompanyAccountDto>(`${this.base}/CompanyAccount/me`);
@@ -131,6 +146,14 @@ export class CompanyApi {
     return this.http.get<AttendanceReportDto>(`${this.base}/Report/company-attendance/${companyId}`);
   }
 
+  // Get company tasks
+  getCompanyTasks(companyId: number): Observable<any[]> {
+  return this.http.get<any[]>(
+    `${this.base}/Task/company/${companyId}`
+  );
+}
+
+  // ============================================================
   // Contact — Company Conversations
   getConversations(userId: number): Observable<ConversationListItemDto[]> {
     return this.http.get<ConversationListItemDto[]>(`${this.base}/Conversation`, { params: { type: 'CompanyThread', participantUserId: userId } });
@@ -148,5 +171,3 @@ export class CompanyApi {
     return this.http.put(`${this.base}/Conversation/${id}/read`, {}, { params: { userId } });
   }
 }
-
-  // Announcements//

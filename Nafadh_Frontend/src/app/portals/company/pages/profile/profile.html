@@ -140,7 +140,7 @@
             <span>العنوان</span><strong style="text-align:left;word-break:break-word;">{{ c.address || 'لا يوجد عنوان مسجل' }}</strong>
           </div>
           <div class="nfd-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
-            <span>الحالة</span><strong>{{ statusLabel(c.status) }}</strong>
+            <span>الحالة</span><strong [class.approved-word]="c.status === 'Approved'">{{ statusLabel(c.status) }}</strong>
           </div>
         </div>
       </div>
@@ -221,7 +221,7 @@
                 <strong style="display:block;font-size:14px;color:var(--color-navy);">{{ program.name }}</strong>
                 <span class="nfd-muted">الطاقة: {{ program.seatsAllocated }} مقعد</span>
               </div>
-              <span class="nfd-badge" [style.background]="program.status === 'معتمد' ? 'var(--status-completed-bg)' : 'var(--status-review-bg)'" [style.color]="program.status === 'معتمد' ? 'var(--status-completed-fg)' : 'var(--status-review-fg)'">{{ program.status }}</span>
+              <span class="nfd-badge" [style.background]="program.status === 'معتمد' ? '#dcfce7' : 'var(--status-review-bg)'" [style.color]="program.status === 'معتمد' ? '#16a34a' : 'var(--status-review-fg)'" [style.font-weight]="program.status === 'معتمد' ? 800 : 600">{{ program.status }}</span>
             </div>
           } @empty {
             @if (!specialtiesLoadError()) {
@@ -287,6 +287,34 @@
             </div>
           }
         </div>
+      </div>
+    </div>
+
+    <div class="nfd-card" style="margin-top:16px;">
+      <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span class="section-title">المشرفون المعتمدون</span>
+        <span class="nfd-muted">{{ approvedSupervisors().length }}</span>
+      </h3>
+
+      @if (supervisorsLoadError()) {
+        <p class="nfd-muted" style="color:var(--status-cancelled-fg);">تعذر تحميل المشرفين من الخادم — راجع الـ console.</p>
+      }
+
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+        @for (person of approvedSupervisors(); track person.id) {
+          <div class="list-tile contact-tile">
+            <div class="contact-avatar">{{ (person.fullName || person.name || 'ش').charAt(0) }}</div>
+            <div style="flex:1;min-width:0;">
+              <strong style="display:block;font-size:14px;color:var(--color-navy);">{{ person.fullName || person.name || 'مشرف' }}</strong>
+              <span class="nfd-muted" style="display:block;margin-top:4px;">{{ person.position || person.role || '—' }}</span>
+            </div>
+            <span class="nfd-badge approved-word" style="background:#dcfce7;border:1px solid #bbf7d0;">معتمد</span>
+          </div>
+        } @empty {
+          @if (!supervisorsLoadError()) {
+            <p class="nfd-muted">لا يوجد مشرفون معتمدون</p>
+          }
+        }
       </div>
     </div>
 

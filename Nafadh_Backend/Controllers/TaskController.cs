@@ -38,7 +38,25 @@ namespace Nafadh_Backend.Controllers
             return Ok(result);
         }
 
+        [HttpGet("company/{companyId}")]
+        public async Task<IActionResult> GetTasksByCompany(int companyId)
+        {
+            var tasks = await _service.GetTasksByCompanyIdAsync(companyId);
 
+            var result = tasks.Select(t => new TaskResponseDto
+            {
+                TaskId = t.TaskId,
+                Title = t.Title,
+                Description = t.Description,
+                DueDate = t.DueDate,
+                Priority = t.Priority,
+                Status = t.Status,
+                BatchId = t.BatchId,
+                CreatedByUserId = t.CreatedByUserId
+            }).ToList();
+
+            return Ok(result);
+        }
 
         // GET: api/Task/{id}
         [HttpGet("{id}")]

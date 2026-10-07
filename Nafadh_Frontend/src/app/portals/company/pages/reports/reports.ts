@@ -1,208 +1,295 @@
-import { Component, OnInit, ElementRef, inject, signal, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-import * as XLSX from 'xlsx';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
 
-import { CompanyApi } from '../../services/company-api';
-import { AuthService } from '../../../../core/auth/auth.service';
-import { AttendanceReportDto, EnrollmentDto, CompanyProgramSummaryDto } from '../../../../core/models/dtos';
-
-interface AttendanceRow {
-  traineeId: number;
-  traineeName: string;
-  presentDays: number;
-  absentDays: number;
-  lateDays: number;
-  excusedDays: number;
-  attendanceRate: number;
+interface ProgramDetails {
+  id: number;
+  title: string;
+  category: string;
+  description: string;
+  occupied: number;
+  capacity: number;
+  percent: number;
+  color: string;
 }
 
-interface AchievementReportDto { total: number; completed: number; rate: number; }
-interface CapacityProgram {
-  programName: string;
-  allocatedQuota: number;
-  usedQuota: number;
-  remainingQuota: number;
-  utilizationPercentage: number;
-}
-interface CapacityReportDto {
-  total: number;
-  used: number;
-  remaining: number;
-  programs: CapacityProgram[];
-}
-interface ProgramProgress { programName: string; shortName: string; progress: number; colorClass: string; }
+type ReportTab =
+  | 'attendance'
+  | 'progress'
+  | 'capacity'
+  | 'evaluations'
+  | 'tasks'
+  | 'comparison';
 
 @Component({
-  selector: 'app-company-reports',
+  selector: 'app-reports',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './reports.html',
-  styleUrl: './reports.scss'
+  styleUrls: ['./reports.scss']
 })
-export class ReportsComponent implements OnInit {
-  private readonly elementRef = inject(ElementRef);
-  private readonly api = inject(CompanyApi);
-  private readonly auth = inject(AuthService);
+export class ReportsComponent {
 
-  readonly tab = signal<'attendance' | 'achievement' | 'capacity'>('achievement');
-  readonly loading = signal(false);
-  readonly errorMessage = signal<string | null>(null);
-  readonly attendance = signal<AttendanceReportDto | null>(null);
-  readonly achievement = signal<AchievementReportDto | null>(null);
-  readonly capacity = signal<CapacityReportDto | null>(null);
-  readonly programProgressList = signal<ProgramProgress[]>([]);
+  @Input() programs: ProgramDetails[] = [];
 
-  ngOnInit(): void { this.loadInitialData(); }
+  @Output() selectProgram = new EventEmitter<number>();
 
-  private loadInitialData(): void {
-    const companyId = this.auth.companyId ?? 0;
-    if (!companyId) {
-      this.errorMessage.set('لا يمكن تحديد الشركة الحالية من جلسة الدخول.');
-      return;
+  activeTab: ReportTab = 'attendance';
+
+  exportNotice = '';
+
+  // ==========================================
+  // تقرير حضور الأقسام
+  // ==========================================
+  departmentAttendanceReport = [
+    {
+      department: 'تقنية المعلومات',
+      traineesCount: 12,
+      attendanceRate: 94,
+      absences: 3,
+      lateCount: 2,
+      rating: 'ممتاز',
+      tone: 'emerald'
+    },
+    {
+      department: 'الموارد البشرية',
+      traineesCount: 8,
+      attendanceRate: 91,
+      absences: 4,
+      lateCount: 3,
+      rating: 'جيد جداً',
+      tone: 'sky'
+    },
+    {
+      department: 'التسويق',
+      traineesCount: 10,
+      attendanceRate: 88,
+      absences: 5,
+      lateCount: 4,
+      rating: 'جيد جداً',
+      tone: 'amber'
+    },
+    {
+      department: 'المالية',
+      traineesCount: 7,
+      attendanceRate: 96,
+      absences: 2,
+      lateCount: 1,
+      rating: 'ممتاز',
+      tone: 'emerald'
+    }
+  ];
+
+  // ==========================================
+  // تقرير الحضور الأسبوعي
+  // ==========================================
+  weeklyAttendanceReport = [
+    {
+      week: 'الأسبوع الأول',
+      attendance: 92,
+      rate: 92
+    },
+    {
+      week: 'الأسبوع الثاني',
+      attendance: 94,
+      rate: 94
+    },
+    {
+      week: 'الأسبوع الثالث',
+      attendance: 91,
+      rate: 91
+    },
+    {
+      week: 'الأسبوع الرابع',
+      attendance: 96,
+      rate: 96
+    },
+    {
+      week: 'الأسبوع الخامس',
+      attendance: 93,
+      rate: 93
+    }
+  ];
+
+  // ==========================================
+  // قائمة المشرفين
+  // ==========================================
+  supervisorsList = [
+    {
+      id: 1,
+      name: 'أحمد محمد',
+      role: 'مشرف',
+      department: 'تقنية المعلومات',
+      traineesCount: 6,
+      attendanceRate: 95,
+      rating: 'ممتاز',
+      avgProgress: 92
+    },
+    {
+      id: 2,
+      name: 'سارة علي',
+      role: 'مشرف',
+      department: 'الموارد البشرية',
+      traineesCount: 5,
+      attendanceRate: 92,
+      rating: 'جيد جداً',
+      avgProgress: 88
+    },
+    {
+      id: 3,
+      name: 'خالد سالم',
+      role: 'مشرف',
+      department: 'التسويق',
+      traineesCount: 7,
+      attendanceRate: 89,
+      rating: 'جيد جداً',
+      avgProgress: 84
+    },
+    {
+      id: 4,
+      name: 'مريم أحمد',
+      role: 'مشرف',
+      department: 'المالية',
+      traineesCount: 4,
+      attendanceRate: 97,
+      rating: 'ممتاز',
+      avgProgress: 95
+    }
+  ];
+
+  // ==========================================
+  // تبويبات التقارير
+  // ==========================================
+  tabs: { id: ReportTab; label: string }[] = [
+    {
+      id: 'attendance',
+      label: 'حضور الشركة'
+    },
+    {
+      id: 'progress',
+      label: 'إنجاز المتدربين'
+    },
+    {
+      id: 'capacity',
+      label: 'الطاقة الاستيعابية'
+    },
+    {
+      id: 'evaluations',
+      label: 'التقييمات'
+    },
+    {
+      id: 'tasks',
+      label: 'المهام'
+    },
+    {
+      id: 'comparison',
+      label: 'مقارنة الأقسام والمشرفين'
+    }
+  ];
+
+  // ==========================================
+  // تغيير التبويب
+  // ==========================================
+  setActiveTab(tab: ReportTab): void {
+    this.activeTab = tab;
+  }
+
+  // ==========================================
+  // تصدير PDF
+  // ==========================================
+  handleExportPdf(): void {
+    this.exportNotice = 'جاري تجهيز ملف PDF للطباعة...';
+
+    setTimeout(() => {
+      window.print();
+      this.exportNotice = '';
+    }, 300);
+  }
+
+  // ==========================================
+  // تصدير Excel / CSV
+  // ==========================================
+  handleExportExcel(): void {
+
+    const headers = [
+      'القسم',
+      'عدد المتدربين',
+      'معدل الحضور',
+      'الغياب',
+      'التأخر',
+      'التقييم'
+    ];
+
+    const rows = this.departmentAttendanceReport.map((d) => [
+      d.department,
+      d.traineesCount.toString(),
+      `${d.attendanceRate}%`,
+      d.absences.toString(),
+      d.lateCount.toString(),
+      d.rating
+    ]);
+
+    const csvContent =
+      '\uFEFF' +
+      [
+        headers.join(','),
+        ...rows.map((row) =>
+          row.map((cell) => `"${cell}"`).join(',')
+        )
+      ].join('\n');
+
+    const blob = new Blob(
+      [csvContent],
+      {
+        type: 'text/csv;charset=utf-8;'
+      }
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+
+    link.href = url;
+
+    link.setAttribute(
+      'download',
+      'تقرير_حضور_الشركة_نفاذ.csv'
+    );
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+    this.exportNotice = 'تم تصدير ملف Excel (CSV) بنجاح.';
+
+    setTimeout(() => {
+      this.exportNotice = '';
+    }, 3000);
+  }
+
+  // ==========================================
+  // اختيار البرنامج
+  // ==========================================
+  onSelectProgram(programId: number): void {
+    this.selectProgram.emit(programId);
+  }
+
+  // ==========================================
+  // تحديد لون الـ Badge
+  // ==========================================
+  getBadgeClass(tone: string): string {
+
+    if (tone === 'emerald' || tone === 'sky') {
+      return 'badge-blue';
     }
 
-    this.loading.set(true);
-    this.errorMessage.set(null);
+    if (tone === 'amber') {
+      return 'badge-amber';
+    }
 
-    forkJoin({
-      attendance: this.api.getCompanyAttendanceReport(companyId).pipe(catchError(() => of(null))),
-      attendanceChart: this.api.getAttendanceChart(companyId).pipe(catchError(() => of({ weeks: [] }))),
-      capacity: this.api.getCapacity(companyId).pipe(catchError(() => of({ total: 0, used: 0, remaining: 0 } as any))),
-      distribution: this.api.getProgramDistribution(companyId).pipe(catchError(() => of([]))),
-      programSummaries: this.api.getCompanyProgramSummaries(companyId).pipe(catchError(() => of([] as CompanyProgramSummaryDto[]))),
-      enrollments: this.api.getEnrollmentsByCompany(companyId).pipe(catchError(() => of([] as EnrollmentDto[]))),
-    }).subscribe({
-      next: ({ attendance, attendanceChart, capacity, distribution, programSummaries, enrollments }) => {
-        this.attendance.set(attendance ? { ...(attendance as AttendanceReportDto), chart: attendanceChart?.weeks ?? [] } : null);
-
-        const rows = (enrollments ?? []).map((e) => this.api.getProgressSummary(e.enrollmentId).pipe(
-          catchError(() => of({ enrollmentId: e.enrollmentId, totalModules: 0, completedModules: 0, progressPercentage: 0 })) ,
-          map(progress => ({ e, progress }))
-        ));
-
-        if (!rows.length) {
-          this.setAchievementAndCapacity(enrollments ?? [], distribution as any[], capacity as any, programSummaries ?? []);
-          this.loading.set(false);
-          return;
-        }
-
-        forkJoin(rows).subscribe({
-          next: (items) => {
-            const group = new Map<string, { total: number; sum: number }>();
-            items.forEach(({ e, progress }) => {
-              const key = e.programTitle || 'غير محدد';
-              const current = group.get(key) ?? { total: 0, sum: 0 };
-              current.total += 1;
-              current.sum += Number(progress.progressPercentage ?? 0);
-              group.set(key, current);
-            });
-
-            this.programProgressList.set(
-              Array.from(group.entries()).map(([programName, value], i) => ({
-                programName,
-                shortName: programName.length > 18 ? `${programName.slice(0, 18)}…` : programName,
-                progress: Math.round(value.sum / Math.max(1, value.total)),
-                colorClass: ['blue', 'cyan', 'purple', 'orange', 'red', 'green'][i % 6]
-              }))
-            );
-
-            const completed = items.filter(({ progress }) => Number(progress.progressPercentage ?? 0) >= 100).length;
-            this.achievement.set({ total: enrollments.length, completed, rate: enrollments.length ? Math.round(completed * 100 / enrollments.length) : 0 });
-            this.setCapacity(enrollments, distribution as any[], capacity as any, programSummaries ?? []);
-            this.loading.set(false);
-          },
-          error: () => {
-            this.setAchievementAndCapacity(enrollments ?? [], distribution as any[], capacity as any, programSummaries ?? []);
-            this.loading.set(false);
-          }
-        });
-      },
-      error: () => {
-        this.errorMessage.set('تعذر تحميل تقارير الشركة من قاعدة البيانات.');
-        this.loading.set(false);
-      }
-    });
-  }
-
-  private setAchievementAndCapacity(
-    enrollments: EnrollmentDto[],
-    distribution: any[],
-    capacity: any,
-    programSummaries: CompanyProgramSummaryDto[],
-  ): void {
-    const completed = enrollments.filter((e) => /Completed/i.test(e.completionStatus)).length;
-    this.achievement.set({
-      total: enrollments.length,
-      completed,
-      rate: enrollments.length ? Math.round((completed * 100) / enrollments.length) : 0,
-    });
-    this.setCapacity(enrollments, distribution, capacity, programSummaries);
-    this.programProgressList.set([]);
-  }
-
-  private setCapacity(
-    enrollments: EnrollmentDto[],
-    distribution: any[],
-    capacity: any,
-    programSummaries: CompanyProgramSummaryDto[],
-  ): void {
-    const total = Number(capacity?.total ?? 0);
-    const used = Number(capacity?.used ?? enrollments.length);
-    const remaining = Number(capacity?.remaining ?? Math.max(0, total - used));
-
-    const programs: CapacityProgram[] = programSummaries.length
-      ? programSummaries.map((program) => ({
-          programName: program.title,
-          allocatedQuota: Number(program.allocatedCapacity ?? 0),
-          usedQuota: Number(program.usedCapacity ?? 0),
-          remainingQuota: Number(program.remainingCapacity ?? 0),
-          utilizationPercentage: Number(program.utilizationPercentage ?? 0),
-        }))
-      : (distribution ?? []).map((item: any) => ({
-          programName: String(item?.label ?? 'غير محدد'),
-          allocatedQuota: 0,
-          usedQuota: Number(item?.value ?? 0),
-          remainingQuota: 0,
-          utilizationPercentage: 0,
-        }));
-
-    this.capacity.set({ total, used, remaining, programs });
-  }
-
-  selectTab(tab: 'attendance' | 'achievement' | 'capacity'): void { this.tab.set(tab); }
-
-  readonly attendanceChart = computed(() => this.attendance()?.chart ?? []);
-  readonly totalTrainees = computed(() => this.attendance()?.rows?.length ?? 0);
-  readonly totalPresentDays = computed(() => this.attendance()?.rows?.reduce((total, row) => total + Number(row.presentDays ?? 0), 0) ?? 0);
-  readonly totalExcusedDays = computed(() => this.attendance()?.rows?.reduce((total, row) => total + Number(row.excusedDays ?? 0), 0) ?? 0);
-  readonly attendanceRate = computed(() => Number(this.attendance()?.overallAttendanceRate ?? 0));
-  readonly totalAbsentDays = computed(() => this.attendance()?.rows?.reduce((t, r) => t + r.absentDays, 0) ?? 0);
-  readonly totalLateDays = computed(() => this.attendance()?.rows?.reduce((t, r) => t + r.lateDays, 0) ?? 0);
-  attendanceLabel(rate: number): string { return rate >= 90 ? 'ممتاز' : rate >= 75 ? 'جيد' : 'يحتاج متابعة'; }
-  getInitials(name?: string): string { const p = (name ?? '').trim().split(/\s+/).filter(Boolean); return p.length ? p.slice(0, 2).map(x => x[0]).join('') : '?'; }
-  clampPercentage(value: number | undefined): number { return Math.max(0, Math.min(100, Number(value ?? 0))); }
-  readonly achievementRate = computed(() => this.achievement()?.rate ?? 0);
-  readonly bestProgram = computed(() => this.programProgressList().length ? [...this.programProgressList()].sort((a, b) => b.progress - a.progress)[0] : null);
-  readonly weakestProgram = computed(() => this.programProgressList().length ? [...this.programProgressList()].sort((a, b) => a.progress - b.progress)[0] : null);
-  readonly capacityPercentage = computed(() => { const d = this.capacity(); return d?.total ? this.clampPercentage((d.used / d.total) * 100) : 0; });
-  readonly ringCircumference = 2 * Math.PI * 78;
-  readonly ringDashoffset = computed(() => this.ringCircumference * (1 - this.capacityPercentage() / 100));
-  refreshReports(): void { this.loadInitialData(); }
-
-  exportPdf(): void {
-    const element = this.elementRef.nativeElement.querySelector('.reports-page');
-    if (!element) return;
-    (html2pdf as any)().set({ margin: 8, filename: `report_${new Date().toISOString().slice(0, 10)}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(element).save();
-  }
-
-  exportExcel(): void {
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(this.attendance()?.rows ?? []), 'الحضور');
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(this.capacity()?.programs ?? []), 'الطاقة الاستيعابية');
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(this.programProgressList()), 'الإنجاز');
-    XLSX.writeFile(workbook, `تقرير_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    return 'badge-red';
   }
 }

@@ -2,65 +2,76 @@
   class="program-details-page"
   [style.--program-color]="p?.color || '#00338d'"
 >
+  <!-- Loading State -->
   @if (loading()) {
     <div class="card card-pad state-card">
       <div class="loading-spinner"></div>
-
-      <strong>
-        جاري تحميل تفاصيل البرنامج...
-      </strong>
-
-      <span>
-        يتم جلب البيانات من قاعدة البيانات.
-      </span>
+      <strong>جاري تحميل تفاصيل البرنامج...</strong>
+      <span>يتم جلب البيانات من قاعدة البيانات.</span>
     </div>
   }
 
+  <!-- Error State -->
   @if (!loading() && error()) {
     <div class="card card-pad state-card error-card">
-      <div class="state-icon error-icon">
-        !
-      </div>
-
-      <strong>
-        {{ error() }}
-      </strong>
-
-      <button
-        type="button"
-        class="back-btn"
-        (click)="goBack()"
-      >
+      <div class="state-icon error-icon">!</div>
+      <strong>{{ error() }}</strong>
+      <button type="button" class="back-btn" (click)="goBack()">
         العودة للبرامج
       </button>
     </div>
   }
 
+  <!-- Main Content -->
   @if (!loading() && !error() && p) {
+    <!-- Top Page Bar (Breadcrumb + Actions matching Nafath Portal) -->
+    <div class="page-top-bar">
+      <div class="page-top-right">
+        <button class="back-btn" type="button" (click)="goBack()">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path d="M9 18l6-6-6-6"></path>
+          </svg>
+          <span>العودة للبرامج</span>
+        </button>
 
-    <!-- Back -->
-    <button
-      class="back-btn"
-      type="button"
-      (click)="goBack()"
-    >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-      >
-        <path d="M15 18l-6-6 6-6"></path>
-      </svg>
+        <div class="breadcrumb-trail">
+          <span class="crumb-muted">الرئيسية</span>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-muted">البرامج التدريبية</span>
+          <span class="crumb-sep">/</span>
+          <strong class="crumb-current">{{ p.title }}</strong>
+        </div>
+      </div>
 
-      <span>
-        العودة للبرامج
-      </span>
-    </button>
+      <div class="page-top-actions">
+        <button type="button" class="action-btn outline-btn" (click)="exportExcel()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+          <span>تصدير Excel</span>
+        </button>
 
-    <!-- Program Header -->
+        <button type="button" class="action-btn primary-btn" (click)="exportPdf()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>تصدير PDF</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Program Header (Hero Card) -->
     <div class="card card-pad hero">
-
       <div class="program-icon">
         <svg
           viewBox="0 0 24 24"
@@ -75,17 +86,16 @@
       </div>
 
       <div class="hero-copy">
+        <div class="hero-title-row">
+          <h2>{{ p.title }}</h2>
+          <span class="dept-tag">
+            الأقسام: <strong>{{ p.department }}</strong>
+          </span>
+        </div>
 
-        <h2>
-          {{ p.title }}
-        </h2>
-
-        <p>
-          {{ p.description }}
-        </p>
+        <p>{{ p.description }}</p>
 
         <div class="chips">
-
           @if (p.category) {
             <span class="chip">
               <i></i>
@@ -99,430 +109,328 @@
             [class.pending-chip]="!p.approved"
           >
             <i></i>
-
-            {{
-              p.approved
-                ? 'معتمد للشركة'
-                : 'غير معتمد'
-            }}
+            {{ p.approved ? 'معتمد للشركة' : 'غير معتمد' }}
           </span>
 
           <span class="chip gray">
             {{ programStatusLabel(p.status) }}
           </span>
-
         </div>
-
       </div>
     </div>
 
-    <!-- Main Statistics -->
+    <!-- Main Statistics (5 KPI Cards matching Nafath Report KPIs) -->
     <div class="stats-grid">
-
       <div class="stat-card">
-        <small>
-          المتدربون الحاليون
-        </small>
-
-        <strong>
-          {{ p.currentTraineeCount }}
-        </strong>
-
-        <span>
-          متدرب
-        </span>
+        <div class="stat-head">
+          <small>المتدربون الحاليون</small>
+        </div>
+        <div class="stat-value-row">
+          <strong>{{ p.currentTraineeCount }}</strong>
+          <span>متدرب نشط</span>
+        </div>
       </div>
 
       <div class="stat-card">
-        <small>
-          نسبة الإشغال
-        </small>
-
-        <strong class="ok">
-          {{ formatPercent(p.percent) }}%
-        </strong>
-
-        <span>
-          من الطاقة الاستيعابية
-        </span>
+        <div class="stat-head">
+          <small>نسبة الإشغال</small>
+        </div>
+        <div class="stat-value-row">
+          <strong class="ok">{{ formatPercent(p.percent) }}%</strong>
+          <span>من الطاقة الاستيعابية</span>
+        </div>
       </div>
 
       <div class="stat-card">
-        <small>
-          الدفعات
-        </small>
-
-        <strong>
-          {{ p.batchCount }}
-        </strong>
-
-        <span>
-          دفعة تدريبية
-        </span>
+        <div class="stat-head">
+          <small>الدفعات التدريبية</small>
+        </div>
+        <div class="stat-value-row">
+          <strong>{{ p.batchCount }}</strong>
+          <span>دفعة مسجلة</span>
+        </div>
       </div>
 
       <div class="stat-card">
-        <small>
-          الساعات التدريبية
-        </small>
-
-        <strong>
-          {{ p.durationHours }}
-        </strong>
-
-        <span>
-          ساعة
-        </span>
+        <div class="stat-head">
+          <small>الساعات التدريبية</small>
+        </div>
+        <div class="stat-value-row">
+          <strong>{{ p.durationHours }}</strong>
+          <span>ساعة معتمدة</span>
+        </div>
       </div>
 
       <div class="stat-card">
-        <small>
-          التسجيلات
-        </small>
-
-        <strong>
-          {{ p.enrollmentCount }}
-        </strong>
-
-        <span>
-          تسجيل
-        </span>
+        <div class="stat-head">
+          <small>إجمالي التسجيلات</small>
+        </div>
+        <div class="stat-value-row">
+          <strong class="brand-num">{{ p.enrollmentCount }}</strong>
+          <span>تسجيل بالبرنامج</span>
+        </div>
       </div>
-
     </div>
 
-    <!-- Capacity + Utilization -->
+    <!-- Capacity + Utilization (Two Column Section) -->
     <div class="two-col">
-
-      <!-- Capacity -->
+      <!-- Capacity Card -->
       <div class="card card-pad capacity-card-modern">
-
         <div class="card-title">
-
-          <span class="title-main">
-            استخدام الطاقة الاستيعابية
-          </span>
-
+          <span class="title-main">استخدام الطاقة الاستيعابية</span>
           <span
             class="pulse-badge"
             [class.badge-warning]="p.available <= 0"
           >
-            {{
-              p.available > 0
-                ? 'متاح للتسجيل'
-                : 'السعة مكتملة'
-            }}
+            {{ p.available > 0 ? 'متاح للتسجيل' : 'السعة مكتملة' }}
           </span>
-
         </div>
 
         <div class="capacity-bar-wrapper">
-
           <div class="bar-info">
-
-            <span>
-              تم شغل {{ p.occupied }}
-              من {{ p.capacity }} مقعد
-            </span>
-
-            <strong>
-              {{ formatPercent(p.percent) }}%
-            </strong>
-
+            <span>تم شغل {{ p.occupied }} من {{ p.capacity }} مقعد</span>
+            <strong>{{ formatPercent(p.percent) }}%</strong>
           </div>
 
           <div class="main-progress-bar">
-
             <div
               class="progress-fill-gradient"
               [style.width.%]="p.percent"
             ></div>
-
           </div>
-
         </div>
 
         <div class="colored-bars-grid">
-
           <div class="bar-card-item used-col">
-
             <div class="bar-header">
               <span class="dot-indicator"></span>
-
-              <span class="label">
-                المقاعد المشغولة
-              </span>
+              <span class="label">المقاعد المشغولة</span>
             </div>
 
             <div class="bar-body">
-              <strong>
-                {{ p.occupied }}
-              </strong>
-
-              <small>
-                مقعد
-              </small>
+              <strong>{{ p.occupied }}</strong>
+              <small>مقعد</small>
             </div>
 
             <div class="mini-col-progress">
-              <i
-                [style.width.%]="p.percent"
-              ></i>
+              <i [style.width.%]="p.percent"></i>
             </div>
-
           </div>
 
           <div class="bar-card-item available-col">
-
             <div class="bar-header">
               <span class="dot-indicator bg-emerald"></span>
-
-              <span class="label">
-                المقاعد المتاحة
-              </span>
+              <span class="label">المقاعد المتاحة</span>
             </div>
 
             <div class="bar-body">
-
-              <strong class="ok">
-                {{ p.available }}
-              </strong>
-
-              <small>
-                مقعد
-              </small>
-
+              <strong class="ok">{{ p.available }}</strong>
+              <small>مقعد</small>
             </div>
 
             <div class="mini-col-progress">
-
               <i
                 class="bg-emerald"
                 [style.width.%]="
-                  p.capacity > 0
-                    ? (p.available / p.capacity) * 100
-                    : 0
+                  p.capacity > 0 ? (p.available / p.capacity) * 100 : 0
                 "
               ></i>
-
             </div>
-
           </div>
-
         </div>
       </div>
 
-      <!-- Utilization -->
+      <!-- Utilization Donut Card -->
       <div class="card card-pad">
-
         <div class="card-title">
-
-          <span class="title-main">
-            نسبة استخدام البرنامج
-          </span>
-
-          <span>
-            نظرة عامة
-          </span>
-
+          <span class="title-main">نسبة استخدام البرنامج</span>
+          <span>نظرة عامة</span>
         </div>
 
         <div class="distribution-chart-container">
-
           <div
             class="donut-chart-ring"
             [style.background]="utilizationRing()"
           >
-
             <div class="donut-inner-content">
-
-              <small>
-                نسبة الإشغال
-              </small>
-
-              <strong>
-                {{ formatPercent(p.percent) }}%
-              </strong>
-
+              <small>نسبة الإشغال</small>
+              <strong>{{ formatPercent(p.percent) }}%</strong>
               <span
                 class="badge-active"
                 [class.badge-complete]="p.percent >= 100"
               >
-                {{
-                  p.percent >= 100
-                    ? 'مكتمل'
-                    : 'نشط الآن'
-                }}
+                {{ p.percent >= 100 ? 'مكتمل' : 'نشط الآن' }}
               </span>
-
             </div>
-
           </div>
 
+          <div class="donut-legend">
+            <div class="legend-item">
+              <span class="legend-dot used"></span>
+              <span>المقاعد المستغلة ({{ p.occupied }} مقعد)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot free"></span>
+              <span>الشواغر المتاحة ({{ p.available }} مقعد)</span>
+            </div>
+            <div class="legend-summary">
+              متوسط إنجاز المتدربين:
+              <strong>{{ averageProgress() }}%</strong>
+            </div>
+          </div>
         </div>
-
       </div>
-
     </div>
 
-    <!-- Training Plan -->
+    <!-- Training Plan (Modules) -->
     <div class="card card-pad section-card">
-
       <div class="card-title">
-
-        <span class="title-main">
-          مراحل الخطة التدريبية
-        </span>
-
-        <span>
-          {{ modules().length }} مرحلة
-        </span>
-
+        <span class="title-main">مراحل الخطة التدريبية</span>
+        <span>{{ modules().length }} مرحلة</span>
       </div>
 
       @if (modules().length) {
-
         <div class="plan-cards-grid">
-
           @for (
             module of modules();
             track module.moduleId;
             let index = $index
           ) {
-
             <div class="plan-step-card">
-
               <div class="pnum">
-                {{
-                  (index + 1)
-                    .toString()
-                    .padStart(2, '0')
-                }}
+                {{ (index + 1).toString().padStart(2, '0') }}
               </div>
 
               <div class="plan-content">
-
-                <b>
-                  {{ module.title }}
-                </b>
-
+                <b>{{ module.title }}</b>
                 <small>
                   المرحلة {{ index + 1 }}
-
                   @if (module.prerequisiteModuleId) {
-                    <span>
-                      • تعتمد على مرحلة سابقة
-                    </span>
+                    <span class="prereq-tag">• تعتمد على مرحلة سابقة</span>
                   }
                 </small>
-
               </div>
-
             </div>
-
           }
-
         </div>
-
       } @else {
-
         <div class="empty-state">
           لا توجد مراحل تدريبية مسجلة لهذا البرنامج.
         </div>
-
       }
-
     </div>
 
-   <!-- Batches Section -->
-<div class="card card-pad section-card">
-  <div class="card-title">
-    <span class="title-main">
-      الدفعات التدريبية
-    </span>
-    <span>
-      {{ p.batches.length }} دفعات
-    </span>
-  </div>
+    <!-- Batches Section (Horizontal Progress Style matching Nafath Reports) -->
+    <div class="card card-pad section-card">
+      <div class="card-title">
+        <span class="title-main">الدفعات التدريبية</span>
+        <span>{{ p.batches.length }} دفعات</span>
+      </div>
 
-  @if (p.batches && p.batches.length) {
-    <div class="batches-list">
-      @for (batch of p.batches; track batch.batchId) {
-        <div class="batch-row">
-          <div class="batch-name">
-            <strong>{{ batch.batchName }}</strong>
-          </div>
+      @if (p.batches && p.batches.length) {
+        <div class="batches-list">
+          @for (batch of p.batches; track batch.batchId) {
+            <div class="batch-row">
+              <div class="batch-name">
+                <strong>{{ batch.batchName }}</strong>
+              </div>
 
-          <div class="batch-date">
-            <i class="fa-regular fa-calendar"></i>
-            <span>
-              {{ formatDate(batch.startDate) }} – {{ formatDate(batch.endDate) }}
-            </span>
-          </div>
+              <div class="batch-date">
+                <i class="fa-regular fa-calendar"></i>
+                <span>
+                  {{ formatDate(batch.startDate) }} – {{ formatDate(batch.endDate) }}
+                </span>
+              </div>
 
-          <div class="batch-capacity">
-            <i class="fa-solid fa-users"></i>
-            <span>{{ batch.capacity }} مقعد</span>
-          </div>
+              <div class="batch-capacity">
+                <i class="fa-solid fa-users"></i>
+                <span>{{ batch.capacity }} مقعد</span>
+              </div>
 
-          <span class="batch-status">
-            {{ programStatusLabel(batch.status) }}
-          </span>
+              <span
+                class="batch-status"
+                [class.status-completed]="programStatusLabel(batch.status) === 'مكتمل'"
+                [class.status-suspended]="programStatusLabel(batch.status) === 'معلق'"
+              >
+                {{ programStatusLabel(batch.status) }}
+              </span>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          لا توجد دفعات تدريبية مسجلة لهذا البرنامج.
         </div>
       }
     </div>
-  } @else {
-    <div class="empty-state">
-      لا توجد دفعات تدريبية مسجلة لهذا البرنامج.
-    </div>
-  }
-</div>
 
-    <!-- Trainees -->
+    <!-- Trainees Section -->
     <div class="card card-pad">
+      <div class="card-title trainees-header-row">
+        <div>
+          <span class="title-main">المتدربون المسجلون</span>
+          <span class="count-pill">{{ filteredTrainees().length }} متدرب</span>
+        </div>
 
-      <div class="card-title">
+        <!-- Search & Filter Bar -->
+        <div class="table-filters">
+          <div class="search-box">
+            <input
+              type="text"
+              placeholder="بحث في المتدربين والمشرفين..."
+              [value]="searchTerm()"
+              (input)="onSearchChange($event)"
+            />
+          </div>
 
-        <span class="title-main">
-          المتدربون المسجلون
-        </span>
-
-        <span>
-          {{ trainees().length }} متدرب
-        </span>
-
+          <div class="status-tabs">
+            <button
+              type="button"
+              [class.active]="selectedStatus() === 'all'"
+              (click)="setStatusFilter('all')"
+            >
+              الكل
+            </button>
+            <button
+              type="button"
+              [class.active]="selectedStatus() === 'قيد التدريب'"
+              (click)="setStatusFilter('قيد التدريب')"
+            >
+              قيد التدريب
+            </button>
+            <button
+              type="button"
+              [class.active]="selectedStatus() === 'مكتمل'"
+              (click)="setStatusFilter('مكتمل')"
+            >
+              مكتمل
+            </button>
+            <button
+              type="button"
+              [class.active]="selectedStatus() === 'متعثر'"
+              (click)="setStatusFilter('متعثر')"
+            >
+              متعثر
+            </button>
+          </div>
+        </div>
       </div>
 
       @if (trainees().length) {
-
         <div class="trainee-summary">
-
           <div class="summary-item">
-            <span>
-              المشرفون
-            </span>
-
-            <strong>
-              {{ supervisorCount() }}
-            </strong>
+            <span>المشرفون</span>
+            <strong>{{ supervisorCount() }}</strong>
           </div>
 
           <div class="summary-item">
-            <span>
-              متوسط الإنجاز
-            </span>
-
-            <strong class="green-text">
-              {{ averageProgress() }}%
-            </strong>
+            <span>متوسط الإنجاز</span>
+            <strong class="green-text">{{ averageProgress() }}%</strong>
           </div>
-
         </div>
 
         <div class="table-wrap">
-
           <table>
-
             <thead>
               <tr>
                 <th>المتدرب</th>
@@ -536,77 +444,53 @@
             </thead>
 
             <tbody>
-
               @for (
-                trainee of trainees();
+                trainee of filteredTrainees();
                 track trainee.enrollmentId
               ) {
-
                 <tr>
-
                   <!-- Trainee -->
                   <td>
-
                     <div class="trainee-name">
-
                       <span
                         class="avatar"
                         [style.background]="p.color"
                       >
                         {{ initials(trainee.name) }}
                       </span>
-
-                      <span class="trainee-name-text">
-                        {{ trainee.name }}
-                      </span>
-
+                      <span class="trainee-name-text">{{ trainee.name }}</span>
                     </div>
-
                   </td>
 
                   <!-- Department -->
                   <td>
-                    <span class="table-muted">
-                      {{ trainee.department }}
-                    </span>
+                    <span class="table-muted">{{ trainee.department }}</span>
                   </td>
 
                   <!-- Batch -->
                   <td>
-                    <span class="table-muted">
-                      {{ trainee.cohort }}
-                    </span>
+                    <span class="table-muted">{{ trainee.cohort }}</span>
                   </td>
 
                   <!-- Supervisor -->
                   <td>
-                    <span class="table-muted">
-                      {{ trainee.supervisor }}
-                    </span>
+                    <span class="table-muted">{{ trainee.supervisor }}</span>
                   </td>
 
                   <!-- Progress -->
                   <td class="progress-cell">
-
                     <div class="progress-content">
-
                       <span class="progress-percent">
                         {{ formatPercent(trainee.progress) }}%
                       </span>
-
                       <div class="progress">
-                        <i
-                          [style.width.%]="trainee.progress"
-                        ></i>
+                        <i [style.width.%]="trainee.progress"></i>
                       </div>
-
                     </div>
-
                   </td>
 
                   <!-- Status -->
                   <td>
-
                     <span
                       class="status"
                       [class.done]="statusClass(trainee.status) === 'done'"
@@ -616,19 +500,12 @@
                     >
                       {{ trainee.status }}
                     </span>
-
                   </td>
 
                   <!-- Social -->
                   <td>
-
                     <div class="trainee-socials">
-
-                      @if (
-                        githubUrl(trainee.gitHubUrl);
-                        as github
-                      ) {
-
+                      @if (githubUrl(trainee.gitHubUrl); as github) {
                         <a
                           class="social-icon-btn github"
                           [href]="github"
@@ -637,40 +514,27 @@
                           aria-label="GitHub"
                           title="GitHub"
                         >
-                          <svg
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                          >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path
                               d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
                             ></path>
                           </svg>
                         </a>
-
                       } @else {
-
                         <span
                           class="social-icon-btn github is-muted"
                           title="GitHub غير متوفر"
                           aria-label="GitHub غير متوفر"
                         >
-                          <svg
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                          >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path
-                              d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+                              d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
                             ></path>
                           </svg>
                         </span>
-
                       }
 
-                      @if (
-                        linkedInUrl(trainee.linkedInUrl);
-                        as linkedin
-                      ) {
-
+                      @if (linkedInUrl(trainee.linkedInUrl); as linkedin) {
                         <a
                           class="social-icon-btn linkedin"
                           [href]="linkedin"
@@ -679,58 +543,37 @@
                           aria-label="LinkedIn"
                           title="LinkedIn"
                         >
-                          <svg
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                          >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path
                               d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
                             ></path>
                           </svg>
                         </a>
-
                       } @else {
-
                         <span
                           class="social-icon-btn linkedin is-muted"
                           title="LinkedIn غير متوفر"
                           aria-label="LinkedIn غير متوفر"
                         >
-                          <svg
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                          >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path
-                              d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
+                              d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"
                             ></path>
                           </svg>
                         </span>
-
                       }
-
                     </div>
-
                   </td>
-
                 </tr>
-
               }
-
             </tbody>
-
           </table>
-
         </div>
-
       } @else {
-
         <div class="empty-state">
           لا يوجد متدربون مسجلون في هذا البرنامج.
         </div>
-
       }
-
     </div>
-
   }
 </div>
