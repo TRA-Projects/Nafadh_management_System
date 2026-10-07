@@ -46,6 +46,7 @@ namespace Nafadh_Backend.Models
         public ICollection<NFD_Evaluation> Evaluations { get; set; } = new List<NFD_Evaluation>();
         // NEW: TrainerRating feedback received by this trainer.
         public ICollection<NFD_Feedback> Feedbacks { get; set; } = new List<NFD_Feedback>();
+        public ICollection<NFD_TrainerCertificate> Certificates { get; set; } = new List<NFD_TrainerCertificate>();
 
     }
 }

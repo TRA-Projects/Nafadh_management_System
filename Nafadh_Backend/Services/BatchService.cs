@@ -94,6 +94,7 @@ namespace Nafadh_Backend.Services
             return enrollments.Select(e => new BatchTraineeDto
             {
                 TraineeId = e.TraineeId,
+                UserId = e.Trainee?.User?.UserId ?? 0,
                 FullName = e.Trainee?.User?.FullName ?? string.Empty,
                 CompletionStatus = e.CompletionStatus
             }).ToList();

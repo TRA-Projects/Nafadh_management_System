@@ -186,6 +186,8 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IMessageService, MessageService>();
             builder.Services.AddScoped<ICertificateRepository, CertificateRepository>();
             builder.Services.AddScoped<ICertificateService, CertificateService>();
+            builder.Services.AddScoped<ITrainerCertificateRepository, TrainerCertificateRepository>();
+            builder.Services.AddScoped<ITrainerCertificateService, TrainerCertificateService>();
             builder.Services.AddScoped<IReportRepository, ReportRepository>();
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<ISystemSettingRepository, SystemSettingRepository>();

@@ -48,6 +48,7 @@ namespace Nafadh_Backend.DTOs
     public class BatchTraineeDto
     {
         public int TraineeId { get; set; }
+        public int UserId { get; set; }
         public string FullName { get; set; } = string.Empty;
         public NFD_EnrollmentCompletionStatus? CompletionStatus { get; set; }
     }
