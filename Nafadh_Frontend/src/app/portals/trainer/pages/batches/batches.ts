@@ -720,6 +720,33 @@ export class TrainerBatches implements OnInit {
 
   }
 
+ // =====================================================
+// BATCH DURATION IN MONTHS
+// =====================================================
+
+getBatchDurationInMonths(
+  batch: TrainerBatchDto
+): number {
+
+  if (
+    !batch.startDate ||
+    !batch.endDate
+  ) {
+    return 0;
+  }
+
+  const start =
+    new Date(batch.startDate);
+
+  const end =
+    new Date(batch.endDate);
+
+  return Math.max(
+    0,
+    (end.getFullYear() - start.getFullYear()) * 12 +
+    (end.getMonth() - start.getMonth())
+  );
+} 
 
   // =====================================================
   // TIME LABEL
