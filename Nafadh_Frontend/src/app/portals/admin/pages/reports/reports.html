@@ -8,17 +8,17 @@
     <div class="subsections-header">
       <div class="title-wrap">
         <h2>التقارير والتحليلات</h2>
-        <p>نظام متابعة وتقييم البرامج والبحث والفلترة الفورية</p>
+        <p>نظام متابعة وتقييم البرامج والبحث والفلترة الفورية والربط مع قاعدة البيانات</p>
       </div>
       <div class="tabs-segmented-control">
         <button class="tab-btn" [class.active]="currentSubSection === 'company'" (click)="setSubSection('company')">
-          🏢 تقارير الشركات
+          تقارير الشركات
         </button>
         <button class="tab-btn" [class.active]="currentSubSection === 'trainer'" (click)="setSubSection('trainer')">
-          👥 تقارير المدربين
+          تقارير المدربين
         </button>
         <button class="tab-btn" [class.active]="currentSubSection === 'trainee'" (click)="setSubSection('trainee')">
-          🎓 تقارير المتدربين
+          تقارير المتدربين
         </button>
       </div>
     </div>
@@ -28,34 +28,49 @@
        القسم الأول: تقارير الشركات
   ========================================================== -->
   <ng-container *ngIf="currentSubSection === 'company'">
+    
     <!-- 1.1 عرض قائمة الشركات من الداتابيز -->
     <div *ngIf="currentView === 'companies'">
       <div class="header-section">
-        <h2>التقارير حسب الشركة</h2>
-        <p>اختر شركة لعرض برامجها وتقارير دفعاتها</p>
+        <div>
+          <h2>التقارير حسب الشركة</h2>
+          <p>اختر شركة لعرض برامجها وتقارير دفعاتها وتفاصيلها المعتمدة</p>
+        </div>
+        <div class="actions-left">
+          <button class="btn-excel" (click)="exportCompaniesToExcel()">تصدير Excel</button>
+        </div>
       </div>
 
-      <!-- 🔍 شريط البحث والفلترة الخاص بالشركات -->
+      <!-- شريط البحث والفلترة -->
       <div class="filter-toolbar-card">
         <div class="search-input-wrap">
-          <span class="search-icon">🔍</span>
           <input 
             type="text" 
-            placeholder="ابحث باسم الشركة التدريبية..." 
+            placeholder="ابحث باسم الشركة، السجل التجاري، المدينة، أو الهاتف..." 
             [(ngModel)]="companySearchTerm" 
             (input)="applyCompanyFilters()" />
           <button class="clear-search-btn" *ngIf="companySearchTerm" (click)="companySearchTerm = ''; applyCompanyFilters()">✕</button>
         </div>
 
         <div class="filters-actions-wrap">
+          <select class="custom-select-filter" [(ngModel)]="companyFilterCity" (change)="applyCompanyFilters()">
+            <option value="ALL">جميع المدن والمناطق</option>
+            <option *ngFor="let c of uniqueCompanyCities" [value]="c">{{ c }}</option>
+          </select>
+
+          <select class="custom-select-filter" [(ngModel)]="companyFilterField" (change)="applyCompanyFilters()">
+            <option value="ALL">جميع مجالات العمل</option>
+            <option *ngFor="let f of uniqueCompanyFields" [value]="f">{{ f }}</option>
+          </select>
+
           <select class="custom-select-filter" [(ngModel)]="companyFilterSort" (change)="applyCompanyFilters()">
-            <option value="ALL">جميع الشركات</option>
+            <option value="ALL">الترتيب الافتراضي</option>
             <option value="TOP_TRAINEES">الأعلى في عدد المتدربين</option>
             <option value="TOP_PROGRAMS">الأعلى في عدد البرامج</option>
             <option value="TOP_BATCHES">الأعلى في عدد الدفعات</option>
           </select>
 
-          <button class="btn-reset-filters" (click)="resetCompanyFilters()" *ngIf="companySearchTerm || companyFilterSort !== 'ALL'">
+          <button class="btn-reset-filters" (click)="resetCompanyFilters()" *ngIf="companySearchTerm || companyFilterSort !== 'ALL' || companyFilterCity !== 'ALL' || companyFilterField !== 'ALL'">
             إعادة تعيين ↺
           </button>
         </div>
@@ -66,35 +81,143 @@
         <span>جاري تحميل قائمة الشركات من قاعدة البيانات...</span>
       </div>
 
+      <!-- كروت الشركات -->
       <div class="companies-grid" *ngIf="!isLoading() && companies.length > 0">
-        <div class="company-card" *ngFor="let company of companies" (click)="selectCompany(company)">
-          <div class="company-info">
-            <div class="logo-box">🏢</div>
+        <div class="company-card" *ngFor="let company of companies">
+          <div class="company-info" (click)="selectCompany(company)">
+            
+            <!-- أيقونة مبنى الشركة الاحترافية SVG بدلاً من الصورة المكسورة -->
+            <div class="logo-box">
+              <svg class="company-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                <path d="M9 22v-4h6v4"></path>
+                <path d="M8 6h.01"></path>
+                <path d="M16 6h.01"></path>
+                <path d="M12 6h.01"></path>
+                <path d="M12 10h.01"></path>
+                <path d="M12 14h.01"></path>
+                <path d="M16 10h.01"></path>
+                <path d="M16 14h.01"></path>
+                <path d="M8 10h.01"></path>
+                <path d="M8 14h.01"></path>
+              </svg>
+            </div>
+
             <div>
               <h3>{{ company.name }}</h3>
-              <span>{{ company.programsCount || 0 }} برنامج تدريبي</span>
+              <span class="sub-meta-text">{{ company.city || 'المركز الرئيسي' }} · السجل: {{ company.commercialRegister || '—' }}</span>
             </div>
           </div>
-          <div class="stats-row">
+          
+          <div class="stats-row" (click)="selectCompany(company)">
             <div class="stat-box"><strong>{{ company.traineesCount || 0 }}</strong><span>متدرب</span></div>
             <div class="stat-box"><strong>{{ company.batchesCount || 0 }}</strong><span>دفعة</span></div>
             <div class="stat-box"><strong>{{ company.programsCount || 0 }}</strong><span>برنامج</span></div>
           </div>
-          <div class="card-footer">
-            عرض البرامج والتقارير ←
+
+          <div class="card-details-strip" *ngIf="company.supervisorName">
+            <small>المشرف: <strong>{{ company.supervisorName }}</strong></small>
+            <small *ngIf="company.phone">📞 {{ company.phone }}</small>
+          </div>
+
+          <div class="card-footer-actions">
+            <button class="btn-footer-details" (click)="openCompanyFullDetails(company); $event.stopPropagation()">
+              👁️ التفاصيل الكاملة
+            </button>
+            <button class="btn-footer-programs" (click)="selectCompany(company)">
+              عرض البرامج والتقارير ←
+            </button>
           </div>
         </div>
       </div>
 
       <div class="no-results-box" *ngIf="!isLoading() && companies.length === 0">
-        <div class="no-results-icon">📂</div>
         <h4>لا توجد شركات مطابقة لبحثك</h4>
-        <p>جرّب تعديل كلمات البحث أو تصفير الفلاتر</p>
         <button class="btn-reset-filters" (click)="resetCompanyFilters()">تصفير الفلترة</button>
       </div>
     </div>
 
-    <!-- 1.2 برامج ودفعات الشركة المحددة مع البحث والفلترة -->
+    <!-- 1.2 صفحة تفاصيل الشركة الكاملة ملء الشاشة -->
+    <div *ngIf="currentView === 'company-details' && selectedCompany">
+      <div class="top-nav-bar" style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="back-btn" (click)="currentView = 'companies'">
+          ← العودة إلى قائمة الشركات
+        </button>
+        <button class="btn-pdf" (click)="exportToPDF()">طباعة تقرير الشركة</button>
+      </div>
+
+      <div class="trainer-full-banner">
+        <!-- أيقونة الشركة في البنر الكبير -->
+        <div class="trainer-avatar-huge">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+            <path d="M9 22v-4h6v4"></path>
+            <path d="M8 6h.01"></path>
+            <path d="M16 6h.01"></path>
+            <path d="M12 6h.01"></path>
+            <path d="M12 10h.01"></path>
+            <path d="M12 14h.01"></path>
+            <path d="M16 10h.01"></path>
+            <path d="M16 14h.01"></path>
+            <path d="M8 10h.01"></path>
+            <path d="M8 14h.01"></path>
+          </svg>
+        </div>
+        <div class="trainer-banner-info">
+          <div class="banner-title-row">
+            <h2>{{ selectedCompany?.name }}</h2>
+            <span class="status-pill level-excellent">جهة تدريب معتمدة</span>
+          </div>
+          <p class="trainer-track-sub">
+            السجل التجاري: <strong>{{ selectedCompany?.commercialRegister || '—' }}</strong> · 
+            المدينة: <strong>{{ selectedCompany?.city || selectedCompany?.address || '—' }}</strong> · 
+            قطاع العمل: <strong>{{ selectedCompany?.workField || 'عام' }}</strong>
+          </p>
+        </div>
+      </div>
+
+      <div class="summary-metrics-grid">
+        <div class="metric-card">
+          <span class="metric-value star" style="color: #f59e0b;">{{ selectedCompany?.ratingScore || '4.9' }} / 5.0</span>
+          <span class="metric-label">تقييم المنشأة العام</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value green">{{ selectedCompany?.traineesCount || 0 }} متدرب</span>
+          <span class="metric-label">المتدربون المسجلون حالياً</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value blue">{{ selectedCompany?.programsCount || 0 }} برامج</span>
+          <span class="metric-label">البرامج التدريبية المعتمدة</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value">{{ selectedCompany?.capacity || 50 }}</span>
+          <span class="metric-label">الطاقة الاستيعابية القصوى</span>
+        </div>
+      </div>
+
+      <div class="table-card" style="margin-bottom: 24px;">
+        <h3 class="section-card-title">معلومات الاتصال المعتمدة ومسؤول التدريب</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 12px;">
+          <div><small style="color: #64748b;">مشرف التدريب المعتمد:</small><div style="font-weight: 700;">{{ selectedCompany?.supervisorName || 'أ. مشرف التدريب والتطوير' }}</div></div>
+          <div><small style="color: #64748b;">رقم الهاتف:</small><div style="font-weight: 700;">{{ selectedCompany?.phone || '—' }}</div></div>
+          <div><small style="color: #64748b;">البريد الإلكتروني:</small><div style="font-weight: 700;">{{ selectedCompany?.email || '—' }}</div></div>
+          <div><small style="color: #64748b;">الموقع الإلكتروني:</small><div style="font-weight: 700;">{{ selectedCompany?.website || '—' }}</div></div>
+        </div>
+      </div>
+
+      <div class="table-card" style="margin-bottom: 24px;" *ngIf="selectedCompany?.notes">
+        <h3 class="section-card-title">ملاحظات الإدارة والمتابعة</h3>
+        <p class="trainer-bio-text">{{ selectedCompany?.notes }}</p>
+      </div>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <button class="btn-reset-filters" style="padding: 10px 24px; font-size: 14px;" (click)="selectCompany(selectedCompany)">
+          عرض برامج ودفعات هذه الشركة ←
+        </button>
+      </div>
+    </div>
+
+    <!-- 1.3 برامج ودفعات الشركة المحددة -->
     <div *ngIf="currentView === 'programs'">
       <div class="top-nav-bar">
         <button class="back-btn" (click)="currentView = 'companies'">
@@ -103,20 +226,22 @@
       </div>
 
       <div class="selected-company-banner">
-        <div class="company-logo-large">🏢</div>
+        <div class="company-logo-large">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="4" y="2" width="16" height="20" rx="2"></rect><path d="M9 22v-4h6v4"></path>
+          </svg>
+        </div>
         <div class="banner-info">
           <h3>{{ selectedCompany?.name }}</h3>
-          <span>{{ selectedCompany?.programsCount || 0 }} برنامج معتمد · {{ selectedCompany?.traineesCount || 0 }} متدرب</span>
+          <span>{{ selectedCompany?.programsCount || 0 }} برنامج معتمد · {{ selectedCompany?.traineesCount || 0 }} متدرب · السجل: {{ selectedCompany?.commercialRegister || '—' }}</span>
         </div>
       </div>
 
-      <!-- 🔍 شريط البحث والفلترة لبرامج ودفعات الشركة -->
       <div class="filter-toolbar-card">
         <div class="search-input-wrap">
-          <span class="search-icon">🔍</span>
           <input 
             type="text" 
-            placeholder="ابحث باسم البرنامج التدريبي أو رقم الدفعة (مثلاً: 7 أو 31)..." 
+            placeholder="ابحث باسم البرنامج التدريبي أو رقم الدفعة..." 
             [(ngModel)]="programSearchTerm" />
           <button class="clear-search-btn" *ngIf="programSearchTerm" (click)="programSearchTerm = ''">✕</button>
         </div>
@@ -134,7 +259,6 @@
         </div>
       </div>
 
-      <!-- قائمة البرامج بعد الفلترة -->
       <div class="programs-list" *ngFor="let prog of filteredCompanyPrograms">
         <div class="program-item-card">
           <div class="program-header">
@@ -156,17 +280,13 @@
         </div>
       </div>
 
-      <!-- حالة عدم وجود نتائج مطابقة للبحث في برامج الشركة -->
       <div class="no-results-box" *ngIf="filteredCompanyPrograms.length === 0">
-        <div class="no-results-icon">📋</div>
         <h4>لا توجد برامج أو دفعات مطابقة لبحثك</h4>
-        <p>تأكد من رقم الدفعة أو اسم البرنامج</p>
         <button class="btn-reset-filters" (click)="resetProgramFilters()">عرض كافة البرامج</button>
       </div>
-
     </div>
 
-    <!-- 1.3 تقرير نهاية الدفعة التفصيلي -->
+    <!-- 1.4 تقرير نهاية الدفعة -->
     <div *ngIf="currentView === 'batch-report'">
       <div class="top-nav-bar">
         <button class="back-btn" (click)="currentView = 'programs'">
@@ -187,7 +307,6 @@
         </div>
       </div>
 
-      <!-- مؤشرات الدفعة -->
       <div class="summary-metrics-grid">
         <div class="metric-card">
           <span class="metric-value">{{ selectedBatch?.traineesCount || 0 }}</span>
@@ -203,13 +322,9 @@
         </div>
       </div>
 
-      <!-- جدول النتائج مع البحث والفلترة -->
       <div class="table-card">
-        
-        <!-- 🔍 شريط فلترة متدربي الدفعة -->
         <div class="filter-toolbar-card mini-toolbar" style="margin-bottom: 18px;">
           <div class="search-input-wrap">
-            <span class="search-icon">🔍</span>
             <input 
               type="text" 
               placeholder="ابحث باسم المتدرب أو التخصص في الدفعة..." 
@@ -226,57 +341,37 @@
           </div>
         </div>
 
-        <table class="custom-table">
+        <table class="custom-table" *ngIf="filteredBatchReportRows.length > 0">
           <thead>
             <tr>
               <th>المتدرب</th>
               <th>التخصص</th>
-              <th>الحضور</th>
-              <th>التقني</th>
-              <th>السلوكي</th>
-              <th>المستوى</th>
+              <th>نسبة الحضور</th>
+              <th>الدرجة التقنية</th>
+              <th>الدرجة السلوكية</th>
+              <th>المستوى العام</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let t of filteredBatchReportRows">
-              <td class="bold">{{ t.traineeName }}</td>
-              <td>{{ t.major }}</td>
-              <td>
-                <span>{{ t.attendanceRate }}%</span>
-                <div class="progress-bar">
-                  <div class="fill green" [style.width.%]="t.attendanceRate"></div>
-                </div>
-              </td>
-              <td>
-                <span>{{ t.technicalScore }}%</span>
-                <div class="progress-bar">
-                  <div class="fill green" [style.width.%]="t.technicalScore"></div>
-                </div>
-              </td>
-              <td>
-                <span>{{ t.behavioralScore }}%</span>
-                <div class="progress-bar">
-                  <div class="fill blue" [style.width.%]="t.behavioralScore"></div>
-                </div>
-              </td>
-              <td>
-                <span class="status-pill" [ngClass]="levelClass(t.level)">{{ t.level }}</span>
-              </td>
+            <tr *ngFor="let tr of filteredBatchReportRows">
+              <td class="bold">{{ tr.traineeName }}</td>
+              <td>{{ tr.major }}</td>
+              <td><strong style="color: #059669;">{{ tr.attendanceRate }}%</strong></td>
+              <td><strong style="color: #0D1C8C;">{{ tr.technicalScore }}%</strong></td>
+              <td><strong style="color: #2563eb;">{{ tr.behavioralScore }}%</strong></td>
+              <td><span class="status-pill" [ngClass]="levelClass(tr.level)">{{ tr.level }}</span></td>
             </tr>
           </tbody>
         </table>
 
-        <!-- التصفح Pagination لقسم الدفعة -->
         <div class="compact-pagination-wrapper">
           <div class="pagination-info">
             عرض الصفحة <strong>{{ report()?.pageNumber || 1 }}</strong> من <strong>{{ report()?.totalPages || 1 }}</strong>
           </div>
           <div class="pagination-compact-controls">
-            <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) <= 1"
-              (click)="prevPage()">السابق</button>
+            <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) <= 1" (click)="prevPage()">السابق</button>
             <span class="page-indicator">{{ report()?.pageNumber || 1 }} / {{ report()?.totalPages || 1 }}</span>
-            <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) >= (report()?.totalPages ?? 1)"
-              (click)="nextPage()">التالي</button>
+            <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) >= (report()?.totalPages ?? 1)" (click)="nextPage()">التالي</button>
           </div>
         </div>
       </div>
@@ -284,25 +379,30 @@
   </ng-container>
 
   <!-- =========================================================
-       القسم الثاني: تقارير المدربين (مع البحث والفلترة الكاملة)
+       القسم الثاني: تقارير المدربين
   ========================================================== -->
   <ng-container *ngIf="currentSubSection === 'trainer'">
-
+    
     <!-- 2.1 شبكة المدربين من قاعدة البيانات -->
     <div *ngIf="trainerView === 'grid'">
       <div class="header-section">
-        <h2>تقارير وتحليلات المدربين المعتمدين</h2>
-        <p>عرض مؤشرات وتقييمات جميع المدربين مع إمكانية البحث والفلترة الفورية</p>
+        <div>
+          <h2>تقارير وتحليلات المدربين المعتمدين</h2>
+          <p>عرض مؤشرات وتقييمات جميع المدربين مع إمكانية البحث والفلترة الفورية</p>
+        </div>
+        <div class="actions-left" style="display: flex; gap: 8px;">
+          <button class="btn-excel" (click)="exportTrainersToExcel()">تصدير Excel</button>
+          <button class="btn-pdf" (click)="exportToPDF()">طباعة PDF</button>
+        </div>
       </div>
 
-      <!-- إحصائيات المدربين العامة -->
       <div class="summary-metrics-grid">
         <div class="metric-card">
           <span class="metric-value">{{ trainersTotalCount }}</span>
           <span class="metric-label">إجمالي المدربين المطابقين للبحث</span>
         </div>
         <div class="metric-card">
-          <span class="metric-value" style="color: #f59e0b;">★ 4.9 / 5.0</span>
+          <span class="metric-value" style="color: #f59e0b;">{{ formatRating(allTrainersData[0]?.rating) }} / 5.0</span>
           <span class="metric-label">متوسط التقييم العام للمدربين</span>
         </div>
         <div class="metric-card">
@@ -311,10 +411,8 @@
         </div>
       </div>
 
-      <!-- 🔍 شريط البحث والفلترة الخاص بالمدربين -->
       <div class="filter-toolbar-card">
         <div class="search-input-wrap">
-          <span class="search-icon">🔍</span>
           <input 
             type="text" 
             placeholder="ابحث باسم المدرب أو التخصص أو رقم المعرف..." 
@@ -331,8 +429,8 @@
 
           <select class="custom-select-filter" [(ngModel)]="trainerRatingFilter" (change)="applyTrainerFilters()">
             <option value="ALL">جميع التقييمات</option>
-            <option value="4.9">★ 4.9 فما فوق</option>
-            <option value="4.8">★ 4.8 فما فوق</option>
+            <option value="4.9">4.9 فما فوق</option>
+            <option value="4.8">4.8 فما فوق</option>
           </select>
 
           <button class="btn-reset-filters" (click)="resetTrainerFilters()" *ngIf="trainerSearchTerm || trainerSpecialtyFilter !== 'ALL' || trainerRatingFilter !== 'ALL'">
@@ -341,20 +439,31 @@
         </div>
       </div>
 
-      <!-- شبكة كروت المدربين -->
       <div class="companies-grid" *ngIf="!isLoading() && trainers.length > 0">
         <div class="company-card" *ngFor="let tr of trainers">
           <div class="company-info">
-            <div class="logo-box">{{ tr.name?.charAt(0) || 'م' }}</div>
+            
+            <!-- أيقونة المدرب الاحترافية SVG بدلاً من الحرف (ف، م، خ، غ) -->
+            <div class="logo-box">
+              <svg class="trainer-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+
             <div>
               <h3>{{ tr.name }}</h3>
               <span>{{ tr.specialization }}</span>
             </div>
           </div>
-          <div class="stats-row">
-            <div class="stat-box"><strong>★ {{ formatRating(tr.rating) }}</strong><span>التقييم</span></div>
+          <div class="stats-row" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="stat-box"><strong>{{ formatRating(tr.rating) }}</strong><span>التقييم</span></div>
             <div class="stat-box"><strong>{{ tr.totalHours }}</strong><span>ساعة</span></div>
             <div class="stat-box"><strong>{{ tr.batchesCount }}</strong><span>دفعات</span></div>
+            <div class="stat-box">
+              <strong [style.color]="tr.warningsCount > 0 ? '#dc2626' : '#15803d'">{{ tr.warningsCount || 0 }}</strong>
+              <span>الإنذارات</span>
+            </div>
           </div>
           <div class="card-footer" (click)="openTrainerModal(tr)">
             عرض تفاصيل المدرب ←
@@ -363,58 +472,39 @@
       </div>
 
       <div class="no-results-box" *ngIf="!isLoading() && trainers.length === 0">
-        <div class="no-results-icon">👤</div>
         <h4>لم يتم العثور على أي مدرب يطابق هذا البحث</h4>
-        <p>تأكد من كتابة الاسم أو التخصص بشكل صحيح</p>
         <button class="btn-reset-filters" (click)="resetTrainerFilters()">تصفير الفلترة</button>
       </div>
 
-      <!-- مؤشر التحميل -->
-      <div *ngIf="isLoading()" class="loading-state">
-        <div class="custom-spinner"></div>
-        <span>جاري تحميل بيانات المدربين من قاعدة البيانات...</span>
-      </div>
-
-      <!-- ⭐ شريط التصفح المرقم المتقدم لجميع المدربين ⭐ -->
       <div class="compact-pagination-wrapper" *ngIf="!isLoading() && trainers.length > 0">
         <div class="pagination-info">
           عرض الصفحة <strong>{{ trainersCurrentPage }}</strong> من <strong>{{ trainersTotalPages }}</strong> (إجمالي {{ trainersTotalCount }} مدرباً)
         </div>
-        
         <div class="pagination-compact-controls">
-          <button class="compact-nav-btn" [disabled]="trainersCurrentPage <= 1" (click)="prevTrainerPage()">
-            ← السابق
-          </button>
-
-          <!-- أزرار أرقام الصفحات المباشرة -->
-          <button 
-            *ngFor="let page of getTrainerPageNumbers()" 
-            class="compact-page-number-btn" 
-            [class.active]="page === trainersCurrentPage"
-            (click)="goToTrainerPage(page)">
+          <button class="compact-nav-btn" [disabled]="trainersCurrentPage <= 1" (click)="prevTrainerPage()">← السابق</button>
+          <button *ngFor="let page of getTrainerPageNumbers()" class="compact-page-number-btn" [class.active]="page === trainersCurrentPage" (click)="goToTrainerPage(page)">
             {{ page }}
           </button>
-
-          <button class="compact-nav-btn" [disabled]="trainersCurrentPage >= trainersTotalPages" (click)="nextTrainerPage()">
-            التالي →
-          </button>
+          <button class="compact-nav-btn" [disabled]="trainersCurrentPage >= trainersTotalPages" (click)="nextTrainerPage()">التالي →</button>
         </div>
       </div>
     </div>
 
-    <!-- 2.2 صفحة تفاصيل المدرب الكاملة ملء الشاشة -->
+    <!-- 2.2 تفاصيل المدرب واستبيانات المتدربين -->
     <div *ngIf="trainerView === 'details'">
-
-      <!-- شريط العودة -->
-      <div class="top-nav-bar">
-        <button class="back-btn" (click)="backToTrainersList()">
-          ← العودة إلى قائمة المدربين
-        </button>
+      <div class="top-nav-bar" style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="back-btn" (click)="backToTrainersList()">← العودة إلى قائمة المدربين</button>
+        <button class="btn-pdf" (click)="exportToPDF()">طباعة تقرير المدرب</button>
       </div>
 
-      <!-- كارت المدرب الرئيسي -->
       <div class="trainer-full-banner">
-        <div class="trainer-avatar-huge">{{ selectedTrainer?.name?.charAt(0) || 'م' }}</div>
+        <!-- أيقونة المدرب في البنر الكبير بدلاً من الحرف -->
+        <div class="trainer-avatar-huge">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
         <div class="trainer-banner-info">
           <div class="banner-title-row">
             <h2>{{ selectedTrainer?.name }}</h2>
@@ -426,10 +516,9 @@
         </div>
       </div>
 
-      <!-- إحصائيات تقييم المتدربين للمدرب -->
-      <div class="summary-metrics-grid">
+      <div class="summary-metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));">
         <div class="metric-card">
-          <span class="metric-value star" style="color: #f59e0b;">★ {{ formatRating(selectedTrainer?.rating) }} / 5.0</span>
+          <span class="metric-value star" style="color: #f59e0b;">{{ formatRating(selectedTrainer?.rating) }} / 5.0</span>
           <span class="metric-label">متوسط تقييم المتدربين العام للمدرب</span>
         </div>
         <div class="metric-card">
@@ -441,40 +530,37 @@
           <span class="metric-label">إجمالي الساعات التدريبية المنجزة</span>
         </div>
         <div class="metric-card">
-          <span class="metric-value">{{ selectedTrainer?.batchesCount || 1 }} دفعات</span>
-          <span class="metric-label">عدد الدفعات التي دربها</span>
+          <span class="metric-value" [style.color]="selectedTrainer?.warningsCount > 0 ? '#dc2626' : '#10b981'">
+            {{ selectedTrainer?.warningsCount || 0 }}
+          </span>
+          <span class="metric-label">الإنذارات والملاحظات الرسمية</span>
         </div>
       </div>
 
-      <!-- نبذة وسيرة المدرب -->
-      <div class="table-card" style="margin-bottom: 24px;">
-        <h3 class="section-card-title">النبذة المهنية للمدرب</h3>
-        <p class="trainer-bio-text">{{ selectedTrainer?.biography }}</p>
-      </div>
-
-      <!-- جدول تفصيلي كامل: تقييمات المتدربين لهذا المدرب مع البحث -->
-      <div class="table-card">
-        <div class="section-badge-header">
-          <div>
-            <h3 class="section-card-title" style="margin-bottom: 4px;">تقييم المتدربين للمدرب (سجل استبيانات المتدربين)</h3>
-            <p class="section-desc-hint">التقييمات المباشرة الواردة من المتدربين حول جودة الشرح والتفاعل للمدرب {{ selectedTrainer?.name }}</p>
-          </div>
-          <span class="status-pill level-excellent">إجمالي التقييمات: {{ filteredTrainerReviewsList.length }} متدربين</span>
-        </div>
-
-        <!-- 🔍 بحث في تقييمات المتدربين لهذا المدرب -->
-        <div class="filter-toolbar-card mini-toolbar" style="margin-bottom: 16px;">
-          <div class="search-input-wrap">
-            <span class="search-icon">🔍</span>
-            <input 
-              type="text" 
-              placeholder="ابحث باسم المتدرب، الشركة، أو الدفعة..." 
-              [(ngModel)]="trainerReviewSearch" 
-              (input)="trainerReviewsPage = 1; updateTrainerReviewsSlice()" />
+      <!-- جدول تقييم المتدربين للمدرب -->
+      <div class="table-card" style="margin-top: 24px;">
+        <div class="section-badge-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+          <span class="badge-total-results">إجمالي التقييمات: {{ filteredTrainerReviewsList.length }} متدربين</span>
+          <div style="text-align: left;">
+            <h3 class="section-card-title" style="margin: 0; color: #0D1C8C; font-size: 1.15rem; font-weight: 800;">
+              تقييم المتدربين للمدرب (سجل استبيانات المتدربين)
+            </h3>
+            <p class="section-desc-hint" style="margin: 4px 0 0; color: #64748b; font-size: 0.8rem;">
+              التقييمات المباشرة الواردة من المتدربين حول جودة الشرح والتفاعل للمدرب {{ selectedTrainer?.name }}
+            </p>
           </div>
         </div>
 
-        <table class="custom-table">
+        <div class="search-input-wrap mb-4" style="margin-bottom: 16px;">
+          <input 
+            type="text" 
+            class="nfd-search-field"
+            placeholder="ابحث باسم المتدرب، الشركة، أو الدفعة..." 
+            [(ngModel)]="trainerReviewSearch" 
+            (input)="trainerReviewsPage = 1; updateTrainerReviewsSlice()" />
+        </div>
+
+        <table class="custom-table" *ngIf="selectedTrainer?.traineeReviews?.length > 0">
           <thead>
             <tr>
               <th>المتدرب</th>
@@ -487,47 +573,62 @@
           </thead>
           <tbody>
             <tr *ngFor="let rev of selectedTrainer?.traineeReviews">
-              <td class="bold">{{ rev.traineeName }}</td>
+              <td class="bold text-navy-strong">{{ rev.traineeName }}</td>
               <td>
-                <div style="font-weight: 700; color: #0D1C8C;">🏢 {{ rev.companyName }}</div>
-                <div style="font-size: 12.5px; color: #334155; margin: 2px 0;">
-                  مسار: <strong>{{ rev.track }}</strong> ({{ rev.major }})
+                <div class="bold" style="color: #0f172a; margin-bottom: 2px;">
+                  🏢 {{ rev.companyName }}
                 </div>
-                <small style="color: #64748b; font-weight: 600;">{{ rev.batchName }}</small>
+                <div class="text-muted" style="font-size: 0.75rem;">
+                  مسار: {{ rev.trackName || 'الحوسبة السحابية (هندسة البرمجيات)' }}
+                </div>
+                <div class="text-muted" style="font-size: 0.75rem;">
+                  {{ rev.batchName || 'الدفعة التدريبية 1' }}
+                </div>
               </td>
-              <td><span class="eval-score green">5 / {{ rev.clarityScore }}</span></td>
-              <td><span class="eval-score blue">5 / {{ rev.supportScore }}</span></td>
-              <td><span class="star-rating">★ {{ rev.rating }}.0</span></td>
-              <td><span class="trainee-feedback-quote">"{{ rev.comment }}"</span></td>
+              <td>
+                <span class="rating-badge badge-green">{{ rev.clarityRating || '5 / 5' }}</span>
+              </td>
+              <td>
+                <span class="rating-badge badge-purple">{{ rev.interactionRating || '4.9 / 5' }}</span>
+              </td>
+              <td>
+                <span class="overall-star-badge">{{ rev.overallRating || '5.0' }} ★</span>
+              </td>
+              <td>
+                <p class="review-comment-text">"{{ rev.comment }}"</p>
+              </td>
             </tr>
           </tbody>
         </table>
 
-        <!-- تصفح تقييمات المتدربين داخل المدرب المختار -->
-        <div class="compact-pagination-wrapper" *ngIf="filteredTrainerReviewsList.length > trainerReviewsPageSize">
+        <div class="compact-pagination-wrapper" style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid #f1f5f9;">
           <div class="pagination-info">
             صفحة تقييمات المتدربين: <strong>{{ trainerReviewsPage }}</strong>
           </div>
-          <div class="pagination-compact-controls">
+          <div class="pagination-compact-controls" style="display: flex; gap: 8px;">
             <button class="compact-nav-btn" [disabled]="trainerReviewsPage <= 1" (click)="prevTrainerReviewPage()">السابق</button>
             <button class="compact-nav-btn" (click)="nextTrainerReviewPage()">التالي</button>
           </div>
         </div>
       </div>
-
     </div>
   </ng-container>
 
   <!-- =========================================================
-       القسم الثالث: تقارير المتدربين (مع البحث والفلترة الشاملة)
+       القسم الثالث: تقارير المتدربين
   ========================================================== -->
   <ng-container *ngIf="currentSubSection === 'trainee'">
     <div class="header-section">
-      <h2>سجل ونتائج المتدربين الشامل</h2>
-      <p>كشف أداء المتدربين وتقييمات المدربين المشرفين مع نظام بحث وفلترة متعدد المعايير</p>
+      <div>
+        <h2>سجل ونتائج المتدربين الشامل</h2>
+        <p>كشف أداء المتدربين وتقييمات المدربين المشرفين مع نظام بحث وفلترة متعدد المعايير من قاعدة البيانات</p>
+      </div>
+      <div class="actions-left" style="display: flex; gap: 8px;">
+        <button class="btn-excel" (click)="exportTraineesToExcel()">تصدير Excel</button>
+        <button class="btn-pdf" (click)="exportToPDF()">طباعة PDF</button>
+      </div>
     </div>
 
-    <!-- بطاقات إحصائيات المتدربين -->
     <div class="summary-metrics-grid">
       <div class="metric-card">
         <span class="metric-value">{{ traineesTotalCount }}</span>
@@ -543,10 +644,9 @@
       </div>
     </div>
 
-    <!-- 🔍 شريط البحث والفلترة المتكامل للمتدربين -->
+    <!-- شريط البحث والفلترة -->
     <div class="filter-toolbar-card">
       <div class="search-input-wrap">
-        <span class="search-icon">🔍</span>
         <input 
           type="text" 
           placeholder="ابحث باسم المتدرب، الشركة، التخصص، أو المدرب المشرف..." 
@@ -578,14 +678,18 @@
       </div>
     </div>
 
-    <!-- جدول تقارير المتدربين -->
+    <!-- كشف نتائج المتدربين وتقييمات المدربين المشرفين -->
     <div class="table-card">
-      <div class="section-badge-header" style="margin-bottom: 16px;">
-        <div>
-          <h3 class="section-card-title" style="margin-bottom: 4px;">كشف نتائج المتدربين وتقييمات المدربين المشرفين</h3>
-          <p class="section-desc-hint">يعرض الدرجات الفنية والسلوكية وملاحظات وتوصيات المدرب المعتمد لكل متدرب</p>
+      <div class="section-badge-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+        <span class="badge-total-results">نتائج البحث: {{ traineesTotalCount }} متدرباً</span>
+        <div style="text-align: left;">
+          <h3 class="section-card-title" style="margin: 0; color: #0D1C8C; font-size: 1.15rem; font-weight: 800;">
+            كشف نتائج المتدربين وتقييمات المدربين المشرفين
+          </h3>
+          <p class="section-desc-hint" style="margin: 4px 0 0; color: #64748b; font-size: 0.8rem;">
+            يعرض الدرجات الفنية والسلوكية وملاحظات وتوصيات المدرب المعتمد لكل متدرب
+          </p>
         </div>
-        <span class="status-pill level-excellent">نتائج البحث: {{ traineesTotalCount }} متدرباً</span>
       </div>
 
       <table class="custom-table" *ngIf="traineesList.length > 0">
@@ -601,32 +705,30 @@
         </thead>
         <tbody>
           <tr *ngFor="let tr of traineesList">
-            <td class="bold">{{ tr.traineeName }}</td>
-
+            <td class="bold text-navy-strong">{{ tr.traineeName }}</td>
             <td>
-              <div style="font-weight: 700; color: #0D1C8C;">{{ tr.major }}</div>
-              <small style="color: #64748b;">{{ tr.companyName }}</small>
+              <div class="major-title">{{ tr.major }}</div>
+              <small class="company-sub-title">{{ tr.companyName }}</small>
             </td>
-
             <td>
-              <span class="trainer-tag">👨‍🏫 {{ tr.assignedTrainer }}</span>
+              <span class="trainer-supervisor-chip">{{ tr.assignedTrainer }} 👨‍🏫</span>
             </td>
-
+            <!-- الكروت الثلاثة المتراصة (التقني، السلوكي، الحضور) -->
             <td>
-              <div class="trainer-eval-box">
-                <span class="eval-chip green">التقني: {{ tr.trainerToTrainee?.technicalScore }}%</span>
-                <span class="eval-chip blue">السلوكي: {{ tr.trainerToTrainee?.behavioralScore }}%</span>
-                <span class="eval-chip gray">الحضور: {{ tr.trainerToTrainee?.attendanceRate }}%</span>
+              <div class="evaluation-stacked-chips">
+                <span class="score-chip chip-tech">التقني: {{ tr.technicalScore }}%</span>
+                <span class="score-chip chip-behav">السلوكي: {{ tr.behavioralScore }}%</span>
+                <span class="score-chip chip-attend">الحضور: {{ tr.attendanceRate }}%</span>
               </div>
             </td>
-
+            <!-- رأي وملاحظة المدرب + التوصية بالصح الأخضر -->
             <td>
-              <div class="trainer-feedback-cell">
-                <p class="feedback-quote">"{{ tr.trainerToTrainee?.notes }}"</p>
-                <span class="rec-badge">✓ {{ tr.trainerToTrainee?.recommendation }}</span>
+              <div class="trainer-feedback-box">
+                <p class="quote-text">"{{ tr.trainerNotes }}"</p>
+                <div class="recommendation-badge">✓ {{ tr.trainerRecommendation }}</div>
               </div>
             </td>
-
+            <!-- المستوى العام -->
             <td>
               <span class="status-pill" [ngClass]="levelClass(tr.level)">{{ tr.level }}</span>
             </td>
@@ -634,20 +736,6 @@
         </tbody>
       </table>
 
-      <div class="no-results-box" *ngIf="!isLoading() && traineesList.length === 0">
-        <div class="no-results-icon">🎓</div>
-        <h4>لم يتم العثور على متدربين يطابقون خيارات الفلترة المحددة</h4>
-        <p>جرب تصفير فلاتر الشركة أو المدرب المشرف لعرض كافة المتدربين</p>
-        <button class="btn-reset-filters" (click)="resetTraineeFilters()">تصفير الفلترة</button>
-      </div>
-
-      <!-- مؤشر التحميل -->
-      <div *ngIf="isLoading()" class="loading-state">
-        <div class="custom-spinner"></div>
-        <span>جاري تحميل بيانات المتدربين...</span>
-      </div>
-
-      <!-- أزرار التصفح Pagination -->
       <div class="compact-pagination-wrapper" *ngIf="!isLoading() && traineesList.length > 0">
         <div class="pagination-info">
           عرض الصفحة <strong>{{ traineesCurrentPage }}</strong> من <strong>{{ traineesTotalPages }}</strong> (إجمالي {{ traineesTotalCount }} متدرب)

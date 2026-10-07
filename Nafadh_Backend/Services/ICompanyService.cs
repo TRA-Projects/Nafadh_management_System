@@ -1,3 +1,4 @@
+using Nafadh_Backend.Controllers;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 
@@ -40,5 +41,26 @@ namespace Nafadh_Backend.Services
         // Delete Company
         Task<bool> DeleteCompanyAsync(
             int companyId);
+
+        // 1. دعم البحث والمدينة والترتيب في جلب الشركات
+        Task<IEnumerable<NFD_CompanyOutputDTO>> GetCompaniesAsync(
+            NFD_CompanyStatus? status,
+            string? workField,
+            string? city,
+            string? search,
+            string? sort);
+
+        // 2. تفاصيل الشركة الكاملة
+        Task<object?> GetCompanyFullDetailsAsync(int companyId);
+
+        // 3. رفض الشركة مع سبب الرفض
+        Task<NFD_CompanyOutputDTO?> RejectCompanyAsync(int companyId, string rejectionReason);
+
+        // 4. إنذارات الشركة
+        Task<IEnumerable<object>> GetCompanyWarningsAsync(int companyId);
+        Task<object> AddCompanyWarningAsync(int companyId, CreateCompanyWarningDTO dto);
+
+
     }
+
 }

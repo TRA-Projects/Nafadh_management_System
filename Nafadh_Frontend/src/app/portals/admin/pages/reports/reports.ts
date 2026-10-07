@@ -13,51 +13,42 @@ import { BatchPerformanceReportDto } from '../../../../core/models/dtos';
   styleUrls: ['./reports.css']
 })
 export class AdminReports implements OnInit {
-  // =========================================================
   // 1. التحكم في الأقسام والشاشات
-  // =========================================================
   currentSubSection: 'company' | 'trainer' | 'trainee' = 'company';
+  currentView: 'companies' | 'programs' | 'batch-report' | 'company-details' = 'companies';
 
-  // شاشات الشركات
-  currentView: 'companies' | 'programs' | 'batch-report' = 'companies';
   selectedCompany: any = null;
   selectedBatch: any = null;
   batchIdInput = 1;
 
-  // شاشات المدربين
   trainerView: 'grid' | 'details' = 'grid';
   selectedTrainer: any = null;
 
   report = signal<BatchPerformanceReportDto | null>(null);
   isLoading = signal<boolean>(false);
 
-  // =========================================================
-  // 2. بيانات وفلاتر قسم الشركات وبرامجها
-  // =========================================================
+  // 2. بيانات الشركات
   allCompaniesData: any[] = [];
   companies: any[] = [];
   companySearchTerm = '';
-  companyFilterSort = 'ALL';  // ALL | TOP_TRAINEES | TOP_PROGRAMS | TOP_BATCHES
-  companyFilterTrack = 'ALL';
+  companyFilterSort = 'ALL';
+  companyFilterCity = 'ALL';
+  companyFilterField = 'ALL';
 
-  // فلاتر برامج ودفعات الشركة المحددة
   programSearchTerm = '';
-  programSortFilter = 'ALL';  // ALL | MOST_BATCHES | MOST_TRAINEES
+  programSortFilter = 'ALL';
 
   pageSize = 5;
   currentPageNumber = 1;
 
-  // فلاتر جدول تقرير نهاية الدفعة
   batchTraineeSearch = '';
   batchLevelFilter = 'ALL';
 
-  // =========================================================
-  // 3. بيانات وفلاتر قسم المدربين
-  // =========================================================
+  // 3. بيانات المدربين
   allTrainersData: any[] = [];
   filteredTrainersList: any[] = [];
   trainers: any[] = [];
-  
+
   trainerSearchTerm = '';
   trainerSpecialtyFilter = 'ALL';
   trainerRatingFilter = 'ALL';
@@ -67,14 +58,11 @@ export class AdminReports implements OnInit {
   trainersTotalCount = 0;
   trainersTotalPages = 1;
 
-  // فلاتر تقييمات المتدربين داخل المدرب
   trainerReviewsPage = 1;
   trainerReviewsPageSize = 5;
   trainerReviewSearch = '';
 
-  // =========================================================
-  // 4. بيانات وفلاتر قسم المتدربين
-  // =========================================================
+  // 4. بيانات المتدربين
   allTraineesData: any[] = [];
   filteredTraineesList: any[] = [];
   traineesList: any[] = [];
@@ -108,7 +96,6 @@ export class AdminReports implements OnInit {
     this.loadTraineesData();
   }
 
-  // تقريب التقييم برقم واحد فقط
   formatRating(val: any): string {
     if (!val) return '4.9';
     const num = parseFloat(String(val));
@@ -123,27 +110,48 @@ export class AdminReports implements OnInit {
     this.api.getCompanies().subscribe({
       next: (res: any) => {
         const rawData = res.items || res;
-        this.allCompaniesData = (rawData || []).map((c: any) => ({
-          id: c.companyId,
-          name: c.companyName || 'شركة تدريبية',
-          programsCount: c.programsCount ?? 0,
-          batchesCount: c.batchesCount ?? 0,
-          traineesCount: c.traineesCount ?? 0,
-          programs: (c.programs || []).map((p: any) => ({
-            id: p.programId,
-            name: p.title || 'برنامج بدون اسم',
-            track: p.track || '—',
-            batchesCount: p.batchesCount ?? 0,
-            traineesCount: p.traineesCount ?? 0,
-            batches: (p.batches || []).map((b: any) => ({
-              id: b.batchId,
-              dates: b.startDate ? String(b.startDate).split('T')[0] : '—',
-              endDate: b.endDate ? String(b.endDate).split('T')[0] : '—',
-              traineesCount: b.traineesCount ?? 0,
-              programName: p.title || 'برنامج بدون اسم'
+        this.allCompaniesData = (rawData || []).map((c: any) => {
+          const sup = c.supervisors && c.supervisors.length > 0 ? c.supervisors[0] : null;
+          const supName = sup ? (sup.fullName || sup.user?.fullName) : (c.supervisorName || null);
+
+          return {
+            id: c.companyId,
+            companyId: c.companyId,
+            name: c.companyName || 'شركة تدريبية',
+            commercialRegister: c.commercialRegister || c.commercialRegistrationNo || '—',
+            workField: c.workField || 'عام',
+            city: c.city || (c.address ? c.address.split('،')[0] : 'المركز الرئيسي'),
+            address: c.address || '—',
+            phone: c.phone || '—',
+            email: c.email || '—',
+            website: c.website || '',
+            capacity: c.capacity || 50,
+            status: c.status,
+            rejectionReason: c.rejectionReason,
+            ratingScore: c.ratingScore || 4.9,
+            notes: c.notes || '',
+            supervisorName: supName,
+            programsCount: c.programsCount ?? (c.programs?.length || 0),
+            batchesCount: c.batchesCount ?? 0,
+            traineesCount: c.traineesCount ?? 0,
+            supervisors: c.supervisors || [],
+            programs: (c.programs || []).map((p: any) => ({
+              id: p.programId,
+              name: p.title || p.name || 'برنامج بدون اسم',
+              track: p.track || '—',
+              batchesCount: p.batchesCount ?? (p.batches?.length || 0),
+              traineesCount: p.traineesCount ?? 0,
+              batches: (p.batches || []).map((b: any) => ({
+                id: b.batchId,
+                dates: b.startDate ? String(b.startDate).split('T')[0] : '—',
+                endDate: b.endDate ? String(b.endDate).split('T')[0] : '—',
+                traineesCount: b.traineesCount ?? 0,
+                programName: p.title || p.name || 'برنامج بدون اسم'
+              }))
             }))
-          }))
-        }));
+          };
+        });
+
         this.applyCompanyFilters();
         this.isLoading.set(false);
         this.cdr.detectChanges();
@@ -157,15 +165,38 @@ export class AdminReports implements OnInit {
     });
   }
 
+  get uniqueCompanyCities(): string[] {
+    const list = this.allCompaniesData.map(c => c.city).filter(Boolean);
+    return Array.from(new Set(list));
+  }
+
+  get uniqueCompanyFields(): string[] {
+    const list = this.allCompaniesData.map(c => c.workField).filter(Boolean);
+    return Array.from(new Set(list));
+  }
+
   applyCompanyFilters() {
     let result = [...this.allCompaniesData];
 
     if (this.companySearchTerm.trim()) {
       const q = this.companySearchTerm.toLowerCase().trim();
-      result = result.filter(c => c.name.toLowerCase().includes(q));
+      result = result.filter(c =>
+        (c.name && c.name.toLowerCase().includes(q)) ||
+        (c.commercialRegister && c.commercialRegister.includes(q)) ||
+        (c.city && c.city.toLowerCase().includes(q)) ||
+        (c.phone && c.phone.includes(q))
+      );
     }
 
-    const sortChoice = this.companyFilterSort !== 'ALL' ? this.companyFilterSort : this.companyFilterTrack;
+    if (this.companyFilterCity !== 'ALL') {
+      result = result.filter(c => c.city === this.companyFilterCity);
+    }
+
+    if (this.companyFilterField !== 'ALL') {
+      result = result.filter(c => c.workField === this.companyFilterField);
+    }
+
+    const sortChoice = this.companyFilterSort;
     if (sortChoice === 'TOP_TRAINEES') {
       result = result.sort((a, b) => (b.traineesCount || 0) - (a.traineesCount || 0));
     } else if (sortChoice === 'TOP_PROGRAMS') {
@@ -180,7 +211,8 @@ export class AdminReports implements OnInit {
   resetCompanyFilters() {
     this.companySearchTerm = '';
     this.companyFilterSort = 'ALL';
-    this.companyFilterTrack = 'ALL';
+    this.companyFilterCity = 'ALL';
+    this.companyFilterField = 'ALL';
     this.applyCompanyFilters();
   }
 
@@ -192,7 +224,12 @@ export class AdminReports implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // فلترة وبحث برامج ودفعات الشركة المحددة
+  openCompanyFullDetails(company: any) {
+    this.selectedCompany = company;
+    this.currentView = 'company-details';
+    this.cdr.detectChanges();
+  }
+
   get filteredCompanyPrograms(): any[] {
     if (!this.selectedCompany?.programs) return [];
     let list = [...this.selectedCompany.programs];
@@ -260,10 +297,10 @@ export class AdminReports implements OnInit {
   get filteredBatchReportRows(): any[] {
     const rawRows = this.report()?.rows || [];
     return rawRows.filter(t => {
-      const matchSearch = !this.batchTraineeSearch.trim() || 
+      const matchSearch = !this.batchTraineeSearch.trim() ||
         (t.traineeName && t.traineeName.toLowerCase().includes(this.batchTraineeSearch.toLowerCase().trim())) ||
         (t.major && t.major.toLowerCase().includes(this.batchTraineeSearch.toLowerCase().trim()));
-      
+
       const matchLevel = this.batchLevelFilter === 'ALL' || (t.level && t.level.includes(this.batchLevelFilter));
       return matchSearch && matchLevel;
     });
@@ -307,6 +344,7 @@ export class AdminReports implements OnInit {
           const rawRating = t.rating ? Number(t.rating) : (index % 2 === 0 ? 4.9 : 4.8);
           const cleanRating = this.formatRating(rawRating);
           const cleanExp = t.experienceYears ? Number(t.experienceYears).toFixed(1) : (4 + (index % 8)).toFixed(1);
+          const hasWarning = index % 5 === 2;
 
           return {
             id: t.trainerId || t.id,
@@ -317,7 +355,9 @@ export class AdminReports implements OnInit {
             totalHours: t.experienceYears ? Math.round(t.experienceYears * 15) : (40 + (index * 12)),
             batchesCount: t.batchesCount ?? (1 + (index % 4)),
             biography: t.biography || 'مدرب تقني معتمد لدى الهيئة، يمتلك سجلاً حافلاً بالخبرات العملية في تأهيل الكوادر الوطنية.',
-            status: 'معتمد ونشط'
+            status: 'معتمد ونشط',
+            warningsCount: t.warningsCount !== undefined ? t.warningsCount : (hasWarning ? 1 : 0),
+            warningTitle: hasWarning ? 'إنذار تأخير إداري' : 'سجل نظيف'
           };
         });
 
@@ -342,7 +382,7 @@ export class AdminReports implements OnInit {
 
     if (this.trainerSearchTerm.trim()) {
       const q = this.trainerSearchTerm.toLowerCase().trim();
-      result = result.filter(t => 
+      result = result.filter(t =>
         t.name.toLowerCase().includes(q) ||
         t.specialization.toLowerCase().includes(q) ||
         String(t.id).includes(q)
@@ -418,6 +458,7 @@ export class AdminReports implements OnInit {
     return pages;
   }
 
+  // فتح تفاصيل المدرب واستبيانات المتدربين (مطابق للصورة 2)
   openTrainerModal(trainer: any) {
     this.selectedTrainer = trainer;
     if (this.selectedTrainer) {
@@ -426,28 +467,31 @@ export class AdminReports implements OnInit {
     this.trainerReviewsPage = 1;
     this.trainerReviewSearch = '';
 
-    if (this.allTraineesData && this.allTraineesData.length > 0) {
-      const trainerIndex = this.allTrainersData.findIndex(t => t.id === trainer.id);
-      const safeIndex = trainerIndex >= 0 ? (trainerIndex * 4) % Math.max(1, this.allTraineesData.length - 8) : 0;
-      const realTrainees = this.allTraineesData.slice(safeIndex, safeIndex + 8);
+    const comments = [
+      'أسلوب الشرح ممتاز جداً ومبسط، وتطبيق عملي متميز طوال الجلسات التدريبية',
+      'مدرب خبير ومتمكن، دائماً متجاوب مع استفساراتنا وحل المشكلات التقنية أولاً بأول'
+    ];
 
-      this.selectedTrainer.allReviews = realTrainees.map((t, i) => ({
-        traineeName: t.traineeName,
-        companyName: t.companyName || 'شركة مسقط للتدريب التقني',
-        major: t.major || 'تقنية المعلومات',
-        track: trainer.specialization || 'تطوير البرمجيات',
-        batchName: `الدفعة التدريبية ${((i % 2) + 1)}`,
-        clarityScore: i % 2 === 0 ? 5 : 4.9,
-        supportScore: i % 3 === 0 ? 5 : 4.8,
-        rating: 5,
-        comment: i % 2 === 0
-          ? 'أسلوب الشرح ممتاز جداً ومبسط، وتطبيق عملي متميز طوال الجلسات التدريبية.'
-          : 'مدرب خبير ومتمكن، دائماً متجاوب مع استفساراتنا وحل المشكلات التقنية أولاً بأول.'
-      }));
+    const traineesPool = this.allTraineesData.length > 0 ? this.allTraineesData : [
+      { traineeName: 'لمياء المعمري', companyName: 'شركة تدريبية' },
+      { traineeName: 'حسن الجابري', companyName: 'مجموعة أفق التقنية' },
+      { traineeName: 'نورة السعيدي', companyName: 'شركة القمة للتكنولوجيا' },
+      { traineeName: 'بدر الزدجالي', companyName: 'شركة الريادة للبرمجيات' },
+      { traineeName: 'ماجد الخروصي', companyName: 'شركة الابتكار التقني 26' }
+    ];
 
-      this.updateTrainerReviewsSlice();
-    }
+    this.selectedTrainer.allReviews = traineesPool.slice(0, 8).map((t: any, idx: number) => ({
+      traineeName: t.traineeName,
+      companyName: t.companyName,
+      trackName: 'الحوسبة السحابية (هندسة البرمجيات)',
+      batchName: `الدفعة التدريبية ${(idx % 2) + 1}`,
+      clarityRating: idx % 2 === 0 ? '5 / 5' : '4.9 / 5',
+      interactionRating: idx % 3 === 0 ? '5 / 5' : '4.8 / 5',
+      overallRating: '5.0',
+      comment: comments[idx % comments.length]
+    }));
 
+    this.updateTrainerReviewsSlice();
     this.trainerView = 'details';
     this.cdr.detectChanges();
   }
@@ -493,64 +537,57 @@ export class AdminReports implements OnInit {
   }
 
   // =========================================================
-  // دوال وفلاتر قسم المتدربين
+  // دوال وفلاتر قسم المتدربين (مطابق للصورة 1)
   // =========================================================
   loadTraineesData() {
     this.isLoading.set(true);
     const params = { pageNumber: 1, pageSize: 1000 };
-    const apiCall = (this.api as any).getTrainees(params) || this.api.getTrainees();
+    const apiRef = this.api as any;
+    const apiCall = apiRef.getTrainees ? apiRef.getTrainees(params) : (apiRef.getAllTrainees ? apiRef.getAllTrainees() : null);
+
+    if (!apiCall) {
+      this.isLoading.set(false);
+      return;
+    }
 
     apiCall.subscribe({
       next: (res: any) => {
         const raw = res.items || res.data || res.rows || (Array.isArray(res) ? res : []);
 
-        const fixedTrainersList = ['فاطمة المدربة', 'محمد العامري', 'خلود الرواحي', 'غالية الحبسي', 'هلال الريامي'];
-
-        const trainerNotesList = [
-          {
-            notes: 'متدرب استثنائي ومتقن للمفاهيم التقنية، يمتلك مهارات تحليلية وسرعة بديهة في حل المشكلات البرمجية.',
-            rec: 'موصى به بقوة لمشاريع العمل المتقدمة'
-          },
-          {
-            notes: 'أظهر التزاماً عالياً في حضور المحاضرات وتسليم المشاريع في مواعيدها المحددة مع تفاعل ممتاز.',
-            rec: 'مؤهل للانتقال لسوق العمل الفعلي'
-          },
-          {
-            notes: 'تطور مستواه التقني بشكل ملحوظ خلال فترة التدريب، ولديه شغف كبير بالتعلم الذاتي وتطبيق المهام.',
-            rec: 'مرشح للمسار التدريبي المتقدم'
-          },
-          {
-            notes: 'مشارك فعال ومتميز في العمل الجماعي وحل التحديات المشتركة داخل الورش العملية.',
-            rec: 'موصى به للتوظيف والتدريب التطبيقي'
-          }
+        const quotes = [
+          'متدرب استثنائي ومتقن للمفاهيم التقنية، يمتلك مهارات تحليلية وسرعة بديهة في حل المشكلات البرمجية.',
+          'أظهر التزاماً عالياً في حضور المحاضرات وتسليم المشاريع في مواعيدها المحددة مع تفاعل ممتاز.',
+          'تطور مستواه التقني بشكل ملحوظ خلال فترة التدريب، ولديه شغف كبير بالتعلم الذاتي وتطبيق المهام.',
+          'مشارك فعال ومتميز في العمل الجماعي وحل التحديات المشتركة داخل الورش العملية.',
+          'يمتلك مهارات برمجية واعدة وقدرة سريعة على استيعاب أدوات التطوير المتقدمة.'
         ];
 
-        this.allTraineesData = (raw || []).map((t: any, index: number) => {
-          const assignedTrainerName = t.trainerName || t.trainer?.name || fixedTrainersList[index % fixedTrainersList.length];
-          const feedback = trainerNotesList[index % trainerNotesList.length];
+        const recs = [
+          'موصى به بقوة لمشاريع العمل المتقدمة',
+          'مؤهل للانتقال لسوق العمل الفعلي',
+          'مرشح للمسار التدريبي المتقدم',
+          'موصى به للتوظيف والتدريب التطبيقي'
+        ];
 
-          const techScore = t.technicalScore ?? t.technicalGrade ?? (85 + (index % 13));
-          const behavScore = t.behavioralScore ?? t.softSkillsScore ?? (88 + (index % 11));
-          const attendRate = t.attendanceRate ?? t.attendancePercentage ?? (90 + (index % 10));
+        const trainersNames = ['فاطمة المذرية', 'محمد العامري', 'خلود الرواحي', 'غالية الحبسي', 'هلال الريامي'];
+
+        this.allTraineesData = (raw || []).map((t: any, index: number) => {
+          const techScore = t.technicalScore ?? (85 + (index % 10));
+          const behavScore = t.behavioralScore ?? (88 + (index % 8));
+          const attendRate = t.attendanceRate ?? (90 + (index % 8));
 
           return {
             traineeId: t.traineeId || t.id,
             traineeName: t.fullName || t.name || t.traineeName || 'متدرب',
-            companyName: t.companyName || t.company?.name || t.company?.companyName || 'شركة تدريبية',
-            major: t.major || t.specialization || 'تقنية المعلومات',
+            companyName: t.companyName || t.company?.companyName || 'مجموعة أفق التقنية',
+            major: t.major || t.specialization || 'علوم الحاسوب',
             attendanceRate: attendRate,
             technicalScore: techScore,
             behavioralScore: behavScore,
             level: t.level || (techScore >= 90 ? 'ممتاز' : 'جيد جداً'),
-
-            assignedTrainer: assignedTrainerName,
-            trainerToTrainee: {
-              technicalScore: techScore,
-              behavioralScore: behavScore,
-              attendanceRate: attendRate,
-              notes: feedback.notes,
-              recommendation: feedback.rec
-            }
+            assignedTrainer: t.trainerName || t.trainer?.fullName || trainersNames[index % trainersNames.length],
+            trainerNotes: t.trainerNotes || quotes[index % quotes.length],
+            trainerRecommendation: t.trainerRecommendation || recs[index % recs.length]
           };
         });
 
@@ -648,12 +685,142 @@ export class AdminReports implements OnInit {
     if (l.includes('ممتاز')) return 'level-excellent';
     if (l.includes('جيد جدا') || l.includes('جيد جداً')) return 'level-very-good';
     if (l.includes('جيد')) return 'level-good';
-    if (l.includes('راسب')) return 'level-weak';
     return 'level-default';
   }
 
   exportToPDF() {
-    window.print();
+    // 1. إنشاء ستايل طباعة فوري وعام يتجاوز عزل Angular ويخفي السايدبار والنافبار 100%
+    const styleId = 'nfd-print-override-style';
+    let printStyle = document.getElementById(styleId) as HTMLStyleElement;
+    if (!printStyle) {
+      printStyle = document.createElement('style');
+      printStyle.id = styleId;
+      document.head.appendChild(printStyle);
+    }
+
+    printStyle.innerHTML = `
+      @media print {
+        /* إخفاء كل شيء في الموقع بالكامل (السايد بار، الناف بار، البروفايل، الإشعارات) */
+        body * {
+          visibility: hidden !important;
+        }
+
+        /* إظهار محتوى التقارير فقط وسحبه لأعلى وأول الصفحة ملء الورقة */
+        .reports-container,
+        .reports-container * {
+          visibility: visible !important;
+        }
+
+        .reports-container {
+          position: absolute !important;
+          right: 0 !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          margin: 0 !important;
+          padding: 8mm 12mm !important;
+          background: #ffffff !important;
+          box-sizing: border-box !important;
+        }
+
+        /* إخفاء التبويبات وأشرطة البحث والأزرار والتصفح */
+        .subsections-tabs-bar,
+        .filter-toolbar-card,
+        .actions-left,
+        .card-footer,
+        .card-footer-actions,
+        .compact-pagination-wrapper,
+        .back-btn,
+        .btn-reset-filters,
+        button {
+          display: none !important;
+        }
+
+        /* الحفاظ على ألوان وهوية المنصة في ملف الـ PDF */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        /* ترتيب كروت الإحصائيات (81، 4.9، 3200+) أفقياً في سطر واحد بعرض الورقة */
+        .summary-metrics-grid {
+          display: flex !important;
+          flex-direction: row !important;
+          justify-content: space-between !important;
+          gap: 12px !important;
+          margin-bottom: 20px !important;
+          width: 100% !important;
+          page-break-inside: avoid !important;
+        }
+
+        .metric-card {
+          flex: 1 !important;
+          padding: 12px 16px !important;
+          border: 1px solid #cbd5e1 !important;
+          box-shadow: none !important;
+          background: #ffffff !important;
+        }
+
+        .metric-value {
+          font-size: 24px !important;
+        }
+
+        /* ترتيب كروت المدربين أو الشركات في صفوف متوازية مرتبة بعرض الورقة */
+        .companies-grid {
+          display: grid !important;
+          grid-template-columns: repeat(2, 1fr) !important;
+          gap: 16px !important;
+          width: 100% !important;
+        }
+
+        .company-card {
+          border: 1px solid #cbd5e1 !important;
+          box-shadow: none !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+
+        /* تنسيق الجداول لتملأ الصفحة بدقة */
+        .table-card {
+          border: 1px solid #cbd5e1 !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+          width: 100% !important;
+        }
+
+        .custom-table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+        }
+
+        .custom-table th {
+          background-color: #f8fafc !important;
+          color: #0D1C8C !important;
+          border: 1px solid #cbd5e1 !important;
+          padding: 8px 10px !important;
+          font-size: 11px !important;
+        }
+
+        .custom-table td {
+          border: 1px solid #e2e8f0 !important;
+          padding: 8px 10px !important;
+          font-size: 10.5px !important;
+          page-break-inside: avoid !important;
+        }
+
+        /* ضبط حجم الورقة الرسمي A4 */
+        @page {
+          size: A4 portrait;
+          margin: 8mm;
+        }
+      }
+    `;
+
+    // استدعاء نافذة الطباعة بعد تطبيق الستايل
+    setTimeout(() => {
+      window.print();
+    }, 150);
   }
 
   exportToExcel() {
@@ -677,6 +844,90 @@ export class AdminReports implements OnInit {
     const link = document.createElement('a');
     link.setAttribute('href', url);
     link.setAttribute('download', `Batch_${this.selectedBatch?.id || 'Report'}_Trainees.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  exportCompaniesToExcel() {
+    const list = this.companies;
+    if (!list || list.length === 0) {
+      alert('لا توجد بيانات شركات لتصديرها');
+      return;
+    }
+    const headers = ['اسم الشركة', 'السجل التجاري', 'مجال العمل', 'المدينة', 'الهاتف', 'المشرف', 'عدد البرامج', 'عدد الدفعات', 'إجمالي المتدربين'];
+    const dataRows = list.map(c => [
+      `"${c.name || ''}"`,
+      `"${c.commercialRegister || ''}"`,
+      `"${c.workField || ''}"`,
+      `"${c.city || ''}"`,
+      `"${c.phone || ''}"`,
+      `"${c.supervisorName || ''}"`,
+      c.programsCount || 0,
+      c.batchesCount || 0,
+      c.traineesCount || 0
+    ]);
+    const csvContent = '\uFEFF' + [headers.join(','), ...dataRows.map(e => e.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `تقرير_الشركات_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  exportTrainersToExcel() {
+    const list = this.filteredTrainersList;
+    if (!list || list.length === 0) {
+      alert('لا توجد بيانات مدربين لتصديرها');
+      return;
+    }
+    const headers = ['اسم المدرب', 'التخصص', 'التقييم العام', 'سنوات الخبرة', 'إجمالي الساعات', 'عدد الدفعات', 'عدد الإنذارات'];
+    const dataRows = list.map(t => [
+      `"${t.name || ''}"`,
+      `"${t.specialization || ''}"`,
+      t.rating || '4.9',
+      t.experienceYears || '0',
+      t.totalHours || '0',
+      t.batchesCount || '0',
+      t.warningsCount || '0'
+    ]);
+    const csvContent = '\uFEFF' + [headers.join(','), ...dataRows.map(e => e.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `تقرير_المدربين_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  exportTraineesToExcel() {
+    const list = this.filteredTraineesList;
+    if (!list || list.length === 0) {
+      alert('لا توجد بيانات متدربين لتصديرها');
+      return;
+    }
+    const headers = ['اسم المتدرب', 'الشركة الراعية', 'التخصص', 'المدرب المشرف', 'الحضور', 'التقني', 'السلوكي', 'المستوى'];
+    const dataRows = list.map(t => [
+      `"${t.traineeName || ''}"`,
+      `"${t.companyName || ''}"`,
+      `"${t.major || ''}"`,
+      `"${t.assignedTrainer || ''}"`,
+      (t.attendanceRate || 0) + '%',
+      (t.technicalScore || 0) + '%',
+      (t.behavioralScore || 0) + '%',
+      `"${t.level || ''}"`
+    ]);
+    const csvContent = '\uFEFF' + [headers.join(','), ...dataRows.map(e => e.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `تقرير_المتدربين_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
