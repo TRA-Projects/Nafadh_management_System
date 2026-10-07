@@ -60,12 +60,16 @@ namespace Nafadh_Backend
         public DbSet<NFD_TraineePaymentSchedule> NFD_TraineePaymentSchedules { get; set; }
         public DbSet<NFD_CompanyPayment> NFD_CompanyPayments { get; set; }
         public DbSet<NFD_CompanyPaymentSchedule> NFD_CompanyPaymentSchedules { get; set; }
+
         // NEW DbSets (backend upgrade - Phase 2 Contract Alignment)
         public DbSet<NFD_FeedbackCriterion> NFD_FeedbackCriteria { get; set; }
         public DbSet<NFD_Feedback> NFD_Feedbacks { get; set; }
         public DbSet<NFD_FeedbackScore> NFD_FeedbackScores { get; set; }
         public DbSet<NFD_Badge> NFD_Badges { get; set; }
         public DbSet<NFD_TraineeBadge> NFD_TraineeBadges { get; set; }
+
+        // Remediation Request Entity
+        public DbSet<RemediationRequest> RemediationRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -449,7 +453,6 @@ namespace Nafadh_Backend
                     .WithMany()
                     .HasForeignKey(e => e.CreatedByUserId)
                     .OnDelete(DeleteBehavior.Restrict);
-                // NEW: optional Module scoping
                 entity.HasOne(e => e.Module)
                     .WithMany(p => p.EvaluationTemplates)
                     .HasForeignKey(e => e.ModuleId)
@@ -466,7 +469,7 @@ namespace Nafadh_Backend
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ---- NFD_EvaluationCriterionScore ---- (NEW)
+            // ---- NFD_EvaluationCriterionScore ----
             modelBuilder.Entity<NFD_EvaluationCriterionScore>(entity =>
             {
                 entity.ToTable("NFD_EvaluationCriterionScores");
@@ -506,12 +509,10 @@ namespace Nafadh_Backend
             modelBuilder.Entity<NFD_Warning>(entity =>
             {
                 entity.ToTable("NFD_Warnings");
-                // EDITED: EnrollmentId is now optional (Scope == Trainee only)
                 entity.HasOne(e => e.Enrollment)
                     .WithMany(p => p.Warnings)
                     .HasForeignKey(e => e.EnrollmentId)
                     .OnDelete(DeleteBehavior.Restrict);
-                // NEW: optional Company relation (Scope == Company only)
                 entity.HasOne(e => e.Company)
                     .WithMany(p => p.Warnings)
                     .HasForeignKey(e => e.CompanyId)
@@ -519,6 +520,20 @@ namespace Nafadh_Backend
                 entity.HasOne(e => e.User)
                     .WithMany()
                     .HasForeignKey(e => e.RaisedByUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ---- RemediationRequest ----
+            modelBuilder.Entity<RemediationRequest>(entity =>
+            {
+                entity.ToTable("NFD_RemediationRequests");
+                entity.HasOne(e => e.Warning)
+                    .WithMany()
+                    .HasForeignKey(e => e.WarningId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Company)
+                    .WithMany()
+                    .HasForeignKey(e => e.CompanyId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -560,13 +575,10 @@ namespace Nafadh_Backend
                     .WithMany()
                     .HasForeignKey(e => e.SenderId)
                     .OnDelete(DeleteBehavior.Restrict);
-                // EDITED: ReceiverId is now optional (a ticket-threaded reply has no
-                // single pre-known receiver)
                 entity.HasOne(e => e.Receiver)
                     .WithMany()
                     .HasForeignKey(e => e.ReceiverId)
                     .OnDelete(DeleteBehavior.Restrict);
-                // NEW: optional Ticket/Conversation relation
                 entity.HasOne(e => e.Ticket)
                     .WithMany(p => p.Messages)
                     .HasForeignKey(e => e.TicketId)
@@ -643,10 +655,6 @@ namespace Nafadh_Backend
                     .HasForeignKey(e => e.CompanyPaymentId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-
-            // ==========================================================
-            // NEW entities (backend upgrade - Phase 2 Contract Alignment)
-            // ==========================================================
 
             // ---- NFD_FeedbackCriterion ----
             modelBuilder.Entity<NFD_FeedbackCriterion>(entity =>
