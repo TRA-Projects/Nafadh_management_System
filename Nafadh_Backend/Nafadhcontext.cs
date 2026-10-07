@@ -53,6 +53,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_Notification> NFD_Notifications { get; set; }
         public DbSet<NFD_Announcement> NFD_Announcements { get; set; }
         public DbSet<NFD_Message> NFD_Messages { get; set; }
+        public DbSet<NFD_ConversationGroupMember> NFD_ConversationGroupMembers { get; set; }
         public DbSet<NFD_Certificate> NFD_Certificates { get; set; }
         public DbSet<NFD_TrainerCertificate> NFD_TrainerCertificates { get; set; }
         public DbSet<NFD_Report> NFD_Reports { get; set; }
