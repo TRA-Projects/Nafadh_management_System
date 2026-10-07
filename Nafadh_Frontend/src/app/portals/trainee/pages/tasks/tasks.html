@@ -6,10 +6,7 @@
   "
 >
 
-  <!-- ========================================================= -->
   <!-- PAGE TITLE -->
-  <!-- ========================================================= -->
-
   <h2
     class="nfd-page-title"
     style="
@@ -22,10 +19,7 @@
   </h2>
 
 
-  <!-- ========================================================= -->
   <!-- TABS -->
-  <!-- ========================================================= -->
-
   @if (!selected() && !selectedProject()) {
 
     <div
@@ -72,10 +66,7 @@
   }
 
 
-  <!-- ========================================================= -->
   <!-- ERROR -->
-  <!-- ========================================================= -->
-
   @if (errorMessage()) {
 
     <div
@@ -113,19 +104,14 @@
         !
       </span>
 
-      <span>
-        {{ errorMessage() }}
-      </span>
+      <span>{{ errorMessage() }}</span>
 
     </div>
 
   }
 
 
-  <!-- ========================================================= -->
   <!-- SUCCESS MESSAGE -->
-  <!-- ========================================================= -->
-
   @if (successMessage()) {
 
     <div
@@ -164,19 +150,14 @@
         ✓
       </span>
 
-      <span>
-        {{ successMessage() }}
-      </span>
+      <span>{{ successMessage() }}</span>
 
     </div>
 
   }
 
 
-  <!-- ========================================================= -->
   <!-- TASKS -->
-  <!-- ========================================================= -->
-
   @if (tab() === 'assignments' && !selected()) {
 
     @if (loadingProfile() || loadingTasks()) {
@@ -209,6 +190,7 @@
             @let submission = submissionFor(t.taskId);
             @let taskStatus = displayTaskStatus(t);
             @let deadlinePassed = isDeadlinePassed(t);
+            @let daysLate = getDaysLate(t);
 
             <div
               class="nfd-card"
@@ -262,19 +244,8 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                   >
-
-                    <rect
-                      x="3"
-                      y="3"
-                      width="18"
-                      height="18"
-                      rx="3"
-                    ></rect>
-
-                    <path
-                      d="M8 12l2.5 2.5L16 9"
-                    ></path>
-
+                    <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+                    <path d="M8 12l2.5 2.5L16 9"></path>
                   </svg>
 
                 </div>
@@ -386,15 +357,12 @@
               </div>
 
 
-              @if (
-                deadlinePassed &&
-                taskStatus !== 'مكتمل'
-              ) {
+              @if (deadlinePassed && taskStatus !== 'مكتمل') {
 
                 <div
                   style="
                     display:flex;
-                    align-items:center;
+                    align-items:flex-start;
                     gap:7px;
                     direction:rtl;
                     background:var(--status-new-bg);
@@ -403,13 +371,15 @@
                     padding:9px 10px;
                     margin-bottom:10px;
                     font-size:12px;
+                    line-height:1.6;
                   "
                 >
 
                   <span>⚠</span>
 
                   <span>
-                    انتهى موعد التسليم
+                    انتهى موعد التسليم — يمكنك التسليم الآن مع احتساب
+                    <strong> {{ getDaysLateText(t) }} </strong>
                   </span>
 
                 </div>
@@ -487,27 +457,12 @@
                     ✓ تم إكمال المهمة
                   </div>
 
-                } @else if (deadlinePassed) {
-
-                  <button
-                    class="nfd-btn"
-                    disabled
-                    style="
-                      width:100%;
-                      opacity:.55;
-                      cursor:not-allowed;
-                      font-size:13px;
-                      padding:9px;
-                    "
-                    (click)="$event.stopPropagation()"
-                  >
-                    انتهى موعد التسليم
-                  </button>
-
                 } @else {
 
                   <button
-                    class="nfd-btn primary"
+                    class="nfd-btn"
+                    [class.primary]="!deadlinePassed"
+                    [class.ghost]="deadlinePassed"
                     style="
                       width:100%;
                       font-size:13px;
@@ -518,7 +473,22 @@
                       selectTask(t)
                     "
                   >
-                    {{ submission ? 'إعادة التسليم' : 'تسليم المهمة' }}
+
+                    @if (deadlinePassed) {
+
+                      <span>
+                        ⚠ تسليم متأخر
+                        @if (daysLate > 0) {
+                          ({{ daysLate }} يوم)
+                        }
+                      </span>
+
+                    } @else {
+
+                      {{ submission ? 'إعادة التسليم' : 'تسليم المهمة' }}
+
+                    }
+
                   </button>
 
                 }
@@ -555,10 +525,7 @@
   }
 
 
-  <!-- ========================================================= -->
   <!-- TASK DETAILS -->
-  <!-- ========================================================= -->
-
   @if (tab() === 'assignments' && selected(); as t) {
 
     <button
@@ -580,6 +547,7 @@
     @let submission = submissionFor(t.taskId);
     @let deadlinePassed = isDeadlinePassed(t);
     @let taskStatus = displayTaskStatus(t);
+    @let daysLate = getDaysLate(t);
 
 
     <div
@@ -669,7 +637,6 @@
 
 
       <!-- DEADLINE -->
-
       <div
         style="
           background:var(--color-tint-indigo);
@@ -702,8 +669,38 @@
       </div>
 
 
-      <!-- GRADE -->
+      <!-- LATE WARNING -->
+      @if (deadlinePassed && taskStatus !== 'مكتمل') {
 
+        <div
+          style="
+            background:var(--status-new-bg);
+            color:var(--status-new-fg);
+            border-radius:11px;
+            padding:12px 14px;
+            margin-bottom:14px;
+            font-size:13px;
+            line-height:1.7;
+            display:flex;
+            align-items:flex-start;
+            gap:8px;
+          "
+        >
+
+          <span>⚠</span>
+
+          <span>
+            انتهى موعد التسليم — يمكنك التسليم الآن، وسيتم احتساب
+            <strong> {{ getDaysLateText(t) }} </strong>
+            على التسليم.
+          </span>
+
+        </div>
+
+      }
+
+
+      <!-- GRADE -->
       @if (submission) {
 
         @if (
@@ -770,10 +767,7 @@
       }
 
 
-      <!-- ===================================================== -->
       <!-- SUBMISSION -->
-      <!-- ===================================================== -->
-
       @if (taskStatus !== 'مكتمل') {
 
         <div>
@@ -801,14 +795,13 @@
 
 
           <!-- SUBMISSION URL INPUT -->
-
           <input
             class="nfd-input"
             dir="ltr"
             [(ngModel)]="submissionLink"
             placeholder="https://github.com/..."
             autocomplete="url"
-            [disabled]="deadlinePassed || submitting()"
+            [disabled]="submitting()"
             style="
               width:100%;
               box-sizing:border-box;
@@ -818,8 +811,7 @@
           />
 
 
-          <!-- URL VALIDATION MESSAGE -->
-
+          <!-- URL ERROR -->
           @if (
             submissionLink.trim() &&
             !isValidSubmissionUrl(submissionLink)
@@ -842,17 +834,14 @@
 
               <span>⚠</span>
 
-              <span>
-                {{ getSubmissionUrlError() }}
-              </span>
+              <span>{{ getSubmissionUrlError() }}</span>
 
             </div>
 
           }
 
 
-          <!-- VALID URL MESSAGE -->
-
+          <!-- URL VALID -->
           @if (
             submissionLink.trim() &&
             isValidSubmissionUrl(submissionLink)
@@ -874,61 +863,51 @@
 
               <span>✓</span>
 
-              <span>
-                الرابط صالح ويمكن إرساله.
-              </span>
+              <span>الرابط صالح ويمكن إرساله.</span>
 
             </div>
 
           }
 
 
-          <!-- DEADLINE -->
+          <!-- SUBMIT BUTTON -->
+          <div
+            style="
+              display:flex;
+              justify-content:center;
+              margin-top:14px;
+            "
+          >
 
-          @if (deadlinePassed) {
-
-            <div
+            <button
+              class="nfd-btn primary"
               style="
-                margin-top:12px;
-                background:var(--status-new-bg);
-                color:var(--status-new-fg);
-                border-radius:10px;
-                padding:11px;
+                min-width:160px;
                 font-size:13px;
-                text-align:center;
+                padding:10px 22px;
               "
-            >
-              انتهى موعد التسليم، لا يمكن إعادة تسليم المهمة.
-            </div>
-
-          } @else {
-
-            <div
-              style="
-                display:flex;
-                justify-content:center;
-                margin-top:14px;
+              (click)="submit()"
+              [disabled]="
+                !submissionLink.trim() ||
+                !isValidSubmissionUrl(submissionLink) ||
+                submitting()
               "
             >
 
-              <button
-                class="nfd-btn primary"
-                style="
-                  min-width:160px;
-                  font-size:13px;
-                  padding:10px 22px;
-                "
-                (click)="submit()"
-                [disabled]="
-                  !submissionLink.trim() ||
-                  !isValidSubmissionUrl(submissionLink) ||
-                  submitting()
-                "
-              >
+              @if (submitting()) {
 
-                @if (submitting()) {
+                جاري التسليم...
 
-                  جاري التسليم...
+              } @else {
+
+                @if (deadlinePassed) {
+
+                  <span>
+                    ⚠ تسليم متأخر
+                    @if (daysLate > 0) {
+                      ({{ daysLate }} يوم)
+                    }
+                  </span>
 
                 } @else {
 
@@ -936,11 +915,11 @@
 
                 }
 
-              </button>
+              }
 
-            </div>
+            </button>
 
-          }
+          </div>
 
         </div>
 
@@ -951,10 +930,7 @@
   }
 
 
-  <!-- ========================================================= -->
   <!-- PROJECTS LIST -->
-  <!-- ========================================================= -->
-
   @if (tab() === 'projects' && !selectedProject()) {
 
     @if (loadingProfile() || loadingProjects()) {
@@ -992,10 +968,7 @@
           "
         >
 
-          @for (
-            project of projects();
-            track project.projectId
-          ) {
+          @for (project of projects(); track project.projectId) {
 
             <div
               class="nfd-card"
@@ -1046,21 +1019,12 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                   >
-
-                    <rect
-                      x="3"
-                      y="4"
-                      width="18"
-                      height="16"
-                      rx="3"
-                    ></rect>
-
+                    <rect x="3" y="4" width="18" height="16" rx="3"></rect>
                     <path d="M8 4V2"></path>
                     <path d="M16 4V2"></path>
                     <path d="M3 9h18"></path>
                     <path d="M8 13h3"></path>
                     <path d="M8 16h5"></path>
-
                   </svg>
 
                 </div>
@@ -1104,12 +1068,8 @@
                         padding:4px 9px;
                         white-space:nowrap;
                       "
-                      [style.background]="
-                        projectStatusBackground(project)
-                      "
-                      [style.color]="
-                        projectStatusForeground(project)
-                      "
+                      [style.background]="projectStatusBackground(project)"
+                      [style.color]="projectStatusForeground(project)"
                     >
                       {{ displayProjectStatus(project) }}
                     </span>
@@ -1144,20 +1104,10 @@
 
                     <span>
                       البداية:
-
-                      <strong
-                        style="
-                          color:var(--color-text-secondary);
-                          font-weight:500;
-                        "
-                      >
-                        {{
-                          projectStartDate(project)
-                            | date:'dd-MM-yyyy'
-                        }}
+                      <strong style="color:var(--color-text-secondary); font-weight:500;">
+                        {{ projectStartDate(project) | date:'dd-MM-yyyy' }}
                       </strong>
                     </span>
-
 
                     <span
                       style="
@@ -1169,20 +1119,10 @@
                       "
                     ></span>
 
-
                     <span>
                       النهاية:
-
-                      <strong
-                        style="
-                          color:var(--color-text-secondary);
-                          font-weight:500;
-                        "
-                      >
-                        {{
-                          projectEndDate(project)
-                            | date:'dd-MM-yyyy'
-                        }}
+                      <strong style="color:var(--color-text-secondary); font-weight:500;">
+                        {{ projectEndDate(project) | date:'dd-MM-yyyy' }}
                       </strong>
                     </span>
 
@@ -1194,7 +1134,6 @@
 
 
               <!-- PROJECT STAGES -->
-
               <div
                 style="
                   width:100%;
@@ -1345,10 +1284,7 @@
   }
 
 
-  <!-- ========================================================= -->
   <!-- PROJECT DETAILS -->
-  <!-- ========================================================= -->
-
   @if (tab() === 'projects' && selectedProject(); as project) {
 
     <button
@@ -1409,21 +1345,12 @@
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-
-            <rect
-              x="3"
-              y="4"
-              width="18"
-              height="16"
-              rx="3"
-            ></rect>
-
+            <rect x="3" y="4" width="18" height="16" rx="3"></rect>
             <path d="M8 4V2"></path>
             <path d="M16 4V2"></path>
             <path d="M3 9h18"></path>
             <path d="M8 13h3"></path>
             <path d="M8 16h5"></path>
-
           </svg>
 
         </div>
@@ -1463,12 +1390,8 @@
                 font-size:11px;
                 padding:4px 9px;
               "
-              [style.background]="
-                projectStatusBackground(project)
-              "
-              [style.color]="
-                projectStatusForeground(project)
-              "
+              [style.background]="projectStatusBackground(project)"
+              [style.color]="projectStatusForeground(project)"
             >
               {{ displayProjectStatus(project) }}
             </span>
@@ -1493,7 +1416,6 @@
 
 
       <!-- DATES -->
-
       <div
         style="
           display:grid;
@@ -1528,10 +1450,7 @@
               color:var(--color-navy);
             "
           >
-            {{
-              projectStartDate(project)
-                | date:'yyyy-MM-dd'
-            }}
+            {{ projectStartDate(project) | date:'yyyy-MM-dd' }}
           </strong>
 
         </div>
@@ -1562,10 +1481,7 @@
               color:var(--color-navy);
             "
           >
-            {{
-              projectEndDate(project)
-                | date:'yyyy-MM-dd'
-            }}
+            {{ projectEndDate(project) | date:'yyyy-MM-dd' }}
           </strong>
 
         </div>
@@ -1574,7 +1490,6 @@
 
 
       <!-- PROJECT STAGES -->
-
       <div
         style="
           margin-top:28px;

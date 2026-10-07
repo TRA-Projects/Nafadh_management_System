@@ -1,13 +1,9 @@
 <div class="support-page" dir="rtl">
 
-  <!-- =========================================================
-       HEADER
-       ========================================================= -->
-
   <div class="support-header">
 
     <h2 class="nfd-page-title">
-      التواصل والدعم
+      التواصل والمراسلات
     </h2>
 
     <p class="nfd-page-sub">
@@ -16,10 +12,6 @@
 
   </div>
 
-
-  <!-- =========================================================
-       ALERT MESSAGES
-       ========================================================= -->
 
   @if (errorMessage()) {
 
@@ -55,228 +47,256 @@
   }
 
 
-  <!-- =========================================================
-       MAIN CONTENT
-       ========================================================= -->
-
   <div class="support-main-layout">
 
 
     <!-- =======================================================
-         CONVERSATIONS
+         CONVERSATION LIST
          ======================================================= -->
 
-    <section class="conversation-section">
+    <section class="conversation-list">
 
+      <div class="list-header">
 
-      <!-- =====================================================
-           CONVERSATION LIST
-           ===================================================== -->
+        <div>
 
-      <div class="conversation-list">
+          <h3>
+            الشكاوى والاستفسارات
+          </h3>
 
-        <div class="list-header">
-
-          <div>
-
-            <h3>
-              الشكاوى والاستفسارات
-            </h3>
-
-            <p>
-              المحادثات السابقة
-            </p>
-
-          </div>
-
-          <span class="conversation-count">
-            {{ conversations().length }}
-          </span>
+          <p>
+            المحادثات السابقة
+          </p>
 
         </div>
 
-
-        <div class="conversation-items">
-
-          @for (
-            c of conversations();
-            track c.conversationId
-          ) {
-
-            <button
-              type="button"
-              class="conversation-item"
-              [class.active]="active()?.conversationId === c.conversationId"
-              (click)="open(c.conversationId)"
-            >
-
-              <div class="conversation-item-content">
-
-                <strong>
-                  {{ c.subject }}
-                </strong>
-
-                <small>
-                  {{ c.startedByName }}
-                </small>
-
-                <p>
-                  {{ c.lastMessagePreview }}
-                </p>
-
-              </div>
-
-              <span class="conversation-arrow">
-                <i class="fa-solid fa-chevron-left"></i>
-              </span>
-
-            </button>
-
-          }
-
-          @empty {
-
-            <div class="empty-conversations">
-
-              <div class="empty-icon">
-                <i class="fa-solid fa-comments"></i>
-              </div>
-
-              <strong>
-                لا توجد محادثات سابقة
-              </strong>
-
-              <span>
-                يمكنك بدء محادثة جديدة من النموذج
-              </span>
-
-            </div>
-
-          }
-
-        </div>
+        <span class="conversation-count">
+          {{ conversations().length }}
+        </span>
 
       </div>
 
 
+      <div class="conversation-items">
+
+        @for (
+          c of conversations();
+          track c.conversationId
+        ) {
+
+          <button
+            type="button"
+            class="conversation-item"
+            [class.active]="active()?.conversationId === c.conversationId"
+            (click)="open(c.conversationId)"
+          >
+
+            <span class="conversation-status"></span>
+
+
+            <div class="conversation-item-content">
+
+              <strong>
+                {{ c.subject }}
+              </strong>
+
+              <small>
+                {{ c.startedByName }}
+              </small>
+
+              <p>
+                {{ c.lastMessagePreview }}
+              </p>
+
+            </div>
+
+
+            <span class="conversation-arrow">
+              <i class="fa-solid fa-chevron-left"></i>
+            </span>
+
+          </button>
+
+        }
+
+        @empty {
+
+          <div class="empty-conversations">
+
+            <div class="empty-icon">
+              <i class="fa-solid fa-comments"></i>
+            </div>
+
+            <strong>
+              لا توجد محادثات سابقة
+            </strong>
+
+            <span>
+              يمكنك بدء محادثة جديدة من النموذج
+            </span>
+
+          </div>
+
+        }
+
+      </div>
+
+    </section>
+
+
+    <!-- =======================================================
+         ACTIVE CONVERSATION
+         ======================================================= -->
+
+    <section class="conversation-detail">
+
+
       <!-- =====================================================
-           ACTIVE CONVERSATION
+           FIXED HEADER
            ===================================================== -->
 
-      <div class="conversation-detail">
+      <div class="conversation-detail-header">
 
-        @if (active(); as conversation) {
+        <div class="conversation-header-main">
 
-          <div class="conversation-detail-header">
+          <div class="conversation-header-icon">
+            <i class="fa-solid fa-comments"></i>
+          </div>
 
-            <div>
+
+          <div class="conversation-header-text">
+
+            @if (active(); as conversation) {
 
               <h3>
                 {{ conversation.subject }}
               </h3>
 
-              <span>
-                {{ conversation.category || 'شكوى أو استفسار' }}
-              </span>
+              <div class="conversation-meta">
 
-              <small class="conversation-receiver">
-                الجهة: {{ getReceiverLabel(conversation) }}
-              </small>
-
-            </div>
-
-          </div>
-
-
-          <div class="messages-container">
-
-            @for (
-              message of conversation.messages;
-              track message.messageId
-            ) {
-
-              <div
-                class="message-bubble"
-                [class.mine]="message.senderId === auth.userId"
-              >
-
-                <strong>
-                  {{ message.senderName }}
-                </strong>
-
-                <p>
-                  {{ message.content }}
-                </p>
+                <span>
+                  شكوى أو استفسار
+                </span>
 
               </div>
 
             }
 
-            @empty {
+            @else {
 
-              <div class="no-messages">
-                لا توجد رسائل في هذه المحادثة
+              <h3></h3>
+
+              <div class="conversation-meta">
+
+                <span>
+                  شكوى أو استفسار
+                </span>
+
               </div>
 
             }
 
           </div>
 
+        </div>
 
-          <div class="reply-area">
+      </div>
 
-            <input
-              type="text"
-              class="reply-input"
-              [(ngModel)]="replyText"
-              placeholder="اكتب ردك هنا..."
-              (keydown.enter)="send()"
-            />
 
-            <button
-              type="button"
-              class="reply-button"
-              [disabled]="!replyText.trim()"
-              (click)="send()"
+      <!-- =====================================================
+           CONVERSATION CONTENT
+           ===================================================== -->
+
+      @if (active(); as conversation) {
+
+        <div class="messages-container">
+
+          @for (
+            message of conversation.messages;
+            track message.messageId
+          ) {
+
+            <div
+              class="message-bubble"
+              [class.mine]="message.senderId === auth.userId"
             >
 
-              <i class="fa-solid fa-paper-plane"></i>
-
-              <span>
-                إرسال
-              </span>
-
-            </button>
-
-          </div>
-
-        }
-
-        @else {
-
-          <div class="conversation-placeholder">
-
-            <div class="conversation-placeholder-content">
-
-              <div class="placeholder-icon">
-                <i class="fa-solid fa-comments"></i>
-              </div>
-
-              <h3>
-                اختر محادثة من القائمة
-              </h3>
+              <strong>
+                {{ message.senderName }}
+              </strong>
 
               <p>
-                اختر إحدى الشكاوى أو الاستفسارات لعرض تفاصيل المحادثة
+                {{ message.content }}
               </p>
 
             </div>
 
+          }
+
+          @empty {
+
+            <div class="no-messages">
+              لا توجد رسائل في هذه المحادثة
+            </div>
+
+          }
+
+        </div>
+
+
+        <div class="reply-area">
+
+          <input
+            type="text"
+            class="reply-input"
+            [(ngModel)]="replyText"
+            placeholder="اكتب ردك هنا..."
+            (keydown.enter)="send()"
+          />
+
+
+          <button
+            type="button"
+            class="reply-button"
+            [disabled]="!replyText.trim()"
+            (click)="send()"
+          >
+
+            <i class="fa-solid fa-paper-plane"></i>
+
+            <span>
+              إرسال
+            </span>
+
+          </button>
+
+        </div>
+
+      }
+
+      @else {
+
+        <div class="conversation-placeholder">
+
+          <div class="conversation-placeholder-content">
+
+            <div class="placeholder-icon">
+              <i class="fa-solid fa-comments"></i>
+            </div>
+
+            <h3>
+              اختر محادثة من القائمة
+            </h3>
+
+            <p>
+              اختر إحدى الشكاوى أو الاستفسارات لعرض تفاصيل المحادثة
+            </p>
+
           </div>
 
-        }
+        </div>
 
-      </div>
+      }
 
     </section>
 
@@ -289,11 +309,6 @@
       class="support-card"
       [class.receiver-only]="!newConv.receiverType"
     >
-
-
-      <!-- =====================================================
-           TITLE
-           ===================================================== -->
 
       <div class="support-title-row">
 
@@ -464,14 +479,8 @@
 
               <i
                 class="fa-solid"
-                [class.fa-image]="
-                  selectedFile &&
-                  selectedFile.type.startsWith('image/')
-                "
-                [class.fa-file-pdf]="
-                  selectedFile &&
-                  selectedFile.type === 'application/pdf'
-                "
+                [class.fa-image]="selectedFile && selectedFile.type.startsWith('image/')"
+                [class.fa-file-pdf]="selectedFile && selectedFile.type === 'application/pdf'"
                 [class.fa-paperclip]="!selectedFile"
               ></i>
 
@@ -515,9 +524,7 @@
                 aria-label="حذف المرفق"
                 (click)="removeFile($event)"
               >
-
                 <i class="fa-solid fa-xmark"></i>
-
               </button>
 
             }
@@ -590,14 +597,8 @@
 
               <i
                 class="fa-solid"
-                [class.fa-image]="
-                  selectedFile &&
-                  selectedFile.type.startsWith('image/')
-                "
-                [class.fa-file-pdf]="
-                  selectedFile &&
-                  selectedFile.type === 'application/pdf'
-                "
+                [class.fa-image]="selectedFile && selectedFile.type.startsWith('image/')"
+                [class.fa-file-pdf]="selectedFile && selectedFile.type === 'application/pdf'"
                 [class.fa-paperclip]="!selectedFile"
               ></i>
 
@@ -641,9 +642,7 @@
                 aria-label="حذف المرفق"
                 (click)="removeFile($event)"
               >
-
                 <i class="fa-solid fa-xmark"></i>
-
               </button>
 
             }
@@ -788,14 +787,13 @@
                 aria-label="حذف الملف"
                 (click)="removeFile($event)"
               >
-
                 <i class="fa-solid fa-xmark"></i>
-
               </button>
 
             }
 
           </div>
+
 
           <p class="file-hint">
             PDF, PNG, JPG, JPEG — Max 10MB
@@ -854,7 +852,7 @@
 
 .support-page {
   width: 100%;
-  max-width: 1400px;
+  max-width: 1450px;
   height: 100vh;
   min-height: 0;
   margin: 0 auto;
@@ -867,25 +865,25 @@
 
 .support-header {
   flex-shrink: 0;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .nfd-page-title {
   margin: 0 0 5px;
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
   color: #172033;
 }
 
 .nfd-page-sub {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   color: #8c98a5;
 }
 
 
 /* =========================================================
-   MESSAGES
+   ALERT
    ========================================================= */
 
 .message {
@@ -896,7 +894,7 @@
   padding: 8px 11px;
   margin-bottom: 10px;
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .message p {
@@ -931,24 +929,41 @@
 .support-main-layout {
   flex: 1;
   min-height: 0;
+
   display: grid;
-  grid-template-columns: 1.45fr 1fr;
-  gap: 16px;
+
+  grid-template-columns:
+    315px
+    minmax(300px, 1fr)
+    435px;
+
+  gap: 13px;
+
   overflow: hidden;
 }
 
 
 /* =========================================================
-   CONVERSATIONS SECTION
+   COMMON CARDS
    ========================================================= */
 
-.conversation-section {
+.conversation-list,
+.conversation-detail,
+.support-card {
   min-width: 0;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
-  gap: 14px;
-  overflow: hidden;
+
+  height: 600px;
+
+  background: #fff;
+
+  border: 1px solid #e7ebf0;
+
+  border-radius: 15px;
+
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+
+  box-sizing: border-box;
 }
 
 
@@ -957,31 +972,33 @@
    ========================================================= */
 
 .conversation-list {
-  min-width: 0;
-  min-height: 0;
-  height: 600px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #fff;
-  border: 1px solid #e7ebf0;
-  border-radius: 15px;
-  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
 }
 
 .list-header {
   flex-shrink: 0;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 15px 17px;
+
+  min-height: 66px;
+
+  padding: 12px 17px;
+
+  box-sizing: border-box;
+
   background: #0066cc;
+
   color: #fff;
+
   border-radius: 15px 15px 0 0;
 }
 
 .list-header h3 {
-  margin: 0 0 4px;
+  margin: 0 0 3px;
   color: #fff;
   font-size: 15px;
   font-weight: 700;
@@ -996,15 +1013,27 @@
 .conversation-count {
   min-width: 29px;
   height: 29px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  flex-shrink: 0;
+
   border-radius: 50%;
+
   background: rgba(255, 255, 255, 0.18);
+
   color: #fff;
+
   font-size: 11px;
   font-weight: 700;
 }
+
+
+/* =========================================================
+   CONVERSATION ITEMS
+   ========================================================= */
 
 .conversation-items {
   position: relative;
@@ -1018,30 +1047,87 @@
   overflow-y: auto;
   overflow-x: hidden;
 
-  padding: 7px;
+  padding: 8px;
 }
+
+
+/* =========================================================
+   ALL CONVERSATION BOXES BLUE
+   ========================================================= */
 
 .conversation-item {
   width: 100%;
+
   display: flex;
   align-items: center;
+
   gap: 9px;
-  margin-bottom: 4px;
-  padding: 11px;
-  border: none;
+
+  padding: 12px 10px;
+
+  margin-bottom: 6px;
+
+  border: 1px solid #dbe7ff;
+
   border-radius: 9px;
-  background: transparent;
+
+  background: #eef5ff;
+
   text-align: right;
+
   font-family: inherit;
+
   cursor: pointer;
-  transition: 0.15s;
+
   box-sizing: border-box;
+
+  transition: 0.18s ease;
 }
 
-.conversation-item:hover,
-.conversation-item.active {
-  background: #eef2ff;
+.conversation-item:last-child {
+  margin-bottom: 0;
 }
+
+.conversation-item:hover {
+  background: #eef5ff;
+  border-color: #dbe7ff;
+}
+
+.conversation-item.active,
+.conversation-item.active:hover,
+.conversation-item.active:focus,
+.conversation-item.active:active {
+  background: #eef5ff;
+  border-color: #dbe7ff;
+  outline: none;
+}
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.conversation-status {
+  width: 4px;
+  height: 34px;
+
+  flex: 0 0 4px;
+
+  border-radius: 5px;
+
+  background: #bcd4ff;
+
+  transition: 0.18s ease;
+}
+
+.conversation-item.active .conversation-status {
+  background: #0066cc;
+}
+
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
 
 .conversation-item-content {
   min-width: 0;
@@ -1050,73 +1136,125 @@
 
 .conversation-item strong {
   display: block;
-  margin-bottom: 4px;
-  color: #1e293b;
+
+  margin-bottom: 3px;
+
+  color: #172033;
+
   font-size: 12px;
-  line-height: 1.5;
+
+  font-weight: 700;
+
+  line-height: 1.45;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
 }
 
 .conversation-item small {
   display: block;
-  margin-bottom: 4px;
+
+  margin-bottom: 3px;
+
   color: #8c98a5;
+
   font-size: 9px;
+
+  line-height: 1.4;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
 }
 
 .conversation-item p {
   margin: 0;
-  overflow: hidden;
-  color: #64748b;
-  font-size: 9px;
-  line-height: 1.5;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
-.conversation-arrow {
-  color: #0066cc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: #64748b;
+
+  font-size: 9px;
+
+  line-height: 1.45;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
 }
 
 
 /* =========================================================
-   RIGHT CARD EMPTY CONTENT
+   ARROW
+   ========================================================= */
+
+.conversation-arrow {
+  width: 25px;
+  height: 25px;
+
+  flex: 0 0 25px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  color: #0066cc;
+
+  font-size: 10px;
+
+  transition: 0.18s ease;
+}
+
+.conversation-item.active .conversation-arrow {
+  background: #0066cc;
+  color: #fff;
+}
+
+
+/* =========================================================
+   EMPTY LIST
    ========================================================= */
 
 .empty-conversations {
   position: absolute;
 
-  top: 145px;
-  right: 7px;
-  left: 7px;
+  inset: 0;
 
   display: flex;
   flex-direction: column;
 
   align-items: center;
+  justify-content: center;
 
   gap: 5px;
 
-  padding: 0 20px;
+  padding: 20px;
 
   box-sizing: border-box;
 
-  color: #8c98a5;
-
   text-align: center;
+
+  color: #8c98a5;
 }
 
 .empty-icon {
-  width: 50px;
-  height: 50px;
+  width: 47px;
+  height: 47px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  margin-bottom: 18px;
+  margin-bottom: 7px;
 
   border-radius: 50%;
 
@@ -1126,32 +1264,17 @@
 }
 
 .empty-icon i {
-  font-size: 20px;
+  font-size: 19px;
 }
 
 .empty-conversations strong {
-  display: block;
-
-  margin: 0 0 8px;
-
-  color: #8c98a5;
-
-  font-size: 16px;
-  font-weight: 700;
-
-  line-height: 1.5;
+  font-size: 13px;
+  color: #64748b;
 }
 
 .empty-conversations span {
-  display: block;
-
-  margin: 0;
-
-  color: #8c98a5;
-
-  font-size: 14px;
-
-  line-height: 1.7;
+  font-size: 10px;
+  line-height: 1.6;
 }
 
 
@@ -1160,126 +1283,236 @@
    ========================================================= */
 
 .conversation-detail {
-  min-width: 0;
-  min-height: 0;
-  height: 600px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #fff;
-  border: 1px solid #e7ebf0;
-  border-radius: 15px;
-  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
 }
+
+
+/* =========================================================
+   FIXED HEADER
+   ========================================================= */
 
 .conversation-detail-header {
   flex-shrink: 0;
-  padding: 15px 18px;
+
+  height: 76px;
+  min-height: 76px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 14px 16px;
+
+  box-sizing: border-box;
+
   border-bottom: 1px solid #edf0f4;
+
+  background: #fff;
+}
+
+.conversation-header-main {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  min-width: 0;
+}
+
+.conversation-header-icon {
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background: #eef2ff;
+
+  color: #0066cc;
+}
+
+.conversation-header-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .conversation-detail-header h3 {
-  margin: 0 0 4px;
-  color: #1e293b;
-  font-size: 14px;
+  margin: 0 0 5px;
+
+  color: #172033;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
 }
 
-.conversation-detail-header span {
+.conversation-meta {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
   color: #8c98a5;
+
   font-size: 10px;
 }
 
-.conversation-receiver {
-  display: block;
-  margin-top: 4px;
-  color: #0066cc;
-  font-size: 9px;
-  font-weight: 600;
-}
+
+/* =========================================================
+   MESSAGES
+   ========================================================= */
 
 .messages-container {
   flex: 1;
+
   min-height: 0;
+
   display: flex;
   flex-direction: column;
-  gap: 9px;
+
+  gap: 10px;
+
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px;
+
+  padding: 15px;
 }
 
 .message-bubble {
-  max-width: 70%;
+  max-width: 78%;
+
   flex-shrink: 0;
+
   align-self: flex-start;
-  padding: 9px 12px;
-  border-radius: 10px;
+
+  padding: 10px 12px;
+
+  border-radius: 10px 10px 10px 3px;
+
   background: #eef2ff;
+
   color: #334155;
 }
 
 .message-bubble.mine {
   align-self: flex-end;
+
+  border-radius: 10px 10px 3px 10px;
+
   background: #172033;
+
   color: #fff;
 }
 
 .message-bubble strong {
   display: block;
+
   margin-bottom: 3px;
-  font-size: 9px;
+
+  font-size: 10px;
 }
 
 .message-bubble p {
   margin: 0;
-  font-size: 11px;
+
+  font-size: 12px;
+
   line-height: 1.7;
+
   overflow-wrap: anywhere;
 }
 
 .no-messages {
   margin: auto;
+
   color: #94a3b8;
-  font-size: 11px;
+
+  font-size: 12px;
 }
+
+
+/* =========================================================
+   REPLY
+   ========================================================= */
 
 .reply-area {
   flex-shrink: 0;
+
   display: flex;
+
   gap: 7px;
-  padding: 11px 14px;
+
+  padding: 11px 12px;
+
   border-top: 1px solid #edf0f4;
 }
 
 .reply-input {
   flex: 1;
-  height: 40px;
-  padding: 0 11px;
+
+  min-width: 0;
+
+  height: 41px;
+
+  padding: 0 10px;
+
   border: 1px solid #dfe5e8;
+
   border-radius: 8px;
+
   outline: none;
+
   font-family: inherit;
-  font-size: 11px;
+
+  font-size: 12px;
+
   box-sizing: border-box;
 }
 
 .reply-input:focus {
   border-color: #0066cc;
+
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.08);
 }
 
 .reply-button {
-  width: 85px;
+  width: 78px;
+
+  flex-shrink: 0;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+
+  gap: 5px;
+
   border: none;
+
   border-radius: 8px;
+
   background: #0066cc;
+
   color: #fff;
+
   font-family: inherit;
+
   font-size: 11px;
+
   font-weight: 700;
+
   cursor: pointer;
 }
 
@@ -1290,46 +1523,41 @@
 
 
 /* =========================================================
-   CENTER CARD EMPTY CONTENT
+   PLACEHOLDER
    ========================================================= */
 
 .conversation-placeholder {
-  position: relative;
-
   flex: 1;
-  min-height: 0;
 
-  padding: 0;
+  display: flex;
 
-  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
 }
 
 .conversation-placeholder-content {
-  position: absolute;
-
-  top: 235px;
-  right: 20px;
-  left: 20px;
-
   display: flex;
+
   flex-direction: column;
 
   align-items: center;
+  justify-content: center;
+
+  padding: 20px;
 
   text-align: center;
-
-  color: #8c98a5;
 }
 
 .placeholder-icon {
-  width: 50px;
-  height: 50px;
+  width: 52px;
+  height: 52px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
-  margin: 0 0 18px;
+  margin-bottom: 12px;
 
   border-radius: 50%;
 
@@ -1343,35 +1571,25 @@
 }
 
 .conversation-placeholder-content h3 {
-  width: 100%;
-
-  margin: 0 0 18px;
+  margin: 0 0 7px;
 
   color: #8c98a5;
 
-  font-size: 18px;
+  font-size: 17px;
 
   font-weight: 700;
-
-  line-height: 1.5;
-
-  text-align: center;
 }
 
 .conversation-placeholder-content p {
-  width: 100%;
-
-  max-width: 500px;
+  max-width: 300px;
 
   margin: 0;
 
   color: #8c98a5;
 
-  font-size: 15px;
+  font-size: 12px;
 
-  line-height: 1.7;
-
-  text-align: center;
+  line-height: 1.6;
 }
 
 
@@ -1380,31 +1598,23 @@
    ========================================================= */
 
 .support-card {
-  min-width: 0;
-  min-height: 0;
-
-  height: 600px;
-
   overflow-y: auto;
   overflow-x: hidden;
 
-  box-sizing: border-box;
-
-  padding: 22px 25px;
-
-  background: #fff;
-
-  border: 1px solid #e7ebf0;
-
-  border-radius: 15px;
-
-  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+  padding: 20px 26px;
 }
 
 .support-title-row {
-  margin: -22px -25px 18px;
+  margin: -20px -26px 16px;
 
-  padding: 15px 20px;
+  min-height: 66px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 12px 20px;
+
+  box-sizing: border-box;
 
   background: #0066cc;
 
@@ -1412,7 +1622,7 @@
 }
 
 .support-title {
-  margin: 0 0 4px;
+  margin: 0 0 3px;
 
   color: #fff;
 
@@ -1435,13 +1645,13 @@
    ========================================================= */
 
 .form-group {
-  margin-bottom: 13px;
+  margin-bottom: 12px;
 }
 
 .form-group label {
   display: block;
 
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 
   color: #475569;
 
@@ -1456,7 +1666,7 @@
 
   height: 40px;
 
-  padding: 0 12px;
+  padding: 0 11px;
 
   border: 1px solid #dfe5e8;
 
@@ -1490,7 +1700,7 @@
 
   min-height: 82px;
 
-  padding: 9px 12px;
+  padding: 9px 11px;
 
   border: 1px solid #dfe5e8;
 
@@ -1515,23 +1725,51 @@
 
 
 /* =========================================================
+   RECEIVER
+   ========================================================= */
+
+.receiver-form-group {
+  padding: 10px;
+
+  background: #eef2ff;
+
+  border: 1px solid #dbe7ff;
+
+  border-radius: 9px;
+
+  box-sizing: border-box;
+}
+
+.receiver-form-group label {
+  color: #0066cc;
+
+  font-weight: 700;
+}
+
+.receiver-select {
+  background: #fff;
+
+  border: 1px solid #cfdcff;
+}
+
+
+/* =========================================================
    ATTACHMENT
    ========================================================= */
 
 .attachment-box {
   width: 100%;
 
-  min-height: 62px;
+  min-height: 58px;
 
   position: relative;
 
   display: flex;
-
   align-items: center;
 
-  gap: 10px;
+  gap: 9px;
 
-  padding: 9px 12px;
+  padding: 8px 10px;
 
   border: 1px dashed #cbd6e5;
 
@@ -1551,19 +1789,16 @@
 }
 
 .attachment-icon {
-  width: 34px;
-
-  height: 34px;
+  width: 33px;
+  height: 33px;
 
   flex-shrink: 0;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
-  border-radius: 8px;
+  border-radius: 7px;
 
   background: #eef2ff;
 
@@ -1574,18 +1809,17 @@
   min-width: 0;
 
   display: flex;
-
   flex-direction: column;
 
   gap: 2px;
 }
 
 .attachment-text strong {
+  overflow: hidden;
+
   color: #475569;
 
   font-size: 10px;
-
-  overflow: hidden;
 
   text-overflow: ellipsis;
 
@@ -1601,18 +1835,14 @@
 .remove-attachment {
   position: absolute;
 
-  left: 8px;
+  left: 7px;
+  top: 7px;
 
-  top: 8px;
-
-  width: 22px;
-
-  height: 22px;
+  width: 21px;
+  height: 21px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
   border: none;
@@ -1628,35 +1858,31 @@
 
 
 /* =========================================================
-   AUTHORITY FILE
+   FILE UPLOAD
    ========================================================= */
 
 .file-upload {
-  min-height: 65px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 10px;
+  min-height: 60px;
 
   position: relative;
 
-  padding: 9px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  padding: 8px 10px;
 
   border: 1.5px dashed #cbd6e5;
 
-  border-radius: 9px;
+  border-radius: 8px;
 
   background: #fbfcff;
 
   cursor: pointer;
 
   box-sizing: border-box;
-
-  transition: 0.2s;
 }
 
 .file-upload:hover {
@@ -1666,19 +1892,16 @@
 }
 
 .upload-icon {
-  width: 34px;
-
-  height: 34px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
+  width: 33px;
+  height: 33px;
 
   flex-shrink: 0;
 
-  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 7px;
 
   background: #eef2ff;
 
@@ -1686,17 +1909,24 @@
 }
 
 .upload-text {
-  display: flex;
+  min-width: 0;
 
+  display: flex;
   flex-direction: column;
 
   gap: 2px;
 }
 
 .upload-text strong {
+  overflow: hidden;
+
   color: #475569;
 
   font-size: 10px;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
 }
 
 .upload-text span {
@@ -1708,18 +1938,14 @@
 .remove-file {
   position: absolute;
 
-  left: 8px;
+  left: 7px;
+  top: 7px;
 
-  top: 8px;
-
-  width: 22px;
-
-  height: 22px;
+  width: 21px;
+  height: 21px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
   border: none;
@@ -1738,7 +1964,7 @@
 
   color: #9aa5af;
 
-  font-size: 8px;
+  font-size: 9px;
 }
 
 
@@ -1752,9 +1978,7 @@
   height: 40px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
   gap: 7px;
@@ -1794,9 +2018,13 @@
   opacity: .85;
 }
 
+
+/* =========================================================
+   LOADER
+   ========================================================= */
+
 .loader {
   width: 13px;
-
   height: 13px;
 
   border: 2px solid rgba(255, 255, 255, .35);
@@ -1818,42 +2046,15 @@
 
 
 /* =========================================================
-   LEFT CARD INITIAL CONTENT
-   نفس مستوى باقي البطاقات
+   INITIAL REQUEST
    ========================================================= */
 
-.support-card.receiver-only {
-  position: relative;
-
-  display: block;
-}
-
-.support-card.receiver-only .support-title-row {
-  flex-shrink: 0;
-}
-
 .support-card.receiver-only .receiver-form-group {
-  position: absolute;
-
-  top: 235px;
-
-  right: 25px;
-
-  left: 25px;
-
-  margin: 0;
+  margin-top: 2px;
 }
 
 .support-card.receiver-only .submit-button {
-  position: absolute;
-
-  top: 315px;
-
-  right: 25px;
-
-  width: calc(100% - 50px);
-
-  margin: 0;
+  margin-top: 10px;
 }
 
 
@@ -1904,23 +2105,23 @@
     padding-right: 35px;
   }
 
+  .support-main-layout {
+    grid-template-columns:
+      330px
+      minmax(320px, 1fr)
+      455px;
+  }
+
 }
 
 
-@media (max-width: 1100px) {
-
-  .support-page {
-    padding: 12px 18px;
-  }
+@media (max-width: 1180px) {
 
   .support-main-layout {
-    grid-template-columns: 1.35fr 1fr;
-
-    gap: 12px;
-  }
-
-  .conversation-section {
-    grid-template-columns: 270px minmax(0, 1fr);
+    grid-template-columns:
+      275px
+      minmax(260px, 1fr)
+      385px;
 
     gap: 10px;
   }
@@ -1934,7 +2135,7 @@
 }
 
 
-@media (max-width: 850px) {
+@media (max-width: 900px) {
 
   .support-page {
     height: auto;
@@ -1950,26 +2151,18 @@
     overflow: visible;
   }
 
-  .conversation-section {
-    grid-template-columns: 1fr;
-
-    min-height: auto;
-
-    overflow: visible;
-  }
-
   .conversation-list {
     height: 300px;
   }
 
   .conversation-detail {
-    height: 450px;
-
-    min-height: 450px;
+    height: 460px;
   }
 
   .support-card {
-    height: 560px;
+    height: auto;
+
+    min-height: 480px;
   }
 
 }
@@ -1982,11 +2175,11 @@
   }
 
   .nfd-page-title {
-    font-size: 23px;
+    font-size: 25px;
   }
 
   .nfd-page-sub {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .conversation-list {
@@ -1995,8 +2188,6 @@
 
   .conversation-detail {
     height: 430px;
-
-    min-height: 430px;
   }
 
   .message-bubble {
@@ -2004,4 +2195,5 @@
   }
 
 }
+
 </style>

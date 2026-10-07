@@ -3,22 +3,34 @@
   <!-- ========================================================= 
        TOAST / SUCCESS MESSAGE 
        ========================================================= --> 
+ 
   @if (showSuccessToast()) { 
+ 
     <div class="toast-success"> 
+ 
       <!-- <span class="toast-icon">✅</span> --> 
+ 
       {{ successMessage() }} 
+ 
     </div> 
+ 
   } 
+ 
+ 
+ 
  
  
   <!-- ========================================================= 
        HEADER 
        ========================================================= --> 
+ 
   <div class="page-header"> 
  
     <div> 
  
-      <h2 class="nfd-page-title">الإنجازات والشهادات</h2> 
+      <h2 class="nfd-page-title"> 
+        الإنجازات والشهادات 
+      </h2> 
  
       <p class="nfd-page-sub"> 
         تابع تقدمك، إنجازاتك وشهاداتك التدريبية 
@@ -27,9 +39,13 @@
     </div> 
  
  
+ 
+ 
+ 
     <div class="achievement-summary"> 
  
       <!-- نسبة الإكمال --> 
+ 
       <div class="summary-item"> 
  
         <div class="summary-icon progress-icon"> 
@@ -38,7 +54,9 @@
  
         <div> 
  
-          <span>إكمال البرنامج</span> 
+          <span> 
+            إكمال البرنامج 
+          </span> 
  
           <strong> 
             {{ progressPercentage() }}% 
@@ -49,7 +67,11 @@
       </div> 
  
  
+ 
+ 
+ 
       <!-- الأوسمة --> 
+ 
       <div class="summary-item"> 
  
         <div class="summary-icon badge-icon"> 
@@ -58,7 +80,9 @@
  
         <div> 
  
-          <span>الأوسمة</span> 
+          <span> 
+            الأوسمة 
+          </span> 
  
           <strong> 
             {{ earnedBadgesCount() }} 
@@ -74,9 +98,14 @@
  
  
  
+ 
+ 
+ 
+ 
   <!-- ========================================================= 
-        FEEDBACK 
-        ========================================================= --> 
+       FEEDBACK 
+       ========================================================= --> 
+ 
   <div class="feedback-strip"> 
  
     <div class="feedback-info"> 
@@ -87,7 +116,9 @@
  
       <div> 
  
-        <strong>شاركنا تجربتك</strong> 
+        <strong> 
+          شاركنا تجربتك 
+        </strong> 
  
         <small> 
           أكملت وحدة مؤخراً؟ نود معرفة رأيك 
@@ -98,6 +129,9 @@
     </div> 
  
  
+ 
+ 
+ 
     <div class="feedback-buttons"> 
  
       <button 
@@ -105,9 +139,13 @@
         (click)="openFeedback('TrainerRating')"> 
  
         <i class="fas fa-star"></i> 
+ 
         تقييم المدرب 
  
       </button> 
+ 
+ 
+ 
  
  
       <button 
@@ -115,6 +153,7 @@
         (click)="openFeedback('BatchExperienceRating')"> 
  
         <i class="fas fa-chart-bar"></i> 
+ 
         تقييم البرنامج التدريبي 
  
       </button> 
@@ -125,15 +164,24 @@
  
  
  
+ 
+ 
+ 
+ 
   <!-- ========================================================= 
-        MAIN CONTENT 
-        ========================================================= --> 
+       MAIN CONTENT 
+       ========================================================= --> 
+ 
   <div class="main-grid"> 
  
  
+ 
+ 
+ 
     <!-- ======================================================= 
-          PROGRESS 
-          ======================================================= --> 
+         PROGRESS 
+         ======================================================= --> 
+ 
     <div class="nfd-card progress-card"> 
  
       <div class="card-header"> 
@@ -141,8 +189,11 @@
         <div> 
  
           <h3> 
+ 
             <i class="fas fa-book-open"></i> 
+ 
             تقدم البرنامج 
+ 
           </h3> 
  
           <span> 
@@ -155,14 +206,24 @@
  
  
  
+ 
+ 
+ 
+ 
       <!-- Modules --> 
+ 
       <div class="modules-list"> 
  
         @for (module of displayModules(); track module.moduleId) { 
  
           @let progress = module.progress; 
+ 
           @let status = module.status; 
+ 
           @let title = module.title; 
+ 
+ 
+ 
  
  
           <div class="module-row"> 
@@ -198,6 +259,10 @@
  
  
  
+ 
+ 
+ 
+ 
             <div class="module-progress"> 
  
               <div class="module-track"> 
@@ -219,6 +284,9 @@
           </div> 
  
         } 
+ 
+ 
+ 
  
  
         @empty { 
@@ -243,9 +311,14 @@
  
  
  
+ 
+ 
+ 
+ 
     <!-- ======================================================= 
-          BADGES 
-          ======================================================= --> 
+         BADGES 
+         ======================================================= --> 
+ 
     <div class="nfd-card badges-card"> 
  
       <div class="card-header"> 
@@ -253,8 +326,11 @@
         <div> 
  
           <h3> 
+ 
             <i class="fas fa-award"></i> 
+ 
             الأوسمة والإنجازات 
+ 
           </h3> 
  
           <span> 
@@ -262,6 +338,9 @@
           </span> 
  
         </div> 
+ 
+ 
+ 
  
  
         <div class="badge-counter"> 
@@ -272,11 +351,18 @@
  
  
  
+ 
+ 
+ 
+ 
       <div class="badges-grid"> 
  
         @for (badge of allBadges(); track badge.badgeId) { 
  
           @let earned = isEarned(badge.badgeId); 
+ 
+ 
+ 
  
  
           <div 
@@ -297,6 +383,9 @@
               } 
  
  
+ 
+ 
+ 
               @if (earned) { 
  
                 <span class="earned-check"> 
@@ -308,9 +397,15 @@
             </div> 
  
  
+ 
+ 
+ 
             <strong> 
               {{ badge.name }} 
             </strong> 
+ 
+ 
+ 
  
  
             <small> 
@@ -318,11 +413,15 @@
             </small> 
  
  
+ 
+ 
+ 
             @if (earned) { 
  
               <span class="badge-status earned-status"> 
  
                 <i class="fas fa-check-circle"></i> 
+ 
                 محقق 
  
               </span> 
@@ -332,6 +431,7 @@
               <span class="badge-status locked-status"> 
  
                 <i class="fas fa-lock"></i> 
+ 
                 غير محقق 
  
               </span> 
@@ -341,6 +441,9 @@
           </div> 
  
         } 
+ 
+ 
+ 
  
  
         @empty { 
@@ -367,9 +470,14 @@
  
  
  
+ 
+ 
+ 
+ 
   <!-- ========================================================= 
-        CERTIFICATE 
-        ========================================================= --> 
+       CERTIFICATE 
+       ========================================================= --> 
+ 
   <div class="certificate-card nfd-card"> 
  
     <div class="certificate-info"> 
@@ -383,6 +491,9 @@
         </div> 
  
  
+ 
+ 
+ 
         <div> 
  
           <h3> 
@@ -390,21 +501,27 @@
           </h3> 
  
  
+ 
+ 
+ 
           <p> 
  
             @if (progressPercentage() >= 85 && certificates().length > 0) { 
  
               <i class="fas fa-graduation-cap"></i> 
+ 
               🎉 أصبحت الشهادة متاحة للتحميل 
  
-            } @else if (progressPercentage() >= 85 && certificates().length === 0) { 
+            } @else if (progressPercentage() >= 16 && certificates().length === 0) { 
  
               <i class="fas fa-spinner fa-pulse"></i> 
+ 
               ⏳ جاري تجهيز الشهادة... 
  
             } @else { 
  
               <i class="fas fa-hourglass-half"></i> 
+ 
               أكمل 85% من البرنامج للحصول على الشهادة 
  
             } 
@@ -417,6 +534,10 @@
  
  
  
+ 
+ 
+ 
+ 
       <div class="certificate-status"> 
  
         @if (progressPercentage() >= 85 && certificates().length > 0) { 
@@ -424,6 +545,7 @@
           <span class="available"> 
  
             <i class="fas fa-check-circle"></i> 
+ 
             متاحة للتحميل 
  
           </span> 
@@ -433,6 +555,7 @@
           <span class="pending"> 
  
             <i class="fas fa-clock"></i> 
+ 
             {{ progressPercentage() }}% مكتمل 
  
           </span> 
@@ -445,14 +568,22 @@
  
  
  
+ 
+ 
+ 
+ 
     <!-- ========================================================== 
          معاينة الشهادة - كل النصوص في المنتصف 
          ========================================================== --> 
+ 
     <div class="certificate-preview"> 
  
       <div class="certificate-brand"> 
         NAFADH 
       </div> 
+ 
+ 
+ 
  
  
       <div class="certificate-text"> 
@@ -462,9 +593,15 @@
         </span> 
  
  
+ 
+ 
+ 
         <strong> 
           {{ traineeName() }} 
         </strong> 
+ 
+ 
+ 
  
  
         <small> 
@@ -477,6 +614,10 @@
  
  
  
+ 
+ 
+ 
+ 
     <button 
       class="download-btn" 
       [class.enabled]="canDownloadCertificate()" 
@@ -486,15 +627,21 @@
       @if (canDownloadCertificate()) { 
  
         <span> 
+ 
           <i class="fas fa-download"></i> 
+ 
           تنزيل الشهادة 
+ 
         </span> 
  
       } @else { 
  
         <span> 
+ 
           <i class="fas fa-lock"></i> 
+ 
           الشهادة غير متاحة بعد 
+ 
         </span> 
  
       } 
@@ -505,9 +652,14 @@
  
  
  
+ 
+ 
+ 
+ 
   <!-- ========================================================= 
-        FEEDBACK MODAL 
-        ========================================================= --> 
+       FEEDBACK MODAL 
+       ========================================================= --> 
+ 
   @if (showFeedback()) { 
  
     <div 
@@ -519,6 +671,9 @@
         (click)="$event.stopPropagation()"> 
  
  
+ 
+ 
+ 
         <div class="modal-header"> 
  
           <div> 
@@ -528,11 +683,13 @@
               @if (feedbackType() === 'TrainerRating') { 
  
                 <i class="fas fa-star"></i> 
+ 
                 تقييم المدرب 
  
               } @else { 
  
                 <i class="fas fa-chart-pie"></i> 
+ 
                 تقييم البرنامج التدريبي 
  
               } 
@@ -540,11 +697,17 @@
             </h3> 
  
  
+ 
+ 
+ 
             <p> 
               ساعدنا في تحسين تجربتك التدريبية 
             </p> 
  
           </div> 
+ 
+ 
+ 
  
  
           <button 
@@ -559,7 +722,14 @@
  
  
  
+ 
+ 
+ 
+ 
         @if (feedbackType() === 'TrainerRating') { 
+ 
+ 
+ 
  
  
           <!-- اختيار نوع التقييم --> 
@@ -570,6 +740,9 @@
             gap: 8px; 
             margin-bottom: 15px; 
           "> 
+ 
+ 
+ 
  
  
             <button 
@@ -600,6 +773,10 @@
               تقييم أسبوعي 
  
             </button> 
+ 
+ 
+ 
+ 
  
  
  
@@ -636,6 +813,10 @@
  
  
  
+ 
+ 
+ 
+ 
           <!-- اختيار الكورس --> 
  
           <label class="comment-label"> 
@@ -645,6 +826,9 @@
             اختيار الكورس 
  
           </label> 
+ 
+ 
+ 
  
  
           <select 
@@ -668,6 +852,9 @@
             </option> 
  
  
+ 
+ 
+ 
             @for (module of modules(); track module.moduleId) { 
  
               <option [ngValue]="module.moduleId"> 
@@ -677,6 +864,10 @@
             } 
  
           </select> 
+ 
+ 
+ 
+ 
  
  
  
@@ -691,9 +882,12 @@
           </label> 
  
  
+ 
+ 
+ 
           <select 
             [ngModel]="selectedTrainerId()" 
-            disabled
+            (ngModelChange)="onTrainerSelected($event ? +$event : null)" 
             style=" 
               width: 100%; 
               box-sizing: border-box; 
@@ -703,14 +897,17 @@
               font-family: inherit; 
               font-size: 11px; 
               outline: none; 
-              background: #f8fafc; 
+              background: #fff; 
               margin-bottom: 15px; 
-              color: #64748b;
+              color: #64748b; 
             "> 
  
             <option [ngValue]="null"> 
               اختر المدرب 
             </option> 
+ 
+ 
+ 
  
  
             @for (trainer of trainers(); track getTrainerId(trainer)) { 
@@ -722,6 +919,10 @@
             } 
  
           </select> 
+ 
+ 
+ 
+ 
  
  
  
@@ -741,7 +942,7 @@
  
             @if (evaluationPeriod() === 'Weekly') { 
  
-              التقييم الأسبوعي متاح للإرسال يوم الجمعة فقط. 
+           التقييم الأسبوعي متاح مرة واحدة أسبوعيا. 
  
             } @else { 
  
@@ -750,6 +951,10 @@
             } 
  
           </div> 
+ 
+ 
+ 
+ 
  
  
  
@@ -762,6 +967,9 @@
               <label> 
                 {{ c.name }} 
               </label> 
+ 
+ 
+ 
  
  
               <textarea 
@@ -777,12 +985,39 @@
  
  
  
+ 
+ 
         } @else { 
+ 
+ 
+ 
  
  
           <!-- ===================================================== 
                تقييم البرنامج التدريبي 
                ===================================================== --> 
+ 
+          @if (progressPercentage() < 100) {
+
+            <div style=" 
+              background: #f0fdfa; 
+              border: 1px solid #ccfbf1; 
+              border-radius: 8px; 
+              padding: 9px 10px; 
+              margin-bottom: 14px; 
+              font-size: 10px; 
+              color: #0f766e; 
+            "> 
+
+              <i class="fas fa-info-circle"></i> 
+
+              متاح عند اكتمال البرنامج التدريبي بنسبة 100%.
+
+            </div>
+
+          }
+
+ 
  
           @for (c of criteria(); track c.criterionId) { 
  
@@ -791,6 +1026,9 @@
               <label> 
                 {{ c.name }} 
               </label> 
+ 
+ 
+ 
  
  
               <textarea 
@@ -806,11 +1044,20 @@
  
  
  
+ 
+ 
         } 
  
  
  
+ 
+ 
+ 
+ 
         <div class="modal-actions"> 
+ 
+ 
+ 
  
  
           <button 
@@ -823,6 +1070,10 @@
             إلغاء 
  
           </button> 
+ 
+ 
+ 
+ 
  
  
  
@@ -848,6 +1099,9 @@
           </button> 
  
         </div> 
+ 
+ 
+ 
  
  
       </div> 
