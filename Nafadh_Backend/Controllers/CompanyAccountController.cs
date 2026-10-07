@@ -260,7 +260,7 @@ namespace Nafadh_Backend.Controllers
 
                     page.DefaultTextStyle(
                         x => x
-                            .FontFamily("Arial")
+                            .FontFamily("Lato")
                             .FontSize(10)
                             .FontColor("#1F2937")
                     );
@@ -284,7 +284,7 @@ namespace Nafadh_Backend.Controllers
                                             col.Item()
                                                 .AlignRight()
                                                 .Text("NAFADH")
-                                                .FontFamily("Arial")
+                                                .FontFamily("Lato")
                                                 .FontSize(12)
                                                 .Bold()
                                                 .FontColor(Colors.White);
