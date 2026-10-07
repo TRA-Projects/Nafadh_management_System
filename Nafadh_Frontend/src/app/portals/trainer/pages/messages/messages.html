@@ -72,7 +72,18 @@
         <span class="search-icon">
           ⌕
         </span>
+<select
+  class="batch-filter"
+  [(ngModel)]="selectedBatchName"
+>
+  <option value="">كل الدفعات</option>
 
+  @for (batch of batchNames; track batch) {
+    <option [value]="batch">
+      {{ batch }}
+    </option>
+  }
+</select>
         <input
           type="text"
           placeholder="ابحث عن متدرب..."
@@ -369,8 +380,9 @@
           <input
             type="text"
             [(ngModel)]="messageText"
+          (keydown.enter)="$event.preventDefault(); sendMessage()"
             placeholder="اكتب رسالتك هنا..."
-            (keydown.enter)="sendMessage()"
+            
           />
 
           <button
