@@ -317,45 +317,8 @@ certificateFileInput: HTMLInputElement | null = null;
 
 
 
-  submitCertificate(): void {
-    if (!this.certificateForm.certificateName.trim() || !this.certificateForm.issuingOrganization.trim()) {
-      this.showError('يرجى تعبئة اسم الشهادة والجهة المانحة.');
-      return;
-    }
 
-
-    const currentFile = this.selectedCertificateFile;
-    if (!currentFile) {
-      this.showError('يرجى إرفاق ملف الشهادة.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const newCert = {
-        id: Date.now(),
-        certificateName: this.certificateForm.certificateName,
-        issuingOrganization: this.certificateForm.issuingOrganization,
-        issueDate: this.certificateForm.issueDate,
-        // استخدام currentFile المضمون وجوده بدلاً من this
-        certificateUrl: URL.createObjectURL(currentFile)
-      };
-
-      this.certificates.update(list => {
-        const updatedList = [...list, newCert];
-        this.saveCertificatesToStorage(updatedList);
-        return updatedList;
-      });
-
-      this.closeCertificateForm();
-      if (typeof this.markProfileChanged === 'function') {
-        this.markProfileChanged();
-      }
-    };
-
-    reader.readAsDataURL(currentFile);
-  }
-
+  
   removeCertificate(id: number): void {
     this.certificates.update(list => {
       const updatedList = list.filter(c => c.id !== id);
