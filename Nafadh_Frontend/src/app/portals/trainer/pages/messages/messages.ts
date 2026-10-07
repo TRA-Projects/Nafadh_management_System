@@ -340,29 +340,35 @@ export class TrainerMessages implements OnInit {
   // FORMAT DATE
   // =====================================================
 
-  private formatMessageTime(
-    dateValue: string | Date | undefined
-  ): string {
+private formatMessageTime(
+  dateValue: string | Date | undefined
+): string {
 
-    if (!dateValue) {
-      return '';
-    }
-
-    const date = new Date(dateValue);
-
-    if (Number.isNaN(date.getTime())) {
-      return '';
-    }
-
-    return new Intl.DateTimeFormat(
-      'ar-OM',
-      {
-        hour: 'numeric',
-        minute: '2-digit'
-      }
-    ).format(date);
+  if (!dateValue) {
+    return '';
   }
 
+  const date =
+    typeof dateValue === 'string'
+      ? new Date(
+          /[zZ]|[+-]\d{2}:\d{2}$/.test(dateValue)
+            ? dateValue
+            : `${dateValue}Z`
+        )
+      : dateValue;
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return new Intl.DateTimeFormat(
+    'ar-OM',
+    {
+      hour: 'numeric',
+      minute: '2-digit'
+    }
+  ).format(date);
+}
   // =====================================================
   // SEARCH
   // =====================================================
