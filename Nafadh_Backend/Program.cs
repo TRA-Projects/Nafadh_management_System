@@ -1,19 +1,20 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
+using Nafadh_Backend; // ✅ صحيح.Core.Interfaces;
 using Nafadh_Backend.Filters;
 using Nafadh_Backend.Interfaces;
 using Nafadh_Backend.Repositories;
 using Nafadh_Backend.Services;
+using Nafadh_Backend.Settings;
+using QuestPDF.Infrastructure;
 using System.Security.Claims;
 using System.Text;
-using QuestPDF.Infrastructure;
-using Nafadh_Backend.Settings;
 
 namespace Nafadh_Backend
 {
@@ -198,6 +199,9 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ICompanyPaymentService, CompanyPaymentService>();
             builder.Services.AddScoped<ICompanyPaymentScheduleRepository, CompanyPaymentScheduleRepository>();
             builder.Services.AddScoped<ICompanyPaymentScheduleService, CompanyPaymentScheduleService>();
+            //change by admin team
+            builder.Services.AddScoped<IRemediationRepository, RemediationRepository>();
+            builder.Services.AddScoped<IRemediationService, RemediationService>();
 
             // ── NEW registrations (backend upgrade - Phase 2 Contract Alignment) ──
             builder.Services.AddScoped<IConversationRepository, ConversationRepository>();

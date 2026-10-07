@@ -49,5 +49,6 @@ namespace Nafadh_Backend.Models
         // NEW: company-scoped Warnings (Scope == Company) — see NFD_Warning.
         public ICollection<NFD_Warning> Warnings { get; set; } = new List<NFD_Warning>();
 
+        public string? RejectionReason { get; set; }
     }
 }

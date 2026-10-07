@@ -22,22 +22,19 @@ export interface TraineeCertificateStatusDto {
 @Injectable({ providedIn: 'root' })
 export class AdminApi {
   private base = environment.apiBaseUrl;
-  
 
   constructor(private http: HttpClient) {}
 
-  // ---- Helper Method: تنظيف وتقليم المعرفات لمنع أخطاء الـ URL (مثل 16:1) ----
+  // ---- Helper Method: تنظيف وتقليم المعرفات لمنع أخطاء الـ URL ----
   private sanitizeId(id: any): number {
     if (id === null || id === undefined) return 0;
-    // أخذ الجزء الأول قبل النقطتين : وتحويله لرقم صحسح
     const cleanStr = String(id).split(':')[0].trim();
     const parsed = parseInt(cleanStr, 10);
     return isNaN(parsed) ? 0 : parsed;
   }
 
   // ---- Dashboard ----
-
-   getAdminDashboardSummary(): Observable<any> {
+  getAdminDashboardSummary(): Observable<any> {
     return this.http.get<any>(`${this.base}/AdminDashboard`);
   }
   getDashboardCharts(): Observable<DashboardChartsDto> {
@@ -52,7 +49,6 @@ export class AdminApi {
       for (const k of Object.keys(params)) {
         const v = params[k];
         if (v !== undefined && v !== null && v !== '') {
-          // تنظيف batchId بشكل خاص إذا كان موجوداً ضمن المتغيرات
           const cleanValue = k.toLowerCase().includes('id') ? this.sanitizeId(v) : String(v);
           httpParams = httpParams.set(k, String(cleanValue));
         }
@@ -60,26 +56,29 @@ export class AdminApi {
     }
     return this.http.get<{ items: TraineeListItemDto[]; totalCount: number }>(`${this.base}/Trainee`, { params: httpParams });
   }
-  getCompanies(): Observable<CompanyDto[]> {
-    return this.http.get<CompanyDto[]>(`${this.base}/Company`);
-  }
+getCompanies(search?: string, city?: string, workField?: string): Observable<CompanyDto[]> {
+  let params = new HttpParams();
+  if (search) params = params.set('search', search);
+  if (city && city !== 'ALL') params = params.set('city', city);
+  if (workField && workField !== 'ALL') params = params.set('workField', workField);
+
+  return this.http.get<CompanyDto[]>(`${this.base}/Company`, { params });
+}
   getBatches(): Observable<BatchDto[]> {
     return this.http.get<BatchDto[]>(`${this.base}/Batch`);
   }
 
   // ---- Users & Permissions ----
-  // في ملف admin-api.ts
-getUsers(): Observable<UserResponseDto[]> {
-  // إرسال pageSize كبرامتر لجلب عدد كبير جداً من الأسماء دفعة واحدة
-  return this.http.get<any>(`${this.base}/User`, {
-    params: { page: 1, pageSize: 10000 }
-  }).pipe(
-    map(res => {
-      if (Array.isArray(res)) return res;
-      return res?.items || res?.data || res?.results || [];
-    })
-  );
-}
+  getUsers(): Observable<UserResponseDto[]> {
+    return this.http.get<any>(`${this.base}/User`, {
+      params: { page: 1, pageSize: 10000 }
+    }).pipe(
+      map(res => {
+        if (Array.isArray(res)) return res;
+        return res?.items || res?.data || res?.results || [];
+      })
+    );
+  }
   getRoles(): Observable<RoleDto[]> {
     return this.http.get<RoleDto[]>(`${this.base}/Role`);
   }
@@ -107,74 +106,46 @@ getUsers(): Observable<UserResponseDto[]> {
     return this.http.get<EvaluationDto[]>(`${this.base}/Evaluation/enrollment/${this.sanitizeId(enrollmentId)}`);
   }
 
-  /**
-   * جلب تسجيلات (Enrollments) متدرب معيّن — يُستخدم لاستخراج enrollmentId
-   * الفعلي عند فتح ملف المتدرب (بدل الاعتماد فقط على الحقل المرجع من Trainee/{id}).
-   */
   getEnrollmentsByTrainee(traineeId: number): Observable<any[]> {
     const cleanId = this.sanitizeId(traineeId);
     return this.http.get<any[]>(`${this.base}/Enrollment/trainee/${cleanId}`);
   }
 
-  /**
-   * نسبة إنجاز المتدرب الإجمالية في التدريب (بناءً على وحدات/موديولات البرنامج)
-   */
   getTraineeProgressPercentage(traineeId: number): Observable<{ traineeId: number; percentage: number }> {
     const cleanId = this.sanitizeId(traineeId);
     return this.http.get<{ traineeId: number; percentage: number }>(`${this.base}/TraineeModuleProgress/trainee/${cleanId}/percentage`);
   }
 
-  /**
-   * وحدات (Modules) برنامج تدريبي معيّن، مرتبة حسب OrderIndex — تُستخدم
-   * لعرض "فترات/مراحل التدريب" الحقيقية في ملف المتدرب.
-   */
   getModulesByProgram(programId: number): Observable<ModuleDto[]> {
     const cleanId = this.sanitizeId(programId);
     return this.http.get<ModuleDto[]>(`${this.base}/Module/program/${cleanId}`);
   }
 
-  /**
-   * حالة تقدّم المتدرب في كل وحدة (مكتملة / قيد التنفيذ / لم تبدأ)
-   */
   getTraineeModuleProgress(traineeId: number): Observable<any[]> {
     const cleanId = this.sanitizeId(traineeId);
     return this.http.get<any[]>(`${this.base}/TraineeModuleProgress/trainee/${cleanId}`);
   }
 
-// ---- Attendance & Evaluation Real Endpoints ----
-
-  /**
-   * جلب سجلات الحضور اليومية برقم التسجيل (Enrollment ID)
-   */
+  // ---- Attendance & Evaluation Real Endpoints ----
   getDailyAttendanceByEnrollment(enrollmentId: number): Observable<any[]> {
     const cleanId = this.sanitizeId(enrollmentId);
     return this.http.get<any[]>(`${this.base}/DailyAttendance/enrollment/${cleanId}`);
   }
 
-  /**
-   * جلب حضور الجلسات برقم المتدرب (Trainee ID)
-   */
   getSessionAttendanceByTrainee(traineeId: number): Observable<any[]> {
     const cleanId = this.sanitizeId(traineeId);
     return this.http.get<any[]>(`${this.base}/SessionAttendance/trainee/${cleanId}`);
   }
 
-  /**
-   * جلب تقييمات المتدرب برقم التسجيل (Enrollment ID)
-   */
   getEvaluationsByEnrollment(enrollmentId: number): Observable<any[]> {
     const cleanId = this.sanitizeId(enrollmentId);
     return this.http.get<any[]>(`${this.base}/Evaluation/enrollment/${cleanId}`);
   }
-  // =========================================================
-// Attendance
-// =========================================================
 
-getAttendance(enrollmentId: number): Observable<any[]> {
-  const cleanId = this.sanitizeId(enrollmentId);
-  return this.http.get<any[]>(`${this.base}/DailyAttendance/enrollment/${cleanId}`);
-}
-
+  getAttendance(enrollmentId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(enrollmentId);
+    return this.http.get<any[]>(`${this.base}/DailyAttendance/enrollment/${cleanId}`);
+  }
 
   // ---- Certificates Special Endpoint ----
   getTraineesForCertificates(params?: Record<string, unknown>): Observable<{ items: TraineeListItemDto[]; totalCount: number }> {
@@ -191,7 +162,6 @@ getAttendance(enrollmentId: number): Observable<any[]> {
     return this.http.get<{ items: TraineeListItemDto[]; totalCount: number }>(`${this.base}/Trainee/certificates-dashboard`, { params: httpParams });
   }
 
-  
   // ---- Companies ----
   getCompany(id: number): Observable<CompanyDto> { return this.http.get<CompanyDto>(`${this.base}/Company/${this.sanitizeId(id)}`); }
   createCompany(dto: unknown) { return this.http.post(`${this.base}/Company`, dto); }
@@ -199,20 +169,17 @@ getAttendance(enrollmentId: number): Observable<any[]> {
   approveCompany(id: number) { return this.http.put(`${this.base}/Company/${this.sanitizeId(id)}/approve`, {}); }
   suspendCompany(id: number) { return this.http.put(`${this.base}/Company/${this.sanitizeId(id)}/suspend`, {}); }
 
-  
-
   // ---- Programs & Batches ----
   createBatch(dto: unknown) { return this.http.post(`${this.base}/Batch`, dto); }
   updateBatch(id: number, dto: unknown) { return this.http.put(`${this.base}/Batch/${this.sanitizeId(id)}`, dto); }
   getPrograms(): Observable<ProgramDto[]> { return this.http.get<ProgramDto[]>(`${this.base}/Program`); }
   createProgram(dto: unknown) { return this.http.post(`${this.base}/Program`, dto); }
-  
-// ---- Trainers ----
+
+  // ---- Trainers ----
   getTrainers(params?: any): Observable<any> {
-    return this.http.get(`${this.base}/Trainer`, {
-      params: params
-    });
+    return this.http.get(`${this.base}/Trainer`, { params: params });
   }
+
   // ---- Tracks ----
   getTracks(): Observable<any[]> {
     return this.http.get<any[]>(`${this.base}/Track`);
@@ -231,10 +198,8 @@ getAttendance(enrollmentId: number): Observable<any[]> {
   updateCertificateStatus(enrollmentId: any, isIssued: boolean) {
     const cleanId = this.sanitizeId(enrollmentId);
     return this.http.patch(`${this.base}/Certificate/enrollment/${cleanId}/status`, { isIssued });
-  } 
-  
-  
-  // ---- Certificates (معدلة للحماية من أخطاء الـ 404) ----
+  }
+
   issueCertificate(dto: unknown) {
     return this.http.post(`${this.base}/Certificate`, dto);
   }
@@ -255,16 +220,39 @@ getAttendance(enrollmentId: number): Observable<any[]> {
   }
 
   // ---- Warnings ----
-  getWarnings(params: Record<string, unknown>): Observable<WarningDto[]> {
+  getWarnings(params?: Record<string, unknown>): Observable<WarningDto[]> {
     let httpParams = new HttpParams();
-    for (const k of Object.keys(params)) {
-      const v = params[k];
-      if (v !== undefined && v !== null && v !== '') httpParams = httpParams.set(k, String(v));
+    if (params) {
+      for (const k of Object.keys(params)) {
+        const v = params[k];
+        if (v !== undefined && v !== null && v !== '') httpParams = httpParams.set(k, String(v));
+      }
     }
     return this.http.get<WarningDto[]>(`${this.base}/Warning`, { params: httpParams });
   }
   createWarning(dto: unknown) { return this.http.post(`${this.base}/Warning`, dto); }
   resolveWarning(id: number, dto: unknown) { return this.http.put(`${this.base}/Warning/${this.sanitizeId(id)}/resolve`, dto); }
+
+  // ---- Remediation Requests (طلبات معالجة وتصحيح الإنذارات) ----
+  getRemediationRequests(params?: { searchTerm?: string; status?: number }): Observable<any[]> {
+    let httpParams = new HttpParams();
+    if (params?.searchTerm) httpParams = httpParams.set('searchTerm', params.searchTerm);
+    if (params?.status !== undefined && params?.status !== null) httpParams = httpParams.set('status', params.status.toString());
+
+    return this.http.get<any[]>(`${this.base}/admin/remediation-requests`, { params: httpParams });
+  }
+
+  getRemediationRequestById(id: number): Observable<any> {
+    return this.http.get<any>(`${this.base}/admin/remediation-requests/${this.sanitizeId(id)}`);
+  }
+
+  createRemediationRequest(dto: any): Observable<any> {
+    return this.http.post<any>(`${this.base}/admin/remediation-requests`, dto);
+  }
+
+  reviewRemediationRequest(id: number, dto: { status: number; reviewNotes?: string; reviewedByUserId: number }): Observable<any> {
+    return this.http.put<any>(`${this.base}/admin/remediation-requests/${this.sanitizeId(id)}/review`, dto);
+  }
 
   // ---- Communications hub ----
   getConversations(type: string): Observable<ConversationListItemDto[]> {
@@ -278,19 +266,15 @@ getAttendance(enrollmentId: number): Observable<any[]> {
   }
 
   // ---- Reports ----
-getBatchPerformanceReport(
-  batchId: number,
-  pageNumber: number = 1,
-  pageSize: number = 15
-): Observable<BatchPerformanceReportDto> {
-  const params = new HttpParams()
-    .set('pageNumber', String(pageNumber))
-    .set('pageSize', String(pageSize));
-  return this.http.get<BatchPerformanceReportDto>(
-    `${this.base}/Report/batch-performance/${this.sanitizeId(batchId)}`,
-    { params }
-  );
-}
+  getBatchPerformanceReport(batchId: number, pageNumber: number = 1, pageSize: number = 15): Observable<BatchPerformanceReportDto> {
+    const params = new HttpParams()
+      .set('pageNumber', String(pageNumber))
+      .set('pageSize', String(pageSize));
+    return this.http.get<BatchPerformanceReportDto>(
+      `${this.base}/Report/batch-performance/${this.sanitizeId(batchId)}`,
+      { params }
+    );
+  }
   getEvaluationBucketRollup(enrollmentId: number): Observable<EvaluationBucketRollupDto> {
     return this.http.get<EvaluationBucketRollupDto>(`${this.base}/Evaluation/enrollment/${this.sanitizeId(enrollmentId)}/by-bucket`);
   }
@@ -306,7 +290,7 @@ getBatchPerformanceReport(
   // ---- Audit ----
   getAuditLog(): Observable<AuditLogDto[]> { return this.http.get<AuditLogDto[]>(`${this.base}/AuditLog`); }
 
-// ---- Badges ----
+  // ---- Badges ----
   getAllBadges() { return this.http.get<unknown[]>(`${this.base}/Badge`); }
 
   // ---- Announcements ----

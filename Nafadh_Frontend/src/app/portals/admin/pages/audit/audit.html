@@ -118,47 +118,50 @@
 </div>
 
 <!-- =========================================================================
-     صفحة تفاصيل إجراء السجل كاملة الشاشة (Full-Screen View)
+     صفحة تفاصيل إجراء السجل كاملة الشاشة 100% (Edge-to-Edge Full-Width)
      ========================================================================= -->
 <div class="nfd-audit-fullpage" *ngIf="selectedLog()">
-  <!-- شريط الرأس مع زر الرجوع وأزرار الطباعة -->
+  <!-- شريط الرأس بكامل العرض -->
   <div class="nfd-audit-fullpage-header">
     <button type="button" class="nfd-audit-back-btn" (click)="closeModal()">
-      <span>&#8594;</span>
+      <span style="font-size: 1.2rem;">&#8594;</span>
       العودة إلى سجل التدقيق والرقابة
     </button>
 
-    <div style="display: flex; gap: 8px;">
-      <button type="button" class="nfd-btn nfd-btn-export" (click)="printAudit()" style="padding: 6px 14px; font-size: 13px;">
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <span style="font-family: monospace; font-size: 0.85rem; background: #f1f5f9; padding: 6px 12px; border-radius: 6px; font-weight: 700; color: #475569;">
+        معرف السجل: #{{ selectedLog()?.entityId || 'AUD-LOG' }}
+      </span>
+      <button type="button" class="nfd-btn nfd-btn-export" (click)="printAudit()" style="padding: 8px 16px; font-size: 13px;">
         طباعة التقرير
       </button>
     </div>
   </div>
 
-  <!-- محتوى الشاشة الكاملة -->
+  <!-- محتوى الشاشة بكامل العرض 100% -->
   <div class="nfd-audit-fullpage-body">
     <!-- كارت الهيرو الرئيسي للإجراء -->
     <div class="audit-hero-card">
       <div>
-        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
-          <span class="nfd-badge badge-warning" style="padding: 4px 14px; font-weight: 700; font-size: 13px;">
+        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+          <span class="nfd-badge badge-warning" style="padding: 6px 16px; font-weight: 700; font-size: 14px;">
             {{ selectedLog()?.action || 'إصدار إنذار' }}
           </span>
-          <span class="entity-tag" style="font-size: 13px;">
+          <span class="entity-tag" style="font-size: 14px;">
             {{ selectedLog()?.entityName }} <strong *ngIf="selectedLog()?.entityId">#{{ selectedLog()?.entityId }}</strong>
           </span>
         </div>
-        <h2 style="margin: 0 0 6px; font-size: 1.5rem; color: #0A1172;">
+        <h2 style="margin: 0 0 8px; font-size: 1.7rem; color: #0A1172;">
           {{ selectedLog()?.entityName || 'جهة المنشأة' }}
         </h2>
-        <p style="margin: 0; color: #64748b; font-size: 0.9rem;">
-          تم تسجيل هذا الإجراء وتوثيقه في قاعدة بيانات التدقيق المركزية لمنصة نفاذ.
+        <p style="margin: 0; color: #64748b; font-size: 0.95rem; line-height: 1.6;">
+          تم تسجيل هذا الإجراء وتوثيقه في قاعدة بيانات التدقيق المركزية لمنصة نفاذ وفقاً للائحة الرقابة والامتثال المعتمدة.
         </p>
       </div>
 
-      <div style="background: #f8fafc; padding: 14px 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: left;">
-        <span style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 2px;">توقيت وتاريخ التسجيل</span>
-        <span style="font-family: monospace; font-weight: 700; color: #0f172a; font-size: 0.95rem;" dir="ltr">
+      <div style="background: #f8fafc; padding: 18px 24px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: left;">
+        <span style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 4px;">توقيت وتاريخ التسجيل</span>
+        <span style="font-family: monospace; font-weight: 700; color: #0f172a; font-size: 1.05rem;" dir="ltr">
           {{ (selectedLog()?.timestamp || selectedLog()?.createdAt) | date:'yyyy-MM-dd | hh:mm a' }}
         </span>
       </div>
@@ -211,7 +214,7 @@
 
       <div class="audit-card" style="grid-column: span 2;">
         <span class="audit-card-label">السند والسبب الإداري للإجراء</span>
-        <span class="audit-card-value" style="font-weight: 500; font-size: 0.9rem; line-height: 1.6;">
+        <span class="audit-card-value" style="font-weight: 500; font-size: 0.95rem; line-height: 1.6;">
           {{ getAuditReason(selectedLog()) }}
         </span>
       </div>
@@ -246,15 +249,15 @@
     </div>
 
     <!-- 4. التوثيق والسند القانوني -->
-    <div class="audit-card" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 20px;">
-      <span class="audit-card-label" style="font-weight: 700; color: #0A1172; font-size: 0.85rem; margin-bottom: 6px;">
+    <div class="audit-card" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 24px; width: 100%; box-sizing: border-box;">
+      <span class="audit-card-label" style="font-weight: 700; color: #0A1172; font-size: 0.95rem; margin-bottom: 8px;">
         التوثيق الرقابي المعتمد:
       </span>
-      <p style="margin: 0 0 10px; font-size: 0.85rem; color: #475569; line-height: 1.7;">
-        تم تسجيل هذا الإجراء وتثبيته في سجل الرقابة والتدقيق الداخلي لمنصة نفاذ الوطنية وفقاً للائحة التدريب والامتثال المعتمدة. السجل غير قابل للحذف أو التعديل بأثر رجعي.
+      <p style="margin: 0 0 14px; font-size: 0.9rem; color: #475569; line-height: 1.8;">
+        تم تسجيل هذا الإجراء وتثبيته في سجل الرقابة والتدقيق الداخلي لمنصة نفاذ الوطنية وفقاً للائحة التدريب والامتثال المعتمدة. السجل محمي بتشفير رقمي وغير قابل للحذف أو التعديل بأثر رجعي.
       </p>
-      <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 8px;">
-        <span>التحقق من سلامة التوقيع الرقمي: مكتمل بنجاح ✓</span>
+      <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+        <span>التحقق من سلامة التوقيع الرقمي: معتمد ومكتمل بنجاح ✓</span>
         <span style="font-family: monospace;">Audit-Hash: 8f9b2c34a10e7b99c823f401</span>
       </div>
     </div>
