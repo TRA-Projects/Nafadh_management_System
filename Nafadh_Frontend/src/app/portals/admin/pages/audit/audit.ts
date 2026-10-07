@@ -56,7 +56,7 @@ export class AdminAudit implements OnInit {
     return [...result].sort((a, b) => {
       const dateA = new Date(a.timestamp || a.createdAt || 0).getTime();
       const dateB = new Date(b.timestamp || b.createdAt || 0).getTime();
-      return dateB - dateA; // الأحدث في الأعلى
+      return dateB - dateA; // الأحدث يظهر أولاً
     });
   });
 
