@@ -973,6 +973,7 @@ sendMessage(
   conversationId: number,
   dto: {
     senderId: number;
+    receiverUserId: number;
     content: string;
   }
 ): Observable<any> {

@@ -557,6 +557,7 @@ export class TrainerMessages implements OnInit {
         trainee.conversationId,
         {
           senderId: userId,
+          receiverUserId: trainee.userId,
           content: text
         }
       ).subscribe({
