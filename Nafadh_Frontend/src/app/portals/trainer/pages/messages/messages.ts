@@ -376,7 +376,16 @@ private formatMessageTime(
   searchText = '';
 
   unreadOnly = false;
-
+  selectedBatchName = '';
+  get batchNames(): string[] {
+  return [
+    ...new Set(
+      this.trainees
+        .map((trainee) => trainee.batchName)
+        .filter((name) => !!name)
+    )
+  ];
+}
   todayDate =
     new Intl.DateTimeFormat(
       'ar-OM',
@@ -409,14 +418,18 @@ private formatMessageTime(
             .toLowerCase()
             .includes(search);
 
-        const matchesUnread =
-          !this.unreadOnly ||
-          trainee.unread;
+        const matchesBatch =
+  !this.selectedBatchName ||
+  trainee.batchName === this.selectedBatchName;
 
-        return (
-          matchesSearch &&
-          matchesUnread
-        );
+const matchesUnread =
+  !this.unreadOnly || trainee.unread;
+
+       return (
+  matchesSearch &&
+  matchesBatch &&
+  matchesUnread
+);
       }
     );
   }
