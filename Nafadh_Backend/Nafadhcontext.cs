@@ -66,6 +66,11 @@ namespace Nafadh_Backend
         public DbSet<NFD_FeedbackScore> NFD_FeedbackScores { get; set; }
         public DbSet<NFD_Badge> NFD_Badges { get; set; }
         public DbSet<NFD_TraineeBadge> NFD_TraineeBadges { get; set; }
+        // Company Portal course plans (additive - see Models/NFD_CoursePlan.cs)
+        public DbSet<NFD_CoursePlan> NFD_CoursePlans { get; set; }
+        public DbSet<NFD_CoursePlanStage> NFD_CoursePlanStages { get; set; }
+        public DbSet<NFD_CoursePlanItem> NFD_CoursePlanItems { get; set; }
+        public DbSet<NFD_CoursePlanNote> NFD_CoursePlanNotes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -711,6 +716,8 @@ namespace Nafadh_Backend
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            // ---- Company Portal course plans ----
+            modelBuilder.ConfigureCoursePlans();
         }
     }
 }
