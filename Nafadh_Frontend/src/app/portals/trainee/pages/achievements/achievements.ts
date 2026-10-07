@@ -68,7 +68,7 @@ export interface TrainerOptionDto {
   templateUrl: './achievements.html', 
   styles: [ 
     ` 
-     
+       
       .achievements-page { 
         width: 100%; 
         max-width: 2000px; 
@@ -77,6 +77,7 @@ export interface TrainerOptionDto {
         padding: 10px 4px; 
         box-sizing: border-box; 
         color: #1e293b; 
+        font-size: 15px; 
       } 
  
       .page-header { 
@@ -96,8 +97,9 @@ export interface TrainerOptionDto {
  
       .nfd-page-sub { 
         margin: 4px 0 0; 
-        font-size: 12px; 
-        color: #94a3b8; 
+        font-size: 15px; 
+        font-weight: 500; 
+        color: #64748b; 
       } 
  
       .achievement-summary { 
@@ -106,8 +108,8 @@ export interface TrainerOptionDto {
       } 
  
       .summary-item { 
-        min-width: 125px; 
-        padding: 9px 12px; 
+        min-width: 135px; 
+        padding: 10px 13px; 
         background: #fff; 
         border: 1px solid #e8edf3; 
         border-radius: 11px; 
@@ -115,29 +117,37 @@ export interface TrainerOptionDto {
         align-items: center; 
         gap: 8px; 
         box-shadow: 0 2px 7px rgba(15, 23, 42, 0.03); 
+        transition: 0.2s; 
+      } 
+ 
+      .summary-item:hover { 
+        background: #eff6ff; 
+        transform: translateY(-2px); 
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08); 
       } 
  
       .summary-item span { 
         display: block; 
-        font-size: 10px; 
-        color: #94a3b8; 
+        font-size: 13px; 
+        font-weight: 600; 
+        color: #64748b; 
         margin-bottom: 2px; 
       } 
  
       .summary-item strong { 
-        font-size: 15px; 
+        font-size: 17px; 
         color: #172554; 
       } 
  
       .summary-icon { 
-        width: 31px; 
-        height: 31px; 
+        width: 33px; 
+        height: 33px; 
         border-radius: 9px; 
         display: flex; 
         align-items: center; 
         justify-content: center; 
         font-weight: 800; 
-        font-size: 14px; 
+        font-size: 15px; 
       } 
  
       .progress-icon { 
@@ -185,14 +195,16 @@ export interface TrainerOptionDto {
  
       .feedback-info strong { 
         display: block; 
-        font-size: 12px; 
+        font-size: 14px; 
+        font-weight: 700; 
         color: #172554; 
       } 
  
       .feedback-info small { 
         display: block; 
-        font-size: 10px; 
-        color: #94a3b8; 
+        font-size: 13px; 
+        font-weight: 500; 
+        color: #64748b; 
         margin-top: 2px; 
       } 
  
@@ -206,15 +218,17 @@ export interface TrainerOptionDto {
         background: #fff; 
         color: #1e40af; 
         border-radius: 7px; 
-        padding: 6px 12px; 
-        font-size: 11px; 
+        padding: 7px 13px; 
+        font-size: 14px; 
+        font-weight: 700; 
         cursor: pointer; 
         transition: 0.2s; 
       } 
  
       .feedback-btn:hover { 
         background: #eff6ff; 
-        transform: translateY(-1px); 
+        transform: translateY(-2px); 
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08); 
       } 
  
       .main-grid { 
@@ -229,6 +243,12 @@ export interface TrainerOptionDto {
         border: 1px solid #e8edf3; 
         border-radius: 12px; 
         box-shadow: 0 3px 10px rgba(15, 23, 42, 0.035); 
+        transition: 0.2s; 
+      } 
+ 
+      .nfd-card:hover { 
+        transform: translateY(-2px); 
+        box-shadow: 0 5px 14px rgba(15, 23, 42, 0.08); 
       } 
  
       .card-header { 
@@ -240,15 +260,16 @@ export interface TrainerOptionDto {
  
       .card-header h3 { 
         margin: 0; 
-        font-size: 15px; 
+        font-size: 18px; 
         color: #172554; 
       } 
  
       .card-header span { 
         display: block; 
         margin-top: 3px; 
-        font-size: 10px; 
-        color: #94a3b8; 
+        font-size: 13px; 
+        font-weight: 500; 
+        color: #64748b; 
       } 
  
       .progress-card { 
@@ -294,7 +315,7 @@ export interface TrainerOptionDto {
       } 
  
       .module-name span:last-child { 
-        font-size: 11px; 
+        font-size: 14px; 
         font-weight: 600; 
         white-space: nowrap; 
         overflow: hidden; 
@@ -310,7 +331,7 @@ export interface TrainerOptionDto {
         display: flex; 
         align-items: center; 
         justify-content: center; 
-        font-size: 11px; 
+        font-size: 12px; 
         flex-shrink: 0; 
       } 
  
@@ -347,7 +368,8 @@ export interface TrainerOptionDto {
  
       .module-progress strong { 
         width: 35px; 
-        font-size: 10px; 
+        font-size: 13px; 
+        font-weight: 700; 
         text-align: left; 
         color: #475569; 
       } 
@@ -359,9 +381,9 @@ export interface TrainerOptionDto {
       .badge-counter { 
         background: #eef2ff; 
         color: #3730a3; 
-        padding: 4px 9px; 
+        padding: 5px 10px; 
         border-radius: 15px; 
-        font-size: 10px; 
+        font-size: 13px; 
         font-weight: 700; 
       } 
  
@@ -383,18 +405,33 @@ export interface TrainerOptionDto {
       } 
  
       .badge-item { 
-        min-height: 90px; 
-        padding: 8px 5px; 
+        min-height: 100px; 
+        padding: 9px 6px; 
         border-radius: 9px; 
         border: 1px solid #e2e8f0; 
         text-align: center; 
         transition: 0.2s; 
         box-sizing: border-box; 
+        cursor: default; 
+      } 
+ 
+      .badge-item:hover { 
+        background: #f8fafc; 
+        transform: translateY(-2px); 
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08); 
+        border-color: #cbd5e1; 
       } 
  
       .badge-item.earned { 
         background: #fffbeb; 
         border-color: #fbbf24; 
+      } 
+ 
+      .badge-item.earned:hover { 
+        background: #fff7ed; 
+        transform: translateY(-2px); 
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08); 
+        border-color: #f59e0b; 
       } 
  
       .badge-item.locked { 
@@ -426,7 +463,8 @@ export interface TrainerOptionDto {
  
       .badge-item strong { 
         display: block; 
-        font-size: 9px; 
+        font-size: 12px; 
+        font-weight: 700; 
         color: #1e293b; 
         white-space: nowrap; 
         overflow: hidden; 
@@ -436,8 +474,9 @@ export interface TrainerOptionDto {
       .badge-item small { 
         display: block; 
         margin-top: 2px; 
-        font-size: 8px; 
-        color: #94a3b8; 
+        font-size: 11px; 
+        font-weight: 500; 
+        color: #64748b; 
         white-space: nowrap; 
         overflow: hidden; 
         text-overflow: ellipsis; 
@@ -446,7 +485,7 @@ export interface TrainerOptionDto {
       .badge-status { 
         display: inline-block; 
         margin-top: 4px; 
-        font-size: 8px; 
+        font-size: 11px; 
         font-weight: 700; 
       } 
  
@@ -488,20 +527,21 @@ export interface TrainerOptionDto {
  
       .certificate-title h3 { 
         margin: 0; 
-        font-size: 13px; 
+        font-size: 16px; 
         color: #172554; 
       } 
  
       .certificate-title p { 
         margin: 3px 0 0; 
-        font-size: 9px; 
-        color: #94a3b8; 
+        font-size: 12px; 
+        font-weight: 500; 
+        color: #64748b; 
       } 
  
       .certificate-status span { 
         padding: 5px 10px; 
         border-radius: 15px; 
-        font-size: 9px; 
+        font-size: 12px; 
         font-weight: 700; 
       } 
  
@@ -535,7 +575,7 @@ export interface TrainerOptionDto {
  
       /* تنسيق اسم البرنامج */ 
       .certificate-brand { 
-        font-size: 17px; 
+        font-size: 18px; 
         font-weight: 900; 
         letter-spacing: 2px; 
         margin-bottom: 4px; 
@@ -550,18 +590,21 @@ export interface TrainerOptionDto {
       } 
  
       .certificate-text span { 
-        font-size: 8px; 
+        font-size: 11px; 
+        font-weight: 500; 
         color: #94a3b8; 
         letter-spacing: 1px; 
       } 
  
       .certificate-text strong { 
-        font-size: 12px; 
+        font-size: 15px; 
+        font-weight: 700; 
         color: #fff; 
       } 
  
       .certificate-text small { 
-        font-size: 9px; 
+        font-size: 12px; 
+        font-weight: 500; 
         color: #cbd5e1; 
       } 
  
@@ -573,7 +616,7 @@ export interface TrainerOptionDto {
         border: none; 
         color: #fff; 
         background: #808baf; 
-        font-size: 11px; 
+        font-size: 14px; 
         font-weight: 700; 
         transition: 0.2s; 
       } 
@@ -606,7 +649,8 @@ export interface TrainerOptionDto {
  
       .empty-state p { 
         margin: 5px 0 0; 
-        font-size: 10px; 
+        font-size: 13px; 
+        font-weight: 500; 
       } 
  
       .nfd-modal-bg { 
@@ -640,14 +684,15 @@ export interface TrainerOptionDto {
  
       .modal-header h3 { 
         margin: 0; 
-        font-size: 16px; 
+        font-size: 19px; 
         color: #172554; 
       } 
  
       .modal-header p { 
         margin: 4px 0 0; 
-        font-size: 10px; 
-        color: #94a3b8; 
+        font-size: 13px; 
+        font-weight: 500; 
+        color: #64748b; 
       } 
  
       .modal-close { 
@@ -671,7 +716,7 @@ export interface TrainerOptionDto {
       } 
  
       .criterion-row label { 
-        font-size: 11px; 
+        font-size: 14px; 
         color: #334155; 
         font-weight: 700; 
       } 
@@ -699,7 +744,7 @@ export interface TrainerOptionDto {
         display: block; 
         margin-top: 14px; 
         margin-bottom: 5px; 
-        font-size: 11px; 
+        font-size: 14px; 
         font-weight: 700; 
       } 
  
@@ -711,7 +756,7 @@ export interface TrainerOptionDto {
         border-radius: 7px; 
         padding: 9px; 
         font-family: inherit; 
-        font-size: 11px; 
+        font-size: 14px; 
         outline: none; 
       } 
  
@@ -735,18 +780,18 @@ export interface TrainerOptionDto {
         font-size: 20px; 
         color: #64748b; 
         cursor: pointer; 
-        display: flex;          
-        align-items: center;       
-        justify-content: center;   
-        line-height: 1;            
-        padding: 0;                
+        display: flex;            
+        align-items: center;         
+        justify-content: center;     
+        line-height: 1;              
+        padding: 0;                  
       } 
  
       .cancel-btn, 
       .submit-feedback-btn { 
         border-radius: 7px; 
         padding: 7px 15px; 
-        font-size: 11px; 
+        font-size: 14px; 
         cursor: pointer; 
       } 
  
@@ -783,7 +828,7 @@ export interface TrainerOptionDto {
         color: #fff; 
         padding: 12px 28px; 
         border-radius: 10px; 
-        font-size: 13px; 
+        font-size: 15px; 
         font-weight: 600; 
         box-shadow: 0 8px 30px rgba(13, 148, 136, 0.3); 
         z-index: 2000; 
@@ -865,7 +910,7 @@ export interface TrainerOptionDto {
         } 
       } 
     `, 
-  ] 
+  ], 
 }) 
 export class TraineeAchievements implements OnInit { 
   private api = inject(TraineeApi); 
@@ -1735,6 +1780,7 @@ export class TraineeAchievements implements OnInit {
  
       // إبقاء scores فارغة للتوافق مع الكود السابق 
       scores: [], 
+ 
     }; 
  
  
@@ -1803,7 +1849,7 @@ export class TraineeAchievements implements OnInit {
  
     // الشهادة متاحة فقط عند 85% أو أكثر 
     if (!this.canDownloadCertificate()) return; 
-      
+        
     // ✅ البحث عن شهادة، وإذا لم توجد ننشئها أو نعطي رسالة 
     const cert = this.certificates()[0]; 
  
