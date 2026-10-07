@@ -8,6 +8,10 @@
   font-weight: 700;
   color: #0A1172;
   margin: 0;
+  transition: color 0.2s ease;
+}
+.nfd-page-title:hover {
+  color: #121c9c;
 }
 .nfd-page-sub {
   color: #64748b;
@@ -32,11 +36,19 @@
   align-items: center;
   gap: 14px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: box-shadow 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
 }
 
+/* تحسين هوفر بطاقات الإحصائيات مع حركة رفع خفيفة وتكبير الأيقونة */
 .stat-card:hover {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 18px rgba(10, 17, 114, 0.09);
+  transform: translateY(-3px);
+}
+
+.stat-card:hover .stat-icon {
+  transform: scale(1.08);
 }
 
 .stat-icon {
@@ -48,6 +60,7 @@
   justify-content: center;
   font-size: 1.1rem;
   flex-shrink: 0;
+  transition: transform 0.25s ease;
 }
 
 .stat-icon-navy {
@@ -118,9 +131,13 @@
   margin-bottom: 20px;
 }
 
+/* =========================================================
+   الكلمات / تصنيفات الفلترة (الكل، هيئة، شركة، مدرب، متدرب)
+   ========================================================= */
 .nfd-chips {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .nfd-chip {
@@ -134,13 +151,41 @@
   gap: 6px;
   font-size: 0.85rem;
   color: #475569;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
 }
 
+/* 🟢 إضافة تأثير هوفر للكلمات غير النشطة */
+.nfd-chip:hover {
+  background: #eef2ff;
+  border-color: #a5b4fc;
+  color: #0A1172;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(10, 17, 114, 0.08);
+}
+
+/* تفاعل عداد الأرقام داخل الكلمات عند الهوفر */
+.nfd-chip:hover .chip-count {
+  background: rgba(10, 17, 114, 0.12);
+  color: #0A1172;
+  font-weight: 600;
+}
+
+/* العنصر النشط */
 .nfd-chip.active {
   background: #0A1172;
   color: #ffffff;
-  border-color: #0f172a;
+  border-color: #0A1172;
+  box-shadow: 0 2px 6px rgba(10, 17, 114, 0.2);
+}
+
+/* 🟢 هوفر للكلمة/الزر النشط */
+.nfd-chip.active:hover {
+  background: #121c9c;
+  border-color: #121c9c;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 14px rgba(10, 17, 114, 0.3);
 }
 
 .chip-count {
@@ -148,6 +193,7 @@
   padding: 2px 6px;
   border-radius: 10px;
   font-size: 0.75rem;
+  transition: all 0.2s ease;
 }
 
 .nfd-chip.active .chip-count {
@@ -155,6 +201,9 @@
   color: #fff;
 }
 
+/* =========================================================
+   الزر الذي على نفس المسار (+ إنشاء حساب جديد)
+   ========================================================= */
 .nfd-btn.primary-teal {
   background-color: #0A1172;
   color: white;
@@ -166,6 +215,22 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 5px rgba(10, 17, 114, 0.15);
+}
+
+/* 🟢 إضافة تأثير هوفر للزر الرئيسي */
+.nfd-btn.primary-teal:hover {
+  background-color: #121c9c;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(10, 17, 114, 0.28);
+}
+
+/* تأثير الضغط للزر */
+.nfd-btn.primary-teal:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 5px rgba(10, 17, 114, 0.15);
 }
 
 .nfd-inline-error {
@@ -190,6 +255,12 @@
   font-size: 0.8rem;
   cursor: pointer;
   margin-right: auto;
+  transition: all 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: #991b1b;
+  color: #ffffff;
 }
 
 /* الجدول */
@@ -205,6 +276,15 @@
   font-size: 0.85rem;
   padding: 12px 16px;
   border-bottom: 1px solid #e2e8f0;
+}
+
+.nfd-table tbody tr {
+  transition: background-color 0.18s ease;
+}
+
+/* 🟢 هوفر للصفوف داخل الجدول */
+.nfd-table tbody tr:hover {
+  background-color: #f8fafc;
 }
 
 .nfd-table td {
@@ -229,6 +309,12 @@
   object-fit: cover;
   flex-shrink: 0;
   border: 1px solid #e2e8f0;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.user-info:hover .user-avatar {
+  transform: scale(1.05);
+  border-color: #0A1172;
 }
 
 .user-details {
@@ -239,6 +325,11 @@
 .user-name {
   color: #0f172a;
   font-size: 0.9rem;
+  transition: color 0.15s ease;
+}
+
+.user-info:hover .user-name {
+  color: #0A1172;
 }
 
 .user-email {
@@ -254,6 +345,11 @@
   font-weight: 500;
   display: inline-block;
   text-align: center;
+  transition: transform 0.18s ease;
+}
+
+.nfd-badge:hover {
+  transform: scale(1.04);
 }
 
 /* شارات الحالة */
@@ -315,9 +411,10 @@
   background-color: #ffffff;
   color: #334155;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* 🟢 تحسين تأثير هوفر أزرار الإجراءات */
 .btn-action.edit-btn:hover,
 .btn-action.password-btn:hover,
 .btn-action.details-btn:hover,
@@ -325,6 +422,12 @@
   background-color: #0A1172 !important;
   border-color: #0A1172 !important;
   color: #ffffff !important;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 10px rgba(10, 17, 114, 0.2);
+}
+
+.btn-action:active {
+  transform: translateY(0);
 }
 
 /* RBAC Table */
@@ -390,6 +493,17 @@
   border-radius: 6px;
   font-size: 0.9rem;
   box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.nfd-input:hover {
+  border-color: #94a3b8;
+}
+
+.nfd-input:focus {
+  outline: none;
+  border-color: #0A1172;
+  box-shadow: 0 0 0 3px rgba(10, 17, 114, 0.1);
 }
 
 .form-group label {
@@ -414,6 +528,12 @@
   padding: 8px 16px;
   border-radius: 6px;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nfd-btn.secondary:hover {
+  background: #e2e8f0;
+  color: #1e293b;
 }
 
 /* Validation */
@@ -471,7 +591,9 @@
   pointer-events: none;
 }
 
-/* شريط البحث والتصفية المتقدمة */
+/* =========================================================
+   شريط البحث والتصفية المتقدمة مع تأثيرات هوفر
+   ========================================================= */
 .nfd-filters-bar {
   display: flex;
   flex-wrap: wrap;
@@ -492,11 +614,29 @@
   padding: 7px 12px;
   flex: 1 1 220px;
   min-width: 200px;
+  transition: all 0.2s ease;
+}
+
+/* 🟢 هوفر لحقل البحث */
+.nfd-search-box:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.nfd-search-box:focus-within {
+  border-color: #0A1172;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(10, 17, 114, 0.08);
 }
 
 .nfd-search-box i {
   color: #94a3b8;
   font-size: 0.85rem;
+  transition: color 0.2s ease;
+}
+
+.nfd-search-box:hover i {
+  color: #0A1172;
 }
 
 .nfd-search-input {
@@ -517,6 +657,19 @@
   color: #334155;
   background: #ffffff;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* 🟢 هوفر لقوائم الاختيار */
+.nfd-filter-select:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.nfd-filter-select:focus {
+  outline: none;
+  border-color: #0A1172;
+  box-shadow: 0 0 0 3px rgba(10, 17, 114, 0.08);
 }
 
 .nfd-date-range {
@@ -531,6 +684,18 @@
   padding: 6px 10px;
   font-size: 0.82rem;
   color: #334155;
+  transition: all 0.2s ease;
+}
+
+/* 🟢 هوفر لحقول التاريخ */
+.nfd-filter-date:hover {
+  border-color: #cbd5e1;
+}
+
+.nfd-filter-date:focus {
+  outline: none;
+  border-color: #0A1172;
+  box-shadow: 0 0 0 3px rgba(10, 17, 114, 0.08);
 }
 
 .date-sep {
@@ -554,6 +719,8 @@
 
 .nfd-clear-filters-btn:hover {
   background: #fee2e2;
+  border-color: #fca5a5;
+  transform: translateY(-1px);
 }
 
 .nfd-results-count {
@@ -578,7 +745,6 @@
 }
 
 /* تنسيق اختيار الصورة (رابط، رفع ملف، ومكتبة صور جاهزة) */
-
 .avatar-section-wrapper {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -658,6 +824,7 @@
 .avatar-remove-btn:hover {
   background: #fca5a5;
   color: #7f1d1d;
+  transform: translateY(-1px);
 }
 
 .avatar-type-select {
@@ -771,11 +938,10 @@
 /* =========================================================
    صفحة تفاصيل المستخدم كاملة الشاشة
    ========================================================= */
-
 .details-fullpage {
   position: fixed;
   inset: 0;
-  background: #f8fafc;
+  background: #f1f5f9;
   z-index: 1000;
   overflow-y: auto;
 }
@@ -783,7 +949,7 @@
 .details-fullpage-header {
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
-  padding: 16px 32px;
+  padding: 18px 48px;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -800,33 +966,37 @@
   font-weight: 600;
   cursor: pointer;
   padding: 6px 0;
+  transition: all 0.2s ease;
 }
 
 .details-back-btn:hover {
   text-decoration: underline;
+  transform: translateX(3px);
 }
 
 .details-fullpage-body {
-  max-width: 820px;
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 32px;
+  padding: 40px 48px 64px;
+  box-sizing: border-box;
 }
 
 .details-hero {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 24px;
-  margin-bottom: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin-bottom: 36px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .details-hero-avatar {
-  width: 90px;
-  height: 90px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid #0A1172;
@@ -834,30 +1004,84 @@
 }
 
 .details-hero-info h2 {
-  margin: 0 0 10px;
-  font-size: 1.4rem;
+  margin: 0 0 12px;
+  font-size: 1.5rem;
   color: #0f172a;
+}
+
+.details-section {
+  margin-bottom: 36px;
+}
+
+.details-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0A1172;
+  margin: 0 0 18px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e8eaf6;
+}
+
+.details-section-title i {
+  font-size: 0.9rem;
+  color: #0A1172;
+  opacity: 0.8;
 }
 
 .details-fullpage-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
 }
 
 .details-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.details-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 6px 16px rgba(10, 17, 114, 0.08);
+  transform: translateY(-2px);
+}
+
+.details-card-icon {
+  width: 42px;
+  height: 42px;
   border-radius: 10px;
-  padding: 16px;
+  background: #e8eaf6;
+  color: #0A1172;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.details-card:hover .details-card-icon {
+  transform: scale(1.08);
+}
+
+.details-card-text {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
+  min-width: 0;
 }
 
 .details-label {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: #64748b;
   font-weight: 500;
 }
@@ -878,19 +1102,22 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  padding: 20px 24px;
+  padding: 24px 28px;
 }
 
 .details-permissions-text {
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   color: #334155;
-  line-height: 1.9;
-  margin: 10px 0 0;
+  line-height: 2;
+  margin: 0;
 }
 
 @media (max-width: 700px) {
   .details-fullpage-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .details-fullpage-body {
+    padding: 28px 24px 48px;
   }
 }
 
@@ -899,7 +1126,7 @@
     grid-template-columns: 1fr;
   }
   .details-fullpage-body {
-    padding: 16px;
+    padding: 20px 16px 40px;
   }
   .details-hero {
     flex-direction: column;

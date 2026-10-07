@@ -245,7 +245,7 @@ export class AdminUsers implements OnInit {
   isEditModalOpen = false;
   isResetPasswordModalOpen = false;
 
-  // جديد: نافذة تفاصيل المستخدم (قراءة فقط)
+  // نافذة تفاصيل المستخدم (قراءة فقط)
   isDetailsModalOpen = false;
   detailsUser: any = {};
 
@@ -308,7 +308,7 @@ export class AdminUsers implements OnInit {
     Trainee: 0
   };
 
-  // جديد: وصف صلاحيات كل دور (لنافذة التفاصيل)
+  // وصف صلاحيات كل دور (لنافذة التفاصيل)
   private readonly permissionsDescriptionByRole: Record<string, string> = {
     Admin: 'صلاحيات كاملة لإدارة النظام: إدارة المستخدمين والأدوار، الشركات، البرامج التدريبية، إصدار الشهادات، ومراجعة التقارير والتحليلات الشاملة.',
     CompanySupervisor: 'إدارة بيانات الشركة التابعة له، متابعة المتدربين المسجلين فيها، ومراجعة تقارير الأداء الخاصة بالشركة.',
@@ -690,9 +690,7 @@ export class AdminUsers implements OnInit {
     });
   }
 
-  // =========================================================
-  // جديد: نافذة تفاصيل المستخدم (قراءة فقط)
-  // =========================================================
+  // نافذة تفاصيل المستخدم (قراءة فقط)
   openDetailsModal(user: any): void {
     const localAvatar = this.getLocalAvatar(user.userId);
     this.detailsUser = {

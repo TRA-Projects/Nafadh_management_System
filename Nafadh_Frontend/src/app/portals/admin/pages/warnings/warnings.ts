@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router'; // 👈 إضافة Router
+import { Router } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
 import { WarningDto } from '../../../../core/models/dtos';
 
@@ -21,9 +21,9 @@ export class AdminWarnings implements OnInit {
   // شريط البحث
   searchTerm = '';
 
-  // التحكم بالقائمة المنسدلة المدمجة
+  // التحكم باللوحة المدمجة للفلترة
   isFilterDropdownOpen = false;
-  activeFilterTab: 'NONE' | 'PRESETS' | 'YEAR' | 'MONTH' | 'STATUS' | 'LEVEL' = 'NONE';
+  activeFilterTab: 'PRESETS' | 'YEAR' | 'MONTH' | 'STATUS' | 'LEVEL' = 'PRESETS';
 
   // الفلاتر المحددة حالياً
   selectedYear: string = 'ALL';
@@ -55,7 +55,7 @@ export class AdminWarnings implements OnInit {
   touchedFields = signal<{ [key: string]: boolean }>({});
   newWarning = { companyId: null as number | null, type: 'Performance', level: 'Medium', evidence: '' };
 
-  // قائمة أسباب ومخالفات البلاغ الجاهزة وإدارة الاختيارات المتعددة
+  // قائمة أسباب ومخالفات البلاغ الجاهزة
   violationReasons: string[] = [
     'عدم الالتزام بالحضور',
     'التأخر المتكرر',
@@ -72,7 +72,7 @@ export class AdminWarnings implements OnInit {
 
   constructor(
     private api: AdminApi,
-    private router: Router // 👈 حقن الـ Router
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -80,12 +80,10 @@ export class AdminWarnings implements OnInit {
     this.loadCompanies();
   }
 
-  // 👈 دالة التوجيه إلى صفحة طلبات المعالجة والتصحيح
   goToRemediationRequests(): void {
-    this.router.navigate(['/admin/remediation-requests']); // تعديل المسار حسب المعتمد في الـ Routes لديكِ
+    this.router.navigate(['/admin/remediation-requests']);
   }
 
-  // التبديل بين تحديد وإلغاء تحديد سبب المخالفة
   toggleReason(reason: string): void {
     const current = this.selectedReasons();
     if (current.includes(reason)) {
@@ -96,14 +94,12 @@ export class AdminWarnings implements OnInit {
     this.updateEvidenceFromReasons();
   }
 
-  // مسح جميع الخيارات المحددة
   clearAllReasons(): void {
     this.selectedReasons.set([]);
     this.otherReasonText = '';
     this.updateEvidenceFromReasons();
   }
 
-  // تحديث نص الأدلة والأسباب تلقائياً بناءً على الخيارات المحددة
   updateEvidenceFromReasons(): void {
     let reasons = [...this.selectedReasons()];
     if (reasons.includes('مخالفة أخرى') && this.otherReasonText.trim()) {
@@ -116,13 +112,10 @@ export class AdminWarnings implements OnInit {
 
   toggleFilterMenu(): void {
     this.isFilterDropdownOpen = !this.isFilterDropdownOpen;
-    if (!this.isFilterDropdownOpen) {
-      this.activeFilterTab = 'NONE';
-    }
   }
 
   openFilterTab(tab: 'PRESETS' | 'YEAR' | 'MONTH' | 'STATUS' | 'LEVEL'): void {
-    this.activeFilterTab = this.activeFilterTab === tab ? 'NONE' : tab;
+    this.activeFilterTab = tab;
   }
 
   selectFilterOption(type: 'YEAR' | 'MONTH' | 'STATUS' | 'LEVEL', value: string): void {
@@ -135,8 +128,6 @@ export class AdminWarnings implements OnInit {
     if (type === 'MONTH') this.selectedMonth = value;
     if (type === 'STATUS') this.selectedStatus = value;
     if (type === 'LEVEL') this.selectedLevel = value;
-    
-    this.activeFilterTab = 'NONE';
   }
 
   applyPreset(preset: 'THIS_MONTH' | 'CURRENT_QUARTER' | 'THIS_YEAR'): void {
@@ -154,8 +145,6 @@ export class AdminWarnings implements OnInit {
     } else if (preset === 'CURRENT_QUARTER') {
       this.selectedYear = currentYear;
     }
-    this.isFilterDropdownOpen = false;
-    this.activeFilterTab = 'NONE';
   }
 
   resetAllFilters(): void {
@@ -164,8 +153,6 @@ export class AdminWarnings implements OnInit {
     this.selectedStatus = 'ALL';
     this.selectedLevel = 'ALL';
     this.searchTerm = '';
-    this.isFilterDropdownOpen = false;
-    this.activeFilterTab = 'NONE';
   }
 
   hasActiveFilters(): boolean {
@@ -222,6 +209,7 @@ export class AdminWarnings implements OnInit {
       if (this.selectedStatus === 'Open') matchesStatus = st === '0' || st === 'Open';
       else if (this.selectedStatus === 'UnderReview') matchesStatus = st === '1' || st === 'UnderReview';
       else if (this.selectedStatus === 'Resolved') matchesStatus = st === '2' || st === 'Resolved';
+      else if (this.selectedStatus === 'Escalated') matchesStatus = st === '3' || st === 'Escalated'; // 👈 دعم حالة التصعيد
 
       const lvl = String(w.level);
       let matchesLevel = true;
@@ -400,12 +388,14 @@ export class AdminWarnings implements OnInit {
     window.print();
   }
 
+  // 👈 تحديث الدالة لتشمل الحالات الأربعة للباك إند
   getCountByStatus(statusKey: string): number {
     return this.warnings().filter(w => {
       const st = String(w.status);
       if (statusKey === 'Open') return st === '0' || st === 'Open';
       if (statusKey === 'UnderReview') return st === '1' || st === 'UnderReview';
       if (statusKey === 'Resolved') return st === '2' || st === 'Resolved';
+      if (statusKey === 'Escalated') return st === '3' || st === 'Escalated'; // 👈 حالة التصعيد
       return false;
     }).length;
   }
@@ -459,19 +449,23 @@ export class AdminWarnings implements OnInit {
     return 'lvl-medium';
   }
 
+  // 👈 تسمية الكروت بالعربي
   getStatusLabel(status?: any): string {
     const val = String(status);
     if (val === '0' || val === 'Open') return 'نشط';
     if (val === '1' || val === 'UnderReview') return 'قيد المراجعة';
     if (val === '2' || val === 'Resolved') return 'مكتمل';
+    if (val === '3' || val === 'Escalated') return 'مُصعّد'; // 👈 الحالة الرابعة
     return status ?? 'نشط';
   }
 
+  // 👈 كلاسات التنسيق المحدثة
   getStatusClass(status?: any): string {
     const val = String(status);
     if (val === '0' || val === 'Open') return 'st-open';
     if (val === '1' || val === 'UnderReview') return 'st-review';
     if (val === '2' || val === 'Resolved') return 'st-resolved';
+    if (val === '3' || val === 'Escalated') return 'st-escalated'; // 👈 كلاس حالة التصعيد
     return 'st-open';
   }
 }
