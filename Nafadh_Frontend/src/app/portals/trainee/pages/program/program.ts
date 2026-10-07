@@ -12,6 +12,8 @@ import { Router } from '@angular/router';
 import { TraineeApi } from '../../services/trainee-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+
 import {
   ProgramDto,
   ModuleDto,
@@ -23,6 +25,8 @@ import {
   TrainingMaterialDto,
   SessionDto
 } from '../../../../core/models/dtos';
+
+
 
 
 // =====================================================
@@ -72,6 +76,7 @@ export class TraineeProgram implements OnInit {
   private api = inject(TraineeApi);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private sanitizer = inject(DomSanitizer);
 
 
   // =====================================================
@@ -197,6 +202,55 @@ export class TraineeProgram implements OnInit {
 
 
   // =====================================================
+  // LESSON SIDEBAR / VIEWER
+  // =====================================================
+
+  showLessonSidebar =
+    signal(false);
+
+  lessonViewerVisible =
+    signal(false);
+
+  lessonViewerUrl =
+    signal<SafeUrl | null>(null);
+
+  lessonViewerTitle =
+    signal('');
+
+  selectedLesson =
+    signal<LessonWithProgressDto | null>(null);
+
+  selectedModule =
+    signal<ModuleWithLessonsDto | null>(null);
+
+  lessonSidebarTab =
+    signal<'notes' | 'rating'>('notes');
+
+  lessonNote =
+    signal('');
+
+  lessonRating =
+    signal(0);
+
+  /*
+   * Indicates that the currently opened lesson video
+   * has been watched until the end.
+   *
+   * Notes are available immediately after opening
+   * the video, while rating is available only after
+   * the video ends.
+   */
+  lessonVideoCompleted =
+    signal(false);
+
+  lessonFeedbackExists =
+    signal(false);
+
+  lessonFeedbackLoading =
+    signal(false);
+
+
+  // =====================================================
   // INIT
   // =====================================================
 
@@ -319,7 +373,6 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // LOAD TRAINEE
-  // GET /api/Trainee/traineeByUserID/{userId}
   // =====================================================
 
   private loadTrainee(
@@ -413,7 +466,6 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // LOAD ENROLLMENT
-  // GET /api/Enrollment/trainee/{traineeId}
   // =====================================================
 
   private loadEnrollment(
@@ -543,7 +595,6 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // LOAD BATCH
-  // GET /api/Batch/{batchId}
   // =====================================================
 
   private loadBatchAndProgram(
@@ -659,7 +710,6 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // LOAD PROGRAM
-  // GET /api/Program/{programId}
   // =====================================================
 
   loadProgramData(
@@ -749,7 +799,6 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // LOAD MODULES
-  // GET /api/Program/{programId}/modules
   // =====================================================
 
   private loadModules(): void {
@@ -1053,7 +1102,6 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // LOAD ENROLLMENT PROGRESS
-  // GET /api/Enrollment/{id}/progress-summary
   // =====================================================
 
   private loadEnrollmentProgress(): void {
@@ -1540,8 +1588,7 @@ export class TraineeProgram implements OnInit {
 
 
   // =====================================================
-  // SESSIONS
-  // GET /api/Session/batch/{batchId}
+  // LOAD BATCH SESSIONS
   // =====================================================
 
   private loadBatchSessions(
@@ -1592,10 +1639,70 @@ export class TraineeProgram implements OnInit {
 
 
   // =====================================================
-  // ATTEND LESSON
+  // TRAINING MATERIAL HELPERS
   // =====================================================
 
-  attendLesson(
+  private isVideoMaterial(
+    material: TrainingMaterialDto
+  ): boolean {
+
+    const fileUrl =
+      String(
+        material.fileUrl ?? ''
+      )
+        .split('?')[0]
+        .toLowerCase();
+
+    return /\.(mp4|webm|mov|m4v|ogg)$/i.test(
+      fileUrl
+    );
+  }
+
+
+  private findVideoMaterial(
+    materials: TrainingMaterialDto[]
+  ): TrainingMaterialDto | null {
+
+    const videos =
+      materials.filter(
+        material =>
+          this.isVideoMaterial(
+            material
+          )
+      );
+
+
+    if (
+      videos.length === 0
+    ) {
+
+      return null;
+    }
+
+
+    /*
+     * If there is more than one video,
+     * use the latest uploaded video.
+     */
+    return videos.sort(
+      (a, b) =>
+        new Date(
+          b.uploadDate
+        ).getTime()
+        -
+        new Date(
+          a.uploadDate
+        ).getTime()
+    )[0];
+  }
+
+
+  // =====================================================
+  // VIEW LESSON
+  // OPEN VIDEO INSIDE SAME PAGE
+  // =====================================================
+
+  viewLesson(
     lesson: LessonWithProgressDto,
     module: ModuleWithLessonsDto
   ): void {
@@ -1610,8 +1717,12 @@ export class TraineeProgram implements OnInit {
       return;
     }
 
+
     const lessonId =
-      Number(lesson.lessonId);
+      Number(
+        lesson.lessonId
+      );
+
 
     if (
       !lessonId ||
@@ -1626,79 +1737,171 @@ export class TraineeProgram implements OnInit {
       return;
     }
 
-    const batchId =
-      this.batchId();
 
-    if (
-      !batchId ||
-      Number.isNaN(Number(batchId))
-    ) {
-
-      this.showNotification(
-        'لم يتم العثور على الدفعة.',
-        'error'
-      );
-
-      return;
-    }
-
-    console.log(
-      '🎓 Opening lesson:',
-      {
-        lessonId,
-        batchId,
-        lesson
-      }
+    this.selectedLesson.set(
+      lesson
     );
 
-    const sessions =
-      this.sessions();
 
-    if (sessions.length > 0) {
+    this.selectedModule.set(
+      module
+    );
 
-      this.findAndOpenSession(
-        sessions,
-        lesson
-      );
 
-      return;
-    }
+    this.lessonViewerTitle.set(
+      lesson.title || 'الدرس'
+    );
 
+
+    this.lessonViewerVisible.set(
+      false
+    );
+
+
+    this.lessonViewerUrl.set(
+      null
+    );
+
+
+    /*
+     * Every time a new lesson is opened,
+     * its video completion state starts as false.
+     */
+    this.lessonVideoCompleted.set(
+      false
+    );
+
+
+    this.lessonSidebarTab.set(
+      'notes'
+    );
+
+
+    /*
+     * Get the actual training materials
+     * uploaded for this lesson.
+     */
     this.api
-      .getSessionsByBatch(batchId)
+      .getTrainingMaterials(lessonId)
       .subscribe({
 
         next:
-          data => {
+          materials => {
 
             console.log(
-              '✅ Batch Sessions:',
-              data
+              '✅ Lesson Training Materials:',
+              materials
             );
 
-            const sessionData =
-              data ?? [];
 
-            this.sessions.set(
-              sessionData
+            this.lessonMaterials.update(
+              current => ({
+
+                ...current,
+
+                [lessonId]:
+                  materials ?? []
+
+              })
             );
 
-            this.findAndOpenSession(
-              sessionData,
+
+            if (
+              !materials ||
+              materials.length === 0
+            ) {
+
+              this.showNotification(
+                'لا توجد مواد تدريبية لهذا الدرس حاليًا.',
+                'error'
+              );
+
+              return;
+            }
+
+
+            /*
+             * Find the real video based on
+             * the file extension.
+             *
+             * We intentionally do NOT rely on
+             * fileType because some existing records
+             * have incorrect fileType values.
+             */
+            const videoMaterial =
+              this.findVideoMaterial(
+                materials
+              );
+
+
+            if (
+              !videoMaterial ||
+              !videoMaterial.fileUrl
+            ) {
+
+              console.warn(
+                '⚠️ No video material found:',
+                materials
+              );
+
+
+              this.showNotification(
+                'لا يوجد فيديو مرفوع لهذا الدرس حاليًا.',
+                'error'
+              );
+
+              return;
+            }
+
+
+            const videoUrl =
+              this.api.getFileUrl(
+                videoMaterial.fileUrl
+              );
+
+
+            if (!videoUrl) {
+
+              this.showNotification(
+                'رابط فيديو الدرس غير متوفر حاليًا.',
+                'error'
+              );
+
+              return;
+            }
+
+
+            console.log(
+              '🎥 Video Material:',
+              videoMaterial
+            );
+
+
+            console.log(
+              '🎬 Video URL:',
+              videoUrl
+            );
+
+
+            this.openLessonViewer(
+              videoUrl,
               lesson
             );
+
           },
+
 
         error:
           error => {
 
             console.error(
-              '❌ Failed to load sessions:',
+              '❌ Training Material API Error:',
               error
             );
 
+
             this.showNotification(
-              'تعذر تحميل جلسات الدرس حاليًا.',
+              'تعذر تحميل فيديو الدرس حاليًا.',
               'error'
             );
 
@@ -1709,298 +1912,125 @@ export class TraineeProgram implements OnInit {
 
 
   // =====================================================
-  // FIND SESSION + OPEN LESSON
+  // OPEN LESSON VIEWER
+  // SAME PAGE
   // =====================================================
 
-  private findAndOpenSession(
-    sessions: SessionDto[],
+  private openLessonViewer(
+    url: string,
     lesson: LessonWithProgressDto
   ): void {
 
-    if (!sessions || sessions.length === 0) {
+    if (!url) {
 
       this.showNotification(
-        'لا توجد جلسات متاحة لهذا الدرس حاليًا.',
+        'رابط الدرس غير متوفر حاليًا.',
         'error'
       );
 
       return;
     }
 
-    const lessonId =
-      Number(lesson.lessonId);
 
     console.log(
-      '🔎 Searching session for lesson:',
-      lessonId
+      '🎬 Opening lesson video inside same page:',
+      url
     );
 
-    console.log(
-      '📚 Available sessions:',
-      sessions
+
+    this.selectedLesson.set(
+      lesson
+    );
+
+
+    this.lessonViewerTitle.set(
+      lesson.title || 'الدرس'
     );
 
 
     /*
-     * Try to find a session directly related
-     * to the selected lesson.
+     * Video uses a normal URL context,
+     * not an iframe ResourceUrl context.
+     */
+    this.lessonViewerUrl.set(
+      this.sanitizer.bypassSecurityTrustUrl(
+        url
+      )
+    );
+
+
+    /*
+     * The video has just been opened.
      *
-     * Different DTO versions may use different
-     * property names, so we check the common ones.
+     * Notes are available immediately,
+     * but rating will remain unavailable
+     * until the video fires the "ended" event.
      */
-
-    const lessonSessions =
-      sessions.filter(
-        session => {
-
-          const sessionData =
-            session as any;
-
-          const relatedLessonId =
-            Number(
-              sessionData.lessonId ??
-              sessionData.LessonId ??
-              sessionData.lesson?.lessonId ??
-              sessionData.Lesson?.lessonId
-            );
-
-          return (
-            relatedLessonId === lessonId
-          );
-
-        }
-      );
-
-
-    console.log(
-      '🎯 Sessions for selected lesson:',
-      lessonSessions
+    this.lessonVideoCompleted.set(
+      false
     );
 
 
-    /*
-     * If there are lesson-specific sessions,
-     * use them.
-     *
-     * Otherwise fallback to the available sessions.
-     */
-
-    const availableSessions =
-      lessonSessions.length > 0
-        ? lessonSessions
-        : sessions;
+    this.lessonViewerVisible.set(
+      true
+    );
 
 
-    const selectedSession =
-      availableSessions.find(
-        session =>
-          String(session.status ?? '')
-            .toLowerCase() === 'scheduled' &&
-          !!session.meetingLink
-      )
-      ??
-      availableSessions.find(
-        session =>
-          !!session.meetingLink
-      )
-      ??
-      availableSessions.find(
-        session =>
-          String(session.status ?? '')
-            .toLowerCase() === 'completed' &&
-          !!session.recordingUrl
-      )
-      ??
-      availableSessions.find(
-        session =>
-          !!session.recordingUrl
-      );
+    this.lessonSidebarTab.set(
+      'notes'
+    );
 
 
-    if (
-      !selectedSession ||
-      !selectedSession.sessionId
-    ) {
+    this.showLessonSidebar.set(
+      true
+    );
 
-      console.warn(
-        '⚠️ No valid session found for lesson:',
-        {
-          lessonId,
-          sessions
-        }
-      );
-
-      this.showNotification(
-        'لا يوجد رابط حضور أو تسجيل متاح لهذا الدرس حاليًا.',
-        'error'
-      );
-
-      return;
-    }
+  }
 
 
-    const sessionId =
-      Number(
-        selectedSession.sessionId
-      );
+  // =====================================================
+  // VIDEO ENDED
+  // ENABLE RATING AFTER FULL VIDEO WATCH
+  // =====================================================
+
+  onLessonVideoEnded(): void {
+
+    const lesson =
+      this.selectedLesson();
 
 
-    if (
-      !sessionId ||
-      Number.isNaN(sessionId)
-    ) {
-
-      this.showNotification(
-        'معرف الجلسة غير صالح.',
-        'error'
-      );
-
+    if (!lesson) {
       return;
     }
 
 
     console.log(
-      '🎯 Selected Session:',
-      selectedSession
+      '🎬 Lesson video completed:',
+      lesson.lessonId
     );
 
 
     /*
-     * Load full session details.
+     * Mark the video as fully watched.
      */
-
-    this.api
-      .getSession(sessionId)
-      .subscribe({
-
-        next:
-          session => {
-
-            console.log(
-              '✅ Session Details:',
-              session
-            );
+    this.lessonVideoCompleted.set(
+      true
+    );
 
 
-            const status =
-              String(
-                session.status ?? ''
-              ).toLowerCase();
+    /*
+     * Mark the lesson as viewed/completed
+     * only after the video reaches the end.
+     */
+    this.markLessonAsViewed(
+      lesson.lessonId
+    );
 
 
-            /*
-             * Scheduled session
-             */
-
-            if (
-              status === 'scheduled' &&
-              session.meetingLink
-            ) {
-
-              console.log(
-                '🎥 Opening meeting:',
-                session.meetingLink
-              );
-
-
-              window.open(
-                session.meetingLink,
-                '_blank',
-                'noopener,noreferrer'
-              );
-
-
-              this.markLessonAsViewed(
-                lesson.lessonId
-              );
-
-              return;
-            }
-
-
-            /*
-             * Completed session / recording
-             */
-
-            if (
-              session.recordingUrl
-            ) {
-
-              console.log(
-                '🎬 Opening recording:',
-                session.recordingUrl
-              );
-
-
-              window.open(
-                session.recordingUrl,
-                '_blank',
-                'noopener,noreferrer'
-              );
-
-
-              this.markLessonAsViewed(
-                lesson.lessonId
-              );
-
-              return;
-            }
-
-
-            /*
-             * Meeting link fallback
-             */
-
-            if (
-              session.meetingLink
-            ) {
-
-              console.log(
-                '🎥 Opening meeting link:',
-                session.meetingLink
-              );
-
-
-              window.open(
-                session.meetingLink,
-                '_blank',
-                'noopener,noreferrer'
-              );
-
-
-              this.markLessonAsViewed(
-                lesson.lessonId
-              );
-
-              return;
-            }
-
-
-            this.showNotification(
-              'لا يوجد رابط حضور أو تسجيل متاح لهذه الجلسة حاليًا.',
-              'error'
-            );
-
-          },
-
-
-        error:
-          error => {
-
-            console.error(
-              '❌ Session Details API Error:',
-              error
-            );
-
-
-            this.showNotification(
-              'تعذر تحميل بيانات الجلسة حاليًا.',
-              'error'
-            );
-
-          }
-
-      });
+    this.showNotification(
+      'تمت مشاهدة الدرس بالكامل، يمكنك الآن تقييم الدرس.',
+      'success'
+    );
   }
 
 
@@ -2014,7 +2044,10 @@ export class TraineeProgram implements OnInit {
   ): void {
 
     const id =
-      Number(lessonId);
+      Number(
+        lessonId
+      );
+
 
     if (
       !id ||
@@ -2043,6 +2076,7 @@ export class TraineeProgram implements OnInit {
                       }
 
                     : lesson
+
               )
 
           })
@@ -2050,17 +2084,7 @@ export class TraineeProgram implements OnInit {
     );
 
 
-    /*
-     * Recalculate frontend statistics
-     */
-
     this.calculateStats();
-
-
-    this.showNotification(
-      'تم فتح الدرس بنجاح.',
-      'success'
-    );
 
 
     console.log(
@@ -2072,7 +2096,6 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // TRAINING MATERIALS
-  // GET /api/TrainingMaterial/lesson/{lessonId}
   // =====================================================
 
   downloadLessonMaterials(
@@ -2084,6 +2107,27 @@ export class TraineeProgram implements OnInit {
 
       console.warn(
         '🔒 Module is locked'
+      );
+
+      this.showNotification(
+        'هذا المحتوى غير متاح حاليًا.',
+        'error'
+      );
+
+      return;
+    }
+
+
+    /*
+     * Lesson must be watched first.
+     */
+    if (
+      lesson.progressPercentage !== 100
+    ) {
+
+      this.showNotification(
+        'يجب مشاهدة الدرس أولاً قبل تحميل المواد.',
+        'error'
       );
 
       return;
@@ -2101,19 +2145,13 @@ export class TraineeProgram implements OnInit {
       Number.isNaN(lessonId)
     ) {
 
-      console.warn(
-        '⚠️ Invalid lesson ID'
+      this.showNotification(
+        'تعذر تحديد الدرس.',
+        'error'
       );
-
 
       return;
     }
-
-
-    console.log(
-      '📥 Loading training materials for lesson:',
-      lessonId
-    );
 
 
     this.api
@@ -2134,10 +2172,10 @@ export class TraineeProgram implements OnInit {
               materials.length === 0
             ) {
 
-              alert(
-                'لا توجد مواد تدريبية متاحة لهذا الدرس.'
+              this.showNotification(
+                'لا توجد مواد تدريبية متاحة لهذا الدرس.',
+                'error'
               );
-
 
               return;
             }
@@ -2155,22 +2193,134 @@ export class TraineeProgram implements OnInit {
             );
 
 
-            materials.forEach(
+            /*
+             * Video is for viewing only.
+             *
+             * Download only non-video materials
+             * such as PDF, Word, images, etc.
+             */
+            const downloadableMaterials =
+              materials.filter(
+                material =>
+                  !this.isVideoMaterial(
+                    material
+                  )
+              );
+
+
+            if (
+              downloadableMaterials.length === 0
+            ) {
+
+              this.showNotification(
+                'لا توجد ملفات قابلة للتحميل لهذا الدرس.',
+                'error'
+              );
+
+              return;
+            }
+
+
+            downloadableMaterials.forEach(
               material => {
 
-                if (!material.fileUrl) {
+                const materialId =
+                  Number(
+                    material.materialId
+                  );
+
+
+                if (
+                  !materialId ||
+                  Number.isNaN(materialId)
+                ) {
+
+                  console.warn(
+                    '⚠️ Invalid material ID:',
+                    material
+                  );
+
                   return;
                 }
 
 
-                window.open(
-                  material.fileUrl,
-                  '_blank',
-                  'noopener,noreferrer'
-                );
+                this.api
+                  .getTrainingMaterialDownloadUrl(
+                    materialId
+                  )
+                  .subscribe({
 
-              }
-            );
+                    next:
+                      response => {
+
+                        const rawDownloadUrl =
+                          response?.DownloadUrl;
+
+
+                        if (
+                          !rawDownloadUrl
+                        ) {
+
+                          this.showNotification(
+                            'رابط تحميل المادة غير متوفر.',
+                            'error'
+                          );
+
+                          return;
+                        }
+
+
+                        const downloadUrl =
+                          this.api.getFileUrl(
+                            rawDownloadUrl
+                          );
+
+
+                        if (!downloadUrl) {
+
+                          this.showNotification(
+                            'رابط تحميل المادة غير صالح.',
+                            'error'
+                          );
+
+                          return;
+                        }
+
+
+                        console.log(
+                          '⬇️ Download URL:',
+                          downloadUrl
+                        );
+
+
+                        window.open(
+                          downloadUrl,
+                          '_blank',
+                          'noopener,noreferrer'
+                        );
+
+                      },
+
+
+                    error:
+                      error => {
+
+                        console.error(
+                          '❌ Download URL API Error:',
+                          error
+                        );
+
+
+                        this.showNotification(
+                          'تعذر تحميل المادة التدريبية.',
+                          'error'
+                        );
+
+                      }
+
+                  });
+
+              });
 
           },
 
@@ -2184,8 +2334,9 @@ export class TraineeProgram implements OnInit {
             );
 
 
-            alert(
-              'تعذر تحميل مادة الدرس حاليًا.'
+            this.showNotification(
+              'تعذر تحميل مواد الدرس حاليًا.',
+              'error'
             );
 
           }
@@ -2195,36 +2346,9 @@ export class TraineeProgram implements OnInit {
 
 
   // =====================================================
-  // LESSON DETAILS SIDEBAR
-  // =====================================================
-
-  showLessonSidebar =
-    signal(false);
-
-  selectedLesson =
-    signal<LessonWithProgressDto | null>(null);
-
-  selectedModule =
-    signal<ModuleWithLessonsDto | null>(null);
-
-  lessonSidebarTab =
-    signal<'notes' | 'rating'>('notes');
-
-  lessonNote =
-    signal('');
-
-  lessonRating =
-    signal(0);
-
-  lessonFeedbackExists =
-    signal(false);
-
-  lessonFeedbackLoading =
-    signal(false);
-
-
-  // =====================================================
   // OPEN LESSON NOTES
+  // NOTES ARE AVAILABLE IMMEDIATELY AFTER
+  // OPENING THE VIDEO
   // =====================================================
 
   openLessonNotes(
@@ -2234,18 +2358,8 @@ export class TraineeProgram implements OnInit {
 
     if (module.isLocked) {
 
-      console.warn(
-        '🔒 Module is locked'
-      );
-
-      return;
-    }
-
-
-    if (lesson.progressPercentage !== 100) {
-
       this.showNotification(
-        'يجب مشاهدة الدرس أولاً قبل إضافة ملاحظة.',
+        'هذه الوحدة مقفلة حاليًا.',
         'error'
       );
 
@@ -2253,21 +2367,39 @@ export class TraineeProgram implements OnInit {
     }
 
 
+    /*
+     * Notes do not require the video to be completed.
+     * They are available once the lesson has been opened.
+     */
     this.selectedLesson.set(
       lesson
     );
+
 
     this.selectedModule.set(
       module
     );
 
+
     this.lessonSidebarTab.set(
       'notes'
     );
 
+
+    this.lessonViewerVisible.set(
+      false
+    );
+
+
+    this.lessonViewerUrl.set(
+      null
+    );
+
+
     this.loadLessonFeedback(
       lesson.lessonId
     );
+
 
     this.showLessonSidebar.set(
       true
@@ -2277,6 +2409,7 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // OPEN LESSON RATING
+  // RATING IS AVAILABLE ONLY AFTER VIDEO ENDS
   // =====================================================
 
   openLessonRating(
@@ -2286,18 +2419,25 @@ export class TraineeProgram implements OnInit {
 
     if (module.isLocked) {
 
-      console.warn(
-        '🔒 Module is locked'
+      this.showNotification(
+        'هذه الوحدة مقفلة حاليًا.',
+        'error'
       );
 
       return;
     }
 
 
-    if (lesson.progressPercentage !== 100) {
+    /*
+     * Rating is only available after the
+     * current video has been watched until the end.
+     */
+    if (
+      !this.lessonVideoCompleted()
+    ) {
 
       this.showNotification(
-        'يجب مشاهدة الدرس أولاً قبل تقييم الدرس.',
+        'يجب إكمال مشاهدة الفيديو أولاً قبل تقييم الدرس.',
         'error'
       );
 
@@ -2309,17 +2449,31 @@ export class TraineeProgram implements OnInit {
       lesson
     );
 
+
     this.selectedModule.set(
       module
     );
+
 
     this.lessonSidebarTab.set(
       'rating'
     );
 
+
+    this.lessonViewerVisible.set(
+      false
+    );
+
+
+    this.lessonViewerUrl.set(
+      null
+    );
+
+
     this.loadLessonFeedback(
       lesson.lessonId
     );
+
 
     this.showLessonSidebar.set(
       true
@@ -2329,7 +2483,6 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // LOAD LESSON FEEDBACK
-  // GET /api/LessonFeedback/lesson/{lessonId}
   // =====================================================
 
   private loadLessonFeedback(
@@ -2400,17 +2553,13 @@ export class TraineeProgram implements OnInit {
 
             console.log(
               'ℹ️ No existing feedback for lesson:',
-              id,
-              error
+              id
             );
 
 
-            /*
-             * 404 means the trainee has not submitted
-             * feedback for this lesson yet.
-             */
-
-            if (error?.status === 404) {
+            if (
+              error?.status === 404
+            ) {
 
               this.lessonFeedbackExists.set(
                 false
@@ -2453,6 +2602,35 @@ export class TraineeProgram implements OnInit {
     tab: 'notes' | 'rating'
   ): void {
 
+    const lesson =
+      this.selectedLesson();
+
+
+    if (!lesson) {
+      return;
+    }
+
+
+    /*
+     * Notes are available immediately.
+     *
+     * Rating requires the video to have
+     * reached the end.
+     */
+    if (
+      tab === 'rating' &&
+      !this.lessonVideoCompleted()
+    ) {
+
+      this.showNotification(
+        'يجب إكمال مشاهدة الفيديو أولاً قبل تقييم الدرس.',
+        'error'
+      );
+
+      return;
+    }
+
+
     this.lessonSidebarTab.set(
       tab
     );
@@ -2467,6 +2645,21 @@ export class TraineeProgram implements OnInit {
 
     this.showLessonSidebar.set(
       false
+    );
+
+
+    this.lessonViewerVisible.set(
+      false
+    );
+
+
+    this.lessonViewerUrl.set(
+      null
+    );
+
+
+    this.lessonViewerTitle.set(
+      ''
     );
 
 
@@ -2487,6 +2680,11 @@ export class TraineeProgram implements OnInit {
 
     this.lessonRating.set(
       0
+    );
+
+
+    this.lessonVideoCompleted.set(
+      false
     );
 
 
@@ -2521,6 +2719,8 @@ export class TraineeProgram implements OnInit {
 
   // =====================================================
   // SAVE NOTE
+  // NOTES CAN BE SAVED IMMEDIATELY
+  // AFTER OPENING THE LESSON
   // =====================================================
 
   saveLessonNote(): void {
@@ -2534,17 +2734,11 @@ export class TraineeProgram implements OnInit {
     }
 
 
-    if (lesson.progressPercentage !== 100) {
-
-      this.showNotification(
-        'يجب مشاهدة الدرس أولاً قبل إضافة ملاحظة.',
-        'error'
-      );
-
-      return;
-    }
-
-
+    /*
+     * No video completion check here.
+     * Notes can be saved immediately after
+     * opening the lesson.
+     */
     const note =
       this.lessonNote().trim();
 
@@ -2575,20 +2769,6 @@ export class TraineeProgram implements OnInit {
           : null
 
     };
-
-
-    console.log(
-      '📝 Saving lesson feedback:',
-      {
-        lessonId:
-          lesson.lessonId,
-
-        dto,
-
-        exists:
-          this.lessonFeedbackExists()
-      }
-    );
 
 
     const request =
@@ -2650,7 +2830,9 @@ export class TraineeProgram implements OnInit {
           );
 
 
-          if (error?.status === 409) {
+          if (
+            error?.status === 409
+          ) {
 
             this.showNotification(
               'الملاحظات لهذا الدرس موجودة مسبقًا، يرجى إعادة فتح الدرس.',
@@ -2680,6 +2862,29 @@ export class TraineeProgram implements OnInit {
     rating: number
   ): void {
 
+    const lesson =
+      this.selectedLesson();
+
+
+    /*
+     * Extra protection:
+     * Do not allow rating selection before
+     * the video has ended.
+     */
+    if (
+      lesson &&
+      !this.lessonVideoCompleted()
+    ) {
+
+      this.showNotification(
+        'يجب إكمال مشاهدة الفيديو أولاً قبل تقييم الدرس.',
+        'error'
+      );
+
+      return;
+    }
+
+
     this.lessonRating.set(
       rating
     );
@@ -2705,10 +2910,16 @@ export class TraineeProgram implements OnInit {
     }
 
 
-    if (lesson.progressPercentage !== 100) {
+    /*
+     * Rating can only be saved after
+     * the video has completely ended.
+     */
+    if (
+      !this.lessonVideoCompleted()
+    ) {
 
       this.showNotification(
-        'يجب مشاهدة الدرس أولاً قبل تقييم الدرس.',
+        'يجب إكمال مشاهدة الفيديو أولاً قبل تقييم الدرس.',
         'error'
       );
 
@@ -2722,7 +2933,6 @@ export class TraineeProgram implements OnInit {
         'يرجى اختيار تقييم الدرس.',
         'error'
       );
-
 
       return;
     }
@@ -2743,20 +2953,6 @@ export class TraineeProgram implements OnInit {
         rating
 
     };
-
-
-    console.log(
-      '⭐ Saving lesson rating:',
-      {
-        lessonId:
-          lesson.lessonId,
-
-        dto,
-
-        exists:
-          this.lessonFeedbackExists()
-      }
-    );
 
 
     const request =
@@ -2818,7 +3014,9 @@ export class TraineeProgram implements OnInit {
           );
 
 
-          if (error?.status === 409) {
+          if (
+            error?.status === 409
+          ) {
 
             this.showNotification(
               'التقييم لهذا الدرس موجود مسبقًا، يرجى إعادة فتح الدرس.',
@@ -2854,7 +3052,6 @@ export class TraineeProgram implements OnInit {
         '🔒 Prerequisite not completed'
       );
 
-
       return;
     }
 
@@ -2886,7 +3083,6 @@ export class TraineeProgram implements OnInit {
         '⚠️ No trainee ID'
       );
 
-
       return;
     }
 
@@ -2896,7 +3092,6 @@ export class TraineeProgram implements OnInit {
       console.warn(
         '⚠️ No program ID'
       );
-
 
       return;
     }

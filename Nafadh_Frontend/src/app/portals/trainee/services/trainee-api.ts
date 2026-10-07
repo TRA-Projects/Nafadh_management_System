@@ -332,7 +332,7 @@ export class TraineeApi {
   }
 
 
-  // =========================================================
+    // =========================================================
   // Training Materials
   // =========================================================
 
@@ -346,18 +346,59 @@ export class TraineeApi {
   }
 
 
+  getTrainingMaterialDownloadUrl(
+    materialId: number
+  ): Observable<{ DownloadUrl: string }> {
+
+    return this.http.get<{ DownloadUrl: string }>(
+      `${this.base}/TrainingMaterial/${materialId}/download`
+    );
+  }
+
+
+getFileUrl(fileUrl: string): string {
+
+  if (!fileUrl) {
+    return '';
+  }
+
+  // If the URL is already absolute
+  if (/^https?:\/\//i.test(fileUrl)) {
+    return fileUrl;
+  }
+
+  /*
+   * environment.apiBaseUrl is normally:
+   * https://localhost:7082/api
+   *
+   * Uploaded files are served from:
+   * https://localhost:7082/uploads/...
+   *
+   * So we remove /api from the base URL.
+   */
+  const apiRoot =
+    this.base.replace(/\/api\/?$/i, '');
+
+  const normalizedPath =
+    fileUrl.startsWith('/')
+      ? fileUrl
+      : `/${fileUrl}`;
+
+  return `${apiRoot}${normalizedPath}`;
+}
+
   // =========================================================
   // Sessions
   // =========================================================
 
-  getSessionsByBatch(
-    batchId: number
-  ): Observable<SessionDto[]> {
+getSessionsByBatch(
+  batchId: number
+): Observable<SessionDto[]> {
 
-    return this.http.get<SessionDto[]>(
-      `${this.base}/Session/batch/${batchId}`
-    );
-  }
+  return this.http.get<SessionDto[]>(
+    `${this.base}/Session?batchId=${batchId}`
+  );
+}
 
 
   getSession(
