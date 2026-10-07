@@ -78,6 +78,7 @@ namespace Nafadh_Backend.DTOs
     {
         [Required]
         public int SenderId { get; set; }
+        public int? ReceiverUserId { get; set; }
 
         [Required]
         [MaxLength(1000)]

@@ -144,61 +144,59 @@ namespace Nafadh_Backend.Services
         // Add message
         // ============================================================
         public async Task<ConversationMessageDTO> AddMessageAsync(
-    int conversationId,
-    AddConversationMessageDTO dto
-)
+            int conversationId,
+            AddConversationMessageDTO dto
+        )
         {
-            var conversation =
-                await _repository.GetByIdAsync(
-                    conversationId
-                );
+            int? receiverId =
+    dto.ReceiverUserId;
 
-            if (conversation == null)
+            if (!receiverId.HasValue)
             {
-                throw new Exception(
-                    "Conversation not found."
-                );
-            }
+                var conversation =
+                    await _repository.GetByIdAsync(
+                        conversationId
+                    );
 
+                if (conversation == null)
+                {
+                    throw new Exception(
+                        "Conversation not found."
+                    );
+                }
 
-            int? receiverId = null;
-
-
-            // محادثة المدرب مع المتدرب
-            if (
-                conversation.Type ==
-                    NFD_ConversationType.Other
-                &&
-                conversation.Category ==
-                    "TrainerTrainee"
-            )
-            {
-                var lastMessage =
-                    conversation.Messages?
-                        .OrderByDescending(
-                            m => m.SentDate
-                        )
-                        .FirstOrDefault();
-
-
-                // إذا كان الطرف الآخر قد أرسل آخر رسالة
                 if (
-                    lastMessage != null
+                    conversation.Type ==
+                        NFD_ConversationType.Other
                     &&
-                    lastMessage.SenderId !=
-                        dto.SenderId
+                    conversation.Category ==
+                        "TrainerTrainee"
                 )
                 {
-                    receiverId =
-                        lastMessage.SenderId;
-                }
-                else
-                {
-                    receiverId =
-                        conversation.UserId;
+                    var lastMessage =
+                        conversation.Messages?
+                            .OrderByDescending(
+                                m => m.SentDate
+                            )
+                            .FirstOrDefault();
+
+                    if (
+                        lastMessage != null
+                        &&
+                        lastMessage.SenderId !=
+                            dto.SenderId
+                    )
+                    {
+                        receiverId =
+                            lastMessage.SenderId;
+                    }
+                    else
+                    {
+                        receiverId =
+                            conversation.UserId;
+                    }
                 }
             }
-
 
             var message =
                 new NFD_Message
@@ -229,24 +227,7 @@ namespace Nafadh_Backend.Services
                 );
 
 
-            // Reload the conversation so the Sender navigation
-            // property is available.
-            var updatedConversation =
-                await _repository.GetByIdAsync(
-                    conversationId
-                );
-
-
-            var savedMessage =
-                updatedConversation?
-                    .Messages
-                    .FirstOrDefault(
-                        m =>
-                            m.MessageId ==
-                            created.MessageId
-                    );
-
-
+            // لا نعيد تحميل المحادثة مرة ثانية
             return new ConversationMessageDTO
             {
                 MessageId =
@@ -265,9 +246,7 @@ namespace Nafadh_Backend.Services
                     created.SenderId,
 
                 SenderName =
-                    savedMessage?
-                        .Sender?
-                        .FullName,
+                    null,
 
                 ReceiverId =
                     created.ReceiverId,
@@ -276,7 +255,6 @@ namespace Nafadh_Backend.Services
                     created.TicketId
             };
         }
-
 
 
         // ============================================================
