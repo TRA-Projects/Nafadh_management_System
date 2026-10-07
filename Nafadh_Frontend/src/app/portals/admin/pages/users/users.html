@@ -534,53 +534,96 @@
       </div>
     </div>
 
-    <div class="details-fullpage-grid">
-      <div class="details-card">
-        <span class="details-label">البريد الإلكتروني</span>
-        <span class="details-value">{{ detailsUser.email || '---' }}</span>
-      </div>
+    <!-- قسم: معلومات التواصل -->
+    <div class="details-section">
+      <h4 class="details-section-title">
+        <i class="fa-solid fa-address-card"></i>
+        معلومات التواصل
+      </h4>
+      <div class="details-fullpage-grid">
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-envelope"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">البريد الإلكتروني</span>
+            <span class="details-value">{{ detailsUser.email || '---' }}</span>
+          </div>
+        </div>
 
-      <div class="details-card">
-        <span class="details-label">رقم الهاتف</span>
-        <span class="details-value">{{ detailsUser.phone || 'غير مسجل' }}</span>
-      </div>
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-phone"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">رقم الهاتف</span>
+            <span class="details-value">{{ detailsUser.phone || 'غير مسجل' }}</span>
+          </div>
+        </div>
 
-      <div class="details-card">
-        <span class="details-label">حالة الحساب</span>
-        <span
-          class="nfd-badge status"
-          [class.active]="(detailsUser.status | lowercase) !== 'suspended'"
-          [class.suspended]="(detailsUser.status | lowercase) === 'suspended'">
-          {{ (detailsUser.status | lowercase) === 'suspended' ? 'موقوف' : 'نشط' }}
-        </span>
-      </div>
-
-      <div class="details-card">
-        <span class="details-label">تاريخ إنشاء الحساب</span>
-        <span class="details-value">{{ (detailsUser.createdAt | date:'dd/MM/yyyy') || '---' }}</span>
-      </div>
-
-      <div class="details-card">
-        <span class="details-label">User ID</span>
-        <span class="details-value mono">{{ detailsUser.userId }}</span>
-      </div>
-
-      <div class="details-card">
-        <span class="details-label">Role ID</span>
-        <span class="details-value mono">{{ detailsUser.roleId }}</span>
-      </div>
-
-      <div class="details-card">
-        <span class="details-label">عدد الصلاحيات</span>
-        <span class="details-value">{{ getRolePermissionsCount(detailsUser.roleName || detailsUser.roleId) }} صلاحية</span>
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-circle-check"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">حالة الحساب</span>
+            <span
+              class="nfd-badge status"
+              [class.active]="(detailsUser.status | lowercase) !== 'suspended'"
+              [class.suspended]="(detailsUser.status | lowercase) === 'suspended'">
+              {{ (detailsUser.status | lowercase) === 'suspended' ? 'موقوف' : 'نشط' }}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="details-permissions-box">
-      <div class="details-label">وصف صلاحيات الدور</div>
-      <p class="details-permissions-text">
-        {{ getRolePermissionsDescription(detailsUser.roleName || detailsUser.roleId) }}
-      </p>
+    <!-- قسم: معلومات النظام -->
+    <div class="details-section">
+      <h4 class="details-section-title">
+        <i class="fa-solid fa-database"></i>
+        معلومات النظام
+      </h4>
+      <div class="details-fullpage-grid">
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-calendar-days"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">تاريخ إنشاء الحساب</span>
+            <span class="details-value">{{ (detailsUser.createdAt | date:'dd/MM/yyyy') || '---' }}</span>
+          </div>
+        </div>
+
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-id-badge"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">User ID</span>
+            <span class="details-value mono">{{ detailsUser.userId }}</span>
+          </div>
+        </div>
+
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">Role ID</span>
+            <span class="details-value mono">{{ detailsUser.roleId }}</span>
+          </div>
+        </div>
+
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-key"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">عدد الصلاحيات</span>
+            <span class="details-value">{{ getRolePermissionsCount(detailsUser.roleName || detailsUser.roleId) }} صلاحية</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- قسم: وصف الصلاحيات -->
+    <div class="details-section">
+      <h4 class="details-section-title">
+        <i class="fa-solid fa-file-shield"></i>
+        وصف صلاحيات الدور
+      </h4>
+      <div class="details-permissions-box">
+        <p class="details-permissions-text">
+          {{ getRolePermissionsDescription(detailsUser.roleName || detailsUser.roleId) }}
+        </p>
+      </div>
     </div>
   </div>
 </div>
