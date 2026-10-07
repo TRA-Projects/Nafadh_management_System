@@ -1027,6 +1027,134 @@
       </p>
 
     </section>
+    <section class="certificates-card">
+  <div class="certificates-header">
+    <div>
+      <span class="summary-kicker">الملف المهني</span>
+      <h2 class="summary-title">الشهادات المهنية</h2>
+      <p class="summary-sub">
+        أضيفي شهاداتك المهنية ليتم حفظها في النظام.
+      </p>
+    </div>
+
+    <div class="certificate-header-icon">
+      <i class="fa-solid fa-certificate"></i>
+    </div>
+  </div>
+
+  <div class="certificate-upload-form">
+    <div class="certificate-field">
+      <label>اسم الشهادة *</label>
+      <input
+        type="text"
+        [(ngModel)]="certificateName"
+        placeholder="مثال: Microsoft Azure Fundamentals"
+      />
+    </div>
+
+    <div class="certificate-field">
+      <label>الجهة المصدرة</label>
+      <input
+        type="text"
+        [(ngModel)]="certificateIssuer"
+        placeholder="مثال: Microsoft"
+      />
+    </div>
+
+    <div class="certificate-field">
+      <label>تاريخ الإصدار</label>
+      <input
+        type="date"
+        [(ngModel)]="certificateIssueDate"
+      />
+    </div>
+
+    <div class="certificate-field">
+      <label>تاريخ الانتهاء</label>
+      <input
+        type="date"
+        [(ngModel)]="certificateExpiryDate"
+      />
+    </div>
+
+    <div class="certificate-field full-width">
+      <label>ملف الشهادة *</label>
+      <input
+        #certificateFile
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png"
+        (change)="onCertificateFileSelected($event)"
+      />
+      <small>PDF أو JPG أو PNG — الحد الأقصى 10 MB</small>
+    </div>
+
+    <button
+      type="button"
+      class="certificate-upload-btn"
+      [disabled]="isUploadingCertificate()"
+      (click)="uploadCertificate()"
+    >
+      @if (isUploadingCertificate()) {
+        جاري الرفع...
+      } @else {
+        <i class="fa-solid fa-upload"></i>
+        إضافة الشهادة
+      }
+    </button>
+  </div>
+
+  <div class="certificates-list">
+    @if (trainerCertificates().length === 0) {
+      <div class="certificates-empty">
+        لا توجد شهادات مضافة حتى الآن.
+      </div>
+    } @else {
+      @for (certificate of trainerCertificates(); track certificate.trainerCertificateId) {
+        <article class="certificate-item">
+          <div class="certificate-item-icon">
+            <i class="fa-solid fa-award"></i>
+          </div>
+
+          <div class="certificate-item-content">
+            <h3>{{ certificate.certificateName }}</h3>
+
+            @if (certificate.issuer) {
+              <span>الجهة المصدرة: {{ certificate.issuer }}</span>
+            }
+
+            <div class="certificate-dates">
+              @if (certificate.issueDate) {
+                <span>الإصدار: {{ certificate.issueDate | date:'yyyy/MM/dd' }}</span>
+              }
+              @if (certificate.expiryDate) {
+                <span>الانتهاء: {{ certificate.expiryDate | date:'yyyy/MM/dd' }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="certificate-item-actions">
+            <a
+              class="certificate-view-btn"
+              [href]="getCertificateFileUrl(certificate.fileUrl)"
+              target="_blank"
+              rel="noopener"
+            >
+              عرض الملف
+            </a>
+
+            <button
+              type="button"
+              class="certificate-delete-btn"
+              (click)="deleteCertificate(certificate)"
+            >
+              حذف
+            </button>
+          </div>
+        </article>
+      }
+    }
+  </div>
+</section>
 
   }
 
