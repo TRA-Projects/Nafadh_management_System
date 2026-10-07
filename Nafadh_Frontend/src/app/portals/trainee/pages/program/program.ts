@@ -2291,12 +2291,6 @@ export class TraineeProgram implements OnInit {
               fileName;
 
 
-            link.setAttribute(
-              'download',
-              fileName
-            );
-
-
             link.style.display =
               'none';
 
