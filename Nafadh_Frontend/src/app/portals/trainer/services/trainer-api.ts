@@ -108,6 +108,16 @@ getProgram(
     );
   }
   
+updateSessionStatus(
+  sessionId: number,
+  status: number
+): Observable<void> {
+  return this.http.put<void>(
+    `${this.base}/Session/${sessionId}/status`,
+    { status }
+  );
+}
+
 createSession(dto: unknown) {
   return this.http.post(
     `${this.base}/Session`,

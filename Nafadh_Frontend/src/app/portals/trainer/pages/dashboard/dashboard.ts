@@ -54,6 +54,366 @@ export class TrainerDashboard implements OnInit {
   traineeCount =
     signal(0);
 
+  // =====================================================
+  // MONTHLY CALENDAR
+  // =====================================================
+
+  calendarDate = signal(new Date());
+
+  selectedCalendarDate =
+    signal<string | null>(null);
+
+
+  calendarMonthTitle = computed(() => {
+
+    return this.calendarDate().toLocaleDateString(
+      'ar-OM',
+      {
+        month: 'long',
+        year: 'numeric'
+      }
+    );
+
+  });
+
+
+  calendarDays = computed(() => {
+
+    const currentDate =
+      this.calendarDate();
+
+    const year =
+      currentDate.getFullYear();
+
+    const month =
+      currentDate.getMonth();
+
+    const firstDay =
+      new Date(
+        year,
+        month,
+        1
+      );
+
+    const lastDay =
+      new Date(
+        year,
+        month + 1,
+        0
+      );
+
+    /*
+     * JavaScript:
+     * Sunday = 0
+     *
+     * We want Saturday -> Friday
+     * because the interface is Arabic.
+     *
+     * Convert:
+     * Saturday = 0
+     * Sunday   = 1
+     * ...
+     * Friday   = 6
+     */
+
+    const firstDayIndex =
+      (firstDay.getDay() + 1) % 7;
+
+    const daysInMonth =
+      lastDay.getDate();
+
+    const days: Array<{
+      date: Date;
+      dateKey: string;
+      dayNumber: number;
+      isCurrentMonth: boolean;
+      isToday: boolean;
+      sessions: SessionDto[];
+    }> = [];
+
+
+    // Previous month days
+    for (
+      let i = firstDayIndex - 1;
+      i >= 0;
+      i--
+    ) {
+
+      const date =
+        new Date(
+          year,
+          month,
+          -i
+        );
+
+      days.push(
+        this.createCalendarDay(
+          date,
+          false
+        )
+      );
+
+    }
+
+
+    // Current month days
+    for (
+      let day = 1;
+      day <= daysInMonth;
+      day++
+    ) {
+
+      const date =
+        new Date(
+          year,
+          month,
+          day
+        );
+
+      days.push(
+        this.createCalendarDay(
+          date,
+          true
+        )
+      );
+
+    }
+
+
+    // Next month days
+    let nextDay = 1;
+
+    while (
+      days.length < 42
+    ) {
+
+      const date =
+        new Date(
+          year,
+          month + 1,
+          nextDay++
+        );
+
+      days.push(
+        this.createCalendarDay(
+          date,
+          false
+        )
+      );
+
+    }
+
+
+    return days;
+
+  });
+
+
+  selectedDaySessions = computed(() => {
+
+    const selectedDate =
+      this.selectedCalendarDate();
+
+    if (!selectedDate) {
+
+      return [];
+
+    }
+
+    return this.sessions()
+      .filter(session =>
+        this.getSessionDateKey(session) ===
+        selectedDate
+      )
+      .sort(
+        (a, b) =>
+          this.getSessionDateTime(a) -
+          this.getSessionDateTime(b)
+      );
+
+  });
+
+  completeSession(session: SessionDto): void {
+    if (session.status === 'Completed') {
+      return;
+    }
+
+    this.api.updateSessionStatus(session.sessionId, 1).subscribe({
+      next: () => {
+        this.sessions.update(sessions =>
+          sessions.map(item =>
+            item.sessionId === session.sessionId
+              ? { ...item, status: 'Completed' }
+              : item
+          )
+        );
+      },
+      error: (error) => {
+        console.error('Failed to complete session:', error);
+      }
+    });
+  }
+
+  private createCalendarDay(
+    date: Date,
+    isCurrentMonth: boolean
+  ) {
+
+    const dateKey =
+      this.formatDateKey(date);
+
+    return {
+
+      date,
+
+      dateKey,
+
+      dayNumber:
+        date.getDate(),
+
+      isCurrentMonth,
+
+      isToday:
+        dateKey ===
+        this.formatDateKey(
+          new Date()
+        ),
+
+      sessions:
+        this.sessions().filter(
+          session =>
+            this.getSessionDateKey(session) ===
+            dateKey
+        )
+
+    };
+
+  }
+
+
+  private formatDateKey(
+    date: Date
+  ): string {
+
+    const year =
+      date.getFullYear();
+
+    const month =
+      String(
+        date.getMonth() + 1
+      ).padStart(2, '0');
+
+    const day =
+      String(
+        date.getDate()
+      ).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+
+  }
+
+
+  private getSessionDateKey(
+    session: SessionDto
+  ): string {
+
+    if (!session.sessionDate) {
+      return '';
+    }
+
+    const value =
+      String(session.sessionDate).trim();
+
+    // ISO:
+    // 2026-10-07T00:00:00
+    if (value.includes('T')) {
+      return value.split('T')[0];
+    }
+
+    // ISO with space:
+    // 2026-10-07 00:00:00
+    if (value.includes(' ')) {
+      return value.split(' ')[0];
+    }
+
+    // Date only:
+    // 2026-10-07
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+
+    const parsed =
+      new Date(value);
+
+    if (Number.isNaN(parsed.getTime())) {
+      return '';
+    }
+
+    return this.formatDateKey(parsed);
+  }
+
+
+  selectCalendarDate(
+    dateKey: string
+  ): void {
+
+    this.selectedCalendarDate.set(
+      dateKey
+    );
+
+  }
+
+
+  previousMonth(): void {
+
+    const current =
+      this.calendarDate();
+
+    this.calendarDate.set(
+      new Date(
+        current.getFullYear(),
+        current.getMonth() - 1,
+        1
+      )
+    );
+
+  }
+
+
+  nextMonth(): void {
+
+    const current =
+      this.calendarDate();
+
+    this.calendarDate.set(
+      new Date(
+        current.getFullYear(),
+        current.getMonth() + 1,
+        1
+      )
+    );
+
+  }
+
+
+  goToToday(): void {
+
+    const today =
+      new Date();
+
+    this.calendarDate.set(
+      new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        1
+      )
+    );
+
+    this.selectedCalendarDate.set(
+      this.formatDateKey(today)
+    );
+
+  }
 
   // =====================================================
   // UPCOMING SESSIONS
@@ -485,9 +845,89 @@ export class TrainerDashboard implements OnInit {
 
         next: (data) => {
 
+          const sessions =
+            data ?? [];
+
           this.sessions.set(
-            data ?? []
+            sessions
           );
+
+          // =========================================
+          // فتح التقويم على أقرب جلسة قادمة
+          // =========================================
+
+          const now =
+            Date.now();
+
+          const upcoming =
+            sessions
+              .filter(session => {
+
+                const status =
+                  String(session.status)
+                    .toLowerCase();
+
+                const isUpcomingStatus =
+                  status === 'scheduled' ||
+                  status === 'postponed';
+
+                return (
+                  isUpcomingStatus &&
+                  this.getSessionDateTime(session) >= now
+                );
+
+              })
+              .sort(
+                (a, b) =>
+                  this.getSessionDateTime(a) -
+                  this.getSessionDateTime(b)
+              );
+
+          if (upcoming.length > 0) {
+
+            const nextSession =
+              upcoming[0];
+
+            const sessionDate =
+              new Date(
+                nextSession.sessionDate
+              );
+
+            this.calendarDate.set(
+              new Date(
+                sessionDate.getFullYear(),
+                sessionDate.getMonth(),
+                1
+              )
+            );
+
+            this.selectedCalendarDate.set(
+              this.getSessionDateKey(
+                nextSession
+              )
+            );
+
+          } else {
+
+            // لا توجد جلسات قادمة:
+            // نعرض الشهر الحالي
+
+            const today =
+              new Date();
+
+            this.calendarDate.set(
+              new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                1
+              )
+            );
+
+            this.selectedCalendarDate.set(
+              this.formatDateKey(today)
+            );
+
+          }
 
         },
 
