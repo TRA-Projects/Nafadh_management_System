@@ -1,3 +1,4 @@
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
@@ -23,6 +24,9 @@ namespace Nafadh_Backend.Repositories
         Task<NFD_Message> AddMessageAsync(
             NFD_Message message
         );
+        Task<int> CreateBatchGroupAsync(
+    CreateBatchGroupDTO dto
+);
 
         Task UpdateStatusAsync(
             int conversationId,
