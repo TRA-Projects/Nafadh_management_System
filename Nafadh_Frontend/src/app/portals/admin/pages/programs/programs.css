@@ -1137,3 +1137,268 @@
 .trainee-univ { font-weight: 700; color: #1e293b; font-size: 13.5px; }
 .trainee-major { font-size: 12px; color: #64748b; margin-top: 2px; }
 .trainee-company { font-weight: 600; color: #334155; }
+
+/* ==========================================================
+   تنسيقات صفحة تفاصيل الدفعة الكاملة (Details Full Page View)
+   ========================================================== */
+.details-full-page-container {
+  max-width: 1250px;
+  margin: 16px auto 60px auto;
+  padding: 0 20px;
+  font-family: 'Cairo', sans-serif;
+  direction: rtl;
+}
+
+/* زر الرجوع */
+.btn-back-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 8px;
+  margin-bottom: 18px;
+  transition: all 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.btn-back-nav:hover {
+  color: #0D1C8C;
+  background-color: #eff6ff;
+}
+
+.back-arrow { font-size: 16px; }
+
+/* بطاقة الترويسة العلوية */
+.details-page-header-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 22px 28px;
+  margin-bottom: 22px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.header-title-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.title-with-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.details-main-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.details-main-subtext {
+  margin: 0;
+  font-size: 13.5px;
+  color: #64748b;
+}
+
+.details-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-pro-trainees {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #059669;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.btn-pro-trainees:hover {
+  background-color: #059669;
+  color: #ffffff;
+}
+
+.btn-pro-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Cairo', sans-serif;
+}
+
+.btn-pro-edit:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+/* ==========================================================
+   شبكة المؤشرات الأربعة (4 كروت بيضاء متناسقة بجانب بعضها)
+   ========================================================== */
+.details-kpis-grid-full {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+@media (max-width: 1024px) {
+  .details-kpis-grid-full { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .details-kpis-grid-full { grid-template-columns: 1fr; }
+}
+
+.kpi-card-full {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card-full:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.kpi-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.kpi-icon {
+  font-size: 16px;
+}
+
+.text-indigo { color: #6366f1 !important; }
+.text-cyan { color: #0891b2 !important; }
+.text-emerald { color: #059669 !important; }
+.text-amber { color: #d97706 !important; }
+
+.kpi-val {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+/* أشرطة التقدم المحددة داخل كل كارد */
+.kpi-bar-bg {
+  width: 100%;
+  height: 7px;
+  background-color: #f1f5f9;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.kpi-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.bg-cyan { background-color: #06b6d4 !important; }
+.bg-emerald { background-color: #10b981 !important; }
+.bg-amber { background-color: #f59e0b !important; }
+
+.kpi-hint {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0;
+}
+
+/* ==========================================================
+   بطاقة البيانات التنظيمية (صندوق بعمودين في الأسفل)
+   ========================================================== */
+.details-org-card-full {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.org-section-title {
+  margin: 0 0 18px 0;
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.org-grid-full {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .org-grid-full { grid-template-columns: 1fr; }
+}
+
+.org-item-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.org-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.org-value {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #1e293b;
+}
