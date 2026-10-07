@@ -572,7 +572,7 @@ sessionForm = {
         })
         .slice(
           0,
-          2
+          4
         );
 
     });
