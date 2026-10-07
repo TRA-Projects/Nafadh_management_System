@@ -40,7 +40,6 @@
   cursor: pointer;
 }
 
-/* تحسين هوفر بطاقات الإحصائيات مع حركة رفع خفيفة وتكبير الأيقونة */
 .stat-card:hover {
   border-color: #cbd5e1;
   box-shadow: 0 8px 18px rgba(10, 17, 114, 0.09);
@@ -131,9 +130,7 @@
   margin-bottom: 20px;
 }
 
-/* =========================================================
-   الكلمات / تصنيفات الفلترة (الكل، هيئة، شركة، مدرب، متدرب)
-   ========================================================= */
+/* الكلمات وتصنيفات الفلترة مع الهوفر */
 .nfd-chips {
   display: flex;
   gap: 8px;
@@ -155,7 +152,6 @@
   user-select: none;
 }
 
-/* 🟢 إضافة تأثير هوفر للكلمات غير النشطة */
 .nfd-chip:hover {
   background: #eef2ff;
   border-color: #a5b4fc;
@@ -164,14 +160,12 @@
   box-shadow: 0 4px 10px rgba(10, 17, 114, 0.08);
 }
 
-/* تفاعل عداد الأرقام داخل الكلمات عند الهوفر */
 .nfd-chip:hover .chip-count {
   background: rgba(10, 17, 114, 0.12);
   color: #0A1172;
   font-weight: 600;
 }
 
-/* العنصر النشط */
 .nfd-chip.active {
   background: #0A1172;
   color: #ffffff;
@@ -179,7 +173,6 @@
   box-shadow: 0 2px 6px rgba(10, 17, 114, 0.2);
 }
 
-/* 🟢 هوفر للكلمة/الزر النشط */
 .nfd-chip.active:hover {
   background: #121c9c;
   border-color: #121c9c;
@@ -201,9 +194,7 @@
   color: #fff;
 }
 
-/* =========================================================
-   الزر الذي على نفس المسار (+ إنشاء حساب جديد)
-   ========================================================= */
+/* زر إنشاء حساب جديد */
 .nfd-btn.primary-teal {
   background-color: #0A1172;
   color: white;
@@ -219,7 +210,6 @@
   box-shadow: 0 2px 5px rgba(10, 17, 114, 0.15);
 }
 
-/* 🟢 إضافة تأثير هوفر للزر الرئيسي */
 .nfd-btn.primary-teal:hover {
   background-color: #121c9c;
   color: #ffffff;
@@ -227,7 +217,6 @@
   box-shadow: 0 6px 16px rgba(10, 17, 114, 0.28);
 }
 
-/* تأثير الضغط للزر */
 .nfd-btn.primary-teal:active {
   transform: translateY(0);
   box-shadow: 0 2px 5px rgba(10, 17, 114, 0.15);
@@ -282,7 +271,6 @@
   transition: background-color 0.18s ease;
 }
 
-/* 🟢 هوفر للصفوف داخل الجدول */
 .nfd-table tbody tr:hover {
   background-color: #f8fafc;
 }
@@ -301,7 +289,6 @@
   gap: 12px;
 }
 
-/* صورة المستخدم الحقيقية */
 .user-avatar {
   width: 38px;
   height: 38px;
@@ -337,7 +324,7 @@
   font-size: 0.8rem;
 }
 
-/* الشارة الأساسية General Badge */
+/* الشارات */
 .nfd-badge {
   padding: 4px 14px;
   border-radius: 8px;
@@ -352,7 +339,6 @@
   transform: scale(1.04);
 }
 
-/* شارات الحالة */
 .nfd-badge.status.active {
   background-color: #e6fffa;
   border: 1px solid #9ae6b4;
@@ -365,29 +351,28 @@
   color: #9b2c2c;
 }
 
-/* شارات الأدوار */
 .nfd-badge.role.admin {
   background-color: #f0f5ff;
   border: 1px solid #adc6ff;
-  color: #2f54eb; /* هيئة - أزرق */
+  color: #2f54eb;
 }
 
 .nfd-badge.role.trainer {
   background-color: #e6fffb;
   border: 1px solid #87e8de;
-  color: #13c2c2; /* مدرب - تركواز */
+  color: #13c2c2;
 }
 
 .nfd-badge.role.companysupervisor {
   background-color: #fffbe6;
   border: 1px solid #ffe58f;
-  color: #d48806; /* شركة - أصفر/ذهبي */
+  color: #d48806;
 }
 
 .nfd-badge.role.trainee {
   background-color: #f5f5f5;
   border: 1px solid #d9d9d9;
-  color: #595959; /* متدرب - رمادي */
+  color: #595959;
 }
 
 /* أزرار العمليات */
@@ -414,9 +399,6 @@
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 🟢 تحسين تأثير هوفر أزرار الإجراءات */
-.btn-action.edit-btn:hover,
-.btn-action.password-btn:hover,
 .btn-action.details-btn:hover,
 .btn-action:hover {
   background-color: #0A1172 !important;
@@ -430,27 +412,7 @@
   transform: translateY(0);
 }
 
-/* RBAC Table */
-.rbac-card {
-  margin-top: 24px;
-}
-
-.rbac-header h3 {
-  margin-top: 0;
-  margin-bottom: 16px;
-  font-size: 1.1rem;
-  color: #0f172a;
-}
-
-.perm-badge {
-  background: #f1f5f9;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-weight: 600;
-  color: #334155;
-}
-
-/* Modals */
+/* النوافذ المنبثقة العامة */
 .nfd-modal-bg {
   position: fixed;
   top: 0;
@@ -536,10 +498,19 @@
   color: #1e293b;
 }
 
-/* Validation */
-.required-star {
-  color: #dc2626;
-  font-weight: 600;
+/* =========================================================
+   علامة النجمة الإلزامية باللون الأحمر الفاقع
+   ========================================================= */
+.required-star,
+.form-group label .required-star,
+label .required-star,
+label span.required-star {
+  color: #ef4444 !important;
+  font-weight: 700 !important;
+  font-size: 1.05rem !important;
+  margin-right: 4px;
+  display: inline-block;
+  line-height: 1;
 }
 
 .nfd-input.input-error {
@@ -591,9 +562,7 @@
   pointer-events: none;
 }
 
-/* =========================================================
-   شريط البحث والتصفية المتقدمة مع تأثيرات هوفر
-   ========================================================= */
+/* شريط الفلاتر والبحث */
 .nfd-filters-bar {
   display: flex;
   flex-wrap: wrap;
@@ -617,7 +586,6 @@
   transition: all 0.2s ease;
 }
 
-/* 🟢 هوفر لحقل البحث */
 .nfd-search-box:hover {
   border-color: #cbd5e1;
   background: #ffffff;
@@ -660,7 +628,6 @@
   transition: all 0.2s ease;
 }
 
-/* 🟢 هوفر لقوائم الاختيار */
 .nfd-filter-select:hover {
   border-color: #cbd5e1;
   background-color: #f8fafc;
@@ -687,7 +654,6 @@
   transition: all 0.2s ease;
 }
 
-/* 🟢 هوفر لحقول التاريخ */
 .nfd-filter-date:hover {
   border-color: #cbd5e1;
 }
@@ -729,7 +695,6 @@
   margin-bottom: 12px;
 }
 
-/* رسالة النجاح داخل النافذة (بديل alert) */
 .nfd-inline-success {
   background-color: #f0fdf4;
   border: 1px solid #bbf7d0;
@@ -744,7 +709,7 @@
   font-weight: 500;
 }
 
-/* تنسيق اختيار الصورة (رابط، رفع ملف، ومكتبة صور جاهزة) */
+/* اختيار الصور */
 .avatar-section-wrapper {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -762,7 +727,6 @@
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   margin-bottom: 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .avatar-preview-sizes {
@@ -778,8 +742,6 @@
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #0A1172;
-  background: #0A1172;
-  box-shadow: 0 2px 5px rgba(10, 17, 114, 0.15);
 }
 
 .avatar-preview-img-sm {
@@ -788,7 +750,6 @@
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid #cbd5e1;
-  background: #0A1172;
 }
 
 .avatar-preview-info {
@@ -817,14 +778,6 @@
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.avatar-remove-btn:hover {
-  background: #fca5a5;
-  color: #7f1d1d;
-  transform: translateY(-1px);
 }
 
 .avatar-type-select {
@@ -836,16 +789,7 @@
   color: #1e293b;
   background-color: #ffffff;
   cursor: pointer;
-  font-family: inherit;
-  font-weight: 500;
-  transition: all 0.2s ease;
   margin-top: 4px;
-}
-
-.avatar-type-select:focus {
-  outline: none;
-  border-color: #0A1172;
-  box-shadow: 0 0 0 3px rgba(10, 17, 114, 0.1);
 }
 
 .avatar-file-drop {
@@ -855,16 +799,10 @@
   text-align: center;
   background: #ffffff;
   cursor: pointer;
-  transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-}
-
-.avatar-file-drop:hover {
-  border-color: #0A1172;
-  background: #f0f5ff;
 }
 
 .avatar-file-drop span {
@@ -887,7 +825,6 @@
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 0.8rem;
-  color: #334155;
   margin-top: 6px;
 }
 
@@ -906,92 +843,202 @@
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   border: 2px solid transparent;
-  padding: 1px;
   cursor: pointer;
-  transition: all 0.2s ease;
   overflow: hidden;
-  background: #f1f5f9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .avatar-preset-item img {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
   object-fit: cover;
-}
-
-.avatar-preset-item:hover {
-  transform: scale(1.08);
-  border-color: #3b82f6;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .avatar-preset-item.selected {
   border-color: #0A1172;
   box-shadow: 0 0 0 2px rgba(10, 17, 114, 0.3);
-  transform: scale(1.08);
 }
 
-/* =========================================================
-   صفحة تفاصيل المستخدم كاملة الشاشة
-   ========================================================= */
+/* =========================================================================
+   صفحة تفاصيل المستخدم كاملة الشاشة (100% Full-Screen)
+   ========================================================================= */
 .details-fullpage {
   position: fixed;
   inset: 0;
-  background: #f1f5f9;
+  width: 100vw;
+  height: 100vh;
+  background: #f8fafc;
   z-index: 1000;
   overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
+/* الشريط العلوي */
 .details-fullpage-header {
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
-  padding: 18px 48px;
+  padding: 14px 40px;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.details-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .details-back-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: transparent;
-  border: none;
+  gap: 10px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
   color: #0A1172;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  padding: 6px 0;
-  transition: all 0.2s ease;
+  padding: 8px 18px;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .details-back-btn:hover {
-  text-decoration: underline;
+  background: #0A1172;
+  color: #ffffff;
+  border-color: #0A1172;
   transform: translateX(3px);
+  box-shadow: 0 4px 12px rgba(10, 17, 114, 0.2);
 }
 
+.details-user-id-tag {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-family: monospace;
+}
+
+.details-fullpage-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* زر إيقاف / تفعيل الحساب */
+.details-status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.details-status-btn.btn-suspend {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.details-status-btn.btn-suspend:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.details-status-btn.btn-activate {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.details-status-btn.btn-activate:hover {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+/* المحتوى الرئيسي ممتد 100% للشاشة كاملة */
 .details-fullpage-body {
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 48px 64px;
+  max-width: 100%;
+  margin: 0;
+  padding: 28px 40px 64px;
   box-sizing: border-box;
 }
 
+/* شريط التنبيه الأمني */
+.details-system-notice {
+  background: linear-gradient(90deg, #eff6ff 0%, #e0e7ff 100%);
+  border: 1px solid #c7d2fe;
+  border-radius: 12px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.notice-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #0A1172;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.notice-badge {
+  background: #ffffff;
+  color: #0A1172;
+  border: 1px solid #c7d2fe;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* بطاقة الهيرو */
 .details-hero {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 24px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  padding: 28px 32px;
-  margin-bottom: 36px;
+  padding: 28px 36px;
+  margin-bottom: 28px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.details-hero-user {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 
 .details-hero-avatar {
@@ -1000,41 +1047,87 @@
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid #0A1172;
+  box-shadow: 0 4px 12px rgba(10, 17, 114, 0.15);
   flex-shrink: 0;
 }
 
 .details-hero-info h2 {
-  margin: 0 0 12px;
-  font-size: 1.5rem;
+  margin: 0 0 10px;
+  font-size: 1.6rem;
+  font-weight: 700;
   color: #0f172a;
 }
 
+.details-hero-badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.details-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 0.8rem;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.hero-stat-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero-stat-num {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #0A1172;
+}
+
+.hero-stat-title {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* الأقسام */
 .details-section {
-  margin-bottom: 36px;
+  margin-bottom: 28px;
+  width: 100%;
 }
 
 .details-section-title {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #0A1172;
-  margin: 0 0 18px;
+  margin: 0 0 16px;
   padding-bottom: 10px;
   border-bottom: 2px solid #e8eaf6;
 }
 
 .details-section-title i {
-  font-size: 0.9rem;
   color: #0A1172;
-  opacity: 0.8;
 }
 
+/* شبكة البطاقات ممتدة على كامل عرض الشاشة */
 .details-fullpage-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  width: 100%;
 }
 
 .details-card {
@@ -1046,27 +1139,27 @@
   align-items: center;
   gap: 14px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  transition: all 0.25s ease;
 }
 
 .details-card:hover {
   border-color: #cbd5e1;
-  box-shadow: 0 6px 16px rgba(10, 17, 114, 0.08);
+  box-shadow: 0 8px 18px rgba(10, 17, 114, 0.08);
   transform: translateY(-2px);
 }
 
 .details-card-icon {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 10px;
   background: #e8eaf6;
   color: #0A1172;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 1.1rem;
   flex-shrink: 0;
-  transition: transform 0.2s ease;
+  transition: transform 0.25s ease;
 }
 
 .details-card:hover .details-card-icon {
@@ -1076,12 +1169,12 @@
 .details-card-text {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
 }
 
 .details-label {
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   color: #64748b;
   font-weight: 500;
 }
@@ -1090,34 +1183,116 @@
   font-size: 0.95rem;
   color: #0f172a;
   font-weight: 600;
+  word-break: break-word;
 }
 
 .details-value.mono {
-  font-family: 'Courier New', monospace;
+  font-family: monospace;
   direction: ltr;
   text-align: right;
 }
 
+.text-success {
+  color: #16a34a !important;
+}
+
+/* صندوق الصلاحيات */
 .details-permissions-box {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .details-permissions-text {
   font-size: 0.95rem;
   color: #334155;
-  line-height: 2;
-  margin: 0;
+  line-height: 1.9;
+  margin: 0 0 16px;
 }
 
-@media (max-width: 700px) {
+.details-permissions-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.perm-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.perm-pill i {
+  color: #16a34a;
+  font-size: 0.75rem;
+}
+
+/* بطاقة التدقيق والرقابة */
+.details-audit-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+
+.audit-note-text {
+  font-size: 0.9rem;
+  color: #475569;
+  line-height: 1.8;
+  margin: 0 0 14px;
+}
+
+.audit-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #64748b;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.audit-status-tag {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* استجابة الشاشات (Responsive) */
+@media (max-width: 1024px) {
+  .details-fullpage-header {
+    padding: 12px 24px;
+  }
+  .details-fullpage-body {
+    padding: 20px 24px 48px;
+  }
+}
+
+@media (max-width: 768px) {
   .details-fullpage-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .details-fullpage-body {
-    padding: 28px 24px 48px;
+  .details-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
   }
 }
 
@@ -1125,11 +1300,23 @@
   .details-fullpage-grid {
     grid-template-columns: 1fr;
   }
-  .details-fullpage-body {
-    padding: 20px 16px 40px;
+  .details-fullpage-header {
+    padding: 12px 16px;
   }
-  .details-hero {
-    flex-direction: column;
-    text-align: center;
+  .details-fullpage-body {
+    padding: 16px 16px 40px;
+  }
+}
+
+/* تنسيقات الطباعة */
+@media print {
+  .details-fullpage-header,
+  .details-back-btn,
+  .details-fullpage-actions {
+    display: none !important;
+  }
+  .details-fullpage {
+    position: static !important;
+    overflow: visible !important;
   }
 }
