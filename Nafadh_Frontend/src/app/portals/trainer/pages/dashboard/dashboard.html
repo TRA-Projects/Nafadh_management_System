@@ -583,17 +583,15 @@
           <div class="selected-session-row" [class.completed]="session.status === 'Completed'">
 
             <div class="selected-session-time">
-
               <strong>
                 {{ session.startTime || '—' }}
               </strong>
 
               @if (session.endTime) {
-              <span>
+              <strong class="session-end-time">
                 إلى {{ session.endTime }}
-              </span>
+              </strong>
               }
-
             </div>
 
 
@@ -706,9 +704,190 @@
 
 
       <!-- ===================================================
-       CREATE SESSION
-  ==================================================== -->
+     CREATE SESSION
+==================================================== -->
 
-      <button type="button" class="create-session-btn">
+      <button type="button" class="create-session-btn" (click)="openSessionModal()">
         + إضافة جلسة
       </button>
+
+
+      <!-- ===================================================
+     CREATE SESSION MODAL
+==================================================== -->
+
+      @if (showSessionModal()) {
+
+      <div class="session-modal-overlay" (click)="closeSessionModal()">
+
+        <div class="session-modal" (click)="$event.stopPropagation()">
+
+          <!-- HEADER -->
+
+          <div class="session-modal-header">
+
+            <div>
+
+              <h3>
+                إضافة جلسة تدريبية
+              </h3>
+
+              <p>
+                أضف جلسة إضافية إلى جدول التدريب.
+              </p>
+
+            </div>
+
+            <button type="button" class="modal-close-btn" (click)="closeSessionModal()" [disabled]="isSavingSession()"
+              aria-label="إغلاق">
+              ×
+            </button>
+
+          </div>
+
+
+          <!-- FORM -->
+
+          <div class="session-form">
+
+            <!-- الدفعة -->
+
+            <div class="form-group">
+
+              <label>
+                الدفعة
+                <span>*</span>
+              </label>
+
+              <select [(ngModel)]="sessionForm.batchId">
+
+                <option [ngValue]="null" disabled>
+                  اختر الدفعة
+                </option>
+
+                @for (
+                batch of batches();
+                track batch.batchId
+                ) {
+
+                <option [ngValue]="batch.batchId">
+                  {{ batch.batchName || 'دفعة ' + batch.batchId }}
+                </option>
+
+                }
+
+              </select>
+
+            </div>
+
+
+            <!-- التاريخ -->
+
+            <div class="form-group">
+
+              <label>
+                تاريخ الجلسة
+                <span>*</span>
+              </label>
+
+              <input type="date" [(ngModel)]="sessionForm.sessionDate" />
+
+            </div>
+
+
+            <!-- وقت البداية -->
+
+            <div class="form-group">
+
+              <label>
+                وقت البداية
+                <span>*</span>
+              </label>
+
+              <input type="time" [(ngModel)]="sessionForm.startTime" />
+
+            </div>
+
+
+            <!-- وقت النهاية -->
+
+            <div class="form-group">
+
+              <label>
+                وقت النهاية
+              </label>
+
+              <input type="time" [(ngModel)]="sessionForm.endTime" />
+
+            </div>
+
+
+            <!-- الموضوع -->
+
+            <div class="form-group full-width">
+
+              <label>
+                موضوع الجلسة
+                <span>*</span>
+              </label>
+
+              <input type="text" [(ngModel)]="sessionForm.topic" placeholder="مثال: مقدمة في الأمن السيبراني" />
+
+            </div>
+
+
+            <!-- رابط الاجتماع -->
+
+            <div class="form-group full-width">
+
+              <label>
+                رابط الاجتماع
+              </label>
+
+              <input type="url" [(ngModel)]="sessionForm.meetingLink" placeholder="https://..." />
+
+            </div>
+
+
+            <!-- أهداف التعلم -->
+
+            <div class="form-group full-width">
+
+              <label>
+                أهداف الجلسة
+              </label>
+
+              <textarea [(ngModel)]="sessionForm.learningObjectives" placeholder="أهداف الجلسة..."></textarea>
+
+            </div>
+
+          </div>
+
+
+          <!-- ACTIONS -->
+
+          <div class="session-modal-actions">
+
+            <button type="button" class="save-session-btn" (click)="saveSession()" [disabled]="isSavingSession()">
+
+              @if (isSavingSession()) {
+              جارٍ الحفظ...
+              } @else {
+              حفظ الجلسة
+              }
+
+            </button>
+
+
+            <button type="button" class="cancel-session-btn" (click)="closeSessionModal()"
+              [disabled]="isSavingSession()">
+              إلغاء
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      }

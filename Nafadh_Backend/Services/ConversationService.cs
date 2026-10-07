@@ -255,8 +255,15 @@ namespace Nafadh_Backend.Services
                     created.TicketId
             };
         }
-
-
+        //----------------------------------
+        //group 
+        //---------------------------------------
+        public async Task<int> CreateBatchGroupAsync(
+    CreateBatchGroupDTO dto
+)
+        {
+            return await _repository.CreateBatchGroupAsync(dto);
+        }
         // ============================================================
         // Update conversation status
         // ============================================================

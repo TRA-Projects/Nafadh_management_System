@@ -54,6 +54,25 @@ export class TrainerDashboard implements OnInit {
   traineeCount =
     signal(0);
 
+    // =====================================================
+// CREATE SESSION
+// =====================================================
+
+showSessionModal = signal(false);
+
+isSavingSession = signal(false);
+
+sessionForm = {
+  batchId: null as number | null,
+  sessionDate: '',
+  startTime: '',
+  endTime: '',
+  meetingLink: '',
+  topic: '',
+  learningObjectives: ''
+};
+  // =====================================================
+
   showConfirmModal = signal(false);
 
   sessionToReset = signal<SessionDto | null>(null);
@@ -553,7 +572,7 @@ export class TrainerDashboard implements OnInit {
         })
         .slice(
           0,
-          2
+          4
         );
 
     });
@@ -1031,7 +1050,140 @@ export class TrainerDashboard implements OnInit {
 
   }
 
+// =====================================================
+// CREATE SESSION
+// =====================================================
 
+openSessionModal(): void {
+
+  const selectedDate =
+    this.selectedCalendarDate() ||
+    this.formatDateKey(new Date());
+
+  this.sessionForm = {
+    batchId:
+      this.batches().length > 0
+        ? this.batches()[0].batchId
+        : null,
+
+    sessionDate: selectedDate,
+
+    startTime: '',
+
+    endTime: '',
+
+    meetingLink: '',
+
+    topic: '',
+
+    learningObjectives: ''
+  };
+
+  this.showSessionModal.set(true);
+}
+
+
+closeSessionModal(): void {
+
+  if (this.isSavingSession()) {
+    return;
+  }
+
+  this.showSessionModal.set(false);
+}
+
+
+saveSession(): void {
+
+  const trainer = this.trainer();
+
+  if (!trainer) {
+    console.error('بيانات المدرب غير متوفرة');
+    return;
+  }
+
+  if (!this.sessionForm.batchId) {
+    console.error('يجب اختيار الدفعة');
+    return;
+  }
+
+  if (!this.sessionForm.sessionDate) {
+    console.error('يجب اختيار تاريخ الجلسة');
+    return;
+  }
+
+  if (!this.sessionForm.startTime) {
+    console.error('يجب تحديد وقت بداية الجلسة');
+    return;
+  }
+
+  if (!this.sessionForm.topic.trim()) {
+    console.error('يجب إدخال موضوع الجلسة');
+    return;
+  }
+
+  const dto = {
+
+    batchId:
+      this.sessionForm.batchId,
+
+    trainerId:
+      trainer.trainerId,
+
+    sessionDate:
+      this.sessionForm.sessionDate,
+
+    startTime:
+      this.sessionForm.startTime,
+
+    endTime:
+      this.sessionForm.endTime || null,
+
+    meetingLink:
+      this.sessionForm.meetingLink.trim() || null,
+
+    topic:
+      this.sessionForm.topic.trim(),
+
+    learningObjectives:
+      this.sessionForm.learningObjectives.trim() || null
+
+  };
+
+  this.isSavingSession.set(true);
+
+  this.api
+    .createSession(dto)
+    .subscribe({
+
+      next: () => {
+
+        this.isSavingSession.set(false);
+
+        this.showSessionModal.set(false);
+
+        // إعادة تحميل الجلسات حتى تظهر
+        // مباشرة في التقويم
+        this.loadSessions(
+          trainer.trainerId
+        );
+
+      },
+
+      error: (error) => {
+
+        this.isSavingSession.set(false);
+
+        console.error(
+          'خطأ في إضافة الجلسة:',
+          error
+        );
+
+      }
+
+    });
+
+}
   // =====================================================
   // BATCH IMAGE
   // =====================================================
