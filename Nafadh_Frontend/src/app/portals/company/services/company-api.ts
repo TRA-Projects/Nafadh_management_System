@@ -270,6 +270,16 @@ export class CompanyApi {
       `${this.base}/CompanyAccount/me`
     );
   }
+  updateMyAccount(data: {
+  
+  
+  phone: string | null;
+}): Observable<void> {
+  return this.http.put<void>(
+    `${this.base}/CompanyAccount/me`,
+    data
+  );
+}
 downloadMyAccountPdf(): Observable<Blob> {
   return this.http.get(
     `${this.base}/CompanyAccount/me/export-pdf`,
