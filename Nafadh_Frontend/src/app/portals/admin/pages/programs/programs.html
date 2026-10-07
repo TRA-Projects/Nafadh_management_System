@@ -1,362 +1,37 @@
-<h2 class="nfd-page-title">البرامج والدفعات</h2>
-<p class="nfd-page-sub">المسارات التدريبية والدفعات والمواد</p>
+<!-- ========================================================== -->
+<!-- 1. صفحة متدربي الدفعة الكاملة (تفتح عند الضغط على الأيقونة) -->
+<!-- ========================================================== -->
+<div *ngIf="isTraineesPageOpen()" class="trainees-full-page-container" dir="rtl">
 
-<!-- Action Header Bar -->
-<div class="action-header-bar" dir="rtl">
+  <!-- زر الرجوع لقائمة الدفعات -->
+  <button type="button" class="btn-back-nav" (click)="onBackFromTrainees()">
+    <span class="back-arrow">&#8594;</span>
+    <span>العودة إلى قائمة البرامج والدفعات</span>
+  </button>
 
-  <!-- أزرار الفلترة حسب الحالة مع العدادات الحقيقية من الداتابيس -->
-  <div class="filter-buttons-group">
-
-    <!-- الدفعات (الكل) -->
-    <button type="button" (click)="statusFilter.set('الكل')" [class.active]="statusFilter() === 'الكل'"
-      class="filter-btn">
-      <span class="filter-badge">
-        {{ batches().length }}
-      </span>
-      <span>الدفعات</span>
-    </button>
-
-    <!-- جارية -->
-    <button type="button" (click)="statusFilter.set('جارية')" [class.active]="statusFilter() === 'جارية'"
-      class="filter-btn">
-      <span class="filter-badge">
-        {{ getCountByStatus('جارية') }}
-      </span>
-      <span>جارية</span>
-    </button>
-
-    <!-- قادمة -->
-    <button type="button" (click)="statusFilter.set('قادمة')" [class.active]="statusFilter() === 'قادمة'"
-      class="filter-btn">
-      <span class="filter-badge">
-        {{ getCountByStatus('قادمة') }}
-      </span>
-      <span>قادمة</span>
-    </button>
-
-    <!-- مكتملة -->
-    <button type="button" (click)="statusFilter.set('مكتملة')" [class.active]="statusFilter() === 'مكتملة'"
-      class="filter-btn">
-      <span class="filter-badge">
-        {{ getCountByStatus('مكتملة') }}
-      </span>
-      <span>مكتملة</span>
-    </button>
-
-  </div>
-
-  <!-- أزرار الإجراءات مع زر تصدير Excel -->
-  <div class="action-buttons-group">
+  <!-- كارد عنوان الدفعة وبياناتها -->
+  <div class="trainees-page-header-card">
+    <div class="header-main-info">
+      <div class="title-with-pill">
+        <h2 class="trainees-main-title">متدربو {{ selectedBatch?.batchName }}</h2>
+        <span class="trainees-count-pill">{{ selectedBatchTrainees().length }} متدرب مسجل</span>
+      </div>
+      <p class="trainees-subtext">
+        البرنامج: <strong>{{ getProgramName(selectedBatch) }}</strong> · الشركة المستضيفة: <strong>{{ selectedBatch?.companyName || 'مؤسسة بوابة عمان التقنية' }}</strong>
+      </p>
+    </div>
     
-    <!-- زر تصدير الدفعات المفلترة إلى Excel -->
-    <button type="button" (click)="exportToExcel()" class="btn-secondary-custom" title="تصدير نتائج الجدول لملف Excel">
-      <i class="fa-solid fa-file-excel" style="color: #10b981; margin-left: 6px;"></i>
-      <span>تصدير Excel</span>
-    </button>
-
-    <button type="button" (click)="onCreateBatch()" class="btn-primary-custom">
-      <span class="btn-icon">+</span>
-      <span>إنشاء دفعة</span>
-    </button>
-
-    <button type="button" (click)="onCreateProgram()" class="btn-secondary-custom">
-      <span class="btn-icon">+</span>
-      <span>إنشاء برنامج</span>
-    </button>
-  </div>
-
-</div>
-
-
-<!-- ========================================================== -->
-<!-- شريط البحث والتصفية المتقدم                                 -->
-<!-- ========================================================== -->
-<div class="nfd-search-filter-card" dir="rtl">
-
-  <!-- شريط الاختصارات والنتائج العلوي -->
-  <div class="filter-card-header">
-    <div class="filter-card-presets">
-      <span class="filter-presets-label">فترات سريعة:</span>
-      <button type="button" class="preset-pill" [class.active]="selectedYear() === 'الكل' && !fromDate()" (click)="setQuickPreset('all')">الكل</button>
-      <button type="button" class="preset-pill" [class.active]="selectedYear() === '2026'" (click)="setQuickPreset('2026')">عام 2026</button>
-      <button type="button" class="preset-pill" [class.active]="selectedYear() === '2027'" (click)="setQuickPreset('2027')">عام 2027</button>
-    </div>
-
-    <div class="filter-card-stats">
-      <span class="results-badge">النتائج: <strong>{{ totalBatchesCount() }}</strong> من أصل {{ batches().length }}</span>
-      <button *ngIf="activeFiltersCount() > 0" type="button" (click)="onResetFilters()" class="btn-reset-filters">
-        <span>إعادة ضبط</span>
-        <span class="reset-count">({{ activeFiltersCount() }})</span>
-      </button>
+    <div class="header-capacity-badge">
+      طاقة الدفعة: {{ selectedBatch?.totalTraineesCount || selectedBatchTrainees().length || 0 }} من أصل {{ selectedBatch?.capacity || 0 }} مقعد
     </div>
   </div>
 
-  <!-- شبكة حقول الفلترة -->
-  <div class="filter-fields-grid">
-
-    <!-- 1. بحث عام -->
-    <div class="filter-col col-search">
-      <label class="filter-field-label">بحث عام</label>
-      <div class="filter-input-wrapper">
-        <input 
-          type="text" 
-          [value]="searchTerm()" 
-          (input)="onSearchInput($event)" 
-          placeholder="ابحث باسم الدفعة، البرنامج، أو الشركة المستضيفة..." 
-          class="filter-input-ctrl">
-        <i class="fa-solid fa-magnifying-glass filter-icon-left"></i>
-        <button *ngIf="searchTerm()" type="button" (click)="searchTerm.set('')" class="clear-input-btn">&times;</button>
-      </div>
-    </div>
-
-    <!-- 2. البرنامج التدريبي من الداتابيس -->
-    <div class="filter-col col-program">
-      <label class="filter-field-label">البرنامج التدريبي</label>
-      <div class="filter-input-wrapper">
-        <select [value]="selectedProgram()" (change)="onProgramFilterChange($event)" class="filter-select-ctrl">
-          <option value="الكل">كل البرامج التدريبية</option>
-          <option *ngFor="let prog of programs()" [value]="prog.programId">
-            {{ prog.title || prog.name }}
-          </option>
-        </select>
-        <i class="fa-solid fa-chevron-down filter-icon-left select-chevron"></i>
-      </div>
-    </div>
-
-    <!-- 3. السنة -->
-    <div class="filter-col col-year">
-      <label class="filter-field-label">السنة</label>
-      <div class="filter-input-wrapper">
-        <select [value]="selectedYear()" (change)="onYearChange($event)" class="filter-select-ctrl">
-          <option value="الكل">كل السنوات</option>
-          <option *ngFor="let yr of availableYears()" [value]="yr">{{ yr }}</option>
-        </select>
-        <i class="fa-solid fa-chevron-down filter-icon-left select-chevron"></i>
-      </div>
-    </div>
-
-    <!-- 4. من تاريخ -->
-    <div class="filter-col col-date">
-      <label class="filter-field-label">من تاريخ</label>
-      <div class="filter-input-wrapper">
-        <input 
-          type="date" 
-          [value]="fromDate()" 
-          (change)="onFromDateChange($event)" 
-          class="filter-date-ctrl">
-        <i class="fa-regular fa-calendar filter-icon-left"></i>
-      </div>
-    </div>
-
-    <!-- 5. إلى تاريخ -->
-    <div class="filter-col col-date">
-      <label class="filter-field-label">إلى تاريخ</label>
-      <div class="filter-input-wrapper">
-        <input 
-          type="date" 
-          [value]="toDate()" 
-          (change)="onToDateChange($event)" 
-          class="filter-date-ctrl">
-        <i class="fa-regular fa-calendar filter-icon-left"></i>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- شارات التصفيات النشطة -->
-  <div *ngIf="activeFiltersCount() > 0" class="active-tags-strip">
-    <span class="active-tags-title">التصفيات المطبقة:</span>
-
-    <span *ngIf="searchTerm()" class="filter-tag">
-      بحث: "{{ searchTerm() }}"
-      <button type="button" (click)="searchTerm.set('')" class="tag-close-btn">&times;</button>
-    </span>
-
-    <span *ngIf="selectedYear() !== 'الكل'" class="filter-tag">
-      السنة: {{ selectedYear() }}
-      <button type="button" (click)="selectedYear.set('الكل')" class="tag-close-btn">&times;</button>
-    </span>
-
-    <span *ngIf="selectedProgram() !== 'الكل'" class="filter-tag">
-      البرنامج: محدد
-      <button type="button" (click)="selectedProgram.set('الكل')" class="tag-close-btn">&times;</button>
-    </span>
-
-    <span *ngIf="fromDate()" class="filter-tag">
-      من: {{ fromDate() }}
-      <button type="button" (click)="fromDate.set('')" class="tag-close-btn">&times;</button>
-    </span>
-
-    <span *ngIf="toDate()" class="filter-tag">
-      إلى: {{ toDate() }}
-      <button type="button" (click)="toDate.set('')" class="tag-close-btn">&times;</button>
-    </span>
-  </div>
-
-</div>
-
-
-<!-- Table Container & Borders -->
-<div class="nfd-table-container" dir="rtl">
-  <div class="nfd-table-wrapper">
-    <table class="nfd-table">
-
-      <!-- Table Header -->
-      <thead>
-        <tr class="nfd-tr-header">
-          <th scope="col" class="nfd-th">الدفعة</th>
-          <th scope="col" class="nfd-th">البرنامج والمسار</th>
-          <th scope="col" class="nfd-th">الشركة المستضيفة</th>
-          <th scope="col" class="nfd-th text-center">البداية</th>
-          <th scope="col" class="nfd-th text-center">النهاية</th>
-          <th scope="col" class="nfd-th text-center">الإشغال</th>
-          <th scope="col" class="nfd-th text-center">الحالة</th>
-          <th scope="col" class="nfd-th text-center">الإجراءات</th>
-        </tr>
-      </thead>
-
-      <!-- Table Body -->
-      <tbody class="nfd-tbody">
-        <tr *ngFor="let batch of paginatedBatches(); trackBy: trackByBatchId" class="nfd-tr-row">
-          
-          <!-- 1. الدفعة -->
-          <td class="nfd-td">
-            <div class="nfd-cell-flex">
-              <span class="nfd-batch-name">
-                {{ batch.batchName }}
-              </span>
-              <span class="nfd-batch-subtext">
-                {{ getFormattedSubtext(batch.startDate) }}
-              </span>
-            </div>
-          </td>
-
-          <!-- 2. البرنامج والمسار التابع له من الداتابيس -->
-          <td class="nfd-td">
-            <div class="nfd-cell-flex">
-              <span class="nfd-batch-name">
-                {{ getProgramName(batch) }}
-              </span>
-              <!-- جلب المسار من الداتابيس -->
-              <span *ngIf="getTrackName(batch) !== '-'" class="nfd-track-badge">
-                <span class="track-label">مسار:</span>
-                <span class="track-name">{{ getTrackName(batch) }}</span>
-              </span>
-            </div>
-          </td>
-
-          <!-- 3. الشركة المستضيفة -->
-          <td class="nfd-td">
-            {{ batch.companyName || '-' }}
-          </td>
-
-          <!-- 4. البداية -->
-          <td class="nfd-td text-center">
-            {{ batch.startDate ? (batch.startDate | date:'dd/MM/yyyy') : '-' }}
-          </td>
-
-          <!-- 5. النهاية -->
-          <td class="nfd-td text-center">
-            {{ batch.endDate ? (batch.endDate | date:'dd/MM/yyyy') : '-' }}
-          </td>
-
-          <!-- 6. الإشغال مع تنبيه لوني عند الامتلاء -->
-          <td class="nfd-td text-center">
-            <div class="nfd-occupancy-wrapper">
-              <div class="occupancy-numbers-row">
-                <span class="nfd-occupancy-text" dir="ltr">
-                  {{ batch.totalTraineesCount || 0 }} / {{ batch.capacity }}
-                </span>
-                <span *ngIf="getOccupancyPercentage(batch.totalTraineesCount, batch.capacity) >= 90" class="badge-almost-full">
-                  ممتلئة
-                </span>
-              </div>
-              <div class="nfd-progress-bar-bg">
-                <div class="nfd-progress-bar-fill"
-                  [class.fill-warning]="getOccupancyPercentage(batch.totalTraineesCount, batch.capacity) >= 90"
-                  [style.width.%]="getOccupancyPercentage(batch.totalTraineesCount, batch.capacity)"></div>
-              </div>
-            </div>
-          </td>
-
-          <!-- 7. الحالة -->
-          <td class="nfd-td text-center">
-            <span class="nfd-status-badge" [ngClass]="getStatusBadgeClass(batch.status)">
-              {{ getStatusLabel(batch.status) }}
-            </span>
-          </td>
-
-          <!-- 8. الإجراءات (مع زر متدربي الدفعة) -->
-          <td class="nfd-td text-center">
-            <div class="nfd-actions-wrapper">
-              
-              <!-- زر استعراض متدربي هذه الدفعة ومراسلتهم -->
-              <button type="button" 
-                (click)="onViewTrainees(batch); $event.stopPropagation();" 
-                title="متدربو هذه الدفعة والمراسلة" 
-                aria-label="عرض متدربي الدفعة"
-                class="nfd-action-icon-btn action-trainees-btn">
-                <i class="fa-solid fa-users"></i>
-              </button>
-
-              <button type="button" (click)="onEdit(batch)" title="تعديل" aria-label="تعديل الدفعة"
-                class="nfd-action-icon-btn">
-                <i class="fa-regular fa-pen-to-square"></i>
-              </button>
-
-              <button type="button" (click)="onView(batch)" title="عرض التفاصيل" aria-label="عرض تفاصيل الدفعة"
-                class="nfd-action-icon-btn">
-                <i class="fa-regular fa-eye"></i>
-              </button>
-            </div>
-          </td>
-        </tr>
-
-        <!-- Empty State -->
-        <tr *ngIf="!batchesError() && filteredBatches().length === 0">
-          <td colspan="8" class="nfd-empty-state">
-            <i class="fa-regular fa-folder-open"></i>
-            <span>لا توجد دفعات متوفرة حالياً تطابق معايير البحث والفلترة.</span>
-            <div style="margin-top: 10px;">
-              <button type="button" (click)="onResetFilters()" class="compact-nav-btn">إعادة ضبط التصفية</button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-
-<!-- ========================================================== -->
-<!-- Modal: قائمة متدربي الدفعة المختارة من الداتابيس            -->
-<!-- ========================================================== -->
-<div *ngIf="isTraineesModalOpen()" (click)="onCloseTraineesModal()" class="modal-overlay" dir="rtl">
-  <div (click)="$event.stopPropagation()" class="modal-container-trainees">
-
-    <!-- Modal Header -->
-    <div class="details-header">
-      <div>
-        <div class="modal-title-with-pill">
-          <h3 class="details-title">متدربو {{ selectedBatch?.batchName }}</h3>
-          <span class="trainees-count-pill">
-            {{ selectedBatchTrainees().length }} متدرب مسجل
-          </span>
-        </div>
-        <p class="trainees-modal-subtext">
-          {{ getProgramName(selectedBatch) }} · {{ selectedBatch?.companyName || 'شركة مستضيفة' }}
-        </p>
-      </div>
-      <button type="button" (click)="onCloseTraineesModal()" class="details-close-btn">&times;</button>
-    </div>
-
-
-
-    <!-- جدول المتدربين -->
-    <div class="trainees-table-scroll">
-      <table class="trainees-modal-table">
+  <!-- جدول المتدربين على كِبر الصفحة بالكامل -->
+  <div class="trainees-full-table-card">
+    <div class="nfd-table-wrapper">
+      <table class="trainees-full-table">
         <thead>
-          <tr>
+          <tr class="nfd-tr-header">
             <th>المتدرب</th>
             <th>الجامعة والتخصص</th>
             <th>الشركة المستضيفة</th>
@@ -365,41 +40,39 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let t of selectedBatchTrainees()">
-
+          <tr *ngFor="let t of selectedBatchTrainees()" class="trainee-row">
+            
             <!-- 1. المتدرب -->
             <td>
               <div class="trainee-user-cell">
-                <img [src]="t.fileUrl || 'https://api.dicebear.com/7.x/initials/svg?seed=' + t.fullName"
-                  [alt]="t.fullName" class="trainee-avatar" />
+                <img [src]="t.fileUrl || 'https://api.dicebear.com/7.x/initials/svg?seed=' + (t.fullName || t.name)"
+                  [alt]="t.fullName || t.name" class="trainee-avatar" />
                 <div>
-                  <div class="trainee-name">{{ t.fullName }}</div>
-                  <div class="trainee-email" style="font-size: 11px; color: #94a3b8;">رقم المتدرب: #{{ t.traineeId }}
-                  </div>
+                  <div class="trainee-name">{{ t.fullName || t.name }}</div>
+                  <div class="trainee-email">رقم المتدرب: #{{ t.traineeId || t.id }}</div>
                 </div>
               </div>
             </td>
 
-            <!-- 2. الجامعة والتخصص (بيانات حقيقية من الداتابيس) -->
+            <!-- 2. الجامعة والتخصص -->
             <td>
-              <div style="font-weight: 600; color: #1e293b;">{{ t.university || '-' }}</div>
-              <div style="font-size: 11.5px; color: #64748b;">{{ t.major || '-' }}</div>
+              <div class="trainee-univ">{{ t.university || '-' }}</div>
+              <div class="trainee-major">{{ t.major || '-' }}</div>
             </td>
 
-            <!-- 1. الشركة المستضيفة -->
+            <!-- 3. الشركة المستضيفة -->
             <td>
-              <span style="color: #334155; font-weight: 500;">
-                {{ t.companyName || 'قيد التوزيع' }}
-              </span>
+              <span class="trainee-company">{{ t.companyName || 'قيد التوزيع' }}</span>
             </td>
-            
-            <!-- 2. الحالة -->
+
+            <!-- 4. الحالة -->
             <td class="text-center">
               <span class="trainee-status-pill" [ngClass]="t.status">
                 {{ t.status === 'InTraining' ? 'قيد التدريب' : (t.status === 'NotAssigned' ? 'قيد التوزيع' : (t.status || 'نشط')) }}
               </span>
             </td>
-            <!-- 5. زر المراسلة المباشرة -->
+
+            <!-- 5. زر المراسلة المباشرة لصفحة التواصل والمراسلات -->
             <td class="text-center">
               <button type="button" (click)="onMessageTrainee(t)" class="message-trainee-btn">
                 <i class="fa-regular fa-comment-dots"></i>
@@ -409,6 +82,7 @@
 
           </tr>
 
+          <!-- عند عدم وجود متدربين -->
           <tr *ngIf="selectedBatchTrainees().length === 0">
             <td colspan="5" class="trainees-empty-row">
               لا يوجد متدربون مسجلون في هذه الدفعة حالياً.
@@ -417,257 +91,255 @@
         </tbody>
       </table>
     </div>
+  </div>
 
-    <!-- Modal Footer -->
-    <div class="trainees-modal-footer">
-      <span class="footer-occupancy-note">
-        طاقة الدفعة: {{ selectedBatch?.totalTraineesCount || 0 }} من أصل {{ selectedBatch?.capacity || 0 }} مقعد
-      </span>
-      <button type="button" (click)="onCloseTraineesModal()" class="btn-close-trainees-modal">
-        إغلاق النافذة
+</div>
+
+
+<!-- ========================================================== -->
+<!-- 2. جدول الدفعات الرئيسي (يختفي عند فتح صفحة المتدربين)       -->
+<!-- ========================================================== -->
+<div *ngIf="!isTraineesPageOpen()" dir="rtl">
+
+  <h2 class="nfd-page-title">البرامج والدفعات</h2>
+  <p class="nfd-page-sub">المسارات التدريبية والدفعات والمواد</p>
+
+  <!-- Action Header Bar -->
+  <div class="action-header-bar">
+    <div class="filter-buttons-group">
+      <button type="button" (click)="statusFilter.set('الكل')" [class.active]="statusFilter() === 'الكل'" class="filter-btn">
+        <span class="filter-badge">{{ batches().length }}</span>
+        <span>الدفعات</span>
+      </button>
+
+      <button type="button" (click)="statusFilter.set('جارية')" [class.active]="statusFilter() === 'جارية'" class="filter-btn">
+        <span class="filter-badge">{{ getCountByStatus('جارية') }}</span>
+        <span>جارية</span>
+      </button>
+
+      <button type="button" (click)="statusFilter.set('قادمة')" [class.active]="statusFilter() === 'قادمة'" class="filter-btn">
+        <span class="filter-badge">{{ getCountByStatus('قادمة') }}</span>
+        <span>قادمة</span>
+      </button>
+
+      <button type="button" (click)="statusFilter.set('مكتملة')" [class.active]="statusFilter() === 'مكتملة'" class="filter-btn">
+        <span class="filter-badge">{{ getCountByStatus('مكتملة') }}</span>
+        <span>مكتملة</span>
       </button>
     </div>
 
+    <div class="action-buttons-group">
+      <button type="button" (click)="exportToExcel()" class="btn-secondary-custom" title="تصدير نتائج الجدول لملف Excel">
+        <i class="fa-solid fa-file-excel" style="color: #10b981; margin-left: 6px;"></i>
+        <span>تصدير Excel</span>
+      </button>
+
+      <button type="button" (click)="onCreateBatch()" class="btn-primary-custom">
+        <span class="btn-icon">+</span>
+        <span>إنشاء دفعة</span>
+      </button>
+
+      <button type="button" (click)="onCreateProgram()" class="btn-secondary-custom">
+        <span class="btn-icon">+</span>
+        <span>إنشاء برنامج</span>
+      </button>
+    </div>
   </div>
+
+  <!-- شريط البحث والتصفية المتقدم -->
+  <div class="nfd-search-filter-card">
+    <div class="filter-card-header">
+      <div class="filter-card-presets">
+        <span class="filter-presets-label">فترات سريعة:</span>
+        <button type="button" class="preset-pill" [class.active]="selectedYear() === 'الكل' && !fromDate()" (click)="setQuickPreset('all')">الكل</button>
+        <button type="button" class="preset-pill" [class.active]="selectedYear() === '2026'" (click)="setQuickPreset('2026')">عام 2026</button>
+        <button type="button" class="preset-pill" [class.active]="selectedYear() === '2027'" (click)="setQuickPreset('2027')">عام 2027</button>
+      </div>
+
+      <div class="filter-card-stats">
+        <span class="results-badge">النتائج: <strong>{{ totalBatchesCount() }}</strong> من أصل {{ batches().length }}</span>
+        <button *ngIf="activeFiltersCount() > 0" type="button" (click)="onResetFilters()" class="btn-reset-filters">
+          <span>إعادة ضبط</span>
+          <span class="reset-count">({{ activeFiltersCount() }})</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-fields-grid">
+      <div class="filter-col col-search">
+        <label class="filter-field-label">بحث عام</label>
+        <div class="filter-input-wrapper">
+          <input type="text" [value]="searchTerm()" (input)="onSearchInput($event)" placeholder="ابحث باسم الدفعة، البرنامج، أو الشركة المستضيفة..." class="filter-input-ctrl">
+          <i class="fa-solid fa-magnifying-glass filter-icon-left"></i>
+          <button *ngIf="searchTerm()" type="button" (click)="searchTerm.set('')" class="clear-input-btn">&times;</button>
+        </div>
+      </div>
+
+      <div class="filter-col col-program">
+        <label class="filter-field-label">البرنامج التدريبي</label>
+        <div class="filter-input-wrapper">
+          <select [value]="selectedProgram()" (change)="onProgramFilterChange($event)" class="filter-select-ctrl">
+            <option value="الكل">كل البرامج التدريبية</option>
+            <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title || prog.name }}</option>
+          </select>
+          <i class="fa-solid fa-chevron-down filter-icon-left select-chevron"></i>
+        </div>
+      </div>
+
+      <div class="filter-col col-year">
+        <label class="filter-field-label">السنة</label>
+        <div class="filter-input-wrapper">
+          <select [value]="selectedYear()" (change)="onYearChange($event)" class="filter-select-ctrl">
+            <option value="الكل">كل السنوات</option>
+            <option *ngFor="let yr of availableYears()" [value]="yr">{{ yr }}</option>
+          </select>
+          <i class="fa-solid fa-chevron-down filter-icon-left select-chevron"></i>
+        </div>
+      </div>
+
+      <div class="filter-col col-date">
+        <label class="filter-field-label">من تاريخ</label>
+        <div class="filter-input-wrapper">
+          <input type="date" [value]="fromDate()" (change)="onFromDateChange($event)" class="filter-date-ctrl">
+          <i class="fa-regular fa-calendar filter-icon-left"></i>
+        </div>
+      </div>
+
+      <div class="filter-col col-date">
+        <label class="filter-field-label">إلى تاريخ</label>
+        <div class="filter-input-wrapper">
+          <input type="date" [value]="toDate()" (change)="onToDateChange($event)" class="filter-date-ctrl">
+          <i class="fa-regular fa-calendar filter-icon-left"></i>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="activeFiltersCount() > 0" class="active-tags-strip">
+      <span class="active-tags-title">التصفيات المطبقة:</span>
+      <span *ngIf="searchTerm()" class="filter-tag">بحث: "{{ searchTerm() }}" <button type="button" (click)="searchTerm.set('')" class="tag-close-btn">&times;</button></span>
+      <span *ngIf="selectedYear() !== 'الكل'" class="filter-tag">السنة: {{ selectedYear() }} <button type="button" (click)="selectedYear.set('الكل')" class="tag-close-btn">&times;</button></span>
+      <span *ngIf="selectedProgram() !== 'الكل'" class="filter-tag">البرنامج: محدد <button type="button" (click)="selectedProgram.set('الكل')" class="tag-close-btn">&times;</button></span>
+      <span *ngIf="fromDate()" class="filter-tag">من: {{ fromDate() }} <button type="button" (click)="fromDate.set('')" class="tag-close-btn">&times;</button></span>
+      <span *ngIf="toDate()" class="filter-tag">إلى: {{ toDate() }} <button type="button" (click)="toDate.set('')" class="tag-close-btn">&times;</button></span>
+    </div>
+  </div>
+
+  <!-- جدول الدفعات الرئيسي -->
+  <div class="nfd-table-container">
+    <div class="nfd-table-wrapper">
+      <table class="nfd-table">
+        <thead>
+          <tr class="nfd-tr-header">
+            <th scope="col" class="nfd-th">الدفعة</th>
+            <th scope="col" class="nfd-th">البرنامج والمسار</th>
+            <th scope="col" class="nfd-th">الشركة المستضيفة</th>
+            <th scope="col" class="nfd-th text-center">البداية</th>
+            <th scope="col" class="nfd-th text-center">النهاية</th>
+            <th scope="col" class="nfd-th text-center">الإشغال</th>
+            <th scope="col" class="nfd-th text-center">الحالة</th>
+            <th scope="col" class="nfd-th text-center">الإجراءات</th>
+          </tr>
+        </thead>
+
+        <tbody class="nfd-tbody">
+          <tr *ngFor="let batch of paginatedBatches(); trackBy: trackByBatchId" class="nfd-tr-row">
+            <td class="nfd-td">
+              <div class="nfd-cell-flex">
+                <span class="nfd-batch-name">{{ batch.batchName }}</span>
+                <span class="nfd-batch-subtext">{{ getFormattedSubtext(batch.startDate) }}</span>
+              </div>
+            </td>
+
+            <td class="nfd-td">
+              <div class="nfd-cell-flex">
+                <span class="nfd-batch-name">{{ getProgramName(batch) }}</span>
+                <span *ngIf="getTrackName(batch) !== '-'" class="nfd-track-badge">
+                  <span class="track-label">مسار:</span>
+                  <span class="track-name">{{ getTrackName(batch) }}</span>
+                </span>
+              </div>
+            </td>
+
+            <td class="nfd-td">{{ batch.companyName || '-' }}</td>
+            <td class="nfd-td text-center">{{ batch.startDate ? (batch.startDate | date:'dd/MM/yyyy') : '-' }}</td>
+            <td class="nfd-td text-center">{{ batch.endDate ? (batch.endDate | date:'dd/MM/yyyy') : '-' }}</td>
+
+            <td class="nfd-td text-center">
+              <div class="nfd-occupancy-wrapper">
+                <div class="occupancy-numbers-row">
+                  <span class="nfd-occupancy-text" dir="ltr">{{ batch.totalTraineesCount || 0 }} / {{ batch.capacity }}</span>
+                  <span *ngIf="getOccupancyPercentage(batch.totalTraineesCount, batch.capacity) >= 90" class="badge-almost-full">ممتلئة</span>
+                </div>
+                <div class="nfd-progress-bar-bg">
+                  <div class="nfd-progress-bar-fill"
+                    [class.fill-warning]="getOccupancyPercentage(batch.totalTraineesCount, batch.capacity) >= 90"
+                    [style.width.%]="getOccupancyPercentage(batch.totalTraineesCount, batch.capacity)"></div>
+                </div>
+              </div>
+            </td>
+
+            <td class="nfd-td text-center">
+              <span class="nfd-status-badge" [ngClass]="getStatusBadgeClass(batch.status)">
+                {{ getStatusLabel(batch.status) }}
+              </span>
+            </td>
+
+            <!-- 🌟 الإجراءات: زر المتدربين يفتح الصفحة الكاملة 🌟 -->
+            <td class="nfd-td text-center">
+              <div class="nfd-actions-wrapper">
+                <button type="button" 
+                  (click)="onViewTrainees(batch); $event.stopPropagation();" 
+                  title="متدربو هذه الدفعة والمراسلة" 
+                  aria-label="عرض متدربي الدفعة"
+                  class="nfd-action-icon-btn action-trainees-btn">
+                  <i class="fa-solid fa-users"></i>
+                </button>
+
+                <button type="button" (click)="onEdit(batch)" title="تعديل" aria-label="تعديل الدفعة" class="nfd-action-icon-btn">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+
+                <button type="button" (click)="onView(batch)" title="عرض التفاصيل" aria-label="عرض تفاصيل الدفعة" class="nfd-action-icon-btn">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="!batchesError() && filteredBatches().length === 0">
+            <td colspan="8" class="nfd-empty-state">
+              <i class="fa-regular fa-folder-open"></i>
+              <span>لا توجد دفعات متوفرة حالياً تطابق معايير البحث والفلترة.</span>
+              <div style="margin-top: 10px;">
+                <button type="button" (click)="onResetFilters()" class="compact-nav-btn">إعادة ضبط التصفية</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  @if (totalPages() > 1) {
+  <div class="compact-pagination-wrapper">
+    <div class="pagination-info">
+      عرض الصفحة <strong>{{ currentPage() }}</strong> من <strong>{{ totalPages() }}</strong> (إجمالي {{ totalBatchesCount() }} دفعة)
+    </div>
+    <div class="pagination-compact-controls">
+      <button class="compact-nav-btn" [disabled]="currentPage() === 1" (click)="onPageChange(currentPage() - 1)">السابق</button>
+      <span class="page-indicator">{{ currentPage() }} / {{ totalPages() }}</span>
+      <button class="compact-nav-btn" [disabled]="currentPage() === totalPages()" (click)="onPageChange(currentPage() + 1)">التالي</button>
+    </div>
+  </div>
+  }
+
 </div>
 
 
 <!-- ========================================== -->
-<!-- Modal: تعديل الدفعة (Edit Modal)          -->
+<!-- Modals الأخرى (إنشاء دفعة، إنشاء برنامج، تعديل، تفاصيل) -->
 <!-- ========================================== -->
-<div *ngIf="isEditModalOpen" (click)="onCloseEditModal()" class="modal-overlay" dir="rtl" role="dialog" aria-modal="true">
-  <div (click)="$event.stopPropagation()" class="modal-container">
-    <div class="modal-header">
-      <h3 class="modal-title">تعديل الدفعة</h3>
-      <button type="button" (click)="onCloseEditModal()" class="modal-close-btn">&times;</button>
-    </div>
-
-    <form [formGroup]="editBatchForm" (ngSubmit)="onSaveBatch()" class="modal-form">
-
-      <div class="form-group">
-        <label class="form-label">اسم الدفعة <span class="required-star">*</span></label>
-        <input type="text" formControlName="batchName" class="form-input text-right"
-          [class.input-error]="editBatchForm.get('batchName')?.touched && editBatchForm.get('batchName')?.invalid">
-        
-        <div *ngIf="editBatchForm.get('batchName')?.touched && editBatchForm.get('batchName')?.invalid" class="error-msg text-right">
-          <small *ngIf="editBatchForm.get('batchName')?.errors?.['required']">اسم الدفعة مطلوب</small>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">البرنامج <span class="required-star">*</span></label>
-        <select formControlName="programId" class="form-select text-right"
-          [class.input-error]="editBatchForm.get('programId')?.touched && editBatchForm.get('programId')?.invalid">
-          <option value="" disabled>– اختر برنامجاً –</option>
-          <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title || prog.name }}</option>
-        </select>
-        
-        <div *ngIf="editBatchForm.get('programId')?.touched && editBatchForm.get('programId')?.invalid" class="error-msg text-right">
-          <small>يجب اختيار البرنامج</small>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">الشركة المستضيفة</label>
-        <select formControlName="companyId" class="form-select text-right">
-          <option value="">– اختر شركة –</option>
-          <option *ngFor="let comp of companies()" [value]="comp.companyId">{{ comp.companyName }}</option>
-        </select>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">تاريخ البداية <span class="required-star">*</span></label>
-          <input type="date" formControlName="startDate" class="form-input"
-            [class.input-error]="editBatchForm.get('startDate')?.touched && editBatchForm.get('startDate')?.invalid">
-          
-          <div *ngIf="editBatchForm.get('startDate')?.touched && editBatchForm.get('startDate')?.invalid" class="error-msg text-right">
-            <small>تاريخ البداية مطلوب</small>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">تاريخ النهاية <span class="required-star">*</span></label>
-          <input type="date" formControlName="endDate" class="form-input"
-            [class.input-error]="editBatchForm.get('endDate')?.touched && (editBatchForm.get('endDate')?.invalid || editBatchForm.errors?.['dateRangeInvalid'])">
-          
-          <div *ngIf="editBatchForm.get('endDate')?.touched && editBatchForm.get('endDate')?.invalid" class="error-msg text-right">
-            <small *ngIf="editBatchForm.get('endDate')?.errors?.['required']">تاريخ النهاية مطلوب</small>
-          </div>
-          <div *ngIf="editBatchForm.get('endDate')?.touched && editBatchForm.errors?.['dateRangeInvalid']" class="error-msg text-right" style="color: #dc2626; font-size: 12px; margin-top: 4px;">
-            <small>تاريخ النهاية يجب أن يكون بعد تاريخ البداية</small>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">الطاقة الاستيعابية <span class="required-star">*</span></label>
-        <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="capacity" placeholder="15"
-          class="form-input text-right"
-          [class.input-error]="editBatchForm.get('capacity')?.touched && editBatchForm.get('capacity')?.invalid">
-
-        <div *ngIf="editBatchForm.get('capacity')?.touched && editBatchForm.get('capacity')?.invalid" class="error-msg text-right">
-          <small *ngIf="editBatchForm.get('capacity')?.errors?.['required']">الطاقة الاستيعابية مطلوبة</small>
-          <small *ngIf="editBatchForm.get('capacity')?.errors?.['min']">لا يمكن أن تكون الطاقة الاستيعابية أقل من 1</small>
-        </div>
-      </div>
-
-      <div *ngIf="editBatchErrorMessage" class="error-msg text-center mb-2" style="color: #dc2626; font-size: 13px;">
-        <small>{{ editBatchErrorMessage }}</small>
-      </div>
-
-      <div class="modal-footer-buttons">
-        <button type="submit" [disabled]="isSubmittingEditBatch" class="btn-submit-batch">
-          {{ isSubmittingEditBatch ? 'جاري الحفظ...' : 'حفظ التعديلات' }}
-        </button>
-        <button type="button" (click)="onCloseEditModal()" class="btn-cancel-batch">إلغاء</button>
-      </div>
-
-    </form>
-  </div>
-</div>
-
-<!-- ========================================== -->
-<!-- Modal: تفاصيل الدفعة (View Modal)          -->
-<!-- ========================================== -->
-<div *ngIf="isViewModalOpen" (click)="onCloseViewModal()" class="modal-overlay" dir="rtl" role="dialog" aria-modal="true">
-  <div (click)="$event.stopPropagation()" class="modal-container-details-pro">
-    
-    <!-- 1. Header -->
-    <div class="details-pro-header">
-      <div class="header-title-block">
-        <h3 class="details-pro-title">تفاصيل الدفعة</h3>
-        <span class="nfd-status-badge" [ngClass]="getStatusBadgeClass(selectedBatch?.status)">
-          {{ getStatusLabel(selectedBatch?.status) }}
-        </span>
-      </div>
-      <button type="button" (click)="onCloseViewModal()" class="details-pro-close">&times;</button>
-    </div>
-
-    <!-- 2. Hero Card -->
-    <div class="details-pro-hero">
-      <div class="hero-icon-box">
-        <i class="fa-solid fa-graduation-cap"></i>
-      </div>
-      <div class="hero-info">
-        <h4 class="hero-batch-name">{{ selectedBatch?.batchName }}</h4>
-        <div class="hero-tags-row">
-          <span class="hero-program-tag">{{ getProgramName(selectedBatch) }}</span>
-          <span *ngIf="getTrackName(selectedBatch) !== '-'" class="hero-track-tag">
-            مسار: {{ getTrackName(selectedBatch) }}
-          </span>
-          <span class="hero-duration-tag">
-            <i class="fa-regular fa-clock"></i>
-            {{ getBatchDuration(selectedBatch?.startDate, selectedBatch?.endDate) }}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 3. شبكة المؤشرات الأربعة (KPIs) من الداتابيس -->
-    <div class="details-kpis-grid">
-      <!-- 1: المقاعد والإشغال -->
-      <div class="kpi-card">
-        <div class="kpi-card-header">
-          <span class="kpi-label">المقاعد والإشغال</span>
-          <i class="fa-solid fa-users kpi-icon text-indigo"></i>
-        </div>
-        <div class="kpi-val" dir="ltr">{{ selectedBatch?.totalTraineesCount || 0 }} / {{ selectedBatch?.capacity || 0 }}</div>
-        <div class="nfd-progress-bar-bg" style="margin: 8px 0;">
-          <div class="nfd-progress-bar-fill" [style.width.%]="getOccupancyPercentage(selectedBatch?.totalTraineesCount, selectedBatch?.capacity)"></div>
-        </div>
-        <div class="kpi-hint">
-          متاح: {{ (selectedBatch?.capacity || 0) - (selectedBatch?.totalTraineesCount || 0) }} مقعد
-        </div>
-      </div>
-
-      <!-- 2: نسبة التقدم الأكاديمي -->
-      <div class="kpi-card">
-        <div class="kpi-card-header">
-          <span class="kpi-label">نسبة الإنجاز</span>
-          <i class="fa-solid fa-chart-line kpi-icon text-cyan"></i>
-        </div>
-        <div class="kpi-val">{{ selectedBatch?.progressPercentage || 0 }}%</div>
-        <div class="kpi-bar-bg">
-          <div class="kpi-bar-fill bg-cyan" [style.width.%]="selectedBatch?.progressPercentage || 0"></div>
-        </div>
-        <div class="kpi-hint text-cyan">معدل إكمال المواد</div>
-      </div>
-
-      <!-- 3: معدل الحضور والانضباط -->
-      <div class="kpi-card">
-        <div class="kpi-card-header">
-          <span class="kpi-label">معدل الحضور</span>
-          <i class="fa-solid fa-user-check kpi-icon text-emerald"></i>
-        </div>
-        <div class="kpi-val">{{ selectedBatch?.attendanceRate || 0 }}%</div>
-        <div class="kpi-bar-bg">
-          <div class="kpi-bar-fill bg-emerald" [style.width.%]="selectedBatch?.attendanceRate || 0"></div>
-        </div>
-        <div class="kpi-hint text-emerald">متوسط انضباط الجلسات</div>
-      </div>
-
-      <!-- 4: الشهادات الصادرة -->
-      <div class="kpi-card">
-        <div class="kpi-card-header">
-          <span class="kpi-label">الشهادات الصادرة</span>
-          <i class="fa-solid fa-award kpi-icon text-amber"></i>
-        </div>
-        <div class="kpi-val">{{ selectedBatch?.issuedCertificatesCount || 0 }}</div>
-        <div class="kpi-bar-bg">
-          <div class="kpi-bar-fill bg-amber" [style.width.%]="selectedBatch?.issuedCertificatesCount ? 100 : 0"></div>
-        </div>
-        <div class="kpi-hint text-amber">متدربين أتموا المتطلبات</div>
-      </div>
-    </div>
-
-    <!-- 4. البيانات التنظيمية من الداتابيس -->
-    <div class="details-org-grid">
-      <div class="org-item">
-        <span class="org-label"><i class="fa-solid fa-chalkboard-user"></i> المدرب المسؤول:</span>
-        <span class="org-value">{{ selectedBatch?.InstructorName || 'بدون مدرب حالياً' }}</span>
-      </div>
-
-      <div class="org-item">
-        <span class="org-label"><i class="fa-solid fa-building"></i> الشركة المستضيفة:</span>
-        <span class="org-value">{{ selectedBatch?.companyName || 'لم تُحدد بعد' }}</span>
-      </div>
-
-      <div class="org-item">
-        <span class="org-label"><i class="fa-regular fa-calendar"></i> تاريخ البداية:</span>
-        <span class="org-value" dir="ltr">{{ selectedBatch?.startDate ? (selectedBatch.startDate | date:'dd/MM/yyyy') : '-' }}</span>
-      </div>
-
-      <div class="org-item">
-        <span class="org-label"><i class="fa-regular fa-calendar-check"></i> تاريخ التخرج المتوقع:</span>
-        <span class="org-value" dir="ltr">{{ selectedBatch?.endDate ? (selectedBatch.endDate | date:'dd/MM/yyyy') : '-' }}</span>
-      </div>
-
-      <div class="org-item full-width" *ngIf="selectedBatch?.department">
-        <span class="org-label"><i class="fa-solid fa-sitemap"></i> القسم التدريبي:</span>
-        <span class="org-value">{{ selectedBatch.department }}</span>
-      </div>
-    </div>
-
-    <!-- 5. شريط الإجراءات السريعة -->
-    <div class="details-pro-footer">
-      <div class="footer-actions-right">
-        <button type="button" (click)="onViewTraineesFromDetails()" class="btn-pro-trainees">
-          <i class="fa-solid fa-users"></i>
-          <span>متدربو الدفعة ({{ selectedBatch?.totalTraineesCount || 0 }})</span>
-        </button>
-
-        <button type="button" (click)="onEditFromDetails()" class="btn-pro-edit">
-          <i class="fa-regular fa-pen-to-square"></i>
-          <span>تعديل الدفعة</span>
-        </button>
-      </div>
-
-      <button type="button" (click)="onCloseViewModal()" class="btn-pro-close">إغلاق</button>
-    </div>
-
-  </div>
-</div>
 
 <!-- Modal: إنشاء دفعة جديدة -->
 <div *ngIf="isBatchModalOpen" (click)="onCloseBatchModal()" class="modal-overlay" dir="rtl">
@@ -712,29 +384,25 @@
           <label class="form-label">تاريخ البداية <span class="required-star">*</span></label>
           <input type="date" formControlName="startDate" class="form-input"
             [class.input-error]="batchForm.get('startDate')?.touched && batchForm.get('startDate')?.invalid">
-          <div *ngIf="batchForm.get('startDate')?.touched && batchForm.get('startDate')?.invalid" class="error-msg text-right">
-            <small>تاريخ البداية مطلوب</small>
-          </div>
         </div>
 
         <div class="form-group">
           <label class="form-label">تاريخ النهاية <span class="required-star">*</span></label>
           <input type="date" formControlName="endDate" class="form-input"
             [class.input-error]="batchForm.get('endDate')?.touched && (batchForm.get('endDate')?.invalid || batchForm.errors?.['dateRangeInvalid'])">
-          <div *ngIf="batchForm.get('endDate')?.touched && batchForm.get('endDate')?.invalid" class="error-msg text-right">
-            <small *ngIf="batchForm.get('endDate')?.errors?.['required']">تاريخ النهاية مطلوب</small>
+          <div *ngIf="batchForm.get('endDate')?.touched && batchForm.errors?.['dateRangeInvalid']" class="error-msg text-right">
+            <small>تاريخ النهاية يجب أن يكون بعد تاريخ البداية</small>
           </div>
         </div>
       </div>
 
       <div class="form-group">
         <label class="form-label">الطاقة الاستيعابية <span class="required-star">*</span></label>
-        <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="capacity" placeholder="15"
-          class="form-input text-right"
+        <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="capacity" placeholder="15" class="form-input text-right"
           [class.input-error]="batchForm.get('capacity')?.touched && batchForm.get('capacity')?.invalid">
       </div>
 
-      <div *ngIf="batchErrorMessage" class="error-msg text-center mb-2" style="color: #dc2626; font-size: 13px;">
+      <div *ngIf="batchErrorMessage" class="error-msg text-center mb-2">
         <small>{{ batchErrorMessage }}</small>
       </div>
 
@@ -790,18 +458,170 @@
   </div>
 </div>
 
-<!-- pagination -->
-@if (totalPages() > 1) {
-<div class="compact-pagination-wrapper">
-  <div class="pagination-info">
-    عرض الصفحة <strong>{{ currentPage() }}</strong> من <strong>{{ totalPages() }}</strong> (إجمالي {{
-    totalBatchesCount() }} دفعة)
-  </div>
+<!-- Modal: تعديل الدفعة -->
+<div *ngIf="isEditModalOpen" (click)="onCloseEditModal()" class="modal-overlay" dir="rtl" role="dialog" aria-modal="true">
+  <div (click)="$event.stopPropagation()" class="modal-container">
+    <div class="modal-header">
+      <h3 class="modal-title">تعديل الدفعة</h3>
+      <button type="button" (click)="onCloseEditModal()" class="modal-close-btn">&times;</button>
+    </div>
 
-  <div class="pagination-compact-controls">
-    <button class="compact-nav-btn" [disabled]="currentPage() === 1" (click)="onPageChange(currentPage() - 1)">السابق</button>
-    <span class="page-indicator">{{ currentPage() }} / {{ totalPages() }}</span>
-    <button class="compact-nav-btn" [disabled]="currentPage() === totalPages()" (click)="onPageChange(currentPage() + 1)">التالي</button>
+    <form [formGroup]="editBatchForm" (ngSubmit)="onSaveBatch()" class="modal-form">
+      <div class="form-group">
+        <label class="form-label">اسم الدفعة <span class="required-star">*</span></label>
+        <input type="text" formControlName="batchName" class="form-input text-right"
+          [class.input-error]="editBatchForm.get('batchName')?.touched && editBatchForm.get('batchName')?.invalid">
+        <div *ngIf="editBatchForm.get('batchName')?.touched && editBatchForm.get('batchName')?.invalid" class="error-msg text-right">
+          <small>اسم الدفعة مطلوب</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">البرنامج <span class="required-star">*</span></label>
+        <select formControlName="programId" class="form-select text-right"
+          [class.input-error]="editBatchForm.get('programId')?.touched && editBatchForm.get('programId')?.invalid">
+          <option value="" disabled>– اختر برنامجاً –</option>
+          <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title || prog.name }}</option>
+        </select>
+        <div *ngIf="editBatchForm.get('programId')?.touched && editBatchForm.get('programId')?.invalid" class="error-msg text-right">
+          <small>يجب اختيار البرنامج</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">الشركة المستضيفة</label>
+        <select formControlName="companyId" class="form-select text-right">
+          <option value="">– اختر شركة –</option>
+          <option *ngFor="let comp of companies()" [value]="comp.companyId">{{ comp.companyName }}</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">تاريخ البداية <span class="required-star">*</span></label>
+          <input type="date" formControlName="startDate" class="form-input"
+            [class.input-error]="editBatchForm.get('startDate')?.touched && editBatchForm.get('startDate')?.invalid">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">تاريخ النهاية <span class="required-star">*</span></label>
+          <input type="date" formControlName="endDate" class="form-input"
+            [class.input-error]="editBatchForm.get('endDate')?.touched && (editBatchForm.get('endDate')?.invalid || editBatchForm.errors?.['dateRangeInvalid'])">
+          <div *ngIf="editBatchForm.get('endDate')?.touched && editBatchForm.errors?.['dateRangeInvalid']" class="error-msg text-right">
+            <small>تاريخ النهاية يجب أن يكون بعد تاريخ البداية</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">الطاقة الاستيعابية <span class="required-star">*</span></label>
+        <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="capacity" placeholder="15" class="form-input text-right"
+          [class.input-error]="editBatchForm.get('capacity')?.touched && editBatchForm.get('capacity')?.invalid">
+      </div>
+
+      <div *ngIf="editBatchErrorMessage" class="error-msg text-center mb-2">
+        <small>{{ editBatchErrorMessage }}</small>
+      </div>
+
+      <div class="modal-footer-buttons">
+        <button type="submit" [disabled]="isSubmittingEditBatch" class="btn-submit-batch">
+          {{ isSubmittingEditBatch ? 'جاري الحفظ...' : 'حفظ التعديلات' }}
+        </button>
+        <button type="button" (click)="onCloseEditModal()" class="btn-cancel-batch">إلغاء</button>
+      </div>
+    </form>
   </div>
 </div>
-}
+
+<!-- Modal: تفاصيل الدفعة (View Modal) -->
+<div *ngIf="isViewModalOpen" (click)="onCloseViewModal()" class="modal-overlay" dir="rtl" role="dialog" aria-modal="true">
+  <div (click)="$event.stopPropagation()" class="modal-container-details-pro">
+    <div class="details-pro-header">
+      <div class="header-title-block">
+        <h3 class="details-pro-title">تفاصيل الدفعة</h3>
+        <span class="nfd-status-badge" [ngClass]="getStatusBadgeClass(selectedBatch?.status)">
+          {{ getStatusLabel(selectedBatch?.status) }}
+        </span>
+      </div>
+      <button type="button" (click)="onCloseViewModal()" class="details-pro-close">&times;</button>
+    </div>
+
+    <div class="details-pro-hero">
+      <div class="hero-icon-box"><i class="fa-solid fa-graduation-cap"></i></div>
+      <div class="hero-info">
+        <h4 class="hero-batch-name">{{ selectedBatch?.batchName }}</h4>
+        <div class="hero-tags-row">
+          <span class="hero-program-tag">{{ getProgramName(selectedBatch) }}</span>
+          <span *ngIf="getTrackName(selectedBatch) !== '-'" class="hero-track-tag">مسار: {{ getTrackName(selectedBatch) }}</span>
+          <span class="hero-duration-tag"><i class="fa-regular fa-clock"></i> {{ getBatchDuration(selectedBatch?.startDate, selectedBatch?.endDate) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-kpis-grid">
+      <div class="kpi-card">
+        <div class="kpi-card-header"><span class="kpi-label">المقاعد والإشغال</span><i class="fa-solid fa-users kpi-icon text-indigo"></i></div>
+        <div class="kpi-val" dir="ltr">{{ selectedBatch?.totalTraineesCount || 0 }} / {{ selectedBatch?.capacity || 0 }}</div>
+        <div class="nfd-progress-bar-bg" style="margin: 8px 0;">
+          <div class="nfd-progress-bar-fill" [style.width.%]="getOccupancyPercentage(selectedBatch?.totalTraineesCount, selectedBatch?.capacity)"></div>
+        </div>
+        <div class="kpi-hint">متاح: {{ (selectedBatch?.capacity || 0) - (selectedBatch?.totalTraineesCount || 0) }} مقعد</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-card-header"><span class="kpi-label">نسبة الإنجاز</span><i class="fa-solid fa-chart-line kpi-icon text-cyan"></i></div>
+        <div class="kpi-val">{{ selectedBatch?.progressPercentage || 0 }}%</div>
+        <div class="kpi-bar-bg"><div class="kpi-bar-fill bg-cyan" [style.width.%]="selectedBatch?.progressPercentage || 0"></div></div>
+        <div class="kpi-hint text-cyan">معدل إكمال المواد</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-card-header"><span class="kpi-label">معدل الحضور</span><i class="fa-solid fa-user-check kpi-icon text-emerald"></i></div>
+        <div class="kpi-val">{{ selectedBatch?.attendanceRate || 0 }}%</div>
+        <div class="kpi-bar-bg"><div class="kpi-bar-fill bg-emerald" [style.width.%]="selectedBatch?.attendanceRate || 0"></div></div>
+        <div class="kpi-hint text-emerald">متوسط انضباط الجلسات</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-card-header"><span class="kpi-label">الشهادات الصادرة</span><i class="fa-solid fa-award kpi-icon text-amber"></i></div>
+        <div class="kpi-val">{{ selectedBatch?.issuedCertificatesCount || 0 }}</div>
+        <div class="kpi-bar-bg"><div class="kpi-bar-fill bg-amber" [style.width.%]="selectedBatch?.issuedCertificatesCount ? 100 : 0"></div></div>
+        <div class="kpi-hint text-amber">متدربين أتموا المتطلبات</div>
+      </div>
+    </div>
+
+    <div class="details-org-grid">
+      <div class="org-item">
+        <span class="org-label"><i class="fa-solid fa-chalkboard-user"></i> المدرب المسؤول:</span>
+        <span class="org-value">{{ selectedBatch?.InstructorName || 'بدون مدرب حالياً' }}</span>
+      </div>
+      <div class="org-item">
+        <span class="org-label"><i class="fa-solid fa-building"></i> الشركة المستضيفة:</span>
+        <span class="org-value">{{ selectedBatch?.companyName || 'لم تُحدد بعد' }}</span>
+      </div>
+      <div class="org-item">
+        <span class="org-label"><i class="fa-regular fa-calendar"></i> تاريخ البداية:</span>
+        <span class="org-value" dir="ltr">{{ selectedBatch?.startDate ? (selectedBatch.startDate | date:'dd/MM/yyyy') : '-' }}</span>
+      </div>
+      <div class="org-item">
+        <span class="org-label"><i class="fa-regular fa-calendar-check"></i> تاريخ التخرج المتوقع:</span>
+        <span class="org-value" dir="ltr">{{ selectedBatch?.endDate ? (selectedBatch.endDate | date:'dd/MM/yyyy') : '-' }}</span>
+      </div>
+    </div>
+
+    <div class="details-pro-footer">
+      <div class="footer-actions-right">
+        <button type="button" (click)="onViewTraineesFromDetails()" class="btn-pro-trainees">
+          <i class="fa-solid fa-users"></i>
+          <span>متدربو الدفعة ({{ selectedBatch?.totalTraineesCount || 0 }})</span>
+        </button>
+
+        <button type="button" (click)="onEditFromDetails()" class="btn-pro-edit">
+          <i class="fa-regular fa-pen-to-square"></i>
+          <span>تعديل الدفعة</span>
+        </button>
+      </div>
+      <button type="button" (click)="onCloseViewModal()" class="btn-pro-close">إغلاق</button>
+    </div>
+  </div>
+</div>

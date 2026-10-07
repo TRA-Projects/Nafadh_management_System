@@ -4,28 +4,28 @@
   <!-- Certificate Toast Message -->
   <!-- ========================================================= -->
   @if (certificateMessage()) {
-    <div class="certificate-message" [ngClass]="certificateMessage()?.type">
-      <div class="certificate-message-icon">
-        @if (certificateMessage()?.type === 'error') {
-          <span>✕</span>
-        }
-        @if (certificateMessage()?.type === 'warning') {
-          <span>!</span>
-        }
-        @if (certificateMessage()?.type === 'success') {
-          <span>✓</span>
-        }
-      </div>
-
-      <div class="certificate-message-content">
-        <h4 class="certificate-message-title">{{ certificateMessage()?.title }}</h4>
-        <p class="certificate-message-text">{{ certificateMessage()?.message }}</p>
-      </div>
-
-      <button type="button" class="certificate-message-close" (click)="closeCertificateMessage()">
-        &times;
-      </button>
+  <div class="certificate-message" [ngClass]="certificateMessage()?.type">
+    <div class="certificate-message-icon">
+      @if (certificateMessage()?.type === 'error') {
+      <i class="fa-solid fa-xmark"></i>
+      }
+      @if (certificateMessage()?.type === 'warning') {
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      }
+      @if (certificateMessage()?.type === 'success') {
+      <i class="fa-solid fa-check"></i>
+      }
     </div>
+
+    <div class="certificate-message-content">
+      <h4 class="certificate-message-title">{{ certificateMessage()?.title }}</h4>
+      <p class="certificate-message-text">{{ certificateMessage()?.message }}</p>
+    </div>
+
+    <button type="button" class="certificate-message-close" (click)="closeCertificateMessage()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
   }
 
   <!-- ========================================================= -->
@@ -33,361 +33,356 @@
   <!-- ========================================================= -->
   @if (viewMode() === 'list') {
 
-    <!-- ترويسة الصفحة -->
-    <div class="page-top-header">
+  <!-- ترويسة الصفحة -->
+  <div class="page-top-header">
+    <div>
+      <h2 class="nfd-page-title">
+        <i class="fa-solid fa-award title-icon"></i>
+        إصدار الشهادات التدريبية
+      </h2>
+      <p class="nfd-page-sub">
+        إصدار الشهادات الرسمية للمتدربين
+      </p>
+    </div>
+  </div>
+
+  <!-- بطاقات الإحصائيات السريعة (KPIs) -->
+  <div class="cert-kpi-grid">
+    <div class="cert-kpi-card kpi-completed" (click)="setQuickStatusFilter('completed')">
       <div>
-        <h2 class="nfd-page-title">  إصدار الشهادات التدريبية</h2>
-        <p class="nfd-page-sub">
-          إصدار الشهادات الرسمية للمتدربين 
-        </p>
+        <span class="kpi-label">الدفعات المكتملة (المؤهلة للإصدار)</span>
+        <strong class="kpi-value text-emerald">{{ completedBatchesCount() }} دفعات</strong>
+        <span class="kpi-sub text-emerald">
+          <i class="fa-solid fa-circle-check"></i> متاح إصدار وتحميل شهاداتها فوراً
+        </span>
+      </div>
+      <div class="kpi-icon-box bg-emerald-soft">
+        <i class="fa-solid fa-circle-check"></i>
       </div>
     </div>
 
-    <!-- بطاقات الإحصائيات السريعة (KPIs) -->
-    <div class="cert-kpi-grid">
-      <div class="cert-kpi-card kpi-completed" (click)="setQuickStatusFilter('completed')">
-        <div>
-          <span class="kpi-label">الدفعات المكتملة (المؤهلة للإصدار)</span>
-          <strong class="kpi-value text-emerald">{{ completedBatchesCount() }} دفعات</strong>
-          <span class="kpi-sub text-emerald">✓ متاح إصدار وتحميل شهاداتها فوراً</span>
-        </div>
-        <div class="kpi-icon-box bg-emerald-soft">✓</div>
+    <div class="cert-kpi-card">
+      <div>
+        <span class="kpi-label">إجمالي الشهادات المعتمدة</span>
+        <strong class="kpi-value text-navy">{{ totalIssuedCertificatesCount() }} شهادة</strong>
+        <span class="kpi-sub">
+          <i class="fa-solid fa-certificate"></i> موثقة برقم تسلسلي وكود تحقق
+        </span>
       </div>
-
-      <div class="cert-kpi-card">
-        <div>
-          <span class="kpi-label">إجمالي الشهادات المعتمدة</span>
-          <strong class="kpi-value text-navy">{{ totalIssuedCertificatesCount() }} شهادة</strong>
-          <span class="kpi-sub">موثقة برقم تسلسلي وكود تحقق وختم</span>
-        </div>
-        <div class="kpi-icon-box bg-navy-soft">★</div>
-      </div>
-
-      <div class="cert-kpi-card" (click)="setQuickStatusFilter('ongoing')">
-        <div>
-          <span class="kpi-label">الدفعات الجارية حالياً</span>
-          <strong class="kpi-value text-amber">{{ ongoingBatchesCount() }} دفعة</strong>
-          <span class="kpi-sub text-amber">🔒 يُفتح الإصدار تلقائياً فور اكتمالها</span>
-        </div>
-        <div class="kpi-icon-box bg-amber-soft">⏳</div>
-      </div>
-
-      <div class="cert-kpi-card" (click)="setQuickStatusFilter('not-started')">
-        <div>
-          <span class="kpi-label">دفعات لم تبدأ بعد</span>
-          <strong class="kpi-value text-slate">{{ notStartedBatchesCount() }} دفعة</strong>
-          <span class="kpi-sub">🔒 غير متاحة لإصدار الشهادات</span>
-        </div>
-        <div class="kpi-icon-box bg-slate-soft">🔒</div>
+      <div class="kpi-icon-box bg-navy-soft">
+        <i class="fa-solid fa-award"></i>
       </div>
     </div>
 
-    <!-- شريط التحقق الفوري من صحة الشهادة بواسطة Serial Number أو Verification Code -->
-    <div class="verify-bar-card">
-      <div class="verify-bar-main">
-        <div class="verify-bar-info">
-          <div class="verify-shield-icon">🛡️</div>
-          <div>
-            <h4 class="verify-bar-title">خدمة التحقق الفوري من صحة الشهادات (Serial No / Verify Code)</h4>
-            <p class="verify-bar-sub">
-              أدخلي الرقم التسلسلي للشهادة (مثال: <code>SN-2026-...</code>) أو كود التحقق (مثال: <code>VR-NAF-...</code>) للتأكد من صحتها
-            </p>
-          </div>
-        </div>
-
-        <div class="verify-bar-controls">
-          <input
-            type="text"
-            class="verify-input"
-            placeholder="أدخل الرقم التسلسلي (SN-...) أو كود التحقق (VR-...)..."
-            [value]="verifyQuery()"
-            (input)="onVerifyInput($event)"
-            (keyup.enter)="verifyCertificateByCode()"
-          />
-          <button type="button" class="verify-submit-btn" (click)="verifyCertificateByCode()">
-            تحقق من الشهادة ✓
-          </button>
-        </div>
+    <div class="cert-kpi-card" (click)="setQuickStatusFilter('ongoing')">
+      <div>
+        <span class="kpi-label">الدفعات الجارية حالياً</span>
+        <strong class="kpi-value text-amber">{{ ongoingBatchesCount() }} دفعة</strong>
+        <span class="kpi-sub text-amber">
+          <i class="fa-solid fa-lock"></i> يُفتح الإصدار تلقائياً فور اكتمالها
+        </span>
       </div>
-
-      @if (verifyResult().checked) {
-        @if (verifyResult().found && verifyResult().certData; as vCert) {
-          <div class="verify-result-box valid">
-            <div class="verify-result-text">
-              <strong>✅ شهادة صحيحة ومعتمدة رسمياً:</strong>
-              <span>المتدرب: <b>{{ vCert.traineeName }}</b></span>
-              <span>•</span>
-              <span>البرنامج: <b>{{ vCert.trackName }}</b></span>
-              <span>•</span>
-              <span>الشركة المدربة: <b>{{ vCert.companyName }}</b></span>
-              <span>•</span>
-              <span>التقدير: <b>{{ vCert.grade }} ({{ vCert.gradeLabel }})</b></span>
-            </div>
-            <button type="button" class="verify-open-btn" (click)="openVerifiedCertificate()">
-              استعراض الشهادة الأصلية ←
-            </button>
-          </div>
-        } @else {
-          <div class="verify-result-box invalid">
-            ⚠️ لم يتم العثور على شهادة مصدرة بهذا الرقم التسلسلي أو كود التحقق في السجل المعتمد.
-          </div>
-        }
-      }
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- شريط الفلترة الاحترافية الذكية (اختيار مباشر بدون تعب الكتابة) -->
-    <!-- ========================================================= -->
-    <div class="smart-filter-panel">
-      <div class="smart-filter-header">
-        <div class="smart-filter-title">
-          <span>⚡ الفلترة الذكية السريعة (اختاري الشركة أو البرنامج أو الدفعة مباشرة)</span>
-        </div>
-
-        <!-- أزرار التبويب السريعة للحالة -->
-        <div class="status-segmented-tabs">
-          <button
-            type="button"
-            class="seg-tab"
-            [class.active]="statusFilter() === 'all'"
-            (click)="setQuickStatusFilter('all')">
-            الكل ({{ allBatchesList().length }})
-          </button>
-          <button
-            type="button"
-            class="seg-tab tab-completed"
-            [class.active]="statusFilter() === 'completed'"
-            (click)="setQuickStatusFilter('completed')">
-            المكتملة · جاهزة للشهادات ✓ ({{ completedBatchesCount() }})
-          </button>
-          <button
-            type="button"
-            class="seg-tab"
-            [class.active]="statusFilter() === 'ongoing'"
-            (click)="setQuickStatusFilter('ongoing')">
-            الجارية 🔒 ({{ ongoingBatchesCount() }})
-          </button>
-          <button
-            type="button"
-            class="seg-tab"
-            [class.active]="statusFilter() === 'not-started'"
-            (click)="setQuickStatusFilter('not-started')">
-            لم تبدأ 🔒 ({{ notStartedBatchesCount() }})
-          </button>
-        </div>
-      </div>
-
-      <div class="smart-filter-grid">
-        <!-- 1. اختيار الشركة المدربة -->
-        <div class="smart-filter-field">
-          <label>1. الشركة المدربة المستضيفة</label>
-          <select [value]="companyFilter()" (change)="onCompanyFilterChange($event)">
-            <option value="all">جميع الشركات المدربة ({{ companiesList().length }})</option>
-            @for (comp of companiesList(); track comp) {
-              <option [value]="comp">{{ comp }}</option>
-            }
-          </select>
-        </div>
-
-        <!-- 2. اختيار البرنامج / المسار -->
-        <div class="smart-filter-field">
-          <label>2. البرنامج / المسار التدريبي</label>
-          <select [value]="trackFilter()" (change)="onTrackFilterChange($event)">
-            <option value="all">جميع البرامج والمسارات ({{ tracksList().length }})</option>
-            @for (trk of tracksList(); track trk) {
-              <option [value]="trk">{{ trk }}</option>
-            }
-          </select>
-        </div>
-
-        <!-- 3. اختيار الدفعة مباشرة -->
-        <div class="smart-filter-field">
-          <label>3. اختيار اسم الدفعة مباشرة</label>
-          <select [value]="batchIdFilter()" (change)="onBatchIdFilterChange($event)">
-            <option value="all">جميع الدفعات التدريبية ({{ allBatchesList().length }})</option>
-            @for (b of allBatchesList(); track b.batchId ?? b.id) {
-              <option [value]="b.batchId || b.id">
-                {{ b.batchName }} ({{ isBatchCompleted(b) ? 'مكتملة ✓' : isBatchOngoing(b) ? 'جارية 🔒' : 'لم تبدأ 🔒' }})
-              </option>
-            }
-          </select>
-        </div>
-
-        <!-- 4. بحث سريع اختياري + زر إعادة التعيين -->
-        <div class="smart-filter-field">
-          <label>4. بحث نصي سريع (اختياري)</label>
-          <div class="search-with-reset">
-            <div class="quick-search-input-wrap">
-              <input
-                type="text"
-                placeholder="ابحث باسم دفعة أو شركة..."
-                [value]="searchTerm()"
-                (input)="onSearch($event)"
-              />
-            </div>
-
-            @if (hasActiveFilters()) {
-              <button type="button" class="reset-smart-btn" (click)="resetFilters()">
-                إعادة تعيين ↺
-              </button>
-            }
-          </div>
-        </div>
+      <div class="kpi-icon-box bg-amber-soft">
+        <i class="fa-solid fa-hourglass-half"></i>
       </div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- Loading -->
-    <!-- ========================================================= -->
-    @if (loading()) {
-      <div class="page-loader">
-        <div class="loader-box">
-          <div class="spinner"></div>
-          <span>جاري تجهيز الدفعات...</span>
+    <div class="cert-kpi-card" (click)="setQuickStatusFilter('not-started')">
+      <div>
+        <span class="kpi-label">دفعات لم تبدأ بعد</span>
+        <strong class="kpi-value text-slate">{{ notStartedBatchesCount() }} دفعة</strong>
+        <span class="kpi-sub">
+          <i class="fa-solid fa-lock"></i> غير متاحة لإصدار الشهادات
+        </span>
+      </div>
+      <div class="kpi-icon-box bg-slate-soft">
+        <i class="fa-solid fa-calendar-xmark"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- شريط التحقق الفوري من صحة الشهادة بواسطة Serial Number أو Verification Code -->
+  <div class="verify-bar-card">
+    <div class="verify-bar-main">
+      <div class="verify-bar-info">
+        <div class="verify-shield-icon">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h4 class="verify-bar-title">خدمة التحقق الفوري من صحة الشهادات (Serial No / Verify Code)</h4>
+          <p class="verify-bar-sub">
+            أدخلي الرقم التسلسلي للشهادة (مثال: <code>SN-2026-...</code>) أو كود التحقق (مثال: <code>VR-NAF-...</code>)
+            للتأكد من صحتها
+          </p>
         </div>
       </div>
+
+      <div class="verify-bar-controls">
+        <input type="text" class="verify-input" placeholder="أدخل الرقم التسلسلي (SN-...) أو كود التحقق (VR-...)..."
+          [value]="verifyQuery()" (input)="onVerifyInput($event)" (keyup.enter)="verifyCertificateByCode()" />
+        <button type="button" class="verify-submit-btn" (click)="verifyCertificateByCode()">
+          <i class="fa-solid fa-magnifying-glass-check"></i>
+          <span>تحقق من الشهادة</span>
+        </button>
+      </div>
+    </div>
+
+    @if (verifyResult().checked) {
+    @if (verifyResult().found && verifyResult().certData; as vCert) {
+    <div class="verify-result-box valid">
+      <div class="verify-result-text">
+        <strong><i class="fa-solid fa-circle-check"></i> شهادة صحيحة ومعتمدة رسمياً:</strong>
+        <span>المتدرب: <b>{{ vCert.traineeName }}</b></span>
+        <span>•</span>
+        <span>البرنامج: <b>{{ vCert.trackName }}</b></span>
+        <span>•</span>
+        <span>الشركة المدربة: <b>{{ vCert.companyName }}</b></span>
+        <span>•</span>
+        <span>التقدير: <b>{{ vCert.grade }} ({{ vCert.gradeLabel }})</b></span>
+      </div>
+      <button type="button" class="verify-open-btn" (click)="openVerifiedCertificate()">
+        <span>استعراض الشهادة الأصلية</span>
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+    </div>
     } @else {
+    <div class="verify-result-box invalid">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>لم يتم العثور على شهادة مصدرة بهذا الرقم التسلسلي أو كود التحقق في السجل المعتمد.</span>
+    </div>
+    }
+    }
+  </div>
 
-      <!-- ========================================================= -->
-      <!-- شبكة بطاقات الدفعات -->
-      <!-- ========================================================= -->
-      <div class="batches-grid">
-        @for (batch of batches(); track batch.batchId ?? $index) {
-          <div
-            class="batch-card"
-            [class.batch-card-completed]="isBatchCompleted(batch)"
-            [class.batch-card-locked]="!isBatchCompleted(batch)">
-
-            <!-- Header -->
-            <div class="card-header">
-              <div class="calendar-icon-box" [class.completed-icon]="isBatchCompleted(batch)">
-                @if (isBatchCompleted(batch)) {
-                  <span>🎓</span>
-                } @else {
-                  <span>🔒</span>
-                }
-              </div>
-
-              <span class="status-badge-pill" [ngClass]="getBatchStatusClass(batch.status)">
-                @if (isBatchCompleted(batch)) {
-                  ✓ مكتملة · مؤهلة للشهادات
-                } @else if (isBatchOngoing(batch)) {
-                  🔒 جارية · الإصدار مغلق
-                } @else {
-                  🔒 لم تبدأ · الإصدار مغلق
-                }
-              </span>
-            </div>
-
-            <!-- Body -->
-            <div class="card-body">
-              <h3 class="batch-title">{{ batch.batchName }}</h3>
-
-              <div class="batch-meta-info">
-                <div class="meta-line">
-                  <span class="meta-lbl">الشركة المدربة:</span>
-                  <strong class="company-name">{{ batch.companyName }}</strong>
-                </div>
-                <div class="meta-line">
-                  <span class="meta-lbl">البرنامج التدريبي:</span>
-                  <span class="track-name">{{ batch.trackName }}</span>
-                </div>
-                <div class="meta-line">
-                  <span class="meta-lbl">فترة التدريب:</span>
-                  <span class="dates-inline">
-                    {{ batch.startDate | date:'dd/MM/yyyy' }} ← {{ batch.endDate | date:'dd/MM/yyyy' }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- إذا كانت الدفعة مكتملة نعرض شريط تقدم الشهادات، وإلا نعرض تنبيه القفل -->
-              @if (isBatchCompleted(batch)) {
-                <div class="progress-section">
-                  <div class="progress-labels">
-                    <span class="progress-title">الشهادات المعتمدة الصادرة</span>
-                    <span class="issued-count">
-                      {{ batch.issuedCertificatesCount }} من {{ batch.totalTraineesCount }} متدرب
-                    </span>
-                  </div>
-                  <div class="progress-bar-bg">
-                    <div
-                      class="progress-bar-fill completed-fill"
-                      [style.width.%]="(batch.issuedCertificatesCount / (batch.totalTraineesCount || 1)) * 100">
-                    </div>
-                  </div>
-                </div>
-              } @else {
-                <div class="batch-locked-notice">
-                  @if (isBatchOngoing(batch)) {
-                    <span>🔒 الدفعة لا تزال قيد التدريب حالياً؛ يُفتح إصدار الشهادات تلقائياً فور اكتمال الدفعة.</span>
-                  } @else {
-                    <span>🔒 لم تبدأ هذه الدفعة بعد؛ إصدار الشهادات مخصص للدفعات المكتملة فقط.</span>
-                  }
-                </div>
-              }
-
-              <hr class="card-divider" />
-
-              <!-- Footer -->
-              <div class="card-footer">
-                <span class="trainees-count">
-                  👥 {{ batch.totalTraineesCount }} متدرب
-                </span>
-
-                @if (isBatchCompleted(batch)) {
-                  <button type="button" class="btn-enter-batch" (click)="onViewTrainees(batch)">
-                    <span>إصدار واستعراض الشهادات</span>
-                    <span>←</span>
-                  </button>
-                } @else {
-                  <button type="button" class="btn-locked-batch" (click)="onViewTrainees(batch)">
-                    <span>🔒 متاح بعد اكتمال الدفعة</span>
-                  </button>
-                }
-              </div>
-            </div>
-
-          </div>
-        } @empty {
-          <div class="empty-state">
-            لا توجد دفعات مطابقة لخيارات الفلترة المحددة حالياً
-          </div>
-        }
+  <!-- ========================================================= -->
+  <!-- شريط الفلترة الاحترافية الذكية -->
+  <!-- ========================================================= -->
+  <div class="smart-filter-panel">
+    <div class="smart-filter-header">
+      <div class="smart-filter-title">
+        <i class="fa-solid fa-sliders"></i>
+        <span>الفلترة الذكية السريعة (اختاري الشركة أو البرنامج أو الدفعة مباشرة)</span>
       </div>
 
-      <!-- ========================================================= -->
-      <!-- Pagination -->
-      <!-- ========================================================= -->
-      @if (totalPages() > 1) {
-        <div class="compact-pagination-wrapper">
-          <div class="pagination-info">
-            عرض الصفحة <strong>{{ currentPage() }}</strong> من <strong>{{ totalPages() }}</strong>
-            (إجمالي <strong>{{ totalBatchesCount() }}</strong> دفعة)
+      <div class="status-segmented-tabs">
+        <button type="button" class="seg-tab" [class.active]="statusFilter() === 'all'"
+          (click)="setQuickStatusFilter('all')">
+          الكل ({{ allBatchesList().length }})
+        </button>
+        <button type="button" class="seg-tab tab-completed" [class.active]="statusFilter() === 'completed'"
+          (click)="setQuickStatusFilter('completed')">
+          <i class="fa-solid fa-check"></i>
+          المكتملة · جاهزة للشهادات ({{ completedBatchesCount() }})
+        </button>
+        <button type="button" class="seg-tab" [class.active]="statusFilter() === 'ongoing'"
+          (click)="setQuickStatusFilter('ongoing')">
+          <i class="fa-solid fa-lock"></i>
+          الجارية ({{ ongoingBatchesCount() }})
+        </button>
+        <button type="button" class="seg-tab" [class.active]="statusFilter() === 'not-started'"
+          (click)="setQuickStatusFilter('not-started')">
+          <i class="fa-solid fa-lock"></i>
+          لم تبدأ ({{ notStartedBatchesCount() }})
+        </button>
+      </div>
+    </div>
+
+    <div class="smart-filter-grid">
+      <div class="smart-filter-field">
+        <label><i class="fa-solid fa-building"></i> 1. الشركة المدربة المستضيفة</label>
+        <select [value]="companyFilter()" (change)="onCompanyFilterChange($event)">
+          <option value="all">جميع الشركات المدربة ({{ companiesList().length }})</option>
+          @for (comp of companiesList(); track comp) {
+          <option [value]="comp">{{ comp }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="smart-filter-field">
+        <label><i class="fa-solid fa-laptop-code"></i> 2. البرنامج / المسار التدريبي</label>
+        <select [value]="trackFilter()" (change)="onTrackFilterChange($event)">
+          <option value="all">جميع البرامج والمسارات ({{ tracksList().length }})</option>
+          @for (trk of tracksList(); track trk) {
+          <option [value]="trk">{{ trk }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="smart-filter-field">
+        <label><i class="fa-solid fa-layer-group"></i> 3. اختيار اسم الدفعة مباشرة</label>
+        <select [value]="batchIdFilter()" (change)="onBatchIdFilterChange($event)">
+          <option value="all">جميع الدفعات التدريبية ({{ allBatchesList().length }})</option>
+          @for (b of allBatchesList(); track b.batchId ?? b.id) {
+          <option [value]="b.batchId || b.id">
+            {{ b.batchName }} ({{ isBatchCompleted(b) ? 'مكتملة' : isBatchOngoing(b) ? 'جارية' : 'لم تبدأ' }})
+          </option>
+          }
+        </select>
+      </div>
+
+      <div class="smart-filter-field">
+        <label><i class="fa-solid fa-magnifying-glass"></i> 4. بحث نصي سريع (اختياري)</label>
+        <div class="search-with-reset">
+          <div class="quick-search-input-wrap">
+            <input type="text" placeholder="ابحث باسم دفعة أو شركة..." [value]="searchTerm()"
+              (input)="onSearch($event)" />
           </div>
 
-          <div class="pagination-compact-controls">
-            <button
-              class="compact-nav-btn"
-              [disabled]="currentPage() === 1"
-              (click)="onPageChange(currentPage() - 1)">
-              السابق
-            </button>
+          @if (hasActiveFilters()) {
+          <button type="button" class="reset-smart-btn" (click)="resetFilters()">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>إعادة تعيين</span>
+          </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
 
-            <span class="page-indicator">
-              {{ currentPage() }} / {{ totalPages() }}
+  <!-- ========================================================= -->
+  <!-- Loading -->
+  <!-- ========================================================= -->
+  @if (loading()) {
+  <div class="page-loader">
+    <div class="loader-box">
+      <div class="spinner"></div>
+      <span>جاري تجهيز الدفعات...</span>
+    </div>
+  </div>
+  } @else {
+
+  <!-- ========================================================= -->
+  <!-- شبكة بطاقات الدفعات -->
+  <!-- ========================================================= -->
+  <div class="batches-grid">
+    @for (batch of batches(); track batch.batchId ?? $index) {
+    <div class="batch-card" [class.batch-card-completed]="isBatchCompleted(batch)"
+      [class.batch-card-locked]="!isBatchCompleted(batch)">
+
+      <div class="card-header">
+        <div class="calendar-icon-box" [class.completed-icon]="isBatchCompleted(batch)">
+          @if (isBatchCompleted(batch)) {
+          <i class="fa-solid fa-user-graduate"></i>
+          } @else {
+          <i class="fa-solid fa-lock"></i>
+          }
+        </div>
+
+        <span class="status-badge-pill" [ngClass]="getBatchStatusClass(batch.status)">
+          @if (isBatchCompleted(batch)) {
+          <i class="fa-solid fa-circle-check"></i> مكتملة · مؤهلة للشهادات
+          } @else if (isBatchOngoing(batch)) {
+          <i class="fa-solid fa-lock"></i> جارية · الإصدار مغلق
+          } @else {
+          <i class="fa-solid fa-lock"></i> لم تبدأ · الإصدار مغلق
+          }
+        </span>
+      </div>
+
+      <div class="card-body">
+        <h3 class="batch-title">{{ batch.batchName }}</h3>
+
+        <div class="batch-meta-info">
+          <div class="meta-line">
+            <span class="meta-lbl">الشركة المدربة:</span>
+            <strong class="company-name">{{ batch.companyName }}</strong>
+          </div>
+          <div class="meta-line">
+            <span class="meta-lbl">البرنامج التدريبي:</span>
+            <span class="track-name">{{ batch.trackName }}</span>
+          </div>
+          <div class="meta-line">
+            <span class="meta-lbl">فترة التدريب:</span>
+            <span class="dates-inline">
+              {{ batch.startDate | date:'dd/MM/yyyy' }} ← {{ batch.endDate | date:'dd/MM/yyyy' }}
             </span>
-
-            <button
-              class="compact-nav-btn"
-              [disabled]="currentPage() === totalPages()"
-              (click)="onPageChange(currentPage() + 1)">
-              التالي
-            </button>
           </div>
         </div>
-      }
 
+        @if (isBatchCompleted(batch)) {
+        <div class="progress-section">
+          <div class="progress-labels">
+            <span class="progress-title">الشهادات المعتمدة الصادرة</span>
+            <span class="issued-count">
+              {{ batch.issuedCertificatesCount }} من {{ batch.totalTraineesCount }} متدرب
+            </span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill completed-fill"
+              [style.width.%]="(batch.issuedCertificatesCount / (batch.totalTraineesCount || 1)) * 100">
+            </div>
+          </div>
+        </div>
+        } @else {
+        <div class="batch-locked-notice">
+          @if (isBatchOngoing(batch)) {
+          <span><i class="fa-solid fa-lock"></i> الدفعة لا تزال قيد التدريب حالياً؛ يُفتح إصدار الشهادات تلقائياً فور
+            اكتمال الدفعة.</span>
+          } @else {
+          <span><i class="fa-solid fa-lock"></i> لم تبدأ هذه الدفعة بعد؛ إصدار الشهادات مخصص للدفعات المكتملة
+            فقط.</span>
+          }
+        </div>
+        }
+
+        <hr class="card-divider" />
+
+        <div class="card-footer">
+          <span class="trainees-count">
+            <i class="fa-solid fa-users"></i> {{ batch.totalTraineesCount }} متدرب
+          </span>
+
+          @if (isBatchCompleted(batch)) {
+          <button type="button" class="btn-enter-batch" (click)="onViewTrainees(batch)">
+            <span>إصدار واستعراض الشهادات</span>
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          } @else {
+          <button type="button" class="btn-locked-batch" (click)="onViewTrainees(batch)">
+            <i class="fa-solid fa-lock"></i>
+            <span>متاح بعد اكتمال الدفعة</span>
+          </button>
+          }
+        </div>
+      </div>
+
+    </div>
+    } @empty {
+    <div class="empty-state">
+      <i class="fa-regular fa-folder-open"></i>
+      <span>لا توجد دفعات مطابقة لخيارات الفلترة المحددة حالياً</span>
+    </div>
     }
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- Pagination -->
+  <!-- ========================================================= -->
+  @if (totalPages() > 1) {
+  <div class="compact-pagination-wrapper">
+    <div class="pagination-info">
+      عرض الصفحة <strong>{{ currentPage() }}</strong> من <strong>{{ totalPages() }}</strong>
+      (إجمالي <strong>{{ totalBatchesCount() }}</strong> دفعة)
+    </div>
+
+    <div class="pagination-compact-controls">
+      <button class="compact-nav-btn" [disabled]="currentPage() === 1" (click)="onPageChange(currentPage() - 1)">
+        السابق
+      </button>
+
+      <span class="page-indicator">
+        {{ currentPage() }} / {{ totalPages() }}
+      </span>
+
+      <button class="compact-nav-btn" [disabled]="currentPage() === totalPages()"
+        (click)="onPageChange(currentPage() + 1)">
+        التالي
+      </button>
+    </div>
+  </div>
+  }
+
+  }
 
   }
 
@@ -396,332 +391,317 @@
   <!-- ========================================================= -->
   @if (viewMode() === 'details' && selectedBatch()) {
 
-    <div class="back-link-row">
-      <button class="back-btn" (click)="backToBatches()">
-        <span>→</span>
-        <span>العودة إلى قائمة الدفعات التدريبية</span>
+  <div class="back-link-row">
+    <button class="back-btn" (click)="backToBatches()">
+      <i class="fa-solid fa-arrow-right"></i>
+      <span>العودة إلى قائمة الدفعات التدريبية</span>
+    </button>
+  </div>
+
+  <div class="top-info-card">
+    <div class="right-details-side">
+      <div class="calendar-box">
+        <i class="fa-solid fa-user-graduate"></i>
+      </div>
+
+      <div class="batch-main-info">
+        <div class="title-with-badge">
+          <h3 class="batch-name-heading">{{ selectedBatch()?.batchName }}</h3>
+          <span class="status-badge-pill completed">
+            <i class="fa-solid fa-circle-check"></i> دفعة مكتملة · مؤهلة للشهادات
+          </span>
+        </div>
+
+        <div class="company-text-highlight">
+          الشركة المدربة: <strong>{{ selectedBatch()?.companyName }}</strong>
+        </div>
+
+        <div class="meta-dates-row">
+          <span>البرنامج: {{ selectedBatch()?.trackName }}</span>
+          <span class="dot-separator">•</span>
+          <span>
+            فترة التدريب: {{ selectedBatch()?.startDate | date:'dd/MM/yyyy' }} – {{ selectedBatch()?.endDate |
+            date:'dd/MM/yyyy' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="left-stats-side">
+      <div class="stat-item">
+        <span class="stat-num dark-text">{{ selectedBatch()?.totalTraineesCount }}</span>
+        <span class="stat-lbl">إجمالي المتدربين</span>
+      </div>
+
+      <div class="stat-v-divider"></div>
+
+      <div class="stat-item">
+        <span class="stat-num green-text">{{ selectedBatch()?.issuedCertificatesCount }}</span>
+        <span class="stat-lbl">شهادة معتمدة صادرة</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- شريط البحث عن متدرب أو رقم تسلسلي + زر إصدار الكل -->
+  <div class="header-action-box">
+    <div class="header-titles">
+      <h3 class="trainees-section-title">قائمة المتدربين والأرقام التسلسلية للشهادات</h3>
+    </div>
+
+    <div class="details-actions-group">
+      <input type="text" class="trainee-table-search" placeholder="ابحث باسم المتدرب أو الرقم التسلسلي..."
+        [value]="traineeSearchTerm()" (input)="onTraineeSearch($event)" />
+
+      <button class="btn-issue-all" (click)="issueAllCertificates()">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <span>إصدار جميع الشهادات المتبقية دفعة واحدة</span>
       </button>
     </div>
+  </div>
 
-    <!-- بطاقة معلومات الدفعة المكتملة -->
-    <div class="top-info-card">
-      <div class="right-details-side">
-        <div class="calendar-box">🎓</div>
+  <!-- جدول المتدربين والشهادات -->
+  <div class="table-card-container">
+    @if (loadingTrainees()) {
+    <div class="loading-state">جاري تحميل بيانات المتدربين والشهادات...</div>
+    } @else if (filteredBatchTrainees().length > 0) {
+    <div class="table-responsive">
+      <table class="trainees-data-table">
+        <thead>
+          <tr>
+            <th>اسم المتدرب</th>
+            <th>البرنامج التدريبي</th>
+            <th>الدرجة والتقدير</th>
+            <th>الرقم التسلسلي (Serial No)</th>
+            <th>كود التحقق (Verify Code)</th>
+            <th>حالة الشهادة</th>
+            <th>الإجراء</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (trainee of filteredBatchTrainees(); track trainee.traineeId) {
+          <tr>
+            <td class="trainee-name-cell">
+              <strong>{{ trainee.fullName }}</strong>
+            </td>
 
-        <div class="batch-main-info">
-          <div class="title-with-badge">
-            <h3 class="batch-name-heading">{{ selectedBatch()?.batchName }}</h3>
-            <span class="status-badge-pill completed">✓ دفعة مكتملة · مؤهلة للشهادات</span>
-          </div>
+            <td>{{ selectedBatch()?.trackName }}</td>
 
-          <div class="company-text-highlight">
-            الشركة المدربة: <strong>{{ selectedBatch()?.companyName }}</strong>
-          </div>
-
-          <div class="meta-dates-row">
-            <span>البرنامج: {{ selectedBatch()?.trackName }}</span>
-            <span class="dot-separator">•</span>
-            <span>
-              فترة التدريب: {{ selectedBatch()?.startDate | date:'dd/MM/yyyy' }} – {{ selectedBatch()?.endDate | date:'dd/MM/yyyy' }}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div class="left-stats-side">
-        <div class="stat-item">
-          <span class="stat-num dark-text">{{ selectedBatch()?.totalTraineesCount }}</span>
-          <span class="stat-lbl">إجمالي المتدربين</span>
-        </div>
-
-        <div class="stat-v-divider"></div>
-
-        <div class="stat-item">
-          <span class="stat-num green-text">{{ selectedBatch()?.issuedCertificatesCount }}</span>
-          <span class="stat-lbl">شهادة معتمدة صادرة</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- شريط البحث عن متدرب أو رقم تسلسلي + زر إصدار الكل -->
-    <div class="header-action-box">
-      <div class="header-titles">
-        <h3 class="trainees-section-title">قائمة المتدربين والأرقام التسلسلية للشهادات</h3>
-        <p class="trainees-section-sub">
-          تُختم كل شهادة تلقائياً بختم {{ selectedBatch()?.companyName }} وتُزود برقم تسلسلي (Serial No) وكود تحقق فريد
-        </p>
-      </div>
-
-      <div class="details-actions-group">
-        <input
-          type="text"
-          class="trainee-table-search"
-          placeholder="ابحث باسم المتدرب أو الرقم التسلسلي..."
-          [value]="traineeSearchTerm()"
-          (input)="onTraineeSearch($event)"
-        />
-
-        <button class="btn-issue-all" (click)="issueAllCertificates()">
-          <span>✨ إصدار جميع الشهادات المتبقية دفعة واحدة</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- جدول المتدربين والشهادات -->
-    <div class="table-card-container">
-      @if (loadingTrainees()) {
-        <div class="loading-state">جاري تحميل بيانات المتدربين والشهادات...</div>
-      } @else if (filteredBatchTrainees().length > 0) {
-        <div class="table-responsive">
-          <table class="trainees-data-table">
-            <thead>
-              <tr>
-                <th>اسم المتدرب</th>
-                <th>البرنامج التدريبي</th>
-                <th>الدرجة والتقدير</th>
-                <th>الرقم التسلسلي (Serial No)</th>
-                <th>كود التحقق (Verify Code)</th>
-                <th>حالة الشهادة</th>
-                <th>الإجراء</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (trainee of filteredBatchTrainees(); track trainee.traineeId) {
-                <tr>
-                  <td class="trainee-name-cell">
-                    <strong>{{ trainee.fullName }}</strong>
-                  </td>
-
-                  <td>{{ selectedBatch()?.trackName }}</td>
-
-                  <td>
-                    <span class="grade-badge">{{ trainee.grade || '--%' }}</span>
-                    @if (trainee.grade) {
-                      <span class="grade-label-sub">{{ trainee.gradeLabel }}</span>
-                    }
-                  </td>
-
-                  <td class="mono-code-cell">
-                    @if (isCertificateIssued(trainee)) {
-                      <span class="serial-pill">{{ trainee.serialNumber }}</span>
-                    } @else {
-                      <span class="text-muted-dash">— يُولّد عند الإصدار —</span>
-                    }
-                  </td>
-
-                  <td class="mono-code-cell">
-                    @if (isCertificateIssued(trainee)) {
-                      <span class="verify-pill">{{ trainee.verificationCode }}</span>
-                    } @else {
-                      <span class="text-muted-dash">—</span>
-                    }
-                  </td>
-
-                  <td>
-                    @if (isCertificateIssued(trainee)) {
-                      <span class="status-issued">✓ معتمدة وصادرة</span>
-                    } @else {
-                      <span class="status-not-issued">⏳ لم تُصدر بعد</span>
-                    }
-                  </td>
-
-                  <td>
-                    @if (isCertificateIssued(trainee)) {
-                      <button
-                        class="btn-action-cert view-cert"
-                        (click)="viewSingleCertificate(trainee)">
-                        👁 استعراض الشهادة والختم
-                      </button>
-                    } @else {
-                      <button
-                        class="btn-action-cert issue-cert"
-                        (click)="issueSingleCertificate(trainee)">
-                        ✓ إصدار الشهادة وتوليد السيريال
-                      </button>
-                    }
-                  </td>
-                </tr>
+            <td>
+              <span class="grade-badge">{{ trainee.grade || '--%' }}</span>
+              @if (trainee.grade) {
+              <span class="grade-label-sub">{{ trainee.gradeLabel }}</span>
               }
-            </tbody>
-          </table>
-        </div>
-      } @else {
-        <div class="empty-state-inside">لا يوجد متدربون مطابقون للبحث في هذه الدفعة</div>
-      }
+            </td>
+
+            <td class="mono-code-cell">
+              @if (isCertificateIssued(trainee)) {
+              <span class="serial-pill">{{ trainee.serialNumber }}</span>
+              } @else {
+              <span class="text-muted-dash">— يُولّد عند الإصدار —</span>
+              }
+            </td>
+
+            <td class="mono-code-cell">
+              @if (isCertificateIssued(trainee)) {
+              <span class="verify-pill">{{ trainee.verificationCode }}</span>
+              } @else {
+              <span class="text-muted-dash">—</span>
+              }
+            </td>
+
+            <td>
+              @if (isCertificateIssued(trainee)) {
+              <span class="status-issued">
+                <i class="fa-solid fa-circle-check"></i> معتمدة وصادرة
+              </span>
+              } @else {
+              <span class="status-not-issued">
+                <i class="fa-regular fa-clock"></i> لم تُصدر بعد
+              </span>
+              }
+            </td>
+
+            <td>
+              @if (isCertificateIssued(trainee)) {
+              <button class="btn-action-cert view-cert" (click)="viewSingleCertificate(trainee)">
+                <i class="fa-solid fa-eye"></i>
+                <span>استعراض الشهادة</span>
+              </button>
+              } @else {
+              <button class="btn-action-cert issue-cert" (click)="issueSingleCertificate(trainee)">
+                <i class="fa-solid fa-file-signature"></i>
+                <span>إصدار الشهادة وتوليد السيريال</span>
+              </button>
+              }
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
     </div>
+    } @else {
+    <div class="empty-state-inside">لا يوجد متدربون مطابقون للبحث في هذه الدفعة</div>
+    }
+  </div>
 
   }
 
   <!-- ========================================================= -->
-  <!-- 3. نافذة الشهادة الرسمية المعتمدة (Template + Stamp + Serial + QR) -->
+  <!-- 3. نافذة الشهادة الرسمية المعتمدة -->
   <!-- ========================================================= -->
   @if (isModalOpen() && activeCertData(); as cert) {
-    <div class="cert-modal-backdrop" (click)="closeModal()">
-      <div class="cert-modal-container" (click)="$event.stopPropagation()">
+  <div class="cert-modal-backdrop" (click)="closeModal()">
+    <div class="cert-modal-container" (click)="$event.stopPropagation()">
 
-        <!-- شريط نافذة المعاينة العلوي -->
-        <div class="cert-modal-header">
-          <div class="modal-header-right">
-            <h3>معاينة الشهادة الرسمية المعتمدة</h3>
-            <span class="modal-header-sub">قابلة للطباعة والتحميل كملف PDF رسمي وموثقة بالسجل الوطني</span>
-          </div>
-
-          <div class="modal-header-actions">
-            <button
-              type="button"
-              class="copy-chip-btn"
-              (click)="copyToClipboard(cert.serialNumber)">
-              {{ copiedText() === cert.serialNumber ? '✓ تم نسخ السيريال' : 'نسخ Serial: ' + cert.serialNumber }}
-            </button>
-
-            <button
-              type="button"
-              class="copy-chip-btn verify-chip"
-              (click)="copyToClipboard(cert.verificationCode)">
-              {{ copiedText() === cert.verificationCode ? '✓ تم نسخ الكود' : 'نسخ الكود: ' + cert.verificationCode }}
-            </button>
-
-            <button class="close-btn" (click)="closeModal()">&times;</button>
-          </div>
+      <!-- شريط نافذة المعاينة العلوي -->
+      <div class="cert-modal-header">
+        <div class="modal-header-right">
+          <h3>معاينة الشهادة الرسمية المعتمدة</h3>
+          <span class="modal-header-sub">قابلة للطباعة والتحميل كملف PDF رسمي في صفحة واحدة وموثقة بالسجل الوطني</span>
         </div>
 
-        <!-- جسم النافذة (قالب الشهادة الحقيقي) -->
-        <div class="cert-modal-body">
+        <div class="modal-header-actions">
+          <button type="button" class="copy-chip-btn" (click)="copyToClipboard(cert.serialNumber)">
+            <i class="fa-regular fa-copy"></i>
+            <span>{{ copiedText() === cert.serialNumber ? 'تم نسخ السيريال' : 'نسخ Serial: ' + cert.serialNumber }}</span>
+          </button>
 
-          <div class="official-certificate-paper" id="printable-certificate">
-            <div class="cert-outer-border">
-              <div class="cert-inner-gold-border">
+          <button type="button" class="copy-chip-btn verify-chip" (click)="copyToClipboard(cert.verificationCode)">
+            <i class="fa-regular fa-copy"></i>
+            <span>{{ copiedText() === cert.verificationCode ? 'تم نسخ الكود' : 'نسخ الكود: ' + cert.verificationCode }}</span>
+          </button>
 
-                <!-- الزوايا الذهبية -->
-                <div class="corner-ornament top-right"></div>
-                <div class="corner-ornament top-left"></div>
-                <div class="corner-ornament bottom-right"></div>
-                <div class="corner-ornament bottom-left"></div>
+          <button class="close-btn" (click)="closeModal()">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
 
-                <!-- 1. ترويسة الشهادة: شعار نفاذ + وسام الشهادة + صندوق السيريال وكود التحقق -->
-                <div class="official-cert-header">
-                  <div class="cert-brand-side">
-                    <div class="nafadh-emblem">ن</div>
-                    <div>
-                      <div class="nafadh-main-title">منظومة نفاذ الوطنية للتدريب</div>
-                      <div class="nafadh-sub-title">هيئة تنظيم الاتصالات · سلطنة عُمان</div>
-                    </div>
-                  </div>
+      <!-- جسم النافذة (قالب الشهادة الحقيقي) -->
+      <div class="cert-modal-body">
 
-                  <div class="cert-crest-center">
-                    <div class="gold-medal-circle">🏅</div>
-                    <span class="crest-caption">شهادة إتمام تدريب معتمدة</span>
-                  </div>
+        <div class="official-certificate-paper" id="printable-certificate">
+          <div class="cert-outer-border">
+            <div class="cert-inner-gold-border">
 
-                  <div class="cert-serial-top-box">
-                    <div class="serial-row">
-                      <span class="s-lbl">الرقم التسلسلي (Serial No):</span>
-                      <strong class="s-val">{{ cert.serialNumber }}</strong>
-                    </div>
-                    <div class="serial-row">
-                      <span class="s-lbl">كود التحقق (Verify Code):</span>
-                      <strong class="s-val text-emerald">{{ cert.verificationCode }}</strong>
-                    </div>
-                  </div>
+              <!-- الزوايا الذهبية -->
+              <div class="corner-ornament top-right"></div>
+              <div class="corner-ornament top-left"></div>
+              <div class="corner-ornament bottom-right"></div>
+              <div class="corner-ornament bottom-left"></div>
+
+              <!-- 1. الترويسة المتوازنة: شعار نفاذ يمين + عنوان الشهادة وسط + شعار الهيئة يسار -->
+              <div class="official-cert-header">
+                <div class="cert-brand-side">
+                  <img src="https://nafadh.om/app-assets/AccountLayoutStyle/img/logo.png" alt="شعار برنامج نفاذ"
+                    style="height: 52px; width: auto; object-fit: contain;" />
                 </div>
 
-                <!-- 2. متن الشهادة الرسمي -->
-                <div class="official-cert-body">
-                  <div class="cert-title-banner">شهادة إتمام البرنامج التدريبي التخصصي</div>
-
-                  <p class="cert-witness-line">
-                    تشهد <strong>منظومة نفاذ للتدريب</strong> بالشراكة مع الشركة المدربة
-                    <strong class="text-teal">{{ cert.companyName }}</strong> بأن المتدرب / المتدربة:
-                  </p>
-
-                  <h1 class="cert-trainee-full-name">{{ cert.traineeName }}</h1>
-
-                  <p class="cert-completion-paragraph">
-                    قد أتمّ بنجاح كافة متطلبات الساعات التدريبية والمشاريع العملية المقررة في برنامج
-                    <strong class="text-navy">«{{ cert.trackName }}»</strong>
-                    ضمن <strong>({{ cert.batchName }})</strong>، والمنعقد خلال الفترة من
-                    <strong>{{ cert.startDate | date:'dd/MM/yyyy' }}</strong> إلى
-                    <strong>{{ cert.endDate | date:'dd/MM/yyyy' }}</strong>.
-                  </p>
-
-                  <!-- شريط الدرجة والتقدير وفترة الاعتماد -->
-                  <div class="cert-scores-strip">
-                    <div class="score-box">
-                      <span class="sc-label">الدرجة النهائية المكتسبة</span>
-                      <strong class="sc-value text-navy">{{ cert.grade || '90.00%' }}</strong>
-                    </div>
-
-                    <div class="score-box highlight-grade">
-                      <span class="sc-label">التقدير العام</span>
-                      <strong class="sc-value text-emerald">{{ cert.gradeLabel }}</strong>
-                    </div>
-
-                    <div class="score-box">
-                      <span class="sc-label">الجهة المدربة المعتمدة</span>
-                      <strong class="sc-value text-teal">{{ cert.companyName }}</strong>
-                    </div>
-                  </div>
+                <div class="cert-crest-center">
+                  <span class="cert-title-banner" style="margin: 0;">شهادة إتمام تدريب معتمدة</span>
                 </div>
 
-                <!-- 3. ذيل الشهادة: التوقيع + ختم الشركة المدربة الرسمي + صندوق QR والسيريال -->
-                <div class="official-cert-footer">
+                <div class="cert-brand-side">
+                  <img src="https://nafadh.om/app-assets/AccountLayoutStyle/img/TRA-Logo.png"
+                    alt="شعار هيئة تنظيم الاتصالات" style="height: 56px; width: auto; object-fit: contain;" />
+                </div>
+              </div>
 
-                  <!-- توقيع الجهة المدربة -->
-                  <div class="cert-signature-block">
-                    <span class="sig-label">اعتماد الجهة المدربة المستضيفة</span>
-                    <strong class="sig-company">{{ cert.companyName }}</strong>
-                    <span class="sig-approved">✓ تم الاعتماد والتوقيع الإلكتروني</span>
+              <!-- 2. متن الشهادة الرسمي المتوازن -->
+              <div class="official-cert-body">
+                <p class="cert-witness-line">
+                  تشهد <strong>هيئة تنظيم الاتصالات</strong> و<strong>البرنامج الوطني «نفاذ»</strong> بالشراكة مع
+                  <strong class="text-teal">{{ cert.companyName }}</strong> بأن المتدرب / المتدربة:
+                </p>
+
+                <h1 class="cert-trainee-full-name">{{ cert.traineeName }}</h1>
+
+                <p class="cert-completion-paragraph">
+                  قد أتمّ بنجاح متطلبات البرنامج التدريبي التخصصي في مسار
+                  <strong class="text-navy">«{{ cert.trackName }}»</strong>
+                  ضمن <strong>({{ cert.batchName }})</strong>، والمنعقد خلال الفترة من
+                  <strong>{{ cert.startDate | date:'dd/MM/yyyy' }}</strong> إلى
+                  <strong>{{ cert.endDate | date:'dd/MM/yyyy' }}</strong>،
+                  بإجمالي <strong>({{ cert.totalHours }} ساعة تدريبية)</strong> شملت المهارات التقنية التخصصية ({{
+                  cert.techHours }} ساعة)، والمشاريع العملية الميدانية ومهارات العمل الحر ({{ cert.practicalHours }}
+                  ساعة).
+                </p>
+
+                <!-- شريط الدرجة والتقدير وإجمالي الساعات -->
+                <div class="cert-scores-strip">
+                  <div class="score-box">
+                    <span class="sc-label">الدرجة النهائية المكتسبة</span>
+                    <strong class="sc-value text-navy">{{ cert.grade || '90.00%' }}</strong>
                   </div>
 
-                  <!-- ختم الشركة المدربة الرسمي المعتمد -->
-                  <div class="cert-official-stamp-wrap">
-                    <div class="official-circular-stamp">
-                      <span class="stamp-top">ختم رسمي معتمد</span>
-                      <div class="stamp-divider"></div>
-                      <strong class="stamp-company-name">{{ cert.companyName }}</strong>
-                      <span class="stamp-date">{{ cert.issueDate | date:'dd/MM/yyyy' }}</span>
-                      <span class="stamp-verified">VERIFIED SEAL</span>
-                    </div>
+                  <div class="score-box highlight-grade">
+                    <span class="sc-label">التقدير العام</span>
+                    <strong class="sc-value text-emerald">{{ cert.gradeLabel }}</strong>
                   </div>
 
-                  <!-- صندوق التحقق الرقمي ورمز QR -->
-                  <div class="cert-qr-verification-block">
-                    <div class="qr-meta-text">
-                      <div class="qr-badge-title">🛡️ شهادة موثقة وقابلة للتحقق</div>
-                      <div class="qr-code-line">SN: <strong>{{ cert.serialNumber }}</strong></div>
-                      <div class="qr-code-line">Code: <strong>{{ cert.verificationCode }}</strong></div>
-                      <div class="qr-date-line">تاريخ الإصدار: {{ cert.issueDate | date:'dd/MM/yyyy' }}</div>
-                    </div>
+                  <div class="score-box">
+                    <span class="sc-label">إجمالي ساعات التدريب</span>
+                    <strong class="sc-value text-teal">{{ cert.totalHours }} ساعة تدريبية</strong>
+                  </div>
+                </div>
+              </div>
 
-                    <!-- رمز QR رسمي بصيغة SVG -->
-                    <div class="qr-svg-box" title="امسح للتحقق من الشهادة">
-                      <svg viewBox="0 0 36 36" class="qr-svg-icon">
-                        <path d="M2 2h10v10H2V2zm2 2v6h6V4H4zm2 2h2v2H6V6zm18-4h10v10H24V2zm2 2v6h6V4h-6zm2 2h2v2h-2V6zM2 24h10v10H2V24zm2 2v6h6v-6H4zm2 2h2v2H6v-2zm10-24h2v4h-2V4zm4 2h2v4h-2V6zm-4 6h4v2h-4v-2zm6 2h2v4h-2v-4zm-8 4h2v4h-2v-4zm4 2h4v4h-4v-4zm10-2h4v2h-4v-2zm-16 2h2v2H10v-2zm-8 4h4v2H2v-2zm6 0h4v2H8v-2zm8 2h2v6h-2v-6zm6-2h4v4h-4v-4zm6 2h4v4h-4v-4zm-8 6h6v4h-6v-4zm8 2h4v2h-4v-2z"/>
-                      </svg>
+              <!-- 3. ذيل الشهادة: التوقيع يمين + الباركود والسيريال يسار -->
+              <div class="official-cert-footer">
+
+                <div class="cert-signature-block">
+                  <span class="sig-label">اعتماد الجهة المدربة المستضيفة</span>
+                  <strong class="sig-company">{{ cert.companyName }}</strong>
+                  <svg viewBox="0 0 140 32" width="115" height="24" class="sig-handwriting">
+                    <path d="M15 22 Q 40 6, 62 18 T 115 10 M 35 25 L 95 16" stroke="#0A1172" stroke-width="2"
+                      fill="none" stroke-linecap="round" />
+                  </svg>
+                  <span class="sig-approved">
+                    <i class="fa-solid fa-circle-check"></i> تم الاعتماد والتوقيع الإلكتروني
+                  </span>
+                </div>
+
+                <div class="cert-qr-verification-block">
+                  <div class="qr-meta-text">
+                    <div class="qr-badge-title">
+                      <i class="fa-solid fa-shield-halved"></i> شهادة موثقة وقابلة للتحقق
                     </div>
+                    <div class="qr-code-line">SN: <strong>{{ cert.serialNumber }}</strong></div>
+                    <div class="qr-code-line">Code: <strong>{{ cert.verificationCode }}</strong></div>
+                    <div class="qr-date-line">تاريخ الإصدار: {{ cert.issueDate | date:'dd/MM/yyyy' }}</div>
                   </div>
 
+                  <div class="qr-svg-box" style="width: 68px; height: 68px;" title="امسح بكاميرا الجوال للتحقق">
+                    <img
+                      [src]="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=4&data=https://nafadh.om/?sn=' + cert.serialNumber + '-' + cert.verificationCode"
+                      alt="QR Code"
+                      style="width: 100%; height: 100%; object-fit: contain; display: block;"
+                    />
+                  </div>
                 </div>
 
               </div>
+
             </div>
           </div>
+        </div>
 
-          <!-- أزرار التحكم أسفل الشهادة -->
-          <div class="cert-actions-row">
-            <button class="btn-download-pdf" (click)="downloadPdf()">
-              <span>📥 تنزيل / طباعة الشهادة المعتمدة (PDF)</span>
-            </button>
+        <!-- أزرار التحكم أسفل الشهادة -->
+        <div class="cert-actions-row">
+          <button class="btn-download-pdf" (click)="downloadPdf()">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>تنزيل / طباعة الشهادة المعتمدة (PDF)</span>
+          </button>
 
-            <button class="btn-close-modal" (click)="closeModal()">
-              إغلاق المعاينة
-            </button>
-          </div>
-
+          <button class="btn-close-modal" (click)="closeModal()">
+            إغلاق المعاينة
+          </button>
         </div>
 
       </div>
+
     </div>
+  </div>
   }
 
 </div>

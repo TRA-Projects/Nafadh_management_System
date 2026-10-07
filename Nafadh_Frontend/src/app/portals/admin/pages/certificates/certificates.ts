@@ -47,6 +47,9 @@ export interface ActiveCertificateModal {
   verificationCode: string;
   issueDate: string;
   fileUrl?: string;
+  totalHours: number;
+  techHours: number;
+  practicalHours: number;
 }
 
 export interface CertificateMessage {
@@ -67,8 +70,6 @@ export class AdminCertificates implements OnInit {
   private static cachedBatches: BatchCertificateCardDto[] | null = null;
   private static cachedTraineesByBatch = new Map<number, TraineeDto[]>();
 
-  // ==================== State ====================
-
   readonly batches = signal<BatchCertificateCardDto[]>([]);
   readonly selectedBatch = signal<BatchCertificateCardDto | null>(null);
   readonly selectedBatchTrainees = signal<TraineeDto[]>([]);
@@ -77,8 +78,6 @@ export class AdminCertificates implements OnInit {
 
   readonly loading = signal<boolean>(false);
   readonly loadingTrainees = signal<boolean>(false);
-
-  // ==================== Smart Filter Options ====================
 
   readonly companiesList = signal<string[]>([]);
   readonly tracksList = signal<string[]>([]);
@@ -91,14 +90,10 @@ export class AdminCertificates implements OnInit {
   readonly searchTerm = signal<string>('');
   readonly traineeSearchTerm = signal<string>('');
 
-  // ==================== KPI Counters ====================
-
   readonly completedBatchesCount = signal<number>(0);
   readonly ongoingBatchesCount = signal<number>(0);
   readonly notStartedBatchesCount = signal<number>(0);
   readonly totalIssuedCertificatesCount = signal<number>(0);
-
-  // ==================== Verification Checker ====================
 
   readonly verifyQuery = signal<string>('');
   readonly verifyResult = signal<{
@@ -109,17 +104,11 @@ export class AdminCertificates implements OnInit {
 
   readonly copiedText = signal<string | null>(null);
 
-  // ==================== Certificate Message ====================
-
   readonly certificateMessage = signal<CertificateMessage | null>(null);
   private messageTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  // ==================== Modal ====================
-
   readonly isModalOpen = signal<boolean>(false);
   readonly activeCertData = signal<ActiveCertificateModal | null>(null);
-
-  // ==================== Pagination ====================
 
   readonly currentPage = signal<number>(1);
   readonly pageSize = signal<number>(9);
@@ -148,10 +137,6 @@ export class AdminCertificates implements OnInit {
     this.fetchBatches();
   }
 
-  // ============================================================
-  // CERTIFICATE MESSAGE
-  // ============================================================
-
   private showCertificateMessage(
     type: 'error' | 'warning' | 'success',
     title: string,
@@ -176,10 +161,6 @@ export class AdminCertificates implements OnInit {
     this.certificateMessage.set(null);
   }
 
-  // ============================================================
-  // SERIAL NUMBER & VERIFICATION CODE GENERATORS
-  // ============================================================
-
   private cleanId(val: any): number {
     if (!val) return 0;
     const str = String(val).split(':')[0].trim();
@@ -203,6 +184,29 @@ export class AdminCertificates implements OnInit {
     return `VR-NAF-${seed}${c1}${c2}-${ePart}`;
   }
 
+  // حساب عدد الساعات تلقائياً من تاريخ بداية ونهاية الدفعة (بمعدل 7 ساعات يومياً / 5 أيام في الأسبوع)
+  calculateTrainingHours(startDate?: string | Date, endDate?: string | Date): {
+    totalHours: number;
+    techHours: number;
+    practicalHours: number;
+  } {
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const diffMs = end.getTime() - start.getTime();
+      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+      if (!isNaN(diffDays) && diffDays > 0) {
+        const workingDays = Math.max(1, Math.round((diffDays / 7) * 5));
+        const totalHours = Math.round((workingDays * 7) / 10) * 10 || 1260;
+        const techHours = Math.round((totalHours * 2) / 3);
+        const practicalHours = totalHours - techHours;
+        return { totalHours, techHours, practicalHours };
+      }
+    }
+    return { totalHours: 1260, techHours: 840, practicalHours: 420 };
+  }
+
   getGradeLabel(gradeStr?: string): string {
     if (!gradeStr) return 'اجتياز بنجاح';
     const num = parseFloat(String(gradeStr).replace('%', '').trim());
@@ -221,10 +225,6 @@ export class AdminCertificates implements OnInit {
     this.copiedText.set(text);
     setTimeout(() => this.copiedText.set(null), 1800);
   }
-
-  // ============================================================
-  // VERIFY CERTIFICATE AUTHENTICITY BY SERIAL OR CODE
-  // ============================================================
 
   onVerifyInput(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -272,10 +272,6 @@ export class AdminCertificates implements OnInit {
       this.isModalOpen.set(true);
     }
   }
-
-  // ============================================================
-  // 1. GET BATCHES (ZERO-LATENCY INSTANT LOADING)
-  // ============================================================
 
   fetchBatches(): void {
     if (AdminCertificates.cachedBatches && AdminCertificates.cachedBatches.length > 0) {
@@ -407,10 +403,6 @@ export class AdminCertificates implements OnInit {
     this.notStartedBatchesCount.set(notStarted);
     this.totalIssuedCertificatesCount.set(totalIssued);
   }
-
-  // ============================================================
-  // 2. SMART FILTERS + SEARCH + PAGINATION
-  // ============================================================
 
   private applyFilters(): void {
     const search = this.searchTerm().trim().toLowerCase();
@@ -554,10 +546,6 @@ export class AdminCertificates implements OnInit {
     }
   }
 
-  // ============================================================
-  // 3. VIEW TRAINEES (COMPLETED BATCHES ONLY RULE)
-  // ============================================================
-
   isBatchCompleted(batch?: BatchCertificateCardDto | null): boolean {
     if (!batch) return false;
     const st = String(batch.status).toLowerCase().trim();
@@ -591,7 +579,7 @@ export class AdminCertificates implements OnInit {
 
       this.showCertificateMessage(
         'warning',
-        'إصدار الشهادات غير متاح لهذه الدفعة 🔒',
+        'إصدار الشهادات غير متاح لهذه الدفعة',
         msg
       );
       return;
@@ -644,15 +632,13 @@ export class AdminCertificates implements OnInit {
     });
   }
 
-  // ============================================================
-  // 4. VIEW & PRINT OFFICIAL SINGLE-PAGE A4 CERTIFICATE
-  // ============================================================
-
   private buildModalData(
     trainee: TraineeDto,
     batch?: BatchCertificateCardDto | null
   ): ActiveCertificateModal {
     const bId = this.cleanId(batch?.batchId || batch?.id || 1);
+    const hours = this.calculateTrainingHours(batch?.startDate, batch?.endDate);
+
     return {
       traineeName: trainee.fullName,
       traineeId: trainee.traineeId,
@@ -671,7 +657,10 @@ export class AdminCertificates implements OnInit {
         trainee.verificationCode ||
         this.generateVerificationCode(bId, trainee.enrollmentId, trainee.traineeId),
       issueDate: trainee.issueDate || new Date().toISOString().slice(0, 10),
-      fileUrl: trainee.fileUrl
+      fileUrl: trainee.fileUrl,
+      totalHours: hours.totalHours,
+      techHours: hours.techHours,
+      practicalHours: hours.practicalHours
     };
   }
 
@@ -686,21 +675,14 @@ export class AdminCertificates implements OnInit {
     this.activeCertData.set(null);
   }
 
-  private formatDateAr(d?: string | Date): string {
-    if (!d) return '';
-    const dateObj = new Date(d);
-    if (isNaN(dateObj.getTime())) return String(d);
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const year = dateObj.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
-
+  // طباعة الشهادة في صفحة واحدة A4 Landscape مضبوطة الأبعاد 100%
   downloadPdf(): void {
-    const cert = this.activeCertData();
-    if (!cert) return;
+    const certEl = document.getElementById('printable-certificate');
+    if (!certEl) {
+      window.print();
+      return;
+    }
 
-    // طباعة الشهادة وحدها في إطار مخفي بحجم A4 بالعرض (صفحة واحدة فقط بدون أي عناصر خارجية)
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
@@ -710,19 +692,24 @@ export class AdminCertificates implements OnInit {
     iframe.style.border = '0';
     document.body.appendChild(iframe);
 
-    const startStr = this.formatDateAr(cert.startDate);
-    const endStr = this.formatDateAr(cert.endDate);
-    const issueStr = this.formatDateAr(cert.issueDate);
+    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map(el => el.outerHTML)
+      .join('\n');
 
-    const htmlContent = `<!DOCTYPE html>
+    const doc = iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(`<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>شهادة إتمام تدريب - ${cert.traineeName}</title>
+  <title>شهادة إتمام تدريب - ${this.activeCertData()?.traineeName || ''}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  ${styles}
   <style>
     @page {
       size: A4 landscape;
-      margin: 8mm;
+      margin: 6mm;
     }
     * {
       box-sizing: border-box;
@@ -730,335 +717,59 @@ export class AdminCertificates implements OnInit {
       print-color-adjust: exact !important;
     }
     html, body {
-      margin: 0;
-      padding: 0;
+      margin: 0 !important;
+      padding: 0 !important;
       width: 100%;
-      height: 100%;
-      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      height: auto;
       background: #ffffff;
       direction: rtl;
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      overflow: hidden;
     }
-    .cert-page-wrap {
-      width: 100%;
-      padding: 6px;
-      page-break-inside: avoid;
-      page-break-after: avoid;
+    #printable-certificate {
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+      page-break-inside: avoid !important;
+      page-break-after: avoid !important;
+      break-inside: avoid !important;
     }
-    .cert-outer {
-      border: 6px double #0A1172;
-      border-radius: 14px;
-      padding: 16px;
-      background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+    .cert-outer-border {
+      padding: 10px !important;
     }
-    .cert-inner {
-      border: 2px solid #c59b27;
-      border-radius: 10px;
-      padding: 24px 32px;
-      position: relative;
+    .cert-inner-gold-border {
+      padding: 16px 24px !important;
     }
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #e2e8f0;
+    .official-cert-header {
+      padding-bottom: 10px !important;
     }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    .official-cert-body {
+      padding: 10px 6px !important;
     }
-    .emblem {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: #0A1172;
-      border: 2px solid #c59b27;
-      color: #ffffff;
-      font-size: 22px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .cert-trainee-full-name {
+      margin: 4px 0 8px 0 !important;
+      font-size: 24px !important;
     }
-    .brand-title {
-      font-size: 16px;
-      font-weight: 800;
-      color: #0A1172;
+    .cert-completion-paragraph {
+      margin: 0 auto 10px auto !important;
+      line-height: 1.65 !important;
     }
-    .brand-sub {
-      font-size: 11.5px;
-      color: #64748b;
+    .cert-curriculum-breakdown {
+      padding: 8px 14px !important;
+      margin: 0 auto 10px auto !important;
     }
-    .crest {
-      text-align: center;
+    .cert-scores-strip {
+      margin: 0 auto 10px auto !important;
     }
-    .medal {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: #fef3c7;
-      border: 2px solid #c59b27;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-    }
-    .crest-lbl {
-      display: block;
-      font-size: 11px;
-      font-weight: 800;
-      color: #92400e;
-      margin-top: 4px;
-    }
-    .serial-box {
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      padding: 8px 14px;
-      font-size: 11.5px;
-      line-height: 1.7;
-    }
-    .serial-line {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    .s-val {
-      font-family: monospace;
-      font-weight: 800;
-      color: #0A1172;
-    }
-    .s-code {
-      font-family: monospace;
-      font-weight: 800;
-      color: #059669;
-    }
-    .body {
-      text-align: center;
-      padding: 20px 10px;
-    }
-    .banner {
-      display: inline-block;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      color: #0A1172;
-      padding: 5px 20px;
-      border-radius: 30px;
-      font-size: 13px;
-      font-weight: 800;
-      margin-bottom: 12px;
-    }
-    .witness {
-      font-size: 14.5px;
-      color: #475569;
-      margin: 0 0 8px 0;
-    }
-    .trainee-name {
-      font-size: 28px;
-      font-weight: 800;
-      color: #0f172a;
-      margin: 6px 0 14px 0;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #c59b27;
-      display: inline-block;
-      min-width: 45%;
-    }
-    .desc {
-      font-size: 15px;
-      line-height: 1.85;
-      color: #334155;
-      max-width: 720px;
-      margin: 0 auto 18px auto;
-    }
-    .scores-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      max-width: 680px;
-      margin: 0 auto;
-    }
-    .score-card {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 10px;
-    }
-    .score-card.highlight {
-      background: #ecfdf5;
-      border-color: #a7f3d0;
-    }
-    .sc-lbl {
-      display: block;
-      font-size: 11px;
-      color: #64748b;
-      margin-bottom: 4px;
-    }
-    .sc-val {
-      font-size: 15px;
-      font-weight: 800;
-      color: #0A1172;
-    }
-    .footer {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      gap: 18px;
-      padding-top: 16px;
-      border-top: 1px solid #e2e8f0;
-    }
-    .sig {
-      text-align: right;
-      line-height: 1.6;
-    }
-    .sig-lbl { font-size: 11.5px; color: #64748b; font-weight: 700; display: block; }
-    .sig-comp { font-size: 14px; color: #0f172a; font-weight: 800; display: block; }
-    .sig-ok { font-size: 11.5px; color: #0A1172; font-weight: 700; display: block; }
-    .stamp {
-      width: 110px;
-      height: 110px;
-      border-radius: 50%;
-      border: 4px double #0A1172;
-      background: rgba(10, 17, 114, 0.03);
-      color: #0A1172;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 8px;
-      transform: rotate(-7deg);
-      text-align: center;
-    }
-    .st-top { font-size: 9px; font-weight: 800; }
-    .st-line { width: 65%; height: 1px; background: rgba(10,17,114,0.3); margin: 3px 0; }
-    .st-comp { font-size: 10px; font-weight: 800; line-height: 1.2; }
-    .st-date { font-size: 9px; color: #0d9488; font-weight: 800; margin-top: 2px; }
-    .st-ver { font-size: 8px; color: #64748b; font-weight: 700; }
-    .qr-box {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 10px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 10px 12px;
-    }
-    .qr-text {
-      text-align: right;
-      font-size: 10.5px;
-      line-height: 1.5;
-    }
-    .qr-title { font-weight: 800; color: #059669; }
-    .qr-mono { font-family: monospace; color: #1e293b; }
-    .qr-svg {
-      width: 54px;
-      height: 54px;
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      padding: 4px;
-      flex-shrink: 0;
+    .official-cert-footer {
+      padding-top: 10px !important;
     }
   </style>
 </head>
-<body>
-  <div class="cert-page-wrap">
-    <div class="cert-outer">
-      <div class="cert-inner">
-        <div class="header">
-          <div class="brand">
-            <div class="emblem">ن</div>
-            <div>
-              <div class="brand-title">منظومة نفاذ الوطنية للتدريب</div>
-              <div class="brand-sub">هيئة تنظيم الاتصالات · سلطنة عُمان</div>
-            </div>
-          </div>
-          <div class="crest">
-            <div class="medal">🏅</div>
-            <span class="crest-lbl">شهادة إتمام تدريب معتمدة</span>
-          </div>
-          <div class="serial-box">
-            <div class="serial-line">
-              <span>الرقم التسلسلي (Serial No):</span>
-              <span class="s-val">${cert.serialNumber}</span>
-            </div>
-            <div class="serial-line">
-              <span>كود التحقق (Verify Code):</span>
-              <span class="s-code">${cert.verificationCode}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="body">
-          <div class="banner">شهادة إتمام البرنامج التدريبي التخصصي</div>
-          <p class="witness">
-            تشهد <strong>منظومة نفاذ للتدريب</strong> بالشراكة مع الشركة المدربة
-            <strong style="color:#0d9488">${cert.companyName}</strong> بأن المتدرب / المتدربة:
-          </p>
-          <div class="trainee-name">${cert.traineeName}</div>
-          <p class="desc">
-            قد أتمّ بنجاح كافة متطلبات الساعات التدريبية والمشاريع العملية المقررة في برنامج
-            <strong style="color:#0A1172">«${cert.trackName}»</strong>
-            ضمن <strong>(${cert.batchName})</strong>، والمنعقد خلال الفترة من
-            <strong>${startStr}</strong> إلى <strong>${endStr}</strong>.
-          </p>
-
-          <div class="scores-grid">
-            <div class="score-card">
-              <span class="sc-lbl">الدرجة النهائية المكتسبة</span>
-              <span class="sc-val">${cert.grade || '90.00%'}</span>
-            </div>
-            <div class="score-card highlight">
-              <span class="sc-lbl">التقدير العام</span>
-              <span class="sc-val" style="color:#059669">${cert.gradeLabel}</span>
-            </div>
-            <div class="score-card">
-              <span class="sc-lbl">الجهة المدربة المعتمدة</span>
-              <span class="sc-val" style="color:#0d9488">${cert.companyName}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="footer">
-          <div class="sig">
-            <span class="sig-lbl">اعتماد الجهة المدربة المستضيفة</span>
-            <span class="sig-comp">${cert.companyName}</span>
-            <span class="sig-ok">✓ تم الاعتماد والتوقيع الإلكتروني</span>
-          </div>
-
-          <div class="stamp">
-            <span class="st-top">ختم رسمي معتمد</span>
-            <div class="st-line"></div>
-            <span class="st-comp">${cert.companyName}</span>
-            <span class="st-date">${issueStr}</span>
-            <span class="st-ver">VERIFIED SEAL</span>
-          </div>
-
-          <div class="qr-box">
-            <div class="qr-text">
-              <div class="qr-title">🛡️ شهادة موثقة وقابلة للتحقق</div>
-              <div class="qr-mono">SN: <strong>${cert.serialNumber}</strong></div>
-              <div class="qr-mono">Code: <strong>${cert.verificationCode}</strong></div>
-              <div style="color:#64748b;font-size:10px">تاريخ الإصدار: ${issueStr}</div>
-            </div>
-            <div class="qr-svg">
-              <svg viewBox="0 0 36 36" style="width:100%;height:100%;fill:#0A1172">
-                <path d="M2 2h10v10H2V2zm2 2v6h6V4H4zm2 2h2v2H6V6zm18-4h10v10H24V2zm2 2v6h6V4h-6zm2 2h2v2h-2V6zM2 24h10v10H2V24zm2 2v6h6v-6H4zm2 2h2v2H6v-2zm10-24h2v4h-2V4zm4 2h2v4h-2V6zm-4 6h4v2h-4v-2zm6 2h2v4h-2v-4zm-8 4h2v4h-2v-4zm4 2h4v4h-4v-4zm10-2h4v2h-4v-2zm-16 2h2v2H10v-2zm-8 4h4v2H2v-2zm6 0h4v2H8v-2zm8 2h2v6h-2v-6zm6-2h4v4h-4v-4zm6 2h4v4h-4v-4zm-8 6h6v4h-6v-4zm8 2h4v2h-4v-2z"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</body>
-</html>`;
-
-    const doc = iframe.contentWindow?.document;
-    if (doc) {
-      doc.open();
-      doc.write(htmlContent);
+<body>${certEl.outerHTML}</body>
+</html>`);
       doc.close();
       setTimeout(() => {
         iframe.contentWindow?.focus();
@@ -1066,13 +777,9 @@ export class AdminCertificates implements OnInit {
         setTimeout(() => {
           document.body.removeChild(iframe);
         }, 1000);
-      }, 250);
+      }, 350);
     }
   }
-
-  // ============================================================
-  // 5. ISSUE SINGLE CERTIFICATE
-  // ============================================================
 
   issueSingleCertificate(trainee: TraineeDto, autoOpenModal: boolean = true): void {
     const batch = this.selectedBatch();
@@ -1160,10 +867,6 @@ export class AdminCertificates implements OnInit {
     });
   }
 
-  // ============================================================
-  // 6. ISSUE ALL CERTIFICATES IN COMPLETED BATCH
-  // ============================================================
-
   issueAllCertificates(): void {
     const batch = this.selectedBatch();
     if (!this.isBatchCompleted(batch)) {
@@ -1219,10 +922,6 @@ export class AdminCertificates implements OnInit {
       }
     });
   }
-
-  // ============================================================
-  // 7. RELOAD & REFRESH HELPERS
-  // ============================================================
 
   private reloadTraineesAndBatchStatus(batchId: number): void {
     const bId = this.cleanId(batchId);
@@ -1344,7 +1043,7 @@ export class AdminCertificates implements OnInit {
     const st = String(status).toLowerCase().trim();
     if (st === 'completed' || st === '2' || st === 'مكتملة') {
       return 'مكتملة';
-    } 
+    }
     if (st === 'ongoing' || st === '1' || st === 'active' || st === 'جارية') {
       return 'جارية';
     }

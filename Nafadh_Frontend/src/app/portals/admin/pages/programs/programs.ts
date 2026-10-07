@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
 export class AdminPrograms implements OnInit {
   private fb = inject(FormBuilder);
   private adminApi = inject(AdminApi);
-   private router = inject(Router);
+  private router = inject(Router);
 
   // --- مصفوفات البيانات من الـ Database ---
   batches = signal<any[]>([]);
@@ -30,12 +30,14 @@ export class AdminPrograms implements OnInit {
   currentPage = signal<number>(1);
   pageSize = signal<number>(10);
   
-  // Modals Visibility
+  // 🌟 إظهار صفحة المتدربين كصفحة كاملة بدلاً من المودل 🌟
+  isTraineesPageOpen = signal<boolean>(false);
+
+  // Modals Visibility (للنوافذ الأخرى)
   isBatchModalOpen = false;
   isProgramModalOpen = false;
   isViewModalOpen = false;
   isEditModalOpen = false;
-  isTraineesModalOpen = signal<boolean>(false); // نافذة متدربي الدفعة
 
   selectedBatch: any = null;
 
@@ -59,21 +61,102 @@ export class AdminPrograms implements OnInit {
   fromDate = signal<string>('');
   toDate = signal<string>('');
 
-  // 1. فتح متدربي الدفعة من داخل نافذة التفاصيل
+  ngOnInit(): void {
+    this.initBatchForm();
+    this.initEditBatchForm();
+    this.initProgramForm();
+    this.loadInitialData();
+  }
+
+  // --- دوال استدعاء الداتابيس عبر AdminApi ---
+  loadInitialData(): void {
+    this.adminApi.getBatches?.().subscribe({
+      next: (res: any) => this.batches.set(res || []),
+      error: () => this.batchesError.set('فشل تحميل قائمة الدفعات من قاعدة البيانات')
+    });
+
+    this.adminApi.getPrograms?.().subscribe({
+      next: (res: any) => this.programs.set(res || [])
+    });
+
+    this.adminApi.getCompanies?.().subscribe({
+      next: (res: any) => this.companies.set(res || [])
+    });
+
+    this.adminApi.getTracks?.().subscribe({
+      next: (res: any) => this.tracks.set(res || [])
+    });
+  }
+
+  // --- 🌟 دالة فتح صفحة المتدربين الكاملة 🌟 ---
+  onViewTrainees(batch: any): void {
+    this.selectedBatch = batch;
+    this.isTraineesPageOpen.set(true);
+    this.selectedBatchTrainees.set([]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const bId = batch?.batchId || batch?.id;
+
+    this.adminApi.getTrainees?.({ batchId: bId, BatchId: bId, pageSize: 1000 }).subscribe({
+      next: (res: any) => {
+        const all = res?.items || (Array.isArray(res) ? res : []);
+        
+        // فلترة المتدربين التابعين لهذه الدفعة فقط
+        const matched = all.filter((t: any) => {
+          const tBatchId = t.batchId ?? t.batch_id ?? t.BatchId;
+          const tBatchName = t.batchName ?? t.BatchName;
+          return (tBatchId && String(tBatchId) === String(bId)) ||
+                 (tBatchName && batch?.batchName && tBatchName === batch.batchName);
+        });
+
+        const finalTrainees = matched.length > 0 
+          ? matched 
+          : all.slice(0, batch.totalTraineesCount || 5);
+
+        this.selectedBatchTrainees.set(finalTrainees);
+      },
+      error: () => {
+        this.selectedBatchTrainees.set([]);
+      }
+    });
+  }
+
+  // --- 🌟 دالة الرجوع من صفحة المتدربين لجدول الدفعات 🌟 ---
+  onBackFromTrainees(): void {
+    this.isTraineesPageOpen.set(false);
+    this.selectedBatchTrainees.set([]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // --- 🌟 دالة الانتقال المباشر لصفحة "التواصل والمراسلات" 🌟 ---
+  onMessageTrainee(trainee: any): void {
+    const tId = trainee?.traineeId || trainee?.id;
+    const tName = trainee?.fullName || trainee?.name;
+
+    this.router.navigate(['/admin/communications'], {
+      queryParams: { 
+        traineeId: tId, 
+        traineeName: tName,
+        tab: 'complaints'
+      }
+    });
+  }
+
+  // فتح متدربي الدفعة من داخل نافذة التفاصيل
   onViewTraineesFromDetails(): void {
     const b = this.selectedBatch;
     this.onCloseViewModal();
     this.onViewTrainees(b);
   }
 
-  // 2. فتح نافذة التعديل من داخل نافذة التفاصيل
+  // فتح نافذة التعديل من داخل نافذة التفاصيل
   onEditFromDetails(): void {
     const b = this.selectedBatch;
     this.onCloseViewModal();
     this.onEdit(b);
   }
 
-  // 3. حساب مدة الدفعة بالأشهر والأسابيع تلقائياً من التواريخ
+  // حساب مدة الدفعة
   getBatchDuration(startDate?: string, endDate?: string): string {
     if (!startDate || !endDate) return '-';
     const start = new Date(startDate);
@@ -87,40 +170,7 @@ export class AdminPrograms implements OnInit {
     return `${Math.ceil(diffDays / 7)} أسابيع`;
   }
 
-  ngOnInit(): void {
-    this.initBatchForm();
-    this.initEditBatchForm();
-    this.initProgramForm();
-    
-    // جلب كل البيانات مباشرة من جداول الداتابيس عبر الـ API
-    this.loadInitialData();
-  }
-
-  // --- دوال استدعاء الداتابيس عبر AdminApi ---
-  loadInitialData(): void {
-    // 1. الدفعات
-    this.adminApi.getBatches?.().subscribe({
-      next: (res: any) => this.batches.set(res || []),
-      error: () => this.batchesError.set('فشل تحميل قائمة الدفعات من قاعدة البيانات')
-    });
-
-    // 2. البرامج
-    this.adminApi.getPrograms?.().subscribe({
-      next: (res: any) => this.programs.set(res || [])
-    });
-
-    // 3. الشركات المستضيفة
-    this.adminApi.getCompanies?.().subscribe({
-      next: (res: any) => this.companies.set(res || [])
-    });
-
-    // 4. المسارات التدريبية
-    this.adminApi.getTracks?.().subscribe({
-      next: (res: any) => this.tracks.set(res || [])
-    });
-  }
-
-  // --- التحقق من صحة تاريخ النهاية والبداية ---
+  // التحقق من صحة تاريخ النهاية والبداية
   dateRangeValidator(group: FormGroup) {
     const start = group.get('startDate')?.value;
     const end = group.get('endDate')?.value;
@@ -184,7 +234,6 @@ export class AdminPrograms implements OnInit {
     }
   }
 
-  // --- دالة توحيد الحالات ---
   normalizeStatus(status: any): string {
     if (!status) return '';
     const s = String(status).trim().toLowerCase();
@@ -194,7 +243,6 @@ export class AdminPrograms implements OnInit {
     return status;
   }
 
-  // --- استخراج السنوات ديناميكياً من تواريخ الداتابيس ---
   availableYears = computed(() => {
     const yearsSet = new Set<string>();
     this.batches().forEach(b => {
@@ -207,13 +255,11 @@ export class AdminPrograms implements OnInit {
     return Array.from(yearsSet).sort().reverse();
   });
 
-  // --- حساب أعداد الدفعات من قاعدة البيانات ---
   getCountByStatus(status: string): number {
     if (status === 'الكل') return this.batches().length;
     return this.batches().filter(b => this.normalizeStatus(b.status) === status).length;
   }
 
-  // --- عدد الفلاتر المطبقة حالياً ---
   activeFiltersCount = computed(() => {
     let count = 0;
     if (this.searchTerm().trim()) count++;
@@ -224,7 +270,6 @@ export class AdminPrograms implements OnInit {
     return count;
   });
 
-  // --- محرك التصفية الشامل للبيانات ---
   filteredBatches = computed(() => {
     const status = this.statusFilter();
     const search = this.searchTerm().trim().toLowerCase();
@@ -234,12 +279,8 @@ export class AdminPrograms implements OnInit {
     const to = this.toDate();
 
     return this.batches().filter(batch => {
-      // 1. فلترة الحالة
-      if (status !== 'الكل' && this.normalizeStatus(batch.status) !== status) {
-        return false;
-      }
+      if (status !== 'الكل' && this.normalizeStatus(batch.status) !== status) return false;
 
-      // 2. البحث النصي العام
       if (search) {
         const batchName = (batch.batchName || '').toLowerCase();
         const progName = this.getProgramName(batch).toLowerCase();
@@ -250,41 +291,28 @@ export class AdminPrograms implements OnInit {
         }
       }
 
-      // 3. فلترة البرنامج
       if (prog !== 'الكل') {
-        if (batch.programId?.toString() !== prog && batch.programName !== prog) {
-          return false;
-        }
+        if (batch.programId?.toString() !== prog && batch.programName !== prog) return false;
       }
 
-      // 4. فلترة السنة
       if (year !== 'الكل' && batch.startDate) {
         const batchYear = new Date(batch.startDate).getFullYear().toString();
-        if (batchYear !== year) {
-          return false;
-        }
+        if (batchYear !== year) return false;
       }
 
-      // 5. فلترة من تاريخ
       if (from && batch.startDate) {
         const bStart = batch.startDate.split('T')[0];
-        if (bStart < from) {
-          return false;
-        }
+        if (bStart < from) return false;
       }
 
-      // 6. فلترة إلى تاريخ
       if (to && batch.startDate) {
         const bDate = batch.startDate.split('T')[0];
-        if (bDate > to) {
-          return false;
-        }
+        if (bDate > to) return false;
       }
 
       return true;
     });
   });
-
 
   paginatedBatches = computed(() => {
     const filtered = this.filteredBatches();
@@ -296,38 +324,30 @@ export class AdminPrograms implements OnInit {
     return Math.ceil(this.filteredBatches().length / this.pageSize()) || 1;
   });
 
-  totalBatchesCount = computed(() => {
-    return this.filteredBatches().length;
-  });
+  totalBatchesCount = computed(() => this.filteredBatches().length);
 
-  // --- دوال أزرار الفلترة ---
   onSearchInput(event: Event): void {
-    const val = (event.target as HTMLInputElement).value;
-    this.searchTerm.set(val);
+    this.searchTerm.set((event.target as HTMLInputElement).value);
     this.currentPage.set(1);
   }
 
   onYearChange(event: Event): void {
-    const val = (event.target as HTMLSelectElement).value;
-    this.selectedYear.set(val);
+    this.selectedYear.set((event.target as HTMLSelectElement).value);
     this.currentPage.set(1);
   }
 
   onProgramFilterChange(event: Event): void {
-    const val = (event.target as HTMLSelectElement).value;
-    this.selectedProgram.set(val);
+    this.selectedProgram.set((event.target as HTMLSelectElement).value);
     this.currentPage.set(1);
   }
 
   onFromDateChange(event: Event): void {
-    const val = (event.target as HTMLInputElement).value;
-    this.fromDate.set(val);
+    this.fromDate.set((event.target as HTMLInputElement).value);
     this.currentPage.set(1);
   }
 
   onToDateChange(event: Event): void {
-    const val = (event.target as HTMLInputElement).value;
-    this.toDate.set(val);
+    this.toDate.set((event.target as HTMLInputElement).value);
     this.currentPage.set(1);
   }
 
@@ -352,7 +372,6 @@ export class AdminPrograms implements OnInit {
     }
   }
 
-  // --- دالة تصدير بيانات الداتابيس المفلترة إلى Excel / CSV ---
   exportToExcel(): void {
     const data = this.filteredBatches();
     if (!data.length) return;
@@ -377,62 +396,7 @@ export class AdminPrograms implements OnInit {
     link.click();
   }
 
-  // --- دالة عرض متدربي الدفعة من الـ API مباشرة ---
-// دالة عرض متدربي الدفعة المفلترين بدقة
-onViewTrainees(batch: any): void {
-  this.selectedBatch = batch;
-  this.isTraineesModalOpen.set(true);
-  this.selectedBatchTrainees.set([]);
-
-  const bId = batch?.batchId || batch?.id;
-
-  this.adminApi.getTrainees({ batchId: bId, BatchId: bId, pageSize: 1000 }).subscribe({
-    next: (res: any) => {
-      const all = res?.items || (Array.isArray(res) ? res : []);
-      
-      // فلترة المتدربين التابعين لهذه الدفعة فقط
-      const matched = all.filter((t: any) => {
-        const tBatchId = t.batchId ?? t.batch_id ?? t.BatchId;
-        const tBatchName = t.batchName ?? t.BatchName;
-        return (tBatchId && String(tBatchId) === String(bId)) ||
-               (tBatchName && batch?.batchName && tBatchName === batch.batchName);
-      });
-
-      // إظهار المتدربين الـ 5 الفعليين للدفعة
-      const finalTrainees = matched.length > 0 
-        ? matched 
-        : all.slice(0, batch.totalTraineesCount || 5);
-
-      this.selectedBatchTrainees.set(finalTrainees);
-    },
-    error: () => {
-      this.selectedBatchTrainees.set([]);
-    }
-  });
-}
-  onCloseTraineesModal(): void {
-    this.isTraineesModalOpen.set(false);
-    this.selectedBatchTrainees.set([]);
-  }
-
-// دالة الانتقال لصفحة "التواصل والمراسلات" بالرابط الصحيح
-onMessageTrainee(trainee: any): void {
-  // 1. إغلاق نافذة المتدربين
-  this.onCloseTraineesModal();
-
-  const tId = trainee?.traineeId || trainee?.id;
-  const tName = trainee?.fullName || trainee?.name;
-
-  // 2. الانتقال المباشر لصفحة التواصل والمراسلات الصحيحة
-  this.router.navigate(['/admin/communications'], {
-    queryParams: { 
-      traineeId: tId, 
-      traineeName: tName 
-    }
-  });
-}
-
-  // --- Modal Handlers ---
+  // --- Handlers النوافذ العادية ---
   onCreateBatch(): void {
     this.batchForm.reset({ capacity: 15 });
     this.batchErrorMessage = null;
@@ -482,13 +446,11 @@ onMessageTrainee(trainee: any): void {
     this.selectedBatch = null;
   }
 
-  // --- Form Submissions للـ API والداتابيس ---
   onSubmit(): void {
     if (this.batchForm.invalid) {
       this.batchForm.markAllAsTouched();
       return;
     }
-    
     this.isSubmittingBatch = true;
     this.batchErrorMessage = null;
     
@@ -526,61 +488,53 @@ onMessageTrainee(trainee: any): void {
     });
   }
 
-  // دالة حفظ التعديلات المعقمة والمتوافقة 100% مع سيرفر C#
-onSaveBatch(): void {
-  if (this.editBatchForm.invalid) {
-    this.editBatchForm.markAllAsTouched();
-    return;
-  }
-
-  // 1. استخراج معرّف الدفعة
-  const batchId = Number(this.selectedBatch?.batchId || this.selectedBatch?.id);
-  if (!batchId) {
-    this.editBatchErrorMessage = 'لم يتم العثور على معرّف الدفعة.';
-    return;
-  }
-
-  // 2. التحقق الذكي من الطاقة الاستيعابية
-  const currentEnrolled = Number(this.selectedBatch?.totalTraineesCount || 0);
-  const newCapacity = Number(this.editBatchForm.get('capacity')?.value);
-
-  if (newCapacity < currentEnrolled) {
-    this.editBatchErrorMessage = `لا يمكن تقليل الطاقة الاستيعابية إلى (${newCapacity})، لأن الدفعة تحتوي بالفعل على (${currentEnrolled}) متدرب مسجل.`;
-    return;
-  }
-
-  this.isSubmittingEditBatch = true;
-  this.editBatchErrorMessage = null;
-
-  // 3. تجهيز البيانات بالشكل الصارم الذي ينتظره C# Backend بالضبط:
-  const formRaw = this.editBatchForm.value;
-  
-  const payload: any = {
-    batchId: batchId,
-    batchName: String(formRaw.batchName).trim(),
-    programId: Number(formRaw.programId),
-    // إذا لم تُختر شركة، نرسل null وليس نصاً فارغاً "" لمنع خطأ 400
-    companyId: formRaw.companyId && formRaw.companyId !== '' ? Number(formRaw.companyId) : null,
-    startDate: formRaw.startDate,
-    endDate: formRaw.endDate,
-    capacity: Number(formRaw.capacity),
-    status: this.selectedBatch?.status || 'Ongoing' // إرفاق الحالة لتجنب رفض السيرفر
-  };
-
-  // 4. إرسال الطلب للسيرفر
-  this.adminApi.updateBatch(batchId, payload).subscribe({
-    next: () => {
-      this.isSubmittingEditBatch = false;
-      // إعادة تحميل قائمة الدفعات من قاعدة البيانات فوراً لتحديث الجدول
-      this.loadInitialData();
-      this.onCloseEditModal();
-    },
-    error: (err: any) => {
-      this.isSubmittingEditBatch = false;
-      this.editBatchErrorMessage = err?.error?.message || err?.error?.title || 'فشل تحديث بيانات الدفعة في قاعدة البيانات، تأكد من صحة المدخلات.';
+  onSaveBatch(): void {
+    if (this.editBatchForm.invalid) {
+      this.editBatchForm.markAllAsTouched();
+      return;
     }
-  });
-}
+
+    const batchId = Number(this.selectedBatch?.batchId || this.selectedBatch?.id);
+    if (!batchId) {
+      this.editBatchErrorMessage = 'لم يتم العثور على معرّف الدفعة.';
+      return;
+    }
+
+    const currentEnrolled = Number(this.selectedBatch?.totalTraineesCount || 0);
+    const newCapacity = Number(this.editBatchForm.get('capacity')?.value);
+
+    if (newCapacity < currentEnrolled) {
+      this.editBatchErrorMessage = `لا يمكن تقليل الطاقة الاستيعابية إلى (${newCapacity})، لأن الدفعة تحتوي بالفعل على (${currentEnrolled}) متدرب مسجل.`;
+      return;
+    }
+
+    this.isSubmittingEditBatch = true;
+    this.editBatchErrorMessage = null;
+
+    const formRaw = this.editBatchForm.value;
+    const payload: any = {
+      batchId: batchId,
+      batchName: String(formRaw.batchName).trim(),
+      programId: Number(formRaw.programId),
+      companyId: formRaw.companyId && formRaw.companyId !== '' ? Number(formRaw.companyId) : null,
+      startDate: formRaw.startDate,
+      endDate: formRaw.endDate,
+      capacity: Number(formRaw.capacity),
+      status: this.selectedBatch?.status || 'Ongoing'
+    };
+
+    this.adminApi.updateBatch?.(batchId, payload).subscribe({
+      next: () => {
+        this.isSubmittingEditBatch = false;
+        this.loadInitialData();
+        this.onCloseEditModal();
+      },
+      error: (err: any) => {
+        this.isSubmittingEditBatch = false;
+        this.editBatchErrorMessage = err?.error?.message || err?.error?.title || 'فشل تحديث بيانات الدفعة في قاعدة البيانات، تأكد من صحة المدخلات.';
+      }
+    });
+  }
 
   onPageChange(page: number): void {
     if (page >= 1 && page <= this.totalPages()) {
@@ -591,8 +545,6 @@ onSaveBatch(): void {
   trackByBatchId(index: number, batch: any): any {
     return batch.batchId || index;
   }
-
-  // --- دوال الربط مع الداتابيس ---
 
   getProgramName(batch: any): string {
     if (!batch) return '-';
