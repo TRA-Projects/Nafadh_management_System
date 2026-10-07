@@ -2268,3 +2268,147 @@
   }
 
 }
+
+.confirm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+
+  animation: confirmOverlayIn 0.2s ease;
+}
+
+.confirm-modal {
+  width: min(420px, 100%);
+  padding: 30px 28px 24px;
+
+  background: #ffffff;
+  border: 1px solid #e5eef1;
+  border-radius: 18px;
+
+  text-align: center;
+
+  box-shadow:
+    0 20px 60px rgba(15, 23, 42, 0.18),
+    0 8px 24px rgba(0, 143, 160, 0.08);
+
+  animation: confirmModalIn 0.25s ease;
+}
+
+.confirm-modal-icon {
+  width: 52px;
+  height: 52px;
+
+  margin: 0 auto 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #e8f8ee;
+  border: 1px solid #b9dfc5;
+
+  color: #15803d;
+
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.confirm-modal h3 {
+  margin: 0 0 9px;
+
+  color: #173f46;
+
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.confirm-modal p {
+  margin: 0 auto 24px;
+
+  color: #6b7f84;
+
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.confirm-modal-actions button {
+  min-width: 130px;
+  height: 42px;
+
+  border: 0;
+  border-radius: 10px;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.confirm-modal-actions button:hover {
+  transform: translateY(-1px);
+}
+
+.confirm-cancel-btn {
+  background: #f1f5f6;
+  color: #53696e;
+}
+
+.confirm-cancel-btn:hover {
+  background: #e7edef;
+}
+
+.confirm-reset-btn {
+  background: #008fa0;
+  color: #ffffff;
+
+  box-shadow: 0 5px 14px rgba(0, 143, 160, 0.18);
+}
+
+.confirm-reset-btn:hover {
+  background: #007d8d;
+}
+
+@keyframes confirmOverlayIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes confirmModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

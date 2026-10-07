@@ -54,6 +54,10 @@ export class TrainerDashboard implements OnInit {
   traineeCount =
     signal(0);
 
+  showConfirmModal = signal(false);
+
+  sessionToReset = signal<SessionDto | null>(null);
+
   // =====================================================
   // MONTHLY CALENDAR
   // =====================================================
@@ -233,23 +237,64 @@ export class TrainerDashboard implements OnInit {
 
   });
 
-  completeSession(session: SessionDto): void {
-    if (session.status === 'Completed') {
+  toggleSessionCompletion(session: SessionDto): void {
+    const isCompleted = session.status === 'Completed';
+
+    if (isCompleted) {
+      this.sessionToReset.set(session);
+      this.showConfirmModal.set(true);
       return;
     }
 
-    this.api.updateSessionStatus(session.sessionId, 1).subscribe({
+    this.updateSessionStatus(session, 1);
+  }
+
+  confirmResetSession(): void {
+    const session = this.sessionToReset();
+
+    if (!session) {
+      return;
+    }
+
+    this.showConfirmModal.set(false);
+    this.sessionToReset.set(null);
+
+    this.updateSessionStatus(session, 0);
+  }
+
+  cancelResetSession(): void {
+    this.showConfirmModal.set(false);
+    this.sessionToReset.set(null);
+  }
+
+  private updateSessionStatus(
+    session: SessionDto,
+    status: number
+  ): void {
+    this.api.updateSessionStatus(
+      session.sessionId,
+      status
+    ).subscribe({
       next: () => {
         this.sessions.update(sessions =>
           sessions.map(item =>
             item.sessionId === session.sessionId
-              ? { ...item, status: 'Completed' }
+              ? {
+                ...item,
+                status: status === 1
+                  ? 'Completed'
+                  : 'Scheduled'
+              }
               : item
           )
         );
       },
+
       error: (error) => {
-        console.error('Failed to complete session:', error);
+        console.error(
+          'Failed to update session status:',
+          error
+        );
       }
     });
   }

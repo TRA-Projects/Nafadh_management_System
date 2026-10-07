@@ -616,9 +616,8 @@
 
             <!-- إكمال الجلسة -->
             <label class="session-complete" [class.completed]="session.status === 'Completed'">
-
               <input type="checkbox" [checked]="session.status === 'Completed'"
-                [disabled]="session.status === 'Completed'" (change)="completeSession(session)" />
+                (change)="toggleSessionCompletion(session)" />
 
               <span class="checkmark"></span>
 
@@ -629,7 +628,6 @@
                 : 'تم إكمال الدرس'
                 }}
               </span>
-
             </label>
 
           </div>
@@ -668,6 +666,40 @@
 
         </div>
 
+        }
+
+        @if (showConfirmModal()) {
+        <div class="confirm-modal-overlay" (click)="cancelResetSession()">
+
+          <div class="confirm-modal" (click)="$event.stopPropagation()">
+
+            <div class="confirm-modal-icon">
+              ✓
+            </div>
+
+            <h3>
+              إلغاء إكمال الجلسة؟
+            </h3>
+
+            <p>
+              هل أنت متأكد من إلغاء إكمال هذه الجلسة؟
+            </p>
+
+            <div class="confirm-modal-actions">
+
+              <button type="button" class="confirm-cancel-btn" (click)="cancelResetSession()">
+                إلغاء
+              </button>
+
+              <button type="button" class="confirm-reset-btn" (click)="confirmResetSession()">
+                نعم، إلغاء الإكمال
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
         }
 
       </div>
