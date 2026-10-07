@@ -41,6 +41,7 @@ import {
   templateUrl: './support.html'
 })
 
+
 export class TraineeSupport implements OnInit {
 
 
@@ -247,6 +248,7 @@ export class TraineeSupport implements OnInit {
 
           this.companyName.set('');
 
+
           this.trainers.set([]);
 
         }
@@ -284,9 +286,12 @@ export class TraineeSupport implements OnInit {
               null
             );
 
+
             this.companyName.set('');
 
+
             this.trainers.set([]);
+
 
             return;
 
@@ -423,9 +428,11 @@ export class TraineeSupport implements OnInit {
 
             this.trainers.set([]);
 
+
             this.loadingTrainers.set(
               false
             );
+
 
             return;
 
@@ -565,6 +572,7 @@ export class TraineeSupport implements OnInit {
         'تعذر تحديد المستخدم الحالي'
       );
 
+
       return;
 
     }
@@ -663,6 +671,33 @@ export class TraineeSupport implements OnInit {
     this.errorMessage.set('');
 
 
+    /*
+     * نأخذ بيانات المحادثة من القائمة أيضاً
+     * لأن receiverType قد يكون موجوداً في القائمة
+     * وغير موجود في تفاصيل المحادثة.
+     */
+
+    const listConversation: any =
+
+      this.conversations()
+
+        .find(
+
+          conversation =>
+
+            Number(
+              conversation.conversationId
+            )
+
+            ===
+
+            Number(
+              id
+            )
+
+        );
+
+
     this.api
       .getConversation(
         id
@@ -673,8 +708,22 @@ export class TraineeSupport implements OnInit {
           conversation
         ) => {
 
+
+          /*
+           * ندمج بيانات القائمة مع التفاصيل.
+           */
+
+          const mergedConversation: any = {
+
+            ...(listConversation ?? {}),
+
+            ...(conversation ?? {})
+
+          };
+
+
           this.active.set(
-            conversation
+            mergedConversation as ConversationDetailDto
           );
 
         },
@@ -923,7 +972,14 @@ export class TraineeSupport implements OnInit {
     conversation: any
   ): string {
 
-    const receiverType =
+    if (!conversation) {
+
+      return '';
+
+    }
+
+
+    const rawReceiverType =
 
       conversation?.receiverType
 
@@ -952,61 +1008,205 @@ export class TraineeSupport implements OnInit {
       '';
 
 
-    switch (
-      receiverType
+    const receiverType =
+
+      String(
+        rawReceiverType
+      )
+
+        .trim()
+
+        .toLowerCase();
+
+
+    // =======================================================
+    // Authority
+    // =======================================================
+
+    if (
+
+      receiverType === 'authority'
+
+      ||
+
+      receiverType.includes('authority')
+
+      ||
+
+      receiverType.includes('هيئة')
+
     ) {
 
-
-      case 'Authority':
-
-      case 'authority':
-
-        return (
-          'هيئة تنظيم الاتصالات'
-        );
-
-
-      case 'Trainer':
-
-      case 'trainer':
-
-        return (
-
-          conversation?.receiverTrainerName
-
-          ??
-
-          conversation?.trainerName
-
-          ??
-
-          conversation?.recipientName
-
-          ??
-
-          'المدرب'
-
-        );
-
-
-      case 'Company':
-
-      case 'company':
-
-        return (
-          this.companyName()
-
-            ? `الشركة - ${this.companyName()}`
-
-            : 'الشركة'
-        );
-
-
-      default:
-
-        return 'الجهة المختصة';
+      return 'هيئة تنظيم الاتصالات';
 
     }
+
+
+    // =======================================================
+    // Trainer
+    // =======================================================
+
+    if (
+
+      receiverType === 'trainer'
+
+      ||
+
+      receiverType.includes('trainer')
+
+      ||
+
+      receiverType.includes('مدرب')
+
+      ||
+
+      conversation?.receiverTrainerId
+
+      ||
+
+      conversation?.trainerId
+
+    ) {
+
+      const trainerName =
+
+        conversation?.receiverTrainerName
+
+        ??
+
+        conversation?.trainerName
+
+        ??
+
+        conversation?.recipientName
+
+        ??
+
+        conversation?.receiverName
+
+        ??
+
+        conversation?.targetName
+
+        ??
+
+        conversation?.assignedToName
+
+        ??
+
+        '';
+
+
+      if (
+        trainerName
+      ) {
+
+        return String(
+          trainerName
+        );
+
+      }
+
+
+      return 'المدرب';
+
+    }
+
+
+    // =======================================================
+    // Company
+    // =======================================================
+
+    if (
+
+      receiverType === 'company'
+
+      ||
+
+      receiverType.includes('company')
+
+      ||
+
+      receiverType.includes('شركة')
+
+      ||
+
+      conversation?.receiverCompanyId
+
+      ||
+
+      conversation?.companyId
+
+    ) {
+
+      const conversationCompanyName =
+
+        conversation?.receiverCompanyName
+
+        ??
+
+        conversation?.companyName
+
+        ??
+
+        conversation?.recipientName
+
+        ??
+
+        conversation?.receiverName
+
+        ??
+
+        conversation?.targetName
+
+        ??
+
+        this.companyName();
+
+
+      if (
+        conversationCompanyName
+      ) {
+
+        return `الشركة - ${conversationCompanyName}`;
+
+      }
+
+
+      return 'الشركة';
+
+    }
+
+
+    // =======================================================
+    // Fallback Trainer
+    // =======================================================
+
+    if (
+      conversation?.receiverTrainerName
+    ) {
+
+      return String(
+        conversation.receiverTrainerName
+      );
+
+    }
+
+
+    // =======================================================
+    // Fallback Company
+    // =======================================================
+
+    if (
+      conversation?.receiverCompanyName
+    ) {
+
+      return `الشركة - ${conversation.receiverCompanyName}`;
+
+    }
+
+
+    return '';
 
   }
 
@@ -1192,6 +1392,7 @@ export class TraineeSupport implements OnInit {
 
     this.errorMessage.set('');
 
+
     this.successMessage.set('');
 
 
@@ -1206,6 +1407,7 @@ export class TraineeSupport implements OnInit {
       this.errorMessage.set(
         'يرجى اختيار الجهة المستلمة أولاً'
       );
+
 
       return;
 
@@ -1231,6 +1433,7 @@ export class TraineeSupport implements OnInit {
         'يرجى اختيار المدرب'
       );
 
+
       return;
 
     }
@@ -1247,6 +1450,7 @@ export class TraineeSupport implements OnInit {
       this.errorMessage.set(
         'يرجى كتابة نوع الطلب'
       );
+
 
       return;
 
@@ -1281,6 +1485,7 @@ export class TraineeSupport implements OnInit {
         'يرجى كتابة الملاحظة'
       );
 
+
       return;
 
     }
@@ -1305,6 +1510,7 @@ export class TraineeSupport implements OnInit {
         'يرجى كتابة تفاصيل الطلب'
       );
 
+
       return;
 
     }
@@ -1323,6 +1529,7 @@ export class TraineeSupport implements OnInit {
       this.errorMessage.set(
         'تعذر تحديد المستخدم الحالي'
       );
+
 
       return;
 
