@@ -1,25 +1,22 @@
 <div class="warnings-container">
 
-  <!-- 1️⃣ هيدر الصفحة (الصف الأولي + أزرار العمليات الرئيسية) -->
+  <!-- 1️⃣ هيدر الصفحة -->
   <div class="page-header">
     <div>
       <h2 class="nfd-page-title">إشارات ومخالفات الشركات</h2>
       <p class="nfd-page-sub">متابعة وإدارة الامتثال للشركات المستضيفة للبرامج التدريبية</p>
     </div>
     <div class="header-actions">
-      <!-- زر الانتقال المباشر لصفحة طلبات المعالجة والتصحيح -->
       <button class="nfd-btn secondary-btn" (click)="goToRemediationRequests()">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         طلبات معالجة وتصحيح الإنذارات
       </button>
 
-      <!-- زر تصدير CSV -->
       <button class="nfd-btn secondary-btn" (click)="exportToCSV()">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         تحميل كافة الإنذارات (CSV)
       </button>
 
-      <!-- زر إصدار إنذار جديد -->
       <button class="nfd-btn primary-btn" (click)="openIssueModal()">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
         إصدار إنذار تنظيمي
@@ -27,7 +24,7 @@
     </div>
   </div>
 
-  <!-- 2️⃣ كروت الإحصائيات المختصرة -->
+  <!-- 2️⃣ كروت الإحصائيات الـ 5 المحدثة بالكامل -->
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-title">إجمالي البلاغات والإنذارات</div>
@@ -44,6 +41,11 @@
       <div class="stat-value text-review">{{ getCountByStatus('UnderReview') }}</div>
       <div class="stat-desc">تم تقديم رد وقيد التقييم</div>
     </div>
+    <div class="stat-card border-escalated">
+      <div class="stat-title">تم التصعيد</div>
+      <div class="stat-value text-escalated">{{ getCountByStatus('Escalated') }}</div>
+      <div class="stat-desc">تم تحويلها للإدارة العليا</div>
+    </div>
     <div class="stat-card border-resolved">
       <div class="stat-title">المكتملة والتم إغلاقها</div>
       <div class="stat-value text-resolved">{{ getCountByStatus('Resolved') }}</div>
@@ -51,76 +53,86 @@
     </div>
   </div>
 
-  <!-- 3️⃣ شريط البحث والفلترة المتقدمة -->
+  <!-- 3️⃣ شريط البحث والفلترة الرئيسي -->
   <div class="filter-toolbar">
     <div class="search-box">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="text" [(ngModel)]="searchTerm" placeholder="ابحث باسم الشركة أو كود الإنذار (CW-X)...">
     </div>
 
-    <div class="filter-dropdown-wrapper">
-      <button class="nfd-btn filter-toggle-btn" [class.active]="hasActiveFilters()" (click)="toggleFilterMenu()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-        <span>تصفية النتائج</span>
-        <span class="filter-badge" *ngIf="hasActiveFilters()">•</span>
-      </button>
+    <button class="nfd-btn filter-toggle-btn" [class.active]="isFilterDropdownOpen || hasActiveFilters()" (click)="toggleFilterMenu()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      <span>تصفية النتائج</span>
+      <span class="filter-count-badge" *ngIf="hasActiveFilters()">•</span>
+    </button>
+  </div>
 
-      <!-- القائمة المنسدلة للفلاتر -->
-      <div class="filter-dropdown-menu" *ngIf="isFilterDropdownOpen">
-        <div class="filter-tabs">
-          <button (click)="openFilterTab('PRESETS')" [class.active]="activeFilterTab === 'PRESETS'">خيارات سريعة</button>
-          <button (click)="openFilterTab('YEAR')" [class.active]="activeFilterTab === 'YEAR'">السنة</button>
-          <button (click)="openFilterTab('MONTH')" [class.active]="activeFilterTab === 'MONTH'">الشهر</button>
-          <button (click)="openFilterTab('STATUS')" [class.active]="activeFilterTab === 'STATUS'">الحالة</button>
-          <button (click)="openFilterTab('LEVEL')" [class.active]="activeFilterTab === 'LEVEL'">المستوى</button>
-        </div>
-
-        <div class="filter-tab-content">
-          <!-- خيارات سريعة -->
-          <div *ngIf="activeFilterTab === 'PRESETS'" class="filter-options">
-            <button (click)="applyPreset('THIS_MONTH')">هذا الشهر</button>
-            <button (click)="applyPreset('CURRENT_QUARTER')">الربع الحالي</button>
-            <button (click)="applyPreset('THIS_YEAR')">هذه السنة</button>
-          </div>
-
-          <!-- فلترة حسب السنة -->
-          <div *ngIf="activeFilterTab === 'YEAR'" class="filter-options">
-            <button (click)="selectFilterOption('YEAR', 'ALL')" [class.selected]="selectedYear === 'ALL'">الكل</button>
-            <button *ngFor="let yr of getAvailableYears()" (click)="selectFilterOption('YEAR', yr)" [class.selected]="selectedYear === yr">{{ yr }}</button>
-          </div>
-
-          <!-- فلترة حسب الشهر -->
-          <div *ngIf="activeFilterTab === 'MONTH'" class="filter-options">
-            <button (click)="selectFilterOption('MONTH', 'ALL')" [class.selected]="selectedMonth === 'ALL'">كافة الأشهر</button>
-            <button *ngFor="let m of getAvailableMonthsForSelectedYear()" (click)="selectFilterOption('MONTH', m.value)" [class.selected]="selectedMonth === m.value">{{ m.name }}</button>
-          </div>
-
-          <!-- فلترة حسب الحالة -->
-          <div *ngIf="activeFilterTab === 'STATUS'" class="filter-options">
-            <button (click)="selectFilterOption('STATUS', 'ALL')" [class.selected]="selectedStatus === 'ALL'">كافة الحالات</button>
-            <button (click)="selectFilterOption('STATUS', 'Open')" [class.selected]="selectedStatus === 'Open'">نشط</button>
-            <button (click)="selectFilterOption('STATUS', 'UnderReview')" [class.selected]="selectedStatus === 'UnderReview'">قيد المراجعة</button>
-            <button (click)="selectFilterOption('STATUS', 'Resolved')" [class.selected]="selectedStatus === 'Resolved'">مكتمل</button>
-          </div>
-
-          <!-- فلترة حسب المستوى -->
-          <div *ngIf="activeFilterTab === 'LEVEL'" class="filter-options">
-            <button (click)="selectFilterOption('LEVEL', 'ALL')" [class.selected]="selectedLevel === 'ALL'">كافة المستويات</button>
-            <button (click)="selectFilterOption('LEVEL', 'Low')" [class.selected]="selectedLevel === 'Low'">منخفض</button>
-            <button (click)="selectFilterOption('LEVEL', 'Medium')" [class.selected]="selectedLevel === 'Medium'">متوسط</button>
-            <button (click)="selectFilterOption('LEVEL', 'High')" [class.selected]="selectedLevel === 'High'">مرتفع</button>
-            <button (click)="selectFilterOption('LEVEL', 'Critical')" [class.selected]="selectedLevel === 'Critical'">حرج جداً</button>
-          </div>
-        </div>
-
-        <div class="filter-actions-bar" *ngIf="hasActiveFilters()">
-          <button class="reset-link" (click)="resetAllFilters()">إعادة ضبط الفلاتر</button>
-        </div>
+  <!-- لوحة الفلترة المدمجة المبتكرة -->
+  <div class="inline-filter-panel" *ngIf="isFilterDropdownOpen">
+    <div class="filter-panel-header">
+      <div class="filter-tabs-row">
+        <button (click)="openFilterTab('PRESETS')" [class.active]="activeFilterTab === 'PRESETS'">⚡ خيارات سريعة</button>
+        <button (click)="openFilterTab('YEAR')" [class.active]="activeFilterTab === 'YEAR'">📅 السنة</button>
+        <button (click)="openFilterTab('MONTH')" [class.active]="activeFilterTab === 'MONTH'">🗓️ الشهر</button>
+        <button (click)="openFilterTab('STATUS')" [class.active]="activeFilterTab === 'STATUS'">📌 الحالة</button>
+        <button (click)="openFilterTab('LEVEL')" [class.active]="activeFilterTab === 'LEVEL'">⚠️ المستوى</button>
       </div>
+      <button class="close-panel-btn" (click)="toggleFilterMenu()">✕ إغلاق</button>
+    </div>
+
+    <div class="filter-panel-body">
+      <!-- خيارات سريعة -->
+      <div *ngIf="activeFilterTab === 'PRESETS'" class="chips-group">
+        <button class="filter-chip" (click)="applyPreset('THIS_MONTH')">هذا الشهر</button>
+        <button class="filter-chip" (click)="applyPreset('CURRENT_QUARTER')">الربع الحالي</button>
+        <button class="filter-chip" (click)="applyPreset('THIS_YEAR')">هذه السنة</button>
+      </div>
+
+      <!-- السنة -->
+      <div *ngIf="activeFilterTab === 'YEAR'" class="chips-group">
+        <button class="filter-chip" [class.selected]="selectedYear === 'ALL'" (click)="selectFilterOption('YEAR', 'ALL')">كافة السنوات</button>
+        <button *ngFor="let yr of getAvailableYears()" class="filter-chip" [class.selected]="selectedYear === yr" (click)="selectFilterOption('YEAR', yr)">{{ yr }}</button>
+      </div>
+
+      <!-- الشهر -->
+      <div *ngIf="activeFilterTab === 'MONTH'" class="chips-group">
+        <button class="filter-chip" [class.selected]="selectedMonth === 'ALL'" (click)="selectFilterOption('MONTH', 'ALL')">كافة الأشهر</button>
+        <button *ngFor="let m of getAvailableMonthsForSelectedYear()" class="filter-chip" [class.selected]="selectedMonth === m.value" (click)="selectFilterOption('MONTH', m.value)">{{ m.name }}</button>
+      </div>
+
+      <!-- الحالة (محدث بالـ 4 حالات) -->
+      <div *ngIf="activeFilterTab === 'STATUS'" class="chips-group">
+        <button class="filter-chip" [class.selected]="selectedStatus === 'ALL'" (click)="selectFilterOption('STATUS', 'ALL')">كافة الحالات</button>
+        <button class="filter-chip" [class.selected]="selectedStatus === 'Open'" (click)="selectFilterOption('STATUS', 'Open')">نشط</button>
+        <button class="filter-chip" [class.selected]="selectedStatus === 'UnderReview'" (click)="selectFilterOption('STATUS', 'UnderReview')">قيد المراجعة</button>
+        <button class="filter-chip" [class.selected]="selectedStatus === 'Escalated'" (click)="selectFilterOption('STATUS', 'Escalated')">مُصعّد</button>
+        <button class="filter-chip" [class.selected]="selectedStatus === 'Resolved'" (click)="selectFilterOption('STATUS', 'Resolved')">مكتمل</button>
+      </div>
+
+      <!-- المستوى -->
+      <div *ngIf="activeFilterTab === 'LEVEL'" class="chips-group">
+        <button class="filter-chip" [class.selected]="selectedLevel === 'ALL'" (click)="selectFilterOption('LEVEL', 'ALL')">كافة المستويات</button>
+        <button class="filter-chip" [class.selected]="selectedLevel === 'Low'" (click)="selectFilterOption('LEVEL', 'Low')">منخفض</button>
+        <button class="filter-chip" [class.selected]="selectedLevel === 'Medium'" (click)="selectFilterOption('LEVEL', 'Medium')">متوسط</button>
+        <button class="filter-chip" [class.selected]="selectedLevel === 'High'" (click)="selectFilterOption('LEVEL', 'High')">مرتفع</button>
+        <button class="filter-chip" [class.selected]="selectedLevel === 'Critical'" (click)="selectFilterOption('LEVEL', 'Critical')">حرج جداً</button>
+      </div>
+    </div>
+
+    <!-- شريط الفلاتر النشطة -->
+    <div class="filter-panel-footer" *ngIf="hasActiveFilters()">
+      <div class="active-chips-summary">
+        <span class="summary-label">الفلاتر المطبقة:</span>
+        <span class="active-tag" *ngIf="selectedYear !== 'ALL'">السنة: {{ selectedYear }}</span>
+        <span class="active-tag" *ngIf="selectedMonth !== 'ALL'">الشهر: {{ getMonthName(selectedMonth) }}</span>
+        <span class="active-tag" *ngIf="selectedStatus !== 'ALL'">الحالة: {{ getStatusLabel(selectedStatus) }}</span>
+        <span class="active-tag" *ngIf="selectedLevel !== 'ALL'">المستوى: {{ getLevelLabel(selectedLevel) }}</span>
+      </div>
+      <button class="reset-all-btn" (click)="resetAllFilters()">إعادة ضبط الكل ↺</button>
     </div>
   </div>
 
-  <!-- 4️⃣ جدول عرض الإنذارات -->
+  <!-- 4️⃣ جدول عرض البيانات -->
   <div class="table-card">
     <table class="nfd-table">
       <thead>
@@ -162,7 +174,6 @@
           </td>
         </tr>
 
-        <!-- حالة عدم وجود بيانات -->
         <tr *ngIf="filteredWarnings().length === 0">
           <td colspan="7" class="empty-state">
             لا توجد إنذارات مُسجلة تطابق خيارات البحث الحالية.
@@ -181,7 +192,6 @@
       </div>
       <div class="modal-body">
         
-        <!-- تحديد الشركة -->
         <div class="form-group">
           <label class="required">الشركة المستضيفة المعنية</label>
           <select [(ngModel)]="newWarning.companyId" (change)="markFieldTouched('companyId')">
@@ -193,7 +203,6 @@
           </span>
         </div>
 
-        <!-- نوع المخالفة ودرجة الأهمية -->
         <div class="form-row">
           <div class="form-group">
             <label class="required">تصنيف المخالفة</label>
@@ -216,7 +225,6 @@
           </div>
         </div>
 
-        <!-- أسباب البلاغ والمخالفة الجاهزة -->
         <div class="form-group">
           <label class="required">أسباب البلاغ والمخالفات المحددة</label>
           <div class="reasons-chips-grid">
@@ -231,7 +239,6 @@
             </button>
           </div>
 
-          <!-- تفاصيل المخالفة الأخرى إن حُددت -->
           <div class="other-reason-input" *ngIf="selectedReasons().includes('مخالفة أخرى')">
             <input 
               type="text" 
@@ -245,7 +252,6 @@
           </span>
         </div>
 
-        <!-- المعاينة النصية التلقائية للبلاغ -->
         <div class="form-group">
           <label>معاينة ملخص الأدلة والأسباب المسجلة</label>
           <textarea rows="3" [value]="newWarning.evidence" readonly class="readonly-textarea"></textarea>
@@ -318,7 +324,6 @@
           </div>
         </div>
 
-        <!-- منطقة اتخاذ إجراء أو تسوية الإنذار -->
         <div class="resolution-section" *ngIf="selectedWarning().status !== 'Resolved' && selectedWarning().status !== 2">
           <h4>إغلاق وتصحيح الإنذار</h4>
           <p>أدخل ملاحظات الإجراء التصحيحي المتخذ لإغلاق هذا البلاغ رسمياً:</p>
@@ -335,8 +340,8 @@
         <button class="nfd-btn secondary-btn" (click)="closeDetailsModal()">إغلاق</button>
 
         <button 
+          *ngIf="selectedWarning().status !== 'Resolved' && selectedWarning().status !== 2"
           class="nfd-btn primary-btn" 
-          *ngIf="selectedWarning().status !== 'Resolved' && selectedWarning().status !== 2" 
           (click)="resolveWarning()" 
           [disabled]="isResolving()">
           <span *ngIf="!isResolving()">حفظ وإغلاق الإنذار</span>
