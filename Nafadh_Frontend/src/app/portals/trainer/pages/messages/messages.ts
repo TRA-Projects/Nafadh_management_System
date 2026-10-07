@@ -430,15 +430,16 @@ export class TrainerMessages implements OnInit {
   selectedTraineeId =
     signal<number | null>(null);
 
-  selectedTrainee = computed(
-    () =>
-      this.trainees.find(
-        (trainee) =>
-          trainee.traineeId ===
-          this.selectedTraineeId()
-      ) ??
-      this.trainees[0]
+ selectedTrainee(): TrainerTrainee | undefined {
+  return (
+    this.trainees.find(
+      (trainee) =>
+        trainee.traineeId ===
+        this.selectedTraineeId()
+    ) ??
+    this.trainees[0]
   );
+}
 
   // =====================================================
   // MESSAGES
@@ -515,25 +516,37 @@ export class TrainerMessages implements OnInit {
   // SEND MESSAGE
   // =====================================================
 
-  sendMessage(): void {
+ sendMessage(): void {
 
-    const text =
-      this.messageText.trim();
+  console.log('SEND CLICK');
 
-    if (!text) {
-      return;
-    }
+  const text =
+    this.messageText.trim();
 
-    const userId =
-      this.auth.userId;
+  if (!text) {
+    return;
+  }
 
-    const trainee =
-      this.selectedTrainee();
+  const userId =
+    this.auth.userId;
 
-    if (!userId || !trainee) {
-      return;
-    }
+  const trainee =
+    this.selectedTrainee();
+    console.log('TRAINEE DEBUG:', {
+  userId,
+  trainee
+});
 
+  if (!userId || !trainee) {
+    return;
+  }
+    console.log('SEND MESSAGE DEBUG:', {
+  userId,
+  traineeId: trainee.traineeId,
+  traineeUserId: trainee.userId,
+  conversationId: trainee.conversationId,
+  text
+});
     // -------------------------------------------------
     // إذا كانت هناك محادثة موجودة
     // -------------------------------------------------
