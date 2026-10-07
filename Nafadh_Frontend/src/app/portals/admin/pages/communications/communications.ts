@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router'; // 👈 استيراد الرابط لقراءة اسم المتدرب
+import { ActivatedRoute, Router } from '@angular/router'; // 👈 1. أضفنا Router هنا
 import { AdminApi } from '../../services/admin-api';
 import { ConversationDetailDto, ConversationListItemDto, WarningDto } from '../../../../core/models/dtos';
 
@@ -13,7 +13,11 @@ import { ConversationDetailDto, ConversationListItemDto, WarningDto } from '../.
 })
 export class AdminCommunications implements OnInit {
   private api = inject(AdminApi);
-  private route = inject(ActivatedRoute); // 👈 حقن مسار التوجيه
+  private route = inject(ActivatedRoute);
+  private router = inject(Router); // 👈 2. حقن خدمة التوجيه هنا
+
+  // 🌟 متغير لمعرفة هل أتينا من صفحة البرامج (لكي يظهر الزر فقط عند الحاجة)
+  fromPrograms = signal<boolean>(false);
 
   tab = signal<'company' | 'complaints' | 'warnings'>('company');
   companyThreads = signal<ConversationListItemDto[]>([]);
@@ -21,7 +25,7 @@ export class AdminCommunications implements OnInit {
   traineeWarnings = signal<WarningDto[]>([]);
   activeConversation = signal<ConversationDetailDto | null>(null);
   replyText = '';
-
+  
   ngOnInit() {
     // 1. جلب البيانات العادية
     this.api.getConversations('CompanyThread').subscribe((d) => this.companyThreads.set(d || []));
@@ -33,6 +37,9 @@ export class AdminCommunications implements OnInit {
       const traineeId = params['traineeId'];
 
       if (traineeName || traineeId) {
+        // 🌟 تفعيل ظهور زر الرجوع لأننا جئنا من صفحة البرامج
+        this.fromPrograms.set(true);
+
         // تحويل التبويب تلقائياً إلى محادثات المتدربين
         this.tab.set('complaints');
 
@@ -64,10 +71,16 @@ export class AdminCommunications implements OnInit {
           }
         });
       } else {
-        // فتح عادي لصفحة المراسلات
+        // فتح عادي لصفحة المراسلات (الزر يظل مخفياً)
+        this.fromPrograms.set(false);
         this.api.getConversations('TraineeComplaint').subscribe((d) => this.complaintThreads.set(d || []));
       }
     });
+  }
+
+  // 🌟 دالة الرجوع لصفحة البرامج والدفعات 🌟
+  goBackToPrograms(): void {
+    this.router.navigate(['/admin/programs']);
   }
 
   open(id: number) {
