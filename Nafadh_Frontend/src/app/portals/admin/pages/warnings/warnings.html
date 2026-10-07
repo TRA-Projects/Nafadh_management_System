@@ -24,7 +24,7 @@
     </div>
   </div>
 
-  <!-- 2️⃣ كروت الإحصائيات المختصرة -->
+  <!-- 2️⃣ كروت الإحصائيات الـ 5 المحدثة بالكامل -->
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-title">إجمالي البلاغات والإنذارات</div>
@@ -41,6 +41,11 @@
       <div class="stat-value text-review">{{ getCountByStatus('UnderReview') }}</div>
       <div class="stat-desc">تم تقديم رد وقيد التقييم</div>
     </div>
+    <div class="stat-card border-escalated">
+      <div class="stat-title">تم التصعيد</div>
+      <div class="stat-value text-escalated">{{ getCountByStatus('Escalated') }}</div>
+      <div class="stat-desc">تم تحويلها للإدارة العليا</div>
+    </div>
     <div class="stat-card border-resolved">
       <div class="stat-title">المكتملة والتم إغلاقها</div>
       <div class="stat-value text-resolved">{{ getCountByStatus('Resolved') }}</div>
@@ -48,7 +53,7 @@
     </div>
   </div>
 
-  <!-- 3️⃣ شريط البحث والفلترة المبتكر (Inline Expansion Bar) -->
+  <!-- 3️⃣ شريط البحث والفلترة الرئيسي -->
   <div class="filter-toolbar">
     <div class="search-box">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -62,7 +67,7 @@
     </button>
   </div>
 
-  <!-- لوحة الفلترة المدمجة (تتوسع تحت الشريط بعرض الصفحة دون الخروج عن الشاشة) -->
+  <!-- لوحة الفلترة المدمجة المبتكرة -->
   <div class="inline-filter-panel" *ngIf="isFilterDropdownOpen">
     <div class="filter-panel-header">
       <div class="filter-tabs-row">
@@ -95,11 +100,12 @@
         <button *ngFor="let m of getAvailableMonthsForSelectedYear()" class="filter-chip" [class.selected]="selectedMonth === m.value" (click)="selectFilterOption('MONTH', m.value)">{{ m.name }}</button>
       </div>
 
-      <!-- الحالة -->
+      <!-- الحالة (محدث بالـ 4 حالات) -->
       <div *ngIf="activeFilterTab === 'STATUS'" class="chips-group">
         <button class="filter-chip" [class.selected]="selectedStatus === 'ALL'" (click)="selectFilterOption('STATUS', 'ALL')">كافة الحالات</button>
         <button class="filter-chip" [class.selected]="selectedStatus === 'Open'" (click)="selectFilterOption('STATUS', 'Open')">نشط</button>
         <button class="filter-chip" [class.selected]="selectedStatus === 'UnderReview'" (click)="selectFilterOption('STATUS', 'UnderReview')">قيد المراجعة</button>
+        <button class="filter-chip" [class.selected]="selectedStatus === 'Escalated'" (click)="selectFilterOption('STATUS', 'Escalated')">مُصعّد</button>
         <button class="filter-chip" [class.selected]="selectedStatus === 'Resolved'" (click)="selectFilterOption('STATUS', 'Resolved')">مكتمل</button>
       </div>
 
@@ -113,7 +119,7 @@
       </div>
     </div>
 
-    <!-- شريط الفلاتر النشطة مع زر الإعادة -->
+    <!-- شريط الفلاتر النشطة -->
     <div class="filter-panel-footer" *ngIf="hasActiveFilters()">
       <div class="active-chips-summary">
         <span class="summary-label">الفلاتر المطبقة:</span>
@@ -126,7 +132,7 @@
     </div>
   </div>
 
-  <!-- 4️⃣ جدول عرض الإنذارات -->
+  <!-- 4️⃣ جدول عرض البيانات -->
   <div class="table-card">
     <table class="nfd-table">
       <thead>

@@ -1,5 +1,5 @@
 /* =========================================================
-   منصة نفاذ - شاشة الإنذارات مع نظام الفلترة المدمج المبتكر
+   منصة نفاذ - شاشة الإنذارات (شاملة الحالة الرابعة Escalated)
 ========================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
@@ -84,11 +84,11 @@
   border-color: #94a3b8;
 }
 
-/* 2️⃣ كروت الإحصائيات */
+/* 2️⃣ كروت الإحصائيات الـ 5 (تقسيم خماسي متناسق) */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(5, 1fr); /* 👈 5 كروت بطريقة متساوية */
+  gap: 16px;
   margin-bottom: 24px;
   width: 100%;
 }
@@ -96,7 +96,7 @@
 .stat-card {
   background: #ffffff;
   border-radius: 12px;
-  padding: 20px 24px;
+  padding: 18px 20px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   display: flex;
@@ -114,7 +114,7 @@
 }
 
 .stat-value {
-  font-size: 32px;
+  font-size: 30px;
   font-weight: 800;
   color: #0f172a;
   line-height: 1;
@@ -122,19 +122,22 @@
 }
 
 .stat-desc {
-  font-size: 12px;
+  font-size: 11px;
   color: #94a3b8;
 }
 
+/* حدود وألوان الحالات الأربع */
 .border-open { border-right: 4px solid #ef4444; }
 .border-review { border-right: 4px solid #f59e0b; }
+.border-escalated { border-right: 4px solid #7c3aed; } /* 👈 بنفسجي لحالة التصعيد */
 .border-resolved { border-right: 4px solid #10b981; }
 
 .text-open { color: #dc2626; }
 .text-review { color: #d97706; }
+.text-escalated { color: #6d28d9; } /* 👈 لون نص بنفسجي */
 .text-resolved { color: #059669; }
 
-/* 3️⃣ شريط البحث والفلترة الرئيسي */
+/* 3️⃣ شريط البحث والفلترة المدمج */
 .filter-toolbar {
   display: flex;
   gap: 12px;
@@ -198,7 +201,7 @@
   font-size: 20px;
 }
 
-/* 🌟 التصميم المبتكر: لوحة الفلترة المدمجة الكاملة (Inline Filter Panel) */
+/* لوحة الفلترة المدمجة */
 .inline-filter-panel {
   width: 100%;
   background: #ffffff;
@@ -244,10 +247,6 @@
   transition: all 0.2s ease;
 }
 
-.filter-tabs-row button:hover {
-  background: #f1f5f9;
-}
-
 .filter-tabs-row button.active {
   background: #1d4ed8;
   color: #ffffff;
@@ -289,11 +288,6 @@
   color: #334155;
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.filter-chip:hover {
-  border-color: #1d4ed8;
-  color: #1d4ed8;
 }
 
 .filter-chip.selected {
@@ -431,6 +425,7 @@
 
 .st-open { background: #fee2e2; color: #991b1b; }
 .st-review { background: #fef3c7; color: #92400e; }
+.st-escalated { background: #f3e8ff; color: #6d28d9; } /* 👈 خلفية أرجوانية ناعمة لحالة التصعيد */
 .st-resolved { background: #dcfce7; color: #166534; }
 
 .action-btn {

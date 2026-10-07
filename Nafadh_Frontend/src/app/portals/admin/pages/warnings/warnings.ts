@@ -21,7 +21,7 @@ export class AdminWarnings implements OnInit {
   // شريط البحث
   searchTerm = '';
 
-  // التحكم باللوحة المدمجة المبتكرة للفلترة
+  // التحكم باللوحة المدمجة للفلترة
   isFilterDropdownOpen = false;
   activeFilterTab: 'PRESETS' | 'YEAR' | 'MONTH' | 'STATUS' | 'LEVEL' = 'PRESETS';
 
@@ -209,6 +209,7 @@ export class AdminWarnings implements OnInit {
       if (this.selectedStatus === 'Open') matchesStatus = st === '0' || st === 'Open';
       else if (this.selectedStatus === 'UnderReview') matchesStatus = st === '1' || st === 'UnderReview';
       else if (this.selectedStatus === 'Resolved') matchesStatus = st === '2' || st === 'Resolved';
+      else if (this.selectedStatus === 'Escalated') matchesStatus = st === '3' || st === 'Escalated'; // 👈 دعم حالة التصعيد
 
       const lvl = String(w.level);
       let matchesLevel = true;
@@ -387,12 +388,14 @@ export class AdminWarnings implements OnInit {
     window.print();
   }
 
+  // 👈 تحديث الدالة لتشمل الحالات الأربعة للباك إند
   getCountByStatus(statusKey: string): number {
     return this.warnings().filter(w => {
       const st = String(w.status);
       if (statusKey === 'Open') return st === '0' || st === 'Open';
       if (statusKey === 'UnderReview') return st === '1' || st === 'UnderReview';
       if (statusKey === 'Resolved') return st === '2' || st === 'Resolved';
+      if (statusKey === 'Escalated') return st === '3' || st === 'Escalated'; // 👈 حالة التصعيد
       return false;
     }).length;
   }
@@ -446,19 +449,23 @@ export class AdminWarnings implements OnInit {
     return 'lvl-medium';
   }
 
+  // 👈 تسمية الكروت بالعربي
   getStatusLabel(status?: any): string {
     const val = String(status);
     if (val === '0' || val === 'Open') return 'نشط';
     if (val === '1' || val === 'UnderReview') return 'قيد المراجعة';
     if (val === '2' || val === 'Resolved') return 'مكتمل';
+    if (val === '3' || val === 'Escalated') return 'مُصعّد'; // 👈 الحالة الرابعة
     return status ?? 'نشط';
   }
 
+  // 👈 كلاسات التنسيق المحدثة
   getStatusClass(status?: any): string {
     const val = String(status);
     if (val === '0' || val === 'Open') return 'st-open';
     if (val === '1' || val === 'UnderReview') return 'st-review';
     if (val === '2' || val === 'Resolved') return 'st-resolved';
+    if (val === '3' || val === 'Escalated') return 'st-escalated'; // 👈 كلاس حالة التصعيد
     return 'st-open';
   }
 }
