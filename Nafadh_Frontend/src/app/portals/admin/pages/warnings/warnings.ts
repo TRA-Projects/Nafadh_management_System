@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router'; // 👈 إضافة Router
+import { Router } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
 import { WarningDto } from '../../../../core/models/dtos';
 
@@ -21,9 +21,9 @@ export class AdminWarnings implements OnInit {
   // شريط البحث
   searchTerm = '';
 
-  // التحكم بالقائمة المنسدلة المدمجة
+  // التحكم باللوحة المدمجة المبتكرة للفلترة
   isFilterDropdownOpen = false;
-  activeFilterTab: 'NONE' | 'PRESETS' | 'YEAR' | 'MONTH' | 'STATUS' | 'LEVEL' = 'NONE';
+  activeFilterTab: 'PRESETS' | 'YEAR' | 'MONTH' | 'STATUS' | 'LEVEL' = 'PRESETS';
 
   // الفلاتر المحددة حالياً
   selectedYear: string = 'ALL';
@@ -55,7 +55,7 @@ export class AdminWarnings implements OnInit {
   touchedFields = signal<{ [key: string]: boolean }>({});
   newWarning = { companyId: null as number | null, type: 'Performance', level: 'Medium', evidence: '' };
 
-  // قائمة أسباب ومخالفات البلاغ الجاهزة وإدارة الاختيارات المتعددة
+  // قائمة أسباب ومخالفات البلاغ الجاهزة
   violationReasons: string[] = [
     'عدم الالتزام بالحضور',
     'التأخر المتكرر',
@@ -72,7 +72,7 @@ export class AdminWarnings implements OnInit {
 
   constructor(
     private api: AdminApi,
-    private router: Router // 👈 حقن الـ Router
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -80,12 +80,10 @@ export class AdminWarnings implements OnInit {
     this.loadCompanies();
   }
 
-  // 👈 دالة التوجيه إلى صفحة طلبات المعالجة والتصحيح
   goToRemediationRequests(): void {
-    this.router.navigate(['/admin/remediation-requests']); // تعديل المسار حسب المعتمد في الـ Routes لديكِ
+    this.router.navigate(['/admin/remediation-requests']);
   }
 
-  // التبديل بين تحديد وإلغاء تحديد سبب المخالفة
   toggleReason(reason: string): void {
     const current = this.selectedReasons();
     if (current.includes(reason)) {
@@ -96,14 +94,12 @@ export class AdminWarnings implements OnInit {
     this.updateEvidenceFromReasons();
   }
 
-  // مسح جميع الخيارات المحددة
   clearAllReasons(): void {
     this.selectedReasons.set([]);
     this.otherReasonText = '';
     this.updateEvidenceFromReasons();
   }
 
-  // تحديث نص الأدلة والأسباب تلقائياً بناءً على الخيارات المحددة
   updateEvidenceFromReasons(): void {
     let reasons = [...this.selectedReasons()];
     if (reasons.includes('مخالفة أخرى') && this.otherReasonText.trim()) {
@@ -116,13 +112,10 @@ export class AdminWarnings implements OnInit {
 
   toggleFilterMenu(): void {
     this.isFilterDropdownOpen = !this.isFilterDropdownOpen;
-    if (!this.isFilterDropdownOpen) {
-      this.activeFilterTab = 'NONE';
-    }
   }
 
   openFilterTab(tab: 'PRESETS' | 'YEAR' | 'MONTH' | 'STATUS' | 'LEVEL'): void {
-    this.activeFilterTab = this.activeFilterTab === tab ? 'NONE' : tab;
+    this.activeFilterTab = tab;
   }
 
   selectFilterOption(type: 'YEAR' | 'MONTH' | 'STATUS' | 'LEVEL', value: string): void {
@@ -135,8 +128,6 @@ export class AdminWarnings implements OnInit {
     if (type === 'MONTH') this.selectedMonth = value;
     if (type === 'STATUS') this.selectedStatus = value;
     if (type === 'LEVEL') this.selectedLevel = value;
-    
-    this.activeFilterTab = 'NONE';
   }
 
   applyPreset(preset: 'THIS_MONTH' | 'CURRENT_QUARTER' | 'THIS_YEAR'): void {
@@ -154,8 +145,6 @@ export class AdminWarnings implements OnInit {
     } else if (preset === 'CURRENT_QUARTER') {
       this.selectedYear = currentYear;
     }
-    this.isFilterDropdownOpen = false;
-    this.activeFilterTab = 'NONE';
   }
 
   resetAllFilters(): void {
@@ -164,8 +153,6 @@ export class AdminWarnings implements OnInit {
     this.selectedStatus = 'ALL';
     this.selectedLevel = 'ALL';
     this.searchTerm = '';
-    this.isFilterDropdownOpen = false;
-    this.activeFilterTab = 'NONE';
   }
 
   hasActiveFilters(): boolean {
