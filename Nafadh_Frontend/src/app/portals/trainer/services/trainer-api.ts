@@ -16,6 +16,7 @@ import {
   TrainingMaterialDto,
   TrainerBatchDto,
   TrainerDto,
+  TrainerCertificateDto,
   TrainerKpisDto,
   BatchDto,
   ProgramDto,
@@ -108,6 +109,16 @@ getProgram(
     );
   }
   
+updateSessionStatus(
+  sessionId: number,
+  status: number
+): Observable<void> {
+  return this.http.put<void>(
+    `${this.base}/Session/${sessionId}/status`,
+    { status }
+  );
+}
+
 createSession(dto: unknown) {
   return this.http.post(
     `${this.base}/Session`,
@@ -1042,6 +1053,47 @@ uploadTrainerProfileImage(
     `${this.base}/Trainer/${trainerId}/profile-image`,
     formData
   );
+}
+// =====================================================
+// TRAINER CERTIFICATES
+// =====================================================
+
+getTrainerCertificates(
+  trainerId: number
+): Observable<TrainerCertificateDto[]> {
+  return this.http.get<TrainerCertificateDto[]>(
+    `${this.base}/TrainerCertificate/trainer/${trainerId}`
+   );
+}
+
+uploadTrainerCertificate(
+  trainerId: number,
+  certificateName: string,
+  issuer: string,
+  issueDate: string,
+  expiryDate: string,
+  file: File
+): Observable<TrainerCertificateDto> {
+  const formData = new FormData();
+
+  formData.append('CertificateName', certificateName);
+  formData.append('Issuer', issuer || '');
+  formData.append('IssueDate', issueDate || '');
+  formData.append('ExpiryDate', expiryDate || '');
+  formData.append('File', file);
+
+  return this.http.post<TrainerCertificateDto>(
+    `${this.base}/TrainerCertificate/trainer/${trainerId}`,
+    formData
+   );
+}
+
+deleteTrainerCertificate(
+  certificateId: number
+): Observable<void> {
+  return this.http.delete<void>(
+    `${this.base}/TrainerCertificate/${certificateId}`
+   );
 }
 }
 
