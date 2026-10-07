@@ -2095,7 +2095,7 @@ export class TraineeProgram implements OnInit {
 
 
   // =====================================================
-  // TRAINING MATERIALS
+  // DOWNLOAD LESSON VIDEO
   // =====================================================
 
   downloadLessonMaterials(
@@ -2126,7 +2126,7 @@ export class TraineeProgram implements OnInit {
     ) {
 
       this.showNotification(
-        'يجب مشاهدة الدرس أولاً قبل تحميل المواد.',
+        'يجب مشاهدة الدرس أولاً قبل تحميل الفيديو.',
         'error'
       );
 
@@ -2154,6 +2154,10 @@ export class TraineeProgram implements OnInit {
     }
 
 
+    /*
+     * Get the same training materials used
+     * by "مشاهدة الدرس".
+     */
     this.api
       .getTrainingMaterials(lessonId)
       .subscribe({
@@ -2162,7 +2166,7 @@ export class TraineeProgram implements OnInit {
           materials => {
 
             console.log(
-              '✅ Training Materials:',
+              '✅ Lesson Training Materials for Download:',
               materials
             );
 
@@ -2173,7 +2177,7 @@ export class TraineeProgram implements OnInit {
             ) {
 
               this.showNotification(
-                'لا توجد مواد تدريبية متاحة لهذا الدرس.',
+                'لا يوجد فيديو متاح لهذا الدرس.',
                 'error'
               );
 
@@ -2194,26 +2198,32 @@ export class TraineeProgram implements OnInit {
 
 
             /*
-             * Video is for viewing only.
+             * Find the exact same video selected
+             * by viewLesson().
              *
-             * Download only non-video materials
-             * such as PDF, Word, images, etc.
+             * We use the file extension instead of
+             * fileType because some existing records
+             * have incorrect fileType values.
              */
-            const downloadableMaterials =
-              materials.filter(
-                material =>
-                  !this.isVideoMaterial(
-                    material
-                  )
+            const videoMaterial =
+              this.findVideoMaterial(
+                materials
               );
 
 
             if (
-              downloadableMaterials.length === 0
+              !videoMaterial ||
+              !videoMaterial.fileUrl
             ) {
 
+              console.warn(
+                '⚠️ No video material found:',
+                materials
+              );
+
+
               this.showNotification(
-                'لا توجد ملفات قابلة للتحميل لهذا الدرس.',
+                'لا يوجد فيديو مرفوع لهذا الدرس حاليًا.',
                 'error'
               );
 
@@ -2221,106 +2231,93 @@ export class TraineeProgram implements OnInit {
             }
 
 
-            downloadableMaterials.forEach(
-              material => {
-
-                const materialId =
-                  Number(
-                    material.materialId
-                  );
+            console.log(
+              '🎥 Video Material for Download:',
+              videoMaterial
+            );
 
 
-                if (
-                  !materialId ||
-                  Number.isNaN(materialId)
-                ) {
-
-                  console.warn(
-                    '⚠️ Invalid material ID:',
-                    material
-                  );
-
-                  return;
-                }
+            const videoUrl =
+              this.api.getFileUrl(
+                videoMaterial.fileUrl
+              );
 
 
-                this.api
-                  .getTrainingMaterialDownloadUrl(
-                    materialId
-                  )
-                  .subscribe({
+            if (!videoUrl) {
 
-                    next:
-                      response => {
+              this.showNotification(
+                'رابط فيديو الدرس غير متوفر حاليًا.',
+                'error'
+              );
 
-                        const rawDownloadUrl =
-                          response?.DownloadUrl;
+              return;
+            }
 
 
-                        if (
-                          !rawDownloadUrl
-                        ) {
-
-                          this.showNotification(
-                            'رابط تحميل المادة غير متوفر.',
-                            'error'
-                          );
-
-                          return;
-                        }
+            console.log(
+              '⬇️ Video Download URL:',
+              videoUrl
+            );
 
 
-                        const downloadUrl =
-                          this.api.getFileUrl(
-                            rawDownloadUrl
-                          );
+            /*
+             * Use the original video filename.
+             * Example:
+             * 40a3b138-e6c8-40b9-ba0c-cb9c71ccf324.mp4
+             */
+            const fileName =
+              videoMaterial.fileUrl
+                ?.split('/')
+                .pop()
+                ?.split('?')[0]
+                ||
+                `lesson-${lessonId}.mp4`;
 
 
-                        if (!downloadUrl) {
-
-                          this.showNotification(
-                            'رابط تحميل المادة غير صالح.',
-                            'error'
-                          );
-
-                          return;
-                        }
+            /*
+             * Create a temporary download link
+             * for the exact same video used by
+             * the lesson viewer.
+             */
+            const link =
+              document.createElement('a');
 
 
-                        console.log(
-                          '⬇️ Download URL:',
-                          downloadUrl
-                        );
+            link.href =
+              videoUrl;
 
 
-                        window.open(
-                          downloadUrl,
-                          '_blank',
-                          'noopener,noreferrer'
-                        );
-
-                      },
+            link.download =
+              fileName;
 
 
-                    error:
-                      error => {
-
-                        console.error(
-                          '❌ Download URL API Error:',
-                          error
-                        );
+            link.setAttribute(
+              'download',
+              fileName
+            );
 
 
-                        this.showNotification(
-                          'تعذر تحميل المادة التدريبية.',
-                          'error'
-                        );
+            link.style.display =
+              'none';
 
-                      }
 
-                  });
+            document.body.appendChild(
+              link
+            );
 
-              });
+
+            link.click();
+
+
+            document.body.removeChild(
+              link
+            );
+
+
+            this.showNotification(
+              'بدأ تحميل فيديو الدرس بنجاح.',
+              'success'
+            );
 
           },
 
@@ -2335,7 +2332,7 @@ export class TraineeProgram implements OnInit {
 
 
             this.showNotification(
-              'تعذر تحميل مواد الدرس حاليًا.',
+              'تعذر تحميل فيديو الدرس حاليًا.',
               'error'
             );
 
