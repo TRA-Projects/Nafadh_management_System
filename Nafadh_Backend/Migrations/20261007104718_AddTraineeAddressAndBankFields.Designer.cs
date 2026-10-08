@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Nafadh_Backend;
 
@@ -11,9 +12,11 @@ using Nafadh_Backend;
 namespace Nafadh_Backend.Migrations
 {
     [DbContext(typeof(Nafadhcontext))]
-    partial class NafadhcontextModelSnapshot : ModelSnapshot
+    [Migration("20261007104718_AddTraineeAddressAndBankFields")]
+    partial class AddTraineeAddressAndBankFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1501,6 +1504,9 @@ namespace Nafadh_Backend.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
+                    b.Property<string>("Skills")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -1647,34 +1653,6 @@ namespace Nafadh_Backend.Migrations
                     b.HasIndex("TraineePaymentId");
 
                     b.ToTable("NFD_TraineePaymentSchedules", (string)null);
-                });
-
-            modelBuilder.Entity("Nafadh_Backend.Models.NFD_TraineeSkill", b =>
-                {
-                    b.Property<int>("TraineeSkillId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TraineeSkillId"));
-
-                    b.Property<string>("CertificateUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SerialNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SkillName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("TraineeId")
-                        .HasColumnType("int");
-
-                    b.HasKey("TraineeSkillId");
-
-                    b.HasIndex("TraineeId");
-
-                    b.ToTable("NFD_TraineeSkills");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Trainer", b =>
@@ -2543,17 +2521,6 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("TraineePayment");
                 });
 
-            modelBuilder.Entity("Nafadh_Backend.Models.NFD_TraineeSkill", b =>
-                {
-                    b.HasOne("Nafadh_Backend.Models.NFD_Trainee", "Trainee")
-                        .WithMany("TraineeSkills")
-                        .HasForeignKey("TraineeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Trainee");
-                });
-
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Trainer", b =>
                 {
                     b.HasOne("Nafadh_Backend.Models.NFD_User", "User")
@@ -2802,8 +2769,6 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("TraineeBadges");
 
                     b.Navigation("TraineeModuleProgresses");
-
-                    b.Navigation("TraineeSkills");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TraineePayment", b =>

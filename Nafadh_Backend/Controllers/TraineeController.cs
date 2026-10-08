@@ -33,7 +33,7 @@ namespace Nafadh_Backend.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll(
             [FromQuery] int? companyId = null,
-            [FromQuery] NFD_TraineeStatus? status = null, // 👈 التخلف الافتراضي null لجلب الكل
+            [FromQuery] NFD_TraineeStatus? status = null,
             [FromQuery] string? university = null,
             [FromQuery] string? searchTerm = null,
             [FromQuery] int pageNumber = 1,
@@ -65,7 +65,6 @@ namespace Nafadh_Backend.Controllers
             var t = await _service.GetByIdWithDashboardDataAsync(id);
             if (t == null) return NotFound();
 
-            // Prefer the enrollment still in progress; fall back to the most recent one.
             var activeEnrollment = t.Enrollments?
                 .OrderByDescending(e => e.CompletionStatus == Enums.NFD_EnrollmentCompletionStatus.InProgress)
                 .ThenByDescending(e => e.EnrollmentDate)
@@ -80,20 +79,28 @@ namespace Nafadh_Backend.Controllers
                 University = t.University,
                 Major = t.Major,
                 AcademicLevel = t.AcademicLevel,
-                Skills = t.Skills,
+                //Skills = t.Skills,
                 ResumeUrl = t.ResumeUrl,
                 GitHubUrl = t.GitHubUrl,
                 LinkedInUrl = t.LinkedInUrl,
-
-                // Public URL of the trainee profile image.
                 ProfileImageUrl = t.ProfileImageUrl,
+
+                // NEW: Address
+                Governorate = t.Governorate,
+                Wilaya = t.Wilaya,
+                Village = t.Village,
+
+                // NEW: Bank Account
+                BankName = t.BankName,
+                AccountHolderName = t.AccountHolderName,
+                AccountNumber = t.AccountNumber,
+                IBAN = t.IBAN,
+                BankBranch = t.BankBranch,
 
                 Status = t.Status,
                 VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
                 CompanyName = t.Company?.CompanyName,
-                // FIX: was left at its default (0), which silently broke every
-                // consumer that relies on EnrollmentId (attendance, warnings, evaluations).
                 EnrollmentId = activeEnrollment?.EnrollmentId ?? 0
             };
 
@@ -113,12 +120,24 @@ namespace Nafadh_Backend.Controllers
             existing.University = update.University;
             existing.Major = update.Major;
             existing.AcademicLevel = update.AcademicLevel;
-            existing.Skills = update.Skills;
+            //existing.Skills = update.Skills;
             existing.ResumeUrl = update.ResumeUrl;
             existing.GitHubUrl = update.GitHubUrl;
             existing.LinkedInUrl = update.LinkedInUrl;
             existing.Status = update.Status;
             existing.CompanyId = update.CompanyId;
+
+            // NEW: Address
+            existing.Governorate = update.Governorate;
+            existing.Wilaya = update.Wilaya;
+            existing.Village = update.Village;
+
+            // NEW: Bank Account
+            existing.BankName = update.BankName;
+            existing.AccountHolderName = update.AccountHolderName;
+            existing.AccountNumber = update.AccountNumber;
+            existing.IBAN = update.IBAN;
+            existing.BankBranch = update.BankBranch;
 
             if (existing.CompanyId.HasValue)
             {
@@ -190,6 +209,7 @@ namespace Nafadh_Backend.Controllers
                 );
             }
         }
+
         // POST: api/trainee
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] TraineeCreateDTO create)
@@ -221,10 +241,23 @@ namespace Nafadh_Backend.Controllers
                 University = create.University,
                 Major = create.Major,
                 AcademicLevel = create.AcademicLevel,
-                Skills = create.Skills,
+                //Skills = create.Skills,
                 ResumeUrl = create.ResumeUrl,
                 GitHubUrl = create.GitHubUrl,
                 LinkedInUrl = create.LinkedInUrl,
+
+                // NEW: Address
+                Governorate = create.Governorate,
+                Wilaya = create.Wilaya,
+                Village = create.Village,
+
+                // NEW: Bank Account
+                BankName = create.BankName,
+                AccountHolderName = create.AccountHolderName,
+                AccountNumber = create.AccountNumber,
+                IBAN = create.IBAN,
+                BankBranch = create.BankBranch,
+
                 Status = Enums.NFD_TraineeStatus.NotAssigned,
                 VerificationStatus = Enums.NFD_VerificationStatus.Pending
             };
@@ -348,10 +381,23 @@ namespace Nafadh_Backend.Controllers
                     University = item.University,
                     Major = item.Major,
                     AcademicLevel = item.AcademicLevel,
-                    Skills = item.Skills,
+                    //Skills = item.Skills,
                     ResumeUrl = item.ResumeUrl,
                     GitHubUrl = item.GitHubUrl,
                     LinkedInUrl = item.LinkedInUrl,
+
+                    // NEW: Address
+                    Governorate = item.Governorate,
+                    Wilaya = item.Wilaya,
+                    Village = item.Village,
+
+                    // NEW: Bank Account
+                    BankName = item.BankName,
+                    AccountHolderName = item.AccountHolderName,
+                    AccountNumber = item.AccountNumber,
+                    IBAN = item.IBAN,
+                    BankBranch = item.BankBranch,
+
                     Status = Enums.NFD_TraineeStatus.NotAssigned,
                     VerificationStatus = Enums.NFD_VerificationStatus.Pending
                 };
@@ -408,7 +454,7 @@ namespace Nafadh_Backend.Controllers
         [HttpGet("certificates-dashboard")]
         public async Task<IActionResult> GetCertificatesDashboard(
             [FromQuery] int? companyId = null,
-            [FromQuery] NFD_TraineeStatus? status = null, // 👈 التخلف الافتراضي null
+            [FromQuery] NFD_TraineeStatus? status = null,
             [FromQuery] string? university = null,
             [FromQuery] string? searchTerm = null,
             [FromQuery] int pageNumber = 1,
@@ -453,28 +499,39 @@ namespace Nafadh_Backend.Controllers
                 TraineeId = t.TraineeId,
                 FullName = t.User?.FullName,
                 Email = t.User?.Email,
+                Phone = t.User?.Phone,
                 NationalId = t.NationalId,
                 University = t.University,
                 Major = t.Major,
                 AcademicLevel = t.AcademicLevel,
-                Skills = t.Skills,
+                //Skills = t.Skills,
                 ResumeUrl = t.ResumeUrl,
                 GitHubUrl = t.GitHubUrl,
                 LinkedInUrl = t.LinkedInUrl,
-
-                // Public URL of the trainee profile image.
                 ProfileImageUrl = t.ProfileImageUrl,
+
+                // NEW: Address
+                Governorate = t.Governorate,
+                Wilaya = t.Wilaya,
+                Village = t.Village,
+
+                // NEW: Bank Account
+                BankName = t.BankName,
+                AccountHolderName = t.AccountHolderName,
+                AccountNumber = t.AccountNumber,
+                IBAN = t.IBAN,
+                BankBranch = t.BankBranch,
 
                 Status = t.Status,
                 VerificationStatus = t.VerificationStatus,
                 CompanyId = t.CompanyId,
                 CompanyName = t.Company?.CompanyName,
-                Phone = t.User?.Phone,
                 EnrollmentId = t.Enrollments?.LastOrDefault(u => u.TraineeId == t.TraineeId)?.EnrollmentId ?? 0
             };
 
             return Ok(dto);
         }
+
         // PUT: api/trainee/traineeByUserID/{userId}
         [HttpPut("traineeByUserID/{userId}")]
         public async Task<IActionResult> UpdateTraineeByUserID(
@@ -532,9 +589,9 @@ namespace Nafadh_Backend.Controllers
             // Update Trainee information
             // =========================
 
-            trainee.Skills = string.IsNullOrWhiteSpace(dto.Skills)
-                ? null
-                : dto.Skills.Trim();
+            //trainee.Skills = string.IsNullOrWhiteSpace(dto.Skills)
+            //    ? null
+            //    : dto.Skills.Trim();
 
             trainee.ResumeUrl = string.IsNullOrWhiteSpace(dto.ResumeUrl)
                 ? null
@@ -547,6 +604,50 @@ namespace Nafadh_Backend.Controllers
             trainee.LinkedInUrl = string.IsNullOrWhiteSpace(dto.LinkedInUrl)
                 ? null
                 : dto.LinkedInUrl.Trim();
+
+            trainee.AcademicLevel = string.IsNullOrWhiteSpace(dto.AcademicLevel)
+                ? null
+                : dto.AcademicLevel.Trim();
+
+            // =========================
+            // Update Address information (NEW)
+            // =========================
+
+            trainee.Governorate = string.IsNullOrWhiteSpace(dto.Governorate)
+                ? null
+                : dto.Governorate.Trim();
+
+            trainee.Wilaya = string.IsNullOrWhiteSpace(dto.Wilaya)
+                ? null
+                : dto.Wilaya.Trim();
+
+            trainee.Village = string.IsNullOrWhiteSpace(dto.Village)
+                ? null
+                : dto.Village.Trim();
+
+            // =========================
+            // Update Bank Account information (NEW)
+            // =========================
+
+            trainee.BankName = string.IsNullOrWhiteSpace(dto.BankName)
+                ? null
+                : dto.BankName.Trim();
+
+            trainee.AccountHolderName = string.IsNullOrWhiteSpace(dto.AccountHolderName)
+                ? null
+                : dto.AccountHolderName.Trim();
+
+            trainee.AccountNumber = string.IsNullOrWhiteSpace(dto.AccountNumber)
+                ? null
+                : dto.AccountNumber.Trim();
+
+            trainee.IBAN = string.IsNullOrWhiteSpace(dto.IBAN)
+                ? null
+                : dto.IBAN.Trim();
+
+            trainee.BankBranch = string.IsNullOrWhiteSpace(dto.BankBranch)
+                ? null
+                : dto.BankBranch.Trim();
 
             try
             {
@@ -571,13 +672,23 @@ namespace Nafadh_Backend.Controllers
                     University = trainee.University,
                     Major = trainee.Major,
                     AcademicLevel = trainee.AcademicLevel,
-                    Skills = trainee.Skills,
+                    //Skills = trainee.Skills,
                     ResumeUrl = trainee.ResumeUrl,
                     GitHubUrl = trainee.GitHubUrl,
                     LinkedInUrl = trainee.LinkedInUrl,
-
-                    // Public URL of the trainee profile image.
                     ProfileImageUrl = trainee.ProfileImageUrl,
+
+                    // NEW: Address
+                    Governorate = trainee.Governorate,
+                    Wilaya = trainee.Wilaya,
+                    Village = trainee.Village,
+
+                    // NEW: Bank Account
+                    BankName = trainee.BankName,
+                    AccountHolderName = trainee.AccountHolderName,
+                    AccountNumber = trainee.AccountNumber,
+                    IBAN = trainee.IBAN,
+                    BankBranch = trainee.BankBranch,
 
                     Status = trainee.Status,
                     VerificationStatus = trainee.VerificationStatus,

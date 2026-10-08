@@ -199,6 +199,9 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ICompanyPaymentScheduleRepository, CompanyPaymentScheduleRepository>();
             builder.Services.AddScoped<ICompanyPaymentScheduleService, CompanyPaymentScheduleService>();
 
+            builder.Services.AddScoped<ITraineeSkillRepository, TraineeSkillRepository>();
+            builder.Services.AddScoped<ITraineeSkillService, TraineeSkillService>();
+
             // ── NEW registrations (backend upgrade - Phase 2 Contract Alignment) ──
             builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
             builder.Services.AddScoped<IConversationService, ConversationService>();
@@ -435,7 +438,7 @@ namespace Nafadh_Backend
 
             // Enable CORS middleware here
             app.UseCors("AllowAll");
-
+            app.UseStaticFiles();
             app.UseAuthentication();
             app.UseAuthorization();
 

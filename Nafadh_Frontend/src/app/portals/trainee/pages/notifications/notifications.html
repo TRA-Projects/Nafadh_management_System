@@ -19,43 +19,146 @@
 
   </header>
 
-  <div class="toolbar">
 
-    <div class="tabs">
+  <!-- =========================================================
+       Filters
+       ========================================================= -->
 
-      <button
-        type="button"
-        [class.active]="activeFilter() === 'all'"
-        (click)="setFilter('all')">
+  <div class="filters-row">
 
-        الكل
-        <span>{{ notifications().length }}</span>
+    <!-- فلترة حسب النوع -->
+    <div class="notification-type-filter">
 
-      </button>
+      <span class="type-filter-title">
+        تصفية حسب النوع:
+      </span>
 
-      <button
-        type="button"
-        [class.active]="activeFilter() === 'read'"
-        (click)="setFilter('read')">
 
-        مقروءة
-        <span>{{ readCount() }}</span>
+      <div class="type-filter-buttons">
 
-      </button>
+        <button
+          type="button"
+          class="type-filter-button"
+          [class.active]="activeTypeFilter() === 'all'"
+          (click)="setTypeFilter('all')">
 
-      <button
-        type="button"
-        [class.active]="activeFilter() === 'unread'"
-        (click)="setFilter('unread')">
+          الكل
 
-        غير مقروءة
-        <span>{{ unreadCount() }}</span>
+        </button>
 
-      </button>
+
+        <button
+          type="button"
+          class="type-filter-button"
+          [class.active]="activeTypeFilter() === 'unknown'"
+          (click)="setTypeFilter('unknown')">
+
+          إشعار
+
+        </button>
+
+
+        <button
+          type="button"
+          class="type-filter-button"
+          [class.active]="activeTypeFilter() === 'evaluation'"
+          (click)="setTypeFilter('evaluation')">
+
+          تقييم
+
+        </button>
+
+
+        <button
+          type="button"
+          class="type-filter-button"
+          [class.active]="activeTypeFilter() === 'reminder'"
+          (click)="setTypeFilter('reminder')">
+
+          إنذار
+
+        </button>
+
+
+        <button
+          type="button"
+          class="type-filter-button"
+          [class.active]="activeTypeFilter() === 'task'"
+          (click)="setTypeFilter('task')">
+
+          مهمة
+
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- فلترة حسب حالة القراءة -->
+    <div class="read-filter">
+
+      <span class="type-filter-title">
+        حالة القراءة:
+      </span>
+
+
+      <div class="type-filter-buttons">
+
+        <button
+          type="button"
+          class="type-filter-button"
+          [class.active]="activeFilter() === 'all'"
+          (click)="setFilter('all')">
+
+          الكل
+
+          <span>
+            {{ notifications().length }}
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="type-filter-button"
+          [class.active]="activeFilter() === 'read'"
+          (click)="setFilter('read')">
+
+          مقروءة
+
+          <span>
+            {{ readCount() }}
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="type-filter-button"
+          [class.active]="activeFilter() === 'unread'"
+          (click)="setFilter('unread')">
+
+          غير مقروءة
+
+          <span>
+            {{ unreadCount() }}
+          </span>
+
+        </button>
+
+      </div>
 
     </div>
 
   </div>
+
+
+  <!-- =========================================================
+       Loading
+       ========================================================= -->
 
   @if (loading()) {
 
@@ -64,6 +167,11 @@
     </div>
 
   }
+
+
+  <!-- =========================================================
+       Error
+       ========================================================= -->
 
   @else if (error()) {
 
@@ -83,15 +191,24 @@
 
   }
 
+
+  <!-- =========================================================
+       Empty
+       ========================================================= -->
+
   @else if (!filteredNotifications().length) {
 
     <div class="state empty">
 
-      <span class="bell">♧</span>
+      <span class="bell">
+        ♧
+      </span>
+
 
       <strong>
         لا توجد إشعارات
       </strong>
+
 
       <span>
 
@@ -99,11 +216,21 @@
 
           لا توجد إشعارات غير مقروءة.
 
-        } @else if (activeFilter() === 'read') {
+        }
+
+        @else if (activeFilter() === 'read') {
 
           لا توجد إشعارات مقروءة.
 
-        } @else {
+        }
+
+        @else if (activeTypeFilter() !== 'all') {
+
+          لا توجد إشعارات من النوع المحدد.
+
+        }
+
+        @else {
 
           ستظهر هنا الإشعارات الجديدة الخاصة بك.
 
@@ -114,6 +241,11 @@
     </div>
 
   }
+
+
+  <!-- =========================================================
+       Notifications List
+       ========================================================= -->
 
   @else {
 
@@ -128,11 +260,144 @@
           class="notification"
           [class.read]="item.isRead"
           [class.unread]="!item.isRead"
+          [ngClass]="'type-' + getNotificationType(item.relatedEntity)"
           (click)="markRead(item)">
 
+
+          <!-- =================================================
+               Notification Icon
+               ================================================= -->
+
           <div class="icon">
-            🔔
+
+            @switch (getNotificationType(item.relatedEntity)) {
+
+              @case ('task') {
+
+                📋
+
+              }
+
+
+              @case ('announcement') {
+
+                📢
+
+              }
+
+
+              @case ('reminder') {
+
+                ⏰
+
+              }
+
+
+              @case ('message') {
+
+                💬
+
+              }
+
+
+              @case ('system') {
+
+                ⚙️
+
+              }
+
+
+              @case ('training') {
+
+                🎓
+
+              }
+
+
+              @case ('lesson') {
+
+                📚
+
+              }
+
+
+              @case ('program') {
+
+                🗂️
+
+              }
+
+
+              @case ('assignment') {
+
+                📝
+
+              }
+
+
+              @case ('evaluation') {
+
+                ⭐
+
+              }
+
+
+              @case ('certificate') {
+
+                🏆
+
+              }
+
+
+              @case ('attendance') {
+
+                🕐
+
+              }
+
+
+              @case ('payment') {
+
+                💳
+
+              }
+
+
+              @case ('feedback') {
+
+                💭
+
+              }
+
+
+              @case ('achievement') {
+
+                🏅
+
+              }
+
+
+              @case ('report') {
+
+                📊
+
+              }
+
+
+              @default {
+
+                🔔
+
+              }
+
+            }
+
           </div>
+
+
+          <!-- =================================================
+               Notification Body
+               ================================================= -->
 
           <div class="body">
 
@@ -141,6 +406,7 @@
               <h2>
                 {{ item.title }}
               </h2>
+
 
               @if (!item.isRead) {
 
@@ -152,21 +418,29 @@
 
             </div>
 
+
             <p>
               {{ item.message }}
             </p>
 
+
             @if (item.relatedEntity) {
 
-              <small>
-                {{ item.relatedEntity }}
+              <small class="notification-type">
+
+                {{ getRelatedEntityLabel(item.relatedEntity) }}
+
               </small>
 
             }
 
+
             <div class="notification-date">
+
               <span class="date-dot"></span>
+
               {{ timeAgo(item.createdAt) }}
+
             </div>
 
           </div>

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TraineeApi } from '../../services/trainee-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { jsPDF } from 'jspdf';
 
 import {
   BadgeDto,
@@ -3098,14 +3099,11 @@ export class TraineeAchievements implements OnInit {
         ) => {
 
           const url =
-            window.URL.createObjectURL(
-              blob
-            );
+            window.URL
+              .createObjectURL(blob);
 
           const a =
-            document.createElement(
-              'a'
-            );
+            document.createElement('a');
 
           a.href = url;
 
@@ -3114,9 +3112,8 @@ export class TraineeAchievements implements OnInit {
 
           a.click();
 
-          window.URL.revokeObjectURL(
-            url
-          );
+          window.URL
+            .revokeObjectURL(url);
 
         },
 
