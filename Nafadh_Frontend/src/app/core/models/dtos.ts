@@ -105,6 +105,30 @@ export interface TraineeDashboardSummaryDto {
   latestNotifications?: { message: string; date: string }[];
 }
 
+// =====================================================
+// Lesson Feedback
+// =====================================================
+
+export interface LessonFeedbackDto {
+  lessonFeedbackId: number;
+  lessonId: number;
+  traineeId: number;
+  note?: string | null;
+  rating?: number | null;
+  createdAt: string;
+  updatedAt?: string | null;
+}
+
+export interface LessonFeedbackCreateDto {
+  note?: string | null;
+  rating?: number | null;
+}
+
+export interface LessonFeedbackUpdateDto {
+  note?: string | null;
+  rating?: number | null;
+}
+
 
 // ---- Company ----
 export interface CompanyDto {
@@ -871,4 +895,12 @@ export interface TrainerKpisDto {
   attendanceRate: number;
   taskCompletionRate: number;
   avgTechnicalGrade: number;
+}
+
+export interface TraineeSkillDto {
+  traineeSkillId: number;
+  traineeId: number;
+  skillName: string;
+  serialNumber?: string | null;
+  certificateUrl?: string | null;
 }

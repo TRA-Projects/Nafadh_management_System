@@ -201,6 +201,9 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ICompanyPaymentScheduleRepository, CompanyPaymentScheduleRepository>();
             builder.Services.AddScoped<ICompanyPaymentScheduleService, CompanyPaymentScheduleService>();
 
+            builder.Services.AddScoped<ITraineeSkillRepository, TraineeSkillRepository>();
+            builder.Services.AddScoped<ITraineeSkillService, TraineeSkillService>();
+
             // ── NEW registrations (backend upgrade - Phase 2 Contract Alignment) ──
             builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
             builder.Services.AddScoped<IConversationService, ConversationService>();
@@ -209,6 +212,12 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IBadgeRepository, BadgeRepository>();
             builder.Services.AddScoped<IBadgeService, BadgeService>();
             builder.Services.AddScoped<IBadgeEvaluationService, BadgeEvaluationService>();
+
+            // ── NEW registrations (backend upgrade - Phase 3 Contract Alignment) ──
+
+            builder.Services.AddScoped<ILessonFeedbackRepository, LessonFeedbackRepository>();
+            builder.Services.AddScoped<ILessonFeedbackService, LessonFeedbackService>();
+
 
             // Email settings
             builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
@@ -431,7 +440,7 @@ namespace Nafadh_Backend
 
             // Enable CORS middleware here
             app.UseCors("AllowAll");
-
+            app.UseStaticFiles();
             app.UseAuthentication();
             app.UseAuthorization();
 

@@ -7,28 +7,38 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { TraineeApi } from '../../services/trainee-api';
+import {
+  forkJoin,
+  of
+} from 'rxjs';
 
+import {
+  catchError
+} from 'rxjs/operators';
+
+import { TraineeApi } from '../../services/trainee-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 
 import {
   ConversationDetailDto,
-  ConversationListItemDto
+  ConversationListItemDto,
+  TraineeProfileDto,
+  EnrollmentDto,
+  TrainerDto
 } from '../../../../core/models/dtos';
 
 
 @Component({
   selector: 'app-trainee-support',
-
   standalone: true,
-
   imports: [
     CommonModule,
     FormsModule
   ],
-
   templateUrl: './support.html'
 })
+
+
 export class TraineeSupport implements OnInit {
 
 
@@ -39,19 +49,54 @@ export class TraineeSupport implements OnInit {
   conversations =
     signal<ConversationListItemDto[]>([]);
 
+
   active =
     signal<ConversationDetailDto | null>(null);
 
 
   // =========================================================
-  // UI State
+  // Trainee
+  // =========================================================
+
+  traineeId =
+    signal<number | null>(null);
+
+
+  enrollment =
+    signal<EnrollmentDto | null>(null);
+
+
+  // =========================================================
+  // Company
+  // =========================================================
+
+  companyName =
+    signal('');
+
+
+  // =========================================================
+  // Trainers
+  // =========================================================
+
+  trainers =
+    signal<TrainerDto[]>([]);
+
+
+  loadingTrainers =
+    signal(false);
+
+
+  // =========================================================
+  // UI
   // =========================================================
 
   isSubmitting =
     signal(false);
 
+
   errorMessage =
     signal('');
+
 
   successMessage =
     signal('');
@@ -65,12 +110,19 @@ export class TraineeSupport implements OnInit {
 
 
   // =========================================================
-  // New Complaint
+  // New Request
   // =========================================================
 
   newConv = {
 
+    receiverType: '',
+
+    trainerId:
+      null as number | null,
+
     subject: '',
+
+    note: '',
 
     firstMessage: ''
 
@@ -81,25 +133,21 @@ export class TraineeSupport implements OnInit {
   // File
   // =========================================================
 
-  selectedFile: File | null = null;
+  selectedFile: File | null =
+    null;
 
 
   // =========================================================
-  // Subjects
+  // Authority Subjects
   // =========================================================
 
   subjects = [
-
     'استفسار عن البرنامج التدريبي',
-
     'مشكلة تقنية',
-
     'استفسار عن الحضور',
-
     'شكوى رسمية',
-
+    'طلب انسحاب',
     'أخرى'
-
   ];
 
 
@@ -117,18 +165,434 @@ export class TraineeSupport implements OnInit {
 
 
   // =========================================================
-  // On Init
+  // Init
   // =========================================================
 
   ngOnInit(): void {
 
     this.loadConversations();
 
+    this.loadCurrentTraineeData();
+
   }
 
 
   // =========================================================
-  // Load Conversations
+  // Withdrawal Request
+  // =========================================================
+
+  isWithdrawalRequest(
+    conversation: any
+  ): boolean {
+
+    if (!conversation) {
+
+      return false;
+
+    }
+
+
+    return String(
+      conversation?.subject ?? ''
+    ).trim() === 'طلب انسحاب';
+
+  }
+
+
+  getWithdrawalStatus(
+    conversation: any
+  ): 'pending' | 'approved' | 'rejected' | null {
+
+    if (
+      !this.isWithdrawalRequest(
+        conversation
+      )
+    ) {
+
+      return null;
+
+    }
+
+
+    /*
+     * الحالة الحالية مؤقتة إلى أن يتم
+     * ربط حالة الطلب القادمة من Backend.
+     *
+     * حاليًا كل طلب انسحاب جديد يظهر
+     * على أنه قيد المراجعة.
+     */
+
+    return 'pending';
+
+  }
+
+
+  // =========================================================
+  // Trainee
+  // =========================================================
+
+  private loadCurrentTraineeData(): void {
+
+    const uid =
+      this.auth.userId;
+
+
+    if (!uid) {
+
+      return;
+
+    }
+
+
+    this.api
+      .getTrainee(uid)
+      .subscribe({
+
+        next: (
+          trainee: TraineeProfileDto
+        ) => {
+
+          const traineeId =
+            Number(
+              trainee.traineeId
+            );
+
+
+          if (
+            !traineeId ||
+            Number.isNaN(traineeId)
+          ) {
+
+            return;
+
+          }
+
+
+          this.traineeId.set(
+            traineeId
+          );
+
+
+          this.loadTraineeEnrollment(
+            traineeId
+          );
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'Error loading trainee:',
+            err
+          );
+
+
+          this.companyName.set('');
+
+          this.trainers.set([]);
+
+        }
+
+      });
+
+  }
+
+
+  // =========================================================
+  // Enrollment
+  // =========================================================
+
+  private loadTraineeEnrollment(
+    traineeId: number
+  ): void {
+
+    this.api
+      .getEnrollmentsByTrainee(
+        traineeId
+      )
+      .subscribe({
+
+        next: (
+          enrollments: EnrollmentDto[]
+        ) => {
+
+
+          if (
+            !enrollments ||
+            enrollments.length === 0
+          ) {
+
+            this.enrollment.set(
+              null
+            );
+
+
+            this.companyName.set('');
+
+            this.trainers.set([]);
+
+            return;
+
+          }
+
+
+          const activeEnrollment =
+
+            enrollments.find(
+
+              enrollment => {
+
+                const status =
+                  String(
+                    enrollment.completionStatus
+                    ?? ''
+                  )
+                    .toLowerCase();
+
+
+                return (
+                  status === 'active'
+                  ||
+                  status === 'inprogress'
+                  ||
+                  status === 'in_progress'
+                );
+
+              }
+
+            )
+
+            ||
+
+            enrollments[0];
+
+
+          this.enrollment.set(
+            activeEnrollment
+          );
+
+
+          this.companyName.set(
+
+            activeEnrollment.companyName
+
+            ?? ''
+
+          );
+
+
+          const batchId =
+            Number(
+              activeEnrollment.batchId
+            );
+
+
+          if (
+            batchId &&
+            !Number.isNaN(batchId)
+          ) {
+
+            this.loadTrainersByBatch(
+              batchId
+            );
+
+          }
+
+          else {
+
+            this.trainers.set([]);
+
+          }
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'Error loading enrollment:',
+            err
+          );
+
+
+          this.enrollment.set(
+            null
+          );
+
+
+          this.companyName.set('');
+
+          this.trainers.set([]);
+
+        }
+
+      });
+
+  }
+
+
+  // =========================================================
+  // Trainers
+  // =========================================================
+
+  private loadTrainersByBatch(
+    batchId: number
+  ): void {
+
+    this.loadingTrainers.set(
+      true
+    );
+
+
+    this.trainers.set([]);
+
+
+    this.api
+      .getBatchTrainers(
+        batchId
+      )
+      .subscribe({
+
+        next: (
+          batchTrainers: TrainerDto[]
+        ) => {
+
+
+          if (
+            !batchTrainers ||
+            batchTrainers.length === 0
+          ) {
+
+            this.trainers.set([]);
+
+            this.loadingTrainers.set(
+              false
+            );
+
+            return;
+
+          }
+
+
+          const requests =
+
+            batchTrainers.map(
+
+              batchTrainer => {
+
+                const trainerId =
+                  Number(
+                    batchTrainer.trainerId
+                  );
+
+
+                if (
+                  !trainerId ||
+                  Number.isNaN(
+                    trainerId
+                  )
+                ) {
+
+                  return of(
+                    batchTrainer
+                  );
+
+                }
+
+
+                return this.api
+                  .getTrainer(
+                    trainerId
+                  )
+                  .pipe(
+
+                    catchError(
+                      () => {
+
+                        return of(
+                          batchTrainer
+                        );
+
+                      }
+                    )
+
+                  );
+
+              }
+
+            );
+
+
+          forkJoin(
+            requests
+          )
+            .subscribe({
+
+              next: (
+                fullTrainers
+              ) => {
+
+                const validTrainers =
+                  fullTrainers.filter(
+                    trainer =>
+                      trainer != null
+                  ) as TrainerDto[];
+
+
+                this.trainers.set(
+                  validTrainers
+                );
+
+
+                this.loadingTrainers.set(
+                  false
+                );
+
+              },
+
+
+              error: () => {
+
+                this.trainers.set(
+                  batchTrainers
+                );
+
+
+                this.loadingTrainers.set(
+                  false
+                );
+
+              }
+
+            });
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'Error loading trainers:',
+            err
+          );
+
+
+          this.trainers.set([]);
+
+          this.loadingTrainers.set(
+            false
+          );
+
+        }
+
+      });
+
+  }
+
+
+  // =========================================================
+  // Conversations
   // =========================================================
 
   private loadConversations(): void {
@@ -143,14 +607,16 @@ export class TraineeSupport implements OnInit {
         'تعذر تحديد المستخدم الحالي'
       );
 
+
       return;
 
     }
 
 
     this.api
-      .getConversations(uid)
-
+      .getConversations(
+        uid
+      )
       .subscribe({
 
         next: (data) => {
@@ -159,30 +625,20 @@ export class TraineeSupport implements OnInit {
             data ?? [];
 
 
-          console.log(
-            '📥 All conversations:',
-            all
-          );
-
-
-          /*
-           * المتدرب يرى فقط شكاوى المتدربين.
-           */
-
           const complaints =
-            all.filter((c: any) =>
+            all.filter(
 
-              c.type === 'TraineeComplaint' ||
+              (conversation: any) =>
 
-              c.conversationType === 'TraineeComplaint'
+                conversation.type ===
+                  'TraineeComplaint'
+
+                ||
+
+                conversation.conversationType ===
+                  'TraineeComplaint'
 
             );
-
-
-          console.log(
-            '📋 Trainee complaints:',
-            complaints
-          );
 
 
           this.conversations.set(
@@ -190,28 +646,35 @@ export class TraineeSupport implements OnInit {
           );
 
 
-          /*
-           * إذا كانت هناك محادثة مفتوحة
-           * نعيد تحميل تفاصيلها.
-           */
-
           const current =
             this.active();
 
 
           if (current) {
 
-            const stillExists =
+            const exists =
               complaints.some(
-                (c: any) =>
-                  c.conversationId ===
-                  current.conversationId
+
+                (conversation: any) =>
+
+                  Number(
+                    conversation.conversationId
+                  )
+
+                  ===
+
+                  Number(
+                    current.conversationId
+                  )
+
               );
 
 
-            if (!stillExists) {
+            if (!exists) {
 
-              this.active.set(null);
+              this.active.set(
+                null
+              );
 
             }
 
@@ -223,7 +686,7 @@ export class TraineeSupport implements OnInit {
         error: (err) => {
 
           console.error(
-            '❌ خطأ في جلب الشكاوى:',
+            'Error loading conversations:',
             err
           );
 
@@ -243,32 +706,61 @@ export class TraineeSupport implements OnInit {
   // Open Conversation
   // =========================================================
 
-  open(id: number): void {
+  open(
+    id: number
+  ): void {
 
     this.errorMessage.set('');
 
 
-    this.api
-      .getConversation(id)
+    const listConversation: any =
 
+      this.conversations()
+
+        .find(
+
+          conversation =>
+
+            Number(
+              conversation.conversationId
+            )
+
+            ===
+
+            Number(
+              id
+            )
+
+        );
+
+
+    this.api
+      .getConversation(
+        id
+      )
       .subscribe({
 
-        next: (conversation) => {
+        next: (
+          conversation
+        ) => {
+
+          const mergedConversation: any = {
+
+            ...(listConversation ?? {}),
+
+            ...(conversation ?? {})
+
+          };
+
 
           this.active.set(
-            conversation
+            mergedConversation as ConversationDetailDto
           );
 
         },
 
 
-        error: (err) => {
-
-          console.error(
-            '❌ خطأ في فتح المحادثة:',
-            err
-          );
-
+        error: () => {
 
           this.errorMessage.set(
             'تعذر فتح المحادثة'
@@ -282,21 +774,20 @@ export class TraineeSupport implements OnInit {
 
 
   // =========================================================
-  // File Selected
+  // File
   // =========================================================
 
-  onFileSelected(event: Event): void {
+  onFileSelected(
+    event: Event
+  ): void {
 
     const input =
       event.target as HTMLInputElement;
 
 
     if (
-
       !input.files ||
-
       input.files.length === 0
-
     ) {
 
       return;
@@ -308,30 +799,31 @@ export class TraineeSupport implements OnInit {
       input.files[0];
 
 
-    // Maximum 10 MB
-
     const maxSize =
       10 * 1024 * 1024;
 
 
-    if (file.size > maxSize) {
+    if (
+      file.size > maxSize
+    ) {
 
       this.errorMessage.set(
         'حجم الملف يجب ألا يتجاوز 10MB'
       );
 
 
-      this.selectedFile = null;
+      this.selectedFile =
+        null;
 
-      input.value = '';
+
+      input.value =
+        '';
 
 
       return;
 
     }
 
-
-    // Allowed types
 
     const allowedTypes = [
 
@@ -345,19 +837,22 @@ export class TraineeSupport implements OnInit {
 
 
     if (
-
-      !allowedTypes.includes(file.type)
-
+      !allowedTypes.includes(
+        file.type
+      )
     ) {
 
       this.errorMessage.set(
-        'نوع الملف غير مدعوم. يسمح فقط بـ PDF, PNG, JPG'
+        'يسمح فقط بصورة PNG أو JPG أو JPEG أو ملف PDF'
       );
 
 
-      this.selectedFile = null;
+      this.selectedFile =
+        null;
 
-      input.value = '';
+
+      input.value =
+        '';
 
 
       return;
@@ -367,16 +862,15 @@ export class TraineeSupport implements OnInit {
 
     this.errorMessage.set('');
 
-    this.selectedFile = file;
+    this.selectedFile =
+      file;
 
   }
 
 
-  // =========================================================
-  // Remove File
-  // =========================================================
-
-  removeFile(event?: Event): void {
+  removeFile(
+    event?: Event
+  ): void {
 
     if (event) {
 
@@ -385,18 +879,19 @@ export class TraineeSupport implements OnInit {
     }
 
 
-    this.selectedFile = null;
+    this.selectedFile =
+      null;
 
   }
 
 
-  // =========================================================
-  // Format File Size
-  // =========================================================
+  formatFileSize(
+    bytes: number
+  ): string {
 
-  formatFileSize(bytes: number): string {
-
-    if (bytes === 0) {
+    if (
+      bytes === 0
+    ) {
 
       return '0 KB';
 
@@ -407,7 +902,9 @@ export class TraineeSupport implements OnInit {
       bytes / 1024;
 
 
-    if (kb < 1024) {
+    if (
+      kb < 1024
+    ) {
 
       return `${kb.toFixed(1)} KB`;
 
@@ -424,22 +921,379 @@ export class TraineeSupport implements OnInit {
 
 
   // =========================================================
-  // Validate Form
+  // Receiver Change
+  // =========================================================
+
+  onReceiverChange(): void {
+
+    this.newConv.subject =
+      '';
+
+
+    this.newConv.note =
+      '';
+
+
+    this.newConv.firstMessage =
+      '';
+
+
+    this.newConv.trainerId =
+      null;
+
+
+    this.selectedFile =
+      null;
+
+
+    this.errorMessage.set('');
+
+  }
+
+
+  // =========================================================
+  // Selected Trainer
+  // =========================================================
+
+  private getSelectedTrainer():
+    TrainerDto | undefined {
+
+    const trainerId =
+      this.newConv.trainerId;
+
+
+    if (!trainerId) {
+
+      return undefined;
+
+    }
+
+
+    return this.trainers()
+      .find(
+
+        trainer =>
+
+          Number(
+            trainer.trainerId
+          )
+
+          ===
+
+          Number(
+            trainerId
+          )
+
+      );
+
+  }
+
+
+  // =========================================================
+  // Receiver Label
+  // =========================================================
+
+  getReceiverLabel(
+    conversation: any
+  ): string {
+
+    if (!conversation) {
+
+      return '';
+
+    }
+
+
+    const rawReceiverType =
+
+      conversation?.receiverType
+
+      ??
+
+      conversation?.recipientType
+
+      ??
+
+      conversation?.targetType
+
+      ??
+
+      conversation?.assignedToType
+
+      ??
+
+      conversation?.receiverRole
+
+      ??
+
+      conversation?.recipientRole
+
+      ??
+
+      '';
+
+
+    const receiverType =
+
+      String(
+        rawReceiverType
+      )
+
+        .trim()
+
+        .toLowerCase();
+
+
+    if (
+
+      receiverType === 'authority'
+
+      ||
+
+      receiverType.includes('authority')
+
+      ||
+
+      receiverType.includes('هيئة')
+
+    ) {
+
+      return 'هيئة تنظيم الاتصالات';
+
+    }
+
+
+    if (
+
+      receiverType === 'trainer'
+
+      ||
+
+      receiverType.includes('trainer')
+
+      ||
+
+      receiverType.includes('مدرب')
+
+      ||
+
+      conversation?.receiverTrainerId
+
+      ||
+
+      conversation?.trainerId
+
+    ) {
+
+      const trainerName =
+
+        conversation?.receiverTrainerName
+
+        ??
+
+        conversation?.trainerName
+
+        ??
+
+        conversation?.recipientName
+
+        ??
+
+        conversation?.receiverName
+
+        ??
+
+        conversation?.targetName
+
+        ??
+
+        conversation?.assignedToName
+
+        ??
+
+        '';
+
+
+      if (
+        trainerName
+      ) {
+
+        return String(
+          trainerName
+        );
+
+      }
+
+
+      return 'المدرب';
+
+    }
+
+
+    if (
+
+      receiverType === 'company'
+
+      ||
+
+      receiverType.includes('company')
+
+      ||
+
+      receiverType.includes('شركة')
+
+      ||
+
+      conversation?.receiverCompanyId
+
+      ||
+
+      conversation?.companyId
+
+    ) {
+
+      const conversationCompanyName =
+
+        conversation?.receiverCompanyName
+
+        ??
+
+        conversation?.companyName
+
+        ??
+
+        conversation?.recipientName
+
+        ??
+
+        conversation?.receiverName
+
+        ??
+
+        conversation?.targetName
+
+        ??
+
+        conversation?.assignedToName
+
+        ??
+
+        this.companyName();
+
+
+      if (
+        conversationCompanyName
+      ) {
+
+        return `الشركة - ${conversationCompanyName}`;
+
+      }
+
+
+      return 'الشركة';
+
+    }
+
+
+    if (
+      conversation?.receiverTrainerName
+    ) {
+
+      return String(
+        conversation.receiverTrainerName
+      );
+
+    }
+
+
+    if (
+      conversation?.receiverCompanyName
+    ) {
+
+      return `الشركة - ${conversation.receiverCompanyName}`;
+
+    }
+
+
+    return '';
+
+  }
+
+
+  // =========================================================
+  // Validate
   // =========================================================
 
   canSubmit(): boolean {
 
-    return (
+    if (
+      !this.newConv.receiverType
+    ) {
 
-      !!this.newConv.subject &&
+      return false;
 
-      !!this.newConv.firstMessage &&
+    }
 
-      this.newConv.firstMessage
-        .trim()
-        .length > 0
 
-    );
+    if (
+      this.newConv.receiverType ===
+        'Trainer'
+    ) {
+
+      return (
+
+        !!this.newConv.trainerId
+
+        &&
+
+        !!this.newConv.subject.trim()
+
+        &&
+
+        !!this.newConv.note.trim()
+
+      );
+
+    }
+
+
+    if (
+      this.newConv.receiverType ===
+        'Company'
+    ) {
+
+      return (
+
+        !!this.newConv.subject.trim()
+
+        &&
+
+        !!this.newConv.note.trim()
+
+      );
+
+    }
+
+
+    if (
+      this.newConv.receiverType ===
+        'Authority'
+    ) {
+
+      return (
+
+        !!this.newConv.subject.trim()
+
+        &&
+
+        !!this.newConv.firstMessage.trim()
+
+      );
+
+    }
+
+
+    return false;
 
   }
 
@@ -455,11 +1309,8 @@ export class TraineeSupport implements OnInit {
 
 
     if (
-
       !conversation ||
-
       !this.replyText.trim()
-
     ) {
 
       return;
@@ -473,27 +1324,20 @@ export class TraineeSupport implements OnInit {
 
     if (!uid) {
 
-      this.errorMessage.set(
-        'تعذر تحديد المستخدم الحالي'
-      );
-
       return;
 
     }
 
 
-    this.errorMessage.set('');
-
-
     this.api
-
       .sendMessage(
 
         conversation.conversationId,
 
         {
 
-          senderId: uid,
+          senderId:
+            uid,
 
           content:
             this.replyText.trim()
@@ -501,18 +1345,13 @@ export class TraineeSupport implements OnInit {
         }
 
       )
-
       .subscribe({
 
         next: () => {
 
-          this.replyText = '';
+          this.replyText =
+            '';
 
-
-          /*
-           * إعادة تحميل المحادثة
-           * لإظهار الرسالة الجديدة.
-           */
 
           this.open(
             conversation.conversationId
@@ -521,13 +1360,7 @@ export class TraineeSupport implements OnInit {
         },
 
 
-        error: (err) => {
-
-          console.error(
-            '❌ خطأ في إرسال الرد:',
-            err
-          );
-
+        error: () => {
 
           this.errorMessage.set(
             'تعذر إرسال الرد'
@@ -541,12 +1374,14 @@ export class TraineeSupport implements OnInit {
 
 
   // =========================================================
-  // Start Complaint
+  // Start Conversation
   // =========================================================
 
   startConversation(): void {
 
-    if (this.isSubmitting()) {
+    if (
+      this.isSubmitting()
+    ) {
 
       return;
 
@@ -558,24 +1393,91 @@ export class TraineeSupport implements OnInit {
     this.successMessage.set('');
 
 
-    // Validate Subject
-
-    if (!this.newConv.subject) {
+    if (
+      !this.newConv.receiverType
+    ) {
 
       this.errorMessage.set(
-        'يرجى اختيار موضوع الطلب'
+        'يرجى اختيار الجهة المستلمة أولاً'
       );
+
 
       return;
 
     }
 
 
-    // Validate Message
+    if (
+
+      this.newConv.receiverType ===
+        'Trainer'
+
+      &&
+
+      !this.newConv.trainerId
+
+    ) {
+
+      this.errorMessage.set(
+        'يرجى اختيار المدرب'
+      );
+
+
+      return;
+
+    }
+
+
+    if (
+      !this.newConv.subject.trim()
+    ) {
+
+      this.errorMessage.set(
+        'يرجى كتابة نوع الطلب'
+      );
+
+
+      return;
+
+    }
+
 
     if (
 
-      !this.newConv.firstMessage ||
+      (
+
+        this.newConv.receiverType ===
+          'Trainer'
+
+        ||
+
+        this.newConv.receiverType ===
+          'Company'
+
+      )
+
+      &&
+
+      !this.newConv.note.trim()
+
+    ) {
+
+      this.errorMessage.set(
+        'يرجى كتابة الملاحظة'
+      );
+
+
+      return;
+
+    }
+
+
+    if (
+
+      this.newConv.receiverType ===
+        'Authority'
+
+      &&
 
       !this.newConv.firstMessage.trim()
 
@@ -585,12 +1487,11 @@ export class TraineeSupport implements OnInit {
         'يرجى كتابة تفاصيل الطلب'
       );
 
+
       return;
 
     }
 
-
-    // User
 
     const uid =
       this.auth.userId;
@@ -602,86 +1503,166 @@ export class TraineeSupport implements OnInit {
         'تعذر تحديد المستخدم الحالي'
       );
 
+
       return;
 
     }
 
 
-    // Payload
+    const selectedTrainer =
+      this.getSelectedTrainer();
+
+
+    const messageContent =
+
+      this.newConv.receiverType ===
+        'Trainer'
+
+      ||
+
+      this.newConv.receiverType ===
+        'Company'
+
+        ? this.newConv.note.trim()
+
+        : this.newConv.firstMessage.trim();
+
 
     const payload = {
 
-      type: 'TraineeComplaint',
+      type:
+        'TraineeComplaint',
+
+      receiverType:
+        this.newConv.receiverType,
+
+      receiverTrainerId:
+
+        this.newConv.receiverType ===
+          'Trainer'
+
+          ? this.newConv.trainerId
+
+          : null,
+
+      receiverTrainerName:
+
+        this.newConv.receiverType ===
+          'Trainer'
+
+          ? (
+              selectedTrainer?.fullName
+              ?? ''
+            )
+
+          : null,
 
       subject:
-        this.newConv.subject,
+        this.newConv.subject.trim(),
+
+      note:
+
+        (
+
+          this.newConv.receiverType ===
+            'Trainer'
+
+          ||
+
+          this.newConv.receiverType ===
+            'Company'
+
+        )
+
+          ? this.newConv.note.trim()
+
+          : '',
 
       firstMessage:
-        this.newConv.firstMessage.trim(),
+        messageContent,
 
       startedByUserId:
-        uid
+        uid,
+
+      attachment:
+        this.selectedFile
 
     };
 
 
     console.log(
-      '📤 Sending trainee complaint:',
+      'Sending support request:',
       payload
     );
 
 
-    this.isSubmitting.set(true);
+    console.log(
+      'Selected attachment:',
+      this.selectedFile
+    );
+
+
+    this.isSubmitting.set(
+      true
+    );
 
 
     this.api
-
-      .startConversation(payload)
-
+      .startConversation(
+        payload
+      )
       .subscribe({
 
-        next: (response) => {
-
-          console.log(
-            '✅ تم إرسال الشكوى:',
-            response
-          );
-
+        next: () => {
 
           this.successMessage.set(
             'تم إرسال الطلب بنجاح'
           );
 
 
-          // Reset form
-
           this.newConv = {
 
-            subject: '',
+            receiverType:
+              '',
 
-            firstMessage: ''
+            trainerId:
+              null,
+
+            subject:
+              '',
+
+            note:
+              '',
+
+            firstMessage:
+              ''
 
           };
 
 
-          this.selectedFile = null;
+          this.selectedFile =
+            null;
 
-
-          // Refresh conversations
 
           this.loadConversations();
 
 
-          this.isSubmitting.set(false);
+          this.isSubmitting.set(
+            false
+          );
 
 
-          // Hide success message
+          setTimeout(
+            () => {
 
-          setTimeout(() => {
+              this.successMessage.set(
+                ''
+              );
 
-            this.successMessage.set('');
+            },
 
-          }, 4000);
+            4000
+          );
 
         },
 
@@ -689,7 +1670,7 @@ export class TraineeSupport implements OnInit {
         error: (err) => {
 
           console.error(
-            '❌ خطأ في إرسال الطلب:',
+            'Error sending request:',
             err
           );
 
@@ -699,37 +1680,11 @@ export class TraineeSupport implements OnInit {
 
 
           if (
-
-            err?.error &&
-
-            typeof err.error === 'object' &&
-
-            err.error.message
-
+            err?.error?.message
           ) {
 
             message =
               err.error.message;
-
-          }
-
-          else if (
-
-            err?.error &&
-
-            typeof err.error === 'string'
-
-          ) {
-
-            message =
-              err.error;
-
-          }
-
-          else if (err?.message) {
-
-            message =
-              err.message;
 
           }
 
@@ -739,7 +1694,9 @@ export class TraineeSupport implements OnInit {
           );
 
 
-          this.isSubmitting.set(false);
+          this.isSubmitting.set(
+            false
+          );
 
         }
 

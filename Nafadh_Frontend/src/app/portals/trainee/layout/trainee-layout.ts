@@ -13,12 +13,42 @@ import { AppShell, ShellNavItem } from '../../../shared/ui/app-shell/app-shell';
 export class TraineeLayout {
   navItems: ShellNavItem[] = [
     { path: 'dashboard', label: 'الرئيسية', icon: 'home' },
+
+
+
+
     { path: 'profile', label: 'الملف الشخصي', icon: 'user' },
+
+
+
+
     { path: 'program', label: 'البرنامج التدريبي', icon: 'book' },
+
+
+
+
     { path: 'tasks', label: 'المهام والمشاريع', icon: 'clip' },
+
+
+
+
     { path: 'attendance', label: 'الحضور', icon: 'cal' },
+
+
+
+
     { path: 'notifications', label: 'التنبيهات', icon: 'bell' },
-    { path: 'support', label: 'الدعم', icon: 'chat' },
-    { path: 'achievements', label: 'الإنجازات', icon: 'award' },
+
+
+
+
+    { path: 'support', label: 'التواصل والمراسلات', icon: 'chat' },
+
+
+
+
+    { path: 'achievements', label: 'الإنجازات والشهادات', icon: 'award' },
+
+    
   ];
 }

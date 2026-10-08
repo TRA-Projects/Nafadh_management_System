@@ -33,6 +33,10 @@ import {
   TrainerDto,
   CompanySupervisorDto,
   ProgressSummaryDto,
+  LessonFeedbackDto,
+  LessonFeedbackCreateDto,
+  LessonFeedbackUpdateDto,
+  TraineeSkillDto,
 } from '../../../core/models/dtos';
 
 
@@ -191,6 +195,80 @@ export class TraineeApi {
     );
   }
 
+getTraineeSkills(
+  traineeId: number
+): Observable<TraineeSkillDto[]> {
+  return this.http.get<TraineeSkillDto[]>(
+    `${this.base}/TraineeSkill/trainee/${traineeId}`
+  );
+}
+
+addTraineeSkill(
+  traineeId: number,
+  skillName: string,
+  serialNumber: string,
+  certificateFile: File | null
+): Observable<TraineeSkillDto> {
+
+  const formData = new FormData();
+
+  formData.append(
+    'TraineeId',
+    traineeId.toString()
+  );
+
+  formData.append(
+    'SkillName',
+    skillName
+  );
+
+  if (serialNumber.trim()) {
+    formData.append(
+      'SerialNumber',
+      serialNumber
+    );
+  }
+
+  if (certificateFile) {
+    formData.append(
+      'CertificateFile',
+      certificateFile,
+      certificateFile.name
+    );
+  }
+
+  return this.http.post<TraineeSkillDto>(
+    `${this.base}/TraineeSkill`,
+    formData
+  );
+}
+
+deleteTraineeSkill(
+  traineeSkillId: number
+): Observable<any> {
+  return this.http.delete(
+    `${this.base}/TraineeSkill/${traineeSkillId}`
+  );
+}
+
+uploadTraineeResume(
+  traineeId: number,
+  file: File
+): Observable<{ resumeUrl: string }> {
+
+  const formData = new FormData();
+
+  formData.append(
+    'file',
+    file,
+    file.name
+  );
+
+  return this.http.post<{ resumeUrl: string }>(
+    `${this.base}/Trainee/${traineeId}/resume`,
+    formData
+  );
+}
 
   // =========================================================
   // Enrollment
@@ -329,7 +407,7 @@ export class TraineeApi {
   }
 
 
-  // =========================================================
+    // =========================================================
   // Training Materials
   // =========================================================
 
@@ -343,18 +421,59 @@ export class TraineeApi {
   }
 
 
+  getTrainingMaterialDownloadUrl(
+    materialId: number
+  ): Observable<{ DownloadUrl: string }> {
+
+    return this.http.get<{ DownloadUrl: string }>(
+      `${this.base}/TrainingMaterial/${materialId}/download`
+    );
+  }
+
+
+getFileUrl(fileUrl: string): string {
+
+  if (!fileUrl) {
+    return '';
+  }
+
+  // If the URL is already absolute
+  if (/^https?:\/\//i.test(fileUrl)) {
+    return fileUrl;
+  }
+
+  /*
+   * environment.apiBaseUrl is normally:
+   * https://localhost:7082/api
+   *
+   * Uploaded files are served from:
+   * https://localhost:7082/uploads/...
+   *
+   * So we remove /api from the base URL.
+   */
+  const apiRoot =
+    this.base.replace(/\/api\/?$/i, '');
+
+  const normalizedPath =
+    fileUrl.startsWith('/')
+      ? fileUrl
+      : `/${fileUrl}`;
+
+  return `${apiRoot}${normalizedPath}`;
+}
+
   // =========================================================
   // Sessions
   // =========================================================
 
-  getSessionsByBatch(
-    batchId: number
-  ): Observable<SessionDto[]> {
+getSessionsByBatch(
+  batchId: number
+): Observable<SessionDto[]> {
 
-    return this.http.get<SessionDto[]>(
-      `${this.base}/Session/batch/${batchId}`
-    );
-  }
+  return this.http.get<SessionDto[]>(
+    `${this.base}/Session?batchId=${batchId}`
+  );
+}
 
 
   getSession(
@@ -363,6 +482,44 @@ export class TraineeApi {
 
     return this.http.get<SessionDto>(
       `${this.base}/Session/${sessionId}`
+    );
+  }
+
+
+  // =========================================================
+  // Lesson Feedback
+  // =========================================================
+
+  getLessonFeedback(
+    lessonId: number
+  ): Observable<LessonFeedbackDto> {
+
+    return this.http.get<LessonFeedbackDto>(
+      `${this.base}/LessonFeedback/lesson/${lessonId}`
+    );
+  }
+
+
+  createLessonFeedback(
+    lessonId: number,
+    dto: LessonFeedbackCreateDto
+  ): Observable<LessonFeedbackDto> {
+
+    return this.http.post<LessonFeedbackDto>(
+      `${this.base}/LessonFeedback/lesson/${lessonId}`,
+      dto
+    );
+  }
+
+
+  updateLessonFeedback(
+    lessonId: number,
+    dto: LessonFeedbackUpdateDto
+  ): Observable<LessonFeedbackDto> {
+
+    return this.http.put<LessonFeedbackDto>(
+      `${this.base}/LessonFeedback/lesson/${lessonId}`,
+      dto
     );
   }
 
@@ -625,12 +782,68 @@ export class TraineeApi {
 
 
   startConversation(
-    dto: unknown
+    dto: {
+      type: string;
+      category?: string | null;
+      subject: string;
+      startedByUserId: number;
+      firstMessage: string;
+      attachment?: File | null;
+    }
   ): Observable<ConversationDetailDto> {
+
+    const formData =
+      new FormData();
+
+
+    formData.append(
+      'Type',
+      dto.type
+    );
+
+
+    if (dto.category) {
+
+      formData.append(
+        'Category',
+        dto.category
+      );
+
+    }
+
+
+    formData.append(
+      'Subject',
+      dto.subject
+    );
+
+
+    formData.append(
+      'StartedByUserId',
+      dto.startedByUserId.toString()
+    );
+
+
+    formData.append(
+      'FirstMessage',
+      dto.firstMessage
+    );
+
+
+    if (dto.attachment) {
+
+      formData.append(
+        'Attachment',
+        dto.attachment,
+        dto.attachment.name
+      );
+
+    }
+
 
     return this.http.post<ConversationDetailDto>(
       `${this.base}/Conversation`,
-      dto
+      formData
     );
   }
 
