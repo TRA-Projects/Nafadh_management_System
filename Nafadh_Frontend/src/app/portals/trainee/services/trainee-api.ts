@@ -36,6 +36,7 @@ import {
   LessonFeedbackDto,
   LessonFeedbackCreateDto,
   LessonFeedbackUpdateDto,
+  TraineeSkillDto,
 } from '../../../core/models/dtos';
 
 
@@ -194,6 +195,61 @@ export class TraineeApi {
     );
   }
 
+getTraineeSkills(
+  traineeId: number
+): Observable<TraineeSkillDto[]> {
+  return this.http.get<TraineeSkillDto[]>(
+    `${this.base}/TraineeSkill/trainee/${traineeId}`
+  );
+}
+
+addTraineeSkill(
+  traineeId: number,
+  skillName: string,
+  serialNumber: string,
+  certificateFile: File | null
+): Observable<TraineeSkillDto> {
+
+  const formData = new FormData();
+
+  formData.append(
+    'TraineeId',
+    traineeId.toString()
+  );
+
+  formData.append(
+    'SkillName',
+    skillName
+  );
+
+  if (serialNumber.trim()) {
+    formData.append(
+      'SerialNumber',
+      serialNumber
+    );
+  }
+
+  if (certificateFile) {
+    formData.append(
+      'CertificateFile',
+      certificateFile,
+      certificateFile.name
+    );
+  }
+
+  return this.http.post<TraineeSkillDto>(
+    `${this.base}/TraineeSkill`,
+    formData
+  );
+}
+
+deleteTraineeSkill(
+  traineeSkillId: number
+): Observable<any> {
+  return this.http.delete(
+    `${this.base}/TraineeSkill/${traineeSkillId}`
+  );
+}
 
   // =========================================================
   // Enrollment

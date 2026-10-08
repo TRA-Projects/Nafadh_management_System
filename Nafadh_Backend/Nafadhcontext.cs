@@ -67,6 +67,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_Badge> NFD_Badges { get; set; }
         public DbSet<NFD_TraineeBadge> NFD_TraineeBadges { get; set; }
         public DbSet<NFD_LessonFeedback> NFD_LessonFeedbacks { get; set; }
+        public DbSet<NFD_TraineeSkill> NFD_TraineeSkills { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -761,6 +762,14 @@ namespace Nafadh_Backend
                     .HasForeignKey(e => e.BadgeId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+
+            // ---- NFD_TraineeSkill ----
+            modelBuilder.Entity<NFD_TraineeSkill>()
+            .HasOne(ts => ts.Trainee)
+            .WithMany(t => t.TraineeSkills)
+            .HasForeignKey(ts => ts.TraineeId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         }
     }

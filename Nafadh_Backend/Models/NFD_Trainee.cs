@@ -24,7 +24,7 @@ namespace Nafadh_Backend.Models
         public string? Major { get; set; }
         [MaxLength(50)]
         public string? AcademicLevel { get; set; }
-        public string? Skills { get; set; }
+        
         [MaxLength(300)]
         public string? ResumeUrl { get; set; }
         [MaxLength(300)]
@@ -86,6 +86,7 @@ namespace Nafadh_Backend.Models
         public ICollection<NFD_TraineeBadge> TraineeBadges { get; set; } = new List<NFD_TraineeBadge>();
 
         public ICollection<NFD_LessonFeedback> LessonFeedbacks { get; set; } = new List<NFD_LessonFeedback>();
+        public ICollection<NFD_TraineeSkill> TraineeSkills { get; set; } = new List<NFD_TraineeSkill>();
 
     }
 }

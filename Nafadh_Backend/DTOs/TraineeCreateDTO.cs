@@ -33,7 +33,7 @@ namespace Nafadh_Backend.DTOs
         [MaxLength(50, ErrorMessage = "AcademicLevel cannot exceed 50 characters.")]
         public string? AcademicLevel { get; set; }
 
-        public string? Skills { get; set; }
+        //public string? Skills { get; set; }
 
         [MaxLength(300, ErrorMessage = "ResumeUrl cannot exceed 300 characters.")]
         public string? ResumeUrl { get; set; }

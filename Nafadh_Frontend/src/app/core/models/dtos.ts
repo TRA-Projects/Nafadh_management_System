@@ -812,3 +812,11 @@ export interface TrainerKpisDto {
   taskCompletionRate: number;
   avgTechnicalGrade: number;
 }
+
+export interface TraineeSkillDto {
+  traineeSkillId: number;
+  traineeId: number;
+  skillName: string;
+  serialNumber?: string | null;
+  certificateUrl?: string | null;
+}

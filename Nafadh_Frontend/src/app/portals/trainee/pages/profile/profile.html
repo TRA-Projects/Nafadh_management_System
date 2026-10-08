@@ -1,3 +1,4 @@
+```html
 <h2 class="nfd-page-title">
   الملف الشخصي
 </h2>
@@ -1380,7 +1381,8 @@
 
 
 <!-- =========================================================
-     SKILLS (NEW DESIGN - MATCHES IMAGE 1)
+     SKILLS
+     المهارات - من NFD_TraineeSkill
 ========================================================= -->
 
 <div
@@ -1392,6 +1394,7 @@
 >
 
   <!-- Header: Title + Add Button -->
+
   <div
     style="
       display: flex;
@@ -1441,6 +1444,7 @@
 
 
   <!-- Cards Grid -->
+
   <div
     style="
       display: grid;
@@ -1451,9 +1455,8 @@
   >
 
     @for (
-      skill of getSkillsList(t.skills);
-      track skill;
-      let i = $index
+      skill of traineeSkills();
+      track skill.traineeSkillId
     ) {
 
       <div
@@ -1470,10 +1473,13 @@
         "
       >
 
-        <!-- Delete Button (×) - Only in Edit Mode -->
+        <!-- Delete Button -->
+
         @if (editing()) {
+
           <div
-            (click)="removeSkill(i)"
+            (click)="removeSkill(skill.traineeSkillId)"
+            title="حذف المهارة"
             style="
               position: absolute;
               top: 10px;
@@ -1495,10 +1501,12 @@
           >
             ×
           </div>
+
         }
 
 
         <!-- Skill Name -->
+
         <div
           style="
             font-size: 15px;
@@ -1507,11 +1515,12 @@
             text-align: right;
           "
         >
-          {{ skill }}
+          {{ skill.skillName }}
         </div>
 
 
         <!-- Proof Details -->
+
         <div
           style="
             display: flex;
@@ -1521,13 +1530,15 @@
           "
         >
 
-          <!-- =========================================================
-               FILE PROOF (Green - matches Image 1)
-          ========================================================= -->
-          @if (skillProofs()[skill]?.type === 'file') {
+          <!-- =====================================================
+               FILE PROOF
+          ====================================================== -->
+
+          @if (skill.certificateUrl) {
 
             <div
-              (click)="openCertificateFile(skillProofs()[skill]?.file)"
+              (click)="openCertificateFile(skill.certificateUrl)"
+              title="فتح الملف المرفق"
               style="
                 display: inline-flex;
                 align-items: center;
@@ -1547,7 +1558,9 @@
               onmouseout="this.style.background='#ffffff'"
             >
 
-              <span style="font-size: 13px;">🔗</span>
+              <span style="font-size: 13px;">
+                🔗
+              </span>
 
               <span
                 style="
@@ -1562,7 +1575,7 @@
 
             </div>
 
-            <!-- File name below (with 📄 icon) -->
+
             <div
               style="
                 font-size: 11px;
@@ -1575,7 +1588,11 @@
                 max-width: 100%;
               "
             >
-              <span>📄</span>
+
+              <span>
+                📄
+              </span>
+
               <span
                 style="
                   white-space: nowrap;
@@ -1584,17 +1601,19 @@
                   max-width: 200px;
                 "
               >
-                {{ skillProofs()[skill]?.fileName }}
+                ملف مرفق
               </span>
+
             </div>
 
           }
 
 
-          <!-- =========================================================
-               SERIAL PROOF (Blue - matches Image 1)
-          ========================================================= -->
-          @if (skillProofs()[skill]?.type === 'serial') {
+          <!-- =====================================================
+               SERIAL PROOF
+          ====================================================== -->
+
+          @if (skill.serialNumber) {
 
             <div
               style="
@@ -1610,9 +1629,17 @@
                 font-weight: 600;
               "
             >
-              <span style="font-weight: 700;">#</span>
-              <span>رقم تسلسلي</span>
+
+              <span style="font-weight: 700;">
+                #
+              </span>
+
+              <span>
+                رقم تسلسلي
+              </span>
+
             </div>
+
 
             <div
               style="
@@ -1628,13 +1655,32 @@
                 min-width: 60px;
               "
             >
-              {{ skillProofs()[skill]?.serial }}
+              {{ skill.serialNumber }}
             </div>
 
           }
 
         </div>
 
+      </div>
+
+    }
+
+
+    <!-- No Skills -->
+
+    @if (traineeSkills().length === 0) {
+
+      <div
+        style="
+          grid-column: 1 / -1;
+          text-align: center;
+          padding: 25px;
+          color: #94a3b8;
+          font-size: 13px;
+        "
+      >
+        لا توجد مهارات مضافة حتى الآن.
       </div>
 
     }
@@ -1717,17 +1763,36 @@
       </div>
 
 
-      <p style="margin: 0 0 4px 0; font-size: 13px; color: #475569; font-weight: 500;">
+      <p
+        style="
+          margin: 0 0 4px 0;
+          font-size: 13px;
+          color: #475569;
+          font-weight: 500;
+        "
+      >
         اسحب وأرفق ملف PDF هنا أو
       </p>
 
 
-      <span style="color: #0284c7; font-weight: 600; font-size: 13px; margin-bottom: 6px;">
+      <span
+        style="
+          color: #0284c7;
+          font-weight: 600;
+          font-size: 13px;
+          margin-bottom: 6px;
+        "
+      >
         انقر للاختيار
       </span>
 
 
-      <small style="color: #94a3b8; font-size: 11px;">
+      <small
+        style="
+          color: #94a3b8;
+          font-size: 11px;
+        "
+      >
         PDF, DOCX — الحجم الأقصى 5 ميغا
       </small>
 
@@ -1938,6 +2003,8 @@
       "
     >
 
+      <!-- Popup Header -->
+
       <div
         style="
           padding: 18px 20px;
@@ -1976,14 +2043,32 @@
 
             @if (popupType() === 'success') {
 
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#10b981"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <path d="M20 6L9 17l-5-5"></path>
               </svg>
 
             }
             @else if (popupType() === 'error') {
 
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#ef4444"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <circle cx="12" cy="12" r="9"></circle>
                 <line x1="12" y1="8" x2="12" y2="12"></line>
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -1992,7 +2077,16 @@
             }
             @else {
 
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#0284c7"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <circle cx="12" cy="12" r="9"></circle>
                 <line x1="12" y1="8" x2="12" y2="12"></line>
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -2039,6 +2133,8 @@
       </div>
 
 
+      <!-- Popup Body -->
+
       <div
         style="
           padding: 20px;
@@ -2066,6 +2162,7 @@
         @if (popupInputMode()) {
 
           <!-- ===== اسم المهارة ===== -->
+
           <div style="margin-top: 15px;">
 
             <label
@@ -2102,9 +2199,10 @@
           </div>
 
 
-          <!-- =========================================================
-               NEW: إثبات المهارة
-          ========================================================= -->
+          <!-- =====================================================
+               إثبات المهارة
+          ====================================================== -->
+
           <div
             style="
               margin-top: 16px;
@@ -2122,17 +2220,35 @@
                 margin-bottom: 8px;
               "
             >
-              إثبات المهارة (اختر طريقة واحدة على الأقل)
+              إثبات المهارة (اختر طريقة واحدة)
             </label>
 
 
-            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <!-- Proof Type Buttons -->
+
+            <div
+              style="
+                display: flex;
+                gap: 8px;
+                margin-bottom: 12px;
+              "
+            >
+
+              <!-- File -->
 
               <button
                 type="button"
                 (click)="setProofMode('file')"
-                [style.background]="proofMode() === 'file' ? '#0284c7' : '#f1f5f9'"
-                [style.color]="proofMode() === 'file' ? '#ffffff' : '#475569'"
+                [style.background]="
+                  proofMode() === 'file'
+                    ? '#0284c7'
+                    : '#f1f5f9'
+                "
+                [style.color]="
+                  proofMode() === 'file'
+                    ? '#ffffff'
+                    : '#475569'
+                "
                 style="
                   flex: 1;
                   border: none;
@@ -2148,22 +2264,41 @@
                 "
               >
 
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                   <polyline points="17 8 12 3 7 8"></polyline>
                   <line x1="12" y1="3" x2="12" y2="15"></line>
                 </svg>
 
-                رفع شهادة
+                رفع ملف
 
               </button>
 
 
+              <!-- Serial -->
+
               <button
                 type="button"
                 (click)="setProofMode('serial')"
-                [style.background]="proofMode() === 'serial' ? '#0284c7' : '#f1f5f9'"
-                [style.color]="proofMode() === 'serial' ? '#ffffff' : '#475569'"
+                [style.background]="
+                  proofMode() === 'serial'
+                    ? '#0284c7'
+                    : '#f1f5f9'
+                "
+                [style.color]="
+                  proofMode() === 'serial'
+                    ? '#ffffff'
+                    : '#475569'
+                "
                 style="
                   flex: 1;
                   border: none;
@@ -2179,11 +2314,45 @@
                 "
               >
 
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="16" rx="2"></rect>
-                  <line x1="7" y1="9" x2="17" y2="9"></line>
-                  <line x1="7" y1="13" x2="17" y2="13"></line>
-                  <line x1="7" y1="17" x2="13" y2="17"></line>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect
+                    x="3"
+                    y="4"
+                    width="18"
+                    height="16"
+                    rx="2"
+                  ></rect>
+
+                  <line
+                    x1="7"
+                    y1="9"
+                    x2="17"
+                    y2="9"
+                  ></line>
+
+                  <line
+                    x1="7"
+                    y1="13"
+                    x2="17"
+                    y2="13"
+                  ></line>
+
+                  <line
+                    x1="7"
+                    y1="17"
+                    x2="13"
+                    y2="17"
+                  ></line>
+
                 </svg>
 
                 رقم تسلسلي
@@ -2192,6 +2361,10 @@
 
             </div>
 
+
+            <!-- =================================================
+                 FILE MODE
+            ================================================== -->
 
             @if (proofMode() === 'file') {
 
@@ -2211,7 +2384,7 @@
                 <input
                   #certificateFileInput
                   type="file"
-                  accept="image/*,.pdf"
+                  accept="*/*"
                   (change)="onCertificateFileSelected($event)"
                   style="display: none;"
                 />
@@ -2231,7 +2404,16 @@
                     "
                   >
 
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
                       <path d="M20 6L9 17l-5-5"></path>
                     </svg>
 
@@ -2242,7 +2424,13 @@
                 }
                 @else {
 
-                  <div style="color: #64748b; font-size: 12px; line-height: 1.8;">
+                  <div
+                    style="
+                      color: #64748b;
+                      font-size: 12px;
+                      line-height: 1.8;
+                    "
+                  >
 
                     <svg
                       width="26"
@@ -2260,10 +2448,20 @@
                       <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
 
-                    <div>اضغط لرفع الشهادة</div>
 
-                    <div style="font-size: 11px; color: #94a3b8; margin-top: 3px;">
-                      (صورة أو PDF)
+                    <div>
+                      اضغط لرفع ملف الإثبات
+                    </div>
+
+
+                    <div
+                      style="
+                        font-size: 11px;
+                        color: #94a3b8;
+                        margin-top: 3px;
+                      "
+                    >
+                      جميع أنواع الملفات والصور مسموحة
                     </div>
 
                   </div>
@@ -2275,11 +2473,16 @@
             }
 
 
+            <!-- =================================================
+                 SERIAL MODE
+            ================================================== -->
+
             @if (proofMode() === 'serial') {
 
               <input
                 type="text"
-                [(ngModel)]="certificateSerial"
+                [ngModel]="certificateSerial()"
+                (ngModelChange)="certificateSerial.set($event)"
                 placeholder="مثال: CERT-2024-00123"
                 style="
                   width: 100%;
@@ -2302,6 +2505,8 @@
 
       </div>
 
+
+      <!-- Popup Buttons -->
 
       <div
         style="
@@ -2380,11 +2585,17 @@
 }
 
 
-
-
 <style>
   @keyframes nfdPopupIn {
-    from { opacity: 0; transform: translateY(-10px) scale(0.98); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.98);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 </style>
+```

@@ -13,7 +13,7 @@ namespace Nafadh_Backend.DTOs
         [MaxLength(20, ErrorMessage = "Phone cannot exceed 20 characters.")]
         public string? Phone { get; set; }
 
-        public string? Skills { get; set; }
+        //public string? Skills { get; set; }
 
         [MaxLength(300, ErrorMessage = "ResumeUrl cannot exceed 300 characters.")]
         public string? ResumeUrl { get; set; }

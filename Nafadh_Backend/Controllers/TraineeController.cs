@@ -79,7 +79,7 @@ namespace Nafadh_Backend.Controllers
                 University = t.University,
                 Major = t.Major,
                 AcademicLevel = t.AcademicLevel,
-                Skills = t.Skills,
+                //Skills = t.Skills,
                 ResumeUrl = t.ResumeUrl,
                 GitHubUrl = t.GitHubUrl,
                 LinkedInUrl = t.LinkedInUrl,
@@ -120,7 +120,7 @@ namespace Nafadh_Backend.Controllers
             existing.University = update.University;
             existing.Major = update.Major;
             existing.AcademicLevel = update.AcademicLevel;
-            existing.Skills = update.Skills;
+            //existing.Skills = update.Skills;
             existing.ResumeUrl = update.ResumeUrl;
             existing.GitHubUrl = update.GitHubUrl;
             existing.LinkedInUrl = update.LinkedInUrl;
@@ -241,7 +241,7 @@ namespace Nafadh_Backend.Controllers
                 University = create.University,
                 Major = create.Major,
                 AcademicLevel = create.AcademicLevel,
-                Skills = create.Skills,
+                //Skills = create.Skills,
                 ResumeUrl = create.ResumeUrl,
                 GitHubUrl = create.GitHubUrl,
                 LinkedInUrl = create.LinkedInUrl,
@@ -381,7 +381,7 @@ namespace Nafadh_Backend.Controllers
                     University = item.University,
                     Major = item.Major,
                     AcademicLevel = item.AcademicLevel,
-                    Skills = item.Skills,
+                    //Skills = item.Skills,
                     ResumeUrl = item.ResumeUrl,
                     GitHubUrl = item.GitHubUrl,
                     LinkedInUrl = item.LinkedInUrl,
@@ -504,7 +504,7 @@ namespace Nafadh_Backend.Controllers
                 University = t.University,
                 Major = t.Major,
                 AcademicLevel = t.AcademicLevel,
-                Skills = t.Skills,
+                //Skills = t.Skills,
                 ResumeUrl = t.ResumeUrl,
                 GitHubUrl = t.GitHubUrl,
                 LinkedInUrl = t.LinkedInUrl,
@@ -589,9 +589,9 @@ namespace Nafadh_Backend.Controllers
             // Update Trainee information
             // =========================
 
-            trainee.Skills = string.IsNullOrWhiteSpace(dto.Skills)
-                ? null
-                : dto.Skills.Trim();
+            //trainee.Skills = string.IsNullOrWhiteSpace(dto.Skills)
+            //    ? null
+            //    : dto.Skills.Trim();
 
             trainee.ResumeUrl = string.IsNullOrWhiteSpace(dto.ResumeUrl)
                 ? null
@@ -672,7 +672,7 @@ namespace Nafadh_Backend.Controllers
                     University = trainee.University,
                     Major = trainee.Major,
                     AcademicLevel = trainee.AcademicLevel,
-                    Skills = trainee.Skills,
+                    //Skills = trainee.Skills,
                     ResumeUrl = trainee.ResumeUrl,
                     GitHubUrl = trainee.GitHubUrl,
                     LinkedInUrl = trainee.LinkedInUrl,
