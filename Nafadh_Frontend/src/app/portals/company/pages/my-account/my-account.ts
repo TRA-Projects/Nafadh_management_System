@@ -76,10 +76,10 @@ saveAccount(): void {
       this.savingAccount.set(false);
     },
 
-    error: (error) => {
-      console.error('Failed to update phone:', error);
-      this.savingAccount.set(false);
-    }
+   error: (error: unknown) => {
+  console.error('Failed to update phone:', error);
+  this.savingAccount.set(false);
+}
   });
 }
 
