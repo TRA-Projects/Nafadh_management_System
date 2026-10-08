@@ -46,6 +46,30 @@
     flex: 1;
     min-width: 0;
 
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .page-header-icon {
+    width: 50px;
+    height: 50px;
+    flex: 0 0 50px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 15px;
+    background: linear-gradient(145deg, #e8f7fc, #f7fcff);
+    border: 1px solid #ddedf6;
+    color: #0097aa;
+    font-size: 23px;
+    font-weight: 900;
+  }
+
+  .page-header-copy {
+    min-width: 0;
 
     .nfd-page-title {
       margin: 0 0 5px !important;
@@ -69,7 +93,7 @@
       line-height: 1.8;
     }
   }
-
+  
 
   /* =========================================================
      REPORT ALERT CARDS
