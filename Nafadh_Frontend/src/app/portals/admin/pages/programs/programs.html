@@ -1,6 +1,4 @@
-<!-- ========================================================== -->
-<!-- 1. صفحة تفاصيل الدفعة الكاملة (تفتح عند الضغط على أيقونة العين 👁️) -->
-<!-- ========================================================== -->
+
 <div *ngIf="isDetailsPageOpen()" class="details-full-page-container" dir="rtl">
 
   <!-- زر العودة لجدول الدفعات -->
@@ -418,6 +416,13 @@
             <!-- 🌟 الإجراءات: زر العين يفتح صفحة التفاصيل، وزر المتدربين يفتح صفحة المتدربين 🌟 -->
             <td class="nfd-td text-center">
               <div class="nfd-actions-wrapper">
+
+                <!-- زر عرض خطة الدورة التدريبية   -->
+                <button type="button" (click)="onViewPlan(batch); $event.stopPropagation();" title="عرض خطة الدورة التدريبية"
+                  class="nfd-action-icon-btn action-plan-btn">
+                  <i class="fa-solid fa-file-circle-check"></i>
+                </button>
+
                 <button type="button" 
                   (click)="onViewTrainees(batch); $event.stopPropagation();" 
                   title="متدربو هذه الدفعة والمراسلة" 

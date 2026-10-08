@@ -1402,3 +1402,28 @@
   font-weight: 800;
   color: #1e293b;
 }
+
+/* ===================================================
+   تنسيق زر عرض خطة الدورة التدريبية (Action Plan Button)
+   =================================================== */
+.nfd-action-icon-btn.action-plan-btn {
+  color: #0D1C8C;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  transition: all 0.2s ease-in-out;
+}
+
+/* عند تمرير الماوس فوق الزر (Hover) */
+.nfd-action-icon-btn.action-plan-btn:hover {
+  color: #ffffff;
+  background-color: #0D1C8C;
+  border-color: #0D1C8C;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(13, 28, 140, 0.2);
+}
+
+/* عند الضغط على الزر (Active) */
+.nfd-action-icon-btn.action-plan-btn:active {
+  transform: translateY(0);
+  background-color: #09135e;
+}

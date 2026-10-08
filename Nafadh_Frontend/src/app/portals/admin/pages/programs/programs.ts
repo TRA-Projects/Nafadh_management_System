@@ -118,6 +118,20 @@ export class AdminPrograms implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  // دالة فتح الخطة
+onViewPlan(batch: any): void {
+  const batchId = batch?.batchId || batch?.id;
+  console.log('عرض خطة الدورة للدفعة:', batchId);
+
+  // 🟢 مستقبلاً أول ما يخلص الفريق صفحتهم:
+  // this.router.navigate(['/portals/admin/courses/plan', batchId]);
+  // أو إذا كان رابط خارجي:
+  // window.open('https://company-link.com/plan/' + batchId, '_blank');
+
+  // 🟡 حالياً (كتجربة وتأكيد أن الزر شغال):
+  alert('سيتم فتح خطة الدورة للدفعة: ' + (batch?.batchName || batchId));
+}
+
   // ب) فتح صفحة متدربي الدفعة الكاملة (عند الضغط على أيقونة المتدربين)
   onViewTrainees(batch: any): void {
     this.selectedBatch = batch;
