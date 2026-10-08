@@ -1758,43 +1758,73 @@ export class TraineeProfile implements OnInit {
   }
 
 
-  // =========================================================
-  // DELETE SKILL
-  // =========================================================
+ // =========================================================
+// DELETE SKILL
+// =========================================================
 
-  removeSkill(
-    skillId: number
-  ): void {
+removeSkill(
+  skillId: number
+): void {
 
-    this.api
+  this.api
+    .deleteTraineeSkill(
+      skillId
+    )
+    .subscribe({
 
-      .deleteTraineeSkill(
-        skillId
-      )
+      next: () => {
 
-      .subscribe({
+        console.log(
+          'Skill deleted successfully:',
+          skillId
+        );
 
-        next: () => {
+        this.traineeSkills.update(
+          current =>
+            current.filter(
+              skill =>
+                skill.traineeSkillId !==
+                skillId
+            )
+        );
 
-          console.log(
-            'Skill deleted successfully:',
-            skillId
-          );
+        this.openPopup(
+          'تم حذف المهارة بنجاح.',
+          'success',
+          'تم الحذف'
+        );
+      },
 
+      error: (err) => {
+
+        console.error(
+          'فشل حذف المهارة:',
+          err
+        );
+
+        console.error(
+          'Status:',
+          err.status
+        );
+
+        console.error(
+          'Backend Error:',
+          err.error
+        );
+
+        if (
+          err.status === 200 ||
+          err.status === 204
+        ) {
 
           this.traineeSkills.update(
-
             current =>
               current.filter(
-
                 skill =>
                   skill.traineeSkillId !==
                   skillId
-
               )
-
           );
-
 
           this.openPopup(
             'تم حذف المهارة بنجاح.',
@@ -1802,45 +1832,18 @@ export class TraineeProfile implements OnInit {
             'تم الحذف'
           );
 
-        },
-
-
-        error: (err) => {
-
-          console.error(
-            'فشل حذف المهارة:',
-            err
-          );
-
-
-          console.error(
-            'Status:',
-            err.status
-          );
-
-
-          console.error(
-            'Backend Error:',
-            err.error
-          );
-
-
-          this.openPopup(
-            err.error?.message ||
-
-            'حدث خطأ أثناء حذف المهارة.',
-
-            'error',
-
-            'فشل الحذف'
-          );
-
+          return;
         }
 
-      });
-
-  }
-
+        this.openPopup(
+          err.error?.message ||
+          'حدث خطأ أثناء حذف المهارة.',
+          'error',
+          'فشل الحذف'
+        );
+      }
+    });
+}
 
   // =========================================================
   // PROOF MODE
