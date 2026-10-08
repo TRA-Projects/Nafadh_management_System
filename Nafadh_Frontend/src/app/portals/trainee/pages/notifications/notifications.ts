@@ -24,6 +24,34 @@ type NotificationFilter =
   | 'unread';
 
 
+type NotificationType =
+  | 'task'
+  | 'announcement'
+  | 'reminder'
+  | 'message'
+  | 'system'
+  | 'training'
+  | 'lesson'
+  | 'program'
+  | 'assignment'
+  | 'evaluation'
+  | 'certificate'
+  | 'attendance'
+  | 'payment'
+  | 'feedback'
+  | 'achievement'
+  | 'report'
+  | 'unknown';
+
+
+type NotificationTypeFilter =
+  | 'all'
+  | 'evaluation'
+  | 'reminder'
+  | 'task'
+  | 'unknown';
+
+
 @Component({
   selector: 'app-trainee-notifications',
   imports: [CommonModule],
@@ -48,6 +76,10 @@ export class TraineeNotifications implements OnInit {
     signal<NotificationFilter>('all');
 
 
+  activeTypeFilter =
+    signal<NotificationTypeFilter>('all');
+
+
   loading =
     signal(true);
 
@@ -68,28 +100,35 @@ export class TraineeNotifications implements OnInit {
     const filter =
       this.activeFilter();
 
+    const typeFilter =
+      this.activeTypeFilter();
 
-    if (filter === 'read') {
 
-      return list.filter(
-        (notification) =>
-          notification.isRead
+    return list.filter((notification) => {
+
+      const matchesReadFilter =
+        filter === 'all' ||
+        (filter === 'read' && notification.isRead) ||
+        (filter === 'unread' && !notification.isRead);
+
+
+      const notificationType =
+        this.getNotificationType(
+          notification.relatedEntity
+        );
+
+
+      const matchesTypeFilter =
+        typeFilter === 'all' ||
+        notificationType === typeFilter;
+
+
+      return (
+        matchesReadFilter &&
+        matchesTypeFilter
       );
 
-    }
-
-
-    if (filter === 'unread') {
-
-      return list.filter(
-        (notification) =>
-          !notification.isRead
-      );
-
-    }
-
-
-    return list;
+    });
 
   });
 
@@ -180,7 +219,7 @@ export class TraineeNotifications implements OnInit {
 
 
   // =========================================================
-  // Change filter
+  // Change read status filter
   // =========================================================
 
   setFilter(
@@ -195,6 +234,283 @@ export class TraineeNotifications implements OnInit {
 
 
   // =========================================================
+  // Change notification type filter
+  // =========================================================
+
+  setTypeFilter(
+    type: NotificationTypeFilter
+  ): void {
+
+    this.activeTypeFilter.set(
+      type
+    );
+
+  }
+
+
+  // =========================================================
+  // Normalize notification type
+  // =========================================================
+
+  private normalizeNotificationType(
+    value: string | null | undefined
+  ): NotificationType {
+
+    if (!value) {
+
+      return 'unknown';
+
+    }
+
+
+    const normalized =
+      value
+        .trim()
+        .toLowerCase()
+        .replace(/[\s_-]/g, '');
+
+
+    if (
+      normalized.includes('task') ||
+      normalized.includes('tasknotification') ||
+      normalized.includes('taskassignment')
+    ) {
+
+      return 'task';
+
+    }
+
+
+    if (
+      normalized.includes('announcement') ||
+      normalized.includes('announce')
+    ) {
+
+      return 'announcement';
+
+    }
+
+
+    if (
+      normalized.includes('reminder') ||
+      normalized.includes('remind')
+    ) {
+
+      return 'reminder';
+
+    }
+
+
+    if (
+      normalized.includes('message') ||
+      normalized.includes('chat')
+    ) {
+
+      return 'message';
+
+    }
+
+
+    if (
+      normalized.includes('system') ||
+      normalized.includes('systemnotification')
+    ) {
+
+      return 'system';
+
+    }
+
+
+    if (
+      normalized.includes('training') ||
+      normalized.includes('trainingprogram')
+    ) {
+
+      return 'training';
+
+    }
+
+
+    if (
+      normalized.includes('lesson') ||
+      normalized.includes('course')
+    ) {
+
+      return 'lesson';
+
+    }
+
+
+    if (
+      normalized.includes('program') ||
+      normalized.includes('programme')
+    ) {
+
+      return 'program';
+
+    }
+
+
+    if (
+      normalized.includes('assignment') ||
+      normalized.includes('homework')
+    ) {
+
+      return 'assignment';
+
+    }
+
+
+    if (
+      normalized.includes('evaluation') ||
+      normalized.includes('assessment')
+    ) {
+
+      return 'evaluation';
+
+    }
+
+
+    if (
+      normalized.includes('certificate') ||
+      normalized.includes('certification')
+    ) {
+
+      return 'certificate';
+
+    }
+
+
+    if (
+      normalized.includes('attendance') ||
+      normalized.includes('attend') ||
+      normalized.includes('absence') ||
+      normalized.includes('absent') ||
+      normalized.includes('late')
+    ) {
+
+      return 'attendance';
+
+    }
+
+
+    if (
+      normalized.includes('payment') ||
+      normalized.includes('invoice')
+    ) {
+
+      return 'payment';
+
+    }
+
+
+    if (
+      normalized.includes('feedback') ||
+      normalized.includes('comment')
+    ) {
+
+      return 'feedback';
+
+    }
+
+
+    if (
+      normalized.includes('achievement') ||
+      normalized.includes('badge')
+    ) {
+
+      return 'achievement';
+
+    }
+
+
+    if (
+      normalized.includes('report')
+    ) {
+
+      return 'report';
+
+    }
+
+
+    return 'unknown';
+
+  }
+
+
+  // =========================================================
+  // Translate notification type
+  // =========================================================
+
+  getRelatedEntityLabel(
+    value: string | null | undefined
+  ): string {
+
+    const type =
+      this.normalizeNotificationType(value);
+
+
+    const labels: Record<
+      NotificationType,
+      string
+    > = {
+
+      task: 'مهمة',
+
+      announcement: 'إعلان',
+
+      reminder: 'تذكير',
+
+      message: 'رسالة',
+
+      system: 'النظام',
+
+      training: 'التدريب',
+
+      lesson: 'درس',
+
+      program: 'برنامج',
+
+      assignment: 'واجب',
+
+      evaluation: 'تقييم',
+
+      certificate: 'شهادة',
+
+      attendance: 'الحضور',
+
+      payment: 'الدفع',
+
+      feedback: 'ملاحظات',
+
+      achievement: 'إنجاز',
+
+      report: 'تقرير',
+
+      unknown: 'إشعار',
+
+    };
+
+
+    return labels[type];
+
+  }
+
+
+  // =========================================================
+  // Get notification type
+  // =========================================================
+
+  getNotificationType(
+    value: string | null | undefined
+  ): NotificationType {
+
+    return this.normalizeNotificationType(value);
+
+  }
+
+
+  // =========================================================
   // Mark one notification as read
   // =========================================================
 
@@ -203,7 +519,9 @@ export class TraineeNotifications implements OnInit {
   ): void {
 
     if (notification.isRead) {
+
       return;
+
     }
 
 
@@ -260,7 +578,9 @@ export class TraineeNotifications implements OnInit {
   markAllRead(): void {
 
     if (!this.unreadCount()) {
+
       return;
+
     }
 
 
