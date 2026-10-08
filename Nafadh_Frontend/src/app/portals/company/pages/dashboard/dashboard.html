@@ -66,19 +66,22 @@
               (click)="openOpportunityModal(item)">
               <div class="item-main">
                 <div class="item-title">
-                  {{ item.title || 'إعلان رسمي' }}
-                </div>
-                <div class="item-sub">
                   {{
+                    item.title ||
                     item.description ||
                     item.message ||
                     'انقر لعرض تفاصيل الإعلان.'
                   }}
                 </div>
+                @if (item.title && (item.description || item.message)) {
+                  <div class="item-sub">
+                    {{ item.description || item.message }}
+                  </div>
+                }
               </div>
 
               <div class="item-meta">
-                <span class="badge-type">{{ item.type || 'إعلان' }}</span>
+                <span class="badge-type">{{ item.type || 'إعلان رسمي' }}</span>
                 <span class="item-date">
                   {{ announcementDate(item) | date:'yyyy-MM-dd' }}
                 </span>
@@ -135,7 +138,7 @@
         </div>
         <div class="kpi-info">
           <span class="kpi-label">المتدربون المتميزون</span>
-          <strong class="kpi-value">{{ filteredTopPerformers().length }}</strong>
+          <strong class="kpi-value">{{ topPerformers().length }}</strong>
           <small>هذا الشهر</small>
         </div>
       </article>
@@ -176,13 +179,6 @@
         <h3>لوحة تشغيل الاستضافة والتدريب</h3>
         <p>متابعة أداء المتدربين، الطاقة الاستيعابية والإنذارات</p>
       </div>
-      <button
-        class="btn btn-outline"
-        type="button"
-        (click)="refreshData()"
-        [disabled]="loading()">
-        {{ loading() ? 'جارٍ التحديث…' : 'تحديث البيانات' }}
-      </button>
     </div>
 
     @if (capacity(); as cap) {
@@ -309,7 +305,7 @@
         <div class="card-title">
           <span>
             <span class="icon-star">★</span>
-            المتدربون المتميزون هذا الشهر
+            المتدربون المتميزون 
           </span>
           <button
             class="link-btn"
@@ -319,7 +315,7 @@
 
         <div class="lower-list">
           @for (
-            trainee of filteredTopPerformers().slice(0, 5);
+            trainee of topPerformers().slice(0, 5);
             track trainee.traineeId
           ) {
             <div class="top-row">
@@ -389,14 +385,25 @@
                   {{ initials(trainee.fullName) }}
                 </div>
 
-                <div class="trainee-meta" style="text-align: right;">
-                  <div class="name" style="font-weight: bold; color: #1e293b;">
-                    {{ trainee.fullName || 'متدرب بدون اسم' }}
-                  </div>
-                  <div class="sub danger-text" style="color: #e53e3e; font-size: 12px;">
-                    {{ riskReason(trainee) }}
-                  </div>
-                </div>
+               <div class="trainee-meta" style="text-align: right;">
+  <div
+    class="name"
+    style="font-weight: bold; color: #1e293b;">
+    {{ trainee.fullName || 'متدرب بدون اسم' }}
+  </div>
+
+  <div
+    class="sub"
+    style="color: #64748b; font-size: 12px; margin-top: 3px;">
+    {{ trainee.programName || 'البرنامج غير محدد' }}
+  </div>
+
+  <div
+    class="sub danger-text"
+    style="color: #e53e3e; font-size: 12px; margin-top: 2px;">
+    {{ riskReason(trainee) }}
+  </div>
+</div>
               </div>
 
               <div class="row-actions" style="display: flex; align-items: center; gap: 8px;">
@@ -537,9 +544,9 @@
       </div>
 
       <div class="modal-body flyer-body-content">
-        <h2 class="flyer-main-title">
-          {{ announcement.title || 'إعلان رسمي' }}
-        </h2>
+        @if (announcement.title) {
+          <h2 class="flyer-main-title">{{ announcement.title }}</h2>
+        }
 
         <div class="target-major-badge">
           {{ announcement.type || 'إعلان' }}

@@ -61,6 +61,18 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
         }
 
+        // Get tasks by company
+        public async Task<List<NFD_Task>> GetTasksByCompanyIdAsync(int companyId)
+        {
+            return await _context.NFD_Tasks
+                .Where(t => t.Batch.Program.CompanyPrograms
+                    .Any(cp => cp.CompanyId == companyId))
+                .Include(t => t.Batch)
+                    .ThenInclude(b => b.Program)
+                .Include(t => t.User)
+                .ToListAsync();
+        }
+
         // Get rubrics of a task
         public async Task<List<NFD_Rubric>> GetRubricsByTaskIdAsync(int taskId)
         {

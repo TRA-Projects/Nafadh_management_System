@@ -1,6 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 import { CompanyApi } from '../../services/company-api';
 import { EnrollmentDto, EvaluationDto, ProgressSummaryDto } from '../../../../core/models/dtos';
 import { NfdIcon } from '../../../../shared/ui/icon/icon';
@@ -21,13 +23,15 @@ const DONUT_CIRC = 2 * Math.PI * DONUT_R;
 
 @Component({
   selector: 'app-company-trainee-progress',
-  imports: [CommonModule, RouterLink, NfdIcon],
+  standalone: true,
+  imports: [CommonModule, RouterLink, FormsModule, NfdIcon],
   templateUrl: './trainee-progress.html',
-  styleUrl: './trainee-progress.scss',
+  styleUrls: ['./trainee-progress.scss'],
 })
 export class CompanyTraineeProgress implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(CompanyApi);
+  private readonly http = inject(HttpClient);
 
   enrollment = signal<EnrollmentDto | null>(null);
   evaluations = signal<EvaluationDto[]>([]);
@@ -35,8 +39,14 @@ export class CompanyTraineeProgress implements OnInit {
   phaseDefs = PHASE_DEFS;
   donutCirc = DONUT_CIRC;
 
-  // متغير لتحديد التبويب (الفترة) النشط حالياً (الافتراضي الفترة الأولى رقم 1)
   activeTab: number = 1;
+
+  // متغيرات الفلاتر (بما فيها فلتر التاريخ)
+  searchTerm: string = '';
+  selectedBatch: string = '';
+  selectedProgram: string = '';
+  selectedStatus: string = '';
+  selectedDate: string = '';
 
   selectPhase(phaseNum: number) {
     this.activeTab = phaseNum;
@@ -44,9 +54,45 @@ export class CompanyTraineeProgress implements OnInit {
 
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
+    this.loadData(id);
+  }
+
+  loadData(id: number) {
     this.api.getEnrollment(id).subscribe((d) => this.enrollment.set(d));
     this.api.getEvaluationsForEnrollment(id).subscribe((d) => this.evaluations.set(d ?? []));
     this.api.getProgressSummary(id).subscribe((d) => this.progressSummary.set(d));
+  }
+
+  // رفع وتحديث الصورة الشخصية عند اختيارها من المربع مباشرة
+  onFileSelected(event: any, traineeId: number) {
+    const file: File = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    this.http.post(`/api/Enrollment/trainee/${traineeId}/upload-image`, formData).subscribe({
+      next: () => {
+        alert('تم تحديث الصورة الشخصية بنجاح!');
+        const id = Number(this.route.snapshot.paramMap.get('id'));
+        if (id) {
+          this.loadData(id); // إعادة تحميل البيانات لتحديث واجهة الصورة فوراً
+        }
+      },
+      error: (err) => {
+        console.error('خطأ أثناء رفع الصورة', err);
+        alert('حدث خطأ أثناء رفع الصورة الشخصية.');
+      }
+    });
+  }
+
+  // مسح التصفية والفلاتر
+  clearFilters() {
+    this.searchTerm = '';
+    this.selectedBatch = '';
+    this.selectedProgram = '';
+    this.selectedStatus = '';
+    this.selectedDate = '';
   }
 
   phases = computed(() => {
@@ -58,7 +104,6 @@ export class CompanyTraineeProgress implements OnInit {
     });
   });
 
-  // دالة لجلب بيانات الفترة النشطة حالياً في التبويبات
   getSelectedPhaseData() {
     return this.phases().find(p => p.def.n === this.activeTab) || null;
   }
