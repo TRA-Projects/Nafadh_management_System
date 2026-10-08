@@ -241,43 +241,21 @@ export class ReportsComponent {
     alert('تم تجهيز تصدير التقرير Excel - يمكن ربطه لاحقاً مع خدمة التصدير');
   }
 
-  getBarWidth(value: number, max: number = 100): number {
-    return Math.min((value / max) * 100, 100);
-  }
-
-  getCapacityWidth(value: number): number {
-    return Math.min(value, 100);
+  getTaskStatusClass(status: string): string {
+    switch (status) {
+      case 'review': return 'info';
+      case 'pending': return 'warn';
+      case 'late': return 'bad';
+      default: return 'ok';
+    }
   }
 
   getTaskStatusText(status: string): string {
     switch (status) {
-      case 'review':
-        return 'قيد المراجعة';
-
-      case 'pending':
-        return 'بانتظار الاستلام';
-
-      case 'late':
-        return 'متأخرة';
-
-      default:
-        return status;
-    }
-  }
-
-  getTaskStatusClass(status: string): string {
-    switch (status) {
-      case 'review':
-        return 'info';
-
-      case 'pending':
-        return 'warn';
-
-      case 'late':
-        return 'bad';
-
-      default:
-        return '';
+      case 'review': return 'قيد المراجعة';
+      case 'pending': return 'بانتظار الاستلام';
+      case 'late': return 'متأخرة';
+      default: return 'مكتملة';
     }
   }
 }

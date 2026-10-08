@@ -2,152 +2,63 @@
 
   <!-- Header -->
   <div class="page-head">
-
     <div>
       <h3>التقارير</h3>
-
-      <p>
-        تقارير الحضور والطاقة الاستيعابية والإنجاز والمهام — جاهزة للتصدير
-      </p>
+      <p>تقارير الحضور والطاقة الاستيعابية والإنجاز والمهام — جاهزة للتصدير</p>
     </div>
-
     <div class="actions">
-
-      <button
-        class="btn btn-primary"
-        type="button"
-        (click)="exportPdf()">
-
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round">
-
+      <button class="btn btn-primary" type="button" (click)="exportPdf()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
           <path d="m7 10 5 5 5-5"></path>
           <path d="M12 15V3"></path>
-
         </svg>
-
         تصدير PDF
       </button>
 
-
-      <button
-        class="btn btn-outline"
-        type="button"
-        (click)="exportExcel()">
-
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round">
-
+      <button class="btn btn-outline" type="button" (click)="exportExcel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
           <path d="m7 10 5 5 5-5"></path>
           <path d="M12 15V3"></path>
-
         </svg>
-
         تصدير Excel
       </button>
-
     </div>
-
   </div>
-
 
   <!-- Tabs -->
   <div class="tabs">
-
-    <button
-      type="button"
-      class="tab"
-      [class.active]="activeTab === 'att'"
-      (click)="selectTab('att')">
-
+    <button type="button" class="tab" [class.active]="activeTab === 'att'" (click)="selectTab('att')">
       حضور الشركة
-
     </button>
-
-
-    <button
-      type="button"
-      class="tab"
-      [class.active]="activeTab === 'achieve'"
-      (click)="selectTab('achieve')">
-
+    <button type="button" class="tab" [class.active]="activeTab === 'achieve'" (click)="selectTab('achieve')">
       إنجاز المتدربين
-
     </button>
-
-
-    <button
-      type="button"
-      class="tab"
-      [class.active]="activeTab === 'cap'"
-      (click)="selectTab('cap')">
-
+    <button type="button" class="tab" [class.active]="activeTab === 'cap'" (click)="selectTab('cap')">
       الطاقة الاستيعابية
-
     </button>
-
-
-    <button
-      type="button"
-      class="tab"
-      [class.active]="activeTab === 'eval'"
-      (click)="selectTab('eval')">
-
+    <button type="button" class="tab" [class.active]="activeTab === 'eval'" (click)="selectTab('eval')">
       التقييمات
-
     </button>
-
-
-    <button
-      type="button"
-      class="tab"
-      [class.active]="activeTab === 'tasks'"
-      (click)="selectTab('tasks')">
-
+    <button type="button" class="tab" [class.active]="activeTab === 'tasks'" (click)="selectTab('tasks')">
       المهام
-
     </button>
-
-
-    <button
-      type="button"
-      class="tab"
-      [class.active]="activeTab === 'compare'"
-      (click)="selectTab('compare')">
-
+    <button type="button" class="tab" [class.active]="activeTab === 'compare'" (click)="selectTab('compare')">
       مقارنة الأقسام والمشرفين
-
     </button>
-
   </div>
-
 
   <!-- ================================================= -->
   <!-- حضور الشركة -->
   <!-- ================================================= -->
-
   @if (activeTab === 'att') {
-
     <div class="stat-row">
-
       <div class="stat-mini">
         <span>متوسط حضور الشركة</span>
         <b class="success-text">94.2%</b>
         <small>▲ 1.2% عن الشهر الماضي</small>
       </div>
-
 
       <div class="stat-mini">
         <span>أيام الغياب (30 يومًا)</span>
@@ -155,79 +66,45 @@
         <small>6 متدربين</small>
       </div>
 
-
       <div class="stat-mini">
         <span>حالات التأخر</span>
         <b class="warning-text">27</b>
         <small>أغلبها في الدفعة أ</small>
       </div>
 
-
       <div class="stat-mini">
         <span>الانصراف المبكر</span>
         <b>6</b>
         <small>حالة مسجلة</small>
       </div>
-
     </div>
-
 
     <!-- Attendance chart -->
     <div class="card card-pad">
-
       <div class="card-title">
         تقرير حضور الشركة — آخر 6 أسابيع
       </div>
-
-      <div class="hbars">
-
-        @for (week of attendanceWeeks; track week.label) {
-
-          <div class="hbar">
-
-            <div class="h-lbl">
-              {{ week.label }}
-            </div>
-
-            <div class="h-trk">
-
-              <div
-                class="h-fill"
-                [style.width.%]="getBarWidth(week.value)"
-              >
-
-                {{ week.value }}%
-
-              </div>
-
-            </div>
-
-            <div class="h-val">
-              {{ week.value }}%
-            </div>
-
-          </div>
-
-        }
-
+     <div class="hbars">
+  @for (week of attendanceWeeks; track week.label) {
+    <div class="hbar">
+      <div class="h-lbl">{{ week.label }}</div>
+      <div class="h-trk">
+        <div class="h-fill" [style.width.%]="week.value"></div>
       </div>
-
+      <div class="h-val">{{ week.value }}%</div>
     </div>
-
+  }
+</div>
+    </div>
 
     <!-- Attendance table -->
     <div class="card card-pad">
-
       <div class="card-title">
         الحضور حسب القسم
       </div>
-
       <div class="tbl-wrap">
-
         <table class="tbl">
-
           <thead>
-
             <tr>
               <th>القسم</th>
               <th>عدد المتدربين</th>
@@ -236,83 +113,39 @@
               <th>التأخر</th>
               <th>التقييم</th>
             </tr>
-
           </thead>
-
-
           <tbody>
-
-            @for (
-              department of attendanceDepartments;
-              track department.department
-            ) {
-
+            @for (department of attendanceDepartments; track department.department) {
               <tr>
-
+                <td><b>{{ department.department }}</b></td>
+                <td>{{ department.trainees }}</td>
                 <td>
-                  <b>{{ department.department }}</b>
-                </td>
-
-                <td>
-                  {{ department.trainees }}
-                </td>
-
-                <td>
-
-                  <span
-                    class="chip"
-                    [ngClass]="department.status"
-                  >
-
+                  <span class="chip" [ngClass]="department.status">
                     <span class="dot"></span>
-
                     {{ department.attendance }}%
-
                   </span>
-
                 </td>
-
-                <td>
-                  {{ department.absence }}
-                </td>
-
-                <td>
-                  {{ department.late }}
-                </td>
-
-                <td>
-                  {{ department.evaluation }}
-                </td>
-
+                <td>{{ department.absence }}</td>
+                <td>{{ department.late }}</td>
+                <td>{{ department.evaluation }}</td>
               </tr>
-
             }
-
           </tbody>
-
         </table>
-
       </div>
-
     </div>
-
   }
 
-
-  <!-- ================================================= -->
+ <!-- ================================================= -->
   <!-- إنجاز المتدربين -->
   <!-- ================================================= -->
-
   @if (activeTab === 'achieve') {
-
     <div class="stat-row">
-
       <div class="stat-mini">
         <span>متوسط الإنجاز العام</span>
         <b class="primary-text">86%</b>
         <small>لكل البرامج</small>
       </div>
-
 
       <div class="stat-mini">
         <span>مشروعات مكتملة</span>
@@ -320,194 +153,83 @@
         <small>من أصل 92</small>
       </div>
 
-
       <div class="stat-mini">
         <span>متدربون متميزون</span>
         <b class="success-text">22</b>
         <small>أداء ≥ 90%</small>
       </div>
 
-
       <div class="stat-mini">
         <span>متعثرون</span>
         <b class="danger-text">6</b>
         <small>خطة تحسين</small>
       </div>
-
     </div>
 
-
     <div class="card card-pad">
-
       <div class="card-title">
         نسبة إنجاز المتدربين حسب البرنامج
       </div>
-
-
       <div class="hbars">
-
-        @for (
-          program of achievementPrograms;
-          track program.name
-        ) {
-
+        @for (program of achievementPrograms; track program.name) {
           <div class="hbar">
-
-            <div class="h-lbl">
-              {{ program.name }}
-            </div>
-
+            <div class="h-lbl">{{ program.name }}</div>
             <div class="h-trk">
-
-              <div
-                class="h-fill"
-                [style.width.%]="getBarWidth(program.value)"
-              >
-
-                {{ program.value }}%
-
-              </div>
-
+              <!-- تم إزالة الـ span هنا أيضاً -->
+              <div class="h-fill" [style.width.%]="program.value"></div>
             </div>
-
-            <div class="h-val">
-              {{ program.value }}%
-            </div>
-
+            <div class="h-val">{{ program.value }}%</div>
           </div>
-
         }
-
       </div>
-
     </div>
-
   }
-
-
   <!-- ================================================= -->
   <!-- الطاقة الاستيعابية -->
   <!-- ================================================= -->
-
   @if (activeTab === 'cap') {
-
     <div class="card card-pad capacity-card">
-
       <div class="card-title">
         الطاقة الاستيعابية — الحصة المخصصة للشركة: 150 مقعدًا
       </div>
-
-
       <div class="donut-wrap">
-
         <div class="donut">
-
-          <svg
-            width="150"
-            height="150"
-            viewBox="0 0 150 150">
-
-            <circle
-              cx="75"
-              cy="75"
-              r="62"
-              fill="none"
-              stroke="#e9eef2"
-              stroke-width="15">
-            </circle>
-
-            <circle
-              class="donut-progress"
-              cx="75"
-              cy="75"
-              r="62"
-              fill="none"
-              stroke="#00338d"
-              stroke-width="15"
-              stroke-linecap="round"
-              stroke-dasharray="389.6"
-              stroke-dashoffset="57.4">
-            </circle>
-
+          <svg width="150" height="150" viewBox="0 0 150 150">
+            <circle cx="75" cy="75" r="62" fill="none" stroke="#e9eef2" stroke-width="15"></circle>
+            <circle class="donut-progress" cx="75" cy="75" r="62" fill="none" stroke="#00338d" stroke-width="15" stroke-linecap="round" stroke-dasharray="389.6" stroke-dashoffset="57.4"></circle>
           </svg>
-
-
           <div class="center">
-
             <b>85%</b>
-
-            <span>
-              مستخدمة
-            </span>
-
+            <span>مستخدمة</span>
           </div>
-
         </div>
-
-
         <div class="legend">
-
           <div class="lg-item">
-
-            <span
-              class="sw"
-              style="background:#00338d">
-            </span>
-
+            <span class="sw" style="background:#00338d"></span>
             مشغول
-
             <b>128</b>
-
           </div>
-
-
           <div class="lg-item">
-
-            <span
-              class="sw"
-              style="background:#e9eef2">
-            </span>
-
+            <span class="sw" style="background:#e9eef2"></span>
             متبقي
-
             <b>22</b>
-
           </div>
-
-
           <div class="lg-item">
-
-            <span
-              class="sw"
-              style="background:#efbb20">
-            </span>
-
+            <span class="sw" style="background:#efbb20"></span>
             الحصة
-
             <b>150</b>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
 
-
     <div class="card card-pad">
-
       <div class="card-title">
         الطاقة حسب البرنامج
       </div>
-
-
       <div class="tbl-wrap">
-
         <table class="tbl">
-
           <thead>
-
             <tr>
               <th>البرنامج</th>
               <th>الحصة المخصصة</th>
@@ -515,126 +237,65 @@
               <th>المتبقي</th>
               <th>الاستغلال</th>
             </tr>
-
           </thead>
-
-
           <tbody>
-
-            @for (
-              program of capacityPrograms;
-              track program.name
-            ) {
-
+            @for (program of capacityPrograms; track program.name) {
               <tr>
-
+                <td><b>{{ program.name }}</b></td>
+                <td>{{ program.capacity }}</td>
+                <td>{{ program.used }}</td>
+                <td>{{ program.remaining }}</td>
                 <td>
-                  <b>{{ program.name }}</b>
-                </td>
-
-                <td>
-                  {{ program.capacity }}
-                </td>
-
-                <td>
-                  {{ program.used }}
-                </td>
-
-                <td>
-                  {{ program.remaining }}
-                </td>
-
-                <td>
-
                   <div class="capacity-progress">
-
                     <div class="bar">
-
-                      <i
-                        [class.amber]="program.percentage < 70"
-                        [style.width.%]="program.percentage">
-                      </i>
-
+                      <i [class.amber]="program.percentage < 70" [style.width.%]="program.percentage"></i>
                     </div>
-
-                    <b>
-                      {{ program.percentage }}%
-                    </b>
-
+                    <b>{{ program.percentage }}%</b>
                   </div>
-
                 </td>
-
               </tr>
-
             }
-
           </tbody>
-
         </table>
-
       </div>
-
     </div>
-
   }
-
 
   <!-- ================================================= -->
   <!-- التقييمات -->
   <!-- ================================================= -->
-
   @if (activeTab === 'eval') {
-
     <div class="report-note">
-
       <span class="info-icon">i</span>
-
       توجد 9 تقييمات مطلوب استكمالها، منها 4 متأخرة عن الموعد المحدد.
-
     </div>
 
-
     <div class="stat-row">
-
       <div class="stat-mini">
         <span>تقييمات مكتملة هذا الشهر</span>
         <b class="success-text">118</b>
       </div>
-
-
       <div class="stat-mini">
         <span>تقييمات قيد الإعداد</span>
         <b class="warning-text">9</b>
       </div>
-
-
       <div class="stat-mini">
         <span>تقييمات متأخرة</span>
         <b class="danger-text">4</b>
       </div>
-
-
       <div class="stat-mini">
         <span>متوسط التقييم الشهري</span>
         <b class="primary-text">4.2/5</b>
       </div>
-
     </div>
 
-
     <div class="card card-pad">
-
       <div class="card-title">
         التقييمات غير المكتملة حسب المشرف
       </div>
-
       <div class="tbl-wrap">
-
         <table class="tbl">
-
           <thead>
-
             <tr>
               <th>المشرف</th>
               <th>القسم</th>
@@ -643,115 +304,59 @@
               <th>آخر تقييم</th>
               <th>الحالة</th>
             </tr>
-
           </thead>
-
-
           <tbody>
-
-            @for (
-              evaluation of evaluations;
-              track evaluation.supervisor
-            ) {
-
+            @for (evaluation of evaluations; track evaluation.supervisor) {
               <tr>
-
+                <td><b>{{ evaluation.supervisor }}</b></td>
+                <td>{{ evaluation.department }}</td>
+                <td>{{ evaluation.required }}</td>
+                <td>{{ evaluation.late }}</td>
+                <td>{{ evaluation.lastEvaluation }}</td>
                 <td>
-                  <b>{{ evaluation.supervisor }}</b>
-                </td>
-
-                <td>
-                  {{ evaluation.department }}
-                </td>
-
-                <td>
-                  {{ evaluation.required }}
-                </td>
-
-                <td>
-                  {{ evaluation.late }}
-                </td>
-
-                <td>
-                  {{ evaluation.lastEvaluation }}
-                </td>
-
-                <td>
-
-                  <span
-                    class="chip"
-                    [ngClass]="evaluation.statusClass">
-
+                  <span class="chip" [ngClass]="evaluation.statusClass">
                     <span class="dot"></span>
-
                     {{ evaluation.status }}
-
                   </span>
-
                 </td>
-
               </tr>
-
             }
-
           </tbody>
-
         </table>
-
       </div>
-
     </div>
-
   }
-
 
   <!-- ================================================= -->
   <!-- المهام -->
   <!-- ================================================= -->
-
   @if (activeTab === 'tasks') {
-
     <div class="stat-row">
-
       <div class="stat-mini">
         <span>مهام مكتملة</span>
         <b class="success-text">64</b>
       </div>
-
-
       <div class="stat-mini">
         <span>مهام قيد المراجعة</span>
         <b class="primary-text">2</b>
       </div>
-
-
       <div class="stat-mini">
         <span>مهام بانتظار الاستلام</span>
         <b class="warning-text">3</b>
       </div>
-
-
       <div class="stat-mini">
         <span>مهام متأخرة</span>
         <b class="danger-text">2</b>
       </div>
-
     </div>
 
-
     <div class="card card-pad">
-
       <div class="card-title">
         أحدث المهام والمشروعات
       </div>
-
-
       <div class="tbl-wrap">
-
         <table class="tbl">
-
           <thead>
-
             <tr>
               <th>المتدرب</th>
               <th>المهمة</th>
@@ -759,215 +364,44 @@
               <th>الحالة</th>
               <th></th>
             </tr>
-
           </thead>
-
-
           <tbody>
-
             @for (task of tasks; track task.trainee) {
-
               <tr>
-
+                <td><b>{{ task.trainee }}</b></td>
+                <td>{{ task.task }}</td>
+                <td>{{ task.due }}</td>
                 <td>
-                  <b>{{ task.trainee }}</b>
-                </td>
-
-                <td>
-                  {{ task.task }}
-                </td>
-
-                <td>
-                  {{ task.due }}
-                </td>
-
-                <td>
-
-                  <span
-                    class="chip"
-                    [ngClass]="getTaskStatusClass(task.status)">
-
+                  <span class="chip" [ngClass]="getTaskStatusClass(task.status)">
                     <span class="dot"></span>
-
                     {{ getTaskStatusText(task.status) }}
-
                   </span>
-
                 </td>
-
                 <td>
-
-                  <button
-                    class="btn btn-soft btn-sm"
-                    type="button">
-
-                    مراجعة
-
-                  </button>
-
+                  <button class="btn btn-soft btn-sm" type="button">مراجعة</button>
                 </td>
-
               </tr>
-
             }
-
           </tbody>
-
         </table>
-
       </div>
-
     </div>
-
   }
 
-
-  <!-- ================================================= -->
-  <!-- مقارنة الأقسام والمشرفين -->
-  <!-- ================================================= -->
-
-  @if (activeTab === 'compare') {
-
-    <div class="report-note">
-
-      <span class="info-icon">i</span>
-
-      مقارنة أداء المشرفين: معدل الحضور مقابل متوسط الأداء العملي لمتدربيهم.
-
-    </div>
-
-
-    <div class="card card-pad">
-
-      <div class="card-title">
-        مؤشرات المشرفين
-      </div>
-
-
-      <div class="tbl-wrap">
-
-        <table class="tbl">
-
-          <thead>
-
-            <tr>
-              <th>المشرف</th>
-              <th>القسم</th>
-              <th>المتدربون</th>
-              <th>معدل الحضور</th>
-              <th>متوسط الأداء</th>
-              <th>تقييمات معلقة</th>
-              <th>الأداء العام</th>
-            </tr>
-
-          </thead>
-
-
-          <tbody>
-
-            @for (
-              supervisor of supervisors;
-              track supervisor.name
-            ) {
-
-              <tr>
-
-                <td>
-                  <b>{{ supervisor.name }}</b>
-                </td>
-
-                <td>
-                  {{ supervisor.department }}
-                </td>
-
-                <td>
-                  {{ supervisor.trainees }}
-                </td>
-
-                <td>
-                  {{ supervisor.attendance }}%
-                </td>
-
-                <td>
-                  {{ supervisor.performance }}%
-                </td>
-
-                <td>
-                  {{ supervisor.pendingEvaluations }}
-                </td>
-
-                <td>
-
-                  <span
-                    class="chip"
-                    [ngClass]="supervisor.statusClass">
-
-                    <span class="dot"></span>
-
-                    {{ supervisor.overall }}
-
-                  </span>
-
-                </td>
-
-              </tr>
-
-            }
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </div>
-
-
-    <div class="card card-pad comparison-card">
-
+  <div class="card card-pad comparison-card">
       <div class="card-title">
         مقارنة الحضور والأداء حسب القسم
       </div>
-
-
       <div class="hbars">
-
-        @for (
-          department of comparisonDepartments;
-          track department.name
-        ) {
-
+        @for (department of comparisonDepartments; track department.name) {
           <div class="hbar">
-
-            <div class="h-lbl">
-              {{ department.name }}
-            </div>
-
+            <div class="h-lbl">{{ department.name }}</div>
             <div class="h-trk">
-
-              <div
-                class="h-fill"
-                [style.width.%]="department.value"
-              >
-
-                {{ department.value }}%
-
-              </div>
-
+              <div class="h-fill" [style.width.%]="department.value"></div>
             </div>
-
-            <div class="h-val">
-              {{ department.value }}%
-            </div>
-
+            <div class="h-val">{{ department.value }}%</div>
           </div>
-
         }
-
       </div>
-
     </div>
-
-  }
-
 </div>
