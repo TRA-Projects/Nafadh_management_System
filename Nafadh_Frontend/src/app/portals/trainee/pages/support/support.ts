@@ -30,14 +30,11 @@ import {
 
 @Component({
   selector: 'app-trainee-support',
-
   standalone: true,
-
   imports: [
     CommonModule,
     FormsModule
   ],
-
   templateUrl: './support.html'
 })
 
@@ -145,17 +142,12 @@ export class TraineeSupport implements OnInit {
   // =========================================================
 
   subjects = [
-
     'استفسار عن البرنامج التدريبي',
-
     'مشكلة تقنية',
-
     'استفسار عن الحضور',
-
     'شكوى رسمية',
-
+    'طلب انسحاب',
     'أخرى'
-
   ];
 
 
@@ -181,6 +173,56 @@ export class TraineeSupport implements OnInit {
     this.loadConversations();
 
     this.loadCurrentTraineeData();
+
+  }
+
+
+  // =========================================================
+  // Withdrawal Request
+  // =========================================================
+
+  isWithdrawalRequest(
+    conversation: any
+  ): boolean {
+
+    if (!conversation) {
+
+      return false;
+
+    }
+
+
+    return String(
+      conversation?.subject ?? ''
+    ).trim() === 'طلب انسحاب';
+
+  }
+
+
+  getWithdrawalStatus(
+    conversation: any
+  ): 'pending' | 'approved' | 'rejected' | null {
+
+    if (
+      !this.isWithdrawalRequest(
+        conversation
+      )
+    ) {
+
+      return null;
+
+    }
+
+
+    /*
+     * الحالة الحالية مؤقتة إلى أن يتم
+     * ربط حالة الطلب القادمة من Backend.
+     *
+     * حاليًا كل طلب انسحاب جديد يظهر
+     * على أنه قيد المراجعة.
+     */
+
+    return 'pending';
 
   }
 
@@ -248,7 +290,6 @@ export class TraineeSupport implements OnInit {
 
           this.companyName.set('');
 
-
           this.trainers.set([]);
 
         }
@@ -289,9 +330,7 @@ export class TraineeSupport implements OnInit {
 
             this.companyName.set('');
 
-
             this.trainers.set([]);
-
 
             return;
 
@@ -384,7 +423,6 @@ export class TraineeSupport implements OnInit {
 
           this.companyName.set('');
 
-
           this.trainers.set([]);
 
         }
@@ -428,11 +466,9 @@ export class TraineeSupport implements OnInit {
 
             this.trainers.set([]);
 
-
             this.loadingTrainers.set(
               false
             );
-
 
             return;
 
@@ -544,7 +580,6 @@ export class TraineeSupport implements OnInit {
 
           this.trainers.set([]);
 
-
           this.loadingTrainers.set(
             false
           );
@@ -622,8 +657,15 @@ export class TraineeSupport implements OnInit {
 
                 (conversation: any) =>
 
-                  conversation.conversationId ===
+                  Number(
+                    conversation.conversationId
+                  )
+
+                  ===
+
+                  Number(
                     current.conversationId
+                  )
 
               );
 
@@ -671,12 +713,6 @@ export class TraineeSupport implements OnInit {
     this.errorMessage.set('');
 
 
-    /*
-     * نأخذ بيانات المحادثة من القائمة أيضاً
-     * لأن receiverType قد يكون موجوداً في القائمة
-     * وغير موجود في تفاصيل المحادثة.
-     */
-
     const listConversation: any =
 
       this.conversations()
@@ -707,11 +743,6 @@ export class TraineeSupport implements OnInit {
         next: (
           conversation
         ) => {
-
-
-          /*
-           * ندمج بيانات القائمة مع التفاصيل.
-           */
 
           const mergedConversation: any = {
 
@@ -831,7 +862,6 @@ export class TraineeSupport implements OnInit {
 
     this.errorMessage.set('');
 
-
     this.selectedFile =
       file;
 
@@ -895,11 +925,6 @@ export class TraineeSupport implements OnInit {
   // =========================================================
 
   onReceiverChange(): void {
-
-    /*
-     * عند تغيير الجهة نمسح
-     * بيانات الجهة السابقة بالكامل.
-     */
 
     this.newConv.subject =
       '';
@@ -1019,10 +1044,6 @@ export class TraineeSupport implements OnInit {
         .toLowerCase();
 
 
-    // =======================================================
-    // Authority
-    // =======================================================
-
     if (
 
       receiverType === 'authority'
@@ -1041,10 +1062,6 @@ export class TraineeSupport implements OnInit {
 
     }
 
-
-    // =======================================================
-    // Trainer
-    // =======================================================
 
     if (
 
@@ -1113,10 +1130,6 @@ export class TraineeSupport implements OnInit {
     }
 
 
-    // =======================================================
-    // Company
-    // =======================================================
-
     if (
 
       receiverType === 'company'
@@ -1161,6 +1174,10 @@ export class TraineeSupport implements OnInit {
 
         ??
 
+        conversation?.assignedToName
+
+        ??
+
         this.companyName();
 
 
@@ -1178,10 +1195,6 @@ export class TraineeSupport implements OnInit {
     }
 
 
-    // =======================================================
-    // Fallback Trainer
-    // =======================================================
-
     if (
       conversation?.receiverTrainerName
     ) {
@@ -1192,10 +1205,6 @@ export class TraineeSupport implements OnInit {
 
     }
 
-
-    // =======================================================
-    // Fallback Company
-    // =======================================================
 
     if (
       conversation?.receiverCompanyName
@@ -1217,11 +1226,6 @@ export class TraineeSupport implements OnInit {
 
   canSubmit(): boolean {
 
-    /*
-     * بدون اختيار الجهة
-     * لا يمكن إرسال أي شيء.
-     */
-
     if (
       !this.newConv.receiverType
     ) {
@@ -1230,8 +1234,6 @@ export class TraineeSupport implements OnInit {
 
     }
 
-
-    // Trainer
 
     if (
       this.newConv.receiverType ===
@@ -1255,8 +1257,6 @@ export class TraineeSupport implements OnInit {
     }
 
 
-    // Company
-
     if (
       this.newConv.receiverType ===
         'Company'
@@ -1274,8 +1274,6 @@ export class TraineeSupport implements OnInit {
 
     }
 
-
-    // Authority
 
     if (
       this.newConv.receiverType ===
@@ -1392,13 +1390,8 @@ export class TraineeSupport implements OnInit {
 
     this.errorMessage.set('');
 
-
     this.successMessage.set('');
 
-
-    // =====================================================
-    // Receiver
-    // =====================================================
 
     if (
       !this.newConv.receiverType
@@ -1413,10 +1406,6 @@ export class TraineeSupport implements OnInit {
 
     }
 
-
-    // =====================================================
-    // Trainer
-    // =====================================================
 
     if (
 
@@ -1439,10 +1428,6 @@ export class TraineeSupport implements OnInit {
     }
 
 
-    // =====================================================
-    // Subject
-    // =====================================================
-
     if (
       !this.newConv.subject.trim()
     ) {
@@ -1456,10 +1441,6 @@ export class TraineeSupport implements OnInit {
 
     }
 
-
-    // =====================================================
-    // Trainer / Company Note
-    // =====================================================
 
     if (
 
@@ -1491,10 +1472,6 @@ export class TraineeSupport implements OnInit {
     }
 
 
-    // =====================================================
-    // Authority Details
-    // =====================================================
-
     if (
 
       this.newConv.receiverType ===
@@ -1516,10 +1493,6 @@ export class TraineeSupport implements OnInit {
     }
 
 
-    // =====================================================
-    // User
-    // =====================================================
-
     const uid =
       this.auth.userId;
 
@@ -1536,17 +1509,9 @@ export class TraineeSupport implements OnInit {
     }
 
 
-    // =====================================================
-    // Trainer
-    // =====================================================
-
     const selectedTrainer =
       this.getSelectedTrainer();
 
-
-    // =====================================================
-    // First Message
-    // =====================================================
 
     const messageContent =
 
@@ -1562,10 +1527,6 @@ export class TraineeSupport implements OnInit {
 
         : this.newConv.firstMessage.trim();
 
-
-    // =====================================================
-    // Payload
-    // =====================================================
 
     const payload = {
 
@@ -1623,10 +1584,6 @@ export class TraineeSupport implements OnInit {
       startedByUserId:
         uid,
 
-      // ===================================================
-      // Attachment
-      // ===================================================
-
       attachment:
         this.selectedFile
 
@@ -1662,8 +1619,6 @@ export class TraineeSupport implements OnInit {
             'تم إرسال الطلب بنجاح'
           );
 
-
-          // Reset
 
           this.newConv = {
 

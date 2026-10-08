@@ -91,14 +91,34 @@
             (click)="open(c.conversationId)"
           >
 
-            <span class="conversation-status"></span>
+            <span
+              class="conversation-status"
+              [class.withdrawal-status-bar]="isWithdrawalRequest(c)"
+            ></span>
 
 
             <div class="conversation-item-content">
 
-              <strong>
-                {{ c.subject }}
-              </strong>
+              <div class="conversation-subject-row">
+
+                <strong>
+                  {{ c.subject }}
+                </strong>
+
+                @if (isWithdrawalRequest(c)) {
+
+                  <span class="withdrawal-badge pending">
+
+                    <i class="fa-solid fa-clock"></i>
+
+                    قيد المراجعة
+
+                  </span>
+
+                }
+
+              </div>
+
 
               <small>
                 {{ c.startedByName }}
@@ -174,9 +194,25 @@
 
               <div class="conversation-meta">
 
-                <span>
-                  شكوى أو استفسار
-                </span>
+                @if (isWithdrawalRequest(conversation)) {
+
+                  <span class="withdrawal-badge pending">
+
+                    <i class="fa-solid fa-clock"></i>
+
+                    قيد المراجعة
+
+                  </span>
+
+                }
+
+                @else {
+
+                  <span>
+                    شكوى أو استفسار
+                  </span>
+
+                }
 
               </div>
 
@@ -1050,11 +1086,6 @@
   padding: 8px;
 }
 
-
-/* =========================================================
-   ALL CONVERSATION BOXES BLUE
-   ========================================================= */
-
 .conversation-item {
   width: 100%;
 
@@ -1122,6 +1153,68 @@
 
 .conversation-item.active .conversation-status {
   background: #0066cc;
+}
+
+
+/* =========================================================
+   WITHDRAWAL REQUEST STATUS
+   ========================================================= */
+
+.conversation-subject-row {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+}
+
+.conversation-subject-row strong {
+  flex: 1;
+  min-width: 0;
+
+  margin-bottom: 0;
+}
+
+.withdrawal-badge {
+  flex-shrink: 0;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 4px;
+
+  min-height: 21px;
+
+  padding: 2px 7px;
+
+  border-radius: 20px;
+
+  font-size: 8px;
+
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+.withdrawal-badge.pending {
+  background: #fff7e6;
+
+  color: #d97706;
+
+  border: 1px solid #fde7b2;
+}
+
+.withdrawal-badge.pending i {
+  font-size: 8px;
+}
+
+.withdrawal-status-bar {
+  background: #f59e0b;
+}
+
+.conversation-item.active .withdrawal-status-bar {
+  background: #f59e0b;
 }
 
 
@@ -2192,6 +2285,16 @@
 
   .message-bubble {
     max-width: 85%;
+  }
+
+  .conversation-subject-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .withdrawal-badge {
+    font-size: 7px;
   }
 
 }
