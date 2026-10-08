@@ -55,6 +55,13 @@ namespace Nafadh_Backend.Repositories
                                 m.ReceiverId ==
                                 participantUserId.Value
                         )
+                       ||
+_context.NFD_ConversationGroupMembers.Any(
+    gm =>
+        gm.ConversationId == t.TicketId
+        &&
+        gm.UserId == participantUserId.Value
+)
                 );
             }
 
@@ -151,8 +158,8 @@ namespace Nafadh_Backend.Repositories
         //create batch group
         //=============================
         public async Task<int> CreateBatchGroupAsync(
-    CreateBatchGroupDTO dto
-)
+            CreateBatchGroupDTO dto
+        )
         {
             var batch = await _context.NFD_Batches
                 .FirstOrDefaultAsync(
@@ -164,6 +171,19 @@ namespace Nafadh_Backend.Repositories
                 throw new Exception(
                     "Batch not found."
                 );
+            }
+
+            // check if batch group already exists
+            var existingGroup = await _context.NFD_SupportTickets
+                .FirstOrDefaultAsync(
+                    c =>
+                        c.Category == "BatchGroup"
+                        && c.Subject == $"مجموعة {batch.BatchName}"
+                );
+
+            if (existingGroup != null)
+            {
+                return existingGroup.TicketId;
             }
 
             var conversation =
