@@ -85,55 +85,39 @@
 
           <div class="avatar-box">
 
-  @if (profileImagePreview()) {
+            @if (profileImagePreview()) {
 
-    <button
-  type="button"
-  class="profile-avatar-button"
-  (click)="openProfileImage()"
-  title="عرض الصورة"
->
-  <img
-    [src]="profileImagePreview()"
-    [alt]="t.fullName || 'صورة المدرب'"
-    class="profile-avatar-image"
-  />
-</button>
+            <button type="button" class="profile-avatar-button" (click)="openProfileImage()" title="عرض الصورة">
+              <img [src]="profileImagePreview()" [alt]="t.fullName || 'صورة المدرب'" class="profile-avatar-image" />
+            </button>
 
-  }
-  @else {
+            }
+            @else {
 
-    <span class="avatar-letter">
-      {{
-        (t.fullName || 'م')
-          .charAt(0)
-      }}
-    </span>
+            <span class="avatar-letter">
+              {{
+              (t.fullName || 'م')
+              .charAt(0)
+              }}
+            </span>
 
-  }
+            }
 
-</div>
+          </div>
 
 
-@if (isEditing()) {
+          @if (isEditing()) {
 
-  <label
-    class="change-photo-btn"
-    title="تغيير الصورة"
-  >
+          <label class="change-photo-btn" title="تغيير الصورة">
 
-    <i class="fa-solid fa-camera"></i>
+            <i class="fa-solid fa-camera"></i>
 
-    <input
-      type="file"
-      accept="image/png,image/jpeg,image/webp"
-      (change)="onProfileImageSelected($event)"
-      hidden
-    />
+            <input type="file" accept="image/png,image/jpeg,image/webp" (change)="onProfileImageSelected($event)"
+              hidden />
 
-  </label>
+          </label>
 
-}
+          }
 
 
           <span class="status-dot" [class.active]="
@@ -299,36 +283,31 @@
     }
 
 
-  <!-- =================================================
+    <!-- =================================================
      SECTION HEADING
 ================================================== -->
 
-<div class="section-heading">
+    <div class="section-heading">
 
-  <button
-    type="button"
-    class="section-icon edit-profile-btn"
-    (click)="startEditing()"
-    [disabled]="isEditing()"
-    title="تعديل المعلومات الشخصية"
-  >
-    <i class="fa-solid fa-pen-to-square"></i>
-  </button>
+      <button type="button" class="section-icon edit-profile-btn" (click)="startEditing()" [disabled]="isEditing()"
+        title="تعديل المعلومات الشخصية">
+        <i class="fa-solid fa-pen-to-square"></i>
+      </button>
 
 
-  <div>
+      <div>
 
-    <h3>
-      المعلومات الشخصية
-    </h3>
+        <h3>
+          المعلومات الشخصية
+        </h3>
 
-    <p>
-      عدّل بياناتك المهنية ثم احفظ التغييرات.
-    </p>
+        <p>
+          عدّل بياناتك المهنية ثم احفظ التغييرات.
+        </p>
 
-  </div>
+      </div>
 
-</div>
+    </div>
 
 
     <!-- =================================================
@@ -363,15 +342,8 @@
           </span>
 
 
-          <input
-  type="text"
-  class="profile-input"
-  [(ngModel)]="t.fullName"
-  [readonly]="!isEditing()"
-  (ngModelChange)="markProfileChanged()"
-  autocomplete="name"
-  placeholder="الاسم الكامل"
-/>
+          <input type="text" class="profile-input" [(ngModel)]="t.fullName" [readonly]="!isEditing()"
+            (ngModelChange)="markProfileChanged()" autocomplete="name" placeholder="الاسم الكامل" />
 
         </div>
 
@@ -437,16 +409,8 @@
           </span>
 
 
-        <input
-  type="tel"
-  class="profile-input text-ltr"
-  [(ngModel)]="t.phone"
-  [readonly]="!isEditing()"
-  (ngModelChange)="markProfileChanged()"
-  autocomplete="tel"
-  inputmode="tel"
-  placeholder="+968 9123 4567"
-/>
+          <input type="tel" class="profile-input text-ltr" [(ngModel)]="t.phone" [readonly]="!isEditing()"
+            (ngModelChange)="markProfileChanged()" autocomplete="tel" inputmode="tel" placeholder="+968 9123 4567" />
 
         </div>
 
@@ -476,14 +440,8 @@
 
           </span>
 
-<input
-  type="text"
-  class="profile-input"
-  [(ngModel)]="t.specialty"
-  [readonly]="!isEditing()"
-  (ngModelChange)="markProfileChanged()"
-  placeholder="مثال: تطوير البرمجيات"
-/>
+          <input type="text" class="profile-input" [(ngModel)]="t.specialty" [readonly]="!isEditing()"
+            (ngModelChange)="markProfileChanged()" placeholder="مثال: تطوير البرمجيات" />
 
         </div>
 
@@ -513,17 +471,8 @@
 
           </span>
 
-<input
-  type="number"
-  min="0"
-  max="100"
-  step="1"
-  class="profile-input"
-  [(ngModel)]="t.experienceYears"
-  [readonly]="!isEditing()"
-  (ngModelChange)="markProfileChanged()"
-  placeholder="0"
-/>
+          <input type="number" min="0" max="100" step="1" class="profile-input" [(ngModel)]="t.experienceYears"
+            [readonly]="!isEditing()" (ngModelChange)="markProfileChanged()" placeholder="0" />
 
         </div>
 
@@ -599,14 +548,9 @@
           نبذة مهنية
         </label>
 
-<textarea
-  class="profile-textarea"
-  rows="5"
-  [(ngModel)]="t.biography"
-  [readonly]="!isEditing()"
-  (ngModelChange)="markProfileChanged()"
-  placeholder="اكتب نبذة مختصرة عن خبراتك المهنية والتدريبية..."
-></textarea>
+        <textarea class="profile-textarea" rows="5" [(ngModel)]="t.biography" [readonly]="!isEditing()"
+          (ngModelChange)="markProfileChanged()"
+          placeholder="اكتب نبذة مختصرة عن خبراتك المهنية والتدريبية..."></textarea>
 
 
         <span class="field-hint">
@@ -620,190 +564,157 @@
   </section>
   <section class="profile-section skills-section">
 
-  <div class="section-heading">
+    <div class="section-heading">
 
-    <div>
+      <div>
 
-      <h3>المهارات المهنية</h3>
+        <h3>المهارات المهنية</h3>
 
-      <p>أضف المهارات والخبرات التي تتميز بها كمدرب.</p>
+        <p>أضف المهارات والخبرات التي تتميز بها كمدرب.</p>
+
+      </div>
+
+
+
+      <button type="button" class="add-item-btn" (click)="addSkill()">
+
+        <i class="fa-solid fa-plus"></i>
+        إضافة مهارة
+
+      </button>
 
     </div>
 
- 
 
-   <button
-  type="button"
-  class="add-item-btn"
-  (click)="addSkill()">
+    @if (showSkillInput()) {
+    <div class="skill-input-row">
 
-  <i class="fa-solid fa-plus"></i>
-  إضافة مهارة
+      <input type="text" class="profile-input" [(ngModel)]="newSkillName" (keyup.enter)="saveSkill()"
+        placeholder="اكتب اسم المهارة" />
 
-</button>
+      <button type="button" class="skill-save-btn" (click)="saveSkill()">
+        حفظ
+      </button>
 
-  </div>
+      <button type="button" class="skill-cancel-btn" (click)="cancelSkill()">
+        إلغاء
+      </button>
 
-
-@if (showSkillInput()) {
-  <div class="skill-input-row">
-
-    <input
-      type="text"
-      class="profile-input"
-      [(ngModel)]="newSkillName"
-      (keyup.enter)="saveSkill()"
-      placeholder="اكتب اسم المهارة"
-    />
-
-    <button
-      type="button"
-      class="skill-save-btn"
-      (click)="saveSkill()">
-      حفظ
-    </button>
-
-    <button
-      type="button"
-      class="skill-cancel-btn"
-      (click)="cancelSkill()">
-      إلغاء
-    </button>
-
-  </div>
-}
+    </div>
+    }
 
 
 
- 
 
-  <div class="skills-list">
 
-    @for (skill of skills(); track skill.trainerSkillId) {
+    <div class="skills-list">
+
+      @for (skill of skills(); track skill.trainerSkillId) {
 
       <span class="skill-tag">
 
         {{ skill.skillName }}
 
- 
+
 
         @if (isEditing()) {
 
-          <button
+        <button type="button" (click)="removeSkill(skill.trainerSkillId)" title="حذف المهارة">
 
-            type="button"
+          <i class="fa-solid fa-xmark"></i>
 
-            (click)="removeSkill(skill.trainerSkillId)"
-
-            title="حذف المهارة">
-
-            <i class="fa-solid fa-xmark"></i>
-
-          </button>
+        </button>
 
         }
 
       </span>
 
-    }
+      }
 
-  </div>
-
-</section>
-<!-- =====================================================
-     TRAINER CERTIFICATES SECTION
-====================================================== -->
-<section class="profile-section certificates-section">
-
- <div class="section-heading" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-    <div>
-      <h3 style="margin: 0; color: #123d70; font-size: 16px;">الشهادات والاعتمادات المهنية</h3>
-      <p style="margin: 4px 0 0 0; color: #718096; font-size: 12px;">أضف شهاداتك العلمية والمهنية لتعزيز ملفك الشخصي.</p>
     </div>
 
-    <!-- زر الإضافة (تم إزالة شرط isEditing مؤقتاً للتأكد من ظهوره، أو يمكنك إبقاؤه حسب منطق التطبيق) -->
-    <button
-      type="button"
-      class="add-item-btn"
-      (click)="openCertificateForm()"
-      style="background: #e6f4f8; color: #087c90; border: 1px solid #bfe5eb; padding: 6px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 600;">
-      <i class="fa-solid fa-plus"></i>
-      إضافة شهادة
-    </button>
-  </div>
+  </section>
+  <!-- =====================================================
+     TRAINER CERTIFICATES SECTION
+====================================================== -->
+  <section class="profile-section certificates-section">
 
-  <!-- نموذج إدخال شهادة جديدة -->
-  @if (isCertificateFormOpen()) {
+    <div class="section-heading"
+      style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div>
+        <h3 style="margin: 0; color: #123d70; font-size: 16px;">الشهادات والاعتمادات المهنية</h3>
+        <p style="margin: 4px 0 0 0; color: #718096; font-size: 12px;">أضف شهاداتك العلمية والمهنية لتعزيز ملفك الشخصي.
+        </p>
+      </div>
+
+      <!-- زر الإضافة (تم إزالة شرط isEditing مؤقتاً للتأكد من ظهوره، أو يمكنك إبقاؤه حسب منطق التطبيق) -->
+      <button type="button" class="add-item-btn" (click)="openCertificateForm()"
+        style="background: #e6f4f8; color: #087c90; border: 1px solid #bfe5eb; padding: 6px 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 600;">
+        <i class="fa-solid fa-plus"></i>
+        إضافة شهادة
+      </button>
+    </div>
+
+    <!-- نموذج إدخال شهادة جديدة -->
+    @if (isCertificateFormOpen()) {
     <div class="certificate-form-box">
       <h4>إضافة شهادة جديدة</h4>
-      
+
       <div class="form-grid">
         <div class="form-group">
           <label>اسم الشهادة <span class="required-mark">*</span></label>
-          <input
-            type="text"
-            class="profile-input"
-            [(ngModel)]="certificateForm.certificateName"
-            placeholder="مثال: شهادة مدرب معتمد"
-          />
+          <input type="text" class="profile-input" [(ngModel)]="certificateForm.certificateName"
+            placeholder="مثال: شهادة مدرب معتمد" />
         </div>
 
         <div class="form-group">
           <label>الجهة المانحة <span class="required-mark">*</span></label>
-          <input
-            type="text"
-            class="profile-input"
-            [(ngModel)]="certificateForm.issuingOrganization"
-            placeholder="مثال: المؤسسة العامة للتدريب"
-          />
+          <input type="text" class="profile-input" [(ngModel)]="certificateForm.issuingOrganization"
+            placeholder="مثال: المؤسسة العامة للتدريب" />
         </div>
 
         <div class="form-group">
           <label>تاريخ الإصدار</label>
-          <input
-            type="date"
-            class="profile-input"
-            [(ngModel)]="certificateForm.issueDate"
-          />
+          <input type="date" class="profile-input" [(ngModel)]="certificateForm.issueDate" />
         </div>
 
         <div class="form-group">
           <label>ملف الشهادة (PDF أو صورة) <span class="required-mark">*</span></label>
-          <input
-            type="file"
-            class="profile-input"
-            accept=".pdf,image/jpeg,image/png,image/webp"
-            (change)="onCertificateFileSelected($event)"
-          />
+          <input type="file" class="profile-input" accept=".pdf,image/jpeg,image/png,image/webp"
+            (change)="onCertificateFileSelected($event)" />
         </div>
       </div>
 
       <div class="certificate-form-actions" style="margin-top: 14px; display: flex; gap: 10px;">
-        <button type="button" class="skill-save-btn" (click)="submitCertificate()">حفظ الشهادة</button>
+        <button type="button" class="skill-save-btn" (click)="uploadCertificate()">حفظ الشهادة</button>
         <button type="button" class="skill-cancel-btn" (click)="closeCertificateForm()">إلغاء</button>
       </div>
     </div>
-  }
+    }
 
-  <!-- عرض قائمة الشهادات -->
-  <div class="certificates-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 14px;">
-    @for (cert of certificates(); track cert.id) {
-      <div class="certificate-card" style="border: 1px solid #d4e2eb; padding: 14px; border-radius: 12px; background: #fbfdfe;">
+    <!-- عرض قائمة الشهادات -->
+    <div class="certificates-list"
+      style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 14px;">
+      @for (cert of certificates(); track cert.id) {
+      <div class="certificate-card"
+        style="border: 1px solid #d4e2eb; padding: 14px; border-radius: 12px; background: #fbfdfe;">
         <h4 style="margin: 0 0 6px 0; color: #123d70; font-size: 13px;">{{ cert.certificateName }}</h4>
         <p style="margin: 0 0 4px 0; color: #718096; font-size: 11px;">الجهة: {{ cert.issuingOrganization }}</p>
         <p style="margin: 0 0 10px 0; color: #718096; font-size: 11px;">التاريخ: {{ cert.issueDate }}</p>
-        
+
         <div style="display: flex; gap: 8px; align-items: center; margin-top: 10px;">
           @if (cert.certificateUrl) {
-            <a [href]="cert.certificateUrl" target="_blank" class="skill-save-btn" style="text-decoration: none; padding: 6px 12px; font-size: 11px;">عرض الملف</a>
+          <a [href]="cert.certificateUrl" target="_blank" class="skill-save-btn"
+            style="text-decoration: none; padding: 6px 12px; font-size: 11px;">عرض الملف</a>
           }
-          <button type="button" class="skill-cancel-btn" (click)="removeCertificate(cert.id)" style="padding: 6px 12px; font-size: 11px; color: #b42323; background: #fff5f5; border: 1px solid #fed7d7; border-radius: 6px; cursor: pointer;">حذف</button>
+          <button type="button" class="skill-cancel-btn" (click)="removeCertificate(cert.id)"
+            style="padding: 6px 12px; font-size: 11px; color: #b42323; background: #fff5f5; border: 1px solid #fed7d7; border-radius: 6px; cursor: pointer;">حذف</button>
         </div>
       </div>
-    }
-  </div>
+      }
+    </div>
 
-</section>
+  </section>
 
   <!-- =====================================================
          ACCOUNT SUMMARY
@@ -1008,153 +919,123 @@
   ====================================================== -->
 
   @if (
-    !loading() &&
-    !trainer()
+  !loading() &&
+  !trainer()
   ) {
 
-    <section class="profile-empty">
+  <section class="profile-empty">
 
-      <div class="empty-icon">
-        !
+    <div class="empty-icon">
+      !
+    </div>
+
+    <strong>
+      تعذر عرض الملف الشخصي
+    </strong>
+
+    <p>
+      لم نتمكن من تحميل بيانات المدرب الحالي.
+    </p>
+
+  </section>
+  <section class="certificates-card">
+    <div class="certificates-header">
+      <div>
+        <span class="summary-kicker">الملف المهني</span>
+        <h2 class="summary-title">الشهادات المهنية</h2>
+        <p class="summary-sub">
+          أضيفي شهاداتك المهنية ليتم حفظها في النظام.
+        </p>
       </div>
 
-      <strong>
-        تعذر عرض الملف الشخصي
-      </strong>
-
-      <p>
-        لم نتمكن من تحميل بيانات المدرب الحالي.
-      </p>
-
-    </section>
-    <section class="certificates-card">
-  <div class="certificates-header">
-    <div>
-      <span class="summary-kicker">الملف المهني</span>
-      <h2 class="summary-title">الشهادات المهنية</h2>
-      <p class="summary-sub">
-        أضيفي شهاداتك المهنية ليتم حفظها في النظام.
-      </p>
+      <div class="certificate-header-icon">
+        <i class="fa-solid fa-certificate"></i>
+      </div>
     </div>
 
-    <div class="certificate-header-icon">
-      <i class="fa-solid fa-certificate"></i>
-    </div>
-  </div>
+    <div class="certificate-upload-form">
+      <div class="certificate-field">
+        <label>اسم الشهادة *</label>
+        <input type="text" [(ngModel)]="certificateName" placeholder="مثال: Microsoft Azure Fundamentals" />
+      </div>
 
-  <div class="certificate-upload-form">
-    <div class="certificate-field">
-      <label>اسم الشهادة *</label>
-      <input
-        type="text"
-        [(ngModel)]="certificateName"
-        placeholder="مثال: Microsoft Azure Fundamentals"
-      />
-    </div>
+      <div class="certificate-field">
+        <label>الجهة المصدرة</label>
+        <input type="text" [(ngModel)]="certificateIssuer" placeholder="مثال: Microsoft" />
+      </div>
 
-    <div class="certificate-field">
-      <label>الجهة المصدرة</label>
-      <input
-        type="text"
-        [(ngModel)]="certificateIssuer"
-        placeholder="مثال: Microsoft"
-      />
-    </div>
+      <div class="certificate-field">
+        <label>تاريخ الإصدار</label>
+        <input type="date" [(ngModel)]="certificateIssueDate" />
+      </div>
 
-    <div class="certificate-field">
-      <label>تاريخ الإصدار</label>
-      <input
-        type="date"
-        [(ngModel)]="certificateIssueDate"
-      />
-    </div>
+      <div class="certificate-field">
+        <label>تاريخ الانتهاء</label>
+        <input type="date" [(ngModel)]="certificateExpiryDate" />
+      </div>
 
-    <div class="certificate-field">
-      <label>تاريخ الانتهاء</label>
-      <input
-        type="date"
-        [(ngModel)]="certificateExpiryDate"
-      />
-    </div>
+      <div class="certificate-field full-width">
+        <label>ملف الشهادة *</label>
+        <input #certificateFile type="file" accept=".pdf,.jpg,.jpeg,.png"
+          (change)="onCertificateFileSelected($event)" />
+        <small>PDF أو JPG أو PNG — الحد الأقصى 10 MB</small>
+      </div>
 
-    <div class="certificate-field full-width">
-      <label>ملف الشهادة *</label>
-      <input
-        #certificateFile
-        type="file"
-        accept=".pdf,.jpg,.jpeg,.png"
-        (change)="onCertificateFileSelected($event)"
-      />
-      <small>PDF أو JPG أو PNG — الحد الأقصى 10 MB</small>
-    </div>
-
-    <button
-      type="button"
-      class="certificate-upload-btn"
-      [disabled]="isUploadingCertificate()"
-      (click)="uploadCertificate()"
-    >
-      @if (isUploadingCertificate()) {
+      <button type="button" class="certificate-upload-btn" [disabled]="isUploadingCertificate()"
+        (click)="uploadCertificate()">
+        @if (isUploadingCertificate()) {
         جاري الرفع...
-      } @else {
+        } @else {
         <i class="fa-solid fa-upload"></i>
         إضافة الشهادة
-      }
-    </button>
-  </div>
+        }
+      </button>
+    </div>
 
-  <div class="certificates-list">
-    @if (trainerCertificates().length === 0) {
+    <div class="certificates-list">
+      @if (trainerCertificates().length === 0) {
       <div class="certificates-empty">
         لا توجد شهادات مضافة حتى الآن.
       </div>
-    } @else {
+      } @else {
       @for (certificate of trainerCertificates(); track certificate.trainerCertificateId) {
-        <article class="certificate-item">
-          <div class="certificate-item-icon">
-            <i class="fa-solid fa-award"></i>
-          </div>
+      <article class="certificate-item">
+        <div class="certificate-item-icon">
+          <i class="fa-solid fa-award"></i>
+        </div>
 
-          <div class="certificate-item-content">
-            <h3>{{ certificate.certificateName }}</h3>
+        <div class="certificate-item-content">
+          <h3>{{ certificate.certificateName }}</h3>
 
-            @if (certificate.issuer) {
-              <span>الجهة المصدرة: {{ certificate.issuer }}</span>
+          @if (certificate.issuer) {
+          <span>الجهة المصدرة: {{ certificate.issuer }}</span>
+          }
+
+          <div class="certificate-dates">
+            @if (certificate.issueDate) {
+            <span>الإصدار: {{ certificate.issueDate | date:'yyyy/MM/dd' }}</span>
             }
-
-            <div class="certificate-dates">
-              @if (certificate.issueDate) {
-                <span>الإصدار: {{ certificate.issueDate | date:'yyyy/MM/dd' }}</span>
-              }
-              @if (certificate.expiryDate) {
-                <span>الانتهاء: {{ certificate.expiryDate | date:'yyyy/MM/dd' }}</span>
-              }
-            </div>
+            @if (certificate.expiryDate) {
+            <span>الانتهاء: {{ certificate.expiryDate | date:'yyyy/MM/dd' }}</span>
+            }
           </div>
+        </div>
 
-          <div class="certificate-item-actions">
-            <a
-              class="certificate-view-btn"
-              [href]="getCertificateFileUrl(certificate.fileUrl)"
-              target="_blank"
-              rel="noopener"
-            >
-              عرض الملف
-            </a>
+        <div class="certificate-item-actions">
+          <a class="certificate-view-btn" [href]="getCertificateFileUrl(certificate.fileUrl)" target="_blank"
+            rel="noopener">
+            عرض الملف
+          </a>
 
-            <button
-              type="button"
-              class="certificate-delete-btn"
-              (click)="deleteCertificate(certificate)"
-            >
-              حذف
-            </button>
-          </div>
-        </article>
+          <button type="button" class="certificate-delete-btn" (click)="deleteCertificate(certificate)">
+            حذف
+          </button>
+        </div>
+      </article>
       }
-    }
-  </div>
-</section>
+      }
+    </div>
+  </section>
 
   }
 
@@ -1164,38 +1045,23 @@
   ====================================================== -->
 
   @if (
-    isProfileImageOpen() &&
-    profileImagePreview()
+  isProfileImageOpen() &&
+  profileImagePreview()
   ) {
 
-    <div
-      class="profile-image-modal"
-      (click)="closeProfileImage()"
-    >
+  <div class="profile-image-modal" (click)="closeProfileImage()">
 
-      <div
-        class="profile-image-modal-content"
-        (click)="$event.stopPropagation()"
-      >
+    <div class="profile-image-modal-content" (click)="$event.stopPropagation()">
 
-        <button
-          type="button"
-          class="profile-image-close"
-          (click)="closeProfileImage()"
-          title="إغلاق"
-        >
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+      <button type="button" class="profile-image-close" (click)="closeProfileImage()" title="إغلاق">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
 
-        <img
-          [src]="profileImagePreview()"
-          alt="صورة المدرب"
-          class="profile-image-large"
-        />
-
-      </div>
+      <img [src]="profileImagePreview()" alt="صورة المدرب" class="profile-image-large" />
 
     </div>
+
+  </div>
 
   }
 
