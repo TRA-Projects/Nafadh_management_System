@@ -27,7 +27,9 @@ namespace Nafadh_Backend.Repositories
         Task<int> CreateBatchGroupAsync(
     CreateBatchGroupDTO dto
 );
-
+        Task<int?> GetBatchIdAsync(
+    int conversationId
+);
         Task UpdateStatusAsync(
             int conversationId,
             NFD_SupportTicketStatus status

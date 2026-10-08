@@ -38,10 +38,11 @@ namespace Nafadh_Backend.Services
             return conversations
                 .Select(
                     t =>
-                        MapToListItem(
-                            t,
-                            participantUserId
-                        )
+                      MapToListItem(
+    t,
+    participantUserId,
+    null
+)
                 )
                 .ToList();
         }
@@ -301,9 +302,10 @@ namespace Nafadh_Backend.Services
         // ============================================================
 
         private static ConversationListItemDTO MapToListItem(
-            NFD_SupportTicket t,
-            int? participantUserId
-        )
+     NFD_SupportTicket t,
+     int? participantUserId,
+     int? batchId
+ )
         {
             var lastMessage =
                 t.Messages?
@@ -386,10 +388,11 @@ namespace Nafadh_Backend.Services
         )
         {
             var listItem =
-                MapToListItem(
-                    t,
-                    null
-                );
+            MapToListItem(
+    t,
+    null,
+    null
+);
 
 
             return new ConversationDetailDTO

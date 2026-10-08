@@ -13,6 +13,7 @@ namespace Nafadh_Backend.DTOs
     public class ConversationListItemDTO
     {
         public int ConversationId { get; set; }
+        public int? BatchId { get; set; }
         public NFD_ConversationType Type { get; set; }
         public string? Category { get; set; }
         public string Subject { get; set; } = string.Empty;

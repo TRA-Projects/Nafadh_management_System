@@ -160,6 +160,7 @@ _context.NFD_ConversationGroupMembers.Any(
         public async Task<int> CreateBatchGroupAsync(
             CreateBatchGroupDTO dto
         )
+
         {
             var batch = await _context.NFD_Batches
                 .FirstOrDefaultAsync(
@@ -279,7 +280,20 @@ _context.NFD_ConversationGroupMembers.Any(
 
             return created.TicketId;
         }
-
+        public async Task<int?> GetBatchIdAsync(
+    int conversationId
+)
+        {
+            return await _context.NFD_ConversationGroupMembers
+                .Where(
+                    gm =>
+                        gm.ConversationId == conversationId
+                )
+                .Select(
+                    gm => (int?)gm.BatchId
+                )
+                .FirstOrDefaultAsync();
+        }
         // ============================================================
         // Update status
         // ============================================================
