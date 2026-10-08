@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { throwError, timer } from 'rxjs';
 import { retry } from 'rxjs/operators';
 
@@ -22,11 +23,17 @@ type DeleteMode = 'one' | 'selected';
 export class TrainerNotifications implements OnInit {
 
   private readonly notificationService = inject(NotificationService);
-  private readonly summaryService = inject(NotificationSummaryService);
+
+  private readonly summaryService =
+    inject(NotificationSummaryService);
+
+  private readonly router = inject(Router);
+
 
   notifications = signal<NotificationDto[]>([]);
 
-  activeFilter = signal<NotificationFilter>('all');
+  activeFilter =
+    signal<NotificationFilter>('all');
 
   loading = signal(true);
 
@@ -34,13 +41,17 @@ export class TrainerNotifications implements OnInit {
 
   markingAll = signal(false);
 
-  selectedIds = signal<Set<number>>(new Set());
+  selectedIds =
+    signal<Set<number>>(new Set());
 
-  deleteModalOpen = signal(false);
+  deleteModalOpen =
+    signal(false);
 
-  deleteMode = signal<DeleteMode>('selected');
+  deleteMode =
+    signal<DeleteMode>('selected');
 
-  notificationToDelete = signal<NotificationDto | null>(null);
+  notificationToDelete =
+    signal<NotificationDto | null>(null);
 
 
   filteredNotifications = computed(() => {
@@ -48,7 +59,9 @@ export class TrainerNotifications implements OnInit {
     const list = this.notifications();
 
     if (this.activeFilter() === 'unread') {
-      return list.filter(notification => !notification.isRead);
+      return list.filter(
+        notification => !notification.isRead
+      );
     }
 
     return list;
@@ -74,14 +87,17 @@ export class TrainerNotifications implements OnInit {
 
   allSelected = computed(() => {
 
-    const list = this.filteredNotifications();
+    const list =
+      this.filteredNotifications();
 
     if (!list.length) {
       return false;
     }
 
     return list.every(notification =>
-      this.selectedIds().has(notification.notificationId)
+      this.selectedIds().has(
+        notification.notificationId
+      )
     );
   });
 
@@ -124,7 +140,9 @@ export class TrainerNotifications implements OnInit {
 
         next: data => {
 
-          this.notifications.set(data ?? []);
+          this.notifications.set(
+            data ?? []
+          );
 
           this.loading.set(false);
         },
@@ -147,7 +165,9 @@ export class TrainerNotifications implements OnInit {
   }
 
 
-  setFilter(filter: NotificationFilter): void {
+  setFilter(
+    filter: NotificationFilter
+  ): void {
 
     this.activeFilter.set(filter);
 
@@ -155,7 +175,9 @@ export class TrainerNotifications implements OnInit {
   }
 
 
-  toggleSelection(notificationId: number): void {
+  toggleSelection(
+    notificationId: number
+  ): void {
 
     this.selectedIds.update(current => {
 
@@ -172,14 +194,20 @@ export class TrainerNotifications implements OnInit {
   }
 
 
-  isSelected(notificationId: number): boolean {
-    return this.selectedIds().has(notificationId);
+  isSelected(
+    notificationId: number
+  ): boolean {
+
+    return this.selectedIds().has(
+      notificationId
+    );
   }
 
 
   toggleSelectAll(): void {
 
-    const list = this.filteredNotifications();
+    const list =
+      this.filteredNotifications();
 
     if (this.allSelected()) {
 
@@ -191,7 +219,8 @@ export class TrainerNotifications implements OnInit {
     this.selectedIds.set(
       new Set(
         list.map(
-          notification => notification.notificationId
+          notification =>
+            notification.notificationId
         )
       )
     );
@@ -199,25 +228,32 @@ export class TrainerNotifications implements OnInit {
 
 
   clearSelection(): void {
-    this.selectedIds.set(new Set());
+    this.selectedIds.set(
+      new Set()
+    );
   }
 
 
-  markRead(notification: NotificationDto): void {
+  markRead(
+    notification: NotificationDto
+  ): void {
 
     if (notification.isRead) {
       return;
     }
 
     this.notificationService
-      .markAsRead(notification.notificationId)
+      .markAsRead(
+        notification.notificationId
+      )
       .subscribe({
 
         next: () => {
 
           this.notifications.update(list =>
             list.map(item =>
-              item.notificationId === notification.notificationId
+              item.notificationId ===
+              notification.notificationId
                 ? {
                     ...item,
                     isRead: true
@@ -243,7 +279,10 @@ export class TrainerNotifications implements OnInit {
 
   markAllRead(): void {
 
-    if (!this.unreadCount() || this.markingAll()) {
+    if (
+      !this.unreadCount() ||
+      this.markingAll()
+    ) {
       return;
     }
 
@@ -255,11 +294,12 @@ export class TrainerNotifications implements OnInit {
 
         next: () => {
 
-          this.notifications.update(list =>
-            list.map(notification => ({
-              ...notification,
-              isRead: true
-            }))
+          this.notifications.update(
+            list =>
+              list.map(notification => ({
+                ...notification,
+                isRead: true
+              }))
           );
 
           this.markingAll.set(false);
@@ -295,7 +335,8 @@ export class TrainerNotifications implements OnInit {
 
       const notification =
         this.notifications().find(
-          item => item.notificationId === id
+          item =>
+            item.notificationId === id
         );
 
       if (notification) {
@@ -308,9 +349,129 @@ export class TrainerNotifications implements OnInit {
   }
 
 
-  askDeleteOne(notification: NotificationDto): void {
+  /*
+   * Opens the portal section related
+   * to the notification.
+   *
+   * This uses the existing relatedEntity
+   * value from the backend.
+   */
+  openNotification(
+    notification: NotificationDto
+  ): void {
 
-    this.notificationToDelete.set(notification);
+    const navigateTo =
+      this.getNotificationRoute(
+        notification.relatedEntity
+      );
+
+    /*
+     * Always mark the notification as read
+     * when the trainer opens it.
+     */
+    if (!notification.isRead) {
+
+      this.notificationService
+        .markAsRead(
+          notification.notificationId
+        )
+        .subscribe({
+
+          next: () => {
+
+            this.notifications.update(list =>
+              list.map(item =>
+                item.notificationId ===
+                notification.notificationId
+                  ? {
+                      ...item,
+                      isRead: true
+                    }
+                  : item
+              )
+            );
+
+            this.summaryService.refresh();
+
+            if (navigateTo) {
+              this.router.navigate(
+                navigateTo
+              );
+            }
+          },
+
+          error: err => {
+
+            console.error(
+              'Failed to mark notification as read.',
+              err
+            );
+
+            /*
+             * Even if marking as read fails,
+             * the trainer can still open
+             * the related section.
+             */
+            if (navigateTo) {
+              this.router.navigate(
+                navigateTo
+              );
+            }
+          }
+
+        });
+
+      return;
+    }
+
+    if (navigateTo) {
+      this.router.navigate(
+        navigateTo
+      );
+    }
+  }
+
+
+  /*
+   * Maps backend notification types
+   * to existing Trainer Portal routes.
+   */
+  private getNotificationRoute(
+    relatedEntity?: string | null
+  ): string[] | null {
+
+    switch (
+      relatedEntity?.trim().toLowerCase()
+    ) {
+
+      case 'task':
+        return [
+          '/trainer/tasks'
+        ];
+
+      case 'evaluation':
+        return [
+          '/trainer/trainees'
+        ];
+
+      case 'attendance':
+        return [
+          '/trainer/attendance'
+        ];
+
+      default:
+        return null;
+    }
+  }
+
+
+  askDeleteOne(
+    notification: NotificationDto
+  ): void {
+
+    this.notificationToDelete.set(
+      notification
+    );
 
     this.deleteMode.set('one');
 
@@ -324,7 +485,9 @@ export class TrainerNotifications implements OnInit {
       return;
     }
 
-    this.notificationToDelete.set(null);
+    this.notificationToDelete.set(
+      null
+    );
 
     this.deleteMode.set('selected');
 
@@ -336,13 +499,17 @@ export class TrainerNotifications implements OnInit {
 
     this.deleteModalOpen.set(false);
 
-    this.notificationToDelete.set(null);
+    this.notificationToDelete.set(
+      null
+    );
   }
 
 
   confirmDelete(): void {
 
-    if (this.deleteMode() === 'one') {
+    if (
+      this.deleteMode() === 'one'
+    ) {
 
       const notification =
         this.notificationToDelete();
@@ -379,7 +546,9 @@ export class TrainerNotifications implements OnInit {
 
     this.deleteModalOpen.set(false);
 
-    this.notificationToDelete.set(null);
+    this.notificationToDelete.set(
+      null
+    );
 
     this.summaryService.refresh();
   }
@@ -387,7 +556,9 @@ export class TrainerNotifications implements OnInit {
 
   deleteTitle(): string {
 
-    if (this.deleteMode() === 'one') {
+    if (
+      this.deleteMode() === 'one'
+    ) {
       return 'حذف الإشعار';
     }
 
@@ -397,7 +568,9 @@ export class TrainerNotifications implements OnInit {
 
   deleteMessage(): string {
 
-    if (this.deleteMode() === 'one') {
+    if (
+      this.deleteMode() === 'one'
+    ) {
       return 'هل أنت متأكد من حذف هذا الإشعار؟';
     }
 
@@ -409,26 +582,36 @@ export class TrainerNotifications implements OnInit {
     _: number,
     item: NotificationDto
   ): number {
+
     return item.notificationId;
   }
 
 
-  timeAgo(value: string): string {
+  timeAgo(
+    value: string
+  ): string {
 
-    const date = new Date(value);
+    const date =
+      new Date(value);
 
-    if (Number.isNaN(date.getTime())) {
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
       return value;
     }
 
     const diff = Math.max(
       0,
-      Date.now() - date.getTime()
+      Date.now() -
+        date.getTime()
     );
 
-    const minutes = Math.floor(
-      diff / 60000
-    );
+    const minutes =
+      Math.floor(
+        diff / 60000
+      );
 
     if (minutes < 1) {
       return 'الآن';
@@ -438,17 +621,19 @@ export class TrainerNotifications implements OnInit {
       return `منذ ${minutes} دقيقة`;
     }
 
-    const hours = Math.floor(
-      minutes / 60
-    );
+    const hours =
+      Math.floor(
+        minutes / 60
+      );
 
     if (hours < 24) {
       return `منذ ${hours} ساعة`;
     }
 
-    const days = Math.floor(
-      hours / 24
-    );
+    const days =
+      Math.floor(
+        hours / 24
+      );
 
     if (days === 1) {
       return 'أمس';
@@ -458,6 +643,8 @@ export class TrainerNotifications implements OnInit {
       return `منذ ${days} يوم`;
     }
 
-    return date.toLocaleDateString('ar-OM');
+    return date.toLocaleDateString(
+      'ar-OM'
+    );
   }
 }
