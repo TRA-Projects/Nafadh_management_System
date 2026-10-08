@@ -105,7 +105,20 @@ export class TrainerMessages implements OnInit {
               'Trainer trainees:',
               results
             );
-
+           console.log(
+  'TRAINER BATCHES:',
+  [
+    ...new Set(
+      results.flatMap(
+        (batch: any[]) =>
+          batch.map(
+            (trainee: any) =>
+              trainee.batchId
+          )
+      )
+    )
+  ]
+);
             const allTrainees: TrainerTrainee[] =
               results.flatMap(
                 (batchTrainees, index) => {
@@ -179,14 +192,21 @@ export class TrainerMessages implements OnInit {
 
     this.api.getConversations(userId).subscribe({
       next: (conversations) => {
-      const batchGroup =
-  (conversations ?? []).find(
-    (conversation: any) =>
-      conversation.category === 'BatchGroup'
-  );
-
-this.batchGroupConversationId =
-  batchGroup?.conversationId ?? null;
+ this.batchGroups =
+  (conversations ?? [])
+    .filter(
+      (conversation: any) =>
+        conversation.category === 'BatchGroup'
+    )
+    .filter(
+      (group: any, index: number, groups: any[]) =>
+        index ===
+        groups.findIndex(
+          (item: any) =>
+            item.batchId === group.batchId
+        )
+    );
+console.log('BATCH GROUPS:', this.batchGroups);
 
         // نحتاج فقط محادثات المدرب مع المتدرب
         const trainerConversations =
@@ -397,6 +417,27 @@ private formatMessageTime(
     )
   ];
 }
+get filteredBatchGroups(): any[] {
+  const search =
+    this.searchText
+      .trim()
+      .toLowerCase();
+
+  return this.batchGroups.filter(
+    (group: any) => {
+
+      const groupName =
+        String(
+          group.subject ?? ''
+        ).toLowerCase();
+console.log('GROUP FOR FILTER:', group);
+     return (
+  !search ||
+  groupName.includes(search)
+);
+    }
+  );
+}
   todayDate =
     new Intl.DateTimeFormat(
       'ar-OM',
@@ -450,7 +491,8 @@ const matchesUnread =
   // =====================================================
 
   trainees: TrainerTrainee[] = [];
-  batchGroupConversationId: number | null = null;
+selectedBatchGroupId: number | null = null;
+  batchGroups: any[] = [];
   isBatchGroupSelected = false;
 
   createBatchGroup(batchId: number, trainerUserId: number): void {
@@ -459,12 +501,15 @@ const matchesUnread =
     trainerUserId
   }).subscribe({
     next: (response) => {
-      this.batchGroupConversationId =
+      this.selectedBatchGroupId =
         response?.conversationId ?? null;
 
+ this.loadTrainerConversations(
+  this.auth.userId!
+);
       console.log(
         'Batch group created:',
-        this.batchGroupConversationId
+        this.selectedBatchGroupId
       );
     },
     error: (error) => {
@@ -568,10 +613,13 @@ const matchesUnread =
     }
   }
 
-  selectBatchGroup(): void {
-    this.isBatchGroupSelected = true;
+ selectBatchGroup(
+  conversationId: number
+): void {
 
-  if (!this.batchGroupConversationId) {
+  this.isBatchGroupSelected = true;
+this.selectedBatchGroupId = conversationId;
+  if (!conversationId) {
     return;
   }
 
@@ -579,7 +627,7 @@ const matchesUnread =
   this.messages = [];
 
   this.api.getConversation(
-    this.batchGroupConversationId
+   conversationId
   ).subscribe({
     next: (conversation) => {
 
@@ -616,6 +664,11 @@ const matchesUnread =
       );
     }
   });
+}selectedBatchGroup(): any | undefined {
+  return this.batchGroups.find(
+    (group: any) =>
+      group.conversationId === this.selectedBatchGroupId
+  );
 }
   // =====================================================
   // SEND MESSAGE
@@ -629,7 +682,7 @@ sendMessage(): void {
 
   if (
     this.isBatchGroupSelected &&
-    this.batchGroupConversationId
+    this.selectedBatchGroupId
   ) {
 
     const userId =
@@ -640,7 +693,7 @@ sendMessage(): void {
     }
 
     this.api.sendMessage(
-      this.batchGroupConversationId,
+      this.selectedBatchGroupId,
       {
         senderId: userId,
         receiverUserId: null,
