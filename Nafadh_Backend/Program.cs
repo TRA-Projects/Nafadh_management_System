@@ -130,6 +130,9 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ICompanyProgramService, CompanyProgramService>();
             builder.Services.AddScoped<ITrainerRepository, TrainerRepository>();
             builder.Services.AddScoped<ITrainerService, TrainerService>();
+            builder.Services.AddScoped<ICoursePlanExecutionRepository, CoursePlanExecutionRepository>();
+            builder.Services.AddScoped<ICoursePlanExecutionService, CoursePlanExecutionService>();
+            builder.Services.AddScoped<CoursePlanReader>();
             builder.Services.AddScoped<ITraineeRepository, TraineeRepository>();
             builder.Services.AddScoped<ITraineeService, TraineeService>();
             builder.Services.AddScoped<ITrackRepository, TrackRepository>();
@@ -221,7 +224,7 @@ namespace Nafadh_Backend
 
             // Automatic absence warnings
             builder.Services.AddScoped<IEmailService, EmailService>();
-            builder.Services.AddScoped<IAbsenceWarningService,AbsenceWarningService>();
+            builder.Services.AddScoped<IAbsenceWarningService, AbsenceWarningService>();
 
             // ── Swagger with JWT support ───────────────────────────────────────
             builder.Services.AddEndpointsApiExplorer();
@@ -289,7 +292,7 @@ namespace Nafadh_Backend
                 app.UseStaticFiles(new StaticFileOptions
 
                 {
-                        FileProvider = new PhysicalFileProvider(trainingMaterialsPath),
+                    FileProvider = new PhysicalFileProvider(trainingMaterialsPath),
 
                     RequestPath = trainingMaterialsRequestPath
 

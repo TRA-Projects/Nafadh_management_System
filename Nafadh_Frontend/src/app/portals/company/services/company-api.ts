@@ -277,15 +277,24 @@ export class CompanyApi {
       `${this.base}/CompanyAccount/me`
     );
   }
-
-  downloadMyAccountPdf(): Observable<Blob> {
-    return this.http.get(
-      `${this.base}/CompanyAccount/me/pdf`,
-      {
-        responseType: 'blob',
-      }
-    );
-  }
+  updateMyAccount(data: {
+  
+  
+  phone: string | null;
+}): Observable<void> {
+  return this.http.put<void>(
+    `${this.base}/CompanyAccount/me`,
+    data
+  );
+}
+downloadMyAccountPdf(): Observable<Blob> {
+  return this.http.get(
+    `${this.base}/CompanyAccount/me/export-pdf`,
+    {
+      responseType: 'blob',
+    }
+  );
+}
 
   // ============================================================
   // PDF - Backend
