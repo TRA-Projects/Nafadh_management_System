@@ -36,9 +36,11 @@
 
   <ItemGroup>
     <Folder Include="Controllers\NewFolder\" />
-    <Folder Include="Enums\" />
-    <Folder Include="Repositories\" />
     <Folder Include="wwwroot\reports\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Models\NFD_ trainerattendance.cs" />
   </ItemGroup>
 
 </Project>
