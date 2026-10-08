@@ -1,3 +1,4 @@
+
 import {
   Component,
   OnInit,
@@ -6,7 +7,6 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
 import { TraineeApi } from '../../services/trainee-api';
 
 import {
@@ -44,18 +44,25 @@ interface TraineeUpdateDto {
   iban?: string;
 
   bankBranch?: string;
+
 }
 
 
 @Component({
+
   selector: 'app-trainee-profile',
+
   standalone: true,
+
   imports: [CommonModule, FormsModule],
+
   templateUrl: './profile.html'
+
 })
 
 
 export class TraineeProfile implements OnInit {
+
 
   // =========================================================
   // USER / TRAINEE
@@ -231,7 +238,9 @@ export class TraineeProfile implements OnInit {
 
 
         if (!key) {
+
           continue;
+
         }
 
 
@@ -240,7 +249,9 @@ export class TraineeProfile implements OnInit {
 
 
         if (!val) {
+
           continue;
+
         }
 
 
@@ -281,7 +292,9 @@ export class TraineeProfile implements OnInit {
 
       const token =
         localStorage.getItem('auth_token') ||
+
         localStorage.getItem('token') ||
+
         localStorage.getItem('user_session');
 
 
@@ -303,7 +316,9 @@ export class TraineeProfile implements OnInit {
 
         const foundUserId =
           payload.userId ||
+
           payload.nameid ||
+
           payload[
             'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
           ];
@@ -372,7 +387,9 @@ export class TraineeProfile implements OnInit {
 
 
     this.api
+
       .getTrainee(this.userId)
+
       .subscribe({
 
         next: (t) => {
@@ -384,7 +401,9 @@ export class TraineeProfile implements OnInit {
 
 
           if (!t) {
+
             return;
+
           }
 
 
@@ -566,7 +585,9 @@ export class TraineeProfile implements OnInit {
 
 
     this.api
+
       .getTraineeSkills(this.traineeId)
+
       .subscribe({
 
         next: (skills) => {
@@ -607,13 +628,17 @@ export class TraineeProfile implements OnInit {
   ): string | null {
 
     if (!profileImageUrl) {
+
       return null;
+
     }
 
 
     if (
       profileImageUrl.startsWith('http://') ||
+
       profileImageUrl.startsWith('https://') ||
+
       profileImageUrl.startsWith('data:')
     ) {
 
@@ -698,7 +723,9 @@ export class TraineeProfile implements OnInit {
   ): boolean {
 
     if (!this.originalProfile) {
+
       return true;
+
     }
 
 
@@ -731,7 +758,9 @@ export class TraineeProfile implements OnInit {
 
 
       if (!t) {
+
         return;
+
       }
 
 
@@ -920,10 +949,12 @@ export class TraineeProfile implements OnInit {
 
 
     this.api
+
       .updateTrainee(
         this.userId,
         payload
       )
+
       .subscribe({
 
         next: (updatedTrainee) => {
@@ -1013,7 +1044,19 @@ export class TraineeProfile implements OnInit {
             null;
 
 
+          // ---------------------------------------------------
+          // SUCCESS MESSAGE
+          // ---------------------------------------------------
+
+          this.openPopup(
+            'تم حفظ التعديلات بنجاح.',
+            'success',
+            'تم الحفظ'
+          );
+
+
           // Reload profile
+
           this.loadTraineeData();
 
         },
@@ -1162,6 +1205,7 @@ export class TraineeProfile implements OnInit {
       !/^https?:\/\/(www\.)?linkedin\.com\/in\/.+/i.test(
         value
       )
+
     ) {
 
       this.linkedInError.set(
@@ -1228,7 +1272,9 @@ export class TraineeProfile implements OnInit {
       current => {
 
         if (!current) {
+
           return current;
+
         }
 
 
@@ -1242,6 +1288,7 @@ export class TraineeProfile implements OnInit {
         };
 
       }
+
     );
 
   }
@@ -1272,107 +1319,157 @@ export class TraineeProfile implements OnInit {
 
   }
 
-// =========================================================
-// CV UPLOAD
-// =========================================================
 
-onCvUpload(
-  event: Event
-): void {
+  // =========================================================
+  // CV UPLOAD
+  // =========================================================
 
-  const input =
-    event.target as HTMLInputElement;
+  onCvUpload(
+    event: Event
+  ): void {
 
-  if (
-    !input.files ||
-    input.files.length === 0
-  ) {
-    return;
-  }
+    const input =
+      event.target as HTMLInputElement;
 
-  const file =
-    input.files[0];
 
-  const traineeId =
-    this.trainee()?.traineeId;
+    if (
+      !input.files ||
+      input.files.length === 0
+    ) {
 
-  if (!traineeId) {
+      return;
 
-    console.error(
-      'Trainee ID not found.'
-    );
+    }
 
-    return;
-  }
 
-  this.api
-    .uploadTraineeResume(
-      traineeId,
-      file
-    )
-    .subscribe({
+    const file =
+      input.files[0];
 
-      next: (response) => {
 
-        const fileUrl =
-          this.api.getFileUrl(
-            response.resumeUrl
+    const traineeId =
+      this.trainee()?.traineeId;
+
+
+    if (!traineeId) {
+
+      console.error(
+        'Trainee ID not found.'
+      );
+
+      return;
+
+    }
+
+
+    this.api
+
+      .uploadTraineeResume(
+        traineeId,
+        file
+      )
+
+      .subscribe({
+
+        next: (response) => {
+
+          const fileUrl =
+            this.api.getFileUrl(
+              response.resumeUrl
+            );
+
+
+          this.cvDownloadUrl.set(
+            fileUrl
           );
 
-        this.cvDownloadUrl.set(
-          fileUrl
-        );
 
-        this.trainee.update(
-          current => {
+          this.trainee.update(
+            current => {
 
-            if (!current) {
-              return current;
+              if (!current) {
+
+                return current;
+
+              }
+
+
+              return {
+
+                ...current,
+
+                cvFileName:
+                  file.name,
+
+                resumeUrl:
+                  response.resumeUrl
+
+              };
+
             }
 
-            return {
-              ...current,
+          );
+
+
+          // ---------------------------------------------------
+          // IMPORTANT:
+          // CV is already saved by the upload API.
+          // Update the original snapshot so that clicking
+          // "Save Changes" does not try to save the CV again.
+          // ---------------------------------------------------
+
+          if (this.originalProfile) {
+
+            this.originalProfile = {
+
+              ...this.originalProfile,
 
               cvFileName:
                 file.name,
 
               resumeUrl:
                 response.resumeUrl
+
             };
 
           }
-        );
 
-      },
+        },
 
-      error: (error) => {
 
-        console.error(
-          'CV upload failed:',
-          error
-        );
+        error: (error) => {
 
-      }
+          console.error(
+            'CV upload failed:',
+            error
+          );
 
-    });
-}
+        }
 
-// =========================================================
-// CV DOWNLOAD URL
-// =========================================================
+      });
 
-getCvDownloadUrl(
-  resumeUrl: string
-): string {
-
-  if (!resumeUrl) {
-    return '';
   }
 
-  return this.api.getFileUrl(
-    resumeUrl
-  );
-}
+
+  // =========================================================
+  // CV DOWNLOAD URL
+  // =========================================================
+
+  getCvDownloadUrl(
+    resumeUrl: string
+  ): string {
+
+    if (!resumeUrl) {
+
+      return '';
+
+    }
+
+
+    return this.api.getFileUrl(
+      resumeUrl
+    );
+
+  }
 
 
   // =========================================================
@@ -1486,13 +1583,11 @@ getCvDownloadUrl(
 
 
       this.popupMessage.set(
-
         this.proofMode() === 'file'
 
           ? 'الرجاء رفع ملف أو صورة لإثبات المهارة.'
 
           : 'الرجاء كتابة الرقم التسلسلي للشهادة.'
-
       );
 
 
@@ -1507,10 +1602,12 @@ getCvDownloadUrl(
 
     const exists =
       this.traineeSkills().some(
+
         item =>
           item.skillName
             .toLowerCase() ===
           skill.toLowerCase()
+
       );
 
 
@@ -1562,12 +1659,14 @@ getCvDownloadUrl(
     // -------------------------------------------------------
 
     this.api
+
       .addTraineeSkill(
         this.traineeId,
         skill,
         serialNumber,
         certificateFile
       )
+
       .subscribe({
 
         next: (result) => {
@@ -1648,6 +1747,7 @@ getCvDownloadUrl(
 
           this.popupMessage.set(
             err.error?.message ||
+
             'حدث خطأ أثناء إضافة المهارة.'
           );
 
@@ -1667,9 +1767,11 @@ getCvDownloadUrl(
   ): void {
 
     this.api
+
       .deleteTraineeSkill(
         skillId
       )
+
       .subscribe({
 
         next: () => {
@@ -1681,12 +1783,16 @@ getCvDownloadUrl(
 
 
           this.traineeSkills.update(
+
             current =>
               current.filter(
+
                 skill =>
                   skill.traineeSkillId !==
                   skillId
+
               )
+
           );
 
 
@@ -1707,10 +1813,25 @@ getCvDownloadUrl(
           );
 
 
+          console.error(
+            'Status:',
+            err.status
+          );
+
+
+          console.error(
+            'Backend Error:',
+            err.error
+          );
+
+
           this.openPopup(
             err.error?.message ||
+
             'حدث خطأ أثناء حذف المهارة.',
+
             'error',
+
             'فشل الحذف'
           );
 
@@ -1745,6 +1866,7 @@ getCvDownloadUrl(
       this.certificateFileName.set(
         ''
       );
+
 
       this.certificateFile.set(
         null
@@ -1866,7 +1988,9 @@ getCvDownloadUrl(
   ): void {
 
     if (!certificateUrl) {
+
       return;
+
     }
 
 
@@ -1942,3 +2066,4 @@ getCvDownloadUrl(
   }
 
 }
+
