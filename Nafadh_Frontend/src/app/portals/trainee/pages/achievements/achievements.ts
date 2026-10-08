@@ -3045,107 +3045,658 @@ export class TraineeAchievements implements OnInit {
 
   }
 
+// ============================================================
+// CERTIFICATE DOWNLOAD
+// ============================================================
+// ============================================================
+// CERTIFICATE DOWNLOAD
+// ============================================================
 
-  // ============================================================
-  // CERTIFICATE DOWNLOAD
-  // ============================================================
+downloadCertificate() {
 
-  downloadCertificate() {
+  if (!this.canDownloadCertificate()) {
 
-    if (
-      !this.canDownloadCertificate()
-    ) {
+    this.showSuccessToast.set(true);
 
-      return;
+    this.successMessage.set(
+      '⚠️ الشهادة غير متاحة بعد'
+    );
 
-    }
+    setTimeout(
+      () =>
+        this.showSuccessToast.set(false),
+      3000
+    );
 
-
-    const cert =
-      this.certificates()[0];
-
-
-    if (!cert) {
-
-      this.showSuccessToast.set(
-        true
-      );
-
-      this.successMessage.set(
-        '⚠️ لم يتم العثور على شهادة، يرجى التواصل مع الدعم'
-      );
-
-      setTimeout(
-        () =>
-          this.showSuccessToast.set(
-            false
-          ),
-        3000
-      );
-
-      return;
-
-    }
-
-
-    this.api
-      .downloadCertificate(
-        cert.certificateId
-      )
-      .subscribe({
-
-        next: (
-          blob: Blob
-        ) => {
-
-          const url =
-            window.URL
-              .createObjectURL(blob);
-
-          const a =
-            document.createElement('a');
-
-          a.href = url;
-
-          a.download =
-            `شهادة_إتمام_التدريب_${Date.now()}.pdf`;
-
-          a.click();
-
-          window.URL
-            .revokeObjectURL(url);
-
-        },
-
-        error: (
-          err: any
-        ) => {
-
-          console.error(
-            '❌ فشل تحميل الشهادة:',
-            err
-          );
-
-          this.showSuccessToast.set(
-            true
-          );
-
-          this.successMessage.set(
-            '❌ فشل تحميل الشهادة، يرجى المحاولة مرة أخرى'
-          );
-
-          setTimeout(
-            () =>
-              this.showSuccessToast.set(
-                false
-              ),
-            3000
-          );
-
-        },
-
-      });
+    return;
 
   }
+
+  const cert =
+    this.certificates()[0];
+
+  if (!cert) {
+
+    this.showSuccessToast.set(true);
+
+    this.successMessage.set(
+      '⚠️ لم يتم العثور على شهادة، يرجى التواصل مع الدعم'
+    );
+
+    setTimeout(
+      () =>
+        this.showSuccessToast.set(false),
+      3000
+    );
+
+    return;
+
+  }
+
+  this.loading.set(true);
+
+  this.api
+    .downloadCertificate(
+      cert.certificateId
+    )
+    .subscribe({
+
+      next: (
+        blob: Blob
+      ) => {
+
+        try {
+
+          const reader =
+            new FileReader();
+
+          reader.onload = () => {
+
+            const result =
+              reader.result;
+
+            const bytes =
+              result instanceof ArrayBuffer
+                ? new Uint8Array(result)
+                : null;
+
+            let isValidPdf = false;
+
+            if (bytes && bytes.length >= 4) {
+
+              isValidPdf =
+                bytes[0] === 0x25 &&
+                bytes[1] === 0x50 &&
+                bytes[2] === 0x44 &&
+                bytes[3] === 0x46;
+
+            }
+
+            /*
+             * إذا كان الملف PDF صالحًا
+             * يتم تنزيله مباشرة.
+             */
+            if (isValidPdf) {
+
+              const pdfBlob =
+                new Blob(
+                  [blob],
+                  {
+                    type: 'application/pdf'
+                  }
+                );
+
+              const url =
+                window.URL.createObjectURL(
+                  pdfBlob
+                );
+
+              const a =
+                document.createElement('a');
+
+              a.href = url;
+
+              a.download =
+                `شهادة_إتمام_التدريب_${Date.now()}.pdf`;
+
+              document.body.appendChild(a);
+
+              a.click();
+
+              document.body.removeChild(a);
+
+              setTimeout(
+                () =>
+                  window.URL.revokeObjectURL(url),
+                100
+              );
+
+              this.loading.set(false);
+
+              return;
+
+            }
+
+            /*
+             * إذا لم يكن الملف القادم من الـ API
+             * PDF صالحًا، يتم إنشاء PDF من Frontend.
+             */
+            this.generateCertificatePdf(cert);
+
+            this.loading.set(false);
+
+          };
+
+          reader.onerror = () => {
+
+            console.warn(
+              '⚠️ تعذر قراءة ملف الشهادة، سيتم إنشاء PDF من الواجهة.'
+            );
+
+            this.generateCertificatePdf(cert);
+
+            this.loading.set(false);
+
+          };
+
+          reader.readAsArrayBuffer(blob);
+
+        } catch (error) {
+
+          console.error(
+            '❌ خطأ أثناء معالجة ملف الشهادة:',
+            error
+          );
+
+          this.generateCertificatePdf(cert);
+
+          this.loading.set(false);
+
+        }
+
+      },
+
+      error: (
+        err: any
+      ) => {
+
+        console.error(
+          '❌ فشل تحميل الشهادة من API:',
+          err
+        );
+
+        /*
+         * في حالة فشل الـ API بالكامل،
+         * يتم إنشاء الشهادة من Frontend.
+         */
+        this.generateCertificatePdf(cert);
+
+        this.loading.set(false);
+
+      },
+
+    });
+
+}
+
+
+// ============================================================
+// GENERATE CERTIFICATE PDF - FRONTEND
+// ============================================================
+
+private generateCertificatePdf(
+  cert: CertificateDto
+): void {
+
+  try {
+
+    const doc =
+      new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+    const pageWidth =
+      doc.internal.pageSize.getWidth();
+
+    const pageHeight =
+      doc.internal.pageSize.getHeight();
+
+    const certificate =
+      cert as any;
+
+    const traineeName =
+      certificate.traineeName ??
+      certificate.fullName ??
+      certificate.studentName ??
+      this.traineeName() ??
+      'Trainee';
+
+    const programName =
+      certificate.programTitle ??
+      certificate.programName ??
+      certificate.trainingProgramName ??
+      this.programTitle() ??
+      'Training Program';
+
+    const certificateNumber =
+      certificate.certificateNumber ??
+      certificate.certificateCode ??
+      certificate.number ??
+      certificate.certificateId ??
+      '';
+
+    const issuedDate =
+      certificate.issuedAt ??
+      certificate.issueDate ??
+      certificate.createdAt ??
+      null;
+
+    let formattedDate = '';
+
+    if (issuedDate) {
+
+      const date =
+        new Date(issuedDate);
+
+      if (!Number.isNaN(date.getTime())) {
+
+        formattedDate =
+          date.toLocaleDateString(
+            'en-GB'
+          );
+
+      }
+
+    }
+
+    // ========================================================
+    // BACKGROUND
+    // ========================================================
+
+    doc.setFillColor(
+      248,
+      250,
+      252
+    );
+
+    doc.rect(
+      0,
+      0,
+      pageWidth,
+      pageHeight,
+      'F'
+    );
+
+    // ========================================================
+    // OUTER BORDER
+    // ========================================================
+
+    doc.setDrawColor(
+      11,
+      31,
+      100
+    );
+
+    doc.setLineWidth(1.5);
+
+    doc.rect(
+      10,
+      10,
+      pageWidth - 20,
+      pageHeight - 20
+    );
+
+    // ========================================================
+    // INNER BORDER
+    // ========================================================
+
+    doc.setDrawColor(
+      13,
+      148,
+      136
+    );
+
+    doc.setLineWidth(0.6);
+
+    doc.rect(
+      14,
+      14,
+      pageWidth - 28,
+      pageHeight - 28
+    );
+
+    // ========================================================
+    // HEADER
+    // ========================================================
+
+    doc.setTextColor(
+      11,
+      31,
+      100
+    );
+
+    doc.setFont(
+      'helvetica',
+      'bold'
+    );
+
+    doc.setFontSize(26);
+
+    doc.text(
+      'NAFADH',
+      pageWidth / 2,
+      38,
+      {
+        align: 'center'
+      }
+    );
+
+    doc.setTextColor(
+      71,
+      85,
+      105
+    );
+
+    doc.setFont(
+      'helvetica',
+      'normal'
+    );
+
+    doc.setFontSize(12);
+
+    doc.text(
+      'TRAINING AND ACADEMY MANAGEMENT PLATFORM',
+      pageWidth / 2,
+      46,
+      {
+        align: 'center'
+      }
+    );
+
+    // ========================================================
+    // CERTIFICATE TITLE
+    // ========================================================
+
+    doc.setTextColor(
+      13,
+      148,
+      136
+    );
+
+    doc.setFont(
+      'helvetica',
+      'bold'
+    );
+
+    doc.setFontSize(25);
+
+    doc.text(
+      'CERTIFICATE OF COMPLETION',
+      pageWidth / 2,
+      66,
+      {
+        align: 'center'
+      }
+    );
+
+    // ========================================================
+    // DESCRIPTION
+    // ========================================================
+
+    doc.setTextColor(
+      71,
+      85,
+      105
+    );
+
+    doc.setFont(
+      'helvetica',
+      'normal'
+    );
+
+    doc.setFontSize(12);
+
+    doc.text(
+      'This certificate is proudly presented to',
+      pageWidth / 2,
+      82,
+      {
+        align: 'center'
+      }
+    );
+
+    // ========================================================
+    // TRAINEE NAME
+    // ========================================================
+
+    doc.setTextColor(
+      23,
+      37,
+      84
+    );
+
+    doc.setFont(
+      'helvetica',
+      'bold'
+    );
+
+    doc.setFontSize(23);
+
+    doc.text(
+      String(traineeName),
+      pageWidth / 2,
+      96,
+      {
+        align: 'center',
+        maxWidth: pageWidth - 50
+      }
+    );
+
+    // ========================================================
+    // UNDERLINE
+    // ========================================================
+
+    doc.setDrawColor(
+      13,
+      148,
+      136
+    );
+
+    doc.setLineWidth(0.8);
+
+    doc.line(
+      65,
+      101,
+      pageWidth - 65,
+      101
+    );
+
+    // ========================================================
+    // PROGRAM
+    // ========================================================
+
+    doc.setTextColor(
+      71,
+      85,
+      105
+    );
+
+    doc.setFont(
+      'helvetica',
+      'normal'
+    );
+
+    doc.setFontSize(12);
+
+    doc.text(
+      'for successfully completing the training program',
+      pageWidth / 2,
+      116,
+      {
+        align: 'center'
+      }
+    );
+
+    doc.setTextColor(
+      11,
+      31,
+      100
+    );
+
+    doc.setFont(
+      'helvetica',
+      'bold'
+    );
+
+    doc.setFontSize(18);
+
+    doc.text(
+      String(programName),
+      pageWidth / 2,
+      130,
+      {
+        align: 'center',
+        maxWidth: pageWidth - 60
+      }
+    );
+
+    // ========================================================
+    // CERTIFICATE DETAILS
+    // ========================================================
+
+    doc.setTextColor(
+      71,
+      85,
+      105
+    );
+
+    doc.setFont(
+      'helvetica',
+      'normal'
+    );
+
+    doc.setFontSize(10);
+
+    if (certificateNumber) {
+
+      doc.text(
+        `Certificate No: ${certificateNumber}`,
+        pageWidth / 2,
+        148,
+        {
+          align: 'center'
+        }
+      );
+
+    }
+
+    if (formattedDate) {
+
+      doc.text(
+        `Issue Date: ${formattedDate}`,
+        pageWidth / 2,
+        156,
+        {
+          align: 'center'
+        }
+      );
+
+    }
+
+    // ========================================================
+    // FOOTER
+    // ========================================================
+
+    doc.setDrawColor(
+      226,
+      232,
+      240
+    );
+
+    doc.setLineWidth(0.4);
+
+    doc.line(
+      45,
+      171,
+      pageWidth - 45,
+      171
+    );
+
+    doc.setTextColor(
+      100,
+      116,
+      139
+    );
+
+    doc.setFont(
+      'helvetica',
+      'normal'
+    );
+
+    doc.setFontSize(9);
+
+    doc.text(
+      'Nafadh Training & Academy Management Platform',
+      pageWidth / 2,
+      181,
+      {
+        align: 'center'
+      }
+    );
+
+    doc.setTextColor(
+      13,
+      148,
+      136
+    );
+
+    doc.setFont(
+      'helvetica',
+      'bold'
+    );
+
+    doc.setFontSize(9);
+
+    doc.text(
+      'Official Training Certificate',
+      pageWidth / 2,
+      188,
+      {
+        align: 'center'
+      }
+    );
+
+    // ========================================================
+    // SAVE PDF
+    // ========================================================
+
+    doc.save(
+      `شهادة_إتمام_التدريب_${Date.now()}.pdf`
+    );
+
+  } catch (error) {
+
+    console.error(
+      '❌ فشل إنشاء ملف PDF:',
+      error
+    );
+
+    this.showSuccessToast.set(true);
+
+    this.successMessage.set(
+      '❌ تعذر إنشاء الشهادة، يرجى المحاولة مرة أخرى'
+    );
+
+    setTimeout(
+      () =>
+        this.showSuccessToast.set(false),
+      3000
+    );
+
+  }
+
+}
 
 }
