@@ -76,7 +76,7 @@ button:disabled {
 
 .heading-copy {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
 
   flex: 1;
@@ -101,12 +101,12 @@ button:disabled {
 
   border: 1px solid #ddedf6;
 
-  color: #003b82;
+  color: #0097aa;
   font-size: 23px;
   font-weight: 900;
 }
 
-.page-heading h2 {
+.page-heading h1 {
   margin: 0 0 5px !important;
 
   color: #003b82 !important;
