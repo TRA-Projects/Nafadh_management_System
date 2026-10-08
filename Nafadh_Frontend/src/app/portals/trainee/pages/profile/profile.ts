@@ -1272,103 +1272,107 @@ export class TraineeProfile implements OnInit {
 
   }
 
+// =========================================================
+// CV UPLOAD
+// =========================================================
 
-  // =========================================================
-  // CV UPLOAD
-  // =========================================================
+onCvUpload(
+  event: Event
+): void {
 
-  onCvUpload(
-    event: Event
-  ): void {
+  const input =
+    event.target as HTMLInputElement;
 
-    const input =
-      event.target as HTMLInputElement;
+  if (
+    !input.files ||
+    input.files.length === 0
+  ) {
+    return;
+  }
 
+  const file =
+    input.files[0];
 
-    if (
-      !input.files ||
-      input.files.length === 0
-    ) {
+  const traineeId =
+    this.trainee()?.traineeId;
 
-      return;
+  if (!traineeId) {
 
-    }
-
-
-    const file =
-      input.files[0];
-
-
-    const objectUrl =
-      URL.createObjectURL(file);
-
-
-    this.cvDownloadUrl.set(
-      objectUrl
+    console.error(
+      'Trainee ID not found.'
     );
 
+    return;
+  }
 
-    this.trainee.update(
-      current => {
+  this.api
+    .uploadTraineeResume(
+      traineeId,
+      file
+    )
+    .subscribe({
 
-        if (!current) {
-          return current;
-        }
+      next: (response) => {
 
+        const fileUrl =
+          this.api.getFileUrl(
+            response.resumeUrl
+          );
 
-        return {
+        this.cvDownloadUrl.set(
+          fileUrl
+        );
 
-          ...current,
+        this.trainee.update(
+          current => {
 
-          cvFileName:
-            file.name,
+            if (!current) {
+              return current;
+            }
 
-          resumeUrl:
-            file.name
+            return {
+              ...current,
 
-        };
+              cvFileName:
+                file.name,
+
+              resumeUrl:
+                response.resumeUrl
+            };
+
+          }
+        );
+
+      },
+
+      error: (error) => {
+
+        console.error(
+          'CV upload failed:',
+          error
+        );
 
       }
-    );
 
+    });
+}
+
+// =========================================================
+// CV DOWNLOAD URL
+// =========================================================
+
+getCvDownloadUrl(
+  resumeUrl: string
+): string {
+
+  if (!resumeUrl) {
+    return '';
   }
 
-
-  // =========================================================
-  // CV DOWNLOAD URL
-  // =========================================================
-
-  getCvDownloadUrl(
-    resumeUrl: string
-  ): string {
-
-    if (!resumeUrl) {
-      return '';
-    }
-
-
-    if (
-      resumeUrl.startsWith('http://') ||
-      resumeUrl.startsWith('https://')
-    ) {
-
-      return resumeUrl;
-
-    }
-
-
-    if (
-      resumeUrl.startsWith('/')
-    ) {
-
-      return `${window.location.origin}${resumeUrl}`;
-
-    }
-
-
-    return `${window.location.origin}/${resumeUrl}`;
-
-  }
+  return this.api.getFileUrl(
+    resumeUrl
+  );
+}
 
 
   // =========================================================

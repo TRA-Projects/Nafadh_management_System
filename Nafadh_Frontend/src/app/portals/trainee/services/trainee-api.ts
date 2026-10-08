@@ -251,6 +251,25 @@ deleteTraineeSkill(
   );
 }
 
+uploadTraineeResume(
+  traineeId: number,
+  file: File
+): Observable<{ resumeUrl: string }> {
+
+  const formData = new FormData();
+
+  formData.append(
+    'file',
+    file,
+    file.name
+  );
+
+  return this.http.post<{ resumeUrl: string }>(
+    `${this.base}/Trainee/${traineeId}/resume`,
+    formData
+  );
+}
+
   // =========================================================
   // Enrollment
   // =========================================================
