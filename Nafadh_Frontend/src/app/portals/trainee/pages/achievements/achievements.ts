@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TraineeApi } from '../../services/trainee-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { jsPDF } from 'jspdf';
 
 import {
   BadgeDto,
@@ -2571,22 +2572,187 @@ export class TraineeAchievements implements OnInit {
 
         next: (blob: Blob) => {
 
-          const url =
-            window.URL
-              .createObjectURL(blob);
+          // تحويل الصورة القادمة من الـ API إلى PDF
+          const imageUrl =
+            window.URL.createObjectURL(blob);
 
-          const a =
-            document.createElement('a');
+          const image =
+            new Image();
 
-          a.href = url;
+          image.onload = () => {
 
-          a.download =
-            `شهادة_إتمام_التدريب_${Date.now()}.pdf`;
+            try {
 
-          a.click();
+              // استخدام canvas لتحويل WebP إلى JPEG
+              // حتى يكون الإدخال متوافقًا مع jsPDF
+              const canvas =
+                document.createElement('canvas');
 
-          window.URL
-            .revokeObjectURL(url);
+              canvas.width =
+                image.naturalWidth ||
+                image.width;
+
+              canvas.height =
+                image.naturalHeight ||
+                image.height;
+
+              const context =
+                canvas.getContext('2d');
+
+              if (!context) {
+                throw new Error(
+                  'تعذر إنشاء Canvas'
+                );
+              }
+
+              context.drawImage(
+                image,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+              );
+
+              const imageData =
+                canvas.toDataURL(
+                  'image/jpeg',
+                  0.95
+                );
+
+              const imageWidth =
+                canvas.width;
+
+              const imageHeight =
+                canvas.height;
+
+              // اختيار اتجاه الصفحة حسب أبعاد الصورة
+              const orientation =
+                imageWidth >= imageHeight
+                  ? 'landscape'
+                  : 'portrait';
+
+              const pdf =
+                new jsPDF({
+                  orientation,
+                  unit: 'mm',
+                  format: 'a4',
+                });
+
+              const pageWidth =
+                pdf.internal.pageSize.getWidth();
+
+              const pageHeight =
+                pdf.internal.pageSize.getHeight();
+
+              const margin = 5;
+
+              const maxWidth =
+                pageWidth - margin * 2;
+
+              const maxHeight =
+                pageHeight - margin * 2;
+
+              const imageRatio =
+                imageWidth / imageHeight;
+
+              let pdfWidth =
+                maxWidth;
+
+              let pdfHeight =
+                pdfWidth / imageRatio;
+
+              if (pdfHeight > maxHeight) {
+
+                pdfHeight =
+                  maxHeight;
+
+                pdfWidth =
+                  pdfHeight * imageRatio;
+
+              }
+
+              const x =
+                (pageWidth - pdfWidth) / 2;
+
+              const y =
+                (pageHeight - pdfHeight) / 2;
+
+              pdf.addImage(
+                imageData,
+                'JPEG',
+                x,
+                y,
+                pdfWidth,
+                pdfHeight
+              );
+
+              pdf.save(
+                `شهادة_إتمام_التدريب_${Date.now()}.pdf`
+              );
+
+            } catch (error) {
+
+              console.error(
+                '❌ فشل تحويل الشهادة إلى PDF:',
+                error
+              );
+
+              this.showSuccessToast.set(
+                true
+              );
+
+              this.successMessage.set(
+                '❌ تعذر تحويل الشهادة إلى PDF، يرجى المحاولة مرة أخرى'
+              );
+
+              setTimeout(() => {
+
+                this.showSuccessToast.set(
+                  false
+                );
+
+              }, 3000);
+
+            } finally {
+
+              window.URL.revokeObjectURL(
+                imageUrl
+              );
+
+            }
+
+          };
+
+          image.onerror = () => {
+
+            window.URL.revokeObjectURL(
+              imageUrl
+            );
+
+            console.error(
+              '❌ تعذر قراءة صورة الشهادة'
+            );
+
+            this.showSuccessToast.set(
+              true
+            );
+
+            this.successMessage.set(
+              '❌ تعذر قراءة ملف الشهادة، يرجى المحاولة مرة أخرى'
+            );
+
+            setTimeout(() => {
+
+              this.showSuccessToast.set(
+                false
+              );
+
+            }, 3000);
+
+          };
+
+          image.src =
+            imageUrl;
 
         },
 
