@@ -427,14 +427,28 @@ get filteredBatchGroups(): any[] {
     (group: any) => {
 
       const groupName =
-        String(
-          group.subject ?? ''
-        ).toLowerCase();
-console.log('GROUP FOR FILTER:', group);
-     return (
+  String(
+    group.subject ?? ''
+  )
+    .toLowerCase()
+    .replace(/[أإآ]/g, 'ا');
+
+     const matchesSearch =
   !search ||
-  groupName.includes(search)
-);
+  groupName.includes(search) ||
+  String(group.batchName ?? '')
+  .toLowerCase()
+  .replace(/[أإآ]/g, 'ا')
+  .includes(search);
+
+      const matchesBatch =
+        !this.selectedBatchName ||
+        group.batchName === this.selectedBatchName;
+
+      return (
+        matchesSearch &&
+        matchesBatch
+      );
     }
   );
 }
