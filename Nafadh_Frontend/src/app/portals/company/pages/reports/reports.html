@@ -50,57 +50,84 @@
   </div>
 
   <!-- ================================================= -->
-  <!-- حضور الشركة -->
+  <!-- 1. حضور الشركة -->
   <!-- ================================================= -->
   @if (activeTab === 'att') {
-    <div class="stat-row">
-      <div class="stat-mini">
-        <span>متوسط حضور الشركة</span>
-        <b class="success-text">94.2%</b>
-        <small>▲ 1.2% عن الشهر الماضي</small>
+    <div class="stats-grid-modern">
+      <div class="stat-box primary-glow">
+        <span class="label">متوسط حضور الشركة</span>
+        <div class="val-flex">
+          <b class="success-text">94.2%</b>
+          <span class="badge-trend up">▲ 1.2% عن الشهر الماضي</span>
+        </div>
       </div>
 
-      <div class="stat-mini">
-        <span>أيام الغياب (30 يومًا)</span>
-        <b class="danger-text">17</b>
-        <small>6 متدربين</small>
+      <div class="stat-box">
+        <span class="label">أيام الغياب (30 يومًا)</span>
+        <div class="val-flex">
+          <b class="danger-text">17</b>
+          <span class="sub-text">6 متدربين</span>
+        </div>
       </div>
 
-      <div class="stat-mini">
-        <span>حالات التأخر</span>
-        <b class="warning-text">27</b>
-        <small>أغلبها في الدفعة أ</small>
+      <div class="stat-box">
+        <span class="label">حالات التأخر</span>
+        <div class="val-flex">
+          <b class="warning-text">27</b>
+          <span class="sub-text">أغلبها في الدفعة أ</span>
+        </div>
       </div>
 
-      <div class="stat-mini">
-        <span>الانصراف المبكر</span>
-        <b>6</b>
-        <small>حالة مسجلة</small>
+      <div class="stat-box">
+        <span class="label">الانصراف المبكر</span>
+        <div class="val-flex">
+          <b>6</b>
+          <span class="sub-text">حالة مسجلة</span>
+        </div>
       </div>
     </div>
 
-    <!-- Attendance chart -->
+    <div class="reports-grid-split">
+      <div class="card card-pad">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          تقرير حضور الشركة — آخر 6 أسابيع
+        </div>
+        <div class="hbars">
+          @for (week of attendanceWeeks; track week.label) {
+            <div class="hbar">
+              <div class="h-lbl">{{ week.label }}</div>
+              <div class="h-trk">
+                <div class="h-fill" [style.width.%]="week.value"></div>
+              </div>
+              <div class="h-val">{{ week.value }}%</div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
+          مقارنة الحضور حسب القسم
+        </div>
+        <div class="hbars">
+          @for (department of comparisonDepartments; track department.name) {
+            <div class="hbar">
+              <div class="h-lbl">{{ department.name }}</div>
+              <div class="h-trk">
+                <div class="h-fill" [style.width.%]="department.value"></div>
+              </div>
+              <div class="h-val">{{ department.value }}%</div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
     <div class="card card-pad">
       <div class="card-title">
-        تقرير حضور الشركة — آخر 6 أسابيع
-      </div>
-     <div class="hbars">
-  @for (week of attendanceWeeks; track week.label) {
-    <div class="hbar">
-      <div class="h-lbl">{{ week.label }}</div>
-      <div class="h-trk">
-        <div class="h-fill" [style.width.%]="week.value"></div>
-      </div>
-      <div class="h-val">{{ week.value }}%</div>
-    </div>
-  }
-</div>
-    </div>
-
-    <!-- Attendance table -->
-    <div class="card card-pad">
-      <div class="card-title">
-        الحضور حسب القسم
+        تفاصيل الحضور والغياب حسب القسم
       </div>
       <div class="tbl-wrap">
         <table class="tbl">
@@ -136,56 +163,78 @@
     </div>
   }
 
- <!-- ================================================= -->
-  <!-- إنجاز المتدربين -->
+  <!-- ================================================= -->
+  <!-- 2. إنجاز المتدربين (بالتصميم الشبكي الجديد) -->
   <!-- ================================================= -->
   @if (activeTab === 'achieve') {
-    <div class="stat-row">
-      <div class="stat-mini">
-        <span>متوسط الإنجاز العام</span>
-        <b class="primary-text">86%</b>
-        <small>لكل البرامج</small>
+    <!-- المؤشرات الأربعة في شبكة 2x2 متوازنة -->
+    <div class="achievement-stats-grid">
+      <div class="achievement-card-mini">
+        <span class="label">متوسط الإنجاز العام</span>
+        <div class="value-row">
+          <b style="color: #00338d;">86%</b>
+          <small>لكل البرامج</small>
+        </div>
       </div>
 
-      <div class="stat-mini">
-        <span>مشروعات مكتملة</span>
-        <b>74</b>
-        <small>من أصل 92</small>
+      <div class="achievement-card-mini">
+        <span class="label">مشروعات مكتملة</span>
+        <div class="value-row">
+          <b>74</b>
+          <small>من أصل 92</small>
+        </div>
       </div>
 
-      <div class="stat-mini">
-        <span>متدربون متميزون</span>
-        <b class="success-text">22</b>
-        <small>أداء ≥ 90%</small>
+      <div class="achievement-card-mini">
+        <span class="label">متدربون متميزون</span>
+        <div class="value-row">
+          <b style="color: #10b981;">22</b>
+          <small>أداء ≥ 90%</small>
+        </div>
       </div>
 
-      <div class="stat-mini">
-        <span>متعثرون</span>
-        <b class="danger-text">6</b>
-        <small>خطة تحسين</small>
+      <div class="achievement-card-mini">
+        <span class="label">متعثرون</span>
+        <div class="value-row">
+          <b style="color: #ef4444;">6</b>
+          <small>خطة تحسين</small>
+        </div>
       </div>
     </div>
 
-    <div class="card card-pad">
-      <div class="card-title">
+    <!-- بطاقات البرامج الشبكية الفخمة بدلاً من الأشرطة التقليدية -->
+    <div class="card card-pad" style="background: transparent; border: none; box-shadow: none; padding: 0;">
+      <div class="card-title" style="margin-bottom: 16px;">
         نسبة إنجاز المتدربين حسب البرنامج
       </div>
-      <div class="hbars">
+      
+      <div class="programs-grid">
         @for (program of achievementPrograms; track program.name) {
-          <div class="hbar">
-            <div class="h-lbl">{{ program.name }}</div>
-            <div class="h-trk">
-              <!-- تم إزالة الـ span هنا أيضاً -->
-              <div class="h-fill" [style.width.%]="program.value"></div>
+          <div class="program-card">
+            <div class="program-header">
+              <h4 class="program-title">{{ program.name }}</h4>
+              <span class="program-badge" [class.high]="program.value >= 90">
+                {{ program.value }}%
+              </span>
             </div>
-            <div class="h-val">{{ program.value }}%</div>
+
+            <div class="program-progress-section">
+              <div class="prog-info-row">
+                <span>مستوى الإنجاز الحالي</span>
+                <b>{{ program.value }} من 100%</b>
+              </div>
+              <div class="prog-bar-bg">
+                <div class="prog-bar-fill" [style.width.%]="program.value"></div>
+              </div>
+            </div>
           </div>
         }
       </div>
     </div>
   }
+
   <!-- ================================================= -->
-  <!-- الطاقة الاستيعابية -->
+  <!-- 3. الطاقة الاستيعابية -->
   <!-- ================================================= -->
   @if (activeTab === 'cap') {
     <div class="card card-pad capacity-card">
@@ -195,8 +244,8 @@
       <div class="donut-wrap">
         <div class="donut">
           <svg width="150" height="150" viewBox="0 0 150 150">
-            <circle cx="75" cy="75" r="62" fill="none" stroke="#e9eef2" stroke-width="15"></circle>
-            <circle class="donut-progress" cx="75" cy="75" r="62" fill="none" stroke="#00338d" stroke-width="15" stroke-linecap="round" stroke-dasharray="389.6" stroke-dashoffset="57.4"></circle>
+            <circle cx="75" cy="75" r="62" fill="none" stroke="#e2e8f0" stroke-width="14"></circle>
+            <circle class="donut-progress" cx="75" cy="75" r="62" fill="none" stroke="#00338d" stroke-width="14" stroke-linecap="round" stroke-dasharray="389.6" stroke-dashoffset="57.4"></circle>
           </svg>
           <div class="center">
             <b>85%</b>
@@ -210,7 +259,7 @@
             <b>128</b>
           </div>
           <div class="lg-item">
-            <span class="sw" style="background:#e9eef2"></span>
+            <span class="sw" style="background:#e2e8f0"></span>
             متبقي
             <b>22</b>
           </div>
@@ -262,7 +311,7 @@
   }
 
   <!-- ================================================= -->
-  <!-- التقييمات -->
+  <!-- 4. التقييمات -->
   <!-- ================================================= -->
   @if (activeTab === 'eval') {
     <div class="report-note">
@@ -328,7 +377,7 @@
   }
 
   <!-- ================================================= -->
-  <!-- المهام -->
+  <!-- 5. المهام -->
   <!-- ================================================= -->
   @if (activeTab === 'tasks') {
     <div class="stat-row">
@@ -388,7 +437,55 @@
     </div>
   }
 
-  <div class="card card-pad comparison-card">
+  <!-- ================================================= -->
+  <!-- 6. مقارنة الأقسام والمشرفين -->
+  <!-- ================================================= -->
+  @if (activeTab === 'compare') {
+    <div class="report-note">
+      <span class="info-icon">i</span>
+      مقارنة أداء المشرفين: معدل الحضور مقابل متوسط الأداء العملي لمتدربيهم.
+    </div>
+
+    <div class="card card-pad">
+      <div class="card-title">
+        مؤشرات المشرفين
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>المشرف</th>
+              <th>القسم</th>
+              <th>المتدربون</th>
+              <th>معدل الحضور</th>
+              <th>متوسط الأداء</th>
+              <th>تقييمات معلقة</th>
+              <th>الأداء العام</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (supervisor of supervisors; track supervisor.name) {
+              <tr>
+                <td><b>{{ supervisor.name }}</b></td>
+                <td>{{ supervisor.department }}</td>
+                <td>{{ supervisor.trainees }}</td>
+                <td>{{ supervisor.attendance }}%</td>
+                <td>{{ supervisor.performance }}%</td>
+                <td>{{ supervisor.pendingEvaluations }}</td>
+                <td>
+                  <span class="chip" [ngClass]="supervisor.statusClass">
+                    <span class="dot"></span>
+                    {{ supervisor.overall }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card card-pad comparison-card">
       <div class="card-title">
         مقارنة الحضور والأداء حسب القسم
       </div>
@@ -404,4 +501,6 @@
         }
       </div>
     </div>
+  }
+
 </div>
