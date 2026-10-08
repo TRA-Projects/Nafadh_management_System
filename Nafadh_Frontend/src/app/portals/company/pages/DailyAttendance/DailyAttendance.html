@@ -6,7 +6,7 @@
 
         <div class="head-text">
 
-            <h2>الحضور اليومي</h2>
+            <h2>سجل حضور المدربين</h2>
 
             <p>تسجيل حضور المدربين — {{ todayLabel }}</p>
 
@@ -110,20 +110,16 @@
 
                 تم تأكيد السجل ولا يمكن تعديله
 
-                } @else if (missingCount() > 0 && rows().length) {
-
-                لم يُسجَّل بعد: {{ missingCount() }} — اضغط على حالة كل مدرب لتسجيلها
-
                 } @else {
 
-                اضغط على حالة كل مدرب للتغيير
+                الجميع حاضر افتراضياً — غيّري الحالات المختلفة ثم أكدي سجل اليوم
 
                 }
 
             </span>
 
             <button type="button" class="btn primary confirm-day-btn" [disabled]="!canConfirm()"
-                            [title]="missingCount() > 0 && !isConfirmed() ? 'سجّل حضور كل المدربين أولًا (' + missingCount() + ' متبقٍ)' : ''"
+                            [title]="'سيتم حفظ الحضور الافتراضي للمدربين غير المسجلين قبل التأكيد'"
                             (click)="confirmDay()">
             
                             {{ isConfirmed() ? 'تم تأكيد سجل اليوم' : 'تأكيد سجل اليوم' }}
@@ -180,7 +176,26 @@
 
                     <tr>
 
-                        <th>المدرب</th>
+                        <th class="trainer-filter-heading">
+                            <div class="trainer-filter-header">
+                                <span>المدرب</span>
+                                <details class="trainer-filter-menu" #trainerFilterMenu>
+                                    <summary class="trainer-filter-trigger" title="تصفية حسب اسم المدرب" (click)="positionTrainerFilter($event)">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M7 12h10m-7 5h4"/></svg>
+                                        @if (selectedDayTrainerId() !== null) { <span class="trainer-filter-active-dot"></span> }
+                                    </summary>
+                                    <div class="trainer-filter-panel" [style.top.px]="trainerFilterTop()" [style.left.px]="trainerFilterLeft()" (click)="$event.stopPropagation()">
+                                        <input type="search" class="trainer-filter-search" placeholder="ابحث عن مدرب..." [ngModel]="trainerSearch()" (ngModelChange)="trainerSearch.set($event)" />
+                                        <div class="trainer-filter-options">
+                                            <button type="button" class="all-trainers-option" [class.selected]="selectedDayTrainerId() === null" (click)="selectedDayTrainerId.set(null); trainerFilterMenu.open = false">جميع المدربين</button>
+                                            @for (trainer of filteredTrainerOptions(); track trainer.trainerId) {
+                                                <button type="button" [class.selected]="selectedDayTrainerId() === trainer.trainerId" (click)="selectedDayTrainerId.set(trainer.trainerId); trainerFilterMenu.open = false">{{ trainer.fullName || 'مدرب' }}</button>
+                                            } @empty { <span class="trainer-filter-empty">لا توجد نتائج</span> }
+                                        </div>
+                                    </div>
+                                </details>
+                            </div>
+                        </th>
 
                         <th>التخصص</th>
 
@@ -196,7 +211,7 @@
 
                 <tbody>
 
-                    @for (row of rows(); track trackByTrainer($index, row)) {
+                    @for (row of dayRows(); track trackByTrainer($index, row)) {
 
                     <tr [class.saving]="isSaving(row.trainer.trainerId)">
 
@@ -240,7 +255,7 @@
                                     @for (state of states; track state.key) {
 
                                     <button type="button" class="seg s-{{ state.css }}"
-                                        [class.on]="row.record?.status === state.key"
+                                        [class.on]="(row.record?.status ?? 'Present') === state.key"
                                         [disabled]="isConfirmed() || isSaving(row.trainer.trainerId)"
                                         (click)="setStatus(row, state.key)">{{ state.label }}</button>
 
@@ -250,11 +265,7 @@
 
 
 
-                                @if (!row.record) {
-
-                                <span class="unrecorded">لم يُسجَّل</span>
-
-                                } @else if (row.record.status === 'Late') {
+                                @if (row.record?.status === 'Late') {
 
                                 <label class="time">
 
@@ -266,7 +277,7 @@
 
                                 </label>
 
-                                } @else if (row.record.status === 'EarlyLeave') {
+                                } @else if (row.record?.status === 'EarlyLeave') {
 
                                 <label class="time">
 
@@ -452,7 +463,34 @@
                     <thead>
                         <tr>
 
-                            <th>المدرب</th>
+                            <th class="trainer-filter-heading">
+                                <div class="trainer-filter-header">
+                                    <span>المدرب</span>
+                                    <details class="trainer-filter-menu" #trainerFilterMenu>
+                                        <summary class="trainer-filter-trigger" title="تصفية حسب اسم المدرب" aria-label="تصفية حسب اسم المدرب" (click)="positionTrainerFilter($event)">
+                                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <path d="M4 7h16M7 12h10m-7 5h4" />
+                                            </svg>
+                                            @if (selectedTrainerId() !== null) { <span class="trainer-filter-active-dot"></span> }
+                                        </summary>
+                                        <div class="trainer-filter-panel" [style.top.px]="trainerFilterTop()" [style.left.px]="trainerFilterLeft()" (click)="$event.stopPropagation()">
+                                            <input type="search" class="trainer-filter-search" placeholder="ابحث عن مدرب..."
+                                                aria-label="البحث عن اسم المدرب" [ngModel]="trainerSearch()"
+                                                (ngModelChange)="trainerSearch.set($event)" />
+                                            <div class="trainer-filter-options">
+                                                <button type="button" class="all-trainers-option" [class.selected]="selectedTrainerId() === null"
+                                                    (click)="selectTrainer(null)">جميع المدربين</button>
+                                                @for (trainer of filteredTrainerOptions(); track trainer.trainerId) {
+                                                <button type="button" [class.selected]="selectedTrainerId() === trainer.trainerId"
+                                                    (click)="selectTrainer(trainer.trainerId)">{{ trainer.fullName || 'مدرب' }}</button>
+                                                } @empty {
+                                                <span class="trainer-filter-empty">لا توجد نتائج</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </details>
+                                </div>
+                            </th>
 
                             @for (day of week.days; track day.key) { <th class="num">{{ day.label }}</th> }
 
@@ -463,7 +501,7 @@
 
                     <tbody>
 
-                        @for (row of weekRows(week); track row.trainer.trainerId) {
+                        @for (row of weekRows(week, true); track row.trainer.trainerId) {
 
                         <tr>
 
@@ -512,6 +550,8 @@
 
                         </tr>
 
+                        } @empty {
+                        <tr><td class="trainer-filter-no-rows" [attr.colspan]="week.days.length + 2">لا توجد سجلات للمدرب المحدد.</td></tr>
                         }
 
                     </tbody>

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, QueryList, ViewChildren, computed, inject, signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 
@@ -170,6 +170,44 @@ export class CompanyDailyAttendance implements OnInit {
   private companyId = 0;
 
 
+
+  @ViewChildren('trainerFilterMenu') trainerFilterMenus!: QueryList<ElementRef<HTMLDetailsElement>>;
+
+  @HostListener('document:click', ['$event'])
+  closeTrainerFiltersOnOutsideClick(event: MouseEvent): void {
+    const target = event.target as Node | null;
+    this.trainerFilterMenus?.forEach(menu => {
+      if (target && !menu.nativeElement.contains(target)) {
+        menu.nativeElement.open = false;
+      }
+    });
+  }
+
+  trainerFilterTop = signal(0);
+  trainerFilterLeft = signal(0);
+
+  positionTrainerFilter(event: MouseEvent): void {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const panelWidth = 230;
+    this.trainerFilterTop.set(Math.min(rect.bottom + 8, window.innerHeight - 80));
+    this.trainerFilterLeft.set(Math.max(8, Math.min(rect.right - panelWidth, window.innerWidth - panelWidth - 8)));
+  }
+
+  selectTrainer(trainerId: number | null): void {
+    this.selectedTrainerId.set(trainerId);
+    this.trainerFilterMenus?.forEach(menu => { menu.nativeElement.open = false; });
+  }
+
+  // UI-only trainer filter shared by the weekly and monthly tables.
+  selectedTrainerId = signal<number | null>(null);
+  selectedDayTrainerId = signal<number | null>(null);
+  trainerSearch = signal('');
+  filteredTrainerOptions = computed(() => {
+    const query = this.trainerSearch().trim().toLocaleLowerCase();
+    return this.trainers().filter(trainer =>
+      !query || (trainer.fullName ?? '').toLocaleLowerCase().includes(query)
+    );
+  });
 
   trainers = signal<CompanyTrainerDto[]>([]);
 
@@ -464,13 +502,17 @@ export class CompanyDailyAttendance implements OnInit {
 
 
 
+  dayRows = computed(() => this.rows().filter(row =>
+    this.selectedDayTrainerId() === null || row.trainer.trainerId === this.selectedDayTrainerId()
+  ));
+
   counts = computed(() => {
 
     const result: Record<TrainerAttendanceStatus, number> = { Present: 0, Late: 0, Absent: 0, EarlyLeave: 0 };
 
     for (const row of this.rows()) {
 
-      if (row.record) result[row.record.status]++;
+      result[row.record?.status ?? 'Present']++;
 
     }
 
@@ -490,11 +532,9 @@ export class CompanyDailyAttendance implements OnInit {
 
   attendanceRate = computed<number | null>(() => {
 
-    const recorded = this.recordedCount();
-
-    if (!recorded) return null;
-
-    return Math.round(((recorded - this.counts().Absent) / recorded) * 100);
+    const total = this.rows().length;
+    if (!total) return null;
+    return Math.round(((total - this.counts().Absent) / total) * 100);
 
   });
 
@@ -506,7 +546,7 @@ export class CompanyDailyAttendance implements OnInit {
 
   canConfirm = computed(
 
-    () => !this.isConfirmed() && this.rows().length > 0 && this.missingCount() === 0 && !this.confirming(),
+    () => !this.isConfirmed() && this.rows().length > 0 && !this.confirming() && this.savingIds().length === 0,
 
   );
 
@@ -608,11 +648,13 @@ export class CompanyDailyAttendance implements OnInit {
 
   /** Returns a status grid for a given week, based only on recorded attendance. */
 
-  weekRows(week: { days: { key: string; label: string }[] }) {
+  weekRows(week: { days: { key: string; label: string }[] }, applyTrainerFilter = false) {
 
     const map = this.recordMap();
 
-    return this.trainers().map((trainer, index) => {
+    return this.trainers().filter(trainer =>
+      !applyTrainerFilter || this.selectedTrainerId() === null || trainer.trainerId === this.selectedTrainerId()
+    ).map((trainer, index) => {
 
       const days = week.days.map(day => ({
 
@@ -949,13 +991,36 @@ ngOnInit(): void {
 
 
   confirmDay(): void {
-
     if (!this.canConfirm()) return;
-
     this.confirming.set(true);
+    // Persist the default Present status only for trainers without a record.
+    const missing = this.rows().filter(row => !row.record);
+    if (missing.length) {
+      forkJoin(missing.map(row => this.api.saveTrainerAttendance({
+        companyId: this.companyId,
+        trainerId: row.trainer.trainerId,
+        date: this.todayKey,
+        status: 'Present',
+        reason: null,
+        checkInTime: null,
+        checkOutTime: null,
+      }))).subscribe({
+        next: saved => {
+          saved.forEach(record => this.upsertRecord(record));
+          this.finishConfirmDay();
+        },
+        error: err => {
+          this.showError(err, 'تعذر حفظ الحضور الافتراضي. لم يتم تأكيد السجل.');
+          this.confirming.set(false);
+          this.load();
+        },
+      });
+      return;
+    }
+    this.finishConfirmDay();
+  }
 
-
-
+  private finishConfirmDay(): void {
     this.api.confirmTrainerAttendanceDay({ companyId: this.companyId, date: this.todayKey }).subscribe({
 
       next: () => {

@@ -2,12 +2,12 @@ import {
   Component,
   HostListener,
   OnInit,
+  ChangeDetectorRef,
   inject
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 
 import { CompanyApi } from '../../services/company-api';
 
@@ -82,8 +82,7 @@ interface Toast {
 
   imports: [
     CommonModule,
-    FormsModule,
-    RouterLink
+    FormsModule
   ],
 
   templateUrl: './supervisors.html',
@@ -95,7 +94,11 @@ export class CompanySupervisors implements OnInit {
   // API
   // =========================================================
 
-  private readonly companyApi = inject(CompanyApi);
+  private readonly companyApi =
+    inject(CompanyApi);
+
+  private readonly cdr =
+    inject(ChangeDetectorRef);
 
 
   // =========================================================
@@ -119,8 +122,6 @@ export class CompanySupervisors implements OnInit {
   // =========================================================
 
   supervisors: Supervisor[] = [];
-
-  // تمت إزالة المصفوفة العادية واستبدالها بالـ Getter أدناه لضمان التحديث التلقائي الفوري
 
 
   // =========================================================
@@ -166,6 +167,20 @@ export class CompanySupervisors implements OnInit {
 
   editingSupervisor = false;
 
+
+  // =========================================================
+  // Supervisor Profile Modal
+  // =========================================================
+
+  showProfileModal = false;
+
+  selectedProfileSupervisor: Supervisor | null = null;
+
+
+  // =========================================================
+  // Selected Supervisor
+  // =========================================================
+
   selectedSupervisor: Supervisor | null = null;
 
 
@@ -208,60 +223,10 @@ export class CompanySupervisors implements OnInit {
 
 
   // =========================================================
-  // توزيع الأقسام
-  // =========================================================
-
-  private readonly departmentAssignments = [
-
-    {
-      department: 'تقنية المعلومات',
-      position: 'مشرف تقنية المعلومات'
-    },
-
-    {
-      department: 'الموارد البشرية',
-      position: 'مشرف الموارد البشرية'
-    },
-
-    {
-      department: 'التسويق',
-      position: 'مشرف التسويق'
-    },
-
-    {
-      department: 'المالية',
-      position: 'مشرف مالي'
-    },
-
-    {
-      department: 'التدريب والتطوير',
-      position: 'مسؤول التدريب والتطوير'
-    },
-
-    {
-      department: 'الجودة',
-      position: 'مشرف الجودة'
-    },
-
-    {
-      department: 'الشؤون الإدارية',
-      position: 'مشرف الشؤون الإدارية'
-    },
-
-    {
-      department: 'التدريب والتطوير',
-      position: 'منسق التدريب والتطوير'
-    }
-
-  ];
-
-
-  // =========================================================
   // ألوان الصور
   // =========================================================
 
   private readonly avatarColors = [
-
     'navy',
     'cyan',
     'gold',
@@ -270,7 +235,6 @@ export class CompanySupervisors implements OnInit {
     'green',
     'orange',
     'pink'
-
   ];
 
 
@@ -279,9 +243,7 @@ export class CompanySupervisors implements OnInit {
   // =========================================================
 
   ngOnInit(): void {
-
     this.loadSupervisors();
-
   }
 
 
@@ -292,9 +254,7 @@ export class CompanySupervisors implements OnInit {
   loadSupervisors(): void {
 
     this.loading = true;
-
     this.errorMessage = '';
-
 
     this.companyApi
       .getSupervisors(this.companyId)
@@ -302,118 +262,180 @@ export class CompanySupervisors implements OnInit {
 
         next: (data: any[]) => {
 
-          this.supervisors = data.map(
-            (item: any, index: number) => {
+          const fakeStats: SupervisorStats[] = [
 
-              const assignment =
-                this.departmentAssignments[
-                  index % this.departmentAssignments.length
-                ];
+            {
+              monthlyEvaluations: 4,
+              attendanceRate: 94,
+              assignedTrainees: 6
+            },
 
+            {
+              monthlyEvaluations: 3,
+              attendanceRate: 88,
+              assignedTrainees: 5
+            },
 
-              const supervisorId =
-                Number(
-                  item.supervisorId ??
-                  item.id ??
-                  0
-                );
+            {
+              monthlyEvaluations: 6,
+              attendanceRate: 96,
+              assignedTrainees: 8
+            },
 
+            {
+              monthlyEvaluations: 2,
+              attendanceRate: 72,
+              assignedTrainees: 4
+            },
 
-              const status =
-                item.status ?? 'Active';
+            {
+              monthlyEvaluations: 5,
+              attendanceRate: 91,
+              assignedTrainees: 7
+            },
 
+            {
+              monthlyEvaluations: 3,
+              attendanceRate: 79,
+              assignedTrainees: 5
+            },
 
-              return {
+            {
+              monthlyEvaluations: 7,
+              attendanceRate: 97,
+              assignedTrainees: 9
+            },
 
-                supervisorId,
-
-                id: supervisorId,
-
-                fullName:
-                  item.fullName ??
-                  item.name ??
-                  'مشرف',
-
-                phone:
-                  item.phone ??
-                  '',
-
-                email:
-                  item.email ??
-                  '',
-
-
-                department:
-                  assignment.department,
-
-                position:
-                  assignment.position,
-
-
-                status,
-
-
-                companyId:
-                  item.companyId ??
-                  this.companyId,
-
-                userId:
-                  item.userId,
-
-                permissions:
-                  item.permissions ??
-                  [],
-
-
-                avatarColor:
-                  this.avatarColors[
-                    index %
-                    this.avatarColors.length
-                  ],
-
-
-                isInactive:
-                  status === 'Inactive' ||
-                  status === 'Frozen' ||
-                  status === 'غير نشط' ||
-                  status === 'مجمد',
-
-
-                showMenu: false,
-
-
-                lastActivity:
-                  item.lastActivity ??
-                  'نشط مؤخراً',
-
-
-                stats: {
-
-                  monthlyEvaluations:
-                    item.stats?.monthlyEvaluations ??
-                    0,
-
-                  attendanceRate:
-                    item.stats?.attendanceRate ??
-                    0,
-
-                  assignedTrainees:
-                    item.stats?.assignedTrainees ??
-                    0
-
-                }
-
-              };
-
+            {
+              monthlyEvaluations: 4,
+              attendanceRate: 85,
+              assignedTrainees: 6
             }
-          );
+
+          ];
+
+
+          this.supervisors =
+            data.map(
+              (
+                item: any,
+                index: number
+              ) => {
+
+                const supervisorId =
+                  Number(
+                    item.supervisorId ??
+                    item.id ??
+                    index + 1
+                  );
+
+
+                const status =
+                  item.status ??
+                  'Active';
+
+
+                const stats =
+                  item.stats ??
+                  fakeStats[
+                    index %
+                    fakeStats.length
+                  ];
+
+
+                return {
+
+                  supervisorId,
+
+                  id: supervisorId,
+
+                  fullName:
+                    item.fullName ??
+                    item.name ??
+                    'مشرف',
+
+                  phone:
+                    item.phone ??
+                    '',
+
+                  email:
+                    item.email ??
+                    '',
+
+                  department:
+                    item.department ??
+                    'القسم العام',
+
+                  position:
+                    item.position ??
+                    'مشرف',
+
+                  status,
+
+                  companyId:
+                    item.companyId ??
+                    this.companyId,
+
+                  userId:
+                    item.userId,
+
+                  permissions:
+                    item.permissions ??
+                    [],
+
+                  avatarColor:
+                    this.avatarColors[
+                      index %
+                      this.avatarColors.length
+                    ],
+
+                  isInactive:
+                    status === 'Inactive' ||
+                    status === 'Frozen' ||
+                    status === 'غير نشط' ||
+                    status === 'مجمد',
+
+                  showMenu: false,
+
+                  lastActivity:
+                    item.lastActivity ??
+                    'نشط مؤخراً',
+
+                  stats: {
+
+                    monthlyEvaluations:
+                      Number(
+                        stats.monthlyEvaluations ??
+                        0
+                      ),
+
+                    attendanceRate:
+                      Number(
+                        stats.attendanceRate ??
+                        0
+                      ),
+
+                    assignedTrainees:
+                      Number(
+                        stats.assignedTrainees ??
+                        0
+                      )
+
+                  }
+
+                };
+
+              }
+            );
+
 
           this.calculateStatistics();
 
           this.loading = false;
 
-        },
+          this.cdr.detectChanges();
 
+        },
 
         error: (error) => {
 
@@ -422,17 +444,17 @@ export class CompanySupervisors implements OnInit {
             error
           );
 
-
           this.loading = false;
 
           this.errorMessage =
             'حدث خطأ أثناء تحميل بيانات المشرفين';
 
-
           this.showToast(
             'error',
             'تعذر تحميل بيانات المشرفين'
           );
+
+          this.cdr.detectChanges();
 
         }
 
@@ -458,27 +480,58 @@ export class CompanySupervisors implements OnInit {
 
 
   // =========================================================
-  // الفلترة الديناميكية (Getter) لحل مشاكل الأزرار والبحث
+  // الفلترة الديناميكية
   // =========================================================
 
   get filteredSupervisors(): Supervisor[] {
-    const query = this.searchQuery.trim().toLowerCase();
 
-    return this.supervisors.filter((supervisor) => {
-      const matchesDepartment =
-        this.selectedDept === 'all' ||
-        supervisor.department === this.selectedDept;
+    const query =
+      this.searchQuery
+        .trim()
+        .toLowerCase();
 
-      const matchesSearch =
-        !query ||
-        supervisor.fullName?.toLowerCase().includes(query) ||
-        supervisor.email?.toLowerCase().includes(query) ||
-        supervisor.phone?.toLowerCase().includes(query) ||
-        supervisor.department?.toLowerCase().includes(query) ||
-        supervisor.position?.toLowerCase().includes(query);
 
-      return matchesDepartment && matchesSearch;
-    });
+    return this.supervisors.filter(
+      (supervisor) => {
+
+        const matchesDepartment =
+          this.selectedDept === 'all' ||
+          supervisor.department ===
+          this.selectedDept;
+
+
+        const matchesSearch =
+          !query ||
+
+          supervisor.fullName
+            ?.toLowerCase()
+            .includes(query) ||
+
+          supervisor.email
+            ?.toLowerCase()
+            .includes(query) ||
+
+          supervisor.phone
+            ?.toLowerCase()
+            .includes(query) ||
+
+          supervisor.department
+            ?.toLowerCase()
+            .includes(query) ||
+
+          supervisor.position
+            ?.toLowerCase()
+            .includes(query);
+
+
+        return (
+          matchesDepartment &&
+          matchesSearch
+        );
+
+      }
+    );
+
   }
 
 
@@ -503,7 +556,8 @@ export class CompanySupervisors implements OnInit {
     department: string
   ): void {
 
-    this.selectedDept = department;
+    this.selectedDept =
+      department;
 
   }
 
@@ -516,7 +570,10 @@ export class CompanySupervisors implements OnInit {
 
     this.totalAssignedTrainees =
       this.supervisors.reduce(
-        (total, supervisor) =>
+        (
+          total,
+          supervisor
+        ) =>
           total +
           (
             supervisor.stats
@@ -527,11 +584,16 @@ export class CompanySupervisors implements OnInit {
       );
 
 
-    if (this.supervisors.length > 0) {
+    if (
+      this.supervisors.length > 0
+    ) {
 
       const totalAttendance =
         this.supervisors.reduce(
-          (total, supervisor) =>
+          (
+            total,
+            supervisor
+          ) =>
             total +
             (
               supervisor.stats
@@ -566,7 +628,6 @@ export class CompanySupervisors implements OnInit {
           ) < 70 ||
 
           supervisor.isInactive
-
       ).length;
 
   }
@@ -592,7 +653,9 @@ export class CompanySupervisors implements OnInit {
         .filter(Boolean);
 
 
-    if (parts.length === 1) {
+    if (
+      parts.length === 1
+    ) {
 
       return parts[0]
         .substring(0, 2);
@@ -604,6 +667,42 @@ export class CompanySupervisors implements OnInit {
       parts[0].charAt(0) +
       parts[1].charAt(0)
     );
+
+  }
+
+
+  // =========================================================
+  // فتح ملف المشرف
+  // =========================================================
+
+  openSupervisorProfile(
+    supervisor: Supervisor
+  ): void {
+
+    this.selectedProfileSupervisor =
+      supervisor;
+
+    this.showProfileModal =
+      true;
+
+    // إغلاق أي قائمة مفتوحة
+    supervisor.showMenu =
+      false;
+
+  }
+
+
+  // =========================================================
+  // إغلاق ملف المشرف
+  // =========================================================
+
+  closeSupervisorProfile(): void {
+
+    this.showProfileModal =
+      false;
+
+    this.selectedProfileSupervisor =
+      null;
 
   }
 
@@ -625,8 +724,13 @@ export class CompanySupervisors implements OnInit {
     this.supervisors.forEach(
       item => {
 
-        if (item !== supervisor) {
-          item.showMenu = false;
+        if (
+          item !== supervisor
+        ) {
+
+          item.showMenu =
+            false;
+
         }
 
       }
@@ -650,14 +754,11 @@ export class CompanySupervisors implements OnInit {
     this.selectedSupervisor =
       supervisor;
 
-
     this.editingSupervisor =
       true;
 
-
     this.showAddModal =
       true;
-
 
     this.newSupervisor = {
 
@@ -698,14 +799,11 @@ export class CompanySupervisors implements OnInit {
     this.editingSupervisor =
       false;
 
-
     this.selectedSupervisor =
       null;
 
-
     this.showAddModal =
       true;
-
 
     this.newSupervisor = {
 
@@ -737,10 +835,8 @@ export class CompanySupervisors implements OnInit {
     this.showAddModal =
       false;
 
-
     this.editingSupervisor =
       false;
-
 
     this.selectedSupervisor =
       null;
@@ -807,7 +903,10 @@ export class CompanySupervisors implements OnInit {
 
 
       this.companyApi
-        .updateSupervisor(id, dto)
+        .updateSupervisor(
+          id,
+          dto
+        )
         .subscribe({
 
           next: () => {
@@ -817,13 +916,11 @@ export class CompanySupervisors implements OnInit {
               'تم تحديث بيانات المشرف بنجاح'
             );
 
-
             this.closeAddModal();
 
             this.loadSupervisors();
 
           },
-
 
           error: (error) => {
 
@@ -831,7 +928,6 @@ export class CompanySupervisors implements OnInit {
               'Update supervisor error:',
               error
             );
-
 
             this.showToast(
               'error',
@@ -885,13 +981,11 @@ export class CompanySupervisors implements OnInit {
             'تمت إضافة المشرف بنجاح'
           );
 
-
           this.closeAddModal();
 
           this.loadSupervisors();
 
         },
-
 
         error: (error) => {
 
@@ -899,7 +993,6 @@ export class CompanySupervisors implements OnInit {
             'Add supervisor error:',
             error
           );
-
 
           this.showToast(
             'error',
@@ -962,7 +1055,10 @@ export class CompanySupervisors implements OnInit {
 
 
     this.companyApi
-      .updateSupervisor(id, dto)
+      .updateSupervisor(
+        id,
+        dto
+      )
       .subscribe({
 
         next: () => {
@@ -974,11 +1070,9 @@ export class CompanySupervisors implements OnInit {
               : 'تم تجميد الحساب'
           );
 
-
           this.loadSupervisors();
 
         },
-
 
         error: (error) => {
 
@@ -986,7 +1080,6 @@ export class CompanySupervisors implements OnInit {
             'Toggle status error:',
             error
           );
-
 
           this.showToast(
             'error',
@@ -1038,11 +1131,9 @@ export class CompanySupervisors implements OnInit {
             'تم حذف المشرف بنجاح'
           );
 
-
           this.loadSupervisors();
 
         },
-
 
         error: (error) => {
 
@@ -1050,7 +1141,6 @@ export class CompanySupervisors implements OnInit {
             'Delete supervisor error:',
             error
           );
-
 
           this.showToast(
             'error',
@@ -1079,7 +1169,6 @@ export class CompanySupervisors implements OnInit {
     this.selectedSupervisor =
       supervisor;
 
-
     this.isDistributeModalOpen =
       true;
 
@@ -1098,7 +1187,10 @@ export class CompanySupervisors implements OnInit {
 
           this.traineesList =
             data.map(
-              (item: any, index: number) => {
+              (
+                item: any,
+                index: number
+              ) => {
 
                 const name =
                   item.name ??
@@ -1152,7 +1244,6 @@ export class CompanySupervisors implements OnInit {
 
         },
 
-
         error: (error) => {
 
           console.error(
@@ -1160,9 +1251,7 @@ export class CompanySupervisors implements OnInit {
             error
           );
 
-
           this.traineesList = [];
-
 
           this.showToast(
             'error',
@@ -1189,10 +1278,8 @@ export class CompanySupervisors implements OnInit {
     this.isDistributeModalOpen =
       false;
 
-
     this.selectedSupervisor =
       null;
-
 
     this.traineesList = [];
 
@@ -1260,8 +1347,12 @@ export class CompanySupervisors implements OnInit {
 
   saveDistribution(): void {
 
-    if (!this.selectedSupervisor) {
+    if (
+      !this.selectedSupervisor
+    ) {
+
       return;
+
     }
 
 
@@ -1340,13 +1431,21 @@ export class CompanySupervisors implements OnInit {
       Number(value ?? 0);
 
 
-    if (attendance >= 90) {
+    if (
+      attendance >= 90
+    ) {
+
       return 'attendance-good';
+
     }
 
 
-    if (attendance >= 70) {
+    if (
+      attendance >= 70
+    ) {
+
       return 'attendance-medium';
+
     }
 
 
