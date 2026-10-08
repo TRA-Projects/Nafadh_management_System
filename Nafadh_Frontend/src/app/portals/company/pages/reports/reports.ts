@@ -2,6 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import * as XLSX from 'xlsx';
+import html2pdf from 'html2pdf.js';
+
+
 type ReportTab =
   | 'att'
   | 'achieve'
@@ -233,29 +237,321 @@ export class ReportsComponent {
     this.activeTab = tab;
   }
 
-  exportPdf(): void {
-    alert('تم تجهيز تصدير التقرير PDF - يمكن ربطه لاحقاً مع خدمة التصدير');
-  }
+  // =========================================================
+  // تصدير Excel
+  // =========================================================
 
   exportExcel(): void {
-    alert('تم تجهيز تصدير التقرير Excel - يمكن ربطه لاحقاً مع خدمة التصدير');
+
+    let data: any[] = [];
+    let fileName = 'Nafadh_Report';
+
+    switch (this.activeTab) {
+
+      case 'att':
+        data = this.attendanceDepartments.map(item => ({
+          'القسم': item.department,
+          'عدد المتدربين': item.trainees,
+          'معدل الحضور': `${item.attendance}%`,
+          'الغياب': item.absence,
+          'التأخر': item.late,
+          'التقييم': item.evaluation
+        }));
+
+        fileName = 'Nafadh_Attendance_Report';
+        break;
+
+      case 'achieve':
+        data = this.achievementPrograms.map(item => ({
+          'البرنامج': item.name,
+          'نسبة الإنجاز': `${item.value}%`
+        }));
+
+        fileName = 'Nafadh_Achievement_Report';
+        break;
+
+      case 'cap':
+        data = this.capacityPrograms.map(item => ({
+          'البرنامج': item.name,
+          'الحصة المخصصة': item.capacity,
+          'المستخدم': item.used,
+          'المتبقي': item.remaining,
+          'الاستغلال': `${item.percentage}%`
+        }));
+
+        fileName = 'Nafadh_Capacity_Report';
+        break;
+
+      case 'eval':
+        data = this.evaluations.map(item => ({
+          'المشرف': item.supervisor,
+          'القسم': item.department,
+          'مطلوب': item.required,
+          'متأخر': item.late,
+          'آخر تقييم': item.lastEvaluation,
+          'الحالة': item.status
+        }));
+
+        fileName = 'Nafadh_Evaluations_Report';
+        break;
+
+      case 'tasks':
+        data = this.tasks.map(item => ({
+          'المتدرب': item.trainee,
+          'المهمة': item.task,
+          'الموعد': item.due,
+          'الحالة': this.getTaskStatusText(item.status)
+        }));
+
+        fileName = 'Nafadh_Tasks_Report';
+        break;
+
+      case 'compare':
+        data = this.supervisors.map(item => ({
+          'المشرف': item.name,
+          'القسم': item.department,
+          'المتدربون': item.trainees,
+          'معدل الحضور': `${item.attendance}%`,
+          'متوسط الأداء': `${item.performance}%`,
+          'تقييمات معلقة': item.pendingEvaluations,
+          'الأداء العام': item.overall
+        }));
+
+        fileName = 'Nafadh_Supervisors_Comparison_Report';
+        break;
+    }
+
+    if (!data.length) {
+      alert('لا توجد بيانات لتصديرها.');
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+
+    // ضبط عرض الأعمدة
+    const columnWidths = Object.keys(data[0]).map(key => {
+      const maxLength = Math.max(
+        key.length,
+        ...data.map(row => String(row[key] ?? '').length)
+      );
+
+      return {
+        wch: Math.min(Math.max(maxLength + 3, 12), 35)
+      };
+    });
+
+    worksheet['!cols'] = columnWidths;
+
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      'التقرير'
+    );
+
+    XLSX.writeFile(
+      workbook,
+      `${fileName}.xlsx`
+    );
   }
+
+  // =========================================================
+// تصدير PDF عربي
+// =========================================================
+exportPdf(): void {
+  const source = document.querySelector('.reports-page') as HTMLElement | null;
+
+  if (!source) {
+    alert('تعذر العثور على محتوى التقرير.');
+    return;
+  }
+
+  const clone = source.cloneNode(true) as HTMLElement;
+
+  // إزالة عناصر الواجهة التي لا نريدها داخل PDF
+  clone.querySelector('.page-head')?.remove();
+  clone.querySelector('.tabs')?.remove();
+
+  // إزالة جميع الأزرار من التقرير
+  clone.querySelectorAll('button').forEach(button => {
+    button.remove();
+  });
+
+  // إعداد الصفحة للغة العربية
+  clone.setAttribute('dir', 'rtl');
+
+  clone.style.direction = 'rtl';
+  clone.style.textAlign = 'right';
+  clone.style.background = '#ffffff';
+  clone.style.color = '#111827';
+  clone.style.width = '1120px';
+  clone.style.padding = '20px';
+  clone.style.boxSizing = 'border-box';
+
+  // ضمان اتجاه الجداول
+  clone.querySelectorAll('table').forEach(table => {
+    const element = table as HTMLElement;
+    element.style.direction = 'rtl';
+    element.style.width = '100%';
+  });
+
+  // اسم التقرير حسب التبويب الحالي
+  let reportName = 'تقرير نفاذ';
+
+  switch (this.activeTab) {
+    case 'att':
+      reportName = 'تقرير حضور الشركة';
+      break;
+
+    case 'achieve':
+      reportName = 'تقرير إنجاز المتدربين';
+      break;
+
+    case 'cap':
+      reportName = 'تقرير الطاقة الاستيعابية';
+      break;
+
+    case 'eval':
+      reportName = 'تقرير التقييمات';
+      break;
+
+    case 'tasks':
+      reportName = 'تقرير المهام';
+      break;
+
+    case 'compare':
+      reportName = 'تقرير مقارنة الأقسام والمشرفين';
+      break;
+  }
+
+  // عنوان التقرير
+  const title = document.createElement('div');
+
+  title.style.direction = 'rtl';
+  title.style.textAlign = 'center';
+  title.style.marginBottom = '25px';
+  title.style.paddingBottom = '15px';
+  title.style.borderBottom = '2px solid #00338d';
+
+  title.innerHTML = `
+    <h1 style="
+      margin: 0 0 8px 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: #00338d;
+    ">
+      ${reportName}
+    </h1>
+
+    <div style="
+      font-size: 13px;
+      color: #64748b;
+    ">
+      نظام نفاذ لإدارة التدريب
+    </div>
+
+    <div style="
+      margin-top: 5px;
+      font-size: 12px;
+      color: #94a3b8;
+    ">
+      تاريخ التقرير: ${new Date().toLocaleDateString('ar-OM')}
+    </div>
+  `;
+
+  clone.insertBefore(title, clone.firstChild);
+
+  // إنشاء حاوية مؤقتة
+  const wrapper = document.createElement('div');
+
+  wrapper.style.position = 'absolute';
+  wrapper.style.left = '-10000px';
+  wrapper.style.top = '0';
+  wrapper.style.width = '1160px';
+  wrapper.style.background = '#ffffff';
+  wrapper.style.padding = '20px';
+  wrapper.style.boxSizing = 'border-box';
+
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
+
+  const options = {
+    margin: 10,
+
+    filename: `${reportName}.pdf`,
+
+    image: {
+      type: 'jpeg' as const,
+      quality: 0.98
+    },
+
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false
+    },
+
+    jsPDF: {
+      unit: 'mm' as const,
+      format: 'a4' as const,
+      orientation: 'landscape' as const
+    },
+
+    pagebreak: {
+      mode: ['css', 'legacy'] as const
+    }
+  };
+
+  html2pdf()
+    .set(options)
+    .from(clone)
+    .save()
+    .then(() => {
+      wrapper.remove();
+    })
+    .catch((error: unknown) => {
+      console.error('PDF export error:', error);
+
+      wrapper.remove();
+
+      alert('حدث خطأ أثناء إنشاء ملف PDF.');
+    });
+}
+  // =========================================================
+  // حالة المهام
+  // =========================================================
 
   getTaskStatusClass(status: string): string {
     switch (status) {
-      case 'review': return 'info';
-      case 'pending': return 'warn';
-      case 'late': return 'bad';
-      default: return 'ok';
+      case 'review':
+        return 'info';
+
+      case 'pending':
+        return 'warn';
+
+      case 'late':
+        return 'bad';
+
+      default:
+        return 'ok';
     }
   }
 
   getTaskStatusText(status: string): string {
     switch (status) {
-      case 'review': return 'قيد المراجعة';
-      case 'pending': return 'بانتظار الاستلام';
-      case 'late': return 'متأخرة';
-      default: return 'مكتملة';
+      case 'review':
+        return 'قيد المراجعة';
+
+      case 'pending':
+        return 'بانتظار الاستلام';
+
+      case 'late':
+        return 'متأخرة';
+
+      default:
+        return 'مكتملة';
     }
   }
 }

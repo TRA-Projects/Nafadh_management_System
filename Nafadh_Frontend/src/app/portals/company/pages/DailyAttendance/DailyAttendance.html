@@ -104,36 +104,36 @@
             <h3>سجل حضور اليوم — {{ todayLabel }}</h3>
 
             <div class="daily-confirm-actions">
-            <span class="hint">
+                <span class="hint">
 
-                @if (isConfirmed()) {
+                    @if (isConfirmed()) {
 
-                تم تأكيد السجل ولا يمكن تعديله
+                    تم تأكيد السجل ولا يمكن تعديله
 
-                } @else {
+                    } @else {
 
-                الجميع حاضر افتراضياً — غيّري الحالات المختلفة ثم أكدي سجل اليوم
+                    الجميع حاضر افتراضياً — غيّري الحالات المختلفة ثم أكدي سجل اليوم
 
-                }
+                    }
 
-            </span>
+                </span>
 
-            <button type="button" class="btn primary confirm-day-btn" [disabled]="!canConfirm()"
-                            [title]="'سيتم حفظ الحضور الافتراضي للمدربين غير المسجلين قبل التأكيد'"
-                            (click)="confirmDay()">
-            
-                            {{ isConfirmed() ? 'تم تأكيد سجل اليوم' : 'تأكيد سجل اليوم' }}
-            
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
-                                stroke-linecap="round" stroke-linejoin="round">
-            
-                                <circle cx="12" cy="12" r="10" />
-            
-                                <path d="M8 12l3 3 5-6" />
-            
-                            </svg>
-            
-                        </button>
+                <button type="button" class="btn primary confirm-day-btn" [disabled]="!canConfirm()"
+                    [title]="'سيتم حفظ الحضور الافتراضي للمدربين غير المسجلين قبل التأكيد'"
+                    (click)="confirmDay()">
+
+                    {{ isConfirmed() ? 'تم تأكيد سجل اليوم' : 'تأكيد سجل اليوم' }}
+
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                        stroke-linecap="round" stroke-linejoin="round">
+
+                        <circle cx="12" cy="12" r="10" />
+
+                        <path d="M8 12l3 3 5-6" />
+
+                    </svg>
+
+                </button>
             </div>
 
             } @else {
@@ -180,17 +180,35 @@
                             <div class="trainer-filter-header">
                                 <span>المدرب</span>
                                 <details class="trainer-filter-menu" #trainerFilterMenu>
-                                    <summary class="trainer-filter-trigger" title="تصفية حسب اسم المدرب" (click)="positionTrainerFilter($event)">
-                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M7 12h10m-7 5h4"/></svg>
-                                        @if (selectedDayTrainerId() !== null) { <span class="trainer-filter-active-dot"></span> }
+                                    <summary class="trainer-filter-trigger" title="تصفية حسب اسم المدرب"
+                                        (click)="positionTrainerFilter($event)">
+                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
+                                            stroke="currentColor" stroke-width="2">
+                                            <path d="M4 7h16M7 12h10m-7 5h4" />
+                                        </svg>
+                                        @if (selectedDayTrainerId() !== null) {
+                                        <span class="trainer-filter-active-dot"></span>
+                                        }
                                     </summary>
-                                    <div class="trainer-filter-panel" [style.top.px]="trainerFilterTop()" [style.left.px]="trainerFilterLeft()" (click)="$event.stopPropagation()">
-                                        <input type="search" class="trainer-filter-search" placeholder="ابحث عن مدرب..." [ngModel]="trainerSearch()" (ngModelChange)="trainerSearch.set($event)" />
+                                    <div class="trainer-filter-panel" [style.top.px]="trainerFilterTop()"
+                                        [style.left.px]="trainerFilterLeft()"
+                                        (click)="$event.stopPropagation()">
+                                        <input type="search" class="trainer-filter-search"
+                                            placeholder="ابحث عن مدرب..." [ngModel]="trainerSearch()"
+                                            (ngModelChange)="trainerSearch.set($event)" />
                                         <div class="trainer-filter-options">
-                                            <button type="button" class="all-trainers-option" [class.selected]="selectedDayTrainerId() === null" (click)="selectedDayTrainerId.set(null); trainerFilterMenu.open = false">جميع المدربين</button>
+                                            <button type="button" class="all-trainers-option"
+                                                [class.selected]="selectedDayTrainerId() === null"
+                                                (click)="selectedDayTrainerId.set(null); trainerFilterMenu.open = false">جميع
+                                                المدربين</button>
                                             @for (trainer of filteredTrainerOptions(); track trainer.trainerId) {
-                                                <button type="button" [class.selected]="selectedDayTrainerId() === trainer.trainerId" (click)="selectedDayTrainerId.set(trainer.trainerId); trainerFilterMenu.open = false">{{ trainer.fullName || 'مدرب' }}</button>
-                                            } @empty { <span class="trainer-filter-empty">لا توجد نتائج</span> }
+                                            <button type="button"
+                                                [class.selected]="selectedDayTrainerId() === trainer.trainerId"
+                                                (click)="selectedDayTrainerId.set(trainer.trainerId); trainerFilterMenu.open = false">{{
+                                                trainer.fullName || 'مدرب' }}</button>
+                                            } @empty {
+                                            <span class="trainer-filter-empty">لا توجد نتائج</span>
+                                            }
                                         </div>
                                     </div>
                                 </details>
@@ -271,7 +289,8 @@
 
                                     وقت الوصول
 
-                                    <input type="time" [value]="timeValue(row.record.checkInTime)"
+                                    <!-- تم إصلاح الخطأ هنا -->
+                                    <input type="time" [value]="timeValue(row.record?.checkInTime)"
                                         [disabled]="isConfirmed()"
                                         (change)="onTimeChange(row, 'checkInTime', $any($event.target).value)" />
 
@@ -283,7 +302,8 @@
 
                                     وقت الانصراف
 
-                                    <input type="time" [value]="timeValue(row.record.checkOutTime)"
+                                    <!-- تم إصلاح الخطأ هنا -->
+                                    <input type="time" [value]="timeValue(row.record?.checkOutTime)"
                                         [disabled]="isConfirmed()"
                                         (change)="onTimeChange(row, 'checkOutTime', $any($event.target).value)" />
 
@@ -392,6 +412,7 @@
             <span>معدل الالتزام الشهري للشركة</span>
             <strong>{{ monthlyAttendanceRate() === null ? '—' : monthlyAttendanceRate() + '%' }}</strong>
         </div>
+
         <div class="month-weeks">
 
             @for (week of monthWeeks(); track week.index) {
@@ -454,6 +475,7 @@
                     <span class="legend-item legend-early">م = انصراف مبكر</span>
                     <span class="legend-item legend-empty">— = لم يُسجّل</span>
                 </div>
+
             </div>
 
             <div class="table-wrap">
@@ -461,42 +483,82 @@
                 <table class="week-table">
 
                     <thead>
+
                         <tr>
 
                             <th class="trainer-filter-heading">
                                 <div class="trainer-filter-header">
                                     <span>المدرب</span>
+
                                     <details class="trainer-filter-menu" #trainerFilterMenu>
-                                        <summary class="trainer-filter-trigger" title="تصفية حسب اسم المدرب" aria-label="تصفية حسب اسم المدرب" (click)="positionTrainerFilter($event)">
-                                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+
+                                        <summary class="trainer-filter-trigger" title="تصفية حسب اسم المدرب"
+                                            aria-label="تصفية حسب اسم المدرب"
+                                            (click)="positionTrainerFilter($event)">
+
+                                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round" aria-hidden="true">
+
                                                 <path d="M4 7h16M7 12h10m-7 5h4" />
+
                                             </svg>
-                                            @if (selectedTrainerId() !== null) { <span class="trainer-filter-active-dot"></span> }
+
+                                            @if (selectedTrainerId() !== null) {
+                                            <span class="trainer-filter-active-dot"></span>
+                                            }
+
                                         </summary>
-                                        <div class="trainer-filter-panel" [style.top.px]="trainerFilterTop()" [style.left.px]="trainerFilterLeft()" (click)="$event.stopPropagation()">
-                                            <input type="search" class="trainer-filter-search" placeholder="ابحث عن مدرب..."
-                                                aria-label="البحث عن اسم المدرب" [ngModel]="trainerSearch()"
+
+                                        <div class="trainer-filter-panel" [style.top.px]="trainerFilterTop()"
+                                            [style.left.px]="trainerFilterLeft()"
+                                            (click)="$event.stopPropagation()">
+
+                                            <input type="search" class="trainer-filter-search"
+                                                placeholder="ابحث عن مدرب..." aria-label="البحث عن اسم المدرب"
+                                                [ngModel]="trainerSearch()"
                                                 (ngModelChange)="trainerSearch.set($event)" />
+
                                             <div class="trainer-filter-options">
-                                                <button type="button" class="all-trainers-option" [class.selected]="selectedTrainerId() === null"
+
+                                                <button type="button" class="all-trainers-option"
+                                                    [class.selected]="selectedTrainerId() === null"
                                                     (click)="selectTrainer(null)">جميع المدربين</button>
+
                                                 @for (trainer of filteredTrainerOptions(); track trainer.trainerId) {
-                                                <button type="button" [class.selected]="selectedTrainerId() === trainer.trainerId"
-                                                    (click)="selectTrainer(trainer.trainerId)">{{ trainer.fullName || 'مدرب' }}</button>
+
+                                                <button type="button"
+                                                    [class.selected]="selectedTrainerId() === trainer.trainerId"
+                                                    (click)="selectTrainer(trainer.trainerId)">
+
+                                                    {{ trainer.fullName || 'مدرب' }}
+
+                                                </button>
+
                                                 } @empty {
+
                                                 <span class="trainer-filter-empty">لا توجد نتائج</span>
+
                                                 }
+
                                             </div>
+
                                         </div>
+
                                     </details>
+
                                 </div>
+
                             </th>
 
-                            @for (day of week.days; track day.key) { <th class="num">{{ day.label }}</th> }
+                            @for (day of week.days; track day.key) {
+                            <th class="num">{{ day.label }}</th>
+                            }
 
                             <th class="num">نسبة الالتزام</th>
 
                         </tr>
+
                     </thead>
 
                     <tbody>
@@ -506,6 +568,7 @@
                         <tr>
 
                             <td>
+
                                 <div class="person">
 
                                     @if (row.trainer.profileImageUrl) {
@@ -523,35 +586,65 @@
                                     <strong>{{ row.trainer.fullName || 'مدرب' }}</strong>
 
                                 </div>
+
                             </td>
 
                             @for (day of row.days; track day.key) {
 
                             <td class="num">
+
                                 <div class="weekly-day-cell">
+
                                     <span class="attendance-badge" [ngClass]="statusClass(day.record?.status)"
-                                        [title]="day.record?.reason || day.record?.status || 'لم يُسجّل'">{{
-                                        statusSymbol(day.record?.status) }}</span>
+                                        [title]="day.record?.reason || day.record?.status || 'لم يُسجّل'">
+
+                                        {{ statusSymbol(day.record?.status) }}
+
+                                    </span>
+
                                     @if (day.record?.status === 'Absent') {
+
                                     <button type="button" class="weekly-excuse-btn"
                                         [class.has-excuse]="hasExcuse(day.record)"
                                         (click)="openWeeklyExcuse(day.record!)">
+
                                         {{ hasExcuse(day.record) ? 'تم إرفاق عذر · عرض' : '+ إضافة عذر' }}
+
                                     </button>
+
                                     }
+
                                 </div>
+
                             </td>
 
                             }
 
-                            <td class="num"><strong class="week-rate"
-                                    [class.low]="row.rate !== null && row.rate < 100">{{ row.rate === null ? '—' :
-                                    row.rate + '%' }}</strong></td>
+                            <td class="num">
+
+                                <strong class="week-rate"
+                                    [class.low]="row.rate !== null && row.rate < 100">
+
+                                    {{ row.rate === null ? '—' : row.rate + '%' }}
+
+                                </strong>
+
+                            </td>
 
                         </tr>
 
                         } @empty {
-                        <tr><td class="trainer-filter-no-rows" [attr.colspan]="week.days.length + 2">لا توجد سجلات للمدرب المحدد.</td></tr>
+
+                        <tr>
+
+                            <td class="trainer-filter-no-rows" [attr.colspan]="week.days.length + 2">
+
+                                لا توجد سجلات للمدرب المحدد.
+
+                            </td>
+
+                        </tr>
+
                         }
 
                     </tbody>
@@ -566,39 +659,89 @@
 
 
     @if (weeklyExcuse(); as excuse) {
+
     <div class="weekly-excuse-overlay" (click)="closeWeeklyExcuse()">
+
         <section class="weekly-excuse-dialog" role="dialog" aria-modal="true" aria-label="عذر الغياب"
             (click)="$event.stopPropagation()">
+
             <div class="weekly-excuse-heading">
+
                 <h3>عذر الغياب — {{ excuse.date | date:'yyyy-MM-dd' }}</h3>
+
                 <button type="button" (click)="closeWeeklyExcuse()" aria-label="إغلاق">×</button>
+
             </div>
+
             <label for="weeklyReason">سبب الغياب</label>
+
             <textarea id="weeklyReason" rows="3" maxlength="500" [(ngModel)]="weeklyReason"
-                [disabled]="excuse.isConfirmed || weeklyExcuseSaving()" placeholder="اكتبي سبب الغياب..."></textarea>
+                [disabled]="excuse.isConfirmed || weeklyExcuseSaving()"
+                placeholder="اكتبي سبب الغياب..."></textarea>
+
             <button type="button" class="weekly-excuse-action" (click)="saveWeeklyReason()"
-                [disabled]="excuse.isConfirmed || weeklyExcuseSaving()">حفظ السبب</button>
+                [disabled]="excuse.isConfirmed || weeklyExcuseSaving()">
+
+                حفظ السبب
+
+            </button>
+
             <div class="weekly-excuse-proof">
+
                 @if (excuse.excuseProofUrl) {
+
                 <span>تم إرفاق إثبات</span>
-                <a [href]="fileUrl(excuse.excuseProofUrl)" target="_blank" rel="noopener noreferrer">عرض الإثبات</a>
+
+                <a [href]="fileUrl(excuse.excuseProofUrl)" target="_blank"
+                    rel="noopener noreferrer">عرض الإثبات</a>
+
                 @if (!excuse.isConfirmed) {
-                <button type="button" (click)="removeWeeklyProof()" [disabled]="weeklyExcuseSaving()">حذف
-                    الإثبات</button>
+
+                <button type="button" (click)="removeWeeklyProof()"
+                    [disabled]="weeklyExcuseSaving()">
+
+                    حذف الإثبات
+
+                </button>
+
                 }
+
                 } @else {
+
                 <span>لم يُرفق إثبات بعد</span>
+
                 }
+
                 @if (!excuse.isConfirmed) {
+
                 <label class="weekly-excuse-upload">
+
                     {{ excuse.excuseProofUrl ? 'استبدال الإثبات' : '+ رفع صورة أو PDF' }}
-                    <input type="file" hidden accept=".jpg,.jpeg,.png,.webp,.pdf" [disabled]="weeklyExcuseSaving()"
+
+                    <input type="file" hidden accept=".jpg,.jpeg,.png,.webp,.pdf"
+                        [disabled]="weeklyExcuseSaving()"
                         (change)="uploadWeeklyProof($event)" />
+
                 </label>
+
                 }
+
             </div>
-            @if (excuse.isConfirmed) { <p class="weekly-excuse-readonly">هذا السجل مؤكد، ويمكن عرض العذر فقط.</p> }
+
+            @if (excuse.isConfirmed) {
+
+            <p class="weekly-excuse-readonly">
+
+                هذا السجل مؤكد، ويمكن عرض العذر فقط.
+
+            </p>
+
+            }
+
         </section>
+
     </div>
+
     }
+
 </section>
