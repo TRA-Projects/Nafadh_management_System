@@ -2208,3 +2208,1055 @@ select.form-input {
     min-width: 0;
   }
 }
+
+
+/* =========================================================
+   Supervisor Profile Modal
+   ملف المشرف - التصميم النهائي
+========================================================= */
+
+.supervisor-profile-modal {
+  width: min(760px, calc(100vw - 32px));
+  max-width: 760px;
+
+  max-height: calc(100vh - 40px);
+
+  overflow: hidden;
+
+  background: #ffffff;
+
+  border-radius: 26px;
+
+  border: 1px solid rgba(226, 232, 240, 0.95);
+
+  box-shadow:
+    0 30px 80px rgba(15, 23, 42, 0.24),
+    0 10px 30px rgba(15, 23, 42, 0.10);
+
+  direction: rtl;
+
+  animation:
+    supervisorProfileIn
+    0.28s
+    ease-out;
+}
+
+
+/* =========================================================
+   رأس النافذة
+========================================================= */
+
+.supervisor-profile-modal .modal-header {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 22px 28px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f8fbff 0%,
+      #ffffff 65%,
+      #f8fafc 100%
+    );
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+
+/* خط علوي جميل */
+
+.supervisor-profile-modal .modal-header::before {
+  content: '';
+
+  position: absolute;
+
+  top: 0;
+  right: 0;
+  left: 0;
+
+  height: 4px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #2563eb,
+      #06b6d4,
+      #7c3aed
+    );
+}
+
+
+/* =========================================================
+   عنوان النافذة
+========================================================= */
+
+.supervisor-profile-modal .modal-header > div {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+
+.supervisor-profile-modal .modal-kicker {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  color: #2563eb;
+}
+
+
+/* أيقونة صغيرة بجانب "ملف المشرف" */
+
+.supervisor-profile-modal .modal-kicker::before {
+  content: '●';
+
+  font-size: 9px;
+
+  color: #22c55e;
+}
+
+
+.supervisor-profile-modal .modal-header h2 {
+  margin: 0;
+
+  font-size: 22px;
+
+  font-weight: 850;
+
+  color: #0f172a;
+}
+
+
+/* =========================================================
+   زر الإغلاق
+========================================================= */
+
+.supervisor-profile-modal .close-btn {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  color: #64748b;
+
+  font-size: 24px;
+
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    all 0.2s ease;
+}
+
+
+.supervisor-profile-modal .close-btn:hover {
+  background: #fee2e2;
+
+  border-color: #fecaca;
+
+  color: #dc2626;
+
+  transform:
+    rotate(8deg)
+    scale(1.03);
+}
+
+
+/* =========================================================
+   محتوى الملف
+========================================================= */
+
+.supervisor-profile-modal .profile-content {
+  padding: 28px;
+
+  max-height: calc(100vh - 185px);
+
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    #cbd5e1
+    transparent;
+}
+
+
+.supervisor-profile-modal .profile-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+
+.supervisor-profile-modal .profile-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+
+  border-radius: 20px;
+}
+
+
+/* =========================================================
+   Avatar
+========================================================= */
+
+.supervisor-profile-modal .profile-avatar {
+  position: relative;
+
+  width: 92px;
+  height: 92px;
+
+  margin: 0 auto 15px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  font-size: 29px;
+
+  font-weight: 850;
+
+  color: #ffffff;
+
+  border: 5px solid #ffffff;
+
+  outline: 1px solid #dbe3ed;
+
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.18);
+}
+
+
+/* نقطة الحالة */
+
+.supervisor-profile-modal .profile-avatar::after {
+  content: '';
+
+  position: absolute;
+
+  right: 2px;
+  bottom: 3px;
+
+  width: 18px;
+  height: 18px;
+
+  border-radius: 50%;
+
+  background: #22c55e;
+
+  border: 3px solid #ffffff;
+
+  box-shadow:
+    0 2px 6px rgba(15, 23, 42, 0.15);
+}
+
+
+/* =========================================================
+   ألوان Avatar
+========================================================= */
+
+.supervisor-profile-modal .profile-avatar.navy {
+  background:
+    linear-gradient(
+      135deg,
+      #0f172a,
+      #09469b
+    );
+}
+
+
+.supervisor-profile-modal .profile-avatar.cyan {
+  background:
+    linear-gradient(
+      135deg,
+      #0891b2,
+      #06b6d4
+    );
+}
+
+
+.supervisor-profile-modal .profile-avatar.gold {
+  background:
+    linear-gradient(
+      135deg,
+      #b7791f,
+      #d4a72c
+    );
+}
+
+
+.supervisor-profile-modal .profile-avatar.red {
+  background:
+    linear-gradient(
+      135deg,
+      #dc2626,
+      #ef4444
+    );
+}
+
+
+.supervisor-profile-modal .profile-avatar.purple {
+  background:
+    linear-gradient(
+      135deg,
+      #7c3aed,
+      #a855f7
+    );
+}
+
+
+.supervisor-profile-modal .profile-avatar.green {
+  background:
+    linear-gradient(
+      135deg,
+      #15803d,
+      #22c55e
+    );
+}
+
+
+.supervisor-profile-modal .profile-avatar.orange {
+  background:
+    linear-gradient(
+      135deg,
+      #ea580c,
+      #f97316
+    );
+}
+
+
+.supervisor-profile-modal .profile-avatar.pink {
+  background:
+    linear-gradient(
+      135deg,
+      #db2777,
+      #ec4899
+    );
+}
+
+
+/* =========================================================
+   اسم المشرف
+========================================================= */
+
+.supervisor-profile-modal .profile-content > h3 {
+  margin: 0;
+
+  text-align: center;
+
+  font-size: 25px;
+
+  font-weight: 850;
+
+  color: #0f172a;
+}
+
+
+.supervisor-profile-modal .profile-role {
+  display: block;
+
+  margin-top: 7px;
+
+  text-align: center;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  color: #64748b;
+}
+
+
+/* =========================================================
+   معلومات المشرف
+========================================================= */
+
+.supervisor-profile-modal .profile-info-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+
+  margin-top: 26px;
+}
+
+
+.supervisor-profile-modal .profile-info-item {
+  min-width: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 15px;
+
+  background: #ffffff;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 17px;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+
+.supervisor-profile-modal .profile-info-item:hover {
+  transform: translateY(-2px);
+
+  border-color: #cbd5e1;
+
+  box-shadow:
+    0 9px 24px rgba(15, 23, 42, 0.07);
+}
+
+
+/* =========================================================
+   ألوان الأيقونات الصغيرة داخل مربعات المعلومات
+========================================================= */
+
+.supervisor-profile-modal .info-icon {
+  width: 43px;
+  height: 43px;
+  flex: 0 0 43px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 13px;
+
+  font-size: 19px;
+  font-weight: 900;
+
+  /* وضوح أعلى للأيقونة */
+  text-shadow: none;
+}
+
+/* البريد الإلكتروني */
+.supervisor-profile-modal .info-email .info-icon {
+  background: #dbeafe;
+  color: #075985;
+}
+
+/* الهاتف */
+.supervisor-profile-modal .info-phone .info-icon {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* القسم */
+.supervisor-profile-modal .info-department .info-icon {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* المنصب */
+.supervisor-profile-modal .info-position .info-icon {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+/* حالة الحساب */
+.supervisor-profile-modal .info-status .info-icon {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* رقم المشرف */
+.supervisor-profile-modal .info-id .info-icon {
+  background: #fce7f3;
+  color: #9d174d;
+}
+
+/* حركة بسيطة عند تمرير الماوس */
+.supervisor-profile-modal .profile-info-item:hover .info-icon {
+  transform: scale(1.06);
+  filter: saturate(1.15);
+}
+
+.supervisor-profile-modal .info-icon {
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+/* =========================================================
+   حالة الحساب
+========================================================= */
+
+.supervisor-profile-modal
+.profile-info-item
+strong.active-status {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  color: #15803d;
+}
+
+
+.supervisor-profile-modal
+.profile-info-item
+strong.active-status::before {
+
+  content: '';
+
+  width: 8px;
+  height: 8px;
+
+  flex: 0 0 8px;
+
+  border-radius: 50%;
+
+  background: #22c55e;
+
+  box-shadow:
+    0 0 0 4px #dcfce7;
+}
+
+
+.supervisor-profile-modal
+.profile-info-item
+strong.inactive-status {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  color: #dc2626;
+}
+
+
+.supervisor-profile-modal
+.profile-info-item
+strong.inactive-status::before {
+
+  content: '';
+
+  width: 8px;
+  height: 8px;
+
+  flex: 0 0 8px;
+
+  border-radius: 50%;
+
+  background: #ef4444;
+
+  box-shadow:
+    0 0 0 4px #fee2e2;
+}
+
+
+/* =========================================================
+   الإحصائيات
+========================================================= */
+
+.supervisor-profile-modal .profile-stats {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 12px;
+
+  margin-top: 20px;
+
+  padding: 0;
+
+  background: transparent;
+
+  border: 0;
+}
+
+
+.supervisor-profile-modal .profile-stat {
+  position: relative;
+
+  overflow: hidden;
+
+  min-height: 135px;
+
+  padding: 18px 12px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  border-radius: 19px;
+
+  border: 1px solid transparent;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.supervisor-profile-modal .profile-stat:hover {
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 12px 28px rgba(121, 113, 10, 0.08);
+}
+
+
+/* =========================================================
+   بطاقة التقييمات
+========================================================= */
+
+.supervisor-profile-modal .profile-stat.evaluations {
+  background:
+    linear-gradient(
+      135deg,
+      #eff6ff,
+      #dbeafe
+    );
+
+  border-color: #bfdbfe;
+}
+
+
+.supervisor-profile-modal
+.profile-stat.evaluations
+.stat-icon {
+
+  background: #2563eb;
+}
+
+
+/* =========================================================
+   بطاقة الحضور
+========================================================= */
+
+.supervisor-profile-modal .profile-stat.attendance {
+  background:
+    linear-gradient(
+      135deg,
+      #ecfdf5,
+      #d1fae5
+    );
+
+  border-color: #a7f3d0;
+}
+
+
+.supervisor-profile-modal
+.profile-stat.attendance
+.stat-icon {
+
+  background: #059669;
+}
+
+
+/* =========================================================
+   بطاقة المتدربين
+========================================================= */
+
+.supervisor-profile-modal .profile-stat.trainees {
+  background:
+    linear-gradient(
+      135deg,
+      #fff7ed,
+      #ffedd5
+    );
+
+  border-color: #fed7aa;
+}
+
+
+.supervisor-profile-modal
+.profile-stat.trainees
+.stat-icon {
+
+  background: #ea580c;
+}
+
+
+/* =========================================================
+   أيقونة الإحصائية
+========================================================= */
+
+.supervisor-profile-modal .stat-icon {
+  width: 39px;
+  height: 39px;
+
+  margin-bottom: 9px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  color: #ffffff;
+
+  font-size: 16px;
+
+  font-weight: 900;
+
+  box-shadow:
+    0 5px 12px rgba(15, 23, 42, 0.12);
+}
+
+
+.supervisor-profile-modal .profile-stat strong {
+  display: block;
+
+  font-size: 26px;
+
+  line-height: 1.1;
+
+  font-weight: 900;
+
+  color: #0f172a;
+}
+
+
+.supervisor-profile-modal .profile-stat span {
+  display: block;
+
+  margin-top: 6px;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  color: #8b7564;
+}
+
+
+/* =========================================================
+   الصلاحيات
+========================================================= */
+
+.supervisor-profile-modal .profile-permissions {
+  margin-top: 20px;
+
+  padding: 18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fafafa,
+      #f8fafc
+    );
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 19px;
+}
+
+
+.supervisor-profile-modal .profile-permissions h4 {
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  margin: 0 0 14px;
+
+  font-size: 15px;
+
+  font-weight: 850;
+
+  color: #1e293b;
+}
+
+
+.supervisor-profile-modal
+.profile-permissions
+h4::before {
+
+  content: '◆';
+
+  width: 29px;
+  height: 29px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background: #ede9fe;
+
+  color: #7c3aed;
+
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   الصلاحيات Chips
+========================================================= */
+
+.supervisor-profile-modal
+.profile-permissions
+.chips {
+
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 8px;
+}
+
+
+.supervisor-profile-modal
+.profile-permissions
+.chip {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  min-height: 34px;
+
+  padding: 6px 12px;
+
+  border-radius: 999px;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+
+  color: #475569;
+
+  font-size: 11px;
+
+  font-weight: 750;
+
+  box-shadow:
+    0 2px 6px rgba(15, 23, 42, 0.04);
+
+  transition:
+    all 0.2s ease;
+}
+
+
+.supervisor-profile-modal
+.profile-permissions
+.chip:hover {
+
+  background: #f8fafc;
+
+  border-color: #cbd5e1;
+
+  transform: translateY(-1px);
+}
+
+
+.supervisor-profile-modal
+.profile-permissions
+.chip::before {
+
+  content: '✓';
+
+  width: 19px;
+  height: 19px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #dcfce7;
+
+  color: #16a34a;
+
+  font-size: 10px;
+
+  font-weight: 900;
+}
+
+
+/* =========================================================
+   أسفل النافذة
+========================================================= */
+
+.supervisor-profile-modal .modal-actions {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: flex-start;
+
+  padding: 17px 28px;
+
+  background: #f8fafc;
+
+  border-top: 1px solid #e5e7eb;
+}
+
+
+.supervisor-profile-modal .btn-cancel-modal {
+  min-width: 115px;
+
+  height: 42px;
+
+  padding: 0 20px;
+
+  border: 1px solid #cbd5e1;
+
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  color: #334155;
+
+  font-size: 13px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    all 0.2s ease;
+}
+
+
+.supervisor-profile-modal .btn-cancel-modal:hover {
+  background: #0f172a;
+
+  border-color: #0f172a;
+
+  color: #ffffff;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 6px 15px rgba(15, 23, 42, 0.16);
+}
+
+
+/* =========================================================
+   Animation
+========================================================= */
+
+@keyframes supervisorProfileIn {
+
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(15px)
+      scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+
+}
+
+
+/* =========================================================
+   Responsive
+========================================================= */
+
+@media (max-width: 650px) {
+
+  .supervisor-profile-modal {
+    width: calc(100vw - 18px);
+
+    max-height: calc(100vh - 18px);
+
+    border-radius: 21px;
+  }
+
+
+  .supervisor-profile-modal .modal-header {
+    padding: 19px 18px;
+  }
+
+
+  .supervisor-profile-modal .profile-content {
+    padding: 22px 17px;
+
+    max-height: calc(100vh - 155px);
+  }
+
+
+  .supervisor-profile-modal .profile-info-grid {
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+
+    margin-top: 22px;
+  }
+
+
+  .supervisor-profile-modal .profile-stats {
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+  }
+
+
+  .supervisor-profile-modal .profile-stat {
+    min-height: 115px;
+  }
+
+
+  .supervisor-profile-modal .profile-content > h3 {
+    font-size: 21px;
+  }
+
+
+  .supervisor-profile-modal .modal-actions {
+    padding: 14px 17px;
+  }
+
+
+  .supervisor-profile-modal .btn-cancel-modal {
+    width: 100%;
+  }
+
+}
