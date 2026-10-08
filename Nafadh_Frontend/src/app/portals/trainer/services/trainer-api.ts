@@ -979,12 +979,21 @@ createConversation(dto: {
     dto
   );
 }
+createBatchGroup(dto: {
+  batchId: number;
+  trainerUserId: number;
+}): Observable<any> {
 
+  return this.http.post<any>(
+    `${this.base}/Conversation/batch-group`,
+    dto
+  );
+}
 sendMessage(
   conversationId: number,
   dto: {
     senderId: number;
-    receiverUserId: number;
+   receiverUserId: number | null;
     content: string;
   }
 ): Observable<any> {

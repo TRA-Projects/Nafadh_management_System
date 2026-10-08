@@ -55,6 +55,13 @@ namespace Nafadh_Backend.Repositories
                                 m.ReceiverId ==
                                 participantUserId.Value
                         )
+                       ||
+_context.NFD_ConversationGroupMembers.Any(
+    gm =>
+        gm.ConversationId == t.TicketId
+        &&
+        gm.UserId == participantUserId.Value
+)
                 );
             }
 
@@ -151,8 +158,9 @@ namespace Nafadh_Backend.Repositories
         //create batch group
         //=============================
         public async Task<int> CreateBatchGroupAsync(
-    CreateBatchGroupDTO dto
-)
+            CreateBatchGroupDTO dto
+        )
+
         {
             var batch = await _context.NFD_Batches
                 .FirstOrDefaultAsync(
@@ -164,6 +172,23 @@ namespace Nafadh_Backend.Repositories
                 throw new Exception(
                     "Batch not found."
                 );
+            }
+
+            // check if batch group already exists
+            var existingGroupId =
+     await _context.NFD_ConversationGroupMembers
+         .Where(
+             gm =>
+                 gm.BatchId == dto.BatchId
+         )
+         .Select(
+             gm => gm.ConversationId
+         )
+         .FirstOrDefaultAsync();
+
+            if (existingGroupId != 0)
+            {
+                return existingGroupId;
             }
 
             var conversation =
@@ -255,7 +280,36 @@ namespace Nafadh_Backend.Repositories
 
             return created.TicketId;
         }
+        public async Task<int?> GetBatchIdAsync(
+      int conversationId
+  )
+        {
+            return await _context.NFD_ConversationGroupMembers
+                .Where(
+                    gm => gm.ConversationId == conversationId
+                )
+                .Select(
+                    gm => (int?)gm.BatchId
+                )
+                .FirstOrDefaultAsync();
+        }
 
+        public async Task<string?> GetBatchNameAsync(
+            int conversationId
+        )
+        {
+            return await _context.NFD_ConversationGroupMembers
+                .Where(
+                    gm => gm.ConversationId == conversationId
+                )
+                .Join(
+                    _context.NFD_Batches,
+                    gm => gm.BatchId,
+                    b => b.BatchId,
+                    (gm, b) => b.BatchName
+                )
+                .FirstOrDefaultAsync();
+        }
         // ============================================================
         // Update status
         // ============================================================

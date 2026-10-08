@@ -9,7 +9,6 @@
     <div class="banner-content">
 
       <div class="banner-icon">
-
         <svg
           viewBox="0 0 24 24"
           aria-hidden="true"
@@ -22,11 +21,13 @@
             d="M10 21h4"
           />
         </svg>
-
       </div>
 
-
       <div class="banner-text">
+
+        <div class="banner-eyebrow">
+          مركز التنبيهات
+        </div>
 
         <h1>
           الإشعارات
@@ -39,7 +40,6 @@
       </div>
 
     </div>
-
 
     <button
       type="button"
@@ -69,28 +69,34 @@
 
   <section class="notifications-card">
 
-
     <!-- ==============================
          CARD HEADER
-    =============================== -->
+    ============================== -->
 
     <div class="notifications-toolbar">
 
       <div class="toolbar-title">
 
-        <h2>
-          الإشعارات
-        </h2>
+        <div class="toolbar-heading">
 
-        <span class="toolbar-count">
-          {{ totalCount() }}
+          <h2>
+            الإشعارات
+          </h2>
+
+          <span class="toolbar-count">
+            {{ totalCount() }}
+          </span>
+
+        </div>
+
+        <span class="toolbar-subtitle">
+          آخر التحديثات والتنبيهات
         </span>
 
       </div>
 
 
       <div class="toolbar-actions">
-
 
         <!-- Filters -->
 
@@ -144,6 +150,10 @@
             (click)="toggleSelectAll()"
           >
 
+            <span class="select-all-icon">
+              ✓
+            </span>
+
             @if (allSelected()) {
               إلغاء التحديد
             } @else {
@@ -161,7 +171,7 @@
 
     <!-- ==============================
          SELECTED ACTIONS
-    =============================== -->
+    ============================== -->
 
     @if (selectedCount()) {
 
@@ -173,9 +183,15 @@
             {{ selectedCount() }}
           </span>
 
-          <span>
-            تم تحديد {{ selectedCount() }} إشعار
-          </span>
+          <div class="selected-copy">
+            <strong>
+              تم تحديد {{ selectedCount() }} إشعار
+            </strong>
+
+            <span>
+              اختر الإجراء المطلوب
+            </span>
+          </div>
 
         </div>
 
@@ -187,7 +203,8 @@
             class="mark-selected"
             (click)="markSelectedRead()"
           >
-            ✓ تعليم كمقروء
+            <span>✓</span>
+            تعليم كمقروء
           </button>
 
 
@@ -217,7 +234,7 @@
 
     <!-- ==============================
          LOADING
-    =============================== -->
+    ============================== -->
 
     @if (loading()) {
 
@@ -225,8 +242,12 @@
 
         <div class="loader"></div>
 
+        <strong>
+          جاري تحميل الإشعارات
+        </strong>
+
         <span>
-          جاري تحميل الإشعارات...
+          لحظات ونجهز لك آخر التنبيهات...
         </span>
 
       </div>
@@ -236,7 +257,7 @@
 
     <!-- ==============================
          ERROR
-    =============================== -->
+    ============================== -->
 
     @else if (error()) {
 
@@ -268,59 +289,53 @@
 
     <!-- ==============================
          EMPTY
-    =============================== -->
+    ============================== -->
 
-    @else if (!filteredNotifications().length) {
+    @if (!filteredNotifications().length) {
 
-      <div class="empty-state">
+  <div class="empty-state">
 
-        <div class="empty-icon">
+    <div class="empty-icon">
 
-          <svg
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
-            />
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+        />
 
-            <path
-              d="M10 21h4"
-            />
-          </svg>
+        <path
+          d="M10 21h4"
+        />
+      </svg>
 
-        </div>
+    </div>
 
+    <h3>
+      @if (activeFilter() === 'unread') {
+        لا توجد إشعارات غير مقروءة
+      } @else {
+        لا توجد إشعارات
+      }
+    </h3>
 
-        <h3>
+    <p>
+      @if (activeFilter() === 'unread') {
+        لا توجد إشعارات جديدة حاليًا.
+      } @else {
+        ستظهر هنا الإشعارات الجديدة عند وصولها.
+      }
+    </p>
 
-          @if (activeFilter() === 'unread') {
-            لا توجد إشعارات غير مقروءة
-          } @else {
-            لا توجد إشعارات
-          }
+  </div>
 
-        </h3>
-
-
-        <p>
-
-          @if (activeFilter() === 'unread') {
-            أنت محدث بالكامل، لا توجد إشعارات جديدة.
-          } @else {
-            ستظهر هنا الإشعارات الجديدة الخاصة بك.
-          }
-
-        </p>
-
-      </div>
-
-    }
+}
 
 
     <!-- ==============================
          NOTIFICATION LIST
-    =============================== -->
+    ============================== -->
 
     @else {
 
@@ -336,7 +351,6 @@
             [class.unread]="!item.isRead"
             [class.selected]="isSelected(item.notificationId)"
           >
-
 
             <!-- Checkbox -->
 
@@ -383,23 +397,24 @@
 
             <!-- Content -->
 
-            <div
-              class="notification-content"
-              (click)="markRead(item)"
-            >
+         <div
+  class="notification-content"
+  role="button"
+  tabindex="0"
+  title="فتح الإشعار"
+  (click)="openNotification(item)"
+  (keydown.enter)="openNotification(item)"
+>
 
               <div class="notification-title">
 
                 @if (!item.isRead) {
-
                   <span class="unread-dot"></span>
-
                 }
 
                 <h3>
                   {{ item.title }}
                 </h3>
-
 
                 @if (!item.isRead) {
 
@@ -534,6 +549,10 @@
 
 
         <div class="modal-text">
+
+          <span class="modal-eyebrow">
+            تأكيد الإجراء
+          </span>
 
           <h3>
             {{ deleteTitle() }}

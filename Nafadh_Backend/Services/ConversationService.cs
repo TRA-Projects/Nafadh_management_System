@@ -35,15 +35,30 @@ namespace Nafadh_Backend.Services
                 );
 
 
-            return conversations
-                .Select(
-                    t =>
-                        MapToListItem(
-                            t,
-                            participantUserId
-                        )
-                )
-                .ToList();
+            var result = new List<ConversationListItemDTO>();
+
+            foreach (var conversation in conversations)
+            {
+                var batchId =
+                    await _repository.GetBatchIdAsync(
+                        conversation.TicketId
+                    );
+                var batchName =
+    await _repository.GetBatchNameAsync(
+        conversation.TicketId
+    );
+
+                result.Add(
+                    MapToListItem(
+                        conversation,
+                        participantUserId,
+                        batchId,
+        batchName
+                    )
+                );
+            }
+
+            return result;
         }
 
 
@@ -66,9 +81,14 @@ namespace Nafadh_Backend.Services
                 return null;
             }
 
+            var batchId =
+                await _repository.GetBatchIdAsync(
+                    conversationId
+                );
 
             return MapToDetail(
-                conversation
+                conversation,
+                batchId
             );
         }
 
@@ -135,8 +155,10 @@ namespace Nafadh_Backend.Services
                     created.TicketId
                 );
 
-
-            return MapToDetail(full!);
+            return MapToDetail(
+                full!,
+                null
+            );
         }
 
 
@@ -301,9 +323,11 @@ namespace Nafadh_Backend.Services
         // ============================================================
 
         private static ConversationListItemDTO MapToListItem(
-            NFD_SupportTicket t,
-            int? participantUserId
-        )
+     NFD_SupportTicket t,
+     int? participantUserId,
+     int? batchId,
+     string? batchName
+ )
         {
             var lastMessage =
                 t.Messages?
@@ -347,6 +371,9 @@ namespace Nafadh_Backend.Services
             {
                 ConversationId =
                     t.TicketId,
+                BatchId =
+    batchId,
+                BatchName = batchName,
 
                 Type =
                     t.Type,
@@ -382,20 +409,25 @@ namespace Nafadh_Backend.Services
         // ============================================================
 
         private static ConversationDetailDTO MapToDetail(
-            NFD_SupportTicket t
+           NFD_SupportTicket t, int? batchId
+
         )
         {
             var listItem =
-                MapToListItem(
-                    t,
-                    null
-                );
-
+     MapToListItem(
+         t,
+         null,
+         batchId,
+         null
+     );
 
             return new ConversationDetailDTO
             {
                 ConversationId =
                     listItem.ConversationId,
+
+                BatchId =
+                    listItem.BatchId,
 
                 Type =
                     listItem.Type,

@@ -467,6 +467,59 @@ max-height: 600px;
   background: #f7fbfd;
 }
 
+.batch-group-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid #edf2f5;
+  background: #ffffff;
+  text-align: right;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.batch-group-item:hover {
+  background: #f7fbfd;
+}
+
+.batch-group-avatar {
+  width: 43px;
+  height: 43px;
+  flex: 0 0 43px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e8f7fc;
+  color: #087fc1;
+  font-size: 16px;
+}
+
+.batch-group-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.batch-group-info strong {
+  display: block;
+  overflow: hidden;
+  color: #203b52;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.batch-group-info small {
+  display: block;
+  margin-top: 4px;
+  color: #9aa8b4;
+  font-size: 9px;
+}
 
 .trainee-item.active {
   background: #eefaff;

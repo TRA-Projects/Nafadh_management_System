@@ -83,6 +83,9 @@ export class TrainerMessages implements OnInit {
     this.api.getMyBatches(trainerId).subscribe({
       next: (batches) => {
 
+      
+
+
         const requests = (batches ?? []).map(
           (batch) =>
             this.api.getBatchTrainees(
@@ -102,7 +105,20 @@ export class TrainerMessages implements OnInit {
               'Trainer trainees:',
               results
             );
-
+           console.log(
+  'TRAINER BATCHES:',
+  [
+    ...new Set(
+      results.flatMap(
+        (batch: any[]) =>
+          batch.map(
+            (trainee: any) =>
+              trainee.batchId
+          )
+      )
+    )
+  ]
+);
             const allTrainees: TrainerTrainee[] =
               results.flatMap(
                 (batchTrainees, index) => {
@@ -176,6 +192,21 @@ export class TrainerMessages implements OnInit {
 
     this.api.getConversations(userId).subscribe({
       next: (conversations) => {
+ this.batchGroups =
+  (conversations ?? [])
+    .filter(
+      (conversation: any) =>
+        conversation.category === 'BatchGroup'
+    )
+    .filter(
+      (group: any, index: number, groups: any[]) =>
+        index ===
+        groups.findIndex(
+          (item: any) =>
+            item.batchId === group.batchId
+        )
+    );
+console.log('BATCH GROUPS:', this.batchGroups);
 
         // نحتاج فقط محادثات المدرب مع المتدرب
         const trainerConversations =
@@ -386,6 +417,41 @@ private formatMessageTime(
     )
   ];
 }
+get filteredBatchGroups(): any[] {
+  const search =
+    this.searchText
+      .trim()
+      .toLowerCase();
+
+  return this.batchGroups.filter(
+    (group: any) => {
+
+      const groupName =
+  String(
+    group.subject ?? ''
+  )
+    .toLowerCase()
+    .replace(/[أإآ]/g, 'ا');
+
+     const matchesSearch =
+  !search ||
+  groupName.includes(search) ||
+  String(group.batchName ?? '')
+  .toLowerCase()
+  .replace(/[أإآ]/g, 'ا')
+  .includes(search);
+
+      const matchesBatch =
+        !this.selectedBatchName ||
+        group.batchName === this.selectedBatchName;
+
+      return (
+        matchesSearch &&
+        matchesBatch
+      );
+    }
+  );
+}
   todayDate =
     new Intl.DateTimeFormat(
       'ar-OM',
@@ -439,6 +505,35 @@ const matchesUnread =
   // =====================================================
 
   trainees: TrainerTrainee[] = [];
+selectedBatchGroupId: number | null = null;
+  batchGroups: any[] = [];
+  isBatchGroupSelected = false;
+
+  createBatchGroup(batchId: number, trainerUserId: number): void {
+  this.api.createBatchGroup({
+    batchId,
+    trainerUserId
+  }).subscribe({
+    next: (response) => {
+      this.selectedBatchGroupId =
+        response?.conversationId ?? null;
+
+ this.loadTrainerConversations(
+  this.auth.userId!
+);
+      console.log(
+        'Batch group created:',
+        this.selectedBatchGroupId
+      );
+    },
+    error: (error) => {
+      console.error(
+        'Failed to create batch group:',
+        error
+      );
+    }
+  });
+}
 
   // =====================================================
   // SELECTED TRAINEE
@@ -478,6 +573,7 @@ const matchesUnread =
   selectTrainee(
     traineeId: number
   ): void {
+    this.isBatchGroupSelected = false;
 
     this.selectedTraineeId.set(
       traineeId
@@ -531,16 +627,123 @@ const matchesUnread =
     }
   }
 
+ selectBatchGroup(
+  conversationId: number
+): void {
+
+  this.isBatchGroupSelected = true;
+this.selectedBatchGroupId = conversationId;
+  if (!conversationId) {
+    return;
+  }
+
+  this.selectedTraineeId.set(null);
+  this.messages = [];
+
+  this.api.getConversation(
+   conversationId
+  ).subscribe({
+    next: (conversation) => {
+
+      const messages =
+        conversation?.messages ?? [];
+
+      this.messages = messages
+        .sort(
+          (a: any, b: any) =>
+            new Date(a.sentDate).getTime() -
+            new Date(b.sentDate).getTime()
+        )
+        .map((message: any) => ({
+          sender:
+            message.senderId === this.auth.userId
+              ? 'trainer'
+              : 'trainee',
+
+          text:
+            message.content ?? '',
+
+          time:
+            this.formatMessageTime(
+              message.sentDate
+            )
+        }));
+
+    },
+
+    error: (error) => {
+      console.error(
+        'Failed to load batch group:',
+        error
+      );
+    }
+  });
+}selectedBatchGroup(): any | undefined {
+  return this.batchGroups.find(
+    (group: any) =>
+      group.conversationId === this.selectedBatchGroupId
+  );
+}
   // =====================================================
   // SEND MESSAGE
   // =====================================================
-
- sendMessage(): void {
+sendMessage(): void {
 
   console.log('SEND CLICK');
 
   const text =
     this.messageText.trim();
+
+  if (
+    this.isBatchGroupSelected &&
+    this.selectedBatchGroupId
+  ) {
+
+    const userId =
+      this.auth.userId;
+
+    if (!userId) {
+      return;
+    }
+
+    this.api.sendMessage(
+      this.selectedBatchGroupId,
+      {
+        senderId: userId,
+        receiverUserId: null,
+        content: text
+      }
+    ).subscribe({
+
+      next: (savedMessage) => {
+
+        this.messages.push({
+          sender: 'trainer',
+          text:
+            savedMessage?.content ?? text,
+          time:
+            this.formatMessageTime(
+              savedMessage?.sentDate
+            ) ||
+            this.formatMessageTime(
+              new Date()
+            )
+        });
+
+        this.messageText = '';
+      },
+
+      error: (error) => {
+        console.error(
+          'Failed to send group message:',
+          error
+        );
+      }
+
+    });
+
+    return;
+  }
 
   if (!text) {
     return;

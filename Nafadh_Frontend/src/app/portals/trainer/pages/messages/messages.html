@@ -84,13 +84,13 @@
     </option>
   }
 </select>
-        <input
-          type="text"
-          placeholder="ابحث عن متدرب..."
-          [value]="searchText"
-          (input)="searchText = $any($event.target).value"
-        />
 
+<input
+  type="text"
+  placeholder="ابحث عن متدرب..."
+  [value]="searchText"
+  (input)="searchText = $any($event.target).value"
+/>
       </div>
 
 
@@ -120,6 +120,36 @@
 
 
       <!-- TRAINEES -->
+      <!-- BATCH GROUP -->
+
+
+@for (group of filteredBatchGroups; track group.conversationId) {
+
+  <button
+    type="button"
+    class="batch-group-item"
+    (click)="selectBatchGroup(group.conversationId)"
+  >
+
+    <div class="batch-group-avatar">
+      👥
+    </div>
+
+    <div class="batch-group-info">
+
+      <strong>
+        {{ group.subject }}
+      </strong>
+
+      <small>
+        محادثة جماعية
+      </small>
+
+    </div>
+
+  </button>
+
+}
 
       <div class="trainees-list">
 
@@ -210,8 +240,27 @@
       <!-- ================================================= -->
 
       <header class="chat-header">
+       @if (isBatchGroupSelected) {
 
-        @if (selectedTrainee()) {
+  <div class="chat-user">
+
+    <div class="chat-avatar">
+      👥
+    </div>
+
+    <div>
+
+     <h2>{{ selectedBatchGroup()?.subject }}</h2>
+      <p>
+        محادثة جماعية
+      </p>
+
+    </div>
+
+  </div>
+
+} @else if (selectedTrainee()) {
+       
 
           <div class="chat-user">
 
@@ -319,7 +368,7 @@
 
       <div class="chat-messages">
 
-        @if (selectedTrainee()) {
+        @if (isBatchGroupSelected || selectedTrainee()) {
 
           @for (
             message of messages;
