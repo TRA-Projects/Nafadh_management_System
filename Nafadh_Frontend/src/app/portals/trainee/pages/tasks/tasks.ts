@@ -52,16 +52,7 @@ export class TraineeTasks implements OnInit {
   submitting = signal(false);
 
   errorMessage = signal('');
-
-  // =========================================================
-  // NEW: Success Message
-  // =========================================================
-
   successMessage = signal('');
-
-  // =========================================================
-  // On Init
-  // =========================================================
 
   ngOnInit(): void {
     this.loadTraineeData();
@@ -93,9 +84,7 @@ export class TraineeTasks implements OnInit {
 
         if (!trainee) {
           this.loadingProfile.set(false);
-          this.errorMessage.set(
-            'لم يتم العثور على بيانات المتدرب.'
-          );
+          this.errorMessage.set('لم يتم العثور على بيانات المتدرب.');
           return;
         }
 
@@ -104,9 +93,7 @@ export class TraineeTasks implements OnInit {
 
         if (!trainee.traineeId) {
           this.loadingProfile.set(false);
-          this.errorMessage.set(
-            'لم يتم العثور على معرف المتدرب.'
-          );
+          this.errorMessage.set('لم يتم العثور على معرف المتدرب.');
           return;
         }
 
@@ -114,13 +101,9 @@ export class TraineeTasks implements OnInit {
       },
 
       error: (error) => {
-
         console.error('Error loading trainee:', error);
-
         this.loadingProfile.set(false);
-        this.errorMessage.set(
-          'تعذر تحميل بيانات المتدرب.'
-        );
+        this.errorMessage.set('تعذر تحميل بيانات المتدرب.');
       }
     });
   }
@@ -136,12 +119,8 @@ export class TraineeTasks implements OnInit {
       next: (enrollments: EnrollmentDto[]) => {
 
         if (!enrollments || enrollments.length === 0) {
-
           this.loadingProfile.set(false);
-          this.errorMessage.set(
-            'لا توجد تسجيلات لهذا المتدرب.'
-          );
-
+          this.errorMessage.set('لا توجد تسجيلات لهذا المتدرب.');
           return;
         }
 
@@ -152,45 +131,23 @@ export class TraineeTasks implements OnInit {
           ) ?? enrollments[0];
 
         this.enrollmentData.set(activeEnrollment);
-
-        this.enrollmentId.set(
-          activeEnrollment.enrollmentId
-        );
-
-        this.batchId.set(
-          activeEnrollment.batchId
-        );
+        this.enrollmentId.set(activeEnrollment.enrollmentId);
+        this.batchId.set(activeEnrollment.batchId);
 
         if (!activeEnrollment.batchId) {
-
           this.loadingProfile.set(false);
-          this.errorMessage.set(
-            'لم يتم العثور على الدفعة الخاصة بالتسجيل.'
-          );
-
+          this.errorMessage.set('لم يتم العثور على الدفعة الخاصة بالتسجيل.');
           return;
         }
 
-        this.loadBatchData(
-          activeEnrollment.batchId
-        );
-
-        this.loadSubmissions(
-          traineeId
-        );
+        this.loadBatchData(activeEnrollment.batchId);
+        this.loadSubmissions(traineeId);
       },
 
       error: (error) => {
-
-        console.error(
-          'Error loading enrollments:',
-          error
-        );
-
+        console.error('Error loading enrollments:', error);
         this.loadingProfile.set(false);
-        this.errorMessage.set(
-          'تعذر تحميل تسجيلات المتدرب.'
-        );
+        this.errorMessage.set('تعذر تحميل تسجيلات المتدرب.');
       }
     });
   }
@@ -206,12 +163,8 @@ export class TraineeTasks implements OnInit {
       next: (batch: BatchDto) => {
 
         if (!batch) {
-
           this.loadingProfile.set(false);
-          this.errorMessage.set(
-            'لم يتم العثور على بيانات الدفعة.'
-          );
-
+          this.errorMessage.set('لم يتم العثور على بيانات الدفعة.');
           return;
         }
 
@@ -221,13 +174,8 @@ export class TraineeTasks implements OnInit {
         this.loadTasks(batchId);
 
         if (batch.programId) {
-
-          this.loadProjects(
-            batch.programId
-          );
-
+          this.loadProjects(batch.programId);
         } else {
-
           this.projects.set([]);
         }
 
@@ -235,16 +183,9 @@ export class TraineeTasks implements OnInit {
       },
 
       error: (error) => {
-
-        console.error(
-          'Error loading batch:',
-          error
-        );
-
+        console.error('Error loading batch:', error);
         this.loadingProfile.set(false);
-        this.errorMessage.set(
-          'تعذر تحميل بيانات الدفعة.'
-        );
+        this.errorMessage.set('تعذر تحميل بيانات الدفعة.');
       }
     });
   }
@@ -260,24 +201,15 @@ export class TraineeTasks implements OnInit {
     this.api.getTasks(batchId).subscribe({
 
       next: (data: TaskDto[]) => {
-
         this.tasks.set(data ?? []);
         this.loadingTasks.set(false);
       },
 
       error: (error) => {
-
-        console.error(
-          'Error loading tasks:',
-          error
-        );
-
+        console.error('Error loading tasks:', error);
         this.tasks.set([]);
         this.loadingTasks.set(false);
-
-        this.errorMessage.set(
-          'تعذر تحميل المهام.'
-        );
+        this.errorMessage.set('تعذر تحميل المهام.');
       }
     });
   }
@@ -293,18 +225,12 @@ export class TraineeTasks implements OnInit {
     this.api.getSubmissions(traineeId).subscribe({
 
       next: (data: SubmissionDto[]) => {
-
         this.submissions.set(data ?? []);
         this.loadingSubmissions.set(false);
       },
 
       error: (error) => {
-
-        console.error(
-          'Error loading submissions:',
-          error
-        );
-
+        console.error('Error loading submissions:', error);
         this.submissions.set([]);
         this.loadingSubmissions.set(false);
       }
@@ -322,18 +248,12 @@ export class TraineeTasks implements OnInit {
     this.api.getProjectsByProgram(programId).subscribe({
 
       next: (data: ProjectDto[]) => {
-
         this.projects.set(data ?? []);
         this.loadingProjects.set(false);
       },
 
       error: (error) => {
-
-        console.error(
-          'Error loading projects:',
-          error
-        );
-
+        console.error('Error loading projects:', error);
         this.projects.set([]);
         this.loadingProjects.set(false);
       }
@@ -354,21 +274,16 @@ export class TraineeTasks implements OnInit {
     this.errorMessage.set('');
     this.successMessage.set('');
 
-    const submission =
-      this.submissionFor(task.taskId);
+    const submission = this.submissionFor(task.taskId);
 
     if (submission) {
-
-      this.submissionLink =
-        this.getSubmissionUrl(submission);
+      this.submissionLink = this.getSubmissionUrl(submission);
     }
   }
 
   backToTasks(): void {
-
     this.selected.set(null);
     this.submissionLink = '';
-
     this.errorMessage.set('');
     this.successMessage.set('');
   }
@@ -377,22 +292,12 @@ export class TraineeTasks implements OnInit {
   // Submission
   // =========================================================
 
-  submissionFor(
-    taskId: number
-  ): SubmissionDto | undefined {
-
-    return this.submissions().find(
-      submission =>
-        submission.taskId === taskId
-    );
+  submissionFor(taskId: number): SubmissionDto | undefined {
+    return this.submissions().find(submission => submission.taskId === taskId);
   }
 
-  private getSubmissionUrl(
-    submission: SubmissionDto
-  ): string {
-
+  private getSubmissionUrl(submission: SubmissionDto): string {
     const data = submission as any;
-
     return (
       data.fileUrl ??
       data.fileURL ??
@@ -406,24 +311,15 @@ export class TraineeTasks implements OnInit {
   // URL VALIDATION
   // =========================================================
 
-  isValidSubmissionUrl(
-    value: string
-  ): boolean {
+  isValidSubmissionUrl(value: string): boolean {
 
-    if (!value) {
-      return false;
-    }
+    if (!value) return false;
 
     const url = value.trim();
-
-    if (!url) {
-      return false;
-    }
+    if (!url) return false;
 
     try {
-
-      const parsedUrl =
-        new URL(url);
+      const parsedUrl = new URL(url);
 
       if (
         parsedUrl.protocol !== 'http:' &&
@@ -432,12 +328,9 @@ export class TraineeTasks implements OnInit {
         return false;
       }
 
-      if (!parsedUrl.hostname) {
-        return false;
-      }
+      if (!parsedUrl.hostname) return false;
 
-      const hostname =
-        parsedUrl.hostname.toLowerCase();
+      const hostname = parsedUrl.hostname.toLowerCase();
 
       if (
         hostname === 'localhost' ||
@@ -450,29 +343,20 @@ export class TraineeTasks implements OnInit {
       return true;
 
     } catch {
-
       return false;
     }
   }
 
-  // =========================================================
-  // URL Error Message
-  // =========================================================
-
   getSubmissionUrlError(): string {
 
-    const value =
-      this.submissionLink.trim();
+    const value = this.submissionLink.trim();
 
     if (!value) {
       return 'يرجى إدخال رابط التسليم.';
     }
 
     if (!this.isValidSubmissionUrl(value)) {
-
-      return (
-        'الرابط غير صحيح. يرجى إدخال رابط يبدأ بـ https:// أو http:// مثل: https://github.com/...'
-      );
+      return 'الرابط غير صحيح. يرجى إدخال رابط يبدأ بـ https:// أو http:// مثل: https://github.com/...';
     }
 
     return '';
@@ -482,13 +366,9 @@ export class TraineeTasks implements OnInit {
   // Deadline
   // =========================================================
 
-  isDeadlinePassed(
-    task: TaskDto
-  ): boolean {
+  isDeadlinePassed(task: TaskDto): boolean {
 
-    if (!task.dueDate) {
-      return false;
-    }
+    if (!task.dueDate) return false;
 
     return (
       new Date().getTime() >
@@ -497,22 +377,51 @@ export class TraineeTasks implements OnInit {
   }
 
   // =========================================================
-  // Can Submit
+  // NEW: Get Days Late
   // =========================================================
 
-  canSubmit(
-    task: TaskDto
-  ): boolean {
+  getDaysLate(task: TaskDto): number {
 
-    const submission =
-      this.submissionFor(task.taskId);
+    if (!task.dueDate) return 0;
+
+    const due = new Date(task.dueDate).getTime();
+    const now = new Date().getTime();
+
+    if (now <= due) return 0;
+
+    return Math.ceil((now - due) / (1000 * 60 * 60 * 24));
+  }
+
+  // =========================================================
+  // NEW: Get Days Late Text
+  // =========================================================
+
+  getDaysLateText(task: TaskDto): string {
+
+    const days = this.getDaysLate(task);
+
+    if (days <= 0) return '';
+
+    if (days === 1) return 'متأخر بيوم واحد';
+    if (days === 2) return 'متأخر بيومين';
+    if (days <= 10) return `متأخر بـ ${days} أيام`;
+
+    return `متأخر بـ ${days} يومًا`;
+  }
+
+  // =========================================================
+  // Can Submit (يسمح بالتسليم المتأخر)
+  // =========================================================
+
+  canSubmit(task: TaskDto): boolean {
+
+    const submission = this.submissionFor(task.taskId);
 
     if (submission) {
 
-      const status =
-        String(submission.status ?? '')
-          .toLowerCase()
-          .replace(/\s/g, '');
+      const status = String(submission.status ?? '')
+        .toLowerCase()
+        .replace(/\s/g, '');
 
       if (
         status === 'graded' ||
@@ -523,22 +432,19 @@ export class TraineeTasks implements OnInit {
       }
     }
 
-    return !this.isDeadlinePassed(task);
+    return true;
   }
 
   // =========================================================
-  // Display Task Status
+  // Display Status
   // =========================================================
 
-  displayStatus(
-    status: any
-  ): string {
+  displayStatus(status: any): string {
 
-    const value =
-      String(status ?? '')
-        .toLowerCase()
-        .replace(/\s/g, '')
-        .trim();
+    const value = String(status ?? '')
+      .toLowerCase()
+      .replace(/\s/g, '')
+      .trim();
 
     switch (value) {
 
@@ -576,19 +482,15 @@ export class TraineeTasks implements OnInit {
   // Effective Task Status
   // =========================================================
 
-  displayTaskStatus(
-    task: TaskDto
-  ): string {
+  displayTaskStatus(task: TaskDto): string {
 
-    const submission =
-      this.submissionFor(task.taskId);
+    const submission = this.submissionFor(task.taskId);
 
     if (submission) {
 
-      const status =
-        String(submission.status ?? '')
-          .toLowerCase()
-          .replace(/\s/g, '');
+      const status = String(submission.status ?? '')
+        .toLowerCase()
+        .replace(/\s/g, '');
 
       if (
         status === 'graded' ||
@@ -624,18 +526,15 @@ export class TraineeTasks implements OnInit {
   }
 
   // =========================================================
-  // Task Status Background
+  // Status Colors
   // =========================================================
 
-  statusBackground(
-    status: any
-  ): string {
+  statusBackground(status: any): string {
 
-    const value =
-      String(status ?? '')
-        .toLowerCase()
-        .replace(/\s/g, '')
-        .trim();
+    const value = String(status ?? '')
+      .toLowerCase()
+      .replace(/\s/g, '')
+      .trim();
 
     switch (value) {
 
@@ -662,19 +561,12 @@ export class TraineeTasks implements OnInit {
     }
   }
 
-  // =========================================================
-  // Task Status Foreground
-  // =========================================================
+  statusForeground(status: any): string {
 
-  statusForeground(
-    status: any
-  ): string {
-
-    const value =
-      String(status ?? '')
-        .toLowerCase()
-        .replace(/\s/g, '')
-        .trim();
+    const value = String(status ?? '')
+      .toLowerCase()
+      .replace(/\s/g, '')
+      .trim();
 
     switch (value) {
 
@@ -701,171 +593,93 @@ export class TraineeTasks implements OnInit {
 
   submit(): void {
 
-    const task =
-      this.selected();
+    const task = this.selected();
+    const traineeId = this.traineeId();
 
-    const traineeId =
-      this.traineeId();
-
-    if (!task || !traineeId) {
-      return;
-    }
-
-    // ---------------------------------------------------------
-    // Check deadline
-    // ---------------------------------------------------------
+    if (!task || !traineeId) return;
 
     if (!this.canSubmit(task)) {
-
-      this.errorMessage.set(
-        'انتهى موعد تسليم هذه المهمة ولا يمكن إعادة التسليم.'
-      );
-
+      this.errorMessage.set('لا يمكن إعادة التسليم بعد التقييم.');
       return;
     }
 
-    // ---------------------------------------------------------
-    // Get link
-    // ---------------------------------------------------------
-
-    const link =
-      this.submissionLink.trim();
-
-    // ---------------------------------------------------------
-    // Empty link
-    // ---------------------------------------------------------
+    const link = this.submissionLink.trim();
 
     if (!link) {
-
-      this.errorMessage.set(
-        'يرجى إدخال رابط التسليم.'
-      );
-
+      this.errorMessage.set('يرجى إدخال رابط التسليم.');
       return;
     }
 
-    // ---------------------------------------------------------
-    // Validate URL
-    // ---------------------------------------------------------
-
     if (!this.isValidSubmissionUrl(link)) {
-
       this.errorMessage.set(
         'الرابط غير صحيح. يرجى إدخال رابط صالح يبدأ بـ https:// أو http://'
       );
-
       return;
     }
 
-    // ---------------------------------------------------------
-    // Start submitting
-    // ---------------------------------------------------------
+    const isLate = this.isDeadlinePassed(task);
+    const daysLate = this.getDaysLate(task);
 
     this.submitting.set(true);
-
     this.errorMessage.set('');
     this.successMessage.set('');
 
-    console.log(
-      '📤 Sending valid submission URL:',
-      link
-    );
-
-    // ---------------------------------------------------------
-    // API
-    // ---------------------------------------------------------
+    console.log('📤 Sending valid submission URL:', link, { isLate, daysLate });
 
     this.api.submitAssignment({
-
-      taskId:
-        task.taskId,
-
-      traineeId:
-        traineeId,
-
-      fileUrl:
-        link
-
-    }).subscribe({
-
-      // =======================================================
-      // SUCCESS
-      // =======================================================
+      taskId: task.taskId,
+      traineeId: traineeId,
+      fileUrl: link,
+      isLate: isLate,
+      daysLate: daysLate
+    } as any).subscribe({
 
       next: (response) => {
 
-        console.log(
-          '✅ Assignment submitted successfully:',
-          response
-        );
+        console.log('✅ Assignment submitted successfully:', response);
 
         this.submitting.set(false);
 
-        // رسالة النجاح
-        this.successMessage.set(
-          'تم إرسال المهمة بنجاح ✓'
-        );
+        if (isLate && daysLate > 0) {
+          this.successMessage.set(
+            `تم إرسال المهمة بنجاح ✓ — تم احتساب تأخير بـ ${daysLate} يوم`
+          );
+        } else {
+          this.successMessage.set('تم إرسال المهمة بنجاح ✓');
+        }
 
-        // تنظيف الرابط
         this.submissionLink = '';
-
-        // إغلاق تفاصيل المهمة
         this.selected.set(null);
 
-        // تحديث التسليمات من الـ API
-        this.loadSubmissions(
-          traineeId
-        );
+        this.loadSubmissions(traineeId);
 
-        // إخفاء رسالة النجاح بعد 4 ثوانٍ
         setTimeout(() => {
-
           this.successMessage.set('');
-
         }, 4000);
       },
 
-      // =======================================================
-      // ERROR
-      // =======================================================
-
       error: (error) => {
 
-        console.error(
-          '❌ Error submitting assignment:',
-          error
-        );
+        console.error('❌ Error submitting assignment:', error);
 
         this.submitting.set(false);
-
         this.successMessage.set('');
-
-        // محاولة عرض رسالة Backend
 
         if (
           error?.error &&
           typeof error.error === 'object' &&
           error.error.message
         ) {
-
-          this.errorMessage.set(
-            error.error.message
-          );
+          this.errorMessage.set(error.error.message);
 
         } else if (
           error?.error &&
           typeof error.error === 'string'
         ) {
-
-          this.errorMessage.set(
-            error.error
-          );
+          this.errorMessage.set(error.error);
 
         } else {
-
-          this.errorMessage.set(
-            'حدث خطأ أثناء تسليم المهمة.'
-          );
+          this.errorMessage.set('حدث خطأ أثناء تسليم المهمة.');
         }
       }
     });
@@ -875,77 +689,45 @@ export class TraineeTasks implements OnInit {
   // Select Project
   // =========================================================
 
-  selectProject(
-    project: ProjectDto
-  ): void {
-
+  selectProject(project: ProjectDto): void {
     this.selectedProject.set(project);
     this.selected.set(null);
-
     this.errorMessage.set('');
     this.successMessage.set('');
   }
 
   backToProjects(): void {
-
     this.selectedProject.set(null);
-
     this.errorMessage.set('');
     this.successMessage.set('');
   }
 
   // =========================================================
-  // Project Start Date
+  // Project Dates
   // =========================================================
 
-  projectStartDate(
-    project: ProjectDto
-  ): any {
-
+  projectStartDate(project: ProjectDto): any {
     const p = project as any;
-
-    return (
-      p.startDate ??
-      p.startedAt ??
-      p.projectStartDate ??
-      null
-    );
+    return p.startDate ?? p.startedAt ?? p.projectStartDate ?? null;
   }
 
-  // =========================================================
-  // Project End Date
-  // =========================================================
-
-  projectEndDate(
-    project: ProjectDto
-  ): any {
-
+  projectEndDate(project: ProjectDto): any {
     const p = project as any;
-
-    return (
-      p.endDate ??
-      p.deadline ??
-      p.dueDate ??
-      p.projectEndDate ??
-      null
-    );
+    return p.endDate ?? p.deadline ?? p.dueDate ?? p.projectEndDate ?? null;
   }
 
   // =========================================================
   // Project Status
   // =========================================================
 
-  displayProjectStatus(
-    project: ProjectDto
-  ): string {
+  displayProjectStatus(project: ProjectDto): string {
 
     const p = project as any;
 
-    const rawStatus =
-      String(p.status ?? '')
-        .toLowerCase()
-        .trim()
-        .replace(/[\s_-]/g, '');
+    const rawStatus = String(p.status ?? '')
+      .toLowerCase()
+      .trim()
+      .replace(/[\s_-]/g, '');
 
     switch (rawStatus) {
 
@@ -966,73 +748,40 @@ export class TraineeTasks implements OnInit {
         return 'مستمر';
 
       default:
-        return String(
-          p.status ?? 'غير محدد'
-        );
+        return String(p.status ?? 'غير محدد');
     }
   }
 
-  // =========================================================
-  // Project Status Background
-  // =========================================================
-
-  projectStatusBackground(
-    project: ProjectDto
-  ): string {
-
-    switch (
-      this.displayProjectStatus(project)
-    ) {
-
+  projectStatusBackground(project: ProjectDto): string {
+    switch (this.displayProjectStatus(project)) {
       case 'مكتمل':
         return 'var(--status-completed-bg)';
-
       case 'جديد':
         return 'var(--status-new-bg)';
-
       default:
         return 'var(--status-active-bg)';
     }
   }
 
-  // =========================================================
-  // Project Status Foreground
-  // =========================================================
-
-  projectStatusForeground(
-    project: ProjectDto
-  ): string {
-
-    switch (
-      this.displayProjectStatus(project)
-    ) {
-
+  projectStatusForeground(project: ProjectDto): string {
+    switch (this.displayProjectStatus(project)) {
       case 'مكتمل':
         return 'var(--status-completed-fg)';
-
       case 'جديد':
         return 'var(--status-new-fg)';
-
       default:
         return 'var(--status-active-fg)';
     }
   }
 
-  // =========================================================
-  // Project Stages
-  // =========================================================
-
-  projectStagesCompleted(
-    project: ProjectDto
-  ): boolean {
+  projectStagesCompleted(project: ProjectDto): boolean {
 
     const p = project as any;
 
-    const status =
-      String(p.status ?? '')
-        .toLowerCase()
-        .trim()
-        .replace(/[\s_-]/g, '');
+    const status = String(p.status ?? '')
+      .toLowerCase()
+      .trim()
+      .replace(/[\s_-]/g, '');
 
     return (
       status === 'completed' ||
@@ -1047,25 +796,12 @@ export class TraineeTasks implements OnInit {
 
   refreshData(): void {
 
-    const batchId =
-      this.batchId();
+    const batchId = this.batchId();
+    const traineeId = this.traineeId();
+    const programId = this.programId();
 
-    const traineeId =
-      this.traineeId();
-
-    const programId =
-      this.programId();
-
-    if (batchId) {
-      this.loadTasks(batchId);
-    }
-
-    if (traineeId) {
-      this.loadSubmissions(traineeId);
-    }
-
-    if (programId) {
-      this.loadProjects(programId);
-    }
+    if (batchId) this.loadTasks(batchId);
+    if (traineeId) this.loadSubmissions(traineeId);
+    if (programId) this.loadProjects(programId);
   }
 }

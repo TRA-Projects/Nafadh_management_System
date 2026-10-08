@@ -29,6 +29,13 @@
     <option value="الكل">كل الحالات</option>
     @for (s of statuses(); track s) { <option [value]="s">{{ statusLabel(s) }}</option> }
   </select>
+
+  <!-- [جديد] حقل فلتر التاريخ -->
+  <div style="display: flex; align-items: center; gap: 6px;">
+    <span style="font-size: 13px; color: var(--muted); white-space: nowrap;">التاريخ:</span>
+    <input type="date" class="sel" [ngModel]="dateFilter()" (ngModelChange)="dateFilter.set($event)" style="padding: 6px 10px; cursor: pointer;" />
+  </div>
+
   <button class="btn btn-outline btn-sm" (click)="clearFilters()">مسح التصفية</button>
   <span class="f-count">{{ filtered().length }} متدرب</span>
 </div>
@@ -51,7 +58,12 @@
           <tr>
             <td>
               <div class="cell-user">
-                <div class="t-avatar" [style.background]="avatarColor(e.traineeName)">{{ initials(e.traineeName) }}</div>
+                <!-- عرض صورة المتدرب إذا كانت متوفرة، أو الرمز الافتراضي الحرفي -->
+                @if (e.profileImageUrl) {
+                  <img [src]="e.profileImageUrl" alt="{{ e.traineeName }}" style="object-fit: cover; width: 36px; height: 36px; border-radius: 50%; display: block;" />
+                } @else {
+                  <div class="t-avatar" [style.background]="avatarColor(e.traineeName)">{{ initials(e.traineeName) }}</div>
+                }
                 <div>
                   <b>{{ e.traineeName }}</b>
                   <span>#{{ padId(e.enrollmentId) }}</span>
@@ -68,7 +80,6 @@
               <span style="font-size:11px;color:var(--muted)">{{ e.trackName || '—' }}</span>
             </td>
             <td>
-              <!-- تم التحديث هنا لاستخدام الدوال التي تقبل الكائن e بالكامل -->
               <span class="chip" [ngClass]="statusChipClassFor(e)">
                 <span class="dot"></span>{{ statusLabelFor(e) }}
               </span>

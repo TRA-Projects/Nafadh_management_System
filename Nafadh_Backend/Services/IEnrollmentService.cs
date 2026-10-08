@@ -2,7 +2,7 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
-
+using Microsoft.AspNetCore.Http;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using static Nafadh_Backend.DTOs.EnrollmentDTO;
@@ -21,5 +21,7 @@ namespace Nafadh_Backend.Services
         Task<IEnumerable<EnrollmentDTO>> GetByTraineeIdAsync(int traineeId);
         Task<IEnumerable<EnrollmentDTO>> GetByCompanyIdAsync(int companyId);
         Task<ProgressSummaryDto?> GetProgressSummaryAsync(int enrollmentId);
+
+        Task<bool> UploadTraineeProfileImageAsync(int traineeId, IFormFile file);
     }
 }

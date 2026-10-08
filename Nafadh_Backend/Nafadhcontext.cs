@@ -53,7 +53,9 @@ namespace Nafadh_Backend
         public DbSet<NFD_Notification> NFD_Notifications { get; set; }
         public DbSet<NFD_Announcement> NFD_Announcements { get; set; }
         public DbSet<NFD_Message> NFD_Messages { get; set; }
+        public DbSet<NFD_ConversationGroupMember> NFD_ConversationGroupMembers { get; set; }
         public DbSet<NFD_Certificate> NFD_Certificates { get; set; }
+        public DbSet<NFD_TrainerCertificate> NFD_TrainerCertificates { get; set; }
         public DbSet<NFD_Report> NFD_Reports { get; set; }
         public DbSet<NFD_SystemSetting> NFD_SystemSettings { get; set; }
         public DbSet<NFD_TraineePayment> NFD_TraineePayments { get; set; }
@@ -67,6 +69,9 @@ namespace Nafadh_Backend
         public DbSet<NFD_FeedbackScore> NFD_FeedbackScores { get; set; }
         public DbSet<NFD_Badge> NFD_Badges { get; set; }
         public DbSet<NFD_TraineeBadge> NFD_TraineeBadges { get; set; }
+        public DbSet<NFD_LessonFeedback> NFD_LessonFeedbacks { get; set; }
+        public DbSet<NFD_TraineeSkill> NFD_TraineeSkills { get; set; }
+
 
         // Remediation Request Entity
         public DbSet<RemediationRequest> RemediationRequests { get; set; }
@@ -197,6 +202,36 @@ namespace Nafadh_Backend
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            // ---- NFD_TrainerCertificate ----
+            modelBuilder.Entity<NFD_TrainerCertificate>(entity =>
+            {
+                entity.ToTable("NFD_TrainerCertificates");
+
+                entity.HasKey(e => e.TrainerCertificateId);
+
+                entity.Property(e => e.CertificateName)
+                    .HasMaxLength(200)
+                    .IsRequired();
+
+                entity.Property(e => e.Issuer)
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.FileUrl)
+                    .HasMaxLength(500)
+                    .IsRequired();
+
+                entity.Property(e => e.OriginalFileName)
+                    .HasMaxLength(255);
+
+                entity.Property(e => e.ContentType)
+                    .HasMaxLength(100);
+
+                entity.HasOne(e => e.Trainer)
+                    .WithMany(t => t.Certificates)
+                    .HasForeignKey(e => e.TrainerId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
             // ---- NFD_Trainee ----
             modelBuilder.Entity<NFD_Trainee>(entity =>
             {
@@ -302,6 +337,55 @@ namespace Nafadh_Backend
                     .HasForeignKey(e => e.ModuleId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+            // ---- NFD_LessonFeedback ----
+
+            modelBuilder.Entity<NFD_LessonFeedback>(entity =>
+            {
+                entity.ToTable("NFD_LessonFeedbacks");
+
+                entity.HasKey(e => e.LessonFeedbackId);
+
+                entity.Property(e => e.Note)
+                    .HasMaxLength(2000);
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired();
+
+                entity.Property(e => e.UpdatedAt)
+                    .IsRequired(false);
+
+                // One trainee can have only one feedback record per lesson
+                entity.HasIndex(e => new
+                {
+                    e.TraineeId,
+                    e.LessonId
+                })
+                .IsUnique();
+
+                // Lesson relationship
+                entity.HasOne(e => e.Lesson)
+                    .WithMany(l => l.LessonFeedbacks)
+                    .HasForeignKey(e => e.LessonId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Trainee relationship
+                entity.HasOne(e => e.Trainee)
+                    .WithMany(t => t.LessonFeedbacks)
+                    .HasForeignKey(e => e.TraineeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+            //-------------------------
+
+
+
+
+
+
+
+
 
             // ---- NFD_TrainingMaterial ----
             modelBuilder.Entity<NFD_TrainingMaterial>(entity =>
@@ -718,6 +802,14 @@ namespace Nafadh_Backend
                     .HasForeignKey(e => e.BadgeId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+
+            // ---- NFD_TraineeSkill ----
+            modelBuilder.Entity<NFD_TraineeSkill>()
+            .HasOne(ts => ts.Trainee)
+            .WithMany(t => t.TraineeSkills)
+            .HasForeignKey(ts => ts.TraineeId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         }
     }

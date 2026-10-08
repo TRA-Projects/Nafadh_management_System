@@ -109,6 +109,26 @@ export class TrainerAttendance implements OnInit {
   monthlyRows = signal<any[]>([]);
   historyLoading = signal(false);
 
+  filteredWeeklyRows = computed(() => {
+  const q = this.normalize(this.query());
+
+  if (!q) return this.weeklyRows();
+
+  return this.weeklyRows().filter(row =>
+    this.normalize(String(row.traineeName ?? '')).includes(q)
+  );
+});
+
+filteredMonthlyRows = computed(() => {
+  const q = this.normalize(this.query());
+
+  if (!q) return this.monthlyRows();
+
+  return this.monthlyRows().filter(row =>
+    this.normalize(String(row.traineeName ?? '')).includes(q)
+  );
+});
+
   statuses = ATTENDANCE_STATUSES;
   filters: { key: FilterKey; label: string }[] = [
     { key: 'all', label: 'الكل' },

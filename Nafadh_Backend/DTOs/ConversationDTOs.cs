@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Nafadh_Backend.Enums;
 using System.ComponentModel.DataAnnotations;
 
@@ -13,15 +14,27 @@ namespace Nafadh_Backend.DTOs
     public class ConversationListItemDTO
     {
         public int ConversationId { get; set; }
+
+        public int? BatchId { get; set; }
+        public string? BatchName { get; set; }
         public NFD_ConversationType Type { get; set; }
+
         public string? Category { get; set; }
+
         public string Subject { get; set; } = string.Empty;
+
         public NFD_SupportTicketStatus Status { get; set; }
+
         public string? LastMessagePreview { get; set; }
+
         public DateTime? LastMessageDate { get; set; }
+
         public int UnreadCount { get; set; }
+
         public string? StartedByName { get; set; }
+  
     }
+
 
     // ============================================================
     // Output DTO — a single threaded message within a conversation
@@ -29,22 +42,45 @@ namespace Nafadh_Backend.DTOs
     public class ConversationMessageDTO
     {
         public int MessageId { get; set; }
+
         public string Content { get; set; } = string.Empty;
+
         public DateTime SentDate { get; set; }
+
         public NFD_MessageStatus Status { get; set; }
+
         public int SenderId { get; set; }
+
         public string? SenderName { get; set; }
+
         public int? ReceiverId { get; set; }
+
         public int? TicketId { get; set; }
+
+
+        // ========================================================
+        // Attachment
+        // ========================================================
+
+        public string? AttachmentUrl { get; set; }
+
+        public string? AttachmentFileName { get; set; }
+
+        public string? AttachmentContentType { get; set; }
+
+        public long? AttachmentFileSize { get; set; }
     }
+
 
     // ============================================================
     // Output DTO — GET /api/Conversation/{id}
     // ============================================================
     public class ConversationDetailDTO : ConversationListItemDTO
     {
-        public List<ConversationMessageDTO> Messages { get; set; } = new List<ConversationMessageDTO>();
+        public List<ConversationMessageDTO> Messages { get; set; }
+            = new List<ConversationMessageDTO>();
     }
+
 
     // ============================================================
     // Input DTO — POST /api/Conversation
@@ -66,7 +102,16 @@ namespace Nafadh_Backend.DTOs
 
         [Required]
         public string FirstMessage { get; set; } = string.Empty;
+
+
+        // ========================================================
+        // Optional attachment
+        // ========================================================
+
+        public IFormFile? Attachment { get; set; }
+        public int? ReceiverUserId { get; set; }
     }
+
 
     // ============================================================
     // Input DTO — POST /api/Conversation/{id}/messages
@@ -75,11 +120,13 @@ namespace Nafadh_Backend.DTOs
     {
         [Required]
         public int SenderId { get; set; }
+        public int? ReceiverUserId { get; set; }
 
         [Required]
         [MaxLength(1000)]
         public string Content { get; set; } = string.Empty;
     }
+
 
     // ============================================================
     // Input DTO — PUT /api/Conversation/{id}/status

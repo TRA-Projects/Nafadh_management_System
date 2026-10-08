@@ -8,12 +8,16 @@ namespace Nafadh_Backend.Services
     public class ConversationService : IConversationService
     {
         private readonly IConversationRepository _repository;
+        private readonly IConfiguration _configuration;
+
 
         public ConversationService(
-            IConversationRepository repository
+            IConversationRepository repository,
+            IConfiguration configuration
         )
         {
             _repository = repository;
+            _configuration = configuration;
         }
 
 
@@ -35,15 +39,30 @@ namespace Nafadh_Backend.Services
                 );
 
 
-            return conversations
-                .Select(
-                    t =>
-                        MapToListItem(
-                            t,
-                            participantUserId
-                        )
-                )
-                .ToList();
+            var result = new List<ConversationListItemDTO>();
+
+            foreach (var conversation in conversations)
+            {
+                var batchId =
+                    await _repository.GetBatchIdAsync(
+                        conversation.TicketId
+                    );
+                var batchName =
+    await _repository.GetBatchNameAsync(
+        conversation.TicketId
+    );
+
+                result.Add(
+                    MapToListItem(
+                        conversation,
+                        participantUserId,
+                        batchId,
+        batchName
+                    )
+                );
+            }
+
+            return result;
         }
 
 
@@ -66,9 +85,14 @@ namespace Nafadh_Backend.Services
                 return null;
             }
 
+            var batchId =
+                await _repository.GetBatchIdAsync(
+                    conversationId
+                );
 
             return MapToDetail(
-                conversation
+                conversation,
+                batchId
             );
         }
 
@@ -116,8 +140,164 @@ namespace Nafadh_Backend.Services
                         NFD_MessageStatus.Sent,
 
                     SenderId =
-                        dto.StartedByUserId
+                        dto.StartedByUserId,
+
+                    ReceiverId = dto.ReceiverUserId
+
                 };
+
+
+            // ========================================================
+            // Save optional attachment
+            // ========================================================
+
+            if (
+                dto.Attachment != null &&
+                dto.Attachment.Length > 0
+            )
+            {
+                // ----------------------------------------------------
+                // Validate maximum file size: 10 MB
+                // ----------------------------------------------------
+
+                const long maxFileSize =
+                    10 * 1024 * 1024;
+
+
+                if (dto.Attachment.Length > maxFileSize)
+                {
+                    throw new InvalidOperationException(
+                        "Attachment size cannot exceed 10 MB."
+                    );
+                }
+
+
+                // ----------------------------------------------------
+                // Validate extension
+                // ----------------------------------------------------
+
+                var extension =
+                    Path.GetExtension(
+                        dto.Attachment.FileName
+                    )
+                    .ToLowerInvariant();
+
+
+                var allowedExtensions =
+                    new[]
+                    {
+                        ".pdf",
+                        ".png",
+                        ".jpg",
+                        ".jpeg"
+                    };
+
+
+                if (!allowedExtensions.Contains(extension))
+                {
+                    throw new InvalidOperationException(
+                        "Only PDF, PNG, JPG and JPEG files are allowed."
+                    );
+                }
+
+
+                // ----------------------------------------------------
+                // Get storage folder
+                // ----------------------------------------------------
+
+                var uploadsFolder =
+                    _configuration[
+                        "Storage:ConversationAttachmentsPath"
+                    ];
+
+
+                if (string.IsNullOrWhiteSpace(uploadsFolder))
+                {
+                    throw new InvalidOperationException(
+                        "Conversation attachments storage path is not configured."
+                    );
+                }
+
+
+                Directory.CreateDirectory(
+                    uploadsFolder
+                );
+
+
+                // ----------------------------------------------------
+                // Generate unique file name
+                // ----------------------------------------------------
+
+                var generatedFileName =
+                    $"{Guid.NewGuid()}{extension}";
+
+
+                var fullPath =
+                    Path.Combine(
+                        uploadsFolder,
+                        generatedFileName
+                    );
+
+
+                // ----------------------------------------------------
+                // Save physical file
+                // ----------------------------------------------------
+
+                await using (
+                    var stream =
+                        new FileStream(
+                            fullPath,
+                            FileMode.Create
+                        )
+                )
+                {
+                    await dto.Attachment.CopyToAsync(
+                        stream
+                    );
+                }
+
+
+                // ----------------------------------------------------
+                // Create public/request URL
+                // ----------------------------------------------------
+
+                var requestPath =
+                    _configuration[
+                        "Storage:ConversationAttachmentsRequestPath"
+                    ];
+
+
+                if (string.IsNullOrWhiteSpace(requestPath))
+                {
+                    requestPath =
+                        "/uploads/conversation-attachments";
+                }
+
+
+                requestPath =
+                    requestPath.TrimEnd('/');
+
+
+                var attachmentUrl =
+                    $"{requestPath}/{generatedFileName}";
+
+
+                // ----------------------------------------------------
+                // Save attachment information in NFD_Message
+                // ----------------------------------------------------
+
+                firstMessage.AttachmentUrl =
+                    attachmentUrl;
+
+                firstMessage.AttachmentFileName =
+                    dto.Attachment.FileName;
+
+                firstMessage.AttachmentContentType =
+                    dto.Attachment.ContentType;
+
+                firstMessage.AttachmentFileSize =
+                    dto.Attachment.Length;
+            }
 
 
             var created =
@@ -132,20 +312,71 @@ namespace Nafadh_Backend.Services
                     created.TicketId
                 );
 
-
-            return MapToDetail(full!);
+            return MapToDetail(
+                full!,
+                null
+            );
         }
 
 
         // ============================================================
         // Add message
         // ============================================================
-
         public async Task<ConversationMessageDTO> AddMessageAsync(
             int conversationId,
             AddConversationMessageDTO dto
         )
         {
+            int? receiverId =
+    dto.ReceiverUserId;
+
+            if (!receiverId.HasValue)
+            {
+                var conversation =
+                    await _repository.GetByIdAsync(
+                        conversationId
+                    );
+
+                if (conversation == null)
+                {
+                    throw new Exception(
+                        "Conversation not found."
+                    );
+                }
+
+                if (
+                    conversation.Type ==
+                        NFD_ConversationType.Other
+                    &&
+                    conversation.Category ==
+                        "TrainerTrainee"
+                )
+                {
+                    var lastMessage =
+                        conversation.Messages?
+                            .OrderByDescending(
+                                m => m.SentDate
+                            )
+                            .FirstOrDefault();
+
+                    if (
+                        lastMessage != null
+                        &&
+                        lastMessage.SenderId !=
+                            dto.SenderId
+                    )
+                    {
+                        receiverId =
+                            lastMessage.SenderId;
+                    }
+                    else
+                    {
+                        receiverId =
+                            conversation.UserId;
+                    }
+                }
+            }
+
             var message =
                 new NFD_Message
                 {
@@ -161,6 +392,9 @@ namespace Nafadh_Backend.Services
                     SenderId =
                         dto.SenderId,
 
+                    ReceiverId =
+                        receiverId,
+
                     TicketId =
                         conversationId
                 };
@@ -172,24 +406,7 @@ namespace Nafadh_Backend.Services
                 );
 
 
-            // Reload the conversation so the Sender navigation
-            // property is available.
-            var conversation =
-                await _repository.GetByIdAsync(
-                    conversationId
-                );
-
-
-            var savedMessage =
-                conversation?
-                    .Messages
-                    .FirstOrDefault(
-                        m =>
-                            m.MessageId ==
-                            created.MessageId
-                    );
-
-
+            // لا نعيد تحميل المحادثة مرة ثانية
             return new ConversationMessageDTO
             {
                 MessageId =
@@ -208,19 +425,36 @@ namespace Nafadh_Backend.Services
                     created.SenderId,
 
                 SenderName =
-                    savedMessage?
-                        .Sender?
-                        .FullName,
+                    null,
 
                 ReceiverId =
                     created.ReceiverId,
 
                 TicketId =
-                    created.TicketId
+                    created.TicketId,
+
+                AttachmentUrl =
+                    created.AttachmentUrl,
+
+                AttachmentFileName =
+                    created.AttachmentFileName,
+
+                AttachmentContentType =
+                    created.AttachmentContentType,
+
+                AttachmentFileSize =
+                    created.AttachmentFileSize
             };
         }
-
-
+        //----------------------------------
+        //group 
+        //---------------------------------------
+        public async Task<int> CreateBatchGroupAsync(
+    CreateBatchGroupDTO dto
+)
+        {
+            return await _repository.CreateBatchGroupAsync(dto);
+        }
         // ============================================================
         // Update conversation status
         // ============================================================
@@ -258,9 +492,11 @@ namespace Nafadh_Backend.Services
         // ============================================================
 
         private static ConversationListItemDTO MapToListItem(
-            NFD_SupportTicket t,
-            int? participantUserId
-        )
+     NFD_SupportTicket t,
+     int? participantUserId,
+     int? batchId,
+     string? batchName
+ )
         {
             var lastMessage =
                 t.Messages?
@@ -304,6 +540,9 @@ namespace Nafadh_Backend.Services
             {
                 ConversationId =
                     t.TicketId,
+                BatchId =
+    batchId,
+                BatchName = batchName,
 
                 Type =
                     t.Type,
@@ -339,20 +578,25 @@ namespace Nafadh_Backend.Services
         // ============================================================
 
         private static ConversationDetailDTO MapToDetail(
-            NFD_SupportTicket t
+           NFD_SupportTicket t, int? batchId
+
         )
         {
             var listItem =
-                MapToListItem(
-                    t,
-                    null
-                );
-
+     MapToListItem(
+         t,
+         null,
+         batchId,
+         null
+     );
 
             return new ConversationDetailDTO
             {
                 ConversationId =
                     listItem.ConversationId,
+
+                BatchId =
+                    listItem.BatchId,
 
                 Type =
                     listItem.Type,
@@ -411,7 +655,19 @@ namespace Nafadh_Backend.Services
                                         m.ReceiverId,
 
                                     TicketId =
-                                        m.TicketId
+                                        m.TicketId,
+
+                                    AttachmentUrl =
+                                        m.AttachmentUrl,
+
+                                    AttachmentFileName =
+                                        m.AttachmentFileName,
+
+                                    AttachmentContentType =
+                                        m.AttachmentContentType,
+
+                                    AttachmentFileSize =
+                                        m.AttachmentFileSize
                                 }
                         )
 

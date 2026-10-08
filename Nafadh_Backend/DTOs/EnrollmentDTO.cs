@@ -1,5 +1,4 @@
 ﻿using Nafadh_Backend.Enums;
-
 namespace Nafadh_Backend.DTOs
 {
     // Returned to the client
@@ -18,6 +17,9 @@ namespace Nafadh_Backend.DTOs
 
         public int TraineeId { get; set; }
         public string TraineeName { get; set; } = string.Empty;
+
+        // تمت إضافة حقل صورة الملف الشخصي للمتدرب
+        public string? ProfileImageUrl { get; set; }
 
         public int CompanyId { get; set; }
         public string CompanyName { get; set; } = string.Empty;
