@@ -271,7 +271,7 @@
 
                                     وقت الوصول
 
-                                    <input type="time" [value]="timeValue(row.record.checkInTime)"
+                                    <input type="time" [value]="timeValue(row.record?.checkInTime)"
                                         [disabled]="isConfirmed()"
                                         (change)="onTimeChange(row, 'checkInTime', $any($event.target).value)" />
 
@@ -283,7 +283,7 @@
 
                                     وقت الانصراف
 
-                                    <input type="time" [value]="timeValue(row.record.checkOutTime)"
+                                    <input type="time" [value]="timeValue(row.record?.checkOutTime)"
                                         [disabled]="isConfirmed()"
                                         (change)="onTimeChange(row, 'checkOutTime', $any($event.target).value)" />
 
@@ -321,7 +321,7 @@
                             </button> } @else {
 
                             <button type="button" class="note-add"
-                                [disabled]="!row.record || row.record.status === 'Present' || isConfirmed()"
+                                [disabled]="!row.record || row.record?.status === 'Present' || isConfirmed()"
                                 [title]="row.record ? '' : 'سجّل الحالة أولًا'" (click)="startNote(row)">+ إضافة
 
                                 سبب</button>
@@ -348,7 +348,7 @@
                             } @else {
 
                             <label class="proof-btn"
-                                [class.disabled]="!row.record || row.record.status === 'Present' || isConfirmed() || isSaving(row.trainer.trainerId)"
+                                [class.disabled]="!row.record || row.record?.status === 'Present' || isConfirmed() || isSaving(row.trainer.trainerId)"
                                 [title]="row.record ? '' : 'سجّل الحالة أولًا'">
 
                                 إثبات
