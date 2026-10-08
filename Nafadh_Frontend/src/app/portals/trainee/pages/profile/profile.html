@@ -1,4 +1,4 @@
-```html
+
 <h2 class="nfd-page-title">
   الملف الشخصي
 </h2>
@@ -1793,7 +1793,7 @@
           font-size: 11px;
         "
       >
-        PDF, DOCX — الحجم الأقصى 5 ميغا
+        PDF, DOCX — الحجم الأقصى 10 ميغا
       </small>
 
 
@@ -1841,7 +1841,7 @@
     @if ($any(t).resumeUrl) {
 
       <a
-        [href]="$any(t).resumeUrl"
+        [href]="getCvDownloadUrl($any(t).resumeUrl)"
         target="_blank"
         download
         title="تحميل السيرة الذاتية"
@@ -1876,9 +1876,6 @@
   </div>
 
 </div>
-
-}
-
 
 <!-- =========================================================
      PROFILE IMAGE VIEWER
@@ -2598,4 +2595,4 @@
     }
   }
 </style>
-```
+}
