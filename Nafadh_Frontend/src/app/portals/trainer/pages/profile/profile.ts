@@ -631,7 +631,7 @@ uploadCertificate(): void {
     return;
   }
 
-  if (!this.certificateName.trim()) {
+  if (!this.certificateForm.certificateName.trim()) {
     this.showError('اكتبي اسم الشهادة أولاً.');
     return;
   }
@@ -645,17 +645,18 @@ uploadCertificate(): void {
 
   this.api.uploadTrainerCertificate(
     currentTrainer.trainerId,
-    this.certificateName.trim(),
-    this.certificateIssuer.trim(),
-    this.certificateIssueDate,
-    this.certificateExpiryDate,
+    this.certificateForm.certificateName.trim(),
+    this.certificateForm.issuingOrganization.trim(),
+    this.certificateForm.issueDate,
+    this.certificateForm.expiryDate,
     this.selectedCertificateFile
   ).subscribe({
     next: (certificate) => {
       this.trainerCertificates.update(items => [certificate, ...items]);
       this.resetCertificateForm();
+      this.closeCertificateForm();
       this.isUploadingCertificate.set(false);
-      
+      this.showSuccess();
     },
     error: (error) => {
       console.error('تعذر رفع الشهادة:', error);
