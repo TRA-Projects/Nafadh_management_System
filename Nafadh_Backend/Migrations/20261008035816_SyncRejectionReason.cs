@@ -11,82 +11,48 @@ namespace Nafadh_Backend.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Add RejectionReason only if it does not already exist
+            // 1. إضافة عمود RejectionReason فقط إذا لم يكن موجوداً
             migrationBuilder.Sql("""
-        IF COL_LENGTH('NFD_Companies', 'RejectionReason') IS NULL
-        BEGIN
-            ALTER TABLE [NFD_Companies]
-            ADD [RejectionReason] nvarchar(max) NULL;
-        END
-        """);
+                IF COL_LENGTH('NFD_Companies', 'RejectionReason') IS NULL
+                BEGIN
+                    ALTER TABLE [NFD_Companies]
+                    ADD [RejectionReason] nvarchar(max) NULL;
+                END
+                """);
 
-            migrationBuilder.CreateTable(
-                name: "NFD_RemediationRequests",
-                columns: table => new
-                {
-                    RequestId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+            // 2. إنشاء جدول NFD_RemediationRequests فقط إذا لم يكن موجوداً
+            migrationBuilder.Sql("""
+                IF OBJECT_ID(N'[NFD_RemediationRequests]', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE [NFD_RemediationRequests] (
+                        [RequestId] int NOT NULL IDENTITY,
+                        [WarningId] int NOT NULL,
+                        [CompanyId] int NOT NULL,
+                        [RequestedAction] nvarchar(500) NOT NULL,
+                        [SubmissionDate] datetime2 NOT NULL,
+                        [Status] int NOT NULL,
+                        [ReviewNotes] nvarchar(1000) NULL,
+                        [ReviewedByUserId] int NULL,
+                        [ReviewedDate] datetime2 NULL,
+                        CONSTRAINT [PK_NFD_RemediationRequests] PRIMARY KEY ([RequestId]),
+                        CONSTRAINT [FK_NFD_RemediationRequests_NFD_Companies_CompanyId] FOREIGN KEY ([CompanyId]) REFERENCES [NFD_Companies] ([CompanyId]) ON DELETE NO ACTION,
+                        CONSTRAINT [FK_NFD_RemediationRequests_NFD_Warnings_WarningId] FOREIGN KEY ([WarningId]) REFERENCES [NFD_Warnings] ([WarningId]) ON DELETE NO ACTION
+                    );
+                END
+                """);
 
-                    WarningId = table.Column<int>(type: "int", nullable: false),
+            // 3. إنشاء الفهارس (Indexes) فقط إذا لم تكن موجودة
+            migrationBuilder.Sql("""
+                IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = N'IX_NFD_RemediationRequests_CompanyId' AND object_id = OBJECT_ID(N'[NFD_RemediationRequests]'))
+                BEGIN
+                    CREATE INDEX [IX_NFD_RemediationRequests_CompanyId] ON [NFD_RemediationRequests] ([CompanyId]);
+                END
 
-                    CompanyId = table.Column<int>(type: "int", nullable: false),
-
-                    RequestedAction = table.Column<string>(
-                        type: "nvarchar(500)",
-                        maxLength: 500,
-                        nullable: false),
-
-                    SubmissionDate = table.Column<DateTime>(
-                        type: "datetime2",
-                        nullable: false),
-
-                    Status = table.Column<int>(
-                        type: "int",
-                        nullable: false),
-
-                    ReviewNotes = table.Column<string>(
-                        type: "nvarchar(1000)",
-                        maxLength: 1000,
-                        nullable: true),
-
-                    ReviewedByUserId = table.Column<int>(
-                        type: "int",
-                        nullable: true),
-
-                    ReviewedDate = table.Column<DateTime>(
-                        type: "datetime2",
-                        nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey(
-                        "PK_NFD_RemediationRequests",
-                        x => x.RequestId);
-
-                    table.ForeignKey(
-                        name: "FK_NFD_RemediationRequests_NFD_Companies_CompanyId",
-                        column: x => x.CompanyId,
-                        principalTable: "NFD_Companies",
-                        principalColumn: "CompanyId",
-                        onDelete: ReferentialAction.Restrict);
-
-                    table.ForeignKey(
-                        name: "FK_NFD_RemediationRequests_NFD_Warnings_WarningId",
-                        column: x => x.WarningId,
-                        principalTable: "NFD_Warnings",
-                        principalColumn: "WarningId",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_NFD_RemediationRequests_CompanyId",
-                table: "NFD_RemediationRequests",
-                column: "CompanyId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_NFD_RemediationRequests_WarningId",
-                table: "NFD_RemediationRequests",
-                column: "WarningId");
+                IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = N'IX_NFD_RemediationRequests_WarningId' AND object_id = OBJECT_ID(N'[NFD_RemediationRequests]'))
+                BEGIN
+                    CREATE INDEX [IX_NFD_RemediationRequests_WarningId] ON [NFD_RemediationRequests] ([WarningId]);
+                END
+                """);
         }
 
         /// <inheritdoc />
@@ -96,12 +62,12 @@ namespace Nafadh_Backend.Migrations
                 name: "NFD_RemediationRequests");
 
             migrationBuilder.Sql("""
-        IF COL_LENGTH('NFD_Companies', 'RejectionReason') IS NOT NULL
-        BEGIN
-            ALTER TABLE [NFD_Companies]
-            DROP COLUMN [RejectionReason];
-        END
-        """);
+                IF COL_LENGTH('NFD_Companies', 'RejectionReason') IS NOT NULL
+                BEGIN
+                    ALTER TABLE [NFD_Companies]
+                    DROP COLUMN [RejectionReason];
+                END
+                """);
         }
     }
 }

@@ -285,7 +285,6 @@ getCompanies(search?: string, city?: string, workField?: string): Observable<Com
   }
   markNotificationRead(id: number) { return this.http.put(`${this.base}/Notification/${this.sanitizeId(id)}/read`, {}); }
   markAllNotificationsRead(userId: number) { return this.http.put(`${this.base}/Notification/user/${this.sanitizeId(userId)}/read-all`, {}); }
-  createAnnouncement(dto: unknown) { return this.http.post(`${this.base}/Announcement`, dto); }
 
   // ---- Audit ----
   getAuditLog(): Observable<AuditLogDto[]> { return this.http.get<AuditLogDto[]>(`${this.base}/AuditLog`); }
@@ -294,7 +293,20 @@ getCompanies(search?: string, city?: string, workField?: string): Observable<Com
   getAllBadges() { return this.http.get<unknown[]>(`${this.base}/Badge`); }
 
   // ---- Announcements ----
+// ==========================================
+  // الإضافات الخاصة بالإعلانات (Announcements)
+  // ==========================================
+
+  // 1. جلب كافة الإعلانات مباشرة من قاعدة البيانات
   getAnnouncements(): Observable<AnnouncementDto[]> {
     return this.http.get<AnnouncementDto[]>(`${this.base}/Announcement`);
+  }
+
+ createAnnouncement(dto: unknown) {
+  return this.http.post(`${this.base}/Announcement`, dto, { responseType: 'text' as 'json' });
+}
+  //  حذف إعلان من قاعدة البيانات
+  deleteAnnouncement(id: number): Observable<any> {
+    return this.http.delete(`${this.base}/Announcement/${this.sanitizeId(id)}`);
   }
 }
