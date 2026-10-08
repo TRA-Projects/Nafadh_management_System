@@ -12,6 +12,7 @@ export class CompanyLayout {
     { path: 'supervisors', label: 'إدارة المشرفين', icon: 'shield' },
     { path: 'trainees', label: 'المتدربون', icon: 'graduation' },
     { path: 'specialties', label: 'البرامج', icon: 'book' },
+    { path: 'daily-attendance', label: 'الحضور اليومي', icon: 'calendar-check' },
     { path: 'profile', label: 'ملف الشركة', icon: 'building' },
     { path: 'my-account', label: 'حسابي', icon: 'user' },
     { path: 'reports', label: 'التقارير', icon: 'chart' },

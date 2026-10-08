@@ -29,6 +29,13 @@ import {
   CompanyProgramDetailsDto,
 } from '../../../core/models/dtos';
 
+import {
+  CompanyTrainerDto,
+  TrainerAttendanceConfirmDto,
+  TrainerAttendanceDto,
+  TrainerAttendanceUpsertDto,
+} from '../../../core/models/trainer-attendance.models';
+
 @Injectable({ providedIn: 'root' })
 export class CompanyApi {
   private readonly http = inject(HttpClient);
@@ -463,5 +470,74 @@ export class CompanyApi {
     return this.http.get<FeedbackSummaryDto>(
       `${this.base}/Feedback/trainer/${trainerId}`
     );
+  }
+
+  // ============================================================
+  // Trainer Attendance
+  // ============================================================
+
+  getCompanyTrainers(
+    companyId: number
+  ): Observable<CompanyTrainerDto[]> {
+    return this.http.get<CompanyTrainerDto[]>(
+      `${this.base}/TrainerAttendance/company/${companyId}/trainers`
+    );
+  }
+
+  getTrainerAttendance(
+    companyId: number,
+    from: string,
+    to: string
+  ): Observable<TrainerAttendanceDto[]> {
+    return this.http.get<TrainerAttendanceDto[]>(
+      `${this.base}/TrainerAttendance/company/${companyId}`,
+      {
+        params: { from, to },
+      }
+    );
+  }
+
+  saveTrainerAttendance(
+    dto: TrainerAttendanceUpsertDto
+  ): Observable<TrainerAttendanceDto> {
+    return this.http.put<TrainerAttendanceDto>(
+      `${this.base}/TrainerAttendance`,
+      dto
+    );
+  }
+
+  uploadTrainerAttendanceProof(
+    attendanceId: number,
+    file: File
+  ): Observable<{ excuseProofUrl: string }> {
+    const form = new FormData();
+    form.append('file', file);
+
+    return this.http.post<{ excuseProofUrl: string }>(
+      `${this.base}/TrainerAttendance/${attendanceId}/proof`,
+      form
+    );
+  }
+
+  removeTrainerAttendanceProof(attendanceId: number) {
+    return this.http.delete(
+      `${this.base}/TrainerAttendance/${attendanceId}/proof`
+    );
+  }
+
+  confirmTrainerAttendanceDay(
+    dto: TrainerAttendanceConfirmDto
+  ): Observable<{ confirmedRecords: number }> {
+    return this.http.post<{ confirmedRecords: number }>(
+      `${this.base}/TrainerAttendance/confirm`,
+      dto
+    );
+  }
+
+  // Turns a stored relative path (e.g. /uploads/...) into a full URL on the API host.
+  resolveFileUrl(path?: string | null): string {
+    if (!path) return '';
+    if (/^(https?:|data:|blob:)/i.test(path)) return path;
+    return `${new URL(this.base, window.location.origin).origin}${path.startsWith('/') ? '' : '/'}${path}`;
   }
 }

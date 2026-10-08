@@ -15,6 +15,7 @@ export const COMPANY_ROUTES: Routes = [
       { path: 'specialties', loadComponent: () => import('./pages/specialties/specialties').then((m) => m.CompanySpecialties) },
       { path: 'specialties/:id', loadComponent: () => import('./pages/program-details/program-details').then((m) => m.CompanyProgramDetails) },
       { path: 'profile', loadComponent: () => import('./pages/profile/profile').then((m) => m.CompanyProfile) },
+      { path: 'daily-attendance', loadComponent: () => import('./pages/DailyAttendance/DailyAttendance').then((m) => m.CompanyDailyAttendance) },
       { path: 'my-account', loadComponent: () => import('./pages/my-account/my-account').then((m) => m.CompanyMyAccount) },
       { path: 'reports', loadComponent: () => import('./pages/reports/reports').then((m) => m.ReportsComponent) },
       { path: 'contact', loadComponent: () => import('./pages/contact/contact').then((m) => m.CompanyContact) },
