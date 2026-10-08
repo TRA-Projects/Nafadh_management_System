@@ -397,10 +397,14 @@
 
             <!-- Content -->
 
-            <div
-              class="notification-content"
-              (click)="markRead(item)"
-            >
+         <div
+  class="notification-content"
+  role="button"
+  tabindex="0"
+  title="فتح الإشعار"
+  (click)="openNotification(item)"
+  (keydown.enter)="openNotification(item)"
+>
 
               <div class="notification-title">
 
