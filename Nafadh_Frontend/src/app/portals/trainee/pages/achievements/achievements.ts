@@ -15,7 +15,6 @@ import {
   TraineeProfileDto,
   BatchDto,
   ProgramDto,
-  TraineeDashboardSummaryDto,
   EnrollmentDto,
   LessonDto,
 } from '../../../../core/models/dtos';
@@ -867,7 +866,6 @@ export interface TrainerOptionDto {
     `,
   ],
 })
-
 export class TraineeAchievements implements OnInit {
 
   private api = inject(TraineeApi);
@@ -880,7 +878,6 @@ export class TraineeAchievements implements OnInit {
   batchId = signal<number | null>(null);
 
   traineeProfile = signal<TraineeProfileDto | null>(null);
-
   program = signal<ProgramDto | null>(null);
   modules = signal<ModuleWithLessonsDto[]>([]);
   enrollment = signal<EnrollmentDto | null>(null);
@@ -900,7 +897,6 @@ export class TraineeAchievements implements OnInit {
   criteria = signal<FeedbackCriterionDto[]>([]);
 
   scores: Record<number, number> = {};
-
   criterionComments: Record<number, string> = {};
 
   isSubmitting = signal(false);
@@ -921,11 +917,8 @@ export class TraineeAchievements implements OnInit {
     signal<TrainerOptionDto[]>([]);
 
   showSuccessToast = signal(false);
-
   successMessage = signal('');
-
   loading = signal(false);
-
   errorMessage = signal('');
 
   stats = signal({
@@ -941,7 +934,6 @@ export class TraineeAchievements implements OnInit {
       this.stats().overallProgress || 0
     );
 
-  // ✅ الشهادة متاحة عند 50% أو أكثر
   canDownloadCertificate = computed(() => {
     return this.progressPercentage() >= 50;
   });
@@ -974,11 +966,9 @@ export class TraineeAchievements implements OnInit {
       if (profileAny.user?.name) {
         return profileAny.user.name;
       }
-
     }
 
     return 'اسم المتدرب';
-
   });
 
   programTitle = computed(() => {
@@ -1003,16 +993,24 @@ export class TraineeAchievements implements OnInit {
     }
 
     return 'التدريب';
-
   });
 
   displayModules = computed(() => {
 
     return this.modules().map((module) => ({
+
       moduleId: module.moduleId,
-      title: module.title || `وحدة ${module.moduleId}`,
-      status: this.getModuleStatus(module),
-      progress: module.progressPercentage || 0,
+
+      title:
+        module.title ||
+        `وحدة ${module.moduleId}`,
+
+      status:
+        this.getModuleStatus(module),
+
+      progress:
+        module.progressPercentage || 0,
+
     }));
 
   });
@@ -1040,7 +1038,6 @@ export class TraineeAchievements implements OnInit {
     }
 
     return 'NotStarted';
-
   }
 
 
@@ -1069,7 +1066,6 @@ export class TraineeAchievements implements OnInit {
     }
 
     return '#3b82f6';
-
   };
 
 
@@ -1120,26 +1116,34 @@ export class TraineeAchievements implements OnInit {
 
     if (localUserId) {
 
-      const id = Number(localUserId);
+      const id =
+        Number(localUserId);
 
-      if (id && !Number.isNaN(id)) {
+      if (
+        id &&
+        !Number.isNaN(id)
+      ) {
         return id;
       }
-
     }
+
 
     const sessionUserId =
       sessionStorage.getItem('userId');
 
     if (sessionUserId) {
 
-      const id = Number(sessionUserId);
+      const id =
+        Number(sessionUserId);
 
-      if (id && !Number.isNaN(id)) {
+      if (
+        id &&
+        !Number.isNaN(id)
+      ) {
         return id;
       }
-
     }
+
 
     const userData =
       localStorage.getItem('userData');
@@ -1152,9 +1156,15 @@ export class TraineeAchievements implements OnInit {
           JSON.parse(userData);
 
         const id =
-          Number(user.userId ?? user.id);
+          Number(
+            user.userId ??
+            user.id
+          );
 
-        if (id && !Number.isNaN(id)) {
+        if (
+          id &&
+          !Number.isNaN(id)
+        ) {
           return id;
         }
 
@@ -1169,13 +1179,13 @@ export class TraineeAchievements implements OnInit {
     }
 
     return null;
-
   }
 
 
   loadAllData() {
 
-    const userId = this.userId();
+    const userId =
+      this.userId();
 
     if (!userId) {
 
@@ -1184,100 +1194,112 @@ export class TraineeAchievements implements OnInit {
       );
 
       return;
-
     }
 
     this.loading.set(true);
-
     this.errorMessage.set('');
 
-    this.api.getTrainee(userId).subscribe({
 
-      next: (trainee: TraineeProfileDto) => {
+    this.api
+      .getTrainee(userId)
+      .subscribe({
 
-        this.traineeProfile.set(
-          trainee
-        );
+        next: (
+          trainee: TraineeProfileDto
+        ) => {
 
-        this.traineeId.set(
-          trainee.traineeId
-        );
+          this.traineeProfile.set(
+            trainee
+          );
 
-        this.loadEnrollment(
-          trainee.traineeId
-        );
-
-        this.api
-          .getCertificates(
+          this.traineeId.set(
             trainee.traineeId
-          )
-          .subscribe({
+          );
 
-            next: (
-              certs:
-                CertificateDto[]
-            ) => {
-
-              this.certificates.set(
-                certs ?? []
-              );
-
-            },
-
-            error: (
-              err: any
-            ) => {
-
-              console.warn(
-                '⚠️ فشل جلب الشهادات:',
-                err
-              );
-
-              this.certificates.set([]);
-
-            },
-
-          });
-
-      },
-
-      error: (err: any) => {
-
-        console.error(
-          '❌ فشل جلب بيانات المتدرب:',
-          err
-        );
-
-        this.loading.set(false);
-
-        this.errorMessage.set(
-          'تعذر تحميل بيانات المتدرب.'
-        );
-
-      },
-
-    });
+          this.loadEnrollment(
+            trainee.traineeId
+          );
 
 
-    this.api.getAllBadges().subscribe({
+          this.api
+            .getCertificates(
+              trainee.traineeId
+            )
+            .subscribe({
 
-      next: (
-        badges:
-          BadgeDto[]
-      ) =>
-        this.allBadges.set(
-          badges ?? []
-        ),
+              next: (
+                certs: CertificateDto[]
+              ) => {
 
-      error: (
-        err: any
-      ) =>
-        console.warn(
-          '⚠️ فشل جلب الأوسمة:',
-          err
-        ),
+                this.certificates.set(
+                  certs ?? []
+                );
 
-    });
+              },
+
+              error: (
+                err: any
+              ) => {
+
+                console.warn(
+                  '⚠️ فشل جلب الشهادات:',
+                  err
+                );
+
+                this.certificates.set([]);
+
+              },
+
+            });
+
+        },
+
+        error: (
+          err: any
+        ) => {
+
+          console.error(
+            '❌ فشل جلب بيانات المتدرب:',
+            err
+          );
+
+          this.loading.set(false);
+
+          this.errorMessage.set(
+            'تعذر تحميل بيانات المتدرب.'
+          );
+
+        },
+
+      });
+
+
+    this.api
+      .getAllBadges()
+      .subscribe({
+
+        next: (
+          badges: BadgeDto[]
+        ) => {
+
+          this.allBadges.set(
+            badges ?? []
+          );
+
+        },
+
+        error: (
+          err: any
+        ) => {
+
+          console.warn(
+            '⚠️ فشل جلب الأوسمة:',
+            err
+          );
+
+        },
+
+      });
 
 
     this.api
@@ -1285,20 +1307,25 @@ export class TraineeAchievements implements OnInit {
       .subscribe({
 
         next: (
-          badges:
-            TraineeBadgeDto[]
-        ) =>
+          badges: TraineeBadgeDto[]
+        ) => {
+
           this.myBadges.set(
             badges ?? []
-          ),
+          );
+
+        },
 
         error: (
           err: any
-        ) =>
+        ) => {
+
           console.warn(
             '⚠️ فشل جلب أوسمة المتدرب:',
             err
-          ),
+          );
+
+        },
 
       });
 
@@ -1333,8 +1360,7 @@ export class TraineeAchievements implements OnInit {
       .subscribe({
 
         next: (
-          enrollments:
-            EnrollmentDto[]
+          enrollments: EnrollmentDto[]
         ) => {
 
           if (
@@ -1349,11 +1375,10 @@ export class TraineeAchievements implements OnInit {
             this.loading.set(false);
 
             return;
-
           }
 
-          const activeEnrollment =
 
+          const activeEnrollment =
             enrollments.find(
               (e) => {
 
@@ -1389,7 +1414,9 @@ export class TraineeAchievements implements OnInit {
 
         },
 
-        error: (err: any) => {
+        error: (
+          err: any
+        ) => {
 
           console.error(
             '❌ فشل جلب التسجيلات:',
@@ -1413,7 +1440,10 @@ export class TraineeAchievements implements OnInit {
     batchId: number
   ): void {
 
-    if (!batchId || Number.isNaN(batchId)) {
+    if (
+      !batchId ||
+      Number.isNaN(batchId)
+    ) {
 
       this.errorMessage.set(
         'لم يتم العثور على الدفعة.'
@@ -1422,53 +1452,62 @@ export class TraineeAchievements implements OnInit {
       this.loading.set(false);
 
       return;
-
     }
 
-    this.api.getBatch(batchId).subscribe({
 
-      next: (batch: BatchDto) => {
+    this.api
+      .getBatch(batchId)
+      .subscribe({
 
-        const programId =
-          Number(batch.programId);
+        next: (
+          batch: BatchDto
+        ) => {
 
-        if (
-          !programId ||
-          Number.isNaN(programId)
-        ) {
+          const programId =
+            Number(batch.programId);
+
+          if (
+            !programId ||
+            Number.isNaN(programId)
+          ) {
+
+            this.errorMessage.set(
+              'لم يتم العثور على البرنامج المرتبط بالدفعة.'
+            );
+
+            this.loading.set(false);
+
+            return;
+          }
+
+          this.programId.set(
+            programId
+          );
+
+          this.loadProgram(
+            programId
+          );
+
+        },
+
+        error: (
+          err: any
+        ) => {
+
+          console.error(
+            '❌ فشل جلب الدفعة:',
+            err
+          );
 
           this.errorMessage.set(
-            'لم يتم العثور على البرنامج المرتبط بالدفعة.'
+            'تعذر تحميل بيانات الدفعة.'
           );
 
           this.loading.set(false);
 
-          return;
+        },
 
-        }
-
-        this.programId.set(programId);
-
-        this.loadProgram(programId);
-
-      },
-
-      error: (err: any) => {
-
-        console.error(
-          '❌ فشل جلب الدفعة:',
-          err
-        );
-
-        this.errorMessage.set(
-          'تعذر تحميل بيانات الدفعة.'
-        );
-
-        this.loading.set(false);
-
-      },
-
-    });
+      });
 
   }
 
@@ -1477,32 +1516,42 @@ export class TraineeAchievements implements OnInit {
     programId: number
   ): void {
 
-    this.api.getProgram(programId).subscribe({
+    this.api
+      .getProgram(programId)
+      .subscribe({
 
-      next: (program: ProgramDto) => {
+        next: (
+          program: ProgramDto
+        ) => {
 
-        this.program.set(program);
+          this.program.set(
+            program
+          );
 
-        this.loadModules(programId);
+          this.loadModules(
+            programId
+          );
 
-      },
+        },
 
-      error: (err: any) => {
+        error: (
+          err: any
+        ) => {
 
-        console.error(
-          '❌ فشل جلب البرنامج:',
-          err
-        );
+          console.error(
+            '❌ فشل جلب البرنامج:',
+            err
+          );
 
-        this.errorMessage.set(
-          'تعذر تحميل بيانات البرنامج.'
-        );
+          this.errorMessage.set(
+            'تعذر تحميل بيانات البرنامج.'
+          );
 
-        this.loading.set(false);
+          this.loading.set(false);
 
-      },
+        },
 
-    });
+      });
 
   }
 
@@ -1516,8 +1565,7 @@ export class TraineeAchievements implements OnInit {
       .subscribe({
 
         next: (
-          modules:
-            ModuleDto[]
+          modules: ModuleDto[]
         ) => {
 
           if (
@@ -1530,14 +1578,17 @@ export class TraineeAchievements implements OnInit {
             this.loadModuleProgress();
 
             return;
-
           }
 
-          this.loadLessons(modules);
+          this.loadLessons(
+            modules
+          );
 
         },
 
-        error: (err: any) => {
+        error: (
+          err: any
+        ) => {
 
           console.error(
             '❌ فشل جلب الوحدات:',
@@ -1567,74 +1618,101 @@ export class TraineeAchievements implements OnInit {
           )
       );
 
-    import('rxjs').then(({ forkJoin }) => {
 
-      forkJoin(requests).subscribe({
+    import('rxjs').then(
+      ({ forkJoin }) => {
 
-        next: (lessonsData) => {
+        forkJoin(requests)
+          .subscribe({
 
-          const result:
-            ModuleWithLessonsDto[] =
-              modules.map(
-                (
-                  module,
-                  index
-                ) => {
+            next: (
+              lessonsData
+            ) => {
 
-                  const lessons =
-                    lessonsData[index] ?? [];
+              const result:
+                ModuleWithLessonsDto[] =
+                modules.map(
+                  (
+                    module,
+                    index
+                  ) => {
 
-                  return {
-                    ...module,
-                    progressPercentage: 0,
-                    prerequisitePassed: true,
-                    isLocked: false,
+                    const lessons =
+                      lessonsData[index] ?? [];
 
-                    lessons:
-                      lessons.map(
-                        (lesson) => ({
-                          ...lesson,
-                          progressPercentage: 0,
-                        })
-                      ),
-                  };
+                    return {
 
-                }
+                      ...module,
+
+                      progressPercentage: 0,
+
+                      prerequisitePassed: true,
+
+                      isLocked: false,
+
+                      lessons:
+                        lessons.map(
+                          (lesson) => ({
+
+                            ...lesson,
+
+                            progressPercentage: 0,
+
+                          })
+                        ),
+
+                    };
+
+                  }
+                );
+
+
+              this.modules.set(
+                result
               );
 
-          this.modules.set(result);
+              this.loadModuleProgress();
 
-          this.loadModuleProgress();
+            },
 
-        },
+            error: (
+              err: any
+            ) => {
 
-        error: (err: any) => {
+              console.error(
+                '❌ فشل جلب الدروس:',
+                err
+              );
 
-          console.error(
-            '❌ فشل جلب الدروس:',
-            err
-          );
+              const result =
+                modules.map(
+                  (module) => ({
 
-          const result =
-            modules.map(
-              (module) => ({
-                ...module,
-                progressPercentage: 0,
-                prerequisitePassed: true,
-                isLocked: false,
-                lessons: [],
-              })
-            );
+                    ...module,
 
-          this.modules.set(result);
+                    progressPercentage: 0,
 
-          this.loadModuleProgress();
+                    prerequisitePassed: true,
 
-        },
+                    isLocked: false,
 
-      });
+                    lessons: [],
 
-    });
+                  })
+                );
+
+              this.modules.set(
+                result
+              );
+
+              this.loadModuleProgress();
+
+            },
+
+          });
+
+      }
+    );
 
   }
 
@@ -1657,11 +1735,13 @@ export class TraineeAchievements implements OnInit {
       this.loading.set(false);
 
       return;
-
     }
 
+
     this.api
-      .getModuleProgress(traineeId)
+      .getModuleProgress(
+        traineeId
+      )
       .subscribe({
 
         next: (
@@ -1683,7 +1763,9 @@ export class TraineeAchievements implements OnInit {
 
         },
 
-        error: (err: any) => {
+        error: (
+          err: any
+        ) => {
 
           console.error(
             '❌ فشل جلب تقدم الوحدات:',
@@ -1726,7 +1808,9 @@ export class TraineeAchievements implements OnInit {
                 progress.status ?? ''
               ).toLowerCase();
 
-            if (status === 'completed') {
+            if (
+              status === 'completed'
+            ) {
 
               percentage = 100;
 
@@ -1741,23 +1825,21 @@ export class TraineeAchievements implements OnInit {
 
           }
 
+
           const lessons =
             module.lessons ?? [];
 
+
           const completedCount =
-
             percentage === 100
-
               ? lessons.length
-
               : percentage > 0
-
               ? Math.round(
                   (percentage / 100) *
                   lessons.length
                 )
-
               : 0;
+
 
           const updatedLessons =
             lessons.map(
@@ -1765,22 +1847,33 @@ export class TraineeAchievements implements OnInit {
                 lesson,
                 index
               ) => ({
+
                 ...lesson,
+
                 progressPercentage:
                   index < completedCount
                     ? 100
                     : 0,
+
               })
             );
 
+
           return {
+
             ...module,
-            progressPercentage: percentage,
-            lessons: updatedLessons,
+
+            progressPercentage:
+              percentage,
+
+            lessons:
+              updatedLessons,
+
           };
 
         }
       );
+
 
     this.modules.set(
       updatedModules
@@ -1804,6 +1897,7 @@ export class TraineeAchievements implements OnInit {
           m.progressPercentage === 100
       ).length;
 
+
     const totalLessons =
       modules.reduce(
         (
@@ -1817,6 +1911,7 @@ export class TraineeAchievements implements OnInit {
           ),
         0
       );
+
 
     const completedLessons =
       modules.reduce(
@@ -1837,6 +1932,7 @@ export class TraineeAchievements implements OnInit {
         0
       );
 
+
     let overallProgress = 0;
 
     if (totalModules > 0) {
@@ -1851,33 +1947,52 @@ export class TraineeAchievements implements OnInit {
 
     }
 
+
     this.stats.set({
+
       totalModules,
+
       completedModules,
+
       totalLessons,
+
       completedLessons,
+
       overallProgress,
+
     });
 
   }
 
 
+  // ============================================================
+  // FEEDBACK AVAILABILITY
+  // ============================================================
+
+  // التقييم الأسبوعي متاح يوم الجمعة فقط
   isWeeklyEvaluationDay():
     boolean {
 
-    const today =
-      new Date();
+    const today = new Date();
+
+    // Sunday = 0
+    // Monday = 1
+    // Tuesday = 2
+    // Wednesday = 3
+    // Thursday = 4
+    // Friday = 5
+    // Saturday = 6
 
     return today.getDay() === 5;
 
   }
 
 
+  // التقييم الشهري متاح في آخر يوم من الشهر فقط
   isMonthlyEvaluationDay():
     boolean {
 
-    const today =
-      new Date();
+    const today = new Date();
 
     const tomorrow =
       new Date(today);
@@ -1894,30 +2009,36 @@ export class TraineeAchievements implements OnInit {
   }
 
 
+  // تحديد إمكانية إرسال تقييم المدرب
+  // الأسبوعي = الجمعة
+  // الشهري = آخر يوم من الشهر
   canSubmitTrainerEvaluation():
     boolean {
 
-    return (
+    if (
       this.evaluationPeriod() ===
       'Weekly'
-    )
-      ? this.isWeeklyEvaluationDay()
-      : this.isMonthlyEvaluationDay();
+    ) {
+
+      return this.isWeeklyEvaluationDay();
+
+    }
+
+    return this.isMonthlyEvaluationDay();
 
   }
 
 
+  // تقييم البرنامج متاح فقط بعد إكمال البرنامج 100%
   canSubmitProgramFeedback():
     boolean {
 
-    return (
-      this.progressPercentage() >=
-      100
-    );
+    return this.progressPercentage() >= 100;
 
   }
 
 
+  // تحديد شرط الإرسال حسب نوع التقييم
   canSubmitCurrentFeedback():
     boolean {
 
@@ -1926,22 +2047,17 @@ export class TraineeAchievements implements OnInit {
       'TrainerRating'
     ) {
 
-      return (
-        this.canSubmitTrainerEvaluation()
-      );
+      return this.canSubmitTrainerEvaluation();
 
     }
 
-    return (
-      this.canSubmitProgramFeedback()
-    );
+    return this.canSubmitProgramFeedback();
 
   }
 
 
   getTrainerId(
-    trainer:
-      TrainerOptionDto
+    trainer: TrainerOptionDto
   ): number {
 
     return Number(
@@ -1955,8 +2071,7 @@ export class TraineeAchievements implements OnInit {
 
 
   getTrainerName(
-    trainer:
-      TrainerOptionDto
+    trainer: TrainerOptionDto
   ): string {
 
     return (
@@ -1998,11 +2113,10 @@ export class TraineeAchievements implements OnInit {
         this.traineeId() ?? 0
       );
 
+
     const moduleMatchedTrainers =
       trainers.filter(
-        (
-          trainer: any
-        ) => {
+        (trainer: any) => {
 
           const trainerModuleId =
             Number(
@@ -2022,16 +2136,16 @@ export class TraineeAchievements implements OnInit {
         }
       );
 
+
     let candidates =
       moduleMatchedTrainers.length > 0
         ? moduleMatchedTrainers
         : trainers;
 
+
     const traineeMatchedTrainers =
       candidates.filter(
-        (
-          trainer: any
-        ) => {
+        (trainer: any) => {
 
           const trainerTraineeId =
             Number(
@@ -2039,6 +2153,7 @@ export class TraineeAchievements implements OnInit {
               trainer?.traineeUserId ??
               0
             );
+
 
           const trainerTraineeIds =
             Array.isArray(
@@ -2050,16 +2165,24 @@ export class TraineeAchievements implements OnInit {
                 )
               : [];
 
+
           const hasTraineeInformation =
             trainerTraineeId > 0 ||
             trainerTraineeIds.length > 0;
 
-          if (!hasTraineeInformation) {
+
+          if (
+            !hasTraineeInformation
+          ) {
+
             return true;
+
           }
 
+
           return (
-            trainerTraineeId === traineeId ||
+            trainerTraineeId ===
+              traineeId ||
             trainerTraineeIds.includes(
               traineeId
             )
@@ -2067,6 +2190,7 @@ export class TraineeAchievements implements OnInit {
 
         }
       );
+
 
     if (
       traineeMatchedTrainers.length > 0
@@ -2077,7 +2201,10 @@ export class TraineeAchievements implements OnInit {
 
     }
 
-    if (candidates.length === 1) {
+
+    if (
+      candidates.length === 1
+    ) {
 
       const trainerId =
         this.getTrainerId(
@@ -2100,6 +2227,7 @@ export class TraineeAchievements implements OnInit {
 
     }
 
+
     this.selectedTrainerId.set(
       null
     );
@@ -2113,8 +2241,7 @@ export class TraineeAchievements implements OnInit {
 
   onModuleSelected(
     moduleId:
-      number |
-      null
+      number | null
   ): void {
 
     this.selectedModuleId.set(
@@ -2129,23 +2256,27 @@ export class TraineeAchievements implements OnInit {
 
     this.trainers.set([]);
 
+
     const batchId =
       this.batchId();
+
 
     if (
       !batchId ||
       !moduleId
     ) {
+
       return;
+
     }
+
 
     this.api
       .getBatchTrainers(batchId)
       .subscribe({
 
         next: (
-          trainers:
-            any[]
+          trainers: any[]
         ) => {
 
           const selectedModuleId =
@@ -2155,6 +2286,7 @@ export class TraineeAchievements implements OnInit {
             (
               trainers ?? []
             ) as TrainerOptionDto[];
+
 
           this.selectTrainerAutomatically(
             allTrainers,
@@ -2187,8 +2319,7 @@ export class TraineeAchievements implements OnInit {
 
   onTrainerSelected(
     trainerId:
-      number |
-      null
+      number | null
   ): void {
 
     this.selectedTrainerId.set(
@@ -2206,15 +2337,21 @@ export class TraineeAchievements implements OnInit {
       'BatchExperienceRating'
   ) {
 
-    this.feedbackType.set(type);
+    this.feedbackType.set(
+      type
+    );
 
     this.scores = {};
 
     this.criterionComments = {};
 
-    this.selectedModuleId.set(null);
+    this.selectedModuleId.set(
+      null
+    );
 
-    this.selectedTrainerId.set(null);
+    this.selectedTrainerId.set(
+      null
+    );
 
     this.trainers.set([]);
 
@@ -2222,7 +2359,10 @@ export class TraineeAchievements implements OnInit {
       'Weekly'
     );
 
-    this.showFeedback.set(true);
+    this.showFeedback.set(
+      true
+    );
+
 
     this.api
       .getFeedbackCriteria(type)
@@ -2257,15 +2397,202 @@ export class TraineeAchievements implements OnInit {
   }
 
 
-  submitFeedback() {
+  // ============================================================
+  // FEEDBACK HELPERS
+  // ============================================================
+
+  private buildFeedbackComment():
+    string | null {
+
+    const comments =
+      Object.values(
+        this.criterionComments
+      )
+        .map(
+          (value) =>
+            String(
+              value ?? ''
+            ).trim()
+        )
+        .filter(
+          (value) =>
+            value.length > 0
+        );
+
 
     if (
-      this.feedbackType() ===
-      'TrainerRating'
+      comments.length === 0
     ) {
 
+      return null;
+
+    }
+
+
+    return comments.join(
+      '\n'
+    );
+
+  }
+
+
+  private buildFeedbackScores():
+    any[] {
+
+    return Object.entries(
+      this.scores
+    )
+      .filter(
+        ([_, score]) =>
+          Number(score) >= 1 &&
+          Number(score) <= 5
+      )
+      .map(
+        ([criterionId, score]) => ({
+
+          criterionId:
+            Number(criterionId),
+
+          score:
+            Number(score),
+
+        })
+      );
+
+  }
+
+
+  // ============================================================
+  // SUBMIT FEEDBACK
+  // ============================================================
+
+  submitFeedback() {
+
+    const isTrainer =
+      this.feedbackType() ===
+      'TrainerRating';
+
+    const isProgram =
+      this.feedbackType() ===
+      'BatchExperienceRating';
+
+
+    // ==========================================================
+    // VALIDATE TRAINER EVALUATION AVAILABILITY
+    // ==========================================================
+
+    if (isTrainer) {
+
+      if (!this.canSubmitTrainerEvaluation()) {
+
+        this.showSuccessToast.set(true);
+
+        this.successMessage.set(
+          this.evaluationPeriod() === 'Weekly'
+            ? '⚠️ التقييم الأسبوعي متاح يوم الجمعة فقط'
+            : '⚠️ التقييم الشهري متاح في آخر يوم من الشهر فقط'
+        );
+
+        setTimeout(
+          () =>
+            this.showSuccessToast.set(false),
+          3000
+        );
+
+        return;
+
+      }
+
+    }
+
+
+    // ==========================================================
+    // VALIDATE PROGRAM EVALUATION AVAILABILITY
+    // ==========================================================
+
+    if (isProgram) {
+
+      if (!this.canSubmitProgramFeedback()) {
+
+        this.showSuccessToast.set(true);
+
+        this.successMessage.set(
+          '⚠️ تقييم البرنامج التدريبي متاح بعد إكمال البرنامج بالكامل 100%'
+        );
+
+        setTimeout(
+          () =>
+            this.showSuccessToast.set(false),
+          3000
+        );
+
+        return;
+
+      }
+
+    }
+
+
+    // ==========================================================
+    // TRAINEE ID
+    // ==========================================================
+
+    const traineeId =
+      Number(
+        this.traineeId() ?? 0
+      );
+
+
+    if (
+      !traineeId ||
+      Number.isNaN(traineeId)
+    ) {
+
+      this.showSuccessToast.set(
+        true
+      );
+
+      this.successMessage.set(
+        '⚠️ لم يتم العثور على رقم المتدرب'
+      );
+
+      setTimeout(
+        () =>
+          this.showSuccessToast.set(
+            false
+          ),
+        3000
+      );
+
+      return;
+
+    }
+
+
+    // ==========================================================
+    // VARIABLES
+    // ==========================================================
+
+    let moduleId = 0;
+    let trainerId = 0;
+    let batchId = 0;
+
+
+    // ==========================================================
+    // TRAINER FEEDBACK
+    // ==========================================================
+
+    if (isTrainer) {
+
+      moduleId =
+        Number(
+          this.selectedModuleId() ?? 0
+        );
+
+
       if (
-        !this.selectedModuleId()
+        !moduleId ||
+        Number.isNaN(moduleId)
       ) {
 
         this.showSuccessToast.set(
@@ -2278,8 +2605,9 @@ export class TraineeAchievements implements OnInit {
 
         setTimeout(
           () =>
-            this.showSuccessToast
-              .set(false),
+            this.showSuccessToast.set(
+              false
+            ),
           3000
         );
 
@@ -2287,8 +2615,16 @@ export class TraineeAchievements implements OnInit {
 
       }
 
+
+      trainerId =
+        Number(
+          this.selectedTrainerId() ?? 0
+        );
+
+
       if (
-        !this.selectedTrainerId()
+        !trainerId ||
+        Number.isNaN(trainerId)
       ) {
 
         this.showSuccessToast.set(
@@ -2301,38 +2637,9 @@ export class TraineeAchievements implements OnInit {
 
         setTimeout(
           () =>
-            this.showSuccessToast
-              .set(false),
-          3000
-        );
-
-        return;
-
-      }
-
-      if (
-        !this.canSubmitTrainerEvaluation()
-      ) {
-
-        this.showSuccessToast.set(
-          true
-        );
-
-        this.successMessage.set(
-
-          this.evaluationPeriod() ===
-            'Weekly'
-
-            ? '⚠️ التقييم الأسبوعي متاح يوم الجمعة فقط'
-
-            : '⚠️ التقييم الشهري متاح في آخر يوم من الشهر فقط'
-
-        );
-
-        setTimeout(
-          () =>
-            this.showSuccessToast
-              .set(false),
+            this.showSuccessToast.set(
+              false
+            ),
           3000
         );
 
@@ -2342,103 +2649,236 @@ export class TraineeAchievements implements OnInit {
 
     }
 
+
+    // ==========================================================
+    // PROGRAM / BATCH FEEDBACK
+    // ==========================================================
+
+    if (isProgram) {
+
+      batchId =
+        Number(
+          this.batchId() ?? 0
+        );
+
+
+      if (
+        !batchId ||
+        Number.isNaN(batchId)
+      ) {
+
+        this.showSuccessToast.set(
+          true
+        );
+
+        this.successMessage.set(
+          '⚠️ لم يتم العثور على رقم الدفعة'
+        );
+
+        setTimeout(
+          () =>
+            this.showSuccessToast.set(
+              false
+            ),
+          3000
+        );
+
+        return;
+
+      }
+
+
+      const availableModules =
+        this.modules();
+
+
+      if (
+        availableModules &&
+        availableModules.length > 0
+      ) {
+
+        moduleId =
+          Number(
+            availableModules[0].moduleId
+          );
+
+      }
+
+
+      if (
+        !moduleId ||
+        Number.isNaN(moduleId)
+      ) {
+
+        moduleId = 1;
+
+      }
+
+
+      console.log(
+        '🧪 Program feedback ModuleId:',
+        moduleId
+      );
+
+    }
+
+
+    // ==========================================================
+    // PREVENT DOUBLE SUBMISSION
+    // ==========================================================
 
     if (
-      this.feedbackType() ===
-      'BatchExperienceRating'
+      this.isSubmitting()
     ) {
 
-      if (
-        !this.canSubmitProgramFeedback()
-      ) {
+      return;
 
-        this.showSuccessToast.set(
-          true
-        );
+    }
 
-        this.successMessage.set(
-          '⚠️ تقييم البرنامج التدريبي متاح بعد إكمال البرنامج بالكامل 100%'
-        );
+    this.isSubmitting.set(
+      true
+    );
 
-        setTimeout(
-          () =>
-            this.showSuccessToast
-              .set(false),
-          3000
-        );
 
-        return;
+    // ==========================================================
+    // COMMENT
+    // ==========================================================
 
-      }
+    const comment =
+      this.buildFeedbackComment();
+
+
+    // ==========================================================
+    // SCORES
+    // ==========================================================
+
+    const scores =
+      this.buildFeedbackScores();
+
+
+    // ==========================================================
+    // VALIDATE SCORES
+    // ==========================================================
+
+    if (
+      !scores ||
+      scores.length === 0
+    ) {
+
+      this.isSubmitting.set(
+        false
+      );
+
+      this.showSuccessToast.set(
+        true
+      );
+
+      this.successMessage.set(
+        '⚠️ يرجى اختيار درجة التقييم'
+      );
+
+      setTimeout(
+        () =>
+          this.showSuccessToast.set(
+            false
+          ),
+        3000
+      );
+
+      return;
 
     }
 
 
-    this.isSubmitting.set(true);
-
-
-    const criteriaComments =
-
-      Object.entries(
-        this.criterionComments
-      )
-
-        .filter(
-          ([_, text]) =>
-            String(
-              text ?? ''
-            )
-              .trim()
-              .length > 0
-        )
-
-        .map(
-          ([criterionId, text]) => ({
-            criterionId:
-              Number(criterionId),
-
-            comment:
-              String(text).trim(),
-          })
-        );
-
+    // ==========================================================
+    // FINAL PAYLOAD
+    // ==========================================================
 
     const feedbackData: any = {
 
       type:
-        this.feedbackType(),
+        isTrainer
+          ? 0
+          : 1,
 
       traineeId:
-        this.traineeId(),
-
-      enrollmentId:
-        this.enrollmentId(),
+        traineeId,
 
       moduleId:
-        this.feedbackType() ===
-          'TrainerRating'
-          ? this.selectedModuleId()
-          : null,
+        moduleId,
 
       trainerId:
-        this.feedbackType() ===
-          'TrainerRating'
-          ? this.selectedTrainerId()
+        isTrainer
+          ? trainerId
           : null,
 
-      evaluationPeriod:
-        this.feedbackType() ===
-          'TrainerRating'
-          ? this.evaluationPeriod()
+      batchId:
+        isProgram
+          ? batchId
           : null,
 
-      criteriaComments:
-        criteriaComments,
+      comment:
+        comment,
 
-      scores: [],
+      scores:
+        scores,
 
     };
 
+
+    // ==========================================================
+    // DEBUG
+    // ==========================================================
+
+    console.log(
+      '========================================'
+    );
+
+    console.log(
+      '📤 Feedback Data:',
+      feedbackData
+    );
+
+    console.log(
+      '📤 Feedback Type:',
+      isTrainer
+        ? 'TrainerRating'
+        : 'BatchExperienceRating'
+    );
+
+    console.log(
+      '📤 Trainee ID:',
+      feedbackData.traineeId
+    );
+
+    console.log(
+      '📤 Module ID:',
+      feedbackData.moduleId
+    );
+
+    console.log(
+      '📤 Trainer ID:',
+      feedbackData.trainerId
+    );
+
+    console.log(
+      '📤 Batch ID:',
+      feedbackData.batchId
+    );
+
+    console.log(
+      '📤 Scores:',
+      feedbackData.scores
+    );
+
+    console.log(
+      '========================================'
+    );
+
+
+    // ==========================================================
+    // API
+    // ==========================================================
 
     this.api
       .submitFeedback(
@@ -2446,35 +2886,71 @@ export class TraineeAchievements implements OnInit {
       )
       .subscribe({
 
-        next: () => {
+        // ======================================================
+        // SUCCESS
+        // ======================================================
 
-          this.isSubmitting.set(false);
+        next: (
+          response: any
+        ) => {
 
-          this.showFeedback.set(false);
+          console.log(
+            '========================================'
+          );
+
+          console.log(
+            '✅ Feedback submitted successfully:',
+            response
+          );
+
+          console.log(
+            '========================================'
+          );
+
+
+          this.isSubmitting.set(
+            false
+          );
+
+          this.showFeedback.set(
+            false
+          );
+
 
           this.scores = {};
 
           this.criterionComments = {};
 
-          this.selectedModuleId.set(null);
+          this.selectedModuleId.set(
+            null
+          );
 
-          this.selectedTrainerId.set(null);
+          this.selectedTrainerId.set(
+            null
+          );
 
           this.trainers.set([]);
 
-          this.showSuccessToast.set(true);
+
+          this.showSuccessToast.set(
+            true
+          );
 
           this.successMessage.set(
             'تم إرسال التقييم بنجاح!'
           );
 
-          setTimeout(() => {
 
-            this.showSuccessToast.set(
-              false
-            );
+          setTimeout(
+            () => {
 
-          }, 3000);
+              this.showSuccessToast.set(
+                false
+              );
+
+            },
+            3000
+          );
 
 
           this.api
@@ -2484,10 +2960,13 @@ export class TraineeAchievements implements OnInit {
             )
             .subscribe({
 
-              next: (d) =>
+              next: (d) => {
+
                 this.pendingFeedback.set(
                   d ?? null
-                ),
+                );
+
+              },
 
               error: () => {},
 
@@ -2495,30 +2974,69 @@ export class TraineeAchievements implements OnInit {
 
         },
 
+
+        // ======================================================
+        // ERROR
+        // ======================================================
+
         error: (
           err: any
         ) => {
+
+          console.error(
+            '========================================'
+          );
 
           console.error(
             '❌ خطأ في إرسال التقييم:',
             err
           );
 
-          this.isSubmitting.set(false);
+          console.error(
+            '📤 Feedback Data:',
+            feedbackData
+          );
 
-          this.showSuccessToast.set(true);
+          console.error(
+            '❌ HTTP Status:',
+            err?.status
+          );
+
+          console.error(
+            '❌ Error Message:',
+            err?.message
+          );
+
+          console.error(
+            '❌ Server Error:',
+            err?.error
+          );
+
+          console.error(
+            '========================================'
+          );
+
+
+          this.isSubmitting.set(
+            false
+          );
+
+          this.showSuccessToast.set(
+            true
+          );
 
           this.successMessage.set(
             '❌ حدث خطأ في إرسال التقييم، يرجى المحاولة مرة أخرى'
           );
 
-          setTimeout(() => {
 
-            this.showSuccessToast.set(
-              false
-            );
-
-          }, 3000);
+          setTimeout(
+            () =>
+              this.showSuccessToast.set(
+                false
+              ),
+            3000
+          );
 
         },
 
@@ -2533,13 +3051,18 @@ export class TraineeAchievements implements OnInit {
 
   downloadCertificate() {
 
-    // ✅ أقل من 50% ما يقدر ينزل الشهادة
-    if (!this.canDownloadCertificate()) {
+    if (
+      !this.canDownloadCertificate()
+    ) {
+
       return;
+
     }
+
 
     const cert =
       this.certificates()[0];
+
 
     if (!cert) {
 
@@ -2551,17 +3074,18 @@ export class TraineeAchievements implements OnInit {
         '⚠️ لم يتم العثور على شهادة، يرجى التواصل مع الدعم'
       );
 
-      setTimeout(() => {
-
-        this.showSuccessToast.set(
-          false
-        );
-
-      }, 3000);
+      setTimeout(
+        () =>
+          this.showSuccessToast.set(
+            false
+          ),
+        3000
+      );
 
       return;
 
     }
+
 
     this.api
       .downloadCertificate(
@@ -2569,14 +3093,19 @@ export class TraineeAchievements implements OnInit {
       )
       .subscribe({
 
-        next: (blob: Blob) => {
+        next: (
+          blob: Blob
+        ) => {
 
           const url =
-            window.URL
-              .createObjectURL(blob);
+            window.URL.createObjectURL(
+              blob
+            );
 
           const a =
-            document.createElement('a');
+            document.createElement(
+              'a'
+            );
 
           a.href = url;
 
@@ -2585,31 +3114,36 @@ export class TraineeAchievements implements OnInit {
 
           a.click();
 
-          window.URL
-            .revokeObjectURL(url);
+          window.URL.revokeObjectURL(
+            url
+          );
 
         },
 
-        error: (err: any) => {
+        error: (
+          err: any
+        ) => {
 
           console.error(
             '❌ فشل تحميل الشهادة:',
             err
           );
 
-          this.showSuccessToast.set(true);
+          this.showSuccessToast.set(
+            true
+          );
 
           this.successMessage.set(
             '❌ فشل تحميل الشهادة، يرجى المحاولة مرة أخرى'
           );
 
-          setTimeout(() => {
-
-            this.showSuccessToast.set(
-              false
-            );
-
-          }, 3000);
+          setTimeout(
+            () =>
+              this.showSuccessToast.set(
+                false
+              ),
+            3000
+          );
 
         },
 
