@@ -30,6 +30,7 @@ namespace Nafadh_Backend.Repositories
         Task<int?> GetBatchIdAsync(
     int conversationId
 );
+        Task<string?> GetBatchNameAsync(int conversationId);
         Task UpdateStatusAsync(
             int conversationId,
             NFD_SupportTicketStatus status

@@ -281,16 +281,32 @@ _context.NFD_ConversationGroupMembers.Any(
             return created.TicketId;
         }
         public async Task<int?> GetBatchIdAsync(
-    int conversationId
-)
+      int conversationId
+  )
         {
             return await _context.NFD_ConversationGroupMembers
                 .Where(
-                    gm =>
-                        gm.ConversationId == conversationId
+                    gm => gm.ConversationId == conversationId
                 )
                 .Select(
                     gm => (int?)gm.BatchId
+                )
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<string?> GetBatchNameAsync(
+            int conversationId
+        )
+        {
+            return await _context.NFD_ConversationGroupMembers
+                .Where(
+                    gm => gm.ConversationId == conversationId
+                )
+                .Join(
+                    _context.NFD_Batches,
+                    gm => gm.BatchId,
+                    b => b.BatchId,
+                    (gm, b) => b.BatchName
                 )
                 .FirstOrDefaultAsync();
         }
