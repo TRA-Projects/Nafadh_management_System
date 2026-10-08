@@ -174,16 +174,20 @@ _context.NFD_ConversationGroupMembers.Any(
             }
 
             // check if batch group already exists
-            var existingGroup = await _context.NFD_SupportTickets
-                .FirstOrDefaultAsync(
-                    c =>
-                        c.Category == "BatchGroup"
-                        && c.Subject == $"مجموعة {batch.BatchName}"
-                );
+            var existingGroupId =
+     await _context.NFD_ConversationGroupMembers
+         .Where(
+             gm =>
+                 gm.BatchId == dto.BatchId
+         )
+         .Select(
+             gm => gm.ConversationId
+         )
+         .FirstOrDefaultAsync();
 
-            if (existingGroup != null)
+            if (existingGroupId != 0)
             {
-                return existingGroup.TicketId;
+                return existingGroupId;
             }
 
             var conversation =
