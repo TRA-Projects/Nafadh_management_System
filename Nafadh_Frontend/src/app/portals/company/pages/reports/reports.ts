@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 type ReportTab =
   | 'att'
@@ -12,7 +13,10 @@ type ReportTab =
 @Component({
   selector: 'app-reports',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    FormsModule
+  ],
   templateUrl: './reports.html',
   styleUrls: ['./reports.scss']
 })
@@ -69,26 +73,11 @@ export class ReportsComponent {
   ];
 
   achievementPrograms = [
-    {
-      name: 'تطوير تطبيقات الويب',
-      value: 88
-    },
-    {
-      name: 'تحليل البيانات',
-      value: 84
-    },
-    {
-      name: 'الأمن السيبراني',
-      value: 82
-    },
-    {
-      name: 'الدعم الفني',
-      value: 79
-    },
-    {
-      name: 'التصميم الجرافيكي',
-      value: 90
-    }
+    { name: 'تطوير تطبيقات الويب', value: 88 },
+    { name: 'تحليل البيانات', value: 84 },
+    { name: 'الأمن السيبراني', value: 82 },
+    { name: 'الدعم الفني', value: 79 },
+    { name: 'التصميم الجرافيكي', value: 90 }
   ];
 
   capacityPrograms = [
@@ -234,22 +223,10 @@ export class ReportsComponent {
   ];
 
   comparisonDepartments = [
-    {
-      name: 'تقنية المعلومات',
-      value: 96
-    },
-    {
-      name: 'الموارد البشرية',
-      value: 95
-    },
-    {
-      name: 'العمليات',
-      value: 91
-    },
-    {
-      name: 'التسويق',
-      value: 78
-    }
+    { name: 'تقنية المعلومات', value: 96 },
+    { name: 'الموارد البشرية', value: 95 },
+    { name: 'العمليات', value: 91 },
+    { name: 'التسويق', value: 78 }
   ];
 
   selectTab(tab: ReportTab): void {
