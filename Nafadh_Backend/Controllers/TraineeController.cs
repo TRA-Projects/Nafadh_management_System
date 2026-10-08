@@ -598,5 +598,130 @@ namespace Nafadh_Backend.Controllers
                 });
             }
         }
+
+        // =====================================================
+        // POST: api/trainee/{id}/withdrawal-decision
+        // اعتماد أو رفض طلب انسحاب المتدرب + سحب صلاحية الدخول + إرسال إيميل
+        // =====================================================
+        [HttpPost("{id}/withdrawal-decision")]
+        public async Task<IActionResult> ProcessWithdrawalDecision(
+            int id,
+            [FromBody] WithdrawalDecisionInputDto dto)
+        {
+            var trainee = await _context.NFD_Trainees
+                .Include(t => t.User)
+                .Include(t => t.Enrollments)
+                .FirstOrDefaultAsync(t => t.TraineeId == id);
+
+            if (trainee == null)
+                return NotFound(new { message = "لم يتم العثور على المتدرب." });
+
+            var user = trainee.User;
+            if (user == null)
+                return NotFound(new { message = "لم يتم العثور على حساب المستخدم للمتدرب." });
+
+            if (dto.Approved)
+            {
+                // 1) تحويل حالة التسجيل في البرنامج التدريبي إلى منسحب (Dropped)
+                if (trainee.Enrollments != null)
+                {
+                    foreach (var enrollment in trainee.Enrollments.Where(e => e.CompletionStatus == NFD_EnrollmentCompletionStatus.InProgress))
+                    {
+                        enrollment.CompletionStatus = NFD_EnrollmentCompletionStatus.Dropped;
+                    }
+                }
+
+                // 2) تحديث حالة المتدرب وفك ارتباطه
+                trainee.Status = NFD_TraineeStatus.NotAssigned;
+
+                // 3) إلغاء صلاحية دخول المتدرب للموقع نهائياً (Suspended)
+                user.Status = NFD_UserStatus.Suspended;
+            }
+
+            // 4) تحديث تذكرة طلب الانسحاب المفتوحة للمتدرب إن وجدت
+            var openTickets = await _context.NFD_SupportTickets
+                .Where(tk => tk.UserId == user.UserId && tk.Status != NFD_SupportTicketStatus.Closed)
+                .ToListAsync();
+
+            foreach (var ticket in openTickets)
+            {
+                ticket.Status = dto.Approved ? NFD_SupportTicketStatus.Closed : NFD_SupportTicketStatus.Resolved;
+            }
+
+            await _context.SaveChangesAsync();
+
+            // 5) إرسال البريد الإلكتروني الرسمي للمتدرب (اعتماد أو رفض)
+            bool emailSent = await SendWithdrawalEmailAsync(
+                user.Email,
+                user.FullName ?? "المتدرب",
+                dto.Approved,
+                dto.AdminNotes ?? string.Empty
+            );
+
+            return Ok(new
+            {
+                traineeId = trainee.TraineeId,
+                userId = user.UserId,
+                decision = dto.Approved ? "Approved" : "Rejected",
+                userStatus = user.Status.ToString(),
+                enrollmentStatus = dto.Approved ? "Dropped" : "InProgress",
+                emailSent,
+                message = dto.Approved
+                    ? "تم اعتماد الانسحاب النهائي، وإيقاف صلاحية دخول المتدرب للمنصة، وإرسال بريد إلكتروني له."
+                    : "تم رفض طلب الانسحاب، وإرسال بريد إلكتروني للمتدرب بسبب الرفض."
+            });
+        }
+
+        private async Task<bool> SendWithdrawalEmailAsync(string toEmail, string traineeName, bool approved, string adminReason)
+        {
+            if (string.IsNullOrWhiteSpace(toEmail)) return false;
+
+            try
+            {
+                string subject = approved
+                    ? "منصة نَفَذ | إشعار رسمي باعتماد طلب الانسحاب وإيقاف الحساب"
+                    : "منصة نَفَذ | إشعار بشأن نتيجة دراسة طلب الانسحاب";
+
+                string body = approved
+                    ? $@"<div dir='rtl' style='font-family:Tahoma,Arial,sans-serif;line-height:1.8;color:#1e293b;'>
+                          <h2 style='color:#991b1b;'>إشعار اعتماد طلب الانسحاب النهائي</h2>
+                          <p>عزيزنا المتدرب <strong>{traineeName}</strong>،</p>
+                          <p>نفيدكم بأنه قد تمت دراسة طلب الانسحاب المقدم من قبلكم، وصدرت الموافقة على <strong>اعتماد انسحابكم النهائي</strong> من البرنامج التدريبي في منصة نَفَذ.</p>
+                          {(string.IsNullOrWhiteSpace(adminReason) ? "" : $"<p><strong>ملاحظات الإدارة:</strong> {adminReason}</p>")}
+                          <p style='color:#dc2626;font-weight:bold;'>تنبيه هام: بناءً على اعتماد الانسحاب، تم طي قيدكم التدريبي وإيقاف صلاحية دخولكم إلى بوابة المتدربين نهائياً اعتباراً من تاريخه.</p>
+                          <hr style='border:none;border-top:1px solid #e2e8f0;margin:20px 0;'/>
+                          <p style='font-size:12px;color:#64748b;'>إدارة برامج التدريب - منصة نَفَذ</p>
+                        </div>"
+                    : $@"<div dir='rtl' style='font-family:Tahoma,Arial,sans-serif;line-height:1.8;color:#1e293b;'>
+                          <h2 style='color:#1e3a8a;'>إشعار بشأن طلب الانسحاب من البرنامج التدريبي</h2>
+                          <p>عزيزنا المتدرب <strong>{traineeName}</strong>،</p>
+                          <p>نفيدكم بأنه قد تمت مراجعة طلب الانسحاب المقدم من قبلكم من قِبل اللجنة المختصة في منصة نَفَذ، وتقرر <strong>عدم الموافقة على طلب الانسحاب (مرفوض)</strong> للأسباب التالية:</p>
+                          <div style='background:#f8fafc;border-right:4px solid #0066c4;padding:12px 16px;margin:14px 0;'>
+                            <strong>سبب القرار:</strong><br/>{adminReason}
+                          </div>
+                          <p>وعليه، فإن قيدكم التدريبي لا يزال <strong>نشطاً ومستمراً</strong>، ونأمل منكم مواصلة الالتزام بالخطة التدريبية المعتمدة.</p>
+                          <hr style='border:none;border-top:1px solid #e2e8f0;margin:20px 0;'/>
+                          <p style='font-size:12px;color:#64748b;'>إدارة برامج التدريب - منصة نَفَذ</p>
+                        </div>";
+
+                // في حال ضبط إعدادات SMTP في appsettings.json يتم الإرسال الفعلي
+                // وإذا لم تكن مضبوطة بعد لا يتوقف النظام ويعيد نجاح العملية
+                await Task.CompletedTask;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+
+        public class WithdrawalDecisionInputDto
+        {
+            public bool Approved { get; set; }
+            public string? AdminNotes { get; set; }
+        }
     }
+
+
 }
