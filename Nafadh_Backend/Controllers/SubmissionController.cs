@@ -657,7 +657,6 @@ namespace Nafadh_Backend.Controllers
             catch (Exception ex)
             {
                 // Do not let notification failure
-                // prevent the trainee's submission.
                 Console.WriteLine(
                     $"Failed to create trainer notification: {ex.Message}"
                 );
