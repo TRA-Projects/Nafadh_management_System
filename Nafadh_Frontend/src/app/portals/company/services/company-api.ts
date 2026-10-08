@@ -29,6 +29,17 @@ import {
   CompanyProgramDetailsDto,
 } from '../../../core/models/dtos';
 
+import {
+  AddCoursePlanNoteRequest,
+  CoursePlanDetailDto,
+  CoursePlanLookupsDto,
+  CoursePlansOverviewDto,
+  PlanProgressStatus,
+  SaveCoursePlanItemRequest,
+  SaveCoursePlanRequest,
+  SaveCoursePlanStageRequest,
+} from '../models/company-tasks.models';
+
 @Injectable({ providedIn: 'root' })
 export class CompanyApi {
   private readonly http = inject(HttpClient);
@@ -231,7 +242,6 @@ export class CompanyApi {
       dto
     );
   }
-
   getSupervisors(
     companyId: number
   ): Observable<CompanySupervisorDto[]> {
@@ -261,28 +271,27 @@ export class CompanyApi {
     );
   }
 
-  // ============================================================
-  // My Account
-  // ============================================================
 
-  getCurrentAccount(): Observable<CompanyAccountDto> {
-    return this.http.get<CompanyAccountDto>(
-      `${this.base}/CompanyAccount/me`
-    );
-  }
-  updateMyAccount(data: {
-  
-  
-  phone: string | null;
-}): Observable<void> {
-  return this.http.put<void>(
-    `${this.base}/CompanyAccount/me`,
-    data
+// ============================================================
+// My Account
+// ============================================================
+
+getCurrentAccount(): Observable<CompanyAccountDto> {
+  return this.http.get<CompanyAccountDto>(
+    `${this.base}/CompanyAccount/me`
   );
 }
+
+updateMyAccount(dto: { phone: string }): Observable<CompanyAccountDto> {
+  return this.http.put<CompanyAccountDto>(
+    `${this.base}/CompanyAccount/me`,
+    dto
+  );
+}
+
 downloadMyAccountPdf(): Observable<Blob> {
   return this.http.get(
-    `${this.base}/CompanyAccount/me/export-pdf`,
+    `${this.base}/CompanyAccount/me/pdf`,
     {
       responseType: 'blob',
     }
@@ -372,13 +381,6 @@ downloadMyAccountPdf(): Observable<Blob> {
       `${this.base}/Report/company-attendance/${companyId}`
     );
   }
-
-  // Get company tasks
-  getCompanyTasks(companyId: number): Observable<any[]> {
-  return this.http.get<any[]>(
-    `${this.base}/Task/company/${companyId}`
-  );
-}
 
   // ============================================================
   // Contact — Company Conversations
@@ -472,5 +474,104 @@ downloadMyAccountPdf(): Observable<Blob> {
     return this.http.get<FeedbackSummaryDto>(
       `${this.base}/Feedback/trainer/${trainerId}`
     );
+  }
+
+  // ============================================================
+  // Tasks & Projects — course plans (api/CompanyCoursePlan)
+  // Scoped server-side to the signed-in company.
+  // ============================================================
+
+  private planUrl(companyId: number, suffix = ''): string {
+    return `${this.base}/CompanyCoursePlan/company/${companyId}${suffix}`;
+  }
+
+  getCoursePlans(companyId: number): Observable<CoursePlansOverviewDto> {
+    return this.http.get<CoursePlansOverviewDto>(this.planUrl(companyId, '/plans'));
+  }
+
+  getCoursePlanLookups(companyId: number): Observable<CoursePlanLookupsDto> {
+    return this.http.get<CoursePlanLookupsDto>(this.planUrl(companyId, '/lookups'));
+  }
+
+  getCoursePlan(companyId: number, planId: number): Observable<CoursePlanDetailDto> {
+    return this.http.get<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}`));
+  }
+
+  createCoursePlan(companyId: number, dto: SaveCoursePlanRequest): Observable<CoursePlanDetailDto> {
+    return this.http.post<CoursePlanDetailDto>(this.planUrl(companyId, '/plans'), dto);
+  }
+
+  updateCoursePlan(companyId: number, planId: number, dto: SaveCoursePlanRequest): Observable<CoursePlanDetailDto> {
+    return this.http.put<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}`), dto);
+  }
+
+  setCoursePlanTrainers(companyId: number, planId: number, trainerIds: number[]): Observable<CoursePlanDetailDto> {
+    return this.http.put<CoursePlanDetailDto>(
+      this.planUrl(companyId, `/plans/${planId}/trainers`),
+      { trainerIds }
+    );
+  }
+
+  setCoursePlanStageTrainers(companyId: number, planId: number, stageId: number, trainerIds: number[]): Observable<CoursePlanDetailDto> {
+    return this.http.put<CoursePlanDetailDto>(
+      this.planUrl(companyId, `/plans/${planId}/stages/${stageId}/trainers`),
+      { trainerIds }
+    );
+  }
+
+  deleteCoursePlan(companyId: number, planId: number) {
+    return this.http.delete(this.planUrl(companyId, `/plans/${planId}`));
+  }
+
+  addCoursePlanStage(companyId: number, planId: number, dto: SaveCoursePlanStageRequest): Observable<CoursePlanDetailDto> {
+    return this.http.post<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/stages`), dto);
+  }
+
+  updateCoursePlanStage(companyId: number, planId: number, stageId: number, dto: SaveCoursePlanStageRequest): Observable<CoursePlanDetailDto> {
+    return this.http.put<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/stages/${stageId}`), dto);
+  }
+
+  deleteCoursePlanStage(companyId: number, planId: number, stageId: number): Observable<CoursePlanDetailDto> {
+    return this.http.delete<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/stages/${stageId}`));
+  }
+
+  addCoursePlanItem(companyId: number, planId: number, stageId: number, dto: SaveCoursePlanItemRequest): Observable<CoursePlanDetailDto> {
+    return this.http.post<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/stages/${stageId}/items`), dto);
+  }
+
+  updateCoursePlanItem(companyId: number, planId: number, itemId: number, dto: SaveCoursePlanItemRequest): Observable<CoursePlanDetailDto> {
+    return this.http.put<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/items/${itemId}`), dto);
+  }
+
+  deleteCoursePlanItem(companyId: number, planId: number, itemId: number): Observable<CoursePlanDetailDto> {
+    return this.http.delete<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/items/${itemId}`));
+  }
+
+  submitCoursePlan(companyId: number, planId: number): Observable<CoursePlanDetailDto> {
+    return this.http.post<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/submit`), {});
+  }
+
+  withdrawCoursePlan(companyId: number, planId: number): Observable<CoursePlanDetailDto> {
+    return this.http.post<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/withdraw`), {});
+  }
+
+  holdCoursePlan(companyId: number, planId: number): Observable<CoursePlanDetailDto> {
+    return this.http.post<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/hold`), {});
+  }
+
+  resumeCoursePlan(companyId: number, planId: number): Observable<CoursePlanDetailDto> {
+    return this.http.post<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/resume`), {});
+  }
+
+  setCoursePlanStageStatus(companyId: number, planId: number, stageId: number, status: PlanProgressStatus): Observable<CoursePlanDetailDto> {
+    return this.http.put<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/stages/${stageId}/status`), { status });
+  }
+
+  setCoursePlanItemStatus(companyId: number, planId: number, itemId: number, status: PlanProgressStatus): Observable<CoursePlanDetailDto> {
+    return this.http.put<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/items/${itemId}/status`), { status });
+  }
+
+  addCoursePlanNote(companyId: number, planId: number, dto: AddCoursePlanNoteRequest): Observable<CoursePlanDetailDto> {
+    return this.http.post<CoursePlanDetailDto>(this.planUrl(companyId, `/plans/${planId}/notes`), dto);
   }
 }
