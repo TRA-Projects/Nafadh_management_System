@@ -71,6 +71,8 @@ namespace Nafadh_Backend
         public DbSet<NFD_CoursePlanStage> NFD_CoursePlanStages { get; set; }
         public DbSet<NFD_CoursePlanItem> NFD_CoursePlanItems { get; set; }
         public DbSet<NFD_CoursePlanNote> NFD_CoursePlanNotes { get; set; }
+        public DbSet<NFD_CoursePlanTrainer> NFD_CoursePlanTrainers { get; set; }
+        public DbSet<NFD_CoursePlanStageTrainer> NFD_CoursePlanStageTrainers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

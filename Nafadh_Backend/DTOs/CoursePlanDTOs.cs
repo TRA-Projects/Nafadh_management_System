@@ -32,6 +32,7 @@ namespace Nafadh_Backend.DTOs
     {
         public int PlanId { get; set; }
         public int CompanyId { get; set; }
+        public int? ProgramId { get; set; }
         public string CompanyName { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
@@ -61,6 +62,7 @@ namespace Nafadh_Backend.DTOs
         public DateTime? SubmittedAt { get; set; }
         public DateTime? ReviewedAt { get; set; }
         public string? ReviewNote { get; set; }
+        public List<CoursePlanTrainerOptionDTO> Trainers { get; set; } = new();
     }
 
     public class CoursePlanDetailDTO : CoursePlanSummaryDTO
@@ -92,6 +94,7 @@ namespace Nafadh_Backend.DTOs
         public DateTime EndDate { get; set; }
         public int? TrainerId { get; set; }
         public string? TrainerName { get; set; }
+        public List<CoursePlanTrainerOptionDTO> Trainers { get; set; } = new();
         public NFD_CoursePlanProgressStatus Status { get; set; }
         public decimal ProgressPercentage { get; set; }
         public bool IsDelayed { get; set; }
@@ -137,9 +140,29 @@ namespace Nafadh_Backend.DTOs
         public string? Specialty { get; set; }
     }
 
+    public class CoursePlanProgramOptionDTO
+    {
+        public int ProgramId { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string? Category { get; set; }
+        public decimal DurationHours { get; set; }
+        public decimal Price { get; set; }
+        public int TrackId { get; set; }
+        public string Status { get; set; } = string.Empty;
+    }
+
+    public class CoursePlanTrackOptionDTO
+    {
+        public int TrackId { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
     public class CoursePlanLookupsDTO
     {
         public List<CoursePlanTrainerOptionDTO> Trainers { get; set; } = new();
+        public List<CoursePlanProgramOptionDTO> Programs { get; set; } = new();
+        public List<CoursePlanTrackOptionDTO> Tracks { get; set; } = new();
         public List<string> Categories { get; set; } = new();
     }
 
@@ -147,6 +170,17 @@ namespace Nafadh_Backend.DTOs
 
     public class SaveCoursePlanDTO
     {
+        /// <summary>Use an existing company program when supplied; null means create a new Program.</summary>
+        public int? ProgramId { get; set; }
+
+        /// <summary>Required only when creating a new Program manually.</summary>
+        public int? TrackId { get; set; }
+
+        public decimal Price { get; set; }
+
+        /// <summary>Plan-level trainer assignments; can be empty and filled later.</summary>
+        public List<int> TrainerIds { get; set; } = new();
+
         [Required(ErrorMessage = "عنوان الكورس مطلوب.")]
         [MaxLength(150, ErrorMessage = "عنوان الكورس لا يتجاوز 150 حرفاً.")]
         public string Title { get; set; } = string.Empty;
@@ -166,6 +200,11 @@ namespace Nafadh_Backend.DTOs
         public DateTime EndDate { get; set; }
     }
 
+    public class SetCoursePlanTrainersDTO
+    {
+        public List<int> TrainerIds { get; set; } = new();
+    }
+
     public class SaveCoursePlanStageDTO
     {
         [Required(ErrorMessage = "عنوان المرحلة مطلوب.")]
@@ -181,6 +220,9 @@ namespace Nafadh_Backend.DTOs
         public DateTime EndDate { get; set; }
 
         public int? TrainerId { get; set; }
+
+        /// <summary>Multiple trainers for the stage; empty is allowed until trainers are assigned later.</summary>
+        public List<int> TrainerIds { get; set; } = new();
     }
 
     public class SaveCoursePlanItemDTO

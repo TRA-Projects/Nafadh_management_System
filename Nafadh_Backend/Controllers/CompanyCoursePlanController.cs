@@ -93,6 +93,65 @@ namespace Nafadh_Backend.Controllers
                 .Distinct()
                 .ToListAsync();
 
+            // Approved/available courses for Tasks & Projects come from two compatible sources:
+            // 1) programs already assigned to the company through NFD_CompanyPrograms;
+            // 2) programs attached to an approved CoursePlan.
+            //
+            // The second source is intentionally included as a safety net for existing/legacy
+            // approved plans. Normally the approval workflow also creates the NFD_CompanyPrograms
+            // link, but Tasks & Projects must not lose an approved course if that link was
+            // created by an older workflow or imported data.
+            //
+            // We merge by ProgramId so the same course never appears twice. No NFD_Program
+            // records are created or modified by this read-only lookup.
+            var companyProgramIds = await _context.NFD_CompanyPrograms
+                .AsNoTracking()
+                .Where(cp => cp.CompanyId == companyId)
+                .Select(cp => cp.ProgramId)
+                .ToListAsync();
+
+            var approvedPlanProgramIds = await _context.NFD_CoursePlans
+                .AsNoTracking()
+                .Where(plan =>
+                    plan.CompanyId == companyId &&
+                    plan.ApprovalStatus == NFD_CoursePlanApprovalStatus.Approved &&
+                    plan.ProgramId.HasValue)
+                .Select(plan => plan.ProgramId!.Value)
+                .ToListAsync();
+
+            var availableProgramIds = companyProgramIds
+                .Concat(approvedPlanProgramIds)
+                .Distinct()
+                .ToList();
+
+            var programs = await _context.NFD_Programs
+                .AsNoTracking()
+                .Where(p => availableProgramIds.Contains(p.ProgramId) && p.Status != NFD_ProgramStatus.Archived)
+                .OrderBy(p => p.Title)
+                .Select(p => new CoursePlanProgramOptionDTO
+                {
+                    ProgramId = p.ProgramId,
+                    Title = p.Title,
+                    Description = p.Description,
+                    Category = p.Category,
+                    DurationHours = p.DurationHours,
+                    Price = p.Price,
+                    TrackId = p.TrackId,
+                    Status = p.Status.ToString()
+                })
+                .ToListAsync();
+
+            var tracks = await _context.NFD_Tracks
+                .AsNoTracking()
+                .Where(t => t.Status == NFD_TrackStatus.Active)
+                .OrderBy(t => t.Name)
+                .Select(t => new CoursePlanTrackOptionDTO
+                {
+                    TrackId = t.TrackId,
+                    Name = t.Name
+                })
+                .ToListAsync();
+
             var planCategories = await _context.NFD_CoursePlans
                 .AsNoTracking()
                 .Where(p => p.CompanyId == companyId && p.Category != null && p.Category != "")
@@ -103,6 +162,8 @@ namespace Nafadh_Backend.Controllers
             return Ok(new CoursePlanLookupsDTO
             {
                 Trainers = trainers.OrderBy(t => t.FullName).ToList(),
+                Programs = programs,
+                Tracks = tracks,
                 Categories = programCategories
                     .Concat(planCategories)
                     .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -144,19 +205,79 @@ namespace Nafadh_Backend.Controllers
             if (error is not null)
                 return BadRequest(new { message = error });
 
-            var title = dto.Title.Trim();
-            if (await TitleExistsAsync(companyId, title, null))
-                return Conflict(new { message = "لديكم خطة بنفس العنوان مسبقاً." });
-
             var now = DateTime.Now;
+            NFD_Program? program;
+
+            if (dto.ProgramId.HasValue)
+            {
+                program = await _context.NFD_CompanyPrograms
+                    .Where(cp => cp.CompanyId == companyId && cp.ProgramId == dto.ProgramId.Value)
+                    .Select(cp => cp.Program)
+                    .FirstOrDefaultAsync();
+
+                if (program is null || program.Status == NFD_ProgramStatus.Archived)
+                    return BadRequest(new { message = "الكورس المختار غير متاح لهذه الشركة." });
+            }
+            else
+            {
+                if (!dto.TrackId.HasValue)
+                    return BadRequest(new { message = "اختر المسار عند إنشاء كورس جديد يدوياً." });
+
+                var trackExists = await _context.NFD_Tracks
+                    .AsNoTracking()
+                    .AnyAsync(t => t.TrackId == dto.TrackId.Value && t.Status == NFD_TrackStatus.Active);
+
+                if (!trackExists)
+                    return BadRequest(new { message = "المسار المختار غير موجود أو غير نشط." });
+
+                program = new NFD_Program
+                {
+                    Title = dto.Title.Trim(),
+                    Description = Clean(dto.Description),
+                    Category = Clean(dto.Category),
+                    DurationHours = dto.DurationHours,
+                    Price = dto.Price < 0 ? 0 : dto.Price,
+                    TrackId = dto.TrackId.Value,
+                    Status = NFD_ProgramStatus.Draft
+                };
+
+                _context.NFD_Programs.Add(program);
+                await _context.SaveChangesAsync();
+            }
+
+            var title = program.Title;
+            if (await TitleExistsAsync(companyId, title, null))
+            {
+                // Avoid leaving an orphan Draft Program when manual creation collides with an existing plan.
+                if (!dto.ProgramId.HasValue)
+                {
+                    _context.NFD_Programs.Remove(program);
+                    await _context.SaveChangesAsync();
+                }
+
+                return Conflict(new { message = "لديكم خطة بنفس عنوان الكورس مسبقاً." });
+            }
+
+            var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds);
+            if (trainerIds.Error is not null)
+            {
+                if (!dto.ProgramId.HasValue)
+                {
+                    _context.NFD_Programs.Remove(program);
+                    await _context.SaveChangesAsync();
+                }
+                return BadRequest(new { message = trainerIds.Error });
+            }
+
             var plan = new NFD_CoursePlan
             {
                 CompanyId = companyId,
+                ProgramId = program.ProgramId,
                 CreatedByUserId = userId.Value,
                 Title = title,
-                Description = Clean(dto.Description),
-                Category = Clean(dto.Category),
-                DurationHours = dto.DurationHours,
+                Description = program.Description,
+                Category = program.Category,
+                DurationHours = program.DurationHours,
                 StartDate = dto.StartDate.Date,
                 EndDate = dto.EndDate.Date,
                 ApprovalStatus = NFD_CoursePlanApprovalStatus.Draft,
@@ -164,6 +285,9 @@ namespace Nafadh_Backend.Controllers
                 CreatedAt = now,
                 UpdatedAt = now
             };
+
+            foreach (var trainerId in trainerIds.Ids)
+                plan.Trainers.Add(new NFD_CoursePlanTrainer { Plan = plan, TrainerId = trainerId });
 
             _context.NFD_CoursePlans.Add(plan);
             await _context.SaveChangesAsync();
@@ -199,10 +323,60 @@ namespace Nafadh_Backend.Controllers
             if (await TitleExistsAsync(companyId, title, planId))
                 return Conflict(new { message = "لديكم خطة بنفس العنوان مسبقاً." });
 
-            plan.Title = title;
-            plan.Description = Clean(dto.Description);
-            plan.Category = Clean(dto.Category);
-            plan.DurationHours = dto.DurationHours;
+            if (plan.ProgramId.HasValue)
+            {
+                var program = await _context.NFD_Programs.FirstOrDefaultAsync(p => p.ProgramId == plan.ProgramId.Value);
+                var alreadyLinked = await _context.NFD_CompanyPrograms
+                    .AsNoTracking()
+                    .AnyAsync(cp => cp.CompanyId == companyId && cp.ProgramId == plan.ProgramId.Value);
+
+                if (program is not null && !alreadyLinked)
+                {
+                    program.Title = title;
+                    program.Description = Clean(dto.Description);
+                    program.Category = Clean(dto.Category);
+                    program.DurationHours = dto.DurationHours;
+                    program.Price = dto.Price < 0 ? 0 : dto.Price;
+
+                    if (dto.TrackId.HasValue)
+                    {
+                        var trackExists = await _context.NFD_Tracks
+                            .AsNoTracking()
+                            .AnyAsync(t => t.TrackId == dto.TrackId.Value && t.Status == NFD_TrackStatus.Active);
+                        if (!trackExists)
+                            return BadRequest(new { message = "المسار المختار غير موجود أو غير نشط." });
+                        program.TrackId = dto.TrackId.Value;
+                    }
+
+                    plan.Title = program.Title;
+                    plan.Description = program.Description;
+                    plan.Category = program.Category;
+                    plan.DurationHours = program.DurationHours;
+                }
+                else
+                {
+                    plan.Title = program?.Title ?? plan.Title;
+                    plan.Description = program?.Description ?? plan.Description;
+                    plan.Category = program?.Category ?? plan.Category;
+                    plan.DurationHours = program?.DurationHours ?? plan.DurationHours;
+                }
+            }
+            else
+            {
+                plan.Title = title;
+                plan.Description = Clean(dto.Description);
+                plan.Category = Clean(dto.Category);
+                plan.DurationHours = dto.DurationHours;
+            }
+
+            var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds);
+            if (trainerIds.Error is not null)
+                return BadRequest(new { message = trainerIds.Error });
+
+            _context.NFD_CoursePlanTrainers.RemoveRange(plan.Trainers.ToList());
+            foreach (var trainerId in trainerIds.Ids)
+                plan.Trainers.Add(new NFD_CoursePlanTrainer { PlanId = plan.PlanId, TrainerId = trainerId });
+
             plan.StartDate = start;
             plan.EndDate = end;
             plan.UpdatedAt = DateTime.Now;
@@ -227,10 +401,84 @@ namespace Nafadh_Backend.Controllers
                 return Conflict(new { message = "يمكن حذف المسودات فقط." });
 
             _context.NFD_CoursePlanNotes.RemoveRange(plan.Notes.ToList());
+
+            if (plan.ProgramId.HasValue)
+            {
+                var companyLinked = await _context.NFD_CompanyPrograms
+                    .AsNoTracking()
+                    .AnyAsync(cp => cp.CompanyId == companyId && cp.ProgramId == plan.ProgramId.Value);
+
+                var usedByOtherPlan = await _context.NFD_CoursePlans
+                    .AsNoTracking()
+                    .AnyAsync(p => p.PlanId != plan.PlanId && p.ProgramId == plan.ProgramId.Value);
+
+                if (!companyLinked && !usedByOtherPlan)
+                {
+                    var program = await _context.NFD_Programs
+                        .FirstOrDefaultAsync(p => p.ProgramId == plan.ProgramId.Value);
+
+                    if (program is not null && program.Status == NFD_ProgramStatus.Draft)
+                        _context.NFD_Programs.Remove(program);
+                }
+            }
+
             _context.NFD_CoursePlans.Remove(plan);
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        // Trainer assignments are intentionally separate from structural editing:
+        // a trainer may be added, removed or replaced even after Authority approval.
+        [HttpPut("company/{companyId:int}/plans/{planId:int}/trainers")]
+        public async Task<ActionResult<CoursePlanDetailDTO>> SetPlanTrainers(
+            int companyId, int planId, [FromBody] SetCoursePlanTrainersDTO dto)
+        {
+            if (!await OwnsCompanyAsync(companyId))
+                return Forbid();
+
+            var plan = await FindPlanAsync(companyId, planId, tracking: true);
+            if (plan is null)
+                return NotFound(new { message = "الخطة غير موجودة." });
+
+            var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds);
+            if (trainerIds.Error is not null)
+                return BadRequest(new { message = trainerIds.Error });
+
+            _context.NFD_CoursePlanTrainers.RemoveRange(plan.Trainers.ToList());
+            foreach (var trainerId in trainerIds.Ids)
+                plan.Trainers.Add(new NFD_CoursePlanTrainer { PlanId = plan.PlanId, TrainerId = trainerId });
+
+            plan.UpdatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+            return Ok(await ReloadAsync(companyId, planId));
+        }
+
+        [HttpPut("company/{companyId:int}/plans/{planId:int}/stages/{stageId:int}/trainers")]
+        public async Task<ActionResult<CoursePlanDetailDTO>> SetStageTrainers(
+            int companyId, int planId, int stageId, [FromBody] SetCoursePlanTrainersDTO dto)
+        {
+            if (!await OwnsCompanyAsync(companyId))
+                return Forbid();
+
+            var plan = await FindPlanAsync(companyId, planId, tracking: true);
+            var stage = plan?.Stages.FirstOrDefault(s => s.StageId == stageId);
+            if (plan is null || stage is null)
+                return NotFound(new { message = "المرحلة غير موجودة." });
+
+            var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds);
+            if (trainerIds.Error is not null)
+                return BadRequest(new { message = trainerIds.Error });
+
+            _context.NFD_CoursePlanStageTrainers.RemoveRange(stage.Trainers.ToList());
+            foreach (var trainerId in trainerIds.Ids)
+                stage.Trainers.Add(new NFD_CoursePlanStageTrainer { StageId = stage.StageId, TrainerId = trainerId });
+
+            stage.TrainerId = trainerIds.Ids.FirstOrDefault() == 0 ? null : trainerIds.Ids.First();
+            plan.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return Ok(await ReloadAsync(companyId, planId));
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -251,7 +499,7 @@ namespace Nafadh_Backend.Controllers
             if (!IsEditable(plan))
                 return Conflict(new { message = LockedMessage(plan) });
 
-            var error = ValidateStage(plan, dto) ?? await ValidateTrainerAsync(dto.TrainerId);
+            var error = ValidateStage(plan, dto);
             if (error is not null)
                 return BadRequest(new { message = error });
 
@@ -262,12 +510,23 @@ namespace Nafadh_Backend.Controllers
                 Description = Clean(dto.Description),
                 StartDate = dto.StartDate.Date,
                 EndDate = dto.EndDate.Date,
-                TrainerId = dto.TrainerId,
+                TrainerId = dto.TrainerIds.FirstOrDefault() == 0 ? dto.TrainerId : dto.TrainerIds.First(),
                 OrderIndex = plan.Stages.Count == 0 ? 1 : plan.Stages.Max(s => s.OrderIndex) + 1,
                 Status = NFD_CoursePlanProgressStatus.NotStarted
             };
 
+            var stageTrainerIds = await ValidateTrainerIdsAsync(
+                dto.TrainerIds.Count > 0
+                    ? dto.TrainerIds
+                    : (dto.TrainerId.HasValue ? new List<int> { dto.TrainerId.Value } : new List<int>()));
+
+            if (stageTrainerIds.Error is not null)
+                return BadRequest(new { message = stageTrainerIds.Error });
+
             _context.NFD_CoursePlanStages.Add(stage);
+            foreach (var trainerId in stageTrainerIds.Ids)
+                stage.Trainers.Add(new NFD_CoursePlanStageTrainer { Stage = stage, TrainerId = trainerId });
+
             plan.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
 
@@ -289,7 +548,7 @@ namespace Nafadh_Backend.Controllers
             if (!IsEditable(plan))
                 return Conflict(new { message = LockedMessage(plan) });
 
-            var error = ValidateStage(plan, dto) ?? await ValidateTrainerAsync(dto.TrainerId);
+            var error = ValidateStage(plan, dto);
             if (error is not null)
                 return BadRequest(new { message = error });
 
@@ -303,7 +562,19 @@ namespace Nafadh_Backend.Controllers
             stage.Description = Clean(dto.Description);
             stage.StartDate = start;
             stage.EndDate = end;
-            stage.TrainerId = dto.TrainerId;
+            var stageTrainerIds = await ValidateTrainerIdsAsync(
+                dto.TrainerIds.Count > 0
+                    ? dto.TrainerIds
+                    : (dto.TrainerId.HasValue ? new List<int> { dto.TrainerId.Value } : new List<int>()));
+
+            if (stageTrainerIds.Error is not null)
+                return BadRequest(new { message = stageTrainerIds.Error });
+
+            stage.TrainerId = stageTrainerIds.Ids.FirstOrDefault() == 0 ? null : stageTrainerIds.Ids.First();
+            _context.NFD_CoursePlanStageTrainers.RemoveRange(stage.Trainers.ToList());
+            foreach (var trainerId in stageTrainerIds.Ids)
+                stage.Trainers.Add(new NFD_CoursePlanStageTrainer { Stage = stage, TrainerId = trainerId });
+
             plan.UpdatedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
@@ -780,6 +1051,27 @@ namespace Nafadh_Backend.Controllers
             return null;
         }
 
+        private async Task<(List<int> Ids, string? Error)> ValidateTrainerIdsAsync(IEnumerable<int>? trainerIds)
+        {
+            var ids = (trainerIds ?? Enumerable.Empty<int>())
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+
+            if (ids.Count == 0)
+                return (ids, null);
+
+            var activeIds = await _context.NFD_Trainers
+                .AsNoTracking()
+                .Where(t => ids.Contains(t.TrainerId) && t.Status == NFD_TrainerStatus.Active)
+                .Select(t => t.TrainerId)
+                .ToListAsync();
+
+            return activeIds.Count == ids.Count
+                ? (ids, null)
+                : (ids, "يوجد مدرب مختار غير موجود أو غير نشط.");
+        }
+
         private async Task<string?> ValidateTrainerAsync(int? trainerId)
         {
             if (trainerId is null)
@@ -808,9 +1100,6 @@ namespace Nafadh_Backend.Controllers
 
             foreach (var stage in plan.Stages.OrderBy(s => s.OrderIndex))
             {
-                if (stage.TrainerId is null)
-                    problems.Add($"المرحلة «{stage.Title}» بلا مدرب");
-
                 if (stage.Items.Count == 0)
                     problems.Add($"المرحلة «{stage.Title}» بلا مهام أو مشروعات");
             }

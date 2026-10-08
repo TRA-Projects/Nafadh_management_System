@@ -19,6 +19,10 @@ namespace Nafadh_Backend.Models
         public int CompanyId { get; set; }
         public NFD_Company Company { get; set; } = null!;
 
+        /// <summary>Canonical course/program record. Nullable keeps existing plans compatible.</summary>
+        public int? ProgramId { get; set; }
+        public NFD_Program? Program { get; set; }
+
         public int CreatedByUserId { get; set; }
         public NFD_User CreatedByUser { get; set; } = null!;
 
@@ -55,6 +59,7 @@ namespace Nafadh_Backend.Models
         public DateTime UpdatedAt { get; set; }
 
         public ICollection<NFD_CoursePlanStage> Stages { get; set; } = new List<NFD_CoursePlanStage>();
+        public ICollection<NFD_CoursePlanTrainer> Trainers { get; set; } = new List<NFD_CoursePlanTrainer>();
         public ICollection<NFD_CoursePlanNote> Notes { get; set; } = new List<NFD_CoursePlanNote>();
     }
 
@@ -83,6 +88,7 @@ namespace Nafadh_Backend.Models
         public NFD_CoursePlanProgressStatus Status { get; set; }
 
         public ICollection<NFD_CoursePlanItem> Items { get; set; } = new List<NFD_CoursePlanItem>();
+        public ICollection<NFD_CoursePlanStageTrainer> Trainers { get; set; } = new List<NFD_CoursePlanStageTrainer>();
     }
 
     /// <summary>Maps to [NFD_CoursePlanItems] — a task or project inside a stage.</summary>
@@ -146,6 +152,11 @@ namespace Nafadh_Backend.Models
             {
                 entity.ToTable("NFD_CoursePlans");
                 entity.HasIndex(e => new { e.CompanyId, e.ApprovalStatus });
+                entity.HasIndex(e => e.ProgramId);
+                entity.HasOne(e => e.Program)
+                    .WithMany()
+                    .HasForeignKey(e => e.ProgramId)
+                    .OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(e => e.Company)
                     .WithMany()
                     .HasForeignKey(e => e.CompanyId)
@@ -160,12 +171,42 @@ namespace Nafadh_Backend.Models
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            modelBuilder.Entity<NFD_CoursePlanTrainer>(entity =>
+            {
+                entity.ToTable("NFD_CoursePlanTrainers");
+                entity.HasKey(e => new { e.PlanId, e.TrainerId });
+                entity.HasIndex(e => e.TrainerId);
+                entity.HasOne(e => e.Plan)
+                    .WithMany(p => p.Trainers)
+                    .HasForeignKey(e => e.PlanId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.Trainer)
+                    .WithMany()
+                    .HasForeignKey(e => e.TrainerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
             modelBuilder.Entity<NFD_CoursePlanStage>(entity =>
             {
                 entity.ToTable("NFD_CoursePlanStages");
                 entity.HasOne(e => e.Plan)
                     .WithMany(p => p.Stages)
                     .HasForeignKey(e => e.PlanId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.Trainer)
+                    .WithMany()
+                    .HasForeignKey(e => e.TrainerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<NFD_CoursePlanStageTrainer>(entity =>
+            {
+                entity.ToTable("NFD_CoursePlanStageTrainers");
+                entity.HasKey(e => new { e.StageId, e.TrainerId });
+                entity.HasIndex(e => e.TrainerId);
+                entity.HasOne(e => e.Stage)
+                    .WithMany(s => s.Trainers)
+                    .HasForeignKey(e => e.StageId)
                     .OnDelete(DeleteBehavior.Cascade);
                 entity.HasOne(e => e.Trainer)
                     .WithMany()
