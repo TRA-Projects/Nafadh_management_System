@@ -1,0 +1,651 @@
+<section class="tasks-page" dir="rtl">
+  <header class="page-head">
+    <div>
+      <h2>المهام والمشروعات</h2>
+      <p>
+        خطّط للكورس ومراحله ومهامه ومشروعاته وأسند كل مرحلة لمدربها، ثم أرسله لاعتماد الهيئة. لا يمكن الشروع في
+        التنفيذ قبل الاعتماد، وبعده تتابع حالة التنفيذ ونسبة إنجاز الكورس.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="btn primary"
+      (click)="openCreate()"
+      [disabled]="loading() || !!error()">
+      <i class="fa-solid fa-plus"></i>
+      خطة كورس جديدة
+    </button>
+  </header>
+
+  @if (!loading() && !error()) {
+    <div class="stats-grid">
+      <article class="stat-card">
+        <div class="stat-icon bg-blue">
+          <i class="fa-solid fa-diagram-project"></i>
+        </div>
+
+        <div>
+          <span>إجمالي الخطط</span>
+          <strong>{{ counts().total }}</strong>
+          <small>{{ counts().draft }} مسودة</small>
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-icon bg-amber">
+          <i class="fa-solid fa-hourglass-half"></i>
+        </div>
+
+        <div>
+          <span>بانتظار اعتماد الهيئة</span>
+          <strong class="warn">
+            {{ counts().pendingApproval }}
+          </strong>
+          <small>
+            {{ counts().rejected }} مرفوضة تحتاج تعديلاً
+          </small>
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-icon bg-green">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+
+        <div>
+          <span>الكورسات المعتمدة</span>
+          <strong class="ok">
+            {{ approvedCourseCount() }}
+          </strong>
+          <small>
+            {{ counts().inProgress }} قيد التنفيذ ·
+            {{ counts().completed }} مكتملة
+          </small>
+        </div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-icon bg-red">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+
+        <div>
+          <span>خطط متأخرة</span>
+          <strong class="danger">
+            {{ counts().delayedPlans }}
+          </strong>
+          <small>تجاوزت مراحلها مواعيدها</small>
+        </div>
+      </article>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="state-card">
+      <span class="spinner"></span>
+      <span>جاري تحميل الخطط...</span>
+    </div>
+  }
+
+  @if (!loading() && error()) {
+    <div class="state-card error">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span>{{ error() }}</span>
+
+      <button
+        type="button"
+        class="btn ghost"
+        (click)="load()">
+        إعادة المحاولة
+      </button>
+    </div>
+  }
+
+  @if (!loading() && !error()) {
+    <!-- Filters -->
+    <div
+      class="chips"
+      role="group"
+      aria-label="تصفية الخطط والكورسات">
+
+      @for (f of filters; track f.key) {
+        <button
+          type="button"
+          [class.active]="filter() === f.key"
+          (click)="setFilter(f.key)">
+          {{ f.label }}
+        </button>
+      }
+
+      <input
+        type="search"
+        class="search-inline"
+        placeholder="ابحث باسم الكورس أو التصنيف"
+        [value]="search()"
+        (input)="onSearch($event)" />
+    </div>
+
+    <!-- Existing approved company courses -->
+    @if (filteredApprovedCourses().length) {
+      <section aria-labelledby="approved-courses-title">
+        <div class="page-head">
+          <div>
+            <h3 id="approved-courses-title">
+              الكورسات المعتمدة
+            </h3>
+
+            <p>
+              الكورسات المعتمدة والمتاحة للشركة.
+            </p>
+          </div>
+
+          <span class="chip ap-approved">
+            {{ filteredApprovedCourses().length }} كورس
+          </span>
+        </div>
+
+        <div class="plan-grid">
+          @for (
+            course of filteredApprovedCourses();
+            track trackCourse($index, course)
+          ) {
+            <article class="plan-card s-approved">
+              <div class="top">
+                <div>
+                  <h3>{{ course.title }}</h3>
+
+                  <span class="cat">
+                    {{ course.category || 'بدون تصنيف' }}
+                    ·
+                    {{ course.durationHours }} ساعة
+                  </span>
+                </div>
+
+                <div class="badges">
+                  <span class="chip ap-approved">
+                    معتمدة
+                  </span>
+                </div>
+              </div>
+
+              <div class="meta">
+                <span>
+                  <i class="fa-solid fa-graduation-cap"></i>
+                  برنامج متاح للشركة
+                </span>
+
+                @if (
+                  course.price !== null &&
+                  course.price !== undefined
+                ) {
+                  <span>
+                    <i class="fa-solid fa-money-bill"></i>
+                    {{ course.price }}
+                  </span>
+                }
+              </div>
+
+              @if (course.description) {
+                <p>{{ course.description }}</p>
+              }
+
+              <div class="notice ok">
+                <i class="fa-solid fa-circle-check"></i>
+
+                <p>
+                  هذا الكورس معتمد ومتاح للشركة، ويمكن إنشاء خطة
+                  تنفيذ له دون إنشاء برنامج مكرر.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                class="btn ghost"
+                (click)="openCreate(course.programId)">
+                <i class="fa-solid fa-plus"></i>
+                إنشاء خطة لهذا الكورس
+              </button>
+            </article>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Course Plans -->
+    @if (filtered().length) {
+      <div class="plan-grid">
+        @for (
+          plan of filtered();
+          track trackPlan($index, plan)
+        ) {
+          <article
+            class="plan-card"
+            [class]="'plan-card s-' + plan.approvalStatus.toLowerCase()"
+            tabindex="0"
+            role="link"
+            (click)="open(plan)"
+            (keydown.enter)="open(plan)">
+
+            <div class="top">
+              <div>
+                <h3>{{ plan.title }}</h3>
+
+                <span class="cat">
+                  {{ plan.category || 'بدون تصنيف' }}
+                  ·
+                  {{ plan.durationHours }} ساعة
+                </span>
+              </div>
+
+              <div class="badges">
+                <span
+                  [class]="
+                    'chip ap-' +
+                    plan.approvalStatus.toLowerCase()
+                  ">
+                  {{ approvalLabel(plan.approvalStatus) }}
+                </span>
+
+                @if (executionLabel(plan); as ex) {
+                  <span
+                    [class]="
+                      'chip ex-' +
+                      plan.executionStatus.toLowerCase()
+                    ">
+                    {{ ex }}
+                  </span>
+                }
+
+                @if (plan.isDelayed) {
+                  <span class="chip late">
+                    <i class="fa-solid fa-clock"></i>
+                    متأخرة
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="meta">
+              <span>
+                <i class="fa-regular fa-calendar"></i>
+                {{ formatDate(plan.startDate) }}
+                ←
+                {{ formatDate(plan.endDate) }}
+              </span>
+
+              <span>
+                <i class="fa-solid fa-layer-group"></i>
+                {{ plan.stageCount }} مراحل
+              </span>
+
+              <span>
+                <i class="fa-solid fa-list-check"></i>
+                {{ plan.completedItems }}/{{ plan.itemCount }}
+                مهمة ومشروع
+              </span>
+            </div>
+
+            @if (plan.approvalStatus === 'Approved') {
+              <div>
+                <div class="progress-head">
+                  <span>نسبة إنجاز الكورس</span>
+                  <b>{{ plan.progressPercentage }}%</b>
+                </div>
+
+                <div class="bar-wrap">
+                  <div
+                    class="bar"
+                    [class.late]="plan.isDelayed"
+                    [class.done]="
+                      plan.executionStatus === 'Completed'
+                    ">
+                    <i
+                      [style.width.%]="
+                        plan.progressPercentage
+                      "></i>
+                  </div>
+
+                  @if (
+                    plan.executionStatus !== 'Completed' &&
+                    plan.executionStatus !== 'NotStarted'
+                  ) {
+                    <span
+                      class="expected"
+                      [style.inset-inline-start.%]="
+                        plan.expectedProgressPercentage
+                      "
+                      title="المتوقع حسب الجدول">
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (
+              plan.approvalStatus === 'Rejected' &&
+              plan.reviewNote
+            ) {
+              <div class="notice err">
+                <i class="fa-solid fa-circle-xmark"></i>
+
+                <div>
+                  <b>ملاحظة الهيئة</b>
+                  <p>{{ plan.reviewNote }}</p>
+                </div>
+              </div>
+            }
+
+            @if (
+              plan.approvalStatus === 'PendingApproval'
+            ) {
+              <div class="notice warn">
+                <i class="fa-solid fa-hourglass-half"></i>
+
+                <p>
+                  أُرسلت للهيئة بتاريخ
+                  {{ formatDate(plan.submittedAt) }}.
+                  لا يمكن تعديلها أو الشروع فيها حتى تُعتمد.
+                </p>
+              </div>
+            }
+
+            @if (
+              plan.approvalStatus === 'Approved' &&
+              plan.executionStatus === 'NotStarted'
+            ) {
+              <div class="notice ok">
+                <i class="fa-solid fa-circle-check"></i>
+
+                <p>
+                  اعتمدتها الهيئة. يمكن للمدرب المكلّف الآن
+                  الشروع في الكورس في الوقت المناسب له.
+                </p>
+              </div>
+            }
+          </article>
+        }
+      </div>
+    }
+
+    <!-- Empty state -->
+    @if (!hasFilteredResults()) {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <i class="fa-solid fa-clipboard-list"></i>
+        </div>
+
+        <strong>
+          لا توجد كورسات مطابقة
+        </strong>
+
+        <span>
+          لا توجد نتائج ضمن الفلتر الحالي.
+          غيّر عامل التصفية أو البحث.
+        </span>
+      </div>
+    }
+  }
+
+  <!-- Create modal -->
+  @if (formOpen()) {
+    <div
+      class="overlay"
+      (click)="closeForm()">
+
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        (click)="$event.stopPropagation()">
+
+        <header class="modal-head">
+          <h3>خطة كورس جديدة</h3>
+
+          <button
+            type="button"
+            class="icon-btn"
+            aria-label="إغلاق"
+            (click)="closeForm()">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </header>
+
+        <form
+          class="modal-body"
+          (ngSubmit)="save()">
+
+          <label class="field">
+            <span>
+              مصدر الكورس <em>*</em>
+            </span>
+
+            <select
+              name="programId"
+              [ngModel]="form.programId"
+              (ngModelChange)="
+                onProgramChange(
+                  $event === '' ? null : $event
+                )
+              ">
+
+              <option [ngValue]="null">
+                كورس جديد — إدخال يدوي
+              </option>
+
+              @for (
+                program of programs();
+                track program.programId
+              ) {
+                <option [ngValue]="program.programId">
+                  {{ program.title }}
+                </option>
+              }
+            </select>
+
+            <small>
+              يمكن استخدام كورس موجود في برامج الشركة، أو إنشاء
+              كورس جديد يضاف إلى برامج الشركة بعد اعتماد الهيئة.
+            </small>
+          </label>
+
+          <label class="field">
+            <span>
+              عنوان الكورس <em>*</em>
+            </span>
+
+            <input
+              type="text"
+              name="title"
+              [(ngModel)]="form.title"
+              maxlength="150"
+              [readonly]="isExistingProgram()"
+              placeholder="مثال: تطوير تطبيقات الويب بـ Angular" />
+          </label>
+
+          <label class="field">
+            <span>
+              وصف الكورس وأهدافه
+            </span>
+
+            <textarea
+              name="description"
+              rows="4"
+              [(ngModel)]="form.description"
+              [readonly]="isExistingProgram()"
+              placeholder="ما الذي سيتعلمه المتدرب؟ وما مخرجات الكورس؟">
+            </textarea>
+
+            <small>
+              عند اختيار كورس موجود، تُستخدم بيانات البرنامج
+              الأساسية نفسها ولا تُنشأ نسخة أخرى.
+            </small>
+          </label>
+
+          <div class="field-row">
+            <label class="field">
+              <span>التصنيف</span>
+
+              <input
+                type="text"
+                name="category"
+                [(ngModel)]="form.category"
+                maxlength="100"
+                list="plan-categories"
+                [readonly]="isExistingProgram()"
+                placeholder="مثال: تطوير البرمجيات" />
+
+              <datalist id="plan-categories">
+                @for (c of categories(); track c) {
+                  <option [value]="c"></option>
+                }
+              </datalist>
+            </label>
+
+            <label class="field">
+              <span>
+                إجمالي الساعات <em>*</em>
+              </span>
+
+              <input
+                type="number"
+                name="hours"
+                min="1"
+                max="10000"
+                [(ngModel)]="form.durationHours"
+                [readonly]="isExistingProgram()" />
+            </label>
+          </div>
+
+          @if (!isExistingProgram()) {
+            <div class="field-row">
+              <label class="field">
+                <span>
+                  المسار <em>*</em>
+                </span>
+
+                <select
+                  name="trackId"
+                  [(ngModel)]="form.trackId">
+
+                  <option [ngValue]="null">
+                    اختر المسار
+                  </option>
+
+                  @for (
+                    track of tracks();
+                    track track.trackId
+                  ) {
+                    <option [ngValue]="track.trackId">
+                      {{ track.name }}
+                    </option>
+                  }
+                </select>
+              </label>
+
+              <label class="field">
+                <span>السعر</span>
+
+                <input
+                  type="number"
+                  name="price"
+                  min="0"
+                  step="0.01"
+                  [(ngModel)]="form.price" />
+              </label>
+            </div>
+          }
+
+          <label class="field">
+            <span>
+              المدربون (اختياري)
+            </span>
+
+            <select
+              name="trainerIds"
+              multiple
+              [(ngModel)]="form.trainerIds"
+              size="4">
+
+              @for (
+                trainer of trainers();
+                track trainer.trainerId
+              ) {
+                <option [ngValue]="trainer.trainerId">
+                  {{ trainer.fullName }}
+                  {{
+                    trainer.specialty
+                      ? ' — ' + trainer.specialty
+                      : ''
+                  }}
+                </option>
+              }
+            </select>
+
+            <small>
+              يمكن إنشاء الكورس بدون مدرب، ثم إضافة مدرب أو عدة
+              مدربين لاحقاً. ويمكن توزيع مدربين مختلفين على المراحل.
+            </small>
+          </label>
+
+          <div class="field-row">
+            <label class="field">
+              <span>
+                تاريخ البدء <em>*</em>
+              </span>
+
+              <input
+                type="date"
+                name="start"
+                [(ngModel)]="form.startDate"
+                [attr.min]="today" />
+            </label>
+
+            <label class="field">
+              <span>
+                تاريخ الانتهاء <em>*</em>
+              </span>
+
+              <input
+                type="date"
+                name="end"
+                [(ngModel)]="form.endDate"
+                [attr.min]="
+                  form.startDate || today
+                " />
+            </label>
+          </div>
+
+          @if (formError()) {
+            <div class="form-error">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              {{ formError() }}
+            </div>
+          }
+
+          <footer class="modal-foot">
+            <button
+              type="button"
+              class="btn ghost"
+              (click)="closeForm()"
+              [disabled]="saving()">
+              إلغاء
+            </button>
+
+            <button
+              type="submit"
+              class="btn primary"
+              [disabled]="saving()">
+
+              @if (saving()) {
+                <span class="spinner sm"></span>
+              }
+
+              إنشاء ومتابعة بناء الخطة
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  }
+</section>
