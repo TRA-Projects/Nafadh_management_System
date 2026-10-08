@@ -56,9 +56,14 @@ export class AdminApi {
     }
     return this.http.get<{ items: TraineeListItemDto[]; totalCount: number }>(`${this.base}/Trainee`, { params: httpParams });
   }
-  getCompanies(): Observable<CompanyDto[]> {
-    return this.http.get<CompanyDto[]>(`${this.base}/Company`);
-  }
+getCompanies(search?: string, city?: string, workField?: string): Observable<CompanyDto[]> {
+  let params = new HttpParams();
+  if (search) params = params.set('search', search);
+  if (city && city !== 'ALL') params = params.set('city', city);
+  if (workField && workField !== 'ALL') params = params.set('workField', workField);
+
+  return this.http.get<CompanyDto[]>(`${this.base}/Company`, { params });
+}
   getBatches(): Observable<BatchDto[]> {
     return this.http.get<BatchDto[]>(`${this.base}/Batch`);
   }

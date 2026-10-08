@@ -16,7 +16,9 @@ export class AdminPrograms implements OnInit {
   private adminApi = inject(AdminApi);
   private router = inject(Router);
 
-  // --- مصفوفات البيانات من الـ Database ---
+  // ==========================================================
+  // 1. Database Signals (مصفوفات البيانات من الداتابيس)
+  // ==========================================================
   batches = signal<any[]>([]);
   programs = signal<any[]>([]);
   companies = signal<any[]>([]);
@@ -30,10 +32,13 @@ export class AdminPrograms implements OnInit {
   currentPage = signal<number>(1);
   pageSize = signal<number>(10);
   
-  // 🌟 إظهار صفحة المتدربين كصفحة كاملة بدلاً من المودل 🌟
-  isTraineesPageOpen = signal<boolean>(false);
+  // ==========================================================
+  // 2. Full Page Navigation Flags (الصفحات الكاملة المستقلة)
+  // ==========================================================
+  isTraineesPageOpen = signal<boolean>(false); // صفحة متدربي الدفعة الكاملة
+  isDetailsPageOpen = signal<boolean>(false);  // صفحة تفاصيل الدفعة الكاملة
 
-  // Modals Visibility (للنوافذ الأخرى)
+  // النوافذ المنبثقة (Modals)
   isBatchModalOpen = false;
   isProgramModalOpen = false;
   isViewModalOpen = false;
@@ -41,7 +46,7 @@ export class AdminPrograms implements OnInit {
 
   selectedBatch: any = null;
 
-  // States & Error Messages
+  // الحالات ورسائل الأخطاء
   isSubmittingProgram = false;
   programErrorMessage: string | null = null;
   isSubmittingBatch = false; 
@@ -49,18 +54,21 @@ export class AdminPrograms implements OnInit {
   batchErrorMessage: string | null = null;
   editBatchErrorMessage: string | null = null;
 
-  // Forms
+  // النماذج (Forms)
   batchForm!: FormGroup;
   editBatchForm!: FormGroup;
   programForm!: FormGroup;
 
-  // --- Signals الخاصة بشريط الفلترة والبحث ---
+  // فلاتر البحث والتصفية
   searchTerm = signal<string>('');
   selectedYear = signal<string>('الكل');
   selectedProgram = signal<string>('الكل');
   fromDate = signal<string>('');
   toDate = signal<string>('');
 
+  // ==========================================================
+  // 3. Lifecycle Hook
+  // ==========================================================
   ngOnInit(): void {
     this.initBatchForm();
     this.initEditBatchForm();
@@ -68,7 +76,9 @@ export class AdminPrograms implements OnInit {
     this.loadInitialData();
   }
 
-  // --- دوال استدعاء الداتابيس عبر AdminApi ---
+  // ==========================================================
+  // 4. Data Loading (جلب البيانات من الـ API)
+  // ==========================================================
   loadInitialData(): void {
     this.adminApi.getBatches?.().subscribe({
       next: (res: any) => this.batches.set(res || []),
@@ -88,10 +98,31 @@ export class AdminPrograms implements OnInit {
     });
   }
 
-  // --- 🌟 دالة فتح صفحة المتدربين الكاملة 🌟 ---
+  // ==========================================================
+  // 5. Full Page Handlers: Details & Trainees (الصفحات الكاملة)
+  // ==========================================================
+  
+  // أ) فتح صفحة تفاصيل الدفعة الكاملة (عند الضغط على العين)
+  onView(batch: any): void {
+    this.selectedBatch = batch;
+    this.isDetailsPageOpen.set(true);
+    this.isTraineesPageOpen.set(false);
+    this.isViewModalOpen = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // رجوع من صفحة التفاصيل لجدول الدفعات
+  onBackFromDetails(): void {
+    this.isDetailsPageOpen.set(false);
+    this.selectedBatch = null;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ب) فتح صفحة متدربي الدفعة الكاملة (عند الضغط على أيقونة المتدربين)
   onViewTrainees(batch: any): void {
     this.selectedBatch = batch;
     this.isTraineesPageOpen.set(true);
+    this.isDetailsPageOpen.set(false);
     this.selectedBatchTrainees.set([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -101,7 +132,6 @@ export class AdminPrograms implements OnInit {
       next: (res: any) => {
         const all = res?.items || (Array.isArray(res) ? res : []);
         
-        // فلترة المتدربين التابعين لهذه الدفعة فقط
         const matched = all.filter((t: any) => {
           const tBatchId = t.batchId ?? t.batch_id ?? t.BatchId;
           const tBatchName = t.batchName ?? t.BatchName;
@@ -121,14 +151,27 @@ export class AdminPrograms implements OnInit {
     });
   }
 
-  // --- 🌟 دالة الرجوع من صفحة المتدربين لجدول الدفعات 🌟 ---
+  // رجوع من صفحة المتدربين لجدول الدفعات
   onBackFromTrainees(): void {
     this.isTraineesPageOpen.set(false);
     this.selectedBatchTrainees.set([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // --- 🌟 دالة الانتقال المباشر لصفحة "التواصل والمراسلات" 🌟 ---
+  // الانتقال لمتدربي الدفعة من داخل صفحة التفاصيل
+  onViewTraineesFromDetails(): void {
+    const b = this.selectedBatch;
+    this.isDetailsPageOpen.set(false);
+    this.onViewTrainees(b);
+  }
+
+  // الانتقال لتعديل الدفعة من داخل صفحة التفاصيل
+  onEditFromDetails(): void {
+    const b = this.selectedBatch;
+    this.onEdit(b);
+  }
+
+  // الانتقال لصفحة التواصل والمراسلات مع المتدرب
   onMessageTrainee(trainee: any): void {
     const tId = trainee?.traineeId || trainee?.id;
     const tName = trainee?.fullName || trainee?.name;
@@ -142,35 +185,9 @@ export class AdminPrograms implements OnInit {
     });
   }
 
-  // فتح متدربي الدفعة من داخل نافذة التفاصيل
-  onViewTraineesFromDetails(): void {
-    const b = this.selectedBatch;
-    this.onCloseViewModal();
-    this.onViewTrainees(b);
-  }
-
-  // فتح نافذة التعديل من داخل نافذة التفاصيل
-  onEditFromDetails(): void {
-    const b = this.selectedBatch;
-    this.onCloseViewModal();
-    this.onEdit(b);
-  }
-
-  // حساب مدة الدفعة
-  getBatchDuration(startDate?: string, endDate?: string): string {
-    if (!startDate || !endDate) return '-';
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    const months = Math.floor(diffDays / 30);
-    const weeks = Math.floor((diffDays % 30) / 7);
-    if (months > 0) {
-      return `${months} شهر ${weeks > 0 ? 'و ' + weeks + ' أسابيع' : ''}`;
-    }
-    return `${Math.ceil(diffDays / 7)} أسابيع`;
-  }
-
-  // التحقق من صحة تاريخ النهاية والبداية
+  // ==========================================================
+  // 6. Form Validations (الفاليديشن والتحقق)
+  // ==========================================================
   dateRangeValidator(group: FormGroup) {
     const start = group.get('startDate')?.value;
     const end = group.get('endDate')?.value;
@@ -234,169 +251,9 @@ export class AdminPrograms implements OnInit {
     }
   }
 
-  normalizeStatus(status: any): string {
-    if (!status) return '';
-    const s = String(status).trim().toLowerCase();
-    if (s === 'ongoing' || s === 'جارية' || s === 'جاري' || s === 'active') return 'جارية';
-    if (s === 'upcoming' || s === 'قادمة' || s === 'قادم' || s === 'pending') return 'قادمة';
-    if (s === 'completed' || s === 'مكتملة' || s === 'مكتمل') return 'مكتملة';
-    return status;
-  }
-
-  availableYears = computed(() => {
-    const yearsSet = new Set<string>();
-    this.batches().forEach(b => {
-      if (b.startDate) {
-        const year = new Date(b.startDate).getFullYear().toString();
-        if (!isNaN(Number(year))) yearsSet.add(year);
-      }
-    });
-    ['2027', '2026', '2025', '2024'].forEach(y => yearsSet.add(y));
-    return Array.from(yearsSet).sort().reverse();
-  });
-
-  getCountByStatus(status: string): number {
-    if (status === 'الكل') return this.batches().length;
-    return this.batches().filter(b => this.normalizeStatus(b.status) === status).length;
-  }
-
-  activeFiltersCount = computed(() => {
-    let count = 0;
-    if (this.searchTerm().trim()) count++;
-    if (this.selectedYear() !== 'الكل') count++;
-    if (this.selectedProgram() !== 'الكل') count++;
-    if (this.fromDate()) count++;
-    if (this.toDate()) count++;
-    return count;
-  });
-
-  filteredBatches = computed(() => {
-    const status = this.statusFilter();
-    const search = this.searchTerm().trim().toLowerCase();
-    const year = this.selectedYear();
-    const prog = this.selectedProgram();
-    const from = this.fromDate();
-    const to = this.toDate();
-
-    return this.batches().filter(batch => {
-      if (status !== 'الكل' && this.normalizeStatus(batch.status) !== status) return false;
-
-      if (search) {
-        const batchName = (batch.batchName || '').toLowerCase();
-        const progName = this.getProgramName(batch).toLowerCase();
-        const trackName = this.getTrackName(batch).toLowerCase();
-        const compName = (batch.companyName || '').toLowerCase();
-        if (!batchName.includes(search) && !progName.includes(search) && !trackName.includes(search) && !compName.includes(search)) {
-          return false;
-        }
-      }
-
-      if (prog !== 'الكل') {
-        if (batch.programId?.toString() !== prog && batch.programName !== prog) return false;
-      }
-
-      if (year !== 'الكل' && batch.startDate) {
-        const batchYear = new Date(batch.startDate).getFullYear().toString();
-        if (batchYear !== year) return false;
-      }
-
-      if (from && batch.startDate) {
-        const bStart = batch.startDate.split('T')[0];
-        if (bStart < from) return false;
-      }
-
-      if (to && batch.startDate) {
-        const bDate = batch.startDate.split('T')[0];
-        if (bDate > to) return false;
-      }
-
-      return true;
-    });
-  });
-
-  paginatedBatches = computed(() => {
-    const filtered = this.filteredBatches();
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return filtered.slice(start, start + this.pageSize());
-  });
-
-  totalPages = computed(() => {
-    return Math.ceil(this.filteredBatches().length / this.pageSize()) || 1;
-  });
-
-  totalBatchesCount = computed(() => this.filteredBatches().length);
-
-  onSearchInput(event: Event): void {
-    this.searchTerm.set((event.target as HTMLInputElement).value);
-    this.currentPage.set(1);
-  }
-
-  onYearChange(event: Event): void {
-    this.selectedYear.set((event.target as HTMLSelectElement).value);
-    this.currentPage.set(1);
-  }
-
-  onProgramFilterChange(event: Event): void {
-    this.selectedProgram.set((event.target as HTMLSelectElement).value);
-    this.currentPage.set(1);
-  }
-
-  onFromDateChange(event: Event): void {
-    this.fromDate.set((event.target as HTMLInputElement).value);
-    this.currentPage.set(1);
-  }
-
-  onToDateChange(event: Event): void {
-    this.toDate.set((event.target as HTMLInputElement).value);
-    this.currentPage.set(1);
-  }
-
-  onResetFilters(): void {
-    this.searchTerm.set('');
-    this.selectedYear.set('الكل');
-    this.selectedProgram.set('الكل');
-    this.fromDate.set('');
-    this.toDate.set('');
-    this.statusFilter.set('الكل');
-    this.currentPage.set(1);
-  }
-
-  setQuickPreset(preset: 'all' | '2026' | '2027'): void {
-    if (preset === 'all') {
-      this.onResetFilters();
-    } else {
-      this.selectedYear.set(preset);
-      this.fromDate.set('');
-      this.toDate.set('');
-      this.currentPage.set(1);
-    }
-  }
-
-  exportToExcel(): void {
-    const data = this.filteredBatches();
-    if (!data.length) return;
-
-    const headers = ['الدفعة', 'البرنامج', 'المسار', 'الشركة المستضيفة', 'تاريخ البداية', 'تاريخ النهاية', 'المسجلين', 'الطاقة الاستيعابية', 'الحالة'];
-    const rows = data.map(b => [
-      `"${b.batchName}"`,
-      `"${this.getProgramName(b)}"`,
-      `"${this.getTrackName(b)}"`,
-      `"${b.companyName || '-'}"`,
-      `"${b.startDate ? b.startDate.split('T')[0] : ''}"`,
-      `"${b.endDate ? b.endDate.split('T')[0] : ''}"`,
-      b.totalTraineesCount || 0,
-      b.capacity || 0,
-      `"${this.getStatusLabel(b.status)}"`
-    ]);
-
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const link = document.createElement('a');
-    link.href = encodeURI(csvContent);
-    link.download = `batches_${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-  }
-
-  // --- Handlers النوافذ العادية ---
+  // ==========================================================
+  // 7. Modals Handlers (النوافذ المنبثقة)
+  // ==========================================================
   onCreateBatch(): void {
     this.batchForm.reset({ capacity: 15 });
     this.batchErrorMessage = null;
@@ -415,11 +272,6 @@ export class AdminPrograms implements OnInit {
 
   onCloseProgramModal(): void {
     this.isProgramModalOpen = false;
-  }
-
-  onView(batch: any): void {
-    this.selectedBatch = batch;
-    this.isViewModalOpen = true;
   }
 
   onCloseViewModal(): void {
@@ -446,6 +298,9 @@ export class AdminPrograms implements OnInit {
     this.selectedBatch = null;
   }
 
+  // ==========================================================
+  // 8. Form Submissions (إرسال البيانات للباكند)
+  // ==========================================================
   onSubmit(): void {
     if (this.batchForm.invalid) {
       this.batchForm.markAllAsTouched();
@@ -536,6 +391,164 @@ export class AdminPrograms implements OnInit {
     });
   }
 
+  // ==========================================================
+  // 9. Filters, Computed & Pagination Engine
+  // ==========================================================
+  normalizeStatus(status: any): string {
+    if (!status) return '';
+    const s = String(status).trim().toLowerCase();
+    if (s === 'ongoing' || s === 'جارية' || s === 'جاري' || s === 'active') return 'جارية';
+    if (s === 'upcoming' || s === 'قادمة' || s === 'قادم' || s === 'pending') return 'قادمة';
+    if (s === 'completed' || s === 'مكتملة' || s === 'مكتمل') return 'مكتملة';
+    return status;
+  }
+
+  availableYears = computed(() => {
+    const yearsSet = new Set<string>();
+    this.batches().forEach(b => {
+      if (b.startDate) {
+        const year = new Date(b.startDate).getFullYear().toString();
+        if (!isNaN(Number(year))) yearsSet.add(year);
+      }
+    });
+    ['2027', '2026', '2025', '2024'].forEach(y => yearsSet.add(y));
+    return Array.from(yearsSet).sort().reverse();
+  });
+
+  getCountByStatus(status: string): number {
+    if (status === 'الكل') return this.batches().length;
+    return this.batches().filter(b => this.normalizeStatus(b.status) === status).length;
+  }
+
+  activeFiltersCount = computed(() => {
+    let count = 0;
+    if (this.searchTerm().trim()) count++;
+    if (this.selectedYear() !== 'الكل') count++;
+    if (this.selectedProgram() !== 'الكل') count++;
+    if (this.fromDate()) count++;
+    if (this.toDate()) count++;
+    return count;
+  });
+
+  filteredBatches = computed(() => {
+    const status = this.statusFilter();
+    const search = this.searchTerm().trim().toLowerCase();
+    const year = this.selectedYear();
+    const prog = this.selectedProgram();
+    const from = this.fromDate();
+    const to = this.toDate();
+
+    return this.batches().filter(batch => {
+      if (status !== 'الكل' && this.normalizeStatus(batch.status) !== status) return false;
+
+      if (search) {
+        const batchName = (batch.batchName || '').toLowerCase();
+        const progName = this.getProgramName(batch).toLowerCase();
+        const trackName = this.getTrackName(batch).toLowerCase();
+        const compName = (batch.companyName || '').toLowerCase();
+        if (!batchName.includes(search) && !progName.includes(search) && !trackName.includes(search) && !compName.includes(search)) {
+          return false;
+        }
+      }
+
+      if (prog !== 'الكل') {
+        if (batch.programId?.toString() !== prog && batch.programName !== prog) return false;
+      }
+
+      if (year !== 'الكل' && batch.startDate) {
+        const batchYear = new Date(batch.startDate).getFullYear().toString();
+        if (batchYear !== year) return false;
+      }
+
+      if (from && batch.startDate && batch.startDate.split('T')[0] < from) return false;
+      if (to && batch.startDate && batch.startDate.split('T')[0] > to) return false;
+
+      return true;
+    });
+  });
+
+  paginatedBatches = computed(() => {
+    const filtered = this.filteredBatches();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return filtered.slice(start, start + this.pageSize());
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.filteredBatches().length / this.pageSize()) || 1;
+  });
+
+  totalBatchesCount = computed(() => this.filteredBatches().length);
+
+  onSearchInput(event: Event): void {
+    this.searchTerm.set((event.target as HTMLInputElement).value);
+    this.currentPage.set(1);
+  }
+
+  onYearChange(event: Event): void {
+    this.selectedYear.set((event.target as HTMLSelectElement).value);
+    this.currentPage.set(1);
+  }
+
+  onProgramFilterChange(event: Event): void {
+    this.selectedProgram.set((event.target as HTMLSelectElement).value);
+    this.currentPage.set(1);
+  }
+
+  onFromDateChange(event: Event): void {
+    this.fromDate.set((event.target as HTMLInputElement).value);
+    this.currentPage.set(1);
+  }
+
+  onToDateChange(event: Event): void {
+    this.toDate.set((event.target as HTMLInputElement).value);
+    this.currentPage.set(1);
+  }
+
+  onResetFilters(): void {
+    this.searchTerm.set('');
+    this.selectedYear.set('الكل');
+    this.selectedProgram.set('الكل');
+    this.fromDate.set('');
+    this.toDate.set('');
+    this.statusFilter.set('الكل');
+    this.currentPage.set(1);
+  }
+
+  setQuickPreset(preset: 'all' | '2026' | '2027'): void {
+    if (preset === 'all') {
+      this.onResetFilters();
+    } else {
+      this.selectedYear.set(preset);
+      this.fromDate.set('');
+      this.toDate.set('');
+      this.currentPage.set(1);
+    }
+  }
+
+  exportToExcel(): void {
+    const data = this.filteredBatches();
+    if (!data.length) return;
+
+    const headers = ['الدفعة', 'البرنامج', 'المسار', 'الشركة المستضيفة', 'تاريخ البداية', 'تاريخ النهاية', 'المسجلين', 'الطاقة الاستيعابية', 'الحالة'];
+    const rows = data.map(b => [
+      `"${b.batchName}"`,
+      `"${this.getProgramName(b)}"`,
+      `"${this.getTrackName(b)}"`,
+      `"${b.companyName || '-'}"`,
+      `"${b.startDate ? b.startDate.split('T')[0] : ''}"`,
+      `"${b.endDate ? b.endDate.split('T')[0] : ''}"`,
+      b.totalTraineesCount || 0,
+      b.capacity || 0,
+      `"${this.getStatusLabel(b.status)}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const link = document.createElement('a');
+    link.href = encodeURI(csvContent);
+    link.download = `batches_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+  }
+
   onPageChange(page: number): void {
     if (page >= 1 && page <= this.totalPages()) {
       this.currentPage.set(page);
@@ -544,6 +557,22 @@ export class AdminPrograms implements OnInit {
 
   trackByBatchId(index: number, batch: any): any {
     return batch.batchId || index;
+  }
+
+  // ==========================================================
+  // 10. Helper Functions (دوال المساعدة)
+  // ==========================================================
+  getBatchDuration(startDate?: string, endDate?: string): string {
+    if (!startDate || !endDate) return '-';
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const months = Math.floor(diffDays / 30);
+    const weeks = Math.floor((diffDays % 30) / 7);
+    if (months > 0) {
+      return `${months} شهر ${weeks > 0 ? 'و ' + weeks + ' أسابيع' : ''}`;
+    }
+    return `${Math.ceil(diffDays / 7)} أسابيع`;
   }
 
   getProgramName(batch: any): string {

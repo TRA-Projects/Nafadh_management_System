@@ -73,7 +73,7 @@ export class AdminUsers implements OnInit {
     try {
       localStorage.setItem(this.AVATAR_STORAGE_PREFIX + userId, avatarUrl);
     } catch {
-      // تجاهل بصمت لو المتصفح يمنع localStorage
+      // تجاهل بصمت
     }
   }
 
@@ -245,7 +245,7 @@ export class AdminUsers implements OnInit {
   isEditModalOpen = false;
   isResetPasswordModalOpen = false;
 
-  // نافذة تفاصيل المستخدم (قراءة فقط)
+  // نافذة تفاصيل المستخدم كاملة الشاشة
   isDetailsModalOpen = false;
   detailsUser: any = {};
 
@@ -308,12 +308,42 @@ export class AdminUsers implements OnInit {
     Trainee: 0
   };
 
-  // وصف صلاحيات كل دور (لنافذة التفاصيل)
   private readonly permissionsDescriptionByRole: Record<string, string> = {
     Admin: 'صلاحيات كاملة لإدارة النظام: إدارة المستخدمين والأدوار، الشركات، البرامج التدريبية، إصدار الشهادات، ومراجعة التقارير والتحليلات الشاملة.',
     CompanySupervisor: 'إدارة بيانات الشركة التابعة له، متابعة المتدربين المسجلين فيها، ومراجعة تقارير الأداء الخاصة بالشركة.',
     Trainer: 'إدارة البرامج والدفعات التدريبية، تسجيل الحضور، تقييم أداء المتدربين، ومتابعة تسليم المهام.',
     Trainee: 'الوصول للمحتوى التدريبي، تسجيل الحضور، تسليم المهام والمشاريع، وعرض الشهادات الصادرة له.'
+  };
+
+  private readonly permissionsListByRole: Record<string, string[]> = {
+    Admin: [
+      'إدارة المستخدمين والصلاحيات',
+      'إدارة الشركات والمشرفين',
+      'اعتماد البرامج التدريبية',
+      'إصدار الشهادات والإنذارات',
+      'عرض سجل التدقيق والرقابة الكامل',
+      'تصدير التقارير والإحصائيات',
+      'تعديل إعدادات النظام العامة',
+      'إيقاف وتفعيل الحسابات'
+    ],
+    CompanySupervisor: [
+      'إدارة ملف الشركة وسجلها التجاري',
+      'متابعة المتدربين المرتبطين بالشركة',
+      'تقييم أداء متدربي المنشأة',
+      'استخراج تقارير الحضور والالتزام'
+    ],
+    Trainer: [
+      'إدارة الدفعات والبرامج المخصصة',
+      'تسجيل حضور وغياب المتدربين',
+      'تقييم المشاريع والمهام التدريبية',
+      'إرسال التنبيهات للمتدربين'
+    ],
+    Trainee: [
+      'عرض المسار التدريبي والمحتوى التعليمي',
+      'تسجيل الحضور الإلكتروني',
+      'رفع المهام والمشاريع المطلوبة',
+      'تحميل الشهادات المكتسبة'
+    ]
   };
 
   getRolePermissionsCount(roleInput: any): number {
@@ -324,6 +354,11 @@ export class AdminUsers implements OnInit {
   getRolePermissionsDescription(roleInput: any): string {
     const normalized = this.normalizeRole(roleInput);
     return this.permissionsDescriptionByRole[normalized] || 'لا يوجد وصف متاح لهذا الدور حاليًا.';
+  }
+
+  getRolePermissionsList(roleInput: any): string[] {
+    const normalized = this.normalizeRole(roleInput);
+    return this.permissionsListByRole[normalized] || ['عرض البيانات العامة'];
   }
 
   // =========================================================
@@ -690,7 +725,9 @@ export class AdminUsers implements OnInit {
     });
   }
 
-  // نافذة تفاصيل المستخدم (قراءة فقط)
+  // =========================================================
+  // صفحة تفاصيل المستخدم كاملة الشاشة
+  // =========================================================
   openDetailsModal(user: any): void {
     const localAvatar = this.getLocalAvatar(user.userId);
     this.detailsUser = {
@@ -707,6 +744,29 @@ export class AdminUsers implements OnInit {
     this.cdr.detectChanges();
   }
 
+  printUserDetails(): void {
+    window.print();
+  }
+
+  toggleUserStatus(user: any): void {
+    const current = (user.status || '').toLowerCase();
+    const newStatus = current === 'suspended' ? 'Active' : 'Suspended';
+
+    user.status = newStatus;
+    if (this.detailsUser && this.detailsUser.userId === user.userId) {
+      this.detailsUser.status = newStatus;
+    }
+
+    this.users.update((list) =>
+      list.map((u) => (u.userId === user.userId ? { ...u, status: newStatus } : u))
+    );
+
+    this.cdr.detectChanges();
+  }
+
+  // =========================================================
+  // EDIT USER
+  // =========================================================
   openEditModal(user: any): void {
     this.selectedUser = { ...user };
 
@@ -825,6 +885,9 @@ export class AdminUsers implements OnInit {
     });
   }
 
+  // =========================================================
+  // RESET PASSWORD
+  // =========================================================
   openResetPasswordModal(user: UserResponseDto): void {
     this.selectedUser = { ...user };
     this.newPassword = '';
