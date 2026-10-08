@@ -106,6 +106,30 @@ namespace Nafadh_Backend.Controllers
             plan.ReviewNote = note;
             plan.UpdatedAt = now;
 
+            // A manually-created course becomes a normal company program only after Authority approval.
+            // Existing company-program links are left untouched.
+            if (approved && plan.ProgramId.HasValue)
+            {
+                var companyProgramExists = await _context.NFD_CompanyPrograms
+                    .AnyAsync(cp => cp.CompanyId == plan.CompanyId && cp.ProgramId == plan.ProgramId.Value);
+
+                if (!companyProgramExists)
+                {
+                    _context.NFD_CompanyPrograms.Add(new NFD_CompanyProgram
+                    {
+                        CompanyId = plan.CompanyId,
+                        ProgramId = plan.ProgramId.Value
+                    });
+
+                    var program = await _context.NFD_Programs
+                        .FirstOrDefaultAsync(p => p.ProgramId == plan.ProgramId.Value);
+
+                    // Only programs created by this Company Course Plan flow are promoted from Draft.
+                    if (program is not null && program.Status == NFD_ProgramStatus.Draft)
+                        program.Status = NFD_ProgramStatus.Published;
+                }
+            }
+
             if (note is not null)
             {
                 _context.NFD_CoursePlanNotes.Add(new NFD_CoursePlanNote
