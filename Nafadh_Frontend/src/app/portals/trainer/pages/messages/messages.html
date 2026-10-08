@@ -120,7 +120,35 @@
 
 
       <!-- TRAINEES -->
+      <!-- BATCH GROUP -->
 
+@if (batchGroupConversationId) {
+
+<button
+  type="button"
+  class="batch-group-item"
+  (click)="selectBatchGroup()"
+>
+
+  <div class="batch-group-avatar">
+    👥
+  </div>
+
+  <div class="batch-group-info">
+
+    <strong>
+      مجموعة الدفعة
+    </strong>
+
+    <small>
+      محادثة جماعية
+    </small>
+
+  </div>
+
+</button>
+
+}
       <div class="trainees-list">
 
         @for (
@@ -210,8 +238,30 @@
       <!-- ================================================= -->
 
       <header class="chat-header">
+       @if (isBatchGroupSelected) {
 
-        @if (selectedTrainee()) {
+  <div class="chat-user">
+
+    <div class="chat-avatar">
+      👥
+    </div>
+
+    <div>
+
+      <h2>
+        مجموعة الدفعة
+      </h2>
+
+      <p>
+        محادثة جماعية
+      </p>
+
+    </div>
+
+  </div>
+
+} @else if (selectedTrainee()) {
+       
 
           <div class="chat-user">
 
@@ -319,7 +369,7 @@
 
       <div class="chat-messages">
 
-        @if (selectedTrainee()) {
+        @if (isBatchGroupSelected || selectedTrainee()) {
 
           @for (
             message of messages;
