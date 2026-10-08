@@ -29,6 +29,8 @@ namespace Nafadh_Backend.Services
                 .AsNoTracking()
                 .Include(p => p.Company)
                 .Include(p => p.CreatedByUser)
+                .Include(p => p.Trainers).ThenInclude(pt => pt.Trainer).ThenInclude(t => t.User)
+                .Include(p => p.Stages).ThenInclude(s => s.Trainers).ThenInclude(st => st.Trainer).ThenInclude(t => t.User)
                 .Include(p => p.Stages).ThenInclude(s => s.Items)
                 .AsSplitQuery();
         }
@@ -39,6 +41,9 @@ namespace Nafadh_Backend.Services
             IQueryable<NFD_CoursePlan> query = _context.NFD_CoursePlans
                 .Include(p => p.Company)
                 .Include(p => p.CreatedByUser)
+                .Include(p => p.Program)
+                .Include(p => p.Trainers).ThenInclude(pt => pt.Trainer).ThenInclude(t => t.User)
+                .Include(p => p.Stages).ThenInclude(s => s.Trainers).ThenInclude(st => st.Trainer).ThenInclude(t => t.User)
                 .Include(p => p.Stages).ThenInclude(s => s.Trainer).ThenInclude(t => t!.User)
                 .Include(p => p.Stages).ThenInclude(s => s.Items).ThenInclude(i => i.Trainer).ThenInclude(t => t!.User)
                 .Include(p => p.Notes).ThenInclude(n => n.User)
@@ -125,6 +130,21 @@ namespace Nafadh_Backend.Services
             dto.PlanId = plan.PlanId;
             dto.CompanyId = plan.CompanyId;
             dto.CompanyName = plan.Company?.CompanyName ?? string.Empty;
+            dto.ProgramId = plan.ProgramId;
+            dto.Trainers = plan.Trainers
+                .Select(pt => pt.Trainer)
+                .Concat(plan.Stages.SelectMany(st => st.Trainers.Select(x => x.Trainer)))
+                .Concat(plan.Stages.Where(st => st.Trainer is not null).Select(st => st.Trainer!))
+                .GroupBy(t => t.TrainerId)
+                .Select(g => g.First())
+                .OrderBy(t => t.User.FullName)
+                .Select(t => new CoursePlanTrainerOptionDTO
+                {
+                    TrainerId = t.TrainerId,
+                    FullName = t.User.FullName,
+                    Specialty = t.Specialty
+                })
+                .ToList();
             dto.Title = plan.Title;
             dto.Description = plan.Description;
             dto.Category = plan.Category;
@@ -182,8 +202,17 @@ namespace Nafadh_Backend.Services
                     Description = s.Description,
                     StartDate = s.StartDate,
                     EndDate = s.EndDate,
-                    TrainerId = s.TrainerId,
-                    TrainerName = s.Trainer?.User?.FullName,
+                    TrainerId = s.TrainerId ?? s.Trainers.Select(st => (int?)st.TrainerId).FirstOrDefault(),
+                    TrainerName = s.Trainer?.User?.FullName ?? s.Trainers.Select(st => st.Trainer.User.FullName).FirstOrDefault(),
+                    Trainers = s.Trainers
+                        .OrderBy(st => st.Trainer.User.FullName)
+                        .Select(st => new CoursePlanTrainerOptionDTO
+                        {
+                            TrainerId = st.TrainerId,
+                            FullName = st.Trainer.User.FullName,
+                            Specialty = st.Trainer.Specialty
+                        })
+                        .ToList(),
                     Status = s.Status,
                     ProgressPercentage = StageProgress(s),
                     IsDelayed = StageDelayed(plan, s, today),

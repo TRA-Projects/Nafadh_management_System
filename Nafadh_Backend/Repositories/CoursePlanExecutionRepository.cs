@@ -20,6 +20,11 @@ namespace Nafadh_Backend.Repositories
             return _context.NFD_CoursePlans
                 .Include(p => p.Company)
                 .Include(p => p.CreatedByUser)
+                .Include(p => p.Trainers)
+                    .ThenInclude(pt => pt.Trainer)
+                .Include(p => p.Stages)
+                    .ThenInclude(s => s.Trainers)
+                        .ThenInclude(st => st.Trainer)
                 .Include(p => p.Stages)
                     .ThenInclude(s => s.Trainer)
                 .Include(p => p.Stages)
@@ -31,8 +36,10 @@ namespace Nafadh_Backend.Repositories
                 .FirstOrDefaultAsync(p =>
                     p.PlanId == planId &&
                     p.ApprovalStatus == Enums.NFD_CoursePlanApprovalStatus.Approved &&
+                    p.Trainers.Any(pt => pt.Trainer.UserId == trainerUserId) ||
                     p.Stages.Any(s =>
                         (s.Trainer != null && s.Trainer.UserId == trainerUserId) ||
+                        s.Trainers.Any(st => st.Trainer.UserId == trainerUserId) ||
                         s.Items.Any(i => i.Trainer != null && i.Trainer.UserId == trainerUserId)));
         }
 

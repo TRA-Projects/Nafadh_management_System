@@ -14,6 +14,8 @@ export const COMPANY_ROUTES: Routes = [
       { path: 'trainees/:id/progress', loadComponent: () => import('./pages/trainee-progress/trainee-progress').then((m) => m.CompanyTraineeProgress) },
       { path: 'specialties', loadComponent: () => import('./pages/specialties/specialties').then((m) => m.CompanySpecialties) },
       { path: 'specialties/:id', loadComponent: () => import('./pages/program-details/program-details').then((m) => m.CompanyProgramDetails) },
+      { path: 'tasks', loadComponent: () => import('./pages/tasks/tasks').then((m) => m.CompanyTasks) },
+      { path: 'tasks/:id', loadComponent: () => import('./pages/tasks/plan-workspace').then((m) => m.CompanyPlanWorkspace) },
       { path: 'profile', loadComponent: () => import('./pages/profile/profile').then((m) => m.CompanyProfile) },
       { path: 'daily-attendance', loadComponent: () => import('./pages/DailyAttendance/DailyAttendance').then((m) => m.CompanyDailyAttendance) },
       { path: 'my-account', loadComponent: () => import('./pages/my-account/my-account').then((m) => m.CompanyMyAccount) },
