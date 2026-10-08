@@ -38,6 +38,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_Session> NFD_Sessions { get; set; }
         public DbSet<NFD_SessionAttendance> NFD_SessionAttendances { get; set; }
         public DbSet<NFD_DailyAttendance> NFD_DailyAttendances { get; set; }
+        public DbSet<NFD_TrainerAttendance> NFD_TrainerAttendances { get; set; }
         public DbSet<NFD_Excuse> NFD_Excuses { get; set; }
         public DbSet<NFD_Task> NFD_Tasks { get; set; }
         public DbSet<NFD_Rubric> NFD_Rubrics { get; set; }

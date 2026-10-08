@@ -9,21 +9,19 @@
   direction: rtl;
 }
 
-
 /* =========================
    Page Header
 ========================= */
-
 .page-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  margin-bottom: 18px;
+  margin-bottom: 24px;
 
   h3 {
     margin: 0 0 6px;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 800;
     color: #172033;
   }
@@ -31,37 +29,32 @@
   p {
     margin: 0;
     color: #64748b;
-    font-size: 13px;
+    font-size: 13.5px;
   }
 }
 
 .actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
-
 
 /* =========================
    Buttons
 ========================= */
-
 .btn {
   border: 1px solid transparent;
   border-radius: 10px;
-  padding: 9px 17px;
-
+  padding: 9px 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
-
   cursor: pointer;
-  transition: 0.18s ease;
+  transition: all 0.2s ease;
 
   svg {
     width: 16px;
@@ -69,14 +62,14 @@
   }
 
   &:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
   }
 }
 
 .btn-primary {
   background: #00338d;
   color: #fff;
-  box-shadow: 0 8px 18px -8px rgba(0, 51, 141, 0.55);
+  box-shadow: 0 8px 20px -8px rgba(0, 51, 141, 0.5);
 
   &:hover {
     background: #00286f;
@@ -91,6 +84,7 @@
   &:hover {
     border-color: #00338d;
     color: #00338d;
+    background: #f8fbff;
   }
 }
 
@@ -98,53 +92,48 @@
   background: #eef5ff;
   color: #00338d;
   border: 1px solid transparent;
+
+  &:hover {
+    background: #00338d;
+    color: #fff;
+  }
 }
 
 .btn-sm {
-  padding: 7px 12px;
+  padding: 6px 12px;
   font-size: 12px;
 }
 
-
 /* =========================
-   Tabs
+    Tabs
 ========================= */
-
 .tabs {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-
-  margin-bottom: 16px;
-
+  gap: 8px;
+  flex-wrap: nowrap; /* لمنع نزول التبويبات لسطر جديد وضمان تمددها بصف واحد */
+  margin-bottom: 20px;
   background: #fff;
   border: 1px solid #e1e7ed;
-
   padding: 6px;
   border-radius: 12px;
-
-  width: fit-content;
-  max-width: 100%;
+  width: 100%; /* جعل حاوي التبويبات يأخذ العرض كاملاً */
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
 }
 
 .tab {
+  flex: 1; /* جعل كل تبويب يتمدد بالتساوي ليملأ المساحة المتاحة بالكامل */
   border: 0;
   background: transparent;
-
-  padding: 8px 16px;
-
-  border-radius: 9px;
-
+  padding: 9px 12px; /* تقليص الحشو الأفقي قليلاً ليتناسب مع المساحات المتساوية */
+  border-radius: 8px;
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
-
   color: #64748b;
-
   cursor: pointer;
   white-space: nowrap;
-
-  transition: 0.15s ease;
+  text-align: center; /* توسيط النص داخل التبويب */
+  transition: all 0.2s ease;
 
   &:hover {
     color: #00338d;
@@ -154,212 +143,149 @@
   &.active {
     background: #00338d;
     color: #fff;
-
-    box-shadow:
-      0 6px 14px -6px rgba(0, 51, 141, 0.5);
+    box-shadow: 0 4px 12px -4px rgba(0, 51, 141, 0.4);
   }
 }
-
-
 /* =========================
    Cards
 ========================= */
-
 .card {
   background: #fff;
   border: 1px solid #e1e7ed;
-  border-radius: 14px;
-  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.035);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
 }
 
 .card-pad {
-  padding: 18px;
-  margin-bottom: 16px;
+  padding: 22px;
+  margin-bottom: 20px;
 }
 
 .card-title {
   display: flex;
   align-items: center;
   gap: 8px;
-
-  margin-bottom: 16px;
-
-  font-size: 14px;
+  margin-bottom: 18px;
+  font-size: 15px;
   font-weight: 800;
   color: #172033;
 }
 
-
 /* =========================
    Statistics
 ========================= */
-
 .stat-row {
   display: grid;
-
-  grid-template-columns:
-    repeat(auto-fit, minmax(170px, 1fr));
-
-  gap: 12px;
-
-  margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .stat-mini {
   background: #fff;
-
   border: 1px solid #e1e7ed;
-  border-radius: 12px;
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.02);
+  transition: transform 0.2s ease;
 
-  padding: 14px 16px;
-
-  min-height: 82px;
+  &:hover {
+    transform: translateY(-2px);
+  }
 
   span {
     display: block;
-
-    margin-bottom: 4px;
-
-    font-size: 11.5px;
+    margin-bottom: 6px;
+    font-size: 12px;
     color: #64748b;
+    font-weight: 500;
   }
 
   b {
     display: block;
-
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 800;
-
-    margin-bottom: 2px;
+    margin-bottom: 4px;
     color: #172033;
   }
 
   small {
     display: block;
-
-    font-size: 11px;
+    font-size: 11.5px;
     color: #64748b;
   }
 }
 
-
-/* ألوان الأرقام */
-
-.success-text {
-  color: #16a34a !important;
-}
-
-.danger-text {
-  color: #dc2626 !important;
-}
-
-.warning-text {
-  color: #d99a06 !important;
-}
-
-.primary-text {
-  color: #00338d !important;
-}
-
+/* الألوان */
+.success-text { color: #16a34a !important; }
+.danger-text { color: #dc2626 !important; }
+.warning-text { color: #d99a06 !important; }
+.primary-text { color: #00338d !important; }
 
 /* =========================
    Horizontal Bars
 ========================= */
-
 .hbars {
   display: flex;
   flex-direction: column;
-  gap: 13px;
+  gap: 14px;
 }
 
 .hbar {
   display: grid;
-
-  grid-template-columns:
-    minmax(0, 140px)
-    minmax(0, 1fr)
-    55px;
-
+  grid-template-columns: minmax(0, 150px) minmax(0, 1fr) 60px;
   align-items: center;
-
-  gap: 12px;
-
+  gap: 14px;
   min-width: 0;
 }
 
 .h-lbl {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
-
   color: #172033;
-
   text-align: right;
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .h-trk {
-  height: 22px;
-
-  background: #eef2f5;
-
-  border-radius: 7px;
-
+  height: 24px;
+  background: #f1f5f9;
+  border-radius: 8px;
   overflow: hidden;
-
   display: flex;
-
   min-width: 0;
 }
 
 .h-fill {
   height: 100%;
-
-  border-radius: 7px;
-
+  border-radius: 8px;
+  background: linear-gradient(90deg, #00338d, #00bbc2);
   display: flex;
   align-items: center;
   justify-content: flex-end;
-
-  padding-inline-end: 8px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #00338d,
-      #00bbc2
-    );
-
+  padding-inline-end: 10px;
+  background: linear-gradient(90deg, #00338d, #00bbc2);
   color: #fff;
-
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
-
-  min-width: 28px;
-
+  min-width: 45px; // تم زيادة الحد الأدنى للعرض لكي يستوعب النص تماماً
   white-space: nowrap;
-
-  transition: width 0.4s ease;
+  transition: width 0.5s ease;
 }
 
 .h-val {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
-
   color: #172033;
-
   text-align: left;
-
   white-space: nowrap;
 }
-
 
 /* =========================
    Tables
 ========================= */
-
 .tbl-wrap {
   width: 100%;
   overflow-x: auto;
@@ -367,30 +293,21 @@
 
 .tbl {
   width: 100%;
-
   border-collapse: collapse;
-
   min-width: 700px;
 
-  th,
-  td {
-    padding: 12px 11px;
-
-    border-bottom: 1px solid #edf0f3;
-
+  th, td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #edf2f7;
     text-align: right;
-
-    font-size: 12.5px;
+    font-size: 13px;
   }
 
   th {
     background: #f8fafc;
-
     color: #64748b;
-
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 700;
-
     white-space: nowrap;
   }
 
@@ -416,100 +333,71 @@
   }
 }
 
-
 /* =========================
-   Chips
+   Chips & Badges
 ========================= */
-
 .chip {
   display: inline-flex;
-
   align-items: center;
   gap: 6px;
-
-  padding: 5px 9px;
-
+  padding: 6px 12px;
   border-radius: 999px;
-
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-
   white-space: nowrap;
 }
 
 .dot {
   width: 6px;
   height: 6px;
-
   border-radius: 50%;
-
   display: inline-block;
 }
 
 .chip.ok {
   color: #15803d;
-  background: #eaf8ef;
-
-  .dot {
-    background: #22c55e;
-  }
+  background: #f0fdf4;
+  .dot { background: #22c55e; }
 }
 
 .chip.warn {
   color: #a16207;
-  background: #fff7df;
-
-  .dot {
-    background: #eab308;
-  }
+  background: #fefce8;
+  .dot { background: #eab308; }
 }
 
 .chip.bad {
   color: #b91c1c;
-  background: #fff0f0;
-
-  .dot {
-    background: #ef4444;
-  }
+  background: #fef2f2;
+  .dot { background: #ef4444; }
 }
 
 .chip.info {
   color: #0369a1;
-  background: #e8f5ff;
-
-  .dot {
-    background: #0ea5e9;
-  }
+  background: #f0f9ff;
+  .dot { background: #0ea5e9; }
 }
-
 
 /* =========================
    Capacity / Donut
 ========================= */
-
 .capacity-card {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .donut-wrap {
   display: flex;
-
   align-items: center;
   justify-content: center;
-
-  gap: 30px;
-
+  gap: 40px;
   flex-wrap: wrap;
-
-  padding: 10px 0;
+  padding: 15px 0;
 }
 
 .donut {
   position: relative;
-
   width: 150px;
   height: 150px;
-
   flex-shrink: 0;
 
   svg {
@@ -518,309 +406,666 @@
 
   .center {
     position: absolute;
-
     inset: 0;
-
     display: flex;
-
     flex-direction: column;
-
     align-items: center;
     justify-content: center;
 
     b {
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 800;
-
       color: #172033;
     }
 
     span {
-      font-size: 11px;
-
+      font-size: 11.5px;
       color: #64748b;
     }
   }
 }
 
 .donut-progress {
-  transition: stroke-dashoffset 0.4s ease;
+  transition: stroke-dashoffset 0.5s ease;
 }
-
 
 /* =========================
    Legend
 ========================= */
-
 .legend {
   display: flex;
-
   flex-direction: column;
-
-  gap: 10px;
-
-  font-size: 13px;
-
-  min-width: 160px;
+  gap: 12px;
+  font-size: 13.5px;
+  min-width: 180px;
 }
 
 .lg-item {
   display: flex;
-
   align-items: center;
-
-  gap: 9px;
-
+  gap: 10px;
   color: #475569;
 
   b {
     margin-inline-start: auto;
-
     color: #172033;
   }
 }
 
 .sw {
-  width: 11px;
-  height: 11px;
-
+  width: 12px;
+  height: 12px;
   border-radius: 4px;
-
   flex-shrink: 0;
 }
-
 
 /* =========================
    Capacity Progress
 ========================= */
-
 .capacity-progress {
   display: flex;
-
   align-items: center;
-
-  gap: 9px;
-
-  min-width: 170px;
+  gap: 10px;
+  min-width: 180px;
 
   .bar {
-    width: 120px;
+    width: 130px;
   }
 
   b {
-    font-size: 12px;
+    font-size: 12.5px;
   }
 }
 
 .bar {
-  height: 9px;
-
+  height: 10px;
   background: #e9eef2;
-
   border-radius: 999px;
-
   overflow: hidden;
 
   i {
     display: block;
-
     height: 100%;
-
     width: 0;
-
     border-radius: inherit;
-
-    background:
-      linear-gradient(
-        90deg,
-        #00338d,
-        #00bbc2
-      );
-
-    transition: width 0.3s ease;
+    background: linear-gradient(90deg, #00338d, #00bbc2);
+    transition: width 0.4s ease;
 
     &.amber {
-      background:
-        linear-gradient(
-          90deg,
-          #efbb20,
-          #f59e0b
-        );
+      background: linear-gradient(90deg, #efbb20, #f59e0b);
     }
   }
 }
-
 
 /* =========================
    Report Note
 ========================= */
-
 .report-note {
   display: flex;
-
   align-items: center;
-
-  gap: 10px;
-
-  background: #e8f5ff;
-
-  color: #00507f;
-
-  border-radius: 11px;
-
-  padding: 11px 15px;
-
-  font-size: 12.5px;
-
-  margin-bottom: 16px;
-
-  border: 1px solid #d7ecfa;
+  gap: 12px;
+  background: #f0f9ff;
+  color: #0369a1;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 13px;
+  margin-bottom: 20px;
+  border: 1px solid #bae6fd;
 }
 
 .info-icon {
-  width: 20px;
-  height: 20px;
-
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-
   display: inline-flex;
-
   align-items: center;
   justify-content: center;
-
   flex-shrink: 0;
-
-  background: #007cae;
-
+  background: #0284c7;
   color: #fff;
-
   font-size: 12px;
   font-weight: 800;
 }
 
-
 /* =========================
    Comparison
 ========================= */
-
 .comparison-card {
-  margin-top: 16px;
+  margin-top: 20px;
 }
-
 
 /* =========================
    Responsive
 ========================= */
-
 @media (max-width: 900px) {
-
   .page-head {
     align-items: flex-start;
-
     flex-direction: column;
   }
 
   .actions {
     width: 100%;
-
-    button {
-      flex: 1;
-    }
+    button { flex: 1; }
   }
 
   .hbar {
-    grid-template-columns:
-      minmax(0, 110px)
-      minmax(0, 1fr)
-      48px;
-
-    gap: 8px;
+    grid-template-columns: minmax(0, 120px) minmax(0, 1fr) 52px;
+    gap: 10px;
   }
-
 }
 
-
 @media (max-width: 640px) {
-
   .page-head {
-
-    h3 {
-      font-size: 18px;
-    }
-
-    p {
-      font-size: 12px;
-      line-height: 1.7;
-    }
+    h3 { font-size: 20px; }
+    p { font-size: 12.5px; line-height: 1.6; }
   }
 
   .actions {
     flex-direction: column;
-
     width: 100%;
-
-    .btn {
-      width: 100%;
-    }
+    .btn { width: 100%; }
   }
-
 
   .tabs {
     width: 100%;
-
     overflow-x: auto;
-
     flex-wrap: nowrap;
-
     scrollbar-width: thin;
   }
 
-  .tab {
-    flex-shrink: 0;
-  }
-
-
-  .stat-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
+  .tab { flex-shrink: 0; }
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
 
   .hbar {
-    grid-template-columns:
-      minmax(0, 90px)
-      minmax(0, 1fr)
-      42px;
+    grid-template-columns: minmax(0, 100px) minmax(0, 1fr) 46px;
   }
 
-  .h-lbl {
-    font-size: 11px;
-  }
-
-  .h-val {
-    font-size: 11px;
-  }
-
-
-  .card-pad {
-    padding: 14px;
-  }
-
-
-  .donut-wrap {
-    flex-direction: column;
-  }
-
-  .legend {
-    width: 100%;
-  }
-
+  .donut-wrap { flex-direction: column; }
+  .legend { width: 100%; }
 }
 
-
 @media (max-width: 420px) {
+  .stat-row { grid-template-columns: 1fr; }
+}
 
-  .stat-row {
-    grid-template-columns: 1fr;
+/* تصميم شبكي عصري للإحصائيات */
+.stats-grid-modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-box {
+  background: #fff;
+  border: 1px solid #e1e7ed;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.02);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
   }
 
+  .label {
+    font-size: 12.5px;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .val-flex {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+
+    b {
+      font-size: 24px;
+      font-weight: 800;
+      color: #172033;
+    }
+  }
+
+  .sub-text {
+    font-size: 12px;
+    color: #64748b;
+  }
+}
+
+.badge-trend {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  &.up { background: #f0fdf4; color: #16a34a; }
+}
+
+/* تخطيط مقسم لتبويب الحضور */
+.reports-grid-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================
+   تنسيق صفحة التقارير الاحترافي (Enterprise Look)
+========================= */
+.reports-page {
+  padding: 24px 32px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+  font-family: inherit;
+}
+
+/* رأس الصفحة */
+.reports-page .page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  background: #ffffff;
+  padding: 20px 24px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+}
+
+.reports-page .page-head h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.reports-page .page-head p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.reports-page .page-head .actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* =========================
+   Tabs الاحترافية
+========================= */
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  margin-bottom: 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 6px;
+  border-radius: 12px;
+  width: 100%;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.01);
+}
+
+.tab {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab:hover {
+  color: #00338d;
+  background: #f1f5f9;
+}
+
+.tab.active {
+  background: #00338d;
+  color: #fff;
+  box-shadow: 0 4px 12px -2px rgba(0, 51, 141, 0.3);
+}
+
+/* =========================
+   البطاقات الموحدة (Cards)
+========================= */
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: box-shadow 0.2s ease;
+  margin-bottom: 24px;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.card-pad {
+  padding: 24px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* =========================
+   تصميم تبويب الطاقة الاستيعابية "العالمي" (Donut Chart Layout)
+========================= */
+.capacity-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.donut-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  margin-top: 4px;
+}
+
+.donut {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut svg {
+  transform: rotate(-90deg); /* تبدأ الدائرة من الأعلى */
+  width: 100%;
+  height: 100%;
+}
+
+.donut .center {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut .center b {
+  font-size: 30px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.donut .center span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  margin-top: 6px;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 180px;
+}
+
+.lg-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+}
+
+.lg-item b {
+  margin-right: auto;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.sw {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+
+/* =========================
+   الجداول الاحترافية (Modern Tables)
+========================= */
+.tbl-wrap {
+  overflow-x: auto;
+}
+
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+}
+
+.tbl th {
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tbl td {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.tbl tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* أشرطة التقدم داخل الجداول */
+.capacity-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.capacity-progress .bar {
+  flex: 1;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.capacity-progress .bar i {
+  display: block;
+  height: 100%;
+  background: #00338d;
+  border-radius: 4px;
+}
+
+.capacity-progress .bar i.amber {
+  background: #f59e0b;
+}
+
+.capacity-progress b {
+  font-size: 12px;
+  color: #0f172a;
+  min-width: 35px;
+}
+
+/* =========================
+   1. شبكة المؤشرات الأربعة العلوية
+========================= */
+.achievement-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+  direction: rtl;
+}
+
+.achievement-card-mini {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.achievement-card-mini .label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 12px;
+  text-align: right;
+}
+
+.achievement-card-mini .value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  direction: rtl;
+}
+
+.achievement-card-mini .value-row b {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.achievement-card-mini .value-row small {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* =========================
+   2. شبكة بطاقات البرامج (تملي الصفحة بشكل مرتب)
+========================= */
+.programs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) !important; /* فرض ظهورها على 3 أعمدة تملي المساحة */
+  gap: 20px;
+  width: 100%;
+  direction: rtl;
+}
+
+.program-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  padding: 22px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+  position: relative;
+  overflow: hidden;
+  text-align: right;
+}
+
+.program-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #00338d, #0284c7);
+  opacity: 0.8;
+}
+
+.program-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  direction: rtl;
+}
+
+.program-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.program-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #00338d;
+}
+
+.program-badge.high {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.program-progress-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.prog-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #64748b;
+  direction: rtl;
+}
+
+.prog-info-row b {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.prog-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.prog-bar-fill {
+  height: 100%;
+  background: #00338d;
+  border-radius: 4px;
 }

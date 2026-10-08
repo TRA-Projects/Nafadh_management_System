@@ -15,6 +15,7 @@ using System.Text;
 using QuestPDF.Infrastructure;
 using Nafadh_Backend.Settings;
 
+
 namespace Nafadh_Backend
 {
     public class Program
@@ -158,6 +159,12 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ISessionAttendanceService, SessionAttendanceService>();
             builder.Services.AddScoped<IDailyAttendanceRepository, DailyAttendanceRepository>();
             builder.Services.AddScoped<IDailyAttendanceService, DailyAttendanceService>();
+            builder.Services.AddScoped<
+                ITrainerAttendanceRepository,
+                TrainerAttendanceRepository>();
+            builder.Services.AddScoped<
+                ITrainerAttendanceService,
+                TrainerAttendanceService>();
             builder.Services.AddScoped<IExcuseRepository, ExcuseRepository>();
             builder.Services.AddScoped<IExcuseService, ExcuseService>();
             builder.Services.AddScoped<ITaskRepository, TaskRepository>();

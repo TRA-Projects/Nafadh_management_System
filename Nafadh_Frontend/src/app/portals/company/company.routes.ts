@@ -17,6 +17,7 @@ export const COMPANY_ROUTES: Routes = [
       { path: 'tasks', loadComponent: () => import('./pages/tasks/tasks').then((m) => m.CompanyTasks) },
       { path: 'tasks/:id', loadComponent: () => import('./pages/tasks/plan-workspace').then((m) => m.CompanyPlanWorkspace) },
       { path: 'profile', loadComponent: () => import('./pages/profile/profile').then((m) => m.CompanyProfile) },
+      { path: 'daily-attendance', loadComponent: () => import('./pages/DailyAttendance/DailyAttendance').then((m) => m.CompanyDailyAttendance) },
       { path: 'my-account', loadComponent: () => import('./pages/my-account/my-account').then((m) => m.CompanyMyAccount) },
       { path: 'reports', loadComponent: () => import('./pages/reports/reports').then((m) => m.ReportsComponent) },
       { path: 'contact', loadComponent: () => import('./pages/contact/contact').then((m) => m.CompanyContact) },
