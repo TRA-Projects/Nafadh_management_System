@@ -40,6 +40,7 @@ export class CompanyTrainees implements OnInit {
   statusFilter = signal('الكل');
   programFilter = signal('الكل');
   batchFilter = signal('الكل');
+  dateFilter = signal(''); // [جديد] فلتر التاريخ
 
   ngOnInit() {
     this.loadTraineesData();
@@ -64,29 +65,21 @@ export class CompanyTrainees implements OnInit {
     return trimmed;
   }
 
-  /**
-   * دالة موحدة وحاسمة لتحديد الحالة برمجياً (لتكون متطابقة بين لوحة التحكم وصفحة المتدربين)
-   * المعيار يعتمد على: حالة السيرفر الأصلية، نسبة الإنجاز، أو متوسط التقييمات إن وجد.
-   */
   getEffectiveStatus(e: EnrollmentDto & { progressPercentage?: number; averageRating?: number }): string {
-    // 1. إذا تم إيقاف المتدرب رسمياً من النظام
     if (e.completionStatus === 'Dropped') {
       return 'Dropped';
     }
 
-    // 2. إذا تم اعتباره مكتملاً صراحةً أو بلغت نسبة الإنجاز 100%
     const progress = e.progressPercentage ?? 0;
     if (e.completionStatus === 'Completed' || progress >= 100) {
       return 'Completed';
     }
 
-    // 3. المنطق الموحد للتعثر (إذا كان السيرفر معتبره متعثراً أو انخفض متوسط التقييم عن 60% مع وجود تقدم)
     const rating = e.averageRating ?? 100;
     if (e.completionStatus === 'Failed' || (rating < 60 && progress > 15)) {
       return 'Failed';
     }
 
-    // 4. الافتراضي: نشط
     return e.completionStatus || 'InProgress';
   }
 
@@ -101,12 +94,21 @@ export class CompanyTrainees implements OnInit {
 
   filtered = computed(() => {
     const q = this.search().trim();
-    return this.enrollments().filter((e) => {
+    const d = this.dateFilter();
+
+    return this.enrollments().filter((e: any) => {
       const effectiveStatus = this.getEffectiveStatus(e);
       if (this.statusFilter() !== 'الكل' && effectiveStatus !== this.statusFilter()) return false;
       if (this.programFilter() !== 'الكل' && e.programTitle !== this.programFilter()) return false;
       if (this.batchFilter() !== 'الكل' && e.batchName !== this.batchFilter()) return false;
       if (q && !(e.traineeName?.includes(q) || e.programTitle?.includes(q))) return false;
+      
+      // مطابقة التاريخ إن وجد في التسجيل
+      if (d && e.enrollmentDate) {
+        const enrollmentDateOnly = e.enrollmentDate.split('T')[0];
+        if (enrollmentDateOnly !== d) return false;
+      }
+
       return true;
     });
   });
@@ -116,13 +118,13 @@ export class CompanyTrainees implements OnInit {
     this.statusFilter.set('الكل');
     this.programFilter.set('الكل');
     this.batchFilter.set('الكل');
+    this.dateFilter.set(''); // مسح تاريخ التصفية أيضاً
     this.loadTraineesData();
   }
 
   statusLabel(status: string) { return STATUS_LABELS[status] ?? status; }
   statusChipClass(status: string) { return STATUS_CHIP_CLASS[status] ?? 'gray'; }
 
-  // دوال العرض المعتمدة على الحالة الموحدة
   statusLabelFor(e: EnrollmentDto) { 
     return this.statusLabel(this.getEffectiveStatus(e)); 
   }

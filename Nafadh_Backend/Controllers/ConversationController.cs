@@ -102,7 +102,31 @@ namespace Nafadh_Backend.Controllers
             );
         }
 
+        // ============================================================
+        // POST: api/Conversation/batch-group
+        // ============================================================
 
+        [HttpPost("batch-group")]
+        public async Task<IActionResult> CreateBatchGroup(
+            [FromBody]
+    CreateBatchGroupDTO dto
+        )
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var conversationId =
+                await _service.CreateBatchGroupAsync(dto);
+
+            return Ok(
+                new
+                {
+                    conversationId
+                }
+            );
+        }
         // ============================================================
         // POST: api/Conversation/{id}/messages
         // ============================================================

@@ -15,6 +15,8 @@ namespace Nafadh_Backend.DTOs
     {
         public int ConversationId { get; set; }
 
+        public int? BatchId { get; set; }
+        public string? BatchName { get; set; }
         public NFD_ConversationType Type { get; set; }
 
         public string? Category { get; set; }
@@ -30,6 +32,7 @@ namespace Nafadh_Backend.DTOs
         public int UnreadCount { get; set; }
 
         public string? StartedByName { get; set; }
+  
     }
 
 
@@ -106,6 +109,7 @@ namespace Nafadh_Backend.DTOs
         // ========================================================
 
         public IFormFile? Attachment { get; set; }
+        public int? ReceiverUserId { get; set; }
     }
 
 
@@ -116,6 +120,7 @@ namespace Nafadh_Backend.DTOs
     {
         [Required]
         public int SenderId { get; set; }
+        public int? ReceiverUserId { get; set; }
 
         [Required]
         [MaxLength(1000)]
