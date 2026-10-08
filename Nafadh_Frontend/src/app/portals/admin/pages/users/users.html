@@ -1,187 +1,722 @@
-<div class="container-fluid py-3" dir="rtl" (click)="closeAllDropdowns()">
-  <!-- الهيدر -->
-  <div class="header-container mb-4 d-flex justify-content-between align-items-center">
-    <div class="title-section">
-      <h2 class="nfd-page-title mb-1">المستخدمين</h2>
+<div class="nfd-page-header">
+  <h1 class="nfd-page-title">إدارة المستخدمين</h1>
+  <p class="nfd-page-sub">عرض وإدارة حسابات المستخدمين وصلاحياتهم في النظام</p>
+</div>
+
+<!-- بطاقات إحصائية -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon stat-icon-navy">
+      <i class="fa-solid fa-users"></i>
     </div>
-    <button class="add-company-btn shadow-sm" (click)="openAddModal()">
-      <span class="plus-icon">+</span>
-      <span>إضافة مستخدم</span>
-    </button>
+    <div class="stat-info">
+      <div class="stat-value">{{ statsTotal() }}</div>
+      <div class="stat-label">إجمالي المستخدمين</div>
+    </div>
   </div>
 
-  <!-- البطاقة البيضاء والجدول -->
-  <div class="nfd-card card border-0 shadow-sm rounded-4 p-3 bg-white mt-4">
-    <!-- أزرار الفلتر -->
-    <div class="nfd-chips d-flex gap-2 mb-3 flex-wrap">
-      @for (s of ['الكل','Admin','Company','Trainer','Trainee']; track s) {
-      <button class="filter-btn" [class.active]="statusFilter() === s" (click)="setFilter(s)">
-        {{ s === 'الكل' ? 'الكل' : roleLabel(s) }}
+  <div class="stat-card">
+    <div class="stat-icon stat-icon-blue">
+      <i class="fa-solid fa-user-plus"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value">{{ statsNewThisMonth() }}</div>
+      <div class="stat-label">حسابات جديدة هذا الشهر</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon stat-icon-green">
+      <i class="fa-solid fa-circle-check"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value">{{ statsActivePercentage() }}%</div>
+      <div class="stat-label">نشط ({{ statsActiveCount() }} حساب)</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon stat-icon-red">
+      <i class="fa-solid fa-ban"></i>
+    </div>
+    <div class="stat-info">
+      <div class="stat-value">{{ statsSuspendedPercentage() }}%</div>
+      <div class="stat-label">موقوف ({{ statsSuspendedCount() }} حساب)</div>
+    </div>
+  </div>
+</div>
+
+<div class="nfd-card">
+
+  <div class="nfd-toolbar">
+    <div class="nfd-chips">
+      @for (r of roles(); track r.key) {
+      <button class="nfd-chip" [class.active]="roleFilter() === r.key" (click)="setFilter(r.key)">
+        {{ r.label }}
+        <span class="chip-count">{{ r.count }}</span>
       </button>
       }
     </div>
 
-    <!-- عرض مؤشر التحميل الخاص -->
-    @if (isLoading()) {
-    <div
-      style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px; width: 100%;">
-      <div class="custom-spinner"></div>
-      <span style="color: #6C757D; font-size: 0.9rem; font-family: inherit;">جاري تحميل البيانات...</span>
+    <button class="nfd-btn primary-teal" (click)="openCreateModal()">
+      <i class="fa-solid fa-plus"></i> إنشاء حساب جديد
+    </button>
+  </div>
+
+  <!-- شريط البحث والتصفية المتقدمة -->
+  <div class="nfd-filters-bar">
+    <div class="nfd-search-box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input
+        type="text"
+        class="nfd-search-input"
+        placeholder="ابحث بالاسم أو البريد الإلكتروني..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchChange($event)" />
     </div>
-    } @else {
-    <!-- الجدول -->
-    <div class="table-responsive">
-      <table class="nfd-table table align-middle mb-0 text-end">
-        <thead>
-          <tr>
-            <th>الاسم الكامل</th>
-            <th>البريد الإلكتروني</th>
-            <th>رقم الهاتف</th>
-            <th>الدور</th>
-            <th>تاريخ الإنشاء</th>
-            <th>الإجراءات</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (u of filtered(); track u.userId || u.email) {
-          <tr>
-            <td><strong>{{ u.fullName }}</strong></td>
-            <td>{{ u.email }}</td>
-            <td>{{ u.phoneNumber || '-' }}</td>
-            <td>
-              <span class="nfd-badge px-3 py-2 rounded-pill" [ngStyle]="{
-                        'background': u.role === 'Admin' ? '#E0E7FF' : u.role === 'Company' ? '#E8F5E9' : u.role === 'Trainer' ? '#FFF3E0' : '#F1F5F9',
-                        'color': u.role === 'Admin' ? '#3730A3' : u.role === 'Company' ? '#2E7D32' : u.role === 'Trainer' ? '#E65100' : '#475569'
-                        }">
-                {{ roleLabel(u.role) }}
-              </span>
-            </td>
-            <td>{{ u.createdAt ? (u.createdAt | date:'dd/MM/yyyy') : '-' }}</td>
-            <td>
-              <div style="display: flex; gap: 8px; align-items: center;">
-                <button
-                  style="background: #F8F9FA; color: #495057; border: 1px solid #DEE2E6; padding: 4px 12px; border-radius: 50px; cursor: pointer; font-size: 0.8rem;">
-                  كلمة المرور
-                </button>
-                <button
-                  style="background: #F8F9FA; color: #495057; border: 1px solid #DEE2E6; padding: 4px 12px; border-radius: 50px; cursor: pointer; font-size: 0.8rem;">
-                  تعديل
-                </button>
+
+    <select class="nfd-filter-select" [ngModel]="yearFilter()" (ngModelChange)="setYearFilter($event)">
+      <option value="ALL">كل السنوات</option>
+      @for (y of availableYears(); track y) {
+        <option [value]="y">{{ y }}</option>
+      }
+    </select>
+
+    <div class="nfd-date-range">
+      <input type="date" class="nfd-filter-date" [ngModel]="dateFrom()" (ngModelChange)="onDateFromChange($event)" />
+      <span class="date-sep">إلى</span>
+      <input type="date" class="nfd-filter-date" [ngModel]="dateTo()" (ngModelChange)="onDateToChange($event)" />
+    </div>
+
+    <select class="nfd-filter-select" [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)">
+      <option value="ALL">كل الحالات</option>
+      <option value="Active">نشط</option>
+      <option value="Suspended">موقوف</option>
+    </select>
+
+    @if (hasActiveFilters()) {
+      <button type="button" class="nfd-clear-filters-btn" (click)="clearAllFilters()">
+        <i class="fa-solid fa-xmark"></i>
+        مسح الفلاتر
+      </button>
+    }
+  </div>
+
+  <div class="nfd-results-count">{{ resultsCount() }} نتيجة</div>
+
+  @if (usersError()) {
+  <div class="nfd-inline-error">
+    <span>{{ usersError() }}</span>
+    <button class="retry-btn" (click)="loadData()">إعادة المحاولة</button>
+  </div>
+  }
+
+  <!-- جدول المستخدمين -->
+  <div style="overflow-x: auto;">
+    <table class="nfd-table">
+      <thead>
+        <tr>
+          <th>المستخدم</th>
+          <th>الدور</th>
+          <th>الحالة</th>
+          <th>تاريخ الإنشاء</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loadingUsers()) {
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 30px; color: #64748b;">جاري تحميل البيانات...</td>
+        </tr>
+        } @else if (filtered().length === 0) {
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 30px; color: #64748b;">لا توجد بيانات مطابقة لمعايير البحث</td>
+        </tr>
+        } @else {
+        @for (u of filtered(); track u.userId) {
+        <tr>
+          <td>
+            <div class="user-info">
+              <img class="user-avatar" [src]="getAvatarUrl(u)" [alt]="u.fullName" />
+              <div class="user-details">
+                <span class="user-name">{{ u.fullName }}</span>
+                <span class="user-email">{{ u.email }}</span>
               </div>
-            </td>
-          </tr>
-          } @empty {
-          <tr>
-            <td colspan="6" class="text-center py-4 text-muted">لا يوجد مستخدمون مسجلون بموجب هذا الفلتر.</td>
-          </tr>
-          }
-        </tbody>
-      </table>
+            </div>
+          </td>
+          <td>
+            <span class="nfd-badge role {{ getRoleClass(u.roleName || u.roleId) }}">
+              {{ getRoleArabicName(u.roleName || u.roleId) }}
+            </span>
+          </td>
+          <td>
+            <span
+              class="nfd-badge status"
+              [class.active]="(u.status | lowercase) !== 'suspended'"
+              [class.suspended]="(u.status | lowercase) === 'suspended'">
+              {{ (u.status | lowercase) === 'suspended' ? 'موقوف' : 'نشط' }}
+            </span>
+          </td>
+          <td>{{ (u.createdAt | date:'dd/MM/yyyy') || '---' }}</td>
+          <td>
+            <div class="action-buttons-wrapper">
+              <button class="btn-action details-btn" (click)="openDetailsModal(u)">
+                <i class="fa-solid fa-eye"></i> تفاصيل المستخدم
+              </button>
+            </div>
+          </td>
+        </tr>
+        }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- الترقيم -->
+  <div class="nfd-pagination-container"
+    style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 20px; padding: 10px 0;">
+    <button class="btn-action" type="button" (click)="prevPage()" [disabled]="currentPage() <= 1"
+      [style.opacity]="currentPage() <= 1 ? '0.5' : '1'">
+      السابق
+    </button>
+
+    <span style="font-size: 0.9rem; color: #475569; font-weight: 500;">
+      صفحة {{ currentPage() }} من {{ totalPages() }}
+    </span>
+
+    <button class="btn-action" type="button" (click)="nextPage()" [disabled]="currentPage() >= totalPages()"
+      [style.opacity]="currentPage() >= totalPages() ? '0.5' : '1'">
+      التالي
+    </button>
+  </div>
+
+</div>
+
+<!-- مودال إنشاء حساب جديد (النجمة حمراء) -->
+@if (isCreateModalOpen) {
+<div class="nfd-modal-bg">
+  <div class="nfd-modal">
+    <h3>إنشاء حساب جديد</h3>
+
+    @if (createErrorMsg) {
+    <div class="nfd-inline-error create-error">
+      <span>{{ createErrorMsg }}</span>
     </div>
     }
 
-    <!-- نافذة إضافة مستخدم (Modal) -->
-    @if (showAddModal()) {
-    <div class="nfd-modal-overlay"> <!-- تم إزالة (click)="closeAddModal()" من هنا -->
-      <div class="nfd-modal-card" (click)="$event.stopPropagation()">
-        <div class="nfd-modal-header">
-          <h5 class="m-0">إضافة مستخدم جديد</h5>
-          <button type="button" class="nfd-modal-close" (click)="closeAddModal()">×</button>
+    <!-- الاسم الكامل -->
+    <div class="form-group">
+      <label>الاسم الكامل <span class="required-star" style="color: #ef4444; font-weight: bold; margin-right: 3px;">*</span></label>
+      <input type="text" class="nfd-input" [(ngModel)]="newUser.fullName" (blur)="validateCreateField('fullName')"
+        [class.input-error]="createTouched.fullName && getCreateFieldError('fullName')" placeholder="أدخل الاسم الكامل">
+      @if (createTouched.fullName && getCreateFieldError('fullName')) {
+      <div class="field-error">{{ getCreateFieldError('fullName') }}</div>
+      }
+    </div>
+
+    <!-- البريد الإلكتروني -->
+    <div class="form-group">
+      <label>البريد الإلكتروني <span class="required-star" style="color: #ef4444; font-weight: bold; margin-right: 3px;">*</span></label>
+      <input type="email" class="nfd-input" [(ngModel)]="newUser.email" (blur)="validateCreateField('email')"
+        [class.input-error]="createTouched.email && getCreateFieldError('email')" placeholder="example@domain.com">
+      @if (createTouched.email && getCreateFieldError('email')) {
+      <div class="field-error">{{ getCreateFieldError('email') }}</div>
+      }
+    </div>
+
+    <!-- بطاقة الصورة الشخصية -->
+    <div class="avatar-section-wrapper">
+      <div class="avatar-preview-box">
+        <div class="avatar-preview-sizes">
+          <img class="avatar-preview-img-lg" [src]="getAvatarUrl(newUser)" alt="معاينة الصورة" />
+          <img class="avatar-preview-img-sm" [src]="getAvatarUrl(newUser)" alt="معاينة الجدول" />
         </div>
+        <div class="avatar-preview-info">
+          <div class="avatar-preview-title">الصورة الشخصية للحساب</div>
+          <div class="avatar-preview-sub">
+            {{ newUser.avatarUrl ? (createAvatarFileName() || 'تم تعيين صورة خاصة') : 'صورة رمزية تلقائية حسب الاسم' }}
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <button type="button" class="btn-action" style="padding: 2px 8px; font-size: 0.75rem;" (click)="generateCreateInitialsAvatar()">
+              ✨ بالاسم
+            </button>
+            @if (newUser.avatarUrl) {
+              <button type="button" class="avatar-remove-btn" (click)="removeCreateAvatar()">
+                إزالة الصورة
+              </button>
+            }
+          </div>
+        </div>
+      </div>
 
-        <div class="nfd-modal-body">
-          @if (addError()) {
-          <div class="nfd-modal-error">{{ addError() }}</div>
+      <!-- طريقة تحديد الصورة -->
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label>طريقة تحديد الصورة</label>
+        <select class="nfd-input avatar-type-select" [ngModel]="createAvatarMode()" (ngModelChange)="setCreateAvatarMode($event)">
+          <option value="file">📁 رفع صورة من الجهاز</option>
+          <option value="url">🔗 إدخال رابط صورة (URL)</option>
+          <option value="presets">🎨 اختيار صورة رمزية جاهزة</option>
+        </select>
+      </div>
+
+      @if (createAvatarMode() === 'file') {
+        <div>
+          <label for="createFilePicker" class="avatar-file-drop">
+            <span>اضغط هنا لاختيار ملف من جهازك</span>
+            <small>يدعم JPG, PNG, WEBP, SVG حتى 5MB</small>
+          </label>
+          <input id="createFilePicker" type="file" accept="image/*" style="display: none;" (change)="handleCreateFileSelected($event)">
+          @if (createAvatarFileName()) {
+            <div class="avatar-file-loaded-info">
+              <span>✓ {{ createAvatarFileName() }}</span>
+              <button type="button" style="color: #b91c1c; background: transparent; border: none; cursor: pointer;" (click)="removeCreateAvatar()">إلغاء</button>
+            </div>
           }
+        </div>
+      }
 
-          <!-- الاسم الكامل -->
-          <div class="nfd-field">
-            <label>الاسم الكامل <span class="req">*</span></label>
-            <input type="text" class="form-control"
-              [class.is-invalid]="touchedFields()['fullName'] && formErrors()['fullName']"
-              [(ngModel)]="newUser.fullName" (blur)="markTouched('fullName')" placeholder="أدخل الاسم الكامل">
-            <span class="nfd-field-error" *ngIf="touchedFields()['fullName'] && formErrors()['fullName']">
-              {{ formErrors()['fullName'] }}
+      @if (createAvatarMode() === 'url') {
+        <input type="url" class="nfd-input" [(ngModel)]="newUser.avatarUrl" placeholder="https://example.com/avatar.jpg" dir="ltr">
+      }
+
+      @if (createAvatarMode() === 'presets') {
+        <div class="avatar-presets-grid">
+          @for (preset of presetAvatars; track preset.id) {
+            <button type="button" class="avatar-preset-item" [class.selected]="newUser.avatarUrl === preset.url" (click)="selectCreatePreset(preset.url, preset.name)">
+              <img [src]="preset.url" [alt]="preset.name" />
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- الدور -->
+    <div class="form-group">
+      <label>الدور <span class="required-star" style="color: #ef4444; font-weight: bold; margin-right: 3px;">*</span></label>
+      <select class="nfd-input" [(ngModel)]="newUser.roleId" (change)="validateCreateField('roleId')"
+        [class.input-error]="createTouched.roleId && getCreateFieldError('roleId')">
+        <option [ngValue]="null" disabled>اختر الدور</option>
+        @for (role of rolesList(); track role.roleId) {
+        <option [ngValue]="role.roleId">{{ role.roleName }}</option>
+        }
+      </select>
+      @if (createTouched.roleId && getCreateFieldError('roleId')) {
+      <div class="field-error">{{ getCreateFieldError('roleId') }}</div>
+      }
+    </div>
+
+    <!-- كلمة المرور -->
+    <div class="form-group">
+      <label>كلمة المرور <span class="required-star" style="color: #ef4444; font-weight: bold; margin-right: 3px;">*</span></label>
+      <input type="password" class="nfd-input" [(ngModel)]="newUser.password" (blur)="validateCreateField('password')"
+        [class.input-error]="createTouched.password && getCreateFieldError('password')" placeholder="أدخل كلمة المرور">
+      @if (createTouched.password && getCreateFieldError('password')) {
+      <div class="field-error">{{ getCreateFieldError('password') }}</div>
+      }
+      @if (newUser.password) {
+      <div class="password-rules">
+        <div [class.rule-valid]="passwordHasMinLength()">{{ passwordHasMinLength() ? '✓' : '•' }} 8 أحرف على الأقل</div>
+        <div [class.rule-valid]="passwordHasUppercase()">{{ passwordHasUppercase() ? '✓' : '•' }} حرف إنجليزي كبير</div>
+        <div [class.rule-valid]="passwordHasLowercase()">{{ passwordHasLowercase() ? '✓' : '•' }} حرف إنجليزي صغير</div>
+        <div [class.rule-valid]="passwordHasNumber()">{{ passwordHasNumber() ? '✓' : '•' }} رقم واحد على الأقل</div>
+      </div>
+      }
+    </div>
+
+    <!-- تأكيد كلمة المرور -->
+    <div class="form-group">
+      <label>تأكيد كلمة المرور <span class="required-star" style="color: #ef4444; font-weight: bold; margin-right: 3px;">*</span></label>
+      <input type="password" class="nfd-input" [(ngModel)]="newUser.confirmPassword"
+        (blur)="validateCreateField('confirmPassword')"
+        [class.input-error]="createTouched.confirmPassword && getCreateFieldError('confirmPassword')"
+        placeholder="أعد إدخال كلمة المرور">
+      @if (createTouched.confirmPassword && getCreateFieldError('confirmPassword')) {
+      <div class="field-error">{{ getCreateFieldError('confirmPassword') }}</div>
+      }
+    </div>
+
+    <div class="nfd-modal-actions">
+      <button type="button" class="nfd-btn secondary" (click)="closeCreateModal()">إلغاء</button>
+      <button type="button" class="nfd-btn primary-teal" (click)="createUser()" [disabled]="!isCreateFormValid()"
+        [class.btn-disabled]="!isCreateFormValid()">حفظ</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- مودال تعديل البيانات -->
+@if (isEditModalOpen) {
+<div class="nfd-modal-bg">
+  <div class="nfd-modal">
+    <h3>تعديل بيانات المستخدم</h3>
+
+    @if (editSuccessMsg()) {
+    <div class="nfd-inline-success">
+      <i class="fa-solid fa-circle-check"></i>
+      <span>{{ editSuccessMsg() }}</span>
+    </div>
+    }
+
+    @if (editErrorMsg) {
+    <div class="nfd-inline-error create-error">
+      <span>{{ editErrorMsg }}</span>
+    </div>
+    }
+
+    <div class="form-group">
+      <label>الاسم الكامل <span class="required-star" style="color: #ef4444; font-weight: bold; margin-right: 3px;">*</span></label>
+      <input type="text" class="nfd-input" [(ngModel)]="selectedUser.fullName" (blur)="validateEditField('fullName')"
+        [class.input-error]="editTouched.fullName && getEditFieldError('fullName')" placeholder="أدخل الاسم الكامل">
+      @if (editTouched.fullName && getEditFieldError('fullName')) {
+      <div class="field-error">{{ getEditFieldError('fullName') }}</div>
+      }
+    </div>
+
+    <div class="form-group">
+      <label>البريد الإلكتروني <span class="required-star" style="color: #ef4444; font-weight: bold; margin-right: 3px;">*</span></label>
+      <input type="email" class="nfd-input" [(ngModel)]="selectedUser.email" (blur)="validateEditField('email')"
+        [class.input-error]="editTouched.email && getEditFieldError('email')" placeholder="example@domain.com">
+      @if (editTouched.email && getEditFieldError('email')) {
+      <div class="field-error">{{ getEditFieldError('email') }}</div>
+      }
+    </div>
+
+    <!-- بطاقة تعديل الصورة الشخصية -->
+    <div class="avatar-section-wrapper">
+      <div class="avatar-preview-box">
+        <div class="avatar-preview-sizes">
+          <img class="avatar-preview-img-lg" [src]="getAvatarUrl(selectedUser)" alt="معاينة الصورة" />
+          <img class="avatar-preview-img-sm" [src]="getAvatarUrl(selectedUser)" alt="معاينة الجدول" />
+        </div>
+        <div class="avatar-preview-info">
+          <div class="avatar-preview-title">صورة الحساب</div>
+          <div class="avatar-preview-sub">
+            {{ selectedUser.avatarUrl ? (editAvatarFileName() || 'تم تعيين صورة خاصة') : 'صورة رمزية تلقائية حسب الاسم' }}
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <button type="button" class="btn-action" style="padding: 2px 8px; font-size: 0.75rem;" (click)="generateEditInitialsAvatar()">
+              ✨ بالاسم
+            </button>
+            @if (selectedUser.avatarUrl) {
+              <button type="button" class="avatar-remove-btn" (click)="removeEditAvatar()">
+                إزالة الصورة
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- طريقة تحديد الصورة -->
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label>طريقة تحديد الصورة</label>
+        <select class="nfd-input avatar-type-select" [ngModel]="editAvatarMode()" (ngModelChange)="setEditAvatarMode($event)">
+          <option value="file">📁 رفع صورة من الجهاز</option>
+          <option value="url">🔗 إدخال رابط صورة (URL)</option>
+          <option value="presets">🎨 اختيار صورة رمزية جاهزة</option>
+        </select>
+      </div>
+
+      @if (editAvatarMode() === 'file') {
+        <div>
+          <label for="editFilePicker" class="avatar-file-drop">
+            <span>اضغط هنا لاختيار ملف من جهازك</span>
+            <small>JPG, PNG, WEBP (حتى 5MB)</small>
+          </label>
+          <input id="editFilePicker" type="file" accept="image/*" style="display: none;" (change)="handleEditFileSelected($event)">
+          @if (editAvatarFileName()) {
+            <div class="avatar-file-loaded-info">
+              <span>✓ {{ editAvatarFileName() }}</span>
+              <button type="button" style="color: #b91c1c; background: transparent; border: none; cursor: pointer;" (click)="removeEditAvatar()">إلغاء</button>
+            </div>
+          }
+        </div>
+      }
+
+      @if (editAvatarMode() === 'url') {
+        <input type="url" class="nfd-input" [(ngModel)]="selectedUser.avatarUrl" placeholder="https://example.com/avatar.jpg" dir="ltr">
+      }
+
+      @if (editAvatarMode() === 'presets') {
+        <div class="avatar-presets-grid">
+          @for (preset of presetAvatars; track preset.id) {
+            <button type="button" class="avatar-preset-item" [class.selected]="selectedUser.avatarUrl === preset.url" (click)="selectEditPreset(preset.url, preset.name)">
+              <img [src]="preset.url" [alt]="preset.name" />
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- تعديل الدور -->
+    <div class="form-group">
+      <label>الدور <span class="required-star" style="color: #ef4444; font-weight: bold; margin-right: 3px;">*</span></label>
+      <select class="nfd-input" [(ngModel)]="selectedUser.roleId">
+        @for (role of rolesList(); track role.roleId) {
+        <option [ngValue]="role.roleId">{{ role.roleName }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="nfd-modal-actions">
+      <button type="button" class="nfd-btn secondary" (click)="closeEditModal()">إلغاء</button>
+      <button type="button" class="nfd-btn primary-teal" (click)="updateUser()" [disabled]="!isEditFormValid()"
+        [class.btn-disabled]="!isEditFormValid()">تحديث</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- مودال تغيير كلمة المرور -->
+@if (isResetPasswordModalOpen) {
+<div class="nfd-modal-bg">
+  <div class="nfd-modal">
+    <h3>تغيير كلمة المرور</h3>
+    <p class="reset-target">المستخدم: {{ selectedUser.fullName }}</p>
+
+    @if (resetPasswordSuccessMsg()) {
+    <div class="nfd-inline-success">
+      <i class="fa-solid fa-circle-check"></i>
+      <span>{{ resetPasswordSuccessMsg() }}</span>
+    </div>
+    }
+
+    @if (resetPasswordErrorMsg) {
+    <div class="nfd-inline-error create-error">
+      <span>{{ resetPasswordErrorMsg }}</span>
+    </div>
+    }
+
+    <div class="form-group">
+      <label>كلمة المرور الجديدة <span class="required-star" style="color: #ef4444; font-weight: bold; margin-right: 3px;">*</span></label>
+      <input type="password" class="nfd-input" [(ngModel)]="newPassword" (blur)="validateResetPasswordField()"
+        [class.input-error]="resetPasswordTouched.newPassword && getResetPasswordError()"
+        placeholder="أدخل كلمة المرور الجديدة">
+      @if (resetPasswordTouched.newPassword && getResetPasswordError()) {
+      <div class="field-error">{{ getResetPasswordError() }}</div>
+      }
+      @if (newPassword) {
+      <div class="password-rules">
+        <div [class.rule-valid]="passwordHasMinLengthFor(newPassword)">{{ passwordHasMinLengthFor(newPassword) ? '✓' : '•' }} 8 أحرف على الأقل</div>
+        <div [class.rule-valid]="passwordHasUppercaseFor(newPassword)">{{ passwordHasUppercaseFor(newPassword) ? '✓' : '•' }} حرف إنجليزي كبير</div>
+        <div [class.rule-valid]="passwordHasLowercaseFor(newPassword)">{{ passwordHasLowercaseFor(newPassword) ? '✓' : '•' }} حرف إنجليزي صغير</div>
+        <div [class.rule-valid]="passwordHasNumberFor(newPassword)">{{ passwordHasNumberFor(newPassword) ? '✓' : '•' }} رقم واحد على الأقل</div>
+      </div>
+      }
+    </div>
+
+    <div class="nfd-modal-actions">
+      <button type="button" class="nfd-btn secondary" (click)="closeResetPasswordModal()">إلغاء</button>
+      <button type="button" class="nfd-btn primary-teal" (click)="confirmResetPassword()"
+        [disabled]="!isResetPasswordValid()" [class.btn-disabled]="!isResetPasswordValid()">حفظ</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- ========================================================================= -->
+<!-- صفحة تفاصيل المستخدم كاملة الشاشة (تمتد 100% للشاشة كاملة بدون زري التعديل) -->
+<!-- ========================================================================= -->
+@if (isDetailsModalOpen) {
+<div class="details-fullpage">
+  <!-- الشريط العلوي ممتد على كامل العرض -->
+  <div class="details-fullpage-header">
+    <div class="details-header-right">
+      <button type="button" class="details-back-btn" (click)="closeDetailsModal()">
+        <i class="fa-solid fa-arrow-right"></i>
+        <span>العودة إلى إدارة المستخدمين</span>
+      </button>
+
+      <span class="details-user-id-tag">
+        معرف المستخدم: #{{ detailsUser.userId }}
+      </span>
+    </div>
+
+    <div class="details-fullpage-actions">
+      <!-- زر طباعة الملف فقط -->
+      <button type="button" class="btn-action" (click)="printUserDetails()">
+        <i class="fa-solid fa-print"></i>
+        <span>طباعة الملف</span>
+      </button>
+
+      <!-- زر إيقاف / تفعيل الحساب -->
+      <button
+        type="button"
+        class="details-status-btn"
+        [class.btn-suspend]="(detailsUser.status | lowercase) !== 'suspended'"
+        [class.btn-activate]="(detailsUser.status | lowercase) === 'suspended'"
+        (click)="toggleUserStatus(detailsUser)">
+        <i class="fa-solid" [class.fa-ban]="(detailsUser.status | lowercase) !== 'suspended'" [class.fa-check]="(detailsUser.status | lowercase) === 'suspended'"></i>
+        <span>{{ (detailsUser.status | lowercase) === 'suspended' ? 'تفعيل الحساب' : 'إيقاف الحساب' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- محتوى الصفحة ممتد 100% للشاشة كاملة -->
+  <div class="details-fullpage-body">
+
+    <!-- شريط معلومات المنصة -->
+    <div class="details-system-notice">
+      <div class="notice-text">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>بيانات الحساب موثقة عبر منصة نَفَاذ الوطنية، وتخضع لسجل التدقيق والرقابة النظامية.</span>
+      </div>
+      <span class="notice-badge">موثق ومعتمد ✓</span>
+    </div>
+
+    <!-- بطاقة الهيدر الرئيسية (Hero Card) -->
+    <div class="details-hero">
+      <div class="details-hero-user">
+        <img class="details-hero-avatar" [src]="getAvatarUrl(detailsUser)" [alt]="detailsUser.fullName" />
+        <div class="details-hero-info">
+          <h2>{{ detailsUser.fullName }}</h2>
+          <div class="details-hero-badges">
+            <span class="nfd-badge role {{ getRoleClass(detailsUser.roleName || detailsUser.roleId) }}">
+              {{ getRoleArabicName(detailsUser.roleName || detailsUser.roleId) }}
+            </span>
+            <span
+              class="nfd-badge status"
+              [class.active]="(detailsUser.status | lowercase) !== 'suspended'"
+              [class.suspended]="(detailsUser.status | lowercase) === 'suspended'">
+              {{ (detailsUser.status | lowercase) === 'suspended' ? 'حساب موقوف' : 'حساب نشط' }}
+            </span>
+            <span class="details-meta-pill">
+              <i class="fa-solid fa-clock"></i>
+              تاريخ التسجيل: {{ (detailsUser.createdAt | date:'dd/MM/yyyy') || '---' }}
             </span>
           </div>
-
-          <div class="nfd-field-row">
-            <!-- البريد الإلكتروني -->
-            <div class="nfd-field">
-              <label>البريد الإلكتروني <span class="req">*</span></label>
-              <input type="email" class="form-control"
-                [class.is-invalid]="touchedFields()['email'] && formErrors()['email']" [(ngModel)]="newUser.email"
-                (blur)="markTouched('email')" placeholder="user@nafadh.om">
-              <span class="nfd-field-error" *ngIf="touchedFields()['email'] && formErrors()['email']">
-                {{ formErrors()['email'] }}
-              </span>
-            </div>
-
-            <!-- رقم الهاتف -->
-            <div class="nfd-field">
-              <label>رقم الهاتف <span class="req">*</span></label>
-              <input type="text" class="form-control"
-                [class.is-invalid]="touchedFields()['phoneNumber'] && formErrors()['phoneNumber']"
-                [(ngModel)]="newUser.phoneNumber" (blur)="markTouched('phoneNumber')" placeholder="91234567"
-                maxlength="8">
-              <span class="nfd-field-error" *ngIf="touchedFields()['phoneNumber'] && formErrors()['phoneNumber']">
-                {{ formErrors()['phoneNumber'] }}
-              </span>
-            </div>
-          </div>
-
-          <div class="nfd-field-row">
-            <!-- الدور -->
-            <div class="nfd-field">
-              <label>الدور <span class="req">*</span></label>
-              <select class="form-control" [class.is-invalid]="touchedFields()['role'] && formErrors()['role']"
-                [(ngModel)]="newUser.roleId" (blur)="markTouched('role')">
-                <option value="" disabled selected>اختر الدور...</option>
-                @for (opt of roleOptions; track opt.value) {
-                <option [value]="opt.value">{{ opt.label }}</option>
-                }
-              </select>
-              <span class="nfd-field-error" *ngIf="touchedFields()['role'] && formErrors()['role']">
-                {{ formErrors()['role'] }}
-              </span>
-            </div>
-          </div>
-
-          <div class="nfd-field-row">
-            <!-- كلمة المرور -->
-            <div class="nfd-field">
-              <label>كلمة المرور <span class="req">*</span></label>
-              <input type="password" class="form-control"
-                [class.is-invalid]="touchedFields()['password'] && formErrors()['password']"
-                [(ngModel)]="newUser.password" (blur)="markTouched('password')" placeholder="********">
-              <span class="nfd-field-error" *ngIf="touchedFields()['password'] && formErrors()['password']">
-                {{ formErrors()['password'] }}
-              </span>
-            </div>
-
-            <!-- تأكيد كلمة المرور -->
-            <div class="nfd-field">
-              <label>تأكيد كلمة المرور <span class="req">*</span></label>
-              <input type="password" class="form-control"
-                [class.is-invalid]="touchedFields()['confirmPassword'] && formErrors()['confirmPassword']"
-                [(ngModel)]="newUser.confirmPassword" (blur)="markTouched('confirmPassword')" placeholder="********">
-              <span class="nfd-field-error"
-                *ngIf="touchedFields()['confirmPassword'] && formErrors()['confirmPassword']">
-                {{ formErrors()['confirmPassword'] }}
-              </span>
-            </div>
-          </div>
         </div>
+      </div>
 
-        <div class="nfd-modal-actions">
-          <button type="button" class="nfd-cancel-btn" (click)="closeAddModal()" [disabled]="isSaving()">إلغاء</button>
-          <button type="button" class="nfd-submit-btn" (click)="submitAddUser()"
-            [disabled]="isSaving() || !newUser.roleId">
-            {{ isSaving() ? 'جاري الحفظ...' : 'إضافة المستخدم' }}
-          </button>
+      <div class="details-hero-extra">
+        <div class="hero-stat-box">
+          <span class="hero-stat-num">{{ getRolePermissionsCount(detailsUser.roleName || detailsUser.roleId) }}</span>
+          <span class="hero-stat-title">صلاحية معتمدة</span>
         </div>
       </div>
     </div>
-    }
+
+    <!-- 1. قسم: معلومات التواصل والتحقق الوطني -->
+    <div class="details-section">
+      <h4 class="details-section-title">
+        <i class="fa-solid fa-address-card"></i>
+        <span>معلومات التواصل والتحقق الوطني</span>
+      </h4>
+      <div class="details-fullpage-grid">
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-envelope"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">البريد الإلكتروني</span>
+            <span class="details-value">{{ detailsUser.email || '---' }}</span>
+          </div>
+        </div>
+
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-phone"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">رقم الهاتف</span>
+            <span class="details-value">{{ detailsUser.phone || 'غير مسجل' }}</span>
+          </div>
+        </div>
+
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-building"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">الجهة / المنشأة المرتبطة</span>
+            <span class="details-value">{{ detailsUser.companyName || detailsUser.organization || 'منصة نفاذ المركزية' }}</span>
+          </div>
+        </div>
+
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-location-dot"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">الموقع الجغرافي</span>
+            <span class="details-value">سلطنة عُمان - مسقط</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. قسم: معلومات النظام وحالة الحساب -->
+    <div class="details-section">
+      <h4 class="details-section-title">
+        <i class="fa-solid fa-server"></i>
+        <span>معلومات النظام وحالة الحساب</span>
+      </h4>
+      <div class="details-fullpage-grid">
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-calendar-days"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">تاريخ إنشاء الحساب</span>
+            <span class="details-value">{{ (detailsUser.createdAt | date:'dd/MM/yyyy | hh:mm a') || '---' }}</span>
+          </div>
+        </div>
+
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-fingerprint"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">معرف المستخدم (User ID)</span>
+            <span class="details-value mono">#{{ detailsUser.userId }}</span>
+          </div>
+        </div>
+
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-shield-halved"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">معرف الدور (Role ID)</span>
+            <span class="details-value mono">{{ detailsUser.roleId }} ({{ getRoleArabicName(detailsUser.roleName || detailsUser.roleId) }})</span>
+          </div>
+        </div>
+
+        <div class="details-card">
+          <div class="details-card-icon"><i class="fa-solid fa-lock"></i></div>
+          <div class="details-card-text">
+            <span class="details-label">المصادقة الثنائية (2FA)</span>
+            <span class="details-value text-success">مفعلة وآمنة ✓</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. قسم: وصف الصلاحيات وحقوق الوصول -->
+    <div class="details-section">
+      <h4 class="details-section-title">
+        <i class="fa-solid fa-file-shield"></i>
+        <span>صلاحيات الدور والامتيازات الممنوحة</span>
+      </h4>
+      <div class="details-permissions-box">
+        <p class="details-permissions-text">
+          {{ getRolePermissionsDescription(detailsUser.roleName || detailsUser.roleId) }}
+        </p>
+
+        <!-- قائمة وسوم الصلاحيات الممنوحة -->
+        <div class="details-permissions-tags">
+          @for (perm of getRolePermissionsList(detailsUser.roleName || detailsUser.roleId); track perm) {
+            <span class="perm-pill">
+              <i class="fa-solid fa-check"></i>
+              {{ perm }}
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. قسم: الملاحظات وسجل التدقيق -->
+    <div class="details-section">
+      <h4 class="details-section-title">
+        <i class="fa-solid fa-clipboard-check"></i>
+        <span>الملاحظات الإدارية وسجل الرقابة</span>
+      </h4>
+      <div class="details-audit-card">
+        <p class="audit-note-text">
+          الحساب مسجل ومعتمد في نظام منصة نفاذ. جميع عمليات التعديل والدخول مسجلة في سجل التدقيق والرقابة العام للمشرفين.
+        </p>
+        <div class="audit-footer">
+          <span>آخر تحديث للحساب: {{ (detailsUser.createdAt | date:'yyyy-MM-dd') }}</span>
+          <span class="audit-status-tag">حالة الاعتماد: ساري المفعول</span>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
+}

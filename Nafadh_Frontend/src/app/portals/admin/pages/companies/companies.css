@@ -1,307 +1,1302 @@
+/* =========================================================
+   منصة نفاذ - ملف التنسيقات الكامل لإدارة الشركات المستضيفة
+   companies.css
+========================================================== */
+
+:host {
+  display: block;
+  font-family: inherit;
+  color: #1e293b;
+  background-color: #f8fafc;
+}
+
+.nfd-page-container {
+  padding: 1.5rem 2rem;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* =========================================================
+   1. الهيدر الرئيسي
+========================================================== */
 .header-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
+  flex-wrap: wrap;
+  gap: 1.25rem;
 }
 
-.add-company-btn {
-  background-color: #0D1C8C;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 20px;
-  font-weight: 600;
+.nfd-page-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0D1C8C;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.nfd-page-subtitle {
+  color: #64748b;
+  font-size: 0.92rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+.header-actions-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 1rem;
+}
+
+/* زر طلبات التسجيل الجديدة في الهيدر */
+.toggle-requests-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #ffffff;
+  color: #0D1C8C;
+  border: 1.5px solid #cbd5e1;
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.toggle-requests-btn:hover {
+  border-color: #0D1C8C;
+  background: #f0f4ff;
+}
+
+.toggle-requests-btn.active {
+  background: #0D1C8C;
+  color: #ffffff;
+  border-color: #0D1C8C;
+}
+
+.pending-counter-badge {
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 50px;
+  font-weight: 800;
+}
+
+/* زر إضافة شركة جديدة */
+.add-company-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #0D1C8C, #1e3a8a);
+  color: #ffffff;
+  border: none;
+  padding: 0.65rem 1.4rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
 }
 
 .add-company-btn:hover {
-  background-color: #09135d;
-  color: #ffffff;
+  background: linear-gradient(135deg, #0a1670, #172554);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 28, 140, 0.25);
 }
 
 .plus-icon {
   font-size: 1.2rem;
-  font-weight: bold;
   line-height: 1;
 }
 
-/* ===== Add Company Modal ===== */
+/* =========================================================
+   2. كروت المؤشرات الإحصائية العامة (Stats Grid)
+========================================================== */
+.nfd-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.25rem;
+}
 
-.nfd-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+.nfd-stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.nfd-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: #cbd5e1;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+.nfd-stat-card.active-card {
+  border-color: #0D1C8C;
+  background: #f8faff;
+  box-shadow: 0 0 0 2px rgba(13, 28, 140, 0.15);
+}
+
+.nfd-stat-card.highlight {
+  border-right: 4px solid #f59e0b;
+}
+
+.stat-icon-wrap {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1050;
-  padding: 16px;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.stat-icon-wrap.navy { background: #e0e7ff; color: #0D1C8C; }
+.stat-icon-wrap.orange { background: #fef3c7; color: #d97706; }
+.stat-icon-wrap.green { background: #dcfce7; color: #15803d; }
+.stat-icon-wrap.purple { background: #f3e8ff; color: #7e22ce; }
+
+.stat-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.stat-text {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+/* =========================================================
+   3. لوحة أدوات البحث والفلترة الشاملة
+========================================================== */
+.filter-panel-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.nfd-chips {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-btn {
+  background: #f1f5f9;
+  border: 1px solid transparent;
+  color: #475569;
+  padding: 0.5rem 1.1rem;
+  border-radius: 50px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.filter-btn.active {
+  background: #0D1C8C;
+  color: #ffffff;
+  border-color: #0D1C8C;
+}
+
+.results-count-text {
+  font-size: 0.88rem;
+  color: #64748b;
+}
+
+.results-count-text strong {
+  color: #0D1C8C;
+  font-weight: 800;
+}
+
+/* سطر الفلترة المتقدم */
+.advanced-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.search-box-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+}
+
+.search-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.search-field {
+  width: 100%;
+  height: 44px;
+  padding: 0 42px 0 38px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: #1e293b;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.search-field:focus {
+  background: #ffffff;
+  border-color: #0D1C8C;
+  box-shadow: 0 0 0 3px rgba(13, 28, 140, 0.1);
+}
+
+.clear-btn {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.clear-btn:hover {
+  color: #ef4444;
+}
+
+.filter-dropdown-wrap {
+  min-width: 170px;
+}
+
+.custom-filter-select {
+  width: 100%;
+  height: 44px;
+  padding: 0 1rem;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  color: #334155;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.custom-filter-select:focus {
+  border-color: #0D1C8C;
+}
+
+.btn-reset-all {
+  height: 44px;
+  padding: 0 1.2rem;
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-reset-all:hover {
+  background: #fca5a5;
+  color: #991b1b;
+}
+
+/* =========================================================
+   4. جدول الشركات الرئيسي
+========================================================== */
+.nfd-card {
+  background: #ffffff;
+  border-radius: 18px;
+}
+
+.section-notice-banner {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 14px;
+  padding: 0.9rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.nfd-table {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.nfd-table thead th {
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 700;
+  font-size: 0.84rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 2px solid #e2e8f0;
+  text-transform: uppercase;
+}
+
+.nfd-table tbody td {
+  padding: 1.1rem 1.25rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+}
+
+.nfd-table tbody tr:hover {
+  background-color: #f8faff;
+}
+
+.highlight-row {
+  background-color: #fffdf5 !important;
+}
+
+.company-logo-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0D1C8C, #2563eb);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.company-title-text {
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.city-tag {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.contact-person-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+
+.contact-name {
+  color: #1e293b;
+  font-size: 0.88rem;
+}
+
+.contact-email {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.contact-phone {
+  color: #0D1C8C;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.capacity-badge-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.badge-item {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  font-weight: 600;
+  display: inline-block;
+  width: fit-content;
+}
+
+.badge-item.blue { background: #e0e7ff; color: #1e3a8a; }
+.badge-item.gray { background: #f1f5f9; color: #475569; }
+
+.nfd-badge {
+  font-weight: 700;
+  font-size: 0.82rem;
+  display: inline-block;
+}
+
+.rejection-hint {
+  font-size: 0.75rem;
+  color: #dc2626;
+  cursor: pointer;
+  margin-top: 0.3rem;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* أزرار الإجراءات في الجدول */
+.action-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.details-btn {
+  background: #f1f5f9;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+}
+.details-btn:hover { background: #0D1C8C; color: #ffffff; border-color: #0D1C8C; }
+
+.approve-btn {
+  background: #dcfce7;
+  color: #15803d;
+}
+.approve-btn:hover { background: #16a34a; color: #ffffff; }
+
+.reject-btn {
+  background: #fee2e2;
+  color: #dc2626;
+}
+.reject-btn:hover { background: #dc2626; color: #ffffff; }
+
+.suspend-btn {
+  background: #fef3c7;
+  color: #d97706;
+}
+.suspend-btn:hover { background: #d97706; color: #ffffff; }
+
+/* =========================================================
+   5. شريط التصفح المرقم (Pagination)
+========================================================== */
+.compact-pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.pagination-info {
+  font-size: 0.86rem;
+  color: #64748b;
+}
+
+.pagination-compact-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.compact-nav-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 0.35rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.compact-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.compact-nav-btn:not(:disabled):hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.compact-page-number-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.84rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.compact-page-number-btn:hover {
+  background: #f1f5f9;
+}
+
+.compact-page-number-btn.active {
+  background: #0D1C8C !important;
+  color: #ffffff !important;
+  border-color: #0D1C8C !important;
+  box-shadow: 0 2px 6px rgba(13, 28, 140, 0.3);
+}
+
+/* =========================================================
+   6. شاشة تفاصيل الشركة ملء الشاشة (Fullscreen View)
+========================================================== */
+.company-fullscreen-view {
+  width: 100%;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================
+   7. النوافذ المنبثقة (Modals)
+========================================================== */
+.nfd-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeIn 0.15s ease-out;
 }
 
 .nfd-modal-card {
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 20px;
   width: 100%;
-  max-width: 480px;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 24px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
-  direction: rtl;
+  max-width: 600px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.reject-modal-card {
+  max-width: 540px;
 }
 
 .nfd-modal-header {
+  padding: 1.25rem 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.nfd-modal-header h5 {
-  font-weight: 700;
-  color: #1a1a2e;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .nfd-modal-close {
   background: none;
   border: none;
   font-size: 1.5rem;
-  line-height: 1;
-  color: #6b7280;
+  color: #94a3b8;
   cursor: pointer;
+  padding: 0;
+  line-height: 1;
 }
 
 .nfd-modal-close:hover {
-  color: #1a1a2e;
+  color: #0f172a;
+}
+
+.nfd-modal-body {
+  padding: 1.5rem;
+  max-height: 75vh;
+  overflow-y: auto;
 }
 
 .nfd-modal-section-title {
   font-size: 0.85rem;
-  font-weight: 700;
-  color: #6b7280;
-  margin: 16px 0 10px;
-}
-
-.nfd-modal-section-title:first-of-type {
-  margin-top: 0;
+  font-weight: 800;
+  color: #0D1C8C;
+  margin: 1.25rem 0 0.75rem 0;
+  text-transform: uppercase;
 }
 
 .nfd-field {
-  margin-bottom: 14px;
-  flex: 1;
+  margin-bottom: 1rem;
+}
+
+.nfd-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
 }
 
 .nfd-field label {
   display: block;
   font-size: 0.85rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 6px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 0.35rem;
 }
 
-.nfd-field label .req {
-  color: #dc2626;
+.req {
+  color: #ef4444;
 }
 
-.nfd-field .form-control {
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  padding: 8px 12px;
-}
-
-.nfd-field .form-control:focus {
-  border-color: #0D1C8C;
-  box-shadow: 0 0 0 2px rgba(13, 28, 140, 0.12);
-}
-
-.nfd-field .form-control:disabled {
-  background-color: #f3f4f6;
-  color: #6b7280;
-}
-
-.nfd-field-row {
-  display: flex;
-  gap: 12px;
-}
-
-/* ===== المجال custom dropdown ===== */
-
-.nfd-dropdown-wrap {
-  position: relative;
-}
-
-.nfd-select-input {
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  background: #ffffff;
-  user-select: none;
-}
-
-.nfd-select-input span.placeholder {
-  color: #9ca3af;
-}
-
-.nfd-select-input.open {
-  border-color: #0D1C8C;
-  box-shadow: 0 0 0 2px rgba(13, 28, 140, 0.12);
-}
-
-.nfd-select-caret {
-  font-size: 0.75rem;
-  color: #6b7280;
-  transition: transform 0.15s ease;
-}
-
-.nfd-select-input.open .nfd-select-caret {
-  transform: rotate(180deg);
-}
-
-.nfd-select-list {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  background: #ffffff;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-  z-index: 10;
-  overflow: hidden;
-  max-height: 220px;
-  overflow-y: auto;
-}
-
-.nfd-select-item {
-  padding: 10px 14px;
-  font-size: 0.9rem;
-  color: #1f2937;
-  cursor: pointer;
-}
-
-.nfd-select-item:hover {
-  background: #f3f4f6;
-}
-
-.nfd-select-item.selected {
-  background: #4b5563;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.nfd-select-empty {
-  padding: 10px 14px;
-  font-size: 0.85rem;
-  color: #9ca3af;
-  text-align: center;
-}
-
-/* ===== field-level validation error ===== */
-
-.form-control.is-invalid {
-  border-color: #dc2626;
-}
-
-.form-control.is-invalid:focus {
-  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.15);
-}
-
-.nfd-field-error {
-  color: #dc2626;
+.quick-reason-chip {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
   font-size: 0.78rem;
-  margin-top: 4px;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.nfd-modal-error {
-  background: #fef2f2;
-  color: #b91c1c;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 0.85rem;
-  margin-bottom: 12px;
+.quick-reason-chip:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #991b1b;
 }
 
 .nfd-modal-actions {
+  padding: 1rem 1.5rem;
+  background: #f8fafc;
   display: flex;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.nfd-submit-btn {
-  background-color: #0D1C8C;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
-  font-weight: 600;
-  flex: 1;
-  cursor: pointer;
-}
-
-.nfd-submit-btn:hover:not(:disabled) {
-  background-color: #09135d;
-  color: #ffffff;
-}
-
-.nfd-submit-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  border-top: 1px solid #e2e8f0;
 }
 
 .nfd-cancel-btn {
   background: #ffffff;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 10px 16px;
-  font-weight: 600;
-  flex: 1;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 0.6rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 700;
   cursor: pointer;
 }
 
-.nfd-cancel-btn:hover {
-  background: #f3f4f6;
-}
-
-/* أزرار الفلتر */
-.filter-btn {
-  background-color: transparent;
-  border: 1px solid #dee2e6;
-  color: #495057;
-  padding: 6px 20px;
-  border-radius: 50px;
-  transition: all 0.2s ease-in-out;
+.nfd-submit-btn {
+  background: #0D1C8C;
+  border: none;
+  color: #ffffff;
+  padding: 0.6rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 700;
   cursor: pointer;
-  font-weight: 500;
 }
 
-.filter-btn:hover,
-.filter-btn.active {
-  background-color: #0D1C8C !important;
-  color: #ffffff !important;
-  border-color: #0D1C8C !important;
+.nfd-submit-btn:hover {
+  background: #0a1670;
 }
-/* تصميم دائرة التحميل الخاصة */
+
+.nfd-modal-error {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+/* =========================================================
+   مؤشر التحميل Spinner
+========================================================== */
+.loading-state-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  gap: 1rem;
+}
+
 .custom-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3b82f6; /* لون أزرق مميز */
+  width: 44px;
+  height: 44px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #0D1C8C;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 12px;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
+
+.loading-text {
+  color: #64748b;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+/* =========================================================
+   صفحة تفاصيل الشركة ملء الشاشة الفخمة (Full-Screen Styles)
+========================================================== */
+.nfd-details-container {
+  width: 100%;
+  animation: fadeIn 0.25s ease-out;
+}
+
+/* 1. الشريط العلوي */
+.nfd-details-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: #ffffff;
+  padding: 1rem 1.5rem;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.nfd-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nfd-btn-back {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  padding: 0.65rem 1.4rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nfd-btn-back:hover {
+  background: #0D1C8C;
+  transform: translateX(2px);
+}
+
+.nfd-id-badge {
+  color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.nfd-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.nfd-btn-print {
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  color: #334155;
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.nfd-btn-print:hover { background: #e2e8f0; }
+
+.nfd-btn-approve {
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.nfd-btn-approve:hover { background: #15803d; }
+
+.nfd-btn-suspend {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1.5px solid #fde68a;
+  padding: 0.6rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.nfd-btn-reject {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+  padding: 0.6rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+/* 2. بطاقة الشركة الكبرى Hero Card */
+.nfd-hero-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  box-shadow: 0 2px 8px rgba(13, 28, 140, 0.04);
+}
+
+.nfd-hero-main {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.nfd-hero-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #0D1C8C, #2563eb);
+  color: #ffffff;
+  font-size: 2.2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(13, 28, 140, 0.25);
+  flex-shrink: 0;
+}
+
+.nfd-hero-title-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.nfd-hero-company-name {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.nfd-hero-meta {
+  color: #64748b;
+  font-size: 0.92rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.meta-dot { color: #cbd5e1; }
+.text-navy { color: #0D1C8C; font-weight: 700; }
+
+.nfd-cr-chip {
+  background: #f1f5f9;
+  color: #334155;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  border: 1px solid #e2e8f0;
+}
+
+.nfd-hero-rating-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1rem 1.75rem;
+  text-align: center;
+}
+
+.rating-number {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #f59e0b;
+}
+
+.rating-number small {
+  color: #94a3b8;
+  font-size: 0.88rem;
+}
+
+.rating-sub {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+
+/* تنبيه الرفض */
+.nfd-rejection-banner {
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.rejection-icon { font-size: 2rem; }
+.rejection-title { font-size: 1.1rem; font-weight: 800; color: #dc2626; margin: 0; }
+.rejection-desc { font-size: 0.92rem; color: #7f1d1d; margin: 0.25rem 0 0 0; }
+
+/* 3. شبكة المؤشرات الأربعة KPIs Grid */
+.nfd-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 992px) {
+  .nfd-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 576px) {
+  .nfd-kpi-grid { grid-template-columns: 1fr; }
+}
+
+.nfd-kpi-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.nfd-kpi-box.blue { border-right: 4px solid #2563eb; }
+.nfd-kpi-box.green { border-right: 4px solid #16a34a; }
+.nfd-kpi-box.indigo { border-right: 4px solid #4f46e5; }
+.nfd-kpi-box.amber { border-right: 4px solid #d97706; }
+
+.kpi-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.kpi-label { font-size: 0.84rem; color: #64748b; font-weight: 600; }
+.kpi-icon { font-size: 1.2rem; }
+
+.kpi-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.kpi-value small { font-size: 0.88rem; color: #64748b; font-weight: 600; }
+.text-blue { color: #2563eb; }
+.text-green { color: #16a34a; }
+.text-indigo { color: #4f46e5; }
+.text-amber { color: #d97706; }
+
+.kpi-footer {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 0.4rem;
+}
+
+/* 4. بطاقة التبويبات الداخلية */
+.nfd-profile-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.nfd-profile-tabs-nav {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+
+.nfd-tab-nav-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #64748b;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nfd-tab-nav-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.nfd-tab-nav-btn.active {
+  background: #0D1C8C;
+  color: #ffffff;
+  border-color: #0D1C8C;
+  box-shadow: 0 2px 6px rgba(13, 28, 140, 0.25);
+}
+
+.nfd-profile-tab-body {
+  padding: 2rem;
+}
+
+.nfd-section-heading {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+}
+
+/* شبكات العرض 2 و 3 أعمدة */
+.nfd-two-col-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 900px) {
+  .nfd-two-col-grid { grid-template-columns: 1fr; }
+}
+
+.nfd-three-col-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .nfd-three-col-grid { grid-template-columns: 1fr; }
+}
+
+/* جدول البيانات الرسمية */
+.nfd-info-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.nfd-info-table td {
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+}
+
+.nfd-info-table tr:last-child td { border-bottom: none; }
+
+.info-label {
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 700;
+  width: 35%;
+}
+
+.info-val { color: #1e293b; }
+.nfd-link { color: #2563eb; text-decoration: none; font-weight: 600; }
+
+/* بطاقة جهة الاتصال */
+.nfd-contact-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.contact-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.contact-avatar-lg {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #0D1C8C;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-name-lg {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.contact-role-lg {
+  font-size: 0.84rem;
+  color: #64748b;
+}
+
+.contact-rows-list {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.contact-row-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.row-label { color: #64748b; }
+.row-value.email { color: #2563eb; font-weight: 700; }
+.row-value.phone { color: #0f172a; font-weight: 800; }
+
+.status-chip-active {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 0.25rem 0.7rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* جدول البرامج التدريبية */
+.nfd-data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.nfd-data-table thead th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  padding: 1rem;
+  font-size: 0.88rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.nfd-data-table tbody td {
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+}
+
+.nfd-data-table tbody tr:last-child td { border-bottom: none; }
+
+.pill-chip {
+  padding: 0.25rem 0.65rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.pill-chip.blue { background: #e0e7ff; color: #1e3a8a; }
+.pill-chip.purple { background: #f3e8ff; color: #7e22ce; }
+
+/* بطاقات المرافق التدريبية */
+.nfd-feature-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.2s;
+}
+
+.nfd-feature-card:hover {
+  background: #ffffff;
+  border-color: #0D1C8C;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 28, 140, 0.08);
+}
+
+.feature-icon { font-size: 2rem; display: block; margin-bottom: 0.75rem; }
+.feature-title { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0 0 0.5rem 0; }
+.feature-desc { font-size: 0.88rem; color: #64748b; margin: 0; line-height: 1.5; }
+
+/* بطاقات المشرفين */
+.nfd-supervisor-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.supervisor-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.supervisor-avatar.blue { background: #2563eb; }
+.supervisor-avatar.green { background: #16a34a; }
+
+.supervisor-name { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0 0 0.25rem 0; }
+.supervisor-role { font-size: 0.85rem; color: #64748b; display: block; }
+.supervisor-score { font-size: 0.82rem; color: #f59e0b; font-weight: 700; margin-top: 0.35rem; }

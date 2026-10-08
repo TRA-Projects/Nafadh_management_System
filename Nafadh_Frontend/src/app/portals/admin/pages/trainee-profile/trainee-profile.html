@@ -1,31 +1,91 @@
 <div class="profile-container">
 
+  @if (toastText()) {
+    <div class="profile-toast">
+      <span>{{ toastText() }}</span>
+    </div>
+  }
+
+  <!-- شريط الأزرار العلوي: رجوع + الحسابات المهنية (LinkedIn / GitHub) + CV + مراسلة + انسحاب -->
   <div class="header-row">
     <button class="back-btn" (click)="goBack()">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M19 12H5"/>
         <path d="m12 19-7-7 7-7"/>
       </svg>
-      رجوع للقائمة
+      رجوع لقائمة المتدربين
     </button>
 
-    @if (enrollment()?.traineeGitHubUrl || trainee()?.gitHubUrl) {
-      <button class="github-btn" (click)="openGitHub()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.1 3.29 9.4 7.86 10.93.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.43-2.7 5.4-5.27 5.69.42.36.78 1.07.78 2.17 0 1.57-.01 2.83-.01 3.22 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12c0-6.35-5.15-11.5-11.5-11.5Z"/>
+    <div class="header-actions-bar">
+      <!-- زر LinkedIn -->
+      @if (linkedInUrl()) {
+        <button class="linkedin-btn" (click)="openLinkedIn()" title="فتح حساب المتدرب في LinkedIn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77Z"/>
+          </svg>
+          LinkedIn
+        </button>
+      }
+
+      <!-- زر GitHub -->
+      @if (gitHubUrl()) {
+        <button class="github-btn" (click)="openGitHub()" title="فتح مستودع GitHub للمتدرب">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.1 3.29 9.4 7.86 10.93.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.43-2.7 5.4-5.27 5.69.42.36.78 1.07.78 2.17 0 1.57-.01 2.83-.01 3.22 0 .31.21.67.8.56A10.52 10.52 0 0 0 23.5 12c0-6.35-5.15-11.5-11.5-11.5Z"/>
+          </svg>
+          GitHub
+        </button>
+      }
+
+      <!-- زر مشاهدة CV -->
+      <button class="cv-btn" (click)="showCvModal.set(true)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
         </svg>
-        {{ enrollment()?.companyName || 'GitHub' }}
+        مشاهدة السيرة الذاتية (CV)
       </button>
-    }
+
+      <!-- زر تنزيل CV مباشر -->
+      <button class="cv-btn" style="background: #ecfdf5; color: #047857; border-color: #a7f3d0;" (click)="downloadProfileCv()" title="تنزيل السيرة الذاتية على الجهاز">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        تنزيل الـ CV
+      </button>
+
+      <!-- زر مراسلة المتدرب -->
+      <button class="msg-btn" (click)="openDirectMessageModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        مراسلة المتدرب
+      </button>
+
+      <!-- زر الانسحاب واعتماد الهيئة -->
+      <button class="withdraw-btn" (click)="openWithdrawalModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="8.5" cy="7" r="4"/>
+          <line x1="18" y1="8" x2="23" y2="13"/>
+          <line x1="23" y1="8" x2="18" y2="13"/>
+        </svg>
+        إدارة الانسحاب
+      </button>
+    </div>
   </div>
 
   @if (isLoading()) {
-    <div class="state-box">جاري تحميل بيانات المتدرب...</div>
+    <div class="state-box">جاري تحميل بيانات المتدرب من قاعدة البيانات...</div>
   } @else if (loadError()) {
     <div class="state-box state-error">{{ loadError() }}</div>
   } @else {
 
-    <!-- بطاقة هوية المتدرب -->
+    <!-- بطاقة هوية المتدرب + الصورة الشخصية + الروابط المهنية -->
     <div class="nfd-card identity-card">
       <div class="identity-text">
         <h1 class="user-name">{{ fullName() }}</h1>
@@ -38,19 +98,68 @@
         @if (batchDatesLabel()) {
           <p class="batch-dates">مدة الدفعة: {{ batchDatesLabel() }}</p>
         }
+
+        <!-- بيانات الجامعة والتخصص والتواصل -->
+        <div class="academic-strip">
+          @if (trainee()?.university) {
+            <span><strong>الجامعة:</strong> {{ trainee()?.university }}</span>
+          }
+          @if (trainee()?.major) {
+            <span><strong>التخصص:</strong> {{ trainee()?.major }}</span>
+          }
+          @if (trainee()?.email) {
+            <span><strong>البريد:</strong> {{ trainee()?.email }}</span>
+          }
+          @if (trainee()?.phone) {
+            <span><strong>الهاتف:</strong> {{ trainee()?.phone }}</span>
+          }
+        </div>
+
         <div class="badge-row">
+          @if (enrollment()?.companyName || trainee()?.companyName) {
+            <span class="pill pill-muted">الشركة: {{ enrollment()?.companyName || trainee()?.companyName }}</span>
+          }
           @if (enrollment()?.supervisorName) {
             <span class="pill pill-muted">المشرف: {{ enrollment()?.supervisorName }}</span>
           }
           @if (enrollment()?.departmentName) {
             <span class="pill pill-muted">القسم: {{ enrollment()?.departmentName }}</span>
           }
-          <span class="pill pill-status">
+          <span class="pill pill-status" [class.pill-withdrawn]="withdrawalStatus() === 'Approved'">
             <span class="status-dot"></span>{{ enrollmentStatusLabel() }}
           </span>
         </div>
+
+        <!-- المهارات التقنية -->
+        @if (skillsList().length > 0) {
+          <div class="skills-chips-row">
+            @for (sk of skillsList(); track sk) {
+              <span class="skill-chip">{{ sk }}</span>
+            }
+          </div>
+        }
+
+        <!-- سبب الانسحاب في حال كان هناك طلب أو انسحاب معتمد -->
+        @if (withdrawalReason()) {
+          <div class="withdrawal-reason-box">
+            <strong>بيان / سبب الانسحاب المسجل:</strong> {{ withdrawalReason() }}
+          </div>
+        }
       </div>
-      <div class="avatar-circle">{{ getInitials(fullName()) }}</div>
+
+      <!-- الصورة الشخصية الحقيقية للمتدرب أو الحروف عند عدم توفرها -->
+      <div class="profile-avatar-holder">
+        @if (profileImageUrl() && !avatarBroken()) {
+          <img
+            [src]="profileImageUrl()"
+            [alt]="fullName()"
+            class="avatar-photo-lg"
+            (error)="avatarBroken.set(true)"
+          />
+        } @else {
+          <div class="avatar-circle">{{ getInitials(fullName()) }}</div>
+        }
+      </div>
     </div>
 
     <!-- كروت الملخص العلوية -->
@@ -211,4 +320,193 @@
     </div>
 
   }
+
+  <!-- نافذة المراسلة المباشرة من داخل البروفايل -->
+  @if (showMessageModal()) {
+    <div class="prof-modal-backdrop">
+      <div class="prof-modal-card">
+        <div class="prof-modal-head">
+          <h3>مراسلة مباشرة — {{ fullName() }}</h3>
+          <button class="prof-close-btn" (click)="showMessageModal.set(false)">×</button>
+        </div>
+        <div class="prof-modal-body">
+          <div class="prof-chat-box">
+            @if (messageHistory().length === 0) {
+              <p class="empty-note">لا توجد رسائل سابقة مع هذا المتدرب.</p>
+            } @else {
+              @for (m of messageHistory(); track m.date) {
+                <div class="prof-chat-item">
+                  <div class="prof-chat-meta"><strong>{{ m.sender }}</strong> <span>{{ m.date }}</span></div>
+                  <p>{{ m.text }}</p>
+                </div>
+              }
+            }
+          </div>
+          <label class="prof-label">نص الرسالة المباشرة *</label>
+          <textarea
+            rows="3"
+            class="prof-textarea"
+            [ngModel]="messageBody()"
+            (ngModelChange)="messageBody.set($event)"
+            placeholder="اكتب رسالتك للمتدرب..."
+          ></textarea>
+        </div>
+        <div class="prof-modal-foot">
+          <button class="back-btn" (click)="showMessageModal.set(false)">إغلاق</button>
+          <button class="msg-btn" [disabled]="isSendingMessage() || !messageBody().trim()" (click)="sendDirectMessage()">
+            {{ isSendingMessage() ? 'جاري الإرسال...' : 'إرسال الرسالة' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- نافذة مشاهدة السيرة الذاتية CV من داخل البروفايل (بدون المربع الأبيض الفارغ) -->
+  @if (showCvModal()) {
+    <div class="prof-modal-backdrop" (click)="showCvModal.set(false)">
+      <div class="prof-modal-card lg" (click)="$event.stopPropagation()">
+        <div class="prof-modal-head">
+          <h3>السيرة الذاتية (CV) — {{ fullName() }}</h3>
+          <button class="prof-close-btn" (click)="showCvModal.set(false)">×</button>
+        </div>
+
+        <div class="prof-modal-body" style="direction: rtl; text-align: right;">
+          <!-- بطاقة ملخص السيرة الذاتية الأنيقة -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; margin-bottom: 18px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; margin-bottom: 16px;">
+              <div>
+                <h4 style="margin: 0 0 4px 0; font-size: 1.15rem; color: #0a1172; font-weight: 800;">{{ fullName() }}</h4>
+                <p style="margin: 0; font-size: 0.88rem; color: #475569;">{{ programLine() || 'متدرب في برنامج نفاذ الوطني' }}</p>
+              </div>
+              <span class="pill pill-status">نسبة الإنجاز: {{ completionPercentage() }}%</span>
+            </div>
+
+            <!-- شبكة البيانات الأكاديمية والمهنية -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 16px;">
+              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
+                <span style="display: block; font-size: 0.76rem; color: #64748b; margin-bottom: 3px;">الجامعة / الكلية</span>
+                <strong style="font-size: 0.92rem; color: #1e293b;">{{ trainee()?.university || 'جامعة السلطان قابوس' }}</strong>
+              </div>
+              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
+                <span style="display: block; font-size: 0.76rem; color: #64748b; margin-bottom: 3px;">التخصص الأكاديمي</span>
+                <strong style="font-size: 0.92rem; color: #1e293b;">{{ trainee()?.major || 'علوم الحاسوب وهندسة البرمجيات' }}</strong>
+              </div>
+              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
+                <span style="display: block; font-size: 0.76rem; color: #64748b; margin-bottom: 3px;">جهة التدريب</span>
+                <strong style="font-size: 0.92rem; color: #1e293b;">{{ enrollment()?.companyName || trainee()?.companyName || 'غير محدد' }}</strong>
+              </div>
+              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
+                <span style="display: block; font-size: 0.76rem; color: #64748b; margin-bottom: 3px;">البريد الإلكتروني</span>
+                <strong style="font-size: 0.88rem; color: #1e293b;">{{ trainee()?.email || '—' }}</strong>
+              </div>
+            </div>
+
+            <!-- المهارات المسجلة -->
+            @if (skillsList().length > 0) {
+              <div>
+                <span style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 8px;">المهارات التقنية المسجلة:</span>
+                <div class="skills-chips-row">
+                  @for (sk of skillsList(); track sk) {
+                    <span class="skill-chip">{{ sk }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- أزرار عرض وتنزيل ملف الـ CV والروابط المهنية -->
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+            @if (resumeUrl()) {
+              <button class="cv-btn" style="padding: 10px 18px; font-weight: 700;" (click)="openExternalUrl(resumeUrl())">
+                فتح ملف السيرة الذاتية في تبويب مستقل
+              </button>
+            }
+
+            <button class="cv-btn" style="padding: 10px 18px; font-weight: 700; background: #059669; color: #ffffff; border-color: #059669;" (click)="downloadProfileCv()">
+              تنزيل السيرة الذاتية (CV) على الجهاز
+            </button>
+
+            @if (linkedInUrl()) {
+              <button class="linkedin-btn" (click)="openLinkedIn()">LinkedIn</button>
+            }
+            @if (gitHubUrl()) {
+              <button class="github-btn" (click)="openGitHub()">GitHub</button>
+            }
+          </div>
+        </div>
+
+        <div class="prof-modal-foot">
+          <button class="back-btn" (click)="showCvModal.set(false)">إغلاق</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- نافذة إدارة واعتماد الانسحاب من داخل البروفايل -->
+  @if (showWithdrawalModal()) {
+    <div class="prof-modal-backdrop">
+      <div class="prof-modal-card lg">
+        <div class="prof-modal-head">
+          <h3>إدارة طلب الانسحاب واعتماد الهيئة — {{ fullName() }}</h3>
+          <button class="prof-close-btn" (click)="showWithdrawalModal.set(false)">×</button>
+        </div>
+        <div class="prof-modal-body" style="direction: rtl; text-align: right;">
+          <label class="prof-label">سبب الانسحاب (المقدم من المتدرب أو المسجل) *</label>
+          <textarea
+            rows="2"
+            class="prof-textarea"
+            [ngModel]="withdrawalReason()"
+            (ngModelChange)="withdrawalReason.set($event)"
+            placeholder="سبب طلب الانسحاب..."
+          ></textarea>
+
+          <!-- أسباب مقنعة جاهزة للرفض -->
+          <div style="margin-top: 12px; margin-bottom: 10px;">
+            <label style="display:block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px;">
+              أسباب مقنعة جاهزة (في حال رفض الطلب - اضغط لاختيار السبب وإرساله للمتدرب):
+            </label>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              @for (preset of presetRejectionReasons; track preset) {
+                <button
+                  type="button"
+                  (click)="selectPresetReason(preset)"
+                  style="text-align: right; padding: 8px 10px; font-size: 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; color: #1e293b; cursor: pointer;"
+                >
+                  • {{ preset }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <label class="prof-label" style="margin-top: 10px;">قرار الهيئة / سبب الرفض أو ملاحظات الاعتماد (يُرسل لبريد المتدرب {{ trainee()?.email || '' }})</label>
+          <textarea
+            rows="3"
+            class="prof-textarea"
+            [ngModel]="withdrawalNotes()"
+            (ngModelChange)="withdrawalNotes.set($event)"
+            placeholder="اختر سبباً من الأعلى عند الرفض أو اكتب ملاحظات الاعتماد..."
+          ></textarea>
+        </div>
+        <div class="prof-modal-foot" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end;">
+          <button class="back-btn" (click)="showWithdrawalModal.set(false)">إلغاء</button>
+          <button
+            class="cv-btn"
+            style="background: #fff1f2; color: #be123c; border-color: #fecdd3;"
+            [disabled]="isProcessingWithdrawal()"
+            (click)="handleWithdrawalDecision('REJECT')"
+          >
+            رفض طلب الانسحاب (مع إرسال السبب)
+          </button>
+          <button
+            class="withdraw-btn"
+            [disabled]="isProcessingWithdrawal()"
+            (click)="handleWithdrawalDecision('APPROVE')"
+          >
+            اعتماد الانسحاب النهائي (وإيقاف الحساب)
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
 </div>

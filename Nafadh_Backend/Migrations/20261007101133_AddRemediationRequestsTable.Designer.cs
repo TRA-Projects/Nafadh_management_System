@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Nafadh_Backend;
 
@@ -11,9 +12,11 @@ using Nafadh_Backend;
 namespace Nafadh_Backend.Migrations
 {
     [DbContext(typeof(Nafadhcontext))]
-    partial class NafadhcontextModelSnapshot : ModelSnapshot
+    [Migration("20261007101133_AddRemediationRequestsTable")]
+    partial class AddRemediationRequestsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -240,9 +243,6 @@ namespace Nafadh_Backend.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("RejectionReason")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -403,28 +403,6 @@ namespace Nafadh_Backend.Migrations
                         .IsUnique();
 
                     b.ToTable("NFD_CompanySupervisors", (string)null);
-                });
-
-            modelBuilder.Entity("Nafadh_Backend.Models.NFD_ConversationGroupMember", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BatchId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ConversationId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("NFD_ConversationGroupMembers");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_DailyAttendance", b =>
@@ -818,43 +796,6 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("NFD_Lessons", (string)null);
                 });
 
-            modelBuilder.Entity("Nafadh_Backend.Models.NFD_LessonFeedback", b =>
-                {
-                    b.Property<int>("LessonFeedbackId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("LessonFeedbackId"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("LessonId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<int?>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TraineeId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("LessonFeedbackId");
-
-                    b.HasIndex("LessonId");
-
-                    b.HasIndex("TraineeId", "LessonId")
-                        .IsUnique();
-
-                    b.ToTable("NFD_LessonFeedbacks", (string)null);
-                });
-
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Message", b =>
                 {
                     b.Property<int>("MessageId")
@@ -862,21 +803,6 @@ namespace Nafadh_Backend.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MessageId"));
-
-                    b.Property<string>("AttachmentContentType")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("AttachmentFileName")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<long?>("AttachmentFileSize")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("AttachmentUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -1476,36 +1402,12 @@ namespace Nafadh_Backend.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("AccountHolderName")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("AccountNumber")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("BankBranch")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("BankName")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
                     b.Property<int?>("CompanyId")
                         .HasColumnType("int");
 
                     b.Property<string>("GitHubUrl")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
-
-                    b.Property<string>("Governorate")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("IBAN")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("LinkedInUrl")
                         .HasMaxLength(300)
@@ -1526,6 +1428,9 @@ namespace Nafadh_Backend.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
+                    b.Property<string>("Skills")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -1538,14 +1443,6 @@ namespace Nafadh_Backend.Migrations
 
                     b.Property<int>("VerificationStatus")
                         .HasColumnType("int");
-
-                    b.Property<string>("Village")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Wilaya")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("TraineeId");
 
@@ -1674,34 +1571,6 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("NFD_TraineePaymentSchedules", (string)null);
                 });
 
-            modelBuilder.Entity("Nafadh_Backend.Models.NFD_TraineeSkill", b =>
-                {
-                    b.Property<int>("TraineeSkillId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TraineeSkillId"));
-
-                    b.Property<string>("CertificateUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SerialNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SkillName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("TraineeId")
-                        .HasColumnType("int");
-
-                    b.HasKey("TraineeSkillId");
-
-                    b.HasIndex("TraineeId");
-
-                    b.ToTable("NFD_TraineeSkills");
-                });
-
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Trainer", b =>
                 {
                     b.Property<int>("TrainerId")
@@ -1740,55 +1609,6 @@ namespace Nafadh_Backend.Migrations
                         .IsUnique();
 
                     b.ToTable("NFD_Trainers", (string)null);
-                });
-
-            modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerCertificate", b =>
-                {
-                    b.Property<int>("TrainerCertificateId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TrainerCertificateId"));
-
-                    b.Property<string>("CertificateName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("ContentType")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ExpiryDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FileUrl")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime?>("IssueDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Issuer")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("OriginalFileName")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<int>("TrainerId")
-                        .HasColumnType("int");
-
-                    b.HasKey("TrainerCertificateId");
-
-                    b.HasIndex("TrainerId");
-
-                    b.ToTable("NFD_TrainerCertificates", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainingMaterial", b =>
@@ -2341,25 +2161,6 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("Module");
                 });
 
-            modelBuilder.Entity("Nafadh_Backend.Models.NFD_LessonFeedback", b =>
-                {
-                    b.HasOne("Nafadh_Backend.Models.NFD_Lesson", "Lesson")
-                        .WithMany("LessonFeedbacks")
-                        .HasForeignKey("LessonId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Nafadh_Backend.Models.NFD_Trainee", "Trainee")
-                        .WithMany("LessonFeedbacks")
-                        .HasForeignKey("TraineeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Lesson");
-
-                    b.Navigation("Trainee");
-                });
-
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Message", b =>
                 {
                     b.HasOne("Nafadh_Backend.Models.NFD_User", "Receiver")
@@ -2661,17 +2462,6 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("TraineePayment");
                 });
 
-            modelBuilder.Entity("Nafadh_Backend.Models.NFD_TraineeSkill", b =>
-                {
-                    b.HasOne("Nafadh_Backend.Models.NFD_Trainee", "Trainee")
-                        .WithMany("TraineeSkills")
-                        .HasForeignKey("TraineeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Trainee");
-                });
-
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Trainer", b =>
                 {
                     b.HasOne("Nafadh_Backend.Models.NFD_User", "User")
@@ -2681,17 +2471,6 @@ namespace Nafadh_Backend.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerCertificate", b =>
-                {
-                    b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
-                        .WithMany("Certificates")
-                        .HasForeignKey("TrainerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Trainer");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainingMaterial", b =>
@@ -2867,8 +2646,6 @@ namespace Nafadh_Backend.Migrations
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Lesson", b =>
                 {
-                    b.Navigation("LessonFeedbacks");
-
                     b.Navigation("TrainingMaterials");
                 });
 
@@ -2939,8 +2716,6 @@ namespace Nafadh_Backend.Migrations
 
                     b.Navigation("Feedbacks");
 
-                    b.Navigation("LessonFeedbacks");
-
                     b.Navigation("ProjectMembers");
 
                     b.Navigation("SessionAttendances");
@@ -2950,8 +2725,6 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("TraineeBadges");
 
                     b.Navigation("TraineeModuleProgresses");
-
-                    b.Navigation("TraineeSkills");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TraineePayment", b =>
@@ -2962,8 +2735,6 @@ namespace Nafadh_Backend.Migrations
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Trainer", b =>
                 {
                     b.Navigation("BatchTrainers");
-
-                    b.Navigation("Certificates");
 
                     b.Navigation("Evaluations");
 
