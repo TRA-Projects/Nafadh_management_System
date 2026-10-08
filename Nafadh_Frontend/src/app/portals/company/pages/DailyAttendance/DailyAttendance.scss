@@ -934,6 +934,7 @@ tbody tr.saving {
   background: #f8fafc;
   border-color: #cbd5e1;
 }
+
 /* Daily confirmation button only: smaller size, same original design */
 .sub .confirm-day-btn {
   padding: 7px 11px;
@@ -942,6 +943,7 @@ tbody tr.saving {
   border-radius: 10px;
   flex-shrink: 0;
 }
+
 .sub .confirm-day-btn svg {
   width: 14px;
   height: 14px;
@@ -953,4 +955,125 @@ tbody tr.saving {
   align-items: center;
   gap: 12px;
   margin-inline-start: auto;
+}
+
+/* Trainer-name filter for weekly and monthly attendance tables */
+.trainer-filter-heading {
+  position: relative;
+  overflow: visible;
+}
+
+.trainer-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.trainer-filter-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.trainer-filter-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #dbe4f3;
+  border-radius: 7px;
+  background: #fff;
+  color: #172b85;
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+}
+
+.trainer-filter-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.trainer-filter-trigger:hover,
+.trainer-filter-menu[open] .trainer-filter-trigger {
+  background: #eef3ff;
+  border-color: #a7bffa;
+}
+
+.trainer-filter-active-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2563eb;
+  top: 2px;
+  left: 2px;
+}
+
+.trainer-filter-panel {
+  position: fixed;
+  z-index: 9999;
+  width: 230px;
+  max-width: 75vw;
+  padding: 9px;
+  border: 1px solid #dbe4f3;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 10px 30px rgba(15, 30, 80, .13);
+  text-align: right;
+}
+
+.trainer-filter-search {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 9px;
+  border: 1px solid #dbe4f3;
+  border-radius: 7px;
+  font: inherit;
+  outline-color: #2563eb;
+}
+
+.trainer-filter-options {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-top: 7px;
+}
+
+.trainer-filter-options button {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 9px;
+  text-align: right;
+  color: #172b85;
+  font: inherit;
+  cursor: pointer;
+}
+
+.trainer-filter-options button:hover,
+.trainer-filter-options button.selected {
+  background: #eef3ff;
+}
+
+.trainer-filter-empty {
+  display: block;
+  padding: 9px;
+  color: #64748b;
+  font-weight: 400;
+}
+
+.trainer-filter-no-rows {
+  text-align: center !important;
+  padding: 22px !important;
+  color: #64748b;
+}
+
+.all-trainers-option {
+  color: rgb(44, 44, 44) !important;
+  font-weight: 700;
 }
