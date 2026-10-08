@@ -84,13 +84,13 @@
     </option>
   }
 </select>
-        <input
-          type="text"
-          placeholder="ابحث عن متدرب..."
-          [value]="searchText"
-          (input)="searchText = $any($event.target).value"
-        />
 
+<input
+  type="text"
+  placeholder="ابحث عن متدرب..."
+  [value]="searchText"
+  (input)="searchText = $any($event.target).value"
+/>
       </div>
 
 
@@ -122,33 +122,35 @@
       <!-- TRAINEES -->
       <!-- BATCH GROUP -->
 
-@if (batchGroupConversationId) {
 
-<button
-  type="button"
-  class="batch-group-item"
-  (click)="selectBatchGroup()"
->
+@for (group of filteredBatchGroups; track group.conversationId) {
 
-  <div class="batch-group-avatar">
-    👥
-  </div>
+  <button
+    type="button"
+    class="batch-group-item"
+    (click)="selectBatchGroup(group.conversationId)"
+  >
 
-  <div class="batch-group-info">
+    <div class="batch-group-avatar">
+      👥
+    </div>
 
-    <strong>
-      مجموعة الدفعة
-    </strong>
+    <div class="batch-group-info">
 
-    <small>
-      محادثة جماعية
-    </small>
+      <strong>
+        {{ group.subject }}
+      </strong>
 
-  </div>
+      <small>
+        محادثة جماعية
+      </small>
 
-</button>
+    </div>
+
+  </button>
 
 }
+
       <div class="trainees-list">
 
         @for (
@@ -248,10 +250,7 @@
 
     <div>
 
-      <h2>
-        مجموعة الدفعة
-      </h2>
-
+     <h2>{{ selectedBatchGroup()?.subject }}</h2>
       <p>
         محادثة جماعية
       </p>

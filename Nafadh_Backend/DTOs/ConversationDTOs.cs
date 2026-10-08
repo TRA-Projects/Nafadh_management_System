@@ -14,6 +14,7 @@ namespace Nafadh_Backend.DTOs
     {
         public int ConversationId { get; set; }
         public int? BatchId { get; set; }
+        public string? BatchName { get; set; }
         public NFD_ConversationType Type { get; set; }
         public string? Category { get; set; }
         public string Subject { get; set; } = string.Empty;
