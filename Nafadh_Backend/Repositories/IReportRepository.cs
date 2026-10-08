@@ -24,11 +24,13 @@ namespace Nafadh_Backend.Repositories
         Task<List<DTOs.ChartPointDTO>> GetCompanyProgramDistributionAsync(int companyId);
         Task<List<int>> GetCompanyTopPerformerTraineeIdsAsync(int companyId, int take);
         Task<List<int>> GetCompanyAtRiskTraineeIdsAsync(int companyId, int take);
-        Task<DTOs.TrainerKpisDTO> GetTrainerKpisAsync(int trainerId);
+        Task<TrainerKpisDTO> GetTrainerKpisAsync(
+    int trainerId);
 
         Task<List<DTOs.TrainerTraineesReportRowDto>> GetTrainerTraineesReportRowsAsync(
-    int trainerId,
-    int? batchId
-);
+    int trainerId, int? batchId, int? traineeId);
+
+
+
     }
 }

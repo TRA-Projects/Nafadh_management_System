@@ -116,7 +116,10 @@ namespace Nafadh_Backend.Services
                         NFD_MessageStatus.Sent,
 
                     SenderId =
-                        dto.StartedByUserId
+                        dto.StartedByUserId,
+
+                    ReceiverId = dto.ReceiverUserId
+
                 };
 
 
@@ -140,12 +143,61 @@ namespace Nafadh_Backend.Services
         // ============================================================
         // Add message
         // ============================================================
-
         public async Task<ConversationMessageDTO> AddMessageAsync(
             int conversationId,
             AddConversationMessageDTO dto
         )
         {
+            int? receiverId =
+    dto.ReceiverUserId;
+
+            if (!receiverId.HasValue)
+            {
+                var conversation =
+                    await _repository.GetByIdAsync(
+                        conversationId
+                    );
+
+                if (conversation == null)
+                {
+                    throw new Exception(
+                        "Conversation not found."
+                    );
+                }
+
+                if (
+                    conversation.Type ==
+                        NFD_ConversationType.Other
+                    &&
+                    conversation.Category ==
+                        "TrainerTrainee"
+                )
+                {
+                    var lastMessage =
+                        conversation.Messages?
+                            .OrderByDescending(
+                                m => m.SentDate
+                            )
+                            .FirstOrDefault();
+
+                    if (
+                        lastMessage != null
+                        &&
+                        lastMessage.SenderId !=
+                            dto.SenderId
+                    )
+                    {
+                        receiverId =
+                            lastMessage.SenderId;
+                    }
+                    else
+                    {
+                        receiverId =
+                            conversation.UserId;
+                    }
+                }
+            }
+
             var message =
                 new NFD_Message
                 {
@@ -161,6 +213,9 @@ namespace Nafadh_Backend.Services
                     SenderId =
                         dto.SenderId,
 
+                    ReceiverId =
+                        receiverId,
+
                     TicketId =
                         conversationId
                 };
@@ -172,24 +227,7 @@ namespace Nafadh_Backend.Services
                 );
 
 
-            // Reload the conversation so the Sender navigation
-            // property is available.
-            var conversation =
-                await _repository.GetByIdAsync(
-                    conversationId
-                );
-
-
-            var savedMessage =
-                conversation?
-                    .Messages
-                    .FirstOrDefault(
-                        m =>
-                            m.MessageId ==
-                            created.MessageId
-                    );
-
-
+            // لا نعيد تحميل المحادثة مرة ثانية
             return new ConversationMessageDTO
             {
                 MessageId =
@@ -208,9 +246,7 @@ namespace Nafadh_Backend.Services
                     created.SenderId,
 
                 SenderName =
-                    savedMessage?
-                        .Sender?
-                        .FullName,
+                    null,
 
                 ReceiverId =
                     created.ReceiverId,
@@ -219,8 +255,15 @@ namespace Nafadh_Backend.Services
                     created.TicketId
             };
         }
-
-
+        //----------------------------------
+        //group 
+        //---------------------------------------
+        public async Task<int> CreateBatchGroupAsync(
+    CreateBatchGroupDTO dto
+)
+        {
+            return await _repository.CreateBatchGroupAsync(dto);
+        }
         // ============================================================
         // Update conversation status
         // ============================================================

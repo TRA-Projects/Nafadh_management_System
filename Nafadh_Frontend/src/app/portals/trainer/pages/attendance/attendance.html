@@ -444,8 +444,20 @@
     <small>ملخص حضور المتدربين للأسبوع الحالي</small>
   </div>
 
-  <section class="attendance-card">
-    <div class="table-wrap">
+<section class="attendance-card">
+
+  <div class="table-tools history-tools">
+    <div class="search-box">
+      <span aria-hidden="true">⌕</span>
+      <input
+        type="search"
+        placeholder="ابحث باسم المتدرب…"
+        [value]="query()"
+        (input)="onSearch($event)" />
+    </div>
+  </div>
+
+  <div class="table-wrap">
       <table class="attendance-table">
         <thead>
           <tr>
@@ -469,7 +481,7 @@
               </td>
             </tr>
           } @else {
-            @for (r of weeklyRows(); track r.enrollmentId) {
+            @for (r of filteredWeeklyRows(); track r.enrollmentId) {
               <tr>
                 <td>
                   <div class="person">
@@ -513,8 +525,21 @@
   </div>
 
   <section class="attendance-card">
-    <div class="table-wrap">
+
+  <div class="table-tools history-tools">
+    <div class="search-box">
+      <span aria-hidden="true">⌕</span>
+      <input
+        type="search"
+        placeholder="ابحث باسم المتدرب…"
+        [value]="query()"
+        (input)="onSearch($event)" />
+    </div>
+  </div>
+
+  <div class="table-wrap">
       <table class="attendance-table">
+
         <thead>
           <tr>
             <th>المتدرب</th>
@@ -538,7 +563,7 @@
               </td>
             </tr>
           } @else {
-            @for (r of monthlyRows(); track r.enrollmentId) {
+            @for (r of filteredMonthlyRows(); track r.enrollmentId) {
               <tr>
                 <td>
                   <div class="person">

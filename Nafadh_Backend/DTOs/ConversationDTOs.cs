@@ -21,6 +21,7 @@ namespace Nafadh_Backend.DTOs
         public DateTime? LastMessageDate { get; set; }
         public int UnreadCount { get; set; }
         public string? StartedByName { get; set; }
+  
     }
 
     // ============================================================
@@ -66,6 +67,8 @@ namespace Nafadh_Backend.DTOs
 
         [Required]
         public string FirstMessage { get; set; } = string.Empty;
+
+        public int? ReceiverUserId { get; set; }
     }
 
     // ============================================================
@@ -75,6 +78,7 @@ namespace Nafadh_Backend.DTOs
     {
         [Required]
         public int SenderId { get; set; }
+        public int? ReceiverUserId { get; set; }
 
         [Required]
         [MaxLength(1000)]

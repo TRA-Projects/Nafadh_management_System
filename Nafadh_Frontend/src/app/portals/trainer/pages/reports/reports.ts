@@ -11,6 +11,7 @@ import {
   DomSanitizer,
   SafeResourceUrl
 } from '@angular/platform-browser';
+import { forkJoin } from 'rxjs';
 
 import { TrainerApi } from '../../services/trainer-api';
 
@@ -18,7 +19,8 @@ import { AuthService } from '../../../../core/auth/auth.service';
 
 import {
   FeedbackSummaryDto,
-  TrainerKpisDto
+  TrainerKpisDto,
+  TrainerBatchDto
 } from '../../../../core/models/dtos';
 
 
@@ -27,6 +29,10 @@ type TrainerReportType =
   | 'Performance'
   | 'Custom';
 
+type ReportTraineeOption = {
+  traineeId: number;
+  traineeName: string;
+};
 
 type TrainerReportHistoryItem = {
   reportId: number;
@@ -77,6 +83,16 @@ export class TrainerReports
     number | null =
       null;
 
+trainees =
+  signal<ReportTraineeOption[]>([]);
+
+selectedTraineeId =
+  signal<number | null>(null);
+  batches =
+  signal<TrainerBatchDto[]>([]);
+
+selectedBatchId =
+  signal<number | null>(null);
 
   // =====================================================
   // DATA
@@ -244,6 +260,9 @@ export class TrainerReports
           this.trainerId =
             trainer.trainerId;
 
+          this.loadReportTrainees(
+  trainer.trainerId
+);
 
           this.loadKpis();
 
@@ -384,6 +403,235 @@ export class TrainerReports
   // =====================================================
   // LOAD REPORT HISTORY
   // =====================================================
+private loadReportTrainees(
+  trainerId: number
+): void {
+
+  this.api
+    .getMyBatches(trainerId)
+    .subscribe({
+
+      next: (batches) => {
+        this.batches.set(
+  batches ?? []
+);
+
+        const batchIds =
+          (batches ?? [])
+            .map(batch => batch.batchId)
+            .filter(id => id > 0);
+
+
+        if (batchIds.length === 0) {
+
+          this.trainees.set([]);
+
+          return;
+        }
+
+
+        const requests =
+          batchIds.map(batchId =>
+            this.api.getEnrollments(
+              undefined,
+              batchId
+            )
+          );
+
+
+        forkJoin(requests)
+          .subscribe({
+
+            next: (results) => {
+
+              const traineeMap =
+                new Map<number, string>();
+
+
+              for (
+                const enrollments of results
+              ) {
+
+                for (
+                  const enrollment
+                  of enrollments ?? []
+                ) {
+
+                  if (
+                    enrollment.traineeId > 0
+                  ) {
+
+                    traineeMap.set(
+                      enrollment.traineeId,
+                      enrollment.traineeName ||
+                        `متدرب #${enrollment.traineeId}`
+                    );
+
+                  }
+
+                }
+
+              }
+
+
+              const options =
+                Array.from(
+                  traineeMap.entries()
+                )
+                .map(
+                  ([traineeId, traineeName]) => ({
+                    traineeId,
+                    traineeName
+                  })
+                )
+                .sort(
+                  (a, b) =>
+                    a.traineeName.localeCompare(
+                      b.traineeName,
+                      'ar'
+                    )
+                );
+
+
+              this.trainees.set(
+                options
+              );
+
+            },
+
+            error: (err) => {
+
+              console.error(
+                'خطأ في تحميل قائمة المتدربين:',
+                err
+              );
+
+              this.trainees.set([]);
+
+            }
+
+          });
+
+      },
+      
+
+      error: (err) => {
+
+        console.error(
+          'خطأ في تحميل دفعات المدرب للتقرير:',
+          err
+        );
+
+        this.trainees.set([]);
+
+      }
+
+    });}
+onReportBatchChange(rawValue: string): void {
+
+  const batchId = rawValue
+    ? Number(rawValue)
+    : null;
+
+  this.selectedBatchId.set(batchId);
+  this.selectedTraineeId.set(null);
+  this.loadTraineesForBatch(batchId);
+}
+
+
+private loadTraineesForBatch(
+  batchId: number | null
+): void {
+
+  if (batchId === null) {
+
+    if (this.trainerId) {
+      this.loadReportTrainees(this.trainerId);
+    }
+
+    return;
+  }
+
+  this.api
+    .getEnrollments(
+      undefined,
+      batchId
+    )
+    .subscribe({
+
+      next: (enrollments) => {
+
+        const traineeMap =
+          new Map<number, string>();
+
+        for (
+          const enrollment of enrollments ?? []
+        ) {
+
+          if (
+            enrollment.traineeId > 0
+          ) {
+
+            traineeMap.set(
+              enrollment.traineeId,
+              enrollment.traineeName ||
+                `متدرب #${enrollment.traineeId}`
+            );
+
+          }
+
+        }
+
+        const options =
+          Array.from(
+            traineeMap.entries()
+          )
+          .map(
+            ([traineeId, traineeName]) => ({
+              traineeId,
+              traineeName
+            })
+          )
+          .sort(
+            (a, b) =>
+              a.traineeName.localeCompare(
+                b.traineeName,
+                'ar'
+              )
+          );
+
+        this.trainees.set(
+          options
+        );
+
+      },
+
+      error: (err) => {
+
+        console.error(
+          'خطأ في تحميل طلاب الدفعة:',
+          err
+        );
+
+        this.trainees.set([]);
+
+      }
+
+    });
+}
+resetReportFilters(): void {
+
+  this.selectedBatchId.set(null);
+
+  this.selectedTraineeId.set(null);
+
+  if (this.trainerId) {
+    this.loadReportTrainees(
+      this.trainerId
+    );
+  }
+
+}
 
   private loadReportHistory(): void {
 
@@ -583,11 +831,29 @@ export class TrainerReports
       generatedByUserId:
         this.generatedByUserId,
 
-      filtersJson:
-        JSON.stringify({
-          source:
-            'TrainerPortal'
-        })
+  filtersJson:
+
+  JSON.stringify({
+
+    source:
+
+      'TrainerPortal',
+
+    ...(this.selectedBatchId() !== null
+      ? {
+          batchId:
+            this.selectedBatchId()
+        }
+      : {}),
+
+    ...(this.selectedTraineeId() !== null
+      ? {
+          traineeId:
+            this.selectedTraineeId()
+        }
+      : {})
+
+  })
 
     };
 

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
@@ -50,10 +51,12 @@ namespace Nafadh_Backend.Repositories
                             m =>
                                 m.SenderId ==
                                 participantUserId.Value
+                                ||
+                                m.ReceiverId ==
+                                participantUserId.Value
                         )
                 );
             }
-
 
             if (status.HasValue)
             {
@@ -144,7 +147,114 @@ namespace Nafadh_Backend.Repositories
 
             return message;
         }
+        //=============================
+        //create batch group
+        //=============================
+        public async Task<int> CreateBatchGroupAsync(
+    CreateBatchGroupDTO dto
+)
+        {
+            var batch = await _context.NFD_Batches
+                .FirstOrDefaultAsync(
+                    b => b.BatchId == dto.BatchId
+                );
 
+            if (batch == null)
+            {
+                throw new Exception(
+                    "Batch not found."
+                );
+            }
+
+            var conversation =
+                new NFD_SupportTicket
+                {
+                    Type = NFD_ConversationType.Other,
+
+                    Category = "BatchGroup",
+
+                    Subject =
+                        $"مجموعة {batch.BatchName}",
+
+                    Message =
+                        $"مجموعة {batch.BatchName}",
+
+                    Status =
+                        NFD_SupportTicketStatus.Open,
+
+                    CreatedAt =
+                        DateTime.UtcNow,
+
+                    UserId =
+                        dto.TrainerUserId
+                };
+
+            var firstMessage =
+                new NFD_Message
+                {
+                    Content =
+                        $"تم إنشاء مجموعة {batch.BatchName}",
+
+                    SentDate =
+                        DateTime.UtcNow,
+
+                    Status =
+                        NFD_MessageStatus.Sent,
+
+                    SenderId =
+                        dto.TrainerUserId,
+
+                    ReceiverId = null
+                };
+
+            var created =
+                await CreateAsync(
+                    conversation,
+                    firstMessage
+                );
+
+            var traineeUserIds =
+                await _context.NFD_Enrollments
+                    .Where(
+                        e =>
+                            e.BatchId ==
+                            dto.BatchId
+                    )
+                    .Include(e => e.Trainee)
+                    .ThenInclude(t => t.User)
+                    .Select(
+                        e =>
+                            e.Trainee.User.UserId
+                    )
+                    .ToListAsync();
+
+            var members =
+                traineeUserIds
+                    .Append(dto.TrainerUserId)
+                    .Distinct()
+                    .Select(
+                        userId =>
+                            new NFD_ConversationGroupMember
+                            {
+                                ConversationId =
+                                    created.TicketId,
+
+                                UserId =
+                                    userId,
+
+                                BatchId =
+                                    dto.BatchId
+                            }
+                    )
+                    .ToList();
+
+            await _context.NFD_ConversationGroupMembers
+                .AddRangeAsync(members);
+
+            await _context.SaveChangesAsync();
+
+            return created.TicketId;
+        }
 
         // ============================================================
         // Update status

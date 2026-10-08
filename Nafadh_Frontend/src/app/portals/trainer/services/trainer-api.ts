@@ -16,6 +16,7 @@ import {
   TrainingMaterialDto,
   TrainerBatchDto,
   TrainerDto,
+  TrainerCertificateDto,
   TrainerKpisDto,
   BatchDto,
   ProgramDto,
@@ -108,6 +109,16 @@ getProgram(
     );
   }
   
+updateSessionStatus(
+  sessionId: number,
+  status: number
+): Observable<void> {
+  return this.http.put<void>(
+    `${this.base}/Session/${sessionId}/status`,
+    { status }
+  );
+}
+
 createSession(dto: unknown) {
   return this.http.post(
     `${this.base}/Session`,
@@ -146,6 +157,26 @@ createSession(dto: unknown) {
 // =====================================================
 // Content
 // =====================================================
+getBatchProgress(
+  batchId: number
+): Observable<{
+  batchId: number;
+  totalTrainees: number;
+  totalModules: number;
+  completedModules: number;
+  progressPercentage: number;
+}> {
+
+  return this.http.get<{
+    batchId: number;
+    totalTrainees: number;
+    totalModules: number;
+    completedModules: number;
+    progressPercentage: number;
+  }>(
+    `${this.base}/Batch/${batchId}/progress`
+  );
+}
 
 getModulesByProgram(
   programId: number
@@ -530,6 +561,7 @@ getSubmissionFile(
       { params }
     );
   }
+
    getEvaluationAverage(
     enrollmentId: number
   ): Observable<{
@@ -901,7 +933,79 @@ getTrainerPortalReportFile(
     }
   );
 }
+// =====================================================
+// Messaging
+// =====================================================
 
+getConversations(
+  participantUserId: number
+): Observable<any[]> {
+
+  const params = new HttpParams()
+    .set(
+      'type',
+      'Other'
+    )
+    .set(
+      'participantUserId',
+      participantUserId.toString()
+    );
+
+  return this.http.get<any[]>(
+    `${this.base}/Conversation`,
+    { params }
+  );
+}
+
+
+getConversation(
+  conversationId: number
+): Observable<any> {
+
+  return this.http.get<any>(
+    `${this.base}/Conversation/${conversationId}`
+  );
+}
+createConversation(dto: {
+  type: string;
+  category: string;
+  subject: string;
+  startedByUserId: number;
+  firstMessage: string;
+  receiverUserId: number;
+}): Observable<any> {
+  return this.http.post<any>(
+    `${this.base}/Conversation`,
+    dto
+  );
+}
+
+sendMessage(
+  conversationId: number,
+  dto: {
+    senderId: number;
+    receiverUserId: number;
+    content: string;
+  }
+): Observable<any> {
+
+  return this.http.post<any>(
+    `${this.base}/Conversation/${conversationId}/messages`,
+    dto
+  );
+}
+
+
+markConversationAsRead(
+  conversationId: number,
+  userId: number
+): Observable<void> {
+
+  return this.http.put<void>(
+    `${this.base}/Conversation/${conversationId}/read?userId=${userId}`,
+    {}
+  );
+}
   // =====================================================
   // Profile
   // =====================================================
@@ -950,4 +1054,46 @@ uploadTrainerProfileImage(
     formData
   );
 }
+// =====================================================
+// TRAINER CERTIFICATES
+// =====================================================
+
+getTrainerCertificates(
+  trainerId: number
+): Observable<TrainerCertificateDto[]> {
+  return this.http.get<TrainerCertificateDto[]>(
+    `${this.base}/TrainerCertificate/trainer/${trainerId}`
+   );
 }
+
+uploadTrainerCertificate(
+  trainerId: number,
+  certificateName: string,
+  issuer: string,
+  issueDate: string,
+  expiryDate: string,
+  file: File
+): Observable<TrainerCertificateDto> {
+  const formData = new FormData();
+
+  formData.append('CertificateName', certificateName);
+  formData.append('Issuer', issuer || '');
+  formData.append('IssueDate', issueDate || '');
+  formData.append('ExpiryDate', expiryDate || '');
+  formData.append('File', file);
+
+  return this.http.post<TrainerCertificateDto>(
+    `${this.base}/TrainerCertificate/trainer/${trainerId}`,
+    formData
+   );
+}
+
+deleteTrainerCertificate(
+  certificateId: number
+): Observable<void> {
+  return this.http.delete<void>(
+    `${this.base}/TrainerCertificate/${certificateId}`
+   );
+}
+}
+

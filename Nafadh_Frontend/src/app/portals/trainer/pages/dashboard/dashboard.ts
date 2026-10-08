@@ -54,6 +54,430 @@ export class TrainerDashboard implements OnInit {
   traineeCount =
     signal(0);
 
+    // =====================================================
+// CREATE SESSION
+// =====================================================
+
+showSessionModal = signal(false);
+
+isSavingSession = signal(false);
+
+sessionForm = {
+  batchId: null as number | null,
+  sessionDate: '',
+  startTime: '',
+  endTime: '',
+  meetingLink: '',
+  topic: '',
+  learningObjectives: ''
+};
+  // =====================================================
+
+  showConfirmModal = signal(false);
+
+  sessionToReset = signal<SessionDto | null>(null);
+
+  // =====================================================
+  // MONTHLY CALENDAR
+  // =====================================================
+
+  calendarDate = signal(new Date());
+
+  selectedCalendarDate =
+    signal<string | null>(null);
+
+
+  calendarMonthTitle = computed(() => {
+
+    return this.calendarDate().toLocaleDateString(
+      'ar-OM',
+      {
+        month: 'long',
+        year: 'numeric'
+      }
+    );
+
+  });
+
+
+  calendarDays = computed(() => {
+
+    const currentDate =
+      this.calendarDate();
+
+    const year =
+      currentDate.getFullYear();
+
+    const month =
+      currentDate.getMonth();
+
+    const firstDay =
+      new Date(
+        year,
+        month,
+        1
+      );
+
+    const lastDay =
+      new Date(
+        year,
+        month + 1,
+        0
+      );
+
+    /*
+     * JavaScript:
+     * Sunday = 0
+     *
+     * We want Saturday -> Friday
+     * because the interface is Arabic.
+     *
+     * Convert:
+     * Saturday = 0
+     * Sunday   = 1
+     * ...
+     * Friday   = 6
+     */
+
+    const firstDayIndex =
+      (firstDay.getDay() + 1) % 7;
+
+    const daysInMonth =
+      lastDay.getDate();
+
+    const days: Array<{
+      date: Date;
+      dateKey: string;
+      dayNumber: number;
+      isCurrentMonth: boolean;
+      isToday: boolean;
+      sessions: SessionDto[];
+    }> = [];
+
+
+    // Previous month days
+    for (
+      let i = firstDayIndex - 1;
+      i >= 0;
+      i--
+    ) {
+
+      const date =
+        new Date(
+          year,
+          month,
+          -i
+        );
+
+      days.push(
+        this.createCalendarDay(
+          date,
+          false
+        )
+      );
+
+    }
+
+
+    // Current month days
+    for (
+      let day = 1;
+      day <= daysInMonth;
+      day++
+    ) {
+
+      const date =
+        new Date(
+          year,
+          month,
+          day
+        );
+
+      days.push(
+        this.createCalendarDay(
+          date,
+          true
+        )
+      );
+
+    }
+
+
+    // Next month days
+    let nextDay = 1;
+
+    while (
+      days.length < 42
+    ) {
+
+      const date =
+        new Date(
+          year,
+          month + 1,
+          nextDay++
+        );
+
+      days.push(
+        this.createCalendarDay(
+          date,
+          false
+        )
+      );
+
+    }
+
+
+    return days;
+
+  });
+
+
+  selectedDaySessions = computed(() => {
+
+    const selectedDate =
+      this.selectedCalendarDate();
+
+    if (!selectedDate) {
+
+      return [];
+
+    }
+
+    return this.sessions()
+      .filter(session =>
+        this.getSessionDateKey(session) ===
+        selectedDate
+      )
+      .sort(
+        (a, b) =>
+          this.getSessionDateTime(a) -
+          this.getSessionDateTime(b)
+      );
+
+  });
+
+  toggleSessionCompletion(session: SessionDto): void {
+    const isCompleted = session.status === 'Completed';
+
+    if (isCompleted) {
+      this.sessionToReset.set(session);
+      this.showConfirmModal.set(true);
+      return;
+    }
+
+    this.updateSessionStatus(session, 1);
+  }
+
+  confirmResetSession(): void {
+    const session = this.sessionToReset();
+
+    if (!session) {
+      return;
+    }
+
+    this.showConfirmModal.set(false);
+    this.sessionToReset.set(null);
+
+    this.updateSessionStatus(session, 0);
+  }
+
+  cancelResetSession(): void {
+    this.showConfirmModal.set(false);
+    this.sessionToReset.set(null);
+  }
+
+  private updateSessionStatus(
+    session: SessionDto,
+    status: number
+  ): void {
+    this.api.updateSessionStatus(
+      session.sessionId,
+      status
+    ).subscribe({
+      next: () => {
+        this.sessions.update(sessions =>
+          sessions.map(item =>
+            item.sessionId === session.sessionId
+              ? {
+                ...item,
+                status: status === 1
+                  ? 'Completed'
+                  : 'Scheduled'
+              }
+              : item
+          )
+        );
+      },
+
+      error: (error) => {
+        console.error(
+          'Failed to update session status:',
+          error
+        );
+      }
+    });
+  }
+
+  private createCalendarDay(
+    date: Date,
+    isCurrentMonth: boolean
+  ) {
+
+    const dateKey =
+      this.formatDateKey(date);
+
+    return {
+
+      date,
+
+      dateKey,
+
+      dayNumber:
+        date.getDate(),
+
+      isCurrentMonth,
+
+      isToday:
+        dateKey ===
+        this.formatDateKey(
+          new Date()
+        ),
+
+      sessions:
+        this.sessions().filter(
+          session =>
+            this.getSessionDateKey(session) ===
+            dateKey
+        )
+
+    };
+
+  }
+
+
+  private formatDateKey(
+    date: Date
+  ): string {
+
+    const year =
+      date.getFullYear();
+
+    const month =
+      String(
+        date.getMonth() + 1
+      ).padStart(2, '0');
+
+    const day =
+      String(
+        date.getDate()
+      ).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+
+  }
+
+
+  private getSessionDateKey(
+    session: SessionDto
+  ): string {
+
+    if (!session.sessionDate) {
+      return '';
+    }
+
+    const value =
+      String(session.sessionDate).trim();
+
+    // ISO:
+    // 2026-10-07T00:00:00
+    if (value.includes('T')) {
+      return value.split('T')[0];
+    }
+
+    // ISO with space:
+    // 2026-10-07 00:00:00
+    if (value.includes(' ')) {
+      return value.split(' ')[0];
+    }
+
+    // Date only:
+    // 2026-10-07
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+
+    const parsed =
+      new Date(value);
+
+    if (Number.isNaN(parsed.getTime())) {
+      return '';
+    }
+
+    return this.formatDateKey(parsed);
+  }
+
+
+  selectCalendarDate(
+    dateKey: string
+  ): void {
+
+    this.selectedCalendarDate.set(
+      dateKey
+    );
+
+  }
+
+
+  previousMonth(): void {
+
+    const current =
+      this.calendarDate();
+
+    this.calendarDate.set(
+      new Date(
+        current.getFullYear(),
+        current.getMonth() - 1,
+        1
+      )
+    );
+
+  }
+
+
+  nextMonth(): void {
+
+    const current =
+      this.calendarDate();
+
+    this.calendarDate.set(
+      new Date(
+        current.getFullYear(),
+        current.getMonth() + 1,
+        1
+      )
+    );
+
+  }
+
+
+  goToToday(): void {
+
+    const today =
+      new Date();
+
+    this.calendarDate.set(
+      new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        1
+      )
+    );
+
+    this.selectedCalendarDate.set(
+      this.formatDateKey(today)
+    );
+
+  }
 
   // =====================================================
   // UPCOMING SESSIONS
@@ -87,92 +511,7 @@ export class TrainerDashboard implements OnInit {
       );
   });
 
-showCreateSession = signal(false);
-creatingSession = signal(false);
 
-newSession = signal({
-  batchId: 0,
-  sessionDate: '',
-  startTime: '',
-  endTime: '',
-  meetingLink: '',
-  topic: '',
-  learningObjectives: ''
-});
-
-openCreateSession(): void {
-  this.newSession.set({
-    batchId: this.batches()[0]?.batchId ?? 0,
-    sessionDate: '',
-    startTime: '',
-    endTime: '',
-    meetingLink: '',
-    topic: '',
-    learningObjectives: ''
-  });
-
-  this.showCreateSession.set(true);
-}
-
-closeCreateSession(): void {
-  if (this.creatingSession()) return;
-  this.showCreateSession.set(false);
-}
-
-createSession(): void {
-  const trainer = this.trainer();
-  const form = this.newSession();
-
-  if (!trainer) {
-    console.error('بيانات المدرب غير متوفرة');
-    return;
-  }
-
-  if (
-    !form.batchId ||
-    !form.sessionDate ||
-    !form.startTime ||
-    !form.endTime ||
-    !form.topic.trim()
-  ) {
-    alert('يرجى تعبئة الحقول المطلوبة.');
-    return;
-  }
-
-  const dto = {
-    BatchId: form.batchId,
-    TrainerId: trainer.trainerId,
-    SessionDate: `${form.sessionDate}T00:00:00`,
-    StartTime: form.startTime,
-    EndTime: form.endTime,
-    MeetingLink: form.meetingLink.trim(),
-    Topic: form.topic.trim(),
-    LearningObjectives: form.learningObjectives.trim()
-  };
-
-  this.creatingSession.set(true);
-
-  this.api.createSession(dto).subscribe({
-    next: () => {
-      this.creatingSession.set(false);
-      this.showCreateSession.set(false);
-
-      // إعادة تحميل الجلسات حتى تظهر الجديدة مباشرة
-      this.loadSessions(trainer.trainerId);
-    },
-
-    error: (err) => {
-      this.creatingSession.set(false);
-
-      console.error(
-        'خطأ في إنشاء الجلسة:',
-        err
-      );
-
-      alert('تعذر إنشاء الجلسة. حاول مرة أخرى.');
-    }
-  });
-}
   // =====================================================
   // DASHBOARD BATCHES
   // =====================================================
@@ -233,7 +572,7 @@ createSession(): void {
         })
         .slice(
           0,
-          2
+          4
         );
 
     });
@@ -570,9 +909,89 @@ createSession(): void {
 
         next: (data) => {
 
+          const sessions =
+            data ?? [];
+
           this.sessions.set(
-            data ?? []
+            sessions
           );
+
+          // =========================================
+          // فتح التقويم على أقرب جلسة قادمة
+          // =========================================
+
+          const now =
+            Date.now();
+
+          const upcoming =
+            sessions
+              .filter(session => {
+
+                const status =
+                  String(session.status)
+                    .toLowerCase();
+
+                const isUpcomingStatus =
+                  status === 'scheduled' ||
+                  status === 'postponed';
+
+                return (
+                  isUpcomingStatus &&
+                  this.getSessionDateTime(session) >= now
+                );
+
+              })
+              .sort(
+                (a, b) =>
+                  this.getSessionDateTime(a) -
+                  this.getSessionDateTime(b)
+              );
+
+          if (upcoming.length > 0) {
+
+            const nextSession =
+              upcoming[0];
+
+            const sessionDate =
+              new Date(
+                nextSession.sessionDate
+              );
+
+            this.calendarDate.set(
+              new Date(
+                sessionDate.getFullYear(),
+                sessionDate.getMonth(),
+                1
+              )
+            );
+
+            this.selectedCalendarDate.set(
+              this.getSessionDateKey(
+                nextSession
+              )
+            );
+
+          } else {
+
+            // لا توجد جلسات قادمة:
+            // نعرض الشهر الحالي
+
+            const today =
+              new Date();
+
+            this.calendarDate.set(
+              new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                1
+              )
+            );
+
+            this.selectedCalendarDate.set(
+              this.formatDateKey(today)
+            );
+
+          }
 
         },
 
@@ -631,7 +1050,140 @@ createSession(): void {
 
   }
 
+// =====================================================
+// CREATE SESSION
+// =====================================================
 
+openSessionModal(): void {
+
+  const selectedDate =
+    this.selectedCalendarDate() ||
+    this.formatDateKey(new Date());
+
+  this.sessionForm = {
+    batchId:
+      this.batches().length > 0
+        ? this.batches()[0].batchId
+        : null,
+
+    sessionDate: selectedDate,
+
+    startTime: '',
+
+    endTime: '',
+
+    meetingLink: '',
+
+    topic: '',
+
+    learningObjectives: ''
+  };
+
+  this.showSessionModal.set(true);
+}
+
+
+closeSessionModal(): void {
+
+  if (this.isSavingSession()) {
+    return;
+  }
+
+  this.showSessionModal.set(false);
+}
+
+
+saveSession(): void {
+
+  const trainer = this.trainer();
+
+  if (!trainer) {
+    console.error('بيانات المدرب غير متوفرة');
+    return;
+  }
+
+  if (!this.sessionForm.batchId) {
+    console.error('يجب اختيار الدفعة');
+    return;
+  }
+
+  if (!this.sessionForm.sessionDate) {
+    console.error('يجب اختيار تاريخ الجلسة');
+    return;
+  }
+
+  if (!this.sessionForm.startTime) {
+    console.error('يجب تحديد وقت بداية الجلسة');
+    return;
+  }
+
+  if (!this.sessionForm.topic.trim()) {
+    console.error('يجب إدخال موضوع الجلسة');
+    return;
+  }
+
+  const dto = {
+
+    batchId:
+      this.sessionForm.batchId,
+
+    trainerId:
+      trainer.trainerId,
+
+    sessionDate:
+      this.sessionForm.sessionDate,
+
+    startTime:
+      this.sessionForm.startTime,
+
+    endTime:
+      this.sessionForm.endTime || null,
+
+    meetingLink:
+      this.sessionForm.meetingLink.trim() || null,
+
+    topic:
+      this.sessionForm.topic.trim(),
+
+    learningObjectives:
+      this.sessionForm.learningObjectives.trim() || null
+
+  };
+
+  this.isSavingSession.set(true);
+
+  this.api
+    .createSession(dto)
+    .subscribe({
+
+      next: () => {
+
+        this.isSavingSession.set(false);
+
+        this.showSessionModal.set(false);
+
+        // إعادة تحميل الجلسات حتى تظهر
+        // مباشرة في التقويم
+        this.loadSessions(
+          trainer.trainerId
+        );
+
+      },
+
+      error: (error) => {
+
+        this.isSavingSession.set(false);
+
+        console.error(
+          'خطأ في إضافة الجلسة:',
+          error
+        );
+
+      }
+
+    });
+
+}
   // =====================================================
   // BATCH IMAGE
   // =====================================================

@@ -15,6 +15,7 @@ import { environment } from '../../../../../environments/environment';
 
 import {
   TrainerBatchDto,
+  TrainerCertificateDto,
   TrainerDto
 } from '../../../../core/models/dtos';
 
@@ -45,6 +46,104 @@ export class TrainerProfile
     signal<TrainerBatchDto[]>(
       []
     );
+    // =====================================================
+// TRAINER CERTIFICATES
+// =====================================================
+
+trainerCertificates = signal<TrainerCertificateDto[]>([]);
+
+certificateName = '';
+certificateIssuer = '';
+certificateIssueDate = '';
+certificateExpiryDate = '';
+selectedCertificateFile: File | null = null;
+isUploadingCertificate = signal(false);
+
+certificateFileInput: HTMLInputElement | null = null;
+
+  skills =
+    signal<any[]>(
+      []
+    );
+  showSkillInput =
+    signal(false);
+
+  newSkillName =
+    '';
+
+  // جلب الشهادات المخزنة مسبقاً عند تحميل الصفحة لتجنب حذفها عند الـ Refresh
+  certificates = signal<any[]>(this.loadCertificatesFromStorage());
+
+  loadCertificatesFromStorage(): any[] {
+    const saved = localStorage.getItem('trainer_certificates');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  }
+
+  saveCertificatesToStorage(list: any[]): void {
+    localStorage.setItem('trainer_certificates', JSON.stringify(list));
+  }
+  saveSkill(): void {
+
+    const skillName =
+      this.newSkillName.trim();
+
+    if (!skillName) {
+      this.showError(
+        'اكتب اسم المهارة أولًا.'
+      );
+
+      return;
+    }
+
+    const exists =
+      this.skills().some(
+        skill =>
+          skill.skillName?.trim().toLowerCase() ===
+          skillName.toLowerCase()
+      );
+
+    if (exists) {
+      this.showError(
+        'هذه المهارة مضافة مسبقًا.'
+      );
+
+      return;
+    }
+
+    this.skills.update(
+      currentSkills => [
+        ...currentSkills,
+        {
+          trainerSkillId: Date.now(),
+          skillName
+        }
+      ]
+    );
+
+    this.newSkillName = '';
+
+    this.showSkillInput.set(false);
+
+    this.markProfileChanged();
+
+  }
+  cancelSkill(): void {
+
+    this.newSkillName = '';
+
+    this.showSkillInput.set(false);
+
+  }
+
+
+
 
 
   // =====================================================
@@ -190,10 +289,54 @@ export class TrainerProfile
   selectedProfileImage:
     File | null = null;
 
+  // =====================================================
+  // TRAINER CERTIFICATE
+  // =====================================================
+ // selectedCertificateFile: File | null = null;
+
+  isCertificateFormOpen = signal(false);
+
+  //isUploadingCertificate = signal(false);
+
+  certificateForm = {
+    certificateName: '',
+    issuingOrganization: '',
+    certificateNumber: '',
+    issueDate: '',
+    expiryDate: ''
+  };
+
+  openCertificateForm(): void {
+    this.isCertificateFormOpen.set(true);
+  }
+
+  closeCertificateForm(): void {
+    this.isCertificateFormOpen.set(false);
+    this.selectedCertificateFile = null;
+  }
+
+
+
+
+  
+  removeCertificate(id: number): void {
+    this.certificates.update(list => {
+      const updatedList = list.filter(c => c.id !== id);
+      this.saveCertificatesToStorage(updatedList); // تحديث التخزين المحلي بعد الحذف
+      return updatedList;
+    });
+
+    if (typeof this.markProfileChanged === 'function') {
+      this.markProfileChanged();
+    }
+  }
 
   // Controls the enlarged profile image viewer.
   isProfileImageOpen =
     signal(false);
+
+
+
 
 
   // =====================================================
@@ -223,7 +366,7 @@ export class TrainerProfile
   constructor(
     private api: TrainerApi,
     private auth: AuthService
-  ) {}
+  ) { }
 
 
   // =====================================================
@@ -335,6 +478,7 @@ export class TrainerProfile
           this.loadTrainerBatches(
             data.trainerId
           );
+          this.loadTrainerCertificates(data.trainerId);
 
         },
 
@@ -414,11 +558,10 @@ export class TrainerProfile
       );
 
 
-    return `${backendBaseUrl}${
-      imageUrl.startsWith('/')
+    return `${backendBaseUrl}${imageUrl.startsWith('/')
         ? imageUrl
         : `/${imageUrl}`
-    }`;
+      }`;
 
   }
 
@@ -463,6 +606,112 @@ export class TrainerProfile
       });
 
   }
+  loadTrainerCertificates(trainerId: number): void {
+  this.api.getTrainerCertificates(trainerId).subscribe({
+    next: (items) => {
+      this.trainerCertificates.set(items ?? []);
+    },
+    error: (error) => {
+      console.error('تعذر تحميل شهادات المدرب:', error);
+      this.trainerCertificates.set([]);
+    }
+  });
+}
+
+onCertificateFileSelected(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  this.selectedCertificateFile = input.files?.[0] ?? null;
+}
+
+uploadCertificate(): void {
+  const currentTrainer = this.trainer();
+
+  if (!currentTrainer?.trainerId) {
+    this.showError('تعذر تحديد المدرب الحالي.');
+    return;
+  }
+
+  if (!this.certificateName.trim()) {
+    this.showError('اكتبي اسم الشهادة أولاً.');
+    return;
+  }
+
+  if (!this.selectedCertificateFile) {
+    this.showError('اختاري ملف الشهادة أولاً.');
+    return;
+  }
+
+  this.isUploadingCertificate.set(true);
+
+  this.api.uploadTrainerCertificate(
+    currentTrainer.trainerId,
+    this.certificateName.trim(),
+    this.certificateIssuer.trim(),
+    this.certificateIssueDate,
+    this.certificateExpiryDate,
+    this.selectedCertificateFile
+  ).subscribe({
+    next: (certificate) => {
+      this.trainerCertificates.update(items => [certificate, ...items]);
+      this.resetCertificateForm();
+      this.isUploadingCertificate.set(false);
+      
+    },
+    error: (error) => {
+      console.error('تعذر رفع الشهادة:', error);
+      this.isUploadingCertificate.set(false);
+      this.showError(error?.error?.message ?? 'تعذر رفع الشهادة.');
+    }
+  });
+}
+
+deleteCertificate(certificate: TrainerCertificateDto): void {
+  const confirmed = window.confirm(
+    `هل تريدين حذف شهادة "${certificate.certificateName}"؟`
+  );
+
+  if (!confirmed) return;
+
+  this.api.deleteTrainerCertificate(
+    certificate.trainerCertificateId
+  ).subscribe({
+    next: () => {
+      this.trainerCertificates.update(items =>
+        items.filter(x =>
+          x.trainerCertificateId !== certificate.trainerCertificateId
+        )
+      );
+      
+    },
+    error: (error) => {
+      console.error('تعذر حذف الشهادة:', error);
+      this.showError('تعذر حذف الشهادة.');
+    }
+  });
+}
+
+private resetCertificateForm(): void {
+  this.certificateName = '';
+  this.certificateIssuer = '';
+  this.certificateIssueDate = '';
+  this.certificateExpiryDate = '';
+  this.selectedCertificateFile = null;
+
+  if (this.certificateFileInput) {
+    this.certificateFileInput.value = '';
+  }
+}
+
+getCertificateFileUrl(fileUrl: string): string {
+  if (!fileUrl) return '#';
+
+  if (fileUrl.startsWith('http://' ) || fileUrl.startsWith('https://' )) {
+    return fileUrl;
+  }
+
+  const backendBaseUrl = environment.apiBaseUrl.replace(/\/api\/?$/, '');
+  return `${backendBaseUrl}${fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`}`;
+}
 
 
   // =====================================================
@@ -484,6 +733,61 @@ export class TrainerProfile
     );
 
   }
+  openSkillInput(): void {
+
+    if (!this.isEditing()) {
+      return;
+    }
+
+    this.newSkillName = '';
+
+    this.showSkillInput.set(true);
+
+  }
+
+
+  // =====================================================
+  // ADD TRAINER SKILL
+  // =====================================================
+
+  addSkill(): void {
+
+    if (!this.isEditing()) {
+      return;
+    }
+
+    this.newSkillName = '';
+
+    this.showSkillInput.set(true);
+
+  }
+
+
+  // =====================================================
+  // REMOVE TRAINER SKILL
+  // =====================================================
+
+  removeSkill(
+    skillId: number
+  ): void {
+
+    if (!this.isEditing()) {
+      return;
+    }
+
+    this.skills.update(
+      currentSkills =>
+        currentSkills.filter(
+          skill =>
+            skill.trainerSkillId !== skillId
+        )
+    );
+
+    this.markProfileChanged();
+
+  }
+
+
 
 
   // =====================================================
@@ -574,6 +878,7 @@ export class TrainerProfile
     );
 
   }
+
 
 
   // =====================================================

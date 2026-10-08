@@ -1,28 +1,576 @@
-<section class="page" dir="rtl">
-  <header class="page-header">
-    <div><h1>الإشعارات</h1><p>مركز الإشعارات والتنبيهات الخاصة بحسابك.</p></div>
-    <button type="button" class="mark-all" [disabled]="!unreadCount()" (click)="markAllRead()">تعليم الكل كمقروء</button>
-  </header>
+<section class="notifications-page" dir="rtl">
 
-  <div class="toolbar">
-    <div class="tabs">
-      <button type="button" [class.active]="activeFilter() === 'all'" (click)="setFilter('all')">الكل <span>{{ notifications().length }}</span></button>
-      <button type="button" [class.active]="activeFilter() === 'unread'" (click)="setFilter('unread')">غير مقروءة <span>{{ unreadCount() }}</span></button>
+  <!-- ================================
+       HEADER
+  ================================= -->
+
+  <section class="notifications-banner">
+
+    <div class="banner-content">
+
+      <div class="banner-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+          />
+
+          <path
+            d="M10 21h4"
+          />
+        </svg>
+
+      </div>
+
+
+      <div class="banner-text">
+
+        <h1>
+          الإشعارات
+        </h1>
+
+        <p>
+          تابع آخر التنبيهات والتحديثات الخاصة بحسابك
+        </p>
+
+      </div>
+
     </div>
-  </div>
 
-  @if (loading()) { <div class="state">جاري تحميل الإشعارات...</div> }
-  @else if (error()) { <div class="state error">{{ error() }} <button type="button" (click)="load()">إعادة المحاولة</button></div> }
-  @else if (!filteredNotifications().length) { <div class="state empty"><span class="bell">♧</span><strong>لا توجد إشعارات</strong><span>{{ activeFilter() === 'unread' ? 'لا توجد إشعارات غير مقروءة.' : 'ستظهر هنا الإشعارات الجديدة الخاصة بك.' }}</span></div> }
-  @else {
-    <div class="notification-list">
-      @for (item of filteredNotifications(); track trackById($index, item)) {
-        <article class="notification" [class.unread]="!item.isRead" (click)="markRead(item)">
-          <div class="icon">🔔</div>
-          <div class="body"><div class="title-row"><h2>{{ item.title }}</h2>@if (!item.isRead) {<span class="new">جديد</span>}</div><p>{{ item.message }}</p>@if (item.relatedEntity) {<small>{{ item.relatedEntity }}</small>}</div>
-          <time>{{ timeAgo(item.createdAt) }}</time>
-        </article>
+
+    <button
+      type="button"
+      class="read-all-button"
+      [disabled]="!unreadCount() || markingAll()"
+      (click)="markAllRead()"
+    >
+
+      <span class="check-icon">
+        ✓
+      </span>
+
+      @if (markingAll()) {
+        جاري التحديث...
+      } @else {
+        تعليم الكل كمقروء
       }
+
+    </button>
+
+  </section>
+
+
+  <!-- ================================
+       MAIN CARD
+  ================================= -->
+
+  <section class="notifications-card">
+
+
+    <!-- ==============================
+         CARD HEADER
+    =============================== -->
+
+    <div class="notifications-toolbar">
+
+      <div class="toolbar-title">
+
+        <h2>
+          الإشعارات
+        </h2>
+
+        <span class="toolbar-count">
+          {{ totalCount() }}
+        </span>
+
+      </div>
+
+
+      <div class="toolbar-actions">
+
+
+        <!-- Filters -->
+
+        <div class="filters">
+
+          <button
+            type="button"
+            class="filter"
+            [class.active]="activeFilter() === 'all'"
+            (click)="setFilter('all')"
+          >
+
+            <span class="filter-text">
+              الكل
+            </span>
+
+            <span class="filter-count">
+              {{ totalCount() }}
+            </span>
+
+          </button>
+
+
+          <button
+            type="button"
+            class="filter"
+            [class.active]="activeFilter() === 'unread'"
+            (click)="setFilter('unread')"
+          >
+
+            <span class="filter-text">
+              غير مقروءة
+            </span>
+
+            <span class="filter-count">
+              {{ unreadCount() }}
+            </span>
+
+          </button>
+
+        </div>
+
+
+        <!-- Select all -->
+
+        @if (filteredNotifications().length) {
+
+          <button
+            type="button"
+            class="select-all"
+            (click)="toggleSelectAll()"
+          >
+
+            @if (allSelected()) {
+              إلغاء التحديد
+            } @else {
+              تحديد الكل
+            }
+
+          </button>
+
+        }
+
+      </div>
+
     </div>
+
+
+    <!-- ==============================
+         SELECTED ACTIONS
+    =============================== -->
+
+    @if (selectedCount()) {
+
+      <div class="selected-bar">
+
+        <div class="selected-info">
+
+          <span class="selected-number">
+            {{ selectedCount() }}
+          </span>
+
+          <span>
+            تم تحديد {{ selectedCount() }} إشعار
+          </span>
+
+        </div>
+
+
+        <div class="selected-actions">
+
+          <button
+            type="button"
+            class="mark-selected"
+            (click)="markSelectedRead()"
+          >
+            ✓ تعليم كمقروء
+          </button>
+
+
+          <button
+            type="button"
+            class="delete-selected"
+            (click)="askDeleteSelected()"
+          >
+            حذف
+          </button>
+
+
+          <button
+            type="button"
+            class="cancel-selected"
+            (click)="clearSelection()"
+          >
+            إلغاء
+          </button>
+
+        </div>
+
+      </div>
+
+    }
+
+
+    <!-- ==============================
+         LOADING
+    =============================== -->
+
+    @if (loading()) {
+
+      <div class="state">
+
+        <div class="loader"></div>
+
+        <span>
+          جاري تحميل الإشعارات...
+        </span>
+
+      </div>
+
+    }
+
+
+    <!-- ==============================
+         ERROR
+    =============================== -->
+
+    @else if (error()) {
+
+      <div class="state error-state">
+
+        <div class="state-icon">
+          !
+        </div>
+
+        <strong>
+          تعذر تحميل الإشعارات
+        </strong>
+
+        <span>
+          {{ error() }}
+        </span>
+
+        <button
+          type="button"
+          (click)="load()"
+        >
+          إعادة المحاولة
+        </button>
+
+      </div>
+
+    }
+
+
+    <!-- ==============================
+         EMPTY
+    =============================== -->
+
+    @else if (!filteredNotifications().length) {
+
+      <div class="empty-state">
+
+        <div class="empty-icon">
+
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+            />
+
+            <path
+              d="M10 21h4"
+            />
+          </svg>
+
+        </div>
+
+
+        <h3>
+
+          @if (activeFilter() === 'unread') {
+            لا توجد إشعارات غير مقروءة
+          } @else {
+            لا توجد إشعارات
+          }
+
+        </h3>
+
+
+        <p>
+
+          @if (activeFilter() === 'unread') {
+            أنت محدث بالكامل، لا توجد إشعارات جديدة.
+          } @else {
+            ستظهر هنا الإشعارات الجديدة الخاصة بك.
+          }
+
+        </p>
+
+      </div>
+
+    }
+
+
+    <!-- ==============================
+         NOTIFICATION LIST
+    =============================== -->
+
+    @else {
+
+      <div class="notification-list">
+
+        @for (
+          item of filteredNotifications();
+          track trackById($index, item)
+        ) {
+
+          <article
+            class="notification-row"
+            [class.unread]="!item.isRead"
+            [class.selected]="isSelected(item.notificationId)"
+          >
+
+
+            <!-- Checkbox -->
+
+            <label
+              class="checkbox-wrapper"
+              (click)="$event.stopPropagation()"
+            >
+
+              <input
+                type="checkbox"
+                [checked]="isSelected(item.notificationId)"
+                (change)="toggleSelection(item.notificationId)"
+              />
+
+              <span class="checkbox"></span>
+
+            </label>
+
+
+            <!-- Notification icon -->
+
+            <button
+              type="button"
+              class="notification-icon"
+              title="تعليم كمقروء"
+              (click)="markRead(item)"
+            >
+
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+                />
+
+                <path
+                  d="M10 21h4"
+                />
+              </svg>
+
+            </button>
+
+
+            <!-- Content -->
+
+            <div
+              class="notification-content"
+              (click)="markRead(item)"
+            >
+
+              <div class="notification-title">
+
+                @if (!item.isRead) {
+
+                  <span class="unread-dot"></span>
+
+                }
+
+                <h3>
+                  {{ item.title }}
+                </h3>
+
+
+                @if (!item.isRead) {
+
+                  <span class="new-badge">
+                    جديد
+                  </span>
+
+                }
+
+              </div>
+
+
+              <p>
+                {{ item.message }}
+              </p>
+
+
+              <div class="notification-meta">
+
+                @if (item.relatedEntity) {
+
+                  <span class="category">
+                    {{ item.relatedEntity }}
+                  </span>
+
+                }
+
+                <span class="time">
+                  {{ timeAgo(item.createdAt) }}
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <!-- Delete -->
+
+            <button
+              type="button"
+              class="delete-button"
+              title="حذف الإشعار"
+              (click)="$event.stopPropagation(); askDeleteOne(item)"
+            >
+
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+
+                <path
+                  d="M4 7h16"
+                />
+
+                <path
+                  d="M10 11v6"
+                />
+
+                <path
+                  d="M14 11v6"
+                />
+
+                <path
+                  d="M6 7l1 13h10l1-13"
+                />
+
+                <path
+                  d="M9 7V4h6v3"
+                />
+
+              </svg>
+
+            </button>
+
+          </article>
+
+        }
+
+      </div>
+
+    }
+
+  </section>
+
+
+  <!-- ================================
+       DELETE MODAL
+  ================================= -->
+
+  @if (deleteModalOpen()) {
+
+    <div
+      class="modal-overlay"
+      (click)="cancelDelete()"
+    >
+
+      <div
+        class="delete-modal"
+        (click)="$event.stopPropagation()"
+      >
+
+        <div class="modal-icon">
+
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+
+            <path
+              d="M4 7h16"
+            />
+
+            <path
+              d="M10 11v6"
+            />
+
+            <path
+              d="M14 11v6"
+            />
+
+            <path
+              d="M6 7l1 13h10l1-13"
+            />
+
+            <path
+              d="M9 7V4h6v3"
+            />
+
+          </svg>
+
+        </div>
+
+
+        <div class="modal-text">
+
+          <h3>
+            {{ deleteTitle() }}
+          </h3>
+
+          <p>
+            {{ deleteMessage() }}
+          </p>
+
+        </div>
+
+
+        <div class="modal-actions">
+
+          <button
+            type="button"
+            class="modal-cancel"
+            (click)="cancelDelete()"
+          >
+            إلغاء
+          </button>
+
+
+          <button
+            type="button"
+            class="modal-confirm"
+            (click)="confirmDelete()"
+          >
+            حذف
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
   }
+
 </section>

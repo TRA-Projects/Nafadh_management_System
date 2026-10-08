@@ -222,6 +222,18 @@ export interface TrainerBatchDto {
   progressPercentage?: number;
   
 }
+export interface TrainerCertificateDto {
+  trainerCertificateId: number;
+  trainerId: number;
+  certificateName: string;
+  issuer?: string | null;
+  issueDate?: string | null;
+  expiryDate?: string | null;
+  fileUrl: string;
+  originalFileName?: string | null;
+  contentType?: string | null;
+  createdAt: string;
+}
 
 // ---- Academic structure ----
 export interface TrackDto {

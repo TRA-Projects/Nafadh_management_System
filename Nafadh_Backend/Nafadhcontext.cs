@@ -53,7 +53,9 @@ namespace Nafadh_Backend
         public DbSet<NFD_Notification> NFD_Notifications { get; set; }
         public DbSet<NFD_Announcement> NFD_Announcements { get; set; }
         public DbSet<NFD_Message> NFD_Messages { get; set; }
+        public DbSet<NFD_ConversationGroupMember> NFD_ConversationGroupMembers { get; set; }
         public DbSet<NFD_Certificate> NFD_Certificates { get; set; }
+        public DbSet<NFD_TrainerCertificate> NFD_TrainerCertificates { get; set; }
         public DbSet<NFD_Report> NFD_Reports { get; set; }
         public DbSet<NFD_SystemSetting> NFD_SystemSettings { get; set; }
         public DbSet<NFD_TraineePayment> NFD_TraineePayments { get; set; }
@@ -191,6 +193,36 @@ namespace Nafadh_Backend
                     .WithMany()
                     .HasForeignKey(e => e.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ---- NFD_TrainerCertificate ----
+            modelBuilder.Entity<NFD_TrainerCertificate>(entity =>
+            {
+                entity.ToTable("NFD_TrainerCertificates");
+
+                entity.HasKey(e => e.TrainerCertificateId);
+
+                entity.Property(e => e.CertificateName)
+                    .HasMaxLength(200)
+                    .IsRequired();
+
+                entity.Property(e => e.Issuer)
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.FileUrl)
+                    .HasMaxLength(500)
+                    .IsRequired();
+
+                entity.Property(e => e.OriginalFileName)
+                    .HasMaxLength(255);
+
+                entity.Property(e => e.ContentType)
+                    .HasMaxLength(100);
+
+                entity.HasOne(e => e.Trainer)
+                    .WithMany(t => t.Certificates)
+                    .HasForeignKey(e => e.TrainerId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // ---- NFD_Trainee ----

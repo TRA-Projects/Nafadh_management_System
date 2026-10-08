@@ -2,562 +2,521 @@
 
   @if (selected() === null) {
 
-    <!-- =====================================================
+  <!-- =====================================================
          HEADER
     ====================================================== -->
 
-    <section class="page-hero">
+  <section class="page-hero">
+
+    <div>
+
+      <span class="page-kicker">
+        دفعاتي التدريبية
+      </span>
+
+      <h1>
+        إدارة الدفعات
+      </h1>
+
+      <p>
+        اختر الدفعة للوصول إلى المحتوى والمهام
+        والمتدربين والتقييمات الخاصة بها.
+      </p>
+
+    </div>
+
+
+    <div class="hero-icon">
+      <i class="fa-solid fa-calendar-days"></i>
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+         ERROR
+    ====================================================== -->
+
+  @if (errorMessage()) {
+
+  <div class="error-message">
+
+    {{ errorMessage() }}
+
+  </div>
+
+  }
+
+
+  <!-- =====================================================
+         LOADING
+    ====================================================== -->
+
+  @if (loading()) {
+
+  <div class="loading-state">
+
+    <div class="loading-icon">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+    </div>
+
+    <strong>
+      جاري تحميل الدفعات
+    </strong>
+
+    <span>
+      يتم تجهيز الدفعات التدريبية المسندة لك...
+    </span>
+
+  </div>
+
+  }
+
+
+  <!-- =====================================================
+         BATCHES
+    ====================================================== -->
+
+  @if (!loading()) {
+
+  <section class="batches-grid">
+
+    @for (
+    b of batches();
+    track b.batchId
+    ) {
+
+    <article class="batch-card">
+
+      <!-- IMAGE -->
+
+      <div class="batch-image-wrapper">
+
+        <img class="batch-image" [src]="getBatchImage(b.batchId)" [alt]="b.batchName || 'دفعة تدريبية'" />
+
+
+        <span class="status-badge" [class.active]="b.status === 'Ongoing'" [class.upcoming]="b.status === 'Upcoming'"
+          [class.completed]="b.status === 'Completed'" [class.cancelled]="b.status === 'Cancelled'">
+
+          {{
+          getBatchStatusLabel(
+          b.status
+          )
+          }}
+
+        </span>
+
+      </div>
+
+
+      <!-- CONTENT -->
+
+      <div class="batch-content">
+
+        <span class="batch-label">
+          دفعة تدريبية
+        </span>
+
+
+        <h3>
+          {{
+          b.batchName ||
+          'دفعة بدون اسم'
+          }}
+        </h3>
+
+
+        <p class="program-name">
+
+          {{
+          programNames()[b.batchId] ||
+          'جاري تحميل البرنامج...'
+          }}
+
+        </p>
+
+
+        <div class="batch-dates">
+
+          <span class="date-icon">
+            <i class="fa-regular fa-calendar"></i>
+          </span>
+
+
+          @if (
+          b.startDate &&
+          b.endDate
+          ) {
+
+          <span>
+            {{
+            b.startDate |
+            date:'yyyy/MM/dd'
+            }}
+            -
+            {{
+            b.endDate |
+            date:'yyyy/MM/dd'
+            }}
+          </span>
+
+          } @else {
+
+          <span>
+            التاريخ غير محدد
+          </span>
+
+          }
+
+        </div>
+
+
+        <!-- METRICS -->
+
+        <div class="batch-metrics">
+
+          <!-- PROGRESS -->
+
+          <div class="metric-item">
+
+            <div class="progress-circle" [style.background]="
+                      'conic-gradient(#003b82 ' +
+                      getTimeProgress(b) +
+                      '%, #edf2f7 0)'
+                    ">
+
+              <div class="progress-inner">
+
+                {{ contentProgress()[b.batchId] ?? 0 }}%
+
+              </div>
+
+            </div>
+
+
+            <span>
+              نسبة تقدم المحتوى
+            </span>
+
+          </div>
+
+
+          <!-- TIME -->
+
+          <div class="metric-item">
+
+            <strong>
+              {{ getBatchDurationInMonths(b) }}
+              {{ getBatchDurationInMonths(b) === 1 ? 'شهر' : 'أشهر' }}
+            </strong>
+
+            <span>
+              مدة الدفعة
+            </span>
+
+          </div>
+
+
+          <!-- TRAINEES -->
+
+          <div class="metric-item">
+
+            <strong class="trainee-number">
+
+              {{
+              traineeCounts()[
+              b.batchId
+              ] ?? 0
+              }}
+
+            </strong>
+
+            <span>
+              متدرب
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <button type="button" class="select-batch-btn" (click)="select(b)">
+
+          <span>
+            اختيار الدفعة وفتح الإجراءات
+          </span>
+
+          <i class="fa-solid fa-arrow-left"></i>
+
+        </button>
+
+      </div>
+
+    </article>
+
+    } @empty {
+
+    <div class="empty-state">
+
+      <div class="empty-icon">
+        <i class="fa-regular fa-calendar-xmark"></i>
+      </div>
+
+      <strong>
+        لا توجد دفعات مسندة
+      </strong>
+
+      <span>
+        ستظهر هنا الدفعات المسندة
+        للمدرب الحالي.
+      </span>
+
+    </div>
+
+    }
+
+  </section>
+
+  }
+
+  } @else {
+
+  <!-- =====================================================
+         SELECTED BATCH
+    ====================================================== -->
+
+  <section class="selected-panel">
+
+    <div class="selected-header">
 
       <div>
 
-        <span class="page-kicker">
-          دفعاتي التدريبية
+        <span class="selected-kicker">
+          الدفعة المحددة
         </span>
 
-        <h1>
-          إدارة الدفعات
-        </h1>
+        <h2>
+          {{ selected()?.batchName }}
+        </h2>
 
         <p>
-          اختر الدفعة للوصول إلى المحتوى والمهام
-          والمتدربين والتقييمات الخاصة بها.
+          اختر الإجراء الذي تريد القيام به
+          للدفعة الحالية.
         </p>
 
       </div>
 
 
-      <div class="hero-icon">
-        <i class="fa-solid fa-calendar-days"></i>
-      </div>
+      <button type="button" class="back-btn" (click)="back()">
+        <i class="fa-solid fa-arrow-right"></i>
+        <span>العودة إلى الدفعات</span>
+      </button>
 
-    </section>
-
-
-    <!-- =====================================================
-         ERROR
-    ====================================================== -->
-
-    @if (errorMessage()) {
-
-      <div class="error-message">
-
-        {{ errorMessage() }}
-
-      </div>
-
-    }
+    </div>
 
 
-    <!-- =====================================================
-         LOADING
-    ====================================================== -->
+    <!-- SELECTED SUMMARY -->
 
-    @if (loading()) {
+    <div class="selected-summary">
 
-      <div class="loading-state">
-
-        <div class="loading-icon">
-          <i class="fa-solid fa-spinner fa-spin"></i>
-        </div>
-
-        <strong>
-          جاري تحميل الدفعات
-        </strong>
+      <div class="selected-summary-item">
 
         <span>
-          يتم تجهيز الدفعات التدريبية المسندة لك...
+          البرنامج
         </span>
+
+        <strong>
+
+          {{
+          programNames()[
+          selected()!.batchId
+          ] ||
+          'غير متوفر'
+          }}
+
+        </strong>
 
       </div>
 
-    }
 
+      <div class="selected-summary-item">
 
-    <!-- =====================================================
-         BATCHES
-    ====================================================== -->
+        <span>
+          عدد المتدربين
+        </span>
 
-    @if (!loading()) {
+        <strong>
 
-      <section class="batches-grid">
+          {{
+          traineeCounts()[
+          selected()!.batchId
+          ] ?? 0
+          }}
 
-        @for (
-          b of batches();
-          track b.batchId
-        ) {
+        </strong>
 
-          <article class="batch-card">
+      </div>
 
-            <!-- IMAGE -->
 
-            <div class="batch-image-wrapper">
+      <div class="selected-summary-item">
 
-              <img
-                class="batch-image"
-                [src]="getBatchImage(b.batchId)"
-                [alt]="b.batchName || 'دفعة تدريبية'"
-              />
+        <span>
+          حالة الدفعة
+        </span>
 
+        <strong>
 
-              <span
-                class="status-badge"
-                [class.active]="b.status === 'Ongoing'"
-                [class.upcoming]="b.status === 'Upcoming'"
-                [class.completed]="b.status === 'Completed'"
-                [class.cancelled]="b.status === 'Cancelled'"
-              >
+          {{
+          getBatchStatusLabel(
+          selected()!.status
+          )
+          }}
 
-                {{
-                  getBatchStatusLabel(
-                    b.status
-                  )
-                }}
+        </strong>
 
-              </span>
+      </div>
 
-            </div>
 
+      <div class="selected-summary-item">
 
-            <!-- CONTENT -->
+        <span>
+          التقدم الزمني
+        </span>
 
-            <div class="batch-content">
+        <strong>
 
-              <span class="batch-label">
-                دفعة تدريبية
-              </span>
+          {{
+          getTimeProgress(
+          selected()!
+          )
+          }}%
 
+        </strong>
 
-              <h3>
-                {{
-                  b.batchName ||
-                  'دفعة بدون اسم'
-                }}
-              </h3>
+      </div>
 
+    </div>
 
-              <p class="program-name">
 
-                {{
-                  programNames()[b.batchId] ||
-                  'جاري تحميل البرنامج...'
-                }}
+    <!-- ACTIONS -->
 
-              </p>
+    <div class="actions-grid">
 
 
-              <div class="batch-dates">
+      <!-- CONTENT -->
 
-                <span class="date-icon">
-                  <i class="fa-regular fa-calendar"></i>
-                </span>
+      <button type="button" class="action-card" (click)="openSection('content')">
 
-
-                @if (
-                  b.startDate &&
-                  b.endDate
-                ) {
-
-                  <span>
-                    {{
-                      b.startDate |
-                      date:'yyyy/MM/dd'
-                    }}
-                    -
-                    {{
-                      b.endDate |
-                      date:'yyyy/MM/dd'
-                    }}
-                  </span>
-
-                } @else {
-
-                  <span>
-                    التاريخ غير محدد
-                  </span>
-
-                }
-
-              </div>
-
-
-              <!-- METRICS -->
-
-              <div class="batch-metrics">
-
-                <!-- PROGRESS -->
-
-                <div class="metric-item">
-
-                  <div
-                    class="progress-circle"
-                    [style.background]="
-                      'conic-gradient(#003b82 ' +
-                      getTimeProgress(b) +
-                      '%, #edf2f7 0)'
-                    "
-                  >
-
-                    <div class="progress-inner">
-
-                      {{
-                        getTimeProgress(b)
-                      }}%
-
-                    </div>
-
-                  </div>
-
-
-                  <span>
-                    التقدم الزمني
-                  </span>
-
-                </div>
-
-
-                <!-- TIME -->
-
-                <div class="metric-item">
-
-                  <strong>
-
-                    {{
-                      getBatchTimeLabel(b)
-                    }}
-
-                  </strong>
-
-                  <span>
-                    مدة الدفعة
-                  </span>
-
-                </div>
-
-
-                <!-- TRAINEES -->
-
-                <div class="metric-item">
-
-                  <strong class="trainee-number">
-
-                    {{
-                      traineeCounts()[
-                        b.batchId
-                      ] ?? 0
-                    }}
-
-                  </strong>
-
-                  <span>
-                    متدرب
-                  </span>
-
-                </div>
-
-              </div>
-
-
-              <button
-                type="button"
-                class="select-batch-btn"
-                (click)="select(b)"
-              >
-
-                <span>
-                  اختيار الدفعة وفتح الإجراءات
-                </span>
-
-                <i class="fa-solid fa-arrow-left"></i>
-
-              </button>
-
-            </div>
-
-          </article>
-
-        } @empty {
-
-          <div class="empty-state">
-
-            <div class="empty-icon">
-              <i class="fa-regular fa-calendar-xmark"></i>
-            </div>
-
-            <strong>
-              لا توجد دفعات مسندة
-            </strong>
-
-            <span>
-              ستظهر هنا الدفعات المسندة
-              للمدرب الحالي.
-            </span>
-
-          </div>
-
-        }
-
-      </section>
-
-    }
-
-  } @else {
-
-    <!-- =====================================================
-         SELECTED BATCH
-    ====================================================== -->
-
-    <section class="selected-panel">
-
-      <div class="selected-header">
+        <div class="action-icon blue">
+          <i class="fa-solid fa-folder-open"></i>
+        </div>
 
         <div>
 
-          <span class="selected-kicker">
-            الدفعة المحددة
-          </span>
-
-          <h2>
-            {{ selected()?.batchName }}
-          </h2>
+          <h3>
+            إدارة المحتوى
+          </h3>
 
           <p>
-            اختر الإجراء الذي تريد القيام به
-            للدفعة الحالية.
+            إدارة الوحدات والدروس والملفات
+            والروابط التعليمية.
           </p>
 
         </div>
 
+        <span class="action-arrow">
+          <i class="fa-solid fa-arrow-left"></i>
+        </span>
 
-        <button
-          type="button"
-          class="back-btn"
-          (click)="back()"
-        >
-          <i class="fa-solid fa-arrow-right"></i>
-          <span>العودة إلى الدفعات</span>
-        </button>
-
-      </div>
+      </button>
 
 
-      <!-- SELECTED SUMMARY -->
+      <!-- TASKS -->
 
-      <div class="selected-summary">
+      <button type="button" class="action-card" (click)="openSection('tasks')">
 
-        <div class="selected-summary-item">
+        <div class="action-icon orange">
+          <i class="fa-solid fa-list-check"></i>
+        </div>
 
-          <span>
-            البرنامج
-          </span>
+        <div>
 
-          <strong>
+          <h3>
+            المهام والمشروعات
+          </h3>
 
-            {{
-              programNames()[
-                selected()!.batchId
-              ] ||
-              'غير متوفر'
-            }}
-
-          </strong>
+          <p>
+            إنشاء المهام ومتابعة التسليمات
+            ونتائج المتدربين.
+          </p>
 
         </div>
 
+        <span class="action-arrow">
+          <i class="fa-solid fa-arrow-left"></i>
+        </span>
 
-        <div class="selected-summary-item">
+      </button>
 
-          <span>
-            عدد المتدربين
-          </span>
 
-          <strong>
+      <!-- TRAINEES -->
 
-            {{
-              traineeCounts()[
-                selected()!.batchId
-              ] ?? 0
-            }}
+      <button type="button" class="action-card" (click)="openSection('trainees')">
 
-          </strong>
+        <div class="action-icon green">
+          <i class="fa-solid fa-users"></i>
+        </div>
+
+        <div>
+
+          <h3>
+            عرض المتدربين
+          </h3>
+
+          <p>
+            متابعة متدربي الدفعة
+            وتفاصيل تقدمهم التدريبي.
+          </p>
 
         </div>
 
+        <span class="action-arrow">
+          <i class="fa-solid fa-arrow-left"></i>
+        </span>
 
-        <div class="selected-summary-item">
+      </button>
 
-          <span>
-            حالة الدفعة
-          </span>
 
-          <strong>
+      <!-- EVALUATIONS -->
 
-            {{
-              getBatchStatusLabel(
-                selected()!.status
-              )
-            }}
+      <button type="button" class="action-card" (click)="openSection('evaluations')">
 
-          </strong>
+        <div class="action-icon purple">
+          <i class="fa-solid fa-clipboard-check"></i>
+        </div>
+
+        <div>
+
+          <h3>
+            التقييمات
+          </h3>
+
+          <p>
+            الوصول إلى تقييم المتدربين
+            واعتماد الدرجات والملاحظات.
+          </p>
 
         </div>
 
+        <span class="action-arrow">
+          <i class="fa-solid fa-arrow-left"></i>
+        </span>
 
-        <div class="selected-summary-item">
+      </button>
 
-          <span>
-            التقدم الزمني
-          </span>
+    </div>
 
-          <strong>
-
-            {{
-              getTimeProgress(
-                selected()!
-              )
-            }}%
-
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <!-- ACTIONS -->
-
-      <div class="actions-grid">
-
-
-        <!-- CONTENT -->
-
-        <button
-          type="button"
-          class="action-card"
-          (click)="openSection('content')"
-        >
-
-          <div class="action-icon blue">
-            <i class="fa-solid fa-folder-open"></i>
-          </div>
-
-          <div>
-
-            <h3>
-              إدارة المحتوى
-            </h3>
-
-            <p>
-              إدارة الوحدات والدروس والملفات
-              والروابط التعليمية.
-            </p>
-
-          </div>
-
-          <span class="action-arrow">
-            <i class="fa-solid fa-arrow-left"></i>
-          </span>
-
-        </button>
-
-
-        <!-- TASKS -->
-
-        <button
-          type="button"
-          class="action-card"
-          (click)="openSection('tasks')"
-        >
-
-          <div class="action-icon orange">
-            <i class="fa-solid fa-list-check"></i>
-          </div>
-
-          <div>
-
-            <h3>
-              المهام والمشروعات
-            </h3>
-
-            <p>
-              إنشاء المهام ومتابعة التسليمات
-              ونتائج المتدربين.
-            </p>
-
-          </div>
-
-          <span class="action-arrow">
-            <i class="fa-solid fa-arrow-left"></i>
-          </span>
-
-        </button>
-
-
-        <!-- TRAINEES -->
-
-        <button
-          type="button"
-          class="action-card"
-          (click)="openSection('trainees')"
-        >
-
-          <div class="action-icon green">
-            <i class="fa-solid fa-users"></i>
-          </div>
-
-          <div>
-
-            <h3>
-              عرض المتدربين
-            </h3>
-
-            <p>
-              متابعة متدربي الدفعة
-              وتفاصيل تقدمهم التدريبي.
-            </p>
-
-          </div>
-
-          <span class="action-arrow">
-            <i class="fa-solid fa-arrow-left"></i>
-          </span>
-
-        </button>
-
-
-        <!-- EVALUATIONS -->
-
-        <button
-          type="button"
-          class="action-card"
-          (click)="openSection('evaluations')"
-        >
-
-          <div class="action-icon purple">
-            <i class="fa-solid fa-clipboard-check"></i>
-          </div>
-
-          <div>
-
-            <h3>
-              التقييمات
-            </h3>
-
-            <p>
-              الوصول إلى تقييم المتدربين
-              واعتماد الدرجات والملاحظات.
-            </p>
-
-          </div>
-
-          <span class="action-arrow">
-            <i class="fa-solid fa-arrow-left"></i>
-          </span>
-
-        </button>
-
-      </div>
-
-    </section>
+  </section>
 
   }
 

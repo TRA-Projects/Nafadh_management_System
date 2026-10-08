@@ -94,6 +94,7 @@ namespace Nafadh_Backend.Services
             return enrollments.Select(e => new BatchTraineeDto
             {
                 TraineeId = e.TraineeId,
+                UserId = e.Trainee?.User?.UserId ?? 0,
                 FullName = e.Trainee?.User?.FullName ?? string.Empty,
                 CompletionStatus = e.CompletionStatus
             }).ToList();
@@ -175,6 +176,11 @@ namespace Nafadh_Backend.Services
                 AttendanceRate = 88 + (seed * 3) % 11,
                 ProgressPercentage = 40 + (seed * 13) % 55
             };
+        }
+
+        public async Task<BatchProgressDto?> GetProgressAsync(int batchId)
+        {
+            return await _repository.GetProgressAsync(batchId);
         }
 
 

@@ -1,23 +1,8 @@
-import {
-  Component,
-  OnInit,
-  signal
-} from '@angular/core';
-
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-import {
-  RouterLink,
-  ActivatedRoute
-} from '@angular/router';
-
-import {
-  catchError,
-  forkJoin,
-  map,
-  of
-} from 'rxjs';
+import { RouterLink, ActivatedRoute } from '@angular/router';
+import { catchError, forkJoin, map, of } from 'rxjs';
 
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -29,20 +14,13 @@ import {
   TrainerDto
 } from '../../../../core/models/dtos';
 
-import {
-  TaskPriority,
-  TaskStatus
-} from '../../../../core/models/enums';
+import { TaskPriority, TaskStatus } from '../../../../core/models/enums';
 
 
 @Component({
   selector: 'app-trainer-tasks',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterLink
-  ],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './tasks.html',
   styleUrl: './tasks.scss',
 })
@@ -52,102 +30,60 @@ export class TrainerTasks implements OnInit {
   // TRAINER
   // =====================================================
 
-  trainer =
-    signal<TrainerDto | null>(
-      null
-    );
+  trainer = signal<TrainerDto | null>(null);
 
 
   // =====================================================
   // BATCHES
   // =====================================================
 
-  batches =
-    signal<TrainerBatchDto[]>(
-      []
-    );
-
+  batches = signal<TrainerBatchDto[]>([]);
   batchIdInput = 0;
-
-  loadingBatches =
-    signal(false);
-
-  requestedBatchId:
-    number | null = null;
+  loadingBatches = signal(false);
+  requestedBatchId: number | null = null;
 
 
   // =====================================================
   // TASKS
   // =====================================================
 
-  tasks =
-    signal<TaskDto[]>(
-      []
-    );
-
-  loading =
-    signal(false);
-
-  saving =
-    signal(false);
-
-  errorMessage =
-    signal('');
+  tasks = signal<TaskDto[]>([]);
+  loading = signal(false);
+  saving = signal(false);
+  errorMessage = signal('');
 
 
   // =====================================================
   // TASK SUBMISSIONS
   // =====================================================
 
-  submissionsByTask =
-    signal<
-      Record<number, SubmissionDto[]>
-    >({});
-
-  loadingSubmissions =
-    signal(false);
+  submissionsByTask = signal<Record<number, SubmissionDto[]>>({});
+  loadingSubmissions = signal(false);
 
 
   // =====================================================
   // SUBMISSIONS VIEW MODAL
   // =====================================================
 
-  showSubmissionsModal =
-    signal(false);
-
-  selectedSubmissionsTask =
-    signal<TaskDto | null>(
-      null
-    );
-
-  modalLoadingSubmissions =
-    signal(false);
-
-  submissionsModalError =
-    signal('');
+  showSubmissionsModal = signal(false);
+  selectedSubmissionsTask = signal<TaskDto | null>(null);
+  modalLoadingSubmissions = signal(false);
+  submissionsModalError = signal('');
 
 
   // =====================================================
   // TASK ACTIONS
   // =====================================================
 
-  updatingTaskId =
-    signal<number | null>(
-      null
-    );
-
-  deletingTaskId =
-    signal<number | null>(
-      null
-    );
+  updatingTaskId = signal<number | null>(null);
+  deletingTaskId = signal<number | null>(null);
 
 
   // =====================================================
   // CREATE MODAL
   // =====================================================
 
-  showCreateModal =
-    signal(false);
+  showCreateModal = signal(false);
 
 
   // =====================================================
@@ -155,49 +91,21 @@ export class TrainerTasks implements OnInit {
   // =====================================================
 
   newTaskTitle = '';
-
   newTaskDescription = '';
-
   newTaskDueDate = '';
-
-  newTaskPriority:
-    TaskPriority =
-      'Medium';
-
-  newTaskStatus:
-    TaskStatus =
-      'Open';
+  newTaskPriority: TaskPriority = 'Medium';
+  newTaskStatus: TaskStatus = 'Open';
 
 
   // =====================================================
   // OPTIONS
   // =====================================================
 
-  priorityOptions: {
-    value: TaskPriority;
-    label: string;
-  }[] = [
-
-    {
-      value: 'Low',
-      label: 'منخفضة'
-    },
-
-    {
-      value: 'Medium',
-      label: 'متوسطة'
-    },
-
-    {
-      value: 'High',
-      label: 'عالية'
-    },
-
-    {
-      value: 'Critical',
-      label: 'حرجة'
-    }
-
+  priorityOptions: { value: TaskPriority; label: string }[] = [
+    { value: 'Low', label: 'منخفضة' },
+    { value: 'Medium', label: 'متوسطة' },
+    { value: 'High', label: 'عالية' },
+    { value: 'Critical', label: 'حرجة' }
   ];
 
 
@@ -217,34 +125,15 @@ export class TrainerTasks implements OnInit {
   // =====================================================
 
   ngOnInit(): void {
-
-    const batchIdParam =
-      this.route
-        .snapshot
-        .queryParamMap
-        .get('batchId');
-
+    const batchIdParam = this.route.snapshot.queryParamMap.get('batchId');
 
     if (batchIdParam) {
+      const parsedBatchId = Number(batchIdParam);
 
-      const parsedBatchId =
-        Number(
-          batchIdParam
-        );
-
-
-      if (
-        !Number.isNaN(
-          parsedBatchId
-        ) &&
-        parsedBatchId > 0
-      ) {
-
-        this.requestedBatchId =
-          parsedBatchId;
+      if (!Number.isNaN(parsedBatchId) && parsedBatchId > 0) {
+        this.requestedBatchId = parsedBatchId;
       }
     }
-
 
     this.loadCurrentTrainer();
   }
@@ -254,106 +143,39 @@ export class TrainerTasks implements OnInit {
   // CURRENT TRAINER
   // =====================================================
 
+  private resetData(): void {
+    this.trainer.set(null);
+    this.batches.set([]);
+    this.tasks.set([]);
+    this.submissionsByTask.set({});
+    this.batchIdInput = 0;
+  }
+
   private loadCurrentTrainer(): void {
-
-    const userId =
-      this.auth
-        .session()
-        ?.userId;
-
+    const userId = this.auth.session()?.userId;
 
     if (!userId) {
-
-      this.trainer.set(
-        null
-      );
-
-      this.batches.set(
-        []
-      );
-
-      this.tasks.set(
-        []
-      );
-
-      this.submissionsByTask.set(
-        {}
-      );
-
-      this.batchIdInput = 0;
-
-      this.errorMessage.set(
-        'تعذر تحديد المستخدم الحالي'
-      );
-
+      this.resetData();
+      this.errorMessage.set('تعذر تحديد المستخدم الحالي');
       return;
     }
 
+    this.loadingBatches.set(true);
+    this.errorMessage.set('');
 
-    this.loadingBatches.set(
-      true
-    );
+    this.api.getTrainerByUserId(userId).subscribe({
+      next: (trainer) => {
+        this.trainer.set(trainer);
+        this.loadBatches(trainer.trainerId);
+      },
 
-    this.errorMessage.set(
-      ''
-    );
-
-
-    this.api
-      .getTrainerByUserId(
-        userId
-      )
-      .subscribe({
-
-        next: (trainer) => {
-
-          this.trainer.set(
-            trainer
-          );
-
-
-          this.loadBatches(
-            trainer.trainerId
-          );
-        },
-
-
-        error: (error) => {
-
-          console.error(
-            'Error loading current trainer:',
-            error
-          );
-
-
-          this.trainer.set(
-            null
-          );
-
-          this.batches.set(
-            []
-          );
-
-          this.tasks.set(
-            []
-          );
-
-          this.submissionsByTask.set(
-            {}
-          );
-
-          this.batchIdInput = 0;
-
-          this.loadingBatches.set(
-            false
-          );
-
-          this.errorMessage.set(
-            'تعذر تحميل بيانات المدرب الحالي'
-          );
-        }
-
-      });
+      error: (error) => {
+        console.error('Error loading current trainer:', error);
+        this.resetData();
+        this.loadingBatches.set(false);
+        this.errorMessage.set('تعذر تحميل بيانات المدرب الحالي');
+      }
+    });
   }
 
 
@@ -361,134 +183,51 @@ export class TrainerTasks implements OnInit {
   // LOAD BATCHES
   // =====================================================
 
-  private loadBatches(
-    trainerId: number
-  ): void {
+  private loadBatches(trainerId: number): void {
+    this.loadingBatches.set(true);
+    this.errorMessage.set('');
 
-    this.loadingBatches.set(
-      true
-    );
-
-    this.errorMessage.set(
-      ''
-    );
-
-
-    this.batches.set(
-      []
-    );
-
-    this.tasks.set(
-      []
-    );
-
-    this.submissionsByTask.set(
-      {}
-    );
-
+    this.batches.set([]);
+    this.tasks.set([]);
+    this.submissionsByTask.set({});
     this.batchIdInput = 0;
 
+    this.api.getMyBatches(trainerId).subscribe({
+      next: (data) => {
+        const result = data ?? [];
 
-    this.api
-      .getMyBatches(
-        trainerId
-      )
-      .subscribe({
+        this.batches.set(result);
+        this.loadingBatches.set(false);
 
-        next: (data) => {
+        if (result.length > 0) {
+          const requestedBatch = this.requestedBatchId
+            ? result.find(batch => batch.batchId === this.requestedBatchId)
+            : undefined;
 
-          const result =
-            data ?? [];
+          this.batchIdInput = requestedBatch
+            ? requestedBatch.batchId
+            : result[0].batchId;
 
-
-          this.batches.set(
-            result
-          );
-
-          this.loadingBatches.set(
-            false
-          );
-
-
-          if (
-            result.length > 0
-          ) {
-
-            const requestedBatch =
-              this.requestedBatchId
-
-                ? result.find(
-                    batch =>
-                      batch.batchId ===
-                      this.requestedBatchId
-                  )
-
-                : undefined;
-
-
-            this.batchIdInput =
-              requestedBatch
-
-                ? requestedBatch.batchId
-
-                : result[0].batchId;
-
-
-            this.loadTasks();
-
-          } else {
-
-            this.batchIdInput =
-              0;
-
-            this.tasks.set(
-              []
-            );
-
-            this.submissionsByTask.set(
-              {}
-            );
-
-            this.errorMessage.set(
-              'لا توجد دفعات مسندة لهذا المدرب'
-            );
-          }
-
-        },
-
-
-        error: (error) => {
-
-          console.error(
-            'Error loading batches:',
-            error
-          );
-
-
-          this.batches.set(
-            []
-          );
-
-          this.tasks.set(
-            []
-          );
-
-          this.submissionsByTask.set(
-            {}
-          );
-
+          this.loadTasks();
+        } else {
           this.batchIdInput = 0;
-
-          this.loadingBatches.set(
-            false
-          );
-
-          this.errorMessage.set(
-            'تعذر تحميل دفعات المدرب'
-          );
+          this.tasks.set([]);
+          this.submissionsByTask.set({});
+          this.errorMessage.set('لا توجد دفعات مسندة لهذا المدرب');
         }
+      },
 
-      });
+      error: (error) => {
+        console.error('Error loading batches:', error);
+
+        this.batches.set([]);
+        this.tasks.set([]);
+        this.submissionsByTask.set({});
+        this.batchIdInput = 0;
+        this.loadingBatches.set(false);
+        this.errorMessage.set('تعذر تحميل دفعات المدرب');
+      }
+    });
   }
 
 
@@ -497,22 +236,11 @@ export class TrainerTasks implements OnInit {
   // =====================================================
 
   onBatchChange(): void {
-
-    if (
-      !this.batchIdInput
-    ) {
-
-      this.tasks.set(
-        []
-      );
-
-      this.submissionsByTask.set(
-        {}
-      );
-
+    if (!this.batchIdInput) {
+      this.tasks.set([]);
+      this.submissionsByTask.set({});
       return;
     }
-
 
     this.loadTasks();
   }
@@ -522,15 +250,8 @@ export class TrainerTasks implements OnInit {
   // SELECTED BATCH
   // =====================================================
 
-  selectedBatch():
-    TrainerBatchDto | undefined {
-
-    return this.batches()
-      .find(
-        batch =>
-          batch.batchId ===
-          this.batchIdInput
-      );
+  selectedBatch(): TrainerBatchDto | undefined {
+    return this.batches().find(batch => batch.batchId === this.batchIdInput);
   }
 
 
@@ -539,119 +260,44 @@ export class TrainerTasks implements OnInit {
   // =====================================================
 
   loadTasks(): void {
-
-    if (
-      !this.batchIdInput
-    ) {
-
-      this.tasks.set(
-        []
-      );
-
-      this.submissionsByTask.set(
-        {}
-      );
-
+    if (!this.batchIdInput) {
+      this.tasks.set([]);
+      this.submissionsByTask.set({});
       return;
     }
 
+    const batchIsAssigned = this.batches()
+      .some(batch => batch.batchId === this.batchIdInput);
 
-    const batchIsAssigned =
-      this.batches()
-        .some(
-          batch =>
-            batch.batchId ===
-            this.batchIdInput
-        );
-
-
-    if (
-      !batchIsAssigned
-    ) {
-
-      this.tasks.set(
-        []
-      );
-
-      this.submissionsByTask.set(
-        {}
-      );
-
-      this.errorMessage.set(
-        'هذه الدفعة غير مسندة للمدرب الحالي'
-      );
-
+    if (!batchIsAssigned) {
+      this.tasks.set([]);
+      this.submissionsByTask.set({});
+      this.errorMessage.set('هذه الدفعة غير مسندة للمدرب الحالي');
       return;
     }
 
+    this.loading.set(true);
+    this.errorMessage.set('');
+    this.submissionsByTask.set({});
 
-    this.loading.set(
-      true
-    );
+    this.api.getTasksByBatch(this.batchIdInput).subscribe({
+      next: (data) => {
+        const result = data ?? [];
 
-    this.errorMessage.set(
-      ''
-    );
+        this.tasks.set(result);
+        this.loading.set(false);
+        this.loadTaskSubmissions(result);
+      },
 
-    this.submissionsByTask.set(
-      {}
-    );
+      error: (error) => {
+        console.error('Error loading tasks:', error);
 
-
-    this.api
-      .getTasksByBatch(
-        this.batchIdInput
-      )
-      .subscribe({
-
-        next: (data) => {
-
-          const result =
-            data ?? [];
-
-
-          this.tasks.set(
-            result
-          );
-
-
-          this.loading.set(
-            false
-          );
-
-
-          this.loadTaskSubmissions(
-            result
-          );
-        },
-
-
-        error: (error) => {
-
-          console.error(
-            'Error loading tasks:',
-            error
-          );
-
-
-          this.tasks.set(
-            []
-          );
-
-          this.submissionsByTask.set(
-            {}
-          );
-
-          this.errorMessage.set(
-            'تعذر تحميل المهام'
-          );
-
-          this.loading.set(
-            false
-          );
-        }
-
-      });
+        this.tasks.set([]);
+        this.submissionsByTask.set({});
+        this.errorMessage.set('تعذر تحميل المهام');
+        this.loading.set(false);
+      }
+    });
   }
 
 
@@ -659,132 +305,54 @@ export class TrainerTasks implements OnInit {
   // LOAD TASK SUBMISSIONS
   // =====================================================
 
-  private loadTaskSubmissions(
-    tasks: TaskDto[]
-  ): void {
-
-    if (
-      tasks.length === 0
-    ) {
-
-      this.submissionsByTask.set(
-        {}
-      );
-
-      this.loadingSubmissions.set(
-        false
-      );
-
+  private loadTaskSubmissions(tasks: TaskDto[]): void {
+    if (tasks.length === 0) {
+      this.submissionsByTask.set({});
+      this.loadingSubmissions.set(false);
       return;
     }
 
+    this.loadingSubmissions.set(true);
 
-    this.loadingSubmissions.set(
-      true
-    );
+    const requests = tasks.map(task =>
+      this.api.getSubmissionsByTask(task.taskId).pipe(
+        map(submissions => ({
+          taskId: task.taskId,
+          submissions: submissions ?? []
+        })),
 
-
-    const requests =
-      tasks.map(
-        task =>
-
-          this.api
-            .getSubmissionsByTask(
-              task.taskId
-            )
-            .pipe(
-
-              map(
-                submissions => ({
-
-                  taskId:
-                    task.taskId,
-
-                  submissions:
-                    submissions ?? []
-
-                })
-              ),
-
-              catchError(
-                error => {
-
-                  console.error(
-                    `Error loading submissions for task ${task.taskId}:`,
-                    error
-                  );
-
-
-                  return of({
-
-                    taskId:
-                      task.taskId,
-
-                    submissions:
-                      [] as SubmissionDto[]
-
-                  });
-                }
-              )
-
-            )
-      );
-
-
-    forkJoin(
-      requests
-    )
-      .subscribe({
-
-        next: (results) => {
-
-          const resultMap:
-            Record<
-              number,
-              SubmissionDto[]
-            > = {};
-
-
-          for (
-            const result
-            of results
-          ) {
-
-            resultMap[
-              result.taskId
-            ] =
-              result.submissions;
-          }
-
-
-          this.submissionsByTask.set(
-            resultMap
-          );
-
-          this.loadingSubmissions.set(
-            false
-          );
-        },
-
-
-        error: (error) => {
-
+        catchError(error => {
           console.error(
-            'Error loading task submissions:',
+            `Error loading submissions for task ${task.taskId}:`,
             error
           );
 
+          return of({
+            taskId: task.taskId,
+            submissions: [] as SubmissionDto[]
+          });
+        })
+      )
+    );
 
-          this.submissionsByTask.set(
-            {}
-          );
+    forkJoin(requests).subscribe({
+      next: (results) => {
+        const resultMap: Record<number, SubmissionDto[]> = {};
 
-          this.loadingSubmissions.set(
-            false
-          );
+        for (const result of results) {
+          resultMap[result.taskId] = result.submissions;
         }
 
-      });
+        this.submissionsByTask.set(resultMap);
+        this.loadingSubmissions.set(false);
+      },
+
+      error: (error) => {
+        console.error('Error loading task submissions:', error);
+        this.submissionsByTask.set({});
+        this.loadingSubmissions.set(false);
+      }
+    });
   }
 
 
@@ -792,85 +360,106 @@ export class TrainerTasks implements OnInit {
   // SUBMISSION HELPERS
   // =====================================================
 
-  taskSubmissions(
-    taskId: number
-  ): SubmissionDto[] {
+  taskSubmissions(taskId: number): SubmissionDto[] {
+    return this.submissionsByTask()[taskId] ?? [];
+  }
 
-    return (
-      this.submissionsByTask()[
-        taskId
-      ] ?? []
-    );
+  totalSubmissions(taskId: number): number {
+    return this.taskSubmissions(taskId).length;
+  }
+
+  submissionsNeedingReview(taskId: number): number {
+    return this.taskSubmissions(taskId).filter(
+      s =>
+        s.status === 'Submitted' ||
+        s.status === 'UnderReview' ||
+        s.status === 'Late'
+    ).length;
+  }
+
+  gradedSubmissions(taskId: number): number {
+    return this.taskSubmissions(taskId)
+      .filter(s => s.status === 'Graded').length;
+  }
+
+  returnedForRevisionSubmissions(taskId: number): number {
+    return this.taskSubmissions(taskId)
+      .filter(s => s.status === 'ReturnedForRevision').length;
   }
 
 
-  totalSubmissions(
-    taskId: number
-  ): number {
+  // =====================================================
+  // LATE CALCULATIONS
+  // =====================================================
 
-    return this
-      .taskSubmissions(
-        taskId
-      )
-      .length;
+  /** عدد أيام التأخير (يُقرّب للأعلى) — 0 إذا لم يكن متأخرًا */
+  lateDays(task: TaskDto, submission: SubmissionDto): number {
+    const due = new Date(task.dueDate).getTime();
+    const submitted = new Date(submission.submittedAt).getTime();
+
+    if (Number.isNaN(due) || Number.isNaN(submitted) || submitted <= due) {
+      return 0;
+    }
+
+    return Math.ceil((submitted - due) / 86400000);
   }
 
-
-  submissionsNeedingReview(
-    taskId: number
-  ): number {
-
-    return this
-      .taskSubmissions(
-        taskId
-      )
-      .filter(
-        submission =>
-
-          submission.status ===
-            'Submitted' ||
-
-          submission.status ===
-            'UnderReview' ||
-
-          submission.status ===
-            'Late'
-      )
-      .length;
+  /** ✅ هل التسليم متأخر؟ — يعتمد على مقارنة التواريخ فقط، يتجاهل status الباك إند */
+  isSubmissionLate(task: TaskDto, submission: SubmissionDto): boolean {
+    return this.lateDays(task, submission) > 0;
   }
 
+  /** ✅ مدة التأخير نصًا — يعتمد على التواريخ فقط */
+  lateDuration(task: TaskDto, submission: SubmissionDto): string {
+    const due = new Date(task.dueDate).getTime();
+    const submitted = new Date(submission.submittedAt).getTime();
 
-  gradedSubmissions(
-    taskId: number
-  ): number {
+    if (Number.isNaN(due) || Number.isNaN(submitted) || submitted <= due) {
+      return '';
+    }
 
-    return this
-      .taskSubmissions(
-        taskId
-      )
-      .filter(
-        submission =>
-          submission.status ===
-          'Graded'
-      )
-      .length;
+    return this.formatDuration(submitted - due);
   }
 
+  /** هل تجاوزت المهمة موعد التسليم الآن؟ */
+  isTaskPastDue(task: TaskDto): boolean {
+    const due = new Date(task.dueDate).getTime();
+    return !Number.isNaN(due) && Date.now() > due;
+  }
 
-  returnedForRevisionSubmissions(
-    taskId: number
-  ): number {
+  /** المدة التي مرّت منذ موعد التسليم حتى الآن */
+  overdueDuration(task: TaskDto): string {
+    const due = new Date(task.dueDate).getTime();
 
-    return this
-      .taskSubmissions(
-        taskId
-      )
-      .filter(
-        submission =>
-          submission.status ===
-          'ReturnedForRevision'
-      )
-      .length;
+    if (Number.isNaN(due) || Date.now() <= due) {
+      return '';
+    }
+
+    return this.formatDuration(Date.now() - due);
+  }
+
+  /** عدد التسليمات المتأخرة للمهمة */
+  lateSubmissionsCount(taskId: number): number {
+    const task = this.tasks().find(t => t.taskId === taskId);
+
+    if (!task) {
+      return 0;
+    }
+
+    return this.taskSubmissions(taskId)
+      .filter(s => this.isSubmissionLate(task, s)).length;
+  }
+
+  private formatDuration(ms: number): string {
+    const days = Math.floor(ms / 86400000);
+    const hours = Math.floor((ms % 86400000) / 3600000);
+
+    const parts: string[] = [];
+
+    if (days > 0) parts.push(`${days} يوم`);
+    if (hours > 0) parts.push(`${hours} ساعة`);
+
+    return parts.length ? parts.join(' و ') : 'أقل من ساعة';
   }
 
 
@@ -878,75 +467,29 @@ export class TrainerTasks implements OnInit {
   // OPEN SUBMISSIONS MODAL
   // =====================================================
 
-  openSubmissionsModal(
-    task: TaskDto
-  ): void {
+  openSubmissionsModal(task: TaskDto): void {
+    this.selectedSubmissionsTask.set(task);
+    this.showSubmissionsModal.set(true);
+    this.modalLoadingSubmissions.set(true);
+    this.submissionsModalError.set('');
 
-    this.selectedSubmissionsTask.set(
-      task
-    );
+    this.api.getTrainerTaskSubmissions(task.taskId).subscribe({
+      next: (submissions) => {
+        const currentMap = { ...this.submissionsByTask() };
 
-    this.showSubmissionsModal.set(
-      true
-    );
+        currentMap[task.taskId] = submissions ?? [];
 
-    this.modalLoadingSubmissions.set(
-      true
-    );
+        this.submissionsByTask.set(currentMap);
+        this.modalLoadingSubmissions.set(false);
+      },
 
-    this.submissionsModalError.set(
-      ''
-    );
+      error: (error) => {
+        console.error('Error loading trainer task submissions:', error);
 
-
-    // نستخدم endpoint الخاص بالمدرب
-    // لأنه يرجع traineeName الحقيقي
-    this.api
-      .getTrainerTaskSubmissions(
-        task.taskId
-      )
-      .subscribe({
-
-        next: (submissions) => {
-
-          const currentMap = {
-            ...this.submissionsByTask()
-          };
-
-
-          currentMap[
-            task.taskId
-          ] =
-            submissions ?? [];
-
-
-          this.submissionsByTask.set(
-            currentMap
-          );
-
-          this.modalLoadingSubmissions.set(
-            false
-          );
-        },
-
-
-        error: (error) => {
-
-          console.error(
-            'Error loading trainer task submissions:',
-            error
-          );
-
-          this.modalLoadingSubmissions.set(
-            false
-          );
-
-          this.submissionsModalError.set(
-            'تعذر تحميل تسليمات المهمة.'
-          );
-        }
-
-      });
+        this.modalLoadingSubmissions.set(false);
+        this.submissionsModalError.set('تعذر تحميل تسليمات المهمة.');
+      }
+    });
   }
 
 
@@ -955,22 +498,10 @@ export class TrainerTasks implements OnInit {
   // =====================================================
 
   closeSubmissionsModal(): void {
-
-    this.showSubmissionsModal.set(
-      false
-    );
-
-    this.selectedSubmissionsTask.set(
-      null
-    );
-
-    this.modalLoadingSubmissions.set(
-      false
-    );
-
-    this.submissionsModalError.set(
-      ''
-    );
+    this.showSubmissionsModal.set(false);
+    this.selectedSubmissionsTask.set(null);
+    this.modalLoadingSubmissions.set(false);
+    this.submissionsModalError.set('');
   }
 
 
@@ -978,160 +509,99 @@ export class TrainerTasks implements OnInit {
   // SELECTED TASK SUBMISSIONS
   // =====================================================
 
-  selectedTaskSubmissions():
-    SubmissionDto[] {
-
-    const task =
-      this.selectedSubmissionsTask();
-
+  selectedTaskSubmissions(): SubmissionDto[] {
+    const task = this.selectedSubmissionsTask();
 
     if (!task) {
-
       return [];
     }
 
-
-    return this.taskSubmissions(
-      task.taskId
-    );
+    return this.taskSubmissions(task.taskId);
   }
 
 
   // =====================================================
-  // SUBMISSION STATUS LABEL
+  // SUBMISSION STATUS LABEL / CLASS
   // =====================================================
 
-  submissionStatusLabel(
-    status: SubmissionDto['status']
-  ): string {
-
+  submissionStatusLabel(status: SubmissionDto['status']): string {
     switch (status) {
+      case 'Submitted': return 'تم التسليم';
+      case 'UnderReview': return 'قيد المراجعة';
+      case 'Graded': return 'تم التقييم';
+      case 'ReturnedForRevision': return 'معاد للتعديل';
+      case 'Late': return 'متأخر';
+      default: return status;
+    }
+  }
 
-      case 'Submitted':
-        return 'تم التسليم';
-
-      case 'UnderReview':
-        return 'قيد المراجعة';
-
-      case 'Graded':
-        return 'تم التقييم';
-
-      case 'ReturnedForRevision':
-        return 'معاد للتعديل';
-
-      case 'Late':
-        return 'متأخر';
-
-      default:
-        return status;
+  submissionStatusClass(status: SubmissionDto['status']): string {
+    switch (status) {
+      case 'Submitted': return 'submitted';
+      case 'UnderReview': return 'review';
+      case 'Graded': return 'graded';
+      case 'ReturnedForRevision': return 'revision';
+      case 'Late': return 'late';
+      default: return '';
     }
   }
 
 
   // =====================================================
-  // SUBMISSION STATUS CLASS
+  // OPEN SUBMISSION FILE
   // =====================================================
 
-  submissionStatusClass(
-    status: SubmissionDto['status']
-  ): string {
+  openSubmissionFile(submission: SubmissionDto): void {
+    this.submissionsModalError.set('');
 
-    switch (status) {
-
-      case 'Submitted':
-        return 'submitted';
-
-      case 'UnderReview':
-        return 'review';
-
-      case 'Graded':
-        return 'graded';
-
-      case 'ReturnedForRevision':
-        return 'revision';
-
-      case 'Late':
-        return 'late';
-
-      default:
-        return '';
+    if (!submission.submissionId) {
+      this.submissionsModalError.set('تعذر تحديد ملف التسليم.');
+      return;
     }
-  }
-// =====================================================
-// OPEN SUBMISSION FILE
-// =====================================================
 
+    if (!submission.fileUrl) {
+      this.submissionsModalError.set('لا يوجد رابط تسليم لهذه المهمة.');
+      return;
+    }
 
+    const url = submission.fileUrl.trim();
 
-/**
- * فتح رابط التسليم في نافذة جديدة
- * بدلاً من محاولة فتح ملف، يتم فتح الرابط المخزن في fileUrl
- */
-openSubmissionFile(
-  submission: SubmissionDto
-): void {
+    if (!url) {
+      this.submissionsModalError.set('رابط التسليم غير صالح.');
+      return;
+    }
 
-  this.submissionsModalError.set('');
-
-  // ✅ التحقق من وجود submissionId
-  if (!submission.submissionId) {
-    this.submissionsModalError.set('تعذر تحديد ملف التسليم.');
-    return;
-  }
-
-  // ✅ التحقق من وجود fileUrl
-  if (!submission.fileUrl) {
-    this.submissionsModalError.set('لا يوجد رابط تسليم لهذه المهمة.');
-    return;
-  }
-
-  // ✅ تنظيف الرابط من المسافات
-  const url = submission.fileUrl.trim();
-
-  // ✅ التحقق من صحة الرابط
-  if (!url) {
-    this.submissionsModalError.set('رابط التسليم غير صالح.');
-    return;
-  }
-
-  // ✅ التحقق من أن الرابط يبدأ بـ http:// أو https://
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    this.submissionsModalError.set('رابط التسليم غير صحيح. يجب أن يبدأ بـ https:// أو http://');
-    return;
-  }
-
-  try {
-    // ✅ محاولة فتح الرابط في نافذة جديدة
-    const previewWindow = window.open(url, '_blank');
-
-    if (!previewWindow) {
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
       this.submissionsModalError.set(
-        'تعذر فتح الرابط. تأكدي من السماح بالنوافذ المنبثقة.'
+        'رابط التسليم غير صحيح. يجب أن يبدأ بـ https:// أو http://'
       );
       return;
     }
 
-    // ✅ تحسين الأمان
-    previewWindow.opener = null;
+    try {
+      const previewWindow = window.open(url, '_blank');
 
-  } catch (error) {
-    console.error('Error opening submission link:', error);
-    this.submissionsModalError.set('تعذر فتح رابط التسليم.');
+      if (!previewWindow) {
+        this.submissionsModalError.set(
+          'تعذر فتح الرابط. تأكدي من السماح بالنوافذ المنبثقة.'
+        );
+        return;
+      }
+
+      previewWindow.opener = null;
+    } catch (error) {
+      console.error('Error opening submission link:', error);
+      this.submissionsModalError.set('تعذر فتح رابط التسليم.');
+    }
   }
-}
+
+
   // =====================================================
   // FILTER
   // =====================================================
 
-  col(
-    status: TaskStatus
-  ): TaskDto[] {
-
-    return this.tasks()
-      .filter(
-        task =>
-          task.status === status
-      );
+  col(status: TaskStatus): TaskDto[] {
+    return this.tasks().filter(task => task.status === status);
   }
 
 
@@ -1139,93 +609,36 @@ openSubmissionFile(
   // UPDATE TASK STATUS
   // =====================================================
 
-  updateTaskStatus(
-    task: TaskDto,
-    newStatus: TaskStatus
-  ): void {
-
-    if (
-      this.updatingTaskId() !==
-        null ||
-
-      this.deletingTaskId() !==
-        null
-    ) {
-
+  updateTaskStatus(task: TaskDto, newStatus: TaskStatus): void {
+    if (this.updatingTaskId() !== null || this.deletingTaskId() !== null) {
       return;
     }
 
-
-    this.errorMessage.set(
-      ''
-    );
-
-    this.updatingTaskId.set(
-      task.taskId
-    );
-
+    this.errorMessage.set('');
+    this.updatingTaskId.set(task.taskId);
 
     const payload = {
-
-      title:
-        task.title,
-
-      description:
-        task.description ?? '',
-
-      dueDate:
-        task.dueDate,
-
-      priority:
-        task.priority,
-
-      status:
-        newStatus,
-
-      batchId:
-        task.batchId,
-
-      createdByUserId:
-        task.createdByUserId
-
+      title: task.title,
+      description: task.description ?? '',
+      dueDate: task.dueDate,
+      priority: task.priority,
+      status: newStatus,
+      batchId: task.batchId,
+      createdByUserId: task.createdByUserId
     };
 
+    this.api.updateTask(task.taskId, payload).subscribe({
+      next: () => {
+        this.updatingTaskId.set(null);
+        this.loadTasks();
+      },
 
-    this.api
-      .updateTask(
-        task.taskId,
-        payload
-      )
-      .subscribe({
-
-        next: () => {
-
-          this.updatingTaskId.set(
-            null
-          );
-
-          this.loadTasks();
-        },
-
-
-        error: (error) => {
-
-          console.error(
-            'Error updating task status:',
-            error
-          );
-
-
-          this.updatingTaskId.set(
-            null
-          );
-
-          this.errorMessage.set(
-            'تعذر تحديث حالة المهمة'
-          );
-        }
-
-      });
+      error: (error) => {
+        console.error('Error updating task status:', error);
+        this.updatingTaskId.set(null);
+        this.errorMessage.set('تعذر تحديث حالة المهمة');
+      }
+    });
   }
 
 
@@ -1233,170 +646,75 @@ openSubmissionFile(
   // DELETE TASK
   // =====================================================
 
-  deleteTask(
-    task: TaskDto
-  ): void {
-
-    if (
-      this.deletingTaskId() !==
-        null ||
-
-      this.updatingTaskId() !==
-        null
-    ) {
-
+  deleteTask(task: TaskDto): void {
+    if (this.deletingTaskId() !== null || this.updatingTaskId() !== null) {
       return;
     }
 
+    this.errorMessage.set('');
 
-    this.errorMessage.set(
-      ''
-    );
-
-
-    this.api
-      .getSubmissionsByTask(
-        task.taskId
-      )
-      .subscribe({
-
-        next: (submissions) => {
-
-          if (
-            submissions &&
-            submissions.length > 0
-          ) {
-
-            this.errorMessage.set(
-              'لا يمكن حذف هذه المهمة لأنها تحتوي على تسليمات من المتدربين.'
-            );
-
-            return;
-          }
-
-
-          const confirmed =
-            window.confirm(
-              `هل أنت متأكد من حذف المهمة "${task.title}"؟`
-            );
-
-
-          if (
-            !confirmed
-          ) {
-
-            return;
-          }
-
-
-          this.deletingTaskId.set(
-            task.taskId
-          );
-
-
-          this.api
-            .deleteTask(
-              task.taskId
-            )
-            .subscribe({
-
-              next: () => {
-
-                this.deletingTaskId.set(
-                  null
-                );
-
-
-                this.loadTasks();
-              },
-
-
-              error: (error) => {
-
-                console.error(
-                  'Error deleting task:',
-                  error
-                );
-
-
-                this.deletingTaskId.set(
-                  null
-                );
-
-                this.errorMessage.set(
-                  'تعذر حذف المهمة.'
-                );
-              }
-
-            });
-        },
-
-
-        error: (error) => {
-
-          console.error(
-            'Error checking task submissions:',
-            error
-          );
-
-
+    this.api.getSubmissionsByTask(task.taskId).subscribe({
+      next: (submissions) => {
+        if (submissions && submissions.length > 0) {
           this.errorMessage.set(
-            'تعذر التحقق من تسليمات المهمة.'
+            'لا يمكن حذف هذه المهمة لأنها تحتوي على تسليمات من المتدربين.'
           );
+          return;
         }
 
-      });
+        const confirmed = window.confirm(
+          `هل أنت متأكد من حذف المهمة "${task.title}"؟`
+        );
+
+        if (!confirmed) {
+          return;
+        }
+
+        this.deletingTaskId.set(task.taskId);
+
+        this.api.deleteTask(task.taskId).subscribe({
+          next: () => {
+            this.deletingTaskId.set(null);
+            this.loadTasks();
+          },
+
+          error: (error) => {
+            console.error('Error deleting task:', error);
+            this.deletingTaskId.set(null);
+            this.errorMessage.set('تعذر حذف المهمة.');
+          }
+        });
+      },
+
+      error: (error) => {
+        console.error('Error checking task submissions:', error);
+        this.errorMessage.set('تعذر التحقق من تسليمات المهمة.');
+      }
+    });
   }
 
 
   // =====================================================
-  // OPEN CREATE MODAL
+  // OPEN / CLOSE CREATE MODAL
   // =====================================================
 
   openCreateModal(): void {
-
-    if (
-      !this.batchIdInput
-    ) {
-
-      this.errorMessage.set(
-        'يرجى اختيار الدفعة أولاً'
-      );
-
+    if (!this.batchIdInput) {
+      this.errorMessage.set('يرجى اختيار الدفعة أولاً');
       return;
     }
-
 
     this.resetCreateForm();
-
-
-    this.showCreateModal.set(
-      true
-    );
+    this.showCreateModal.set(true);
   }
 
-
-  // =====================================================
-  // CLOSE CREATE MODAL
-  // =====================================================
-
   closeCreateModal(): void {
-
-    if (
-      this.saving()
-    ) {
-
+    if (this.saving()) {
       return;
     }
 
-
-    this.showCreateModal.set(
-      false
-    );
-
-    this.errorMessage.set(
-      ''
-    );
+    this.showCreateModal.set(false);
+    this.errorMessage.set('');
   }
 
 
@@ -1405,22 +723,12 @@ openSubmissionFile(
   // =====================================================
 
   resetCreateForm(): void {
-
     this.newTaskTitle = '';
-
     this.newTaskDescription = '';
-
     this.newTaskDueDate = '';
-
-    this.newTaskPriority =
-      'Medium';
-
-    this.newTaskStatus =
-      'Open';
-
-    this.errorMessage.set(
-      ''
-    );
+    this.newTaskPriority = 'Medium';
+    this.newTaskStatus = 'Open';
+    this.errorMessage.set('');
   }
 
 
@@ -1428,15 +736,8 @@ openSubmissionFile(
   // CURRENT LOGGED USER
   // =====================================================
 
-  private getCreatedByUserId():
-    number {
-
-    return (
-      this.auth
-        .session()
-        ?.userId
-      ?? 0
-    );
+  private getCreatedByUserId(): number {
+    return this.auth.session()?.userId ?? 0;
   }
 
 
@@ -1445,159 +746,66 @@ openSubmissionFile(
   // =====================================================
 
   saveTask(): void {
+    this.errorMessage.set('');
 
-    this.errorMessage.set(
-      ''
-    );
-
-
-    if (
-      !this.newTaskTitle.trim()
-    ) {
-
-      this.errorMessage.set(
-        'يرجى إدخال عنوان المهمة'
-      );
-
+    if (!this.newTaskTitle.trim()) {
+      this.errorMessage.set('يرجى إدخال عنوان المهمة');
       return;
     }
 
-
-    if (
-      !this.newTaskDueDate
-    ) {
-
-      this.errorMessage.set(
-        'يرجى تحديد موعد التسليم'
-      );
-
+    if (!this.newTaskDueDate) {
+      this.errorMessage.set('يرجى تحديد موعد التسليم');
       return;
     }
 
-
-    if (
-      !this.batchIdInput ||
-      this.batchIdInput <= 0
-    ) {
-
-      this.errorMessage.set(
-        'يرجى اختيار الدفعة'
-      );
-
+    if (!this.batchIdInput || this.batchIdInput <= 0) {
+      this.errorMessage.set('يرجى اختيار الدفعة');
       return;
     }
 
+    const batchIsAssigned = this.batches()
+      .some(batch => batch.batchId === this.batchIdInput);
 
-    const batchIsAssigned =
-      this.batches()
-        .some(
-          batch =>
-            batch.batchId ===
-            this.batchIdInput
-        );
-
-
-    if (
-      !batchIsAssigned
-    ) {
-
-      this.errorMessage.set(
-        'لا يمكن إنشاء مهمة لدفعة غير مسندة للمدرب الحالي'
-      );
-
+    if (!batchIsAssigned) {
+      this.errorMessage.set('لا يمكن إنشاء مهمة لدفعة غير مسندة للمدرب الحالي');
       return;
     }
 
+    const createdByUserId = this.getCreatedByUserId();
 
-    const createdByUserId =
-      this.getCreatedByUserId();
-
-
-    if (
-      !createdByUserId
-    ) {
-
+    if (!createdByUserId) {
       this.errorMessage.set(
         'تعذر تحديد المستخدم الحالي. تأكدي من بيانات تسجيل الدخول.'
       );
-
       return;
     }
 
-
     const payload = {
-
-      title:
-        this.newTaskTitle.trim(),
-
-      description:
-        this.newTaskDescription.trim(),
-
-      dueDate:
-        new Date(
-          this.newTaskDueDate
-        ).toISOString(),
-
-      priority:
-        this.newTaskPriority,
-
-      status:
-        this.newTaskStatus,
-
-      batchId:
-        this.batchIdInput,
-
-      createdByUserId:
-        createdByUserId
-
+      title: this.newTaskTitle.trim(),
+      description: this.newTaskDescription.trim(),
+      dueDate: new Date(this.newTaskDueDate).toISOString(),
+      priority: this.newTaskPriority,
+      status: this.newTaskStatus,
+      batchId: this.batchIdInput,
+      createdByUserId
     };
 
+    this.saving.set(true);
 
-    this.saving.set(
-      true
-    );
+    this.api.createTask(payload).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.showCreateModal.set(false);
+        this.resetCreateForm();
+        this.loadTasks();
+      },
 
-
-    this.api
-      .createTask(
-        payload
-      )
-      .subscribe({
-
-        next: () => {
-
-          this.saving.set(
-            false
-          );
-
-          this.showCreateModal.set(
-            false
-          );
-
-          this.resetCreateForm();
-
-          this.loadTasks();
-        },
-
-
-        error: (error) => {
-
-          console.error(
-            'Error creating task:',
-            error
-          );
-
-
-          this.errorMessage.set(
-            'حدث خطأ أثناء إنشاء المهمة'
-          );
-
-          this.saving.set(
-            false
-          );
-        }
-
-      });
+      error: (error) => {
+        console.error('Error creating task:', error);
+        this.errorMessage.set('حدث خطأ أثناء إنشاء المهمة');
+        this.saving.set(false);
+      }
+    });
   }
 
 }
