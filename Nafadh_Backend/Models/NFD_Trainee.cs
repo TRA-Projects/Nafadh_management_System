@@ -49,6 +49,33 @@ namespace Nafadh_Backend.Models
         public int? CompanyId { get; set; }
         public NFD_Company? Company { get; set; }
 
+
+        [MaxLength(100)]
+        public string? Governorate { get; set; }   // المحافظة
+
+        [MaxLength(100)]
+        public string? Wilaya { get; set; }        // الولاية
+
+        [MaxLength(100)]
+        public string? Village { get; set; }       // القرية / المنطقة
+
+
+        [MaxLength(150)]
+        public string? BankName { get; set; }              // اسم البنك
+
+        [MaxLength(150)]
+        public string? AccountHolderName { get; set; }     // اسم صاحب الحساب
+
+        [MaxLength(50)]
+        public string? AccountNumber { get; set; }         // رقم الحساب
+
+        [MaxLength(50)]
+        public string? IBAN { get; set; }                  // IBAN
+
+        [MaxLength(150)]
+        public string? BankBranch { get; set; }
+
+
         public ICollection<NFD_Enrollment> Enrollments { get; set; } = new List<NFD_Enrollment>();
         public ICollection<NFD_TraineeModuleProgress> TraineeModuleProgresses { get; set; } = new List<NFD_TraineeModuleProgress>();
         public ICollection<NFD_SessionAttendance> SessionAttendances { get; set; } = new List<NFD_SessionAttendance>();

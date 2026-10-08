@@ -2,63 +2,68 @@ using Nafadh_Backend.Enums;
 
 namespace Nafadh_Backend.DTOs
 {
+    /// <summary>
+    /// DTO for returning the trainee profile with all details.
+    /// Includes personal, contact, academic, address,
+    /// and banking information.
+    /// </summary>
     public class TraineeProfileDto
     {
-        // Unique identifier of the trainee profile
+        // =====================================================
+        // IDENTIFICATION
+        // =====================================================
+
         public int TraineeId { get; set; }
 
-        // Trainee's display name
-        public string? FullName { get; set; } = string.Empty;
+        // =====================================================
+        // USER INFORMATION
+        // =====================================================
 
-        // Trainee's email address
-        public string? Email { get; set; } = string.Empty;
+        public string? FullName { get; set; }
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
 
-        // Trainee's national identification number
+        // =====================================================
+        // TRAINEE INFORMATION
+        // =====================================================
+
         public int NationalId { get; set; }
-
-        // Trainee's university/institution name
         public string? University { get; set; }
-
-        // Trainee's field of study
         public string? Major { get; set; }
-
-        // Trainee's academic level
         public string? AcademicLevel { get; set; }
-
-        // Trainee's listed skills
         public string? Skills { get; set; }
-
-        // Link to the trainee's resume file
         public string? ResumeUrl { get; set; }
-
-        // NEW: professional profile links
         public string? GitHubUrl { get; set; }
         public string? LinkedInUrl { get; set; }
-
-
-        // =====================================================
-        // TRAINEE PROFILE IMAGE
-        // =====================================================
-
-        // Public URL of the trainee profile image.
-        // The physical image file is stored in external storage.
         public string? ProfileImageUrl { get; set; }
+        public string? CvFileName { get; set; }
 
+        // =====================================================
+        // ADDRESS INFORMATION  (NEW)
+        // =====================================================
 
-        // Current trainee status
+        public string? Governorate { get; set; }   // المحافظة
+        public string? Wilaya { get; set; }        // الولاية
+        public string? Village { get; set; }       // القرية / المنطقة
+
+        // =====================================================
+        // BANK ACCOUNT INFORMATION  (NEW)
+        // =====================================================
+
+        public string? BankName { get; set; }              // اسم البنك
+        public string? AccountHolderName { get; set; }     // اسم صاحب الحساب
+        public string? AccountNumber { get; set; }         // رقم الحساب
+        public string? IBAN { get; set; }                  // IBAN
+        public string? BankBranch { get; set; }            // الفرع
+
+        // =====================================================
+        // STATUS & RELATIONS
+        // =====================================================
+
         public NFD_TraineeStatus Status { get; set; }
-
-        // NEW: identity verification status
         public NFD_VerificationStatus VerificationStatus { get; set; }
-
-        // Id of the host company the trainee is placed with, if any
         public int? CompanyId { get; set; }
-
-        // Name of the host company, if assigned
         public string? CompanyName { get; set; }
-
         public int EnrollmentId { get; set; }
-        public string? FileUrl { get; set; }
-        public string? Phone { get; set; }
     }
 }
