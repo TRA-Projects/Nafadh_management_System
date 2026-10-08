@@ -284,6 +284,17 @@ namespace Nafadh_Backend.Controllers
             var t = await _service.GetByIdWithDashboardDataAsync(id);
             if (t == null) return NotFound();
 
+            // منع المتدرب المنسحب أو الموقوف حسابه من عرض محتوى الداشبورد نهائياً
+            if (t.User?.Status == Enums.NFD_UserStatus.Suspended ||
+                t.User?.Status == Enums.NFD_UserStatus.Inactive ||
+                (t.Enrollments != null && t.Enrollments.Any(e => e.CompletionStatus == Enums.NFD_EnrollmentCompletionStatus.Dropped)))
+            {
+                return StatusCode(403, new
+                {
+                    message = "تم اعتماد انسحابك من البرنامج التدريبي وإلغاء صلاحية الدخول إلى المنصة."
+                });
+            }
+
             var dto = new TraineeDashboardSummaryDto
             {
                 TraineeId = t.TraineeId,

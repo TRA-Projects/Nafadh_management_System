@@ -17,29 +17,59 @@
   color: var(--gov-text-dark);
 }
 
-/* الهيدر */
+.profile-toast {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  z-index: 9999;
+  background: #065f46;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* الهيدر وأزرار الحسابات المهنية والإجراءات */
 .header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.header-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .back-btn,
-.github-btn {
+.github-btn,
+.linkedin-btn,
+.cv-btn,
+.msg-btn,
+.withdraw-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background-color: #ffffff;
-  color: var(--gov-text-dark);
-  border: 1px solid var(--gov-border);
+  padding: 8px 15px;
   border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid transparent;
+}
+
+.back-btn {
+  background-color: #ffffff;
+  color: var(--gov-text-dark);
+  border-color: var(--gov-border);
 }
 
 .back-btn:hover {
@@ -48,14 +78,53 @@
   color: var(--gov-blue-primary);
 }
 
+.linkedin-btn {
+  background-color: #0a66c2;
+  color: #ffffff;
+}
+
+.linkedin-btn:hover {
+  background-color: #084d92;
+}
+
 .github-btn {
   background-color: #0f172a;
   color: #ffffff;
-  border-color: #0f172a;
 }
 
 .github-btn:hover {
   background-color: #1e293b;
+}
+
+.cv-btn {
+  background-color: #f0f9ff;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+
+.cv-btn:hover {
+  background-color: #0284c7;
+  color: #ffffff;
+}
+
+.msg-btn {
+  background-color: #1e3a8a;
+  color: #ffffff;
+}
+
+.msg-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.withdraw-btn {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.withdraw-btn:hover {
+  background-color: #dc2626;
+  color: #ffffff;
 }
 
 /* حالات التحميل / الخطأ */
@@ -120,11 +189,46 @@
   color: #94a3b8;
 }
 
+.academic-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #334155;
+}
+
 .badge-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
+}
+
+.skills-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.skill-chip {
+  background: #f1f5f9;
+  color: #1e293b;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.withdrawal-reason-box {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 13px;
+  border-right: 4px solid #f59e0b;
 }
 
 .pill {
@@ -142,11 +246,16 @@
   color: var(--gov-blue-primary);
 }
 
+.pill-status.pill-withdrawn {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
 .status-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background-color: var(--gov-blue-primary);
+  background-color: currentColor;
 }
 
 .pill-muted {
@@ -164,9 +273,21 @@
   color: #92400e;
 }
 
+.profile-avatar-holder {
+  flex-shrink: 0;
+}
+
+.avatar-photo-lg {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #dbeafe;
+}
+
 .avatar-circle {
-  width: 60px;
-  height: 60px;
+  width: 72px;
+  height: 72px;
   flex-shrink: 0;
   border-radius: 50%;
   background-color: var(--gov-blue-dark);
@@ -174,7 +295,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
 }
 
@@ -464,7 +585,6 @@
   font-style: italic;
 }
 
-/* حالات فارغة */
 .empty-note {
   margin: 0;
   color: var(--gov-text-muted);
@@ -535,6 +655,122 @@
   margin-top: 6px;
   font-size: 12px;
   color: #94a3b8;
+}
+
+/* النوافذ المنبثقة داخل البروفايل */
+.prof-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 16px;
+}
+
+.prof-modal-card {
+  background: #ffffff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 560px;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+}
+
+.prof-modal-card.lg {
+  max-width: 780px;
+}
+
+.prof-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.prof-modal-head h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.prof-close-btn {
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.prof-modal-body {
+  padding: 20px;
+}
+
+.prof-modal-foot {
+  padding: 14px 20px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.prof-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.prof-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.prof-chat-box {
+  max-height: 180px;
+  overflow-y: auto;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.prof-chat-item {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.prof-chat-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.prof-cv-actions {
+  margin-bottom: 12px;
+}
+
+.prof-cv-frame {
+  width: 100%;
+  height: 380px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
 }
 
 @media (max-width: 900px) {

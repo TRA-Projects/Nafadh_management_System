@@ -56,14 +56,14 @@ export class AdminApi {
     }
     return this.http.get<{ items: TraineeListItemDto[]; totalCount: number }>(`${this.base}/Trainee`, { params: httpParams });
   }
-getCompanies(search?: string, city?: string, workField?: string): Observable<CompanyDto[]> {
-  let params = new HttpParams();
-  if (search) params = params.set('search', search);
-  if (city && city !== 'ALL') params = params.set('city', city);
-  if (workField && workField !== 'ALL') params = params.set('workField', workField);
+  getCompanies(search?: string, city?: string, workField?: string): Observable<CompanyDto[]> {
+    let params = new HttpParams();
+    if (search) params = params.set('search', search);
+    if (city && city !== 'ALL') params = params.set('city', city);
+    if (workField && workField !== 'ALL') params = params.set('workField', workField);
 
-  return this.http.get<CompanyDto[]>(`${this.base}/Company`, { params });
-}
+    return this.http.get<CompanyDto[]>(`${this.base}/Company`, { params });
+  }
   getBatches(): Observable<BatchDto[]> {
     return this.http.get<BatchDto[]>(`${this.base}/Batch`);
   }
@@ -293,7 +293,7 @@ getCompanies(search?: string, city?: string, workField?: string): Observable<Com
   getAllBadges() { return this.http.get<unknown[]>(`${this.base}/Badge`); }
 
   // ---- Announcements ----
-// ==========================================
+  // ==========================================
   // الإضافات الخاصة بالإعلانات (Announcements)
   // ==========================================
 
@@ -302,11 +302,27 @@ getCompanies(search?: string, city?: string, workField?: string): Observable<Com
     return this.http.get<AnnouncementDto[]>(`${this.base}/Announcement`);
   }
 
- createAnnouncement(dto: unknown) {
-  return this.http.post(`${this.base}/Announcement`, dto, { responseType: 'text' as 'json' });
-}
-  //  حذف إعلان من قاعدة البيانات
+  createAnnouncement(dto: unknown) {
+    return this.http.post(`${this.base}/Announcement`, dto, { responseType: 'text' as 'json' });
+  }
+
+  // حذف إعلان من قاعدة البيانات
   deleteAnnouncement(id: number): Observable<any> {
     return this.http.delete(`${this.base}/Announcement/${this.sanitizeId(id)}`);
+  }
+
+  // ==========================================
+  // طلبات الانسحاب وتذاكر الدعم (Withdrawal & Support Tickets)
+  // ==========================================
+
+  // جلب التذاكر المفتوحة لمعرفة المتدربين الذين قدموا طلب انسحاب من بورتل المتدربين
+  getOpenSupportTickets(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/SupportTicket/open`);
+  }
+
+  // اعتماد أو رفض طلب الانسحاب (مع إيقاف حساب المتدرب وإرسال الإيميل)
+  submitWithdrawalDecision(traineeId: number, dto: { approved: boolean; adminReason?: string }): Observable<any> {
+    const cleanId = this.sanitizeId(traineeId);
+    return this.http.put<any>(`${this.base}/Trainee/${cleanId}/withdrawal-decision`, dto);
   }
 }
