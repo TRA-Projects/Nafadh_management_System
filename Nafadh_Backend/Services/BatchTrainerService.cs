@@ -14,15 +14,21 @@ namespace Nafadh_Backend.Services
         private readonly IBatchTrainerRepository _repository;
         private readonly IBatchRepository _batchRepository;
         private readonly ITrainerRepository _trainerRepository;
+        private readonly IConversationService _conversationService;
+        private readonly Nafadhcontext _context;
 
         public BatchTrainerService(
-            IBatchTrainerRepository repository,
-            IBatchRepository batchRepository,
-            ITrainerRepository trainerRepository)
+      IBatchTrainerRepository repository,
+      IBatchRepository batchRepository,
+      ITrainerRepository trainerRepository,
+      IConversationService conversationService,
+      Nafadhcontext context)
         {
             _repository = repository;
             _batchRepository = batchRepository;
             _trainerRepository = trainerRepository;
+            _conversationService = conversationService;
+            _context = context;
         }
 
 
@@ -168,51 +174,60 @@ namespace Nafadh_Backend.Services
         // Assign trainer to batch
         // =========================================================
 
-        public async Task<bool> AssignAsync(
-            AssignTrainerDto dto)
+        public async Task<bool> AssignAsync(AssignTrainerDto dto)
         {
             // Prevent duplicate trainer assignment.
-            if (await _repository.ExistsAsync(
-                dto.BatchId,
-                dto.TrainerId))
+            if (await _repository.ExistsAsync(dto.BatchId, dto.TrainerId))
             {
                 return false;
             }
 
-
-            var trainerExists =
-                await _trainerRepository.GetByIdAsync(
-                    dto.TrainerId
-                ) != null;
-
+            var trainer = await _trainerRepository.GetByIdAsync(dto.TrainerId);
 
             var batchExists =
-                await _batchRepository.GetByIdAsync(
-                    dto.BatchId
-                ) != null;
+                await _batchRepository.GetByIdAsync(dto.BatchId) != null;
 
-
-            if (!trainerExists || !batchExists)
+            if (trainer?.User == null || !batchExists)
             {
                 return false;
             }
 
+            // Both operations must succeed together.
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
 
-            await _repository.AddAsync(
-                new NFD_BatchTrainer
-                {
-                    BatchId =
-                        dto.BatchId,
+            try
+            {
+                // Assign trainer to batch.
+                await _repository.AddAsync(
+                    new NFD_BatchTrainer
+                    {
+                        BatchId = dto.BatchId,
+                        TrainerId = dto.TrainerId
+                    }
+                );
 
-                    TrainerId =
-                        dto.TrainerId
-                }
-            );
+                // Create or join the batch group.
+                await _conversationService.CreateBatchGroupAsync(
+                    new CreateBatchGroupDTO
+                    {
+                        BatchId = dto.BatchId,
+                        TrainerUserId = trainer.User.UserId
+                    }
+                );
 
+                // Save both operations.
+                await transaction.CommitAsync();
 
-            return true;
+                return true;
+            }
+            catch
+            {
+                // Undo changes if either operation fails.
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
-
 
         // =========================================================
         // Unassign trainer from batch

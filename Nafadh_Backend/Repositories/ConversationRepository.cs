@@ -188,6 +188,25 @@ _context.NFD_ConversationGroupMembers.Any(
 
             if (existingGroupId != 0)
             {
+                var isMember = await _context.NFD_ConversationGroupMembers
+                    .AnyAsync(gm =>
+                        gm.ConversationId == existingGroupId &&
+                        gm.UserId == dto.TrainerUserId);
+
+                if (!isMember)
+                {
+                    _context.NFD_ConversationGroupMembers.Add(
+                        new NFD_ConversationGroupMember
+                        {
+                            ConversationId = existingGroupId,
+                            UserId = dto.TrainerUserId,
+                            BatchId = dto.BatchId
+                        }
+                    );
+
+                    await _context.SaveChangesAsync();
+                }
+
                 return existingGroupId;
             }
 
