@@ -71,6 +71,19 @@ export class CompanyApi {
     );
   }
 
+  /**
+   * Capacity for the Specialties page. Same rule as the Dashboard
+   * (unique trainees with an active enrollment) and authorised for the
+   * company supervisor. getCapacity() is kept for the Profile page.
+   */
+  getCompanyCapacitySummary(
+    companyId: number
+  ): Observable<{ total: number; used: number; remaining: number }> {
+    return this.http.get<{ total: number; used: number; remaining: number }>(
+      `${this.base}/CompanyProgram/company/${companyId}/capacity`
+    );
+  }
+
   getAttendanceChart(
     companyId: number
   ): Observable<{ weeks: ChartPointDto[] }> {

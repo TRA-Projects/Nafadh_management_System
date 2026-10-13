@@ -205,6 +205,12 @@ namespace Nafadh_Backend.Controllers
             if (error is not null)
                 return BadRequest(new { message = error });
 
+            // Validate everything that can fail BEFORE touching the database, so a
+            // rejected request never leaves an orphan Draft program behind.
+            var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds);
+            if (trainerIds.Error is not null)
+                return BadRequest(new { message = trainerIds.Error });
+
             var now = DateTime.Now;
             NFD_Program? program;
 
@@ -230,6 +236,9 @@ namespace Nafadh_Backend.Controllers
                 if (!trackExists)
                     return BadRequest(new { message = "المسار المختار غير موجود أو غير نشط." });
 
+                if (await TitleExistsAsync(companyId, dto.Title.Trim(), null))
+                    return Conflict(new { message = "لديكم خطة بنفس عنوان الكورس مسبقاً." });
+
                 program = new NFD_Program
                 {
                     Title = dto.Title.Trim(),
@@ -246,28 +255,8 @@ namespace Nafadh_Backend.Controllers
             }
 
             var title = program.Title;
-            if (await TitleExistsAsync(companyId, title, null))
-            {
-                // Avoid leaving an orphan Draft Program when manual creation collides with an existing plan.
-                if (!dto.ProgramId.HasValue)
-                {
-                    _context.NFD_Programs.Remove(program);
-                    await _context.SaveChangesAsync();
-                }
-
+            if (dto.ProgramId.HasValue && await TitleExistsAsync(companyId, title, null))
                 return Conflict(new { message = "لديكم خطة بنفس عنوان الكورس مسبقاً." });
-            }
-
-            var trainerIds = await ValidateTrainerIdsAsync(dto.TrainerIds);
-            if (trainerIds.Error is not null)
-            {
-                if (!dto.ProgramId.HasValue)
-                {
-                    _context.NFD_Programs.Remove(program);
-                    await _context.SaveChangesAsync();
-                }
-                return BadRequest(new { message = trainerIds.Error });
-            }
 
             var plan = new NFD_CoursePlan
             {
@@ -983,7 +972,7 @@ namespace Nafadh_Backend.Controllers
 
             return plan.ExecutionStatus switch
             {
-                NFD_CoursePlanExecutionStatus.NotStarted => "اضغط «الشروع في الكورس» أولاً لبدء التنفيذ.",
+                NFD_CoursePlanExecutionStatus.NotStarted => "لم يبدأ الكورس بعد. يبدأ التنفيذ عندما يشرع المدرب المكلّف في الكورس.",
                 NFD_CoursePlanExecutionStatus.OnHold => "الكورس موقوف مؤقتاً. استأنفه أولاً.",
                 NFD_CoursePlanExecutionStatus.Completed => "الكورس مكتمل.",
                 _ => null
@@ -1094,6 +1083,11 @@ namespace Nafadh_Backend.Controllers
 
             if (string.IsNullOrWhiteSpace(plan.Description))
                 problems.Add("وصف الكورس مطلوب");
+
+            var hasTrainer = plan.Trainers.Count > 0
+                             || plan.Stages.Any(s => s.TrainerId.HasValue || s.Trainers.Count > 0);
+            if (!hasTrainer)
+                problems.Add("أسند مدرباً واحداً على الأقل للكورس أو لإحدى مراحله");
 
             if (plan.Stages.Count == 0)
                 problems.Add("أضف مرحلة واحدة على الأقل");

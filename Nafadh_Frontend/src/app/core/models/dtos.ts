@@ -287,6 +287,8 @@ export interface CompanyProgramEnrollmentDto {
   completionStatus: string;
   traineeGitHubUrl?: string;
   traineeLinkedInUrl?: string;
+  /** Completed modules / all modules of the program (0–100), computed by the backend. */
+  progressPercentage: number;
 }
 
 export interface CompanyProgramModuleDto {
@@ -480,8 +482,8 @@ export interface CompanyDashboardDto {
   programDistribution: CompanyDashboardChartPointDto[];
 
   /**
-   * Top five performers based on evaluations
-   * recorded during the current calendar month.
+   * Top five active trainees ranked by their overall average
+   * evaluation score (all evaluations, not only the current month).
    */
   topPerformers: CompanyDashboardTraineeDto[];
 
