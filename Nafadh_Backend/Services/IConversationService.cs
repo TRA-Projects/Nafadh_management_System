@@ -26,6 +26,10 @@ namespace Nafadh_Backend.Services
         Task<int> CreateBatchGroupAsync(
     CreateBatchGroupDTO dto
 );
+        Task<bool> IsBatchGroupMemberAsync(
+    int conversationId,
+    int userId
+);
         Task UpdateStatusAsync(
             int conversationId,
             UpdateConversationStatusDTO dto

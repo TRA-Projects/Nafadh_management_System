@@ -27,6 +27,11 @@ namespace Nafadh_Backend.Repositories
         Task<int> CreateBatchGroupAsync(
     CreateBatchGroupDTO dto
 );
+
+        Task<bool> IsBatchGroupMemberAsync(
+    int conversationId,
+    int userId
+);
         Task<int?> GetBatchIdAsync(
     int conversationId
 );
