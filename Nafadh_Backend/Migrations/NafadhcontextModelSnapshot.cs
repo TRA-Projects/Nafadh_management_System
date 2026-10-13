@@ -420,9 +420,6 @@ namespace Nafadh_Backend.Migrations
                     b.Property<int>("CompanyId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ProgramId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
@@ -442,6 +439,9 @@ namespace Nafadh_Backend.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<int>("ExecutionStatus")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProgramId")
                         .HasColumnType("int");
 
                     b.Property<string>("ReviewNote")
@@ -474,79 +474,13 @@ namespace Nafadh_Backend.Migrations
 
                     b.HasIndex("CreatedByUserId");
 
+                    b.HasIndex("ProgramId");
+
                     b.HasIndex("ReviewedByUserId");
 
                     b.HasIndex("CompanyId", "ApprovalStatus");
 
-                    b.HasIndex("ProgramId");
-
                     b.ToTable("NFD_CoursePlans", (string)null);
-                });
-
-            modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlanTrainer", b =>
-                {
-                    b.Property<int>("PlanId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TrainerId")
-                        .HasColumnType("int");
-
-                    b.HasKey("PlanId", "TrainerId");
-
-                    b.HasIndex("TrainerId");
-
-                    b.ToTable("NFD_CoursePlanTrainers", (string)null);
-                });
-
-            modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlanStageTrainer", b =>
-                {
-                    b.Property<int>("StageId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TrainerId")
-                        .HasColumnType("int");
-
-                    b.HasKey("StageId", "TrainerId");
-
-                    b.HasIndex("TrainerId");
-
-                    b.ToTable("NFD_CoursePlanStageTrainers", (string)null);
-                });
-
-            modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlanTrainer", b =>
-                {
-                    b.HasOne("Nafadh_Backend.Models.NFD_CoursePlan", "Plan")
-                        .WithMany("Trainers")
-                        .HasForeignKey("PlanId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
-                        .WithMany()
-                        .HasForeignKey("TrainerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Plan");
-                    b.Navigation("Trainer");
-                });
-
-            modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlanStageTrainer", b =>
-                {
-                    b.HasOne("Nafadh_Backend.Models.NFD_CoursePlanStage", "Stage")
-                        .WithMany("Trainers")
-                        .HasForeignKey("StageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
-                        .WithMany()
-                        .HasForeignKey("TrainerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Stage");
-                    b.Navigation("Trainer");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlanItem", b =>
@@ -676,6 +610,36 @@ namespace Nafadh_Backend.Migrations
                     b.HasIndex("TrainerId");
 
                     b.ToTable("NFD_CoursePlanStages", (string)null);
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlanStageTrainer", b =>
+                {
+                    b.Property<int>("StageId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TrainerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("StageId", "TrainerId");
+
+                    b.HasIndex("TrainerId");
+
+                    b.ToTable("NFD_CoursePlanStageTrainers", (string)null);
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlanTrainer", b =>
+                {
+                    b.Property<int>("PlanId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TrainerId")
+                        .HasColumnType("int");
+
+                    b.HasKey("PlanId", "TrainerId");
+
+                    b.HasIndex("TrainerId");
+
+                    b.ToTable("NFD_CoursePlanTrainers", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_DailyAttendance", b =>
@@ -2030,6 +1994,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<int?>("CompanyId")
                         .HasColumnType("int");
 
+                    b.Property<string>("CompanyReply")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("EnrollmentId")
                         .HasColumnType("int");
 
@@ -2222,11 +2189,6 @@ namespace Nafadh_Backend.Migrations
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlan", b =>
                 {
-                    b.HasOne("Nafadh_Backend.Models.NFD_Program", "Program")
-                        .WithMany()
-                        .HasForeignKey("ProgramId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("Nafadh_Backend.Models.NFD_Company", "Company")
                         .WithMany()
                         .HasForeignKey("CompanyId")
@@ -2239,6 +2201,11 @@ namespace Nafadh_Backend.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Nafadh_Backend.Models.NFD_Program", "Program")
+                        .WithMany()
+                        .HasForeignKey("ProgramId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Nafadh_Backend.Models.NFD_User", "ReviewedByUser")
                         .WithMany()
                         .HasForeignKey("ReviewedByUserId")
@@ -2247,6 +2214,8 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("Company");
 
                     b.Navigation("CreatedByUser");
+
+                    b.Navigation("Program");
 
                     b.Navigation("ReviewedByUser");
                 });
@@ -2314,6 +2283,44 @@ namespace Nafadh_Backend.Migrations
                         .WithMany()
                         .HasForeignKey("TrainerId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Plan");
+
+                    b.Navigation("Trainer");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlanStageTrainer", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_CoursePlanStage", "Stage")
+                        .WithMany("Trainers")
+                        .HasForeignKey("StageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
+                        .WithMany()
+                        .HasForeignKey("TrainerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Stage");
+
+                    b.Navigation("Trainer");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_CoursePlanTrainer", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_CoursePlan", "Plan")
+                        .WithMany("Trainers")
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
+                        .WithMany()
+                        .HasForeignKey("TrainerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Plan");
 

@@ -22,5 +22,6 @@ export class CompanyLayout {
     { path: 'reports', label: 'التقارير', icon: 'chart' },
     { path: 'contact', label: 'التواصل والمراسلات', icon: 'chat' },
     { path: 'notifications', label: 'الإشعارات', icon: 'bell' },
+    { path: 'warnings', label: 'الإنذارات', icon: 'shield' },
   ];
 }
