@@ -170,18 +170,13 @@ namespace Nafadh_Backend.Services
         }
 
 
+
         // =========================================================
         // Assign trainer to batch
         // =========================================================
 
         public async Task<bool> AssignAsync(AssignTrainerDto dto)
         {
-            // Prevent duplicate trainer assignment.
-            if (await _repository.ExistsAsync(dto.BatchId, dto.TrainerId))
-            {
-                return false;
-            }
-
             var trainer = await _trainerRepository.GetByIdAsync(dto.TrainerId);
 
             var batchExists =
@@ -189,6 +184,21 @@ namespace Nafadh_Backend.Services
 
             if (trainer?.User == null || !batchExists)
             {
+                return false;
+            }
+
+            // If trainer is already assigned, ensure group membership.
+            if (await _repository.ExistsAsync(dto.BatchId, dto.TrainerId))
+            {
+                await _conversationService.CreateBatchGroupAsync(
+                    new CreateBatchGroupDTO
+                    {
+                        BatchId = dto.BatchId,
+                        TrainerUserId = trainer.User.UserId
+                    }
+                );
+
+                // Keep the existing API behavior for duplicate assignments.
                 return false;
             }
 
@@ -228,6 +238,9 @@ namespace Nafadh_Backend.Services
                 throw;
             }
         }
+
+
+
 
         // =========================================================
         // Unassign trainer from batch
