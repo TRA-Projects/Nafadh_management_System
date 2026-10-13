@@ -38,6 +38,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_Session> NFD_Sessions { get; set; }
         public DbSet<NFD_SessionAttendance> NFD_SessionAttendances { get; set; }
         public DbSet<NFD_DailyAttendance> NFD_DailyAttendances { get; set; }
+        public DbSet<NFD_TrainerAttendance> NFD_TrainerAttendances { get; set; }
         public DbSet<NFD_Excuse> NFD_Excuses { get; set; }
         public DbSet<NFD_Task> NFD_Tasks { get; set; }
         public DbSet<NFD_Rubric> NFD_Rubrics { get; set; }
@@ -69,6 +70,13 @@ namespace Nafadh_Backend
         public DbSet<NFD_FeedbackScore> NFD_FeedbackScores { get; set; }
         public DbSet<NFD_Badge> NFD_Badges { get; set; }
         public DbSet<NFD_TraineeBadge> NFD_TraineeBadges { get; set; }
+        // Company Portal course plans (additive - see Models/NFD_CoursePlan.cs)
+        public DbSet<NFD_CoursePlan> NFD_CoursePlans { get; set; }
+        public DbSet<NFD_CoursePlanStage> NFD_CoursePlanStages { get; set; }
+        public DbSet<NFD_CoursePlanItem> NFD_CoursePlanItems { get; set; }
+        public DbSet<NFD_CoursePlanNote> NFD_CoursePlanNotes { get; set; }
+        public DbSet<NFD_CoursePlanTrainer> NFD_CoursePlanTrainers { get; set; }
+        public DbSet<NFD_CoursePlanStageTrainer> NFD_CoursePlanStageTrainers { get; set; }
         public DbSet<NFD_LessonFeedback> NFD_LessonFeedbacks { get; set; }
         public DbSet<NFD_TraineeSkill> NFD_TraineeSkills { get; set; }
 
@@ -803,6 +811,8 @@ namespace Nafadh_Backend
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            // ---- Company Portal course plans ----
+            modelBuilder.ConfigureCoursePlans();
 
             // ---- NFD_TraineeSkill ----
             modelBuilder.Entity<NFD_TraineeSkill>()

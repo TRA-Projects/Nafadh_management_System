@@ -1,0 +1,629 @@
+<section class="tasks-page" dir="rtl">
+  <a class="back-link" routerLink="/company/tasks"><i class="fa-solid fa-arrow-right"></i> العودة إلى خطط الكورسات</a>
+
+  @if (loading()) {
+    <div class="state-card"><span class="spinner"></span><span>جاري تحميل الخطة...</span></div>
+  }
+
+  @if (!loading() && error()) {
+    <div class="state-card error">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span>{{ error() }}</span>
+      <button type="button" class="btn ghost" (click)="load()">إعادة المحاولة</button>
+    </div>
+  }
+
+  @if (plan(); as p) {
+    <!-- ───────── رأس الخطة والإجراءات ───────── -->
+    <header class="page-head">
+      <div>
+        <div class="ws-title">
+          <h2>{{ p.title }}</h2>
+          <span [class]="'chip ap-' + p.approvalStatus.toLowerCase()">{{ approvalLabel(p.approvalStatus) }}</span>
+          @if (p.approvalStatus === 'Approved') {
+            <span [class]="'chip ex-' + p.executionStatus.toLowerCase()">{{ executionLabel(p.executionStatus) }}</span>
+          }
+          @if (p.isDelayed) {
+            <span class="chip late"><i class="fa-solid fa-clock"></i> متأخرة عن الجدول</span>
+          }
+        </div>
+        <p>
+          {{ p.category || 'بدون تصنيف' }} · {{ p.durationHours }} ساعة ·
+          {{ formatDate(p.startDate) }} ← {{ formatDate(p.endDate) }}
+        </p>
+        @if (p.description) {
+          <p>{{ p.description }}</p>
+        }
+      </div>
+
+      <div class="head-actions">
+        @if (p.canEditStructure) {
+          <button type="button" class="btn ghost" (click)="openPlanForm()" [disabled]="busy()">
+            <i class="fa-solid fa-pen"></i> بيانات الكورس
+          </button>
+          <button type="button" class="btn ghost" (click)="openTrainerForm()" [disabled]="busy()">
+            <i class="fa-solid fa-users"></i> مدربو الكورس
+          </button>
+          <button
+            type="button"
+            class="btn primary"
+            (click)="ask('submit')"
+            [disabled]="busy() || !ready()"
+            [attr.title]="ready() ? null : 'أكمل متطلبات الإرسال أولاً'">
+            <i class="fa-solid fa-paper-plane"></i> إرسال للاعتماد
+          </button>
+        }
+        @if (p.canDelete) {
+          <button type="button" class="btn danger" (click)="ask('delete')" [disabled]="busy()">
+            <i class="fa-solid fa-trash"></i> حذف
+          </button>
+        }
+        @if (p.canWithdraw) {
+          <button type="button" class="btn warning" (click)="ask('withdraw')" [disabled]="busy()">
+            <i class="fa-solid fa-rotate-left"></i> سحب من الاعتماد
+          </button>
+        }
+        @if (p.canHold) {
+          <button type="button" class="btn warning" (click)="ask('hold')" [disabled]="busy()">
+            <i class="fa-solid fa-pause"></i> إيقاف مؤقت
+          </button>
+        }
+        @if (p.canResume) {
+          <button type="button" class="btn success" (click)="ask('resume')" [disabled]="busy()">
+            <i class="fa-solid fa-play"></i> استئناف
+          </button>
+        }
+      </div>
+    </header>
+
+    <!-- ───────── حالة الاعتماد ───────── -->
+    <div class="panel">
+      <ol class="stepper">
+        @for (s of steps(); track s.label) {
+          <li [class.done]="s.state === 'done'" [class.current]="s.state === 'current'" [class.bad]="s.rejected">
+            <span class="dot">
+              @if (s.rejected) { <i class="fa-solid fa-xmark"></i> }
+              @else if (s.state === 'done') { <i class="fa-solid fa-check"></i> }
+            </span>
+            {{ s.label }}
+          </li>
+        }
+      </ol>
+    </div>
+
+    @switch (p.approvalStatus) {
+      @case ('Rejected') {
+        <div class="notice err" style="margin-top: 16px">
+          <i class="fa-solid fa-circle-xmark"></i>
+          <div>
+            <b>رفضت الهيئة الخطة</b>
+            <p>{{ p.reviewNote || 'لم تُدوَّن ملاحظات.' }}</p>
+            <p>عدّل الخطة وفق الملاحظات ثم أعد إرسالها للاعتماد.</p>
+          </div>
+        </div>
+      }
+      @case ('PendingApproval') {
+        <div class="notice warn" style="margin-top: 16px">
+          <i class="fa-solid fa-hourglass-half"></i>
+          <p>
+            أُرسلت للهيئة بتاريخ {{ formatDateTime(p.submittedAt) }}. لا يمكن تعديل الكورس ومراحله ومهامه ولا الشروع فيه حتى
+            تقرر الهيئة. يمكنك سحبها للتعديل.
+          </p>
+        </div>
+      }
+      @case ('Approved') {
+        @if (p.executionStatus === 'NotStarted') {
+          <div class="notice ok" style="margin-top: 16px">
+            <i class="fa-solid fa-circle-check"></i>
+            <div>
+              <b>اعتمدتها الهيئة بتاريخ {{ formatDate(p.reviewedAt) }}</b>
+              @if (p.reviewNote) { <p>{{ p.reviewNote }}</p> }
+              <p>بعد اعتماد الهيئة، يستطيع المدرب المكلّف بالشروع في الكورس في الوقت المناسب له مع تسجيل سبب الشروع في سجل الملاحظات.</p>
+            </div>
+          </div>
+        }
+        @if (p.executionStatus === 'OnHold') {
+          <div class="notice warn" style="margin-top: 16px">
+            <i class="fa-solid fa-pause"></i>
+            <p>الكورس موقوف مؤقتاً، استأنفه لمتابعة تحديث الحالات.</p>
+          </div>
+        }
+        @if (p.executionStatus === 'Completed') {
+          <div class="notice ok" style="margin-top: 16px">
+            <i class="fa-solid fa-trophy"></i>
+            <p>اكتمل الكورس بتاريخ {{ formatDate(p.completedAt) }}.</p>
+          </div>
+        }
+      }
+    }
+
+    <div class="ws-grid" style="margin-top: 16px">
+      <!-- ───────── العمود الرئيسي: المراحل ───────── -->
+      <div>
+        <div class="panel">
+          <h3>
+            الجدول الزمني للمراحل
+            <span class="chip">{{ p.stageCount }} مراحل</span>
+          </h3>
+
+          @if (gantt().length) {
+            <div class="timeline">
+              @for (bar of gantt(); track bar.stage.stageId) {
+                <div class="row">
+                  <span class="label" [attr.title]="bar.stage.title">{{ bar.stage.title }}</span>
+                  <div class="track">
+                    <div
+                      class="seg"
+                      [class.done]="bar.stage.status === 'Completed'"
+                      [class.late]="bar.stage.isDelayed"
+                      [style.inset-inline-start.%]="bar.left"
+                      [style.width.%]="bar.width"
+                      [attr.title]="formatDate(bar.stage.startDate) + ' ← ' + formatDate(bar.stage.endDate)">
+                      <i [style.width.%]="bar.stage.progressPercentage"></i>
+                    </div>
+                    @if (todayMarker() !== null) {
+                      <span class="today" [style.inset-inline-start.%]="todayMarker()" title="اليوم"></span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-row">لم تُضف مراحل بعد، فيظهر الجدول الزمني بعد إضافتها.</div>
+          }
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 18px 0 12px">
+          <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #0a1172">مراحل الكورس ومهامه ومشروعاته</h3>
+          @if (p.canEditStructure) {
+            <button type="button" class="btn primary sm" (click)="openStageForm()" [disabled]="busy()">
+              <i class="fa-solid fa-plus"></i> مرحلة جديدة
+            </button>
+          }
+        </div>
+
+        @for (stage of p.stages; track trackStage($index, stage)) {
+          <article class="stage" [class.is-delayed]="stage.isDelayed" [class.is-done]="stage.status === 'Completed'">
+            <div class="stage-head">
+              <div style="min-width: 0; flex: 1">
+                <h4>
+                  <span class="order">{{ stage.orderIndex }}</span>
+                  {{ stage.title }}
+                  @if (stage.isDelayed) { <span class="chip late"><i class="fa-solid fa-clock"></i> متأخرة</span> }
+                </h4>
+                <div class="meta" style="margin-top: 6px">
+                  <span><i class="fa-regular fa-calendar"></i> {{ formatDate(stage.startDate) }} ← {{ formatDate(stage.endDate) }}</span>
+                  <span>
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                    @if (stage.trainerName) { {{ stage.trainerName }} } @else { <em>بلا مدرب</em> }
+                  </span>
+                  <span><i class="fa-solid fa-list-check"></i> {{ stage.completedItems }}/{{ stage.itemCount }}</span>
+                </div>
+                @if (stage.description) { <p class="desc">{{ stage.description }}</p> }
+              </div>
+
+              <div class="stage-actions">
+                @if (p.canTrack) {
+                  <select class="status-select" [value]="stage.status" (change)="onStageStatus(stage, $event)" [disabled]="busy()" aria-label="حالة المرحلة">
+                    @for (o of progressOptions; track o) {
+                      <option [value]="o" [selected]="o === stage.status">{{ progressLabel(o) }}</option>
+                    }
+                  </select>
+                } @else {
+                  <span class="chip">{{ progressLabel(stage.status) }}</span>
+                }
+                <button type="button" class="icon-btn" title="إضافة ملاحظة" (click)="noteFor('s:' + stage.stageId)">
+                  <i class="fa-regular fa-comment-dots"></i>
+                </button>
+                <button type="button" class="icon-btn" title="تعديل مدربي المرحلة" (click)="openStageForm(stage)" [disabled]="busy()">
+                  <i class="fa-solid fa-user-pen"></i>
+                </button>
+                @if (p.canEditStructure) {
+                  <button type="button" class="icon-btn" title="تعديل المرحلة" (click)="openStageForm(stage)" [disabled]="busy()">
+                    <i class="fa-solid fa-pen"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-btn danger"
+                    title="حذف المرحلة"
+                    (click)="ask('deleteStage', { stageId: stage.stageId })"
+                    [disabled]="busy()">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                }
+              </div>
+            </div>
+
+            @if (p.approvalStatus === 'Approved') {
+              <div class="stage-progress">
+                <div class="progress-head"><span>إنجاز المرحلة</span><b>{{ stage.progressPercentage }}%</b></div>
+                <div class="bar sm" [class.done]="stage.status === 'Completed'" [class.late]="stage.isDelayed">
+                  <i [style.width.%]="stage.progressPercentage"></i>
+                </div>
+              </div>
+            }
+
+            @if (stage.items.length) {
+              <table class="items">
+                <thead>
+                  <tr>
+                    <th>النوع</th>
+                    <th>العنوان</th>
+                    <th>المدرب</th>
+                    <th>الموعد النهائي</th>
+                    <th>الأولوية</th>
+                    <th>الحالة</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of stage.items; track trackItem($index, item)) {
+                    <tr>
+                      <td>
+                        <span [class]="'chip type-' + item.itemType.toLowerCase()">
+                          <i [class]="item.itemType === 'Project' ? 'fa-solid fa-diagram-project' : 'fa-solid fa-list-check'"></i>
+                          {{ typeLabel(item.itemType) }}
+                        </span>
+                      </td>
+                      <td class="t-title">
+                        {{ item.title }}
+                        @if (item.description) { <small>{{ item.description }}</small> }
+                      </td>
+                      <td>{{ item.trainerName || '—' }}</td>
+                      <td>
+                        {{ formatDate(item.dueDate) }}
+                        @if (item.isOverdue) { <span class="chip late">متأخرة</span> }
+                      </td>
+                      <td><span [class]="'chip pr-' + item.priority.toLowerCase()">{{ priorityLabel(item.priority) }}</span></td>
+                      <td>
+                        @if (p.canTrack) {
+                          <select class="mini-select" [value]="item.status" (change)="onItemStatus(item, $event)" [disabled]="busy()" aria-label="حالة التنفيذ">
+                            @for (o of progressOptions; track o) {
+                              <option [value]="o" [selected]="o === item.status">{{ progressLabel(o) }}</option>
+                            }
+                          </select>
+                        } @else {
+                          <span class="chip">{{ progressLabel(item.status) }}</span>
+                        }
+                      </td>
+                      <td style="white-space: nowrap">
+                        <button type="button" class="icon-btn" title="إضافة ملاحظة" (click)="noteFor('i:' + item.itemId)">
+                          <i class="fa-regular fa-comment-dots"></i>
+                        </button>
+                        @if (p.canEditStructure) {
+                          <button type="button" class="icon-btn" title="تعديل" (click)="openItemForm(stage, item)" [disabled]="busy()">
+                            <i class="fa-solid fa-pen"></i>
+                          </button>
+                          <button
+                            type="button"
+                            class="icon-btn danger"
+                            title="حذف"
+                            (click)="ask('deleteItem', { itemId: item.itemId })"
+                            [disabled]="busy()">
+                            <i class="fa-solid fa-trash"></i>
+                          </button>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            } @else {
+              <div class="empty-row">لا توجد مهام أو مشروعات في هذه المرحلة بعد.</div>
+            }
+
+            @if (p.canEditStructure) {
+              <div class="stage-foot" style="display: flex; gap: 8px; flex-wrap: wrap">
+                <button type="button" class="btn ghost sm" (click)="openItemForm(stage, undefined, 'Task')" [disabled]="busy()">
+                  <i class="fa-solid fa-plus"></i> مهمة
+                </button>
+                <button type="button" class="btn ghost sm" (click)="openItemForm(stage, undefined, 'Project')" [disabled]="busy()">
+                  <i class="fa-solid fa-plus"></i> مشروع
+                </button>
+              </div>
+            }
+          </article>
+        } @empty {
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fa-solid fa-layer-group"></i></div>
+            <strong>ابدأ ببناء مراحل الكورس</strong>
+            <span>أضف مرحلة بتاريخ بدء وانتهاء ومدرب، ثم أضف لها المهام والمشروعات.</span>
+          </div>
+        }
+      </div>
+
+      <!-- ───────── العمود الجانبي ───────── -->
+      <aside class="ws-side">
+        <div class="panel">
+          <h3>نسبة إنجاز الكورس</h3>
+          <div class="big-progress">
+            <div class="pct">{{ p.progressPercentage }}%</div>
+            <div class="bar big" [class.done]="p.executionStatus === 'Completed'" [class.late]="p.isDelayed">
+              <i [style.width.%]="p.progressPercentage"></i>
+            </div>
+            @if (p.approvalStatus === 'Approved') {
+              <small>المتوقع حسب الجدول: {{ p.expectedProgressPercentage }}%</small>
+            } @else {
+              <small>تبدأ المتابعة بعد اعتماد الهيئة والشروع في الكورس</small>
+            }
+          </div>
+          <div class="mini-stats">
+            <div><b>{{ p.stageCount }}</b><small>مراحل</small></div>
+            <div><b>{{ p.completedItems }}/{{ p.itemCount }}</b><small>مهام ومشروعات منجزة</small></div>
+            <div><b>{{ p.delayedStages }}</b><small>مراحل متأخرة</small></div>
+            <div><b>{{ p.durationHours }}</b><small>ساعة تدريبية</small></div>
+          </div>
+        </div>
+
+        @if (p.canEditStructure) {
+          <div class="panel">
+            <h3>جاهزية الإرسال للاعتماد</h3>
+            <ul class="checklist">
+              @for (c of readiness(); track c.label) {
+                <li [class.ok]="c.ok">
+                  <i [class]="c.ok ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'"></i>
+                  {{ c.label }}
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        <div class="panel" id="notes-panel">
+          <h3>الملاحظات <span class="chip">{{ p.notes.length }}</span></h3>
+
+          <form class="note-form" (ngSubmit)="addNote()">
+            <select name="noteTarget" [(ngModel)]="noteTarget" aria-label="موضع الملاحظة">
+              @for (t of noteTargets(); track t.value) {
+                <option [value]="t.value">{{ t.label }}</option>
+              }
+            </select>
+            <textarea name="noteText" rows="3" maxlength="2000" [(ngModel)]="noteText" placeholder="اكتب ملاحظتك..."></textarea>
+            @if (noteError()) { <div class="form-error">{{ noteError() }}</div> }
+            <button type="submit" class="btn primary sm" [disabled]="noteSaving()">
+              @if (noteSaving()) { <span class="spinner sm"></span> }
+              إضافة ملاحظة
+            </button>
+          </form>
+
+          <div class="notes">
+            @for (n of p.notes; track trackNote($index, n)) {
+              <div class="note" [class.authority]="n.isAuthority">
+                <div class="note-head">
+                  <b>
+                    {{ n.authorName }}
+                    @if (n.isAuthority) { <span class="chip authority">الهيئة</span> }
+                  </b>
+                  <span>{{ formatDateTime(n.createdAt) }}</span>
+                </div>
+                @if (n.targetTitle) { <div class="note-target">{{ n.targetTitle }}</div> }
+                <p>{{ n.text }}</p>
+              </div>
+            } @empty {
+              <div class="empty-row">لا توجد ملاحظات.</div>
+            }
+          </div>
+        </div>
+      </aside>
+    </div>
+  }
+
+  <!-- ───────── نافذة بيانات الكورس ───────── -->
+  @if (planFormOpen()) {
+    <div class="overlay" (click)="closeForms()">
+      <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <header class="modal-head">
+          <h3>بيانات الكورس</h3>
+          <button type="button" class="icon-btn" aria-label="إغلاق" (click)="closeForms()"><i class="fa-solid fa-xmark"></i></button>
+        </header>
+        <form class="modal-body" (ngSubmit)="savePlan()">
+          <label class="field">
+            <span>عنوان الكورس <em>*</em></span>
+            <input type="text" name="title" [(ngModel)]="planForm.title" maxlength="150" />
+          </label>
+          <label class="field">
+            <span>وصف الكورس وأهدافه</span>
+            <textarea name="description" rows="4" [(ngModel)]="planForm.description"></textarea>
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>التصنيف</span>
+              <input type="text" name="category" [(ngModel)]="planForm.category" maxlength="100" list="ws-categories" />
+              <datalist id="ws-categories">
+                @for (c of categories(); track c) { <option [value]="c"></option> }
+              </datalist>
+            </label>
+            <label class="field">
+              <span>إجمالي الساعات <em>*</em></span>
+              <input type="number" name="hours" min="1" max="10000" [(ngModel)]="planForm.durationHours" />
+            </label>
+          </div>
+          <div class="field-row">
+            <label class="field">
+              <span>تاريخ البدء <em>*</em></span>
+              <input type="date" name="start" [(ngModel)]="planForm.startDate" />
+            </label>
+            <label class="field">
+              <span>تاريخ الانتهاء <em>*</em></span>
+              <input type="date" name="end" [(ngModel)]="planForm.endDate" [attr.min]="planForm.startDate" />
+            </label>
+          </div>
+          @if (formError()) { <div class="form-error"><i class="fa-solid fa-circle-exclamation"></i> {{ formError() }}</div> }
+          <footer class="modal-foot">
+            <button type="button" class="btn ghost" (click)="closeForms()" [disabled]="saving()">إلغاء</button>
+            <button type="submit" class="btn primary" [disabled]="saving()">
+              @if (saving()) { <span class="spinner sm"></span> } حفظ
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ───────── نافذة مدربي الكورس ───────── -->
+  @if (trainerFormOpen()) {
+    <div class="overlay" (click)="closeForms()">
+      <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <header class="modal-head">
+          <h3>مدربو الكورس</h3>
+          <button type="button" class="icon-btn" aria-label="إغلاق" (click)="closeForms()"><i class="fa-solid fa-xmark"></i></button>
+        </header>
+        <form class="modal-body" (ngSubmit)="savePlanTrainers()">
+          <label class="field">
+            <span>المدربون</span>
+            <select name="planTrainerIds" multiple [(ngModel)]="planForm.trainerIds" size="6">
+              @for (t of stageTrainerOptions(); track t.trainerId) {
+                <option [ngValue]="t.trainerId">{{ t.fullName }}{{ t.specialty ? ' — ' + t.specialty : '' }}</option>
+              }
+            </select>
+            <small>يمكن أن يكون الكورس بلا مدرب، أو له مدرب واحد أو عدة مدربين. يمكن تغيير التكليف بعد الاعتماد أيضاً.</small>
+          </label>
+          @if (formError()) { <div class="form-error"><i class="fa-solid fa-circle-exclamation"></i> {{ formError() }}</div> }
+          <footer class="modal-foot">
+            <button type="button" class="btn ghost" (click)="closeForms()" [disabled]="saving()">إلغاء</button>
+            <button type="submit" class="btn primary" [disabled]="saving()">
+              @if (saving()) { <span class="spinner sm"></span> } حفظ المدربين
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ───────── نافذة المرحلة ───────── -->
+  @if (stageFormOpen()) {
+    <div class="overlay" (click)="closeForms()">
+      <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <header class="modal-head">
+          <h3>{{ !plan()?.canEditStructure && stageForm.stageId ? 'تعديل مدربي المرحلة' : (stageForm.stageId ? 'تعديل المرحلة' : 'مرحلة جديدة') }}</h3>
+          <button type="button" class="icon-btn" aria-label="إغلاق" (click)="closeForms()"><i class="fa-solid fa-xmark"></i></button>
+        </header>
+        <form class="modal-body" (ngSubmit)="saveStage()">
+          <label class="field">
+            <span>عنوان المرحلة <em>*</em></span>
+            <input type="text" name="title" [(ngModel)]="stageForm.title" maxlength="150" [readonly]="!plan()?.canEditStructure" placeholder="مثال: الأساسيات والبيئة" />
+          </label>
+          <label class="field">
+            <span>الوصف والأهداف</span>
+            <textarea name="description" rows="3" [(ngModel)]="stageForm.description" [readonly]="!plan()?.canEditStructure"></textarea>
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>تاريخ بدء المرحلة <em>*</em></span>
+              <input type="date" name="start" [(ngModel)]="stageForm.startDate" [readonly]="!plan()?.canEditStructure" [attr.min]="plan()?.startDate?.substring(0, 10)" [attr.max]="plan()?.endDate?.substring(0, 10)" />
+            </label>
+            <label class="field">
+              <span>تاريخ انتهاء المرحلة <em>*</em></span>
+              <input type="date" name="end" [(ngModel)]="stageForm.endDate" [readonly]="!plan()?.canEditStructure" [attr.min]="stageForm.startDate" [attr.max]="plan()?.endDate?.substring(0, 10)" />
+            </label>
+          </div>
+          <label class="field">
+            <span>مدربو المرحلة</span>
+            <select name="trainerIds" multiple [(ngModel)]="stageForm.trainerIds" size="5">
+              @for (t of stageTrainerOptions(); track t.trainerId) {
+                <option [ngValue]="t.trainerId">{{ t.fullName }}{{ t.specialty ? ' — ' + t.specialty : '' }}</option>
+              }
+            </select>
+            <small>
+              يمكن أن يكون للمرحلة مدرب واحد أو عدة مدربين، ويمكن تغييرهم بعد اعتماد الكورس.
+              @if (!plan()?.canEditStructure) { بيانات المرحلة نفسها مقفلة؛ هذا التعديل خاص بالمدربين فقط. }
+            </small>
+          </label>
+          @if (formError()) { <div class="form-error"><i class="fa-solid fa-circle-exclamation"></i> {{ formError() }}</div> }
+          <footer class="modal-foot">
+            <button type="button" class="btn ghost" (click)="closeForms()" [disabled]="saving()">إلغاء</button>
+            <button type="submit" class="btn primary" [disabled]="saving()">
+              @if (saving()) { <span class="spinner sm"></span> } حفظ المرحلة
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ───────── نافذة المهمة / المشروع ───────── -->
+  @if (itemFormOpen()) {
+    <div class="overlay" (click)="closeForms()">
+      <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <header class="modal-head">
+          <h3>{{ itemForm.itemId ? 'تعديل' : 'إضافة' }} {{ typeLabel(itemForm.itemType) }}</h3>
+          <button type="button" class="icon-btn" aria-label="إغلاق" (click)="closeForms()"><i class="fa-solid fa-xmark"></i></button>
+        </header>
+        <form class="modal-body" (ngSubmit)="saveItem()">
+          <div class="field-row">
+            <label class="field">
+              <span>النوع <em>*</em></span>
+              <select name="type" [(ngModel)]="itemForm.itemType">
+                <option ngValue="Task">مهمة</option>
+                <option ngValue="Project">مشروع</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>الأولوية <em>*</em></span>
+              <select name="priority" [(ngModel)]="itemForm.priority">
+                @for (o of priorities; track o) { <option [ngValue]="o">{{ priorityLabel(o) }}</option> }
+              </select>
+            </label>
+          </div>
+          <label class="field">
+            <span>العنوان <em>*</em></span>
+            <input type="text" name="title" [(ngModel)]="itemForm.title" maxlength="150" />
+          </label>
+          <label class="field">
+            <span>الوصف والمخرجات المطلوبة</span>
+            <textarea name="description" rows="3" [(ngModel)]="itemForm.description"></textarea>
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>الموعد النهائي <em>*</em></span>
+              <input type="date" name="due" [(ngModel)]="itemForm.dueDate" />
+              <small>يجب أن يقع ضمن فترة المرحلة.</small>
+            </label>
+            <label class="field">
+              <span>المدرب</span>
+              <select name="trainer" [(ngModel)]="itemForm.trainerId">
+                <option [ngValue]="null">— مدرب المرحلة —</option>
+                @for (t of stageTrainerOptions(); track t.trainerId) {
+                  <option [ngValue]="t.trainerId">{{ t.fullName }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          @if (formError()) { <div class="form-error"><i class="fa-solid fa-circle-exclamation"></i> {{ formError() }}</div> }
+          <footer class="modal-foot">
+            <button type="button" class="btn ghost" (click)="closeForms()" [disabled]="saving()">إلغاء</button>
+            <button type="submit" class="btn primary" [disabled]="saving()">
+              @if (saving()) { <span class="spinner sm"></span> } حفظ
+            </button>
+          </footer>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ───────── نافذة التأكيد ───────── -->
+  @if (confirm(); as c) {
+    <div class="overlay" (click)="cancelConfirm()">
+      <div class="modal narrow" role="alertdialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <header class="modal-head"><h3>{{ c.title }}</h3></header>
+        <div class="modal-body">
+          <p>{{ c.text }}</p>
+          <footer class="modal-foot">
+            <button type="button" class="btn ghost" (click)="cancelConfirm()" [disabled]="busy()">تراجع</button>
+            <button type="button" class="btn" [class.danger]="c.danger" [class.primary]="!c.danger" (click)="doConfirm()" [disabled]="busy()">
+              @if (busy()) { <span class="spinner sm"></span> }
+              {{ c.confirmLabel }}
+            </button>
+          </footer>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (toast(); as t) {
+    <div class="toast" [class.err]="t.kind === 'err'" role="status">
+      <i class="fa-solid" [class.fa-circle-check]="t.kind === 'ok'" [class.fa-circle-exclamation]="t.kind === 'err'"></i>
+      {{ t.text }}
+    </div>
+  }
+</section>
