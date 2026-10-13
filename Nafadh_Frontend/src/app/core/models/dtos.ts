@@ -105,6 +105,30 @@ export interface TraineeDashboardSummaryDto {
   latestNotifications?: { message: string; date: string }[];
 }
 
+// =====================================================
+// Lesson Feedback
+// =====================================================
+
+export interface LessonFeedbackDto {
+  lessonFeedbackId: number;
+  lessonId: number;
+  traineeId: number;
+  note?: string | null;
+  rating?: number | null;
+  createdAt: string;
+  updatedAt?: string | null;
+}
+
+export interface LessonFeedbackCreateDto {
+  note?: string | null;
+  rating?: number | null;
+}
+
+export interface LessonFeedbackUpdateDto {
+  note?: string | null;
+  rating?: number | null;
+}
+
 
 // ---- Company ----
 export interface CompanyDto {
@@ -299,6 +323,8 @@ export interface CompanyProgramEnrollmentDto {
   completionStatus: string;
   traineeGitHubUrl?: string;
   traineeLinkedInUrl?: string;
+  /** Completed modules / all modules of the program (0–100), computed by the backend. */
+  progressPercentage: number;
 }
 
 export interface CompanyProgramModuleDto {
@@ -418,33 +444,104 @@ export interface CompanyDashboardTraineeDto {
   enrollmentId: number;
   fullName?: string;
   major?: string;
+
+  /**
+   * Training program associated with the trainee enrollment.
+   */
+  programName?: string;
+
   gitHubUrl?: string;
   linkedInUrl?: string;
+
+  /**
+   * Average evaluation score represented as a percentage.
+   */
   performancePercent: number;
+
+  /**
+   * Attendance percentage.
+   */
   attendancePercent: number;
+
+ 
+  riskReason?: string | null;
 }
 
 export interface CompanyDashboardWarningDto {
   warningId: number;
   enrollmentId: number;
   traineeId: number;
+
   traineeName?: string;
+
   gitHubUrl?: string;
   linkedInUrl?: string;
+
   type: string;
   level: string;
   status: string;
+
   issuedDate: string;
 }
 
 export interface CompanyDashboardDto {
-  capacity: { total: number; used: number; remaining: number };
+  /**
+   * Company name returned directly from the dashboard endpoint.
+   *
+   * This avoids making a separate CompanyAccount request
+   * only to display the company name.
+   */
+  companyName: string;
+
+  /**
+   * Current company capacity.
+   */
+  capacity: {
+    total: number;
+    used: number;
+    remaining: number;
+  };
+
+  /**
+   * Company-wide attendance KPI calculated by the backend.
+   */
+  averageAttendancePercent: number;
+
+  /**
+   * Latest six attendance weeks.
+   */
   attendanceWeeks: CompanyDashboardChartPointDto[];
+
+  /**
+   * Current active trainee distribution by program.
+   */
   programDistribution: CompanyDashboardChartPointDto[];
+
+  /**
+   * Top five active trainees ranked by their overall average
+   * evaluation score (all evaluations, not only the current month).
+   */
   topPerformers: CompanyDashboardTraineeDto[];
+
+  /**
+   * Trainees currently considered at risk according
+   * to the backend business rules.
+   */
   atRiskTrainees: CompanyDashboardTraineeDto[];
+
+  /**
+   * Latest company trainee warnings.
+   */
   recentWarnings: CompanyDashboardWarningDto[];
+
+  /**
+   * Number of unique trainees associated with the company.
+   */
   totalTrainees: number;
+
+  /**
+   * Number of unique trainees with active enrollments.
+   */
   activeTrainees: number;
 }
 
@@ -461,6 +558,7 @@ export interface EnrollmentDto {
   batchEndDate?: string;
   traineeId: number;
   traineeName: string;
+  profileImageUrl?: string;
   companyId: number;
   companyName: string;
   departmentId?: number;
@@ -799,4 +897,12 @@ export interface TrainerKpisDto {
   attendanceRate: number;
   taskCompletionRate: number;
   avgTechnicalGrade: number;
+}
+
+export interface TraineeSkillDto {
+  traineeSkillId: number;
+  traineeId: number;
+  skillName: string;
+  serialNumber?: string | null;
+  certificateUrl?: string | null;
 }

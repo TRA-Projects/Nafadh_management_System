@@ -89,6 +89,12 @@ namespace Nafadh_Backend.Services
             return await _repository.GetTasksByBatchIdAsync(batchId);
         }
 
+        // Get tasks by company
+        public async Task<List<NFD_Task>> GetTasksByCompanyIdAsync(int companyId)
+        {
+            return await _repository.GetTasksByCompanyIdAsync(companyId);
+        }
+
         // Get rubrics by task
         public async Task<List<NFD_Rubric>> GetRubricsByTaskIdAsync(int taskId)
         {

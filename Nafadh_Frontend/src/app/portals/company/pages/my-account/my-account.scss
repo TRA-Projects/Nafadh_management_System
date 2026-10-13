@@ -55,9 +55,15 @@
   .profile-banner {
     height: 160px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%);
+    background: linear-gradient(
+      135deg,
+      #0f172a 0%,
+      #1e3a8a 50%,
+      #2563eb 100%
+    );
     position: relative;
     box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15);
+    overflow: visible;
 
     .banner-actions {
       position: absolute;
@@ -65,10 +71,20 @@
       left: 20px;
       display: flex;
       gap: 0.75rem;
+      z-index: 10;
+      pointer-events: auto;
+      /* 2. لون زر (إلغاء) الذي يظهر بالأسود */
+  .btn-glass-secondary {
+    background: #64748b !important; /* ضع هنا لون خلفية زر الإلغاء الذي تريده (مثلاً رمادي أو أحمر) */
+    color: #ffffff !important;     /* لون الكتابة داخل زر الإلغاء */
+    border: none !important;
+  }
+      
 
       .btn {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 0.5rem;
         padding: 0.55rem 1.1rem;
         border-radius: 10px;
@@ -77,6 +93,9 @@
         cursor: pointer;
         border: none;
         transition: all 0.3s ease;
+        pointer-events: auto;
+        position: relative;
+        z-index: 11;
 
         &-glass-primary {
           background: #ffffff;
@@ -88,6 +107,13 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
           }
+          
+          &:disabled {
+            cursor: wait;
+            opacity: 0.8;
+            transform: none;
+          }
+          
         }
       }
     }
@@ -133,7 +159,11 @@
         width: 100%;
         height: 100%;
         border-radius: 50%;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        background: linear-gradient(
+          135deg,
+          #2563eb 0%,
+          #1d4ed8 100%
+        );
         color: #ffffff;
         display: flex;
         align-items: center;
@@ -172,12 +202,14 @@
         justify-content: center;
         gap: 0.3rem;
       }
+
       .user-role {
         font-size: 0.8rem;
         color: #2563eb;
         font-weight: 600;
         margin: 0.3rem 0;
       }
+
       .company-badge {
         font-size: 0.75rem;
         color: #64748b;
@@ -247,6 +279,7 @@
         color: #94a3b8;
         margin-bottom: 0.5rem;
       }
+
       .tag-chip {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
@@ -451,6 +484,7 @@
             color: #0f172a;
             transition: color 0.3s ease;
           }
+
           p {
             margin: 0;
             font-size: 0.75rem;
@@ -527,6 +561,7 @@
               color: #0f172a;
               transition: color 0.3s ease;
             }
+
             small {
               color: #64748b;
               font-size: 0.775rem;

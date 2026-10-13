@@ -1,207 +1,557 @@
-import { Component, OnInit, ElementRef, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Component } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+
 import * as XLSX from 'xlsx';
-// @ts-ignore
 import html2pdf from 'html2pdf.js';
-import { CompanyApi } from '../../services/company-api';
-import { AuthService } from '../../../../core/auth/auth.service';
-import { AttendanceReportDto, EnrollmentDto, CompanyProgramSummaryDto } from '../../../../core/models/dtos';
 
-interface AttendanceRow {
-  traineeId: number;
-  traineeName: string;
-  presentDays: number;
-  absentDays: number;
-  lateDays: number;
-  excusedDays: number;
-  attendanceRate: number;
-}
 
-interface AchievementReportDto { total: number; completed: number; rate: number; }
-interface CapacityProgram {
-  programName: string;
-  allocatedQuota: number;
-  usedQuota: number;
-  remainingQuota: number;
-  utilizationPercentage: number;
-}
-interface CapacityReportDto {
-  total: number;
-  used: number;
-  remaining: number;
-  programs: CapacityProgram[];
-}
-interface ProgramProgress { programName: string; shortName: string; progress: number; colorClass: string; }
+type ReportTab =
+  | 'att'
+  | 'achieve'
+  | 'cap'
+  | 'eval'
+  | 'tasks'
+  | 'compare';
 
 @Component({
-  selector: 'app-company-reports',
-  imports: [CommonModule],
+  selector: 'app-reports',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule
+  ],
   templateUrl: './reports.html',
-  styleUrl: './reports.scss'
+  styleUrls: ['./reports.scss']
 })
-export class ReportsComponent implements OnInit {
-  private readonly elementRef = inject(ElementRef);
-  private readonly api = inject(CompanyApi);
-  private readonly auth = inject(AuthService);
+export class ReportsComponent {
 
-  readonly tab = signal<'attendance' | 'achievement' | 'capacity'>('achievement');
-  readonly loading = signal(false);
-  readonly errorMessage = signal<string | null>(null);
-  readonly attendance = signal<AttendanceReportDto | null>(null);
-  readonly achievement = signal<AchievementReportDto | null>(null);
-  readonly capacity = signal<CapacityReportDto | null>(null);
-  readonly programProgressList = signal<ProgramProgress[]>([]);
+  activeTab: ReportTab = 'att';
 
-  ngOnInit(): void { this.loadInitialData(); }
+  attendanceWeeks = [
+    { label: 'الأسبوع 27', value: 95.1 },
+    { label: 'الأسبوع 28', value: 93.4 },
+    { label: 'الأسبوع 29', value: 96.8 },
+    { label: 'الأسبوع 30', value: 92.7 },
+    { label: 'الأسبوع 31', value: 94.5 },
+    { label: 'الأسبوع 32', value: 95.6 }
+  ];
 
-  private loadInitialData(): void {
-    const companyId = this.auth.companyId ?? 0;
-    if (!companyId) {
-      this.errorMessage.set('لا يمكن تحديد الشركة الحالية من جلسة الدخول.');
+  attendanceDepartments = [
+    {
+      department: 'تقنية المعلومات',
+      trainees: 46,
+      attendance: 96,
+      absence: 4,
+      late: 8,
+      evaluation: 'ممتاز',
+      status: 'ok'
+    },
+    {
+      department: 'الموارد البشرية',
+      trainees: 12,
+      attendance: 95,
+      absence: 2,
+      late: 3,
+      evaluation: 'ممتاز',
+      status: 'ok'
+    },
+    {
+      department: 'العمليات',
+      trainees: 24,
+      attendance: 91,
+      absence: 5,
+      late: 9,
+      evaluation: 'جيد',
+      status: 'warn'
+    },
+    {
+      department: 'التسويق',
+      trainees: 8,
+      attendance: 78,
+      absence: 6,
+      late: 7,
+      evaluation: 'يحتاج متابعة',
+      status: 'bad'
+    }
+  ];
+
+  achievementPrograms = [
+    { name: 'تطوير تطبيقات الويب', value: 88 },
+    { name: 'تحليل البيانات', value: 84 },
+    { name: 'الأمن السيبراني', value: 82 },
+    { name: 'الدعم الفني', value: 79 },
+    { name: 'التصميم الجرافيكي', value: 90 }
+  ];
+
+  capacityPrograms = [
+    {
+      name: 'تطوير تطبيقات الويب',
+      capacity: 60,
+      used: 54,
+      remaining: 6,
+      percentage: 90
+    },
+    {
+      name: 'تحليل البيانات',
+      capacity: 40,
+      used: 38,
+      remaining: 2,
+      percentage: 95
+    },
+    {
+      name: 'الأمن السيبراني',
+      capacity: 25,
+      used: 24,
+      remaining: 1,
+      percentage: 96
+    },
+    {
+      name: 'الدعم الفني',
+      capacity: 15,
+      used: 8,
+      remaining: 7,
+      percentage: 53
+    },
+    {
+      name: 'التصميم الجرافيكي',
+      capacity: 10,
+      used: 4,
+      remaining: 6,
+      percentage: 40
+    }
+  ];
+
+  evaluations = [
+    {
+      supervisor: 'خالد المعمري',
+      department: 'تقنية المعلومات',
+      required: 3,
+      late: 2,
+      lastEvaluation: '05 أغسطس 2026',
+      status: 'متأخر',
+      statusClass: 'bad'
+    },
+    {
+      supervisor: 'سعاد الشامسية',
+      department: 'الموارد البشرية',
+      required: 2,
+      late: 1,
+      lastEvaluation: '06 أغسطس 2026',
+      status: 'قريب من الموعد',
+      statusClass: 'warn'
+    },
+    {
+      supervisor: 'طارق السالمي',
+      department: 'الأمن السيبراني',
+      required: 4,
+      late: 1,
+      lastEvaluation: '04 أغسطس 2026',
+      status: 'قريب من الموعد',
+      statusClass: 'warn'
+    }
+  ];
+
+  tasks = [
+    {
+      trainee: 'أحمد بن سعيد البلوشي',
+      task: 'تطوير واجهة المستخدم',
+      due: '10 أغسطس 2026',
+      status: 'review'
+    },
+    {
+      trainee: 'سعيد بن محمد البوسعيدي',
+      task: 'تحليل البيانات',
+      due: '12 أغسطس 2026',
+      status: 'pending'
+    },
+    {
+      trainee: 'عمر بن ناصر الفارسي',
+      task: 'اختبار النظام',
+      due: '08 أغسطس 2026',
+      status: 'late'
+    }
+  ];
+
+  supervisors = [
+    {
+      name: 'خالد المعمري',
+      department: 'تقنية المعلومات',
+      trainees: 24,
+      attendance: 96,
+      performance: 88,
+      pendingEvaluations: 2,
+      overall: 'ممتاز',
+      statusClass: 'ok'
+    },
+    {
+      name: 'سعاد الشامسية',
+      department: 'الموارد البشرية',
+      trainees: 18,
+      attendance: 95,
+      performance: 90,
+      pendingEvaluations: 1,
+      overall: 'ممتاز',
+      statusClass: 'ok'
+    },
+    {
+      name: 'طارق السالمي',
+      department: 'الأمن السيبراني',
+      trainees: 16,
+      attendance: 92,
+      performance: 84,
+      pendingEvaluations: 4,
+      overall: 'جيد',
+      statusClass: 'warn'
+    },
+    {
+      name: 'ليلى الكيومية',
+      department: 'التسويق',
+      trainees: 8,
+      attendance: 78,
+      performance: 62,
+      pendingEvaluations: 2,
+      overall: 'يحتاج متابعة',
+      statusClass: 'bad'
+    },
+    {
+      name: 'ياسر السالمي',
+      department: 'العمليات',
+      trainees: 6,
+      attendance: 90,
+      performance: 81,
+      pendingEvaluations: 0,
+      overall: 'جيد',
+      statusClass: 'warn'
+    }
+  ];
+
+  comparisonDepartments = [
+    { name: 'تقنية المعلومات', value: 96 },
+    { name: 'الموارد البشرية', value: 95 },
+    { name: 'العمليات', value: 91 },
+    { name: 'التسويق', value: 78 }
+  ];
+
+  selectTab(tab: ReportTab): void {
+    this.activeTab = tab;
+  }
+
+  // =========================================================
+  // تصدير Excel
+  // =========================================================
+
+  exportExcel(): void {
+
+    let data: any[] = [];
+    let fileName = 'Nafadh_Report';
+
+    switch (this.activeTab) {
+
+      case 'att':
+        data = this.attendanceDepartments.map(item => ({
+          'القسم': item.department,
+          'عدد المتدربين': item.trainees,
+          'معدل الحضور': `${item.attendance}%`,
+          'الغياب': item.absence,
+          'التأخر': item.late,
+          'التقييم': item.evaluation
+        }));
+
+        fileName = 'Nafadh_Attendance_Report';
+        break;
+
+      case 'achieve':
+        data = this.achievementPrograms.map(item => ({
+          'البرنامج': item.name,
+          'نسبة الإنجاز': `${item.value}%`
+        }));
+
+        fileName = 'Nafadh_Achievement_Report';
+        break;
+
+      case 'cap':
+        data = this.capacityPrograms.map(item => ({
+          'البرنامج': item.name,
+          'الحصة المخصصة': item.capacity,
+          'المستخدم': item.used,
+          'المتبقي': item.remaining,
+          'الاستغلال': `${item.percentage}%`
+        }));
+
+        fileName = 'Nafadh_Capacity_Report';
+        break;
+
+      case 'eval':
+        data = this.evaluations.map(item => ({
+          'المشرف': item.supervisor,
+          'القسم': item.department,
+          'مطلوب': item.required,
+          'متأخر': item.late,
+          'آخر تقييم': item.lastEvaluation,
+          'الحالة': item.status
+        }));
+
+        fileName = 'Nafadh_Evaluations_Report';
+        break;
+
+      case 'tasks':
+        data = this.tasks.map(item => ({
+          'المتدرب': item.trainee,
+          'المهمة': item.task,
+          'الموعد': item.due,
+          'الحالة': this.getTaskStatusText(item.status)
+        }));
+
+        fileName = 'Nafadh_Tasks_Report';
+        break;
+
+      case 'compare':
+        data = this.supervisors.map(item => ({
+          'المشرف': item.name,
+          'القسم': item.department,
+          'المتدربون': item.trainees,
+          'معدل الحضور': `${item.attendance}%`,
+          'متوسط الأداء': `${item.performance}%`,
+          'تقييمات معلقة': item.pendingEvaluations,
+          'الأداء العام': item.overall
+        }));
+
+        fileName = 'Nafadh_Supervisors_Comparison_Report';
+        break;
+    }
+
+    if (!data.length) {
+      alert('لا توجد بيانات لتصديرها.');
       return;
     }
 
-    this.loading.set(true);
-    this.errorMessage.set(null);
+    const worksheet = XLSX.utils.json_to_sheet(data);
 
-    forkJoin({
-      attendance: this.api.getCompanyAttendanceReport(companyId).pipe(catchError(() => of(null))),
-      attendanceChart: this.api.getAttendanceChart(companyId).pipe(catchError(() => of({ weeks: [] }))),
-      capacity: this.api.getCapacity(companyId).pipe(catchError(() => of({ total: 0, used: 0, remaining: 0 } as any))),
-      distribution: this.api.getProgramDistribution(companyId).pipe(catchError(() => of([]))),
-      programSummaries: this.api.getCompanyProgramSummaries(companyId).pipe(catchError(() => of([] as CompanyProgramSummaryDto[]))),
-      enrollments: this.api.getEnrollmentsByCompany(companyId).pipe(catchError(() => of([] as EnrollmentDto[]))),
-    }).subscribe({
-      next: ({ attendance, attendanceChart, capacity, distribution, programSummaries, enrollments }) => {
-        this.attendance.set(attendance ? { ...(attendance as AttendanceReportDto), chart: attendanceChart?.weeks ?? [] } : null);
+    // ضبط عرض الأعمدة
+    const columnWidths = Object.keys(data[0]).map(key => {
+      const maxLength = Math.max(
+        key.length,
+        ...data.map(row => String(row[key] ?? '').length)
+      );
 
-        const rows = (enrollments ?? []).map((e) => this.api.getProgressSummary(e.enrollmentId).pipe(
-          catchError(() => of({ enrollmentId: e.enrollmentId, totalModules: 0, completedModules: 0, progressPercentage: 0 })) ,
-          map(progress => ({ e, progress }))
-        ));
-
-        if (!rows.length) {
-          this.setAchievementAndCapacity(enrollments ?? [], distribution as any[], capacity as any, programSummaries ?? []);
-          this.loading.set(false);
-          return;
-        }
-
-        forkJoin(rows).subscribe({
-          next: (items) => {
-            const group = new Map<string, { total: number; sum: number }>();
-            items.forEach(({ e, progress }) => {
-              const key = e.programTitle || 'غير محدد';
-              const current = group.get(key) ?? { total: 0, sum: 0 };
-              current.total += 1;
-              current.sum += Number(progress.progressPercentage ?? 0);
-              group.set(key, current);
-            });
-
-            this.programProgressList.set(
-              Array.from(group.entries()).map(([programName, value], i) => ({
-                programName,
-                shortName: programName.length > 18 ? `${programName.slice(0, 18)}…` : programName,
-                progress: Math.round(value.sum / Math.max(1, value.total)),
-                colorClass: ['blue', 'cyan', 'purple', 'orange', 'red', 'green'][i % 6]
-              }))
-            );
-
-            const completed = items.filter(({ progress }) => Number(progress.progressPercentage ?? 0) >= 100).length;
-            this.achievement.set({ total: enrollments.length, completed, rate: enrollments.length ? Math.round(completed * 100 / enrollments.length) : 0 });
-            this.setCapacity(enrollments, distribution as any[], capacity as any, programSummaries ?? []);
-            this.loading.set(false);
-          },
-          error: () => {
-            this.setAchievementAndCapacity(enrollments ?? [], distribution as any[], capacity as any, programSummaries ?? []);
-            this.loading.set(false);
-          }
-        });
-      },
-      error: () => {
-        this.errorMessage.set('تعذر تحميل تقارير الشركة من قاعدة البيانات.');
-        this.loading.set(false);
-      }
+      return {
+        wch: Math.min(Math.max(maxLength + 3, 12), 35)
+      };
     });
-  }
 
-  private setAchievementAndCapacity(
-    enrollments: EnrollmentDto[],
-    distribution: any[],
-    capacity: any,
-    programSummaries: CompanyProgramSummaryDto[],
-  ): void {
-    const completed = enrollments.filter((e) => /Completed/i.test(e.completionStatus)).length;
-    this.achievement.set({
-      total: enrollments.length,
-      completed,
-      rate: enrollments.length ? Math.round((completed * 100) / enrollments.length) : 0,
-    });
-    this.setCapacity(enrollments, distribution, capacity, programSummaries);
-    this.programProgressList.set([]);
-  }
+    worksheet['!cols'] = columnWidths;
 
-  private setCapacity(
-    enrollments: EnrollmentDto[],
-    distribution: any[],
-    capacity: any,
-    programSummaries: CompanyProgramSummaryDto[],
-  ): void {
-    const total = Number(capacity?.total ?? 0);
-    const used = Number(capacity?.used ?? enrollments.length);
-    const remaining = Number(capacity?.remaining ?? Math.max(0, total - used));
-
-    const programs: CapacityProgram[] = programSummaries.length
-      ? programSummaries.map((program) => ({
-          programName: program.title,
-          allocatedQuota: Number(program.allocatedCapacity ?? 0),
-          usedQuota: Number(program.usedCapacity ?? 0),
-          remainingQuota: Number(program.remainingCapacity ?? 0),
-          utilizationPercentage: Number(program.utilizationPercentage ?? 0),
-        }))
-      : (distribution ?? []).map((item: any) => ({
-          programName: String(item?.label ?? 'غير محدد'),
-          allocatedQuota: 0,
-          usedQuota: Number(item?.value ?? 0),
-          remainingQuota: 0,
-          utilizationPercentage: 0,
-        }));
-
-    this.capacity.set({ total, used, remaining, programs });
-  }
-
-  selectTab(tab: 'attendance' | 'achievement' | 'capacity'): void { this.tab.set(tab); }
-
-  readonly attendanceChart = computed(() => this.attendance()?.chart ?? []);
-  readonly totalTrainees = computed(() => this.attendance()?.rows?.length ?? 0);
-  readonly totalPresentDays = computed(() => this.attendance()?.rows?.reduce((total, row) => total + Number(row.presentDays ?? 0), 0) ?? 0);
-  readonly totalExcusedDays = computed(() => this.attendance()?.rows?.reduce((total, row) => total + Number(row.excusedDays ?? 0), 0) ?? 0);
-  readonly attendanceRate = computed(() => Number(this.attendance()?.overallAttendanceRate ?? 0));
-  readonly totalAbsentDays = computed(() => this.attendance()?.rows?.reduce((t, r) => t + r.absentDays, 0) ?? 0);
-  readonly totalLateDays = computed(() => this.attendance()?.rows?.reduce((t, r) => t + r.lateDays, 0) ?? 0);
-  attendanceLabel(rate: number): string { return rate >= 90 ? 'ممتاز' : rate >= 75 ? 'جيد' : 'يحتاج متابعة'; }
-  getInitials(name?: string): string { const p = (name ?? '').trim().split(/\s+/).filter(Boolean); return p.length ? p.slice(0, 2).map(x => x[0]).join('') : '?'; }
-  clampPercentage(value: number | undefined): number { return Math.max(0, Math.min(100, Number(value ?? 0))); }
-  readonly achievementRate = computed(() => this.achievement()?.rate ?? 0);
-  readonly bestProgram = computed(() => this.programProgressList().length ? [...this.programProgressList()].sort((a, b) => b.progress - a.progress)[0] : null);
-  readonly weakestProgram = computed(() => this.programProgressList().length ? [...this.programProgressList()].sort((a, b) => a.progress - b.progress)[0] : null);
-  readonly capacityPercentage = computed(() => { const d = this.capacity(); return d?.total ? this.clampPercentage((d.used / d.total) * 100) : 0; });
-  readonly ringCircumference = 2 * Math.PI * 78;
-  readonly ringDashoffset = computed(() => this.ringCircumference * (1 - this.capacityPercentage() / 100));
-  refreshReports(): void { this.loadInitialData(); }
-
-  exportPdf(): void {
-    const element = this.elementRef.nativeElement.querySelector('.reports-page');
-    if (!element) return;
-    (html2pdf as any)().set({ margin: 8, filename: `report_${new Date().toISOString().slice(0, 10)}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(element).save();
-  }
-
-  exportExcel(): void {
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(this.attendance()?.rows ?? []), 'الحضور');
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(this.capacity()?.programs ?? []), 'الطاقة الاستيعابية');
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(this.programProgressList()), 'الإنجاز');
-    XLSX.writeFile(workbook, `تقرير_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      'التقرير'
+    );
+
+    XLSX.writeFile(
+      workbook,
+      `${fileName}.xlsx`
+    );
+  }
+
+  // =========================================================
+// تصدير PDF عربي
+// =========================================================
+exportPdf(): void {
+  const source = document.querySelector('.reports-page') as HTMLElement | null;
+
+  if (!source) {
+    alert('تعذر العثور على محتوى التقرير.');
+    return;
+  }
+
+  const clone = source.cloneNode(true) as HTMLElement;
+
+  // إزالة عناصر الواجهة التي لا نريدها داخل PDF
+  clone.querySelector('.page-head')?.remove();
+  clone.querySelector('.tabs')?.remove();
+
+  // إزالة جميع الأزرار من التقرير
+  clone.querySelectorAll('button').forEach(button => {
+    button.remove();
+  });
+
+  // إعداد الصفحة للغة العربية
+  clone.setAttribute('dir', 'rtl');
+
+  clone.style.direction = 'rtl';
+  clone.style.textAlign = 'right';
+  clone.style.background = '#ffffff';
+  clone.style.color = '#111827';
+  clone.style.width = '1120px';
+  clone.style.padding = '20px';
+  clone.style.boxSizing = 'border-box';
+
+  // ضمان اتجاه الجداول
+  clone.querySelectorAll('table').forEach(table => {
+    const element = table as HTMLElement;
+    element.style.direction = 'rtl';
+    element.style.width = '100%';
+  });
+
+  // اسم التقرير حسب التبويب الحالي
+  let reportName = 'تقرير نفاذ';
+
+  switch (this.activeTab) {
+    case 'att':
+      reportName = 'تقرير حضور الشركة';
+      break;
+
+    case 'achieve':
+      reportName = 'تقرير إنجاز المتدربين';
+      break;
+
+    case 'cap':
+      reportName = 'تقرير الطاقة الاستيعابية';
+      break;
+
+    case 'eval':
+      reportName = 'تقرير التقييمات';
+      break;
+
+    case 'tasks':
+      reportName = 'تقرير المهام';
+      break;
+
+    case 'compare':
+      reportName = 'تقرير مقارنة الأقسام والمشرفين';
+      break;
+  }
+
+  // عنوان التقرير
+  const title = document.createElement('div');
+
+  title.style.direction = 'rtl';
+  title.style.textAlign = 'center';
+  title.style.marginBottom = '25px';
+  title.style.paddingBottom = '15px';
+  title.style.borderBottom = '2px solid #00338d';
+
+  title.innerHTML = `
+    <h1 style="
+      margin: 0 0 8px 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: #00338d;
+    ">
+      ${reportName}
+    </h1>
+
+    <div style="
+      font-size: 13px;
+      color: #64748b;
+    ">
+      نظام نفاذ لإدارة التدريب
+    </div>
+
+    <div style="
+      margin-top: 5px;
+      font-size: 12px;
+      color: #94a3b8;
+    ">
+      تاريخ التقرير: ${new Date().toLocaleDateString('ar-OM')}
+    </div>
+  `;
+
+  clone.insertBefore(title, clone.firstChild);
+
+  // إنشاء حاوية مؤقتة
+  const wrapper = document.createElement('div');
+
+  wrapper.style.position = 'absolute';
+  wrapper.style.left = '-10000px';
+  wrapper.style.top = '0';
+  wrapper.style.width = '1160px';
+  wrapper.style.background = '#ffffff';
+  wrapper.style.padding = '20px';
+  wrapper.style.boxSizing = 'border-box';
+
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
+
+  const options = {
+    margin: 10,
+
+    filename: `${reportName}.pdf`,
+
+    image: {
+      type: 'jpeg' as const,
+      quality: 0.98
+    },
+
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false
+    },
+
+    jsPDF: {
+      unit: 'mm' as const,
+      format: 'a4' as const,
+      orientation: 'landscape' as const
+    },
+
+    pagebreak: {
+      mode: ['css', 'legacy'] as const
+    }
+  };
+
+  html2pdf()
+    .set(options)
+    .from(clone)
+    .save()
+    .then(() => {
+      wrapper.remove();
+    })
+    .catch((error: unknown) => {
+      console.error('PDF export error:', error);
+
+      wrapper.remove();
+
+      alert('حدث خطأ أثناء إنشاء ملف PDF.');
+    });
+}
+  // =========================================================
+  // حالة المهام
+  // =========================================================
+
+  getTaskStatusClass(status: string): string {
+    switch (status) {
+      case 'review':
+        return 'info';
+
+      case 'pending':
+        return 'warn';
+
+      case 'late':
+        return 'bad';
+
+      default:
+        return 'ok';
+    }
+  }
+
+  getTaskStatusText(status: string): string {
+    switch (status) {
+      case 'review':
+        return 'قيد المراجعة';
+
+      case 'pending':
+        return 'بانتظار الاستلام';
+
+      case 'late':
+        return 'متأخرة';
+
+      default:
+        return 'مكتملة';
+    }
   }
 }

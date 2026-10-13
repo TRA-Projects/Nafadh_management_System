@@ -16,6 +16,8 @@ namespace Nafadh_Backend.Services
 
         Task<List<NFD_Task>> GetTasksByBatchIdAsync(int batchId);
 
+        Task<List<NFD_Task>> GetTasksByCompanyIdAsync(int companyId);
+
         Task<List<NFD_Rubric>> GetRubricsByTaskIdAsync(int taskId);
 
         Task<List<NFD_Submission>> GetSubmissionsByTaskIdAsync(int taskId);

@@ -37,25 +37,13 @@ export class TraineeDashboard implements OnInit {
   private api = inject(TraineeApi);
   public auth = inject(AuthService);
 
-  // =========================================================
-  // المستخدم الحالي - من AuthService
-  // =========================================================
-
   currentUserId = signal<number | null>(null);
-
-  // =========================================================
-  // IDs - يتم جلبها من قاعدة البيانات
-  // =========================================================
 
   traineeId = signal<number | null>(null);
   companyId = signal<number | null>(null);
   batchId = signal<number | null>(null);
   enrollmentId = signal<number | null>(null);
   supervisorId = signal<number | null>(null);
-
-  // =========================================================
-  // بيانات المتدرب والبرنامج
-  // =========================================================
 
   traineeData = signal<TraineeProfileDto | null>(null);
   enrollmentData = signal<EnrollmentDto | null>(null);
@@ -66,39 +54,19 @@ export class TraineeDashboard implements OnInit {
   batchName = signal<string>('');
   programEndDate = signal<string>('');
 
-  // =========================================================
-  // بيانات فريق الإشراف
-  // =========================================================
-
   trainerData = signal<TrainerDto | null>(null);
   supervisorData = signal<CompanySupervisorDto | null>(null);
-
-  // =========================================================
-  // البيانات الرئيسية
-  // =========================================================
 
   summary = signal<TraineeDashboardSummaryDto | null>(null);
   tasks = signal<TaskWithSubmissionDto[]>([]);
 
-  // =========================================================
-  // البيانات الجديدة: الإعلانات والتنبيهات
-  // =========================================================
-
   announcements = signal<(AnnouncementDto & { source: string })[]>([]);
   notifications = signal<NotificationDto[]>([]);
-
-  // =========================================================
-  // بيانات نسبة الحضور والإنذارات (جلب باستخدام userId)
-  // =========================================================
 
   attendanceRate = signal<number>(0);
   warningsCount = signal<number>(0);
   loadingAttendance = signal(false);
   loadingWarnings = signal(false);
-
-  // =========================================================
-  // حالات التحميل
-  // =========================================================
 
   loading = signal(false);
   loadingTasks = signal(false);
@@ -108,22 +76,10 @@ export class TraineeDashboard implements OnInit {
   loadingTrainer = signal(false);
   loadingSupervisor = signal(false);
 
-  // =========================================================
-  // رسالة الخطأ
-  // =========================================================
-
   errorMessage = signal('');
-
-  // =========================================================
-  // متغيرات لعرض المزيد من الإعلانات والتنبيهات
-  // =========================================================
 
   showAllAnnouncements = signal(false);
   showAllNotifications = signal(false);
-
-  // =========================================================
-  // متغيرات ودوال نافذة تفاصيل الإعلان (Popup)
-  // =========================================================
 
   selectedAnnouncement = signal<any | null>(null);
 
@@ -134,10 +90,6 @@ export class TraineeDashboard implements OnInit {
   closeAnnouncementPopup() {
     this.selectedAnnouncement.set(null);
   }
-
-  // =========================================================
-  // تحويل الحالة البرمجية إلى النص العربي
-  // =========================================================
 
   calculatedStatus = computed(() => {
     const status = this.summary()?.status;
@@ -150,43 +102,29 @@ export class TraineeDashboard implements OnInit {
     return today > endDate ? 'منتهي' : 'قيد التدريب';
   });
 
-  // =========================================================
-  // نسبة الإنجاز المحسوبة
-  // =========================================================
-
   progressPercentage = computed(() => {
     const summary = this.summary();
     if (!summary) return 0;
     return summary.moduleProgressPercentage ?? 0;
   });
 
-  // =========================================================
-  // التنبيهات الأخيرة - معالجتها للعرض
-  // =========================================================
+  latestNotifications = computed(() => {
+    const notifs = this.notifications();
+    if (!notifs || notifs.length === 0) return [];
 
-latestNotifications = computed(() => {
-  const notifs = this.notifications();
-  if (!notifs || notifs.length === 0) return [];
+    const sorted = [...notifs].sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return dateB.getTime() - dateA.getTime();
+    });
 
-  // ترتيب حسب التاريخ (الأحدث أولاً)
-  const sorted = [...notifs].sort((a, b) => {
-    const dateA = new Date(a.createdAt);
-    const dateB = new Date(b.createdAt);
-    return dateB.getTime() - dateA.getTime();
+    return sorted.slice(0, 5).map((notif) => ({
+      message: notif.title || notif.message || '',
+      date: notif.createdAt,
+      isRead: notif.isRead,
+      notificationId: notif.notificationId,
+    }));
   });
-
-  // أخذ أول 5 تنبيهات فقط
-  // أخذ أول 5 تنبيهات فقط
-return sorted.slice(0, 5).map((notif) => ({
-  message: notif.title || notif.message || '',  // <-- العنوان فقط (مع fallback للوصف إذا لم يوجد عنوان)
-  date: notif.createdAt,
-  isRead: notif.isRead,
-  notificationId: notif.notificationId,
-}));
-});
-  // =========================================================
-  // الإعلانات المعروضة (3 أو الكل)
-  // =========================================================
 
   displayAnnouncements = computed(() => {
     const all = this.announcements();
@@ -195,10 +133,6 @@ return sorted.slice(0, 5).map((notif) => ({
     }
     return all.slice(0, 3);
   });
-
-  // =========================================================
-  // التنبيهات المعروضة (3 أو الكل)
-  // =========================================================
 
   displayNotifications = computed(() => {
     const all = this.latestNotifications();
@@ -209,8 +143,103 @@ return sorted.slice(0, 5).map((notif) => ({
   });
 
   // =========================================================
-  // دوال تبديل عرض الكل / عرض أقل
+  // حالة التقويم الشهري للمهام
   // =========================================================
+
+  calendarTasks = signal<TaskWithSubmissionDto[]>([]);
+  calendarMonth = signal<number>(new Date().getMonth());
+  calendarYear = signal<number>(new Date().getFullYear());
+  selectedCalendarDay = signal<{ day: number; tasks: TaskWithSubmissionDto[] } | null>(null);
+
+  weekDays = ['أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
+
+  calendarMonthName = computed(() => {
+    const months = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+    ];
+    return months[this.calendarMonth()];
+  });
+
+  calendarDays = computed(() => {
+    const year = this.calendarYear();
+    const month = this.calendarMonth();
+    const tasks = this.calendarTasks();
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startDayOfWeek = firstDay.getDay();
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const days: {
+      day: number | null;
+      hasTask: boolean;
+      tasks: TaskWithSubmissionDto[];
+      isToday: boolean;
+    }[] = [];
+
+    for (let i = 0; i < startDayOfWeek; i++) {
+      days.push({ day: null, hasTask: false, tasks: [], isToday: false });
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month, d);
+      date.setHours(0, 0, 0, 0);
+
+      const dayTasks = tasks.filter((t) => {
+        if (!t.dueDate) return false;
+        const due = new Date(t.dueDate);
+        due.setHours(0, 0, 0, 0);
+        return due.getTime() === date.getTime();
+      });
+
+      days.push({
+        day: d,
+        hasTask: dayTasks.length > 0,
+        tasks: dayTasks,
+        isToday: date.getTime() === today.getTime(),
+      });
+    }
+
+    return days;
+  });
+
+  prevMonth(): void {
+    const m = this.calendarMonth();
+    if (m === 0) {
+      this.calendarMonth.set(11);
+      this.calendarYear.update((y) => y - 1);
+    } else {
+      this.calendarMonth.set(m - 1);
+    }
+  }
+
+  nextMonth(): void {
+    const m = this.calendarMonth();
+    if (m === 11) {
+      this.calendarMonth.set(0);
+      this.calendarYear.update((y) => y + 1);
+    } else {
+      this.calendarMonth.set(m + 1);
+    }
+  }
+
+  openCalendarDay(day: {
+    day: number | null;
+    hasTask: boolean;
+    tasks: TaskWithSubmissionDto[];
+    isToday: boolean;
+  }): void {
+    if (day.day === null || !day.tasks || day.tasks.length === 0) return;
+    this.selectedCalendarDay.set({ day: day.day, tasks: day.tasks });
+  }
+
+  closeCalendarDay(): void {
+    this.selectedCalendarDay.set(null);
+  }
 
   toggleShowAllAnnouncements(): void {
     this.showAllAnnouncements.update((value) => !value);
@@ -220,23 +249,17 @@ return sorted.slice(0, 5).map((notif) => ({
     this.showAllNotifications.update((value) => !value);
   }
 
-  // =========================================================
-  // دالة مساعدة لمقارنة حالة المهمة (كسلاسل نصية)
-  // =========================================================
-
   getTaskStatusDisplay(status: any): string {
     if (!status) return 'جديد';
 
     const statusStr = String(status).toLowerCase();
 
-    // حالات TaskStatus
     if (statusStr === 'new' || statusStr === 'pending') return 'جديد';
     if (statusStr === 'completed') return 'مكتمل';
     if (statusStr === 'graded') return 'مكتمل';
     if (statusStr === 'inprogress' || statusStr === 'in_progress') return 'قيد التنفيذ';
     if (statusStr === 'overdue') return 'منتهي';
 
-    // حالات SubmissionStatus
     if (statusStr === 'submitted') return 'تم التسليم';
     if (statusStr === 'underreview' || statusStr === 'under_review') return 'قيد المراجعة';
     if (statusStr === 'returnedforrevision' || statusStr === 'returned') return 'مطلوب تعديل';
@@ -252,7 +275,6 @@ return sorted.slice(0, 5).map((notif) => ({
 
     const statusStr = String(status).toLowerCase();
 
-    // حالات TaskStatus
     if (statusStr === 'new' || statusStr === 'pending') {
       return { background: '#eff6ff', color: '#2563eb' };
     }
@@ -266,7 +288,6 @@ return sorted.slice(0, 5).map((notif) => ({
       return { background: '#fef2f2', color: '#dc2626' };
     }
 
-    // حالات SubmissionStatus
     if (statusStr === 'submitted') {
       return { background: '#fef3c7', color: '#d97706' };
     }
@@ -289,10 +310,6 @@ return sorted.slice(0, 5).map((notif) => ({
     return { background: '#f1f5f9', color: '#64748b' };
   }
 
-  // =========================================================
-  // Constructor - مراقبة تغير المستخدم
-  // =========================================================
-
   constructor() {
     effect(() => {
       const session = this.auth.session?.();
@@ -302,10 +319,6 @@ return sorted.slice(0, 5).map((notif) => ({
       }
     });
   }
-
-  // =========================================================
-  // OnInit
-  // =========================================================
 
   ngOnInit() {
     const session = this.auth.session?.();
@@ -322,10 +335,6 @@ return sorted.slice(0, 5).map((notif) => ({
       }
     }
   }
-
-  // =========================================================
-  // تحميل بيانات المتدرب
-  // =========================================================
 
   loadTraineeData(): void {
     const userId = this.currentUserId();
@@ -366,11 +375,6 @@ return sorted.slice(0, 5).map((notif) => ({
     });
   }
 
-  // =========================================================
-  // تحميل ملخص لوحة التحكم
-  // GET /api/Trainee/{traineeId}/dashboard-summary
-  // =========================================================
-
   loadDashboardSummary(traineeId: number): void {
     this.api.getDashboardSummary(traineeId).subscribe({
       next: (summary: TraineeDashboardSummaryDto) => {
@@ -387,10 +391,6 @@ return sorted.slice(0, 5).map((notif) => ({
     });
   }
 
-  // =========================================================
-  // تحميل نسبة الحضور باستخدام userId
-  // =========================================================
-
   loadAttendanceRate(userId: number): void {
     this.loadingAttendance.set(true);
     this.api.getAttendanceRateByUserId(userId).subscribe({
@@ -401,13 +401,11 @@ return sorted.slice(0, 5).map((notif) => ({
       error: (error: any) => {
         console.error('Error loading attendance rate by userId:', error);
         this.loadingAttendance.set(false);
-        // في حالة الخطأ، نحاول استخدام الطريقة القديمة كبديل
         this.loadAttendanceRateFallback();
       },
     });
   }
 
-  // دالة احتياطية في حالة فشل الدالة الجديدة
   private loadAttendanceRateFallback(): void {
     const traineeId = this.traineeId();
     if (traineeId) {
@@ -416,7 +414,7 @@ return sorted.slice(0, 5).map((notif) => ({
           if (attendanceList && attendanceList.length > 0) {
             const total = attendanceList.length;
             const present = attendanceList.filter(
-              (a) => a.status === 'Present' 
+              (a) => a.status === 'Present'
             ).length;
             const rate = total > 0 ? (present / total) * 100 : 0;
             this.attendanceRate.set(rate);
@@ -431,52 +429,39 @@ return sorted.slice(0, 5).map((notif) => ({
       this.loadingAttendance.set(false);
     }
   }
-// =========================================================
-// تحميل عدد الإنذارات الخاصة بالمستخدم فقط
-// =========================================================
 
-loadWarningsCount(userId: number): void {
-  this.loadingWarnings.set(true);
-  // استخدام getUserWarningsCount بدلاً من getWarningsCountByUserId
-  this.api.getUserWarningsCount(userId).subscribe({
-    next: (count: number) => {
-      this.warningsCount.set(count);
-      this.loadingWarnings.set(false);
-    },
-    error: (error: any) => {
-      console.error('Error loading user warnings count:', error);
-      this.loadingWarnings.set(false);
-      // في حالة الخطأ، نحاول استخدام الطريقة القديمة كبديل
-      this.loadWarningsCountFallback(userId);
-    },
-  });
-}
+  loadWarningsCount(userId: number): void {
+    this.loadingWarnings.set(true);
+    this.api.getUserWarningsCount(userId).subscribe({
+      next: (count: number) => {
+        this.warningsCount.set(count);
+        this.loadingWarnings.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error loading user warnings count:', error);
+        this.loadingWarnings.set(false);
+        this.loadWarningsCountFallback(userId);
+      },
+    });
+  }
 
-// دالة احتياطية في حالة فشل الدالة الجديدة
-private loadWarningsCountFallback(userId: number): void {
-  // استخدام getUserWarnings بدلاً من getMyWarnings
-  this.api.getUserWarnings(userId).subscribe({
-    next: (warnings: WarningDto[]) => {
-      this.warningsCount.set(warnings?.length || 0);
-      this.loadingWarnings.set(false);
-    },
-    error: (error: any) => {
-      console.error('Error loading user warnings (fallback):', error);
-      this.loadingWarnings.set(false);
-    }
-  });
-}
-
-  // =========================================================
-  // تحميل تسجيلات المتدرب
-  // GET /api/Enrollment/trainee/{traineeId}
-  // =========================================================
+  private loadWarningsCountFallback(userId: number): void {
+    this.api.getUserWarnings(userId).subscribe({
+      next: (warnings: WarningDto[]) => {
+        this.warningsCount.set(warnings?.length || 0);
+        this.loadingWarnings.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error loading user warnings (fallback):', error);
+        this.loadingWarnings.set(false);
+      }
+    });
+  }
 
   loadEnrollments(traineeId: number): void {
     this.api.getEnrollmentsByTrainee(traineeId).subscribe({
       next: (enrollments: EnrollmentDto[]) => {
         if (enrollments && enrollments.length > 0) {
-          // البحث عن تسجيل نشط
           const activeEnrollment =
             enrollments.find(
               (e) => e.completionStatus === 'Active' || e.completionStatus === 'InProgress',
@@ -495,22 +480,15 @@ private loadWarningsCountFallback(userId: number): void {
           }
 
           this.loadBatchData(activeEnrollment.batchId);
-
-          // تحميل المدرب لهذه الدفعة
           this.loadTrainerByBatch(activeEnrollment.batchId);
 
-          // تحميل المشرف باستخدام userId
           const userId = this.currentUserId();
           if (userId) {
             this.loadSupervisorByUserId(userId);
           }
 
-          // تحميل المهام
           this.loadTasks(activeEnrollment.batchId);
 
-          // =========================================================
-          // تحميل الإعلانات والتنبيهات ونسبة الحضور والإنذارات باستخدام userId
-          // =========================================================
           if (userId) {
             this.loadUserAnnouncements(userId);
             this.loadUserNotifications(userId);
@@ -532,30 +510,21 @@ private loadWarningsCountFallback(userId: number): void {
     });
   }
 
-  // =========================================================
-  // تحميل المدرب من خلال الدفعة
-  // GET /api/BatchTrainer/batch/{batchId}
-  // =========================================================
-
   loadTrainerByBatch(batchId: number): void {
     this.loadingTrainer.set(true);
 
     this.api.getBatchTrainers(batchId).subscribe({
       next: (trainers: TrainerDto[]) => {
-        console.log('Batch trainers response:', trainers);
-
         if (trainers && trainers.length > 0) {
           const firstTrainer = trainers[0];
 
-          // التحقق من وجود trainerId
           if (firstTrainer.trainerId) {
             this.api.getTrainer(firstTrainer.trainerId).subscribe({
               next: (trainer: TrainerDto) => {
                 this.trainerData.set(trainer);
                 this.loadingTrainer.set(false);
               },
-              error: (error: any) => {
-                console.error('Error loading trainer details:', error);
+              error: () => {
                 this.trainerData.set(null);
                 this.loadingTrainer.set(false);
               },
@@ -569,40 +538,27 @@ private loadWarningsCountFallback(userId: number): void {
           this.loadingTrainer.set(false);
         }
       },
-      error: (error: any) => {
-        console.error('Error loading trainers for batch:', error);
+      error: () => {
         this.trainerData.set(null);
         this.loadingTrainer.set(false);
       },
     });
   }
 
-  // =========================================================
-  // تحميل بيانات المشرف بناءً على userId
-  // GET /api/CompanySupervisor/user/{userId}
-  // =========================================================
-
   loadSupervisorByUserId(userId: number): void {
     this.loadingSupervisor.set(true);
 
-    // استخدام userId بدلاً من supervisorId
     this.api.getCompanySupervisorByUserId(userId).subscribe({
       next: (supervisor: CompanySupervisorDto) => {
         this.supervisorData.set(supervisor);
         this.loadingSupervisor.set(false);
       },
-      error: (error: any) => {
-        console.error('Error loading supervisor by userId:', error);
+      error: () => {
         this.supervisorData.set(null);
         this.loadingSupervisor.set(false);
       },
     });
   }
-
-  // =========================================================
-  // تحميل بيانات الباتش
-  // GET /api/Batch/{batchId}
-  // =========================================================
 
   loadBatchData(batchId: number): void {
     this.api.getBatch(batchId).subscribe({
@@ -627,11 +583,6 @@ private loadWarningsCountFallback(userId: number): void {
     });
   }
 
-  // =========================================================
-  // تحميل بيانات البرنامج
-  // GET /api/Program/{programId}
-  // =========================================================
-
   loadProgramData(programId: number): void {
     this.api.getProgram(programId).subscribe({
       next: (program: ProgramDto) => {
@@ -647,11 +598,6 @@ private loadWarningsCountFallback(userId: number): void {
     });
   }
 
-  // =========================================================
-  // تحميل المهام
-  // GET /api/Task/batch/{batchId}
-  // =========================================================
-
   loadTasks(batchId: number): void {
     this.loadingTasks.set(true);
     const traineeId = this.traineeId();
@@ -664,8 +610,7 @@ private loadWarningsCountFallback(userId: number): void {
               const enrichedTasks = this.enrichTasksWithSubmission(tasks, submissions);
               this.processAndSetTasks(enrichedTasks);
             },
-            error: (error: any) => {
-              console.error('Error loading submissions:', error);
+            error: () => {
               this.processAndSetTasks(tasks);
             },
           });
@@ -673,9 +618,9 @@ private loadWarningsCountFallback(userId: number): void {
           this.processAndSetTasks(tasks || []);
         }
       },
-      error: (error: any) => {
-        console.error('Error loading batch tasks:', error);
+      error: () => {
         this.tasks.set([]);
+        this.calendarTasks.set([]);
         this.loadingTasks.set(false);
       },
     });
@@ -684,28 +629,27 @@ private loadWarningsCountFallback(userId: number): void {
   private processAndSetTasks(tasks: TaskDto[]): void {
     if (!tasks || tasks.length === 0) {
       this.tasks.set([]);
+      this.calendarTasks.set([]);
       this.loadingTasks.set(false);
       return;
     }
 
     let enrichedTasks = tasks as TaskWithSubmissionDto[];
+    this.calendarTasks.set(enrichedTasks);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const sortedTasks = enrichedTasks
       .filter((task) => {
-        // عرض المهام التي لم تكتمل أو المهام المنتهية خلال الـ 7 أيام الماضية
         const isCompleted =
           (task.status as string) === 'Completed' || (task.status as string) === 'Graded';
         if (isCompleted) return false;
 
-        // إذا كان التاريخ موجوداً
         if (task.dueDate) {
           const dueDate = new Date(task.dueDate);
           dueDate.setHours(0, 0, 0, 0);
 
-          // عرض المهام المنتهية خلال الـ 7 أيام الماضية
           const daysDiff = Math.floor(
             (today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
           );
@@ -714,14 +658,13 @@ private loadWarningsCountFallback(userId: number): void {
           return true;
         }
 
-        // عرض المهام بدون تاريخ
         return true;
       })
       .sort((a, b) => {
         if (!a.dueDate && !b.dueDate) return 0;
         if (!a.dueDate) return 1;
         if (!b.dueDate) return -1;
-        
+
         const dateA = new Date(a.dueDate || Date.now());
         const dateB = new Date(b.dueDate || Date.now());
         return dateA.getTime() - dateB.getTime();
@@ -731,9 +674,6 @@ private loadWarningsCountFallback(userId: number): void {
     this.loadingTasks.set(false);
   }
 
-  /**
-   * إثراء المهام بحالة التسليم
-   */
   private enrichTasksWithSubmission(
     tasks: TaskDto[],
     submissions: SubmissionDto[],
@@ -757,15 +697,10 @@ private loadWarningsCountFallback(userId: number): void {
     });
   }
 
-  // =========================================================
-  // تحميل الإعلانات الخاصة بالهيئة فقط
-  // =========================================================
-
   loadUserAnnouncements(userId: number): void {
     this.loadingAnnouncements.set(true);
     this.announcements.set([]);
 
-    // جلب إعلانات الهيئة (المنصة) فقط
     this.api.getPlatformAnnouncements().subscribe({
       next: (items: AnnouncementDto[]) => {
         if (items && items.length > 0) {
@@ -784,9 +719,6 @@ private loadWarningsCountFallback(userId: number): void {
     });
   }
 
-  /**
-   * تحديد مصدر الإعلان بناءً على نطاقه
-   */
   private getAnnouncementSource(scopeType: AnnouncementScopeType): string {
     const scopeMap: Record<string, string> = {
       Platform: 'الهيئة',
@@ -796,10 +728,6 @@ private loadWarningsCountFallback(userId: number): void {
     };
     return scopeMap[scopeType] || 'عام';
   }
-
-  // =========================================================
-  // تحميل التنبيهات بناءً على userId
-  // =========================================================
 
   loadUserNotifications(userId: number): void {
     this.loadingNotifications.set(true);
@@ -818,15 +746,7 @@ private loadWarningsCountFallback(userId: number): void {
     });
   }
 
-  // =========================================================
-  // دوال مساعدة للتنبيهات - تحديد التنبيه كمقروء
-  // =========================================================
-
-  /**
-   * تحديد تنبيه كمقروء
-   */
   markNotificationAsRead(notificationId: number, event?: Event): void {
-    // منع انتشار الحدث إذا كان موجوداً
     if (event) {
       event.stopPropagation();
     }
@@ -834,7 +754,6 @@ private loadWarningsCountFallback(userId: number): void {
     const userId = this.currentUserId();
     if (!userId) return;
 
-    // تحديث الحالة محلياً أولاً لتجربة أفضل للمستخدم
     this.notifications.update((notifs) => {
       return notifs.map((notif) => {
         if (notif.notificationId === notificationId) {
@@ -844,14 +763,11 @@ private loadWarningsCountFallback(userId: number): void {
       });
     });
 
-    // إرسال الطلب إلى الخادم
     this.api.markNotificationAsRead(notificationId).subscribe({
       next: () => {
         console.log('Notification marked as read:', notificationId);
       },
-      error: (error: any) => {
-        console.error('Error marking notification as read:', error);
-        // في حالة الخطأ، نعيد الحالة السابقة
+      error: () => {
         if (userId) {
           this.loadUserNotifications(userId);
         }
@@ -859,9 +775,6 @@ private loadWarningsCountFallback(userId: number): void {
     });
   }
 
-  /**
-   * تحديد جميع التنبيهات كمقروءة
-   */
   markAllNotificationsAsRead(event?: Event): void {
     if (event) {
       event.stopPropagation();
@@ -870,19 +783,15 @@ private loadWarningsCountFallback(userId: number): void {
     const userId = this.currentUserId();
     if (!userId) return;
 
-    // تحديث الحالة محلياً أولاً
     this.notifications.update((notifs) => {
       return notifs.map((notif) => ({ ...notif, isRead: true }));
     });
 
-    // إرسال الطلب إلى الخادم
     this.api.markAllNotificationsAsRead(userId).subscribe({
       next: () => {
         console.log('All notifications marked as read');
       },
-      error: (error: any) => {
-        console.error('Error marking all notifications as read:', error);
-        // في حالة الخطأ، نعيد تحميل التنبيهات
+      error: () => {
         if (userId) {
           this.loadUserNotifications(userId);
         }
@@ -890,16 +799,9 @@ private loadWarningsCountFallback(userId: number): void {
     });
   }
 
-  /**
-   * الحصول على عدد التنبيهات غير المقروءة
-   */
   getUnreadNotificationsCount(): number {
     return this.notifications().filter((n) => !n.isRead).length;
   }
-
-  // =========================================================
-  // الحصول على معرف المستخدم من التخزين المحلي
-  // =========================================================
 
   private getUserIdFromStorage(): number | null {
     const userIdFromStorage = localStorage.getItem('userId');
@@ -914,10 +816,6 @@ private loadWarningsCountFallback(userId: number): void {
 
     return null;
   }
-
-  // =========================================================
-  // إعادة تحميل البيانات
-  // =========================================================
 
   refreshData(): void {
     const traineeId = this.traineeId();
@@ -940,10 +838,6 @@ private loadWarningsCountFallback(userId: number): void {
       this.loadWarningsCount(userId);
     }
   }
-
-  // =========================================================
-  // دوال مساعدة للعرض
-  // =========================================================
 
   getStatusColor(status: string): string {
     const statusMap: Record<string, string> = {
@@ -969,19 +863,11 @@ private loadWarningsCountFallback(userId: number): void {
     return statusMap[status] || 'var(--status-new-fg)';
   }
 
-  // =========================================================
-  // الحصول على الحرف الأول من الاسم
-  // =========================================================
-
   getInitial(name: string | undefined): string {
     if (!name) return 'م';
     const trimmed = name.trim();
     return trimmed.length > 0 ? trimmed[0] : 'م';
   }
-
-  // =========================================================
-  // الحصول على تخصص المدرب أو وصفه
-  // =========================================================
 
   getTrainerSpecialty(): string {
     const trainer = this.trainerData();
@@ -1004,10 +890,6 @@ private loadWarningsCountFallback(userId: number): void {
     return 'مدرب البرنامج';
   }
 
-  // =========================================================
-  // الحصول على قسم المشرف أو منصبه
-  // =========================================================
-
   getSupervisorRole(): string {
     const supervisor = this.supervisorData();
     if (!supervisor) return 'مشرف التدريب';
@@ -1021,10 +903,6 @@ private loadWarningsCountFallback(userId: number): void {
     return 'مشرف التدريب';
   }
 
-  // =========================================================
-  // التحقق من انتهاء موعد المهمة
-  // =========================================================
-
   isTaskOverdue(dueDate: string | Date): boolean {
     if (!dueDate) return false;
     const due = new Date(dueDate);
@@ -1032,33 +910,17 @@ private loadWarningsCountFallback(userId: number): void {
     return due < today;
   }
 
-  // =========================================================
-  // التواصل مع المدرب
-  // =========================================================
-
   contactTrainer(): void {
     const trainer = this.trainerData();
     if (!trainer) return;
-
-    // يمكنك توجيه المستخدم إلى صفحة المحادثة
-    // أو فتح نافذة محادثة جديدة
     console.log('Contact trainer:', trainer);
   }
-
-  // =========================================================
-  // التواصل مع المشرف
-  // =========================================================
 
   contactSupervisor(): void {
     const supervisor = this.supervisorData();
     if (!supervisor) return;
-
     console.log('Contact supervisor:', supervisor);
   }
-
-  // =========================================================
-  // الحصول على أيام متبقية للمهمة (للعرض الإضافي)
-  // =========================================================
 
   getDaysRemaining(dueDate: string | Date): number {
     if (!dueDate) return 0;

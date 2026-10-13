@@ -1,143 +1,1113 @@
 <div class="dashboard-container">
-  
-  <!-- Hero Banner -->
-  <div class="hero-banner">
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-      <h1 class="hero-title">بوابة الإدارة المركزية</h1>
-      <p class="hero-subtitle">منظومة نفاذ للتدريب - هيئة تنظيم الاتصالات</p>
-    </div>
-  </div>
 
-  <!-- Metric Cards -->
-  <div class="stat-cards-grid">
-  
-    <!-- 1. إجمالي المتدربين (قابل للضغط) -->
-    <div class="stat-card clickable-card" (click)="goToTraineesList()" role="button" tabindex="0">
-      <div class="stat-icon icon-blue">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-          <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-        </svg>
-      </div>
-      <div class="stat-info">
-        <div class="stat-value">{{ traineeCount() | number }}</div>
-        <div class="stat-label">إجمالي المتدربين</div>
-      </div>
-    </div>
+  <!-- =========================================================================
+       1) صفحة معاينة المتدرب الكاملة (تظهر عند الضغط على زر العين لأي متدرب)
+       ========================================================================= -->
+  @if (selectedTraineeProfile(); as tp) {
+    <div class="trainee-full-page">
 
-    <!-- 2. الشركات المستضيفة (قابل للضغط) -->
-    <div class="stat-card clickable-card" (click)="goToCompaniesList()" role="button" tabindex="0">
-      <div class="stat-icon icon-teal">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
-          <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
-          <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
-          <path d="M10 6h4"/>
-          <path d="M10 10h4"/>
-          <path d="M10 14h4"/>
-          <path d="M10 18h4"/>
-        </svg>
-      </div>
-      <div class="stat-info">
-        <div class="stat-value">{{ companyCount() | number }}</div>
-        <div class="stat-label">الشركات المستضيفة</div>
-        <div class="stat-subtext">شركة معتمدة</div>
-      </div>
-    </div>
-
-    <!-- 3. إجمالي الدفعات (قابل للضغط) -->
-    <div class="stat-card clickable-card" (click)="goToProgramsList()" role="button" tabindex="0">
-      <div class="stat-icon icon-purple">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> 
-          <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/> 
-          <line x1="16" x2="16" y1="2" y2="6"/> 
-          <line x1="8" x2="8" y1="2" y2="6"/> 
-          <line x1="3" x2="21" y1="10" y2="10"/> 
-        </svg> 
-      </div> 
-      <div class="stat-info"> 
-        <div class="stat-value">{{ batchCount() | number }}</div> 
-        <div class="stat-label">إجمالي الدفعات</div> 
-        <div class="stat-subtext">عبر جميع السنوات</div> 
-      </div> 
-    </div> 
-
-  </div> 
-
-  <!-- Charts Section --> 
-  <div class="charts-grid"> 
-
-    <!-- Bar Chart (عدد الدفعات بالسنوات) --> 
-    <div class="chart-card"> 
-      <div class="chart-header"> 
-        <div> 
-          <h3 class="chart-title">عدد الدفعات بالسنوات</h3> 
-          <p class="chart-subtitle">توزيع الدفعات التدريبية المنفذة سنوياً</p> 
-        </div> 
-      </div> 
-      <div class="chart-body bar-body"> 
-        <canvas id="batchesBarChart"></canvas> 
-      </div> 
-    </div> 
-
-    <!-- Donut Chart (تقسيم المسارات بالسنوات) -->
-    <div class="chart-card">
-      <div class="chart-header">
-        <div>
-          <h3 class="chart-title">تقسيم المسارات</h3>
-          <p class="chart-subtitle">بناءً على السنة المختارة</p>
+      <div class="tp-Topbar">
+        <div class="tp-breadcrumb">
+          <span class="tp-crumb-link" (click)="closeTraineePreview()">لوحة التحكم التنفيذية</span>
+          <span>/</span>
+          <span class="tp-crumb-active">بطاقة المعاينة التفصيلية للمتدرب: {{ tp.fullName }}</span>
         </div>
-        <select class="batch-select" [value]="selectedYear()" (change)="onYearChange($event)">
-          @for (year of availableYears(); track year) {
-            <option [value]="year">{{ year }}</option>
-          } @empty {
-            <option [value]="selectedYear()">{{ selectedYear() }}</option>
-          }
-        </select>
+        <button type="button" class="tp-back-btn" (click)="closeTraineePreview()">
+          <span>→</span>
+          <span>العودة</span>
+        </button>
       </div>
-      <div class="chart-body donut-body">
-        <canvas id="tracksDonutChart"></canvas>
+
+      <div class="tp-hero-card">
+        <div class="tp-hero-banner">
+          <div>
+            <div class="tp-banner-kicker">ملف المتدرب الشامل · منظومة نفاذ للتدريب</div>
+            <h2 class="tp-banner-prog">{{ tp.programName }}</h2>
+          </div>
+          <div class="tp-banner-meta">
+            <div>رقم القيد التدريبي: #{{ tp.enrollmentId }}</div>
+            <div>تاريخ آخر تحديث: {{ tp.lastEvaluationDate }}</div>
+          </div>
+        </div>
+
+        <div class="tp-hero-body">
+          <div class="tp-identity">
+            <div class="tp-big-avatar" [style.background-color]="tp.avatarColor">
+              {{ tp.initials }}
+            </div>
+            <div class="tp-identity-text">
+              <div class="tp-name-row">
+                <h1 class="tp-fullname">{{ tp.fullName }}</h1>
+                <span class="tp-status-badge"
+                      [class.tp-status-good]="tp.performancePercent >= 80 || tp.attendancePercent >= 80"
+                      [class.tp-status-risk]="tp.performancePercent < 80 && tp.attendancePercent < 80">
+                  {{ (tp.performancePercent >= 80 || tp.attendancePercent >= 80) ? 'متدرب متميز ومنتظم' : 'متعثر - بحاجة لمتابعة' }}
+                </span>
+              </div>
+              <div class="tp-info-line">
+                <span>🎓 {{ tp.university }}</span>
+                <span>·</span>
+                <span>تخصص: <strong>{{ tp.major }}</strong></span>
+                <span>·</span>
+                <span>العمر: <strong>{{ tp.age }} سنة</strong></span>
+                <span>·</span>
+                <span>الرقم المدني: {{ tp.nationalId }}</span>
+              </div>
+              <div class="tp-info-line">
+                <span>✉️ {{ tp.email }}</span>
+                <span>·</span>
+                <span>📞 {{ tp.phone }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tp-social-buttons">
+            <a [href]="tp.gitHubUrl" target="_blank" rel="noopener" class="tp-profile-link-btn tp-btn-github">
+              <span class="tp-btn-icon-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
+                  <path d="M9 18c-4.51 2-5-2-7-2"/>
+                </svg>
+              </span>
+              <span class="tp-btn-label">حساب GitHub</span>
+              <span class="tp-btn-arrow">↗</span>
+            </a>
+
+            <a [href]="tp.linkedInUrl" target="_blank" rel="noopener" class="tp-profile-link-btn tp-btn-linkedin">
+              <span class="tp-btn-icon-box">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                  <rect width="4" height="12" x="2" y="9"/>
+                  <circle cx="4" cy="4" r="2"/>
+                </svg>
+              </span>
+              <span class="tp-btn-label">حساب LinkedIn</span>
+              <span class="tp-btn-arrow">↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-cards-grid four-cols">
+        <div class="stat-card">
+          <div class="stat-icon icon-teal">⭐</div>
+          <div class="stat-info">
+            <div class="stat-label">التقييم العام للمدرب</div>
+            <div class="stat-value">{{ tp.performancePercent }}%</div>
+            <div class="stat-subtext">تقني: {{ tp.technicalScore }}% · سلوكي: {{ tp.behavioralScore }}%</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-blue">📊</div>
+          <div class="stat-info">
+            <div class="stat-label">نسبة الالتزام بالحضور</div>
+            <div class="stat-value">{{ tp.attendancePercent }}%</div>
+            <div class="stat-subtext">حضور {{ tp.presentDays }} يوم · غياب {{ tp.absentDays }} يوم</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-purple">📚</div>
+          <div class="stat-info">
+            <div class="stat-label">إنجاز وحدات المسار</div>
+            <div class="stat-value">{{ tp.moduleProgressPercent }}%</div>
+            <div class="stat-subtext">{{ tp.trackName }}</div>
+          </div>
+        </div>
+
+        <div class="stat-card" [class.card-danger]="tp.warnings.length > 0">
+          <div class="stat-icon" [ngClass]="tp.warnings.length > 0 ? 'icon-red' : 'icon-teal'">
+            {{ tp.warnings.length > 0 ? '⚠️' : '✓' }}
+          </div>
+          <div class="stat-info">
+            <div class="stat-label" [class.text-danger]="tp.warnings.length > 0">الإنذارات السابقة</div>
+            <div class="stat-value">{{ tp.warnings.length }}</div>
+            <div class="stat-subtext">
+              {{ tp.warnings.length > 0 ? 'يوجد إنذارات مسجلة' : 'سجل التزام نظيف خالٍ من الإنذارات' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tp-two-cols">
+        <div class="tp-detail-box">
+          <h3 class="tp-box-title">🏢 بيانات الدفعة والمسار والشركة المستضيفة</h3>
+          <div class="tp-info-grid">
+            <div class="tp-info-cell">
+              <span class="tp-cell-label">المسار التدريبي (Track)</span>
+              <span class="tp-cell-val highlight-blue">{{ tp.trackName }}</span>
+            </div>
+            <div class="tp-info-cell">
+              <span class="tp-cell-label">اسم الدفعة الملتحق بها</span>
+              <span class="tp-cell-val">{{ tp.batchName }}</span>
+            </div>
+            <div class="tp-info-cell">
+              <span class="tp-cell-label">الشركة المستضيفة (المدربة)</span>
+              <span class="tp-cell-val highlight-teal">{{ tp.companyName }}</span>
+            </div>
+            <div class="tp-info-cell">
+              <span class="tp-cell-label">المدرب والمشرف الميداني</span>
+              <span class="tp-cell-val">{{ tp.trainerName }}</span>
+            </div>
+          </div>
+
+          <div class="tp-skills-section">
+            <div class="tp-cell-label" style="margin-bottom: 8px;">المهارات التقنية المكتسبة:</div>
+            <div class="tp-skills-wrap">
+              @for (s of tp.skills; track s) {
+                <span class="tp-skill-tag">{{ s }}</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="tp-detail-box">
+          <h3 class="tp-box-title">📅 سجل أيام الحضور والغياب والتقييم التفصيلي</h3>
+
+          <div class="tp-attendance-counters">
+            <div class="tp-att-box att-present">
+              <div class="tp-att-num">{{ tp.presentDays }}</div>
+              <div class="tp-att-lbl">أيام الحضور</div>
+            </div>
+            <div class="tp-att-box att-absent">
+              <div class="tp-att-num">{{ tp.absentDays }}</div>
+              <div class="tp-att-lbl">أيام الغياب</div>
+            </div>
+            <div class="tp-att-box att-late">
+              <div class="tp-att-num">{{ tp.lateDays }}</div>
+              <div class="tp-att-lbl">أيام التأخر</div>
+            </div>
+            <div class="tp-att-box att-excused">
+              <div class="tp-att-num">{{ tp.excusedDays }}</div>
+              <div class="tp-att-lbl">غياب بعذر</div>
+            </div>
+          </div>
+
+          <div class="tp-score-bars">
+            <div class="tp-bar-item">
+              <div class="tp-bar-head">
+                <span>التقييم التقني والعملي (Technical Score)</span>
+                <strong>{{ tp.technicalScore }}%</strong>
+              </div>
+              <div class="capacity-bar-track">
+                <div class="capacity-bar-fill" [style.width.%]="tp.technicalScore"></div>
+              </div>
+            </div>
+
+            <div class="tp-bar-item">
+              <div class="tp-bar-head">
+                <span>الانضباط والتقييم السلوكي (Behavioral Score)</span>
+                <strong>{{ tp.behavioralScore }}%</strong>
+              </div>
+              <div class="capacity-bar-track">
+                <div class="capacity-bar-fill" [style.width.%]="tp.behavioralScore"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tp-two-cols">
+        <div class="tp-detail-box">
+          <div class="tp-box-header-flex">
+            <h3 class="tp-box-title" style="margin:0; border:none; padding:0;">📝 تقييم وملاحظات المدرب على المتدرب</h3>
+            <span class="tp-trainer-badge">{{ tp.trainerName }}</span>
+          </div>
+          <div class="tp-notes-quote">
+            "{{ tp.trainerNotes }}"
+          </div>
+        </div>
+
+        <div class="tp-detail-box">
+          <div class="tp-box-header-flex">
+            <h3 class="tp-box-title" style="margin:0; border:none; padding:0;">🔔 سجل الإنذارات والمخالفات السابقة</h3>
+            <span class="tp-trainer-badge">الإجمالي: {{ tp.warnings.length }}</span>
+          </div>
+
+          @if (tp.warnings.length === 0) {
+            <div class="tp-clean-record">
+              <span>✅</span>
+              <span>لا توجد أي إنذارات سابقة مسجلة على المتدرب ({{ tp.fullName }}) — سجل التزام ممتاز.</span>
+            </div>
+          } @else {
+            <div class="tp-warnings-list">
+              @for (w of tp.warnings; track w.warningId) {
+                <div class="tp-warn-item">
+                  <div>
+                    <div class="tp-warn-title">{{ w.type }} · المستوى: {{ w.level }}</div>
+                    <div class="tp-warn-reason">{{ w.reason }}</div>
+                  </div>
+                  <div class="tp-warn-date">
+                    <div>{{ w.date }}</div>
+                    <strong>#{{ w.warningId }}</strong>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+    </div>
+  }
+
+  <!-- =========================================================================
+       2) صفحة معاينة تفاصيل إنذار الشركة المستضيفة (تظهر عند الضغط على معاينة إنذار شركة)
+       ========================================================================= -->
+  @if (selectedWarningDetail(); as wd) {
+    <div class="trainee-full-page">
+
+      <div class="tp-Topbar">
+        <div class="tp-breadcrumb">
+          <span class="tp-crumb-link" (click)="closeWarningPreview()">لوحة التحكم التنفيذية</span>
+          <span>/</span>
+          <span class="tp-crumb-active">تفاصيل الإنذار رقم #{{ wd.warningId }} — {{ wd.targetName }}</span>
+        </div>
+        <button type="button" class="tp-back-btn" (click)="closeWarningPreview()">
+          <span>→</span>
+          <span>العودة إلى لوحة التحكم</span>
+        </button>
+      </div>
+
+      <div class="tp-hero-card">
+        <div class="tp-hero-banner" style="background: linear-gradient(135deg, #7c2d12 0%, #b45309 55%, #d97706 100%);">
+          <div>
+            <div class="tp-banner-kicker" style="color: #fde68a;">بطاقة معاينة تفاصيل الإنذار · منظومة نفاذ الرقابية</div>
+            <h2 class="tp-banner-prog">🔔 إنذار مسجل على: {{ wd.targetName }}</h2>
+          </div>
+          <div class="tp-banner-meta">
+            <div>رقم الإنذار المرجعي: <strong>#{{ wd.warningId }}</strong></div>
+            <div>تاريخ إصدار الإنذار: <strong>{{ wd.issuedDate }}</strong></div>
+          </div>
+        </div>
+
+        <div class="tp-hero-body">
+          <div class="tp-identity">
+            <div class="tp-big-avatar" style="background-color: #d97706; font-size: 28px;">
+              🏢
+            </div>
+            <div class="tp-identity-text">
+              <div class="tp-name-row">
+                <h1 class="tp-fullname">{{ wd.targetName }}</h1>
+                <span class="tp-status-badge tp-status-risk">
+                  {{ wd.statusArabic }}
+                </span>
+              </div>
+              <div class="tp-info-line">
+                <span>📍 {{ wd.companyLocation }}</span>
+                <span>·</span>
+                <span>تصنيف الإنذار: <strong>{{ wd.type }}</strong></span>
+                <span>·</span>
+                <span>درجة الإنذار: <strong>{{ wd.levelArabic }}</strong></span>
+              </div>
+              <div class="tp-info-line">
+                <span>✉️ {{ wd.companyEmail }}</span>
+                <span>·</span>
+                <span>👤 {{ wd.companyContact }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-cards-grid four-cols">
+        <div class="stat-card card-danger">
+          <div class="stat-icon icon-red">🔔</div>
+          <div class="stat-info">
+            <div class="stat-label text-danger">رقم الإنذار</div>
+            <div class="stat-value">#{{ wd.warningId }}</div>
+            <div class="stat-subtext">تاريخ الإصدار: {{ wd.issuedDate }}</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-amber">⚠️</div>
+          <div class="stat-info">
+            <div class="stat-label">نوع ومجال الإنذار</div>
+            <div class="stat-value" style="font-size: 20px;">{{ wd.type }}</div>
+            <div class="stat-subtext">{{ wd.typeArabic }}</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-purple">📌</div>
+          <div class="stat-info">
+            <div class="stat-label">مستوى الإنذار</div>
+            <div class="stat-value" style="font-size: 20px;">{{ wd.level }}</div>
+            <div class="stat-subtext">{{ wd.levelArabic }}</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-teal">🏢</div>
+          <div class="stat-info">
+            <div class="stat-label">الطاقة الاستيعابية للشركة</div>
+            <div class="stat-value">{{ wd.companyCapacity }}</div>
+            <div class="stat-subtext">إجمالي الإنذارات المسجلة عليها: {{ wd.totalWarningsForTarget }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tp-two-cols">
+        <div class="tp-detail-box">
+          <div class="tp-box-header-flex">
+            <h3 class="tp-box-title" style="margin:0; border:none; padding:0;">📋 سبب وتفاصيل المخالفة المرصودة في الإنذار</h3>
+            <span class="tp-trainer-badge" style="background:#fef2f2; color:#dc2626;">#{{ wd.warningId }}</span>
+          </div>
+          <div class="tp-notes-quote" style="background:#fffbeb; border-color:#fde68a; color:#78350f;">
+            "{{ wd.evidence }}"
+          </div>
+        </div>
+
+        <div class="tp-detail-box">
+          <div class="tp-box-header-flex">
+            <h3 class="tp-box-title" style="margin:0; border:none; padding:0;">✅ الإجراء التصحيحي والمتابعة المطلوبة</h3>
+            <span class="tp-trainer-badge">{{ wd.statusArabic }}</span>
+          </div>
+          <div class="tp-notes-quote" style="background:#f0fdf4; border-color:#bbf7d0; color:#065f46;">
+            "{{ wd.resolution }}"
+          </div>
+        </div>
+      </div>
+
+    </div>
+  }
+
+  <!-- =========================================================================
+       3) صفحة المتدربين المتميزين لهذا الشهر فقط (تظهر عند الضغط على عرض الكل)
+       ========================================================================= -->
+  @if (showAllTopPerformersPage() && selectedTraineeProfile() === null && selectedWarningDetail() === null) {
+    <div class="trainee-full-page">
+
+      <div class="tp-Topbar">
+        <div class="tp-breadcrumb">
+          <span class="tp-crumb-link" (click)="closeTopPerformersPage()">لوحة التحكم التنفيذية</span>
+          <span>/</span>
+          <span class="tp-crumb-active">قائمة المتدربين المتميزين لهذا الشهر فقط</span>
+        </div>
+        <button type="button" class="tp-back-btn" (click)="closeTopPerformersPage()">
+          <span>→</span>
+          <span>العودة إلى لوحة التحكم</span>
+        </button>
+      </div>
+
+      <div class="tp-hero-card">
+        <div class="tp-hero-banner">
+          <div>
+            <div class="tp-banner-kicker">قائمة التميز الشهري · منظومة نفاذ للتدريب</div>
+            <h2 class="tp-banner-prog">⭐ المتدربون المتميزون لهذا الشهر ({{ allTopPerformers().length }} متدرباً)</h2>
+          </div>
+          <div class="tp-banner-meta">
+            <div>متوسط أداء المتميزين: <strong>{{ summary()?.topPerformersAvgScore ?? 0 }}%</strong></div>
+            <div>معيار التميز: الأداء التقني والالتزام ≥ 80%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="list-panel-card" style="padding: 22px;">
+        <div class="list-panel-header" style="margin-bottom: 16px;">
+          <h3 class="list-panel-title">جميع المتدربين المتميزين لهذا الشهر مرتبين حسب الأعلى أداءً</h3>
+          <span class="tp-trainer-badge" style="background:#f0fdf4; color:#0d9488; border:1px solid #99f6e4; padding:6px 14px; font-size:13px; font-weight:700; border-radius:8px;">
+            إجمالي المتميزين: {{ allTopPerformers().length }} متدرباً
+          </span>
+        </div>
+
+        <div class="top-performers-full-grid">
+          @for (t of allTopPerformers(); track t.traineeId; let idx = $index) {
+            <div class="person-item-row tp-card-row" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+              <div class="person-right" style="display:flex; align-items:center; gap:12px;">
+                <span class="tp-rank-badge">#{{ idx + 1 }}</span>
+                <div class="person-avatar" [style.background-color]="getAvatarColor(idx)">
+                  {{ getInitials(t.fullName) }}
+                </div>
+                <div class="person-text" style="display:flex; flex-direction:column; gap:3px; text-align:right;">
+                  <div class="person-name">{{ t.fullName }}</div>
+                  <div class="person-sub">{{ t.major }} · <strong style="color:#0d9488;">{{ t.companyName || 'شركة مستضيفة معتمدة' }}</strong></div>
+                </div>
+              </div>
+
+              <div class="person-left-actions" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                <div class="score-badge">
+                  <span class="score-val">{{ t.performancePercent }}%</span>
+                  <span class="score-lbl">أداء</span>
+                </div>
+
+                <div class="score-badge" style="background:#eff6ff; border-color:#bfdbfe;">
+                  <span class="score-val" style="color:#1d4ed8;">{{ t.attendancePercent }}%</span>
+                  <span class="score-lbl" style="color:#3b82f6;">حضور</span>
+                </div>
+
+                <button type="button" class="icon-action-btn eye-btn" (click)="openTraineePreview(t, idx)" [title]="'معاينة ملف ' + t.fullName">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+
+                <a [href]="getSafeGitHubUrl(t.gitHubUrl, t.fullName)" target="_blank" rel="noopener" class="icon-action-btn gh-btn" title="حساب GitHub">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
+                    <path d="M9 18c-4.51 2-5-2-7-2"/>
+                  </svg>
+                </a>
+
+                <a [href]="getSafeLinkedInUrl(t.linkedInUrl, t.fullName)" target="_blank" rel="noopener" class="icon-action-btn in-btn" title="ملف LinkedIn">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                    <rect width="4" height="12" x="2" y="9"/>
+                    <circle cx="4" cy="4" r="2"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty-state">لا توجد بيانات للمتميزين حالياً</div>
+          }
+        </div>
+      </div>
+
+    </div>
+  }
+
+  <!-- =========================================================================
+       4) صفحة المتدربين المتعثرين فقط (تظهر عند الضغط على عرض الكل في المتعثرين)
+       ========================================================================= -->
+  @if (showAllAtRiskPage() && selectedTraineeProfile() === null && selectedWarningDetail() === null) {
+    <div class="trainee-full-page">
+
+      <div class="tp-Topbar">
+        <div class="tp-breadcrumb">
+          <span class="tp-crumb-link" (click)="closeAtRiskPage()">لوحة التحكم التنفيذية</span>
+          <span>/</span>
+          <span class="tp-crumb-active">قائمة المتدربين المتعثرين بحاجة لمتابعة</span>
+        </div>
+        <button type="button" class="tp-back-btn" (click)="closeAtRiskPage()">
+          <span>→</span>
+          <span>العودة إلى لوحة التحكم</span>
+        </button>
+      </div>
+
+      <div class="tp-hero-card">
+        <div class="tp-hero-banner" style="background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 60%, #dc2626 100%);">
+          <div>
+            <div class="tp-banner-kicker" style="color: #fecaca;">نظام الإنذار المبكر والمتابعة · منظومة نفاذ للتدريب</div>
+            <h2 class="tp-banner-prog">⚠️ المتدربون المتعثرون بحاجة لمتابعة ({{ allAtRiskTrainees().length }} متدرباً)</h2>
+          </div>
+          <div class="tp-banner-meta">
+            <div>معيار التعثر: نسبة الحضور أقل من 80% أو الأداء أقل من 60%</div>
+            <div>مرتبون حسب الأكثر انخفاضاً في نسبة الحضور</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="list-panel-card" style="padding: 22px;">
+        <div class="list-panel-header" style="margin-bottom: 16px;">
+          <h3 class="list-panel-title">جميع المتدربين المتعثرين المسجلين للمتابعة</h3>
+          <span class="tp-trainer-badge" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; padding:6px 14px; font-size:13px; font-weight:700; border-radius:8px;">
+            إجمالي المتعثرين: {{ allAtRiskTrainees().length }} متدرباً
+          </span>
+        </div>
+
+        <div class="top-performers-full-grid">
+          @for (t of allAtRiskTrainees(); track t.traineeId; let idx = $index) {
+            <div class="person-item-row tp-card-row" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+              <div class="person-right" style="display:flex; align-items:center; gap:12px;">
+                <span class="tp-rank-badge" style="background:#fef2f2; color:#dc2626; border-color:#fecaca;">#{{ idx + 1 }}</span>
+                <div class="person-avatar" [style.background-color]="getAvatarColor(idx)">
+                  {{ getInitials(t.fullName) }}
+                </div>
+                <div class="person-text" style="display:flex; flex-direction:column; gap:3px; text-align:right;">
+                  <div class="person-name">{{ t.fullName }}</div>
+                  <div class="person-sub">{{ t.major }} · <strong style="color:#0f172a;">{{ t.companyName || 'شركة مستضيفة معتمدة' }}</strong></div>
+                  <div class="person-sub danger-sub">انخفاض الحضور ({{ t.attendancePercent }}%)</div>
+                </div>
+              </div>
+
+              <div class="person-left-actions" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                <div class="score-badge" style="background:#fef2f2; border-color:#fecaca;">
+                  <span class="score-val" style="color:#dc2626;">{{ t.attendancePercent }}%</span>
+                  <span class="score-lbl" style="color:#ef4444;">حضور</span>
+                </div>
+
+                <button type="button" class="icon-action-btn eye-btn" (click)="openTraineePreview(t, idx)" [title]="'معاينة ملف ' + t.fullName">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+
+                <a [href]="getSafeGitHubUrl(t.gitHubUrl, t.fullName)" target="_blank" rel="noopener" class="icon-action-btn gh-btn" title="حساب GitHub">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
+                    <path d="M9 18c-4.51 2-5-2-7-2"/>
+                  </svg>
+                </a>
+
+                <a [href]="getSafeLinkedInUrl(t.linkedInUrl, t.fullName)" target="_blank" rel="noopener" class="icon-action-btn in-btn" title="ملف LinkedIn">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                    <rect width="4" height="12" x="2" y="9"/>
+                    <circle cx="4" cy="4" r="2"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty-state">لا يوجد متدربون متعثرون حالياً</div>
+          }
+        </div>
+      </div>
+
+    </div>
+  }
+
+  <!-- =========================================================================
+       5) صفحة لوحة التحكم التنفيذية (تبقى محفوظة في الـ DOM لعدم ضياع الشارتات)
+       ========================================================================= -->
+  <div [hidden]="selectedTraineeProfile() !== null || selectedWarningDetail() !== null || showAllTopPerformersPage() || showAllAtRiskPage()">
+
+    <!-- 1. Hero Banner -->
+    <div class="hero-banner">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <h1 class="hero-title">بوابة الإدارة المركزية</h1>
+        <p class="hero-subtitle">منظومة نفاذ للتدريب - هيئة تنظيم الاتصالات</p>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; z-index: 2;">
+        @if (showRefreshToast()) {
+          <span style="background: rgba(16, 185, 129, 0.92); color: #fff; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 8px;">
+            ✓ تم تحديث البيانات من قاعدة البيانات
+          </span>
+        }
+        <button type="button" class="refresh-hero-btn" [disabled]="isLoading()" (click)="refreshData()">
+          <span>↻</span>
+          <span>{{ isLoading() ? 'جاري التحديث...' : 'تحديث البيانات' }}</span>
+        </button>
       </div>
     </div>
 
-  </div> 
+    <!-- 2. إعلانات الهيئة والمنصة -->
+    @if (announcements().length > 0) {
+      <div class="announcements-panel">
+        <div class="announcements-header">
+          <div class="announcements-title-wrap">
+            <div class="ann-header-icon">📄</div>
+            <h3 class="announcements-title">إعلانات الهيئة والمنصة</h3>
+          </div>
+          <div class="announcements-actions">
+            <span class="ann-count-badge">{{ announcements().length }}</span>
+            <button type="button" class="ann-close-btn" (click)="toggleAnnouncements()">
+              {{ showAnnouncements() ? '✕' : '▼' }}
+            </button>
+          </div>
+        </div>
 
-  <!-- Recent Activity Section --> 
-  <div class="activity-card"> 
-    <div class="activity-header" style="display: flex; justify-content: space-between; align-items: center;"> 
-      <h3 class="chart-title">سجل الأنشطة الأخيرة</h3> 
+        @if (showAnnouncements()) {
+          <div class="announcements-list">
+            @for (ann of announcements(); track ann.announcementId ?? ann.id ?? $index) {
+              <div class="announcement-row">
+                <div class="ann-main">
+                  <div class="ann-title">{{ ann.title || 'إعلان رسمي' }}</div>
+                  <div class="ann-body">{{ ann.content || ann.body || ann.message }}</div>
+                </div>
+                <div class="ann-meta">
+                  <div class="ann-tag-col">
+                    <span class="ann-tag">إعلان</span>
+                    <span class="ann-date">{{ (ann.createdAt || ann.publishedAt || ann.date) | date:'yyyy-MM-dd' }}</span>
+                  </div>
+                  <div class="ann-row-icon">📄</div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
 
-      @if (allActivity().length > 10) {
-        <button type="button" class="btn-link" (click)="toggleShowAllActivity()" style="background: none; border: none; color: #0A1172; cursor: pointer; font-weight: 600;">
-          {{ showAllActivity() ? 'عرض أقل' : 'عرض الكل (' + allActivity().length + ')' }}
+    <!-- 3. الصف الأول: إحصائيات المنظومة الأساسية -->
+    <div class="stat-cards-grid four-cols">
+      <div class="stat-card clickable-card" (click)="goToTraineesList()" role="button" tabindex="0">
+        <div class="stat-icon icon-blue">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">إجمالي المتدربين</div>
+          <div class="stat-value">{{ traineeCount() | number }}</div>
+          <div class="stat-subtext active-trainees">{{ summary()?.activeTrainees ?? 0 }} متدرب نشط حالياً</div>
+        </div>
+      </div>
+
+      <div class="stat-card clickable-card" (click)="goToCompaniesList()" role="button" tabindex="0">
+        <div class="stat-icon icon-teal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
+            <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
+            <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">الشركات المستضيفة</div>
+          <div class="stat-value">{{ companyCount() | number }}</div>
+          <div class="stat-subtext">شركة معتمدة</div>
+        </div>
+      </div>
+
+      <div class="stat-card clickable-card" (click)="goToProgramsList()" role="button" tabindex="0">
+        <div class="stat-icon icon-purple">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+            <line x1="16" x2="16" y1="2" y2="6"/>
+            <line x1="8" x2="8" y1="2" y2="6"/>
+            <line x1="3" x2="21" y1="10" y2="10"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">إجمالي الدفعات</div>
+          <div class="stat-value">{{ batchCount() | number }}</div>
+          <div class="stat-subtext">عبر جميع السنوات</div>
+        </div>
+      </div>
+
+      <div class="stat-card clickable-card" (click)="goToCertificatesList()" role="button" tabindex="0">
+        <div class="stat-icon icon-amber">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="6"/>
+            <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">الشهادات الصادرة</div>
+          <div class="stat-value">{{ (summary()?.totalCertificates ?? 0) | number }}</div>
+          <div class="stat-subtext">شهادة تدريبية معتمدة</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. الصف الثاني: مؤشرات الأداء والالتزام -->
+    <div class="stat-cards-grid four-cols">
+      <div class="stat-card">
+        <div class="stat-icon icon-indigo">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" x2="18" y1="20" y2="10"/>
+            <line x1="12" x2="12" y1="20" y2="4"/>
+            <line x1="6" x2="6" y1="20" y2="14"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">متوسط الحضور</div>
+          <div class="stat-value">{{ summary()?.overallAttendanceRate ?? 0 }}%</div>
+          <div class="stat-subtext">من الأسابيع المتاحة</div>
+        </div>
+      </div>
+
+      <div class="stat-card clickable-card" (click)="openTopPerformersPage()" role="button" tabindex="0">
+        <div class="stat-icon icon-purple">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">المتدربون المتميزون</div>
+          <div class="stat-value">{{ summary()?.topPerformersCount ?? 0 }}</div>
+          <div class="stat-subtext">هذا الشهر (اضغط للعرض)</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon icon-teal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+            <polyline points="16 7 22 7 22 13"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">متوسط أداء المتميزين</div>
+          <div class="stat-value">{{ summary()?.topPerformersAvgScore ?? 0 }}%</div>
+          <div class="stat-subtext">محسوب من بيانات الأداء الحقيقية</div>
+        </div>
+      </div>
+
+      <div class="stat-card card-danger clickable-card" (click)="openAtRiskPage()" role="button" tabindex="0">
+        <div class="stat-icon icon-red">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+            <line x1="12" x2="12" y1="9" y2="13"/>
+            <line x1="12" x2="12.01" y1="17" y2="17"/>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label text-danger">متعثرون بحاجة لمتابعة</div>
+          <div class="stat-value">{{ summary()?.atRiskCount ?? 0 }}</div>
+          <div class="stat-subtext">اضغط لعرض قائمة المتعثرين</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. قسم لوحة تشغيل الاستضافة والتدريب + شريط الطاقة الاستيعابية -->
+    <div class="section-heading-row">
+      <div>
+        <h2 class="section-main-title">لوحة تشغيل الاستضافة والتدريب</h2>
+        <p class="section-main-subtitle">متابعة أداء المتدربين، الطاقة الاستيعابية والإنذارات عبر المنظومة</p>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px;">
+        @if (lastUpdated()) {
+          <span style="font-size: 11px; color: #64748b;">
+            آخر تحديث: {{ lastUpdated() | date:'hh:mm a' }}
+          </span>
+        }
+        <button type="button" class="btn-outline-refresh" [disabled]="isLoading()" (click)="refreshData()">
+          <span>↻</span>
+          <span>{{ isLoading() ? 'جاري التحديث...' : 'تحديث البيانات' }}</span>
         </button>
+      </div>
+    </div>
+
+    <div class="capacity-card">
+      <div class="capacity-header">
+        <span class="capacity-title">الطاقة الاستيعابية الكلية للشركات المستضيفة</span>
+        <span class="capacity-meta">
+          المستخدم: {{ summary()?.capacity?.used ?? 0 }} من {{ summary()?.capacity?.total ?? 0 }}
+        </span>
+      </div>
+
+      <div class="capacity-bar-track">
+        <div class="capacity-bar-fill" [style.width.%]="capacityPercent()"></div>
+      </div>
+
+      <div class="capacity-footer">
+        <div class="capacity-stats-right">
+          <span>{{ capacityPercent() }}% مستخدم</span>
+          <span>المتبقية: {{ summary()?.capacity?.remaining ?? 0 }} مقعداً</span>
+        </div>
+        <div class="capacity-legend-left">
+          <span class="legend-item">
+            <span class="legend-dot used-dot"></span>
+            مستخدم {{ summary()?.capacity?.used ?? 0 }}
+          </span>
+          <span class="legend-item">
+            <span class="legend-dot remaining-dot"></span>
+            متبقي {{ summary()?.capacity?.remaining ?? 0 }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. أشرطة التقدم الأفقية -->
+    <div class="horizontal-bars-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">متوسط الحضور الأسبوعي للمتدربين</h3>
+          <span class="chart-subtitle">المعدل العام: {{ summary()?.overallAttendanceRate ?? 0 }}%</span>
+        </div>
+
+        <div class="h-bars-list">
+          @for (w of summary()?.attendanceWeeks || []; track w.label) {
+            <div class="h-bar-row">
+              <div class="h-bar-label">{{ w.label }}</div>
+              <div class="h-bar-track">
+                <div class="h-bar-fill" [style.width.%]="w.value">
+                  <span class="h-bar-inside-val">{{ w.value }}%</span>
+                </div>
+              </div>
+              <div class="h-bar-value">{{ w.value }}%</div>
+            </div>
+          } @empty {
+            <div class="empty-state">لا توجد سجلات حضور أسبوعية مسجلة حالياً</div>
+          }
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">توزيع المتدربين حسب البرنامج</h3>
+          <span class="chart-subtitle">أعلى البرامج التدريبية التحاقاً</span>
+        </div>
+
+        <div class="h-bars-list">
+          @for (prog of summary()?.programDistribution || []; track prog.label) {
+            <div class="h-bar-row">
+              <div class="h-bar-label truncate-text" [title]="prog.label">{{ prog.label }}</div>
+              <div class="h-bar-track">
+                <div class="h-bar-fill" [style.width.%]="getBarWidth(prog.value)">
+                  <span class="h-bar-inside-val">{{ prog.value }}</span>
+                </div>
+              </div>
+              <div class="h-bar-value">{{ prog.value }} متدرب</div>
+            </div>
+          } @empty {
+            <div class="empty-state">لا توجد بيانات توزيع برامج حالياً</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. الرسوم البيانية (Bar + Donut) -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h3 class="chart-title">عدد الدفعات بالسنوات</h3>
+            <p class="chart-subtitle">توزيع الدفعات التدريبية المنفذة سنوياً</p>
+          </div>
+        </div>
+        <div class="chart-body bar-body">
+          <canvas id="batchesBarChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h3 class="chart-title">تقسيم المسارات</h3>
+            <p class="chart-subtitle">بناءً على السنة المختارة</p>
+          </div>
+          <select class="batch-select" [value]="selectedYear()" (change)="onYearChange($event)">
+            @for (year of availableYears(); track year) {
+              <option [value]="year">{{ year }}</option>
+            } @empty {
+              <option [value]="selectedYear()">{{ selectedYear() }}</option>
+            }
+          </select>
+        </div>
+        <div class="chart-body donut-body">
+          <canvas id="tracksDonutChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         8. القوائم الثلاثية التفصيلية في الأسفل
+         ========================================================================= -->
+    <div class="bottom-three-cols">
+
+      <!-- العمود 1: المتدربون المتميزون هذا الشهر -->
+      <div class="list-panel-card">
+        <div class="list-panel-header">
+          <h3 class="list-panel-title">⭐ المتدربون المتميزون هذا الشهر</h3>
+          <button type="button" class="panel-link-btn" (click)="openTopPerformersPage()">عرض الكل</button>
+        </div>
+
+        <div class="list-panel-body">
+          @for (t of summary()?.topPerformers || []; track t.traineeId; let idx = $index) {
+            <div class="person-item-row" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+              <div class="person-right" style="display:flex; align-items:center; gap:12px;">
+                <div class="person-avatar" [style.background-color]="getAvatarColor(idx)">
+                  {{ getInitials(t.fullName) }}
+                </div>
+                <div class="person-text" style="display:flex; flex-direction:column; gap:3px; text-align:right;">
+                  <div class="person-name">{{ t.fullName }}</div>
+                  <div class="person-sub">{{ t.major }}</div>
+                </div>
+              </div>
+
+              <div class="person-left-actions" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                <div class="score-badge">
+                  <span class="score-val">{{ t.performancePercent }}%</span>
+                  <span class="score-lbl">أداء</span>
+                </div>
+
+                <button type="button" class="icon-action-btn eye-btn" (click)="openTraineePreview(t, idx)" [title]="'معاينة ملف ' + t.fullName">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+
+                <a [href]="getSafeGitHubUrl(t.gitHubUrl, t.fullName)" target="_blank" rel="noopener" class="icon-action-btn gh-btn" title="حساب GitHub">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
+                    <path d="M9 18c-4.51 2-5-2-7-2"/>
+                  </svg>
+                </a>
+
+                <a [href]="getSafeLinkedInUrl(t.linkedInUrl, t.fullName)" target="_blank" rel="noopener" class="icon-action-btn in-btn" title="ملف LinkedIn">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                    <rect width="4" height="12" x="2" y="9"/>
+                    <circle cx="4" cy="4" r="2"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty-state">لا توجد بيانات تقييم حالياً</div>
+          }
+        </div>
+      </div>
+
+      <!-- العمود 2: المتدربون المتعثرون -->
+      <div class="list-panel-card">
+        <div class="list-panel-header">
+          <h3 class="list-panel-title">⚠️ المتدربون المتعثرون</h3>
+          <button type="button" class="panel-link-btn" (click)="openAtRiskPage()">عرض الكل</button>
+        </div>
+
+        <div class="list-panel-body">
+          @for (t of summary()?.atRiskTrainees || []; track t.traineeId; let idx = $index) {
+            <div class="person-item-row" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+              <div class="person-right" style="display:flex; align-items:center; gap:12px;">
+                <div class="person-avatar" [style.background-color]="getAvatarColor(idx)">
+                  {{ getInitials(t.fullName) }}
+                </div>
+                <div class="person-text" style="display:flex; flex-direction:column; gap:3px; text-align:right;">
+                  <div class="person-name" style="line-height:1.3;">{{ t.fullName }}</div>
+                  <div class="person-sub" style="line-height:1.3;">{{ t.major }}</div>
+                  <div class="person-sub danger-sub" style="line-height:1.3; margin-top:1px;">انخفاض الحضور ({{ t.attendancePercent }}%)</div>
+                </div>
+              </div>
+
+              <div class="person-left-actions" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                <button type="button" class="icon-action-btn eye-btn" (click)="openTraineePreview(t, idx)" [title]="'معاينة ملف ' + t.fullName">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+
+                <a [href]="getSafeGitHubUrl(t.gitHubUrl, t.fullName)" target="_blank" rel="noopener" class="icon-action-btn gh-btn" title="حساب GitHub">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
+                    <path d="M9 18c-4.51 2-5-2-7-2"/>
+                  </svg>
+                </a>
+
+                <a [href]="getSafeLinkedInUrl(t.linkedInUrl, t.fullName)" target="_blank" rel="noopener" class="icon-action-btn in-btn" title="ملف LinkedIn">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                    <rect width="4" height="12" x="2" y="9"/>
+                    <circle cx="4" cy="4" r="2"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty-state">لا يوجد متدربون متعثرون</div>
+          }
+        </div>
+      </div>
+
+      <!-- العمود 3: أحدث الإنذارات (بدون أيقونات GitHub و LinkedIn + معاينة ذكية للشركة أو المتدرب) -->
+      <div class="list-panel-card">
+        <div class="list-panel-header">
+          <h3 class="list-panel-title">🔔 أحدث الإنذارات</h3>
+          <button type="button" class="panel-link-btn" (click)="goToWarningsList()">عرض الكل</button>
+        </div>
+
+        <div class="list-panel-body">
+          @for (w of summary()?.recentWarnings || []; track w.warningId; let idx = $index) {
+            <div class="person-item-row" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+              <div class="person-right" style="display:flex; align-items:center; gap:12px;">
+                <div class="warning-icon-box" [class.company-warn]="w.scope === 'Company'">
+                  🔔
+                </div>
+                <div class="person-text" style="display:flex; flex-direction:column; gap:3px; text-align:right;">
+                  <div class="person-name">{{ w.type }}</div>
+                  <div class="person-sub">{{ w.targetName }}</div>
+                  <div class="warning-date-meta">{{ w.issuedDate | date:'yyyy-MM-dd' }} · #{{ w.warningId }}</div>
+                </div>
+              </div>
+
+              <div class="person-left-actions" style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                <button type="button" class="icon-action-btn eye-btn" (click)="onWarningItemPreview(w, idx)" [title]="'معاينة تفاصيل الإنذار #' + w.warningId">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty-state">لا توجد إنذارات مسجلة</div>
+          }
+        </div>
+      </div>
+
+    </div>
+
+    <!-- =========================================================================
+         9. سجل الأنشطة الأخيرة (مع زر عرض الكل الموحد + بدون ثواني + Pagination)
+         ========================================================================= -->
+    <div class="activity-card">
+      <div class="list-panel-header" style="margin-bottom: 14px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <h3 class="list-panel-title">🕒 سجل الأنشطة الأخيرة</h3>
+          <span class="tp-trainer-badge" style="font-size:11px; padding:3px 10px;">
+            {{ allActivity().length | number }} نشاط مسجل
+          </span>
+        </div>
+
+        @if (allActivity().length > 8) {
+          <button type="button" class="panel-link-btn" (click)="toggleShowAllActivity()">
+            {{ showAllActivity() ? 'عرض مختصر' : 'عرض الكل' }}
+          </button>
+        }
+      </div>
+
+      <div class="activity-list">
+        @for (item of recentActivity(); track item.logId ?? item.id ?? $index) {
+          <div class="activity-item">
+            <div class="activity-content">
+              <div class="activity-action-title">
+                <span class="status-dot" [ngClass]="getActivityClass(item.action, item.entityName)"></span>
+                <span>{{ item.action }}</span>
+              </div>
+              <div class="activity-meta">
+                <span>{{ item.userName }}</span>
+                <span>•</span>
+                <span class="activity-entity-pill">{{ item.entityName }}</span>
+              </div>
+            </div>
+
+            <!-- التاريخ والساعة والدقيقة فقط بدون ثوانٍ -->
+            <div class="activity-time" dir="ltr">
+              {{ (item.timestamp || item.createdAt) | date:'MMM d, y · h:mm a' }}
+            </div>
+          </div>
+        } @empty {
+          <div class="empty-state">لا يوجد نشاط بعد</div>
+        }
+      </div>
+
+      <!-- شريط ترقيم الصفحات (Pagination) يظهر عند الضغط على "عرض الكل" -->
+      @if (showAllActivity() && totalActivityPages() > 1) {
+        <div class="activity-pagination">
+          <div class="pagination-info">
+            الصفحة <strong>{{ activityPage() }}</strong> من <strong>{{ totalActivityPages() }}</strong>
+            <span style="color:#94a3b8; margin:0 6px;">|</span>
+            <span>عرض {{ ((activityPage() - 1) * activityPageSize) + 1 }} – {{ ((activityPage() - 1) * activityPageSize) + recentActivity().length }} من أصل {{ allActivity().length }}</span>
+          </div>
+
+          <div class="pagination-controls">
+            <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === 1" (click)="goToActivityPage(1)" title="الصفحة الأولى">
+              «
+            </button>
+            <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === 1" (click)="goToActivityPage(activityPage() - 1)">
+              السابق
+            </button>
+
+            @for (p of visibleActivityPages(); track p) {
+              <button type="button" class="page-btn" [class.active]="p === activityPage()" (click)="goToActivityPage(p)">
+                {{ p }}
+              </button>
+            }
+
+            <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === totalActivityPages()" (click)="goToActivityPage(activityPage() + 1)">
+              التالي
+            </button>
+            <button type="button" class="page-btn nav-page-btn" [disabled]="activityPage() === totalActivityPages()" (click)="goToActivityPage(totalActivityPages())" title="الصفحة الأخيرة">
+              »
+            </button>
+          </div>
+        </div>
       }
-    </div> 
+    </div>
 
-    <div class="activity-list"> 
-      @for (item of recentActivity(); track item.logId ?? item.id ?? $index) { 
-        <div class="activity-item"> 
-          <div class="activity-content"> 
-            <div class="activity-action-title"> 
-              <span class="status-dot" [ngClass]="getActivityClass(item.action, item.entityName)"></span> 
-              <span>{{ item.action }}</span> 
-            </div> 
-            <div class="activity-meta"> 
-              {{ item.userName }} • {{ item.entityName }} 
-            </div> 
-          </div> 
-
-          <div class="activity-time"> 
-            {{ (item.timestamp || item.createdAt) | date:'medium' }} 
-          </div> 
-        </div> 
-      } 
-      
-      @empty { 
-        <div class="empty-state">لا يوجد نشاط بعد</div> 
-      } 
-    </div> 
-  </div> 
+  </div>
 
 </div>

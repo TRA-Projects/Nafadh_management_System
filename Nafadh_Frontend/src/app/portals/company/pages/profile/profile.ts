@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CompanyBranchDto, CompanyDto, CompanySupervisorDto, EnrollmentDto } from '../../../../core/models/dtos';
@@ -33,7 +34,7 @@ export interface HostedSpecialtyDto {
 
 @Component({
   selector: 'app-company-profile',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })
@@ -62,6 +63,7 @@ export class CompanyProfile implements OnInit {
 
   uploadingCover = signal(false);
   uploadingLogo = signal(false);
+  logoFailed = signal(false);
   coverUploadError = signal(false);
   logoUploadError = signal(false);
   readonly maxImageSizeMb = 5;
@@ -70,20 +72,22 @@ export class CompanyProfile implements OnInit {
     taxNumber: '',
     phone: '',
     email: '',
-    website: '',
-    accreditationValidUntil: '',
   };
   capacityDraft = 0;
   newFieldDraft = '';
 
   branchFormOpen = signal(false);
-  branchDraft = { location: '', contactPoint: '' };
+  branchDraft = { location: '', phone: '' };
   supervisorFormOpen = signal(false);
-  supervisorDraft = { userId: '', name: '', role: '', phone: '', email: '' };
+  supervisorDraft = { name: '', role: '', phone: '', email: '' };
 
   companyInitial = computed(() => this.company()?.companyName?.trim()?.charAt(0)?.toUpperCase() ?? 'ش');
 
   // حساب عدد المتدربين بناءً على العدد الفعلي من getEnrollmentsByCompany أو قيم Capacity
+  approvedSupervisors = computed(() =>
+    this.supervisors().filter((person) => this.isApprovedSupervisor(person.status)),
+  );
+
   usedCapacityValue = computed(() => {
     if (this.trainees().length > 0) {
       return this.trainees().length;
@@ -107,16 +111,6 @@ export class CompanyProfile implements OnInit {
     this.api.getCompany(this.companyId).subscribe({
       next: (response) => {
         const normalizedCompany = this.normalizeCompany(response);
-        if (normalizedCompany) {
-          try {
-            const storedCover = localStorage.getItem(`nafadh-company-${normalizedCompany.companyId}-cover`);
-            const storedLogo = localStorage.getItem(`nafadh-company-${normalizedCompany.companyId}-logo`);
-            if (storedCover) normalizedCompany.coverImageUrl = storedCover;
-            if (storedLogo) normalizedCompany.logoUrl = storedLogo;
-          } catch {
-            // Ignore local storage read failures.
-          }
-        }
         this.company.set(normalizedCompany);
         this.capacityDraft = normalizedCompany?.capacity ?? 0;
         this.companyLoadError.set(false);
@@ -230,7 +224,7 @@ export class CompanyProfile implements OnInit {
       role: supervisor.role || supervisor.position || supervisor.department || '—',
       phone: supervisor.phone || '',
       email: supervisor.email || '',
-      status: supervisor.status || '—',
+      status: supervisor.status ?? '—',
     } as CompanySupervisorProfileDto;
   }
 
@@ -261,8 +255,6 @@ export class CompanyProfile implements OnInit {
       taxNumber: c.taxNumber || '',
       phone: c.phone || '',
       email: c.email || '',
-      website: c.website || '',
-      accreditationValidUntil: c.accreditationValidUntil || '',
     };
     this.companyEditOpen.set(true);
   }
@@ -372,6 +364,19 @@ export class CompanyProfile implements OnInit {
     });
   }
 
+  private isApprovedSupervisor(status: unknown): boolean {
+    // NFD_SupervisorStatus: Active = 0, Inactive = 1, Suspended = 2
+    if (typeof status === 'number') return status === 0;
+    const value = String(status ?? '').trim().toLowerCase();
+    return value === 'active' || value === '0' || value === 'معتمد' || value === 'نشط';
+  }
+
+  branchPhoneLabel(value?: string | null): string {
+    const text = (value ?? '').trim();
+    if (!text) return 'لا يوجد هاتف مسجل';
+    return text.startsWith('هاتف الفرع') ? text : `هاتف الفرع: ${text}`;
+  }
+
   addBranch() {
     this.branchFormOpen.set(true);
   }
@@ -383,11 +388,11 @@ export class CompanyProfile implements OnInit {
     this.api.addBranch({
       companyId: this.companyId,
       location,
-      contactPoint: this.branchDraft.contactPoint.trim() || null,
+      contactPoint: this.branchDraft.phone.trim() || null,
     }).subscribe({
       next: (branch) => {
         this.branches.update((cur) => [...cur, branch as CompanyBranchDto]);
-        this.branchDraft = { location: '', contactPoint: '' };
+        this.branchDraft = { location: '', phone: '' };
         this.branchFormOpen.set(false);
       },
       error: (error) => {
@@ -401,17 +406,20 @@ export class CompanyProfile implements OnInit {
   }
 
   saveSupervisor() {
-    const userId = Number(this.supervisorDraft.userId);
-    if (!userId || !this.companyId) return;
+    const name = this.supervisorDraft.name.trim();
+    if (!name || !this.companyId) return;
 
     this.api.addSupervisor({
-      userId,
+      name,
+      fullName: name,
+      phone: this.supervisorDraft.phone.trim() || null,
+      email: this.supervisorDraft.email.trim() || null,
       department: this.supervisorDraft.role.trim() || null,
       position: this.supervisorDraft.role.trim() || null,
       companyId: this.companyId,
     }).subscribe({
       next: () => {
-        this.supervisorDraft = { userId: '', name: '', role: '', phone: '', email: '' };
+        this.supervisorDraft = { name: '', role: '', phone: '', email: '' };
         this.supervisorFormOpen.set(false);
         this.api.getSupervisors(this.companyId).subscribe({
           next: (items: CompanySupervisorDto[]) => this.supervisors.set((items ?? []).map((x) => this.normalizeSupervisor(x))),
@@ -461,11 +469,12 @@ export class CompanyProfile implements OnInit {
 
     this.readFileAsDataUrl(file)
       .then((dataUrl) => this.persistImage(kind, dataUrl, previousUrl))
-      .catch(() => this.revertImage(kind, previousUrl))
-      .finally(() => {
-        URL.revokeObjectURL(previewUrl);
+      .catch(() => {
+        this.revertImage(kind, previousUrl);
         (kind === 'cover' ? this.uploadingCover : this.uploadingLogo).set(false);
-      });
+        (kind === 'cover' ? this.coverUploadError : this.logoUploadError).set(true);
+      })
+      .finally(() => URL.revokeObjectURL(previewUrl));
   }
 
   private persistImage(kind: 'cover' | 'logo', value: string, fallbackUrl?: string) {
@@ -478,19 +487,20 @@ export class CompanyProfile implements OnInit {
     uploadingSignal.set(true);
     errorSignal.set(false);
 
-    try {
-      localStorage.setItem(`nafadh-company-${c.companyId}-${kind}`, value);
-    } catch (error) {
-      console.error(`Failed to store ${kind} preview locally:`, error);
-      this.revertImage(kind, fallbackUrl);
-      errorSignal.set(true);
-    }
+    const patch = kind === 'cover' ? { coverImage: value || null } : { logo: value || null };
 
-    if (!errorSignal()) {
-      this.applyImageToCompany(kind, value);
-    }
-
-    uploadingSignal.set(false);
+    this.api.updateCompany(c.companyId, this.buildCompanyUpdatePayload(c, patch)).subscribe({
+      next: () => {
+        this.applyImageToCompany(kind, value);
+        uploadingSignal.set(false);
+      },
+      error: (error) => {
+        console.error(`Failed to save company ${kind}:`, error);
+        this.revertImage(kind, fallbackUrl);
+        errorSignal.set(true);
+        uploadingSignal.set(false);
+      },
+    });
   }
 
   private applyImageToCompany(kind: 'cover' | 'logo', value: string) {

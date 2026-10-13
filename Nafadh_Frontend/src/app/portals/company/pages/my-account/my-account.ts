@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -9,18 +10,24 @@ type AccountTab = 'info' | 'permissions' | 'activities';
 
 @Component({
   selector: 'app-my-account',
-  imports: [DatePipe],
+  imports: [DatePipe, FormsModule],
   templateUrl: './my-account.html',
   styleUrls: ['./my-account.scss'],
 })
 export class CompanyMyAccount implements OnInit {
+
   private readonly api = inject(CompanyApi);
   readonly auth = inject(AuthService);
 
   profile = signal<CompanyAccountDto | null>(null);
   loading = signal(true);
   loadError = signal(false);
+  exportingPdf = signal(false);
   activeTab = signal<AccountTab>('info');
+  editingAccount = signal(false);
+savingAccount = signal(false);
+
+editPhone = signal('');
 
   ngOnInit(): void {
     this.loadAccount();
@@ -29,6 +36,52 @@ export class CompanyMyAccount implements OnInit {
   setActiveTab(tab: AccountTab): void {
     this.activeTab.set(tab);
   }
+  startEditAccount(): void {
+  const account = this.profile();
+
+  if (!account) {
+    return;
+  }
+
+
+  this.editPhone.set(account.phone ?? '');
+
+  this.editingAccount.set(true);
+}
+
+cancelEditAccount(): void {
+  this.editingAccount.set(false);
+}
+
+saveAccount(): void {
+  const phone = this.editPhone().trim();
+
+  this.savingAccount.set(true);
+
+  this.api.updateMyAccount({
+    phone
+    
+  }).subscribe({
+    next: () => {
+      const current = this.profile();
+
+      if (current) {
+        this.profile.set({
+          ...current,
+          phone
+        });
+      }
+
+      this.editingAccount.set(false);
+      this.savingAccount.set(false);
+    },
+
+   error: (error: unknown) => {
+  console.error('Failed to update phone:', error);
+  this.savingAccount.set(false);
+}
+  });
+}
 
   loadAccount(): void {
     this.loading.set(true);
@@ -39,8 +92,10 @@ export class CompanyMyAccount implements OnInit {
         this.profile.set(data);
         this.loading.set(false);
       },
+
       error: (error) => {
         console.error('Failed to load company account:', error);
+
         this.profile.set(null);
         this.loadError.set(true);
         this.loading.set(false);
@@ -48,44 +103,29 @@ export class CompanyMyAccount implements OnInit {
     });
   }
 
-  async exportToPdf(): Promise<void> {
-    const element = document.getElementById('account-pdf-content');
-    if (!element) return;
+exportToPdf(): void {
+  console.log('PDF BUTTON CLICKED');
 
-    if (typeof (window as any).html2pdf === 'undefined') {
-      await this.loadPdfScript();
-    }
+  this.api.downloadMyAccountPdf().subscribe({
+    next: (blob: Blob) => {
+      console.log('PDF RECEIVED:', blob);
 
-    const html2pdf = (window as any).html2pdf;
-    if (!html2pdf) return;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
 
-    html2pdf()
-      .set({
-        margin: 10,
-        filename: `بيانات_الحساب_${new Date().toISOString().slice(0, 10)}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      })
-      .from(element)
-      .save();
-  }
+      link.href = url;
+      link.download = 'حسابي.pdf';
 
-  private loadPdfScript(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const existing = document.querySelector('script[data-html2pdf="true"]');
-      if (existing) {
-        resolve();
-        return;
-      }
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-      const script = document.createElement('script');
-      script.src =
-        'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-      script.setAttribute('data-html2pdf', 'true');
-      script.onload = () => resolve();
-      script.onerror = (error) => reject(error);
-      document.body.appendChild(script);
-    });
-  }
+      window.URL.revokeObjectURL(url);
+    },
+
+    error: (error) => {
+      console.error('PDF EXPORT ERROR:', error);
+    },
+  })
 }
+};

@@ -44,6 +44,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_Session> NFD_Sessions { get; set; }
         public DbSet<NFD_SessionAttendance> NFD_SessionAttendances { get; set; }
         public DbSet<NFD_DailyAttendance> NFD_DailyAttendances { get; set; }
+        public DbSet<NFD_TrainerAttendance> NFD_TrainerAttendances { get; set; }
         public DbSet<NFD_Excuse> NFD_Excuses { get; set; }
         public DbSet<NFD_Task> NFD_Tasks { get; set; }
         public DbSet<NFD_Rubric> NFD_Rubrics { get; set; }
@@ -75,12 +76,26 @@ namespace Nafadh_Backend
         public DbSet<NFD_TraineePaymentSchedule> NFD_TraineePaymentSchedules { get; set; }
         public DbSet<NFD_CompanyPayment> NFD_CompanyPayments { get; set; }
         public DbSet<NFD_CompanyPaymentSchedule> NFD_CompanyPaymentSchedules { get; set; }
+
         // NEW DbSets (backend upgrade - Phase 2 Contract Alignment)
         public DbSet<NFD_FeedbackCriterion> NFD_FeedbackCriteria { get; set; }
         public DbSet<NFD_Feedback> NFD_Feedbacks { get; set; }
         public DbSet<NFD_FeedbackScore> NFD_FeedbackScores { get; set; }
         public DbSet<NFD_Badge> NFD_Badges { get; set; }
         public DbSet<NFD_TraineeBadge> NFD_TraineeBadges { get; set; }
+        // Company Portal course plans (additive - see Models/NFD_CoursePlan.cs)
+        public DbSet<NFD_CoursePlan> NFD_CoursePlans { get; set; }
+        public DbSet<NFD_CoursePlanStage> NFD_CoursePlanStages { get; set; }
+        public DbSet<NFD_CoursePlanItem> NFD_CoursePlanItems { get; set; }
+        public DbSet<NFD_CoursePlanNote> NFD_CoursePlanNotes { get; set; }
+        public DbSet<NFD_CoursePlanTrainer> NFD_CoursePlanTrainers { get; set; }
+        public DbSet<NFD_CoursePlanStageTrainer> NFD_CoursePlanStageTrainers { get; set; }
+        public DbSet<NFD_LessonFeedback> NFD_LessonFeedbacks { get; set; }
+        public DbSet<NFD_TraineeSkill> NFD_TraineeSkills { get; set; }
+
+
+        // Remediation Request Entity
+        public DbSet<RemediationRequest> RemediationRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -344,6 +359,55 @@ namespace Nafadh_Backend
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
+            // ---- NFD_LessonFeedback ----
+
+            modelBuilder.Entity<NFD_LessonFeedback>(entity =>
+            {
+                entity.ToTable("NFD_LessonFeedbacks");
+
+                entity.HasKey(e => e.LessonFeedbackId);
+
+                entity.Property(e => e.Note)
+                    .HasMaxLength(2000);
+
+                entity.Property(e => e.CreatedAt)
+                    .IsRequired();
+
+                entity.Property(e => e.UpdatedAt)
+                    .IsRequired(false);
+
+                // One trainee can have only one feedback record per lesson
+                entity.HasIndex(e => new
+                {
+                    e.TraineeId,
+                    e.LessonId
+                })
+                .IsUnique();
+
+                // Lesson relationship
+                entity.HasOne(e => e.Lesson)
+                    .WithMany(l => l.LessonFeedbacks)
+                    .HasForeignKey(e => e.LessonId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Trainee relationship
+                entity.HasOne(e => e.Trainee)
+                    .WithMany(t => t.LessonFeedbacks)
+                    .HasForeignKey(e => e.TraineeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+            //-------------------------
+
+
+
+
+
+
+
+
+
             // ---- NFD_TrainingMaterial ----
             modelBuilder.Entity<NFD_TrainingMaterial>(entity =>
             {
@@ -494,7 +558,6 @@ namespace Nafadh_Backend
                     .WithMany()
                     .HasForeignKey(e => e.CreatedByUserId)
                     .OnDelete(DeleteBehavior.Restrict);
-                // NEW: optional Module scoping
                 entity.HasOne(e => e.Module)
                     .WithMany(p => p.EvaluationTemplates)
                     .HasForeignKey(e => e.ModuleId)
@@ -511,7 +574,7 @@ namespace Nafadh_Backend
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ---- NFD_EvaluationCriterionScore ---- (NEW)
+            // ---- NFD_EvaluationCriterionScore ----
             modelBuilder.Entity<NFD_EvaluationCriterionScore>(entity =>
             {
                 entity.ToTable("NFD_EvaluationCriterionScores");
@@ -551,12 +614,10 @@ namespace Nafadh_Backend
             modelBuilder.Entity<NFD_Warning>(entity =>
             {
                 entity.ToTable("NFD_Warnings");
-                // EDITED: EnrollmentId is now optional (Scope == Trainee only)
                 entity.HasOne(e => e.Enrollment)
                     .WithMany(p => p.Warnings)
                     .HasForeignKey(e => e.EnrollmentId)
                     .OnDelete(DeleteBehavior.Restrict);
-                // NEW: optional Company relation (Scope == Company only)
                 entity.HasOne(e => e.Company)
                     .WithMany(p => p.Warnings)
                     .HasForeignKey(e => e.CompanyId)
@@ -564,6 +625,20 @@ namespace Nafadh_Backend
                 entity.HasOne(e => e.User)
                     .WithMany()
                     .HasForeignKey(e => e.RaisedByUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ---- RemediationRequest ----
+            modelBuilder.Entity<RemediationRequest>(entity =>
+            {
+                entity.ToTable("NFD_RemediationRequests");
+                entity.HasOne(e => e.Warning)
+                    .WithMany()
+                    .HasForeignKey(e => e.WarningId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(e => e.Company)
+                    .WithMany()
+                    .HasForeignKey(e => e.CompanyId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -605,13 +680,10 @@ namespace Nafadh_Backend
                     .WithMany()
                     .HasForeignKey(e => e.SenderId)
                     .OnDelete(DeleteBehavior.Restrict);
-                // EDITED: ReceiverId is now optional (a ticket-threaded reply has no
-                // single pre-known receiver)
                 entity.HasOne(e => e.Receiver)
                     .WithMany()
                     .HasForeignKey(e => e.ReceiverId)
                     .OnDelete(DeleteBehavior.Restrict);
-                // NEW: optional Ticket/Conversation relation
                 entity.HasOne(e => e.Ticket)
                     .WithMany(p => p.Messages)
                     .HasForeignKey(e => e.TicketId)
@@ -688,10 +760,6 @@ namespace Nafadh_Backend
                     .HasForeignKey(e => e.CompanyPaymentId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
-
-            // ==========================================================
-            // NEW entities (backend upgrade - Phase 2 Contract Alignment)
-            // ==========================================================
 
             // ---- NFD_FeedbackCriterion ----
             modelBuilder.Entity<NFD_FeedbackCriterion>(entity =>
@@ -880,6 +948,16 @@ namespace Nafadh_Backend
                     .HasForeignKey(e => e.SelectedOptionId)
                     .OnDelete(DeleteBehavior.NoAction);
             });
+
+            // ---- Company Portal course plans ----
+            modelBuilder.ConfigureCoursePlans();
+
+            // ---- NFD_TraineeSkill ----
+            modelBuilder.Entity<NFD_TraineeSkill>()
+            .HasOne(ts => ts.Trainee)
+            .WithMany(t => t.TraineeSkills)
+            .HasForeignKey(ts => ts.TraineeId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         }
     }

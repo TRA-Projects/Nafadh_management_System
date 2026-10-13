@@ -128,5 +128,25 @@ namespace Nafadh_Backend.Repositories
                 .Select(e => e.Trainee)
                 .ToListAsync();
         }
+        // ============================================================
+        // Get All Supervisors across all companies
+        // ============================================================
+        public async Task<IEnumerable<NFD_CompanySupervisor>> GetAllAsync()
+        {
+            return await _context.Set<NFD_CompanySupervisor>()
+                .IgnoreQueryFilters() // <-- ضعيها هنا لتجاوز أي فلترة تلقائية للشركة
+
+                // User
+                .Include(s => s.User)
+
+                // User -> Role
+                .ThenInclude(u => u.Role)
+
+                // Role -> RolePermissions -> Permission
+                .ThenInclude(r => r.RolePermissions)
+                .ThenInclude(rp => rp.Permission)
+
+                .ToListAsync();
+        }
     }
 }

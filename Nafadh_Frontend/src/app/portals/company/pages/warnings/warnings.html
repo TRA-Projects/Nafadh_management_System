@@ -1,0 +1,449 @@
+
+<div class="warnings-page" dir="rtl">
+
+  <!-- رأس الصفحة -->
+  <header class="page-header">
+    <div class="header-content">
+      
+<div class="header-icon" aria-hidden="true">
+  <svg
+    class="shield-color-icon"
+    viewBox="0 0 48 48"
+    width="38"
+    height="38"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <!-- الدرع الخارجي -->
+    <path
+      d="M24 4L40 10V21C40 31 33 39 24 44C15 39 8 31 8 21V10L24 4Z"
+      fill="#FFFFFF"
+      fill-opacity="0.18"
+      stroke="#FFFFFF"
+      stroke-width="2"
+      stroke-linejoin="round"
+    />
+
+    <!-- اللون الداخلي للدرع -->
+    <path
+      d="M24 9L35 13V21C35 28 30.5 34 24 38C17.5 34 13 28 13 21V13L24 9Z"
+      fill="#8FB8FF"
+      fill-opacity="0.85"
+    />
+
+    <!-- علامة الصح -->
+    <path
+      d="M17.5 23.5L22 28L31 18.5"
+      stroke="#FFFFFF"
+      stroke-width="3"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+
+    <!-- دائرة ذهبية صغيرة -->
+    <circle cx="37" cy="10" r="6" fill="#FFD166" />
+    <path
+      d="M37 7.5V10.5"
+      stroke="#654712"
+      stroke-width="1.7"
+      stroke-linecap="round"
+    />
+    <circle cx="37" cy="12.5" r="0.8" fill="#654712" />
+  </svg>
+</div>
+
+
+
+      <div class="header-text">
+        <h1>إدارة الإنذارات</h1>
+        <p>متابعة الإنذارات الواردة إلى الشركة ومراجعة تفاصيلها وحالتها.</p>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="refresh-button"
+      (click)="loadCompanyWarnings()"
+      [disabled]="loading"
+    >
+      <i class="bi bi-arrow-clockwise"></i>
+      {{ loading ? 'جارٍ التحديث...' : 'تحديث البيانات' }}
+    </button>
+  </header>
+
+  <!-- رسالة الخطأ -->
+  <div
+    class="message-box error-message"
+    *ngIf="errorMessage"
+    role="alert"
+  >
+    <i class="bi bi-exclamation-circle"></i>
+    <span>{{ errorMessage }}</span>
+
+    <button type="button" (click)="loadCompanyWarnings()">
+      إعادة المحاولة
+    </button>
+  </div>
+
+  <!-- بطاقات الإحصائيات -->
+  <section class="stats-grid" aria-label="إحصائيات الإنذارات">
+
+    <article class="stat-card total-card">
+      <div class="stat-icon">
+        <i class="bi bi-collection"></i>
+      </div>
+
+      <div class="stat-info">
+        <span>إجمالي الإنذارات</span>
+        <strong>{{ warnings.length }}</strong>
+        <small>جميع الإنذارات الواردة للشركة</small>
+      </div>
+    </article>
+
+    <article class="stat-card open-card">
+      <div class="stat-icon">
+        <i class="bi bi-bell"></i>
+      </div>
+
+      <div class="stat-info">
+        <span>الإنذارات المفتوحة</span>
+        <strong>{{ openCount }}</strong>
+        <small>تحتاج إلى المتابعة</small>
+      </div>
+    </article>
+
+    <article class="stat-card review-card">
+      <div class="stat-icon">
+        <i class="bi bi-hourglass-split"></i>
+      </div>
+
+      <div class="stat-info">
+        <span>قيد المراجعة</span>
+        <strong>{{ reviewCount }}</strong>
+        <small>تتم مراجعتها حاليًا</small>
+      </div>
+    </article>
+
+    <article class="stat-card critical-card">
+      <div class="stat-icon">
+        <i class="bi bi-exclamation-triangle"></i>
+      </div>
+
+      <div class="stat-info">
+        <span>الإنذارات الحرجة</span>
+        <strong>{{ criticalCount }}</strong>
+        <small>تحتاج إلى اهتمام خاص</small>
+      </div>
+    </article>
+
+  </section>
+
+  <!-- محتوى الإنذارات -->
+  <section class="content-card">
+
+    <div class="section-heading">
+      <div>
+        <h2>الإنذارات الواردة</h2>
+        <p>ابحثي عن الإنذار المطلوب أو استخدمي الفلاتر لتسهيل المتابعة.</p>
+      </div>
+
+      <span class="results-count">
+        {{ filteredWarnings.length }} نتيجة
+      </span>
+    </div>
+
+    <!-- البحث والفلاتر -->
+    <div class="filters-area">
+
+      <div class="search-field">
+        <i class="bi bi-search"></i>
+        <input
+          type="text"
+          [(ngModel)]="searchText"
+          placeholder="ابحثي برقم الإنذار أو النوع أو التفاصيل..."
+          aria-label="البحث في الإنذارات"
+        />
+      </div>
+
+      <div class="filter-field">
+        <label for="warningType">نوع الإنذار</label>
+        <select id="warningType" [(ngModel)]="selectedType">
+          <option value="">جميع الأنواع</option>
+          <option value="Attendance">حضور وانضباط</option>
+          <option value="Performance">الأداء</option>
+          <option value="Behavioral">السلوك</option>
+          <option value="Other">أخرى</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="warningLevel">مستوى الخطورة</label>
+        <select id="warningLevel" [(ngModel)]="selectedLevel">
+          <option value="">جميع المستويات</option>
+          <option value="Low">منخفض</option>
+          <option value="Medium">متوسط</option>
+          <option value="High">مرتفع</option>
+          <option value="Critical">حرج</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="warningStatus">الحالة</label>
+        <select id="warningStatus" [(ngModel)]="selectedStatus">
+          <option value="">جميع الحالات</option>
+          <option value="Open">مفتوح</option>
+          <option value="UnderReview">قيد المراجعة</option>
+          <option value="Resolved">تم الحل</option>
+          <option value="Escalated">تم التصعيد</option>
+        </select>
+      </div>
+
+      <button
+        type="button"
+        class="reset-button"
+        (click)="resetFilters()"
+      >
+        <i class="bi bi-arrow-counterclockwise"></i>
+        مسح الفلاتر
+      </button>
+
+    </div>
+
+    <!-- حالة التحميل -->
+    <div class="loading-state" *ngIf="loading">
+      <span class="spinner"></span>
+      <p>جارٍ تحميل الإنذارات...</p>
+    </div>
+
+    <!-- جدول الإنذارات -->
+    <div class="table-wrapper" *ngIf="!loading && !errorMessage">
+
+      <table *ngIf="filteredWarnings.length > 0; else emptyState">
+        <thead>
+          <tr>
+            <th>رقم الإنذار</th>
+            <th>نوع الإنذار</th>
+            <th>مستوى الخطورة</th>
+            <th>تاريخ الإصدار</th>
+            <th>الحالة</th>
+            <th>الإجراء</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            *ngFor="let warning of filteredWarnings; trackBy: trackByWarningId"
+          >
+            <td>
+              <span class="warning-number">
+                #{{ warning.warningId }}
+              </span>
+            </td>
+
+            <td>
+              <span class="type-cell">
+                <i class="bi bi-file-earmark-text"></i>
+                {{ typeLabel(warning.type) }}
+              </span>
+            </td>
+
+            <td>
+              <span
+                class="level-badge"
+                [ngClass]="levelClass(warning.level)"
+              >
+                {{ levelLabel(warning.level) }}
+              </span>
+            </td>
+
+            <td class="date-cell">
+              {{ warning.issuedDate | date:'dd/MM/yyyy' }}
+            </td>
+
+            <td>
+              <span
+                class="status-badge"
+                [ngClass]="statusClass(warning.status)"
+              >
+                {{ statusLabel(warning.status) }}
+              </span>
+            </td>
+
+            <td>
+              <button
+                type="button"
+                class="details-button"
+                (click)="selectWarning(warning)"
+              >
+                <i class="bi bi-eye"></i>
+                التفاصيل
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- لا توجد نتائج -->
+      <ng-template #emptyState>
+        <div class="empty-state">
+          <div class="empty-icon">
+            <i class="bi bi-inbox"></i>
+          </div>
+
+          <h3>
+            {{
+              warnings.length === 0
+                ? 'لا توجد إنذارات حتى الآن'
+                : 'لا توجد نتائج مطابقة'
+            }}
+          </h3>
+
+          <p>
+            {{
+              warnings.length === 0
+                ? 'ستظهر هنا الإنذارات التي يرسلها الأدمن إلى الشركة.'
+                : 'جرّبي تغيير كلمات البحث أو مسح الفلاتر.'
+            }}
+          </p>
+
+          <button
+            type="button"
+            class="reset-button"
+            *ngIf="warnings.length > 0"
+            (click)="resetFilters()"
+          >
+            مسح الفلاتر
+          </button>
+        </div>
+      </ng-template>
+
+    </div>
+  </section>
+
+  <!-- نافذة تفاصيل الإنذار -->
+  <div
+    class="details-backdrop"
+    *ngIf="selectedWarning"
+    (click)="closeDetails()"
+  >
+    <section
+      class="details-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="detailsTitle"
+      (click)="$event.stopPropagation()"
+    >
+
+      <header class="details-header">
+        <div>
+          <span class="details-eyebrow">تفاصيل الإنذار</span>
+          <h2 id="detailsTitle">
+            الإنذار #{{ selectedWarning.warningId }}
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          class="close-button"
+          aria-label="إغلاق التفاصيل"
+          (click)="closeDetails()"
+        >
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </header>
+
+      <div class="details-body">
+
+        <div class="details-status-row">
+          <span
+            class="level-badge"
+            [ngClass]="levelClass(selectedWarning.level)"
+          >
+            {{ levelLabel(selectedWarning.level) }}
+          </span>
+
+          <span
+            class="status-badge"
+            [ngClass]="statusClass(selectedWarning.status)"
+          >
+            {{ statusLabel(selectedWarning.status) }}
+          </span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">نوع الإنذار</span>
+          <strong>{{ typeLabel(selectedWarning.type) }}</strong>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">تاريخ الإصدار</span>
+          <strong>
+            {{ selectedWarning.issuedDate | date:'dd MMMM yyyy' }}
+          </strong>
+        </div>
+
+        <div class="detail-item" *ngIf="selectedWarning.raisedByName">
+          <span class="detail-label">صادر عن</span>
+          <strong>{{ selectedWarning.raisedByName }}</strong>
+        </div>
+
+        <div class="detail-item" *ngIf="selectedWarning.targetName">
+          <span class="detail-label">الجهة المستهدفة</span>
+          <strong>{{ selectedWarning.targetName }}</strong>
+        </div>
+
+        <div class="detail-section">
+          <h3>
+            <i class="bi bi-file-text"></i>
+            تفاصيل وملاحظات الإنذار
+          </h3>
+
+          <p *ngIf="selectedWarning.evidence; else noEvidence">
+            {{ selectedWarning.evidence }}
+          </p>
+
+          <ng-template #noEvidence>
+            <p class="muted-text">
+              لم تتم إضافة تفاصيل لهذا الإنذار.
+            </p>
+          </ng-template>
+        </div>
+
+        <div
+          class="detail-section"
+          *ngIf="selectedWarning.resolution"
+        >
+          <h3>
+            <i class="bi bi-check-circle"></i>
+            ملاحظات المعالجة
+          </h3>
+          <p>{{ selectedWarning.resolution }}</p>
+        </div>
+
+        <div class="reply-notice">
+          <i class="bi bi-chat-left-text"></i>
+          <div>
+            <strong>الرد على الأدمن</strong>
+            <p>
+              يمكن ربط الرد بمحادثة الشركة مع الأدمن بعد التأكد من
+              واجهات المحادثات وصلاحيات المستخدم في الـ Backend.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <footer class="details-footer">
+        <button
+          type="button"
+          class="close-details-button"
+          (click)="closeDetails()"
+        >
+          إغلاق
+        </button>
+      </footer>
+
+    </section>
+  </div>
+
+</div>

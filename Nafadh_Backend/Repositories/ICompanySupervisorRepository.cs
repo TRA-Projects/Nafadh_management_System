@@ -32,6 +32,9 @@ namespace Nafadh_Backend.Interfaces
 
         //6-
         Task<IEnumerable<NFD_Trainee>> GetAssignedTraineesAsync(int supervisorId);
+
+        //7-
+        Task<IEnumerable<NFD_CompanySupervisor>> GetAllAsync();
+        //
     }
-    //
 }
