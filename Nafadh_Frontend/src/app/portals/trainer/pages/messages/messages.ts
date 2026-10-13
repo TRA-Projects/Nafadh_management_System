@@ -93,10 +93,14 @@ export class TrainerMessages implements OnInit {
             )
         );
 
-        if (requests.length === 0) {
-          this.trainees = [];
-          return;
-        }
+       if (requests.length === 0) {
+  this.trainees = [];
+
+  // Load conversations even when no trainees are found.
+  this.loadTrainerConversations(userId);
+
+  return;
+}
 
         forkJoin(requests).subscribe({
           next: (results) => {
@@ -207,6 +211,16 @@ export class TrainerMessages implements OnInit {
         )
     );
 console.log('BATCH GROUPS:', this.batchGroups);
+// Automatically load the first batch group after refresh
+if (
+  this.batchGroups.length > 0 &&
+  !this.isBatchGroupSelected &&
+  this.selectedTraineeId() === null
+) {
+  this.selectBatchGroup(
+    this.batchGroups[0].conversationId
+  );
+}
 
         // نحتاج فقط محادثات المدرب مع المتدرب
         const trainerConversations =
@@ -216,12 +230,12 @@ console.log('BATCH GROUPS:', this.batchGroups);
               'TrainerTrainee'
           );
 
-        if (
-          trainerConversations.length === 0
-        ) {
-          this.messages = [];
-          return;
-        }
+       if (trainerConversations.length === 0) {
+  if (!this.isBatchGroupSelected) {
+    this.messages = [];
+  }
+  return;
+}
 
         const requests =
           trainerConversations.map(
@@ -408,20 +422,27 @@ private formatMessageTime(
 
   unreadOnly = false;
   selectedBatchName = '';
-  get batchNames(): string[] {
+ get batchNames(): string[] {
+  const traineeBatchNames = this.trainees.map(
+    trainee => trainee.batchName
+  );
+
+  const groupBatchNames = this.batchGroups.map(
+    group => group.batchName
+  );
+
   return [
     ...new Set(
-      this.trainees
-        .map((trainee) => trainee.batchName)
-        .filter((name) => !!name)
+      [...traineeBatchNames, ...groupBatchNames]
+        .filter((name): name is string => !!name)
     )
   ];
 }
 get filteredBatchGroups(): any[] {
-  const search =
-    this.searchText
-      .trim()
-      .toLowerCase();
+ const search = this.searchText
+  .trim()
+  .toLowerCase()
+  .replace(/[أإآ]/g, 'ا');
 
   return this.batchGroups.filter(
     (group: any) => {
@@ -445,10 +466,15 @@ get filteredBatchGroups(): any[] {
         !this.selectedBatchName ||
         group.batchName === this.selectedBatchName;
 
-      return (
-        matchesSearch &&
-        matchesBatch
-      );
+    const matchesUnread =
+  !this.unreadOnly ||
+  Number(group.unreadCount ?? 0) > 0;
+
+return (
+  matchesSearch &&
+  matchesBatch &&
+  matchesUnread
+);
     }
   );
 }
@@ -705,6 +731,7 @@ sendMessage(): void {
     if (!userId) {
       return;
     }
+
 
     this.api.sendMessage(
       this.selectedBatchGroupId,
