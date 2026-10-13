@@ -643,6 +643,7 @@ namespace Nafadh_Backend.Migrations
                     b.HasIndex("TrainerId");
 
                     b.ToTable("NFD_CoursePlanTrainers", (string)null);
+                });
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_ConversationGroupMember", b =>
                 {
                     b.Property<int>("Id")
@@ -1998,9 +1999,42 @@ namespace Nafadh_Backend.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("ConfirmedAt")
+     .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ExcuseProofUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<bool>("IsConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TrainerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.HasKey("TrainerAttendanceId");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("TrainerId");
+
+                    b.ToTable("NFD_TrainerAttendances");
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerCertificate", b =>
-                {
+            {
                     b.Property<int>("TrainerCertificateId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
@@ -3122,9 +3156,18 @@ namespace Nafadh_Backend.Migrations
                         .IsRequired();
 
                     b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
-                        .WithMany()
+     .WithMany()
+     .HasForeignKey("TrainerId")
+     .OnDelete(DeleteBehavior.Cascade)
+     .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Trainer");
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TrainerCertificate", b =>
-                {
+            {
                     b.HasOne("Nafadh_Backend.Models.NFD_Trainer", "Trainer")
                         .WithMany("Certificates")
                         .HasForeignKey("TrainerId")
