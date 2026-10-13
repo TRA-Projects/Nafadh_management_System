@@ -199,4 +199,27 @@ namespace Nafadh_Backend.Enums
         ModulesCompletedInPeriod, AttendanceStreak, HighScoreCount, ProjectCompletion, ProgramCompletion
     }
     //
+    public enum NFD_QuizStatus
+    {
+        Draft,
+        Scheduled,
+        Open,
+        Closed,
+        Archived
+    }
+
+    public enum NFD_QuizQuestionType
+    {
+        MultipleChoice,
+        TrueFalse,
+        Essay
+    }
+
+    public enum NFD_QuestionDifficulty
+    {
+        Easy,
+        Medium,
+        Hard
+    }
+
 }
