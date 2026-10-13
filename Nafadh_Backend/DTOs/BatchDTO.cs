@@ -38,6 +38,8 @@ namespace Nafadh_Backend.DTOs
 
     public class UpdateBatchDto
     {
+        public string? BatchName { get; set; }
+        public int ProgramId { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public decimal Capacity { get; set; }
@@ -48,6 +50,7 @@ namespace Nafadh_Backend.DTOs
     public class BatchTraineeDto
     {
         public int TraineeId { get; set; }
+        public int UserId { get; set; }
         public string FullName { get; set; } = string.Empty;
         public NFD_EnrollmentCompletionStatus? CompletionStatus { get; set; }
     }

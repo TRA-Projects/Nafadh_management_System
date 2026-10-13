@@ -20,11 +20,23 @@ namespace Nafadh_Backend.Services
             _repository = repository;
             _configuration = configuration;
         }
+
         public Task<(List<NFD_Trainee> Items, int TotalCount)> GetAllAsync(
-            int? companyId, NFD_TraineeStatus? status, string? university, string? searchTerm,
-            int pageNumber, int pageSize)
+            int? companyId,
+            NFD_TraineeStatus? status,
+            string? university,
+            string? searchTerm,
+            int pageNumber,
+            int pageSize)
         {
-            return _repository.GetAllAsync(companyId, status, university, searchTerm, pageNumber, pageSize);
+            return _repository.GetAllAsync(
+                companyId,
+                status,
+                university,
+                searchTerm,
+                pageNumber,
+                pageSize
+            );
         }
 
         public Task<NFD_Trainee?> GetByIdAsync(int id)
@@ -66,6 +78,8 @@ namespace Nafadh_Backend.Services
         {
             _repository.Update(trainee);
         }
+
+
         // =====================================================
         // UPLOAD TRAINEE PROFILE IMAGE
         // =====================================================
@@ -128,13 +142,13 @@ namespace Nafadh_Backend.Services
                 .ToLowerInvariant();
 
             var allowedExtensions =
-    new HashSet<string>
-    {
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".webp"
-    };
+                new HashSet<string>
+                {
+                    ".jpg",
+                    ".jpeg",
+                    ".png",
+                    ".webp"
+                };
 
             if (
                 !allowedExtensions.Contains(
@@ -155,9 +169,9 @@ namespace Nafadh_Backend.Services
             var allowedContentTypes =
                 new HashSet<string>
                 {
-            "image/jpeg",
-            "image/png",
-            "image/webp"
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp"
                 };
 
             if (
@@ -340,14 +354,246 @@ namespace Nafadh_Backend.Services
             return profileImageUrl;
         }
 
+
+        // =====================================================
+        // UPLOAD TRAINEE CV
+        // =====================================================
+
+        public async Task<string?> UploadResumeAsync(
+            int traineeId,
+            IFormFile file
+        )
+        {
+            // ---------------------------------------------
+            // Find trainee
+            // ---------------------------------------------
+
+            var trainee =
+                await _repository.GetByIdAsync(
+                    traineeId
+                );
+
+            if (trainee == null)
+            {
+                return null;
+            }
+
+
+            // ---------------------------------------------
+            // Validate file
+            // ---------------------------------------------
+
+            if (
+                file == null ||
+                file.Length == 0
+            )
+            {
+                throw new ArgumentException(
+                    "CV file is required."
+                );
+            }
+
+
+            // ---------------------------------------------
+            // Maximum allowed size: 10 MB
+            // ---------------------------------------------
+
+            const long maxFileSize =
+                10 * 1024 * 1024;
+
+            if (file.Length > maxFileSize)
+            {
+                throw new ArgumentException(
+                    "CV file cannot exceed 10 MB."
+                );
+            }
+
+
+            // ---------------------------------------------
+            // Get CV storage folder
+            // ---------------------------------------------
+
+            var uploadsFolder =
+                Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "uploads",
+                    "cv"
+                );
+
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(
+                    uploadsFolder
+                );
+            }
+
+
+            // ---------------------------------------------
+            // Generate unique filename
+            // ---------------------------------------------
+
+            var extension =
+                Path.GetExtension(
+                    file.FileName
+                );
+
+            var fileName =
+                $"trainee-{traineeId}-{Guid.NewGuid():N}{extension}";
+
+            var filePath =
+                Path.Combine(
+                    uploadsFolder,
+                    fileName
+                );
+
+
+            // ---------------------------------------------
+            // Save new CV file
+            // ---------------------------------------------
+
+            await using (
+                var stream =
+                    new FileStream(
+                        filePath,
+                        FileMode.Create
+                    )
+            )
+            {
+                await file.CopyToAsync(
+                    stream
+                );
+            }
+
+
+            // ---------------------------------------------
+            // Build public URL
+            // ---------------------------------------------
+
+            var resumeUrl =
+                "/uploads/cv/" + fileName;
+
+
+            // ---------------------------------------------
+            // Keep old CV URL
+            // ---------------------------------------------
+
+            var oldResumeUrl =
+                trainee.ResumeUrl;
+
+
+            // ---------------------------------------------
+            // Update database value
+            // ---------------------------------------------
+
+            trainee.ResumeUrl =
+                resumeUrl;
+
+            _repository.Update(
+                trainee
+            );
+
+
+            // ---------------------------------------------
+            // Save database changes
+            // ---------------------------------------------
+
+            try
+            {
+                var saved =
+                    await _repository.SaveChangesAsync();
+
+                if (!saved)
+                {
+                    if (File.Exists(filePath))
+                    {
+                        File.Delete(filePath);
+                    }
+
+                    trainee.ResumeUrl =
+                        oldResumeUrl;
+
+                    throw new InvalidOperationException(
+                        "Could not save trainee CV."
+                    );
+                }
+            }
+            catch
+            {
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+
+                trainee.ResumeUrl =
+                    oldResumeUrl;
+
+                throw;
+            }
+
+
+            // ---------------------------------------------
+            // Delete old CV file
+            // ---------------------------------------------
+
+            if (
+                !string.IsNullOrWhiteSpace(
+                    oldResumeUrl
+                )
+            )
+            {
+                var oldFileName =
+                    Path.GetFileName(
+                        oldResumeUrl
+                    );
+
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        oldFileName
+                    )
+                )
+                {
+                    var oldFilePath =
+                        Path.Combine(
+                            uploadsFolder,
+                            oldFileName
+                        );
+
+                    if (File.Exists(oldFilePath))
+                    {
+                        File.Delete(
+                            oldFilePath
+                        );
+                    }
+                }
+            }
+
+
+            return resumeUrl;
+        }
+
+
+        // =====================================================
+        // SAVE CHANGES
+        // =====================================================
+
         public Task<bool> SaveChangesAsync()
         {
             return _repository.SaveChangesAsync();
         }
 
-        public async Task<NFD_Trainee?> GetTraineeIdByUserID(int userId)
+
+        // =====================================================
+        // GET TRAINEE BY USER ID
+        // =====================================================
+
+        public async Task<NFD_Trainee?> GetTraineeIdByUserID(
+            int userId
+        )
         {
-            return await _repository.GetTraineeIdByUserID(userId);
+            return await _repository.GetTraineeIdByUserID(
+                userId
+            );
         }
     }
 }

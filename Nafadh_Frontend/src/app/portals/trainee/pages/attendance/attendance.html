@@ -27,10 +27,6 @@
 
   <div class="top-dashboard">
 
-    <!-- =======================================================
-         STATISTICS CARDS
-         ======================================================= -->
-
     <div class="stats-grid">
 
       <!-- ================= PRESENT ================= -->
@@ -161,14 +157,10 @@
             نسبة الالتزام
           </h3>
 
-     
-
         </div>
 
       </div>
 
-
-      <!-- Circular Progress -->
 
       <div
         class="progress-circle"
@@ -194,8 +186,6 @@
       </div>
 
 
-      <!-- Commitment Status -->
-
       @if (commitmentPercentage() >= 90) {
 
         <div class="commitment-message success">
@@ -209,9 +199,6 @@
         </div>
 
       }
-
-
-      
 
     </div>
 
@@ -231,7 +218,7 @@
 
     <div class="record-header">
 
-      <div>
+      <div class="record-header-title">
 
         <h3>
           سجل الحضور
@@ -243,9 +230,109 @@
 
       </div>
 
-      <span class="record-count">
-        {{ rows().length }} سجل
-      </span>
+
+      <!-- =====================================================
+           FILTER + COUNT
+           ===================================================== -->
+
+      <div class="record-header-actions">
+
+        <div class="attendance-filters">
+
+          <button
+            type="button"
+            class="attendance-filter-button filter-all"
+            [class.active]="attendanceFilter() === 'All'"
+            (click)="setAttendanceFilter('All')"
+          >
+
+            <span class="filter-text">
+              الكل
+            </span>
+
+            <span class="filter-count">
+              {{ getFilterCount('All') }}
+            </span>
+
+          </button>
+
+
+          <button
+            type="button"
+            class="attendance-filter-button filter-present"
+            [class.active]="attendanceFilter() === 'Present'"
+            (click)="setAttendanceFilter('Present')"
+          >
+
+            <span class="filter-text">
+              حضور
+            </span>
+
+            <span class="filter-count">
+              {{ getFilterCount('Present') }}
+            </span>
+
+          </button>
+
+
+          <button
+            type="button"
+            class="attendance-filter-button filter-late"
+            [class.active]="attendanceFilter() === 'Late'"
+            (click)="setAttendanceFilter('Late')"
+          >
+
+            <span class="filter-text">
+              متأخر
+            </span>
+
+            <span class="filter-count">
+              {{ getFilterCount('Late') }}
+            </span>
+
+          </button>
+
+
+          <button
+            type="button"
+            class="attendance-filter-button filter-absent"
+            [class.active]="attendanceFilter() === 'Absent'"
+            (click)="setAttendanceFilter('Absent')"
+          >
+
+            <span class="filter-text">
+              غياب
+            </span>
+
+            <span class="filter-count">
+              {{ getFilterCount('Absent') }}
+            </span>
+
+          </button>
+
+        </div>
+
+
+        <span class="record-count">
+
+          @if (attendanceFilter() === 'All') {
+
+            {{ rows().length }} سجل
+
+          }
+
+          @else {
+
+            {{ filteredRows().length }}
+            من
+            {{ rows().length }}
+            سجل
+
+          }
+
+        </span>
+
+      </div>
 
     </div>
 
@@ -285,11 +372,7 @@
 
     <div class="attendance-list">
 
-      @for (r of rows(); track r.dailyAttendanceId) {
-
-        <!-- ===================================================
-             ATTENDANCE ROW
-             =================================================== -->
+      @for (r of filteredRows(); track r.dailyAttendanceId) {
 
         <div class="attendance-row">
 
@@ -506,8 +589,6 @@
             <div class="excuse-form">
 
 
-              <!-- ================= FORM HEADER ================= -->
-
               <div class="excuse-form-header">
 
                 <div>
@@ -533,8 +614,6 @@
               </div>
 
 
-              <!-- ================= REASON ================= -->
-
               <textarea
                 [(ngModel)]="excuseReason"
                 placeholder="اكتب وصفاً للعذر..."
@@ -543,8 +622,6 @@
               ></textarea>
 
 
-              <!-- ================= FILE INPUT ================= -->
-
               <input
                 type="file"
                 #fileInput
@@ -552,8 +629,6 @@
                 style="display: none;"
               />
 
-
-              <!-- ================= FILE UPLOAD ================= -->
 
               <div
                 class="file-upload"
@@ -578,8 +653,6 @@
 
               </div>
 
-
-              <!-- ================= ACTIONS ================= -->
 
               <div class="excuse-actions">
 
@@ -622,13 +695,29 @@
             ✓
           </div>
 
-          <strong>
-            لا يوجد سجل حضور بعد
-          </strong>
+          @if (attendanceFilter() === 'All') {
 
-          <span>
-            ستظهر سجلات حضورك هنا عند تسجيلها
-          </span>
+            <strong>
+              لا يوجد سجل حضور بعد
+            </strong>
+
+            <span>
+              ستظهر سجلات حضورك هنا عند تسجيلها
+            </span>
+
+          }
+
+          @else {
+
+            <strong>
+              لا توجد سجلات مطابقة
+            </strong>
+
+            <span>
+              لا توجد سجلات حضور بالحالة المحددة
+            </span>
+
+          }
 
         </div>
 
@@ -1330,7 +1419,20 @@
 
   justify-content: space-between;
 
+  gap: 12px;
+
   margin-bottom: 11px;
+
+  min-width: 0;
+
+}
+
+
+.record-header-title {
+
+  flex: 1 1 auto;
+
+  min-width: 150px;
 
 }
 
@@ -1359,9 +1461,220 @@
 }
 
 
+/* =========================================================
+   RECORD HEADER ACTIONS
+   ========================================================= */
+
+.record-header-actions {
+
+  flex: 0 1 auto;
+
+  min-width: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: flex-end;
+
+  gap: 8px;
+
+}
+
+
+/* =========================================================
+   ATTENDANCE FILTER
+   ========================================================= */
+
+.attendance-filters {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 3px;
+
+  padding: 3px;
+
+  max-width: 100%;
+
+  background: #f6f9fa;
+
+  border: 1px solid #edf2f4;
+
+  border-radius: 10px;
+
+  box-sizing: border-box;
+
+}
+
+
+.attendance-filter-button {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 5px;
+
+  min-width: 52px;
+
+  border: none;
+
+  background: transparent;
+
+  color: #64748b;
+
+  border-radius: 7px;
+
+  padding: 5px 8px;
+
+  font-family: inherit;
+
+  font-size: 10px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  white-space: nowrap;
+
+}
+
+
+.attendance-filter-button:hover {
+
+  background: #eaf5f4;
+
+  color: #0d9488;
+
+}
+
+
+.filter-count {
+
+  min-width: 17px;
+
+  height: 17px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 0 4px;
+
+  box-sizing: border-box;
+
+  border-radius: 50%;
+
+  background: #e9eef0;
+
+  color: #64748b;
+
+  font-size: 8px;
+
+  font-weight: 700;
+
+}
+
+
+.attendance-filter-button.active {
+
+  background: #0d9488;
+
+  color: #ffffff;
+
+  box-shadow:
+    0 2px 5px rgba(13, 148, 136, 0.15);
+
+}
+
+
+.attendance-filter-button.active .filter-count {
+
+  background: rgba(255, 255, 255, 0.2);
+
+  color: #ffffff;
+
+}
+
+
+/* =========================================================
+   FILTER COLORS
+   ========================================================= */
+
+.attendance-filter-button.filter-present:hover {
+
+  background: #e8f7f4;
+
+  color: #0d9488;
+
+}
+
+
+.attendance-filter-button.filter-present.active {
+
+  background: #0d9488;
+
+  color: #ffffff;
+
+}
+
+
+.attendance-filter-button.filter-late:hover {
+
+  background: #fff7df;
+
+  color: #d97706;
+
+}
+
+
+.attendance-filter-button.filter-late.active {
+
+  background: #d97706;
+
+  color: #ffffff;
+
+}
+
+
+.attendance-filter-button.filter-absent:hover {
+
+  background: #fff0f0;
+
+  color: #dc2626;
+
+}
+
+
+.attendance-filter-button.filter-absent.active {
+
+  background: #dc2626;
+
+  color: #ffffff;
+
+}
+
+
+/* =========================================================
+   RECORD COUNT
+   ========================================================= */
+
 .record-count {
 
-  padding: 6px 10px;
+  flex: 0 0 auto;
+
+  padding: 6px 9px;
 
   background: #f0fafa;
 
@@ -1372,6 +1685,8 @@
   font-size: 10px;
 
   font-weight: 600;
+
+  white-space: nowrap;
 
 }
 
@@ -2493,6 +2808,22 @@
   }
 
 
+  .record-header-actions {
+
+    gap: 5px;
+
+  }
+
+
+  .attendance-filter-button {
+
+    padding-left: 6px;
+
+    padding-right: 6px;
+
+  }
+
+
   .attendance-column-header,
   .attendance-row {
 
@@ -2531,6 +2862,22 @@
   .attendance-record-card {
 
     min-height: 400px;
+
+  }
+
+
+  .record-header {
+
+    align-items: flex-start;
+
+  }
+
+
+  .record-header-actions {
+
+    flex-wrap: wrap;
+
+    justify-content: flex-end;
 
   }
 
@@ -2594,6 +2941,79 @@
   }
 
 
+  .record-header {
+
+    flex-direction: column;
+
+    align-items: stretch;
+
+    gap: 9px;
+
+  }
+
+
+  .record-header-title {
+
+    min-width: 0;
+
+  }
+
+
+  .record-header-actions {
+
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 6px;
+
+  }
+
+
+  .attendance-filters {
+
+    flex: 1 1 auto;
+
+    width: auto;
+
+    min-width: 0;
+
+  }
+
+
+  .attendance-filter-button {
+
+    flex: 1 1 0;
+
+    min-width: 0;
+
+    padding-left: 5px;
+
+    padding-right: 5px;
+
+  }
+
+
+  .filter-text {
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+  }
+
+
+  .record-count {
+
+    flex: 0 0 auto;
+
+  }
+
+
   .attendance-list {
 
     overflow-x: auto;
@@ -2647,6 +3067,51 @@
       1fr
       auto
       1fr;
+
+  }
+
+
+  .record-header-actions {
+
+    flex-direction: column;
+
+    align-items: stretch;
+
+  }
+
+
+  .attendance-filters {
+
+    width: 100%;
+
+  }
+
+
+  .record-count {
+
+    align-self: flex-start;
+
+  }
+
+
+  .attendance-filter-button {
+
+    flex: 1;
+
+    padding-left: 4px;
+
+    padding-right: 4px;
+
+  }
+
+
+  .filter-count {
+
+    min-width: 15px;
+
+    height: 15px;
+
+    font-size: 7px;
 
   }
 

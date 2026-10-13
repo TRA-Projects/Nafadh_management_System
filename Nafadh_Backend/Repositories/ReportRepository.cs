@@ -406,11 +406,11 @@ namespace Nafadh_Backend.Repositories
         // ==========================================================
         // Trainer Trainees Report
         // ==========================================================
-
         public async Task<List<TrainerTraineesReportRowDto>>
             GetTrainerTraineesReportRowsAsync(
                 int trainerId,
-                int? batchId
+                int? batchId,
+                int? traineeId
             )
         {
             // Get batches assigned to this trainer
@@ -464,9 +464,10 @@ namespace Nafadh_Backend.Repositories
                         e.Evaluations
                     )
 
-                    .Where(e =>
-                        trainerBatchIds.Contains(e.BatchId)
-                    )
+                   .Where(e =>
+    trainerBatchIds.Contains(e.BatchId) &&
+    (!traineeId.HasValue || e.TraineeId == traineeId.Value)
+)
 
                     .ToListAsync();
 
