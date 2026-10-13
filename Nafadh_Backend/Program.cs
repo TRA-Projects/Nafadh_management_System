@@ -200,7 +200,8 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ICompanyPaymentService, CompanyPaymentService>();
             builder.Services.AddScoped<ICompanyPaymentScheduleRepository, CompanyPaymentScheduleRepository>();
             builder.Services.AddScoped<ICompanyPaymentScheduleService, CompanyPaymentScheduleService>();
-
+            builder.Services.AddScoped<IQuizRepository, QuizRepository>();
+            builder.Services.AddScoped<IQuizService, QuizService>();
             // ── NEW registrations (backend upgrade - Phase 2 Contract Alignment) ──
             builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
             builder.Services.AddScoped<IConversationService, ConversationService>();
