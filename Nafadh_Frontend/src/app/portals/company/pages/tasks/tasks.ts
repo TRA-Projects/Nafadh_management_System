@@ -202,6 +202,78 @@ export class CompanyTasks implements OnInit {
     );
   });
 
+  // ── Pagination ──
+  //
+  // Done on the client: the overview endpoint already returns the company's
+  // plans in one response and a company has tens of plans, not thousands.
+  // `currentPage` is clamped, so a shrinking result set (new filter, a plan
+  // removed after a reload) can never leave the user on an empty page.
+
+  readonly pageSizes = [6, 9, 12, 24];
+  readonly pageSize = signal(9);
+  private readonly page = signal(1);
+
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filtered().length / this.pageSize()))
+  );
+
+  readonly currentPage = computed(() =>
+    Math.min(Math.max(1, this.page()), this.totalPages())
+  );
+
+  readonly pagedPlans = computed(() => {
+    const size = this.pageSize();
+    const start = (this.currentPage() - 1) * size;
+    return this.filtered().slice(start, start + size);
+  });
+
+  /** "from – to" shown beside the pager. */
+  readonly pageRange = computed(() => {
+    const total = this.filtered().length;
+    if (!total) return { from: 0, to: 0, total };
+    const size = this.pageSize();
+    const from = (this.currentPage() - 1) * size + 1;
+    return { from, to: Math.min(from + size - 1, total), total };
+  });
+
+  /** Page buttons with ellipses, e.g. 1 … 4 5 6 … 12. */
+  readonly pageNumbers = computed<(number | null)[]>(() => {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const pages = new Set<number>([1, total, current - 1, current, current + 1]);
+    const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+    const result: (number | null)[] = [];
+    sorted.forEach((p, i) => {
+      if (i > 0 && p - sorted[i - 1] > 1) result.push(null);
+      result.push(p);
+    });
+    return result;
+  });
+
+  /** Approved source courses: collapsed to a few cards unless expanded. */
+  private static readonly APPROVED_PREVIEW = 6;
+  readonly showAllApproved = signal(false);
+
+  readonly visibleApprovedCourses = computed(() => {
+    const all = this.filteredApprovedCourses();
+    if (this.showAllApproved() || this.search().trim()) return all;
+    return all.slice(0, CompanyTasks.APPROVED_PREVIEW);
+  });
+
+  readonly hiddenApprovedCount = computed(
+    () => this.filteredApprovedCourses().length - this.visibleApprovedCourses().length
+  );
+
+  readonly canCollapseApproved = computed(
+    () =>
+      this.showAllApproved() &&
+      !this.search().trim() &&
+      this.filteredApprovedCourses().length > CompanyTasks.APPROVED_PREVIEW
+  );
+
   // ── Create modal ──
 
   readonly formOpen = signal(false);
@@ -497,12 +569,36 @@ export class CompanyTasks implements OnInit {
 
   setFilter(key: PlanFilter): void {
     this.filter.set(key);
+    this.page.set(1);
   }
 
   onSearch(event: Event): void {
     this.search.set(
       (event.target as HTMLInputElement).value
     );
+    this.page.set(1);
+  }
+
+  goToPage(target: number): void {
+    const next = Math.min(Math.max(1, target), this.totalPages());
+    if (next === this.currentPage()) return;
+    this.page.set(next);
+    // Keep the user at the top of the list after moving between pages.
+    document
+      .querySelector('.tasks-page .chips')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  setPageSize(event: Event): void {
+    const size = Number((event.target as HTMLSelectElement).value);
+    if (this.pageSizes.includes(size)) {
+      this.pageSize.set(size);
+      this.page.set(1);
+    }
+  }
+
+  toggleApprovedCourses(): void {
+    this.showAllApproved.update((v) => !v);
   }
 
   private emptyForm(): PlanForm {
