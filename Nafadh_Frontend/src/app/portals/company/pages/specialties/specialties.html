@@ -87,7 +87,16 @@
             <!-- مفتاح الأقسام -->
             <div class="chart-legend">
               @for (item of getDepartmentDistribution(); track item.name) {
-                <div class="legend-item">
+                <div
+                  class="legend-item"
+                  role="button"
+                  tabindex="0"
+                  title="اضغط لعرض برامج هذا التخصص فقط"
+                  [class.active]="departmentFilter() === item.name"
+                  [attr.aria-pressed]="departmentFilter() === item.name"
+                  (click)="toggleDepartment(item.name)"
+                  (keydown.enter)="toggleDepartment(item.name)"
+                  (keydown.space)="toggleDepartment(item.name); $event.preventDefault()">
                   <div class="legend-info">
                     <span class="dot" [style.background-color]="item.color"></span>
                     <span class="dept-name">{{ item.name }}</span>
@@ -105,11 +114,70 @@
       <div class="specialties-main-area">
         <div class="section-title-bar">
           <h3>البرامج التدريبية المتاحة</h3>
-          <span>إجمالي البرامج: {{ cards().length }}</span>
+          <span>
+            @if (visibleCards().length !== cards().length) {
+              عرض {{ visibleCards().length }} من {{ cards().length }} برنامج
+            } @else {
+              إجمالي البرامج: {{ cards().length }}
+            }
+          </span>
         </div>
 
+        <!-- أدوات البحث والتصفية والترتيب -->
+        <div class="list-toolbar">
+          <div class="toolbar-row">
+            <input
+              type="search"
+              class="toolbar-search"
+              placeholder="ابحث باسم البرنامج أو التخصص"
+              aria-label="بحث في البرامج"
+              [value]="search()"
+              (input)="onSearch($event)" />
+
+            <label class="toolbar-sort">
+              <span>ترتيب حسب</span>
+              <select [value]="sortKey()" (change)="onSort($event)">
+                @for (o of sortOptions; track o.key) {
+                  <option [value]="o.key" [selected]="o.key === sortKey()">{{ o.label }}</option>
+                }
+              </select>
+            </label>
+          </div>
+
+          <div class="toolbar-chips" role="group" aria-label="تصفية حسب الحالة">
+            @for (o of statusOptions; track o.key) {
+              <button
+                type="button"
+                [class.active]="statusFilter() === o.key"
+                (click)="setStatus(o.key)">
+                {{ o.label }}
+                <b>{{ statusCounts()[o.key] }}</b>
+              </button>
+            }
+
+            @if (departmentFilter(); as dept) {
+              <span class="dept-pill">
+                التخصص: {{ dept }}
+                <button type="button" aria-label="إزالة فلتر التخصص" (click)="toggleDepartment(dept)">×</button>
+              </span>
+            }
+
+            @if (hasActiveFilters()) {
+              <button type="button" class="clear-filters" (click)="clearFilters()">مسح الفلاتر</button>
+            }
+          </div>
+        </div>
+
+        @if (!visibleCards().length) {
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+            <strong>لا توجد برامج مطابقة</strong>
+            <span>غيّري كلمة البحث أو الفلاتر المحددة.</span>
+          </div>
+        }
+
         <div class="specialty-grid">
-          @for (card of cards(); track trackByProgramId($index, card)) {
+          @for (card of visibleCards(); track trackByProgramId($index, card)) {
             <article
               class="specialty-card"
               [style.--spec-color]="card.color"
@@ -138,7 +206,13 @@
                   <span>معدل الإشغال</span>
                   <b>{{ card.used }} من {{ card.capacity }} مقعدًا</b>
                 </div>
-                <div class="progress"><i [style.width.%]="card.percent"></i></div>
+                <div class="progress" [class.high]="isNearFull(card)"><i [style.width.%]="card.percent"></i></div>
+                @if (isNearFull(card)) {
+                  <small class="near-full-note">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    {{ card.available > 0 ? 'قاربت على الامتلاء' : 'اكتملت المقاعد' }}
+                  </small>
+                }
               </div>
 
               <div class="spec-foot">
