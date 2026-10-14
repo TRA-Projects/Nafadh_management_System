@@ -274,7 +274,7 @@
 
                                     <button type="button" class="seg s-{{ state.css }}"
                                         [class.on]="(row.record?.status ?? 'Present') === state.key"
-                                        [disabled]="isConfirmed() || isSaving(row.trainer.trainerId)"
+                                        [disabled]="!canManageAttendance() || isConfirmed() || isSaving(row.trainer.trainerId)"
                                         (click)="setStatus(row, state.key)">{{ state.label }}</button>
 
                                     }
@@ -291,7 +291,7 @@
 
                                     <!-- تم إصلاح الخطأ هنا -->
                                     <input type="time" [value]="timeValue(row.record?.checkInTime)"
-                                        [disabled]="isConfirmed()"
+                                        [disabled]="!canManageAttendance() || isConfirmed()"
                                         (change)="onTimeChange(row, 'checkInTime', $any($event.target).value)" />
 
                                 </label>
@@ -304,7 +304,7 @@
 
                                     <!-- تم إصلاح الخطأ هنا -->
                                     <input type="time" [value]="timeValue(row.record?.checkOutTime)"
-                                        [disabled]="isConfirmed()"
+                                        [disabled]="!canManageAttendance() || isConfirmed()"
                                         (change)="onTimeChange(row, 'checkOutTime', $any($event.target).value)" />
 
                                 </label>
@@ -317,7 +317,7 @@
 
                         <td>
 
-                            @if (noteEditingId() === row.trainer.trainerId) {
+                            @if (canManageAttendance() && noteEditingId() === row.trainer.trainerId) {
 
                             <div class="note-edit">
 
@@ -333,7 +333,7 @@
                             } @else if (row.record?.reason) {
 
                             <button type="button" class="note-text"
-                                [disabled]="row.record?.status === 'Present' || isConfirmed()"
+                                [disabled]="!canManageAttendance() || row.record?.status === 'Present' || isConfirmed()"
                                 [title]="row.record?.reason" (click)="startNote(row)">
 
                                 {{ row.record?.reason }}
@@ -341,7 +341,7 @@
                             </button> } @else {
 
                             <button type="button" class="note-add"
-                                [disabled]="!row.record || row.record?.status === 'Present' || isConfirmed()"
+                                [disabled]="!canManageAttendance() || !row.record || row.record?.status === 'Present' || isConfirmed()"
                                 [title]="row.record ? '' : 'سجّل الحالة أولًا'" (click)="startNote(row)">+ إضافة
 
                                 سبب</button>
@@ -360,7 +360,7 @@
                                     rel="noopener">{{ proofName($any(row.record).excuseProofUrl) }}</a>
 
                                 <button type="button" aria-label="حذف الإثبات"
-                                    [disabled]="row.record?.status === 'Present' || isConfirmed() || isSaving(row.trainer.trainerId)"
+                                    [disabled]="!canManageAttendance() || row.record?.status === 'Present' || isConfirmed() || isSaving(row.trainer.trainerId)"
                                     (click)="removeProof(row)">×</button>
 
                             </span>
@@ -368,7 +368,7 @@
                             } @else {
 
                             <label class="proof-btn"
-                                [class.disabled]="!row.record || row.record?.status === 'Present' || isConfirmed() || isSaving(row.trainer.trainerId)"
+                                [class.disabled]="!canManageAttendance() || !row.record || row.record?.status === 'Present' || isConfirmed() || isSaving(row.trainer.trainerId)"
                                 [title]="row.record ? '' : 'سجّل الحالة أولًا'">
 
                                 إثبات
@@ -383,7 +383,7 @@
                                 </svg>
 
                                 <input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf" hidden
-                                    [disabled]="!row.record || isConfirmed() || isSaving(row.trainer.trainerId)"
+                                    [disabled]="!canManageAttendance() || !row.record || isConfirmed() || isSaving(row.trainer.trainerId)"
                                     (change)="onProofSelected(row, $event)" />
 
                             </label>
@@ -676,11 +676,11 @@
             <label for="weeklyReason">سبب الغياب</label>
 
             <textarea id="weeklyReason" rows="3" maxlength="500" [(ngModel)]="weeklyReason"
-                [disabled]="excuse.isConfirmed || weeklyExcuseSaving()"
+                [disabled]="!canManageAttendance() || excuse.isConfirmed || weeklyExcuseSaving()"
                 placeholder="اكتبي سبب الغياب..."></textarea>
 
             <button type="button" class="weekly-excuse-action" (click)="saveWeeklyReason()"
-                [disabled]="excuse.isConfirmed || weeklyExcuseSaving()">
+                [disabled]="!canManageAttendance() || excuse.isConfirmed || weeklyExcuseSaving()">
 
                 حفظ السبب
 
@@ -695,10 +695,10 @@
                 <a [href]="fileUrl(excuse.excuseProofUrl)" target="_blank"
                     rel="noopener noreferrer">عرض الإثبات</a>
 
-                @if (!excuse.isConfirmed) {
+                @if (canManageAttendance() && !excuse.isConfirmed) {
 
                 <button type="button" (click)="removeWeeklyProof()"
-                    [disabled]="weeklyExcuseSaving()">
+                    [disabled]="!canManageAttendance() || weeklyExcuseSaving()">
 
                     حذف الإثبات
 
@@ -712,14 +712,14 @@
 
                 }
 
-                @if (!excuse.isConfirmed) {
+                @if (canManageAttendance() && !excuse.isConfirmed) {
 
                 <label class="weekly-excuse-upload">
 
                     {{ excuse.excuseProofUrl ? 'استبدال الإثبات' : '+ رفع صورة أو PDF' }}
 
                     <input type="file" hidden accept=".jpg,.jpeg,.png,.webp,.pdf"
-                        [disabled]="weeklyExcuseSaving()"
+                        [disabled]="!canManageAttendance() || weeklyExcuseSaving()"
                         (change)="uploadWeeklyProof($event)" />
 
                 </label>
