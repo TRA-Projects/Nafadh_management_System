@@ -1,8 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Nafadh_Backend.Repositories
 {
@@ -15,16 +12,21 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<NFD_Quiz>> GetQuizzesByTrainerIdAsync(int trainerId)
+        public async Task<IEnumerable<NFD_Quiz>> GetQuizzesByTrainerIdAsync(
+            int trainerId)
         {
             return await _context.NFD_Quizzes
+                .Include(q => q.Batch)
                 .Where(q => q.TrainerId == trainerId)
+                .OrderByDescending(q => q.CreatedAt)
                 .ToListAsync();
         }
 
         public async Task<NFD_Quiz> GetByIdAsync(int id)
         {
-            return await _context.NFD_Quizzes.FindAsync(id);
+            return await _context.NFD_Quizzes
+                .Include(q => q.Batch)
+                .FirstOrDefaultAsync(q => q.QuizId == id);
         }
 
         public async Task AddAsync(NFD_Quiz quiz)
