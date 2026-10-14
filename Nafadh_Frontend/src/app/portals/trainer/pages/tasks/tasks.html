@@ -1,46 +1,20 @@
-<div
-  class="tasks-page tasks-inline-001"
->
+<div class="tasks-page tasks-inline-001">
 
-  <!-- ================================================= -->
-  <!--                      HEADER                       -->
-  <!-- ================================================= -->
-
+  <!-- ================= HEADER ================= -->
   <div class="tasks-header">
-
     <div class="tasks-header-copy">
-
       <div class="tasks-title-row">
-
         <div class="tasks-title-icon">
           <i class="fa-solid fa-clipboard-list"></i>
         </div>
-
         <div class="tasks-title-text">
-
-          <h2>
-            المهام والمشروعات
-          </h2>
-
-          <p>
-            إنشاء الواجبات والمشاريع الميدانية ومتابعة التسليم والدرجات
-          </p>
-
+          <h2>المهام والمشروعات</h2>
+          <p>إنشاء الواجبات والمشاريع الميدانية ومتابعة التسليم والدرجات</p>
         </div>
-
       </div>
 
-
-      <!-- ================= BATCH SELECTOR ================= -->
-
       <div class="task-batch-selector">
-
-        <label
-          for="taskBatchSelector"
-        >
-          الدفعة
-        </label>
-
+        <label for="taskBatchSelector">الدفعة</label>
         <select
           id="taskBatchSelector"
           name="taskBatchSelector"
@@ -48,21 +22,12 @@
           (ngModelChange)="onBatchChange()"
           [disabled]="loadingBatches()"
         >
-
           @for (b of batches(); track b.batchId) {
-
-            <option [ngValue]="b.batchId">
-              {{ b.batchName }}
-            </option>
-
+            <option [ngValue]="b.batchId">{{ b.batchName }}</option>
           }
-
         </select>
-
       </div>
-
     </div>
-
 
     <button
       type="button"
@@ -70,51 +35,25 @@
       (click)="openCreateModal()"
       [disabled]="!batchIdInput"
     >
-
-      <span class="tasks-header-action-icon">
-        +
-      </span>
-
+      <span class="tasks-header-action-icon">+</span>
       إنشاء واجب / مشروع
-
     </button>
-
   </div>
 
 
-
-  <!-- ================================================= -->
-  <!--                       ERROR                       -->
-  <!-- ================================================= -->
-
+  <!-- ================= ERROR ================= -->
   @if (errorMessage() && !showCreateModal()) {
-
-    <div class="tasks-inline-011">
-      {{ errorMessage() }}
-    </div>
-
+    <div class="tasks-inline-011">{{ errorMessage() }}</div>
   }
 
 
-
-  <!-- ================================================= -->
-  <!--                      LOADING                      -->
-  <!-- ================================================= -->
-
+  <!-- ================= LOADING ================= -->
   @if (loading()) {
-
-    <div class="tasks-inline-012">
-      جاري تحميل المهام...
-    </div>
-
+    <div class="tasks-inline-012">جاري تحميل المهام...</div>
   }
 
 
-
-  <!-- ================================================= -->
-  <!--                   TASKS GRID                      -->
-  <!-- ================================================= -->
-
+  <!-- ================= TASKS GRID ================= -->
   @if (!loading()) {
 
     @if (tasks().length > 0) {
@@ -123,357 +62,198 @@
 
         @for (t of tasks(); track t.taskId) {
 
-          <div
-            class="task-card tasks-inline-014"
-          >
+          <div class="task-card tasks-inline-014">
 
-            <!-- ================================================= -->
-            <!--                       IMAGE                        -->
-            <!-- ================================================= -->
-
+            <!-- ===== IMAGE ===== -->
             <div class="tasks-inline-015">
 
               @if (t.status === 'Open') {
-
                 <img
                   src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80"
                   alt="مهمة مجدولة"
                   class="tasks-inline-016"
                 />
-
               }
 
-
               @if (t.status === 'Closed') {
-
                 <img
                   src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80"
                   alt="مهمة قيد المراجعة"
                   class="tasks-inline-016"
                 />
-
               }
 
-
               @if (t.status === 'Overdue') {
-
                 <img
                   src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=900&q=80"
                   alt="مهمة مكتملة التقييم"
                   class="tasks-inline-016"
                 />
-
               }
-
-
-              <!-- ================= STATUS BADGE ================= -->
 
               @if (t.status === 'Open') {
-
-                <span class="tasks-inline-017">
-                  مجدولة
-                </span>
-
+                <span class="tasks-inline-017">مجدولة</span>
               }
-
-
               @if (t.status === 'Closed') {
-
-                <span class="tasks-inline-018">
-                  قيد المراجعة
-                </span>
-
+                <span class="tasks-inline-018">قيد المراجعة</span>
               }
-
-
               @if (t.status === 'Overdue') {
-
-                <span class="tasks-inline-019">
-                  مكتملة التقييم
-                </span>
-
+                <span class="tasks-inline-019">مكتملة التقييم</span>
               }
 
             </div>
 
 
-
-            <!-- ================================================= -->
-            <!--                     CONTENT                        -->
-            <!-- ================================================= -->
-
+            <!-- ===== CONTENT ===== -->
             <div class="tasks-inline-020">
 
-              <h3 class="tasks-inline-021">
-                {{ t.title }}
-              </h3>
-
+              <h3 class="tasks-inline-021">{{ t.title }}</h3>
 
               @if (t.description) {
-
-                <p class="tasks-inline-022">
-                  {{ t.description }}
-                </p>
-
+                <p class="tasks-inline-022">{{ t.description }}</p>
               }
 
 
-              <!-- ================================================= -->
-              <!--                    OPEN DETAILS                    -->
-              <!-- ================================================= -->
-
+              <!-- ===== OPEN DETAILS ===== -->
               @if (t.status === 'Open') {
 
                 <div class="tasks-inline-023">
-
-                  <span class="tasks-inline-024">
-                    موعد التسليم
-                  </span>
-
+                  <span class="tasks-inline-024">موعد التسليم</span>
                   <span class="tasks-inline-025">
                     {{ t.dueDate | date:'dd MMMM, yyyy' }}
                   </span>
-
                 </div>
+
+                @if (isTaskPastDue(t)) {
+                  <div class="task-card-late">
+                    ⚠ تجاوزت الموعد بـ {{ overdueDuration(t) }}
+                  </div>
+                }
 
               }
 
 
-              <!-- ================================================= -->
-              <!--                   CLOSED DETAILS                   -->
-              <!-- ================================================= -->
-
+              <!-- ===== CLOSED DETAILS ===== -->
               @if (t.status === 'Closed') {
 
                 <div class="tasks-inline-026">
-
-                  <span class="tasks-inline-027">
-                    حالة التسليمات
-                  </span>
-
+                  <span class="tasks-inline-027">حالة التسليمات</span>
                   <span class="tasks-inline-025">
-
                     @if (loadingSubmissions()) {
-
                       جاري تحميل التسليمات...
-
-                    }
-                    @else {
-
+                    } @else {
                       @if (submissionsNeedingReview(t.taskId) > 0) {
-
                         {{ submissionsNeedingReview(t.taskId) }}
                         تسليم بحاجة للمراجعة
-
-                      }
-                      @else {
-
+                      } @else {
                         لا توجد تسليمات بحاجة للمراجعة
-
                       }
-
                     }
-
                   </span>
-
                 </div>
+
+                @if (!loadingSubmissions() && lateSubmissionsCount(t.taskId) > 0) {
+                  <div class="task-card-late">
+                    ⚠ {{ lateSubmissionsCount(t.taskId) }} تسليم متأخر
+                  </div>
+                }
 
               }
 
 
-              <!-- ================================================= -->
-              <!--                  OVERDUE DETAILS                   -->
-              <!-- ================================================= -->
-
+              <!-- ===== OVERDUE DETAILS ===== -->
               @if (t.status === 'Overdue') {
 
                 <div class="tasks-inline-028">
-
-                  <span class="tasks-inline-029">
-                    حالة التقييم
-                  </span>
-
+                  <span class="tasks-inline-029">حالة التقييم</span>
                   <span class="tasks-inline-025">
-
                     @if (loadingSubmissions()) {
-
                       جاري تحميل التسليمات...
-
-                    }
-                    @else {
-
+                    } @else {
                       @if (totalSubmissions(t.taskId) === 0) {
-
                         لا توجد تسليمات
-
-                      }
-                      @else {
-
+                      } @else {
                         تم تقييم
                         {{ gradedSubmissions(t.taskId) }}
                         من
                         {{ totalSubmissions(t.taskId) }}
                         تسليم
-
                       }
-
                     }
-
                   </span>
-
                 </div>
+
+                @if (!loadingSubmissions() && lateSubmissionsCount(t.taskId) > 0) {
+                  <div class="task-card-late">
+                    ⚠ {{ lateSubmissionsCount(t.taskId) }} تسليم متأخر
+                  </div>
+                }
 
               }
 
 
-              <!-- ================================================= -->
-              <!--                 VIEW SUBMISSIONS                  -->
-              <!-- ================================================= -->
-
-              @if (
-                !loadingSubmissions() &&
-                totalSubmissions(t.taskId) > 0
-              ) {
+              <!-- ===== VIEW SUBMISSIONS ===== -->
+              @if (!loadingSubmissions() && totalSubmissions(t.taskId) > 0) {
 
                 <button
                   type="button"
                   class="view-submissions-btn"
                   (click)="openSubmissionsModal(t)"
-                  style="
-                    width:100%;
-                    min-height:40px;
-                    margin-top:12px;
-                    padding:0 14px;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    gap:7px;
-                    background:#f0f7ff;
-                    color:#0056b8;
-                    border:1px solid #bfdbfe;
-                    border-radius:9px;
-                    font-family:inherit;
-                    font-size:12px;
-                    font-weight:700;
-                    cursor:pointer;
-                    box-sizing:border-box;
-                  "
+                  style="width:100%;min-height:40px;margin-top:12px;padding:0 14px;display:flex;align-items:center;justify-content:center;gap:7px;background:#f0f7ff;color:#0056b8;border:1px solid #bfdbfe;border-radius:9px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;box-sizing:border-box;"
                 >
-
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="16"
-                    height="16"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z">
-                    </path>
-
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="3">
-                    </circle>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
                   </svg>
 
                   عرض التسليمات
 
-                  <span
-                    style="
-                      min-width:22px;
-                      height:22px;
-                      padding:0 6px;
-                      display:inline-flex;
-                      align-items:center;
-                      justify-content:center;
-                      background:#0056b8;
-                      color:#ffffff;
-                      border-radius:999px;
-                      font-size:10px;
-                      font-weight:800;
-                    "
-                  >
+                  <span style="min-width:22px;height:22px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;background:#0056b8;color:#ffffff;border-radius:999px;font-size:10px;font-weight:800;">
                     {{ totalSubmissions(t.taskId) }}
                   </span>
-
                 </button>
 
               }
 
 
-              <!-- ================================================= -->
-              <!--                     OPEN FOOTER                    -->
-              <!-- ================================================= -->
-
+              <!-- ===== OPEN FOOTER ===== -->
               @if (t.status === 'Open') {
 
                 <div class="tasks-inline-030">
 
                   <div class="tasks-inline-031">
-
                     <span class="tasks-inline-032">
                       {{ selectedBatch()?.batchName || 'الدفعة' }}
                     </span>
-
-                    <span class="tasks-inline-033">
-                      نشطة
-                    </span>
-
+                    <span class="tasks-inline-033">نشطة</span>
                   </div>
 
-
                   <div class="tasks-inline-034">
-
                     <button
                       type="button"
                       class="nfd-btn primary tasks-inline-035"
                       (click)="updateTaskStatus(t, 'Closed')"
-                      [disabled]="
-                        updatingTaskId() === t.taskId ||
-                        deletingTaskId() === t.taskId
-                      "
+                      [disabled]="updatingTaskId() === t.taskId || deletingTaskId() === t.taskId"
                     >
-
                       @if (updatingTaskId() === t.taskId) {
-
                         جاري التحديث...
-
-                      }
-                      @else {
-
+                      } @else {
                         نقل إلى قيد المراجعة
-
                       }
-
                     </button>
-
 
                     <button
                       type="button"
                       class="task-delete-btn tasks-inline-036"
                       (click)="deleteTask(t)"
-                      [disabled]="
-                        deletingTaskId() === t.taskId ||
-                        updatingTaskId() === t.taskId
-                      "
+                      [disabled]="deletingTaskId() === t.taskId || updatingTaskId() === t.taskId"
                     >
-
                       @if (deletingTaskId() === t.taskId) {
-
                         ...
-
-                      }
-                      @else {
-
+                      } @else {
                         حذف
-
                       }
-
                     </button>
-
                   </div>
 
                 </div>
@@ -481,102 +261,61 @@
               }
 
 
-              <!-- ================================================= -->
-              <!--                    CLOSED FOOTER                   -->
-              <!-- ================================================= -->
-
+              <!-- ===== CLOSED FOOTER ===== -->
               @if (t.status === 'Closed') {
 
                 <div class="tasks-inline-030">
 
                   <div class="tasks-inline-031">
-
                     <span class="tasks-inline-032">
                       {{ selectedBatch()?.batchName || 'الدفعة' }}
                     </span>
 
-
                     <span class="tasks-inline-037">
-
                       @if (loadingSubmissions()) {
-
                         جاري التحميل...
-
-                      }
-                      @else {
-
+                      } @else {
                         {{ submissionsNeedingReview(t.taskId) }}
                         بحاجة للتقييم
-
                       }
-
                     </span>
-
                   </div>
-
 
                   <button
                     type="button"
                     class="nfd-btn primary review-btn tasks-inline-038"
                     [routerLink]="['/trainer/trainees']"
-                    [queryParams]="{
-                      taskId: t.taskId,
-                      batchId: batchIdInput
-                    }"
+                    [queryParams]="{ taskId: t.taskId, batchId: batchIdInput }"
                   >
                     مراجعة والتقييم
                   </button>
 
-
                   <div class="tasks-inline-034">
-
                     <button
                       type="button"
                       (click)="updateTaskStatus(t, 'Overdue')"
-                      [disabled]="
-                        updatingTaskId() === t.taskId ||
-                        deletingTaskId() === t.taskId
-                      "
+                      [disabled]="updatingTaskId() === t.taskId || deletingTaskId() === t.taskId"
                       class="tasks-inline-039"
                     >
-
                       @if (updatingTaskId() === t.taskId) {
-
                         جاري التحديث...
-
-                      }
-                      @else {
-
+                      } @else {
                         اعتماد كمكتملة التقييم
-
                       }
-
                     </button>
-
 
                     <button
                       type="button"
                       class="task-delete-btn tasks-inline-036"
                       (click)="deleteTask(t)"
-                      [disabled]="
-                        deletingTaskId() === t.taskId ||
-                        updatingTaskId() === t.taskId
-                      "
+                      [disabled]="deletingTaskId() === t.taskId || updatingTaskId() === t.taskId"
                     >
-
                       @if (deletingTaskId() === t.taskId) {
-
                         ...
-
-                      }
-                      @else {
-
+                      } @else {
                         حذف
-
                       }
-
                     </button>
-
                   </div>
 
                 </div>
@@ -584,41 +323,27 @@
               }
 
 
-              <!-- ================================================= -->
-              <!--                   OVERDUE FOOTER                   -->
-              <!-- ================================================= -->
-
+              <!-- ===== OVERDUE FOOTER ===== -->
               @if (t.status === 'Overdue') {
 
                 <div class="tasks-inline-030">
 
                   <div class="tasks-inline-031">
-
                     <span class="tasks-inline-032">
                       {{ selectedBatch()?.batchName || 'الدفعة' }}
                     </span>
 
-
                     <span class="tasks-inline-040">
-
                       @if (loadingSubmissions()) {
-
                         جاري التحميل...
-
-                      }
-                      @else {
-
+                      } @else {
                         {{ gradedSubmissions(t.taskId) }}
                         من
                         {{ totalSubmissions(t.taskId) }}
                         تم تقييمها
-
                       }
-
                     </span>
-
                   </div>
-
 
                   <button
                     type="button"
@@ -626,18 +351,11 @@
                     (click)="deleteTask(t)"
                     [disabled]="deletingTaskId() === t.taskId"
                   >
-
                     @if (deletingTaskId() === t.taskId) {
-
                       جاري الحذف...
-
-                    }
-                    @else {
-
+                    } @else {
                       حذف المهمة
-
                     }
-
                   </button>
 
                 </div>
@@ -652,24 +370,12 @@
 
       </div>
 
-    }
-
-    @else {
+    } @else {
 
       <div class="tasks-inline-042">
-
-        <div class="tasks-inline-043">
-          📋
-        </div>
-
-        <strong class="tasks-inline-044">
-          لا توجد مهام
-        </strong>
-
-        <span class="tasks-inline-045">
-          لا توجد مهام لهذه الدفعة حتى الآن
-        </span>
-
+        <div class="tasks-inline-043">📋</div>
+        <strong class="tasks-inline-044">لا توجد مهام</strong>
+        <span class="tasks-inline-045">لا توجد مهام لهذه الدفعة حتى الآن</span>
       </div>
 
     }
@@ -677,13 +383,8 @@
   }
 
 
-
-  <!-- ================================================= -->
-  <!--                     HOVER CSS                     -->
-  <!-- ================================================= -->
-
+  <!-- ================= HOVER CSS ================= -->
   <style>
-
     .task-card:hover {
       transform:translateY(-6px);
       box-shadow:0 12px 24px rgba(2,132,199,0.12) !important;
@@ -742,484 +443,157 @@
       font-weight:800;
     }
 
-    .submission-status-badge.submitted {
-      background:#e8f8fb;
-      color:#0b8fa5;
-    }
-
-    .submission-status-badge.review {
-      background:#fff2d9;
-      color:#d58b00;
-    }
-
-    .submission-status-badge.graded {
-      background:#e4f7ed;
-      color:#15945a;
-    }
-
-    .submission-status-badge.revision {
-      background:#eef2ff;
-      color:#4f46e5;
-    }
-
-    .submission-status-badge.late {
-      background:#fef2f2;
-      color:#dc2626;
-    }
+    .submission-status-badge.submitted { background:#e8f8fb; color:#0b8fa5; }
+    .submission-status-badge.review    { background:#fff2d9; color:#d58b00; }
+    .submission-status-badge.graded    { background:#e4f7ed; color:#15945a; }
+    .submission-status-badge.revision  { background:#eef2ff; color:#4f46e5; }
+    .submission-status-badge.late      { background:#fef2f2; color:#dc2626; }
 
     button:disabled {
       opacity:0.6;
       cursor:not-allowed !important;
     }
-
   </style>
 
 
-
-  <!-- ================================================= -->
-  <!--              SUBMISSIONS VIEW MODAL               -->
-  <!-- ================================================= -->
-
+  <!-- ================= SUBMISSIONS VIEW MODAL ================= -->
   @if (showSubmissionsModal()) {
 
     @if (selectedSubmissionsTask(); as selectedTask) {
 
       <div
         (click)="closeSubmissionsModal()"
-        style="
-          position:fixed;
-          inset:0;
-          z-index:1200;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          padding:24px;
-          box-sizing:border-box;
-          background:rgba(15,35,70,0.42);
-          backdrop-filter:blur(3px);
-        "
+        style="position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;background:rgba(15,35,70,0.42);backdrop-filter:blur(3px);"
       >
 
         <div
           (click)="$event.stopPropagation()"
-          style="
-            width:min(760px,100%);
-            max-height:calc(100vh - 48px);
-            display:flex;
-            flex-direction:column;
-            background:#ffffff;
-            border:1px solid #e2e8f0;
-            border-radius:18px;
-            overflow:hidden;
-            box-shadow:0 24px 70px rgba(15,35,70,0.24);
-            direction:rtl;
-          "
+          style="width:min(760px,100%);max-height:calc(100vh - 48px);display:flex;flex-direction:column;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;overflow:hidden;box-shadow:0 24px 70px rgba(15,35,70,0.24);direction:rtl;"
         >
 
-          <!-- ================= HEADER ================= -->
-
-          <div
-            style="
-              padding:20px 24px;
-              display:flex;
-              align-items:flex-start;
-              justify-content:space-between;
-              gap:18px;
-              border-bottom:1px solid #e5eaf1;
-              background:#ffffff;
-            "
-          >
-
+          <!-- HEADER -->
+          <div style="padding:20px 24px;display:flex;align-items:flex-start;justify-content:space-between;gap:18px;border-bottom:1px solid #e5eaf1;background:#ffffff;">
             <div>
-
-              <h3
-                style="
-                  margin:0 0 5px 0;
-                  color:#0b192c;
-                  font-size:18px;
-                  font-weight:800;
-                "
-              >
+              <h3 style="margin:0 0 5px 0;color:#0b192c;font-size:18px;font-weight:800;">
                 تسليمات المهمة
               </h3>
-
-              <p
-                style="
-                  margin:0;
-                  color:#64748b;
-                  font-size:12px;
-                "
-              >
+              <p style="margin:0;color:#64748b;font-size:12px;">
                 {{ selectedTask.title }}
               </p>
-
             </div>
-
 
             <button
               type="button"
               (click)="closeSubmissionsModal()"
-              style="
-                width:38px;
-                height:38px;
-                min-width:38px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                background:#f1f5f9;
-                color:#0f172a;
-                border:0;
-                border-radius:50%;
-                font-size:22px;
-                cursor:pointer;
-              "
+              style="width:38px;height:38px;min-width:38px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;color:#0f172a;border:0;border-radius:50%;font-size:22px;cursor:pointer;"
             >
               ×
             </button>
-
           </div>
 
 
-          <!-- ================= SUMMARY ================= -->
-
+          <!-- SUMMARY -->
           @if (!modalLoadingSubmissions()) {
-
-            <div
-              style="
-                padding:12px 24px;
-                display:flex;
-                align-items:center;
-                justify-content:space-between;
-                gap:12px;
-                background:#f8fbff;
-                border-bottom:1px solid #e5eaf1;
-              "
-            >
-
-              <span
-                style="
-                  color:#64748b;
-                  font-size:11px;
-                  font-weight:600;
-                "
-              >
+            <div style="padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#f8fbff;border-bottom:1px solid #e5eaf1;">
+              <span style="color:#64748b;font-size:11px;font-weight:600;">
                 إجمالي التسليمات
               </span>
-
-              <span
-                style="
-                  min-width:34px;
-                  height:28px;
-                  padding:0 10px;
-                  display:inline-flex;
-                  align-items:center;
-                  justify-content:center;
-                  background:#e6f3ff;
-                  color:#0056b8;
-                  border-radius:999px;
-                  font-size:11px;
-                  font-weight:800;
-                "
-              >
+              <span style="min-width:34px;height:28px;padding:0 10px;display:inline-flex;align-items:center;justify-content:center;background:#e6f3ff;color:#0056b8;border-radius:999px;font-size:11px;font-weight:800;">
                 {{ selectedTaskSubmissions().length }}
               </span>
-
             </div>
-
           }
 
 
-          <!-- ================= CONTENT ================= -->
-
-          <div
-            style="
-              padding:20px 24px;
-              overflow:auto;
-            "
-          >
+          <!-- CONTENT -->
+          <div style="padding:20px 24px;overflow:auto;">
 
             @if (modalLoadingSubmissions()) {
 
-              <div
-                style="
-                  min-height:180px;
-                  display:flex;
-                  align-items:center;
-                  justify-content:center;
-                  color:#64748b;
-                  font-size:13px;
-                "
-              >
+              <div style="min-height:180px;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:13px;">
                 جاري تحميل التسليمات...
               </div>
 
-            }
+            } @else if (submissionsModalError()) {
 
-            @else if (submissionsModalError()) {
-
-              <div
-                style="
-                  padding:14px;
-                  background:#fef2f2;
-                  color:#b91c1c;
-                  border:1px solid #fecaca;
-                  border-radius:10px;
-                  font-size:12px;
-                "
-              >
+              <div style="padding:14px;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:10px;font-size:12px;">
                 {{ submissionsModalError() }}
               </div>
 
-            }
+            } @else if (selectedTaskSubmissions().length === 0) {
 
-            @else if (selectedTaskSubmissions().length === 0) {
+              <div style="min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;text-align:center;">
 
-              <div
-                style="
-                  min-height:180px;
-                  display:flex;
-                  flex-direction:column;
-                  align-items:center;
-                  justify-content:center;
-                  gap:7px;
-                  text-align:center;
-                "
-              >
-
-                <div
-                  style="
-                    width:48px;
-                    height:48px;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    background:#f1f5f9;
-                    color:#64748b;
-                    border-radius:50%;
-                  "
-                >
-
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="22"
-                    height="22"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                    </path>
-
-                    <polyline
-                      points="14 2 14 8 20 8">
-                    </polyline>
+                <div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;color:#64748b;border-radius:50%;">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
                   </svg>
-
                 </div>
 
-                <strong
-                  style="
-                    color:#334155;
-                    font-size:13px;
-                  "
-                >
-                  لا توجد تسليمات
-                </strong>
+                <strong style="color:#334155;font-size:13px;">لا توجد تسليمات</strong>
 
-                <span
-                  style="
-                    color:#94a3b8;
-                    font-size:11px;
-                  "
-                >
+                <span style="color:#94a3b8;font-size:11px;">
                   لا توجد تسليمات مرتبطة بهذه المهمة حاليًا.
                 </span>
 
               </div>
 
-            }
+            } @else {
 
-            @else {
+              <div style="display:flex;flex-direction:column;gap:12px;">
 
-              <div
-                style="
-                  display:flex;
-                  flex-direction:column;
-                  gap:12px;
-                "
-              >
-
-                @for (
-                  submission of selectedTaskSubmissions();
-                  track submission.submissionId
-                ) {
+                @for (submission of selectedTaskSubmissions(); track submission.submissionId) {
 
                   <div
                     class="submission-item"
-                    style="
-                      padding:16px;
-                      background:#ffffff;
-                      border:1px solid #e2e8f0;
-                      border-radius:13px;
-                      box-shadow:0 2px 8px rgba(15,35,70,0.03);
-                    "
+                    style="padding:16px;background:#ffffff;border:1px solid #e2e8f0;border-radius:13px;box-shadow:0 2px 8px rgba(15,35,70,0.03);"
                   >
 
-                    <div
-                      style="
-                        display:flex;
-                        align-items:flex-start;
-                        justify-content:space-between;
-                        gap:14px;
-                        margin-bottom:14px;
-                      "
-                    >
+                    <!-- trainee + status -->
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px;">
 
-                      <div
-                        style="
-                          min-width:0;
-                          display:flex;
-                          align-items:center;
-                          gap:10px;
-                        "
-                      >
+                      <div style="min-width:0;display:flex;align-items:center;gap:10px;">
 
-                        <div
-                          style="
-                            width:42px;
-                            height:42px;
-                            min-width:42px;
-                            display:flex;
-                            align-items:center;
-                            justify-content:center;
-                            background:#003b82;
-                            color:#ffffff;
-                            border-radius:50%;
-                            font-size:13px;
-                            font-weight:800;
-                          "
-                        >
-                          {{
-                            (submission.traineeName || 'م')
-                              .charAt(0)
-                          }}
+                        <div style="width:42px;height:42px;min-width:42px;display:flex;align-items:center;justify-content:center;background:#003b82;color:#ffffff;border-radius:50%;font-size:13px;font-weight:800;">
+                          {{ (submission.traineeName || 'م').charAt(0) }}
                         </div>
 
-
                         <div style="min-width:0;">
-
-                          <strong
-                            style="
-                              display:block;
-                              margin-bottom:4px;
-                              color:#0b192c;
-                              font-size:13px;
-                              font-weight:800;
-                            "
-                          >
-                            {{
-                              submission.traineeName ||
-                              'متدرب'
-                            }}
+                          <strong style="display:block;margin-bottom:4px;color:#0b192c;font-size:13px;font-weight:800;">
+                            {{ submission.traineeName || 'متدرب' }}
                           </strong>
-
-                          <span
-                            style="
-                              display:block;
-                              color:#94a3b8;
-                              font-size:10px;
-                            "
-                          >
-                            رقم المتدرب:
-                            {{ submission.traineeId }}
+                          <span style="display:block;color:#94a3b8;font-size:10px;">
+                            رقم المتدرب: {{ submission.traineeId }}
                           </span>
-
                         </div>
 
                       </div>
 
-
                       <span
                         class="submission-status-badge"
-                        [ngClass]="
-                          submissionStatusClass(
-                            submission.status
-                          )
-                        "
+                        [ngClass]="submissionStatusClass(submission.status)"
                       >
-                        {{
-                          submissionStatusLabel(
-                            submission.status
-                          )
-                        }}
+                        {{ submissionStatusLabel(submission.status) }}
                       </span>
 
                     </div>
 
 
-                    <div
-                      style="
-                        display:grid;
-                        grid-template-columns:repeat(2,minmax(0,1fr));
-                        gap:10px;
-                        margin-bottom:14px;
-                      "
-                    >
+                    <!-- date + grade -->
+                    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px;">
 
-                      <div
-                        style="
-                          padding:10px 12px;
-                          background:#f8fafc;
-                          border-radius:9px;
-                        "
-                      >
-
-                        <span
-                          style="
-                            display:block;
-                            margin-bottom:4px;
-                            color:#94a3b8;
-                            font-size:10px;
-                            font-weight:600;
-                          "
-                        >
+                      <div style="padding:10px 12px;background:#f8fafc;border-radius:9px;">
+                        <span style="display:block;margin-bottom:4px;color:#94a3b8;font-size:10px;font-weight:600;">
                           تاريخ التسليم
                         </span>
-
-                        <strong
-                          style="
-                            color:#334155;
-                            font-size:11px;
-                            font-weight:700;
-                          "
-                        >
-                          {{
-                            submission.submittedAt
-                              | date:'dd MMMM, yyyy - h:mm a'
-                          }}
+                        <strong style="color:#334155;font-size:11px;font-weight:700;">
+                          {{ submission.submittedAt | date:'dd MMMM, yyyy - h:mm a' }}
                         </strong>
-
                       </div>
 
-
-                      <div
-                        style="
-                          padding:10px 12px;
-                          background:#f8fafc;
-                          border-radius:9px;
-                        "
-                      >
-
-                        <span
-                          style="
-                            display:block;
-                            margin-bottom:4px;
-                            color:#94a3b8;
-                            font-size:10px;
-                            font-weight:600;
-                          "
-                        >
+                      <div style="padding:10px 12px;background:#f8fafc;border-radius:9px;">
+                        <span style="display:block;margin-bottom:4px;color:#94a3b8;font-size:10px;font-weight:600;">
                           الدرجة
                         </span>
 
@@ -1228,150 +602,74 @@
                           submission.grade !== undefined &&
                           submission.grade !== ''
                         ) {
-
-                          <strong
-                            style="
-                              color:#0056b8;
-                              font-size:12px;
-                              font-weight:800;
-                            "
-                          >
+                          <strong style="color:#0056b8;font-size:12px;font-weight:800;">
                             {{ submission.grade }}
                           </strong>
-
-                        }
-
-                        @else {
-
-                          <strong
-                            style="
-                              color:#94a3b8;
-                              font-size:11px;
-                              font-weight:700;
-                            "
-                          >
+                        } @else {
+                          <strong style="color:#94a3b8;font-size:11px;font-weight:700;">
                             لم يتم التقييم
                           </strong>
-
                         }
-
                       </div>
 
                     </div>
 
 
-                    @if (submission.feedback) {
-
-                      <div
-                        style="
-                          margin-bottom:14px;
-                          padding:11px 12px;
-                          background:#fffbeb;
-                          border:1px solid #fef3c7;
-                          border-radius:9px;
-                        "
-                      >
-
-                        <span
-                          style="
-                            display:block;
-                            margin-bottom:5px;
-                            color:#b45309;
-                            font-size:10px;
-                            font-weight:700;
-                          "
-                        >
-                          ملاحظات التقييم
+                    <!-- LATE DURATION -->
+                    @if (isSubmissionLate(selectedTask, submission)) {
+                      <div class="submission-late-duration">
+                        <span>
+                          مدة التأخير
+                          <small style="display:block;margin-top:3px;font-size:9px;font-weight:600;color:#ef4444;">
+                            الموعد المطلوب: {{ selectedTask.dueDate | date:'dd MMMM, yyyy - h:mm a' }}
+                          </small>
                         </span>
-
-                        <p
-                          style="
-                            margin:0;
-                            color:#475569;
-                            font-size:11px;
-                            line-height:1.7;
-                          "
-                        >
-                          {{ submission.feedback }}
-                        </p>
-
+                        <strong>
+                          @if (lateDuration(selectedTask, submission)) {
+                            متأخر بـ {{ lateDuration(selectedTask, submission) }}
+                          } @else {
+                            تم التسليم بعد الموعد المحدد
+                          }
+                        </strong>
                       </div>
-
                     }
 
 
-                    <div
-                      style="
-                        display:flex;
-                        justify-content:flex-start;
-                      "
-                    >
+                    <!-- FEEDBACK -->
+                    @if (submission.feedback) {
+                      <div style="margin-bottom:14px;padding:11px 12px;background:#fffbeb;border:1px solid #fef3c7;border-radius:9px;">
+                        <span style="display:block;margin-bottom:5px;color:#b45309;font-size:10px;font-weight:700;">
+                          ملاحظات التقييم
+                        </span>
+                        <p style="margin:0;color:#475569;font-size:11px;line-height:1.7;">
+                          {{ submission.feedback }}
+                        </p>
+                      </div>
+                    }
 
-                     @if (submission.fileUrl) {
 
-  <button
-    type="button"
-    (click)="openSubmissionFile(submission)"
-    style="
-      min-height:38px;
-      padding:0 15px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:7px;
-      background:#0056b8;
-      color:#ffffff;
-      border:0;
-      border-radius:9px;
-      font-family:inherit;
-      font-size:11px;
-      font-weight:700;
-      cursor:pointer;
-    "
-  >
+                    <!-- FILE -->
+                    <div style="display:flex;justify-content:flex-start;">
 
-    <svg
-      viewBox="0 0 24 24"
-      width="15"
-      height="15"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-    >
-      <path
-        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-      </path>
+                      @if (submission.fileUrl) {
 
-      <polyline
-        points="14 2 14 8 20 8">
-      </polyline>
-
-      <line
-        x1="12"
-        y1="18"
-        x2="12"
-        y2="12">
-      </line>
-
-      <polyline
-        points="9 15 12 12 15 15">
-      </polyline>
-    </svg>
-
-    عرض التسليم
-
-  </button>
-
-}
-
-                      @else {
-
-                        <span
-                          style="
-                            color:#94a3b8;
-                            font-size:11px;
-                          "
+                        <button
+                          type="button"
+                          (click)="openSubmissionFile(submission)"
+                          style="min-height:38px;padding:0 15px;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#0056b8;color:#ffffff;border:0;border-radius:9px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;"
                         >
+                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="12" y1="18" x2="12" y2="12"></line>
+                            <polyline points="9 15 12 12 15 15"></polyline>
+                          </svg>
+                          عرض التسليم
+                        </button>
+
+                      } @else {
+
+                        <span style="color:#94a3b8;font-size:11px;">
                           لا يوجد ملف مرفق
                         </span>
 
@@ -1379,35 +677,22 @@
 
                     </div>
 
-                  </div>
+                  </div> <!-- نهاية submission-item -->
 
-                }
+                } <!-- نهاية @for -->
 
-              </div>
+              </div> <!-- نهاية الحاوية flex column -->
 
-            }
+            } <!-- نهاية @else -->
 
-          </div>
+          </div> <!-- نهاية CONTENT -->
 
 
-          <div
-            style="
-              padding:14px 24px;
-              display:flex;
-              justify-content:flex-start;
-              border-top:1px solid #e5eaf1;
-              background:#fafcfe;
-            "
-          >
-
-            <button
-              type="button"
-              class="nfd-btn"
-              (click)="closeSubmissionsModal()"
-            >
+          <!-- FOOTER -->
+          <div style="padding:14px 24px;display:flex;justify-content:flex-start;border-top:1px solid #e5eaf1;background:#fafcfe;">
+            <button type="button" class="nfd-btn" (click)="closeSubmissionsModal()">
               إغلاق
             </button>
-
           </div>
 
         </div>
@@ -1419,37 +704,17 @@
   }
 
 
-
-  <!-- ================================================= -->
-  <!--                CREATE TASK MODAL                  -->
-  <!-- ================================================= -->
-
+  <!-- ================= CREATE TASK MODAL ================= -->
   @if (showCreateModal()) {
 
-    <div
-      (click)="closeCreateModal()"
-      class="tasks-inline-046"
-    >
+    <div (click)="closeCreateModal()" class="tasks-inline-046">
 
-      <div
-        (click)="$event.stopPropagation()"
-        class="tasks-inline-047"
-      >
-
-        <!-- ================= MODAL HEADER ================= -->
+      <div (click)="$event.stopPropagation()" class="tasks-inline-047">
 
         <div class="tasks-inline-048">
-
           <div>
-
-            <h3 class="tasks-inline-049">
-              إنشاء واجب / مشروع
-            </h3>
-
-            <p class="tasks-inline-050">
-              أدخل تفاصيل المهمة ثم اضغط حفظ
-            </p>
-
+            <h3 class="tasks-inline-049">إنشاء واجب / مشروع</h3>
+            <p class="tasks-inline-050">أدخل تفاصيل المهمة ثم اضغط حفظ</p>
           </div>
 
           <button
@@ -1460,36 +725,20 @@
           >
             ×
           </button>
-
         </div>
 
-
-        <!-- ================= FORM ================= -->
 
         <form (ngSubmit)="saveTask()">
 
           <div class="tasks-inline-052">
 
             @if (errorMessage()) {
-
-              <div class="tasks-inline-053">
-                {{ errorMessage() }}
-              </div>
-
+              <div class="tasks-inline-053">{{ errorMessage() }}</div>
             }
 
-
-            <!-- ================= TITLE ================= -->
-
+            <!-- TITLE -->
             <div class="tasks-inline-054">
-
-              <label
-                for="taskTitle"
-                class="tasks-inline-055"
-              >
-                عنوان المهمة
-              </label>
-
+              <label for="taskTitle" class="tasks-inline-055">عنوان المهمة</label>
               <input
                 id="taskTitle"
                 type="text"
@@ -1500,21 +749,11 @@
                 autocomplete="off"
                 class="tasks-inline-056"
               />
-
             </div>
 
-
-            <!-- ================= DESCRIPTION ================= -->
-
+            <!-- DESCRIPTION -->
             <div class="tasks-inline-054">
-
-              <label
-                for="taskDescription"
-                class="tasks-inline-055"
-              >
-                وصف المهمة
-              </label>
-
+              <label for="taskDescription" class="tasks-inline-055">وصف المهمة</label>
               <textarea
                 id="taskDescription"
                 name="taskDescription"
@@ -1523,66 +762,30 @@
                 rows="4"
                 class="tasks-inline-057"
               ></textarea>
-
             </div>
 
-
-            <!-- ================= PRIORITY ================= -->
-
+            <!-- PRIORITY -->
             <div class="tasks-inline-054">
-
-              <label
-                for="taskPriority"
-                class="tasks-inline-055"
-              >
-                الأولوية
-              </label>
-
+              <label for="taskPriority" class="tasks-inline-055">الأولوية</label>
               <select
                 id="taskPriority"
                 name="taskPriority"
                 [(ngModel)]="newTaskPriority"
                 class="tasks-inline-058"
               >
-
-                @for (
-                  option of priorityOptions;
-                  track option.value
-                ) {
-
-                  <option
-                    [ngValue]="option.value">
-                    {{ option.label }}
-                  </option>
-
+                @for (option of priorityOptions; track option.value) {
+                  <option [ngValue]="option.value">{{ option.label }}</option>
                 }
-
               </select>
-
             </div>
 
-
-            <!-- ================================================= -->
-            <!--                DUE DATE + BATCH                   -->
-            <!-- ================================================= -->
-
+            <!-- DUE DATE + BATCH -->
             <div class="task-schedule-section">
 
-
-              <!-- ================= DUE DATE ================= -->
-
               <div class="task-due-field">
-
-                <label
-                  for="taskDueDate"
-                  class="tasks-inline-055"
-                >
-                  موعد التسليم
-                </label>
-
+                <label for="taskDueDate" class="tasks-inline-055">موعد التسليم</label>
 
                 <div class="task-due-input-wrapper">
-
                   <input
                     id="taskDueDate"
                     type="datetime-local"
@@ -1591,76 +794,33 @@
                     required
                     class="task-due-input"
                   />
-
                 </div>
-
 
                 <span class="task-field-hint">
                   حدد تاريخ ووقت انتهاء استقبال التسليمات
                 </span>
-
               </div>
 
-
-              <!-- ================= BATCH ================= -->
-
               <div class="task-batch-field">
-
-                <label class="tasks-inline-055">
-                  الدفعة
-                </label>
+                <label class="tasks-inline-055">الدفعة</label>
 
                 <div class="task-selected-batch">
-
                   <span class="task-selected-batch-icon">
-
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="17"
-                      height="17"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.8"
-                    >
-                      <path
-                        d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2">
-                      </path>
-
-                      <circle
-                        cx="9"
-                        cy="7"
-                        r="4">
-                      </circle>
-
-                      <path
-                        d="M22 21v-2a4 4 0 0 0-3-3.87">
-                      </path>
-
-                      <path
-                        d="M16 3.13a4 4 0 0 1 0 7.75">
-                      </path>
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
-
                   </span>
 
-
                   <div class="task-selected-batch-copy">
-
-                    <span class="task-selected-batch-label">
-                      الدفعة المحددة
-                    </span>
-
+                    <span class="task-selected-batch-label">الدفعة المحددة</span>
                     <strong>
-                      {{
-                        selectedBatch()?.batchName ||
-                        'لم يتم تحديد الدفعة'
-                      }}
+                      {{ selectedBatch()?.batchName || 'لم يتم تحديد الدفعة' }}
                     </strong>
-
                   </div>
-
                 </div>
-
               </div>
 
             </div>
@@ -1668,10 +828,7 @@
           </div>
 
 
-          <!-- ================= MODAL FOOTER ================= -->
-
           <div class="tasks-inline-062">
-
             <button
               type="button"
               class="nfd-btn tasks-inline-063"
@@ -1681,30 +838,17 @@
               إلغاء
             </button>
 
-
             <button
               type="submit"
               class="nfd-btn primary tasks-inline-064"
-              [disabled]="
-                saving() ||
-                !newTaskTitle.trim() ||
-                !newTaskDueDate
-              "
+              [disabled]="saving() || !newTaskTitle.trim() || !newTaskDueDate"
             >
-
               @if (saving()) {
-
                 جاري الحفظ...
-
-              }
-              @else {
-
+              } @else {
                 إنشاء المهمة
-
               }
-
             </button>
-
           </div>
 
         </form>

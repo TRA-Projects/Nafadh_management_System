@@ -1159,114 +1159,124 @@ export class CompanySupervisors implements OnInit {
 
 
   // =========================================================
-  // توزيع المتدربين
+  // فتح نافذة توزيع المدربين
   // =========================================================
 
-  openDistributeModal(
-    supervisor: Supervisor
-  ): void {
+  distributionLoading = false;
 
-    this.selectedSupervisor =
-      supervisor;
+  openDistributeModal(supervisor: Supervisor): void {
+    this.selectedSupervisor = supervisor;
+    this.isDistributeModalOpen = true;
+    this.distributionLoading = true;
+    this.traineesList = [];
 
-    this.isDistributeModalOpen =
-      true;
+    supervisor.showMenu = false;
 
+    const supervisorId = supervisor.supervisorId;
 
-    const supervisorId =
-      supervisor.supervisorId;
+    // الاحتفاظ بالاختيارات السابقة خلال الجلسة
+    const previouslySelected =
+      this.distributionMap[supervisorId] ?? [];
 
-
+    // جلب مدربي الشركة بدلاً من المتدربين
     this.companyApi
-      .getSupervisorAssignedTrainees(
-        supervisorId
-      )
+      .getCompanyTrainers(this.companyId)
       .subscribe({
+        next: (response: any) => {
+          // التعامل مع استجابة عبارة عن قائمة مباشرة
+          // أو قائمة داخل خاصية معروفة
+          const data = Array.isArray(response)
+            ? response
+            : Array.isArray(response?.items)
+              ? response.items
+              : Array.isArray(response?.data)
+                ? response.data
+                : Array.isArray(response?.trainers)
+                  ? response.trainers
+                  : [];
 
-        next: (data: any[]) => {
+          this.traineesList = data
+            .map((item: any, index: number) => {
+              const id = Number(
+                item.trainerId ??
+                item.TrainerId ??
+                item.id ??
+                item.Id
+              );
 
-          this.traineesList =
-            data.map(
-              (
-                item: any,
-                index: number
-              ) => {
+              const name =
+                item.fullName ??
+                item.FullName ??
+                item.trainerName ??
+                item.TrainerName ??
+                item.name ??
+                item.Name ??
+                '';
 
-                const name =
-                  item.name ??
-                  item.fullName ??
-                  'متدرب';
-
-
-                return {
-
-                  id:
-                    Number(
-                      item.id ??
-                      item.traineeId ??
-                      index + 1
-                    ),
-
-                  name,
-
-                  email:
-                    item.email ??
-                    '',
-
-                  assigned:
-                    item.assigned ??
-                    item.isAssigned ??
-                    true,
-
-                  color:
-                    this.avatarColors[
-                      index %
-                      this.avatarColors.length
-                    ],
-
-                  initials:
-                    this.initials(name),
-
-                  track:
-                    item.track ??
-                    item.program ??
-                    'برنامج تدريبي',
-
-                  batch:
-                    item.batch ??
-                    item.batchName ??
-                    'الأولى'
-
-                };
-
-              }
+              return {
+                id,
+                name,
+                email:
+                  item.email ??
+                  item.Email ??
+                  '',
+                assigned:
+                  previouslySelected.includes(id),
+                color:
+                  this.avatarColors[
+                    index % this.avatarColors.length
+                  ],
+                initials: this.initials(name),
+                track:
+                  item.specialty ??
+                  item.Specialty ??
+                  item.program ??
+                  item.Program ??
+                  'مدرب',
+                batch:
+                  item.department ??
+                  item.Department ??
+                  ''
+              } as Trainee;
+            })
+            .filter(
+              (trainer: Trainee) =>
+                Number.isFinite(trainer.id) &&
+                trainer.id > 0 &&
+                trainer.name.trim().length > 0
             );
 
+          this.distributionLoading = false;
+
+          if (this.traineesList.length === 0) {
+            this.showToast(
+              'info',
+              'لم يتم العثور على مدربين. تحقق من بيانات الاستجابة.'
+            );
+          }
+
+          this.cdr.detectChanges();
         },
 
         error: (error) => {
-
           console.error(
-            'Get trainees error:',
+            'Error loading company trainers:',
             error
           );
 
           this.traineesList = [];
+          this.distributionLoading = false;
 
           this.showToast(
             'error',
-            'تعذر تحميل المتدربين'
+            'تعذر تحميل المدربين. تحقق من استجابة API.'
           );
 
+          this.cdr.detectChanges();
         }
-
       });
-
-
-    supervisor.showMenu =
-      false;
-
   }
+
 
 
   // =========================================================

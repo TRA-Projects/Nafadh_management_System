@@ -20,6 +20,7 @@ type PlanFilter =
   | 'Approved'
   | 'Rejected'
   | 'InProgress'
+  | 'OnHold'
   | 'Completed';
 
 interface PlanForm {
@@ -110,6 +111,12 @@ export class CompanyTasks implements OnInit {
           return (
             p.approvalStatus === 'Approved' &&
             p.executionStatus === 'InProgress'
+          );
+
+        case 'OnHold':
+          return (
+            p.approvalStatus === 'Approved' &&
+            p.executionStatus === 'OnHold'
           );
 
         case 'Completed':
@@ -236,6 +243,7 @@ export class CompanyTasks implements OnInit {
     { key: 'Rejected', label: 'مرفوضة' },
     { key: 'Approved', label: 'معتمدة' },
     { key: 'InProgress', label: 'قيد التنفيذ' },
+    { key: 'OnHold', label: 'موقوفة مؤقتاً' },
     { key: 'Completed', label: 'مكتملة' },
   ];
 

@@ -22,6 +22,12 @@ export const COMPANY_ROUTES: Routes = [
       { path: 'reports', loadComponent: () => import('./pages/reports/reports').then((m) => m.ReportsComponent) },
       { path: 'contact', loadComponent: () => import('./pages/contact/contact').then((m) => m.CompanyContact) },
       { path: 'notifications', loadComponent: () => import('./pages/notifications/notifications').then((m) => m.CompanyNotifications) },
+    {
+  path: 'warnings',
+  loadComponent: () =>
+    import('./pages/warnings/warnings')
+      .then((m) => m.WarningsComponent)
+},
     ],
   },
 ];

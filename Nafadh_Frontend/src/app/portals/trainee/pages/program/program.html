@@ -1,8 +1,33 @@
 <div class="program-container" dir="rtl">
 
   <!-- =====================================================
-        PROGRAM HEADER
-        ===================================================== -->
+       TOAST NOTIFICATION
+       ===================================================== -->
+
+  <div
+    class="lesson-notification"
+    [class.show]="notificationVisible()"
+    [class.success]="notificationType() === 'success'"
+    [class.error]="notificationType() === 'error'"
+    role="alert"
+    aria-live="polite"
+  >
+    <i
+      class="fa-solid"
+      [class.fa-circle-check]="notificationType() === 'success'"
+      [class.fa-circle-exclamation]="notificationType() === 'error'"
+    ></i>
+
+    <span>
+      {{ notificationMessage() }}
+    </span>
+  </div>
+
+
+  <!-- =====================================================
+       PROGRAM HEADER
+       ===================================================== -->
+
   <section class="program-header">
 
     <div class="program-info">
@@ -29,7 +54,8 @@
       <div class="program-meta">
 
         <span>
-          <i class="fa-regular fa-calendar-days"></i> المدة:
+          <i class="fa-regular fa-calendar-days"></i>
+          المدة:
           <strong>
             {{ stats().totalDays || 0 }} يوم
           </strong>
@@ -58,6 +84,7 @@
 
 
     <!-- Progress -->
+
     <div class="progress-wrapper">
 
       <div
@@ -66,9 +93,11 @@
       >
 
         <div class="progress-circle-inner">
+
           <span>
             {{ stats().overallProgress || 0 }}%
           </span>
+
         </div>
 
       </div>
@@ -83,8 +112,9 @@
 
 
   <!-- =====================================================
-        ENROLLMENT INFORMATION
-        ===================================================== -->
+       ENROLLMENT INFORMATION
+       ===================================================== -->
+
   <section
     class="enrollment-info"
     *ngIf="enrollment()"
@@ -92,10 +122,13 @@
 
     <div class="enrollment-item">
 
-      <span class="info-icon"><i class="fa-solid fa-graduation-cap"></i></span>
+      <span class="info-icon">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </span>
 
       <div>
         <small>الدفعة</small>
+
         <strong>
           {{ enrollment()?.batchName || '-' }}
         </strong>
@@ -106,10 +139,13 @@
 
     <div class="enrollment-item">
 
-      <span class="info-icon"><i class="fa-solid fa-building"></i></span>
+      <span class="info-icon">
+        <i class="fa-solid fa-building"></i>
+      </span>
 
       <div>
         <small>الشركة</small>
+
         <strong>
           {{ enrollment()?.companyName || '-' }}
         </strong>
@@ -120,10 +156,13 @@
 
     <div class="enrollment-item">
 
-      <span class="info-icon"><i class="fa-solid fa-user-tie"></i></span>
+      <span class="info-icon">
+        <i class="fa-solid fa-user-tie"></i>
+      </span>
 
       <div>
         <small>المشرف</small>
+
         <strong>
           {{ enrollment()?.supervisorName || 'غير محدد' }}
         </strong>
@@ -134,10 +173,13 @@
 
     <div class="enrollment-item">
 
-      <span class="info-icon"><i class="fa-solid fa-chart-pie"></i></span>
+      <span class="info-icon">
+        <i class="fa-solid fa-chart-pie"></i>
+      </span>
 
       <div>
         <small>حالة التسجيل</small>
+
         <strong>
           {{ enrollment()?.completionStatus || '-' }}
         </strong>
@@ -149,13 +191,15 @@
 
 
   <!-- =====================================================
-        MODULES SECTION
-        ===================================================== -->
+       MODULES SECTION
+       ===================================================== -->
+
   <section class="modules-container">
 
     <div class="section-header">
 
       <div>
+
         <h2 class="modules-title">
           وحدات البرنامج التدريبي
         </h2>
@@ -163,28 +207,32 @@
         <p class="modules-subtitle">
           تابع تقدمك وأكمل الوحدات بالترتيب
         </p>
+
       </div>
 
+
       <div class="modules-counter">
+
         <strong>
           {{ completedModules() }}
         </strong>
 
         /
-        
         {{ totalModules() }}
 
         <span>
           مكتملة
         </span>
+
       </div>
 
     </div>
 
 
     <!-- =====================================================
-          STEPPER
-          ===================================================== -->
+         STEPPER
+         ===================================================== -->
+
     <div
       class="module-stepper"
       *ngIf="modules().length > 0"
@@ -262,8 +310,9 @@
 
 
     <!-- =====================================================
-          LOADING
-          ===================================================== -->
+         LOADING
+         ===================================================== -->
+
     <div
       *ngIf="loading()"
       class="loading-state"
@@ -279,8 +328,9 @@
 
 
     <!-- =====================================================
-          ERROR
-          ===================================================== -->
+         ERROR
+         ===================================================== -->
+
     <div
       *ngIf="error() && !loading()"
       class="error-state"
@@ -310,8 +360,9 @@
 
 
     <!-- =====================================================
-          MODULE LIST
-          ===================================================== -->
+         MODULE LIST
+         ===================================================== -->
+
     <div
       *ngIf="
         !loading() &&
@@ -326,7 +377,6 @@
           let module of modules();
           let i = index;
         "
-
         class="module-card"
 
         [class.locked-card]="module.isLocked"
@@ -348,7 +398,6 @@
 
           <div class="module-main-info">
 
-            <!-- STATUS -->
             <div
               class="module-status-icon"
 
@@ -395,7 +444,6 @@
             </div>
 
 
-            <!-- MODULE DETAILS -->
             <div class="module-details">
 
               <div class="module-title-row">
@@ -409,7 +457,6 @@
                 </h3>
 
 
-                <!-- Completed -->
                 <span
                   *ngIf="
                     module.progressPercentage === 100
@@ -420,7 +467,6 @@
                 </span>
 
 
-                <!-- In Progress -->
                 <span
                   *ngIf="
                     !module.isLocked &&
@@ -433,7 +479,6 @@
                 </span>
 
 
-                <!-- Locked -->
                 <span
                   *ngIf="module.isLocked"
                   class="module-badge locked"
@@ -442,7 +487,6 @@
                 </span>
 
 
-                <!-- New -->
                 <span
                   *ngIf="
                     !module.isLocked &&
@@ -456,7 +500,6 @@
               </div>
 
 
-              <!-- Progress -->
               <div class="progress-row">
 
                 <span class="progress-number">
@@ -482,7 +525,6 @@
           </div>
 
 
-          <!-- Arrow -->
           <span
             *ngIf="!module.isLocked"
             class="accordion-arrow"
@@ -504,6 +546,7 @@
         <!-- =================================================
              LOCKED MESSAGE
              ================================================= -->
+
         <div
           *ngIf="module.isLocked"
           class="prerequisite-message"
@@ -531,6 +574,7 @@
         <!-- =================================================
              LESSONS
              ================================================= -->
+
         <div
           *ngIf="
             !module.isLocked &&
@@ -574,6 +618,7 @@
                   <i class="fa-solid fa-check"></i>
                 </span>
 
+
                 <span
                   *ngIf="
                     lesson.progressPercentage !== 100
@@ -604,35 +649,97 @@
             </div>
 
 
-            <!-- OPEN LESSON -->
+            <!-- =================================================
+                 LESSON ACTIONS
+                 ================================================= -->
+
             <div class="lesson-actions">
 
-              <!-- حضور الدرس -->
+              <!-- مشاهدة الدرس -->
+
               <button
                 type="button"
-                class="lesson-action-button attendance-button"
+                class="lesson-action-button view-button"
+
                 (click)="
-                  attendLesson(lesson, module);
+                  viewLesson(lesson, module);
                   $event.preventDefault();
                   $event.stopPropagation()
                 "
               >
-                <span><i class="fa-regular fa-calendar-check"></i></span>
-                حضور الدرس
+
+                <span>
+                  <i class="fa-solid fa-play"></i>
+                </span>
+
+                مشاهدة الدرس
+
               </button>
 
+
               <!-- تحميل الدرس -->
+
               <button
                 type="button"
                 class="lesson-action-button download-button"
+
                 (click)="
                   downloadLessonMaterials(lesson, module);
                   $event.preventDefault();
                   $event.stopPropagation()
                 "
               >
-                <span><i class="fa-solid fa-download"></i></span>
+
+                <span>
+                  <i class="fa-solid fa-download"></i>
+                </span>
+
                 تحميل الدرس
+
+              </button>
+
+
+              <!-- ملاحظاتي -->
+
+              <button
+                type="button"
+                class="lesson-action-button notes-button"
+
+                (click)="
+                  openLessonNotes(lesson, module);
+                  $event.preventDefault();
+                  $event.stopPropagation()
+                "
+              >
+
+                <span>
+                  <i class="fa-regular fa-note-sticky"></i>
+                </span>
+
+                ملاحظاتي
+
+              </button>
+
+
+              <!-- تقييم الدرس -->
+
+              <button
+                type="button"
+                class="lesson-action-button rating-button"
+
+                (click)="
+                  openLessonRating(lesson, module);
+                  $event.preventDefault();
+                  $event.stopPropagation()
+                "
+              >
+
+                <span>
+                  <i class="fa-regular fa-star"></i>
+                </span>
+
+                تقييم الدرس
+
               </button>
 
             </div>
@@ -645,6 +752,7 @@
         <!-- =================================================
              NO LESSONS
              ================================================= -->
+
         <div
           *ngIf="
             !module.isLocked &&
@@ -668,8 +776,9 @@
 
 
     <!-- =====================================================
-          EMPTY
-          ===================================================== -->
+         EMPTY
+         ===================================================== -->
+
     <div
       *ngIf="
         !loading() &&
@@ -695,35 +804,565 @@
 
   </section>
 
+
+  <!-- =====================================================
+       LESSON DETAILS
+       ===================================================== -->
+
+  <div
+    *ngIf="showLessonSidebar()"
+    class="lesson-sidebar-overlay"
+    (click)="closeLessonSidebar()"
+  >
+
+    <aside
+      class="lesson-sidebar"
+      dir="rtl"
+      (click)="$event.stopPropagation()"
+    >
+
+      <!-- =================================================
+           SIDEBAR HEADER
+           ================================================= -->
+
+      <div class="lesson-sidebar-header">
+
+        <div class="lesson-sidebar-title">
+
+          <span class="sidebar-title-icon">
+            <i class="fa-solid fa-book-open"></i>
+          </span>
+
+          <div>
+
+            <h3>
+              {{ lessonViewerVisible() ? 'مشاهدة الدرس' : 'تفاصيل الدرس' }}
+            </h3>
+
+            <p>
+              {{ selectedLesson()?.title || 'الدرس' }}
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="lesson-sidebar-close"
+          (click)="closeLessonSidebar()"
+        >
+
+          <i class="fa-solid fa-xmark"></i>
+
+        </button>
+
+      </div>
+
+
+      <!-- =================================================
+           MAIN LESSON WORKSPACE
+           ================================================= -->
+
+      <div class="lesson-workspace">
+
+
+        <!-- =================================================
+             MAIN LESSON AREA
+             ================================================= -->
+
+        <main class="lesson-main-area">
+
+          <!-- =================================================
+               LESSON VIEWER
+               ================================================= -->
+
+          <div
+            *ngIf="
+              lessonViewerVisible() &&
+              lessonViewerUrl()
+            "
+            class="lesson-viewer-section"
+          >
+
+            <div class="lesson-viewer-header">
+
+              <div>
+
+                <span class="lesson-viewer-label">
+                  الدرس الحالي
+                </span>
+
+                <h4>
+                  {{ lessonViewerTitle() }}
+                </h4>
+
+              </div>
+
+              <span class="lesson-viewed-badge">
+
+                <i class="fa-solid fa-circle-check"></i>
+
+                تمت المشاهدة
+
+              </span>
+
+            </div>
+
+
+            <!-- =================================================
+                 HTML5 VIDEO PLAYER
+                 ================================================= -->
+
+            <div class="lesson-video-container">
+
+
+
+
+              <video
+                [src]="lessonViewerUrl()"
+                controls
+                playsinline
+                preload="metadata"
+                 (ended)="onLessonVideoEnded()"
+              >
+                المتصفح الخاص بك لا يدعم تشغيل الفيديو.
+              </video>
+
+            </div>
+
+
+            <div class="lesson-viewer-info">
+
+              <i class="fa-solid fa-circle-info"></i>
+
+              <span>
+                يمكنك مشاهدة الدرس مباشرة من هذه الصفحة، وبعد فتح الدرس
+                تصبح الملاحظات والتقييم متاحة.
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <!-- =================================================
+               LESSON INFORMATION
+               ================================================= -->
+
+          <div class="lesson-sidebar-info">
+
+            <div class="sidebar-info-item">
+
+              <i class="fa-solid fa-layer-group"></i>
+
+              <span>
+                {{ selectedModule()?.title || 'الوحدة' }}
+              </span>
+
+            </div>
+
+
+            <div class="sidebar-info-item">
+
+              <i class="fa-solid fa-book-open"></i>
+
+              <span>
+                {{ selectedLesson()?.title || 'الدرس' }}
+              </span>
+
+            </div>
+
+          </div>
+
+        </main>
+
+
+        <!-- =================================================
+             RIGHT NOTES PANEL
+             ================================================= -->
+
+        <aside class="lesson-notes-panel">
+
+
+          <!-- =================================================
+               TABS
+               ================================================= -->
+
+          <div class="lesson-sidebar-tabs">
+
+            <button
+              type="button"
+              class="lesson-sidebar-tab"
+
+              [class.active]="
+                lessonSidebarTab() === 'notes'
+              "
+
+              (click)="
+                switchLessonSidebarTab('notes')
+              "
+            >
+
+              <i class="fa-regular fa-note-sticky"></i>
+
+              <span>
+                ملاحظاتي
+              </span>
+
+            </button>
+
+
+            <button
+              type="button"
+              class="lesson-sidebar-tab"
+
+              [class.active]="
+                lessonSidebarTab() === 'rating'
+              "
+
+              (click)="
+                switchLessonSidebarTab('rating')
+              "
+            >
+
+              <i class="fa-regular fa-star"></i>
+
+              <span>
+                تقييم الدرس
+              </span>
+
+            </button>
+
+          </div>
+
+
+          <!-- =================================================
+               SIDEBAR CONTENT
+               ================================================= -->
+
+          <div class="lesson-sidebar-content">
+
+            <!-- =================================================
+                 NOTES
+                 ================================================= -->
+
+            <div
+              *ngIf="
+                lessonSidebarTab() === 'notes'
+              "
+              class="sidebar-tab-content"
+            >
+
+              <div class="sidebar-section-title">
+
+                <div class="sidebar-section-icon notes-icon">
+
+                  <i class="fa-regular fa-note-sticky"></i>
+
+                </div>
+
+                <div>
+
+                  <h4>
+                    ملاحظاتي
+                  </h4>
+
+                  <p>
+                    أضف ملاحظاتك الخاصة حول هذا الدرس
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <label class="sidebar-field-label">
+                ملاحظتك
+              </label>
+
+
+              <textarea
+                class="lesson-notes-textarea"
+
+                [value]="lessonNote()"
+
+                (input)="updateLessonNote($event)"
+
+                placeholder="اكتب ملاحظاتك حول هذا الدرس..."
+
+                rows="10"
+              ></textarea>
+
+
+              <div class="sidebar-character-hint">
+
+                <i class="fa-solid fa-circle-info"></i>
+
+                <span>
+                  اكتب أي ملاحظات أو نقاط مهمة تريد الاحتفاظ بها لهذا الدرس.
+                </span>
+
+              </div>
+
+
+              <button
+                type="button"
+                class="sidebar-save-button notes-save-button"
+                (click)="saveLessonNote()"
+              >
+
+                <i class="fa-solid fa-check"></i>
+
+                حفظ الملاحظة
+
+              </button>
+
+            </div>
+
+
+            <!-- =================================================
+                 RATING
+                 ================================================= -->
+
+            <div
+              *ngIf="
+                lessonSidebarTab() === 'rating'
+              "
+              class="sidebar-tab-content rating-tab-content"
+            >
+
+              <div class="sidebar-section-title">
+
+                <div class="sidebar-section-icon rating-icon">
+
+                  <i class="fa-regular fa-star"></i>
+
+                </div>
+
+                <div>
+
+                  <h4>
+                    تقييم الدرس
+                  </h4>
+
+                  <p>
+                    ساعدنا بتقييم مدى استفادتك من هذا الدرس
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <div class="rating-question">
+                كيف تقيّم هذا الدرس؟
+              </div>
+
+
+              <div class="rating-stars">
+
+                <button
+                  *ngFor="
+                    let star of [1, 2, 3, 4, 5]
+                  "
+                  type="button"
+                  class="rating-star-button"
+
+                  [class.selected]="
+                    star <= lessonRating()
+                  "
+
+                  (click)="
+                    selectLessonRating(star)
+                  "
+                >
+
+                  <i
+                    class="fa-star"
+
+                    [class.fa-solid]="
+                      star <= lessonRating()
+                    "
+
+                    [class.fa-regular]="
+                      star > lessonRating()
+                    "
+                  ></i>
+
+                </button>
+
+              </div>
+
+
+              <div
+                *ngIf="
+                  lessonRating() > 0
+                "
+                class="rating-text"
+              >
+
+                <ng-container
+                  [ngSwitch]="lessonRating()"
+                >
+
+                  <span *ngSwitchCase="1">
+                    غير مفيد
+                  </span>
+
+                  <span *ngSwitchCase="2">
+                    يحتاج إلى تحسين
+                  </span>
+
+                  <span *ngSwitchCase="3">
+                    جيد
+                  </span>
+
+                  <span *ngSwitchCase="4">
+                    جيد جدًا
+                  </span>
+
+                  <span *ngSwitchCase="5">
+                    ممتاز
+                  </span>
+
+                </ng-container>
+
+              </div>
+
+
+              <div class="rating-selected-value">
+
+                <span
+                  *ngIf="
+                    lessonRating() === 0
+                  "
+                >
+                  اختر عدد النجوم
+                </span>
+
+                <span
+                  *ngIf="
+                    lessonRating() > 0
+                  "
+                >
+                  تقييمك: {{ lessonRating() }} من 5
+                </span>
+
+              </div>
+
+
+              <button
+                type="button"
+                class="sidebar-save-button rating-save-button"
+
+                (click)="saveLessonRating()"
+              >
+
+                <i class="fa-solid fa-paper-plane"></i>
+
+                إرسال التقييم
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </aside>
+
+      </div>
+
+    </aside>
+
+  </div>
+
 </div>
 
 
 <!-- =========================================================
-    CSS
-    ========================================================= -->
+     CSS
+     ========================================================= -->
 
 <style>
 
-/* تلوين باقي أيقونات Font Awesome في الداشبورد باللون الأزرق المخصص */
+.lesson-notification {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 10000;
+  min-width: 300px;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-right: 4px solid #22c55e;
+  transform: translateX(120%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .3s ease, opacity .3s ease;
+}
+
+.lesson-notification.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.lesson-notification.success {
+  border-right-color: #22c55e;
+}
+
+.lesson-notification.success i {
+  color: #22c55e !important;
+}
+
+.lesson-notification.error {
+  border-right-color: #ef4444;
+}
+
+.lesson-notification.error i {
+  color: #ef4444 !important;
+}
+
+.lesson-notification i {
+  font-size: 21px;
+  flex-shrink: 0;
+}
+
+.lesson-notification span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  line-height: 1.6;
+}
+
 .program-header i,
 .enrollment-item i,
 .modules-container .section-header i,
 .error-icon i,
 .prerequisite-icon i,
 .no-lessons i,
-.empty-icon i,
-.lesson-action-button i,
 .module-status-icon i {
   color: #176fc4 !important;
 }
 
-/* استثناء الـ Stepper العلوي ليعود لألوانه الافتراضية السابقة */
 .module-stepper i {
   color: inherit !important;
 }
+
 .step-completed .step-circle i {
   color: #ffffff !important;
 }
+
+
+/* =========================================================
+   PROGRAM CONTAINER
+   ========================================================= */
 
 .program-container {
   width: 100%;
@@ -731,15 +1370,8 @@
   margin: 0;
   padding: 20px 24px 35px;
   box-sizing: border-box;
-
   background: #f5f7fb;
-
-  font-family:
-    'Cairo',
-    'Segoe UI',
-    Tahoma,
-    sans-serif;
-
+  font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
   color: #172033;
 }
 
@@ -751,109 +1383,73 @@
 .program-header {
   width: 100%;
   min-height: 145px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   padding: 22px 28px;
-
   box-sizing: border-box;
-
   background: #ffffff;
-
   border: 1px solid #edf0f4;
   border-radius: 14px;
-
-  box-shadow:
-    0 3px 14px rgba(25, 45, 80, 0.04);
-
+  box-shadow: 0 3px 14px rgba(25, 45, 80, 0.04);
   margin-bottom: 14px;
 }
-
 
 .program-info {
   flex: 1;
   min-width: 0;
-
   text-align: right;
   padding-right: 20px;
 }
 
-
 .program-title-row {
   display: flex;
   align-items: center;
-
   gap: 10px;
-
   margin-bottom: 7px;
 }
 
-
 .program-title {
   margin: 0;
-
   font-size: 23px;
   font-weight: 700;
-
   color: #172033;
-
   line-height: 1.5;
 }
 
-
 .program-description {
   margin: 0 0 10px;
-
   max-width: 900px;
-
   font-size: 15px;
   line-height: 1.8;
-
   color: #8b929e;
 }
-
 
 .program-meta {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-
   flex-wrap: wrap;
-
   gap: 8px 20px;
-
   color: #8a919d;
-
   font-size: 13px;
 }
-
 
 .program-meta span {
   white-space: nowrap;
 }
-
 
 .program-meta strong {
   color: #555e6c;
   font-weight: 600;
 }
 
-
-/* =========================================================
-   STATUS
-   ========================================================= */
-
 .status-badge {
   padding: 3px 11px;
-
   border-radius: 20px;
-
   font-size: 12px;
   font-weight: 600;
 }
-
 
 .status-active {
   color: #10aa83;
@@ -867,30 +1463,22 @@
 
 .progress-wrapper {
   width: 105px;
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
   flex-shrink: 0;
 }
 
-
 .progress-circle {
   --progress: 0%;
-
   width: 78px;
   height: 78px;
-
   border-radius: 50%;
-
   position: relative;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   background:
     conic-gradient(
       #0fa7c2 0deg,
@@ -900,123 +1488,86 @@
     );
 }
 
-
 .progress-circle::before {
   content: "";
-
   position: absolute;
-
   width: 64px;
   height: 64px;
-
   border-radius: 50%;
-
   background: #ffffff;
 }
-
 
 .progress-circle-inner {
   position: relative;
   z-index: 1;
-
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-
 .progress-circle-inner span {
   font-size: 17px;
   font-weight: 700;
-
   color: #173c82;
 }
 
-
 .progress-label {
   margin-top: 6px;
-
   font-size: 12px;
-
   color: #9ca3ad;
 }
 
 
 /* =========================================================
-   ENROLLMENT INFORMATION
+   ENROLLMENT
    ========================================================= */
 
 .enrollment-info {
   display: grid;
-
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
-
   margin-bottom: 14px;
 }
 
-
 .enrollment-item {
   min-height: 65px;
-
   display: flex;
   align-items: center;
-
   gap: 10px;
-
   padding: 10px 13px;
-
   box-sizing: border-box;
-
   background: #ffffff;
-
   border: 1px solid #edf0f4;
   border-radius: 10px;
 }
 
-
 .info-icon {
   width: 31px;
   height: 31px;
-
   flex-shrink: 0;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 8px;
-
   background: #f2f6ff;
-
   font-size: 16px;
 }
 
-
 .enrollment-item div {
   min-width: 0;
-
   display: flex;
   flex-direction: column;
-
   gap: 2px;
 }
 
-
 .enrollment-item small {
   font-size: 11px;
-
   color: #9da4ae;
 }
 
-
 .enrollment-item strong {
   font-size: 13px;
-
   color: #283448;
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1024,73 +1575,51 @@
 
 
 /* =========================================================
-   MODULE CONTAINER
+   MODULES
    ========================================================= */
 
 .modules-container {
   width: 100%;
-
   padding: 22px 20px 20px;
-
   box-sizing: border-box;
-
   background: #ffffff;
-
   border: 1px solid #edf0f4;
   border-radius: 14px;
-
-  box-shadow:
-    0 3px 14px rgba(25, 45, 80, 0.04);
+  box-shadow: 0 3px 14px rgba(25, 45, 80, 0.04);
 }
-
 
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   margin-bottom: 18px;
 }
 
-
 .modules-title {
   margin: 0;
-
   font-size: 19px;
   font-weight: 700;
-
   color: #182235;
 }
 
-
 .modules-subtitle {
   margin: 4px 0 0;
-
   font-size: 12px;
-
   color: #a0a6b0;
 }
 
-
 .modules-counter {
   padding: 7px 12px;
-
   border-radius: 8px;
-
   background: #f5f8fc;
-
   color: #8d96a3;
-
   font-size: 12px;
 }
 
-
 .modules-counter strong {
   color: #176fc4;
-
   font-size: 15px;
 }
-
 
 .modules-counter span {
   margin-right: 3px;
@@ -1103,116 +1632,77 @@
 
 .module-stepper {
   width: 100%;
-
   display: flex;
   align-items: flex-start;
-
   justify-content: flex-start;
-
   direction: rtl;
-
   margin-bottom: 20px;
-
   padding: 0 15px;
-
   box-sizing: border-box;
-
   overflow-x: auto;
 }
 
-
 .step-wrapper {
   position: relative;
-
   min-width: 80px;
-
   display: flex;
   flex-direction: column;
   align-items: center;
-
   flex: 0 0 auto;
 }
 
-
 .step-line {
   position: absolute;
-
   top: 17px;
-
   left: 50%;
-
   width: 100%;
   height: 2px;
-
   background: #e0e5eb;
-
   z-index: 0;
 }
-
 
 .completed-line {
   background: #176fc4;
 }
 
-
 .step-circle {
   width: 34px;
   height: 34px;
-
   border-radius: 50%;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   position: relative;
   z-index: 2;
-
   background: #ffffff;
-
   border: 1px solid #dfe4eb;
-
   color: #aeb4bd;
-
   font-size: 13px;
   font-weight: 700;
 }
 
-
 .step-completed .step-circle {
   background: #176fc4;
-
   border-color: #176fc4;
-
   color: #ffffff;
 }
-
 
 .step-current .step-circle {
   background: #159a78;
-
   border-color: #159a78;
-
   color: #ffffff;
 }
 
-
 .step-locked .step-circle {
   background: #f1f3f6;
-
   border-color: #e7e9ed;
-
   color: #a9afb8;
 }
 
-
 .step-label {
   margin-top: 6px;
-
   font-size: 11px;
-
   color: #a1a6ae;
-
   white-space: nowrap;
 }
 
@@ -1224,305 +1714,191 @@
 .modules-list {
   display: flex;
   flex-direction: column;
-
   gap: 8px;
 }
 
-
-/* =========================================================
-   MODULE CARD
-   ========================================================= */
-
 .module-card {
   border: 1px solid #e3e7ed;
-
   border-radius: 10px;
-
   background: #ffffff;
-
   overflow: hidden;
-
-  transition:
-    border-color .2s ease,
-    box-shadow .2s ease;
+  transition: border-color .2s ease, box-shadow .2s ease;
 }
-
 
 .module-card[open] {
   border-color: #2b8ce6;
-
-  box-shadow:
-    0 3px 10px rgba(43, 140, 230, .05);
+  box-shadow: 0 3px 10px rgba(43, 140, 230, .05);
 }
-
 
 .module-card.locked-card {
   background: #fafbfc;
-
   border-color: #e7e9ed;
 }
-
 
 .module-card summary {
   list-style: none;
 }
 
-
 .module-card summary::-webkit-details-marker {
   display: none;
 }
 
-
-/* =========================================================
-   MODULE HEADER
-   ========================================================= */
-
 .module-summary {
   min-height: 68px;
-
   padding: 10px 14px;
-
   box-sizing: border-box;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   cursor: pointer;
-
   user-select: none;
 }
-
 
 .locked-card .module-summary {
   cursor: not-allowed;
 }
 
-
 .module-main-info {
   display: flex;
   align-items: center;
-
   gap: 10px;
-
   flex: 1;
-
   min-width: 0;
 }
-
 
 .module-status-icon {
   width: 31px;
   height: 31px;
-
   flex-shrink: 0;
-
   border-radius: 50%;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   background: #f3f5f8;
-
   color: #9aa2ad;
-
   font-size: 13px;
   font-weight: 700;
 }
 
-
 .completed-icon {
   background: #eff6ff;
-
   color: #176fc4;
 }
-
 
 .active-icon {
   background: #edf5ff;
-
   color: #176fc4;
 }
 
-
 .locked-icon {
   background: #f0f2f5;
-
   color: #9ca3ad;
 }
 
-
 .module-details {
   flex: 1;
-
   min-width: 0;
 }
-
 
 .module-title-row {
   display: flex;
   align-items: center;
-
   gap: 7px;
-
   margin-bottom: 5px;
-
   min-width: 0;
 }
 
-
 .module-number {
   flex-shrink: 0;
-
   font-size: 11px;
-
   color: #a0a6b0;
 }
 
-
 .module-title {
   margin: 0;
-
   font-size: 15px;
-
   font-weight: 600;
-
   color: #172033;
-
   line-height: 1.5;
-
   white-space: nowrap;
-
   overflow: hidden;
-
   text-overflow: ellipsis;
 }
 
-
-/* =========================================================
-   BADGES
-   ========================================================= */
-
 .module-badge {
   flex-shrink: 0;
-
   padding: 2px 9px;
-
   border-radius: 20px;
-
   font-size: 11px;
 }
 
-
 .module-badge.completed {
   color: #176fc4;
-
   background: #eff6ff;
 }
 
-
 .module-badge.active {
   color: #176fc4;
-
   background: #edf5ff;
 }
 
-
 .module-badge.new {
   color: #176fc4;
-
   background: #f0f5ff;
 }
 
-
 .module-badge.locked {
   color: #7b818b;
-
   background: #f0f2f5;
 }
-
-
-/* =========================================================
-   MODULE PROGRESS
-   ========================================================= */
 
 .progress-row {
   display: flex;
   align-items: center;
-
   gap: 7px;
-
   width: 180px;
 }
 
-
 .progress-number {
   min-width: 28px;
-
   font-size: 11px;
-
   color: #929aa5;
-
   text-align: left;
 }
 
-
 .module-progress {
   height: 4px;
-
   flex: 1;
-
   background: #e5e9ef;
-
   border-radius: 10px;
-
   overflow: hidden;
 }
 
-
 .module-progress-fill {
   height: 100%;
-
   border-radius: inherit;
-
   background: #176fc4;
-
   transition: width .3s ease;
 }
 
-
-/* =========================================================
-   ARROW
-   ========================================================= */
-
 .accordion-arrow {
   width: 22px;
-
   color: #9ba2ad;
-
   font-size: 14px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   transition: transform .2s ease;
 }
-
 
 .module-card[open] .accordion-arrow {
   transform: rotate(180deg);
 }
 
-
 .locked-arrow {
   width: 22px;
-
   color: #a3a8b0;
-
   font-size: 13px;
-
   text-align: center;
 }
 
@@ -1533,56 +1909,37 @@
 
 .prerequisite-message {
   margin: 0 12px 12px;
-
   padding: 13px;
-
   display: flex;
   align-items: center;
-
   gap: 10px;
-
   border-radius: 8px;
-
   background: #f7f8fa;
-
   border: 1px solid #eceef1;
 }
-
 
 .prerequisite-icon {
   width: 32px;
   height: 32px;
-
   flex-shrink: 0;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 8px;
-
   background: #eceff3;
-
   font-size: 15px;
 }
 
-
 .prerequisite-content strong {
   display: block;
-
   margin-bottom: 3px;
-
   font-size: 13px;
-
   color: #555c68;
 }
 
-
 .prerequisite-content p {
   margin: 0;
-
   font-size: 12px;
-
   color: #999fa8;
 }
 
@@ -1593,454 +1950,89 @@
 
 .module-lessons {
   padding: 0 12px 8px;
-
   border-top: 1px solid #edf0f4;
 }
 
-
 .lessons-header {
   height: 34px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   font-size: 12px;
-
   color: #949ba6;
-
   border-bottom: 1px solid #f1f3f6;
 }
-
 
 .lesson-item {
   min-height: 58px;
-
   padding: 9px 0;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   gap: 15px;
-
   border-bottom: 1px solid #f1f3f6;
 }
-
 
 .lesson-item:last-child {
   border-bottom: none;
 }
 
-
 .lesson-info {
   display: flex;
   align-items: flex-start;
-
   gap: 9px;
-
   flex: 1;
-
   min-width: 0;
 }
 
-
 .lesson-status {
   padding-top: 1px;
-
   flex-shrink: 0;
 }
-
 
 .lesson-check {
   width: 20px;
   height: 20px;
-
   border-radius: 50%;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   background: #eff6ff;
-
   color: #176fc4;
-
   font-size: 11px;
 }
-
 
 .lesson-number {
   width: 20px;
   height: 20px;
-
   border-radius: 50%;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   background: #f1f4f8;
-
   color: #8e96a2;
-
   font-size: 11px;
 }
-
 
 .lesson-text {
   min-width: 0;
 }
 
-
 .lesson-title {
   margin: 0;
-
   font-size: 14px;
-
   font-weight: 600;
-
   color: #1b2536;
 }
 
-
 .lesson-description {
   margin: 3px 0 0;
-
   font-size: 12px;
-
   line-height: 1.5;
-
   color: #9ca2ab;
-
   white-space: nowrap;
-
   overflow: hidden;
-
   text-overflow: ellipsis;
-}
-
-
-/* =========================================================
-   NO LESSONS
-   ========================================================= */
-
-.no-lessons {
-  padding: 18px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 7px;
-
-  color: #9ba1aa;
-
-  font-size: 13px;
-}
-
-
-/* =========================================================
-   LOADING
-   ========================================================= */
-
-.loading-state {
-  text-align: center;
-
-  padding: 55px 20px;
-
-  color: #8f96a1;
-
-  font-size: 14px;
-}
-
-
-.loader {
-  width: 27px;
-  height: 27px;
-
-  margin: 0 auto 12px;
-
-  border: 3px solid #e7ebf0;
-
-  border-top-color: #176fc4;
-
-  border-radius: 50%;
-
-  animation: spin .8s linear infinite;
-}
-
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-
-/* =========================================================
-   ERROR
-   ========================================================= */
-
-.error-state {
-  text-align: center;
-
-  padding: 50px 20px;
-
-  color: #ef5555;
-}
-
-
-.error-icon {
-  width: 40px;
-  height: 40px;
-
-  margin: 0 auto 10px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  background: #fff0f0;
-
-  color: #ef5555;
-
-  font-size: 18px;
-  font-weight: 700;
-}
-
-
-.error-state h3 {
-  margin: 0 0 5px;
-
-  font-size: 16px;
-
-  color: #555c68;
-}
-
-
-.error-state p {
-  margin: 0;
-
-  font-size: 13px;
-
-  color: #999fa8;
-}
-
-
-.retry-button {
-  margin-top: 13px;
-
-  border: none;
-
-  background: #176fc4;
-
-  color: #ffffff;
-
-  border-radius: 6px;
-
-  padding: 8px 17px;
-
-  font-family: inherit;
-
-  font-size: 13px;
-
-  cursor: pointer;
-}
-
-
-/* =========================================================
-   EMPTY
-   ========================================================= */
-
-.empty-state {
-  text-align: center;
-
-  padding: 55px 20px;
-
-  color: #9ba1aa;
-}
-
-
-.empty-icon {
-  font-size: 28px;
-  color: #b5bbc3;
-
-  margin-bottom: 8px;
-}
-
-
-.empty-state h3 {
-  margin: 0 0 5px;
-
-  font-size: 16px;
-
-  color: #68717e;
-}
-
-
-.empty-state p {
-  margin: 0;
-
-  font-size: 13px;
-
-  color: #a1a7b0;
-}
-
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-
-@media (max-width: 900px) {
-
-  .program-header {
-    padding: 18px;
-  }
-
-  .enrollment-info {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
-  .program-meta {
-    gap: 7px 14px;
-  }
-}
-
-
-@media (max-width: 650px) {
-
-  .program-container {
-    padding: 10px;
-  }
-
-
-  .program-header {
-    flex-direction: column-reverse;
-
-    align-items: stretch;
-
-    gap: 15px;
-  }
-
-
-  .progress-wrapper {
-    align-self: center;
-  }
-
-
-  .program-info {
-    padding-right: 0;
-
-    text-align: center;
-  }
-
-
-  .program-title-row {
-    justify-content: center;
-  }
-
-
-  .program-description {
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-
-  .program-meta {
-    justify-content: center;
-  }
-
-
-  .enrollment-info {
-    grid-template-columns: 1fr 1fr;
-  }
-
-
-  .section-header {
-    align-items: flex-start;
-
-    gap: 10px;
-  }
-
-
-  .modules-counter {
-    flex-shrink: 0;
-  }
-
-
-  .module-summary {
-    padding: 9px;
-  }
-
-
-  .progress-row {
-    width: 140px;
-  }
-
-
-  .lesson-item {
-    align-items: flex-start;
-
-    flex-direction: column;
-  }
-
-
-  .lesson-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .lesson-action-button {
-    align-self: flex-start;
-  }
-}
-
-
-@media (max-width: 450px) {
-
-  .program-title {
-    font-size: 19px;
-  }
-
-
-  .program-description {
-    font-size: 13px;
-  }
-
-
-  .enrollment-info {
-    grid-template-columns: 1fr;
-  }
-
-
-  .module-number {
-    display: none;
-  }
-
-
-  .module-title {
-    font-size: 14px;
-  }
-
-
-  .module-badge {
-    display: none;
-  }
-
-
-  .progress-row {
-    width: 105px;
-  }
-
-
-  .modules-counter {
-    display: none;
-  }
-
 }
 
 
@@ -2064,30 +2056,28 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
-
-  transition:
-    background .2s ease,
-    transform .2s ease;
+  transition: background .2s ease, transform .2s ease;
 }
 
-/* حضور الدرس */
 
-.attendance-button {
+/* View */
+
+.view-button {
   background: #eafaf5;
   color: #159a78;
 }
 
-.attendance-button:hover {
+.view-button:hover {
   background: #d9f5ec;
   transform: translateY(-1px);
 }
 
-/* تحميل الدرس */
+
+/* Download */
 
 .download-button {
   background: #f0f5ff;
@@ -2097,6 +2087,1302 @@
 .download-button:hover {
   background: #e1ebff;
   transform: translateY(-1px);
+}
+
+
+/* Notes */
+
+.notes-button {
+  background: #fff7e8;
+  color: #d88a00;
+}
+
+.notes-button:hover {
+  background: #ffefd0;
+  transform: translateY(-1px);
+}
+
+
+/* Rating */
+
+.rating-button {
+  background: #fff1f1;
+  color: #e05a5a;
+}
+
+.rating-button:hover {
+  background: #ffe2e2;
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   LESSON DETAILS - FULL SCREEN WORKSPACE
+   ========================================================= */
+
+.lesson-sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+  box-sizing: border-box;
+
+  backdrop-filter: blur(3px);
+}
+
+
+/* =========================================================
+   LESSON WINDOW
+   ========================================================= */
+
+.lesson-sidebar {
+  width: 100%;
+  max-width: 1600px;
+  height: calc(100vh - 40px);
+
+  background: #ffffff;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.18);
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  animation: lessonSidebarAppear .25s ease;
+}
+
+
+@keyframes lessonSidebarAppear {
+
+  from {
+    opacity: 0;
+    transform: translateY(15px) scale(.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+}
+
+
+/* =========================================================
+   LESSON HEADER
+   ========================================================= */
+
+.lesson-sidebar-header {
+  min-height: 70px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding: 14px 22px;
+
+  border-bottom: 1px solid #edf0f4;
+
+  background: #ffffff;
+
+  box-sizing: border-box;
+
+  flex-shrink: 0;
+}
+
+
+.lesson-sidebar-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  min-width: 0;
+}
+
+
+.sidebar-title-icon {
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: #eff6ff;
+
+  color: #176fc4;
+
+  font-size: 18px;
+}
+
+
+.sidebar-title-icon i {
+  color: #176fc4 !important;
+}
+
+
+.lesson-sidebar-title h3 {
+  margin: 0 0 3px;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  color: #1f2937;
+}
+
+
+.lesson-sidebar-title p {
+  margin: 0;
+
+  font-size: 12px;
+
+  color: #7b8494;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  max-width: 600px;
+}
+
+
+.lesson-sidebar-close {
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: #f5f6f8;
+
+  color: #6b7280;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: .2s ease;
+}
+
+
+.lesson-sidebar-close:hover {
+  background: #eceef2;
+  color: #374151;
+}
+
+
+/* =========================================================
+   MAIN WORKSPACE
+   ========================================================= */
+
+.lesson-workspace {
+  flex: 1;
+
+  min-height: 0;
+
+  display: grid;
+
+  /*
+   * الدرس يأخذ كل المساحة المتبقية
+   * والملاحظات تبقى في اليمين بعرض ثابت
+   */
+  grid-template-columns:
+    minmax(0, 1fr)
+    390px;
+
+  direction: ltr;
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   MAIN LESSON AREA
+   ========================================================= */
+
+.lesson-main-area {
+  min-width: 0;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  direction: rtl;
+
+  background: #f5f7fb;
+
+  overflow-y: auto;
+}
+
+
+/* =========================================================
+   LESSON VIEWER
+   ========================================================= */
+
+.lesson-viewer-section {
+  flex: 1;
+
+  min-height: 0;
+
+  padding: 22px 26px;
+
+  background: #f5f7fb;
+
+  border-bottom: 1px solid #e5e9ef;
+
+  box-sizing: border-box;
+}
+
+
+.lesson-viewer-header {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  margin-bottom: 15px;
+}
+
+
+.lesson-viewer-label {
+  display: block;
+
+  margin-bottom: 4px;
+
+  font-size: 11px;
+
+  color: #98a1ad;
+}
+
+
+.lesson-viewer-header h4 {
+  margin: 0;
+
+  font-size: 18px;
+
+  font-weight: 700;
+
+  color: #374151;
+}
+
+
+.lesson-viewed-badge {
+  flex-shrink: 0;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  padding: 6px 10px;
+
+  border-radius: 20px;
+
+  background: #eafaf5;
+
+  color: #159a78;
+
+  font-size: 11px;
+
+  font-weight: 600;
+}
+
+
+.lesson-viewed-badge i {
+  color: #159a78 !important;
+}
+
+
+/* =========================================================
+   LARGE VIDEO / LESSON
+   ========================================================= */
+
+.lesson-video-container {
+  width: 100%;
+
+  /*
+   * الفيديو يأخذ معظم المساحة المتاحة
+   */
+  height: calc(100vh - 190px);
+
+  min-height: 450px;
+
+  overflow: hidden;
+
+  border-radius: 12px;
+
+  background: #111827;
+
+  box-shadow:
+    0 8px 25px rgba(15, 23, 42, 0.15);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* =========================================================
+   HTML5 VIDEO
+   ========================================================= */
+
+.lesson-video-container video {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  border: none;
+
+  object-fit: contain;
+
+  background: #111827;
+}
+
+
+/* =========================================================
+   VIEWER INFO
+   ========================================================= */
+
+.lesson-viewer-info {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 8px;
+
+  margin-top: 12px;
+
+  padding: 10px 12px;
+
+  border-radius: 8px;
+
+  background: #f0f5ff;
+
+  color: #718096;
+
+  font-size: 11px;
+
+  line-height: 1.7;
+}
+
+
+.lesson-viewer-info i {
+  color: #176fc4 !important;
+
+  margin-top: 2px;
+
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   LESSON INFORMATION
+   ========================================================= */
+
+.lesson-sidebar-info {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 8px;
+
+  padding: 12px 26px;
+
+  border-bottom: 1px solid #e5e9ef;
+
+  background: #ffffff;
+}
+
+
+.sidebar-info-item {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 7px 10px;
+
+  border-radius: 7px;
+
+  background: #f5f7fa;
+
+  color: #667085;
+
+  font-size: 11px;
+
+  max-width: 100%;
+}
+
+
+.sidebar-info-item i {
+  color: #176fc4 !important;
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   RIGHT NOTES PANEL
+   ========================================================= */
+
+.lesson-notes-panel {
+  min-width: 0;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  direction: rtl;
+
+  background: #ffffff;
+
+  border-left: 1px solid #e1e6ec;
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   TABS
+   ========================================================= */
+
+.lesson-sidebar-tabs {
+  display: flex;
+
+  flex-shrink: 0;
+
+  padding: 0 15px;
+
+  border-bottom: 1px solid #edf0f4;
+
+  background: #ffffff;
+}
+
+
+.lesson-sidebar-tab {
+  flex: 1;
+
+  border: none;
+
+  background: transparent;
+
+  color: #8b929e;
+
+  padding: 14px 10px;
+
+  font-family: inherit;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  position: relative;
+
+  transition: .2s ease;
+}
+
+
+.lesson-sidebar-tab:hover {
+  color: #176fc4;
+}
+
+
+.lesson-sidebar-tab.active {
+  color: #176fc4;
+}
+
+
+.lesson-sidebar-tab.active::after {
+  content: "";
+
+  position: absolute;
+
+  bottom: -1px;
+
+  right: 0;
+  left: 0;
+
+  height: 2px;
+
+  background: #176fc4;
+}
+
+
+.lesson-sidebar-tab i {
+  color: inherit !important;
+}
+
+
+/* =========================================================
+   SIDEBAR CONTENT
+   ========================================================= */
+
+.lesson-sidebar-content {
+  flex: 1;
+
+  min-height: 0;
+
+  padding: 22px;
+
+  overflow-y: auto;
+}
+
+
+.sidebar-tab-content {
+  width: 100%;
+}
+
+
+/* =========================================================
+   SECTION TITLE
+   ========================================================= */
+
+.sidebar-section-title {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  margin-bottom: 22px;
+}
+
+
+.sidebar-section-icon {
+  width: 40px;
+  height: 40px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  font-size: 17px;
+}
+
+
+.sidebar-section-icon i {
+  color: inherit !important;
+}
+
+
+.notes-icon {
+  background: #fff7e8;
+
+  color: #d88a00;
+}
+
+
+.rating-icon {
+  background: #fff1f1;
+
+  color: #e05a5a;
+}
+
+
+.sidebar-section-title h4 {
+  margin: 0 0 4px;
+
+  font-size: 15px;
+
+  font-weight: 700;
+
+  color: #374151;
+}
+
+
+.sidebar-section-title p {
+  margin: 0;
+
+  font-size: 11px;
+
+  line-height: 1.6;
+
+  color: #98a1ad;
+}
+
+
+/* =========================================================
+   NOTES
+   ========================================================= */
+
+.sidebar-field-label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  color: #374151;
+}
+
+
+.lesson-notes-textarea {
+  width: 100%;
+
+  min-height: 260px;
+
+  resize: vertical;
+
+  border: 1px solid #dfe3e8;
+
+  border-radius: 9px;
+
+  padding: 12px;
+
+  font-family: inherit;
+
+  font-size: 13px;
+
+  line-height: 1.8;
+
+  color: #374151;
+
+  background: #ffffff;
+
+  outline: none;
+
+  box-sizing: border-box;
+
+  transition: .2s ease;
+}
+
+
+.lesson-notes-textarea:focus {
+  border-color: #176fc4;
+
+  box-shadow:
+    0 0 0 3px rgba(23, 111, 196, 0.08);
+}
+
+
+.lesson-notes-textarea::placeholder {
+  color: #a1a8b3;
+}
+
+
+.sidebar-character-hint {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 6px;
+
+  margin-top: 8px;
+
+  font-size: 11px;
+
+  line-height: 1.6;
+
+  color: #98a1ad;
+}
+
+
+.sidebar-character-hint i {
+  color: #176fc4 !important;
+
+  margin-top: 3px;
+
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   RATING
+   ========================================================= */
+
+.rating-tab-content {
+  text-align: center;
+}
+
+
+.rating-question {
+  font-size: 16px;
+
+  font-weight: 700;
+
+  color: #374151;
+
+  margin: 35px 0 20px;
+}
+
+
+.rating-stars {
+  display: flex;
+
+  direction: ltr;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  margin-bottom: 12px;
+}
+
+
+.rating-star-button {
+  width: 46px;
+  height: 46px;
+
+  border: none;
+
+  background: transparent;
+
+  color: #d6d9de;
+
+  cursor: pointer;
+
+  font-size: 28px;
+
+  padding: 0;
+
+  transition: .2s ease;
+}
+
+
+.rating-star-button:hover {
+  color: #f0b429;
+
+  transform: scale(1.08);
+}
+
+
+.rating-star-button.selected {
+  color: #f0b429;
+}
+
+
+.rating-star-button i {
+  color: inherit !important;
+}
+
+
+.rating-text {
+  text-align: center;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  color: #e09a00;
+
+  margin-bottom: 8px;
+}
+
+
+.rating-selected-value {
+  text-align: center;
+
+  font-size: 12px;
+
+  color: #89919d;
+}
+
+
+/* =========================================================
+   SAVE BUTTONS
+   ========================================================= */
+
+.sidebar-save-button {
+  width: 100%;
+
+  margin-top: 20px;
+
+  border: none;
+
+  border-radius: 7px;
+
+  padding: 11px 15px;
+
+  font-family: inherit;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  color: #ffffff;
+
+  cursor: pointer;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 6px;
+
+  transition: .2s ease;
+}
+
+
+.notes-save-button {
+  background: #d88a00;
+}
+
+
+.notes-save-button:hover {
+  background: #c47c00;
+
+  transform: translateY(-1px);
+}
+
+
+.rating-save-button {
+  background: #e05a5a;
+}
+
+
+.rating-save-button:hover {
+  background: #d34d4d;
+
+  transform: translateY(-1px);
+}
+
+
+.sidebar-save-button i {
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.loading-state {
+  text-align: center;
+  padding: 55px 20px;
+  color: #8f96a1;
+  font-size: 14px;
+}
+
+.loader {
+  width: 27px;
+  height: 27px;
+  margin: 0 auto 12px;
+  border: 3px solid #e7ebf0;
+  border-top-color: #176fc4;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.error-state {
+  text-align: center;
+  padding: 50px 20px;
+  color: #ef5555;
+}
+
+.error-icon {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #fff0f0;
+  color: #ef5555;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.error-state h3 {
+  margin: 0 0 5px;
+  font-size: 16px;
+  color: #555c68;
+}
+
+.error-state p {
+  margin: 0;
+  font-size: 13px;
+  color: #999fa8;
+}
+
+.retry-button {
+  margin-top: 13px;
+  border: none;
+  background: #176fc4;
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 8px 17px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   EMPTY
+   ========================================================= */
+
+.empty-state {
+  text-align: center;
+  padding: 55px 20px;
+  color: #9ba1aa;
+}
+
+.empty-icon {
+  font-size: 28px;
+  color: #b5bbc3;
+  margin-bottom: 8px;
+}
+
+.empty-state h3 {
+  margin: 0 0 5px;
+  font-size: 16px;
+  color: #68717e;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 13px;
+  color: #a1a7b0;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+  .program-header {
+    padding: 18px;
+  }
+
+  .enrollment-info {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .program-meta {
+    gap: 7px 14px;
+  }
+
+}
+
+
+@media (max-width: 1000px) {
+
+  .lesson-workspace {
+    grid-template-columns:
+      minmax(0, 1fr)
+      340px;
+  }
+
+  .lesson-video-container {
+    height: calc(100vh - 200px);
+    min-height: 380px;
+  }
+
+}
+
+
+@media (max-width: 800px) {
+
+  .lesson-sidebar-overlay {
+    padding: 0;
+  }
+
+  .lesson-sidebar {
+    width: 100%;
+    height: 100vh;
+    max-width: none;
+    border-radius: 0;
+  }
+
+  .lesson-workspace {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .lesson-main-area {
+    flex: none;
+    overflow: visible;
+  }
+
+  .lesson-viewer-section {
+    padding: 15px;
+  }
+
+  .lesson-video-container {
+    height: auto;
+    aspect-ratio: 16 / 9;
+    min-height: 0;
+  }
+
+  .lesson-video-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .lesson-notes-panel {
+    flex: none;
+    min-height: 400px;
+    border-left: none;
+    border-top: 1px solid #e1e6ec;
+  }
+
+}
+
+
+@media (max-width: 650px) {
+
+  .program-container {
+    padding: 10px;
+  }
+
+  .program-header {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  .progress-wrapper {
+    align-self: center;
+  }
+
+  .program-info {
+    padding-right: 0;
+    text-align: center;
+  }
+
+  .program-title-row {
+    justify-content: center;
+  }
+
+  .program-description {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .program-meta {
+    justify-content: center;
+  }
+
+  .enrollment-info {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .section-header {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .modules-counter {
+    flex-shrink: 0;
+  }
+
+  .module-summary {
+    padding: 9px;
+  }
+
+  .progress-row {
+    width: 140px;
+  }
+
+  .lesson-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .lesson-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .lesson-action-button {
+    align-self: flex-start;
+  }
+
+  .lesson-sidebar {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .lesson-notification {
+    top: 16px;
+    right: 16px;
+    left: 16px;
+    min-width: 0;
+    max-width: none;
+  }
+
+}
+
+
+@media (max-width: 500px) {
+
+  .lesson-sidebar-header {
+    min-height: 60px;
+    padding: 10px 14px;
+  }
+
+  .sidebar-title-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .lesson-sidebar-title h3 {
+    font-size: 15px;
+  }
+
+  .lesson-sidebar-title p {
+    max-width: 220px;
+  }
+
+  .lesson-viewer-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .lesson-viewer-header h4 {
+    font-size: 15px;
+  }
+
+  .lesson-viewer-section {
+    padding: 12px;
+  }
+
+  .lesson-sidebar-content {
+    padding: 15px;
+  }
+
+  .lesson-sidebar-info {
+    padding: 10px 15px;
+  }
+
+  .lesson-sidebar-tabs {
+    padding: 0 10px;
+  }
+
+  .lesson-notes-textarea {
+    min-height: 200px;
+  }
+
+}
+
+
+@media (max-width: 450px) {
+
+  .program-title {
+    font-size: 19px;
+  }
+
+  .program-description {
+    font-size: 13px;
+  }
+
+  .enrollment-info {
+    grid-template-columns: 1fr;
+  }
+
+  .module-number {
+    display: none;
+  }
+
+  .module-title {
+    font-size: 14px;
+  }
+
+  .module-badge {
+    display: none;
+  }
+
+  .progress-row {
+    width: 105px;
+  }
+
+  .modules-counter {
+    display: none;
+  }
+
+  .lesson-sidebar-header {
+    padding: 15px;
+  }
+
+  .lesson-sidebar-content {
+    padding: 15px;
+  }
+
+  .lesson-sidebar-info {
+    padding: 12px 15px;
+  }
+
+  .lesson-sidebar-tabs {
+    padding: 0 15px;
+  }
+
+  .lesson-viewer-section {
+    padding: 15px;
+  }
+
+  .lesson-viewer-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .rating-star-button {
+    width: 40px;
+    height: 40px;
+    font-size: 25px;
+  }
+
 }
 
 </style>

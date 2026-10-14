@@ -125,6 +125,13 @@
     box-sizing: border-box;
     position: sticky;
     top: 24px;
+
+    /* In the single-column layout the chart box sits ABOVE the cards. A sticky
+       box there stays pinned while the cards scroll, so the cards slid over it.
+       Sticky only makes sense in the two-column layout. */
+    @media (max-width: 1200px) {
+        position: static;
+    }
 }
 
 .specialties-main-area {

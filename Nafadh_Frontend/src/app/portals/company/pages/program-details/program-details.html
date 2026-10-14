@@ -49,23 +49,23 @@
       </div>
 
       <div class="page-top-actions">
-        <button type="button" class="action-btn outline-btn" (click)="exportExcel()">
+        <button type="button" class="action-btn outline-btn" (click)="exportExcel()" [disabled]="exporting() !== ''">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
             <line x1="12" y1="18" x2="12" y2="12"></line>
             <line x1="9" y1="15" x2="15" y2="15"></line>
           </svg>
-          <span>تصدير Excel</span>
+          <span>{{ exporting() === 'excel' ? 'جارٍ التصدير…' : 'تصدير Excel' }}</span>
         </button>
 
-        <button type="button" class="action-btn primary-btn" (click)="exportPdf()">
+        <button type="button" class="action-btn primary-btn" (click)="exportPdf()" [disabled]="exporting() !== ''">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
             <line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
-          <span>تصدير PDF</span>
+          <span>{{ exporting() === 'pdf' ? 'جارٍ إنشاء الملف…' : 'تصدير PDF' }}</span>
         </button>
       </div>
     </div>
@@ -337,22 +337,26 @@
 
               <div class="batch-date">
                 <i class="fa-regular fa-calendar"></i>
-                <span>
-                  {{ formatDate(batch.startDate) }} – {{ formatDate(batch.endDate) }}
+                <span class="batch-range">
+                  من <bdi dir="ltr">{{ formatDate(batch.startDate) }}</bdi>
+                  إلى <bdi dir="ltr">{{ formatDate(batch.endDate) }}</bdi>
                 </span>
               </div>
 
               <div class="batch-capacity">
                 <i class="fa-solid fa-users"></i>
-                <span>{{ batch.capacity }} مقعد</span>
+                <span>
+                  {{ batch.companyEnrollmentCount }} من شركتكم · {{ batch.capacity }} مقعد
+                </span>
               </div>
 
               <span
                 class="batch-status"
-                [class.status-completed]="programStatusLabel(batch.status) === 'مكتمل'"
-                [class.status-suspended]="programStatusLabel(batch.status) === 'معلق'"
+                [class.status-completed]="batch.status === 'Completed'"
+                [class.status-upcoming]="batch.status === 'Upcoming'"
+                [class.status-suspended]="batch.status === 'Cancelled'"
               >
-                {{ programStatusLabel(batch.status) }}
+                {{ batchStatusLabel(batch.status) }}
               </span>
             </div>
           }
@@ -411,6 +415,13 @@
               (click)="setStatusFilter('متعثر')"
             >
               متعثر
+            </button>
+            <button
+              type="button"
+              [class.active]="selectedStatus() === 'متوقف'"
+              (click)="setStatusFilter('متوقف')"
+            >
+              متوقف
             </button>
           </div>
         </div>

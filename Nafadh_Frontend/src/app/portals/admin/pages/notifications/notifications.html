@@ -1,55 +1,351 @@
-<section class="page" dir="rtl">
-  <header class="page-header">
-    <div>
-      <h1>الإشعارات</h1>
-      <p>مركز الإشعارات والتنبيهات الخاصة بحساب الإدارة.</p>
+<!-- =========================================================================
+     منصة نفاذ - شاشة الإشعارات والإعلانات الرسمية (ملء الشاشة مع كافة الأزرار)
+     ========================================================================= -->
+<section class="notifications-page" dir="rtl">
+
+  <!-- 1. ترويسة الصفحة الرسمية والأزرار الرئيسية -->
+  <header class="page-header-card">
+    <div class="header-brand-wrap">
+      <div class="header-icon-box">
+        <span class="bell-icon">🔔</span>
+      </div>
+      <div>
+        <h1 class="page-title">مركز الإشعارات والتنبيهات</h1>
+        <p class="page-subtitle">متابعة الإعلانات النظامية، التنبيهات الإدارية، وإشعارات منصة نفاذ</p>
+      </div>
     </div>
+
+    <!-- أزرار الإجراءات العلوية -->
     <div class="header-actions">
-      <button type="button" class="secondary" (click)="exportAll()">تصدير</button>
-      <button type="button" class="secondary" (click)="showAnnounce.set(true)">إعلان جديد</button>
-      <button type="button" class="mark-all" [disabled]="!unreadCount()" (click)="markAllRead()">تعليم الكل كمقروء</button>
+      <!-- زر تحديث وجلب البيانات من السيرفر -->
+      <button type="button" class="btn btn-secondary" (click)="refresh()" [disabled]="loading()">
+        <span class="btn-icon" [class.spin]="loading()">🔄</span>
+        <span>تحديث</span>
+      </button>
+
+      <!-- زر تصدير البيانات بصيغة CSV -->
+      <button type="button" class="btn btn-secondary" (click)="exportAll()">
+        <span class="btn-icon">📥</span>
+        <span>تصدير CSV</span>
+      </button>
+
+      <!-- زر فتح نافذة إعلان جديد -->
+      <button type="button" class="btn btn-primary" (click)="openAnnounceModal()">
+        <span class="btn-icon">📢</span>
+        <span>إعلان جديد</span>
+      </button>
+
+      <!-- زر تعليم الكل كمقروء -->
+      <button type="button" class="btn btn-success" [disabled]="!unreadCount()" (click)="markAllRead()">
+        <span class="btn-icon">✓✓</span>
+        <span>تعليم الكل كمقروء ({{ unreadCount() }})</span>
+      </button>
     </div>
   </header>
 
-  <div class="toolbar">
-    <div class="tabs">
-      <button type="button" [class.active]="activeFilter() === 'all'" (click)="setFilter('all')">الكل <span>{{ notifications().length }}</span></button>
-      <button type="button" [class.active]="activeFilter() === 'unread'" (click)="setFilter('unread')">غير مقروءة <span>{{ unreadCount() }}</span></button>
+  <!-- 2. كروت المؤشرات والإحصائيات التراكمية (KPIs) -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-info">
+        <span class="metric-label">إجمالي الإعلانات</span>
+        <div class="metric-value blue">{{ stats().total }}</div>
+        <span class="metric-sub">سجل كافة التنبيهات</span>
+      </div>
+      <div class="metric-icon-box blue">🔔</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-info">
+        <span class="metric-label">غير مقروءة</span>
+        <div class="metric-value cyan">{{ stats().unread }}</div>
+        <span class="metric-sub">بحاجة للاطلاع والمتابعة</span>
+      </div>
+      <div class="metric-icon-box cyan">✨</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-info">
+        <span class="metric-label">تنبيهات هامة وعاجلة</span>
+        <div class="metric-value amber">{{ stats().urgent }}</div>
+        <span class="metric-sub">تتطلب إجراءً سريعاً</span>
+      </div>
+      <div class="metric-icon-box amber">⚠️</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-info">
+        <span class="metric-label">إعلانات صادرة</span>
+        <div class="metric-value purple">{{ stats().announcements }}</div>
+        <span class="metric-sub">موجهة لكافة الفئات</span>
+      </div>
+      <div class="metric-icon-box purple">📣</div>
     </div>
   </div>
 
-  @if (loading()) {
-    <div class="state">جاري تحميل الإشعارات...</div>
-  } @else if (error()) {
-    <div class="state error">{{ error() }} <button type="button" (click)="load()">إعادة المحاولة</button></div>
-  } @else if (!filteredNotifications().length) {
-    <div class="state empty"><span class="bell">🔔</span><strong>لا توجد إشعارات</strong><span>{{ activeFilter() === 'unread' ? 'لا توجد إشعارات غير مقروءة.' : 'ستظهر هنا الإشعارات الجديدة.' }}</span></div>
-  } @else {
-    <div class="notification-list">
-      @for (item of filteredNotifications(); track trackById($index, item)) {
-        <article class="notification" [class.unread]="!item.isRead" (click)="markRead(item)" tabindex="0" (keyup.enter)="markRead(item)">
-          <div class="icon">🔔</div>
-          <div class="body">
-            <div class="title-row"><h2>{{ item.title }}</h2>@if (!item.isRead) {<span class="new">جديد</span>}</div>
-            <p>{{ item.message }}</p>
-          </div>
-          <time>{{ item.dateLabel }}</time>
-        </article>
-      }
-    </div>
-  }
+  <!-- 3. شريط الفلترة والبحث الذكي -->
+  <div class="toolbar-card">
+    <!-- تبويبات التصنيف -->
+    <div class="tabs-segmented-control">
+      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'all'" (click)="setFilter('all')">
+        الكل <span class="tab-badge">{{ stats().total }}</span>
+      </button>
 
-  @if (showAnnounce()) {
-    <div class="modal-backdrop" (click)="showAnnounce.set(false)">
-      <div class="modal" (click)="$event.stopPropagation()">
-        <h3>إعلان جديد</h3>
-        <textarea [(ngModel)]="announceMsg" rows="5" placeholder="اكتب نص الإعلان..."></textarea>
-        @if (announceError()) { <p class="modal-error">{{ announceError() }}</p> }
-        <div class="modal-actions">
-          <button type="button" class="secondary" (click)="showAnnounce.set(false)">إلغاء</button>
-          <button type="button" class="primary" [disabled]="!announceMsg.trim() || posting()" (click)="postAnnouncement()">{{ posting() ? 'جاري النشر...' : 'نشر' }}</button>
+      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'unread'" (click)="setFilter('unread')">
+        غير مقروءة <span class="tab-badge unread">{{ stats().unread }}</span>
+      </button>
+
+      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'announcement'"
+        (click)="setFilter('announcement')">
+        إعلانات النظام
+      </button>
+
+      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'alert'" (click)="setFilter('alert')">
+        تنبيهات وإنذارات
+      </button>
+
+      <button type="button" class="tab-btn" [class.active]="activeFilter() === 'company'"
+        (click)="setFilter('company')">
+        شؤون الشركات
+      </button>
+    </div>
+
+    <!-- حقل البحث المباشر وتحديد الأهمية -->
+    <div class="search-filter-wrap">
+      <div class="search-input-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
+          placeholder="ابحث بالعنوان، الرسالة، أو الجهة المصدرة..." />
+        @if (searchQuery) {
+        <button type="button" class="clear-search" (click)="searchQuery = ''; onSearchChange()">✕</button>
+        }
+      </div>
+
+      <!-- قائمة مستويات الأهمية بنفس التصميم الأصلي -->
+      <select [ngModel]="priorityFilterSignal()" (ngModelChange)="onPriorityChange($event)" class="priority-select">
+        <option value="all">كافة مستويات الأهمية</option>
+        <option value="urgent">عاجل فقط 🔴</option>
+        <option value="high">هام فقط 🟡</option>
+        <option value="normal">عادي 🔵</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 4. قائمة الإشعارات وحالات التحميل والخطأ والفراغ -->
+  @if (loading()) {
+  <div class="state-card loading">
+    <div class="spinner"></div>
+    <h3>جاري جلب الإعلانات من قاعدة البيانات...</h3>
+    <p>يرجى الانتظار ثوانٍ معدودة</p>
+  </div>
+  } @else if (error()) {
+  <div class="state-card error">
+    <span class="state-icon">⚠️</span>
+    <h3>حدث خطأ أثناء تحميل البيانات</h3>
+    <p>{{ error() }}</p>
+    <button type="button" class="btn btn-primary" (click)="load()">إعادة المحاولة</button>
+  </div>
+  } @else if (!filteredNotifications().length) {
+  <div class="state-card empty">
+    <div class="empty-icon-circle">🔔</div>
+    <h3>لا توجد إشعارات مطابقة</h3>
+    <p>
+      {{ searchQuery ? 'لم يتم العثور على أي إشعار يطابق كلمة البحث.' : activeFilter() === 'unread' ? 'رائع! لا توجد
+      إشعارات غير مقروءة حالياً.' : 'ستظهر هنا الإعلانات والتنبيهات الجديدة بمجرد إضافتها في قاعدة البيانات.' }}
+    </p>
+    @if (searchQuery || activeFilter() !== 'all' || priorityFilter !== 'all') {
+    <button type="button" class="btn btn-secondary" (click)="resetFilters()">إعادة ضبط التصفية</button>
+    }
+  </div>
+  } @else {
+  <div class="notifications-list">
+    @for (item of filteredNotifications(); track trackById($index, item)) {
+    <article class="notification-card" [class.unread]="!item.isRead" (click)="openDetails(item, $event)" tabindex="0"
+      (keyup.enter)="openDetails(item, $event)">
+
+      <!-- أيقونة التصنيف -->
+      <div class="card-icon-wrap" [class.unread]="!item.isRead">
+        @switch (item.category) {
+        @case ('announcement') { <span>📣</span> }
+        @case ('alert') { <span>⚠️</span> }
+        @case ('company') { <span>🏢</span> }
+        @case ('evaluation') { <span>📝</span> }
+        @default { <span>🔔</span> }
+        }
+      </div>
+
+      <!-- تفاصيل الإشعار -->
+      <div class="card-content">
+        <div class="title-row">
+          <h2 class="notification-title">{{ item.title }}</h2>
+          @if (!item.isRead) {
+          <span class="badge-new">جديد</span>
+          }
+          <span class="badge-category" [ngClass]="item.category">
+            {{ getCategoryLabel(item.category) }}
+          </span>
+          @if (item.priority === 'urgent') {
+          <span class="badge-priority urgent">🔴 عاجل</span>
+          } @else if (item.priority === 'high') {
+          <span class="badge-priority high">🟡 هام</span>
+          }
+        </div>
+
+        <p class="notification-message">{{ item.message }}</p>
+
+        <div class="notification-meta">
+          <span class="meta-item"><span class="meta-icon">⏱</span> {{ item.dateLabel }}</span>
+          <span class="meta-dot">•</span>
+          <span class="meta-item">المصدر: {{ item.source || 'الإدارة العامة' }}</span>
+          @if (item.targetScope && item.targetScope !== 'all') {
+          <span class="meta-dot">•</span>
+          <span class="meta-item scope-tag">المستهدف: {{ getScopeLabel(item.targetScope) }}</span>
+          }
         </div>
       </div>
+
+      <!-- أزرار الإجراءات السريعة في البطاقة -->
+      <div class="card-actions" (click)="$event.stopPropagation()">
+        <!-- زر تبديل حالة القراءة -->
+        <button type="button" class="action-btn toggle-read" [class.read]="item.isRead"
+          (click)="toggleReadStatus(item, $event)" [title]="item.isRead ? 'تحديد كغير مقروء' : 'تعليم كمقروء'">
+          {{ item.isRead ? '✉️' : '✓✓' }}
+        </button>
+
+        <!-- زر عرض التفاصيل الكاملة -->
+        <button type="button" class="action-btn view-details" (click)="openDetails(item, $event)"
+          title="عرض التفاصيل كاملة">
+          👁
+        </button>
+
+        <!-- زر حذف الإشعار -->
+        <button type="button" class="action-btn delete-btn" (click)="deleteNotification(item.notificationId, $event)"
+          title="حذف الإشعار">
+          🗑
+        </button>
+      </div>
+    </article>
+    }
+  </div>
+  }
+
+  <!-- 5. نافذة إنشاء إعلان جديد في قاعدة البيانات (Announcement Modal) -->
+  @if (showAnnounce()) {
+  <div class="modal-backdrop" (click)="closeAnnounceModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <span class="modal-icon">📢</span>
+          <div>
+            <h3>إنشاء ونشر إعلان في قاعدة البيانات</h3>
+            <p>سيتم حفظ الإعلان فورياً في جدول Announcements</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close" (click)="closeAnnounceModal()">✕</button>
+      </div>
+
+      @if (announceError()) {
+      <div class="modal-error-banner">
+        ⚠️ {{ announceError() }}
+      </div>
+      }
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>عنوان الإعلان</label>
+          <input type="text" [(ngModel)]="announceTitle" placeholder="مثال: تنبيه بخصوص موعد رفع التقييمات..." />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>نطاق الإعلان والجمهور</label>
+            <select [(ngModel)]="announceScope">
+              <option value="all">الجميع (كافة مستخدمي المنظومة)</option>
+              <option value="companies">الشركات المستضيفة فقط</option>
+              <option value="trainers">المدربين المعتمدين فقط</option>
+              <option value="trainees">المتدربين الملتحقين فقط</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>مستوى الأهمية</label>
+            <select [(ngModel)]="announcePriority">
+              <option value="normal">عادي 🔵</option>
+              <option value="high">هام 🟡</option>
+              <option value="urgent">عاجل وفوري 🔴</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>نص الإعلان والرسالة <span class="required">*</span></label>
+          <textarea [(ngModel)]="announceMsg" rows="4" placeholder="اكتب نص الإعلان والتعليمات هنا..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAnnounceModal()">إلغاء</button>
+        <button type="button" class="btn btn-primary" [disabled]="!announceMsg.trim() || posting()"
+          (click)="postAnnouncement()">
+          {{ posting() ? 'جاري الحفظ في قاعدة البيانات...' : 'نشر الإعلان الآن' }}
+        </button>
+      </div>
     </div>
+  </div>
+  }
+
+  <!-- 6. نافذة عرض تفاصيل الإشعار كاملة (Details Modal) -->
+  @if (selectedNotification()) {
+  <div class="modal-backdrop" (click)="closeDetails()">
+    <div class="modal-card details-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <span class="modal-icon">📋</span>
+          <div>
+            <h3>تفاصيل الإشعار</h3>
+            <p>رقم المرجع: #{{ selectedNotification()?.notificationId }}</p>
+          </div>
+        </div>
+        <button type="button" class="btn-close" (click)="closeDetails()">✕</button>
+      </div>
+
+      <div class="modal-body details-body">
+        <h2 class="details-title">{{ selectedNotification()?.title }}</h2>
+
+        <div class="details-badges">
+          <span class="badge-category">{{ getCategoryLabel(selectedNotification()?.category) }}</span>
+          <span class="badge-source">المصدر: {{ selectedNotification()?.source }}</span>
+          <span class="badge-time">{{ selectedNotification()?.dateLabel }}</span>
+          @if (selectedNotification()?.priority === 'urgent') {
+          <span class="badge-priority urgent">🔴 عاجل</span>
+          }
+        </div>
+
+        <div class="details-message-box">
+          {{ selectedNotification()?.message }}
+        </div>
+
+        <div class="details-meta-foot">
+          <span>تاريخ الإنشاء: {{ selectedNotification()?.createdAt | date:'yyyy-MM-dd HH:mm' }}</span>
+          <span class="read-status">✓ تمت القراءة والتأكيد</span>
+        </div>
+      </div>
+
+      <div class="modal-footer space-between">
+        <button type="button" class="btn btn-danger-outline"
+          (click)="deleteNotification(selectedNotification()!.notificationId, $event)">
+          🗑 حذف الإشعار
+        </button>
+        <button type="button" class="btn btn-primary" (click)="closeDetails()">إغلاق</button>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- 7. إشعار منبثق سريع لنجاح العمليات (Toast Feedback) -->
+  @if (toastMessage()) {
+  <div class="toast-feedback-banner">
+    <span>✓</span>
+    <span>{{ toastMessage() }}</span>
+  </div>
   }
 </section>

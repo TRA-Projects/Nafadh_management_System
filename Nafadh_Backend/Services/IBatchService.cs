@@ -20,5 +20,6 @@ namespace Nafadh_Backend.Services
         Task<bool> DeleteAsync(int id);
         Task<List<BatchTraineeDto>> GetTraineesAsync(int batchId);
         Task<BatchCapacityDto?> GetCapacityAsync(int batchId);
+        Task<BatchProgressDto?> GetProgressAsync(int batchId);
     }
 }

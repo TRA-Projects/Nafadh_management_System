@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
+using Nafadh_Backend.Repositories;
 using Nafadh_Backend.Services;
 
 namespace Nafadh_Backend.Controllers
@@ -15,15 +16,22 @@ namespace Nafadh_Backend.Controllers
         private readonly IBadgeEvaluationService _badgeEvaluationService;
         private readonly IConfiguration _configuration;
 
+        private readonly ITaskRepository _taskRepository;
+        private readonly INotificationService _notificationService;
+
         public SubmissionController(
       ISubmissionService service,
       IBadgeEvaluationService badgeEvaluationService,
-      IConfiguration configuration
+      IConfiguration configuration,
+            ITaskRepository taskRepository,
+    INotificationService notificationService
   )
         {
             _service = service;
             _badgeEvaluationService = badgeEvaluationService;
             _configuration = configuration;
+            _taskRepository = taskRepository;
+            _notificationService = notificationService;
         }
 
 
@@ -152,6 +160,9 @@ namespace Nafadh_Backend.Controllers
 
             await _service.AddSubmissionAsync(submission);
 
+            await NotifyTrainerAboutSubmissionAsync(
+    submission.TaskId
+);
 
 
             var response = new SubmissionResponseDto
@@ -277,6 +288,9 @@ namespace Nafadh_Backend.Controllers
                 submission
             );
 
+            await NotifyTrainerAboutSubmissionAsync(
+    submission.TaskId
+);
 
             return Ok(
                 new SubmissionResponseDto
@@ -602,6 +616,53 @@ namespace Nafadh_Backend.Controllers
             return Ok(result);
         }
 
+        // ======================================================
+        // NEW:
+        // Notify trainer when a trainee submits a task
+        // ======================================================
+        private async Task NotifyTrainerAboutSubmissionAsync(
+            int taskId
+        )
+        {
+            try
+            {
+                // Get the task
+                var task =
+                    await _taskRepository.GetTaskByIdAsync(
+                        taskId
+                    );
 
-    }
+                // If the task does not exist, do nothing
+                if (task == null)
+                    return;
+
+                // CreatedByUserId = user who created the task
+                await _notificationService.CreateAsync(
+                    new CreateNotificationDTO
+                    {
+                        UserId =
+                            task.CreatedByUserId,
+
+                        Title =
+                            "تسليم مهمة جديد",
+
+                        Message =
+                            "قام أحد المتدربين بتسليم مهمة جديدة، يرجى مراجعتها.",
+
+                        RelatedEntity =
+                            "TaskSubmission"
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                // Do not let notification failure
+                Console.WriteLine(
+                    $"Failed to create trainer notification: {ex.Message}"
+                );
+            }
+        }
+
+
+        }
 }

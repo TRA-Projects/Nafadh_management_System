@@ -794,154 +794,191 @@
 
 }
 
-
 <!-- =========================================================
-     Modal توزيع المتدربين
+     Modal توزيع المدربين
 ========================================================= -->
 
 @if (isDistributeModalOpen && selectedSupervisor) {
 
-<div class="modal-backdrop" (click)="closeDistributeModal()">
+  <div class="modal-backdrop" (click)="closeDistributeModal()">
 
-  <div class="modal-card large-modal" (click)="$event.stopPropagation()">
+    <div
+      class="modal-card large-modal"
+      (click)="$event.stopPropagation()"
+      dir="rtl"
+    >
 
-    <div class="modal-header">
+      <!-- رأس النافذة -->
+      <div class="modal-header">
 
-      <div>
+        <div>
+          <span class="modal-kicker">إدارة التوزيع</span>
+          <h2>توزيع المدربين</h2>
+        </div>
 
-        <span class="modal-kicker">
-          إدارة التوزيع
-        </span>
-
-        <h2>
-          توزيع المتدربين
-        </h2>
+        <button
+          class="close-btn"
+          type="button"
+          (click)="closeDistributeModal()"
+          aria-label="إغلاق"
+        >
+          ×
+        </button>
 
       </div>
 
+      <!-- معلومات المشرف -->
+      <div class="modal-subtext">
 
-      <button class="close-btn" type="button" (click)="closeDistributeModal()">
+        تحديد المدربين للمشرف:
 
-        ×
-
-      </button>
-
-    </div>
-
-
-    <div class="modal-subtext">
-
-      توزيع المتدربين النشطين على
-
-      <strong>
-        {{ selectedSupervisor.fullName }}
-      </strong>
-
-      <span>
-        —
-        {{ selectedSupervisor.department || 'القسم العام' }}
-      </span>
-
-    </div>
-
-
-    <div class="distribution-toolbar">
-
-      <div>
-
-        <strong>
-          {{ selectedAssignedCount }}
-        </strong>
+        <strong>{{ selectedSupervisor.fullName }}</strong>
 
         <span>
-          متدرب محدد
+          — {{ selectedSupervisor.department || 'القسم العام' }}
         </span>
 
       </div>
 
+      <!-- شريط التوزيع -->
+      <div class="distribution-toolbar">
 
-      <button type="button" (click)="toggleAllTrainees()">
-
-        {{ allTraineesSelected ? 'إلغاء تحديد الكل' : 'تحديد الكل' }}
-
-      </button>
-
-    </div>
-
-
-    <div class="trainees-list">
-
-      @for (t of traineesList; track t.id) {
-
-      <label class="trainee-row" [class.selected]="t.assigned">
-
-        <div class="trainee-info">
-
-          <div class="avatar" [ngClass]="t.color">
-
-            {{ t.initials }}
-
-          </div>
-
-
-          <div class="trainee-details">
-
-            <span class="name">
-              {{ t.name }}
-            </span>
-
-            <span class="track">
-
-              {{ t.track }}
-
-              —
-
-              الدفعة {{ t.batch }}
-
-            </span>
-
-          </div>
-
+        <div>
+          <strong>{{ selectedAssignedCount }}</strong>
+          <span>مدرب محدد</span>
         </div>
 
+        <button
+          type="button"
+          (click)="toggleAllTrainees()"
+          [disabled]="distributionLoading || traineesList.length === 0"
+        >
+          {{ allTraineesSelected ? 'إلغاء تحديد الكل' : 'تحديد الكل' }}
+        </button>
 
-        <div class="assign-checkbox-label">
+      </div>
 
-          <span>
-            {{ t.assigned ? 'معين' : 'تعيين' }}
-          </span>
+      <!-- جاري التحميل -->
+      @if (distributionLoading) {
 
-          <input type="checkbox" [(ngModel)]="t.assigned">
-
+        <div class="distribution-loading">
+          <span class="loading-spinner"></span>
+          <p>جارٍ تحميل قائمة المدربين...</p>
         </div>
-
-      </label>
 
       }
 
-    </div>
+      <!-- القائمة -->
+      @if (!distributionLoading && traineesList.length > 0) {
 
+        <div class="trainees-list">
 
-    <div class="modal-footer-actions">
+          @for (t of traineesList; track t.id) {
 
-      <button type="button" class="btn-cancel-modal" (click)="closeDistributeModal()">
+            <label
+              class="trainee-row"
+              [class.selected]="t.assigned"
+            >
 
-        إلغاء
+              <div class="trainee-info">
 
-      </button>
+                <div class="avatar" [ngClass]="t.color">
+                  {{ t.initials }}
+                </div>
 
+                <div class="trainee-details">
 
-      <button type="button" class="btn-save-modal" (click)="saveDistribution()">
+                  <span class="name">
+                    {{ t.name }}
+                  </span>
 
-        حفظ التوزيع
+                  <span class="track">
+                    {{ t.track }}
+                    @if (t.batch) {
+                      — {{ t.batch }}
+                    }
+                  </span>
 
-      </button>
+                  @if (t.email) {
+                    <span class="track">
+                      {{ t.email }}
+                    </span>
+                  }
+
+                </div>
+
+              </div>
+
+              <div class="assign-checkbox-label">
+
+                <span>
+                  {{ t.assigned ? 'محدد' : 'تحديد' }}
+                </span>
+
+                <input
+                  type="checkbox"
+                  [(ngModel)]="t.assigned"
+                  [attr.aria-label]="'تحديد ' + t.name"
+                />
+
+              </div>
+
+            </label>
+
+          }
+
+        </div>
+
+      }
+
+      <!-- القائمة فارغة -->
+      @if (!distributionLoading && traineesList.length === 0) {
+
+        <div class="distribution-empty">
+
+          <h3>لا توجد أسماء مدربين</h3>
+
+          <p>
+            لم يتم العثور على مدربين لعرضهم. تأكد من أن واجهة API
+            تعيد بيانات المدربين بالشكل المتوقع.
+          </p>
+
+          <button
+            type="button"
+            (click)="openDistributeModal(selectedSupervisor)"
+          >
+            إعادة تحميل القائمة
+          </button>
+
+        </div>
+
+      }
+
+      <!-- أزرار الحفظ -->
+      <div class="modal-footer-actions">
+
+        <button
+          type="button"
+          class="btn-cancel-modal"
+          (click)="closeDistributeModal()"
+        >
+          إلغاء
+        </button>
+
+        <button
+          type="button"
+          class="btn-save-modal"
+          (click)="saveDistribution()"
+          [disabled]="distributionLoading || traineesList.length === 0"
+        >
+          حفظ التوزيع
+        </button>
+
+      </div>
 
     </div>
 
   </div>
-
-</div>
 
 }
 

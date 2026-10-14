@@ -7,17 +7,12 @@
     flex-direction: column;
     gap: 16px;
     padding: 16px;
-    font-family:
-      'Cairo',
-      system-ui,
-      -apple-system,
-      sans-serif;
+    font-family: 'Cairo', system-ui, -apple-system, sans-serif;
     background: #f8fafc;
     height: calc(100vh - 70px);
     overflow-y: auto;
   "
 >
-  <!-- حالة التحميل -->
   @if (loading()) {
     <div
       style="
@@ -63,14 +58,9 @@
         font-family: 'Cairo', sans-serif;
       "
     >
-      <!-- معلومات الترحيب والاسم -->
-      <div
-        style="display: flex; flex-direction: column; gap: 6px; font-family: 'Cairo', sans-serif"
-      >
-        <div style="display: flex; align-items: center; gap: 8px; font-family: 'Cairo', sans-serif">
-          <h2
-            style="margin: 0; font-size: 1.6rem; font-weight: 800; font-family: 'Cairo', sans-serif"
-          >
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <h2 style="margin: 0; font-size: 1.6rem; font-weight: 800;">
             <i class="fas fa-hand-wave" style="margin-left: 10px;"></i>
             مرحباً،
             {{
@@ -81,26 +71,11 @@
             }}
           </h2>
         </div>
-        <p
-          style="
-            margin: 0;
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.8);
-            font-family: 'Cairo', sans-serif;
-          "
-        >
+        <p style="margin: 0; font-size: 0.9rem; color: rgba(255, 255, 255, 0.8);">
           <i class="fas fa-graduation-cap" style="margin-left: 6px;"></i>
           {{ programName() || 'برنامج تدريبي' }} — {{ batchName() || 'دفعة تدريبية' }}
         </p>
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-top: 6px;
-            font-family: 'Cairo', sans-serif;
-          "
-        >
+        <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
           <span
             style="
               background: rgba(16, 185, 129, 0.2);
@@ -110,26 +85,18 @@
               border-radius: 20px;
               font-size: 0.78rem;
               font-weight: 700;
-              font-family: 'Cairo', sans-serif;
             "
           >
             <i class="fas fa-check-circle" style="margin-left: 4px;"></i>
             {{ calculatedStatus() }}
           </span>
-          <span
-            style="
-              color: rgba(255, 255, 255, 0.6);
-              font-size: 0.8rem;
-              font-family: 'Cairo', sans-serif;
-            "
-          >
+          <span style="color: rgba(255, 255, 255, 0.6); font-size: 0.8rem;">
             <i class="far fa-calendar-alt" style="margin-left: 4px;"></i>
             تاريخ الانتهاء: {{ (programEndDate() | date: 'MMM yyyy') || 'غير محدد' }}
           </span>
         </div>
       </div>
 
-      <!-- نسبة الإنجاز الدائرية والزر -->
       <div
         style="
           background: rgba(255, 255, 255, 0.08);
@@ -140,29 +107,13 @@
           display: flex;
           align-items: center;
           gap: 20px;
-          font-family: 'Cairo', sans-serif;
         "
       >
-        <div
-          style="
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            text-align: right;
-            font-family: 'Cairo', sans-serif;
-          "
-        >
-          <span
-            style="
-              font-size: 0.78rem;
-              color: rgba(255, 255, 255, 0.75);
-              font-family: 'Cairo', sans-serif;
-            "
-          >
+        <div style="display: flex; flex-direction: column; gap: 6px; text-align: right;">
+          <span style="font-size: 0.78rem; color: rgba(255, 255, 255, 0.75);">
             <i class="fas fa-chart-line" style="margin-left: 4px;"></i>
             نسبة الإنجاز الإجمالية
           </span>
-
           <button
             routerLink="/trainee/program"
             style="
@@ -174,16 +125,13 @@
               font-size: 0.8rem;
               font-weight: 600;
               cursor: pointer;
-              transition: background 0.2s;
               width: fit-content;
-              font-family: 'Cairo', sans-serif;
             "
           >
             <i class="fas fa-arrow-left" style="margin-left: 6px;"></i>
             عرض التفاصيل
           </button>
         </div>
-        <!-- حلقة الإنجاز الدائرية -->
         <div
           [ngStyle]="{
             width: '65px',
@@ -213,7 +161,6 @@
               font-size: 0.85rem;
               font-weight: 800;
               color: #ffffff;
-              font-family: 'Cairo', sans-serif;
             "
           >
             {{ progressPercentage() | number: '1.0-0' }}%
@@ -222,15 +169,8 @@
       </div>
     </div>
 
-    <!-- 2. صف مؤشرات الإحصائيات (4 بطاقات أفقية) -->
-    <div
-      style="
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-        font-family: 'Cairo', sans-serif;
-      "
-    >
+    <!-- 2. صف مؤشرات الإحصائيات -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
       <!-- الوحدات المكتملة -->
       <div
         style="
@@ -242,18 +182,10 @@
           justify-content: space-between;
           align-items: center;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-          font-family: 'Cairo', sans-serif;
         "
       >
-        <span
-          style="
-            font-size: 0.85rem;
-            color: #64748b;
-            font-weight: 600;
-            font-family: 'Cairo', sans-serif;
-          "
-        >
-          <i class="fas fa-book" style="margin-left: 6px;color: #2563eb;"></i>
+        <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">
+          <i class="fas fa-book" style="margin-left: 6px; color: #2563eb;"></i>
           الوحدات المكتملة
         </span>
         <span
@@ -264,7 +196,6 @@
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 700;
-            font-family: 'Cairo', sans-serif;
           "
         >
           {{ summary()?.completedModulesCount ?? 0 }}/{{ summary()?.totalModulesCount ?? 0 }}
@@ -282,17 +213,9 @@
           justify-content: space-between;
           align-items: center;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-          font-family: 'Cairo', sans-serif;
         "
       >
-        <span
-          style="
-            font-size: 0.85rem;
-            color: #64748b;
-            font-weight: 600;
-            font-family: 'Cairo', sans-serif;
-          "
-        >
+        <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">
           <i class="fas fa-tasks" style="margin-left: 6px; color: #2563eb;"></i>
           المهام المسلّمة
         </span>
@@ -304,7 +227,6 @@
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 700;
-            font-family: 'Cairo', sans-serif;
           "
         >
           {{ summary()?.submissionsCount ?? 0 }}/{{
@@ -324,19 +246,10 @@
           justify-content: space-between;
           align-items: center;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-          font-family: 'Cairo', sans-serif;
         "
       >
-        <span
-          style="
-            font-size: 0.85rem;
-            color: #64748b;
-            font-weight: 600;
-            font-family: 'Cairo', sans-serif;
-          "
-        >
+        <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">
           <i class="fas fa-user-check" style="margin-left: 6px; color: #2563eb;"></i>
-   
           نسبة الحضور
         </span>
         <span
@@ -347,74 +260,50 @@
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 700;
-            font-family: 'Cairo', sans-serif;
           "
         >
           {{ attendanceRate() | number: '1.0-0' }}%
         </span>
       </div>
 
-   
-<!-- التواصل والدعم -->
-<div
-
-  routerLink="/trainee/support"
-  style="
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 16px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-    font-family: 'Cairo', sans-serif;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  "
->
-  <span
-    style="
-      font-size: 0.85rem;
-      color: #64748b;
-      font-weight: 600;
-      font-family: 'Cairo', sans-serif;
-    "
-  >
-    <i
-      class="fas fa-headset"
-      style="margin-left: 6px; color: #2563eb;"
-    ></i>
-    التواصل والدعم
-  </span>
-
-  <span
-    style="
-      background: #eff6ff;
-      color: #2563eb;
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      font-family: 'Cairo', sans-serif;
-    "
-  >
-    <i class="fas fa-arrow-left" style="margin-left: 4px;"></i>
-    تواصل معنا
-  </span>
-
-    </div>
+      <!-- التواصل والدعم -->
+      <div
+        routerLink="/trainee/support"
+        style="
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 16px 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+          cursor: pointer;
+          transition: all 0.2s ease;
+        "
+      >
+        <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">
+          <i class="fas fa-headset" style="margin-left: 6px; color: #2563eb;"></i>
+          التواصل والدعم
+        </span>
+        <span
+          style="
+            background: #eff6ff;
+            color: #2563eb;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+          "
+        >
+          <i class="fas fa-arrow-left" style="margin-left: 4px;"></i>
+          تواصل معنا
+        </span>
+      </div>
     </div>
 
-    <!-- 3. الشبكة الرئيسية (الصف الأوسط: فريق الإشراف + المهام القريبة) -->
-    <div
-      style="
-        display: grid;
-        grid-template-columns: 320px 1fr;
-        gap: 16px;
-        font-family: 'Cairo', sans-serif;
-      "
-    >
+    <!-- 3. الشبكة الرئيسية (الصف الأوسط: فريق الإشراف + تقويم المهام) -->
+    <div style="display: grid; grid-template-columns: 320px 1fr; gap: 16px;">
       <!-- فريق الإشراف -->
       <div
         style="
@@ -426,25 +315,14 @@
           flex-direction: column;
           gap: 16px;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-          font-family: 'Cairo', sans-serif;
         "
       >
-        <h3
-          style="
-            margin: 0;
-            font-size: 1rem;
-            font-weight: 700;
-            color: #1e293b;
-            font-family: 'Cairo', sans-serif;
-          "
-        >
+        <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b;">
           <i class="fas fa-users" style="margin-left: 8px;"></i>
           فريق الإشراف
         </h3>
 
-        <div
-          style="display: flex; flex-direction: column; gap: 12px; font-family: 'Cairo', sans-serif"
-        >
+        <div style="display: flex; flex-direction: column; gap: 12px;">
           <!-- المدرب -->
           <div
             style="
@@ -455,7 +333,6 @@
               background: #f8fafc;
               border-radius: 12px;
               border: 1px solid #f1f5f9;
-              font-family: 'Cairo', sans-serif;
             "
           >
             @if (loadingTrainer()) {
@@ -469,26 +346,13 @@
                   align-items: center;
                   justify-content: center;
                   color: #94a3b8;
-                  font-size: 0.75rem;
-                  font-family: 'Cairo', sans-serif;
                 "
               >
                 <i class="fas fa-spinner fa-pulse"></i>
               </div>
-              <div
-                style="
-                  display: flex;
-                  flex-direction: column;
-                  gap: 4px;
-                  font-family: 'Cairo', sans-serif;
-                "
-              >
-                <span style="font-size: 0.75rem; color: #64748b; font-family: 'Cairo', sans-serif"
-                  >المدرب</span
-                >
-                <span style="font-size: 0.85rem; color: #94a3b8; font-family: 'Cairo', sans-serif"
-                  >جاري التحميل...</span
-                >
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 0.75rem; color: #64748b;">المدرب</span>
+                <span style="font-size: 0.85rem; color: #94a3b8;">جاري التحميل...</span>
               </div>
             } @else {
               <div
@@ -503,26 +367,18 @@
                   justify-content: center;
                   font-weight: bold;
                   font-size: 0.95rem;
-                  font-family: 'Cairo', sans-serif;
                 "
               >
                 {{ getInitial(trainerData()?.fullName || summary()?.trainerName || '') }}
               </div>
-              <div
-                style="
-                  display: flex;
-                  flex-direction: column;
-                  flex: 1;
-                  font-family: 'Cairo', sans-serif;
-                "
-              >
-                <span style="font-size: 0.75rem; color: #64748b; font-family: 'Cairo', sans-serif"
-                  ><i class="fas fa-chalkboard-teacher" style="margin-left: 4px;"></i>المدرب</span
-                >
-                <strong style="font-size: 0.9rem; color: #1e293b; font-family: 'Cairo', sans-serif">
+              <div style="display: flex; flex-direction: column; flex: 1;">
+                <span style="font-size: 0.75rem; color: #64748b;">
+                  <i class="fas fa-chalkboard-teacher" style="margin-left: 4px;"></i>المدرب
+                </span>
+                <strong style="font-size: 0.9rem; color: #1e293b;">
                   {{ trainerData()?.fullName || summary()?.trainerName || 'لم يتم التعيين' }}
                 </strong>
-                <span style="font-size: 0.72rem; color: #94a3b8; font-family: 'Cairo', sans-serif">
+                <span style="font-size: 0.72rem; color: #94a3b8;">
                   {{ getTrainerSpecialty() }}
                 </span>
               </div>
@@ -539,7 +395,6 @@
               background: #f8fafc;
               border-radius: 12px;
               border: 1px solid #f1f5f9;
-              font-family: 'Cairo', sans-serif;
             "
           >
             @if (loadingSupervisor()) {
@@ -553,26 +408,13 @@
                   align-items: center;
                   justify-content: center;
                   color: #94a3b8;
-                  font-size: 0.75rem;
-                  font-family: 'Cairo', sans-serif;
                 "
               >
                 <i class="fas fa-spinner fa-pulse"></i>
               </div>
-              <div
-                style="
-                  display: flex;
-                  flex-direction: column;
-                  gap: 4px;
-                  font-family: 'Cairo', sans-serif;
-                "
-              >
-                <span style="font-size: 0.75rem; color: #64748b; font-family: 'Cairo', sans-serif"
-                  >المشرف</span
-                >
-                <span style="font-size: 0.85rem; color: #94a3b8; font-family: 'Cairo', sans-serif"
-                  >جاري التحميل...</span
-                >
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 0.75rem; color: #64748b;">المشرف</span>
+                <span style="font-size: 0.85rem; color: #94a3b8;">جاري التحميل...</span>
               </div>
             } @else {
               <div
@@ -587,23 +429,15 @@
                   justify-content: center;
                   font-weight: bold;
                   font-size: 0.95rem;
-                  font-family: 'Cairo', sans-serif;
                 "
               >
                 {{ getInitial(supervisorData()?.fullName || summary()?.supervisorName || '') }}
               </div>
-              <div
-                style="
-                  display: flex;
-                  flex-direction: column;
-                  flex: 1;
-                  font-family: 'Cairo', sans-serif;
-                "
-              >
-                <span style="font-size: 0.75rem; color: #64748b; font-family: 'Cairo', sans-serif"
-                  ><i class="fas fa-user-tie" style="margin-left: 4px;"></i>المشرف</span
-                >
-                <strong style="font-size: 0.9rem; color: #1e293b; font-family: 'Cairo', sans-serif">
+              <div style="display: flex; flex-direction: column; flex: 1;">
+                <span style="font-size: 0.75rem; color: #64748b;">
+                  <i class="fas fa-user-tie" style="margin-left: 4px;"></i>المشرف
+                </span>
+                <strong style="font-size: 0.9rem; color: #1e293b;">
                   {{
                     supervisorData()?.fullName ||
                       summary()?.supervisorName ||
@@ -611,7 +445,7 @@
                       'لم يتم التعيين'
                   }}
                 </strong>
-                <span style="font-size: 0.72rem; color: #94a3b8; font-family: 'Cairo', sans-serif">
+                <span style="font-size: 0.72rem; color: #94a3b8;">
                   {{ getSupervisorRole() }}
                 </span>
               </div>
@@ -620,215 +454,188 @@
         </div>
       </div>
 
-      <!-- المهام القريبة من موعد التسليم -->
+      <!-- تقويم المهام الشهري (مُصغَّر) -->
       <div
         style="
           background: #ffffff;
           border: 1px solid #e2e8f0;
           border-radius: 16px;
-          padding: 20px;
+          padding: 14px 16px;
           display: flex;
           flex-direction: column;
-          gap: 14px;
+          gap: 8px;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-          font-family: 'Cairo', sans-serif;
         "
       >
-        <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-family: 'Cairo', sans-serif;
-          "
-        >
-          <h3
-            style="
-              margin: 0;
-              font-size: 1rem;
-              font-weight: 700;
-              color: #1e293b;
-              font-family: 'Cairo', sans-serif;
-            "
-          >
-            <i class="fas fa-clock" style="margin-left: 8px;"></i>
-            المهام القريبة من موعد التسليم
+        <!-- رأس التقويم -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: #1e293b;">
+            <i class="fas fa-calendar-alt" style="margin-left: 6px; color: #2563eb;"></i>
+            تقويم المهام
           </h3>
-          <button
-            routerLink="/trainee/tasks"
-            style="
-              background: none;
-              border: none;
-              color: #2563eb;
-              font-size: 0.85rem;
-              font-weight: 600;
-              cursor: pointer;
-              font-family: 'Cairo', sans-serif;
-            "
-          >
-            عرض الكل <i class="fas fa-arrow-left" style="margin-right: 4px;color: #2563eb;"></i>
-          </button>
-        </div>
 
-        <div
-          style="display: flex; flex-direction: column; gap: 10px; font-family: 'Cairo', sans-serif"
-        >
-          @if (loadingTasks()) {
-            <div
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button
+              (click)="prevMonth()"
               style="
+                background: #eff6ff;
+                color: #2563eb;
+                border: 1px solid #dbeafe;
+                width: 24px;
+                height: 24px;
+                border-radius: 6px;
+                cursor: pointer;
                 display: flex;
+                align-items: center;
                 justify-content: center;
-                padding: 20px;
-                color: #94a3b8;
-                font-family: 'Cairo', sans-serif;
+                font-size: 0.65rem;
+              "
+              title="الشهر السابق"
+            >
+              <i class="fas fa-chevron-right"></i>
+            </button>
+            <span
+              style="
+                font-size: 0.78rem;
+                font-weight: 700;
+                color: #1e293b;
+                min-width: 110px;
+                text-align: center;
               "
             >
-              <i class="fas fa-spinner fa-spin" style="margin-left: 8px;"></i>
-              جاري تحميل المهام...
-            </div>
-          } @else {
-            @for (t of tasks(); track t.taskId) {
+              {{ calendarMonthName() }} {{ calendarYear() }}
+            </span>
+            <button
+              (click)="nextMonth()"
+              style="
+                background: #eff6ff;
+                color: #2563eb;
+                border: 1px solid #dbeafe;
+                width: 24px;
+                height: 24px;
+                border-radius: 6px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.65rem;
+              "
+              title="الشهر التالي"
+            >
+              <i class="fas fa-chevron-left"></i>
+            </button>
+          </div>
+        </div>
+
+        @if (loadingTasks()) {
+          <div
+            style="
+              display: flex;
+              justify-content: center;
+              padding: 16px;
+              color: #94a3b8;
+              font-size: 0.75rem;
+            "
+          >
+            <i class="fas fa-spinner fa-spin" style="margin-left: 6px;"></i>
+            جاري تحميل المهام...
+          </div>
+        } @else {
+          <!-- أسماء أيام الأسبوع -->
+          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;">
+            @for (d of weekDays; track d) {
               <div
                 style="
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: center;
-                  padding: 12px 16px;
-                  background: #f8fafc;
-                  border-radius: 12px;
-                  border: 1px solid #f1f5f9;
-                  font-family: 'Cairo', sans-serif;
+                  text-align: center;
+                  font-size: 0.6rem;
+                  color: #64748b;
+                  font-weight: 700;
+                  padding: 1px 0;
                 "
               >
-                <div
-                  style="
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
-                    flex: 1;
-                    font-family: 'Cairo', sans-serif;
-                  "
-                >
-                  <!-- اسم المهمة -->
-                  <strong
-                    style="font-size: 0.9rem; color: #1e293b; font-family: 'Cairo', sans-serif"
-                    >{{ t.title || 'مهمة غير مسماة' }}</strong
-                  >
-                  <!-- التاريخ -->
-                  <div
-                    style="
-                      display: flex;
-                      align-items: center;
-                      gap: 8px;
-                      font-size: 0.78rem;
-                      color: #64748b;
-                      font-family: 'Cairo', sans-serif;
-                    "
-                  >
-                    <span><i class="far fa-calendar-alt" style="margin-left: 4px; color: #2563eb;"></i> الموعد النهائي: ...</span>
-                    @if (t.dueDate) {
-                      <span
-                        [style.color]="isTaskOverdue(t.dueDate) ? '#dc2626' : '#16a34a'"
-                        style="font-family: 'Cairo', sans-serif"
-                      >
-                        @if (isTaskOverdue(t.dueDate)) {
-                          <i class="fas fa-hourglass-end" style="margin-left: 4px;"></i> منتهي
-                        }
-                      </span>
-                    }
-                  </div>
-                  <!-- حالة التسليم (إذا وجدت) -->
-                  @if (t.submissionStatus) {
-                    <span
-                      style="font-size: 0.7rem; color: #94a3b8; font-family: 'Cairo', sans-serif"
-                    >
-                      <i class="fas fa-paper-plane" style="margin-left: 4px;"></i>
-                      التسليم: {{ getTaskStatusDisplay(t.submissionStatus) }}
-                    </span>
-                  }
-                </div>
-                <div
-                  style="
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    font-family: 'Cairo', sans-serif;
-                  "
-                >
-                  <!-- حالة المهمة -->
-                  @if (t.submissionStatus) {
-                    <span
-                      [style.background]="getTaskStatusStyle(t.submissionStatus).background"
-                      [style.color]="getTaskStatusStyle(t.submissionStatus).color"
-                      style="
-                        padding: 3px 10px;
-                        border-radius: 6px;
-                        font-size: 0.75rem;
-                        font-weight: 600;
-                        white-space: nowrap;
-                        font-family: 'Cairo', sans-serif;
-                      "
-                    >
-                      {{ getTaskStatusDisplay(t.submissionStatus) }}
-                    </span>
-                  } @else {
-                    <span
-                      [style.background]="getTaskStatusStyle(t.status).background"
-                      [style.color]="getTaskStatusStyle(t.status).color"
-                      style="
-                        padding: 3px 10px;
-                        border-radius: 6px;
-                        font-size: 0.75rem;
-                        font-weight: 600;
-                        white-space: nowrap;
-                        font-family: 'Cairo', sans-serif;
-                      "
-                    >
-                      {{ getTaskStatusDisplay(t.status) }}
-                    </span>
-                  }
-                  <!-- الدرجة (إذا كانت موجودة) -->
-                  @if (t.grade !== undefined && t.grade !== null && t.grade !== '') {
-                    <span
-                      style="
-                        font-size: 0.75rem;
-                        color: #2563eb;
-                        font-weight: 700;
-                        background: #eff6ff;
-                        padding: 2px 8px;
-                        border-radius: 4px;
-                        font-family: 'Cairo', sans-serif;
-                      "
-                    >
-                      <i class="fas fa-star" style="margin-left: 3px;"></i>
-                      {{ t.grade }}%
-                    </span>
-                  }
-                </div>
-              </div>
-            } @empty {
-              <div
-                style="
-                  display: flex;
-                  justify-content: center;
-                  align-items: center;
-                  padding: 30px;
-                  color: #94a3b8;
-                  font-size: 0.9rem;
-                  flex-direction: column;
-                  gap: 8px;
-                  font-family: 'Cairo', sans-serif;
-                "
-              >
-                <i class="fas fa-clipboard-list" style="font-size: 2rem;"></i>
-                <span>لا توجد مهام حالياً</span>
-                <span style="font-size: 0.75rem; color: #cbd5e1"
-                  >سيتم عرض المهام المخصصة لك هنا</span
-                >
+                {{ d }}
               </div>
             }
-          }
-        </div>
+          </div>
+
+          <!-- شبكة الأيام -->
+          <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;">
+            @for (d of calendarDays(); track $index) {
+              @if (d.day === null) {
+                <div style="height: 26px;"></div>
+              } @else {
+                <div
+                  (click)="openCalendarDay(d)"
+                  [style.background]="d.hasTask ? '#2563eb' : (d.isToday ? '#eff6ff' : '#f8fafc')"
+                  [style.color]="d.hasTask ? '#ffffff' : (d.isToday ? '#2563eb' : '#334155')"
+                  [style.borderColor]="d.hasTask ? '#2563eb' : (d.isToday ? '#2563eb' : '#f1f5f9')"
+                  [style.cursor]="d.hasTask ? 'pointer' : 'default'"
+                  style="
+                    height: 26px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 6px;
+                    border: 1px solid #f1f5f9;
+                    font-size: 0.68rem;
+                    font-weight: 600;
+                    position: relative;
+                  "
+                >
+                  <span>{{ d.day }}</span>
+                  @if (d.hasTask) {
+                    <span
+                      style="
+                        position: absolute;
+                        top: 1px;
+                        left: 2px;
+                        background: rgba(255, 255, 255, 0.35);
+                        color: #ffffff;
+                        font-size: 0.5rem;
+                        padding: 0 3px;
+                        border-radius: 4px;
+                        font-weight: 700;
+                        line-height: 1.2;
+                      "
+                    >
+                      {{ d.tasks.length }}
+                    </span>
+                  }
+                </div>
+              }
+            }
+          </div>
+
+          <!-- مفتاح الألوان -->
+          <div
+            style="
+              display: flex;
+              gap: 12px;
+              justify-content: flex-end;
+              font-size: 0.62rem;
+              color: #64748b;
+              padding-top: 4px;
+              border-top: 1px solid #f1f5f9;
+            "
+          >
+            <span style="display: flex; align-items: center; gap: 4px;">
+              <span style="width: 9px; height: 9px; background: #2563eb; border-radius: 2px;"></span>
+              يوم به مهام
+            </span>
+            <span style="display: flex; align-items: center; gap: 4px;">
+              <span
+                style="
+                  width: 9px;
+                  height: 9px;
+                  background: #eff6ff;
+                  border: 1px solid #2563eb;
+                  border-radius: 2px;
+                "
+              ></span>
+              اليوم
+            </span>
+          </div>
+        }
       </div>
     </div>
 
@@ -839,7 +646,6 @@
         grid-template-columns: 1fr 420px;
         gap: 20px;
         direction: rtl;
-        font-family: 'Cairo', sans-serif;
         align-items: start;
       "
     >
@@ -853,20 +659,15 @@
           display: flex;
           flex-direction: column;
           gap: 16px;
-          box-shadow:
-            0 4px 6px -1px rgba(0, 0, 0, 0.02),
-            0 2px 4px -1px rgba(0, 0, 0, 0.01);
-          font-family: 'Cairo', sans-serif;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
         "
       >
-        <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b">
+        <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b;">
           <i class="fas fa-bullhorn" style="margin-left: 8px;"></i>
           الإعلانات
         </h3>
 
-        <div
-          style="display: flex; flex-direction: column; gap: 10px; font-family: 'Cairo', sans-serif"
-        >
+        <div style="display: flex; flex-direction: column; gap: 10px;">
           @if (loadingAnnouncements()) {
             <div
               style="
@@ -874,7 +675,6 @@
                 justify-content: center;
                 padding: 30px;
                 color: #94a3b8;
-                font-family: 'Cairo', sans-serif;
               "
             >
               <i class="fas fa-spinner fa-spin" style="margin-left: 8px;"></i>
@@ -896,44 +696,23 @@
                   gap: 12px;
                   text-align: right;
                   transition: all 0.2s ease;
-                  font-family: 'Cairo', sans-serif;
                 "
               >
-                <div
-                  style="
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    min-width: 0;
-                    flex: 1;
-                    font-family: 'Cairo', sans-serif;
-                  "
-                >
-                  <span style="font-size: 20px; flex-shrink: 0"><i class="fas fa-bell"></i></span>
-
-                  <div style="min-width: 0; flex: 1; font-family: 'Cairo', sans-serif">
+                <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
+                  <span style="font-size: 20px; flex-shrink: 0;"><i class="fas fa-bell"></i></span>
+                  <div style="min-width: 0; flex: 1;">
                     <div
                       style="
                         display: flex;
                         align-items: center;
                         justify-content: space-between;
                         margin-bottom: 4px;
-                        font-family: 'Cairo', sans-serif;
                       "
                     >
-                      <span
-                        style="
-                          color: #1d4ed8;
-                          font-weight: 700;
-                          font-size: 0.75rem;
-                          font-family: 'Cairo', sans-serif;
-                        "
-                      >
+                      <span style="color: #1d4ed8; font-weight: 700; font-size: 0.75rem;">
                         <i class="fas fa-flag" style="margin-left: 4px;"></i>
                         إعلان رسمي - ({{ ann.source }})
                       </span>
-
-                      <!-- زر التفاصيل -->
                       <button
                         (click)="openAnnouncementPopup(ann)"
                         style="
@@ -945,24 +724,13 @@
                           font-size: 0.75rem;
                           font-weight: 600;
                           cursor: pointer;
-                          transition: all 0.2s;
-                          font-family: 'Cairo', sans-serif;
                         "
                       >
                         <i class="fas fa-info-circle" style="margin-left: 4px;"></i>
                         التفاصيل
                       </button>
                     </div>
-
-                    <div
-                      style="
-                        font-size: 0.85rem;
-                        color: #1e293b;
-                        font-weight: 600;
-                        line-height: 1.4;
-                        font-family: 'Cairo', sans-serif;
-                      "
-                    >
+                    <div style="font-size: 0.85rem; color: #1e293b; font-weight: 600; line-height: 1.4;">
                       {{ ann.message }}
                     </div>
                   </div>
@@ -977,7 +745,6 @@
                   padding: 40px;
                   color: #94a3b8;
                   font-size: 0.9rem;
-                  font-family: 'Cairo', sans-serif;
                 "
               >
                 <i class="fas fa-inbox" style="margin-left: 8px;"></i>
@@ -985,7 +752,6 @@
               </div>
             }
 
-            <!-- زر عرض المزيد للإعلانات -->
             @if (announcements().length > 3) {
               <button
                 (click)="toggleShowAllAnnouncements()"
@@ -1001,13 +767,16 @@
                   gap: 6px;
                   justify-content: center;
                   padding: 8px;
-                  font-family: 'Cairo', sans-serif;
                   width: 100%;
                   border-top: 1px solid #f1f5f9;
                   margin-top: 4px;
                 "
               >
-                <i class="fas" [class.fa-chevron-up]="showAllAnnouncements()" [class.fa-chevron-down]="!showAllAnnouncements()"></i>
+                <i
+                  class="fas"
+                  [class.fa-chevron-up]="showAllAnnouncements()"
+                  [class.fa-chevron-down]="!showAllAnnouncements()"
+                ></i>
                 {{ showAllAnnouncements() ? 'عرض أقل' : 'عرض المزيد' }}
               </button>
             }
@@ -1015,73 +784,7 @@
         </div>
       </div>
 
-      <!-- نافذة البوبب (Popup Modal) للـ Frontend -->
-      @if (selectedAnnouncement()) {
-        <div style="
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-color: rgba(0, 0, 0, 0.5);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 1000;
-          font-family: 'Cairo', sans-serif;
-        ">
-          <div style="
-            background: #ffffff;
-            padding: 24px;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 450px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            text-align: right;
-            direction: rtl;
-          ">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-              <h4 style="margin: 0; font-size: 1.1rem; color: #1e293b; font-weight: 700;">
-                <i class="fas fa-info-circle" style="margin-left: 8px;"></i>
-                تفاصيل الإعلان
-              </h4>
-              <button (click)="closeAnnouncementPopup()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b;">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-
-            <!-- رابط صورة ثابتة -->
-            <div style="text-align: center; margin-bottom: 16px;">
-              <img src="https://shabiba.eu-central-1.linodeobjects.com/2024/10/1727788395-1727788395-evkcgopxuicb.png" alt="صورة الإعلان" style="max-height: 140px; border-radius: 8px; object-fit: cover;">
-            </div>
-
-            <div style="margin-bottom: 12px;">
-              <span style="color: #1d4ed8; font-weight: 700; font-size: 0.8rem;">
-                <i class="fas fa-flag" style="margin-left: 4px;"></i>
-                إعلان رسمي - ({{ selectedAnnouncement()?.source }})
-              </span>
-              <p style="color: #94a3b8; font-size: 0.75rem; margin: 4px 0 12px 0;">
-                <i class="far fa-calendar-alt" style="margin-left: 4px;"></i>
-                {{ selectedAnnouncement()?.date | date: 'mediumDate' }}
-              </p>
-            </div>
-
-            <p style="font-size: 0.9rem; color: #334155; line-height: 1.5; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
-              <i class="fas fa-quote-right" style="margin-left: 6px; color: #94a3b8;"></i>
-              {{ selectedAnnouncement()?.message }}
-            </p>
-
-            <div style="text-align: left; margin-top: 20px;">
-              <button (click)="closeAnnouncementPopup()" style="background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: 'Cairo', sans-serif; font-size: 0.85rem;">
-                <i class="fas fa-check" style="margin-left: 6px;"></i>
-                إغلاق
-              </button>
-            </div>
-          </div>
-        </div>
-      }
-
-      <!-- التنبيهات الأخيرة - مع تصغير الخط وجعل كل شيء في سطر واحد -->
+      <!-- التنبيهات الأخيرة -->
       <div
         style="
           background: #ffffff;
@@ -1091,10 +794,7 @@
           display: flex;
           flex-direction: column;
           gap: 16px;
-          box-shadow:
-            0 4px 6px -1px rgba(0, 0, 0, 0.02),
-            0 2px 4px -1px rgba(0, 0, 0, 0.01);
-          font-family: 'Cairo', sans-serif;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
         "
       >
         <div
@@ -1104,21 +804,10 @@
             align-items: center;
             border-bottom: 2px solid #f8fafc;
             padding-bottom: 12px;
-            font-family: 'Cairo', sans-serif;
           "
         >
-          <div
-            style="display: flex; align-items: center; gap: 8px; font-family: 'Cairo', sans-serif"
-          >
-            <h3
-              style="
-                margin: 0;
-                font-size: 1rem;
-                font-weight: 700;
-                color: #1e293b;
-                font-family: 'Cairo', sans-serif;
-              "
-            >
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b;">
               <i class="fas fa-bell" style="margin-left: 6px;"></i>
               التنبيهات الأخيرة
             </h3>
@@ -1131,16 +820,13 @@
                   padding: 1px 8px;
                   border-radius: 12px;
                   font-weight: 500;
-                  font-family: 'Cairo', sans-serif;
                 "
               >
                 {{ getUnreadNotificationsCount() }} جديد
               </span>
             }
           </div>
-          <div
-            style="display: flex; gap: 6px; align-items: center; font-family: 'Cairo', sans-serif"
-          >
+          <div style="display: flex; gap: 6px; align-items: center;">
             @if (getUnreadNotificationsCount() > 0) {
               <button
                 type="button"
@@ -1152,7 +838,6 @@
                   font-size: 0.55rem;
                   cursor: pointer;
                   text-decoration: underline;
-                  font-family: 'Cairo', sans-serif;
                 "
               >
                 <i class="fas fa-check-double" style="margin-left: 3px; color: #000000;"></i>
@@ -1171,7 +856,6 @@
                 display: flex;
                 align-items: center;
                 gap: 3px;
-                font-family: 'Cairo', sans-serif;
               "
             >
               عرض الكل <i class="fas fa-arrow-left" style="color: #2563eb;"></i>
@@ -1179,9 +863,7 @@
           </div>
         </div>
 
-        <div
-          style="display: flex; flex-direction: column; gap: 6px; font-family: 'Cairo', sans-serif"
-        >
+        <div style="display: flex; flex-direction: column; gap: 6px;">
           @if (loadingNotifications()) {
             <div
               style="
@@ -1189,7 +871,6 @@
                 justify-content: center;
                 padding: 20px;
                 color: #94a3b8;
-                font-family: 'Cairo', sans-serif;
                 font-size: 0.8rem;
               "
             >
@@ -1201,6 +882,7 @@
               @for (notif of displayNotifications(); track notif.notificationId) {
                 <div
                   (click)="markNotificationAsRead(notif.notificationId, $event)"
+                  [style.background]="notif.isRead ? 'transparent' : '#f8faff'"
                   style="
                     display: flex;
                     align-items: center;
@@ -1210,7 +892,6 @@
                     cursor: pointer;
                     transition: background 0.15s;
                   "
-                  [style.background]="notif.isRead ? 'transparent' : '#f8faff'"
                 >
                   <span style="font-size: 16px; flex-shrink: 0; width: 20px; text-align: center;">
                     @if ($index === 0) {
@@ -1226,23 +907,51 @@
                     }
                   </span>
 
-                  <div style="min-width: 0; flex: 1; display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow: hidden;">
+                  <div
+                    style="
+                      min-width: 0;
+                      flex: 1;
+                      display: flex;
+                      align-items: center;
+                      gap: 6px;
+                      flex-wrap: nowrap;
+                      overflow: hidden;
+                    "
+                  >
                     <span
                       [style.color]="notif.isRead ? '#94a3b8' : '#1d4ed8'"
                       style="font-weight: 600; font-size: 0.7rem; white-space: nowrap; flex-shrink: 0;"
                     >
-                      <i class="fas" [class.fa-check-circle]="notif.isRead" [class.fa-circle]="!notif.isRead" style="margin-left: 3px; font-size: 0.55rem; color: #000000;"></i>
+                      <i
+                        class="fas"
+                        [class.fa-check-circle]="notif.isRead"
+                        [class.fa-circle]="!notif.isRead"
+                        style="margin-left: 3px; font-size: 0.55rem; color: #000000;"
+                      ></i>
                       {{ notif.isRead ? 'مقروء' : 'جديد' }}
                     </span>
 
                     <span
-                      style="font-size: 0.75rem; color: #1e293b; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                      style="
+                        font-size: 0.75rem;
+                        color: #1e293b;
+                        font-weight: 500;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                      "
                     >
                       {{ notif.message }}
                     </span>
 
                     <span
-                      style="font-size: 0.6rem; color: #94a3b8; white-space: nowrap; flex-shrink: 0; margin-right: auto;"
+                      style="
+                        font-size: 0.6rem;
+                        color: #94a3b8;
+                        white-space: nowrap;
+                        flex-shrink: 0;
+                        margin-right: auto;
+                      "
                     >
                       <i class="far fa-calendar-alt" style="margin-left: 3px; color: #2563eb;"></i>
                       {{ notif.date | date: 'dd/MM' }}
@@ -1259,7 +968,6 @@
                   padding: 24px;
                   color: #94a3b8;
                   font-size: 0.8rem;
-                  font-family: 'Cairo', sans-serif;
                 "
               >
                 <i class="fas fa-inbox" style="margin-left: 6px; color: #2563eb;"></i>
@@ -1267,7 +975,6 @@
               </div>
             }
 
-            <!-- زر عرض المزيد للتنبيهات -->
             @if (latestNotifications().length > 3) {
               <button
                 (click)="toggleShowAllNotifications()"
@@ -1283,13 +990,17 @@
                   gap: 4px;
                   justify-content: center;
                   padding: 6px;
-                  font-family: 'Cairo', sans-serif;
                   width: 100%;
                   border-top: 1px solid #f1f5f9;
                   margin-top: 4px;
                 "
               >
-                <i class="fas" [class.fa-chevron-up]="showAllNotifications()" [class.fa-chevron-down]="!showAllNotifications()" style="font-size: 0.7rem; color: #2563eb;"></i>
+                <i
+                  class="fas"
+                  [class.fa-chevron-up]="showAllNotifications()"
+                  [class.fa-chevron-down]="!showAllNotifications()"
+                  style="font-size: 0.7rem; color: #2563eb;"
+                ></i>
                 {{ showAllNotifications() ? 'عرض أقل' : 'عرض المزيد' }}
               </button>
             }
@@ -1297,5 +1008,222 @@
         </div>
       </div>
     </div>
+
+    <!-- نافذة تفاصيل الإعلان -->
+    @if (selectedAnnouncement()) {
+      <div
+        style="
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        "
+      >
+        <div
+          style="
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            text-align: right;
+            direction: rtl;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 16px;
+            "
+          >
+            <h4 style="margin: 0; font-size: 1.1rem; color: #1e293b; font-weight: 700;">
+              <i class="fas fa-info-circle" style="margin-left: 8px;"></i>
+              تفاصيل الإعلان
+            </h4>
+            <button
+              (click)="closeAnnouncementPopup()"
+              style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b;"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div style="text-align: center; margin-bottom: 16px;">
+            <img
+              src="https://shabiba.eu-central-1.linodeobjects.com/2024/10/1727788395-1727788395-evkcgopxuicb.png"
+              alt="صورة الإعلان"
+              style="max-height: 140px; border-radius: 8px; object-fit: cover;"
+            />
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <span style="color: #1d4ed8; font-weight: 700; font-size: 0.8rem;">
+              <i class="fas fa-flag" style="margin-left: 4px;"></i>
+              إعلان رسمي - ({{ selectedAnnouncement()?.source }})
+            </span>
+            <p style="color: #94a3b8; font-size: 0.75rem; margin: 4px 0 12px 0;">
+              <i class="far fa-calendar-alt" style="margin-left: 4px;"></i>
+              {{ selectedAnnouncement()?.date | date: 'mediumDate' }}
+            </p>
+          </div>
+
+          <p
+            style="
+              font-size: 0.9rem;
+              color: #334155;
+              line-height: 1.5;
+              background: #f8fafc;
+              padding: 12px;
+              border-radius: 8px;
+              border: 1px solid #e2e8f0;
+            "
+          >
+            <i class="fas fa-quote-right" style="margin-left: 6px; color: #94a3b8;"></i>
+            {{ selectedAnnouncement()?.message }}
+          </p>
+
+          <div style="text-align: left; margin-top: 20px;">
+            <button
+              (click)="closeAnnouncementPopup()"
+              style="
+                background: #2563eb;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 0.85rem;
+              "
+            >
+              <i class="fas fa-check" style="margin-left: 6px;"></i>
+              إغلاق
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- نافذة تفاصيل مهام اليوم المحدد -->
+    @if (selectedCalendarDay()) {
+      <div
+        style="
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        "
+      >
+        <div
+          style="
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 480px;
+            max-height: 80vh;
+            overflow-y: auto;
+            text-align: right;
+            direction: rtl;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 16px;
+            "
+          >
+            <h4 style="margin: 0; font-size: 1rem; color: #1e293b; font-weight: 700;">
+              <i class="fas fa-calendar-day" style="margin-left: 8px; color: #2563eb;"></i>
+              مهام يوم {{ selectedCalendarDay()?.day }} {{ calendarMonthName() }}
+              {{ calendarYear() }}
+            </h4>
+            <button
+              (click)="closeCalendarDay()"
+              style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b;"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            @for (t of selectedCalendarDay()!.tasks; track t.taskId) {
+              <div
+                style="
+                  padding: 12px 14px;
+                  background: #f8fafc;
+                  border: 1px solid #e2e8f0;
+                  border-right: 4px solid #2563eb;
+                  border-radius: 10px;
+                "
+              >
+                <div style="font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 8px;">
+                  {{ t.title || 'مهمة غير مسماة' }}
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    align-items: center;
+                    font-size: 0.72rem;
+                    color: #64748b;
+                  "
+                >
+                  @if (t.submissionStatus) {
+                    <span
+                      [style.background]="getTaskStatusStyle(t.submissionStatus).background"
+                      [style.color]="getTaskStatusStyle(t.submissionStatus).color"
+                      style="padding: 3px 10px; border-radius: 6px; font-weight: 600;"
+                    >
+                      {{ getTaskStatusDisplay(t.submissionStatus) }}
+                    </span>
+                  } @else {
+                    <span
+                      [style.background]="getTaskStatusStyle(t.status).background"
+                      [style.color]="getTaskStatusStyle(t.status).color"
+                      style="padding: 3px 10px; border-radius: 6px; font-weight: 600;"
+                    >
+                      {{ getTaskStatusDisplay(t.status) }}
+                    </span>
+                  }
+
+                  @if (t.grade !== undefined && t.grade !== null && t.grade !== '') {
+                    <span
+                      style="
+                        color: #2563eb;
+                        font-weight: 700;
+                        background: #eff6ff;
+                        padding: 2px 8px;
+                        border-radius: 4px;
+                      "
+                    >
+                      <i class="fas fa-star" style="margin-left: 3px;"></i>
+                      {{ t.grade }}%
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
   }
 </div>

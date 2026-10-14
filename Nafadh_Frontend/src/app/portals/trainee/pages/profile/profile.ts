@@ -1,3 +1,4 @@
+
 import {
   Component,
   OnInit,
@@ -6,13 +7,12 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-
 import { TraineeApi } from '../../services/trainee-api';
 
-import { TraineeProfileDto } from '../../../../core/models/dtos';
-
-import { environment } from '../../../../../environments/environment';
+import {
+  TraineeProfileDto,
+  TraineeSkillDto
+} from '../../../../core/models/dtos';
 
 
 interface TraineeUpdateDto {
@@ -21,8 +21,6 @@ interface TraineeUpdateDto {
 
   phone?: string;
 
-  skills?: string;
-
   resumeUrl?: string;
 
   gitHubUrl?: string;
@@ -30,6 +28,22 @@ interface TraineeUpdateDto {
   linkedInUrl?: string;
 
   academicLevel?: string;
+
+  governorate?: string;
+
+  wilaya?: string;
+
+  village?: string;
+
+  bankName?: string;
+
+  accountHolderName?: string;
+
+  accountNumber?: string;
+
+  iban?: string;
+
+  bankBranch?: string;
 
 }
 
@@ -40,10 +54,7 @@ interface TraineeUpdateDto {
 
   standalone: true,
 
-  imports: [
-    CommonModule,
-    FormsModule
-  ],
+  imports: [CommonModule, FormsModule],
 
   templateUrl: './profile.html'
 
@@ -52,6 +63,10 @@ interface TraineeUpdateDto {
 
 export class TraineeProfile implements OnInit {
 
+
+  // =========================================================
+  // USER / TRAINEE
+  // =========================================================
 
   userId = 0;
 
@@ -66,25 +81,15 @@ export class TraineeProfile implements OnInit {
   // PROFILE IMAGE
   // =========================================================
 
-  // Image currently displayed in the profile.
-  avatarUrl =
-    signal<string | null>(
-      null
-    );
+  avatarUrl = signal<string | null>(null);
 
+  selectedProfileImage: File | null = null;
 
-  // New local image selected by the trainee.
-  selectedProfileImage:
-    File | null = null;
-
-
-  // Controls the enlarged image viewer.
-  avatarViewerOpen =
-    signal(false);
+  avatarViewerOpen = signal(false);
 
 
   // =========================================================
-  // Validation
+  // VALIDATION
   // =========================================================
 
   phoneError = signal<string | null>(null);
@@ -95,7 +100,34 @@ export class TraineeProfile implements OnInit {
 
 
   // =========================================================
-  // Popup
+  // PROFILE SNAPSHOT
+  // =========================================================
+
+  private originalProfile: any = null;
+
+
+  // =========================================================
+  // SKILLS
+  // =========================================================
+
+  traineeSkills = signal<TraineeSkillDto[]>([]);
+
+
+  // =========================================================
+  // SKILL PROOF
+  // =========================================================
+
+  proofMode = signal<'file' | 'serial'>('file');
+
+  certificateFileName = signal<string>('');
+
+  certificateFile = signal<File | null>(null);
+
+  certificateSerial = signal<string>('');
+
+
+  // =========================================================
+  // POPUP
   // =========================================================
 
   popupVisible = signal(false);
@@ -104,37 +136,31 @@ export class TraineeProfile implements OnInit {
 
   popupMessage = signal('');
 
-  popupType =
-    signal<
-      'success' |
-      'error' |
-      'info'
-    >(
-      'info'
-    );
+  popupType = signal<'success' | 'error' | 'info'>('info');
 
-  popupInputMode =
-    signal(false);
+  popupInputMode = signal(false);
 
   popupInputValue = '';
 
 
   // =========================================================
-  // Original profile snapshot
+  // CV
   // =========================================================
 
-  private originalProfile:
-    any = null;
+  cvDownloadUrl = signal<string | null>(null);
 
+
+  // =========================================================
+  // CONSTRUCTOR
+  // =========================================================
 
   constructor(
-    private api: TraineeApi,
-    private http: HttpClient
+    private api: TraineeApi
   ) {}
 
 
   // =========================================================
-  // Init
+  // ON INIT
   // =========================================================
 
   ngOnInit(): void {
@@ -147,622 +173,19 @@ export class TraineeProfile implements OnInit {
 
 
   // =========================================================
-  // Popup Methods
-  // =========================================================
-
-  showPopup(
-    message: string,
-    type:
-      'success' |
-      'error' |
-      'info' = 'info',
-    title?: string
-  ): void {
-
-    this.popupType.set(
-      type
-    );
-
-    this.popupTitle.set(
-      title ??
-      (
-        type === 'success'
-          ? 'تم بنجاح'
-          : type === 'error'
-            ? 'حدث خطأ'
-            : 'تنبيه'
-      )
-    );
-
-    this.popupMessage.set(
-      message
-    );
-
-    this.popupInputMode.set(
-      false
-    );
-
-    this.popupInputValue = '';
-
-    this.popupVisible.set(
-      true
-    );
-
-  }
-
-
-  closePopup(): void {
-
-    this.popupVisible.set(
-      false
-    );
-
-    this.popupInputMode.set(
-      false
-    );
-
-    this.popupInputValue = '';
-
-  }
-
-
-  openSkillPopup(): void {
-
-    this.popupType.set(
-      'info'
-    );
-
-    this.popupTitle.set(
-      'إضافة مهارة'
-    );
-
-    this.popupMessage.set(
-      'أدخل اسم المهارة التي تريد إضافتها إلى ملفك الشخصي.'
-    );
-
-    this.popupInputValue = '';
-
-    this.popupInputMode.set(
-      true
-    );
-
-    this.popupVisible.set(
-      true
-    );
-
-  }
-
-
-  confirmPopupInput(): void {
-
-    const skill =
-      this.popupInputValue.trim();
-
-
-    if (!skill) {
-
-      this.popupType.set(
-        'error'
-      );
-
-      this.popupTitle.set(
-        'تنبيه'
-      );
-
-      this.popupMessage.set(
-        'يرجى إدخال اسم المهارة أولاً.'
-      );
-
-      return;
-
-    }
-
-
-    this.addSkillValue(
-      skill
-    );
-
-  }
-
-
-  // =========================================================
-  // Phone Validation
-  // =========================================================
-
-  validatePhone(
-    phone: string
-  ): void {
-
-    if (
-      !phone ||
-      phone.trim() === ''
-    ) {
-
-      this.phoneError.set(
-        null
-      );
-
-      return;
-
-    }
-
-
-    const cleanPhone =
-      phone.trim();
-
-
-    const phoneWithoutSpaces =
-      cleanPhone.replace(
-        /\s/g,
-        ''
-      );
-
-
-    const phoneRegex =
-      /^\+968\d{8}$/;
-
-
-    if (
-      !phoneRegex.test(
-        phoneWithoutSpaces
-      )
-    ) {
-
-      this.phoneError.set(
-        'رقم الهاتف يجب أن يبدأ بـ +968 ويتبعه 8 أرقام فقط (مثال: +968 12345678)'
-      );
-
-    }
-    else {
-
-      this.phoneError.set(
-        null
-      );
-
-
-      if (
-        cleanPhone !==
-        phoneWithoutSpaces
-      ) {
-
-        this.trainee.update(
-          current => {
-
-            if (!current) {
-
-              return current;
-
-            }
-
-
-            return {
-
-              ...current,
-
-              phone:
-                phoneWithoutSpaces
-
-            };
-
-          }
-        );
-
-      }
-
-    }
-
-  }
-
-
-  // =========================================================
-  // GitHub Validation
-  // =========================================================
-
-  validateGitHub(
-    url: string
-  ): void {
-
-    if (
-      !url ||
-      url.trim() === ''
-    ) {
-
-      this.gitHubError.set(
-        null
-      );
-
-      return;
-
-    }
-
-
-    const cleanUrl =
-      url.trim();
-
-
-    const githubRegex =
-      /^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,38}[a-zA-Z0-9])?$/;
-
-
-    if (
-      !githubRegex.test(
-        cleanUrl
-      )
-    ) {
-
-      this.gitHubError.set(
-        'الرجاء إدخال رابط GitHub صحيح (مثال: https://github.com/username)'
-      );
-
-      return;
-
-    }
-
-
-    if (
-      !cleanUrl.startsWith(
-        'http://'
-      ) &&
-      !cleanUrl.startsWith(
-        'https://'
-      )
-    ) {
-
-      this.trainee.update(
-        current => {
-
-          if (!current) {
-
-            return current;
-
-          }
-
-
-          return {
-
-            ...current,
-
-            gitHubUrl:
-              'https://' +
-              cleanUrl
-
-          };
-
-        }
-      );
-
-    }
-
-
-    this.gitHubError.set(
-      null
-    );
-
-  }
-
-
-  // =========================================================
-  // LinkedIn Validation
-  // =========================================================
-
-  validateLinkedIn(
-    url: string
-  ): void {
-
-    if (
-      !url ||
-      url.trim() === ''
-    ) {
-
-      this.linkedInError.set(
-        null
-      );
-
-      return;
-
-    }
-
-
-    const cleanUrl =
-      url.trim();
-
-
-    const linkedinRegex =
-      /^(https?:\/\/)?(www\.)?linkedin\.com\/(in|company|school)\/[a-zA-Z0-9-]+$/;
-
-
-    if (
-      !linkedinRegex.test(
-        cleanUrl
-      )
-    ) {
-
-      this.linkedInError.set(
-        'الرجاء إدخال رابط LinkedIn صحيح (مثال: https://www.linkedin.com/in/username)'
-      );
-
-      return;
-
-    }
-
-
-    if (
-      !cleanUrl.startsWith(
-        'http://'
-      ) &&
-      !cleanUrl.startsWith(
-        'https://'
-      )
-    ) {
-
-      this.trainee.update(
-        current => {
-
-          if (!current) {
-
-            return current;
-
-          }
-
-
-          return {
-
-            ...current,
-
-            linkedInUrl:
-              'https://' +
-              cleanUrl
-
-          };
-
-        }
-      );
-
-    }
-
-
-    this.linkedInError.set(
-      null
-    );
-
-  }
-
-
-  // =========================================================
-  // Validate Form
-  // =========================================================
-
-  private isFormValid(): boolean {
-
-    const t =
-      this.trainee();
-
-
-    if (!t) {
-
-      return false;
-
-    }
-
-
-    let hasError =
-      false;
-
-
-    if (
-      t.phone &&
-      t.phone.trim() !== ''
-    ) {
-
-      this.validatePhone(
-        t.phone
-      );
-
-
-      if (
-        this.phoneError()
-      ) {
-
-        hasError =
-          true;
-
-      }
-
-    }
-    else {
-
-      this.phoneError.set(
-        null
-      );
-
-    }
-
-
-    if (
-      t.gitHubUrl &&
-      t.gitHubUrl.trim() !== ''
-    ) {
-
-      this.validateGitHub(
-        t.gitHubUrl
-      );
-
-
-      if (
-        this.gitHubError()
-      ) {
-
-        hasError =
-          true;
-
-      }
-
-    }
-    else {
-
-      this.gitHubError.set(
-        null
-      );
-
-    }
-
-
-    if (
-      t.linkedInUrl &&
-      t.linkedInUrl.trim() !== ''
-    ) {
-
-      this.validateLinkedIn(
-        t.linkedInUrl
-      );
-
-
-      if (
-        this.linkedInError()
-      ) {
-
-        hasError =
-          true;
-
-      }
-
-    }
-    else {
-
-      this.linkedInError.set(
-        null
-      );
-
-    }
-
-
-    return !hasError;
-
-  }
-
-
-  // =========================================================
-  // Create normalized snapshot
-  // =========================================================
-
-  private createProfileSnapshot(
-    t: any
-  ): any {
-
-    return {
-
-      email:
-        t.email
-          ?.toString()
-          .trim() || '',
-
-      phone:
-        t.phone
-          ?.toString()
-          .trim() || '',
-
-      academicLevel:
-        t.academicLevel
-          ?.toString()
-          .trim() || '',
-
-      skills:
-        this.getSkillsList(
-          t.skills
-        ).join(', '),
-
-      resumeUrl:
-        t.resumeUrl
-          ?.toString()
-          .trim() || '',
-
-      cvFileName:
-        t.cvFileName
-          ?.toString()
-          .trim() || '',
-
-      gitHubUrl:
-        t.gitHubUrl
-          ?.toString()
-          .trim() || '',
-
-      linkedInUrl:
-        t.linkedInUrl
-          ?.toString()
-          .trim() || ''
-
-    };
-
-  }
-
-
-  // =========================================================
-  // Check if profile information changed
-  // =========================================================
-
-  private hasEditableChanges(
-    t: any
-  ): boolean {
-
-    if (
-      !this.originalProfile
-    ) {
-
-      return true;
-
-    }
-
-
-    const current =
-      this.createProfileSnapshot(
-        t
-      );
-
-
-    const original =
-      this.originalProfile;
-
-
-    return (
-
-      current.phone !==
-        original.phone ||
-
-      current.academicLevel !==
-        original.academicLevel ||
-
-      current.skills !==
-        original.skills ||
-
-      current.resumeUrl !==
-        original.resumeUrl ||
-
-      current.cvFileName !==
-        original.cvFileName ||
-
-      current.gitHubUrl !==
-        original.gitHubUrl ||
-
-      current.linkedInUrl !==
-        original.linkedInUrl
-
-    );
-
-  }
-
-
-  // =========================================================
-  // Get logged in UserId
+  // GET LOGGED-IN USER ID
   // =========================================================
 
   private getLoggedInUserId(): void {
 
     try {
 
+      // -------------------------------------------------------
+      // 1. nafadh_session
+      // -------------------------------------------------------
+
       const session =
-        localStorage.getItem(
-          'nafadh_session'
-        );
+        localStorage.getItem('nafadh_session');
 
 
       if (session) {
@@ -770,19 +193,13 @@ export class TraineeProfile implements OnInit {
         try {
 
           const parsed =
-            JSON.parse(
-              session
-            );
+            JSON.parse(session);
 
 
-          if (
-            parsed?.userId
-          ) {
+          if (parsed?.userId) {
 
             this.userId =
-              Number(
-                parsed.userId
-              );
+              Number(parsed.userId);
 
 
             console.log(
@@ -795,8 +212,7 @@ export class TraineeProfile implements OnInit {
 
           }
 
-        }
-        catch {
+        } catch {
 
           console.warn(
             'تعذر قراءة nafadh_session'
@@ -807,6 +223,10 @@ export class TraineeProfile implements OnInit {
       }
 
 
+      // -------------------------------------------------------
+      // 2. Search other localStorage JSON objects
+      // -------------------------------------------------------
+
       for (
         let i = 0;
         i < localStorage.length;
@@ -814,9 +234,7 @@ export class TraineeProfile implements OnInit {
       ) {
 
         const key =
-          localStorage.key(
-            i
-          );
+          localStorage.key(i);
 
 
         if (!key) {
@@ -826,13 +244,11 @@ export class TraineeProfile implements OnInit {
         }
 
 
-        const value =
-          localStorage.getItem(
-            key
-          );
+        const val =
+          localStorage.getItem(key);
 
 
-        if (!value) {
+        if (!val) {
 
           continue;
 
@@ -842,19 +258,13 @@ export class TraineeProfile implements OnInit {
         try {
 
           const parsed =
-            JSON.parse(
-              value
-            );
+            JSON.parse(val);
 
 
-          if (
-            parsed?.userId
-          ) {
+          if (parsed?.userId) {
 
             this.userId =
-              Number(
-                parsed.userId
-              );
+              Number(parsed.userId);
 
 
             console.log(
@@ -867,28 +277,25 @@ export class TraineeProfile implements OnInit {
 
           }
 
-        }
-        catch {
+        } catch {
 
-          // Not JSON
+          // القيمة ليست JSON
 
         }
 
       }
 
 
+      // -------------------------------------------------------
+      // 3. Search JWT token
+      // -------------------------------------------------------
+
       const token =
-        localStorage.getItem(
-          'auth_token'
-        ) ||
+        localStorage.getItem('auth_token') ||
 
-        localStorage.getItem(
-          'token'
-        ) ||
+        localStorage.getItem('token') ||
 
-        localStorage.getItem(
-          'user_session'
-        );
+        localStorage.getItem('user_session');
 
 
       if (
@@ -896,69 +303,40 @@ export class TraineeProfile implements OnInit {
         token.includes('.')
       ) {
 
-        try {
-
-          const payload =
-            JSON.parse(
-
-              atob(
-
-                token
-                  .split('.')[1]
-                  .replace(
-                    /-/g,
-                    '+'
-                  )
-                  .replace(
-                    /_/g,
-                    '/'
-                  )
-
-              )
-
-            );
-
-
-          const foundUserId =
-
-            payload.userId ||
-
-            payload.nameid ||
-
-            payload[
-              'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
-            ];
-
-
-          if (
-            foundUserId
-          ) {
-
-            this.userId =
-              Number(
-                foundUserId
-              );
-
-
-            console.log(
-              'Logged UserId from JWT:',
-              this.userId
-            );
-
-
-            return;
-
-          }
-
-        }
-        catch (
-          jwtError
-        ) {
-
-          console.error(
-            'خطأ في قراءة JWT:',
-            jwtError
+        const payload =
+          JSON.parse(
+            atob(
+              token
+                .split('.')[1]
+                .replace(/-/g, '+')
+                .replace(/_/g, '/')
+            )
           );
+
+
+        const foundUserId =
+          payload.userId ||
+
+          payload.nameid ||
+
+          payload[
+            'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
+          ];
+
+
+        if (foundUserId) {
+
+          this.userId =
+            Number(foundUserId);
+
+
+          console.log(
+            'Logged UserId from JWT:',
+            this.userId
+          );
+
+
+          return;
 
         }
 
@@ -969,14 +347,11 @@ export class TraineeProfile implements OnInit {
         'لم يتم العثور على UserId للمستخدم الحالي'
       );
 
-    }
-    catch (
-      error
-    ) {
+    } catch (e) {
 
       console.error(
         'خطأ في قراءة UserId:',
-        error
+        e
       );
 
     }
@@ -985,7 +360,7 @@ export class TraineeProfile implements OnInit {
 
 
   // =========================================================
-  // Load trainee
+  // LOAD TRAINEE DATA
   // =========================================================
 
   loadTraineeData(): void {
@@ -1012,9 +387,9 @@ export class TraineeProfile implements OnInit {
 
 
     this.api
-      .getTrainee(
-        this.userId
-      )
+
+      .getTrainee(this.userId)
+
       .subscribe({
 
         next: (t) => {
@@ -1032,27 +407,20 @@ export class TraineeProfile implements OnInit {
           }
 
 
-          // Read the profile image returned
-          // from the backend.
           const profileImageUrl =
             (
               t as TraineeProfileDto & {
-                profileImageUrl?: string | null;
+                profileImageUrl?: string | null
               }
-            ).profileImageUrl
-            ?? null;
+            ).profileImageUrl ?? null;
 
 
-          const traineeData:
-            any = {
+          const traineeData: any = {
 
             ...t,
 
             phone:
               t.phone ?? '',
-
-            skills:
-              t.skills ?? '',
 
             gitHubUrl:
               t.gitHubUrl ?? '',
@@ -1066,12 +434,36 @@ export class TraineeProfile implements OnInit {
             cvFileName:
               (
                 t as TraineeProfileDto & {
-                  cvFileName?: string;
+                  cvFileName?: string
                 }
               ).cvFileName ?? '',
 
             academicLevel:
               t.academicLevel ?? '',
+
+            governorate:
+              (t as any).governorate ?? '',
+
+            wilaya:
+              (t as any).wilaya ?? '',
+
+            village:
+              (t as any).village ?? '',
+
+            bankName:
+              (t as any).bankName ?? '',
+
+            accountHolderName:
+              (t as any).accountHolderName ?? '',
+
+            accountNumber:
+              (t as any).accountNumber ?? '',
+
+            iban:
+              (t as any).iban ?? '',
+
+            bankBranch:
+              (t as any).bankBranch ?? '',
 
             profileImageUrl
 
@@ -1083,7 +475,6 @@ export class TraineeProfile implements OnInit {
           );
 
 
-          // Display saved profile image.
           this.avatarUrl.set(
             this.getProfileImageUrl(
               profileImageUrl
@@ -1094,6 +485,11 @@ export class TraineeProfile implements OnInit {
           this.selectedProfileImage =
             null;
 
+
+          // ---------------------------------------------------
+          // IMPORTANT
+          // Get real TraineeId
+          // ---------------------------------------------------
 
           if (
             traineeData.traineeId
@@ -1119,17 +515,18 @@ export class TraineeProfile implements OnInit {
           );
 
 
-          this.phoneError.set(
-            null
-          );
+          // ---------------------------------------------------
+          // Load skills from NFD_TraineeSkill
+          // ---------------------------------------------------
 
-          this.gitHubError.set(
-            null
-          );
+          this.loadTraineeSkills();
 
-          this.linkedInError.set(
-            null
-          );
+
+          this.phoneError.set(null);
+
+          this.gitHubError.set(null);
+
+          this.linkedInError.set(null);
 
         },
 
@@ -1161,14 +558,76 @@ export class TraineeProfile implements OnInit {
 
 
   // =========================================================
-  // Build full profile image URL
+  // LOAD TRAINEE SKILLS
+  // =========================================================
+
+  private loadTraineeSkills(): void {
+
+    if (
+      !this.traineeId ||
+      this.traineeId <= 0
+    ) {
+
+      console.error(
+        'TraineeId غير صالح:',
+        this.traineeId
+      );
+
+      return;
+
+    }
+
+
+    console.log(
+      'Loading skills using TraineeId:',
+      this.traineeId
+    );
+
+
+    this.api
+
+      .getTraineeSkills(this.traineeId)
+
+      .subscribe({
+
+        next: (skills) => {
+
+          console.log(
+            'Trainee skills:',
+            skills
+          );
+
+
+          this.traineeSkills.set(
+            skills || []
+          );
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'خطأ في جلب المهارات:',
+            err
+          );
+
+        }
+
+      });
+
+  }
+
+
+  // =========================================================
+  // PROFILE IMAGE URL
   // =========================================================
 
   private getProfileImageUrl(
-    imageUrl?: string | null
+    profileImageUrl: string | null
   ): string | null {
 
-    if (!imageUrl) {
+    if (!profileImageUrl) {
 
       return null;
 
@@ -1176,54 +635,123 @@ export class TraineeProfile implements OnInit {
 
 
     if (
-      imageUrl.startsWith(
-        'http://'
-      ) ||
-      imageUrl.startsWith(
-        'https://'
-      ) ||
-      imageUrl.startsWith(
-        'data:'
-      )
+      profileImageUrl.startsWith('http://') ||
+
+      profileImageUrl.startsWith('https://') ||
+
+      profileImageUrl.startsWith('data:')
     ) {
 
-      return imageUrl;
+      return profileImageUrl;
 
     }
 
 
-    // Static profile images are served
-    // outside the /api route.
-    const backendBaseUrl =
-      environment.apiBaseUrl.replace(
-        /\/api\/?$/,
-        ''
-      );
-
-
-    return `${backendBaseUrl}${
-      imageUrl.startsWith('/')
-        ? imageUrl
-        : `/${imageUrl}`
-    }`;
+    return this.api.getFileUrl(
+      profileImageUrl
+    );
 
   }
 
 
   // =========================================================
-  // Toggle Edit / Save
+  // CREATE PROFILE SNAPSHOT
+  // =========================================================
+
+  private createProfileSnapshot(
+    t: any
+  ): any {
+
+    return {
+
+      email:
+        t.email?.toString().trim() || '',
+
+      phone:
+        t.phone?.toString().trim() || '',
+
+      academicLevel:
+        t.academicLevel?.toString().trim() || '',
+
+      resumeUrl:
+        t.resumeUrl?.toString().trim() || '',
+
+      cvFileName:
+        t.cvFileName?.toString().trim() || '',
+
+      gitHubUrl:
+        t.gitHubUrl?.toString().trim() || '',
+
+      linkedInUrl:
+        t.linkedInUrl?.toString().trim() || '',
+
+      governorate:
+        t.governorate?.toString().trim() || '',
+
+      wilaya:
+        t.wilaya?.toString().trim() || '',
+
+      village:
+        t.village?.toString().trim() || '',
+
+      bankName:
+        t.bankName?.toString().trim() || '',
+
+      accountHolderName:
+        t.accountHolderName?.toString().trim() || '',
+
+      accountNumber:
+        t.accountNumber?.toString().trim() || '',
+
+      iban:
+        t.iban?.toString().trim() || '',
+
+      bankBranch:
+        t.bankBranch?.toString().trim() || ''
+
+    };
+
+  }
+
+
+  // =========================================================
+  // CHECK PROFILE CHANGES
+  // =========================================================
+
+  private hasEditableChanges(
+    t: any
+  ): boolean {
+
+    if (!this.originalProfile) {
+
+      return true;
+
+    }
+
+
+    const current =
+      this.createProfileSnapshot(t);
+
+
+    return (
+      JSON.stringify(current) !==
+      JSON.stringify(this.originalProfile)
+    );
+
+  }
+
+
+  // =========================================================
+  // EDIT / SAVE
   // =========================================================
 
   toggleEdit(): void {
-
 
     // =======================================================
     // ENTER EDIT MODE
     // =======================================================
 
-    if (
-      !this.editing()
-    ) {
+    if (!this.editing()) {
 
       const t =
         this.trainee();
@@ -1236,29 +764,8 @@ export class TraineeProfile implements OnInit {
       }
 
 
-      this.phoneError.set(
-        null
-      );
-
-      this.gitHubError.set(
-        null
-      );
-
-      this.linkedInError.set(
-        null
-      );
-
-
       this.originalProfile =
-        this.createProfileSnapshot(
-          t
-        );
-
-
-      // No new image is pending
-      // when entering edit mode.
-      this.selectedProfileImage =
-        null;
+        this.createProfileSnapshot(t);
 
 
       console.log(
@@ -1267,9 +774,7 @@ export class TraineeProfile implements OnInit {
       );
 
 
-      this.editing.set(
-        true
-      );
+      this.editing.set(true);
 
       return;
 
@@ -1286,132 +791,73 @@ export class TraineeProfile implements OnInit {
 
     if (!t) {
 
-      this.editing.set(
-        false
-      );
+      this.editing.set(false);
 
       return;
 
     }
 
 
-    // =======================================================
-    // Validate
-    // =======================================================
+    // -------------------------------------------------------
+    // Validate phone
+    // -------------------------------------------------------
+
+    this.validatePhone(
+      t.phone
+    );
+
+
+    // -------------------------------------------------------
+    // Validate GitHub
+    // -------------------------------------------------------
+
+    this.validateGitHub(
+      t.gitHubUrl
+    );
+
+
+    // -------------------------------------------------------
+    // Validate LinkedIn
+    // -------------------------------------------------------
+
+    this.validateLinkedIn(
+      t.linkedInUrl
+    );
+
 
     if (
-      !this.isFormValid()
+      this.phoneError() ||
+      this.gitHubError() ||
+      this.linkedInError()
     ) {
 
-      const errorMessages:
-        string[] = [];
-
-
-      if (
-        this.phoneError()
-      ) {
-
-        errorMessages.push(
-          '• ' +
-          this.phoneError()
-        );
-
-      }
-
-
-      if (
-        this.gitHubError()
-      ) {
-
-        errorMessages.push(
-          '• ' +
-          this.gitHubError()
-        );
-
-      }
-
-
-      if (
-        this.linkedInError()
-      ) {
-
-        errorMessages.push(
-          '• ' +
-          this.linkedInError()
-        );
-
-      }
-
-
-      this.showPopup(
-
-        'يرجى تصحيح الأخطاء التالية قبل الحفظ:\n\n' +
-        errorMessages.join('\n'),
-
-        'error',
-
-        'بيانات غير صحيحة'
-
-      );
-
-
       return;
 
     }
 
 
-    // =======================================================
-    // Check changes
-    // =======================================================
-
-    const profileChanged =
-      this.hasEditableChanges(
-        t
-      );
-
-
-    const imageChanged =
-      this.selectedProfileImage !==
-      null;
-
+    // -------------------------------------------------------
+    // No changes
+    // -------------------------------------------------------
 
     if (
-      !profileChanged &&
-      !imageChanged
+      !this.hasEditableChanges(t)
     ) {
 
       console.log(
-        'No changes detected.'
+        'No profile changes detected.'
       );
 
 
-      this.editing.set(
-        false
-      );
+      this.editing.set(false);
 
       this.originalProfile =
         null;
 
-
-      this.showPopup(
-
-        'لم يتم إجراء أي تغييرات لحفظها.',
-
-        'info',
-
-        'لا توجد تغييرات'
-
-      );
-
-
       return;
 
     }
 
-
-    // =======================================================
-    // Check UserId
-    // =======================================================
 
     if (
       !this.userId ||
@@ -1424,14 +870,10 @@ export class TraineeProfile implements OnInit {
       );
 
 
-      this.showPopup(
-
+      this.openPopup(
         'تعذر حفظ التعديلات. لم يتم العثور على UserId للمستخدم الحالي.',
-
         'error',
-
-        'تعذر الحفظ'
-
+        'خطأ'
       );
 
 
@@ -1441,56 +883,55 @@ export class TraineeProfile implements OnInit {
 
 
     // =======================================================
-    // IMAGE ONLY
+    // PROFILE PAYLOAD
+    // IMPORTANT:
+    // skills is NOT included anymore.
+    // Skills are handled by NFD_TraineeSkill.
     // =======================================================
 
-    // If only the image changed,
-    // do not send unchanged profile data.
-    if (
-      !profileChanged &&
-      imageChanged
-    ) {
-
-      this.saveSelectedProfileImage();
-
-      return;
-
-    }
-
-
-    // =======================================================
-    // Current snapshot
-    // =======================================================
-
-    const currentProfile =
-      this.createProfileSnapshot(
-        t
-      );
-
-
-    const payload:
-      TraineeUpdateDto = {
+    const payload: TraineeUpdateDto = {
 
       email:
-        currentProfile.email,
+        t.email?.toString().trim() || '',
 
       phone:
-        currentProfile.phone,
-
-      skills:
-        currentProfile.skills,
+        t.phone?.toString().trim() || undefined,
 
       resumeUrl:
-        currentProfile.resumeUrl,
+        t.resumeUrl?.toString().trim() || undefined,
 
       gitHubUrl:
-        currentProfile.gitHubUrl,
+        t.gitHubUrl?.toString().trim() || undefined,
 
       linkedInUrl:
-        currentProfile.linkedInUrl,
+        t.linkedInUrl?.toString().trim() || undefined,
 
       academicLevel:
-        currentProfile.academicLevel
+        t.academicLevel?.toString().trim() || undefined,
+
+      governorate:
+        t.governorate?.toString().trim() || undefined,
+
+      wilaya:
+        t.wilaya?.toString().trim() || undefined,
+
+      village:
+        t.village?.toString().trim() || undefined,
+
+      bankName:
+        t.bankName?.toString().trim() || undefined,
+
+      accountHolderName:
+        t.accountHolderName?.toString().trim() || undefined,
+
+      accountNumber:
+        t.accountNumber?.toString().trim() || undefined,
+
+      iban:
+        t.iban?.toString().trim() || undefined,
+
+      bankBranch:
+        t.bankBranch?.toString().trim() || undefined
 
     };
 
@@ -1501,21 +942,22 @@ export class TraineeProfile implements OnInit {
     );
 
 
-    // =======================================================
-    // Send update
-    // =======================================================
+    console.log(
+      'Update payload:',
+      payload
+    );
+
 
     this.api
+
       .updateTrainee(
         this.userId,
         payload
       )
+
       .subscribe({
 
-        next: (
-          updatedTrainee:
-            any
-        ) => {
+        next: (updatedTrainee) => {
 
           console.log(
             'تم حفظ التعديلات بنجاح:',
@@ -1523,173 +965,99 @@ export class TraineeProfile implements OnInit {
           );
 
 
-          const currentData =
-            this.trainee();
+          if (updatedTrainee) {
+
+            const updatedData: any = {
+
+              ...updatedTrainee,
+
+              phone:
+                (updatedTrainee as any).phone ??
+                t.phone ??
+                '',
+
+              governorate:
+                (updatedTrainee as any).governorate ??
+                t.governorate ??
+                '',
+
+              wilaya:
+                (updatedTrainee as any).wilaya ??
+                t.wilaya ??
+                '',
+
+              village:
+                (updatedTrainee as any).village ??
+                t.village ??
+                '',
+
+              bankName:
+                (updatedTrainee as any).bankName ??
+                t.bankName ??
+                '',
+
+              accountHolderName:
+                (updatedTrainee as any).accountHolderName ??
+                t.accountHolderName ??
+                '',
+
+              accountNumber:
+                (updatedTrainee as any).accountNumber ??
+                t.accountNumber ??
+                '',
+
+              iban:
+                (updatedTrainee as any).iban ??
+                t.iban ??
+                '',
+
+              bankBranch:
+                (updatedTrainee as any).bankBranch ??
+                t.bankBranch ??
+                ''
+
+            };
 
 
-          const mergedData:
-            any = {
-
-            ...currentData,
-
-            ...(
-              updatedTrainee ||
-              {}
-            ),
-
-
-            fullName:
-              updatedTrainee
-                ?.fullName ??
-              currentData
-                ?.fullName ??
-              '',
-
-
-            email:
-              updatedTrainee
-                ?.email ??
-              currentData
-                ?.email ??
-              '',
-
-
-            phone:
-              updatedTrainee
-                ?.phone ??
-              updatedTrainee
-                ?.phoneNumber ??
-              updatedTrainee
-                ?.mobileNumber ??
-              updatedTrainee
-                ?.user
-                ?.phone ??
-              currentData
-                ?.phone ??
-              '',
-
-
-            skills:
-              updatedTrainee
-                ?.skills ??
-              currentData
-                ?.skills ??
-              '',
-
-
-            resumeUrl:
-              updatedTrainee
-                ?.resumeUrl ??
-              currentData
-                ?.resumeUrl ??
-              '',
-
-
-            cvFileName:
-              updatedTrainee
-                ?.cvFileName ??
-              currentData
-                ?.cvFileName ??
-              '',
-
-
-            gitHubUrl:
-              updatedTrainee
-                ?.gitHubUrl ??
-              currentData
-                ?.gitHubUrl ??
-              '',
-
-
-            linkedInUrl:
-              updatedTrainee
-                ?.linkedInUrl ??
-              currentData
-                ?.linkedInUrl ??
-              '',
-
-
-            academicLevel:
-              updatedTrainee
-                ?.academicLevel ??
-              currentData
-                ?.academicLevel ??
-              '',
-
-
-            nationalId:
-              updatedTrainee
-                ?.nationalId ??
-              currentData
-                ?.nationalId ??
-              '',
-
-
-            university:
-              updatedTrainee
-                ?.university ??
-              currentData
-                ?.university ??
-              '',
-
-
-            major:
-              updatedTrainee
-                ?.major ??
-              currentData
-                ?.major ??
-              '',
-
-
-            profileImageUrl:
-              updatedTrainee
-                ?.profileImageUrl ??
-              currentData
-                ?.profileImageUrl ??
-              null
-
-          };
-
-
-          this.trainee.set(
-            mergedData
-          );
-
-
-          if (
-            mergedData.traineeId
-          ) {
-
-            this.traineeId =
-              Number(
-                mergedData.traineeId
-              );
-
-          }
-
-
-          // The normal profile data is
-          // already saved at this point.
-          this.originalProfile =
-            this.createProfileSnapshot(
-              mergedData
+            this.trainee.set(
+              updatedData
             );
 
 
-          // If a new image was also selected,
-          // upload it now.
-          if (
-            this.selectedProfileImage
-          ) {
+            if (
+              updatedData.traineeId
+            ) {
 
-            this.saveSelectedProfileImage();
+              this.traineeId =
+                Number(
+                  updatedData.traineeId
+                );
 
-            return;
+            }
 
           }
 
 
-          this.finishSuccessfulSave();
+          this.editing.set(false);
+
+          this.originalProfile =
+            null;
+
+
+          // ---------------------------------------------------
+          // SUCCESS MESSAGE
+          // ---------------------------------------------------
+
+          this.openPopup(
+            'تم حفظ التعديلات بنجاح.',
+            'success',
+            'تم الحفظ'
+          );
+
+
+          // Reload profile
+
+          this.loadTraineeData();
 
         },
 
@@ -1714,15 +1082,11 @@ export class TraineeProfile implements OnInit {
           );
 
 
-          this.showPopup(
-
+          this.openPopup(
             err.error?.message ||
             'حدث خطأ أثناء حفظ التعديلات.',
-
             'error',
-
-            'فشل حفظ التعديلات'
-
+            'فشل الحفظ'
           );
 
         }
@@ -1733,7 +1097,133 @@ export class TraineeProfile implements OnInit {
 
 
   // =========================================================
-  // Avatar Upload / Preview
+  // PHONE VALIDATION
+  // =========================================================
+
+  validatePhone(
+    phone: string
+  ): void {
+
+    if (!phone || !phone.trim()) {
+
+      this.phoneError.set(
+        'رقم الهاتف مطلوب.'
+      );
+
+      return;
+
+    }
+
+
+    const value =
+      phone.trim();
+
+
+    const omanPhonePattern =
+      /^\+968\s?[279]\d{7}$/;
+
+
+    if (!omanPhonePattern.test(value)) {
+
+      this.phoneError.set(
+        'يرجى إدخال رقم عماني صحيح مثل +968 XXXXXXXX.'
+      );
+
+      return;
+
+    }
+
+
+    this.phoneError.set(null);
+
+  }
+
+
+  // =========================================================
+  // GITHUB VALIDATION
+  // =========================================================
+
+  validateGitHub(
+    url: string
+  ): void {
+
+    if (!url || !url.trim()) {
+
+      this.gitHubError.set(null);
+
+      return;
+
+    }
+
+
+    const value =
+      url.trim();
+
+
+    if (
+      !/^https?:\/\/(www\.)?github\.com\/.+/i.test(
+        value
+      )
+    ) {
+
+      this.gitHubError.set(
+        'يرجى إدخال رابط GitHub صحيح.'
+      );
+
+      return;
+
+    }
+
+
+    this.gitHubError.set(null);
+
+  }
+
+
+  // =========================================================
+  // LINKEDIN VALIDATION
+  // =========================================================
+
+  validateLinkedIn(
+    url: string
+  ): void {
+
+    if (!url || !url.trim()) {
+
+      this.linkedInError.set(null);
+
+      return;
+
+    }
+
+
+    const value =
+      url.trim();
+
+
+    if (
+      !/^https?:\/\/(www\.)?linkedin\.com\/in\/.+/i.test(
+        value
+      )
+
+    ) {
+
+      this.linkedInError.set(
+        'يرجى إدخال رابط LinkedIn صحيح.'
+      );
+
+      return;
+
+    }
+
+
+    this.linkedInError.set(null);
+
+  }
+
+
+  // =========================================================
+  // AVATAR UPLOAD
   // =========================================================
 
   onAvatarUpload(
@@ -1741,343 +1231,7 @@ export class TraineeProfile implements OnInit {
   ): void {
 
     const input =
-      event.target as
-        HTMLInputElement;
-
-
-    const file =
-      input.files?.[0]
-      ?? null;
-
-
-    if (!file) {
-
-      return;
-
-    }
-
-
-    // -------------------------------------------------------
-    // Validate type
-    // -------------------------------------------------------
-
-    const allowedTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/webp'
-    ];
-
-
-    if (
-      !allowedTypes.includes(
-        file.type
-      )
-    ) {
-
-      this.showPopup(
-
-        'يسمح فقط بصور JPG أو PNG أو WEBP.',
-
-        'error',
-
-        'نوع الصورة غير صالح'
-
-      );
-
-
-      input.value = '';
-
-      return;
-
-    }
-
-
-    // -------------------------------------------------------
-    // Validate size
-    // -------------------------------------------------------
-
-    const maxSize =
-      5 * 1024 * 1024;
-
-
-    if (
-      file.size > maxSize
-    ) {
-
-      this.showPopup(
-
-        'حجم الصورة يجب ألا يتجاوز 5 ميغا.',
-
-        'error',
-
-        'حجم الصورة غير صالح'
-
-      );
-
-
-      input.value = '';
-
-      return;
-
-    }
-
-
-    // Keep image pending until
-    // the user clicks Save.
-    this.selectedProfileImage =
-      file;
-
-
-    // Local preview.
-    const reader =
-      new FileReader();
-
-
-    reader.onload = () => {
-
-      this.avatarUrl.set(
-        typeof reader.result ===
-          'string'
-          ? reader.result
-          : null
-      );
-
-    };
-
-
-    reader.readAsDataURL(
-      file
-    );
-
-  }
-
-
-  // =========================================================
-  // Upload selected image to backend
-  // =========================================================
-
-  private saveSelectedProfileImage(): void {
-
-    const file =
-      this.selectedProfileImage;
-
-
-    if (!file) {
-
-      this.finishSuccessfulSave();
-
-      return;
-
-    }
-
-
-    if (
-      !this.traineeId ||
-      this.traineeId <= 0
-    ) {
-
-      this.showPopup(
-
-        'تعذر رفع الصورة. لم يتم العثور على TraineeId.',
-
-        'error',
-
-        'تعذر رفع الصورة'
-
-      );
-
-
-      return;
-
-    }
-
-
-    const formData =
-      new FormData();
-
-
-    // Must match ProfileImageUploadDto.File
-    // in the backend.
-    formData.append(
-      'File',
-      file
-    );
-
-
-    this.http
-      .post<{
-        profileImageUrl:
-          string;
-      }>(
-        `${environment.apiBaseUrl}/Trainee/${this.traineeId}/profile-image`,
-        formData
-      )
-      .subscribe({
-
-        next: (result) => {
-
-          const fullImageUrl =
-            this.getProfileImageUrl(
-              result.profileImageUrl
-            );
-
-
-          this.trainee.update(
-            current => {
-
-              if (!current) {
-
-                return current;
-
-              }
-
-
-              return {
-
-                ...current,
-
-                profileImageUrl:
-                  result.profileImageUrl
-
-              };
-
-            }
-          );
-
-
-          this.avatarUrl.set(
-            fullImageUrl
-          );
-
-
-          this.selectedProfileImage =
-            null;
-
-
-          this.finishSuccessfulSave();
-
-        },
-
-
-        error: (err) => {
-
-          console.error(
-            'فشل رفع صورة المتدرب:',
-            err
-          );
-
-
-          // Keep the local image selected
-          // so the trainee can retry saving.
-          this.showPopup(
-
-            err.error?.message ||
-            'تعذر رفع صورة الملف الشخصي.',
-
-            'error',
-
-            'فشل رفع الصورة'
-
-          );
-
-        }
-
-      });
-
-  }
-
-
-  // =========================================================
-  // Finish successful save
-  // =========================================================
-
-  private finishSuccessfulSave(): void {
-
-    const current =
-      this.trainee();
-
-
-    this.editing.set(
-      false
-    );
-
-
-    this.originalProfile =
-      current
-        ? this.createProfileSnapshot(
-            current
-          )
-        : null;
-
-
-    this.phoneError.set(
-      null
-    );
-
-    this.gitHubError.set(
-      null
-    );
-
-    this.linkedInError.set(
-      null
-    );
-
-
-    this.showPopup(
-
-      'تم حفظ التعديلات بنجاح.',
-
-      'success',
-
-      'تم الحفظ'
-
-    );
-
-  }
-
-
-  // =========================================================
-  // Profile Image Viewer
-  // =========================================================
-
-  openAvatarViewer(): void {
-
-    if (
-      !this.avatarUrl()
-    ) {
-
-      return;
-
-    }
-
-
-    this.avatarViewerOpen.set(
-      true
-    );
-
-  }
-
-
-  closeAvatarViewer(): void {
-
-    this.avatarViewerOpen.set(
-      false
-    );
-
-  }
-
-
-  // =========================================================
-  // CV Upload
-  // =========================================================
-
-  onCvUpload(
-    event: Event
-  ): void {
-
-    const input =
-      event.target as
-        HTMLInputElement;
+      event.target as HTMLInputElement;
 
 
     if (
@@ -2094,65 +1248,24 @@ export class TraineeProfile implements OnInit {
       input.files[0];
 
 
-    const maxSize =
-      5 * 1024 * 1024;
+    this.selectedProfileImage =
+      file;
 
 
-    if (
-      file.size > maxSize
-    ) {
+    const reader =
+      new FileReader();
 
-      this.showPopup(
 
-        'حجم الملف يجب ألا يتجاوز 5 ميغا.',
+    reader.onload = () => {
 
-        'error',
-
-        'حجم الملف غير صالح'
-
+      this.avatarUrl.set(
+        reader.result as string
       );
 
-
-      input.value = '';
-
-      return;
-
-    }
+    };
 
 
-    const fileName =
-      file.name.toLowerCase();
-
-
-    const validExtension =
-      fileName.endsWith(
-        '.pdf'
-      ) ||
-      fileName.endsWith(
-        '.docx'
-      );
-
-
-    if (
-      !validExtension
-    ) {
-
-      this.showPopup(
-
-        'يسمح فقط بملفات PDF أو DOCX.',
-
-        'error',
-
-        'نوع الملف غير صالح'
-
-      );
-
-
-      input.value = '';
-
-      return;
-
-    }
+    reader.readAsDataURL(file);
 
 
     this.trainee.update(
@@ -2169,76 +1282,198 @@ export class TraineeProfile implements OnInit {
 
           ...current,
 
-          cvFileName:
-            file.name,
-
-          resumeUrl:
+          profileImageFileName:
             file.name
 
         };
 
       }
-    );
 
-
-    console.log(
-      'CV selected:',
-      file.name
     );
 
   }
 
 
   // =========================================================
-  // Skills
+  // AVATAR VIEWER
   // =========================================================
 
-  getSkillsList(
-    skills: any
-  ): string[] {
+  openAvatarViewer(): void {
 
-    if (!skills) {
+    if (this.avatarUrl()) {
 
-      return [];
+      this.avatarViewerOpen.set(
+        true
+      );
+
+    }
+
+  }
+
+
+  closeAvatarViewer(): void {
+
+    this.avatarViewerOpen.set(
+      false
+    );
+
+  }
+
+
+  // =========================================================
+  // CV UPLOAD
+  // =========================================================
+
+  onCvUpload(
+    event: Event
+  ): void {
+
+    const input =
+      event.target as HTMLInputElement;
+
+
+    if (
+      !input.files ||
+      input.files.length === 0
+    ) {
+
+      return;
 
     }
 
 
-    if (
-      Array.isArray(
-        skills
+    const file =
+      input.files[0];
+
+
+    const traineeId =
+      this.trainee()?.traineeId;
+
+
+    if (!traineeId) {
+
+      console.error(
+        'Trainee ID not found.'
+      );
+
+      return;
+
+    }
+
+
+    this.api
+
+      .uploadTraineeResume(
+        traineeId,
+        file
       )
-    ) {
 
-      return skills;
+      .subscribe({
 
-    }
+        next: (response) => {
 
-
-    if (
-      typeof skills ===
-      'string'
-    ) {
-
-      return skills
-        .split(',')
-        .map(
-          s => s.trim()
-        )
-        .filter(
-          Boolean
-        );
-
-    }
+          const fileUrl =
+            this.api.getFileUrl(
+              response.resumeUrl
+            );
 
 
-    return [];
+          this.cvDownloadUrl.set(
+            fileUrl
+          );
+
+
+          this.trainee.update(
+            current => {
+
+              if (!current) {
+
+                return current;
+
+              }
+
+
+              return {
+
+                ...current,
+
+                cvFileName:
+                  file.name,
+
+                resumeUrl:
+                  response.resumeUrl
+
+              };
+
+            }
+
+          );
+
+
+          // ---------------------------------------------------
+          // IMPORTANT:
+          // CV is already saved by the upload API.
+          // Update the original snapshot so that clicking
+          // "Save Changes" does not try to save the CV again.
+          // ---------------------------------------------------
+
+          if (this.originalProfile) {
+
+            this.originalProfile = {
+
+              ...this.originalProfile,
+
+              cvFileName:
+                file.name,
+
+              resumeUrl:
+                response.resumeUrl
+
+            };
+
+          }
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            'CV upload failed:',
+            error
+          );
+
+        }
+
+      });
 
   }
 
 
   // =========================================================
-  // Add Skill
+  // CV DOWNLOAD URL
+  // =========================================================
+
+  getCvDownloadUrl(
+    resumeUrl: string
+  ): string {
+
+    if (!resumeUrl) {
+
+      return '';
+
+    }
+
+
+    return this.api.getFileUrl(
+      resumeUrl
+    );
+
+  }
+
+
+  // =========================================================
+  // SKILL POPUP
   // =========================================================
 
   addSkill(): void {
@@ -2248,118 +1483,397 @@ export class TraineeProfile implements OnInit {
   }
 
 
+  openSkillPopup(): void {
+
+    this.popupType.set(
+      'info'
+    );
+
+
+    this.popupTitle.set(
+      'إضافة مهارة'
+    );
+
+
+    this.popupMessage.set(
+      'أدخل اسم المهارة واختر طريقة إثبات المهارة.'
+    );
+
+
+    this.popupInputValue =
+      '';
+
+
+    this.resetProofFields();
+
+
+    this.popupInputMode.set(
+      true
+    );
+
+
+    this.popupVisible.set(
+      true
+    );
+
+  }
+
+
   // =========================================================
-  // Add Skill Value
+  // CONFIRM SKILL
+  // =========================================================
+
+  confirmPopupInput(): void {
+
+    const skill =
+      this.popupInputValue.trim();
+
+
+    if (!skill) {
+
+      this.popupType.set(
+        'error'
+      );
+
+
+      this.popupTitle.set(
+        'تنبيه'
+      );
+
+
+      this.popupMessage.set(
+        'يرجى إدخال اسم المهارة أولاً.'
+      );
+
+
+      return;
+
+    }
+
+
+    this.addSkillValue(
+      skill
+    );
+
+  }
+
+
+  // =========================================================
+  // ADD SKILL TO DATABASE
   // =========================================================
 
   private addSkillValue(
     skill: string
   ): void {
 
-    this.trainee.update(
-      current => {
+    // -------------------------------------------------------
+    // Validate proof
+    // -------------------------------------------------------
 
-        if (!current) {
+    if (!this.isProofValid()) {
 
-          return current;
+      this.popupType.set(
+        'error'
+      );
 
-        }
+
+      this.popupTitle.set(
+        'إثبات مطلوب'
+      );
 
 
-        const skillsArr =
-          this.getSkillsList(
-            current.skills
+      this.popupMessage.set(
+        this.proofMode() === 'file'
+
+          ? 'الرجاء رفع ملف أو صورة لإثبات المهارة.'
+
+          : 'الرجاء كتابة الرقم التسلسلي للشهادة.'
+      );
+
+
+      return;
+
+    }
+
+
+    // -------------------------------------------------------
+    // Check duplicate from database-loaded skills
+    // -------------------------------------------------------
+
+    const exists =
+      this.traineeSkills().some(
+
+        item =>
+          item.skillName
+            .toLowerCase() ===
+          skill.toLowerCase()
+
+      );
+
+
+    if (exists) {
+
+      this.popupType.set(
+        'error'
+      );
+
+
+      this.popupTitle.set(
+        'المهارة موجودة'
+      );
+
+
+      this.popupMessage.set(
+        'هذه المهارة موجودة بالفعل.'
+      );
+
+
+      return;
+
+    }
+
+
+    // -------------------------------------------------------
+    // Prepare proof
+    // -------------------------------------------------------
+
+    const serialNumber =
+      this.proofMode() === 'serial'
+
+        ? this.certificateSerial()
+            .trim()
+
+        : '';
+
+
+    const certificateFile =
+      this.proofMode() === 'file'
+
+        ? this.certificateFile()
+
+        : null;
+
+
+    // -------------------------------------------------------
+    // Send to Backend
+    // -------------------------------------------------------
+
+    this.api
+
+      .addTraineeSkill(
+        this.traineeId,
+        skill,
+        serialNumber,
+        certificateFile
+      )
+
+      .subscribe({
+
+        next: (result) => {
+
+          console.log(
+            'Skill added successfully:',
+            result
           );
 
 
-        const exists =
-          skillsArr.some(
-
-            item =>
-              item.toLowerCase() ===
-              skill.toLowerCase()
-
+          this.traineeSkills.update(
+            current => [
+              ...current,
+              result
+            ]
           );
 
-
-        if (
-          exists
-        ) {
 
           this.popupInputMode.set(
             false
           );
 
+
+          this.popupType.set(
+            'success'
+          );
+
+
+          this.popupTitle.set(
+            'تمت الإضافة'
+          );
+
+
+          this.popupMessage.set(
+            `تمت إضافة المهارة "${skill}" بنجاح.`
+          );
+
+
+          this.resetProofFields();
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'فشل إضافة المهارة:',
+            err
+          );
+
+
+          console.error(
+            'Status:',
+            err.status
+          );
+
+
+          console.error(
+            'Backend Error:',
+            err.error
+          );
+
+
+          this.popupInputMode.set(
+            false
+          );
+
+
           this.popupType.set(
             'error'
           );
 
+
           this.popupTitle.set(
-            'المهارة موجودة'
+            'فشل الإضافة'
           );
+
 
           this.popupMessage.set(
-            'هذه المهارة موجودة بالفعل.'
-          );
+            err.error?.message ||
 
-          return current;
+            'حدث خطأ أثناء إضافة المهارة.'
+          );
 
         }
 
+      });
 
-        return {
+  }
 
-          ...current,
 
-          skills:
-            [
-              ...skillsArr,
-              skill
-            ].join(', ')
+ // =========================================================
+// DELETE SKILL
+// =========================================================
 
-        };
+removeSkill(
+  skillId: number
+): void {
 
+  this.api
+    .deleteTraineeSkill(
+      skillId
+    )
+    .subscribe({
+
+      next: () => {
+
+        console.log(
+          'Skill deleted successfully:',
+          skillId
+        );
+
+        this.traineeSkills.update(
+          current =>
+            current.filter(
+              skill =>
+                skill.traineeSkillId !==
+                skillId
+            )
+        );
+
+        this.openPopup(
+          'تم حذف المهارة بنجاح.',
+          'success',
+          'تم الحذف'
+        );
+      },
+
+      error: (err) => {
+
+        console.error(
+          'فشل حذف المهارة:',
+          err
+        );
+
+        console.error(
+          'Status:',
+          err.status
+        );
+
+        console.error(
+          'Backend Error:',
+          err.error
+        );
+
+        if (
+          err.status === 200 ||
+          err.status === 204
+        ) {
+
+          this.traineeSkills.update(
+            current =>
+              current.filter(
+                skill =>
+                  skill.traineeSkillId !==
+                  skillId
+              )
+          );
+
+          this.openPopup(
+            'تم حذف المهارة بنجاح.',
+            'success',
+            'تم الحذف'
+          );
+
+          return;
+        }
+
+        this.openPopup(
+          err.error?.message ||
+          'حدث خطأ أثناء حذف المهارة.',
+          'error',
+          'فشل الحذف'
+        );
       }
+    });
+}
+
+  // =========================================================
+  // PROOF MODE
+  // =========================================================
+
+  setProofMode(
+    mode: 'file' | 'serial'
+  ): void {
+
+    this.proofMode.set(
+      mode
     );
 
 
-    const current =
-      this.trainee();
+    if (mode === 'file') {
+
+      this.certificateSerial.set(
+        ''
+      );
+
+    } else {
+
+      this.certificateFileName.set(
+        ''
+      );
 
 
-    if (current) {
-
-      const skills =
-        this.getSkillsList(
-          current.skills
-        );
-
-
-      if (
-        skills.some(
-          item =>
-            item.toLowerCase() ===
-            skill.toLowerCase()
-        )
-      ) {
-
-        this.popupInputMode.set(
-          false
-        );
-
-        this.popupType.set(
-          'success'
-        );
-
-        this.popupTitle.set(
-          'تمت الإضافة'
-        );
-
-        this.popupMessage.set(
-          `تمت إضافة المهارة "${skill}" بنجاح.`
-        );
-
-      }
+      this.certificateFile.set(
+        null
+      );
 
     }
 
@@ -2367,47 +1881,192 @@ export class TraineeProfile implements OnInit {
 
 
   // =========================================================
-  // Remove Skill
+  // CERTIFICATE FILE SELECTED
   // =========================================================
 
-  removeSkill(
-    index: number
+  onCertificateFileSelected(
+    event: Event
   ): void {
 
-    this.trainee.update(
-      current => {
-
-        if (!current) {
-
-          return current;
-
-        }
+    const input =
+      event.target as HTMLInputElement;
 
 
-        const skillsArr =
-          this.getSkillsList(
-            current.skills
-          );
+    if (
+      !input.files ||
+      input.files.length === 0
+    ) {
+
+      return;
+
+    }
 
 
-        skillsArr.splice(
-          index,
-          1
-        );
+    const file =
+      input.files[0];
 
 
-        return {
+    this.certificateFile.set(
+      file
+    );
 
-          ...current,
 
-          skills:
-            skillsArr.join(', ')
-
-        };
-
-      }
+    this.certificateFileName.set(
+      file.name
     );
 
   }
 
+
+  // =========================================================
+  // CHECK PROOF
+  // =========================================================
+
+  private isProofValid(): boolean {
+
+    if (
+      this.proofMode() === 'file'
+    ) {
+
+      return (
+        this.certificateFile() !==
+        null
+      );
+
+    }
+
+
+    if (
+      this.proofMode() === 'serial'
+    ) {
+
+      return (
+        this.certificateSerial()
+          .trim()
+          .length > 0
+      );
+
+    }
+
+
+    return false;
+
+  }
+
+
+  // =========================================================
+  // RESET PROOF
+  // =========================================================
+
+  private resetProofFields(): void {
+
+    this.proofMode.set(
+      'file'
+    );
+
+
+    this.certificateFileName.set(
+      ''
+    );
+
+
+    this.certificateFile.set(
+      null
+    );
+
+
+    this.certificateSerial.set(
+      ''
+    );
+
+  }
+
+
+  // =========================================================
+  // OPEN CERTIFICATE FILE
+  // =========================================================
+
+  openCertificateFile(
+    certificateUrl: string | null
+  ): void {
+
+    if (!certificateUrl) {
+
+      return;
+
+    }
+
+
+    const fullUrl =
+      this.api.getFileUrl(
+        certificateUrl
+      );
+
+
+    window.open(
+      fullUrl,
+      '_blank'
+    );
+
+  }
+
+
+  // =========================================================
+  // POPUP
+  // =========================================================
+
+  openPopup(
+    message: string,
+    type: 'success' | 'error' | 'info',
+    title: string
+  ): void {
+
+    this.popupMessage.set(
+      message
+    );
+
+
+    this.popupType.set(
+      type
+    );
+
+
+    this.popupTitle.set(
+      title
+    );
+
+
+    this.popupInputMode.set(
+      false
+    );
+
+
+    this.popupVisible.set(
+      true
+    );
+
+  }
+
+
+  closePopup(): void {
+
+    this.popupVisible.set(
+      false
+    );
+
+
+    this.popupInputMode.set(
+      false
+    );
+
+
+    this.popupInputValue =
+      '';
+
+
+    this.resetProofFields();
+
+  }
+
 }
+

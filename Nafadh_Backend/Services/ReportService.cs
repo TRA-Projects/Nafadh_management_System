@@ -183,7 +183,40 @@ namespace Nafadh_Backend.Services
             // Loaded only when the trainer requests
             // an Attendance report.
             // ======================================================
+            int? selectedTraineeId = null;
 
+            if (!string.IsNullOrWhiteSpace(dto.FiltersJson))
+            {
+                try
+                {
+                    using var filtersDoc =
+                        System.Text.Json.JsonDocument.Parse(dto.FiltersJson);
+
+                    var root = filtersDoc.RootElement;
+
+                    System.Text.Json.JsonElement traineeIdElement;
+
+                    if (
+                        root.TryGetProperty("traineeId", out traineeIdElement) ||
+                        root.TryGetProperty("TraineeId", out traineeIdElement)
+                    )
+                    {
+                        if (
+                            traineeIdElement.ValueKind ==
+                                System.Text.Json.JsonValueKind.Number &&
+                            traineeIdElement.TryGetInt32(out var parsedId) &&
+                            parsedId > 0
+                        )
+                        {
+                            selectedTraineeId = parsedId;
+                        }
+                    }
+                }
+                catch (System.Text.Json.JsonException)
+                {
+                    selectedTraineeId = null;
+                }
+            }
             var attendanceRows =
     (
         dto.Type ==
@@ -193,10 +226,11 @@ namespace Nafadh_Backend.Services
             NFD_ReportType.Custom
     )
         ? await _repository
-            .GetTrainerTraineesReportRowsAsync(
-                trainerId,
-                null
-            )
+          .GetTrainerTraineesReportRowsAsync(
+    trainerId,
+    null,
+    selectedTraineeId
+)
         : null;
 
 
@@ -1518,9 +1552,10 @@ namespace Nafadh_Backend.Services
             var rows =
                 await _repository
                     .GetTrainerTraineesReportRowsAsync(
-                        dto.TrainerId,
-                        dto.BatchId
-                    );
+    dto.TrainerId,
+    dto.BatchId,
+    null
+);
 
 
             // ======================================================

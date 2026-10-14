@@ -24,7 +24,7 @@ namespace Nafadh_Backend.Models
         public string? Major { get; set; }
         [MaxLength(50)]
         public string? AcademicLevel { get; set; }
-        public string? Skills { get; set; }
+        
         [MaxLength(300)]
         public string? ResumeUrl { get; set; }
         [MaxLength(300)]
@@ -49,6 +49,33 @@ namespace Nafadh_Backend.Models
         public int? CompanyId { get; set; }
         public NFD_Company? Company { get; set; }
 
+
+        [MaxLength(100)]
+        public string? Governorate { get; set; }   // المحافظة
+
+        [MaxLength(100)]
+        public string? Wilaya { get; set; }        // الولاية
+
+        [MaxLength(100)]
+        public string? Village { get; set; }       // القرية / المنطقة
+
+
+        [MaxLength(150)]
+        public string? BankName { get; set; }              // اسم البنك
+
+        [MaxLength(150)]
+        public string? AccountHolderName { get; set; }     // اسم صاحب الحساب
+
+        [MaxLength(50)]
+        public string? AccountNumber { get; set; }         // رقم الحساب
+
+        [MaxLength(50)]
+        public string? IBAN { get; set; }                  // IBAN
+
+        [MaxLength(150)]
+        public string? BankBranch { get; set; }
+
+
         public ICollection<NFD_Enrollment> Enrollments { get; set; } = new List<NFD_Enrollment>();
         public ICollection<NFD_TraineeModuleProgress> TraineeModuleProgresses { get; set; } = new List<NFD_TraineeModuleProgress>();
         public ICollection<NFD_SessionAttendance> SessionAttendances { get; set; } = new List<NFD_SessionAttendance>();
@@ -57,6 +84,9 @@ namespace Nafadh_Backend.Models
         // NEW: feedback submitted by this trainee, and badges earned by this trainee.
         public ICollection<NFD_Feedback> Feedbacks { get; set; } = new List<NFD_Feedback>();
         public ICollection<NFD_TraineeBadge> TraineeBadges { get; set; } = new List<NFD_TraineeBadge>();
+
+        public ICollection<NFD_LessonFeedback> LessonFeedbacks { get; set; } = new List<NFD_LessonFeedback>();
+        public ICollection<NFD_TraineeSkill> TraineeSkills { get; set; } = new List<NFD_TraineeSkill>();
 
     }
 }
