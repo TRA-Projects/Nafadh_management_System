@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -36,10 +36,11 @@ interface TrainerMessage {
 })
 export class TrainerMessages implements OnInit {
 
-  constructor(
-    private api: TrainerApi,
-    public auth: AuthService
-  ) {}
+ constructor(
+  private api: TrainerApi,
+  public auth: AuthService,
+  private cdr: ChangeDetectorRef
+) {}
 
   // =====================================================
   // INIT
@@ -83,7 +84,10 @@ export class TrainerMessages implements OnInit {
     this.api.getMyBatches(trainerId).subscribe({
       next: (batches) => {
 
-      
+         console.log('GROUP CREATION CHECK:', batches);
+      (batches ?? []).forEach(batch => {
+  this.createBatchGroup(batch.batchId, userId);
+});
 
 
         const requests = (batches ?? []).map(
@@ -160,12 +164,10 @@ export class TrainerMessages implements OnInit {
               userId
             );
 
-            // اختيار أول متدرب
-            if (allTrainees.length > 0) {
-              this.selectedTraineeId.set(
-                allTrainees[0].traineeId
-              );
-            }
+           // اختيار أول متدرب وتحميل رسائله
+if (allTrainees.length > 0) {
+  this.selectTrainee(allTrainees[0].traineeId);
+}
           },
 
           error: (error) => {
@@ -211,16 +213,7 @@ export class TrainerMessages implements OnInit {
         )
     );
 console.log('BATCH GROUPS:', this.batchGroups);
-// Automatically load the first batch group after refresh
-if (
-  this.batchGroups.length > 0 &&
-  !this.isBatchGroupSelected &&
-  this.selectedTraineeId() === null
-) {
-  this.selectBatchGroup(
-    this.batchGroups[0].conversationId
-  );
-}
+
 
         // نحتاج فقط محادثات المدرب مع المتدرب
         const trainerConversations =
@@ -694,7 +687,7 @@ this.selectedBatchGroupId = conversationId;
               message.sentDate
             )
         }));
-
+this.cdr.markForCheck();
     },
 
     error: (error) => {
