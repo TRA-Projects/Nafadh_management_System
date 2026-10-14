@@ -18,6 +18,7 @@ export const TRAINER_ROUTES: Routes = [
       { path: 'messages', loadComponent: () => import('./pages/messages/messages').then((m) => m.TrainerMessages) },
       { path: 'profile', loadComponent: () => import('./pages/profile/profile').then((m) => m.TrainerProfile) },
       { path: 'notifications', loadComponent: () => import('./pages/notifications/notifications').then((m) => m.TrainerNotifications) },
+      {path: 'quizzes',loadComponent: () =>import('./pages/quizzes/quizzes').then(m => m.TrainerQuizzes)},
     ],
   },
 ];

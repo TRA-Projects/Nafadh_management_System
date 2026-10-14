@@ -80,11 +80,19 @@ namespace Nafadh_Backend.Controllers
                     CurrentTraineeCount = p.Batches
                         .SelectMany(b => b.Enrollments)
                         .Count(e => e.CompanyId == companyId && e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress),
+                    // "Used" = seats currently occupied (InProgress), the same rule the
+                    // Company Dashboard uses. Completed / dropped / failed enrollments
+                    // no longer occupy a seat (they stay in EnrollmentCount).
                     AllocatedCapacity = p.Batches.Sum(b => b.Capacity),
-                    UsedCapacity = p.Batches.SelectMany(b => b.Enrollments).Count(e => e.CompanyId == companyId),
-                    RemainingCapacity = Math.Max(0, (int)p.Batches.Sum(b => b.Capacity) - p.Batches.SelectMany(b => b.Enrollments).Count(e => e.CompanyId == companyId)),
+                    UsedCapacity = p.Batches.SelectMany(b => b.Enrollments)
+                        .Count(e => e.CompanyId == companyId && e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress),
+                    RemainingCapacity = Math.Max(0, (int)p.Batches.Sum(b => b.Capacity)
+                        - p.Batches.SelectMany(b => b.Enrollments)
+                            .Count(e => e.CompanyId == companyId && e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress)),
                     UtilizationPercentage = p.Batches.Sum(b => b.Capacity) > 0
-                        ? Math.Round((decimal)p.Batches.SelectMany(b => b.Enrollments).Count(e => e.CompanyId == companyId) * 100m / p.Batches.Sum(b => b.Capacity), 1)
+                        ? Math.Round((decimal)p.Batches.SelectMany(b => b.Enrollments)
+                            .Count(e => e.CompanyId == companyId && e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress) * 100m
+                            / p.Batches.Sum(b => b.Capacity), 1)
                         : 0m,
                     Departments = p.Batches
                         .SelectMany(b => b.Enrollments)
@@ -149,6 +157,13 @@ namespace Nafadh_Backend.Controllers
                 })
                 .ToListAsync();
 
+            // The stored Batch.Status is edited by hand and drifts away from the dates
+            // (e.g. "Ongoing" for a batch that ended last month). The portal shows the
+            // status that matches the dates; only an explicit cancellation is kept.
+            var today = DateTime.Today;
+            foreach (var batch in batches)
+                batch.Status = DeriveBatchStatus(batch.Status, batch.StartDate, batch.EndDate, today);
+
             var enrollments = await _context.NFD_Enrollments
                 .AsNoTracking()
                 .Include(e => e.Trainee).ThenInclude(t => t.User)
@@ -172,6 +187,32 @@ namespace Nafadh_Backend.Controllers
                 })
                 .ToListAsync();
 
+            // Progress per enrollment, computed in two queries instead of one
+            // /Enrollment/{id}/progress-summary call per row from the browser.
+            // Same rule as EnrollmentService.GetProgressSummaryAsync:
+            // completed modules / all modules of the program.
+            var allModuleIds = await _context.NFD_Modules
+                .AsNoTracking()
+                .Where(m => m.ProgramId == programId)
+                .Select(m => m.ModuleId)
+                .ToListAsync();
+
+            var traineeIds = enrollments.Select(e => e.TraineeId).Distinct().ToList();
+
+            var completedByTrainee = allModuleIds.Count == 0 || traineeIds.Count == 0
+                ? new Dictionary<int, int>()
+                : await _context.NFD_TraineeModuleProgresses
+                    .AsNoTracking()
+                    .Where(mp => traineeIds.Contains(mp.TraineeId)
+                                 && allModuleIds.Contains(mp.ModuleId)
+                                 && mp.Status == Nafadh_Backend.Enums.NFD_ModuleProgressStatus.Completed)
+                    .GroupBy(mp => mp.TraineeId)
+                    .Select(g => new { TraineeId = g.Key, Count = g.Select(x => x.ModuleId).Distinct().Count() })
+                    .ToDictionaryAsync(x => x.TraineeId, x => x.Count);
+
+            var activeCount = enrollments.Count(e =>
+                e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress);
+
             var departments = enrollments
                 .Where(e => e.Department is not null)
                 .Select(e => e.Department!.Name)
@@ -191,12 +232,12 @@ namespace Nafadh_Backend.Controllers
                 ApprovedForCompany = true,
                 BatchCount = batches.Count,
                 EnrollmentCount = enrollments.Count,
-                CurrentTraineeCount = enrollments.Count(e => e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress),
+                CurrentTraineeCount = activeCount,
                 AllocatedCapacity = batches.Sum(b => b.Capacity),
-                UsedCapacity = enrollments.Count,
-                RemainingCapacity = Math.Max(0, (int)batches.Sum(b => b.Capacity) - enrollments.Count),
+                UsedCapacity = activeCount,
+                RemainingCapacity = Math.Max(0, (int)batches.Sum(b => b.Capacity) - activeCount),
                 UtilizationPercentage = batches.Sum(b => b.Capacity) > 0
-                    ? Math.Round((decimal)enrollments.Count * 100m / batches.Sum(b => b.Capacity), 1)
+                    ? Math.Round((decimal)activeCount * 100m / batches.Sum(b => b.Capacity), 1)
                     : 0m,
                 Departments = departments,
                 Batches = batches,
@@ -210,12 +251,52 @@ namespace Nafadh_Backend.Controllers
                     BatchName = e.Batch?.BatchName ?? string.Empty,
                     CompletionStatus = e.CompletionStatus.ToString(),
                     TraineeGitHubUrl = e.Trainee?.GitHubUrl,
-                    TraineeLinkedInUrl = e.Trainee?.LinkedInUrl
+                    TraineeLinkedInUrl = e.Trainee?.LinkedInUrl,
+                    ProgressPercentage = allModuleIds.Count == 0
+                        ? 0
+                        : Math.Round(
+                            (completedByTrainee.TryGetValue(e.TraineeId, out var done) ? done : 0)
+                            * 100.0 / allModuleIds.Count, 1)
                 }).ToList(),
                 Modules = modules
             };
 
             return Ok(result);
+        }
+
+        // GET: api/CompanyProgram/company/{companyId}/capacity
+        // Company capacity for the Specialties header. Same rule as the Company
+        // Dashboard: Used = unique trainees with an InProgress enrollment.
+        // (Replaces the unauthenticated api/Company/{id}/capacity call, which
+        // counted every enrollment regardless of status.)
+        [HttpGet("company/{companyId}/capacity")]
+        [Authorize(Roles = "CompanySupervisor")]
+        public async Task<ActionResult<CompanyDashboardCapacityDTO>> GetCapacity(int companyId)
+        {
+            if (!await OwnsCompanyAsync(companyId))
+                return Forbid();
+
+            var company = await _context.NFD_Companies
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.CompanyId == companyId);
+
+            if (company is null)
+                return NotFound(new { message = "Company not found." });
+
+            var used = await _context.NFD_Enrollments
+                .AsNoTracking()
+                .Where(e => e.CompanyId == companyId
+                            && e.CompletionStatus == Nafadh_Backend.Enums.NFD_EnrollmentCompletionStatus.InProgress)
+                .Select(e => e.TraineeId)
+                .Distinct()
+                .CountAsync();
+
+            return Ok(new CompanyDashboardCapacityDTO
+            {
+                Total = company.Capacity,
+                Used = used,
+                Remaining = Math.Max(0, company.Capacity - used)
+            });
         }
 
         // GET: api/CompanyProgram/program/{programId}
@@ -248,6 +329,20 @@ namespace Nafadh_Backend.Controllers
                 return NotFound();
             return NoContent();
         }
+        private static string DeriveBatchStatus(string stored, DateTime start, DateTime end, DateTime today)
+        {
+            if (string.Equals(stored, nameof(Nafadh_Backend.Enums.NFD_BatchStatus.Cancelled), StringComparison.OrdinalIgnoreCase))
+                return stored;
+
+            if (end.Date < today)
+                return nameof(Nafadh_Backend.Enums.NFD_BatchStatus.Completed);
+
+            if (start.Date > today)
+                return nameof(Nafadh_Backend.Enums.NFD_BatchStatus.Upcoming);
+
+            return nameof(Nafadh_Backend.Enums.NFD_BatchStatus.Ongoing);
+        }
+
         private async Task<bool> OwnsCompanyAsync(int companyId)
         {
             var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");

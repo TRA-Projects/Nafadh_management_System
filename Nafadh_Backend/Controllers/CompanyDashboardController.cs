@@ -168,7 +168,7 @@ namespace Nafadh_Backend.Controllers
             // 10. Build common dashboard rows
             // ============================================================
 
-            var baseRows = enrollments
+            var baseRows = activeEnrollments
                 .Select(e =>
                 {
                     var evaluations = e.Evaluations
@@ -261,6 +261,9 @@ namespace Nafadh_Backend.Controllers
                             attendances
                     };
                 })
+                // A trainee with more than one active enrollment must appear once.
+                .GroupBy(x => x.TraineeId)
+                .Select(g => g.OrderByDescending(x => x.EnrollmentId).First())
                 .ToList();
 
             // ============================================================
@@ -339,7 +342,7 @@ namespace Nafadh_Backend.Controllers
 
             var riskRows = baseRows
                 .Where(x =>
-                    x.Attendance < 80
+                    (x.Attendances.Count > 0 && x.Attendance < 80)
                     ||
                     (
                         x.Evaluations.Count > 0
@@ -362,8 +365,12 @@ namespace Nafadh_Backend.Controllers
                 {
                     string riskReason;
 
+                    var lowAttendance =
+                        x.Attendances.Count > 0
+                        && x.Attendance < 80;
+
                     if (
-                        x.Attendance < 80
+                        lowAttendance
                         &&
                         x.Evaluations.Count > 0
                         &&
@@ -373,7 +380,7 @@ namespace Nafadh_Backend.Controllers
                         riskReason =
                             $"انخفاض الحضور ({Math.Round(x.Attendance)}%) ومستوى الأداء ({Math.Round(x.Performance)}%)";
                     }
-                    else if (x.Attendance < 80)
+                    else if (lowAttendance)
                     {
                         riskReason =
                             $"انخفاض الحضور ({Math.Round(x.Attendance)}%)";

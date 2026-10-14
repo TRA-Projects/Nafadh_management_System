@@ -665,13 +665,10 @@ namespace Nafadh_Backend.Controllers
         // =====================================================
 
         [HttpGet("{id}/dashboard-summary")]
-        public async Task<IActionResult> GetDashboardSummary(
-            int id)
+        public async Task<IActionResult> GetDashboardSummary(int id)
         {
             var t = await _service.GetByIdWithDashboardDataAsync(id);
             if (t == null) return NotFound();
-
-           
 
             var dto = new TraineeDashboardSummaryDto
             {
@@ -694,109 +691,9 @@ namespace Nafadh_Backend.Controllers
                 PendingSubmissionsCount = t.Submissions?.Count(s => s.Status != Enums.NFD_SubmissionStatus.Graded) ?? 0,
                 ActiveProjectsCount = t.ProjectMembers?.Count ?? 0
             };
-            var t =
-                await _service.GetByIdWithDashboardDataAsync(
-                    id
-                );
-
-            if (t == null)
-            {
-                return NotFound();
-            }
-
-            var dto =
-                new TraineeDashboardSummaryDto
-                {
-                    TraineeId =
-                        t.TraineeId,
-
-                    FullName =
-                        t.User?.FullName,
-
-                    Status =
-                        t.Status,
-
-                    CompanyName =
-                        t.Company?.CompanyName,
-
-                    EnrollmentsCount =
-                        t.Enrollments?.Count ?? 0,
-
-                    CompletedModulesCount =
-                        t.TraineeModuleProgresses?
-                            .Count(
-                                pm =>
-                                    pm.Status ==
-                                    Enums.NFD_ModuleProgressStatus.Completed
-                            )
-                        ?? 0,
-
-                    TotalModulesCount =
-                        t.TraineeModuleProgresses?.Count
-                        ?? 0,
-
-                    ModuleProgressPercentage =
-                        t.TraineeModuleProgresses?.Count > 0
-                            ? (
-                                t.TraineeModuleProgresses.Count(
-                                    pm =>
-                                        pm.Status ==
-                                        Enums.NFD_ModuleProgressStatus.Completed
-                                )
-                                * 100.0
-                                /
-                                t.TraineeModuleProgresses.Count
-                            )
-                            : 0,
-
-                    TotalSessionsCount =
-                        t.SessionAttendances?.Count
-                        ?? 0,
-
-                    AttendedSessionsCount =
-                        t.SessionAttendances?
-                            .Count(
-                                sa =>
-                                    sa.Status ==
-                                    Enums.NFD_AttendanceStatus.Present
-                            )
-                        ?? 0,
-
-                    AttendanceRate =
-                        t.SessionAttendances?.Count > 0
-                            ? (
-                                t.SessionAttendances.Count(
-                                    sa =>
-                                        sa.Status ==
-                                        Enums.NFD_AttendanceStatus.Present
-                                )
-                                * 100.0
-                                /
-                                t.SessionAttendances.Count
-                            )
-                            : 0,
-
-                    SubmissionsCount =
-                        t.Submissions?.Count
-                        ?? 0,
-
-                    PendingSubmissionsCount =
-                        t.Submissions?
-                            .Count(
-                                s =>
-                                    s.Status !=
-                                    Enums.NFD_SubmissionStatus.Graded
-                            )
-                        ?? 0,
-
-                    ActiveProjectsCount =
-                        t.ProjectMembers?.Count
-                        ?? 0
-                };
 
             return Ok(dto);
         }
-
 
         // =====================================================
         // IMPORT TRAINEES

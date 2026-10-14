@@ -9,7 +9,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -236,8 +236,15 @@ export class CompanyDashboard implements OnInit {
       dashboard:
         this.api.getDashboard(companyId),
 
+      // Announcements are secondary content: if they fail, the dashboard
+      // must still render its company statistics.
       announcements:
-        this.api.getPlatformAnnouncements(),
+        this.api.getPlatformAnnouncements().pipe(
+          catchError((error) => {
+            console.warn('Platform announcements failed to load:', error);
+            return of([] as AnnouncementDto[]);
+          })
+        ),
     }).subscribe({
       next: ({
         dashboard,

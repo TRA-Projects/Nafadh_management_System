@@ -1,16 +1,17 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
-import { catchError, of } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { CompanyApi } from '../../services/company-api';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { CompanyCapacityDto, CompanyProgramSummaryDto } from '../../../../core/models/dtos';
+import { CompanyProgramSummaryDto } from '../../../../core/models/dtos';
 
 interface SpecialtyCard {
   programId: number;
   title: string;
   description?: string;
   department: string;
+  departments: string[];
   duration: number;
   capacity: number;
   used: number;
@@ -62,31 +63,38 @@ export class CompanySpecialties implements OnInit {
     this.loading.set(true);
     this.error.set('');
 
-    this.api.getCompanyProgramSummaries(this.companyId).pipe(
-      catchError((error) => {
-        console.error('Failed to load company programs:', error);
-        this.error.set('تعذر تحميل البرامج المرتبطة بالشركة.');
-        return of([] as CompanyProgramSummaryDto[]);
-      })
-    ).subscribe((summaries) => {
+    // Both requests are awaited together and the header totals are set in ONE
+    // place. Before, two independent subscriptions wrote the same signals and
+    // the final value depended on which response arrived last.
+    forkJoin({
+      summaries: this.api.getCompanyProgramSummaries(this.companyId).pipe(
+        catchError((error) => {
+          console.error('Failed to load company programs:', error);
+          this.error.set('تعذر تحميل البرامج المرتبطة بالشركة.');
+          return of([] as CompanyProgramSummaryDto[]);
+        })
+      ),
+      capacity: this.api.getCompanyCapacitySummary(this.companyId).pipe(
+        catchError((error) => {
+          console.error('Failed to load company capacity:', error);
+          return of(null);
+        })
+      ),
+    }).subscribe(({ summaries, capacity }) => {
       const cards = summaries.map((program, index) => this.toCard(program, index));
       this.cards.set(cards);
 
-      this.totalCapacity.set(cards.reduce((sum, item) => sum + item.capacity, 0));
-      this.usedCapacity.set(cards.reduce((sum, item) => sum + item.used, 0));
-      this.loading.set(false);
-    });
-
-    this.api.getCapacity(this.companyId).pipe(
-      catchError((error) => {
-        console.error('Failed to load company capacity:', error);
-        return of(null as CompanyCapacityDto | null);
-      })
-    ).subscribe((capacity) => {
       if (capacity) {
+        // Company-level capacity (same numbers as the Dashboard).
         this.totalCapacity.set(Number(capacity.total ?? 0));
         this.usedCapacity.set(Number(capacity.used ?? 0));
+      } else {
+        // Fallback: sum of the program cards.
+        this.totalCapacity.set(cards.reduce((sum, item) => sum + item.capacity, 0));
+        this.usedCapacity.set(cards.reduce((sum, item) => sum + item.used, 0));
       }
+
+      this.loading.set(false);
     });
   }
 
@@ -94,8 +102,9 @@ export class CompanySpecialties implements OnInit {
     return this.cards().filter((x) => x.approved).length;
   }
 
+  /** Published programs that currently have trainees from this company. */
   activePlans(): number {
-    return this.cards().filter((x) => x.approved).length;
+    return this.cards().filter((x) => x.approved && x.used > 0).length;
   }
 
   occupancyPercent(): number {
@@ -111,8 +120,10 @@ export class CompanySpecialties implements OnInit {
     let colorIndex = 0;
 
     for (const card of this.cards()) {
-      const department = card.department || 'غير محدد';
-      counts.set(department, (counts.get(department) ?? 0) + 1);
+      const names = card.departments.length ? card.departments : ['غير محدد'];
+      for (const department of names) {
+        counts.set(department, (counts.get(department) ?? 0) + 1);
+      }
     }
 //
     return Array.from(counts.entries()).map(([name, count]) => {
@@ -135,7 +146,9 @@ export class CompanySpecialties implements OnInit {
 
   getDonutGradient(): SafeStyle {
     const distribution = this.getDepartmentDistribution();
-    const total = this.cards().length;
+    // A program can belong to several departments, so the donut total is the
+    // sum of the slices (not the number of cards) or the ring would not close.
+    const total = distribution.reduce((sum, item) => sum + item.count, 0);
     if (!total || !distribution.length) {
       return this.sanitizer.bypassSecurityTrustStyle('conic-gradient(#e2e8f0 0deg 360deg)');
     }
@@ -170,12 +183,13 @@ export class CompanySpecialties implements OnInit {
       title: program.title,
       description: program.description,
       department,
+      departments: program.departments ?? [],
       duration: this.hoursToWeeks(Number(program.durationHours ?? 0)),
       capacity: Number(program.allocatedCapacity ?? 0),
       used: Number(program.usedCapacity ?? 0),
       available: Number(program.remainingCapacity ?? 0),
       percent: Math.max(0, Math.min(100, Math.round(Number(program.utilizationPercentage ?? 0)))),
-      approved: !!program.approvedForCompany && !/suspended|inactive|rejected/i.test(program.status),
+      approved: !!program.approvedForCompany && program.status === 'Published',
       color,
       soft,
     };
