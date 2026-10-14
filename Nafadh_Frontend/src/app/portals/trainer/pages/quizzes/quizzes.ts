@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
 import {
@@ -37,6 +38,44 @@ interface QuizForm {
   cameraRequired: boolean;
 }
 
+interface QuestionOptionDto {
+  optionId: number;
+  optionText: string;
+  optionCode: string;
+  sortOrder: number;
+  isCorrect: boolean;
+}
+
+interface QuestionBankDto {
+  questionId: number;
+  questionText: string;
+  questionType: number;
+  difficulty: number;
+  points: number;
+  explanation?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  options: QuestionOptionDto[];
+}
+
+interface QuestionOptionForm {
+  optionText: string;
+  optionCode: string;
+  sortOrder: number;
+  isCorrect: boolean;
+}
+
+interface QuestionForm {
+  questionText: string;
+  questionType: number;
+  difficulty: number;
+  points: number;
+  explanation: string;
+  options: QuestionOptionForm[];
+}
+
+
+
 @Component({
   selector: 'app-trainer-quizzes',
   standalone: true,
@@ -62,6 +101,41 @@ export class TrainerQuizzes implements OnInit {
   editingQuizId = signal<number | null>(null);
 
   form: QuizForm = this.emptyForm();
+
+  // =====================================================
+// QUESTION BANK
+// =====================================================
+
+questions = signal<QuestionBankDto[]>([]);
+
+selectedQuiz = signal<QuizDto | null>(null);
+
+showQuestionBank = signal(false);
+
+questionFormOpen = signal(false);
+
+questionLoading = signal(false);
+
+questionSaving = signal(false);
+
+editingQuestionId = signal<number | null>(null);
+
+questionSearch = signal('');
+
+questionTypeFilter = signal('all');
+
+questionDifficultyFilter = signal('all');
+
+questionStatusFilter = signal('active');
+
+questionError = signal('');
+
+questionSuccess = signal('');
+
+selectedQuestionIds = signal<Set<number>>(new Set());
+
+questionForm: QuestionForm =
+  this.emptyQuestionForm();
 
   draftCount = computed(
     () => this.quizzes().filter(q => q.status === 0).length
@@ -89,6 +163,56 @@ export class TrainerQuizzes implements OnInit {
       return matchesTerm && matchesStatus;
     });
   });
+
+  filteredQuestions = computed(() => {
+
+  const term = this.questionSearch()
+    .trim()
+    .toLocaleLowerCase();
+
+  const type = this.questionTypeFilter();
+
+  const difficulty =
+    this.questionDifficultyFilter();
+
+  const status =
+    this.questionStatusFilter();
+
+  return this.questions().filter(question => {
+
+    const matchesSearch =
+      !term ||
+      question.questionText
+        .toLocaleLowerCase()
+        .includes(term);
+
+    const matchesType =
+      type === 'all' ||
+      question.questionType.toString() === type;
+
+    const matchesDifficulty =
+      difficulty === 'all' ||
+      question.difficulty.toString() === difficulty;
+
+    const matchesStatus =
+      status === 'all' ||
+      (
+        status === 'active' &&
+        question.isActive
+      ) ||
+      (
+        status === 'inactive' &&
+        !question.isActive
+      );
+
+    return (
+      matchesSearch &&
+      matchesType &&
+      matchesDifficulty &&
+      matchesStatus
+    );
+  });
+});
 
   constructor(
     private api: TrainerApi,
@@ -352,6 +476,791 @@ export class TrainerQuizzes implements OnInit {
       }
     });
   }
+
+  // =====================================================
+// QUESTION BANK
+// =====================================================
+
+openQuestionBank(quiz: QuizDto): void {
+
+  this.selectedQuiz.set(quiz);
+
+  this.showQuestionBank.set(true);
+
+  this.questionError.set('');
+
+  this.questionSuccess.set('');
+
+  this.selectedQuestionIds.set(
+    new Set()
+  );
+
+  this.loadQuestions();
+}
+
+
+closeQuestionBank(): void {
+
+  if (this.questionSaving()) {
+    return;
+  }
+
+  this.showQuestionBank.set(false);
+
+  this.questionFormOpen.set(false);
+
+  this.selectedQuiz.set(null);
+
+  this.questionError.set('');
+
+  this.questionSuccess.set('');
+
+  this.selectedQuestionIds.set(
+    new Set()
+  );
+}
+
+
+private loadQuestions(): void {
+
+  const trainerId =
+    this.trainer()?.trainerId;
+
+  if (!trainerId) {
+
+    this.questionError.set(
+      'تعذر تحديد المدرب الحالي.'
+    );
+
+    return;
+  }
+
+  this.questionLoading.set(true);
+
+  this.questionError.set('');
+
+  this.api
+    .getTrainerQuestions(trainerId)
+    .subscribe({
+
+      next: questions => {
+
+        this.questions.set(
+          questions ?? []
+        );
+
+        this.questionLoading.set(false);
+      },
+
+      error: error => {
+
+        console.error(
+          'Error loading question bank:',
+          error
+        );
+
+        this.questions.set([]);
+
+        this.questionLoading.set(false);
+
+        this.questionError.set(
+          'تعذر تحميل بنك الأسئلة.'
+        );
+      }
+    });
+}
+
+
+toggleQuestionSelection(
+  questionId: number
+): void {
+
+  this.selectedQuestionIds.update(
+    current => {
+
+      const next =
+        new Set(current);
+
+      if (next.has(questionId)) {
+
+        next.delete(questionId);
+
+      } else {
+
+        next.add(questionId);
+      }
+
+      return next;
+    }
+  );
+}
+
+
+isQuestionSelected(
+  questionId: number
+): boolean {
+
+  return this.selectedQuestionIds()
+    .has(questionId);
+}
+
+
+clearQuestionSelection(): void {
+
+  this.selectedQuestionIds.set(
+    new Set()
+  );
+}
+
+
+// =====================================================
+// CREATE QUESTION
+// =====================================================
+
+openCreateQuestion(): void {
+
+  this.editingQuestionId.set(null);
+
+  this.questionForm =
+    this.emptyQuestionForm();
+
+  this.questionError.set('');
+
+  this.questionSuccess.set('');
+
+  this.questionFormOpen.set(true);
+}
+
+
+// =====================================================
+// EDIT QUESTION
+// =====================================================
+
+openEditQuestion(
+  question: QuestionBankDto
+): void {
+
+  this.editingQuestionId.set(
+    question.questionId
+  );
+
+  this.questionForm = {
+
+    questionText:
+      question.questionText,
+
+    questionType:
+      question.questionType,
+
+    difficulty:
+      question.difficulty,
+
+    points:
+      question.points,
+
+    explanation:
+      question.explanation ?? '',
+
+    options:
+      [...(question.options ?? [])]
+        .sort(
+          (a, b) =>
+            a.sortOrder - b.sortOrder
+        )
+        .map(option => ({
+
+          optionText:
+            option.optionText,
+
+          optionCode:
+            option.optionCode,
+
+          sortOrder:
+            option.sortOrder,
+
+          isCorrect:
+            option.isCorrect
+        }))
+  };
+
+  this.questionError.set('');
+
+  this.questionSuccess.set('');
+
+  this.questionFormOpen.set(true);
+}
+
+
+closeQuestionForm(): void {
+
+  if (this.questionSaving()) {
+    return;
+  }
+
+  this.questionFormOpen.set(false);
+
+  this.questionError.set('');
+}
+
+
+// =====================================================
+// OPTIONS
+// =====================================================
+
+addQuestionOption(): void {
+
+  if (
+    this.questionForm.options.length >= 6
+  ) {
+    return;
+  }
+
+  const index =
+    this.questionForm.options.length;
+
+  this.questionForm.options.push({
+
+    optionText: '',
+
+    optionCode:
+      String.fromCharCode(65 + index),
+
+    sortOrder: index,
+
+    isCorrect: false
+  });
+
+  this.questionForm = {
+    ...this.questionForm
+  };
+}
+
+
+removeQuestionOption(
+  index: number
+): void {
+
+  if (
+    this.questionForm.options.length <= 2
+  ) {
+    return;
+  }
+
+  this.questionForm.options.splice(
+    index,
+    1
+  );
+
+  this.questionForm.options =
+    this.questionForm.options.map(
+      (option, i) => ({
+
+        ...option,
+
+        sortOrder: i,
+
+        optionCode:
+          String.fromCharCode(65 + i)
+      })
+    );
+
+  this.questionForm = {
+    ...this.questionForm
+  };
+}
+
+
+setCorrectOption(
+  index: number
+): void {
+
+  this.questionForm.options =
+    this.questionForm.options.map(
+      (option, i) => ({
+
+        ...option,
+
+        isCorrect:
+          i === index
+      })
+    );
+}
+
+
+questionTypeChanged(): void {
+
+  const type =
+    Number(
+      this.questionForm.questionType
+    );
+
+  // Multiple Choice
+  if (type === 0) {
+
+    if (
+      this.questionForm.options.length === 0
+    ) {
+
+      this.questionForm.options = [
+
+        {
+          optionText: '',
+          optionCode: 'A',
+          sortOrder: 0,
+          isCorrect: true
+        },
+
+        {
+          optionText: '',
+          optionCode: 'B',
+          sortOrder: 1,
+          isCorrect: false
+        }
+
+      ];
+    }
+
+    return;
+  }
+
+
+  // True / False
+  if (type === 1) {
+
+    this.questionForm.options = [
+
+      {
+        optionText: 'صح',
+        optionCode: 'A',
+        sortOrder: 0,
+        isCorrect: true
+      },
+
+      {
+        optionText: 'خطأ',
+        optionCode: 'B',
+        sortOrder: 1,
+        isCorrect: false
+      }
+
+    ];
+
+    return;
+  }
+
+
+  // Essay
+  if (type === 2) {
+
+    this.questionForm.options = [];
+  }
+}
+
+
+// =====================================================
+// SAVE QUESTION
+// =====================================================
+
+saveQuestion(): void {
+
+  const trainerId =
+    this.trainer()?.trainerId;
+
+  if (!trainerId) {
+
+    this.questionError.set(
+      'تعذر تحديد المدرب الحالي.'
+    );
+
+    return;
+  }
+
+  const form =
+    this.questionForm;
+
+
+  if (!form.questionText.trim()) {
+
+    this.questionError.set(
+      'يرجى كتابة نص السؤال.'
+    );
+
+    return;
+  }
+
+
+  if (
+    form.points <= 0 ||
+    form.points > 100
+  ) {
+
+    this.questionError.set(
+      'درجة السؤال يجب أن تكون بين 0.1 و100.'
+    );
+
+    return;
+  }
+
+
+  if (
+    form.questionType === 0 ||
+    form.questionType === 1
+  ) {
+
+    if (
+      form.options.length < 2
+    ) {
+
+      this.questionError.set(
+        'يجب إضافة خيارين على الأقل.'
+      );
+
+      return;
+    }
+
+
+    const correctCount =
+      form.options.filter(
+        option =>
+          option.isCorrect
+      ).length;
+
+
+    if (correctCount !== 1) {
+
+      this.questionError.set(
+        'يجب تحديد إجابة صحيحة واحدة فقط.'
+      );
+
+      return;
+    }
+
+
+    const hasEmptyOption =
+      form.options.some(
+        option =>
+          !option.optionText.trim()
+      );
+
+
+    if (hasEmptyOption) {
+
+      this.questionError.set(
+        'يرجى كتابة جميع الخيارات.'
+      );
+
+      return;
+    }
+  }
+
+
+  const payload = {
+
+    questionText:
+      form.questionText.trim(),
+
+    questionType:
+      Number(
+        form.questionType
+      ),
+
+    difficulty:
+      Number(
+        form.difficulty
+      ),
+
+    points:
+      Number(
+        form.points
+      ),
+
+    explanation:
+      form.explanation.trim() ||
+      null,
+
+    options:
+      form.questionType === 2
+        ? []
+        : form.options.map(
+            (option, index) => ({
+
+              optionText:
+                option.optionText.trim(),
+
+              optionCode:
+                option.optionCode,
+
+              sortOrder:
+                index,
+
+              isCorrect:
+                option.isCorrect
+            })
+          )
+  };
+
+
+  this.questionSaving.set(true);
+
+  this.questionError.set('');
+
+  const questionId =
+    this.editingQuestionId();
+
+const request: Observable<any> =
+  questionId === null
+    ? this.api.createQuestion(
+        trainerId,
+        payload
+      )
+    : this.api.updateQuestion(
+        questionId,
+        trainerId,
+        payload
+      );
+
+
+  request.subscribe({
+
+    next: () => {
+
+      this.questionSaving.set(false);
+
+      this.questionFormOpen.set(false);
+
+      this.questionSuccess.set(
+        questionId === null
+          ? 'تمت إضافة السؤال بنجاح.'
+          : 'تم تحديث السؤال بنجاح.'
+      );
+
+      this.loadQuestions();
+    },
+
+ error: (error: any) => {
+
+      console.error(
+        'Error saving question:',
+        error
+      );
+
+      this.questionSaving.set(false);
+
+      this.questionError.set(
+        error?.error?.message ||
+        'تعذر حفظ السؤال.'
+      );
+    }
+  });
+}
+
+
+// =====================================================
+// DEACTIVATE QUESTION
+// =====================================================
+
+deactivateQuestion(
+  question: QuestionBankDto
+): void {
+
+  if (!question.isActive) {
+    return;
+  }
+
+  const trainerId =
+    this.trainer()?.trainerId;
+
+  if (!trainerId) {
+    return;
+  }
+
+
+  this.api
+    .deactivateQuestion(
+      question.questionId,
+      trainerId
+    )
+    .subscribe({
+
+      next: () => {
+
+        this.questionSuccess.set(
+          'تم تعطيل السؤال بنجاح.'
+        );
+
+        this.loadQuestions();
+      },
+
+      error: error => {
+
+        console.error(
+          'Error deactivating question:',
+          error
+        );
+
+        this.questionError.set(
+          error?.error?.message ||
+          'تعذر تعطيل السؤال.'
+        );
+      }
+    });
+}
+
+
+// =====================================================
+// ADD QUESTIONS TO QUIZ
+// =====================================================
+
+addSelectedQuestionsToQuiz(): void {
+
+  const quiz =
+    this.selectedQuiz();
+
+  if (!quiz) {
+    return;
+  }
+
+  const questionIds =
+    Array.from(
+      this.selectedQuestionIds()
+    );
+
+  if (!questionIds.length) {
+
+    this.questionError.set(
+      'اختاري سؤالًا واحدًا على الأقل.'
+    );
+
+    return;
+  }
+
+  const trainerId =
+    this.trainer()?.trainerId;
+
+  if (!trainerId) {
+
+    this.questionError.set(
+      'تعذر تحديد المدرب الحالي.'
+    );
+
+    return;
+  }
+
+  this.questionSaving.set(true);
+
+  this.questionError.set('');
+
+  this.api
+    .addQuestionsToQuiz(
+      quiz.quizId,
+      trainerId,
+      questionIds
+    )
+    .subscribe({
+
+      next: () => {
+
+        this.questionSaving.set(false);
+
+        this.questionSuccess.set(
+          'تمت إضافة الأسئلة إلى الاختبار بنجاح.'
+        );
+
+        this.clearQuestionSelection();
+      },
+
+      error: error => {
+
+        console.error(
+          'Error adding questions to quiz:',
+          error
+        );
+
+        this.questionSaving.set(false);
+
+        this.questionError.set(
+          error?.error?.message ||
+          'تعذر إضافة الأسئلة إلى الاختبار.'
+        );
+      }
+    });
+}
+
+
+// =====================================================
+// QUESTION LABELS
+// =====================================================
+
+getQuestionTypeLabel(type: number): string {
+  switch (Number(type)) {
+    case 0:
+      return 'اختيار من متعدد';
+
+    case 1:
+      return 'صح أو خطأ';
+
+    case 2:
+      return 'مقالي';
+
+    default:
+      return 'غير محدد';
+  }
+}
+
+
+getDifficultyLabel(difficulty: number): string {
+  switch (Number(difficulty)) {
+    case 0:
+      return 'سهل';
+
+    case 1:
+      return 'متوسط';
+
+    case 2:
+      return 'صعب';
+
+    default:
+      return 'غير محدد';
+  }
+}
+
+// =====================================================
+// EMPTY QUESTION FORM
+// =====================================================
+
+private emptyQuestionForm(): QuestionForm {
+
+  return {
+
+    questionText: '',
+
+    questionType: 0,
+
+    difficulty: 0,
+
+    points: 1,
+
+    explanation: '',
+
+    options: [
+
+      {
+        optionText: '',
+        optionCode: 'A',
+        sortOrder: 0,
+        isCorrect: true
+      },
+
+      {
+        optionText: '',
+        optionCode: 'B',
+        sortOrder: 1,
+        isCorrect: false
+      }
+
+    ]
+  };
+}
 
   refresh(): void {
     const trainerId = this.trainer()?.trainerId;
