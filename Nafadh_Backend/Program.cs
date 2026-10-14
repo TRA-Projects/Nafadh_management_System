@@ -211,6 +211,8 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ICompanyPaymentService, CompanyPaymentService>();
             builder.Services.AddScoped<ICompanyPaymentScheduleRepository, CompanyPaymentScheduleRepository>();
             builder.Services.AddScoped<ICompanyPaymentScheduleService, CompanyPaymentScheduleService>();
+            builder.Services.AddScoped<IQuizRepository, QuizRepository>();
+            builder.Services.AddScoped<IQuizService, QuizService>();
             //change by admin team
             builder.Services.AddScoped<IRemediationRepository, RemediationRepository>();
             builder.Services.AddScoped<IRemediationService, RemediationService>();
