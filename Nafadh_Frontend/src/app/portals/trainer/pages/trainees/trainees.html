@@ -6,54 +6,44 @@
 
   @if (evaluationNotice(); as notice) {
 
-    <div
-      class="evaluation-notice"
-      [class.notice-success]="notice.tone === 'success'"
-      [class.notice-warning]="notice.tone === 'warning'"
-      [class.notice-error]="notice.tone === 'error'"
-      role="status"
-      aria-live="polite"
-    >
+  <div class="evaluation-notice" [class.notice-success]="notice.tone === 'success'"
+    [class.notice-warning]="notice.tone === 'warning'" [class.notice-error]="notice.tone === 'error'" role="status"
+    aria-live="polite">
 
-      <div class="evaluation-notice-icon">
+    <div class="evaluation-notice-icon">
 
-        @if (notice.tone === 'success') {
-          <i class="fa-solid fa-circle-check"></i>
-        }
-        @else if (notice.tone === 'warning') {
-          <i class="fa-solid fa-triangle-exclamation"></i>
-        }
-        @else {
-          <i class="fa-solid fa-circle-exclamation"></i>
-        }
-
-      </div>
-
-
-      <div class="evaluation-notice-copy">
-
-        <strong>
-          {{ notice.title }}
-        </strong>
-
-        <span>
-          {{ notice.message }}
-        </span>
-
-      </div>
-
-
-      <button
-        type="button"
-        class="evaluation-notice-close"
-        (click)="closeEvaluationNotice()"
-        aria-label="إغلاق الإشعار"
-        title="إغلاق"
-      >
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+      @if (notice.tone === 'success') {
+      <i class="fa-solid fa-circle-check"></i>
+      }
+      @else if (notice.tone === 'warning') {
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      }
+      @else {
+      <i class="fa-solid fa-circle-exclamation"></i>
+      }
 
     </div>
+
+
+    <div class="evaluation-notice-copy">
+
+      <strong>
+        {{ notice.title }}
+      </strong>
+
+      <span>
+        {{ notice.message }}
+      </span>
+
+    </div>
+
+
+    <button type="button" class="evaluation-notice-close" (click)="closeEvaluationNotice()" aria-label="إغلاق الإشعار"
+      title="إغلاق">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+  </div>
 
   }
 
@@ -69,11 +59,7 @@
 
       <div class="header-icon">
 
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
           <circle cx="9" cy="7" r="4"></circle>
@@ -101,19 +87,10 @@
 
     <div class="header-actions">
 
-      <button
-        type="button"
-        class="action-btn secondary"
-        [disabled]="isExportingReport()"
+      <button type="button" class="action-btn secondary" [disabled]="isExportingReport()"
         (click)="exportTraineesReport()">
 
-        <svg
-          viewBox="0 0 24 24"
-          width="17"
-          height="17"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
 
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
           <polyline points="7 10 12 15 17 10"></polyline>
@@ -126,12 +103,12 @@
 
           @if (isExportingReport()) {
 
-            جاري التصدير...
+          جاري التصدير...
 
           }
           @else {
 
-            تصدير الكشف
+          تصدير الكشف
 
           }
 
@@ -140,18 +117,9 @@
       </button>
 
 
-      <button
-        type="button"
-        class="action-btn primary"
-        (click)="startNewEvaluation()">
+      <button type="button" class="action-btn primary" (click)="startNewEvaluation()">
 
-        <svg
-          viewBox="0 0 24 24"
-          width="17"
-          height="17"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
 
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -175,16 +143,9 @@
 
   <section class="trainees-kpis">
 
-  <article
-  class="trainee-kpi"
-  role="button"
-  tabindex="0"
-  style="cursor:pointer;"
-  [class.active-filter]="
+    <article class="trainee-kpi" role="button" tabindex="0" style="cursor:pointer;" [class.active-filter]="
     traineeListFilter() === 'all'
-  "
-  (click)="showAllTrainees()"
->
+  " (click)="showAllTrainees()">
 
       <div class="kpi-info">
 
@@ -201,11 +162,7 @@
 
       <div class="kpi-icon">
 
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
           <circle cx="9" cy="7" r="4"></circle>
@@ -229,16 +186,16 @@
 
         @if (averageTechnicalPerformance() !== null) {
 
-          <strong>
-            {{ averageTechnicalPerformance() | number:'1.0-1' }}%
-          </strong>
+        <strong>
+          {{ averageTechnicalPerformance() | number:'1.0-1' }}%
+        </strong>
 
         }
         @else {
 
-          <strong>
-            —
-          </strong>
+        <strong>
+          —
+        </strong>
 
         }
 
@@ -247,11 +204,7 @@
 
       <div class="kpi-icon">
 
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 
           <line x1="4" y1="20" x2="4" y2="10"></line>
           <line x1="10" y1="20" x2="10" y2="4"></line>
@@ -265,16 +218,9 @@
     </article>
 
 
-  <article
-  class="trainee-kpi"
-  role="button"
-  tabindex="0"
-  style="cursor:pointer;"
-  [class.active-filter]="
+    <article class="trainee-kpi" role="button" tabindex="0" style="cursor:pointer;" [class.active-filter]="
     traineeListFilter() === 'high'
-  "
-  (click)="showHighPerformers()"
->
+  " (click)="showHighPerformers()">
 
       <div class="kpi-info">
 
@@ -285,16 +231,16 @@
 
         @if (evaluatedTraineesCount() > 0) {
 
-          <strong>
-            {{ highPerformers() }}
-          </strong>
+        <strong>
+          {{ highPerformers() }}
+        </strong>
 
         }
         @else {
 
-          <strong>
-            —
-          </strong>
+        <strong>
+          —
+        </strong>
 
         }
 
@@ -303,11 +249,7 @@
 
       <div class="kpi-icon">
 
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 
           <circle cx="12" cy="8" r="7"></circle>
           <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
@@ -319,16 +261,9 @@
     </article>
 
 
-<article
-  class="trainee-kpi danger"
-  role="button"
-  tabindex="0"
-  style="cursor:pointer;"
-  [class.active-filter]="
+    <article class="trainee-kpi danger" role="button" tabindex="0" style="cursor:pointer;" [class.active-filter]="
     traineeListFilter() === 'support'
-  "
-  (click)="showSupportTrainees()"
->
+  " (click)="showSupportTrainees()">
 
       <div class="kpi-info">
 
@@ -339,16 +274,16 @@
 
         @if (evaluatedTraineesCount() > 0) {
 
-          <strong>
-            {{ needsSupport() }}
-          </strong>
+        <strong>
+          {{ needsSupport() }}
+        </strong>
 
         }
         @else {
 
-          <strong>
-            —
-          </strong>
+        <strong>
+          —
+        </strong>
 
         }
 
@@ -357,20 +292,14 @@
 
       <div class="kpi-icon">
 
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
           stroke-linejoin="round">
 
           <circle cx="8" cy="8" r="3"></circle>
 
           <path d="M3 20v-2a5 5 0 0 1 5-5"></path>
 
-          <path
-            d="M16.5 19.5
+          <path d="M16.5 19.5
                12.8 16
                a2.5 2.5 0 0 1 3.5-3.6
                l.2.2
@@ -402,12 +331,22 @@
 
           <tr>
 
-            <th>
-              المتدرب
+            <th class="th-search">
+              <span class="th-text">المتدرب</span>
+              <button type="button" class="glass-btn" (click)="toggleStudentSearch()" title="بحث">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </button>
+              <input type="text" *ngIf="showStudentSearch" [ngModel]="studentSearchQuery()"
+                (ngModelChange)="studentSearchQuery.set($event)" placeholder="ابحث..." class="search-input" />
             </th>
 
-            <th>
-              الدفعة
+            <th class="th-search">
+              <span class="th-text">الدفعة</span>
+              <button type="button" class="glass-btn" (click)="toggleBatchSearch()" title="بحث">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </button>
+              <input type="text" *ngIf="showBatchSearch" [ngModel]="batchSearchQuery()"
+                (ngModelChange)="batchSearchQuery.set($event)" placeholder="ابحث..." class="search-input" />
             </th>
 
             <th>
@@ -438,332 +377,305 @@
         <tbody>
 
           @for (
-           e of filteredEnrollments();
-            track e.enrollmentId;
-            let i = $index
+          e of filteredEnrollments;
+          track e.enrollmentId;
+          let i = $index
           ) {
 
-            <tr>
+          <tr>
 
-              <!-- Trainee -->
+            <!-- Trainee -->
 
-              <td>
+            <td>
 
-                <div class="trainee-person">
+              <div class="trainee-person">
 
-                  <div
-                    class="trainee-avatar"
-                    [class.avatar-alt]="i % 3 === 1"
-                    [class.avatar-third]="i % 3 === 2">
+                <div class="trainee-avatar" [class.avatar-alt]="i % 3 === 1" [class.avatar-third]="i % 3 === 2">
 
-                    {{
-                      (e.traineeName || 'م').charAt(0)
-                    }}
-
-                  </div>
-
-
-                  <div class="trainee-details">
-
-                    <strong>
-                      {{ e.traineeName || 'متدرب' }}
-                    </strong>
-
-                    <span>
-                      رقم التسجيل:
-                      {{ e.enrollmentId }}
-                    </span>
-
-                  </div>
+                  {{
+                  (e.traineeName || 'م').charAt(0)
+                  }}
 
                 </div>
 
-              </td>
+
+                <div class="trainee-details">
+
+                  <strong>
+                    {{ e.traineeName || 'متدرب' }}
+                  </strong>
+
+                  <span>
+                    رقم التسجيل:
+                    {{ e.enrollmentId }}
+                  </span>
+
+                </div>
+
+              </div>
+
+            </td>
 
 
-              <!-- Batch -->
+            <!-- Batch -->
 
-              <td>
+            <td>
 
-                <span class="batch-name">
-                  {{ e.batchName || '—' }}
-                </span>
+              <span class="batch-name">
+                {{ e.batchName || '—' }}
+              </span>
 
-              </td>
+            </td>
 
 
             <!-- Status -->
 
-<td>
+            <td>
 
-  <span
-    class="status-badge"
-    [ngClass]="
+              <span class="status-badge" [ngClass]="
       enrollmentStatusClass(
         effectiveEnrollmentStatus(e)
       )
-    "
-  >
-    {{
-      enrollmentStatusLabel(
-        effectiveEnrollmentStatus(e)
-      )
-    }}
-  </span>
+    ">
+                {{
+                enrollmentStatusLabel(
+                effectiveEnrollmentStatus(e)
+                )
+                }}
+              </span>
 
-</td>
+            </td>
 
 
-              <!-- Technical -->
+            <!-- Technical -->
 
-              <td>
+            <td>
 
-             @if (
-  canShowTrainingMetrics(e) &&
-  e.completionStatus !== 'Dropped' &&
-  technicalScore(e.enrollmentId) !== null
-) {
+              @if (
+              canShowTrainingMetrics(e) &&
+              e.completionStatus !== 'Dropped' &&
+              technicalScore(e.enrollmentId) !== null
+              ) {
 
-                  <div class="progress-cell">
+              <div class="progress-cell">
 
-                    <div class="progress-track">
+                <div class="progress-track">
 
-                      <div
-                        class="progress-fill"
-                        [style.width.%]="
+                  <div class="progress-fill" [style.width.%]="
                           technicalProgress(
                             e.enrollmentId
                           )
                         ">
-                      </div>
-
-                    </div>
-
-
-                    <span>
-                      {{
-                        technicalLevel(
-                          e.enrollmentId
-                        )
-                      }}
-                      ·
-                      {{
-                        technicalScore(
-                          e.enrollmentId
-                        )
-                          | number:'1.0-1'
-                      }}%
-                    </span>
-
                   </div>
 
-                }
-                @else {
+                </div>
 
-                  <div class="progress-cell">
 
-                    <div class="progress-track">
+                <span>
+                  {{
+                  technicalLevel(
+                  e.enrollmentId
+                  )
+                  }}
+                  ·
+                  {{
+                  technicalScore(
+                  e.enrollmentId
+                  )
+                  | number:'1.0-1'
+                  }}%
+                </span>
 
-                      <div
-                        class="progress-fill"
-                        style="width:0%;">
-                      </div>
+              </div>
 
-                    </div>
+              }
+              @else {
 
-                    <span>
-                      —
-                    </span>
+              <div class="progress-cell">
 
+                <div class="progress-track">
+
+                  <div class="progress-fill" style="width:0%;">
                   </div>
 
-                }
+                </div>
 
-              </td>
+                <span>
+                  —
+                </span>
 
+              </div>
 
-              <!-- Attendance -->
+              }
 
-              <td>
-
-               @if (
-  canShowTrainingMetrics(e) &&
-  attendancePercentage(
-    e.enrollmentId
-  ) !== null
-) {
-
-                  <span class="metric-value">
-                    {{
-                      attendancePercentage(
-                        e.enrollmentId
-                      )
-                        | number:'1.0-1'
-                    }}%
-                  </span>
-
-                }
-                @else {
-
-                  <span class="metric-value">
-                    —
-                  </span>
-
-                }
-
-              </td>
+            </td>
 
 
-              <!-- Evaluation -->
+            <!-- Attendance -->
 
-              <td>
+            <td>
 
-             @if (
-  canShowTrainingMetrics(e) &&
-  e.completionStatus !== 'Dropped' &&
-  technicalScore(e.enrollmentId) !== null
-) {
+              @if (
+              canShowTrainingMetrics(e) &&
+              attendancePercentage(
+              e.enrollmentId
+              ) !== null
+              ) {
 
-                  <span class="metric-value">
-                    {{
-                      technicalScore(
-                        e.enrollmentId
-                      )
-                        | number:'1.0-1'
-                    }}%
-                  </span>
+              <span class="metric-value">
+                {{
+                attendancePercentage(
+                e.enrollmentId
+                )
+                | number:'1.0-1'
+                }}%
+              </span>
 
-                }
-                @else {
+              }
+              @else {
 
-                  <span class="metric-value">
-                    —
-                  </span>
+              <span class="metric-value">
+                —
+              </span>
 
-                }
+              }
 
-              </td>
+            </td>
 
 
-              <!-- Actions -->
+            <!-- Evaluation -->
 
-              <td>
+            <td>
 
-                <div class="table-actions">
+              @if (
+              canShowTrainingMetrics(e) &&
+              e.completionStatus !== 'Dropped' &&
+              technicalScore(e.enrollmentId) !== null
+              ) {
 
-               <div
-  class="evaluation-action-wrapper"
-  [class.disabled-evaluation]="
+              <span class="metric-value">
+                {{
+                technicalScore(
+                e.enrollmentId
+                )
+                | number:'1.0-1'
+                }}%
+              </span>
+
+              }
+              @else {
+
+              <span class="metric-value">
+                —
+              </span>
+
+              }
+
+            </td>
+
+
+            <!-- Actions -->
+
+            <td>
+
+              <div class="table-actions">
+
+                <div class="evaluation-action-wrapper" [class.disabled-evaluation]="
     !canEvaluateEnrollment(e)
-  "
->
+  ">
 
-  <button
-    type="button"
-    class="small-action-btn"
-    (click)="openEval(e.enrollmentId)"
-    [disabled]="
+                  <button type="button" class="small-action-btn" (click)="openEval(e.enrollmentId)" [disabled]="
       !canEvaluateEnrollment(e)
-    "
-  >
-    تقييم
-  </button>
+    ">
+                    تقييم
+                  </button>
 
 
-  @if (
-    !canEvaluateEnrollment(e)
-  ) {
+                  @if (
+                  !canEvaluateEnrollment(e)
+                  ) {
 
-    <div class="evaluation-tooltip">
+                  <div class="evaluation-tooltip">
 
-      <span class="evaluation-tooltip-icon">
-        !
-      </span>
+                    <span class="evaluation-tooltip-icon">
+                      !
+                    </span>
 
-      <span>
+                    <span>
 
-        @if (
-          effectiveEnrollmentStatus(e) === 'NotStarted'
-        ) {
-          الدفعة لم تبدأ بعد ولا يمكن إضافة تقييم
-        }
-        @else if (
-          effectiveEnrollmentStatus(e) === 'Dropped'
-        ) {
-          المتدرب منسحب ولا يمكن إضافة تقييم جديد
-        }
-        @else {
-          لا يمكن إضافة تقييم لهذا المتدرب
-        }
+                      @if (
+                      effectiveEnrollmentStatus(e) === 'NotStarted'
+                      ) {
+                      الدفعة لم تبدأ بعد ولا يمكن إضافة تقييم
+                      }
+                      @else if (
+                      effectiveEnrollmentStatus(e) === 'Dropped'
+                      ) {
+                      المتدرب منسحب ولا يمكن إضافة تقييم جديد
+                      }
+                      @else {
+                      لا يمكن إضافة تقييم لهذا المتدرب
+                      }
 
-      </span>
+                    </span>
 
-    </div>
+                  </div>
 
-  }
+                  }
 
-</div>
+                </div>
 
 
-                  <button
-                    type="button"
-                    class="small-action-btn"
-                    (click)="
+                <button type="button" class="small-action-btn" (click)="
                       openTraineeProfile(
                         e.enrollmentId
                       )
                     ">
 
-                    الملف
+                  الملف
 
-                  </button>
+                </button>
 
-                </div>
+              </div>
 
-              </td>
+            </td>
 
-            </tr>
+          </tr>
 
           }
           @empty {
 
-            <tr>
+          <tr>
 
-              <td colspan="7">
+            <td colspan="7">
 
-                <div class="table-empty">
+              <div class="table-empty">
 
-                  <div class="empty-icon">
+                <div class="empty-icon">
 
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="26"
-                      height="26"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2">
+                  <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2">
 
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
 
-                    </svg>
-
-                  </div>
-
-
-                  <strong>
-                    لا يوجد متدربون بعد
-                  </strong>
-
-                  <span>
-                    سيظهر المتدربون هنا بعد إضافتهم إلى الدفعات.
-                  </span>
+                  </svg>
 
                 </div>
 
-              </td>
 
-            </tr>
+                <strong>
+                  لا يوجد متدربون بعد
+                </strong>
+
+                <span>
+                  سيظهر المتدربون هنا بعد إضافتهم إلى الدفعات.
+                </span>
+
+              </div>
+
+            </td>
+
+          </tr>
 
           }
 
@@ -782,231 +694,219 @@
 
   @if (showTraineeProfile()) {
 
-    @if (selectedProfileEnrollment(); as profile) {
+  @if (selectedProfileEnrollment(); as profile) {
 
-      <div
-        class="nfd-modal-bg"
-        (click)="closeTraineeProfile()">
+  <div class="nfd-modal-bg" (click)="closeTraineeProfile()">
 
-        <div
-          class="nfd-modal trainee-profile-modal"
-          (click)="$event.stopPropagation()">
+    <div class="nfd-modal trainee-profile-modal" (click)="$event.stopPropagation()">
 
-          <div class="eval-modal-header">
+      <div class="eval-modal-header">
 
-            <div>
+        <div>
 
-              <h3>
-                ملف المتدرب
-              </h3>
+          <h3>
+            ملف المتدرب
+          </h3>
 
-              <p>
-                ملخص أداء ومتابعة المتدرب.
-              </p>
+          <p>
+            ملخص أداء ومتابعة المتدرب.
+          </p>
 
-            </div>
+        </div>
 
 
-            <button
-              type="button"
-              class="modal-close"
-              (click)="closeTraineeProfile()">
+        <button type="button" class="modal-close" (click)="closeTraineeProfile()">
 
-              ×
+          ×
 
-            </button>
+        </button>
 
-          </div>
+      </div>
 
 
-          <div class="profile-trainee-header">
+      <div class="profile-trainee-header">
 
-            <div class="profile-avatar">
+        <div class="profile-avatar">
 
-              {{
-                (profile.traineeName || 'م')
-                  .charAt(0)
-              }}
+          {{
+          (profile.traineeName || 'م')
+          .charAt(0)
+          }}
 
-            </div>
-
-
-            <div class="profile-trainee-info">
-
-              <strong>
-                {{
-                  profile.traineeName ||
-                  'متدرب'
-                }}
-              </strong>
-
-              <span>
-                رقم التسجيل:
-                {{ profile.enrollmentId }}
-              </span>
-
-            </div>
-
-          </div>
+        </div>
 
 
-          <!-- Batch -->
+        <div class="profile-trainee-info">
 
-          <div class="profile-info-row">
+          <strong>
+            {{
+            profile.traineeName ||
+            'متدرب'
+            }}
+          </strong>
 
-            <span class="profile-info-label">
-              الدفعة
-            </span>
+          <span>
+            رقم التسجيل:
+            {{ profile.enrollmentId }}
+          </span>
 
-            <strong>
-              {{ profile.batchName || '—' }}
-            </strong>
+        </div>
 
-          </div>
+      </div>
 
 
-          <!-- Status -->
+      <!-- Batch -->
 
-          <div class="profile-info-row">
+      <div class="profile-info-row">
 
-            <span class="profile-info-label">
-              الحالة
-            </span>
+        <span class="profile-info-label">
+          الدفعة
+        </span>
 
-            <span
-  class="status-badge"
-  [ngClass]="
+        <strong>
+          {{ profile.batchName || '—' }}
+        </strong>
+
+      </div>
+
+
+      <!-- Status -->
+
+      <div class="profile-info-row">
+
+        <span class="profile-info-label">
+          الحالة
+        </span>
+
+        <span class="status-badge" [ngClass]="
     enrollmentStatusClass(
       effectiveEnrollmentStatus(profile)
     )
-  "
->
-  {{
-    enrollmentStatusLabel(
-      effectiveEnrollmentStatus(profile)
-    )
-  }}
-</span>
+  ">
+          {{
+          enrollmentStatusLabel(
+          effectiveEnrollmentStatus(profile)
+          )
+          }}
+        </span>
 
-          </div>
-
-
-          <!-- Stats -->
-
-          <div class="profile-stats-grid">
-
-            <div class="profile-stat-card">
-
-              <span>
-                نسبة الحضور
-              </span>
-
-@if (
-  canShowTrainingMetrics(profile) &&
-  attendancePercentage(
-    profile.enrollmentId
-  ) !== null
-) {
-
-                <strong>
-                  {{
-                    attendancePercentage(
-                      profile.enrollmentId
-                    )
-                      | number:'1.0-1'
-                  }}%
-                </strong>
-
-              }
-              @else {
-
-                <strong>
-                  —
-                </strong>
-
-              }
-
-            </div>
+      </div>
 
 
-            <div class="profile-stat-card">
+      <!-- Stats -->
 
-              <span>
-                متوسط التقييم
-              </span>
+      <div class="profile-stats-grid">
 
+        <div class="profile-stat-card">
 
-              @if (
-  canShowTrainingMetrics(profile) &&
-  profile.completionStatus !== 'Dropped' &&
-  technicalScore(
-    profile.enrollmentId
-  ) !== null
-) {
+          <span>
+            نسبة الحضور
+          </span>
 
-                <strong>
-                  {{
-                    technicalScore(
-                      profile.enrollmentId
-                    )
-                      | number:'1.0-1'
-                  }}%
-                </strong>
+          @if (
+          canShowTrainingMetrics(profile) &&
+          attendancePercentage(
+          profile.enrollmentId
+          ) !== null
+          ) {
 
-              }
-              @else {
+          <strong>
+            {{
+            attendancePercentage(
+            profile.enrollmentId
+            )
+            | number:'1.0-1'
+            }}%
+          </strong>
 
-                <strong>
-                  —
-                </strong>
+          }
+          @else {
 
-              }
+          <strong>
+            —
+          </strong>
 
-            </div>
+          }
 
-          </div>
-
-
-          <!-- Technical Level -->
-
-          <div class="profile-level-card">
-
-            <div class="profile-level-heading">
-
-              <span>
-                المستوى التقني
-              </span>
-
-              <strong>
-
-                @if (
-  canShowTrainingMetrics(profile) &&
-  profile.completionStatus !== 'Dropped'
-) {
-
-  {{
-    technicalLevel(
-      profile.enrollmentId
-    )
-  }}
-
-}
-@else {
-
-  —
-
-}
-
-              </strong>
-
-            </div>
+        </div>
 
 
-            <div class="profile-progress-track">
+        <div class="profile-stat-card">
 
-              <div
-                class="profile-progress-fill"
-           [style.width.%]="
+          <span>
+            متوسط التقييم
+          </span>
+
+
+          @if (
+          canShowTrainingMetrics(profile) &&
+          profile.completionStatus !== 'Dropped' &&
+          technicalScore(
+          profile.enrollmentId
+          ) !== null
+          ) {
+
+          <strong>
+            {{
+            technicalScore(
+            profile.enrollmentId
+            )
+            | number:'1.0-1'
+            }}%
+          </strong>
+
+          }
+          @else {
+
+          <strong>
+            —
+          </strong>
+
+          }
+
+        </div>
+
+      </div>
+
+
+      <!-- Technical Level -->
+
+      <div class="profile-level-card">
+
+        <div class="profile-level-heading">
+
+          <span>
+            المستوى التقني
+          </span>
+
+          <strong>
+
+            @if (
+            canShowTrainingMetrics(profile) &&
+            profile.completionStatus !== 'Dropped'
+            ) {
+
+            {{
+            technicalLevel(
+            profile.enrollmentId
+            )
+            }}
+
+            }
+            @else {
+
+            —
+
+            }
+
+          </strong>
+
+        </div>
+
+
+        <div class="profile-progress-track">
+
+          <div class="profile-progress-fill" [style.width.%]="
   canShowTrainingMetrics(profile) &&
   profile.completionStatus !== 'Dropped'
     ? technicalProgress(
@@ -1014,109 +914,98 @@
       )
     : 0
 ">
-              </div>
-
-            </div>
-
-
-           @if (
-  canShowTrainingMetrics(profile) &&
-  profile.completionStatus !== 'Dropped' &&
-  technicalScore(
-    profile.enrollmentId
-  ) !== null
-) {
-
-              <span class="profile-level-score">
-
-                {{
-                  technicalScore(
-                    profile.enrollmentId
-                  )
-                    | number:'1.0-1'
-                }}%
-
-              </span>
-
-            }
-
           </div>
 
-
-          <!-- Actions -->
-
-          <div class="profile-modal-actions">
-
-            <button
-              type="button"
-              class="nfd-btn secondary"
-              (click)="closeTraineeProfile()">
-
-              إغلاق
-
-            </button>
+        </div>
 
 
-            <div
-              class="evaluation-action-wrapper profile-evaluation-wrapper"
- [class.disabled-evaluation]="
+        @if (
+        canShowTrainingMetrics(profile) &&
+        profile.completionStatus !== 'Dropped' &&
+        technicalScore(
+        profile.enrollmentId
+        ) !== null
+        ) {
+
+        <span class="profile-level-score">
+
+          {{
+          technicalScore(
+          profile.enrollmentId
+          )
+          | number:'1.0-1'
+          }}%
+
+        </span>
+
+        }
+
+      </div>
+
+
+      <!-- Actions -->
+
+      <div class="profile-modal-actions">
+
+        <button type="button" class="nfd-btn secondary" (click)="closeTraineeProfile()">
+
+          إغلاق
+
+        </button>
+
+
+        <div class="evaluation-action-wrapper profile-evaluation-wrapper" [class.disabled-evaluation]="
   !canEvaluateEnrollment(profile)
-"
-            >
+">
 
-              <button
-                type="button"
-                class="nfd-btn primary"
-                (click)="startEvaluationFromProfile()"
-              [disabled]="
+          <button type="button" class="nfd-btn primary" (click)="startEvaluationFromProfile()" [disabled]="
   !canEvaluateEnrollment(profile)
-"
-              >
-                بدء تقييم
-              </button>
+">
+            بدء تقييم
+          </button>
 
 
           @if (
-  !canEvaluateEnrollment(profile)
-) {
+          !canEvaluateEnrollment(profile)
+          ) {
 
-                <div class="evaluation-tooltip">
+          <div class="evaluation-tooltip">
 
-                  <span class="evaluation-tooltip-icon">
-                    !
-                  </span>
+            <span class="evaluation-tooltip-icon">
+              !
+            </span>
 
-                 <span>
+            <span>
 
-  @if (
-    effectiveEnrollmentStatus(profile) === 'NotStarted'
-  ) {
-    الدفعة لم تبدأ بعد ولا يمكن إضافة تقييم
-  }
-  @else if (
-    effectiveEnrollmentStatus(profile) === 'Dropped'
-  ) {
-    المتدرب منسحب ولا يمكن إضافة تقييم جديد
-  }
-  @else {
-    لا يمكن إضافة تقييم لهذا المتدرب
-  }
-
-</span>
-
-                </div>
-
+              @if (
+              effectiveEnrollmentStatus(profile) === 'NotStarted'
+              ) {
+              الدفعة لم تبدأ بعد ولا يمكن إضافة تقييم
+              }
+              @else if (
+              effectiveEnrollmentStatus(profile) === 'Dropped'
+              ) {
+              المتدرب منسحب ولا يمكن إضافة تقييم جديد
+              }
+              @else {
+              لا يمكن إضافة تقييم لهذا المتدرب
               }
 
-            </div>
+            </span>
 
           </div>
+
+          }
 
         </div>
 
       </div>
 
-    }
+    </div>
+
+  </div>
+
+  }
 
   }
 
@@ -1127,211 +1016,181 @@
 
   @if (showTraineePicker()) {
 
-    <div
-      class="nfd-modal-bg"
-      (click)="showTraineePicker.set(false)">
+  <div class="nfd-modal-bg" (click)="showTraineePicker.set(false)">
 
-      <div
-        class="nfd-modal trainee-picker-modal"
-        (click)="$event.stopPropagation()">
+    <div class="nfd-modal trainee-picker-modal" (click)="$event.stopPropagation()">
 
-        <div class="eval-modal-header">
+      <div class="eval-modal-header">
 
-          <div>
+        <div>
 
-            <h3>
-              بدء تقييم جديد
-            </h3>
+          <h3>
+            بدء تقييم جديد
+          </h3>
 
-            <p>
-              اختر المتدرب الذي تريد بدء تقييمه.
-            </p>
-
-          </div>
-
-
-          <button
-            type="button"
-            class="modal-close"
-            (click)="showTraineePicker.set(false)">
-
-            ×
-
-          </button>
+          <p>
+            اختر المتدرب الذي تريد بدء تقييمه.
+          </p>
 
         </div>
 
-<!-- =====================================================
+
+        <button type="button" class="modal-close" (click)="showTraineePicker.set(false)">
+
+          ×
+
+        </button>
+
+      </div>
+
+      <!-- =====================================================
      EVALUATION BATCH
 ====================================================== -->
 
-<div
-  class="modal-field"
-  style="margin-bottom:16px;"
->
+      <div class="modal-field" style="margin-bottom:16px;">
 
-  <label>
-    الدفعة
-  </label>
+        <label>
+          الدفعة
+        </label>
 
-  <select
-    class="nfd-input"
-    [ngModel]="selectedEvaluationBatchId()"
-    (ngModelChange)="
+        <select class="nfd-input" [ngModel]="selectedEvaluationBatchId()" (ngModelChange)="
       selectedEvaluationBatchId.set($event)
-    "
-  >
+    ">
 
-    <option [ngValue]="null">
-      اختر الدفعة
-    </option>
-
-    @for (
-      batch of evaluationBatchOptions();
-      track batch.batchId
-    ) {
-
-      <option
-        [ngValue]="batch.batchId"
-      >
-        {{ batch.batchName }}
-      </option>
-
-    }
-
-  </select>
-
-</div>
-        <div class="trainee-picker-list">
+          <option [ngValue]="null">
+            اختر الدفعة
+          </option>
 
           @for (
-            e of evaluableEnrollments();
-            track e.enrollmentId;
-            let i = $index
+          batch of evaluationBatchOptions();
+          track batch.batchId
           ) {
 
-            <button
-              type="button"
-              class="trainee-picker-item"
-              (click)="
+          <option [ngValue]="batch.batchId">
+            {{ batch.batchName }}
+          </option>
+
+          }
+
+        </select>
+
+      </div>
+      <div class="trainee-picker-list">
+
+        @for (
+        e of evaluableEnrollments();
+        track e.enrollmentId;
+        let i = $index
+        ) {
+
+        <button type="button" class="trainee-picker-item" (click)="
                 selectTraineeForEvaluation(
                   e.enrollmentId
                 )
               ">
 
-              <div
-                class="trainee-avatar"
-                [class.avatar-alt]="i % 3 === 1"
-                [class.avatar-third]="i % 3 === 2">
+          <div class="trainee-avatar" [class.avatar-alt]="i % 3 === 1" [class.avatar-third]="i % 3 === 2">
 
-                {{
-                  (e.traineeName || 'م')
-                    .charAt(0)
-                }}
+            {{
+            (e.traineeName || 'م')
+            .charAt(0)
+            }}
 
-              </div>
+          </div>
 
 
-              <div class="trainee-picker-info">
+          <div class="trainee-picker-info">
 
-                <strong>
-                  {{
-                    e.traineeName ||
-                    'متدرب'
-                  }}
-                </strong>
+            <strong>
+              {{
+              e.traineeName ||
+              'متدرب'
+              }}
+            </strong>
 
-                <span>
+            <span>
 
-                  {{
-                    e.batchName ||
-                    'بدون دفعة'
-                  }}
+              {{
+              e.batchName ||
+              'بدون دفعة'
+              }}
 
-                  ·
+              ·
 
-                  رقم التسجيل:
-                  {{ e.enrollmentId }}
+              رقم التسجيل:
+              {{ e.enrollmentId }}
 
-                </span>
+            </span>
 
-              </div>
-
-
-              <div class="trainee-picker-action">
-
-                <span>
-                  تقييم
-                </span>
-
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2">
-
-                  <path d="M9 18l6-6-6-6"></path>
-
-                </svg>
-
-              </div>
-
-            </button>
-
-          }
-          @empty {
-
-            <div class="trainee-picker-empty">
-
-              <div class="empty-icon">
-
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2">
-
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-
-                </svg>
-
-              </div>
+          </div>
 
 
-             @if (
-  selectedEvaluationBatchId() === null
-) {
+          <div class="trainee-picker-action">
 
-  <strong>
-    اختر الدفعة أولًا
-  </strong>
+            <span>
+              تقييم
+            </span>
 
-  <span>
-    اختر الدفعة لعرض المتدربين المتاحين للتقييم.
-  </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 
-}
-@else {
+              <path d="M9 18l6-6-6-6"></path>
 
-  <strong>
-    لا يوجد متدربون متاحون
-  </strong>
+            </svg>
 
-  <span>
-    لا يوجد متدربون متاحون للتقييم في هذه الدفعة.
-  </span>
+          </div>
 
-}
-            </div>
+        </button>
+
+        }
+        @empty {
+
+        <div class="trainee-picker-empty">
+
+          <div class="empty-icon">
+
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+
+            </svg>
+
+          </div>
+
+
+          @if (
+          selectedEvaluationBatchId() === null
+          ) {
+
+          <strong>
+            اختر الدفعة أولًا
+          </strong>
+
+          <span>
+            اختر الدفعة لعرض المتدربين المتاحين للتقييم.
+          </span>
 
           }
+          @else {
 
+          <strong>
+            لا يوجد متدربون متاحون
+          </strong>
+
+          <span>
+            لا يوجد متدربون متاحون للتقييم في هذه الدفعة.
+          </span>
+
+          }
         </div>
+
+        }
 
       </div>
 
     </div>
+
+  </div>
 
   }
 
@@ -1342,403 +1201,297 @@
 
   @if (showEvalModal()) {
 
-    <div
-      class="nfd-modal-bg"
-      (click)="showEvalModal.set(false)">
+  <div class="nfd-modal-bg" (click)="showEvalModal.set(false)">
 
-      <div
-        class="nfd-modal evaluation-modal"
-        (click)="$event.stopPropagation()">
+    <div class="nfd-modal evaluation-modal" (click)="$event.stopPropagation()">
 
-        <div class="eval-modal-header">
+      <div class="eval-modal-header">
 
-          <div>
+        <div>
 
-            <h3>
-              التقييم الفني للمتدرب
-            </h3>
+          <h3>
+            التقييم الفني للمتدرب
+          </h3>
 
-            <p>
-              أدخل درجات معايير التقييم ثم احفظ النتيجة.
-            </p>
-
-          </div>
-
-
-          <button
-            type="button"
-            class="modal-close"
-            (click)="showEvalModal.set(false)">
-
-            ×
-
-          </button>
+          <p>
+            أدخل درجات معايير التقييم ثم احفظ النتيجة.
+          </p>
 
         </div>
 
 
-        <div class="eval-config-grid">
+        <button type="button" class="modal-close" (click)="showEvalModal.set(false)">
 
-       <div class="modal-field">
+          ×
 
-  <label>
-    الوحدة
-  </label>
+        </button>
 
-  <select
-    class="nfd-input"
-    [(ngModel)]="selectedModuleId"
-    (change)="loadEvaluationStages()"
-  >
-
-    @for (
-      module of evaluationModules();
-      track module.moduleId
-    ) {
-
-      <option
-        [ngValue]="module.moduleId"
-      >
-        {{ module.title }}
-      </option>
-
-    }
-
-  </select>
-
-</div>
+      </div>
 
 
-         <div class="modal-field">
+      <div class="eval-config-grid">
 
-  <label>
-    الفترة
-  </label>
+        <div class="modal-field">
 
-  <select
-    class="nfd-input"
-    [(ngModel)]="selectedStage"
-    (change)="loadTemplates()"
-  >
+          <label>
+            الوحدة
+          </label>
 
-    @for (
-      stage of evaluationStages();
-      track stage
-    ) {
+          <select class="nfd-input" [(ngModel)]="selectedModuleId" (change)="loadEvaluationStages()">
 
-      <option
-        [ngValue]="stage"
-      >
-        الفترة {{ stage }}
-      </option>
+            @for (
+            module of evaluationModules();
+            track module.moduleId
+            ) {
 
-    }
+            <option [ngValue]="module.moduleId">
+              {{ module.title }}
+            </option>
 
-  </select>
+            }
 
-</div>
+          </select>
+
         </div>
 
 
-        <div class="criteria-section">
+        <div class="modal-field">
 
-          @for (
-            c of criteria();
-            track c.criteriaId
-          ) {
+          <label>
+            الفترة
+          </label>
 
-            <div class="criterion-card">
+          <select class="nfd-input" [(ngModel)]="selectedStage" (change)="loadTemplates()">
 
-             <div class="criterion-heading">
+            @for (
+            stage of evaluationStages();
+            track stage
+            ) {
 
-  <div>
+            <option [ngValue]="stage">
+              الفترة {{ stage }}
+            </option>
 
-    <label>
-      {{ c.name }}
-    </label>
+            }
 
-    <span>
-      وزن {{ c.weight }}%
-      ·
-      من {{ c.maxPoints }}
-    </span>
+          </select>
 
-  </div>
+        </div>
+      </div>
 
 
-  <div
-    style="
+      <div class="criteria-section">
+
+        @for (
+        c of criteria();
+        track c.criteriaId
+        ) {
+
+        <div class="criterion-card">
+
+          <div class="criterion-heading">
+
+            <div>
+
+              <label>
+                {{ c.name }}
+              </label>
+
+              <span>
+                وزن {{ c.weight }}%
+                ·
+                من {{ c.maxPoints }}
+              </span>
+
+            </div>
+
+
+            <div style="
       display:flex;
       align-items:center;
       gap:6px;
-    "
-  >
+    ">
 
-    <button
-      type="button"
-      (click)="
+              <button type="button" (click)="
         startEditCriterion(c)
-      "
-      title="تعديل المعيار"
-      style="
+      " title="تعديل المعيار" style="
         border:none;
         background:transparent;
         cursor:pointer;
         font-size:18px;
         padding:4px 6px;
-      "
-    >
-      <i class="fa-solid fa-pen-to-square"></i>
-    </button>
+      ">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
 
 
-    <button
-      type="button"
-      (click)="
+              <button type="button" (click)="
         deleteCriterion(
           c.criteriaId,
           c.name
         )
-      "
-      title="حذف المعيار"
-      style="
+      " title="حذف المعيار" style="
         border:none;
         background:transparent;
         cursor:pointer;
         font-size:18px;
         padding:4px 6px;
-      "
-    >
-      <i class="fa-solid fa-trash-can"></i>
-    </button>
+      ">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
 
-  </div>
+            </div>
 
-</div>
-@if (
-  editingCriterionId() ===
-  c.criteriaId
-) {
+          </div>
+          @if (
+          editingCriterionId() ===
+          c.criteriaId
+          ) {
 
-  <div
-    class="new-criterion-box"
-    style="margin:10px 0 12px;"
-  >
+          <div class="new-criterion-box" style="margin:10px 0 12px;">
 
-    <input
-      class="nfd-input"
-      placeholder="اسم المعيار"
-      [(ngModel)]="
+            <input class="nfd-input" placeholder="اسم المعيار" [(ngModel)]="
         criterionEditForm.name
-      "
-      [name]="
+      " [name]="
         'editCriterionName' +
         c.criteriaId
-      "
-    />
-
-
-    <div class="new-criterion-grid">
-
-      <input
-        class="nfd-input"
-        type="number"
-        min="1"
-        max="100"
-        placeholder="الوزن %"
-        [(ngModel)]="
-          criterionEditForm.weight
-        "
-        [name]="
-          'editCriterionWeight' +
-          c.criteriaId
-        "
-      />
-
-
-      <input
-        class="nfd-input"
-        type="number"
-        min="1"
-        placeholder="الحد الأقصى"
-        [(ngModel)]="
-          criterionEditForm.maxPoints
-        "
-        [name]="
-          'editCriterionMax' +
-          c.criteriaId
-        "
-      />
-
-    </div>
-
-
-    <div
-      style="
-        display:flex;
-        gap:8px;
-        margin-top:10px;
-      "
-    >
-
-      <button
-        type="button"
-        class="nfd-btn primary"
-        (click)="
-          saveCriterionEdit(
-            c.criteriaId
-          )
-        "
-      >
-        حفظ التعديل
-      </button>
-
-
-     <button
-  type="button"
-  class="nfd-btn secondary"
-  (click)="cancelCriterionEdit()"
->
-  إلغاء التعديل
-</button>
-
-    </div>
-
-  </div>
-
-}
-
-              <input
-                class="nfd-input"
-                type="number"
-                [max]="c.maxPoints"
-                min="0"
-                [(ngModel)]="
-                  criteriaScores[
-                    c.criteriaId
-                  ]
-                "
-                [name]="
-                  'crit' + c.criteriaId
-                "
-              />
-
-            </div>
-
-          }
-
-
-          @if (!criteria().length) {
-
-            <div class="criteria-empty">
-              لا توجد معايير معرّفة لهذه الوحدة أو الفترة بعد.
-            </div>
-
-          }
-
-        </div>
-
-
-        <button
-          type="button"
-          class="add-criterion-btn"
-          (click)="showAddCriterion.set(true)">
-
-          + إضافة معيار تقييم جديد
-
-        </button>
-
-
-        @if (showAddCriterion()) {
-
-          <div class="new-criterion-box">
-
-            <input
-              class="nfd-input"
-              placeholder="اسم المعيار"
-              [(ngModel)]="newCriterion.name"
-              name="ncName"
-            />
+      " />
 
 
             <div class="new-criterion-grid">
 
-              <input
-                class="nfd-input"
-                type="number"
-                placeholder="الوزن %"
-                [(ngModel)]="newCriterion.weight"
-                name="ncWeight"
-              />
+              <input class="nfd-input" type="number" min="1" max="100" placeholder="الوزن %" [(ngModel)]="
+          criterionEditForm.weight
+        " [name]="
+          'editCriterionWeight' +
+          c.criteriaId
+        " />
 
-              <input
-                class="nfd-input"
-                type="number"
-                placeholder="الحد الأقصى"
-                [(ngModel)]="newCriterion.maxPoints"
-                name="ncMax"
-              />
+
+              <input class="nfd-input" type="number" min="1" placeholder="الحد الأقصى" [(ngModel)]="
+          criterionEditForm.maxPoints
+        " [name]="
+          'editCriterionMax' +
+          c.criteriaId
+        " />
 
             </div>
 
 
-            <div
-  style="
-    display:flex;
-    gap:8px;
-    margin-top:10px;
-  "
->
+            <div style="
+        display:flex;
+        gap:8px;
+        margin-top:10px;
+      ">
 
-  <button
-    type="button"
-    class="nfd-btn primary"
-    (click)="addCriterion()"
-  >
-    إضافة المعيار
-  </button>
+              <button type="button" class="nfd-btn primary" (click)="
+          saveCriterionEdit(
+            c.criteriaId
+          )
+        ">
+                حفظ التعديل
+              </button>
 
 
-  <button
-    type="button"
-    class="nfd-btn secondary"
-    (click)="cancelAddCriterion()"
-  >
-    إلغاء الإضافة
-  </button>
+              <button type="button" class="nfd-btn secondary" (click)="cancelCriterionEdit()">
+                إلغاء التعديل
+              </button>
 
-</div>
+            </div>
 
           </div>
+
+          }
+
+          <input class="nfd-input" type="number" [max]="c.maxPoints" min="0" [(ngModel)]="
+                  criteriaScores[
+                    c.criteriaId
+                  ]
+                " [name]="
+                  'crit' + c.criteriaId
+                " />
+
+        </div>
 
         }
 
 
-        <div class="nfd-modal-actions">
+        @if (!criteria().length) {
 
-        <button
-  type="button"
-  class="nfd-btn secondary"
-  (click)="showEvalModal.set(false)"
->
-  إغلاق التقييم
-</button>
+        <div class="criteria-empty">
+          لا توجد معايير معرّفة لهذه الوحدة أو الفترة بعد.
+        </div>
+
+        }
+
+      </div>
 
 
-          <button
-            type="button"
-            class="nfd-btn primary"
-            (click)="submitEvaluation()">
+      <button type="button" class="add-criterion-btn" (click)="showAddCriterion.set(true)">
 
-            حفظ التقييم
+        + إضافة معيار تقييم جديد
 
+      </button>
+
+
+      @if (showAddCriterion()) {
+
+      <div class="new-criterion-box">
+
+        <input class="nfd-input" placeholder="اسم المعيار" [(ngModel)]="newCriterion.name" name="ncName" />
+
+
+        <div class="new-criterion-grid">
+
+          <input class="nfd-input" type="number" placeholder="الوزن %" [(ngModel)]="newCriterion.weight"
+            name="ncWeight" />
+
+          <input class="nfd-input" type="number" placeholder="الحد الأقصى" [(ngModel)]="newCriterion.maxPoints"
+            name="ncMax" />
+
+        </div>
+
+
+        <div style="
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  ">
+
+          <button type="button" class="nfd-btn primary" (click)="addCriterion()">
+            إضافة المعيار
+          </button>
+
+
+          <button type="button" class="nfd-btn secondary" (click)="cancelAddCriterion()">
+            إلغاء الإضافة
           </button>
 
         </div>
 
       </div>
 
+      }
+
+
+      <div class="nfd-modal-actions">
+
+        <button type="button" class="nfd-btn secondary" (click)="showEvalModal.set(false)">
+          إغلاق التقييم
+        </button>
+
+
+        <button type="button" class="nfd-btn primary" (click)="submitEvaluation()">
+
+          حفظ التقييم
+
+        </button>
+
+      </div>
+
     </div>
+
+  </div>
 
   }
 
@@ -1750,70 +1503,56 @@
 
   @if (criterionToDelete(); as target) {
 
-    <div
-      class="criterion-delete-overlay"
-      (click)="closeDeleteCriterionModal()"
-    >
+  <div class="criterion-delete-overlay" (click)="closeDeleteCriterionModal()">
 
-      <div
-        class="criterion-delete-modal"
-        (click)="$event.stopPropagation()"
-      >
+    <div class="criterion-delete-modal" (click)="$event.stopPropagation()">
 
-        <div class="criterion-delete-icon">
+      <div class="criterion-delete-icon">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+
+      <h3>
+        حذف معيار التقييم؟
+      </h3>
+
+      <p>
+        هل تريدين حذف معيار
+        <strong>
+          {{ target.criterionName }}
+        </strong>
+        ؟
+      </p>
+
+      <span class="criterion-delete-warning">
+        لن تتمكني من التراجع عن هذه العملية بعد الحذف.
+      </span>
+
+      <div class="criterion-delete-actions">
+
+        <button type="button" class="criterion-cancel-btn" (click)="closeDeleteCriterionModal()"
+          [disabled]="criterionDeleting()">
+          إلغاء
+        </button>
+
+        <button type="button" class="criterion-confirm-delete-btn" (click)="confirmDeleteCriterion()"
+          [disabled]="criterionDeleting()">
+
+          @if (criterionDeleting()) {
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <span>جاري الحذف...</span>
+          }
+          @else {
           <i class="fa-solid fa-trash-can"></i>
-        </div>
+          <span>حذف المعيار</span>
+          }
 
-        <h3>
-          حذف معيار التقييم؟
-        </h3>
-
-        <p>
-          هل تريدين حذف معيار
-          <strong>
-            {{ target.criterionName }}
-          </strong>
-          ؟
-        </p>
-
-        <span class="criterion-delete-warning">
-          لن تتمكني من التراجع عن هذه العملية بعد الحذف.
-        </span>
-
-        <div class="criterion-delete-actions">
-
-          <button
-            type="button"
-            class="criterion-cancel-btn"
-            (click)="closeDeleteCriterionModal()"
-            [disabled]="criterionDeleting()"
-          >
-            إلغاء
-          </button>
-
-          <button
-            type="button"
-            class="criterion-confirm-delete-btn"
-            (click)="confirmDeleteCriterion()"
-            [disabled]="criterionDeleting()"
-          >
-
-            @if (criterionDeleting()) {
-              <i class="fa-solid fa-spinner fa-spin"></i>
-              <span>جاري الحذف...</span>
-            }
-            @else {
-              <i class="fa-solid fa-trash-can"></i>
-              <span>حذف المعيار</span>
-            }
-
-          </button>
-
-        </div>
+        </button>
 
       </div>
 
     </div>
+
+  </div>
 
   }
 

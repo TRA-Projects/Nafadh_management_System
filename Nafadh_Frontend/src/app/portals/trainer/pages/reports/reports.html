@@ -3,7 +3,7 @@
   dir="rtl"
 >
 
-  <!-- =====================================================
+   <!-- =====================================================
        HEADER
   ====================================================== -->
 
@@ -11,6 +11,11 @@
 
     <div class="page-header-text">
 
+      <div class="page-header-icon">
+        <i class="fa-solid fa-chart-column"></i>
+      </div>
+
+      <div class="page-header-copy">
       <h1 class="nfd-page-title">
         مركز التقارير والإحصائيات
       </h1>
@@ -19,10 +24,12 @@
         استعرض تقارير الحضور والأداء والتقييم،
         وعاين التقرير قبل تنزيله عند الحاجة.
       </p>
+      </div>
 
     </div>
 
   </div>
+
 
 
   <!-- =====================================================
@@ -345,7 +352,117 @@
   <!-- =====================================================
        REPORT CARDS
   ====================================================== -->
+<div class="reports-filters-card">
 
+  <div class="reports-filters-header">
+    <div>
+      <span class="reports-filters-label">
+        تصفية التقارير
+      </span>
+
+      <h3>
+        تخصيص التقرير
+      </h3>
+
+      <p>
+        اختر الدفعة والمتدرب لإظهار البيانات المطلوبة في التقارير.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="reports-filter-reset"
+      (click)="resetReportFilters()"
+    >
+      مسح الفلاتر
+    </button>
+  </div>
+
+
+  <div class="reports-filters-fields">
+
+    <!-- BATCH -->
+
+    <div class="report-filter-field">
+
+      <label for="reportBatchFilter">
+        الدفعة
+      </label>
+
+     <select
+  id="reportBatchFilter"
+  [value]="selectedBatchId() ?? ''"
+  [disabled]="exporting()"
+  (change)="onReportBatchChange($any($event.target).value)"
+>
+
+        <option value="">
+          كل الدفعات
+        </option>
+
+        @for (
+          batch of batches();
+          track batch.batchId
+        ) {
+
+          <option
+            [value]="batch.batchId"
+          >
+            {{ batch.batchName }}
+          </option>
+
+        }
+
+      </select>
+
+    </div>
+
+
+    <!-- TRAINEE -->
+
+    <div class="report-filter-field">
+
+      <label for="reportTraineeFilter">
+        المتدرب
+      </label>
+
+      <select
+        id="reportTraineeFilter"
+        [value]="selectedTraineeId() ?? ''"
+        [disabled]="exporting()"
+        (change)="
+          selectedTraineeId.set(
+            $any($event.target).value
+              ? +$any($event.target).value
+              : null
+          )
+        "
+      >
+
+        <option value="">
+          كل المتدربين
+        </option>
+
+        @for (
+          trainee of trainees();
+          track trainee.traineeId
+        ) {
+
+          <option
+            [value]="trainee.traineeId"
+          >
+            {{ trainee.traineeName }}
+          </option>
+
+        }
+
+      </select>
+
+    </div>
+
+  </div>
+
+</div>
   <div class="reports-cards-grid">
 
     <!-- =================================================
@@ -379,6 +496,9 @@
           متابعة نسب حضور وغياب المتدربين
           ومستوى الالتزام في الدفعات التابعة للمدرب.
         </p>
+     
+
+
 
 
         <div class="report-footer">
@@ -1010,6 +1130,5 @@
 
     </div>
 
-  </div>
 
-</div>
+

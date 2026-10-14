@@ -62,6 +62,9 @@ export class TrainerBatches implements OnInit {
   programNames =
     signal<Record<number, string>>({});
 
+  contentProgress =
+  signal<Record<number, number>>({});
+
 
   // =====================================================
   // CONSTRUCTOR
@@ -195,6 +198,8 @@ export class TrainerBatches implements OnInit {
 
           this.programNames.set({});
 
+          this.contentProgress.set({});
+
 
           result.forEach(batch => {
 
@@ -203,6 +208,10 @@ export class TrainerBatches implements OnInit {
             );
 
             this.loadBatchProgramName(
+              batch.batchId
+            );
+
+            this.loadBatchContentProgress(
               batch.batchId
             );
 
@@ -477,6 +486,51 @@ export class TrainerBatches implements OnInit {
 
   }
 
+  private loadBatchContentProgress(batchId: number): void {
+  const batch = this.batches().find(b => b.batchId === batchId);
+
+  if (!batch) return;
+
+  // الدفعة المكتملة = 100%
+  if (batch.status === 'Completed') {
+    this.contentProgress.update(current => ({
+      ...current,
+      [batchId]: 100
+    }));
+    return;
+  }
+
+  // الدفعة القادمة ولم تبدأ = 0%
+  if (batch.status === 'Upcoming') {
+    this.contentProgress.update(current => ({
+      ...current,
+      [batchId]: 0
+    }));
+    return;
+  }
+
+  // الدفعة الجارية = النسبة الفعلية من المحتوى
+  this.api.getBatchProgress(batchId).subscribe({
+    next: (progress) => {
+      this.contentProgress.update(current => ({
+        ...current,
+        [batchId]: progress.progressPercentage
+      }));
+    },
+    error: (error) => {
+      console.error(
+        `Error loading content progress for batch ${batchId}:`,
+        error
+      );
+
+      this.contentProgress.update(current => ({
+        ...current,
+        [batchId]: 0
+      }));
+    }
+  });
+}
+
 
   // =====================================================
   // BATCH STATUS
@@ -666,6 +720,33 @@ export class TrainerBatches implements OnInit {
 
   }
 
+ // =====================================================
+// BATCH DURATION IN MONTHS
+// =====================================================
+
+getBatchDurationInMonths(
+  batch: TrainerBatchDto
+): number {
+
+  if (
+    !batch.startDate ||
+    !batch.endDate
+  ) {
+    return 0;
+  }
+
+  const start =
+    new Date(batch.startDate);
+
+  const end =
+    new Date(batch.endDate);
+
+  return Math.max(
+    0,
+    (end.getFullYear() - start.getFullYear()) * 12 +
+    (end.getMonth() - start.getMonth())
+  );
+} 
 
   // =====================================================
   // TIME LABEL

@@ -76,7 +76,7 @@ button:disabled {
 
 .heading-copy {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
 
   flex: 1;
@@ -101,12 +101,12 @@ button:disabled {
 
   border: 1px solid #ddedf6;
 
-  color: #003b82;
+  color: #0097aa;
   font-size: 23px;
   font-weight: 900;
 }
 
-.page-heading h2 {
+.page-heading h1 {
   margin: 0 0 5px !important;
 
   color: #003b82 !important;
@@ -1106,4 +1106,16 @@ button:disabled {
 .attendance-loading span {
   color: #94a3b8;
   font-size: 12px;
+}
+.history-tools {
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-tools .search-box {
+  flex: 0 1 390px;
+  max-width: 390px;
 }

@@ -17,3 +17,5 @@ namespace Nafadh_Backend.Repositories
         Task DeleteLessonAsync(int lessonId);
     }
 }
+
+

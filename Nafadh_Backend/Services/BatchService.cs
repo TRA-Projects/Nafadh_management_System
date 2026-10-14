@@ -69,9 +69,21 @@ namespace Nafadh_Backend.Services
             var batch = await _repository.GetByIdAsync(id);
             if (batch == null) return false;
 
+            // 1. تحديث اسم الدفعة
+            if (!string.IsNullOrEmpty(dto.BatchName))
+            {
+                batch.BatchName = dto.BatchName;
+            }
+
+            // 2. تحديث البرنامج (ومعه سيتغير المسار والشركة تلقائياً)
+            if (dto.ProgramId > 0)
+            {
+                batch.ProgramId = dto.ProgramId;
+            }
+
             batch.StartDate = dto.StartDate;
             batch.EndDate = dto.EndDate;
-            batch.Capacity = dto.Capacity;
+            batch.Capacity = (int)dto.Capacity;
             batch.Status = dto.Status;
 
             await _repository.UpdateAsync(batch);
@@ -94,6 +106,7 @@ namespace Nafadh_Backend.Services
             return enrollments.Select(e => new BatchTraineeDto
             {
                 TraineeId = e.TraineeId,
+                UserId = e.Trainee?.User?.UserId ?? 0,
                 FullName = e.Trainee?.User?.FullName ?? string.Empty,
                 CompletionStatus = e.CompletionStatus
             }).ToList();
@@ -175,6 +188,11 @@ namespace Nafadh_Backend.Services
                 AttendanceRate = 88 + (seed * 3) % 11,
                 ProgressPercentage = 40 + (seed * 13) % 55
             };
+        }
+
+        public async Task<BatchProgressDto?> GetProgressAsync(int batchId)
+        {
+            return await _repository.GetProgressAsync(batchId);
         }
 
 

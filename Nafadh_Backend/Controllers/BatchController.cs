@@ -72,6 +72,17 @@ namespace Nafadh_Backend.Controllers
             return Ok(result);
         }
 
+        [HttpGet("{id}/progress")]
+        public async Task<IActionResult> GetProgress(int id)
+        {
+            var result = await _service.GetProgressAsync(id);
+
+            if (result == null)
+                return NotFound();
+
+            return Ok(result);
+        }
+
 
     }
 }

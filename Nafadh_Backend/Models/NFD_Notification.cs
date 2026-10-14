@@ -18,17 +18,22 @@ namespace Nafadh_Backend.Models
         public int NotificationId { get; set; }
 
         [Required]
+
         [MaxLength(150)]
         public string Title { get; set; } = string.Empty;
+
         [Required]
         public string Message { get; set; } = string.Empty;
+
         [MaxLength(100)]
         public string? RelatedEntity { get; set; }
+
         public bool IsRead { get; set; }
+
         public DateTime CreatedAt { get; set; }
 
         public int UserId { get; set; }
-        public NFD_User User { get; set; } = null!;
 
+        public NFD_User User { get; set; } = null!;
     }
 }

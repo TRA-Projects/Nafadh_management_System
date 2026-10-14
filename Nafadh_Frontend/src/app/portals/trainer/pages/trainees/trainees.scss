@@ -1952,3 +1952,69 @@
   }
 
 }
+.th-search {
+  position: relative;
+  text-align: right;
+  /* نحافظ على التنسيق الأفقي لتبقى العدسة بجانب الكلمة في نفس السطر */
+  vertical-align: middle;
+
+  /* للتحكم بظهور العناصر بجانب بعضها بشكل متناسق */
+  display: table-cell; 
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* تنسيق زر العدسة ليكون بجانب النص تماماً */
+.glass-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.glass {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #263b50;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+  background: #fff;
+  vertical-align: middle;
+  
+  &:after {
+    content: '';
+    width: 6px;
+    height: 1.5px;
+    background: #263b50;
+    position: absolute;
+    left: -4px;
+    bottom: -1px;
+    transform: rotate(-48deg);
+    border-radius: 2px;
+  }
+}
+
+/* خانة البحث المصغرة التي تظهر عند الضغط على العدسة دون التأثير على الجدول */
+.search-input {
+  font-family: inherit;
+  font-size: 10px;
+  padding: 3px 6px;
+  border: 1px solid #bfd6e3;
+  border-radius: 4px;
+  outline: none;
+  width: 90px;
+  background: #fff;
+  color: #283b55;
+  margin-right: 5px;
+  vertical-align: middle;
+
+  &:focus {
+    border-color: #0875bd;
+  }
+}

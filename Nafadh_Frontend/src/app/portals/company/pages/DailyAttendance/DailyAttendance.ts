@@ -149,6 +149,8 @@ export class CompanyDailyAttendance implements OnInit {
 
 
 
+  readonly canManageAttendance = computed(() => this.auth.role() === 'CompanySupervisor');
+
   readonly states = STATES;
 
   readonly todayKey = this.dayKey(new Date());
@@ -394,6 +396,7 @@ export class CompanyDailyAttendance implements OnInit {
   }
 
   saveWeeklyReason(): void {
+    if (!this.canManageAttendance()) return;
     const record = this.weeklyExcuse();
     if (!record || record.isConfirmed || this.weeklyExcuseSaving()) return;
     this.weeklyExcuseSaving.set(true);
@@ -420,6 +423,7 @@ export class CompanyDailyAttendance implements OnInit {
   }
 
   uploadWeeklyProof(event: Event): void {
+    if (!this.canManageAttendance()) return;
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
@@ -441,6 +445,7 @@ export class CompanyDailyAttendance implements OnInit {
   }
 
   removeWeeklyProof(): void {
+    if (!this.canManageAttendance()) return;
     const record = this.weeklyExcuse();
     if (!record || record.isConfirmed || this.weeklyExcuseSaving()) return;
     this.weeklyExcuseSaving.set(true);
@@ -546,7 +551,7 @@ export class CompanyDailyAttendance implements OnInit {
 
   canConfirm = computed(
 
-    () => !this.isConfirmed() && this.rows().length > 0 && !this.confirming() && this.savingIds().length === 0,
+    () => this.canManageAttendance() && !this.isConfirmed() && this.rows().length > 0 && !this.confirming() && this.savingIds().length === 0,
 
   );
 
@@ -803,6 +808,7 @@ ngOnInit(): void {
 
 
   setStatus(row: AttendanceRow, status: TrainerAttendanceStatus): void {
+    if (!this.canManageAttendance()) return;
 
     if (this.isConfirmed() || this.isSaving(row.trainer.trainerId)) return;
 
@@ -827,6 +833,7 @@ ngOnInit(): void {
 
 
   onTimeChange(row: AttendanceRow, field: 'checkInTime' | 'checkOutTime', value: string): void {
+    if (!this.canManageAttendance()) return;
 
     if (!row.record || row.record.status === 'Present' || this.isConfirmed()) return;
 
@@ -859,6 +866,7 @@ ngOnInit(): void {
 
 
   startNote(row: AttendanceRow): void {
+    if (!this.canManageAttendance()) return;
 
     if (!row.record || row.record.status === 'Present' || this.isConfirmed()) return;
 
@@ -871,6 +879,7 @@ ngOnInit(): void {
 
 
   saveNote(row: AttendanceRow): void {
+    if (!this.canManageAttendance()) return;
 
     if (!row.record || row.record.status === 'Present' || this.isConfirmed()) return;
 
@@ -907,6 +916,7 @@ ngOnInit(): void {
 
 
   onProofSelected(row: AttendanceRow, event: Event): void {
+    if (!this.canManageAttendance()) return;
 
     const input = event.target as HTMLInputElement;
 
@@ -951,6 +961,7 @@ ngOnInit(): void {
 
 
   removeProof(row: AttendanceRow): void {
+    if (!this.canManageAttendance()) return;
 
     if (!row.record || row.record.status === 'Present' || this.isConfirmed()) return;
 
@@ -991,6 +1002,7 @@ ngOnInit(): void {
 
 
   confirmDay(): void {
+    if (!this.canManageAttendance()) return;
     if (!this.canConfirm()) return;
     this.confirming.set(true);
     // Persist the default Present status only for trainers without a record.
@@ -1150,6 +1162,7 @@ ngOnInit(): void {
     values: Pick<TrainerAttendanceUpsertDto, 'status' | 'reason' | 'checkInTime' | 'checkOutTime'>,
 
   ): void {
+    if (!this.canManageAttendance()) return;
 
     this.setSaving(trainerId, true);
 

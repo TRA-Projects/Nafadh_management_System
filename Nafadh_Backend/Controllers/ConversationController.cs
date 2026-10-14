@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -51,21 +53,38 @@ namespace Nafadh_Backend.Controllers
         // ============================================================
         // GET: api/Conversation/{id}
         // ============================================================
-
+        [Authorize]
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(
-            int id
-        )
+        public async Task<IActionResult> GetById(int id)
         {
-            var conversation =
-                await _service.GetByIdAsync(id);
+            var userIdValue = User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
 
+            if (!int.TryParse(userIdValue, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var conversation = await _service.GetByIdAsync(id);
 
             if (conversation == null)
             {
                 return NotFound();
             }
 
+            if (conversation.Category == "BatchGroup")
+            {
+                var isMember = await _service.IsBatchGroupMemberAsync(
+                    id,
+                    userId
+                );
+
+                if (!isMember)
+                {
+                    return Forbid();
+                }
+            }
 
             return Ok(conversation);
         }
@@ -76,8 +95,9 @@ namespace Nafadh_Backend.Controllers
         // ============================================================
 
         [HttpPost]
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> Create(
-            [FromBody]
+            [FromForm]
             CreateConversationDTO dto
         )
         {
@@ -101,7 +121,31 @@ namespace Nafadh_Backend.Controllers
             );
         }
 
+        // ============================================================
+        // POST: api/Conversation/batch-group
+        // ============================================================
 
+        [HttpPost("batch-group")]
+        public async Task<IActionResult> CreateBatchGroup(
+            [FromBody]
+    CreateBatchGroupDTO dto
+        )
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var conversationId =
+                await _service.CreateBatchGroupAsync(dto);
+
+            return Ok(
+                new
+                {
+                    conversationId
+                }
+            );
+        }
         // ============================================================
         // POST: api/Conversation/{id}/messages
         // ============================================================

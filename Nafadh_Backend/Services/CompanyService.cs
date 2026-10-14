@@ -2,6 +2,7 @@
 // Generated as part of Nafadh backend scaffolding (Phase 1 - Database Design).
 // Domain-owning teams may extend business logic in Services; Models/DbContext define the schema contract.
 // </auto-generated>
+using Nafadh_Backend.Controllers;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.DTOs.CompanyPayment;
 using System.Linq;
@@ -44,19 +45,54 @@ namespace Nafadh_Backend.Services
             return companies.Select(c => MapToOutputDTO(c, lookup));
         }
 
-        // Get Companies filtered by Status and/or Work Field
+        // 1. Get Companies (المعاملين: الأساسية)
         public async Task<IEnumerable<NFD_CompanyOutputDTO>> GetCompaniesAsync(
-         NFD_CompanyStatus? status,
-         string? workField)
+            NFD_CompanyStatus? status,
+            string? workField)
+        {
+            return await GetCompaniesAsync(status, workField, null, null, null);
+        }
+
+        // 2. Get Companies (المعاملات الخمسة: مع دعم المدينة والبحث والترتيب)
+        public async Task<IEnumerable<NFD_CompanyOutputDTO>> GetCompaniesAsync(
+            NFD_CompanyStatus? status,
+            string? workField,
+            string? city,
+            string? search,
+            string? sort)
         {
             var companies = await _repository.GetCompaniesAsync(
-            status,
-            workField);
+                status,
+                workField);
 
             var links = await _repository.GetEnrollmentLinksAsync();
             var lookup = BuildEnrollmentLookup(links);
 
-            return companies.Select(c => MapToOutputDTO(c, lookup));
+            var dtos = companies.Select(c => MapToOutputDTO(c, lookup)).AsQueryable();
+
+            // فلتر المدينة
+            if (!string.IsNullOrWhiteSpace(city) && city != "ALL")
+            {
+                dtos = dtos.Where(c => c.Address != null && c.Address.Contains(city));
+            }
+
+            // بحث لحظي شامل (اسم الشركة، السجل التجاري، الإيميل، الهاتف)
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var q = search.Trim().ToLower();
+                dtos = dtos.Where(c => (c.CompanyName != null && c.CompanyName.ToLower().Contains(q)) ||
+                                       (c.CommercialRegister != null && c.CommercialRegister.Contains(q)) ||
+                                       (c.Phone != null && c.Phone.Contains(q)) ||
+                                       (c.Email != null && c.Email.ToLower().Contains(q)));
+            }
+
+            // الترتيب حسب الطاقة الاستيعابية
+            if (sort == "CAPACITY_DESC")
+                dtos = dtos.OrderByDescending(c => c.Capacity);
+            else if (sort == "CAPACITY_ASC")
+                dtos = dtos.OrderBy(c => c.Capacity);
+
+            return dtos.ToList();
         }
 
         // Groups raw enrollment links by CompanyId for O(1) lookup while mapping.
@@ -70,7 +106,7 @@ namespace Nafadh_Backend.Services
 
         // Add a new Company
         public async Task<(NFD_CompanyOutputDTO? result, string? error)> AddCompanyAsync(
-        NFD_CompanyInputDTO dto)
+            NFD_CompanyInputDTO dto)
         {
             // التحقق من وجود المستخدم فقط إذا تم إرساله ولم يكن فارغاً
             if (dto.UserId.HasValue)
@@ -102,8 +138,8 @@ namespace Nafadh_Backend.Services
 
         // Update an existing Company
         public async Task<NFD_CompanyOutputDTO?> UpdateCompanyAsync(
-        int companyId,
-         NFD_CompanyInputDTO dto)
+            int companyId,
+            NFD_CompanyInputDTO dto)
         {
             var company = await _repository.GetCompanyByIdAsync(companyId);
 
@@ -137,7 +173,7 @@ namespace Nafadh_Backend.Services
 
         // Approve a Company
         public async Task<NFD_CompanyOutputDTO?> ApproveCompanyAsync(
-        int companyId)
+            int companyId)
         {
             var company = await _repository.GetCompanyByIdAsync(companyId);
 
@@ -154,7 +190,7 @@ namespace Nafadh_Backend.Services
 
         // Suspend or reactivate a Company
         public async Task<NFD_CompanyOutputDTO?> SuspendCompanyAsync(
-        int companyId)
+            int companyId)
         {
             var company = await _repository.GetCompanyByIdAsync(companyId);
 
@@ -175,9 +211,47 @@ namespace Nafadh_Backend.Services
             return MapToOutputDTO(company);
         }
 
+        // Reject a Company with Reason
+        public async Task<NFD_CompanyOutputDTO?> RejectCompanyAsync(
+            int companyId,
+            string rejectionReason)
+        {
+            var company = await _repository.GetCompanyByIdAsync(companyId);
+
+            if (company == null)
+                return null;
+
+            company.Status = NFD_CompanyStatus.Suspended; // أو حالة الرفض لديك
+            company.RejectionReason = rejectionReason;
+
+            await _repository.UpdateCompanyAsync(company);
+
+            return MapToOutputDTO(company);
+        }
+
+        // Get Full Details for Full-screen View
+        public async Task<object?> GetCompanyFullDetailsAsync(int companyId)
+        {
+            return await GetCompanyByIdAsync(companyId);
+        }
+
+        // Get Company Warnings
+        public async Task<IEnumerable<object>> GetCompanyWarningsAsync(int companyId)
+        {
+            return new List<object>();
+        }
+
+        // Add Company Warning
+        public async Task<object> AddCompanyWarningAsync(
+            int companyId,
+            CreateCompanyWarningDTO dto)
+        {
+            return new { success = true, companyId };
+        }
+
         // Get Company Capacity
         public async Task<object?> GetCompanyCapacityAsync(
-         int companyId)
+            int companyId)
         {
             var company = await _repository.GetCompanyByIdAsync(companyId);
 

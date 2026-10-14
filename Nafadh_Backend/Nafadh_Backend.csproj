@@ -36,6 +36,7 @@
 
   <ItemGroup>
     <Folder Include="Controllers\NewFolder\" />
+    <Folder Include="Enums\" />
     <Folder Include="wwwroot\reports\" />
   </ItemGroup>
 

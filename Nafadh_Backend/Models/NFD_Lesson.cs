@@ -28,6 +28,7 @@ namespace Nafadh_Backend.Models
         public NFD_Module Module { get; set; } = null!;
 
         public ICollection<NFD_TrainingMaterial> TrainingMaterials { get; set; } = new List<NFD_TrainingMaterial>();
+        public ICollection<NFD_LessonFeedback> LessonFeedbacks { get; set; } = new List<NFD_LessonFeedback>();
 
     }
 }
