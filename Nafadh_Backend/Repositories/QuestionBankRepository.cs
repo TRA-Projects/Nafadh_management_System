@@ -14,25 +14,23 @@ namespace Nafadh_Backend.Repositories
             _context = context;
         }
 
-        public async Task<List<NFD_QuestionBank>>
+        public async Task<IEnumerable<NFD_QuestionBank>>
             GetByTrainerIdAsync(int trainerId)
         {
             return await _context.NFD_QuestionBanks
                 .Include(q => q.Options)
-                .Where(q =>
-                    q.TrainerId == trainerId &&
-                    q.IsActive)
+                .Where(q => q.TrainerId == trainerId)
                 .OrderByDescending(q => q.CreatedAt)
                 .ToListAsync();
         }
 
         public async Task<NFD_QuestionBank?>
-            GetByIdWithOptionsAsync(int questionId)
+            GetByIdAsync(int questionId)
         {
             return await _context.NFD_QuestionBanks
                 .Include(q => q.Options)
-                .FirstOrDefaultAsync(q =>
-                    q.QuestionId == questionId);
+                .FirstOrDefaultAsync(
+                    q => q.QuestionId == questionId);
         }
 
         public async Task AddAsync(
@@ -42,10 +40,12 @@ namespace Nafadh_Backend.Repositories
                 .AddAsync(question);
         }
 
-        public void Update(
+        public Task UpdateAsync(
             NFD_QuestionBank question)
         {
             _context.NFD_QuestionBanks.Update(question);
+
+            return Task.CompletedTask;
         }
 
         public async Task SaveChangesAsync()

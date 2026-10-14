@@ -4,15 +4,17 @@ namespace Nafadh_Backend.Repositories
 {
     public interface IQuestionBankRepository
     {
-        Task<List<NFD_QuestionBank>> GetByTrainerIdAsync(
-            int trainerId);
+        Task<IEnumerable<NFD_QuestionBank>>
+            GetByTrainerIdAsync(int trainerId);
 
-        Task<NFD_QuestionBank?> GetByIdWithOptionsAsync(
-            int questionId);
+        Task<NFD_QuestionBank?>
+            GetByIdAsync(int questionId);
 
-        Task AddAsync(NFD_QuestionBank question);
+        Task AddAsync(
+            NFD_QuestionBank question);
 
-        void Update(NFD_QuestionBank question);
+        Task UpdateAsync(
+            NFD_QuestionBank question);
 
         Task SaveChangesAsync();
     }

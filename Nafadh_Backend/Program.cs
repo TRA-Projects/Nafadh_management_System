@@ -226,6 +226,8 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IQuizResultRepository,QuizResultRepository>();
 
             builder.Services.AddScoped<IQuizResultService,QuizResultService>();
+            builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
+            builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 
 
             //change by admin team
