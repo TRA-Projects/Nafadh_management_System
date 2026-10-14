@@ -2053,36 +2053,8 @@ namespace Nafadh_Backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<string>("ExcuseProofUrl")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.Property<bool>("IsConfirmed")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Reason")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TrainerId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("TrainerAttendanceId");
-
-                    b.HasIndex("CompanyId");
-
-                    b.HasIndex("TrainerId");
-
-                    b.ToTable("NFD_TrainerAttendances");
+                   
+                
                     b.Property<DateTime?>("ExpiryDate")
                         .HasColumnType("datetime2");
 
@@ -3174,7 +3146,7 @@ namespace Nafadh_Backend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Company");
+                   
 
                     b.Navigation("Trainer");
                 });
