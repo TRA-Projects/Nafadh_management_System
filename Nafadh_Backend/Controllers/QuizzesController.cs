@@ -1,9 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Nafadh_Backend.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -18,40 +15,76 @@ namespace Nafadh_Backend.Controllers
             _quizService = quizService;
         }
 
-        // 1. جلب قائمة الاختبارات الخاصة بمدرب معين
         [HttpGet("trainer/{trainerId:int}")]
-        public async Task<IActionResult> GetTrainerQuizzes(int trainerId)
+        public async Task<IActionResult> GetTrainerQuizzes(
+            int trainerId)
         {
-            var quizzes = await _quizService.GetTrainerQuizzesAsync(trainerId);
+            var quizzes =
+                await _quizService.GetTrainerQuizzesAsync(trainerId);
+
             return Ok(quizzes);
         }
 
-        // 2. إنشاء اختبار جديد
         [HttpPost]
-        public async Task<IActionResult> CreateQuiz([FromBody] NFD_Quiz quiz, [FromQuery] int trainerId)
+        public async Task<IActionResult> CreateQuiz(
+            [FromBody] CreateQuizDto dto,
+            [FromQuery] int trainerId)
         {
             if (!ModelState.IsValid)
+            {
                 return BadRequest(ModelState);
-
-            await _quizService.CreateQuizAsync(quiz, trainerId);
-            return Ok(new { message = "تم إنشاء الاختبار بنجاح" });
-        }
-
-        // 3. تعديل اختبار موجود
-        [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateQuiz(int id, [FromBody] NFD_Quiz quiz)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            }
 
             try
             {
-                await _quizService.UpdateQuizAsync(id, quiz);
-                return Ok(new { message = "تم تحديث الاختبار بنجاح" });
+                await _quizService.CreateQuizAsync(dto, trainerId);
+
+                return Ok(new
+                {
+                    message = "تم إنشاء الاختبار بنجاح"
+                });
             }
-            catch (System.Exception ex)
+            catch (ArgumentException ex)
             {
-                return NotFound(new { message = ex.Message });
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> UpdateQuiz(
+            int id,
+            [FromBody] UpdateQuizDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _quizService.UpdateQuizAsync(id, dto);
+
+                return Ok(new
+                {
+                    message = "تم تحديث الاختبار بنجاح"
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
             }
         }
     }

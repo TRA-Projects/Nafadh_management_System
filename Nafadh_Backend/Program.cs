@@ -213,6 +213,21 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ICompanyPaymentScheduleService, CompanyPaymentScheduleService>();
             builder.Services.AddScoped<IQuizRepository, QuizRepository>();
             builder.Services.AddScoped<IQuizService, QuizService>();
+            builder.Services.AddScoped<IQuestionBankRepository,QuestionBankRepository>();
+
+            builder.Services.AddScoped<IQuestionBankService,QuestionBankService>();
+            builder.Services.AddScoped<IQuizQuestionRepository,QuizQuestionRepository>();
+
+            builder.Services.AddScoped<IQuizQuestionService,QuizQuestionService>();
+            builder.Services.AddScoped<IQuizAttemptRepository,QuizAttemptRepository>();
+
+            builder.Services.AddScoped<IQuizAttemptService,QuizAttemptService>();
+
+            builder.Services.AddScoped<IQuizResultRepository,QuizResultRepository>();
+
+            builder.Services.AddScoped<IQuizResultService,QuizResultService>();
+
+
             //change by admin team
             builder.Services.AddScoped<IRemediationRepository, RemediationRepository>();
             builder.Services.AddScoped<IRemediationService, RemediationService>();
