@@ -11,6 +11,7 @@ export class TrainerLayout {
     { path: 'dashboard', label: 'لوحة التحكم', icon: 'home' },
     { path: 'batches', label: 'إدارة الدفعات', icon: 'cal' },
     { path: 'content', label: 'إدارة المحتوى', icon: 'folder' },
+    { path: 'quizzes', label: 'الاختبارات', icon: 'clip' },
     { path: 'attendance', label: 'تسجيل الحضور', icon: 'check-square' },
     { path: 'tasks', label: 'المهام والمشروعات', icon: 'clip' },
     { path: 'trainees', label: 'تقييم ومتابعة المتدربين', icon: 'graduation' },
@@ -18,5 +19,6 @@ export class TrainerLayout {
     { path: 'messages', label: 'التواصل والدعم', icon: 'chat' },
     { path: 'profile', label: 'ملفي الشخصي', icon: 'user' },
     { path: 'notifications', label: 'الإشعارات', icon: 'bell' },
+    
   ];
 }

@@ -1,0 +1,466 @@
+
+<div class="quizzes-page" dir="rtl">
+
+  <section class="page-hero">
+    <div class="hero-content">
+      <div class="hero-icon">
+        <i class="fa-solid fa-clipboard-question"></i>
+      </div>
+
+      <div>
+        <span class="page-kicker">إدارة التقييمات</span>
+        <h1>الاختبارات</h1>
+        <p>
+          أنشئي الاختبارات للدفعات التدريبية
+          وتابعي مواعيدها وإعداداتها.
+        </p>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="primary-btn"
+      (click)="openCreateForm()"
+    >
+      <i class="fa-solid fa-plus"></i>
+      <span>إنشاء اختبار</span>
+    </button>
+  </section>
+
+  @if (errorMessage()) {
+    <div class="message error-message" role="alert">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <span>{{ errorMessage() }}</span>
+
+      <button
+        type="button"
+        aria-label="إغلاق"
+        (click)="errorMessage.set('')"
+      >×</button>
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="message success-message" role="status">
+      <i class="fa-solid fa-circle-check"></i>
+      <span>{{ successMessage() }}</span>
+
+      <button
+        type="button"
+        aria-label="إغلاق"
+        (click)="successMessage.set('')"
+      >×</button>
+    </div>
+  }
+
+  <section class="toolbar">
+    <label class="search-box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+
+      <input
+        type="search"
+        placeholder="ابحثي باسم الاختبار أو الدفعة..."
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+      />
+    </label>
+
+    <select
+      aria-label="تصفية حسب الحالة"
+      [ngModel]="statusFilter()"
+      (ngModelChange)="statusFilter.set($event)"
+    >
+      <option value="all">كل الاختبارات</option>
+      <option value="draft">المسودات</option>
+    </select>
+
+    <button
+      type="button"
+      class="refresh-btn"
+      (click)="refresh()"
+      [disabled]="loading()"
+    >
+      <i
+        class="fa-solid fa-rotate"
+        [class.fa-spin]="loading()"
+      ></i>
+      تحديث
+    </button>
+  </section>
+
+  <section class="summary-grid">
+    <article class="summary-card">
+      <div class="summary-icon blue">
+        <i class="fa-solid fa-list-check"></i>
+      </div>
+
+      <div>
+        <strong>{{ quizzes().length }}</strong>
+        <span>إجمالي الاختبارات</span>
+      </div>
+    </article>
+
+    <article class="summary-card">
+      <div class="summary-icon teal">
+        <i class="fa-solid fa-file-pen"></i>
+      </div>
+
+      <div>
+        <strong>{{ draftCount() }}</strong>
+        <span>المسودات</span>
+      </div>
+    </article>
+
+    <article class="summary-card">
+      <div class="summary-icon purple">
+        <i class="fa-solid fa-layer-group"></i>
+      </div>
+
+      <div>
+        <strong>{{ batches().length }}</strong>
+        <span>الدفعات المتاحة</span>
+      </div>
+    </article>
+  </section>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      <strong>جاري تحميل الاختبارات</strong>
+      <span>لحظات من فضلك...</span>
+    </div>
+  } @else {
+    <section class="quiz-grid">
+
+      @for (quiz of filteredQuizzes(); track quiz.quizId) {
+        <article class="quiz-card">
+
+          <div class="quiz-card-top">
+            <div class="quiz-icon">
+              <i class="fa-solid fa-file-circle-question"></i>
+            </div>
+
+            <span
+              class="status-badge"
+              [ngClass]="getStatusClass(quiz.status)"
+            >
+              {{ getStatusLabel(quiz.status) }}
+            </span>
+          </div>
+
+          <div class="quiz-main">
+            <h2>{{ quiz.title }}</h2>
+
+            <p class="description">
+              {{ quiz.description || 'لا يوجد وصف للاختبار.' }}
+            </p>
+
+            <div class="batch-line">
+              <i class="fa-solid fa-users"></i>
+
+              <span>
+                {{ quiz.batchName || ('الدفعة رقم ' + quiz.batchId) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="quiz-details">
+            <div class="detail-row">
+              <i class="fa-regular fa-calendar"></i>
+              <span>البداية</span>
+              <strong>{{ formatDate(quiz.startDateTime) }}</strong>
+            </div>
+
+            <div class="detail-row">
+              <i class="fa-regular fa-calendar-check"></i>
+              <span>النهاية</span>
+              <strong>{{ formatDate(quiz.endDateTime) }}</strong>
+            </div>
+
+            <div class="detail-row">
+              <i class="fa-regular fa-clock"></i>
+              <span>المدة</span>
+              <strong>{{ quiz.durationMinutes }} دقيقة</strong>
+            </div>
+
+            <div class="detail-row">
+              <i class="fa-solid fa-repeat"></i>
+              <span>المحاولات</span>
+              <strong>{{ quiz.maxAttempts }}</strong>
+            </div>
+          </div>
+
+          <div class="quiz-flags">
+            <span [class.enabled]="quiz.randomizeQuestions">
+              <i
+                class="fa-solid"
+                [ngClass]="quiz.randomizeQuestions ? 'fa-check' : 'fa-xmark'"
+              ></i>
+              عشوائية الأسئلة
+            </span>
+
+            <span [class.enabled]="quiz.cameraRequired">
+              <i
+                class="fa-solid"
+                [ngClass]="quiz.cameraRequired ? 'fa-check' : 'fa-xmark'"
+              ></i>
+              الكاميرا
+            </span>
+          </div>
+
+          <button
+            type="button"
+            class="edit-btn"
+            (click)="openEditForm(quiz)"
+          >
+            <i class="fa-regular fa-pen-to-square"></i>
+            تعديل الاختبار
+          </button>
+
+        </article>
+      } @empty {
+        <div class="empty-state">
+          <div class="empty-icon">
+            <i class="fa-regular fa-clipboard"></i>
+          </div>
+
+          <strong>
+            {{ searchTerm()
+              ? 'لا توجد نتائج مطابقة'
+              : 'لا توجد اختبارات حتى الآن' }}
+          </strong>
+
+          <span>
+            يمكنك إنشاء اختبار جديد وربطه بإحدى الدفعات المتاحة.
+          </span>
+
+          @if (!searchTerm()) {
+            <button
+              type="button"
+              class="primary-btn"
+              (click)="openCreateForm()"
+            >
+              <i class="fa-solid fa-plus"></i>
+              إنشاء أول اختبار
+            </button>
+          }
+        </div>
+      }
+
+    </section>
+  }
+
+  @if (showForm()) {
+    <div class="modal-backdrop" (click)="closeForm()">
+
+      <section
+        class="quiz-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quiz-form-title"
+        (click)="$event.stopPropagation()"
+      >
+
+        <header class="modal-header">
+          <div>
+            <span class="page-kicker">بيانات الاختبار</span>
+
+            <h2 id="quiz-form-title">
+              {{ editingQuizId() === null
+                ? 'إنشاء اختبار جديد'
+                : 'تعديل الاختبار' }}
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            class="close-btn"
+            aria-label="إغلاق"
+            (click)="closeForm()"
+          >×</button>
+        </header>
+
+        <form (ngSubmit)="saveQuiz()">
+
+          <div class="form-grid">
+
+            <label class="field full-width">
+              <span>اسم الاختبار <b>*</b></span>
+
+              <input
+                name="title"
+                [(ngModel)]="form.title"
+                maxlength="200"
+                required
+                placeholder="مثال: اختبار الوحدة الأولى"
+              />
+            </label>
+
+            <label class="field full-width">
+              <span>وصف الاختبار</span>
+
+              <textarea
+                name="description"
+                [(ngModel)]="form.description"
+                rows="3"
+                placeholder="اكتبي وصفًا مختصرًا للاختبار"
+              ></textarea>
+            </label>
+
+            <label class="field full-width">
+              <span>الدفعة <b>*</b></span>
+
+              <select
+                name="batchId"
+                [(ngModel)]="form.batchId"
+                required
+              >
+                <option [ngValue]="null" disabled>
+                  اختاري الدفعة
+                </option>
+
+                @for (batch of batches(); track batch.batchId) {
+                  <option [ngValue]="batch.batchId">
+                    {{ batch.batchName }} — #{{ batch.batchId }}
+                  </option>
+                }
+              </select>
+
+              @if (batches().length === 0) {
+                <small>
+                  لم يتم العثور على دفعات مسندة للمدرب.
+                </small>
+              }
+            </label>
+
+            <label class="field">
+              <span>تاريخ ووقت البداية <b>*</b></span>
+
+              <input
+                type="datetime-local"
+                name="startDateTime"
+                [(ngModel)]="form.startDateTime"
+                required
+              />
+            </label>
+
+            <label class="field">
+              <span>تاريخ ووقت النهاية <b>*</b></span>
+
+              <input
+                type="datetime-local"
+                name="endDateTime"
+                [(ngModel)]="form.endDateTime"
+                required
+              />
+            </label>
+
+            <label class="field">
+              <span>مدة الاختبار (دقيقة) <b>*</b></span>
+
+              <input
+                type="number"
+                name="durationMinutes"
+                [(ngModel)]="form.durationMinutes"
+                min="1"
+                max="600"
+                required
+              />
+            </label>
+
+            <label class="field">
+              <span>عدد المحاولات <b>*</b></span>
+
+              <input
+                type="number"
+                name="maxAttempts"
+                [(ngModel)]="form.maxAttempts"
+                min="1"
+                max="10"
+                required
+              />
+            </label>
+
+          </div>
+
+          <div class="settings-box">
+
+            <label class="toggle-row">
+              <span>
+                <strong>ترتيب الأسئلة عشوائيًا</strong>
+                <small>تغيير ترتيب الأسئلة للمتدرب</small>
+              </span>
+
+              <input
+                type="checkbox"
+                name="randomizeQuestions"
+                [(ngModel)]="form.randomizeQuestions"
+              />
+            </label>
+
+            <label class="toggle-row">
+              <span>
+                <strong>اشتراط الكاميرا</strong>
+                <small>
+                  الخيار محفوظ في النظام، وقد يحتاج إعدادًا إضافيًا
+                  عند تطبيق المراقبة.
+                </small>
+              </span>
+
+              <input
+                type="checkbox"
+                name="cameraRequired"
+                [(ngModel)]="form.cameraRequired"
+              />
+            </label>
+
+          </div>
+
+          @if (editingQuizId() !== null) {
+            <p class="status-note">
+              حالة الاختبار الحالية:
+              {{ getStatusLabel(form.status) }}.
+              لم نضف خيارات لتغيير الحالة حتى نتأكد من قيم
+              NFD_QuizStatus في الـ Backend.
+            </p>
+          }
+
+          @if (errorMessage()) {
+            <div class="message error-message form-error" role="alert">
+              {{ errorMessage() }}
+            </div>
+          }
+
+          <footer class="modal-actions">
+
+            <button
+              type="button"
+              class="secondary-btn"
+              (click)="closeForm()"
+              [disabled]="saving()"
+            >
+              إلغاء
+            </button>
+
+            <button
+              type="submit"
+              class="primary-btn"
+              [disabled]="saving() || batches().length === 0"
+            >
+              @if (saving()) {
+                <i class="fa-solid fa-spinner fa-spin"></i>
+              } @else {
+                <i class="fa-solid fa-floppy-disk"></i>
+              }
+
+              {{ saving() ? 'جاري الحفظ...' : 'حفظ الاختبار' }}
+            </button>
+
+          </footer>
+        </form>
+
+      </section>
+    </div>
+  }
+
+</div>
