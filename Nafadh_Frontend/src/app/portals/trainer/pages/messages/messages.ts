@@ -83,7 +83,10 @@ export class TrainerMessages implements OnInit {
     this.api.getMyBatches(trainerId).subscribe({
       next: (batches) => {
 
-      
+         console.log('GROUP CREATION CHECK:', batches);
+      (batches ?? []).forEach(batch => {
+  this.createBatchGroup(batch.batchId, userId);
+});
 
 
         const requests = (batches ?? []).map(
@@ -160,12 +163,10 @@ export class TrainerMessages implements OnInit {
               userId
             );
 
-            // اختيار أول متدرب
-            if (allTrainees.length > 0) {
-              this.selectedTraineeId.set(
-                allTrainees[0].traineeId
-              );
-            }
+           // اختيار أول متدرب وتحميل رسائله
+if (allTrainees.length > 0) {
+  this.selectTrainee(allTrainees[0].traineeId);
+}
           },
 
           error: (error) => {
