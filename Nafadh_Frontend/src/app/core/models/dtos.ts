@@ -300,6 +300,15 @@ export interface CompanyProgramSummaryDto {
   usedCapacity: number;
   remainingCapacity: number;
   utilizationPercentage: number;
+  /**
+   * Seats of the OPEN batches (not cancelled, not ended). Capacity is shared by
+   * all companies, so occupancy counts every company's InProgress enrollments.
+   * Optional: absent when talking to an older backend.
+   */
+  openSeatCapacity?: number;
+  openSeatOccupied?: number;
+  openSeatRemaining?: number;
+  openSeatUtilizationPercentage?: number;
   departments: string[];
 }
 
