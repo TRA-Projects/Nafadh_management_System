@@ -35,6 +35,16 @@ namespace Nafadh_Backend.Repositories
                     a.TraineeId == traineeId);
         }
 
+        public async Task<bool> IsTraineeEnrolledInBatchAsync(
+    int traineeId,
+    int batchId)
+        {
+            return await _context.NFD_Enrollments
+                .AnyAsync(e =>
+                    e.TraineeId == traineeId &&
+                    e.BatchId == batchId);
+        }
+
         public async Task AddAttemptAsync(
             NFD_QuizAttempt attempt)
         {
@@ -46,9 +56,12 @@ namespace Nafadh_Backend.Repositories
             await _context.SaveChangesAsync();
         }
         public async Task<NFD_QuizAttempt?>
+
+
     GetAttemptForAnswerAsync(int attemptId)
         {
             return await _context.NFD_QuizAttempts
+                .Include(a => a.Quiz)
                 .Include(a => a.AttemptQuestions)
                     .ThenInclude(aq => aq.Question)
                         .ThenInclude(q => q.Options)
@@ -58,10 +71,12 @@ namespace Nafadh_Backend.Repositories
                     a.AttemptId == attemptId);
         }
 
-        public async Task<NFD_QuizAttempt?>
-            GetAttemptForSubmissionAsync(int attemptId)
+
+
+        public async Task<NFD_QuizAttempt?> GetAttemptForSubmissionAsync(int attemptId)
         {
             return await _context.NFD_QuizAttempts
+                .Include(a => a.Quiz)
                 .Include(a => a.AttemptQuestions)
                     .ThenInclude(aq => aq.Question)
                         .ThenInclude(q => q.Options)
@@ -70,6 +85,7 @@ namespace Nafadh_Backend.Repositories
                 .FirstOrDefaultAsync(a =>
                     a.AttemptId == attemptId);
         }
+
 
         public async Task<NFD_QuizAnswer?>
             GetAnswerAsync(int attemptQuestionId)
@@ -90,6 +106,17 @@ namespace Nafadh_Backend.Repositories
         {
             _context.NFD_QuizAnswers.Update(answer);
         }
-
+        public async Task<NFD_QuizAnswer?> GetAnswerForGradingAsync(
+    int answerId)
+        {
+            return await _context.NFD_QuizAnswers
+                .Include(a => a.AttemptQuestion)
+                    .ThenInclude(aq => aq.Question)
+                .Include(a => a.AttemptQuestion)
+                    .ThenInclude(aq => aq.Attempt)
+                        .ThenInclude(at => at.Quiz)
+                .FirstOrDefaultAsync(a =>
+                    a.AnswerId == answerId);
+        }
     }
 }

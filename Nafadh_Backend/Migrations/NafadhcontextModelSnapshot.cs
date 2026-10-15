@@ -1528,6 +1528,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<bool?>("IsCorrect")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsManuallyGraded")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsMarkedForReview")
                         .HasColumnType("bit");
 

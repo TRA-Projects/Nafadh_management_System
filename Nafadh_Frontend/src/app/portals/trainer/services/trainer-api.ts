@@ -22,8 +22,43 @@ import {
   ProgramDto,
   ModuleDto,
   LessonDto,
+  
 } from '../../../core/models/dtos';
+export interface QuestionOptionDto {
+  optionId: number;
+  optionText: string;
+  optionCode: string;
+  sortOrder: number;
+  isCorrect: boolean;
+}
 
+export interface QuestionBankDto {
+  questionId: number;
+  questionText: string;
+  questionType: number;
+  difficulty: number;
+  points: number;
+  explanation?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  options: QuestionOptionDto[];
+}
+
+export interface CreateQuestionOptionDto {
+  optionText: string;
+  optionCode: string;
+  sortOrder: number;
+  isCorrect: boolean;
+}
+
+export interface CreateQuestionDto {
+  questionText: string;
+  questionType: number;
+  difficulty: number;
+  points: number;
+  explanation?: string | null;
+  options: CreateQuestionOptionDto[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class TrainerApi {
@@ -1133,6 +1168,91 @@ deleteTrainerCertificate(
       dto
     );
   }
+// =====================================
+// QUESTION BANK - بنك الأسئلة
+// =====================================
 
+getTrainerQuestions(
+  trainerId: number
+): Observable<QuestionBankDto[]> {
+  return this.http.get<QuestionBankDto[]>(
+    `${this.base}/question-bank/trainer/${trainerId}`
+  );
+}
+
+getQuestion(
+  questionId: number,
+  trainerId: number
+): Observable<QuestionBankDto> {
+
+  const params = new HttpParams()
+    .set('trainerId', trainerId.toString());
+
+  return this.http.get<QuestionBankDto>(
+    `${this.base}/question-bank/${questionId}`,
+    { params }
+  );
+}
+
+createQuestion(
+  trainerId: number,
+  dto: CreateQuestionDto
+): Observable<QuestionBankDto> {
+
+  const params = new HttpParams()
+    .set('trainerId', trainerId.toString());
+
+  return this.http.post<QuestionBankDto>(
+    `${this.base}/question-bank`,
+    dto,
+    { params }
+  );
+}
+
+updateQuestion(
+  questionId: number,
+  trainerId: number,
+  dto: CreateQuestionDto
+): Observable<{ message: string }> {
+
+  const params = new HttpParams()
+    .set('trainerId', trainerId.toString());
+
+  return this.http.put<{ message: string }>(
+    `${this.base}/question-bank/${questionId}`,
+    dto,
+    { params }
+  );
+}
+
+deactivateQuestion(
+  questionId: number,
+  trainerId: number
+): Observable<{ message: string }> {
+
+  const params = new HttpParams()
+    .set('trainerId', trainerId.toString());
+
+  return this.http.delete<{ message: string }>(
+    `${this.base}/question-bank/${questionId}`,
+    { params }
+  );
+}
+
+addQuestionsToQuiz(
+  quizId: number,
+  trainerId: number,
+  questionIds: number[]
+): Observable<{ message: string }> {
+
+  const params = new HttpParams()
+    .set('trainerId', trainerId.toString());
+
+  return this.http.post<{ message: string }>(
+    `${this.base}/quizzes/${quizId}/questions`,
+    { questionIds },
+    { params }
+  );
+}
 }
 

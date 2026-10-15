@@ -128,5 +128,53 @@ namespace Nafadh_Backend.Controllers
                 });
             }
         }
+        // تصحيح الإجابة المقالية من المدرب
+        [HttpPost("grade-essay")]
+        public async Task<IActionResult> GradeEssayAnswer(
+            [FromBody] GradeQuizAnswerDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _service.GradeEssayAnswerAsync(dto);
+
+                return Ok(new
+                {
+                    message = "تم تصحيح الإجابة المقالية وتحديث درجة المتدرب بنجاح."
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
     }
 }
