@@ -259,14 +259,35 @@ td small {
   }
 }
 
-.view-btn {
-  color: var(--primary);
 
-  &:hover:not(:disabled) {
-    color: white;
-    background: var(--primary);
-  }
+.view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  background: #fff;
+  color: #2563eb;
+  cursor: pointer;
+  visibility: visible;
+  opacity: 1;
 }
+
+.view-btn svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.view-btn:hover {
+  background: #eff6ff;
+  border-color: #2563eb;
+}
+
 
 .social-btn:disabled {
   opacity: 0.35;

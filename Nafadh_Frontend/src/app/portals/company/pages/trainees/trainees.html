@@ -163,9 +163,9 @@
                 </svg>
               </button>
 
-              <!-- عرض التفاصيل -->
-              <button type="button" class="icon-btn social-btn view-btn" title="عرض تفاصيل المتدرب"
-                aria-label="عرض تفاصيل المتدرب" (click)="openProfile(t)">
+              <!-- عرض تفاصيل وتقييمات المتدرب -->
+              <button type="button" class="icon-btn view-btn" title="عرض تفاصيل المتدرب" aria-label="عرض تفاصيل المتدرب"
+                (click)="openTraineeDetails(t)">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" fill="none" stroke="currentColor"
                     stroke-width="1.8" />
@@ -173,14 +173,7 @@
                 </svg>
               </button>
 
-              <button type="button" class="icon-btn" title="تعيين مشرف مباشر" (click)="openAssign(t)">
-                تعيين
-              </button>
-
-              <button type="button" class="icon-btn" title="تغيير الحالة" (click)="openStatus(t)">
-                الحالة
-              </button>
-
+             
             </div>
           </td>
         </tr>

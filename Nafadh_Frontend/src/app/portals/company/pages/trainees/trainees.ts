@@ -2,6 +2,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 type TraineeStatus =
   | 'active'
@@ -13,6 +14,8 @@ type TraineeStatus =
 type SocialPlatform = 'github' | 'linkedin';
 
 interface Trainee {
+  enrollmentId?: number;
+
   id: number;
   name: string;
   cohort: string;
@@ -42,12 +45,20 @@ type Modal = 'add' | 'profile' | 'assign' | 'status' | null;
   styleUrl: './trainees.scss'
 })
 export class CompanyTrainees {
+  constructor(private router: Router) { }
 
+  openTraineeDetails(t: Trainee): void {
+    this.router.navigate([
+      '/company/trainees',
+      t.id,
+      'progress'
+    ]);
+  }
   // بيانات المتدربين التجريبية
   trainees: Trainee[] = [
     {
       id: 1,
-      name: 'أحمد بن سعيد البلوشي',
+      name: 'أحمد محمد الزهراني',
       cohort: 'الدفعة 2026-أ',
       program: 'تطوير تطبيقات الويب',
       dept: 'تقنية المعلومات',
@@ -312,7 +323,7 @@ export class CompanyTrainees {
       linkedinUrl: ''
     }
   ];
-    openGithub(t: Trainee): void {
+  openGithub(t: Trainee): void {
     const url = t.githubUrl?.trim() || 'https://github.com/';
     window.open(url, '_blank', 'noopener,noreferrer');
   }
