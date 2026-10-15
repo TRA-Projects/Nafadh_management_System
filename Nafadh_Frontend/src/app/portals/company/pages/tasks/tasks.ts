@@ -10,6 +10,7 @@ import {
   EXECUTION_LABELS,
   PlanApprovalStatus,
   CoursePlanProgramOptionDto,
+  CoursePlanLookupsDto,
 } from '../../models/company-tasks.models';
 import { formatDate, messageOf, toInputDate } from './plan-utils';
 
@@ -368,7 +369,7 @@ export class CompanyTasks implements OnInit {
      */
     this.api.getCoursePlanLookups(this.companyId).subscribe({
       next: (lookups) => {
-        this.approvedCourses.set(lookups.programs);
+        this.applyLookups(lookups);
       },
 
       error: (err) => {
@@ -377,9 +378,26 @@ export class CompanyTasks implements OnInit {
           err
         );
 
+        this.lookupsLoaded = false;
         this.approvedCourses.set([]);
       },
     });
+  }
+
+  /**
+   * The lookups (programs, trainers, tracks, categories) are fetched once
+   * per page load and reused by the create modal, instead of a second
+   * identical request every time the modal opens.
+   */
+  private lookupsLoaded = false;
+
+  private applyLookups(lookups: CoursePlanLookupsDto): void {
+    this.categories.set(lookups.categories);
+    this.programs.set(lookups.programs);
+    this.approvedCourses.set(lookups.programs);
+    this.tracks.set(lookups.tracks);
+    this.trainers.set(lookups.trainers);
+    this.lookupsLoaded = true;
   }
 
   // ── Create ──
@@ -389,13 +407,17 @@ export class CompanyTasks implements OnInit {
     this.formError.set('');
     this.formOpen.set(true);
 
+    // Reuse the lookups already loaded with the page.
+    if (this.lookupsLoaded) {
+      if (programId !== null) {
+        this.onProgramChange(programId);
+      }
+      return;
+    }
+
     this.api.getCoursePlanLookups(this.companyId).subscribe({
       next: (lookups) => {
-        this.categories.set(lookups.categories);
-        this.programs.set(lookups.programs);
-        this.approvedCourses.set(lookups.programs);
-        this.tracks.set(lookups.tracks);
-        this.trainers.set(lookups.trainers);
+        this.applyLookups(lookups);
 
         if (programId !== null) {
           this.onProgramChange(programId);
