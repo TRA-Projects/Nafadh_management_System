@@ -34,5 +34,8 @@ namespace Nafadh_Backend.Repositories
         void UpdateAnswer(
             NFD_QuizAnswer answer);
 
+        Task<NFD_QuizAnswer?> GetAnswerForGradingAsync(
+    int answerId);
+
     }
 }

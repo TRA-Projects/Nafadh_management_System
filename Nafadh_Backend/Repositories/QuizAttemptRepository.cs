@@ -106,6 +106,17 @@ namespace Nafadh_Backend.Repositories
         {
             _context.NFD_QuizAnswers.Update(answer);
         }
-
+        public async Task<NFD_QuizAnswer?> GetAnswerForGradingAsync(
+    int answerId)
+        {
+            return await _context.NFD_QuizAnswers
+                .Include(a => a.AttemptQuestion)
+                    .ThenInclude(aq => aq.Question)
+                .Include(a => a.AttemptQuestion)
+                    .ThenInclude(aq => aq.Attempt)
+                        .ThenInclude(at => at.Quiz)
+                .FirstOrDefaultAsync(a =>
+                    a.AnswerId == answerId);
+        }
     }
 }
