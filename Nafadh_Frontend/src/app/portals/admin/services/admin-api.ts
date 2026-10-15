@@ -325,4 +325,31 @@ export class AdminApi {
     const cleanId = this.sanitizeId(traineeId);
     return this.http.put<any>(`${this.base}/Trainee/${cleanId}/withdrawal-decision`, dto);
   }
+  // ==========================================================
+  // 🌟 خطط الدورات التدريبية (Course Plans - Admin Review)
+  // ==========================================================
+
+  // جلب كافة الخطط التدريبية الخاصة بالشركة
+  getCompanyCoursePlans(companyId: number): Observable<any> {
+    const cleanCompanyId = this.sanitizeId(companyId);
+    return this.http.get<any>(`${this.base}/CompanyCoursePlan/company/${cleanCompanyId}/plans`);
+  }
+
+  // جلب تفاصيل خطة معينة مع مراحلها ومدربيها وعناصرها
+  getCoursePlanDetails(companyId: number, planId: number): Observable<any> {
+    const cleanCompanyId = this.sanitizeId(companyId);
+    const cleanPlanId = this.sanitizeId(planId);
+    return this.http.get<any>(`${this.base}/CompanyCoursePlan/company/${cleanCompanyId}/plans/${cleanPlanId}`);
+  }
+
+  // اعتماد أو رفض خطة الدورة التدريبية (Authority Approval / Review)
+  reviewCoursePlan(
+    companyId: number,
+    planId: number,
+    dto: { decision: number; note?: string }
+  ): Observable<any> {
+    const cleanCompanyId = this.sanitizeId(companyId);
+    const cleanPlanId = this.sanitizeId(planId);
+    return this.http.put<any>(`${this.base}/CompanyCoursePlan/company/${cleanCompanyId}/plans/${cleanPlanId}/review`, dto);
+  }
 }
