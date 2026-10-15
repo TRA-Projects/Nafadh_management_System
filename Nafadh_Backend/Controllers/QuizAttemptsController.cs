@@ -176,5 +176,40 @@ namespace Nafadh_Backend.Controllers
                 });
             }
         }
+        // تسجيل مخالفة الخروج من صفحة الاختبار
+        [HttpPost("{attemptId:int}/violation")]
+        public async Task<IActionResult> RegisterViolation(int attemptId)
+        {
+            try
+            {
+                var violationCount =
+                    await _service.RegisterViolationAsync(attemptId);
+
+                var isTerminated = violationCount >= 2;
+
+                return Ok(new
+                {
+                    message = isTerminated
+                        ? "تم إنهاء الاختبار بسبب تكرار المخالفات."
+                        : "تم تسجيل المخالفة الأولى.",
+                    violationCount,
+                    isTerminated
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Nafadh_Backend.DTOs;
+﻿
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -6,7 +7,8 @@ namespace Nafadh_Backend.Services
 {
     public interface IQuizService
     {
-        Task<IEnumerable<QuizListDto>> GetTrainerQuizzesAsync(int trainerId);
+        Task<IEnumerable<QuizListDto>> GetTrainerQuizzesAsync(
+            int trainerId);
 
         Task CreateQuizAsync(
             CreateQuizDto dto,
@@ -14,7 +16,8 @@ namespace Nafadh_Backend.Services
 
         Task UpdateQuizAsync(
             int id,
-            UpdateQuizDto dto);
+            UpdateQuizDto dto,
+            int trainerId);
     }
 
     public class QuizService : IQuizService
@@ -82,7 +85,8 @@ namespace Nafadh_Backend.Services
 
         public async Task UpdateQuizAsync(
             int id,
-            UpdateQuizDto dto)
+            UpdateQuizDto dto,
+            int trainerId)
         {
             if (dto.EndDateTime <= dto.StartDateTime)
             {
@@ -96,6 +100,13 @@ namespace Nafadh_Backend.Services
             {
                 throw new KeyNotFoundException(
                     "الاختبار غير موجود.");
+            }
+
+            // التحقق من أن الاختبار تابع للمدرب
+            if (quiz.TrainerId != trainerId)
+            {
+                throw new UnauthorizedAccessException(
+                    "لا يمكنك تعديل اختبار تابع لمدرب آخر.");
             }
 
             quiz.Title = dto.Title.Trim();

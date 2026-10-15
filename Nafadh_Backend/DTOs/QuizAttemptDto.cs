@@ -11,6 +11,7 @@ namespace Nafadh_Backend.DTOs
         public string QuizTitle { get; set; } = string.Empty;
 
         public int DurationMinutes { get; set; }
+        public bool CameraRequired { get; set; }
 
         public DateTime StartedAt { get; set; }
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿
+using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Services;
 
@@ -56,7 +57,8 @@ namespace Nafadh_Backend.Controllers
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateQuiz(
             int id,
-            [FromBody] UpdateQuizDto dto)
+            [FromBody] UpdateQuizDto dto,
+            [FromQuery] int trainerId)
         {
             if (!ModelState.IsValid)
             {
@@ -65,7 +67,8 @@ namespace Nafadh_Backend.Controllers
 
             try
             {
-                await _quizService.UpdateQuizAsync(id, dto);
+                await _quizService.UpdateQuizAsync(
+                    id, dto, trainerId);
 
                 return Ok(new
                 {
@@ -75,6 +78,13 @@ namespace Nafadh_Backend.Controllers
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new
                 {
                     message = ex.Message
                 });
