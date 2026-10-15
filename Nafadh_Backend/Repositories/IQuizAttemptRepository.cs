@@ -10,6 +10,11 @@ namespace Nafadh_Backend.Repositories
             int quizId,
             int traineeId);
 
+
+        Task<bool> IsTraineeEnrolledInBatchAsync(
+            int traineeId,
+            int batchId);
+
         Task AddAttemptAsync(
             NFD_QuizAttempt attempt);
 

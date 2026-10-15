@@ -35,6 +35,16 @@ namespace Nafadh_Backend.Repositories
                     a.TraineeId == traineeId);
         }
 
+        public async Task<bool> IsTraineeEnrolledInBatchAsync(
+    int traineeId,
+    int batchId)
+        {
+            return await _context.NFD_Enrollments
+                .AnyAsync(e =>
+                    e.TraineeId == traineeId &&
+                    e.BatchId == batchId);
+        }
+
         public async Task AddAttemptAsync(
             NFD_QuizAttempt attempt)
         {
