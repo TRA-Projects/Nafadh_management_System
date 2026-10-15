@@ -46,9 +46,12 @@ namespace Nafadh_Backend.Repositories
             await _context.SaveChangesAsync();
         }
         public async Task<NFD_QuizAttempt?>
+
+
     GetAttemptForAnswerAsync(int attemptId)
         {
             return await _context.NFD_QuizAttempts
+                .Include(a => a.Quiz)
                 .Include(a => a.AttemptQuestions)
                     .ThenInclude(aq => aq.Question)
                         .ThenInclude(q => q.Options)
@@ -58,10 +61,12 @@ namespace Nafadh_Backend.Repositories
                     a.AttemptId == attemptId);
         }
 
-        public async Task<NFD_QuizAttempt?>
-            GetAttemptForSubmissionAsync(int attemptId)
+
+
+        public async Task<NFD_QuizAttempt?> GetAttemptForSubmissionAsync(int attemptId)
         {
             return await _context.NFD_QuizAttempts
+                .Include(a => a.Quiz)
                 .Include(a => a.AttemptQuestions)
                     .ThenInclude(aq => aq.Question)
                         .ThenInclude(q => q.Options)
@@ -70,6 +75,7 @@ namespace Nafadh_Backend.Repositories
                 .FirstOrDefaultAsync(a =>
                     a.AttemptId == attemptId);
         }
+
 
         public async Task<NFD_QuizAnswer?>
             GetAnswerAsync(int attemptQuestionId)
