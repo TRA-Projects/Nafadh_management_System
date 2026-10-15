@@ -2489,6 +2489,41 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("NFD_Warnings", (string)null);
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_WithdrawalRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AdminNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TraineeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TraineeId");
+
+                    b.ToTable("NFD_WithdrawalRequests");
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.RemediationRequest", b =>
                 {
                     b.Property<int>("RequestId")
@@ -3591,6 +3626,17 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("Enrollment");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_WithdrawalRequest", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainee", "Trainee")
+                        .WithMany()
+                        .HasForeignKey("TraineeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Trainee");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.RemediationRequest", b =>
