@@ -231,5 +231,12 @@ namespace Nafadh_Backend.Enums
     }
 
 
-  
+    public enum NFD_WithdrawalRequestStatus
+    {
+        Pending,   // قيد الانتظار / المراجعة
+        Approved,  // تم قبول طلب الانسحاب
+        Rejected   // تم رفض الطلب
+    }
+
+
 }
