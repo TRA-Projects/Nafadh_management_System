@@ -1,0 +1,41 @@
+
+<section class="user-manual-host" aria-label="دليل استخدام بوابة المتدرب">
+  <button
+    type="button"
+    class="manual-help-button"
+    (click)="toggleHelp()"
+    [attr.aria-expanded]="guideService.isHelpOpen()"
+  >
+    <span aria-hidden="true">?</span>
+    <span>دليل الاستخدام</span>
+  </button>
+
+  @if (guideService.isHelpOpen()) {
+    <section class="manual-help-panel" dir="rtl">
+      <header class="manual-help-header">
+        <div>
+          <h2>دليل الاستخدام</h2>
+          <p>بوابة المتدرب</p>
+        </div>
+
+        <button
+          type="button"
+          class="manual-close-button"
+          (click)="closeHelp()"
+          aria-label="إغلاق دليل الاستخدام"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="manual-help-content">
+        <p>
+          الصفحة الحالية:
+          <strong>{{ guideService.currentPageKey() }}</strong>
+        </p>
+
+        <p>سيتم إضافة إرشادات الصفحة والأسئلة الشائعة في الخطوة التالية.</p>
+      </div>
+    </section>
+  }
+</section>
