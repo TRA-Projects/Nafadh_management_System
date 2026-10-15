@@ -43,6 +43,23 @@ namespace Nafadh_Backend.Services
                     "الاختبار غير موجود.");
             }
 
+            if (quiz.Status != Nafadh_Backend.Enums.NFD_QuizStatus.Open)
+            {
+                throw new InvalidOperationException(
+                    "الاختبار غير متاح حالياً.");
+            }
+
+            var isEnrolled =
+                await _repository.IsTraineeEnrolledInBatchAsync(
+                    dto.TraineeId,
+                    quiz.BatchId);
+
+            if (!isEnrolled)
+            {
+                throw new UnauthorizedAccessException(
+                    "المتدرب غير مسجل في دفعة هذا الاختبار.");
+            }
+
             var now = DateTime.UtcNow;
 
             if (now < quiz.StartDateTime)
