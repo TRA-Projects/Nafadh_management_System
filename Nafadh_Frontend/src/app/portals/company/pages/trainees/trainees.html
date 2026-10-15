@@ -1,117 +1,134 @@
-<div class="page-head">
-  <div>
-    <h2 class="nfd-page-title">المتدربون</h2>
-    <p class="nfd-page-sub" style="font-size: 15px;">المتدربون المقبولون والمربوطون بتخصص معتمد وخطة تدريب وقسم عمل داخل الشركة</p>
-  </div>
-  <div class="actions">
-    <button class="btn btn-outline" (click)="exportList()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
-      تصدير القائمة
-    </button>
-  </div>
-</div>
-
-<div class="filters">
-  <div class="search-box">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-    <input [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="بحث بالاسم أو البرنامج…" />
-  </div>
-
-  <select class="sel" [ngModel]="batchFilter()" (ngModelChange)="batchFilter.set($event)">
-    <option value="الكل">كل الدفعات</option>
-    @for (b of batches(); track b) { <option [value]="b">{{ b }}</option> }
-  </select>
-  <select class="sel" [ngModel]="programFilter()" (ngModelChange)="programFilter.set($event)">
-    <option value="الكل">كل البرامج</option>
-    @for (p of programs(); track p) { <option [value]="p">{{ p }}</option> }
-  </select>
-  <select class="sel" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
-    <option value="الكل">كل الحالات</option>
-    @for (s of statuses(); track s) { <option [value]="s">{{ statusLabel(s) }}</option> }
-  </select>
-
-  <!-- [جديد] حقل فلتر التاريخ -->
-  <div style="display: flex; align-items: center; gap: 6px;">
-    <span style="font-size: 13px; color: var(--muted); white-space: nowrap;">التاريخ:</span>
-    <input type="date" class="sel" [ngModel]="dateFilter()" (ngModelChange)="dateFilter.set($event)" style="padding: 6px 10px; cursor: pointer;" />
-  </div>
-
-  <button class="btn btn-outline btn-sm" (click)="clearFilters()">مسح التصفية</button>
-  <span class="f-count">{{ filtered().length }} متدرب</span>
-</div>
-
-<div class="card">
-  <div class="tbl-wrap">
-    <table class="tbl">
-      <thead>
-        <tr>
-          <th>المتدرب</th>
-          <th>الدفعة</th>
-          <th>البرامج</th>
-          <th>التخصص</th>
-          <th>الحالة</th>
-          <th style="width:1%"></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (e of filtered(); track e.enrollmentId) {
-          <tr>
-            <td>
-              <div class="cell-user">
-                <!-- عرض صورة المتدرب إذا كانت متوفرة، أو الرمز الافتراضي الحرفي -->
-                @if (e.profileImageUrl) {
-                  <img [src]="e.profileImageUrl" alt="{{ e.traineeName }}" style="object-fit: cover; width: 36px; height: 36px; border-radius: 50%; display: block;" />
-                } @else {
-                  <div class="t-avatar" [style.background]="avatarColor(e.traineeName)">{{ initials(e.traineeName) }}</div>
-                }
-                <div>
-                  <b>{{ e.traineeName }}</b>
-                  <span>#{{ padId(e.enrollmentId) }}</span>
-                </div>
-              </div>
-            </td>
-            <td>{{ e.batchName }}</td>
-            <td>
-              <b style="font-size:12.5px">{{ e.programTitle || '—' }}</b><br>
-              <span style="font-size:10.8px;color:var(--muted)">خطة تدريب عملية</span>
-            </td>
-            <td>
-              <b style="font-size:12.5px">{{ e.departmentName || '—' }}</b><br>
-              <span style="font-size:11px;color:var(--muted)">{{ e.trackName || '—' }}</span>
-            </td>
-            <td>
-              <span class="chip" [ngClass]="statusChipClassFor(e)">
-                <span class="dot"></span>{{ statusLabelFor(e) }}
-              </span>
-            </td>
-            <td style="white-space:nowrap; text-align:left; vertical-align:middle;">
-              <span style="display:inline-flex; align-items:center; gap:14px; padding: 4px 0;">
-                
-                <!-- زر صفحة التقدم -->
-                <a [routerLink]="['/company/trainees', e.enrollmentId, 'progress']" class="prog-btn" title="عرض صفحة التقدم" style="display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px;">
-                  <nfd-icon name="eye" size="sm" />
-                </a>
-                
-                <!-- روابط المتدرب: GitHub + LinkedIn -->
-                <a class="social-icon-btn github" [class.disabled]="!e.traineeGitHubUrl" [href]="ensureUrl(e.traineeGitHubUrl)" target="_blank" rel="noopener noreferrer" title="حساب GitHub للمتدرب">
-                  <nfd-icon name="github" size="sm" />
-                </a>
-
-                <a class="social-icon-btn linkedin" [class.disabled]="!e.traineeLinkedInUrl" [href]="ensureUrl(e.traineeLinkedInUrl)" target="_blank" rel="noopener noreferrer" title="حساب LinkedIn للمتدرب">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14M8.3 18.5v-8.3H5.5v8.3h2.8ZM6.9 9.1a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Zm12.1 9.4v-4.8c0-2.6-1.4-3.8-3.3-3.8-1.5 0-2.2.8-2.6 1.4v-1.1h-2.8v8.3h2.8v-4.6c0-1.2.2-2.3 1.7-2.3 1.5 0 1.5 1.4 1.5 2.4v4.5H19Z"/></svg>
-                </a>
-              </span>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-  @if (!filtered().length) {
-    <div class="empty">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      <b>لا توجد نتائج مطابقة</b>
-      جرّب تعديل كلمات البحث أو التصفية
+<div class="page-container">
+  <!-- رأس الصفحة -->
+  <div class="page-head">
+    <div>
+      <h2 class="nfd-page-title">المتدربون</h2>
+      <p class="nfd-page-sub">المتدربون المقبولون والمربوطون بتخصص معتمد وخطة تدريب وقسم عمل داخل الشركة</p>
     </div>
-  }
+    <div class="actions">
+      <button class="btn btn-outline" (click)="exportList()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <path d="m7 10 5 5 5-5"/>
+          <path d="M12 15V3"/>
+        </svg>
+        تصدير القائمة
+      </button>
+    </div>
+  </div>
+
+  <!-- شريط الفلاتر والبحث -->
+  <div class="filters">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+      </svg>
+      <input [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="بحث بالاسم أو البرنامج…" />
+    </div>
+
+    <select class="sel" [ngModel]="batchFilter()" (ngModelChange)="batchFilter.set($event)">
+      <option value="الكل">كل الدفعات</option>
+      @for (b of batches(); track b) { <option [value]="b">{{ b }}</option> }
+    </select>
+
+    <select class="sel" [ngModel]="programFilter()" (ngModelChange)="programFilter.set($event)">
+      <option value="الكل">كل البرامج</option>
+      @for (p of programs(); track p) { <option [value]="p">{{ p }}</option> }
+    </select>
+
+    <select class="sel" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+      <option value="الكل">كل الحالات</option>
+      @for (s of statuses(); track s) { <option [value]="s">{{ statusLabel(s) }}</option> }
+    </select>
+
+    <!-- حقل فلتر التاريخ -->
+    <div class="date-filter-wrap">
+      <span class="date-label">التاريخ:</span>
+      <input type="date" class="sel date-input" [ngModel]="dateFilter()" (ngModelChange)="dateFilter.set($event)" />
+    </div>
+
+    <button class="btn btn-outline btn-sm" (click)="clearFilters()">مسح التصفية</button>
+    <span class="f-count">{{ filtered().length }} متدرب</span>
+  </div>
+
+  <!-- جدول المتدربين -->
+  <div class="card">
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>المتدرب</th>
+            <th>الدفعة</th>
+            <th>البرامج</th>
+            <th>التخصص</th>
+            <th>الحالة</th>
+            <th style="width:1%"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of filtered(); track e.enrollmentId) {
+            <tr>
+              <td>
+                <div class="cell-user">
+                  @if (e.profileImageUrl) {
+                    <img [src]="e.profileImageUrl" alt="{{ e.traineeName }}" class="trainee-img" />
+                  } @else {
+                    <div class="t-avatar" [style.background]="avatarColor(e.traineeName)">{{ initials(e.traineeName)}}</div>
+                  }
+                  <div>
+                    <b>{{ e.traineeName }}</b>
+                    <span>#{{ padId(e.enrollmentId) }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>{{ e.batchName }}</td>
+              <td>
+                <b class="table-cell-title">{{ e.programTitle || '—' }}</b>
+                <span class="table-cell-sub">خطة تدريب عملية</span>
+              </td>
+              <td>
+                <b class="table-cell-title">{{ e.departmentName || '—' }}</b>
+                <span class="table-cell-sub-track">{{ e.trackName || '—' }}</span>
+              </td>
+              <td>
+                <span class="chip" [ngClass]="statusChipClassFor(e)">
+                  <span class="dot"></span>{{ statusLabelFor(e) }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <div class="row-actions-group">
+                  <!-- زر صفحة التقدم -->
+                  <a [routerLink]="['/company/trainees', e.enrollmentId, 'progress']" class="prog-btn" title="عرض صفحة التقدم">
+                    <nfd-icon name="eye" size="sm" />
+                  </a>
+                  
+                  <!-- حساب GitHub -->
+                  <a class="social-icon-btn github" [class.disabled]="!e.traineeGitHubUrl" [href]="ensureUrl(e.traineeGitHubUrl)" target="_blank" rel="noopener noreferrer" title="حساب GitHub للمتدرب">
+                    <nfd-icon name="github" size="sm" />
+                  </a>
+
+                  <!-- حساب LinkedIn -->
+                  <a class="social-icon-btn linkedin" [class.disabled]="!e.traineeLinkedInUrl" [href]="ensureUrl(e.traineeLinkedInUrl)" target="_blank" rel="noopener noreferrer" title="حساب LinkedIn للمتدرب">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14M8.3 18.5v-8.3H5.5v8.3h2.8ZM6.9 9.1a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Zm12.1 9.4v-4.8c0-2.6-1.4-3.8-3.3-3.8-1.5 0-2.2.8-2.6 1.4v-1.1h-2.8v8.3h2.8v-4.6c0-1.2.2-2.3 1.7-2.3 1.5 0 1.5 1.4 1.5 2.4v4.5H19Z"/>
+                    </svg>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (!filtered().length) {
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <b>لا توجد نتائج مطابقة</b>
+        <span>جرّب تعديل كلمات البحث أو التصفية</span>
+      </div>
+    }
+  </div>
 </div>

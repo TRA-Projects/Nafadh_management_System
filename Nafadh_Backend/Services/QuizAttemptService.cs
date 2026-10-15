@@ -1,0 +1,315 @@
+﻿using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Models;
+using Nafadh_Backend.Repositories;
+
+namespace Nafadh_Backend.Services
+{
+    public interface IQuizAttemptService
+    {
+        Task<QuizAttemptDto> StartAttemptAsync(
+            StartQuizAttemptDto dto);
+        Task SaveAnswerAsync(
+    int attemptId,
+    SubmitQuizAnswerDto dto);
+
+        Task SubmitAttemptAsync(
+            SubmitQuizDto dto);
+
+
+    }
+
+    public class QuizAttemptService
+        : IQuizAttemptService
+    {
+        private readonly IQuizAttemptRepository _repository;
+
+        public QuizAttemptService(
+            IQuizAttemptRepository repository)
+        {
+            _repository = repository;
+        }
+
+        public async Task<QuizAttemptDto> StartAttemptAsync(
+            StartQuizAttemptDto dto)
+        {
+            var quiz =
+                await _repository.GetQuizForAttemptAsync(
+                    dto.QuizId);
+
+            if (quiz == null)
+            {
+                throw new KeyNotFoundException(
+                    "الاختبار غير موجود.");
+            }
+
+            var now = DateTime.UtcNow;
+
+            if (now < quiz.StartDateTime)
+            {
+                throw new InvalidOperationException(
+                    "الاختبار لم يبدأ بعد.");
+            }
+
+            if (now > quiz.EndDateTime)
+            {
+                throw new InvalidOperationException(
+                    "انتهى وقت دخول الاختبار.");
+            }
+
+            var attemptsCount =
+                await _repository.GetAttemptsCountAsync(
+                    dto.QuizId,
+                    dto.TraineeId);
+
+            if (attemptsCount >= quiz.MaxAttempts)
+            {
+                throw new InvalidOperationException(
+                    "لقد استنفدت عدد المحاولات المسموحة.");
+            }
+
+            var questions = quiz.QuizQuestions
+                .Where(x => x.Question != null)
+                .ToList();
+
+            if (questions.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    "لا توجد أسئلة مرتبطة بهذا الاختبار.");
+            }
+
+            if (quiz.RandomizeQuestions)
+            {
+                questions = questions
+                    .OrderBy(x => Guid.NewGuid())
+                    .ToList();
+            }
+            else
+            {
+                questions = questions
+                    .OrderBy(x => x.QuestionOrder)
+                    .ToList();
+            }
+
+            var attempt = new NFD_QuizAttempt
+            {
+                QuizId = quiz.QuizId,
+                TraineeId = dto.TraineeId,
+                AttemptNumber = attemptsCount + 1,
+                StartedAt = now,
+                Status = "InProgress",
+                CreatedAt = now
+            };
+
+            var order = 1;
+
+            foreach (var quizQuestion in questions)
+            {
+                attempt.AttemptQuestions.Add(
+                    new NFD_AttemptQuestion
+                    {
+                        QuestionId =
+                            quizQuestion.QuestionId,
+                        QuestionOrder = order++,
+                        Points = quizQuestion.Points
+                    });
+            }
+
+            await _repository.AddAttemptAsync(attempt);
+            await _repository.SaveChangesAsync();
+
+            return new QuizAttemptDto
+            {
+                AttemptId = attempt.AttemptId,
+                QuizId = quiz.QuizId,
+                QuizTitle = quiz.Title,
+                DurationMinutes = quiz.DurationMinutes,
+                StartedAt = attempt.StartedAt,
+                ExpectedEndAt = attempt.StartedAt
+                    .AddMinutes(quiz.DurationMinutes),
+                Status = attempt.Status,
+                Questions = attempt.AttemptQuestions
+                    .OrderBy(x => x.QuestionOrder)
+                    .Select(x => new AttemptQuestionDto
+                    {
+                        AttemptQuestionId =
+                            x.AttemptQuestionId,
+                        QuestionId = x.QuestionId,
+                        QuestionOrder = x.QuestionOrder,
+                        QuestionText =
+                            x.Question.QuestionText,
+                        QuestionType =
+                            x.Question.QuestionType,
+                        Points = x.Points,
+                        Options = x.Question.Options
+                            .OrderBy(o => o.SortOrder)
+                            .Select(o =>
+                                new QuestionOptionDto
+                                {
+                                    OptionId = o.OptionId,
+                                    OptionText =
+                                        o.OptionText,
+                                    OptionCode =
+                                        o.OptionCode,
+                                    SortOrder =
+                                        o.SortOrder
+                                })
+                            .ToList()
+                    })
+                    .ToList()
+            };
+        }
+        public async Task SaveAnswerAsync(
+         int attemptId,
+         SubmitQuizAnswerDto dto)
+        {
+            var attempt =
+                await _repository.GetAttemptForAnswerAsync(
+                    attemptId);
+
+            if (attempt == null)
+            {
+                throw new KeyNotFoundException(
+                    "المحاولة غير موجودة.");
+            }
+
+            if (attempt.Status != "InProgress")
+            {
+                throw new InvalidOperationException(
+                    "لا يمكن تعديل إجابة هذه المحاولة.");
+            }
+
+            var now = DateTime.UtcNow;
+            var quizEndTime = attempt.StartedAt
+                .AddMinutes(attempt.Quiz.DurationMinutes);
+
+            if (now > quizEndTime)
+            {
+                attempt.Status = "Expired";
+                attempt.SubmittedAt = now;
+
+                await _repository.SaveChangesAsync();
+
+                throw new InvalidOperationException(
+                    "انتهى وقت الاختبار.");
+            }
+
+            var attemptQuestion = attempt.AttemptQuestions
+                .FirstOrDefault(x =>
+                    x.AttemptQuestionId ==
+                    dto.AttemptQuestionId);
+
+            if (attemptQuestion == null)
+            {
+                throw new KeyNotFoundException(
+                    "سؤال المحاولة غير موجود.");
+            }
+
+            if (dto.SelectedOptionId.HasValue)
+            {
+                var selectedOption = attemptQuestion.Question.Options
+                    .FirstOrDefault(x =>
+                        x.OptionId == dto.SelectedOptionId.Value);
+
+                if (selectedOption == null)
+                {
+                    throw new ArgumentException(
+                        "الخيار المحدد لا ينتمي إلى هذا السؤال.");
+                }
+            }
+
+            var isCorrect = false;
+            decimal awardedPoints = 0;
+
+            if (dto.SelectedOptionId.HasValue)
+            {
+                var selectedOption = attemptQuestion.Question.Options
+                    .First(x =>
+                        x.OptionId == dto.SelectedOptionId.Value);
+
+                isCorrect = selectedOption.IsCorrect;
+
+                if (isCorrect)
+                {
+                    awardedPoints = attemptQuestion.Points;
+                }
+            }
+
+            var answer =
+                await _repository.GetAnswerAsync(
+                    dto.AttemptQuestionId);
+
+            if (answer == null)
+            {
+                answer = new NFD_QuizAnswer
+                {
+                    AttemptQuestionId =
+                        dto.AttemptQuestionId
+                };
+
+                await _repository.AddAnswerAsync(answer);
+            }
+
+            answer.SelectedOptionId = dto.SelectedOptionId;
+            answer.TextAnswer = dto.TextAnswer?.Trim();
+            answer.IsCorrect = isCorrect;
+            answer.AwardedPoints = awardedPoints;
+            answer.IsMarkedForReview = dto.IsMarkedForReview;
+            answer.AnsweredAt = now;
+
+            await _repository.SaveChangesAsync();
+        }
+
+        public async Task SubmitAttemptAsync(
+            SubmitQuizDto dto)
+        {
+            var attempt =
+                await _repository.GetAttemptForSubmissionAsync(
+                    dto.AttemptId);
+
+            if (attempt == null)
+            {
+                throw new KeyNotFoundException(
+                    "المحاولة غير موجودة.");
+            }
+
+            if (attempt.Status != "InProgress")
+            {
+                throw new InvalidOperationException(
+                    "تم تسليم هذه المحاولة مسبقاً.");
+            }
+
+            var now = DateTime.UtcNow;
+            var allowedEndTime = attempt.StartedAt
+                .AddMinutes(attempt.Quiz.DurationMinutes);
+
+            if (now > allowedEndTime)
+            {
+                attempt.Status = "Expired";
+            }
+            else
+            {
+                attempt.Status = "Submitted";
+            }
+
+            var totalScore = attempt.AttemptQuestions
+                .Sum(x => x.Answers
+                    .OrderByDescending(a => a.AnsweredAt)
+                    .FirstOrDefault()?.AwardedPoints ?? 0);
+
+            var totalPoints = attempt.AttemptQuestions
+                .Sum(x => x.Points);
+
+            attempt.Score = totalScore;
+
+            attempt.Percentage = totalPoints <= 0
+                ? 0
+                : Math.Round(
+                    totalScore / totalPoints * 100,
+                    2);
+
+            attempt.SubmittedAt = now;
+
+            await _repository.SaveChangesAsync();
+        }
+    }
+}

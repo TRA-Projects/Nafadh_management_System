@@ -41,4 +41,8 @@
     <Folder Include="wwwroot\reports\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Models\NFD_ trainerattendance.cs" />
+  </ItemGroup>
+
 </Project>

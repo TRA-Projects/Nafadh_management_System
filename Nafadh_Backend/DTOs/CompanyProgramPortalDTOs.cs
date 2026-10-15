@@ -57,6 +57,9 @@ namespace Nafadh_Backend.DTOs
         public string CompletionStatus { get; set; } = string.Empty;
         public string? TraineeGitHubUrl { get; set; }
         public string? TraineeLinkedInUrl { get; set; }
+
+        /// <summary>Completed modules / all modules of the program (0–100).</summary>
+        public double ProgressPercentage { get; set; }
     }
 
     public sealed class CompanyProgramModuleDTO
