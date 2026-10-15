@@ -29,5 +29,7 @@ namespace Nafadh_Backend.DTOs
         public bool CameraRequired { get; set; }
 
         public DateTime CreatedAt { get; set; }
+        // نسبة النجاح في الاختبار
+        public decimal PassingPercentage { get; set; }
     }
 }
