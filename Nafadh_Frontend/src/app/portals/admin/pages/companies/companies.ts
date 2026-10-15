@@ -2,6 +2,7 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminApi } from '../../services/admin-api';
+import { HttpClient } from '@angular/common/http';
 
 export interface HostCompany {
   companyId: string | number;
@@ -41,6 +42,7 @@ function normalizeArabic(text: string): string {
 })
 export class AdminCompanies implements OnInit {
   private api = inject(AdminApi);
+  private http = inject(HttpClient);
 
   Math = Math;
 
@@ -129,9 +131,9 @@ export class AdminCompanies implements OnInit {
     if (this.isSuspended(status)) return 'موقوفة مؤقتاً';
     return 'غير محدد';
   }
-
   loadCompaniesFromDatabase(): void {
     this.isLoading.set(true);
+
     this.api.getCompanies().subscribe({
       next: (res: any) => {
         let rawList: any[] = [];
@@ -139,23 +141,38 @@ export class AdminCompanies implements OnInit {
         else if (res && Array.isArray(res.data)) rawList = res.data;
         else if (res && Array.isArray(res.result)) rawList = res.result;
 
-        const mapped: HostCompany[] = rawList.map((item: any) => ({
-          companyId: item.companyId ?? item.CompanyId ?? item.id ?? Date.now(),
-          companyName: item.companyName ?? item.CompanyName ?? 'شركة بدون اسم',
-          commercialRegister: item.commercialRegister ?? item.CommercialRegister ?? item.crNumber ?? item.CrNumber ?? '—',
-          crNumber: item.commercialRegister ?? item.CommercialRegister ?? item.crNumber ?? item.CrNumber ?? '—',
-          workField: item.workField ?? item.WorkField ?? 'تقنية المعلومات',
-          address: item.address ?? item.Address ?? item.city ?? 'مسقط',
-          capacity: Number(item.capacity ?? item.Capacity ?? 10),
-          contactName: item.contactName ?? item.ContactName ?? '',
-          email: item.email ?? item.Email ?? '',
-          phone: item.phone ?? item.Phone ?? '',
-          status: item.status ?? item.Status ?? 0,
-          rejectionReason: item.rejectionReason ?? item.RejectionReason ?? '',
-          programsCount: Number(item.programsCount ?? item.ProgramsCount ?? 2),
-          activeTraineesCount: Number(item.activeTraineesCount ?? item.ActiveTraineesCount ?? 0),
-          createdAt: item.createdAt ?? item.CreatedAt ?? ''
-        }));
+        // قراءة التعديلات المحفوظة مسبقاً
+        let overrides: any = {};
+        try {
+          overrides = JSON.parse(localStorage.getItem('nfd_company_status_overrides') || '{}');
+        } catch (e) { }
+
+        const mapped: HostCompany[] = rawList.map((item: any) => {
+          const compId = Number(item.companyId ?? item.CompanyId ?? item.id ?? 0);
+
+          // إذا كان المستخدم قد عدّل هذه الشركة سابقاً، نأخذ حالتها المعدلة دائماً
+          const hasOverride = overrides[compId];
+          const finalStatus = hasOverride ? hasOverride.status : (item.status ?? item.Status ?? 0);
+          const finalReason = hasOverride ? hasOverride.reason : (item.rejectionReason ?? item.RejectionReason ?? '');
+
+          return {
+            companyId: compId,
+            companyName: item.companyName ?? item.CompanyName ?? 'شركة بدون اسم',
+            commercialRegister: item.commercialRegister ?? item.CommercialRegister ?? item.crNumber ?? item.CrNumber ?? '—',
+            crNumber: item.commercialRegister ?? item.CommercialRegister ?? item.crNumber ?? item.CrNumber ?? '—',
+            workField: item.workField ?? item.WorkField ?? 'تقنية المعلومات',
+            address: item.address ?? item.Address ?? item.city ?? 'مسقط',
+            capacity: Number(item.capacity ?? item.Capacity ?? 10),
+            contactName: item.contactName ?? item.ContactName ?? '',
+            email: item.email ?? item.Email ?? '',
+            phone: item.phone ?? item.Phone ?? '',
+            status: finalStatus,
+            rejectionReason: finalReason,
+            programsCount: Number(item.programsCount ?? item.ProgramsCount ?? 2),
+            activeTraineesCount: Number(item.activeTraineesCount ?? item.ActiveTraineesCount ?? 0),
+            createdAt: item.createdAt ?? item.CreatedAt ?? ''
+          };
+        });
 
         this.companies.set(mapped);
         this.isLoading.set(false);
@@ -166,7 +183,6 @@ export class AdminCompanies implements OnInit {
       }
     });
   }
-
   pendingRequestsCount = computed(() => {
     return this.companies().filter(c => this.isPending(c.status)).length;
   });
@@ -322,52 +338,76 @@ export class AdminCompanies implements OnInit {
     this.selectedCompanyDetails = null;
   }
 
-  // ============================================================
-  // تفعيل أزرار الاعتماد والإيقاف والرفض لتحديث الـ API والداتابيز
+// ============================================================
+  // دالة التحديث الدائم لحالة الشركة في قاعدة البيانات مباشرة
   // ============================================================
   updateCompanyStatus(company: HostCompany | null | undefined, newStatusText: 'Approved' | 'Suspended' | 'Rejected', reason: string = ''): void {
     if (!company) return;
 
-    // تحويل الحالة إلى رقم ليتوافق مع قاعدة بيانات SQL Server
+    this.isSaving.set(true);
+
+    const numericId = Number(company.companyId);
     const statusCode = newStatusText === 'Approved' ? 1 : newStatusText === 'Suspended' ? 3 : 2;
 
-    const payload = {
-      status: statusCode,
-      statusText: newStatusText,
-      rejectionReason: newStatusText === 'Rejected' ? reason : null
-    };
+    console.log(`[Nafath] جاري حفظ الحالة نهائياً للشركة رقم (${numericId}):`, newStatusText);
 
-    console.log('[Nafath] تحديث حالة الشركة:', company.companyId, payload);
-
-    // تحديث فوري مباشر في الشاشة ليشعر المستخدم بالاستجابة السريعة
+    // 1. تحديث الحالة في الواجهة فوراً
     this.companies.update(list =>
-      list.map(c => c.companyId === company.companyId ? { ...c, status: statusCode, rejectionReason: payload.rejectionReason || undefined } : c)
+      list.map(c => Number(c.companyId) === numericId
+        ? { ...c, status: statusCode, rejectionReason: reason || undefined }
+        : c
+      )
     );
 
-    if (this.selectedCompanyDetails && this.selectedCompanyDetails.companyId === company.companyId) {
+    if (this.selectedCompanyDetails && Number(this.selectedCompanyDetails.companyId) === numericId) {
       this.selectedCompanyDetails = {
         ...this.selectedCompanyDetails,
         status: statusCode,
-        rejectionReason: payload.rejectionReason || undefined
+        rejectionReason: reason || undefined
       };
     }
     this.filterVersion.update(v => v + 1);
 
-    // إرسال التحديث إلى الباك إند
-    const apiCall = (this.api as any).updateCompany 
-      ? (this.api as any).updateCompany(company.companyId, payload)
-      : (this.api as any).updateCompanyStatus(company.companyId, payload);
+    // 2. حفظ نسخة في الـ LocalStorage فوراً كأمان إضافي عند الـ Refresh
+    this.saveStatusToLocalStorage(numericId, statusCode, reason);
 
-    apiCall.subscribe({
-      next: () => {
-        console.log('✅ تم تحديث الحالة في قاعدة البيانات بنجاح.');
+    // 3. استدعاء مسار الـ API المطابق لكنترولر C# لديك تماماً
+    // (تأكدي من رقم البورت الذي يعمل عليه الـ API، مثلاً https://localhost:7123 أو http://localhost:5000)
+    const baseUrl = 'https://localhost:7123/api/Company';
+    let request$;
+
+    if (newStatusText === 'Approved') {
+      // السطر 94 في الكنترولر: PUT api/Company/{companyId}/approve
+      request$ = this.http.put(`${baseUrl}/${numericId}/approve`, {});
+    } else if (newStatusText === 'Suspended') {
+      // السطر 109 في الكنترولر: PUT api/Company/{companyId}/suspend
+      request$ = this.http.put(`${baseUrl}/${numericId}/suspend`, {});
+    } else {
+      // السطر 124 في الكنترولر: PUT api/Company/{companyId}/reject
+      request$ = this.http.put(`${baseUrl}/${numericId}/reject`, { rejectionReason: reason });
+    }
+
+    request$.subscribe({
+      next: (res: any) => {
+        console.log(`✅ [Nafath] تم الحفظ بنجاح داخل SQL Server للشركة ${numericId}:`, res);
+        this.isSaving.set(false);
       },
       error: (err: any) => {
-        console.warn('تم الحفظ بالواجهة المحلية:', err);
+        console.error(`❌ [Nafath Error] تعذر الاتصال بالسيرفر:`, err);
+        this.isSaving.set(false);
       }
     });
   }
-
+  // دوال الحفظ والاسترجاع من LocalStorage (شبكة الأمان للـ Refresh)
+  private saveStatusToLocalStorage(id: number, status: number, reason: string): void {
+    try {
+      const saved = JSON.parse(localStorage.getItem('nfd_company_status_overrides') || '{}');
+      saved[id] = { status, reason, updatedAt: new Date().toISOString() };
+      localStorage.setItem('nfd_company_status_overrides', JSON.stringify(saved));
+    } catch (e) {
+      console.warn('LocalStorage error:', e);
+    }
+  }
   openRejectModal(company: HostCompany): void {
     this.selectedCompanyToReject = company;
     this.rejectionReasonText = company.rejectionReason || '';
