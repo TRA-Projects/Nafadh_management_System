@@ -1563,6 +1563,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsTerminatedByViolation")
+                        .HasColumnType("bit");
+
                     b.Property<decimal>("Percentage")
                         .HasColumnType("decimal(18,2)");
 
@@ -1584,6 +1587,9 @@ namespace Nafadh_Backend.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<int>("TraineeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ViolationCount")
                         .HasColumnType("int");
 
                     b.HasKey("AttemptId");

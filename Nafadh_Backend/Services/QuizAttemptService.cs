@@ -18,6 +18,8 @@ namespace Nafadh_Backend.Services
 
         Task GradeEssayAnswerAsync(
  GradeQuizAnswerDto dto);
+
+        Task<int> RegisterViolationAsync(int attemptId);
     }
  
 
@@ -150,6 +152,7 @@ namespace Nafadh_Backend.Services
                 QuizId = quiz.QuizId,
                 QuizTitle = quiz.Title,
                 DurationMinutes = quiz.DurationMinutes,
+                CameraRequired = quiz.CameraRequired,
                 StartedAt = attempt.StartedAt,
                 ExpectedEndAt = attempt.StartedAt
                     .AddMinutes(quiz.DurationMinutes),
@@ -438,6 +441,47 @@ namespace Nafadh_Backend.Services
                 : Math.Round(totalScore / totalPoints * 100, 2);
 
             await _repository.SaveChangesAsync();
+        }
+        public async Task<int> RegisterViolationAsync(int attemptId)
+        {
+            var attempt = await _repository
+                .GetAttemptForSubmissionAsync(attemptId);
+
+            if (attempt == null)
+            {
+                throw new KeyNotFoundException(
+                    "محاولة الاختبار غير موجودة.");
+            }
+
+            if (attempt.Status != "InProgress")
+            {
+                throw new InvalidOperationException(
+                    "لا يمكن تسجيل مخالفة لمحاولة منتهية.");
+            }
+
+            attempt.ViolationCount++;
+
+            if (attempt.ViolationCount >= 2)
+            {
+                attempt.IsTerminatedByViolation = true;
+                attempt.Status = "Terminated";
+                attempt.SubmittedAt = DateTime.UtcNow;
+
+                var totalScore = attempt.AttemptQuestions
+                    .Sum(q => q.Answers.Sum(a => a.AwardedPoints));
+
+                var totalPoints = attempt.AttemptQuestions
+                    .Sum(q => q.Points);
+
+                attempt.Score = totalScore;
+                attempt.Percentage = totalPoints <= 0
+                    ? 0
+                    : Math.Round(totalScore / totalPoints * 100, 2);
+            }
+
+            await _repository.SaveChangesAsync();
+
+            return attempt.ViolationCount;
         }
     }
 }
