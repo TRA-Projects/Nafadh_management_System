@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿
+using System.ComponentModel.DataAnnotations;
 using Nafadh_Backend.Enums;
 
 namespace Nafadh_Backend.DTOs
@@ -31,5 +32,10 @@ namespace Nafadh_Backend.DTOs
         public int MaxAttempts { get; set; }
 
         public bool CameraRequired { get; set; }
+
+        // نسبة النجاح التي يحددها المدرب
+        [Range(0, 100,
+            ErrorMessage = "نسبة النجاح يجب أن تكون بين 0 و100.")]
+        public decimal PassingPercentage { get; set; } = 50;
     }
 }

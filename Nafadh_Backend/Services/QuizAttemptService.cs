@@ -1,4 +1,4 @@
-﻿
+﻿using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
@@ -21,17 +21,20 @@ namespace Nafadh_Backend.Services
 
         Task<int> RegisterViolationAsync(int attemptId);
     }
- 
+
 
     public class QuizAttemptService
         : IQuizAttemptService
     {
         private readonly IQuizAttemptRepository _repository;
+        private readonly Nafadhcontext _context;
 
         public QuizAttemptService(
-            IQuizAttemptRepository repository)
+            IQuizAttemptRepository repository,
+            Nafadhcontext context)
         {
             _repository = repository;
+            _context = context;
         }
 
         public async Task<QuizAttemptDto> StartAttemptAsync(
@@ -413,7 +416,15 @@ namespace Nafadh_Backend.Services
                 throw new ArgumentException(
                     "الدرجة يجب أن تكون بين صفر والدرجة الكاملة للسؤال.");
             }
+            var isEvaluationCompleted = await _context.NFD_TraineeEvaluations
+                .AnyAsync(e => e.AttemptId == attempt.AttemptId && e.IsCompleted);
 
+
+            if (isEvaluationCompleted)
+            {
+                throw new InvalidOperationException(
+                    "لا يمكن تعديل الدرجات بعد اعتماد تقييم المتدرب.");
+            }
             answer.AwardedPoints = dto.AwardedPoints;
             answer.IsManuallyGraded = true;
             answer.IsCorrect = dto.AwardedPoints == attemptQuestion.Points;

@@ -16,6 +16,7 @@ namespace Nafadh_Backend.Controllers
             _quizService = quizService;
         }
 
+        // عرض اختبارات المدرب
         [HttpGet("trainer/{trainerId:int}")]
         public async Task<IActionResult> GetTrainerQuizzes(
             int trainerId)
@@ -26,6 +27,7 @@ namespace Nafadh_Backend.Controllers
             return Ok(quizzes);
         }
 
+        // إنشاء اختبار
         [HttpPost]
         public async Task<IActionResult> CreateQuiz(
             [FromBody] CreateQuizDto dto,
@@ -38,7 +40,8 @@ namespace Nafadh_Backend.Controllers
 
             try
             {
-                await _quizService.CreateQuizAsync(dto, trainerId);
+                await _quizService.CreateQuizAsync(
+                    dto, trainerId);
 
                 return Ok(new
                 {
@@ -54,6 +57,7 @@ namespace Nafadh_Backend.Controllers
             }
         }
 
+        // تعديل اختبار
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateQuiz(
             int id,
@@ -92,6 +96,13 @@ namespace Nafadh_Backend.Controllers
             catch (ArgumentException ex)
             {
                 return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new
                 {
                     message = ex.Message
                 });

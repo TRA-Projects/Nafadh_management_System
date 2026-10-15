@@ -50,5 +50,9 @@ namespace Nafadh_Backend.Models
         public ICollection<NFD_QuizAttempt> Attempts { get; set; }
             = new List<NFD_QuizAttempt>();
 
+        // نسبة النجاح التي يحددها المدرب
+        [Range(0, 100)]
+        public decimal PassingPercentage { get; set; } = 50;
+
     }
 }
