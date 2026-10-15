@@ -1,4 +1,5 @@
-﻿using Nafadh_Backend.DTOs;
+﻿
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -117,9 +118,16 @@ namespace Nafadh_Backend.Services
             await _repository.AddAttemptAsync(attempt);
             await _repository.SaveChangesAsync();
 
+            // Reload the saved attempt with its question and option relationships.
+            var savedAttempt = await _repository.GetAttemptForAnswerAsync(attempt.AttemptId);
+            if (savedAttempt == null)
+            {
+                throw new InvalidOperationException("تعذر تحميل أسئلة محاولة الاختبار.");
+            }
+
             return new QuizAttemptDto
             {
-                AttemptId = attempt.AttemptId,
+                AttemptId = savedAttempt.AttemptId,
                 QuizId = quiz.QuizId,
                 QuizTitle = quiz.Title,
                 DurationMinutes = quiz.DurationMinutes,
@@ -127,7 +135,7 @@ namespace Nafadh_Backend.Services
                 ExpectedEndAt = attempt.StartedAt
                     .AddMinutes(quiz.DurationMinutes),
                 Status = attempt.Status,
-                Questions = attempt.AttemptQuestions
+                Questions = savedAttempt.AttemptQuestions
                     .OrderBy(x => x.QuestionOrder)
                     .Select(x => new AttemptQuestionDto
                     {
@@ -313,3 +321,4 @@ namespace Nafadh_Backend.Services
         }
     }
 }
+
