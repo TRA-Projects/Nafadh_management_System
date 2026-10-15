@@ -1,6 +1,7 @@
 
 import { Injectable, signal } from '@angular/core';
 import { GuidePage } from '../user-manual/models/guide.models';
+import { GUIDE_CONTENT } from '../user-manual/data/guide-content';
 
 @Injectable({
   providedIn: 'root',
@@ -11,10 +12,11 @@ export class GuideService {
 
   readonly isHelpOpen = signal(false);
   readonly isTourActive = signal(false);
-
-  setPage(pageKey: string): void {
-    this.currentPageKey.set(pageKey);
-  }
+  
+setPage(pageKey: string): void {
+  this.currentPageKey.set(pageKey);
+  this.currentGuide.set(GUIDE_CONTENT[pageKey] ?? null);
+}
 
   setGuide(guide: GuidePage | null): void {
     this.currentGuide.set(guide);

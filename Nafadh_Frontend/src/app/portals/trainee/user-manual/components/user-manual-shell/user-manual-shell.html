@@ -28,14 +28,33 @@
         </button>
       </header>
 
-      <div class="manual-help-content">
-        <p>
-          الصفحة الحالية:
-          <strong>{{ guideService.currentPageKey() }}</strong>
-        </p>
+   
+<div class="manual-help-content">
+  @if (guideService.currentGuide(); as guide) {
+    <h3>{{ guide.title }}</h3>
+    <p>{{ guide.description }}</p>
 
-        <p>سيتم إضافة إرشادات الصفحة والأسئلة الشائعة في الخطوة التالية.</p>
-      </div>
+    <h4>الأسئلة الشائعة</h4>
+
+    @for (faq of guide.faqs; track faq.question) {
+      <details>
+        <summary>{{ faq.question }}</summary>
+        <p>{{ faq.answer }}</p>
+      </details>
+    }
+
+    <button
+      type="button"
+      (click)="guideService.startTour()"
+      [disabled]="guide.steps.length === 0"
+    >
+      بدء الجولة الإرشادية
+    </button>
+  } @else {
+    <p>لا يتوفر محتوى إرشادي لهذه الصفحة حاليًا.</p>
+  }
+</div>
+
     </section>
   }
 </section>
