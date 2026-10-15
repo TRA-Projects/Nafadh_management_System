@@ -15,6 +15,8 @@ interface SpecialtyCard {
   duration: number;
   capacity: number;
   used: number;
+  /** Trainees of THIS company currently in the program. */
+  companyUsed: number;
   available: number;
   percent: number;
   approved: boolean;
@@ -187,7 +189,7 @@ export class CompanySpecialties implements OnInit {
 
   /** Published programs that currently have trainees from this company. */
   activePlans(): number {
-    return this.cards().filter((x) => x.approved && x.used > 0).length;
+    return this.cards().filter((x) => x.approved && x.companyUsed > 0).length;
   }
 
   occupancyPercent(): number {
@@ -305,6 +307,10 @@ export class CompanySpecialties implements OnInit {
       ? program.departments.join('، ')
       : 'غير محدد';
 
+    // Prefer the open-batch seat numbers (shared batch capacity versus every
+    // company's trainees). Fall back to the older fields for an older backend.
+    const hasOpenSeats = program.openSeatCapacity !== undefined && program.openSeatCapacity !== null;
+
     return {
       programId: program.programId,
       title: program.title,
@@ -312,10 +318,23 @@ export class CompanySpecialties implements OnInit {
       department,
       departments: program.departments ?? [],
       duration: this.hoursToWeeks(Number(program.durationHours ?? 0)),
-      capacity: Number(program.allocatedCapacity ?? 0),
-      used: Number(program.usedCapacity ?? 0),
-      available: Number(program.remainingCapacity ?? 0),
-      percent: Math.max(0, Math.min(100, Math.round(Number(program.utilizationPercentage ?? 0)))),
+      capacity: Number(hasOpenSeats ? program.openSeatCapacity : program.allocatedCapacity ?? 0),
+      used: Number(hasOpenSeats ? program.openSeatOccupied ?? 0 : program.usedCapacity ?? 0),
+      companyUsed: Number(program.usedCapacity ?? 0),
+      available: Number(hasOpenSeats ? program.openSeatRemaining ?? 0 : program.remainingCapacity ?? 0),
+      percent: Math.max(
+        0,
+        Math.min(
+          100,
+          Math.round(
+            Number(
+              hasOpenSeats
+                ? program.openSeatUtilizationPercentage ?? 0
+                : program.utilizationPercentage ?? 0
+            )
+          )
+        )
+      ),
       approved: !!program.approvedForCompany && program.status === 'Published',
       color,
       soft,
