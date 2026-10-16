@@ -34,5 +34,10 @@ namespace Nafadh_Backend.Services
 
         // Get warnings by severity level
         Task<IEnumerable<WarningOutputDTO>> GetWarningsByLevelAsync(NFD_WarningLevel level);
+
+        // إضافة رد الشركة على الإنذار الموجّه إليها.
+        // نمرّر رقم الشركة الذي تم التحقق منه من المستخدم المسجّل دخوله.
+        Task ReplyToCompanyWarningAsync(int warningId, int companyId, string reply);
+
     }
 }

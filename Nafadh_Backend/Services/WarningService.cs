@@ -9,6 +9,7 @@ using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
+using System.ComponentModel.DataAnnotations;
 
 namespace Nafadh_Backend.Services
 {
@@ -156,6 +157,24 @@ namespace Nafadh_Backend.Services
                 RaisedByName = warning.User?.FullName
             };
         }
+        //********//////
+        public async Task ReplyToCompanyWarningAsync(
+    int warningId,
+    int companyId,
+    string reply)
+        {
+            if (string.IsNullOrWhiteSpace(reply))
+                throw new ArgumentException("Reply is required.");
+
+            if (reply.Length > 500)
+                throw new ArgumentException(
+                    "Reply cannot exceed 500 characters.");
+
+            await _warningRepository.ReplyToCompanyWarningAsync(
+                warningId,
+                companyId,
+                reply.Trim());
+        }
 
         // Convert Entity to Details DTO
         private WarningDetailsDTO MapToDetailsDTO(
@@ -175,8 +194,17 @@ namespace Nafadh_Backend.Services
                 Resolution = warning.Resolution,
                 IssuedDate = warning.IssuedDate,
                 RaisedByUserId = warning.RaisedByUserId,
-                RaisedByName = warning.User?.FullName
+                RaisedByName = warning.User?.FullName,
+                CompanyReply = warning.CompanyReply
             };
+        }
+
+        //*****///
+        public class CompanyWarningReplyDTO
+        {
+            [Required]
+            [MaxLength(500)]
+            public string Reply { get; set; } = string.Empty;
         }
     }
 }
