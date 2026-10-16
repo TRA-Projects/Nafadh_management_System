@@ -1104,5 +1104,35 @@ deleteTrainerCertificate(
     `${this.base}/TrainerCertificate/${certificateId}`
    );
 }
+
+
+  // =====================================
+  // QUIZZES - الاختبارات
+  // =====================================
+
+  getTrainerQuizzes(trainerId: number) {
+    return this.http.get<any[]>(
+      `${this.base}/Quizzes/trainer/${trainerId}`
+    );
+  }
+
+  createQuiz(trainerId: number, dto: any) {
+    const params = new HttpParams()
+      .set('trainerId', trainerId.toString());
+
+    return this.http.post(
+      `${this.base}/Quizzes`,
+      dto,
+      { params }
+    );
+  }
+
+  updateQuiz(quizId: number, dto: any) {
+    return this.http.put(
+      `${this.base}/Quizzes/${quizId}`,
+      dto
+    );
+  }
+
 }
 

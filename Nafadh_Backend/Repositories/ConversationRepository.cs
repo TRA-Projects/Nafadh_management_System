@@ -169,16 +169,20 @@ namespace Nafadh_Backend.Repositories
             }
 
             // check if batch group already exists
+
             var existingGroupId =
-     await _context.NFD_ConversationGroupMembers
-         .Where(
-             gm =>
-                 gm.BatchId == dto.BatchId
-         )
-         .Select(
-             gm => gm.ConversationId
-         )
-         .FirstOrDefaultAsync();
+                await _context.NFD_ConversationGroupMembers
+                    .Where(gm => gm.BatchId == dto.BatchId)
+                    .Join(
+                        _context.NFD_SupportTickets,
+                        gm => gm.ConversationId,
+                        ticket => ticket.TicketId,
+                        (gm, ticket) => new { gm, ticket }
+                    )
+                    .Where(x => x.ticket.Category == "BatchGroup")
+                    .Select(x => x.ticket.TicketId)
+                    .FirstOrDefaultAsync();
+
 
             if (existingGroupId != 0)
             {

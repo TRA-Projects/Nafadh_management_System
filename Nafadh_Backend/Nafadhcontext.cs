@@ -26,6 +26,12 @@ namespace Nafadh_Backend
         public DbSet<NFD_CompanyProgram> NFD_CompanyPrograms { get; set; }
         public DbSet<NFD_Trainer> NFD_Trainers { get; set; }
         public DbSet<NFD_Trainee> NFD_Trainees { get; set; }
+        public DbSet<NFD_Quiz> NFD_Quizzes { get; set; }
+
+        public DbSet<NFD_QuestionBank> NFD_QuestionBanks { get; set; }
+
+        public DbSet<NFD_QuestionOption> NFD_QuestionOptions { get; set; }
+
         public DbSet<NFD_Track> NFD_Tracks { get; set; }
         public DbSet<NFD_Program> NFD_Programs { get; set; }
         public DbSet<NFD_Batch> NFD_Batches { get; set; }
@@ -60,6 +66,13 @@ namespace Nafadh_Backend
         public DbSet<NFD_Report> NFD_Reports { get; set; }
         public DbSet<NFD_SystemSetting> NFD_SystemSettings { get; set; }
         public DbSet<NFD_TraineePayment> NFD_TraineePayments { get; set; }
+        public DbSet<NFD_QuizQuestion> NFD_QuizQuestions { get; set; }
+
+        public DbSet<NFD_QuizAttempt> NFD_QuizAttempts { get; set; }
+
+        public DbSet<NFD_AttemptQuestion> NFD_AttemptQuestions { get; set; }
+
+        public DbSet<NFD_QuizAnswer> NFD_QuizAnswers { get; set; }
         public DbSet<NFD_TraineePaymentSchedule> NFD_TraineePaymentSchedules { get; set; }
         public DbSet<NFD_CompanyPayment> NFD_CompanyPayments { get; set; }
         public DbSet<NFD_CompanyPaymentSchedule> NFD_CompanyPaymentSchedules { get; set; }
@@ -809,6 +822,131 @@ namespace Nafadh_Backend
                     .WithMany(p => p.TraineeBadges)
                     .HasForeignKey(e => e.BadgeId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+            // ---- Quiz Module ----
+
+            modelBuilder.Entity<NFD_Quiz>(entity =>
+            {
+                entity.ToTable("NFD_Quizzes");
+
+                entity.HasKey(e => e.QuizId);
+
+                entity.HasOne(e => e.Batch)
+                    .WithMany()
+                    .HasForeignKey(e => e.BatchId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Trainer)
+                    .WithMany()
+                    .HasForeignKey(e => e.TrainerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(e => e.Title)
+                    .HasMaxLength(200)
+                    .IsRequired();
+            });
+
+            modelBuilder.Entity<NFD_QuestionBank>(entity =>
+            {
+                entity.ToTable("NFD_QuestionBank");
+
+                entity.HasKey(e => e.QuestionId);
+
+                entity.HasOne(e => e.Trainer)
+                    .WithMany()
+                    .HasForeignKey(e => e.TrainerId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(e => e.QuestionText)
+                    .IsRequired();
+            });
+
+            modelBuilder.Entity<NFD_QuestionOption>(entity =>
+            {
+                entity.ToTable("NFD_QuestionOptions");
+
+                entity.HasKey(e => e.OptionId);
+
+                entity.HasOne(e => e.Question)
+                    .WithMany(q => q.Options)
+                    .HasForeignKey(e => e.QuestionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(e => e.OptionText)
+                    .HasMaxLength(500)
+                    .IsRequired();
+
+                entity.Property(e => e.OptionCode)
+                    .HasMaxLength(10)
+                    .IsRequired();
+            });
+
+            modelBuilder.Entity<NFD_QuizQuestion>(entity =>
+            {
+                entity.ToTable("NFD_QuizQuestions");
+
+                entity.HasKey(e => e.QuizQuestionId);
+
+                entity.HasOne(e => e.Quiz)
+                    .WithMany(q => q.QuizQuestions)
+                    .HasForeignKey(e => e.QuizId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Question)
+                    .WithMany(q => q.QuizQuestions)
+                    .HasForeignKey(e => e.QuestionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<NFD_QuizAttempt>(entity =>
+            {
+                entity.ToTable("NFD_QuizAttempts");
+
+                entity.HasKey(e => e.AttemptId);
+
+                entity.HasOne(e => e.Quiz)
+                    .WithMany(q => q.Attempts)
+                    .HasForeignKey(e => e.QuizId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Trainee)
+                    .WithMany()
+                    .HasForeignKey(e => e.TraineeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<NFD_AttemptQuestion>(entity =>
+            {
+                entity.ToTable("NFD_AttemptQuestions");
+
+                entity.HasKey(e => e.AttemptQuestionId);
+
+                entity.HasOne(e => e.Attempt)
+                    .WithMany(a => a.AttemptQuestions)
+                    .HasForeignKey(e => e.AttemptId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Question)
+                    .WithMany()
+                    .HasForeignKey(e => e.QuestionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<NFD_QuizAnswer>(entity =>
+            {
+                entity.ToTable("NFD_QuizAnswers");
+
+                entity.HasKey(e => e.AnswerId);
+
+                entity.HasOne(e => e.AttemptQuestion)
+                    .WithMany(aq => aq.Answers)
+                    .HasForeignKey(e => e.AttemptQuestionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.SelectedOption)
+                    .WithMany(o => o.Answers)
+                    .HasForeignKey(e => e.SelectedOptionId)
+                    .OnDelete(DeleteBehavior.NoAction);
             });
 
             // ---- Company Portal course plans ----
