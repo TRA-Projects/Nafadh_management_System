@@ -59,8 +59,10 @@ export class UserManualShell implements OnDestroy {
       return;
     }
 
+    // تحميل محتوى الدليل الخاص بالصفحة الحالية
     this.guideService.setPage(pageKey);
-    this.guideService.setGuide(null);
+
+    // إيقاف الجولة السابقة عند الانتقال إلى صفحة أخرى
     this.guideService.stopTour();
   }
 
