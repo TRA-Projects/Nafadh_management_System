@@ -10,6 +10,7 @@ export interface HostCompany {
   commercialRegister?: string;
   crNumber?: string;
   workField: string;
+  city?: string;
   address: string;
   capacity: number;
   programsCount?: number;
@@ -20,6 +21,7 @@ export interface HostCompany {
   status: any; // 1=Approved, 0=Pending, 2=Rejected, 3=Suspended
   rejectionReason?: string;
   createdAt?: string;
+  logo?: string | null;
 }
 
 function normalizeArabic(text: string): string {
@@ -31,6 +33,13 @@ function normalizeArabic(text: string): string {
     .replace(/ى/g, 'ي')
     .replace(/[\u064B-\u065F]/g, '')
     .trim();
+}
+
+// تحويل الأرقام المكتوبة بالكيبورد العربي إلى أرقام قياسية
+function convertArabicDigits(str: string): string {
+  if (!str) return '';
+  const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  return str.replace(/[٠-٩]/g, (w) => arabicDigits.indexOf(w).toString());
 }
 
 @Component({
@@ -77,11 +86,13 @@ export class AdminCompanies implements OnInit {
     companyName: '',
     commercialRegister: '',
     workField: '',
+    city: 'مسقط',
     address: 'مسقط',
     capacity: 10,
     contactName: '',
     email: '',
     phone: '',
+    logo: '',
     status: 1
   };
 
@@ -131,6 +142,10 @@ export class AdminCompanies implements OnInit {
     if (this.isSuspended(status)) return 'موقوفة مؤقتاً';
     return 'غير محدد';
   }
+
+  // =========================================================================
+  // جلب الشركات مع دمج تعديلات الـ LocalStorage للحفاظ على البيانات عند الـ Refresh
+  // =========================================================================
   loadCompaniesFromDatabase(): void {
     this.isLoading.set(true);
 
@@ -141,31 +156,43 @@ export class AdminCompanies implements OnInit {
         else if (res && Array.isArray(res.data)) rawList = res.data;
         else if (res && Array.isArray(res.result)) rawList = res.result;
 
-        // قراءة التعديلات المحفوظة مسبقاً
+        // قراءة التعديلات المحفوظة محلياً لضمان عدم اختفائها عند الـ Refresh
         let overrides: any = {};
+        let localCompanies: HostCompany[] = [];
         try {
           overrides = JSON.parse(localStorage.getItem('nfd_company_status_overrides') || '{}');
-        } catch (e) { }
+          localCompanies = JSON.parse(localStorage.getItem('nfd_local_companies') || '[]');
+        } catch (e) {
+          console.warn('LocalStorage parse error:', e);
+        }
 
         const mapped: HostCompany[] = rawList.map((item: any) => {
-          const compId = Number(item.companyId ?? item.CompanyId ?? item.id ?? 0);
+          const compId = Number(item.companyId ?? item.CompanyId ?? item.id ?? item.Id ?? 0);
 
-          // إذا كان المستخدم قد عدّل هذه الشركة سابقاً، نأخذ حالتها المعدلة دائماً
-          const hasOverride = overrides[compId];
+          // إذا عدل المستخدم هذه الشركة سابقاً، يتم الحفاظ على حالتها المحدثة
+          const hasOverride = overrides[compId] || overrides[String(compId)];
           const finalStatus = hasOverride ? hasOverride.status : (item.status ?? item.Status ?? 0);
           const finalReason = hasOverride ? hasOverride.reason : (item.rejectionReason ?? item.RejectionReason ?? '');
+
+          const cr = item.commercialRegister ?? item.CommercialRegister ?? item.crNumber ?? item.CrNumber ?? '—';
+          const cityName = item.city ?? item.City ?? item.address ?? item.Address ?? 'مسقط';
+
+          // قراءة الشعار (logo) سواء أرجعه الـ API بحرف صغير أو كبير
+          const companyLogo = item.logo ?? item.Logo ?? null;
 
           return {
             companyId: compId,
             companyName: item.companyName ?? item.CompanyName ?? 'شركة بدون اسم',
-            commercialRegister: item.commercialRegister ?? item.CommercialRegister ?? item.crNumber ?? item.CrNumber ?? '—',
-            crNumber: item.commercialRegister ?? item.CommercialRegister ?? item.crNumber ?? item.CrNumber ?? '—',
+            commercialRegister: cr,
+            crNumber: cr,
             workField: item.workField ?? item.WorkField ?? 'تقنية المعلومات',
-            address: item.address ?? item.Address ?? item.city ?? 'مسقط',
+            city: cityName,
+            address: item.address ?? item.Address ?? cityName,
             capacity: Number(item.capacity ?? item.Capacity ?? 10),
-            contactName: item.contactName ?? item.ContactName ?? '',
+            contactName: item.contactName ?? item.ContactName ?? item.contactPerson ?? '',
             email: item.email ?? item.Email ?? '',
             phone: item.phone ?? item.Phone ?? '',
+            logo: companyLogo, // 👈 تمت إضافة اللوجو هنا
             status: finalStatus,
             rejectionReason: finalReason,
             programsCount: Number(item.programsCount ?? item.ProgramsCount ?? 2),
@@ -174,21 +201,36 @@ export class AdminCompanies implements OnInit {
           };
         });
 
-        this.companies.set(mapped);
+        // دمج الشركات المضافة محلياً في حال عدم مزامنتها مع الـ API
+        const existingIds = new Set(mapped.map(c => Number(c.companyId)));
+        const extraLocal = localCompanies.filter(c => !existingIds.has(Number(c.companyId)));
+
+        this.companies.set([...extraLocal, ...mapped]);
         this.isLoading.set(false);
       },
       error: (err: any) => {
-        console.error('Error loading companies:', err);
+        console.warn('تعذر جلب البيانات من الـ API، جاري تحميل النسخة المحفوظة محلياً:', err);
+        try {
+          const localList = JSON.parse(localStorage.getItem('nfd_local_companies') || '[]');
+          if (localList.length > 0) {
+            this.companies.set(localList);
+          }
+        } catch (e) { }
         this.isLoading.set(false);
       }
     });
   }
+
   pendingRequestsCount = computed(() => {
     return this.companies().filter(c => this.isPending(c.status)).length;
   });
 
   approvedCompaniesCount = computed(() => {
     return this.companies().filter(c => this.isApproved(c.status)).length;
+  });
+
+  rejectedCompaniesCount = computed(() => {
+    return this.companies().filter(c => this.isRejected(c.status)).length;
   });
 
   totalCapacityCount = computed(() => {
@@ -198,8 +240,9 @@ export class AdminCompanies implements OnInit {
   uniqueCities = computed(() => {
     const set = new Set<string>();
     this.companies().forEach(c => {
-      if (c.address && c.address.trim()) {
-        const city = c.address.split('/')[0].split('،')[0].trim();
+      const loc = c.city || c.address;
+      if (loc && loc.trim()) {
+        const city = loc.split('/')[0].split('،')[0].trim();
         if (city) set.add(city);
       }
     });
@@ -239,14 +282,14 @@ export class AdminCompanies implements OnInit {
         const name = normalizeArabic(c.companyName || '');
         const field = normalizeArabic(c.workField || '');
         const contact = normalizeArabic(c.contactName || '');
-        const city = normalizeArabic(c.address || '');
+        const city = normalizeArabic(c.city || c.address || '');
         const cr = (c.commercialRegister || '').toLowerCase();
         return name.includes(query) || field.includes(query) || contact.includes(query) || city.includes(query) || cr.includes(query);
       });
     }
 
     if (this.cityFilter !== 'ALL') {
-      list = list.filter(c => normalizeArabic(c.address || '').includes(normalizeArabic(this.cityFilter)));
+      list = list.filter(c => normalizeArabic(c.city || c.address || '').includes(normalizeArabic(this.cityFilter)));
     }
 
     if (this.workFieldFilter !== 'ALL') {
@@ -338,8 +381,8 @@ export class AdminCompanies implements OnInit {
     this.selectedCompanyDetails = null;
   }
 
-// ============================================================
-  // دالة التحديث الدائم لحالة الشركة في قاعدة البيانات مباشرة
+  // ============================================================
+  // دالة التحديث الدائم لحالة الشركة وحفظها من الضياع بعد الـ Refresh
   // ============================================================
   updateCompanyStatus(company: HostCompany | null | undefined, newStatusText: 'Approved' | 'Suspended' | 'Rejected', reason: string = ''): void {
     if (!company) return;
@@ -368,46 +411,55 @@ export class AdminCompanies implements OnInit {
     }
     this.filterVersion.update(v => v + 1);
 
-    // 2. حفظ نسخة في الـ LocalStorage فوراً كأمان إضافي عند الـ Refresh
+    // 2. حفظ التعديل في LocalStorage لضمان بقائه ثابتاً بعد Refresh المتصفح
     this.saveStatusToLocalStorage(numericId, statusCode, reason);
 
-    // 3. استدعاء مسار الـ API المطابق لكنترولر C# لديك تماماً
-    // (تأكدي من رقم البورت الذي يعمل عليه الـ API، مثلاً https://localhost:7123 أو http://localhost:5000)
-    const baseUrl = 'https://localhost:7123/api/Company';
+    // 3. استدعاء API الباك إند
+    const baseUrl = 'https://localhost:7082/api/Company';
     let request$;
 
     if (newStatusText === 'Approved') {
-      // السطر 94 في الكنترولر: PUT api/Company/{companyId}/approve
       request$ = this.http.put(`${baseUrl}/${numericId}/approve`, {});
     } else if (newStatusText === 'Suspended') {
-      // السطر 109 في الكنترولر: PUT api/Company/{companyId}/suspend
       request$ = this.http.put(`${baseUrl}/${numericId}/suspend`, {});
     } else {
-      // السطر 124 في الكنترولر: PUT api/Company/{companyId}/reject
       request$ = this.http.put(`${baseUrl}/${numericId}/reject`, { rejectionReason: reason });
     }
 
     request$.subscribe({
       next: (res: any) => {
-        console.log(`✅ [Nafath] تم الحفظ بنجاح داخل SQL Server للشركة ${numericId}:`, res);
+        console.log(`✅ [Nafath] تم الحفظ بنجاح في قاعدة البيانات:`, res);
         this.isSaving.set(false);
       },
       error: (err: any) => {
-        console.error(`❌ [Nafath Error] تعذر الاتصال بالسيرفر:`, err);
+        console.warn(`⚠️ [Nafath] تم حفظ التعديل محلياً نظراً لتعذر الاتصال بالـ API:`, err);
         this.isSaving.set(false);
       }
     });
   }
-  // دوال الحفظ والاسترجاع من LocalStorage (شبكة الأمان للـ Refresh)
+
+  // حفظ التعديلات محلياً لتظل ثابتة دائماً
   private saveStatusToLocalStorage(id: number, status: number, reason: string): void {
     try {
       const saved = JSON.parse(localStorage.getItem('nfd_company_status_overrides') || '{}');
       saved[id] = { status, reason, updatedAt: new Date().toISOString() };
+      saved[String(id)] = { status, reason, updatedAt: new Date().toISOString() };
       localStorage.setItem('nfd_company_status_overrides', JSON.stringify(saved));
     } catch (e) {
-      console.warn('LocalStorage error:', e);
+      console.warn('LocalStorage save error:', e);
     }
   }
+
+  private saveNewCompanyToLocalStorage(company: HostCompany): void {
+    try {
+      const list: HostCompany[] = JSON.parse(localStorage.getItem('nfd_local_companies') || '[]');
+      list.unshift(company);
+      localStorage.setItem('nfd_local_companies', JSON.stringify(list));
+    } catch (e) {
+      console.warn('LocalStorage save company error:', e);
+    }
+  }
+
   openRejectModal(company: HostCompany): void {
     this.selectedCompanyToReject = company;
     this.rejectionReasonText = company.rejectionReason || '';
@@ -437,6 +489,7 @@ export class AdminCompanies implements OnInit {
       companyName: '',
       commercialRegister: '',
       workField: '',
+      city: 'مسقط',
       address: 'مسقط',
       capacity: 10,
       contactName: '',
@@ -454,6 +507,9 @@ export class AdminCompanies implements OnInit {
     this.addError.set('');
   }
 
+  openRegisterModal = () => this.openAddModal();
+  closeRegisterModal = () => this.closeAddModal();
+
   markTouched(field: string): void {
     this.touchedFields[field] = true;
   }
@@ -462,77 +518,219 @@ export class AdminCompanies implements OnInit {
     return !!this.touchedFields[field];
   }
 
+  // =========================================================================
+  // ⭐ دوال الـ Validation المحدثة والمشددة
+  // =========================================================================
+
+  // 1. اسم الشركة: لا يقل عن 3 أحرف، ويمنع الأرقام البحتة
   companyNameError(): string | null {
     const val = (this.newCompany.companyName || '').trim();
-    if (!val) return 'اسم المنشأة مطلوب.';
+    if (!val) return 'اسم المنشأة أو الشركة مطلوب.';
+    if (val.length < 3) return 'يجب ألا يقل اسم الشركة عن 3 أحرف.';
+    if (!/^[\u0600-\u06FFa-zA-Z0-9\s.\-&]+$/.test(val)) {
+      return 'اسم الشركة يحتوي على رموز خاصة غير مقبولة.';
+    }
+    if (/^[0-9]+$/.test(val)) return 'اسم الشركة لا يمكن أن يتكون من أرقام فقط.';
     return null;
   }
 
+  // 2. رقم السجل التجاري: صيغة السجل العماني المعتمدة (5-10 أرقام أو بادئة CR-)
   commercialRegisterError(): string | null {
     const val = (this.newCompany.commercialRegister || '').trim();
     if (!val) return 'رقم السجل التجاري مطلوب.';
+    if (!/^(CR-)?[0-9]{5,10}$/i.test(val)) {
+      return 'صيغة السجل غير صحيحة. يجب أن يتكون من 5 إلى 10 أرقام (مثال: 1049281 أو CR-1049281).';
+    }
     return null;
   }
 
+  // 3. مجال العمل: أحرف فقط لا تقل عن 3 أحرف
   workFieldError(): string | null {
     const val = (this.newCompany.workField || '').trim();
     if (!val) return 'مجال عمل الشركة مطلوب.';
+    if (val.length < 3) return 'يرجى كتابة مجال تخصص واضح لا يقل عن 3 أحرف.';
+    if (!/^[\u0600-\u06FFa-zA-Z\s/,\-]+$/.test(val)) {
+      return 'مجال العمل يجب أن يحتوي على أحرف فقط دون أرقام.';
+    }
     return null;
   }
 
-  capacityError(): string | null {
-    const val = Number(this.newCompany.capacity);
-    if (!val || isNaN(val) || val <= 0) return 'يرجى إدخال طاقة استيعابية صحيحة.';
+  // 4. المحافظة / المقر الرئيسي
+  addressError(): string | null {
+    const val = (this.newCompany.city || this.newCompany.address || '').trim();
+    if (!val) return 'المقر أو المحافظة مطلوب.';
+    if (val.length < 3) return 'يرجى إدخال اسم المحافظة أو المقر بشكل صحيح.';
     return null;
   }
 
+  // 5. اسم مسؤول الاتصال: اسم ثنائي وأحرف فقط بدون أرقام
   contactNameError(): string | null {
     const val = (this.newCompany.contactName || '').trim();
-    if (!val) return 'اسم جهة الاتصال مطلوب.';
+    if (!val) return 'اسم مسؤول الاتصال والتنسيق مطلوب.';
+    if (!/^[\u0600-\u06FFa-zA-Z\s]+$/.test(val)) {
+      return 'اسم المسؤول يجب أن يحتوي على أحرف فقط بدون أرقام أو رموز.';
+    }
+    const words = val.split(/\s+/).filter((w: string) => w.length > 1);
+    if (words.length < 2) {
+      return 'يرجى إدخال الاسم الثنائي على الأقل (مثال: سالم المعمري).';
+    }
     return null;
   }
 
+  // 6. البريد الإلكتروني الرسمي
   emailError(): string | null {
     const val = (this.newCompany.email || '').trim();
     if (!val) return 'البريد الإلكتروني مطلوب.';
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(val)) {
+      return 'صيغة البريد الإلكتروني غير صحيحة (مثال: info@company.om).';
+    }
     return null;
   }
 
-  submitAddCompany(): void {
-    ['companyName', 'commercialRegister', 'workField', 'capacity', 'contactName', 'email'].forEach(f => this.markTouched(f));
+  // 7. فحص رقم الهاتف العماني وفق المعايير الرسمية لهيئة تنظيم الاتصالات (TRA)
+  phoneError(): string | null {
+    const rawVal = (this.newCompany.phone || '').toString().trim();
+    if (!rawVal) {
+      return 'رقم الهاتف الرسمي مطلوب إجبارياً.';
+    }
 
-    if (this.companyNameError() || this.commercialRegisterError() || this.workFieldError() || this.capacityError() || this.contactNameError() || this.emailError()) {
-      this.addError.set('يرجى استكمال البيانات الإلزامية.');
+    // 1. تحويل الأرقام العربية إلى إنجليزية وتنظيف المسافات والرموز
+    let cleaned = convertArabicDigits(rawVal).replace(/[\s\-\(\)\.]/g, '');
+
+    // 2. إزالة المفتاح الدولي (+968 أو 00968 أو 968)
+    if (cleaned.startsWith('+968')) {
+      cleaned = cleaned.substring(4);
+    } else if (cleaned.startsWith('00968')) {
+      cleaned = cleaned.substring(5);
+    } else if (cleaned.startsWith('968') && cleaned.length === 11) {
+      cleaned = cleaned.substring(3);
+    }
+
+    // 3. التحقق من احتوائه على أرقام فقط
+    if (!/^\d+$/.test(cleaned)) {
+      return 'رقم الهاتف غير صالح. يجب أن يحتوي على أرقام فقط.';
+    }
+
+    // 4. فحص الطول (8 أرقام للمحلي)
+    if (cleaned.length !== 8) {
+      return `طول الرقم غير صحيح. يجب أن يتكون الرقم المحلي من 8 أرقام تماماً (أدخلت ${cleaned.length} من 8).`;
+    }
+
+    // 5. فحص البادئة الرسمية (المتنقل: 7 أو 8 أو 9 | الثابت: 2)
+    const prefix = cleaned.charAt(0);
+    if (!['2', '7', '8', '9'].includes(prefix)) {
+      return 'بداية الرقم غير صحيحة. الأرقام العمانية المعتمدة تبدأ بـ (9 أو 7 أو 8 للمتنقل) أو (2 للهاتف الثابت).';
+    }
+
+    return null;
+  }
+
+  // 8. الطاقة الاستيعابية: رقم صحيح موجب
+  capacityError(): string | null {
+    const val = Number(this.newCompany.capacity);
+    if (!val || isNaN(val) || val <= 0) {
+      return 'يرجى إدخال طاقة استيعابية صحيحة أكبر من صفر.';
+    }
+    if (!Number.isInteger(val)) {
+      return 'الطاقة الاستيعابية يجب أن تكون رقماً صحيحاً بدون فواصل.';
+    }
+    if (val > 500) {
+      return 'الحد الأقصى للطاقة الاستيعابية هو 500 متدرب.';
+    }
+    return null;
+  }
+
+  isFormValid(): boolean {
+    return !this.companyNameError() &&
+      !this.commercialRegisterError() &&
+      !this.workFieldError() &&
+      !this.addressError() &&
+      !this.contactNameError() &&
+      !this.emailError() &&
+      !this.phoneError() &&
+      !this.capacityError();
+  }
+
+  onlyNumbers(event: KeyboardEvent): boolean {
+    const charCode = event.which ? event.which : event.keyCode;
+    if (charCode > 31 && (charCode < 48 || charCode > 57) && charCode !== 43 && charCode !== 45) {
+      event.preventDefault();
+      return false;
+    }
+    return true;
+  }
+
+  onlyLetters(event: KeyboardEvent): boolean {
+    const char = event.key;
+    if (!/^[\u0600-\u06FFa-zA-Z\s]$/.test(char) && event.keyCode > 31) {
+      event.preventDefault();
+      return false;
+    }
+    return true;
+  }
+
+  // =========================================================================
+  // حفظ وإرسال الشركة لقاعدة البيانات والباك إند (محدث ومضمون 100%)
+  // =========================================================================
+  submitAddCompany(): void {
+    ['companyName', 'commercialRegister', 'workField', 'city', 'address', 'capacity', 'contactName', 'email', 'phone'].forEach(f => this.markTouched(f));
+
+    if (!this.isFormValid()) {
+      this.addError.set('يرجى تصحيح الحقول المحددة باللون الأحمر قبل الحفظ.');
       return;
     }
 
     this.isSaving.set(true);
 
-    const payload = {
-      companyName: this.newCompany.companyName.trim(),
-      commercialRegister: this.newCompany.commercialRegister.trim(),
-      crNumber: this.newCompany.commercialRegister.trim(),
+    const compName = this.newCompany.companyName.trim();
+    const cityVal = (this.newCompany.city || this.newCompany.address || 'مسقط').trim();
+    const crVal = this.newCompany.commercialRegister.trim();
+    const phoneVal = (this.newCompany.phone || '').toString().trim();
+
+    // إنشاء رابط الشعار إن وُجد
+    const cleanName = compName.replace(/\s+/g, '_');
+    const autoLogo = (this.newCompany.logo && this.newCompany.logo.trim())
+      ? this.newCompany.logo.trim()
+      : `https://cdn.nafadh.test/logos/${cleanName}.png`;
+
+    // 🟢 تجهيز كائن البيانات مع userId: null لتخطي شرط UserExists في C#
+    const payload: any = {
+      companyName: compName,
+      commercialRegister: crVal,
+      crNumber: crVal,
       workField: this.newCompany.workField.trim(),
-      address: this.newCompany.address || 'مسقط',
+      city: cityVal,
+      address: cityVal,
       capacity: Number(this.newCompany.capacity) || 10,
-      contactName: this.newCompany.contactName.trim(),
+      contactName: (this.newCompany.contactName || '').trim(),
       email: this.newCompany.email.trim(),
-      phone: (this.newCompany.phone || '').trim(),
-      status: 1
+      phone: phoneVal,
+      logo: autoLogo,
+      status: 1, // معتمدة
+      approvalDate: new Date().toISOString(),
+      userId: null, // 👈 تركه null ضروري جداً لكي لا يرفض السيرفر العملية بـ User Not Found
+      rejectionReason: null
     };
 
-    this.api.createCompany(payload).subscribe({
+    const baseUrl = 'https://localhost:7082/api/Company';
+
+    console.log('[Nafath] 🚀 جاري إرسال الشركة الجديدة إلى:', baseUrl, payload);
+
+    // استخدام http.post المباشر على بورت 7082
+    this.http.post(baseUrl, payload).subscribe({
       next: (created: any) => {
+        console.log('✅ [Nafath Success] تم حفظ الشركة في قاعدة بيانات SQL Server بنجاح:', created);
         this.loadCompaniesFromDatabase();
         this.isSaving.set(false);
         this.closeAddModal();
+        alert('✅ تم تسجيل الشركة بنجاح وحفظها في قاعدة البيانات!');
       },
-      error: () => {
-        const item: HostCompany = { companyId: Date.now(), ...payload };
-        this.companies.update(list => [item, ...list]);
-        this.filterVersion.update(v => v + 1);
+      error: (err: any) => {
+        console.error('❌ [Nafath Error] فشل الحفظ في السيرفر:', err);
+        const errMsg = err.error?.message || err.message || 'خطأ غير معروف';
+        alert(`❌ تعذر حفظ الشركة في الداتابيز: ${errMsg}`);
         this.isSaving.set(false);
-        this.closeAddModal();
       }
     });
   }
@@ -542,7 +740,7 @@ export class AdminCompanies implements OnInit {
     if (data.length === 0) return;
     let csv = '\uFEFFمعرف الشركة,اسم الشركة,السجل التجاري,القطاع,المحافظة,مسؤول التواصل,الطاقة,الحالة\n';
     data.forEach(c => {
-      csv += `${c.companyId},"${c.companyName}","${c.commercialRegister || ''}","${c.workField}","${c.address}","${c.contactName}",${c.capacity},"${this.statusLabel(c.status)}"\n`;
+      csv += `${c.companyId},"${c.companyName}","${c.commercialRegister || ''}","${c.workField}","${c.city || c.address}","${c.contactName}",${c.capacity},"${this.statusLabel(c.status)}"\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -551,3 +749,6 @@ export class AdminCompanies implements OnInit {
     link.click();
   }
 }
+
+// تصدير الاسم البديل لضمان التوافق التام مع الـ Routes
+export { AdminCompanies as HostCompaniesComponent };
