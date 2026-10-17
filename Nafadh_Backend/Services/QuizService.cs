@@ -9,6 +9,8 @@ namespace Nafadh_Backend.Services
     {
         Task<IEnumerable<QuizListDto>> GetTrainerQuizzesAsync(
             int trainerId);
+        Task<IEnumerable<QuizListDto>> GetTraineeQuizzesAsync(
+    int traineeId);
 
         Task CreateQuizAsync(
             CreateQuizDto dto,
@@ -145,6 +147,32 @@ namespace Nafadh_Backend.Services
 
             await _quizRepository.UpdateAsync(quiz);
             await _quizRepository.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<QuizListDto>>
+    GetTraineeQuizzesAsync(int traineeId)
+        {
+            var quizzes =
+                await _quizRepository.GetQuizzesByTraineeIdAsync(
+                    traineeId);
+
+            return quizzes.Select(q => new QuizListDto
+            {
+                QuizId = q.QuizId,
+                Title = q.Title,
+                Description = q.Description,
+                BatchId = q.BatchId,
+                BatchName = q.Batch?.BatchName,
+                StartDateTime = q.StartDateTime,
+                EndDateTime = q.EndDateTime,
+                DurationMinutes = q.DurationMinutes,
+                Status = q.Status,
+                RandomizeQuestions = q.RandomizeQuestions,
+                MaxAttempts = q.MaxAttempts,
+                CameraRequired = q.CameraRequired,
+                PassingPercentage = q.PassingPercentage,
+                CreatedAt = q.CreatedAt
+            });
         }
     }
 }

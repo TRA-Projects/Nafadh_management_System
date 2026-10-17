@@ -27,6 +27,18 @@ namespace Nafadh_Backend.Controllers
             return Ok(quizzes);
         }
 
+        // عرض اختبارات المتدرب
+        [HttpGet("trainee/{traineeId:int}")]
+        public async Task<IActionResult> GetTraineeQuizzes(
+            int traineeId)
+        {
+            var quizzes =
+                await _quizService.GetTraineeQuizzesAsync(
+                    traineeId);
+
+            return Ok(quizzes);
+        }
+
         // إنشاء اختبار
         [HttpPost]
         public async Task<IActionResult> CreateQuiz(

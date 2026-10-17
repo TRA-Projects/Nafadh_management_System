@@ -43,5 +43,21 @@ namespace Nafadh_Backend.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task<IEnumerable<NFD_Quiz>> GetQuizzesByTraineeIdAsync(
+    int traineeId)
+        {
+            var batchIds = await _context.NFD_Enrollments
+                .Where(e => e.TraineeId == traineeId)
+                .Select(e => e.BatchId)
+                .Distinct()
+                .ToListAsync();
+
+            return await _context.NFD_Quizzes
+                .Include(q => q.Batch)
+                .Where(q => batchIds.Contains(q.BatchId))
+                .OrderByDescending(q => q.StartDateTime)
+                .ToListAsync();
+        }
     }
 }
