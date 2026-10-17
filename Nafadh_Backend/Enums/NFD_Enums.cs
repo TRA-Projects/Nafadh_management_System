@@ -122,7 +122,15 @@ namespace Nafadh_Backend.Enums
     {
         Open, UnderReview, Resolved, Escalated
     }
-
+    namespace Nafadh_Backend.Enums
+    {
+        public enum NFD_RemediationStatus
+        {
+            Pending = 0,       // قيد المراجعة
+            Approved = 1,      // مقبول
+            NeedsRevision = 2  // يحتاج إلى تعديل / إفادة
+        }
+    }
     public enum NFD_SupportTicketStatus
     {
         Open, InProgress, Resolved, Closed
@@ -199,4 +207,29 @@ namespace Nafadh_Backend.Enums
         ModulesCompletedInPeriod, AttendanceStreak, HighScoreCount, ProjectCompletion, ProgramCompletion
     }
     //
+    public enum NFD_QuizStatus
+    {
+        Draft,
+        Scheduled,
+        Open,
+        Closed,
+        Archived
+    }
+
+    public enum NFD_QuizQuestionType
+    {
+        MultipleChoice,
+        TrueFalse,
+        Essay
+    }
+
+    public enum NFD_QuestionDifficulty
+    {
+        Easy,
+        Medium,
+        Hard
+    }
+
+
+  
 }

@@ -27,6 +27,9 @@ namespace Nafadh_Backend.Models
         public string? Evidence { get; set; }
         public NFD_WarningStatus Status { get; set; }
         public string? Resolution { get; set; }
+        // ردود الشركة على الإنذار، مع الاحتفاظ بالردود السابقة
+        public string? CompanyReply { get; set; }
+
         public DateTime IssuedDate { get; set; }
 
         // EDITED: now nullable — only set when Scope == Trainee

@@ -1,19 +1,21 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
+using Nafadh_Backend; // ✅ صحيح.Core.Interfaces;
 using Nafadh_Backend.Filters;
 using Nafadh_Backend.Interfaces;
 using Nafadh_Backend.Repositories;
 using Nafadh_Backend.Services;
+using Nafadh_Backend.Settings;
+using QuestPDF.Infrastructure;
 using System.Security.Claims;
 using System.Text;
-using QuestPDF.Infrastructure;
-using Nafadh_Backend.Settings;
+
 
 namespace Nafadh_Backend
 {
@@ -129,6 +131,9 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ICompanyProgramService, CompanyProgramService>();
             builder.Services.AddScoped<ITrainerRepository, TrainerRepository>();
             builder.Services.AddScoped<ITrainerService, TrainerService>();
+            builder.Services.AddScoped<ICoursePlanExecutionRepository, CoursePlanExecutionRepository>();
+            builder.Services.AddScoped<ICoursePlanExecutionService, CoursePlanExecutionService>();
+            builder.Services.AddScoped<CoursePlanReader>();
             builder.Services.AddScoped<ITraineeRepository, TraineeRepository>();
             builder.Services.AddScoped<ITraineeService, TraineeService>();
             builder.Services.AddScoped<ITrackRepository, TrackRepository>();
@@ -155,6 +160,12 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ISessionAttendanceService, SessionAttendanceService>();
             builder.Services.AddScoped<IDailyAttendanceRepository, DailyAttendanceRepository>();
             builder.Services.AddScoped<IDailyAttendanceService, DailyAttendanceService>();
+            builder.Services.AddScoped<
+                ITrainerAttendanceRepository,
+                TrainerAttendanceRepository>();
+            builder.Services.AddScoped<
+                ITrainerAttendanceService,
+                TrainerAttendanceService>();
             builder.Services.AddScoped<IExcuseRepository, ExcuseRepository>();
             builder.Services.AddScoped<IExcuseService, ExcuseService>();
             builder.Services.AddScoped<ITaskRepository, TaskRepository>();
@@ -200,6 +211,29 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ICompanyPaymentService, CompanyPaymentService>();
             builder.Services.AddScoped<ICompanyPaymentScheduleRepository, CompanyPaymentScheduleRepository>();
             builder.Services.AddScoped<ICompanyPaymentScheduleService, CompanyPaymentScheduleService>();
+            builder.Services.AddScoped<IQuizRepository, QuizRepository>();
+            builder.Services.AddScoped<IQuizService, QuizService>();
+            builder.Services.AddScoped<IQuestionBankRepository,QuestionBankRepository>();
+
+            builder.Services.AddScoped<IQuestionBankService,QuestionBankService>();
+            builder.Services.AddScoped<IQuizQuestionRepository,QuizQuestionRepository>();
+
+            builder.Services.AddScoped<IQuizQuestionService,QuizQuestionService>();
+            builder.Services.AddScoped<IQuizAttemptRepository,QuizAttemptRepository>();
+
+            builder.Services.AddScoped<IQuizAttemptService,QuizAttemptService>();
+
+            builder.Services.AddScoped<IQuizResultRepository,QuizResultRepository>();
+
+            builder.Services.AddScoped<IQuizResultService,QuizResultService>();
+            builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
+            builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
+
+            builder.Services.AddScoped<ITraineeEvaluationRepository, TraineeEvaluationRepository>();
+            builder.Services.AddScoped<ITraineeEvaluationService, TraineeEvaluationService>();
+            //change by admin team
+            builder.Services.AddScoped<IRemediationRepository, RemediationRepository>();
+            builder.Services.AddScoped<IRemediationService, RemediationService>();
 
             builder.Services.AddScoped<ITraineeSkillRepository, TraineeSkillRepository>();
             builder.Services.AddScoped<ITraineeSkillService, TraineeSkillService>();
@@ -225,7 +259,7 @@ namespace Nafadh_Backend
 
             // Automatic absence warnings
             builder.Services.AddScoped<IEmailService, EmailService>();
-            builder.Services.AddScoped<IAbsenceWarningService,AbsenceWarningService>();
+            builder.Services.AddScoped<IAbsenceWarningService, AbsenceWarningService>();
 
             // ── Swagger with JWT support ───────────────────────────────────────
             builder.Services.AddEndpointsApiExplorer();
@@ -293,7 +327,7 @@ namespace Nafadh_Backend
                 app.UseStaticFiles(new StaticFileOptions
 
                 {
-                        FileProvider = new PhysicalFileProvider(trainingMaterialsPath),
+                    FileProvider = new PhysicalFileProvider(trainingMaterialsPath),
 
                     RequestPath = trainingMaterialsRequestPath
 

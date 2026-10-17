@@ -316,7 +316,7 @@
         <div class="lower-list">
           @for (
             trainee of topPerformers().slice(0, 5);
-            track trainee.traineeId
+            track trainee.enrollmentId
           ) {
             <div class="top-row">
               <div class="person-block">
@@ -374,7 +374,7 @@
         </div>
 
         <div class="trainee-list">
-          @for (trainee of atRisk(); track trainee.traineeId) {
+          @for (trainee of atRisk(); track trainee.enrollmentId) {
             <div class="trainee-row" style="display: flex; align-items: center; justify-content: space-between;">
               
               <div style="display: flex; align-items: center; gap: 12px;">
