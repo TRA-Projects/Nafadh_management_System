@@ -606,6 +606,38 @@ export class TrainerQuizzes implements OnInit {
   }
 
   // =====================================================
+// QUESTION SELECTION HELPERS
+// =====================================================
+
+getSelectedQuestionsCount(): number {
+  return this.selectedQuestionIds().size;
+}
+
+selectAllQuestions(): void {
+  const questions = this.filteredQuestions()
+    .filter(question => question.isActive);
+
+  this.selectedQuestionIds.set(
+    new Set(
+      questions.map(question => question.questionId)
+    )
+  );
+}
+
+areAllQuestionsSelected(): boolean {
+  const questions = this.filteredQuestions()
+    .filter(question => question.isActive);
+
+  if (!questions.length) {
+    return false;
+  }
+
+  return questions.every(question =>
+    this.selectedQuestionIds().has(question.questionId)
+  );
+}
+
+  // =====================================================
   // CREATE QUESTION
   // =====================================================
 

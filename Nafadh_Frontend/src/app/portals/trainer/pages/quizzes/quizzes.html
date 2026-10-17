@@ -392,6 +392,22 @@
 
             </div>
 
+             <!-- PASSING PERCENTAGE -->
+
+  <div class="detail-row">
+
+    <i class="fa-solid fa-percent"></i>
+
+    <span>
+      نسبة النجاح
+    </span>
+
+    <strong>
+      {{ quiz.passingPercentage }}%
+    </strong>
+
+  </div>
+
           </div>
 
 
@@ -1553,7 +1569,56 @@
               </button>
 
             </div>
+<!-- QUESTION SELECTION TOOLBAR -->
 
+<div class="question-selection-toolbar">
+
+  <div class="selection-info">
+
+    <i class="fa-solid fa-list-check"></i>
+
+    <span>
+      الأسئلة المحددة
+    </span>
+
+    <strong>
+      {{ getSelectedQuestionsCount() }}
+    </strong>
+
+  </div>
+
+
+  <div class="selection-actions">
+
+    <button
+      type="button"
+      class="secondary-btn"
+      (click)="selectAllQuestions()"
+      [disabled]="
+        areAllQuestionsSelected() ||
+        filteredQuestions().length === 0
+      "
+    >
+      <i class="fa-solid fa-check-double"></i>
+      تحديد الكل
+    </button>
+
+
+    <button
+      type="button"
+      class="secondary-btn"
+      (click)="clearQuestionSelection()"
+      [disabled]="
+        getSelectedQuestionsCount() === 0
+      "
+    >
+      <i class="fa-solid fa-xmark"></i>
+      إلغاء التحديد
+    </button>
+
+  </div>
+
+</div>
 
             <!-- LOADING -->
 
@@ -1935,71 +2000,59 @@
 
             </div>
 
+<div
+  class="modal-actions"
+>
 
-            <div
-              class="modal-actions"
-            >
+  <button
+    type="button"
+    class="primary-btn"
+    (click)="
+      addSelectedQuestionsToQuiz()
+    "
+    [disabled]="
+      selectedQuestionIds().size === 0 ||
+      questionSaving()
+    "
+  >
 
-              <button
-                type="button"
-                class="secondary-btn"
-                (click)="
-                  clearQuestionSelection()
-                "
-                [disabled]="
-                  selectedQuestionIds().size === 0 ||
-                  questionSaving()
-                "
-              >
-                إلغاء التحديد
-              </button>
+    @if (questionSaving()) {
 
+      <i
+        class="fa-solid fa-spinner fa-spin"
+      ></i>
 
-              <button
-                type="button"
-                class="primary-btn"
-                (click)="
-                  addSelectedQuestionsToQuiz()
-                "
-                [disabled]="
-                  selectedQuestionIds().size === 0 ||
-                  questionSaving()
-                "
-              >
+      جاري الإضافة...
 
-                @if (questionSaving()) {
+    }
 
-                  <i
-                    class="fa-solid fa-spinner fa-spin"
-                  ></i>
+    @else {
 
-                  جاري الإضافة...
+      <i
+        class="fa-solid fa-link"
+      ></i>
 
-                }
+      إضافة المحدد للاختبار
 
-                @else {
+      <span>
+        ({{ getSelectedQuestionsCount() }})
+      </span>
 
-                  <i
-                    class="fa-solid fa-link"
-                  ></i>
+    }
 
-                  إضافة المحدد للاختبار
-
-                }
-
-              </button>
+  </button>
 
 
-              <button
-                type="button"
-                class="secondary-btn"
-                (click)="closeQuestionBank()"
-                [disabled]="questionSaving()"
-              >
-                إغلاق
-              </button>
+  <button
+    type="button"
+    class="secondary-btn"
+    (click)="closeQuestionBank()"
+    [disabled]="questionSaving()"
+  >
+    إغلاق
+  </button>
 
-            </div>
+</div>
 
           </footer>
 
