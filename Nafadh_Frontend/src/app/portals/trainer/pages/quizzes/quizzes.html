@@ -745,27 +745,50 @@
 
             </label>
 
+<!-- ATTEMPTS -->
 
-            <!-- ATTEMPTS -->
+<label class="field">
 
-            <label class="field">
+  <span>
+    عدد المحاولات <b>*</b>
+  </span>
 
-              <span>
-                عدد المحاولات <b>*</b>
-              </span>
+  <input
+    type="number"
+    name="maxAttempts"
+    [(ngModel)]="form.maxAttempts"
+    min="1"
+    max="10"
+    required
+  />
 
-              <input
-                type="number"
-                name="maxAttempts"
-                [(ngModel)]="form.maxAttempts"
-                min="1"
-                max="10"
-                required
-              />
+</label>
 
-            </label>
 
-          </div>
+<!-- PASSING PERCENTAGE -->
+
+<label class="field">
+
+  <span>
+    نسبة النجاح (%) <b>*</b>
+  </span>
+
+  <input
+    type="number"
+    name="passingPercentage"
+    [(ngModel)]="form.passingPercentage"
+    min="0"
+    max="100"
+    step="1"
+    required
+    placeholder="مثال: 50"
+  />
+
+</label>
+
+</div>
+
+        
 
 
           <!-- SETTINGS -->
