@@ -458,7 +458,7 @@ export class TrainerQuizzes implements OnInit {
     const request =
       quizId === null
         ? this.api.createQuiz(trainerId, payload)
-        : this.api.updateQuiz(quizId, payload);
+        : this.api.updateQuiz(quizId, trainerId, payload);
 
     request.subscribe({
       next: () => {
@@ -1208,11 +1208,27 @@ areAllQuestionsSelected(): boolean {
     }
   }
 
-  getStatusLabel(status: number): string {
-    return status === 0
-      ? 'مسودة'
-      : `حالة ${status}`;
+ getStatusLabel(status: number): string {
+  switch (status) {
+    case 0:
+      return 'مسودة';
+
+    case 1:
+      return 'مجدول';
+
+    case 2:
+      return 'مفتوح';
+
+    case 3:
+      return 'مغلق';
+
+    case 4:
+      return 'مؤرشف';
+
+    default:
+      return 'غير معروف';
   }
+}
 
   getStatusClass(status: number): string {
     return status === 0
