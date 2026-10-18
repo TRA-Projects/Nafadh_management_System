@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -154,6 +154,10 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ITrainingMaterialService, TrainingMaterialService>();
             builder.Services.AddScoped<ITraineeModuleProgressRepository, TraineeModuleProgressRepository>();
             builder.Services.AddScoped<ITraineeModuleProgressService, TraineeModuleProgressService>();
+
+            // User Guide Progress
+            builder.Services.AddScoped<IUserGuideProgressRepository, UserGuideProgressRepository>();
+            builder.Services.AddScoped<IUserGuideProgressService, UserGuideProgressService>();
             builder.Services.AddScoped<ISessionRepository, SessionRepository>();
             builder.Services.AddScoped<ISessionService, SessionService>();
             builder.Services.AddScoped<ISessionAttendanceRepository, SessionAttendanceRepository>();
@@ -213,19 +217,19 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ICompanyPaymentScheduleService, CompanyPaymentScheduleService>();
             builder.Services.AddScoped<IQuizRepository, QuizRepository>();
             builder.Services.AddScoped<IQuizService, QuizService>();
-            builder.Services.AddScoped<IQuestionBankRepository,QuestionBankRepository>();
+            builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
 
-            builder.Services.AddScoped<IQuestionBankService,QuestionBankService>();
-            builder.Services.AddScoped<IQuizQuestionRepository,QuizQuestionRepository>();
+            builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
+            builder.Services.AddScoped<IQuizQuestionRepository, QuizQuestionRepository>();
 
-            builder.Services.AddScoped<IQuizQuestionService,QuizQuestionService>();
-            builder.Services.AddScoped<IQuizAttemptRepository,QuizAttemptRepository>();
+            builder.Services.AddScoped<IQuizQuestionService, QuizQuestionService>();
+            builder.Services.AddScoped<IQuizAttemptRepository, QuizAttemptRepository>();
 
-            builder.Services.AddScoped<IQuizAttemptService,QuizAttemptService>();
+            builder.Services.AddScoped<IQuizAttemptService, QuizAttemptService>();
 
-            builder.Services.AddScoped<IQuizResultRepository,QuizResultRepository>();
+            builder.Services.AddScoped<IQuizResultRepository, QuizResultRepository>();
 
-            builder.Services.AddScoped<IQuizResultService,QuizResultService>();
+            builder.Services.AddScoped<IQuizResultService, QuizResultService>();
             builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
             builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 
