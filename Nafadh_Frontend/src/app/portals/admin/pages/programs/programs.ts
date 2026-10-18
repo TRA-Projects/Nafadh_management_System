@@ -1,8 +1,8 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { AdminApi } from '../../services/admin-api';
 import { Router } from '@angular/router';
+import { AdminApi } from '../../services/admin-api';
 
 @Component({
   selector: 'app-admin-programs',
@@ -24,11 +24,11 @@ export class AdminPrograms implements OnInit {
   companies = signal<any[]>([]);
   tracks = signal<any[]>([]);
   selectedBatchTrainees = signal<any[]>([]);
-  
+
   statusFilter = signal<string>('الكل');
-  planFilter = signal<string>('الكل'); // فلتر حالة خطة التدريب
+  planFilter = signal<string>('الكل');
   batchesError = signal<string | null>(null);
-  
+
   currentPage = signal<number>(1);
   pageSize = signal<number>(10);
 
@@ -38,25 +38,29 @@ export class AdminPrograms implements OnInit {
   selectedProgram = signal<string>('الكل');
   fromDate = signal<string>('');
   toDate = signal<string>('');
-  
+
   // ==========================================================
-  // 2. Full Page Navigation Flags
+  // 2. Navigation & Modals Flags
   // ==========================================================
   isTraineesPageOpen = signal<boolean>(false);
   isDetailsPageOpen = signal<boolean>(false);
 
-  // Modals
   isBatchModalOpen = false;
   isProgramModalOpen = false;
   isEditModalOpen = false;
   selectedBatch: any = null;
 
-  // Form states & messages
+  // فحص إرسال النماذج لتفعيل الفاليديشن
   isSubmittingProgram = false;
+  programFormSubmitted = false;
   programErrorMessage: string | null = null;
-  isSubmittingBatch = false; 
-  isSubmittingEditBatch = false;
+
+  isSubmittingBatch = false;
+  batchFormSubmitted = false;
   batchErrorMessage: string | null = null;
+
+  isSubmittingEditBatch = false;
+  editBatchFormSubmitted = false;
   editBatchErrorMessage: string | null = null;
 
   batchForm!: FormGroup;
@@ -64,18 +68,16 @@ export class AdminPrograms implements OnInit {
   programForm!: FormGroup;
 
   // ==========================================================
-  // 3. Course Plan Review Modal Signals & States
+  // 3. Course Plan Review Modal Signals
   // ==========================================================
   isPlanModalOpen = signal<boolean>(false);
   isLoadingPlan = signal<boolean>(false);
   selectedPlan = signal<any>(null);
   selectedPlanBatch = signal<any>(null);
   planErrorMessage = signal<string | null>(null);
-  
-  // تبويبات نافذة مراجعة الخطة
+
   activePlanTab = signal<'curriculum' | 'trainers' | 'decision'>('curriculum');
-  
-  // قرارات الاعتماد والرفض
+
   isSubmittingDecision = signal<boolean>(false);
   approvalNotes: string = '';
   rejectionNotes: string = '';
@@ -90,6 +92,16 @@ export class AdminPrograms implements OnInit {
     'رفع نسبة الحضور الإلزامي الحضوري في مقر الشركة إلى 70% كحد أدنى'
   ];
 
+  decisionErrorMessage = signal<string | null>(null);
+  toast = signal<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
+
+  showToast(message: string, type: 'success' | 'error' | 'warning' = 'success'): void {
+    this.toast.set({ message, type });
+    setTimeout(() => {
+      this.toast.set(null);
+    }, 3500); // يختفي تلقائياً بعد 3.5 ثوانٍ
+  }
+
   // ==========================================================
   // 4. Lifecycle Hook
   // ==========================================================
@@ -101,29 +113,27 @@ export class AdminPrograms implements OnInit {
   }
 
   loadInitialData(): void {
-    this.adminApi.getBatches?.().subscribe({
+    this.adminApi.getBatches().subscribe({
       next: (res: any) => this.batches.set(res || []),
       error: () => this.batchesError.set('فشل تحميل قائمة الدفعات من قاعدة البيانات')
     });
 
-    this.adminApi.getPrograms?.().subscribe({
+    this.adminApi.getPrograms().subscribe({
       next: (res: any) => this.programs.set(res || [])
     });
 
-    this.adminApi.getCompanies?.().subscribe({
+    this.adminApi.getCompanies().subscribe({
       next: (res: any) => this.companies.set(res || [])
     });
 
-    this.adminApi.getTracks?.().subscribe({
+    this.adminApi.getTracks().subscribe({
       next: (res: any) => this.tracks.set(res || [])
     });
   }
 
   // ==========================================================
-  // 5. Course Plan Logic
+  // 5. Course Plan Logic (معالجة ذكية لجلب بيانات الخطة)
   // ==========================================================
-  
-  // عدد الخطط المعلقة بانتظار قرار الأدمن
   pendingPlansCount = computed(() => {
     return this.batches().filter(b => {
       const planStatus = this.getBatchPlanStatus(b);
@@ -137,7 +147,6 @@ export class AdminPrograms implements OnInit {
     if (s === 2 || s === 'Approved') return 'معتمدة';
     if (s === 3 || s === 'Rejected' || s === 'NeedsRevision') return 'مرفوضة';
     if (s === 0 || s === 'Draft') return 'مسودة';
-    // افتراضي بناءً على وجود معرف للشركة
     return batch?.hasCoursePlan ? 'بانتظار الاعتماد' : 'لم تُرفع بعد';
   }
 
@@ -154,7 +163,6 @@ export class AdminPrograms implements OnInit {
     this.rejectionNotes = '';
     this.selectedModifications = [];
 
-
     let companyId = Number(batch.companyId ?? batch.CompanyId);
     if (!companyId && batch.companyName) {
       const comp = this.companies().find(c => c.companyName?.trim() === batch.companyName?.trim());
@@ -162,36 +170,105 @@ export class AdminPrograms implements OnInit {
     }
     const programId = Number(batch.programId ?? batch.ProgramId);
 
+    // 1. نستدعي كنترولر الآدمن CoursePlanApproval
+    this.adminApi.getPendingCoursePlans().subscribe({
+      next: (pendingList: any[]) => {
+        const rawList = Array.isArray(pendingList) ? pendingList : [];
+        
+        // البحث عن خطة هذه الشركة أو هذا البرنامج
+        let matched = rawList.find(p => 
+          (companyId && Number(p.companyId ?? p.CompanyId) === companyId) ||
+          (programId && Number(p.programId ?? p.ProgramId) === programId)
+        ) || rawList[0];
+
+        if (matched) {
+          const planId = Number(matched.planId ?? matched.PlanId ?? matched.id);
+          // 2. جلب التفاصيل الكاملة (المراحل، المهام الـ 9، والمدربين)
+          this.adminApi.getCoursePlanDetails(planId).subscribe({
+            next: (detailedPlan: any) => {
+              this.selectedPlan.set(detailedPlan);
+              this.isLoadingPlan.set(false);
+            },
+            error: () => {
+              this.selectedPlan.set(matched);
+              this.isLoadingPlan.set(false);
+            }
+          });
+        } else {
+          // إذا لم تكن معلقة، نجلبها من خطط الشركة مباشرة
+          this.fallbackToCompany(companyId, programId);
+        }
+      },
+      error: () => {
+        this.fallbackToCompany(companyId, programId);
+      }
+    });
+  }
+
+  private fallbackToCompany(companyId: number, programId: number): void {
     if (!companyId) {
       this.isLoadingPlan.set(false);
-      this.planErrorMessage.set('لم يتم العثور على معرّف الشركة التابعة لهذه الدفعة.');
+      this.planErrorMessage.set('لا توجد خطة مرفوعة لهذه الدفعة.');
       return;
     }
 
     this.adminApi.getCompanyCoursePlans(companyId).subscribe({
       next: (res: any) => {
-        const rawPlans: any[] = res?.plans || res?.Plans || (Array.isArray(res) ? res : []);
-        if (!rawPlans || rawPlans.length === 0) {
+        const plans = res?.plans || res?.Plans || (Array.isArray(res) ? res : []);
+        const matched = plans.find((p: any) => Number(p.programId ?? p.ProgramId) === programId) || plans[0];
+        
+        if (matched) {
+          const planId = Number(matched.planId ?? matched.PlanId ?? matched.id);
+          this.adminApi.getCoursePlanDetails(planId).subscribe({
+            next: (detailed: any) => {
+              this.selectedPlan.set(detailed || matched);
+              this.isLoadingPlan.set(false);
+            },
+            error: () => {
+              this.selectedPlan.set(matched);
+              this.isLoadingPlan.set(false);
+            }
+          });
+        } else {
           this.isLoadingPlan.set(false);
-          this.planErrorMessage.set('لا توجد خطة دورة مرفوعة لهذه الدفعة من قِبل الشركة حتى الآن.');
-          return;
+          this.planErrorMessage.set('لم تقم الشركة برفع خطة تدريبية بعد.');
         }
+      },
+      error: () => {
+        this.isLoadingPlan.set(false);
+        this.planErrorMessage.set('تعذر تحميل خطة الدورة من الخادم.');
+      }
+    });
+  }
 
-        let matched = rawPlans.find(p => Number(p.programId ?? p.ProgramId) === programId);
-        if (!matched) matched = rawPlans[0];
+  private loadDetailedPlan(planId: number, fallback: any): void {
+    this.adminApi.getCoursePlanDetails(planId).subscribe({
+      next: (detail: any) => {
+        this.selectedPlan.set(detail || fallback);
+        this.isLoadingPlan.set(false);
+        this.planErrorMessage.set(null);
+      },
+      error: () => {
+        // حتى لو تعذر جلب تفاصيل المراحل، نعرض الخطة الأساسية
+        this.selectedPlan.set(fallback);
+        this.isLoadingPlan.set(false);
+        this.planErrorMessage.set(null);
+      }
+    });
+  }
 
-        const planId = Number(matched.planId ?? matched.PlanId ?? matched.id);
-
-        this.adminApi.getCoursePlanDetails(companyId, planId).subscribe({
-          next: (detailedPlan: any) => {
-            this.selectedPlan.set(detailedPlan || matched);
-            this.isLoadingPlan.set(false);
-          },
-          error: () => {
-            this.selectedPlan.set(matched);
-            this.isLoadingPlan.set(false);
-          }
-        });
+  private loadFromCompanyPlans(companyId: number, programId: number): void {
+    this.adminApi.getCompanyCoursePlans(companyId).subscribe({
+      next: (res: any) => {
+        const plans = res?.plans || res?.Plans || (Array.isArray(res) ? res : []);
+        if (plans.length > 0) {
+          const matched = plans.find((p: any) => Number(p.programId ?? p.ProgramId) === programId) || plans[0];
+          const planId = Number(matched.planId ?? matched.PlanId ?? matched.id);
+          this.loadDetailedPlan(planId, matched);
+        } else {
+          this.isLoadingPlan.set(false);
+          this.planErrorMessage.set('لم تقم الشركة برفع خطة تفصيلية لهذه الدفعة بعد.');
+        }
       },
       error: () => {
         this.isLoadingPlan.set(false);
@@ -221,44 +298,44 @@ export class AdminPrograms implements OnInit {
     }
   }
 
-  executeApproval(): void {
+ executeApproval(): void {
     const plan = this.selectedPlan();
-    const batch = this.selectedPlanBatch();
     const planId = Number(plan?.planId ?? plan?.PlanId ?? plan?.id);
-    const companyId = Number(batch?.companyId ?? plan?.companyId);
 
-    if (!planId || !companyId) return;
+    if (!planId) return;
 
     this.isSubmittingDecision.set(true);
-    this.adminApi.reviewCoursePlan(companyId, planId, {
-      decision: 0, // 0 = Approved
-      note: this.approvalNotes || 'تم اعتماد الخطة التدريبية رسمياً من قِبل الإدارة.'
-    }).subscribe({
+
+    const payload = {
+      decision: 0, // 0 = Approve
+      note: this.approvalNotes?.trim() || 'تم اعتماد الخطة التدريبية رسمياً من قِبل الإدارة.'
+    };
+
+    this.adminApi.reviewCoursePlan(planId, payload).subscribe({
       next: () => {
         this.isSubmittingDecision.set(false);
         alert('تم اعتماد خطة الدورة بنجاح!');
         this.closePlanModal();
         this.loadInitialData();
       },
-      error: () => {
+      error: (err: any) => {
         this.isSubmittingDecision.set(false);
-        alert('حدث خطأ أثناء اعتماد الخطة.');
+        console.error('خطأ الاعتماد:', err);
+        alert(err?.error?.message || 'حدث خطأ أثناء اعتماد الخطة.');
       }
     });
   }
 
-  executeRejection(): void {
+ executeRejection(): void {
     if (!this.rejectionNotes.trim() && this.selectedModifications.length === 0) {
       alert('يرجى تحديد الملاحظات المطلوبة أو كتابة سبب الرفض/طلب التعديل.');
       return;
     }
 
     const plan = this.selectedPlan();
-    const batch = this.selectedPlanBatch();
     const planId = Number(plan?.planId ?? plan?.PlanId ?? plan?.id);
-    const companyId = Number(batch?.companyId ?? plan?.companyId);
 
-    if (!planId || !companyId) return;
+    if (!planId) return;
 
     const fullReason = [
       this.rejectionNotes.trim(),
@@ -266,25 +343,29 @@ export class AdminPrograms implements OnInit {
     ].filter(Boolean).join('\n\n');
 
     this.isSubmittingDecision.set(true);
-    this.adminApi.reviewCoursePlan(companyId, planId, {
-      decision: 1, // 1 = Rejected / NeedsRevision
-      note: fullReason
-    }).subscribe({
+
+    const payload = {
+      decision: 1, // 1 = Reject
+      note: fullReason // ◄ بالمفرد note ليتعرف عليه السيرفر فوراً
+    };
+
+    this.adminApi.reviewCoursePlan(planId, payload).subscribe({
       next: () => {
         this.isSubmittingDecision.set(false);
         alert('تم إرجاع الخطة إلى الشركة مع الملاحظات المطلوبة.');
         this.closePlanModal();
         this.loadInitialData();
       },
-      error: () => {
+      error: (err: any) => {
         this.isSubmittingDecision.set(false);
-        alert('حدث خطأ أثناء محاولة إرجاع الخطة.');
+        console.error('خطأ الرفض:', err);
+        alert(err?.error?.message || 'حدث خطأ أثناء محاولة إرجاع الخطة.');
       }
     });
   }
 
   // ==========================================================
-  // 6. Navigation & Modals Handlers
+  // 6. Navigation Handlers
   // ==========================================================
   onView(batch: any): void {
     this.selectedBatch = batch;
@@ -307,12 +388,9 @@ export class AdminPrograms implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     const bId = Number(batch?.batchId || batch?.id);
-
-    // ★ نستدعي الدالة الجديدة التي تتصل بالـ API الحقيقي
     this.adminApi.getBatchTrainees(bId).subscribe({
       next: (res: any) => {
         const trainees = Array.isArray(res) ? res : (res?.items || []);
-        console.log('متدربو الدفعة المستلمون:', trainees);
         this.selectedBatchTrainees.set(trainees);
       },
       error: (err) => {
@@ -328,13 +406,8 @@ export class AdminPrograms implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  onViewTraineesFromDetails(): void {
-    this.onViewTrainees(this.selectedBatch);
-  }
-
-  onEditFromDetails(): void {
-    this.onEdit(this.selectedBatch);
-  }
+  onViewTraineesFromDetails(): void { this.onViewTrainees(this.selectedBatch); }
+  onEditFromDetails(): void { this.onEdit(this.selectedBatch); }
 
   onMessageTrainee(trainee: any): void {
     this.router.navigate(['/admin/communications'], {
@@ -347,8 +420,12 @@ export class AdminPrograms implements OnInit {
   }
 
   // ==========================================================
-  // 7. Forms Setup & Modals
+  // 7. Forms Setup & Form Controls Getters (Validation)
   // ==========================================================
+  get bf() { return this.batchForm.controls; }
+  get ebf() { return this.editBatchForm.controls; }
+  get pf() { return this.programForm.controls; }
+
   dateRangeValidator(group: FormGroup) {
     const start = group.get('startDate')?.value;
     const end = group.get('endDate')?.value;
@@ -390,27 +467,33 @@ export class AdminPrograms implements OnInit {
     });
   }
 
-  get pf() { return this.programForm.controls; }
-
   preventNegative(event: KeyboardEvent): void {
     if (['-', 'e', 'E', '+'].includes(event.key)) event.preventDefault();
   }
 
   onCreateBatch(): void {
     this.batchForm.reset({ capacity: 15 });
+    this.batchFormSubmitted = false;
     this.batchErrorMessage = null;
     this.isBatchModalOpen = true;
   }
 
-  onCloseBatchModal(): void { this.isBatchModalOpen = false; }
+  onCloseBatchModal(): void {
+    this.isBatchModalOpen = false;
+    this.batchFormSubmitted = false;
+  }
 
   onCreateProgram(): void {
     this.programForm.reset({ durationWeeks: 10, trackId: null });
+    this.programFormSubmitted = false;
     this.programErrorMessage = null;
     this.isProgramModalOpen = true;
   }
 
-  onCloseProgramModal(): void { this.isProgramModalOpen = false; }
+  onCloseProgramModal(): void {
+    this.isProgramModalOpen = false;
+    this.programFormSubmitted = false;
+  }
 
   onEdit(batch: any): void {
     this.selectedBatch = batch;
@@ -422,22 +505,25 @@ export class AdminPrograms implements OnInit {
       endDate: batch.endDate ? batch.endDate.split('T')[0] : '',
       capacity: batch.capacity
     });
+    this.editBatchFormSubmitted = false;
     this.editBatchErrorMessage = null;
     this.isEditModalOpen = true;
   }
 
   onCloseEditModal(): void {
     this.isEditModalOpen = false;
+    this.editBatchFormSubmitted = false;
     this.selectedBatch = null;
   }
 
   onSubmit(): void {
+    this.batchFormSubmitted = true;
     if (this.batchForm.invalid) {
       this.batchForm.markAllAsTouched();
       return;
     }
     this.isSubmittingBatch = true;
-    this.adminApi.createBatch?.(this.batchForm.value).subscribe({
+    this.adminApi.createBatch(this.batchForm.value).subscribe({
       next: () => {
         this.isSubmittingBatch = false;
         this.loadInitialData();
@@ -451,12 +537,13 @@ export class AdminPrograms implements OnInit {
   }
 
   onSubmitProgram(): void {
+    this.programFormSubmitted = true;
     if (this.programForm.invalid) {
       this.programForm.markAllAsTouched();
       return;
     }
     this.isSubmittingProgram = true;
-    this.adminApi.createProgram?.(this.programForm.value).subscribe({
+    this.adminApi.createProgram(this.programForm.value).subscribe({
       next: () => {
         this.isSubmittingProgram = false;
         this.loadInitialData();
@@ -470,6 +557,7 @@ export class AdminPrograms implements OnInit {
   }
 
   onSaveBatch(): void {
+    this.editBatchFormSubmitted = true;
     if (this.editBatchForm.invalid) {
       this.editBatchForm.markAllAsTouched();
       return;
@@ -483,7 +571,7 @@ export class AdminPrograms implements OnInit {
       status: this.selectedBatch?.status || 'Ongoing'
     };
 
-    this.adminApi.updateBatch?.(batchId, payload).subscribe({
+    this.adminApi.updateBatch(batchId, payload).subscribe({
       next: () => {
         this.isSubmittingEditBatch = false;
         this.loadInitialData();
@@ -548,7 +636,6 @@ export class AdminPrograms implements OnInit {
     return this.batches().filter(batch => {
       if (status !== 'الكل' && this.normalizeStatus(batch.status) !== status) return false;
 
-      // فلترة حالة خطة التدريب
       if (planF !== 'الكل') {
         const batchPlan = this.getBatchPlanStatus(batch);
         if (batchPlan !== planF) return false;
@@ -632,7 +719,6 @@ export class AdminPrograms implements OnInit {
     if (page >= 1 && page <= this.totalPages()) this.currentPage.set(page);
   }
 
-  // Helpers
   getBatchDuration(start?: string, end?: string): string {
     if (!start || !end) return '-';
     const diffDays = Math.ceil(Math.abs(new Date(end).getTime() - new Date(start).getTime()) / (1000 * 60 * 60 * 24));
