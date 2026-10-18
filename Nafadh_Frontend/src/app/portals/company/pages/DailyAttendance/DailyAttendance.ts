@@ -1001,9 +1001,13 @@ ngOnInit(): void {
 
 
 
+  showConfirmPopover = signal(false);
+
   confirmDay(): void {
     if (!this.canManageAttendance()) return;
     if (!this.canConfirm()) return;
+    if (!this.showConfirmPopover()) return;
+    this.showConfirmPopover.set(false);
     this.confirming.set(true);
     // Persist the default Present status only for trainers without a record.
     const missing = this.rows().filter(row => !row.record);

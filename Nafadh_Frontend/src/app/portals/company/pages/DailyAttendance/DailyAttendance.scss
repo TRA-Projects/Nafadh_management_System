@@ -1077,3 +1077,19 @@ tbody tr.saving {
   color: rgb(44, 44, 44) !important;
   font-weight: 700;
 }
+/* Small confirmation popover anchored beside the attendance button. */
+.daily-confirm-actions { position: relative; }
+.attendance-confirm-popover {
+  position: absolute; z-index: 40; inset-inline-end: 0; top: calc(100% + 10px);
+  width: min(340px, calc(100vw - 32px)); padding: 18px;
+  background: #fff; color: #17243b; border: 1px solid #dce4ee;
+  border-radius: 14px; box-shadow: 0 12px 35px rgba(20,35,65,.17);
+  text-align: right; line-height: 1.6;
+}
+.attendance-confirm-popover strong { display: block; font-size: 15px; }
+.attendance-confirm-popover p { margin: 6px 0 16px; font-size: 13px; color: #64748b; }
+.attendance-confirm-popover-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.attendance-confirm-popover-actions .btn { min-height: 36px; }
+@media (max-width: 480px) {
+  .attendance-confirm-popover { inset-inline-end: 0; max-width: calc(100vw - 32px); }
+}
