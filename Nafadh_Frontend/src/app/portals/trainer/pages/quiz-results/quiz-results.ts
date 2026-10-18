@@ -4,6 +4,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TrainerApi, QuizResultDto } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-quiz-results',
@@ -23,7 +24,8 @@ export class QuizResults implements OnInit {
   constructor(
     private api: TrainerApi,
     private auth: AuthService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -64,4 +66,9 @@ export class QuizResults implements OnInit {
       }
     });
   }
+  
+goBack(): void {
+  this.router.navigate(['/trainer/quizzes']);
+}
+
 }

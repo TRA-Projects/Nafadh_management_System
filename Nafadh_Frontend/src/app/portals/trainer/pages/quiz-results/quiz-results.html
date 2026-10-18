@@ -1,7 +1,23 @@
 
 <section class="results-page" dir="rtl">
 
+  
+<div class="results-header">
+
   <h2>نتائج الاختبارات</h2>
+
+  <button
+    type="button"
+    class="back-btn"
+    (click)="goBack()">
+
+    <i class="fa-solid fa-arrow-right"></i>
+    العودة إلى الاختبارات
+
+  </button>
+
+</div>
+
 
   <p *ngIf="loading()">جاري تحميل النتائج...</p>
 
