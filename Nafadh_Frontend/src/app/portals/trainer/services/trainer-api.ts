@@ -44,6 +44,20 @@ export interface QuestionBankDto {
   options: QuestionOptionDto[];
 }
 
+export interface QuizResultDto {
+  attemptId: number;
+  quizId: number;
+  quizTitle: string;
+  traineeId: number;
+  traineeName: string;
+  attemptNumber: number;
+  startedAt: string;
+  submittedAt: string | null;
+  score: number;
+  percentage: number;
+  status: string;
+}
+
 export interface CreateQuestionOptionDto {
   optionText: string;
   optionCode: string;
@@ -1162,12 +1176,20 @@ deleteTrainerCertificate(
     );
   }
 
-  updateQuiz(quizId: number, dto: any) {
-    return this.http.put(
-      `${this.base}/Quizzes/${quizId}`,
-      dto
-    );
-  }
+updateQuiz(
+  quizId: number,
+  trainerId: number,
+  dto: any
+) {
+  const params = new HttpParams()
+    .set('trainerId', trainerId.toString());
+
+  return this.http.put(
+    `${this.base}/Quizzes/${quizId}`,
+    dto,
+    { params }
+  );
+}
 // =====================================
 // QUESTION BANK - بنك الأسئلة
 // =====================================
@@ -1254,5 +1276,31 @@ addQuestionsToQuiz(
     { params }
   );
 }
+
+// =====================================
+// QUIZ RESULTS
+// =====================================
+
+getTrainerQuizResults(
+  trainerId: number,
+  quizId?: number
+): Observable<QuizResultDto[]> {
+
+  let params = new HttpParams();
+
+  if (quizId !== undefined) {
+    params = params.set(
+      'quizId',
+      quizId.toString()
+    );
+  }
+
+  return this.http.get<QuizResultDto[]>(
+    `${this.base}/quiz-results/trainer/${trainerId}`,
+    { params }
+  );
+}
+
+
 }
 

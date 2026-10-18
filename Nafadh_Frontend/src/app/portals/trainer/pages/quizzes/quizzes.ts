@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { Router } from '@angular/router';
 import {
   TrainerDto,
   TrainerBatchDto
@@ -214,7 +215,8 @@ export class TrainerQuizzes implements OnInit {
 
   constructor(
     private api: TrainerApi,
-    private auth: AuthService
+    private auth: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -458,7 +460,7 @@ export class TrainerQuizzes implements OnInit {
     const request =
       quizId === null
         ? this.api.createQuiz(trainerId, payload)
-        : this.api.updateQuiz(quizId, payload);
+        : this.api.updateQuiz(quizId, trainerId, payload);
 
     request.subscribe({
       next: () => {
@@ -1208,11 +1210,29 @@ areAllQuestionsSelected(): boolean {
     }
   }
 
-  getStatusLabel(status: number): string {
-    return status === 0
-      ? 'مسودة'
-      : `حالة ${status}`;
+ 
+getStatusLabel(status: number | string): string {
+
+  switch (Number(status)) {
+    case 0:
+      return 'مسودة';
+
+    case 1:
+      return 'مجدول';
+
+    case 2:
+      return 'مفتوح';
+
+    case 3:
+      return 'مغلق';
+
+    case 4:
+      return 'مؤرشف';
+
+    default:
+      return 'غير معروف';
   }
+}
 
   getStatusClass(status: number): string {
     return status === 0
@@ -1287,4 +1307,17 @@ areAllQuestionsSelected(): boolean {
 
     return local.toISOString().slice(0, 16);
   }
+
+  
+openQuizResults(quizId: number): void {
+  this.router.navigate(
+    ['/trainer/quiz-results'],
+    {
+      queryParams: {
+        quizId: quizId
+      }
+    }
+  );
+}
+
 }
