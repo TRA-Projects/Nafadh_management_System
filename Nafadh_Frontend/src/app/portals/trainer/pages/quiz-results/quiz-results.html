@@ -1,11 +1,15 @@
+
 <section class="results-page" dir="rtl">
 
-
+  <!-- PAGE HEADER -->
   <div class="results-header">
 
     <h2>نتائج الاختبارات</h2>
 
-    <button type="button" class="back-btn" (click)="goBack()">
+    <button
+      type="button"
+      class="back-btn"
+      (click)="goBack()">
 
       <i class="fa-solid fa-arrow-right"></i>
       العودة إلى الاختبارات
@@ -14,16 +18,22 @@
 
   </div>
 
-
-  <p *ngIf="loading()">جاري تحميل النتائج...</p>
+  <!-- RESULTS MESSAGES -->
+  <p *ngIf="loading()">
+    جاري تحميل النتائج...
+  </p>
 
   <p class="error" *ngIf="errorMessage()">
     {{ errorMessage() }}
   </p>
 
-  <div class="table-wrapper" *ngIf="!loading() && !errorMessage()">
+  <!-- RESULTS TABLE -->
+  <div
+    class="table-wrapper"
+    *ngIf="!loading() && !errorMessage()">
 
     <table>
+
       <thead>
         <tr>
           <th>اسم المتدرب</th>
@@ -32,30 +42,307 @@
           <th>الدرجة</th>
           <th>النسبة</th>
           <th>الحالة</th>
+          <th>حالة التصحيح</th>
+          <th>النتيجة</th>
           <th>تاريخ التسليم</th>
+          <th>الإجراءات</th>
         </tr>
       </thead>
 
       <tbody>
+
         <tr *ngFor="let result of results()">
+
           <td>{{ result.traineeName }}</td>
+
           <td>{{ result.quizTitle }}</td>
+
           <td>{{ result.attemptNumber }}</td>
+
           <td>{{ result.score }}</td>
+
           <td>{{ result.percentage }}%</td>
-          <td>{{ getAttemptStatusLabel(result.status) }}</td>
+
           <td>
-            {{ result.submittedAt
-            ? (result.submittedAt | date:'short')
-            : 'لم يُسلّم' }}
+            {{ getAttemptStatusLabel(result.status) }}
           </td>
+
+          <td>
+            {{ getGradingStatusLabel(result.isGradingCompleted) }}
+          </td>
+
+          <td>
+            {{ getPassStatusLabel(result.isPassed) }}
+          </td>
+
+          <td>
+            {{
+              result.submittedAt
+                ? (result.submittedAt | date:'short')
+                : 'لم يُسلّم'
+            }}
+          </td>
+
+          <td>
+            <button
+              type="button"
+              class="details-btn"
+              (click)="openAttemptDetails(result.attemptId)">
+
+              <i class="fa-solid fa-eye"></i>
+              عرض الإجابات وتصحيحها
+
+            </button>
+          </td>
+
         </tr>
+
       </tbody>
+
     </table>
 
     <p *ngIf="results().length === 0">
       لا توجد نتائج لهذا الاختبار.
     </p>
+
+  </div>
+
+  <!-- ====================================== -->
+  <!-- ATTEMPT DETAILS MODAL -->
+  <!-- ====================================== -->
+
+  <div
+    class="modal-backdrop"
+    *ngIf="showAttemptDetails()"
+    (click)="closeAttemptDetails()">
+
+    <section
+      class="attempt-details-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="attempt-details-title"
+      (click)="$event.stopPropagation()">
+
+      <!-- MODAL HEADER -->
+      <div class="modal-header">
+
+        <h3 id="attempt-details-title">
+          تفاصيل محاولة المتدرب
+        </h3>
+
+        <button
+          type="button"
+          class="close-btn"
+          aria-label="إغلاق"
+          [disabled]="grading()"
+          (click)="closeAttemptDetails()">
+          ×
+        </button>
+
+      </div>
+
+      <!-- LOADING -->
+      <p *ngIf="detailsLoading()">
+        جاري تحميل إجابات المتدرب...
+      </p>
+
+      <!-- ERROR MESSAGE -->
+      <p class="error" *ngIf="detailsError()">
+        {{ detailsError() }}
+      </p>
+
+      <!-- SUCCESS MESSAGE -->
+      <p class="success" *ngIf="detailsSuccess()">
+        {{ detailsSuccess() }}
+      </p>
+
+      <!-- ATTEMPT CONTENT -->
+      <ng-container *ngIf="selectedAttempt() as attempt">
+
+        <!-- ATTEMPT SUMMARY -->
+        <div class="attempt-summary">
+
+          <p>
+            <strong>اسم المتدرب:</strong>
+            {{ attempt.traineeName }}
+          </p>
+
+          <p>
+            <strong>الاختبار:</strong>
+            {{ attempt.quizTitle }}
+          </p>
+
+          <p>
+            <strong>رقم المحاولة:</strong>
+            {{ attempt.attemptNumber }}
+          </p>
+
+          <p>
+            <strong>حالة المحاولة:</strong>
+            {{ getAttemptStatusLabel(attempt.status) }}
+          </p>
+
+          <p>
+            <strong>الدرجة:</strong>
+            {{ attempt.score }}
+          </p>
+
+          <p>
+            <strong>النسبة:</strong>
+            {{ attempt.percentage }}%
+          </p>
+
+          <p>
+            <strong>حالة التصحيح:</strong>
+            {{ getGradingStatusLabel(attempt.isGradingCompleted) }}
+          </p>
+
+          <p>
+            <strong>النتيجة:</strong>
+            {{ getPassStatusLabel(attempt.isPassed) }}
+          </p>
+
+        </div>
+
+        <!-- ANSWERS TITLE -->
+        <h4>أسئلة المحاولة وإجابات المتدرب</h4>
+
+        <p *ngIf="attempt.answers.length === 0">
+          لا توجد إجابات لهذه المحاولة.
+        </p>
+
+        <!-- QUESTIONS -->
+        <div
+          class="answer-card"
+          *ngFor="let answer of attempt.answers">
+
+          <div class="answer-header">
+
+            <h4>
+              السؤال {{ answer.questionOrder }}
+            </h4>
+
+            <span>
+              الدرجة القصوى:
+              {{ answer.maxPoints }}
+            </span>
+
+          </div>
+
+          <!-- QUESTION TEXT -->
+          <p class="question-text">
+            {{ answer.questionText }}
+          </p>
+
+          <!-- ESSAY ANSWER -->
+          <div *ngIf="isEssayQuestion(answer)">
+
+            <p>
+              <strong>إجابة المتدرب:</strong>
+            </p>
+
+            <div class="trainee-answer">
+              {{ answer.textAnswer || 'لم يُجب المتدرب عن السؤال.' }}
+            </div>
+
+            <p>
+              <strong>الدرجة الحالية:</strong>
+              {{ answer.awardedPoints }}
+              من
+              {{ answer.maxPoints }}
+            </p>
+
+            <p *ngIf="answer.requiresManualGrading">
+              هذا السؤال يحتاج إلى تصحيح يدوي.
+            </p>
+
+            <p *ngIf="answer.isManuallyGraded">
+              تم تصحيح هذا السؤال سابقًا، ويمكن تعديل درجته.
+            </p>
+
+            <!-- GRADE FORM -->
+            <div
+              class="essay-grading-form"
+              *ngIf="answer.answerId > 0">
+
+              <label [for]="'grade-' + answer.answerId">
+                الدرجة الممنوحة
+              </label>
+
+              <input
+                type="number"
+                [id]="'grade-' + answer.answerId"
+                min="0"
+                [max]="answer.maxPoints"
+                step="0.5"
+                [(ngModel)]="awardedPoints[answer.answerId]"
+                [disabled]="grading() || detailsLoading()">
+
+              <button
+                type="button"
+                class="save-grade-btn"
+                [disabled]="grading() || detailsLoading()"
+                (click)="gradeEssay(answer)">
+
+                <i class="fa-solid fa-check"></i>
+
+                {{
+                  grading()
+                    ? 'جاري الحفظ...'
+                    : answer.isManuallyGraded
+                      ? 'تحديث الدرجة'
+                      : 'حفظ التصحيح'
+                }}
+
+              </button>
+
+            </div>
+
+          </div>
+
+          <!-- MULTIPLE CHOICE / TRUE FALSE ANSWER -->
+          <div *ngIf="!isEssayQuestion(answer)">
+
+            <p>
+              <strong>إجابة المتدرب:</strong>
+              {{ answer.selectedOptionText || 'لم يُجب' }}
+            </p>
+
+            <p>
+              <strong>الدرجة الممنوحة:</strong>
+              {{ answer.awardedPoints }}
+              من
+              {{ answer.maxPoints }}
+            </p>
+
+            <p *ngIf="answer.isCorrect === true">
+              إجابة صحيحة
+            </p>
+
+            <p *ngIf="answer.isCorrect === false">
+              إجابة غير صحيحة
+            </p>
+
+          </div>
+
+        </div>
+
+      </ng-container>
+
+      <!-- MODAL FOOTER -->
+      <div class="modal-footer">
+
+        <button
+          type="button"
+          class="back-btn"
+          [disabled]="grading()"
+          (click)="closeAttemptDetails()">
+          إغلاق
+        </button>
+
+      </div>
+
+    </section>
 
   </div>
 

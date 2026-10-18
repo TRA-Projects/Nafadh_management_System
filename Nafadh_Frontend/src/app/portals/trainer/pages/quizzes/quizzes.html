@@ -816,6 +816,7 @@
             بنك الأسئلة
           </span>
 
+
           <h2 id="question-bank-title">
 
             {{
@@ -824,6 +825,17 @@
             }}
 
           </h2>
+
+
+          <div class="quiz-summary">
+            @if (quizQuestionsLoading()) {
+            <p>جاري حساب درجات الاختبار...</p>
+            } @else {
+            <p>عدد الأسئلة: {{ quizQuestions().length }}</p>
+            <p>مجموع الدرجات: {{ quizTotalPoints() }}</p>
+            }
+          </div>
+
 
           <p class="question-bank-subtitle">
 

@@ -103,3 +103,130 @@ table {
   }
 }
 
+/* =====================================
+   QUIZ ATTEMPT DETAILS MODAL
+===================================== */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.attempt-details-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 850px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+}
+
+.attempt-details-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.attempt-details-modal .close-btn {
+  border: none;
+  background: transparent;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.attempt-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 20px;
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.attempt-summary p {
+  margin: 4px 0;
+}
+
+.answer-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+  margin-top: 16px;
+}
+
+.answer-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.question-text {
+  font-weight: 600;
+  margin: 16px 0;
+}
+
+.trainee-answer {
+  padding: 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  margin-bottom: 16px;
+}
+
+.essay-grading-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.essay-grading-form input {
+  width: 110px;
+  padding: 9px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.save-grade-btn,
+.details-btn {
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.save-grade-btn:disabled,
+.details-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+@media (max-width: 600px) {
+  .attempt-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .attempt-details-modal {
+    padding: 16px;
+  }
+}
+

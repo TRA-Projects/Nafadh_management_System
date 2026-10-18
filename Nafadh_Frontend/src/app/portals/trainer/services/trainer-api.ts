@@ -22,7 +22,7 @@ import {
   ProgramDto,
   ModuleDto,
   LessonDto,
-  
+
 } from '../../../core/models/dtos';
 export interface QuestionOptionDto {
   optionId: number;
@@ -44,6 +44,7 @@ export interface QuestionBankDto {
   options: QuestionOptionDto[];
 }
 
+
 export interface QuizResultDto {
   attemptId: number;
   quizId: number;
@@ -56,6 +57,10 @@ export interface QuizResultDto {
   score: number;
   percentage: number;
   status: string;
+
+  passingPercentage: number;
+  isGradingCompleted: boolean;
+  isPassed: boolean | null;
 }
 
 export interface CreateQuestionOptionDto {
@@ -74,12 +79,53 @@ export interface CreateQuestionDto {
   options: CreateQuestionOptionDto[];
 }
 
+
+export interface GradeQuizAnswerDto {
+  answerId: number;
+  trainerId: number;
+  awardedPoints: number;
+}
+
+export interface QuizAnswerDetailsDto {
+  answerId: number;
+  attemptQuestionId: number;
+  questionId: number;
+  questionOrder: number;
+  questionText: string;
+  questionType: string;
+  selectedOptionId: number | null;
+  selectedOptionText: string | null;
+  textAnswer: string | null;
+  maxPoints: number;
+  awardedPoints: number;
+  isCorrect: boolean | null;
+  isManuallyGraded: boolean;
+  isMarkedForReview: boolean;
+  requiresManualGrading: boolean;
+}
+
+export interface QuizAttemptDetailsDto {
+  attemptId: number;
+  quizId: number;
+  quizTitle: string;
+  traineeId: number;
+  traineeName: string;
+  attemptNumber: number;
+  status: string;
+  score: number;
+  percentage: number;
+  passingPercentage: number;
+  isGradingCompleted: boolean;
+  isPassed: boolean | null;
+  answers: QuizAnswerDetailsDto[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class TrainerApi {
 
   private base = environment.apiBaseUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
 
   // =====================================================
@@ -100,43 +146,43 @@ export class TrainerApi {
   }
 
 
-/**
- * Retrieves all batches assigned to a trainer.
- */
-getMyBatches(
-  trainerId: number
-): Observable<TrainerBatchDto[]> {
+  /**
+   * Retrieves all batches assigned to a trainer.
+   */
+  getMyBatches(
+    trainerId: number
+  ): Observable<TrainerBatchDto[]> {
 
-  return this.http.get<TrainerBatchDto[]>(
-    `${this.base}/BatchTrainer/trainer/${trainerId}`
-  );
-}
-
-
-/**
- * Retrieves full batch details.
- */
-getBatch(
-  batchId: number
-): Observable<BatchDto> {
-
-  return this.http.get<BatchDto>(
-    `${this.base}/Batch/${batchId}`
-  );
-}
+    return this.http.get<TrainerBatchDto[]>(
+      `${this.base}/BatchTrainer/trainer/${trainerId}`
+    );
+  }
 
 
-/**
- * Retrieves program details.
- */
-getProgram(
-  programId: number
-): Observable<ProgramDto> {
+  /**
+   * Retrieves full batch details.
+   */
+  getBatch(
+    batchId: number
+  ): Observable<BatchDto> {
 
-  return this.http.get<ProgramDto>(
-    `${this.base}/Program/${programId}`
-  );
-}
+    return this.http.get<BatchDto>(
+      `${this.base}/Batch/${batchId}`
+    );
+  }
+
+
+  /**
+   * Retrieves program details.
+   */
+  getProgram(
+    programId: number
+  ): Observable<ProgramDto> {
+
+    return this.http.get<ProgramDto>(
+      `${this.base}/Program/${programId}`
+    );
+  }
 
 
   /**
@@ -157,23 +203,23 @@ getProgram(
       { params }
     );
   }
-  
-updateSessionStatus(
-  sessionId: number,
-  status: number
-): Observable<void> {
-  return this.http.put<void>(
-    `${this.base}/Session/${sessionId}/status`,
-    { status }
-  );
-}
 
-createSession(dto: unknown) {
-  return this.http.post(
-    `${this.base}/Session`,
-    dto
-  );
-}
+  updateSessionStatus(
+    sessionId: number,
+    status: number
+  ): Observable<void> {
+    return this.http.put<void>(
+      `${this.base}/Session/${sessionId}/status`,
+      { status }
+    );
+  }
+
+  createSession(dto: unknown) {
+    return this.http.post(
+      `${this.base}/Session`,
+      dto
+    );
+  }
 
   /**
    * Retrieves trainees assigned to a specific batch.
@@ -203,195 +249,195 @@ createSession(dto: unknown) {
 
 
 
-// =====================================================
-// Content
-// =====================================================
-getBatchProgress(
-  batchId: number
-): Observable<{
-  batchId: number;
-  totalTrainees: number;
-  totalModules: number;
-  completedModules: number;
-  progressPercentage: number;
-}> {
-
-  return this.http.get<{
+  // =====================================================
+  // Content
+  // =====================================================
+  getBatchProgress(
+    batchId: number
+  ): Observable<{
     batchId: number;
     totalTrainees: number;
     totalModules: number;
     completedModules: number;
     progressPercentage: number;
-  }>(
-    `${this.base}/Batch/${batchId}/progress`
-  );
-}
+  }> {
 
-getModulesByProgram(
-  programId: number
-): Observable<ModuleDto[]> {
-
-  return this.http.get<ModuleDto[]>(
-    `${this.base}/Module/program/${programId}`
-  );
-}
-
-
-getLessonsByModule(
-  moduleId: number
-): Observable<LessonDto[]> {
-
-  return this.http.get<LessonDto[]>(
-    `${this.base}/Lesson/module/${moduleId}`
-  );
-}
-
-
-createModule(
-  dto: {
-    programId: number;
-    title: string;
-    orderIndex: number;
-    availableFrom?: string | null;
-    availableTo?: string | null;
-    prerequisiteModuleId?: number | null;
+    return this.http.get<{
+      batchId: number;
+      totalTrainees: number;
+      totalModules: number;
+      completedModules: number;
+      progressPercentage: number;
+    }>(
+      `${this.base}/Batch/${batchId}/progress`
+    );
   }
-): Observable<ModuleDto> {
 
-  return this.http.post<ModuleDto>(
-    `${this.base}/Module`,
-    dto
-  );
-}
-// =====================================================
-// UPDATE MODULE
-// Used for archiving and restoring modules.
-// =====================================================
+  getModulesByProgram(
+    programId: number
+  ): Observable<ModuleDto[]> {
 
-updateModule(
-  moduleId: number,
-  dto: {
-    title: string;
-    orderIndex: number;
-    availableFrom?: string | null;
-    availableTo?: string | null;
-    isArchived: boolean;
-    prerequisiteModuleId?: number | null;
+    return this.http.get<ModuleDto[]>(
+      `${this.base}/Module/program/${programId}`
+    );
   }
-): Observable<void> {
 
-  return this.http.put<void>(
-    `${this.base}/Module/${moduleId}`,
-    dto
-  );
 
-}
+  getLessonsByModule(
+    moduleId: number
+  ): Observable<LessonDto[]> {
 
-createLesson(
-  dto: {
-    moduleId: number;
-    title: string;
-    contentBody?: string | null;
-    orderIndex: number;
+    return this.http.get<LessonDto[]>(
+      `${this.base}/Lesson/module/${moduleId}`
+    );
   }
-): Observable<LessonDto> {
-
-  return this.http.post<LessonDto>(
-    `${this.base}/Lesson`,
-    dto
-  );
-}
 
 
-createMaterial(
-  dto: {
-    fileUrl: string;
-    fileType:
+  createModule(
+    dto: {
+      programId: number;
+      title: string;
+      orderIndex: number;
+      availableFrom?: string | null;
+      availableTo?: string | null;
+      prerequisiteModuleId?: number | null;
+    }
+  ): Observable<ModuleDto> {
+
+    return this.http.post<ModuleDto>(
+      `${this.base}/Module`,
+      dto
+    );
+  }
+  // =====================================================
+  // UPDATE MODULE
+  // Used for archiving and restoring modules.
+  // =====================================================
+
+  updateModule(
+    moduleId: number,
+    dto: {
+      title: string;
+      orderIndex: number;
+      availableFrom?: string | null;
+      availableTo?: string | null;
+      isArchived: boolean;
+      prerequisiteModuleId?: number | null;
+    }
+  ): Observable<void> {
+
+    return this.http.put<void>(
+      `${this.base}/Module/${moduleId}`,
+      dto
+    );
+
+  }
+
+  createLesson(
+    dto: {
+      moduleId: number;
+      title: string;
+      contentBody?: string | null;
+      orderIndex: number;
+    }
+  ): Observable<LessonDto> {
+
+    return this.http.post<LessonDto>(
+      `${this.base}/Lesson`,
+      dto
+    );
+  }
+
+
+  createMaterial(
+    dto: {
+      fileUrl: string;
+      fileType:
       | 'Pdf'
       | 'Video'
       | 'Image'
       | 'Document'
       | 'Link'
       | 'Other';
-    lessonId: number;
-    uploadedByUserId: number;
+      lessonId: number;
+      uploadedByUserId: number;
+    }
+  ): Observable<unknown> {
+
+    return this.http.post(
+      `${this.base}/TrainingMaterial`,
+      dto
+    );
   }
-): Observable<unknown> {
-
-  return this.http.post(
-    `${this.base}/TrainingMaterial`,
-    dto
-  );
-}
 
 
-uploadTrainingMaterial(
-  file: File,
-  fileType:
-    | 'Pdf'
-    | 'Video'
-    | 'Image'
-    | 'Document'
-    | 'Other',
-  lessonId: number,
-  uploadedByUserId: number
-): Observable<unknown> {
+  uploadTrainingMaterial(
+    file: File,
+    fileType:
+      | 'Pdf'
+      | 'Video'
+      | 'Image'
+      | 'Document'
+      | 'Other',
+    lessonId: number,
+    uploadedByUserId: number
+  ): Observable<unknown> {
 
-  const formData =
-    new FormData();
-
-
-  formData.append(
-    'File',
-    file
-  );
+    const formData =
+      new FormData();
 
 
-  formData.append(
-    'FileType',
-    fileType
-  );
+    formData.append(
+      'File',
+      file
+    );
 
 
-  formData.append(
-    'LessonId',
-    lessonId.toString()
-  );
+    formData.append(
+      'FileType',
+      fileType
+    );
 
 
-  formData.append(
-    'UploadedByUserId',
-    uploadedByUserId.toString()
-  );
+    formData.append(
+      'LessonId',
+      lessonId.toString()
+    );
 
 
-  return this.http.post(
-    `${this.base}/TrainingMaterial/upload`,
-    formData
-  );
-}
+    formData.append(
+      'UploadedByUserId',
+      uploadedByUserId.toString()
+    );
 
 
-getTrainingMaterialsByLesson(
-  lessonId: number
-): Observable<TrainingMaterialDto[]> {
+    return this.http.post(
+      `${this.base}/TrainingMaterial/upload`,
+      formData
+    );
+  }
 
-  return this.http.get<TrainingMaterialDto[]>(
-    `${this.base}/TrainingMaterial/lesson/${lessonId}`
-  );
-}
-// =====================================================
-// DELETE TRAINING MATERIAL
-// =====================================================
 
-deleteTrainingMaterial(
-  materialId: number
-): Observable<void> {
+  getTrainingMaterialsByLesson(
+    lessonId: number
+  ): Observable<TrainingMaterialDto[]> {
 
-  return this.http.delete<void>(
-    `${this.base}/TrainingMaterial/${materialId}`
-  );
-}
+    return this.http.get<TrainingMaterialDto[]>(
+      `${this.base}/TrainingMaterial/lesson/${lessonId}`
+    );
+  }
+  // =====================================================
+  // DELETE TRAINING MATERIAL
+  // =====================================================
+
+  deleteTrainingMaterial(
+    materialId: number
+  ): Observable<void> {
+
+    return this.http.delete<void>(
+      `${this.base}/TrainingMaterial/${materialId}`
+    );
+  }
   // =====================================================
   // Attendance
   // =====================================================
@@ -558,22 +604,22 @@ deleteTrainingMaterial(
     );
   }
 
-// =====================================================
-// GET REAL SUBMISSION FILE
-// =====================================================
+  // =====================================================
+  // GET REAL SUBMISSION FILE
+  // =====================================================
 
-getSubmissionFile(
-  submissionId: number
-): Observable<Blob> {
+  getSubmissionFile(
+    submissionId: number
+  ): Observable<Blob> {
 
-  return this.http.get(
-    `${this.base}/Submission/${submissionId}/file`,
-    {
-      responseType: 'blob'
-    }
-  );
+    return this.http.get(
+      `${this.base}/Submission/${submissionId}/file`,
+      {
+        responseType: 'blob'
+      }
+    );
 
-}
+  }
 
   // =====================================================
   // Trainee Evaluation
@@ -611,7 +657,7 @@ getSubmissionFile(
     );
   }
 
-   getEvaluationAverage(
+  getEvaluationAverage(
     enrollmentId: number
   ): Observable<{
     enrollmentId: number;
@@ -630,23 +676,23 @@ getSubmissionFile(
    * for a specific enrollment.
    */
   getAttendanceComplianceRate(
-  enrollmentId: number
-): Observable<{
-  enrollmentId: number;
-  totalDays: number;
-  presentDays: number;
-  compliancePercentage: number;
-}> {
-
-  return this.http.get<{
+    enrollmentId: number
+  ): Observable<{
     enrollmentId: number;
     totalDays: number;
     presentDays: number;
     compliancePercentage: number;
-  }>(
-    `${this.base}/DailyAttendance/enrollment/${enrollmentId}/compliance-rate`
-  );
-}
+  }> {
+
+    return this.http.get<{
+      enrollmentId: number;
+      totalDays: number;
+      presentDays: number;
+      compliancePercentage: number;
+    }>(
+      `${this.base}/DailyAttendance/enrollment/${enrollmentId}/compliance-rate`
+    );
+  }
 
   getEvaluationTemplates(
     moduleId?: number,
@@ -689,25 +735,25 @@ getSubmissionFile(
       `${this.base}/EvaluationTemplate/GetTemplateById/${templateId}`
     );
   }
-// =====================================================
-// CHECK EVALUATION TEMPLATE WEIGHTS
-// =====================================================
+  // =====================================================
+  // CHECK EVALUATION TEMPLATE WEIGHTS
+  // =====================================================
 
-checkTemplateWeights(
-  templateId: number
-): Observable<{
-  templateId: number;
-  isValid: boolean;
-}> {
-
-  return this.http.get<{
+  checkTemplateWeights(
+    templateId: number
+  ): Observable<{
     templateId: number;
     isValid: boolean;
-  }>(
-    `${this.base}/EvaluationCriterion/CheckWeights/${templateId}`
-  );
+  }> {
 
-}
+    return this.http.get<{
+      templateId: number;
+      isValid: boolean;
+    }>(
+      `${this.base}/EvaluationCriterion/CheckWeights/${templateId}`
+    );
+
+  }
 
   createTemplate(
     dto: unknown
@@ -721,58 +767,58 @@ checkTemplateWeights(
 
 
   createCriterion(
-  dto: unknown
-): Observable<string> {
+    dto: unknown
+  ): Observable<string> {
 
-  return this.http.post(
-    `${this.base}/EvaluationCriterion/CreateCriterion`,
-    dto,
-    {
-      responseType: 'text'
-    }
-  );
-}
-// =====================================================
-// UPDATE EVALUATION CRITERION
-// =====================================================
-
-updateCriterion(
-  criteriaId: number,
-  dto: {
-    templateId: number;
-    name: string;
-    weight: number;
-    maxPoints: number;
+    return this.http.post(
+      `${this.base}/EvaluationCriterion/CreateCriterion`,
+      dto,
+      {
+        responseType: 'text'
+      }
+    );
   }
-): Observable<string> {
+  // =====================================================
+  // UPDATE EVALUATION CRITERION
+  // =====================================================
 
-  return this.http.put(
-    `${this.base}/EvaluationCriterion/UpdateCriterion/${criteriaId}`,
-    dto,
-    {
-      responseType: 'text'
+  updateCriterion(
+    criteriaId: number,
+    dto: {
+      templateId: number;
+      name: string;
+      weight: number;
+      maxPoints: number;
     }
-  );
+  ): Observable<string> {
 
-}
+    return this.http.put(
+      `${this.base}/EvaluationCriterion/UpdateCriterion/${criteriaId}`,
+      dto,
+      {
+        responseType: 'text'
+      }
+    );
+
+  }
 
 
-// =====================================================
-// DELETE EVALUATION CRITERION
-// =====================================================
+  // =====================================================
+  // DELETE EVALUATION CRITERION
+  // =====================================================
 
-deleteCriterion(
-  criteriaId: number
-): Observable<string> {
+  deleteCriterion(
+    criteriaId: number
+  ): Observable<string> {
 
-  return this.http.delete(
-    `${this.base}/EvaluationCriterion/DeleteCriterion/${criteriaId}`,
-    {
-      responseType: 'text'
-    }
-  );
+    return this.http.delete(
+      `${this.base}/EvaluationCriterion/DeleteCriterion/${criteriaId}`,
+      {
+        responseType: 'text'
+      }
+    );
 
-}
+  }
 
   submitEvaluation(
     dto: unknown
@@ -795,129 +841,129 @@ deleteCriterion(
   }
 
 
-// =====================================================
-// Reports
-// =====================================================
+  // =====================================================
+  // Reports
+  // =====================================================
 
-getTrainerKpis(
-  trainerId: number
-): Observable<TrainerKpisDto> {
+  getTrainerKpis(
+    trainerId: number
+  ): Observable<TrainerKpisDto> {
 
-  return this.http.get<TrainerKpisDto>(
-    `${this.base}/Report/trainer-kpis/${trainerId}`
-  );
-}
+    return this.http.get<TrainerKpisDto>(
+      `${this.base}/Report/trainer-kpis/${trainerId}`
+    );
+  }
 
 
-// =====================================================
-// TRAINER REPORT HISTORY
-// =====================================================
+  // =====================================================
+  // TRAINER REPORT HISTORY
+  // =====================================================
 
-// Retrieves reports generated by the current trainer user.
-getTrainerReports(
-  userId: number
-): Observable<{
-  reportId: number;
-  type:
+  // Retrieves reports generated by the current trainer user.
+  getTrainerReports(
+    userId: number
+  ): Observable<{
+    reportId: number;
+    type:
     | 'Attendance'
     | 'Performance'
     | 'Financial'
     | 'Enrollment'
     | 'Custom';
-  filtersJson?: string | null;
-  generatedAt: string;
-  fileUrl?: string | null;
-  generatedByUserId: number;
-}[]> {
-
-  const params =
-    new HttpParams()
-      .set(
-        'userId',
-        userId.toString()
-      );
-
-
-  return this.http.get<{
-    reportId: number;
-    type:
-      | 'Attendance'
-      | 'Performance'
-      | 'Financial'
-      | 'Enrollment'
-      | 'Custom';
     filtersJson?: string | null;
     generatedAt: string;
     fileUrl?: string | null;
     generatedByUserId: number;
-  }[]>(
-    `${this.base}/Report`,
-    { params }
-  );
-}
+  }[]> {
+
+    const params =
+      new HttpParams()
+        .set(
+          'userId',
+          userId.toString()
+        );
 
 
-// Shared report generator.
-// Keep this unchanged because other portals may use it.
-generateReport(
-  dto: {
-    type:
+    return this.http.get<{
+      reportId: number;
+      type:
       | 'Attendance'
       | 'Performance'
       | 'Financial'
       | 'Enrollment'
       | 'Custom';
-    filtersJson?: string;
-    generatedByUserId: number;
-    trainerId?: number;
+      filtersJson?: string | null;
+      generatedAt: string;
+      fileUrl?: string | null;
+      generatedByUserId: number;
+    }[]>(
+      `${this.base}/Report`,
+      { params }
+    );
   }
-) {
 
-  return this.http.post<{
-    reportId: number;
-    type: string;
-    filtersJson?: string;
-    generatedAt: string;
-    fileUrl?: string;
-    generatedByUserId: number;
-  }>(
-    `${this.base}/Report/generate`,
-    dto
-  );
-}
 
-// =====================================================
-// TRAINER PORTAL REPORT
-// =====================================================
-
-// Uses the dedicated Trainer Portal report endpoint
-// without affecting reports used by other portals.
-generateTrainerPortalReport(
-  dto: {
-    type:
+  // Shared report generator.
+  // Keep this unchanged because other portals may use it.
+  generateReport(
+    dto: {
+      type:
       | 'Attendance'
       | 'Performance'
       | 'Financial'
       | 'Enrollment'
       | 'Custom';
-    filtersJson?: string;
-    generatedByUserId: number;
-    trainerId?: number;
-  }
-) {
+      filtersJson?: string;
+      generatedByUserId: number;
+      trainerId?: number;
+    }
+  ) {
 
-  return this.http.post<{
-    reportId: number;
-    type: string;
-    filtersJson?: string;
-    generatedAt: string;
-    fileUrl?: string;
-    generatedByUserId: number;
-  }>(
-    `${this.base}/Report/trainer-generate`,
-    dto
-  );
-}
+    return this.http.post<{
+      reportId: number;
+      type: string;
+      filtersJson?: string;
+      generatedAt: string;
+      fileUrl?: string;
+      generatedByUserId: number;
+    }>(
+      `${this.base}/Report/generate`,
+      dto
+    );
+  }
+
+  // =====================================================
+  // TRAINER PORTAL REPORT
+  // =====================================================
+
+  // Uses the dedicated Trainer Portal report endpoint
+  // without affecting reports used by other portals.
+  generateTrainerPortalReport(
+    dto: {
+      type:
+      | 'Attendance'
+      | 'Performance'
+      | 'Financial'
+      | 'Enrollment'
+      | 'Custom';
+      filtersJson?: string;
+      generatedByUserId: number;
+      trainerId?: number;
+    }
+  ) {
+
+    return this.http.post<{
+      reportId: number;
+      type: string;
+      filtersJson?: string;
+      generatedAt: string;
+      fileUrl?: string;
+      generatedByUserId: number;
+    }>(
+      `${this.base}/Report/trainer-generate`,
+      dto
+    );
+  }
 
   // =====================================================
   //  GENERATE TRAINER TRAINEES REPORT
@@ -965,105 +1011,105 @@ generateTrainerPortalReport(
     );
   }
 
-// =====================================================
-// TRAINER PORTAL REPORT FILE
-// =====================================================
+  // =====================================================
+  // TRAINER PORTAL REPORT FILE
+  // =====================================================
 
-// Loads a Trainer Portal PDF from the dedicated
-// external-storage endpoint without affecting
-// the shared report download behavior.
-getTrainerPortalReportFile(
-  reportId: number
-): Observable<Blob> {
-  return this.http.get(
-    `${this.base}/Report/trainer/${reportId}/file`,
-    {
-      responseType: 'blob'
-    }
-  );
-}
-// =====================================================
-// Messaging
-// =====================================================
-
-getConversations(
-  participantUserId: number
-): Observable<any[]> {
-
-  const params = new HttpParams()
-    .set(
-      'type',
-      'Other'
-    )
-    .set(
-      'participantUserId',
-      participantUserId.toString()
+  // Loads a Trainer Portal PDF from the dedicated
+  // external-storage endpoint without affecting
+  // the shared report download behavior.
+  getTrainerPortalReportFile(
+    reportId: number
+  ): Observable<Blob> {
+    return this.http.get(
+      `${this.base}/Report/trainer/${reportId}/file`,
+      {
+        responseType: 'blob'
+      }
     );
-
-  return this.http.get<any[]>(
-    `${this.base}/Conversation`,
-    { params }
-  );
-}
-
-
-getConversation(
-  conversationId: number
-): Observable<any> {
-
-  return this.http.get<any>(
-    `${this.base}/Conversation/${conversationId}`
-  );
-}
-createConversation(dto: {
-  type: string;
-  category: string;
-  subject: string;
-  startedByUserId: number;
-  firstMessage: string;
-  receiverUserId: number;
-}): Observable<any> {
-  return this.http.post<any>(
-    `${this.base}/Conversation`,
-    dto
-  );
-}
-createBatchGroup(dto: {
-  batchId: number;
-  trainerUserId: number;
-}): Observable<any> {
-
-  return this.http.post<any>(
-    `${this.base}/Conversation/batch-group`,
-    dto
-  );
-}
-sendMessage(
-  conversationId: number,
-  dto: {
-    senderId: number;
-   receiverUserId: number | null;
-    content: string;
   }
-): Observable<any> {
+  // =====================================================
+  // Messaging
+  // =====================================================
 
-  return this.http.post<any>(
-    `${this.base}/Conversation/${conversationId}/messages`,
-    dto
-  );
-}
+  getConversations(
+    participantUserId: number
+  ): Observable<any[]> {
+
+    const params = new HttpParams()
+      .set(
+        'type',
+        'Other'
+      )
+      .set(
+        'participantUserId',
+        participantUserId.toString()
+      );
+
+    return this.http.get<any[]>(
+      `${this.base}/Conversation`,
+      { params }
+    );
+  }
 
 
-markConversationAsRead(
-  conversationId: number,
-  userId: number
-): Observable<void> {
+  getConversation(
+    conversationId: number
+  ): Observable<any> {
 
-  return this.http.put<void>(
-    `${this.base}/Conversation/${conversationId}/read?userId=${userId}`,
-    {}
-  );
-}
+    return this.http.get<any>(
+      `${this.base}/Conversation/${conversationId}`
+    );
+  }
+  createConversation(dto: {
+    type: string;
+    category: string;
+    subject: string;
+    startedByUserId: number;
+    firstMessage: string;
+    receiverUserId: number;
+  }): Observable<any> {
+    return this.http.post<any>(
+      `${this.base}/Conversation`,
+      dto
+    );
+  }
+  createBatchGroup(dto: {
+    batchId: number;
+    trainerUserId: number;
+  }): Observable<any> {
+
+    return this.http.post<any>(
+      `${this.base}/Conversation/batch-group`,
+      dto
+    );
+  }
+  sendMessage(
+    conversationId: number,
+    dto: {
+      senderId: number;
+      receiverUserId: number | null;
+      content: string;
+    }
+  ): Observable<any> {
+
+    return this.http.post<any>(
+      `${this.base}/Conversation/${conversationId}/messages`,
+      dto
+    );
+  }
+
+
+  markConversationAsRead(
+    conversationId: number,
+    userId: number
+  ): Observable<void> {
+
+    return this.http.put<void>(
+      `${this.base}/Conversation/${conversationId}/read?userId=${userId}`,
+      {}
+    );
+  }
   // =====================================================
   // Profile
   // =====================================================
@@ -1088,71 +1134,71 @@ markConversationAsRead(
       dto
     );
   }
-// =====================================================
-// TRAINER PROFILE IMAGE
-// =====================================================
+  // =====================================================
+  // TRAINER PROFILE IMAGE
+  // =====================================================
 
-uploadTrainerProfileImage(
-  trainerId: number,
-  file: File
-): Observable<{ profileImageUrl: string }> {
+  uploadTrainerProfileImage(
+    trainerId: number,
+    file: File
+  ): Observable<{ profileImageUrl: string }> {
 
-  const formData =
-    new FormData();
+    const formData =
+      new FormData();
 
-  formData.append(
-    'File',
-    file
-  );
+    formData.append(
+      'File',
+      file
+    );
 
-  return this.http.post<{
-    profileImageUrl: string;
-  }>(
-    `${this.base}/Trainer/${trainerId}/profile-image`,
-    formData
-  );
-}
-// =====================================================
-// TRAINER CERTIFICATES
-// =====================================================
+    return this.http.post<{
+      profileImageUrl: string;
+    }>(
+      `${this.base}/Trainer/${trainerId}/profile-image`,
+      formData
+    );
+  }
+  // =====================================================
+  // TRAINER CERTIFICATES
+  // =====================================================
 
-getTrainerCertificates(
-  trainerId: number
-): Observable<TrainerCertificateDto[]> {
-  return this.http.get<TrainerCertificateDto[]>(
-    `${this.base}/TrainerCertificate/trainer/${trainerId}`
-   );
-}
+  getTrainerCertificates(
+    trainerId: number
+  ): Observable<TrainerCertificateDto[]> {
+    return this.http.get<TrainerCertificateDto[]>(
+      `${this.base}/TrainerCertificate/trainer/${trainerId}`
+    );
+  }
 
-uploadTrainerCertificate(
-  trainerId: number,
-  certificateName: string,
-  issuer: string,
-  issueDate: string,
-  expiryDate: string,
-  file: File
-): Observable<TrainerCertificateDto> {
-  const formData = new FormData();
+  uploadTrainerCertificate(
+    trainerId: number,
+    certificateName: string,
+    issuer: string,
+    issueDate: string,
+    expiryDate: string,
+    file: File
+  ): Observable<TrainerCertificateDto> {
+    const formData = new FormData();
 
-  formData.append('CertificateName', certificateName);
-  formData.append('Issuer', issuer || '');
-  formData.append('IssueDate', issueDate || '');
-  formData.append('ExpiryDate', expiryDate || '');
-  formData.append('File', file);
+    formData.append('CertificateName', certificateName);
+    formData.append('Issuer', issuer || '');
+    formData.append('IssueDate', issueDate || '');
+    formData.append('ExpiryDate', expiryDate || '');
+    formData.append('File', file);
 
-  return this.http.post<TrainerCertificateDto>(
-    `${this.base}/TrainerCertificate/trainer/${trainerId}`,
-    formData
-   );
-}
+    return this.http.post<TrainerCertificateDto>(
+      `${this.base}/TrainerCertificate/trainer/${trainerId}`,
+      formData
+    );
+  }
 
-deleteTrainerCertificate(
-  certificateId: number
-): Observable<void> {
-  return this.http.delete<void>(
-    `${this.base}/TrainerCertificate/${certificateId}`
-   );
-}
+  deleteTrainerCertificate(
+    certificateId: number
+  ): Observable<void> {
+    return this.http.delete<void>(
+      `${this.base}/TrainerCertificate/${certificateId}`
+    );
+  }
 
 
   // =====================================
@@ -1176,128 +1222,162 @@ deleteTrainerCertificate(
     );
   }
 
-updateQuiz(
-  quizId: number,
-  trainerId: number,
-  dto: any
-) {
-  const params = new HttpParams()
-    .set('trainerId', trainerId.toString());
+  updateQuiz(
+    quizId: number,
+    trainerId: number,
+    dto: any
+  ) {
+    const params = new HttpParams()
+      .set('trainerId', trainerId.toString());
 
-  return this.http.put(
-    `${this.base}/Quizzes/${quizId}`,
-    dto,
-    { params }
-  );
-}
-// =====================================
-// QUESTION BANK - بنك الأسئلة
-// =====================================
+    return this.http.put(
+      `${this.base}/Quizzes/${quizId}`,
+      dto,
+      { params }
+    );
+  }
+  // =====================================
+  // QUESTION BANK - بنك الأسئلة
+  // =====================================
 
-getTrainerQuestions(
-  trainerId: number
-): Observable<QuestionBankDto[]> {
-  return this.http.get<QuestionBankDto[]>(
-    `${this.base}/question-bank/trainer/${trainerId}`
-  );
-}
-
-getQuestion(
-  questionId: number,
-  trainerId: number
-): Observable<QuestionBankDto> {
-
-  const params = new HttpParams()
-    .set('trainerId', trainerId.toString());
-
-  return this.http.get<QuestionBankDto>(
-    `${this.base}/question-bank/${questionId}`,
-    { params }
-  );
-}
-
-createQuestion(
-  trainerId: number,
-  dto: CreateQuestionDto
-): Observable<QuestionBankDto> {
-
-  const params = new HttpParams()
-    .set('trainerId', trainerId.toString());
-
-  return this.http.post<QuestionBankDto>(
-    `${this.base}/question-bank`,
-    dto,
-    { params }
-  );
-}
-
-updateQuestion(
-  questionId: number,
-  trainerId: number,
-  dto: CreateQuestionDto
-): Observable<{ message: string }> {
-
-  const params = new HttpParams()
-    .set('trainerId', trainerId.toString());
-
-  return this.http.put<{ message: string }>(
-    `${this.base}/question-bank/${questionId}`,
-    dto,
-    { params }
-  );
-}
-
-deactivateQuestion(
-  questionId: number,
-  trainerId: number
-): Observable<{ message: string }> {
-
-  const params = new HttpParams()
-    .set('trainerId', trainerId.toString());
-
-  return this.http.delete<{ message: string }>(
-    `${this.base}/question-bank/${questionId}`,
-    { params }
-  );
-}
-
-addQuestionsToQuiz(
-  quizId: number,
-  trainerId: number,
-  questionIds: number[]
-): Observable<{ message: string }> {
-
-  const params = new HttpParams()
-    .set('trainerId', trainerId.toString());
-
-  return this.http.post<{ message: string }>(
-    `${this.base}/quizzes/${quizId}/questions`,
-    { questionIds },
-    { params }
-  );
-}
-
-// =====================================
-// QUIZ RESULTS
-// =====================================
-
-getTrainerQuizResults(
-  trainerId: number,
-  quizId?: number
-): Observable<QuizResultDto[]> {
-
-  let params = new HttpParams();
-
-  if (quizId !== undefined) {
-    params = params.set(
-      'quizId',
-      quizId.toString()
+  getTrainerQuestions(
+    trainerId: number
+  ): Observable<QuestionBankDto[]> {
+    return this.http.get<QuestionBankDto[]>(
+      `${this.base}/question-bank/trainer/${trainerId}`
     );
   }
 
-  return this.http.get<QuizResultDto[]>(
-    `${this.base}/quiz-results/trainer/${trainerId}`,
-    { params }
+  getQuestion(
+    questionId: number,
+    trainerId: number
+  ): Observable<QuestionBankDto> {
+
+    const params = new HttpParams()
+      .set('trainerId', trainerId.toString());
+
+    return this.http.get<QuestionBankDto>(
+      `${this.base}/question-bank/${questionId}`,
+      { params }
+    );
+  }
+
+  createQuestion(
+    trainerId: number,
+    dto: CreateQuestionDto
+  ): Observable<QuestionBankDto> {
+
+    const params = new HttpParams()
+      .set('trainerId', trainerId.toString());
+
+    return this.http.post<QuestionBankDto>(
+      `${this.base}/question-bank`,
+      dto,
+      { params }
+    );
+  }
+
+  updateQuestion(
+    questionId: number,
+    trainerId: number,
+    dto: CreateQuestionDto
+  ): Observable<{ message: string }> {
+
+    const params = new HttpParams()
+      .set('trainerId', trainerId.toString());
+
+    return this.http.put<{ message: string }>(
+      `${this.base}/question-bank/${questionId}`,
+      dto,
+      { params }
+    );
+  }
+
+  deactivateQuestion(
+    questionId: number,
+    trainerId: number
+  ): Observable<{ message: string }> {
+
+    const params = new HttpParams()
+      .set('trainerId', trainerId.toString());
+
+    return this.http.delete<{ message: string }>(
+      `${this.base}/question-bank/${questionId}`,
+      { params }
+    );
+  }
+
+  addQuestionsToQuiz(
+    quizId: number,
+    trainerId: number,
+    questionIds: number[]
+  ): Observable<{ message: string }> {
+
+    const params = new HttpParams()
+      .set('trainerId', trainerId.toString());
+
+    return this.http.post<{ message: string }>(
+      `${this.base}/quizzes/${quizId}/questions`,
+      { questionIds },
+      { params }
+    );
+  }
+
+
+  getQuizQuestions(
+    quizId: number,
+    trainerId: number
+  ): Observable<any[]> {
+
+    const params = new HttpParams()
+      .set('trainerId', trainerId.toString());
+
+    return this.http.get<any[]>(
+      `${this.base}/quizzes/${quizId}/questions`,
+      { params }
+    );
+  }
+
+
+  // =====================================
+  // QUIZ RESULTS
+  // =====================================
+
+  getTrainerQuizResults(
+    trainerId: number,
+    quizId?: number
+  ): Observable<QuizResultDto[]> {
+
+    let params = new HttpParams();
+
+    if (quizId !== undefined) {
+      params = params.set(
+        'quizId',
+        quizId.toString()
+      );
+    }
+
+    return this.http.get<QuizResultDto[]>(
+      `${this.base}/quiz-results/trainer/${trainerId}`,
+      { params }
+    );
+  }
+
+gradeEssayAnswer(dto: GradeQuizAnswerDto): Observable<{ message: string }> {
+
+  return this.http.post<{ message: string }>(
+    `${this.base}/quiz-attempts/grade-essay`,
+    dto
+  );
+}
+
+getQuizAttemptDetails(
+  trainerId: number,
+  attemptId: number
+): Observable<QuizAttemptDetailsDto> {
+
+  return this.http.get<QuizAttemptDetailsDto>(
+    `${this.base}/quiz-results/trainer/${trainerId}/attempts/${attemptId}`
   );
 }
 
