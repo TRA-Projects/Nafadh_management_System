@@ -61,6 +61,14 @@ interface QuestionBankDto {
   options: QuestionOptionDto[];
 }
 
+
+interface QuizQuestionDto {
+  questionId: number;
+  questionText: string;
+  questionType: number | string;
+  points: number;
+}
+
 interface QuestionOptionForm {
   optionText: string;
   optionCode: string;
@@ -110,6 +118,15 @@ export class TrainerQuizzes implements OnInit {
   questions = signal<QuestionBankDto[]>([]);
 
   selectedQuiz = signal<QuizDto | null>(null);
+
+  quizQuestions = signal<QuizQuestionDto[]>([]);
+
+  quizQuestionsLoading = signal(false);
+
+  quizTotalPoints = computed(() => {
+    return this.getQuizTotalPoints(this.quizQuestions());
+  });
+
 
   showQuestionBank = signal(false);
 
@@ -500,6 +517,33 @@ export class TrainerQuizzes implements OnInit {
   // QUESTION BANK
   // =====================================================
 
+loadQuizQuestions(quizId: number): void {
+  const trainerId = this.trainer()?.trainerId;
+
+  if (!trainerId) {
+    return;
+  }
+
+  this.quizQuestionsLoading.set(true);
+  this.quizQuestions.set([]);
+
+  this.api.getQuizQuestions(quizId, trainerId).subscribe({
+    next: questions => {
+      this.quizQuestions.set(questions ?? []);
+      this.quizQuestionsLoading.set(false);
+    },
+
+    error: error => {
+      console.error('Error loading quiz questions:', error);
+
+      this.quizQuestionsLoading.set(false);
+      this.questionError.set(
+        'تعذر تحميل أسئلة الاختبار.'
+      );
+    }
+  });
+}
+
   openQuestionBank(quiz: QuizDto): void {
     this.selectedQuiz.set(quiz);
 
@@ -514,6 +558,7 @@ export class TrainerQuizzes implements OnInit {
     );
 
     this.loadQuestions();
+    this.loadQuizQuestions(quiz.quizId);
   }
 
   closeQuestionBank(): void {
@@ -1380,6 +1425,16 @@ export class TrainerQuizzes implements OnInit {
       default:
         return -1;
     }
+  }
+
+  getQuizTotalPoints(questions: QuizQuestionDto[]): number {
+    let total = 0;
+
+    for (const question of questions) {
+      total += Number(question.points) || 0;
+    }
+
+    return total;
   }
 
 }

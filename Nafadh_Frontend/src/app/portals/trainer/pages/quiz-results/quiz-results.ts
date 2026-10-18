@@ -13,7 +13,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 @Component({
   selector: 'app-quiz-results',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './quiz-results.html',
   styleUrl: './quiz-results.scss'
 })
@@ -28,8 +28,10 @@ export class QuizResults implements OnInit {
   loading = signal(false);
 
   errorMessage = signal('');
+  successMessage = signal('');
 
   quizId: number | undefined;
+  trainerId: number | null = null;
 
 
   // =========================================
@@ -41,7 +43,7 @@ export class QuizResults implements OnInit {
     private auth: AuthService,
     private route: ActivatedRoute,
     private router: Router
-  ) { }
+  ) {}
 
 
   // =========================================
