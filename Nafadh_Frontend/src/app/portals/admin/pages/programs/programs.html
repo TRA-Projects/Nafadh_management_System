@@ -52,21 +52,21 @@
 
     <div class="kpi-card-full">
       <div class="kpi-card-header"><span class="kpi-label">نسبة الإنجاز</span><i class="fa-solid fa-chart-line kpi-icon text-cyan"></i></div>
-      <div class="kpi-val">{{ selectedBatch?.progressPercentage || 53 }}%</div>
+      <div class="kpi-val">{{ selectedBatch?.progressPercentage ?? 0 }}%</div>
       <div class="kpi-bar-bg"><div class="kpi-bar-fill bg-cyan" [style.width.%]="selectedBatch?.progressPercentage || 53"></div></div>
       <div class="kpi-hint text-cyan">معدل إكمال المواد والدروس</div>
     </div>
 
     <div class="kpi-card-full">
       <div class="kpi-card-header"><span class="kpi-label">معدل الحضور</span><i class="fa-solid fa-user-check kpi-icon text-emerald"></i></div>
-      <div class="kpi-val">{{ selectedBatch?.attendanceRate || 91 }}%</div>
+      <div class="kpi-val">{{ selectedBatch?.attendanceRate ?? 0 }}%</div>
       <div class="kpi-bar-bg"><div class="kpi-bar-fill bg-emerald" [style.width.%]="selectedBatch?.attendanceRate || 91"></div></div>
       <div class="kpi-hint text-emerald">متوسط انضباط الجلسات</div>
     </div>
 
     <div class="kpi-card-full">
       <div class="kpi-card-header"><span class="kpi-label">الشهادات الصادرة</span><i class="fa-solid fa-award kpi-icon text-amber"></i></div>
-      <div class="kpi-val">{{ selectedBatch?.issuedCertificatesCount || 4 }}</div>
+      <div class="kpi-val">{{ selectedBatch?.issuedCertificatesCount ?? 0 }}</div>
       <div class="kpi-bar-bg"><div class="kpi-bar-fill bg-amber" style="width: 35%;"></div></div>
       <div class="kpi-hint text-amber">خريجون مؤهلون</div>
     </div>
@@ -439,9 +439,10 @@
           <div class="stage-header">
             <span class="stage-num">المرحلة {{ stage.stageOrder || sIdx + 1 }}</span>
             <h4 class="stage-title">{{ stage.title || stage.name }}</h4>
+            <p class="stage-desc">{{ stage.description || 'تغطية المفاهيم الأساسية والتطبيقات العملية.' }}</p>
             <span class="stage-duration">{{ stage.durationHours || 40 }} ساعة تدريبية</span>
           </div>
-          <p class="stage-desc">{{ stage.description || 'تغطية المفاهيم الأساسية والتطبيقات العملية.' }}</p>
+          
 
           <!-- قائمة عناصر ومواد المرحلة -->
           <div *ngIf="stage.items && stage.items.length > 0" class="stage-items-list">
