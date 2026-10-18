@@ -780,3 +780,44 @@
     }
   }
 }
+
+
+/* Guided Tour - New Button Only */
+.guided-tour-panel-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 14px 18px;
+
+  background: linear-gradient(135deg, #0a1172, #1a2a9c);
+  color: #ffffff;
+  border: 1px solid #1a2a9c;
+  border-radius: 12px;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+  cursor: pointer;
+
+  box-shadow: 0 4px 12px rgba(10, 17, 114, 0.12);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.guided-tour-panel-button:hover {
+  background: linear-gradient(135deg, #1a2a9c, #2639b5);
+  box-shadow: 0 6px 16px rgba(10, 17, 114, 0.18);
+}
+
+.guided-tour-panel-button:focus-visible {
+  outline: 3px solid var(--color-cyan, #00c4cc);
+  outline-offset: 3px;
+}
+
+.guided-tour-panel-button span:last-child {
+  font-size: 20px;
+  line-height: 1;
+}

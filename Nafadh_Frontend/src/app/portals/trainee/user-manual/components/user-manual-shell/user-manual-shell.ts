@@ -1,3 +1,4 @@
+
 import { Component, OnDestroy, computed, inject } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
@@ -12,6 +13,9 @@ import {
   HelpSection,
 } from '../../models/help-panel.models';
 
+// Guided Tour - الإضافة الجديدة
+import { GuidedTour } from '../guided-tour/guided-tour';
+
 // ✅ استيراد البيانات مباشرة
 import { GUIDE_CONTENT } from '../../data/guide-content';
 
@@ -21,6 +25,7 @@ import { GUIDE_CONTENT } from '../../data/guide-content';
   imports: [
     HelpButtonComponent,
     HelpPanelComponent,
+    GuidedTour,
   ],
   templateUrl: './user-manual-shell.html',
   styleUrl: './user-manual-shell.scss',
@@ -48,7 +53,7 @@ export class UserManualShell implements OnDestroy {
   readonly helpPanelData = computed<HelpPanelData | null>(() => {
     // 1. نأخذ مفتاح الصفحة الحالية
     const pageKey = this.guideService.currentPageKey();
-    
+
     // 2. نقرأ الدليل مباشرة من الملف (بدون الاعتماد على currentGuide)
     const guide = GUIDE_CONTENT[pageKey];
 
@@ -114,7 +119,7 @@ export class UserManualShell implements OnDestroy {
 
     // هذا السطر يحدث المفتاح في الـ Service (مهم جداً)
     this.guideService.setPage(pageKey);
-    
+
     this.guideService.stopTour();
   }
 
@@ -128,6 +133,14 @@ export class UserManualShell implements OnDestroy {
 
   closeHelp(): void {
     this.guideService.closeHelp();
+  }
+
+  // =========================================================
+  // Guided Tour - الإضافة الجديدة فقط
+  // =========================================================
+  startGuidedTour(): void {
+    this.guideService.closeHelp();
+    this.guideService.startTour();
   }
 
   ngOnDestroy(): void {

@@ -1,3 +1,4 @@
+
 <!-- src/app/features/trainee/user-manual/components/help-panel/help-panel.component.html -->
 
 @if (isOpen()) {
@@ -74,6 +75,18 @@
                 {{ panelData.pageDescription }}
               </p>
             </div>
+          </section>
+
+          <!-- Guided Tour - الإضافة الجديدة فقط -->
+          <section class="help-section-group">
+            <button
+              type="button"
+              class="guided-tour-panel-button"
+              (click)="startTour.emit()"
+            >
+              <span>ابدئي الجولة الإرشادية</span>
+              <span aria-hidden="true">←</span>
+            </button>
           </section>
 
           <!-- How to Use -->

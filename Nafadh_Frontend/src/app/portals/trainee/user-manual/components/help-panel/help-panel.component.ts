@@ -1,3 +1,4 @@
+
 import {
   ChangeDetectionStrategy,
   Component,
@@ -24,6 +25,7 @@ export class HelpPanelComponent {
   readonly data = input<HelpPanelData | null>(null);
   readonly pageKey = input<string>('');
   readonly close = output<void>();
+  readonly startTour = output<void>();
 
   // ✅ هذا الـ Signal هو المسؤول عن فتح وإغلاق الأسئلة
   readonly openFaqIds = signal<Set<string>>(new Set());
