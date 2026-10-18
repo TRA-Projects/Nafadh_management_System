@@ -154,7 +154,12 @@ export class AdminPrograms implements OnInit {
     this.rejectionNotes = '';
     this.selectedModifications = [];
 
-    const companyId = Number(batch.companyId ?? batch.CompanyId);
+
+    let companyId = Number(batch.companyId ?? batch.CompanyId);
+    if (!companyId && batch.companyName) {
+      const comp = this.companies().find(c => c.companyName?.trim() === batch.companyName?.trim());
+      if (comp) companyId = comp.companyId;
+    }
     const programId = Number(batch.programId ?? batch.ProgramId);
 
     if (!companyId) {
@@ -301,17 +306,19 @@ export class AdminPrograms implements OnInit {
     this.selectedBatchTrainees.set([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    const bId = batch?.batchId || batch?.id;
-    this.adminApi.getTrainees?.({ batchId: bId, pageSize: 1000 }).subscribe({
+    const bId = Number(batch?.batchId || batch?.id);
+
+    // ★ نستدعي الدالة الجديدة التي تتصل بالـ API الحقيقي
+    this.adminApi.getBatchTrainees(bId).subscribe({
       next: (res: any) => {
-        const all = res?.items || (Array.isArray(res) ? res : []);
-        const matched = all.filter((t: any) => {
-          const tBatchId = t.batchId ?? t.BatchId;
-          return tBatchId && String(tBatchId) === String(bId);
-        });
-        this.selectedBatchTrainees.set(matched.length > 0 ? matched : all.slice(0, 5));
+        const trainees = Array.isArray(res) ? res : (res?.items || []);
+        console.log('متدربو الدفعة المستلمون:', trainees);
+        this.selectedBatchTrainees.set(trainees);
       },
-      error: () => this.selectedBatchTrainees.set([])
+      error: (err) => {
+        console.error('خطأ في جلب المتدربين:', err);
+        this.selectedBatchTrainees.set([]);
+      }
     });
   }
 
