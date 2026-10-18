@@ -30,7 +30,10 @@ namespace Nafadh_Backend.Repositories
 
         public async Task<IEnumerable<NFD_Enrollment>> GetAllAsync(int? batchId, int? traineeId, int? companyId, NFD_EnrollmentCompletionStatus? status)
         {
-            var query = Query();
+            
+            IQueryable<NFD_Enrollment> query = Query()
+                .Include(e => e.Trainee)
+                    .ThenInclude(t => t.User);
 
             if (batchId.HasValue)
                 query = query.Where(e => e.BatchId == batchId.Value);
@@ -46,7 +49,6 @@ namespace Nafadh_Backend.Repositories
 
             return await query.ToListAsync();
         }
-
         public async Task<NFD_Enrollment?> GetByIdAsync(int id)
         {
             return await Query().FirstOrDefaultAsync(e => e.EnrollmentId == id);

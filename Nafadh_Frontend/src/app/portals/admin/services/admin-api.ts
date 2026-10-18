@@ -175,6 +175,11 @@ export class AdminApi {
   getPrograms(): Observable<ProgramDto[]> { return this.http.get<ProgramDto[]>(`${this.base}/Program`); }
   createProgram(dto: unknown) { return this.http.post(`${this.base}/Program`, dto); }
 
+   getBatchTrainees(batchId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(batchId);
+    return this.http.get<any[]>(`${this.base}/Batch/${cleanId}/trainees`);
+  }
+
   // ---- Trainers ----
   getTrainers(params?: any): Observable<any> {
     return this.http.get(`${this.base}/Trainer`, { params: params });
