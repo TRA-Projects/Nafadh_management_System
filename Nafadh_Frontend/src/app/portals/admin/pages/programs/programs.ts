@@ -298,13 +298,14 @@ export class AdminPrograms implements OnInit {
     }
   }
 
- executeApproval(): void {
+  executeApproval(): void {
     const plan = this.selectedPlan();
     const planId = Number(plan?.planId ?? plan?.PlanId ?? plan?.id);
 
     if (!planId) return;
 
     this.isSubmittingDecision.set(true);
+    this.decisionErrorMessage.set(null);
 
     const payload = {
       decision: 0, // 0 = Approve
@@ -314,21 +315,22 @@ export class AdminPrograms implements OnInit {
     this.adminApi.reviewCoursePlan(planId, payload).subscribe({
       next: () => {
         this.isSubmittingDecision.set(false);
-        alert('تم اعتماد خطة الدورة بنجاح!');
         this.closePlanModal();
+        this.showToast('✓ تم اعتماد خطة الدورة التدريبية بنجاح!', 'success');
         this.loadInitialData();
       },
       error: (err: any) => {
         this.isSubmittingDecision.set(false);
-        console.error('خطأ الاعتماد:', err);
-        alert(err?.error?.message || 'حدث خطأ أثناء اعتماد الخطة.');
+        this.decisionErrorMessage.set(err?.error?.message || 'حدث خطأ أثناء اعتماد الخطة.');
       }
     });
   }
 
+
  executeRejection(): void {
+    // التحقق في الفرونت إند مع إظهار رسالة داخلية
     if (!this.rejectionNotes.trim() && this.selectedModifications.length === 0) {
-      alert('يرجى تحديد الملاحظات المطلوبة أو كتابة سبب الرفض/طلب التعديل.');
+      this.decisionErrorMessage.set('⚠️ يرجى تحديد ملاحظة واحدة على الأقل أو كتابة سبب الرفض/طلب التعديل.');
       return;
     }
 
@@ -337,29 +339,29 @@ export class AdminPrograms implements OnInit {
 
     if (!planId) return;
 
+    this.decisionErrorMessage.set(null);
+    this.isSubmittingDecision.set(true);
+
     const fullReason = [
       this.rejectionNotes.trim(),
       this.selectedModifications.length > 0 ? ('التعديلات المطلوبة:\n- ' + this.selectedModifications.join('\n- ')) : ''
     ].filter(Boolean).join('\n\n');
 
-    this.isSubmittingDecision.set(true);
-
     const payload = {
       decision: 1, // 1 = Reject
-      note: fullReason // ◄ بالمفرد note ليتعرف عليه السيرفر فوراً
+      note: fullReason
     };
 
     this.adminApi.reviewCoursePlan(planId, payload).subscribe({
       next: () => {
         this.isSubmittingDecision.set(false);
-        alert('تم إرجاع الخطة إلى الشركة مع الملاحظات المطلوبة.');
         this.closePlanModal();
+        this.showToast('✓ تم إرجاع الخطة إلى الشركة مع الملاحظات المطلوبة.', 'warning');
         this.loadInitialData();
       },
       error: (err: any) => {
         this.isSubmittingDecision.set(false);
-        console.error('خطأ الرفض:', err);
-        alert(err?.error?.message || 'حدث خطأ أثناء محاولة إرجاع الخطة.');
+        this.decisionErrorMessage.set(err?.error?.message || 'حدث خطأ أثناء محاولة إرجاع الخطة.');
       }
     });
   }

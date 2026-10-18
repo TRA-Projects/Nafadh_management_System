@@ -493,6 +493,12 @@
 
       <!-- تبويب 3: القرار -->
       <div *ngIf="!isLoadingPlan() && activePlanTab() === 'decision'" class="decision-view">
+        <!-- تنبيه الخطأ الداخلي الأنيق -->
+        <div *ngIf="decisionErrorMessage()" class="decision-inline-error">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span>{{ decisionErrorMessage() }}</span>
+          <button type="button" (click)="decisionErrorMessage.set(null)" class="btn-close-inline">&times;</button>
+        </div>
         <div class="decision-grid">
           <!-- اعتماد -->
           <div class="decision-card approve-card">
@@ -503,12 +509,14 @@
                 <p class="decision-sub">سيتم اعتماد الخطة رسمياً وإشعار الشركة فوراً.</p>
               </div>
             </div>
-            <textarea [(ngModel)]="approvalNotes" placeholder="ملاحظات الاعتماد (اختياري)..." rows="3" class="decision-textarea"></textarea>
-            <button type="button" (click)="executeApproval()" [disabled]="isSubmittingDecision()" class="btn-decision-approve">
+            <textarea [(ngModel)]="approvalNotes" placeholder="ملاحظات الاعتماد (اختياري)..." rows="3"
+              class="decision-textarea"></textarea>
+            <button type="button" (click)="executeApproval()" [disabled]="isSubmittingDecision()"
+              class="btn-decision-approve">
               {{ isSubmittingDecision() ? 'جاري الاعتماد...' : 'اعتماد الخطة رسمياً' }}
             </button>
           </div>
-
+      
           <!-- رفض / طلب تعديل -->
           <div class="decision-card reject-card">
             <div class="decision-card-top">
@@ -518,27 +526,29 @@
                 <p class="decision-sub">حدد الملاحظات المطلوبة لتعيد الشركة تعديل الخطة.</p>
               </div>
             </div>
-
+      
             <div class="modifications-checklist">
               <label *ngFor="let mod of defaultModSuggestions" class="mod-checkbox-label">
                 <input type="checkbox" [checked]="selectedModifications.includes(mod)" (change)="toggleModification(mod)">
                 <span>{{ mod }}</span>
               </label>
             </div>
-
+      
             <div class="custom-mod-box">
               <input type="text" [(ngModel)]="customModText" placeholder="اكتب ملاحظة أخرى..." class="custom-mod-input">
               <button type="button" (click)="addCustomModification()" class="btn-add-mod">إضافة</button>
             </div>
-
-            <textarea [(ngModel)]="rejectionNotes" placeholder="شرح تفصيلي إضافي للشركة..." rows="2" class="decision-textarea"></textarea>
-            <button type="button" (click)="executeRejection()" [disabled]="isSubmittingDecision()" class="btn-decision-reject">
+      
+            <textarea [(ngModel)]="rejectionNotes" placeholder="شرح تفصيلي إضافي للشركة..." rows="2"
+              class="decision-textarea"></textarea>
+            <button type="button" (click)="executeRejection()" [disabled]="isSubmittingDecision()"
+              class="btn-decision-reject">
               {{ isSubmittingDecision() ? 'جاري الإرجاع...' : 'إرجاع الخطة للشركة مع الملاحظات' }}
             </button>
           </div>
         </div>
       </div>
-    </div>
+      </div>
 
     <div class="plan-modal-footer">
       <button type="button" (click)="closePlanModal()" class="btn-close-modal">إغلاق</button>
@@ -747,4 +757,15 @@
       </div>
     </form>
   </div>
+</div>
+
+<!-- الإشعار العائم الحديث (Toast Notification) -->
+<div *ngIf="toast()" class="nfd-toast-container" [ngClass]="'toast-' + toast()?.type" dir="rtl">
+  <div class="toast-content">
+    <i *ngIf="toast()?.type === 'success'" class="fa-solid fa-circle-check toast-icon"></i>
+    <i *ngIf="toast()?.type === 'warning'" class="fa-solid fa-triangle-exclamation toast-icon"></i>
+    <i *ngIf="toast()?.type === 'error'" class="fa-solid fa-circle-xmark toast-icon"></i>
+    <span class="toast-message">{{ toast()?.message }}</span>
+  </div>
+  <button type="button" (click)="toast.set(null)" class="toast-close-btn">&times;</button>
 </div>
