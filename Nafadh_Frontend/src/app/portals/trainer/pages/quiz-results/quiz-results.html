@@ -1,0 +1,67 @@
+
+<section class="results-page" dir="rtl">
+
+  
+<div class="results-header">
+
+  <h2>نتائج الاختبارات</h2>
+
+  <button
+    type="button"
+    class="back-btn"
+    (click)="goBack()">
+
+    <i class="fa-solid fa-arrow-right"></i>
+    العودة إلى الاختبارات
+
+  </button>
+
+</div>
+
+
+  <p *ngIf="loading()">جاري تحميل النتائج...</p>
+
+  <p class="error" *ngIf="errorMessage()">
+    {{ errorMessage() }}
+  </p>
+
+  <div class="table-wrapper"
+       *ngIf="!loading() && !errorMessage()">
+
+    <table>
+      <thead>
+        <tr>
+          <th>اسم المتدرب</th>
+          <th>الاختبار</th>
+          <th>المحاولة</th>
+          <th>الدرجة</th>
+          <th>النسبة</th>
+          <th>الحالة</th>
+          <th>تاريخ التسليم</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let result of results()">
+          <td>{{ result.traineeName }}</td>
+          <td>{{ result.quizTitle }}</td>
+          <td>{{ result.attemptNumber }}</td>
+          <td>{{ result.score }}</td>
+          <td>{{ result.percentage }}%</td>
+          <td>{{ result.status }}</td>
+          <td>
+            {{ result.submittedAt
+              ? (result.submittedAt | date:'short')
+              : 'لم يُسلّم' }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p *ngIf="results().length === 0">
+      لا توجد نتائج لهذا الاختبار.
+    </p>
+
+  </div>
+
+</section>

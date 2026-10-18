@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -35,6 +36,17 @@ namespace Nafadh_Backend.Services
         {
             _repository = repository;
             _context = context;
+        }
+
+        private static void RecalculateScore(NFD_QuizAttempt attempt)
+        {
+            var totalScore = attempt.AttemptQuestions.Sum(q =>
+                q.Answers.OrderByDescending(a => a.AnsweredAt)
+                    .FirstOrDefault()?.AwardedPoints ?? 0m);
+            var totalPoints = attempt.AttemptQuestions.Sum(q => q.Points);
+            attempt.Score = totalScore;
+            attempt.Percentage = totalPoints <= 0 ? 0m
+                : Math.Round(totalScore / totalPoints * 100m, 2);
         }
 
         public async Task<QuizAttemptDto> StartAttemptAsync(
@@ -355,21 +367,7 @@ namespace Nafadh_Backend.Services
                 attempt.Status = "Submitted";
             }
 
-            var totalScore = attempt.AttemptQuestions
-                .Sum(x => x.Answers
-                    .OrderByDescending(a => a.AnsweredAt)
-                    .FirstOrDefault()?.AwardedPoints ?? 0);
-
-            var totalPoints = attempt.AttemptQuestions
-                .Sum(x => x.Points);
-
-            attempt.Score = totalScore;
-
-            attempt.Percentage = totalPoints <= 0
-                ? 0
-                : Math.Round(
-                    totalScore / totalPoints * 100,
-                    2);
+            RecalculateScore(attempt);
 
             attempt.SubmittedAt = now;
 
@@ -439,61 +437,47 @@ namespace Nafadh_Backend.Services
                 throw new KeyNotFoundException("المحاولة غير موجودة.");
             }
 
-            var totalScore = updatedAttempt.AttemptQuestions
-                .Sum(q => q.Answers.Sum(a => a.AwardedPoints));
-
-            var totalPoints = updatedAttempt.AttemptQuestions
-                .Sum(q => q.Points);
-
-            updatedAttempt.Score = totalScore;
-
-            updatedAttempt.Percentage = totalPoints <= 0
-                ? 0
-                : Math.Round(totalScore / totalPoints * 100, 2);
+            RecalculateScore(updatedAttempt);
 
             await _repository.SaveChangesAsync();
         }
         public async Task<int> RegisterViolationAsync(int attemptId)
         {
-            var attempt = await _repository
-                .GetAttemptForSubmissionAsync(attemptId);
-
+            var attempt = await _repository.GetAttemptForSubmissionAsync(attemptId);
             if (attempt == null)
-            {
-                throw new KeyNotFoundException(
-                    "محاولة الاختبار غير موجودة.");
-            }
+                throw new KeyNotFoundException("محاولة الاختبار غير موجودة.");
 
             if (attempt.Status != "InProgress")
-            {
-                throw new InvalidOperationException(
-                    "لا يمكن تسجيل مخالفة لمحاولة منتهية.");
-            }
+                throw new InvalidOperationException("لا يمكن تسجيل مخالفة لمحاولة منتهية.");
 
             attempt.ViolationCount++;
+            var maxViolations = Math.Max(1, attempt.Quiz.MaxExitAttempts);
 
-            if (attempt.ViolationCount >= 2)
+            if (attempt.ViolationCount >= maxViolations)
             {
-                attempt.IsTerminatedByViolation = true;
-                attempt.Status = "Terminated";
-                attempt.SubmittedAt = DateTime.UtcNow;
+                switch (attempt.Quiz.ExitLimitAction)
+                {
+                    case NFD_ExitLimitAction.Terminate:
+                        attempt.IsTerminatedByViolation = true;
+                        attempt.Status = "Terminated";
+                        attempt.SubmittedAt = DateTime.UtcNow;
+                        RecalculateScore(attempt);
+                        break;
 
-                var totalScore = attempt.AttemptQuestions
-                    .Sum(q => q.Answers.Sum(a => a.AwardedPoints));
+                    case NFD_ExitLimitAction.Warn:
+                        break;
 
-                var totalPoints = attempt.AttemptQuestions
-                    .Sum(q => q.Points);
+                    case NFD_ExitLimitAction.FlagForReview:
+                        // ViolationCount remains available for review.
+                        break;
 
-                attempt.Score = totalScore;
-                attempt.Percentage = totalPoints <= 0
-                    ? 0
-                    : Math.Round(totalScore / totalPoints * 100, 2);
+                    default:
+                        throw new InvalidOperationException("إجراء المخالفات غير معروف.");
+                }
             }
 
             await _repository.SaveChangesAsync();
-
             return attempt.ViolationCount;
         }
     }
 }
-

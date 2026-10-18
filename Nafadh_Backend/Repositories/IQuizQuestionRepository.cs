@@ -8,7 +8,8 @@ namespace Nafadh_Backend.Repositories
         Task<NFD_Quiz?> GetQuizWithQuestionsAsync(int quizId);
 
         Task<List<NFD_QuestionBank>> GetQuestionsByIdsAsync(
-            List<int> questionIds);
+     List<int> questionIds,
+     int trainerId);
 
         Task<List<NFD_QuizQuestion>> GetQuizQuestionsAsync(
             int quizId);
@@ -23,7 +24,9 @@ namespace Nafadh_Backend.Repositories
         Task<bool> HasQuizAttemptsAsync(int quizId);
 
         void RemoveQuizQuestion(NFD_QuizQuestion quizQuestion);
-
+        Task<bool> AreQuizQuestionsValidAsync(
+    int quizId,
+    int trainerId);
         Task SaveChangesAsync();
     }
 }
