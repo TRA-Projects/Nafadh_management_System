@@ -1210,8 +1210,10 @@ areAllQuestionsSelected(): boolean {
     }
   }
 
- getStatusLabel(status: number): string {
-  switch (status) {
+ 
+getStatusLabel(status: number | string): string {
+
+  switch (Number(status)) {
     case 0:
       return 'مسودة';
 

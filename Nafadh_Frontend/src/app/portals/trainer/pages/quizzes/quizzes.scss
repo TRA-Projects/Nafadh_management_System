@@ -696,38 +696,50 @@
     padding: 17px;
   }
 }
+
 /* =====================================================
    QUIZ ACTIONS
 ===================================================== */
 
 .quiz-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 9px;
   margin-top: auto;
   padding-top: 10px;
 }
 
-.questions-btn {
+.quiz-actions button {
   width: 100%;
-  min-height: 40px;
+  min-width: 0;
+  min-height: 44px;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
 
-  border: 1px solid #9bd5dc;
+  padding: 10px 6px;
+
   border-radius: 10px;
-
-  background: #effcfd;
-  color: #007c89;
-
   font-family: inherit;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
 
   cursor: pointer;
-  transition: .2s ease;
+  transition: 0.2s ease;
+}
+
+.quiz-actions button i {
+  font-size: 13px;
+}
+
+/* Manage Questions */
+
+.questions-btn {
+  background: #effcfd;
+  color: #007c89;
+  border: 1px solid #9bd5dc;
 }
 
 .questions-btn:hover {
@@ -735,6 +747,36 @@
   border-color: #72c5ce;
   transform: translateY(-1px);
 }
+
+/* View Results */
+
+.btn-results {
+  background: #eef7ff;
+  color: #003b82;
+  border: 1px solid #c9d9ea;
+}
+
+.btn-results:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  transform: translateY(-1px);
+}
+
+/* Edit Quiz */
+
+.quiz-actions .edit-btn {
+  margin-top: 0;
+  background: #f8fbff;
+  color: #003b82;
+  border: 1px solid #c9d9ea;
+}
+
+.quiz-actions .edit-btn:hover {
+  background: #eef7ff;
+  border-color: #8bb6d9;
+  transform: translateY(-1px);
+}
+
 
 
 /* =====================================================
@@ -1632,8 +1674,8 @@
   border-radius: 10px;
 
   transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
+  background 0.2s ease,
+  border-color 0.2s ease;
 }
 
 .option-letter {
@@ -1715,5 +1757,28 @@
 
   .question-card-actions {
     flex-wrap: wrap;
+  }
+}
+
+
+/* =====================================================
+   RESPONSIVE QUIZ ACTIONS
+===================================================== */
+
+@media (max-width: 1100px) {
+  .quiz-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .quiz-actions {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .quiz-actions button {
+    min-height: 44px;
+    font-size: 12px;
   }
 }
