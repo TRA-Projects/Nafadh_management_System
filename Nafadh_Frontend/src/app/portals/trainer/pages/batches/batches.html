@@ -173,6 +173,12 @@
 
         </div>
 
+@if (hasProgressMismatch(b)) {
+  <div style="background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 6px 10px; font-size: 10px; border-radius: 8px; margin: 8px 15px 0; text-align: center; display: flex; align-items: center; justify-content: center; gap: 5px;">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <span>تنبيه: المحتوى منتهي مبكراً مقارنة بالمدة الزمنية المتبقية!</span>
+  </div>
+}
 
 <!-- METRICS -->
         <div class="batch-metrics-4">
@@ -192,7 +198,7 @@
           </div>
 
 
-          <!-- 2. DAYS PROGRESS (SAME COLOR AS CONTENT) -->
+          <!-- 2. DAYS PROGRESS -->
           <div class="metric-item">
             <div class="progress-circle" [style.background]="
                       'conic-gradient(#003b82 ' +
@@ -204,6 +210,9 @@
               </div>
             </div>
             <span>التقدم الزمني</span>
+            <span class="remaining-time-badge">
+              {{ getRemainingTimeLabel(b) }}
+            </span>
           </div>
 
 

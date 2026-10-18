@@ -2412,3 +2412,56 @@
     transform: translateY(0) scale(1);
   }
 }
+.session-reminder-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 22px;
+  direction: rtl;
+  color: #7c2d12;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-right: 5px solid #f97316;
+  border-radius: 16px;
+  box-shadow: 0 5px 16px rgba(124, 45, 18, 0.08);
+}
+
+.session-reminder-icon {
+  display: flex;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: #f97316;
+  border-radius: 50%;
+  font-size: 18px;
+}
+
+.session-reminder-content h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.session-reminder-content p {
+  margin: 4px 0 0;
+  color: #9a3412;
+  font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  .session-reminder-banner {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .session-reminder-content h3 {
+    font-size: 14px;
+  }
+
+  .session-reminder-content p {
+    font-size: 12px;
+  }
+}
