@@ -413,10 +413,11 @@ export class CompanyDailyAttendance implements OnInit {
   }
 
   openWeeklyExcuse(record: TrainerAttendanceDto): void {
-    if (this.view() !== 'week' || !['Absent', 'Late', 'EarlyLeave'].includes(record.status)) return;
+    if (!['week', 'month'].includes(this.view()) || !['Absent', 'Late', 'EarlyLeave'].includes(record.status)) return;
+    if (this.view() === 'month' && !this.hasExcuse(record)) return;
     this.weeklyExcuse.set(record);
     this.weeklyReason = record.reason ?? '';
-    this.weeklyExcuseEditing.set(!this.hasExcuse(record) && this.canEditWeeklyExcuse(record));
+    this.weeklyExcuseEditing.set(this.view() === 'week' && !this.hasExcuse(record) && this.canEditWeeklyExcuse(record));
   }
 
   closeWeeklyExcuse(): void {
@@ -428,7 +429,7 @@ export class CompanyDailyAttendance implements OnInit {
 
   startWeeklyExcuseEdit(): void {
     const record = this.weeklyExcuse();
-    if (record && this.canEditWeeklyExcuse(record) && !this.weeklyExcuseSaving()) {
+    if (this.view() === 'week' && record && this.canEditWeeklyExcuse(record) && !this.weeklyExcuseSaving()) {
       this.weeklyReason = record.reason ?? '';
       this.weeklyExcuseEditing.set(true);
     }
@@ -442,7 +443,7 @@ export class CompanyDailyAttendance implements OnInit {
   saveWeeklyReason(): void {
     if (!this.canManageAttendance()) return;
     const record = this.weeklyExcuse();
-    if (!record || !this.canEditWeeklyExcuse(record) || !this.weeklyExcuseEditing() || this.weeklyExcuseSaving()) return;
+    if (this.view() !== 'week' || !record || !this.canEditWeeklyExcuse(record) || !this.weeklyExcuseEditing() || this.weeklyExcuseSaving()) return;
     this.weeklyExcuseSaving.set(true);
     this.api.saveTrainerAttendance({
       companyId: this.companyId,
@@ -468,22 +469,53 @@ export class CompanyDailyAttendance implements OnInit {
   }
 
   uploadWeeklyProof(event: Event): void {
-    if (!this.canManageAttendance()) return;
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
     const record = this.weeklyExcuse();
-    if (!file || !record || !this.canEditWeeklyExcuse(record) || !this.weeklyExcuseEditing() || this.weeklyExcuseSaving()) return;
+    if (!file || !record || this.view() !== 'week' || !this.canEditWeeklyExcuse(record) || !this.weeklyExcuseEditing() || this.weeklyExcuseSaving()) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    const extensionAllowed = /\.(jpe?g|png|webp|pdf)$/i.test(file.name);
+    if (!allowedTypes.includes(file.type) && !extensionAllowed) {
+      this.errorMessage.set('نوع الملف غير مدعوم. اختاري JPG أو PNG أو WEBP أو PDF.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      this.errorMessage.set('حجم الإثبات كبير جدًا. الحد الأقصى المسموح 5 ميجابايت.');
+      return;
+    }
+
     this.weeklyExcuseSaving.set(true);
+    this.errorMessage.set(null);
     this.api.uploadTrainerAttendanceProof(record.trainerAttendanceId, file).subscribe({
       next: response => {
-        const updated = { ...record, excuseProofUrl: response.excuseProofUrl };
-        this.patchRecord(record.trainerAttendanceId, { excuseProofUrl: response.excuseProofUrl });
-        this.weeklyExcuse.set(updated);
-        this.weeklyExcuseSaving.set(false);
+        // Some API versions return the proof path only when the attendance list is fetched again.
+        const returnedPath = response?.excuseProofUrl;
+        if (returnedPath) {
+          this.patchRecord(record.trainerAttendanceId, { excuseProofUrl: returnedPath });
+          this.weeklyExcuse.set({ ...record, excuseProofUrl: returnedPath });
+        }
+        this.api.getTrainerAttendance(this.companyId, this.loadFromKey(), this.todayKey).subscribe({
+          next: records => {
+            const fresh = (records ?? []).find(item => item.trainerAttendanceId === record.trainerAttendanceId);
+            if (fresh?.excuseProofUrl) {
+              this.records.set(records ?? []);
+              this.weeklyExcuse.set(fresh);
+            } else if (!returnedPath) {
+              this.errorMessage.set('تم إرسال الملف، لكن الخادم لم يرجع رابط الإثبات. تحققي من حفظه في الـ Backend.');
+            }
+            this.weeklyExcuseSaving.set(false);
+          },
+          error: () => {
+            if (!returnedPath) this.errorMessage.set('تم إرسال الملف لكن تعذر تحديث رابط الإثبات من الخادم.');
+            this.weeklyExcuseSaving.set(false);
+          }
+        });
       },
       error: err => {
-        this.showError(err, 'تعذر رفع إثبات العذر.');
+        this.showError(err, 'تعذر رفع الإثبات. حاولي مرة أخرى.');
         this.weeklyExcuseSaving.set(false);
       }
     });
@@ -492,7 +524,7 @@ export class CompanyDailyAttendance implements OnInit {
   removeWeeklyProof(): void {
     if (!this.canManageAttendance()) return;
     const record = this.weeklyExcuse();
-    if (!record || !this.canEditWeeklyExcuse(record) || !this.weeklyExcuseEditing() || this.weeklyExcuseSaving()) return;
+    if (this.view() !== 'week' || !record || !this.canEditWeeklyExcuse(record) || !this.weeklyExcuseEditing() || this.weeklyExcuseSaving()) return;
     this.weeklyExcuseSaving.set(true);
     this.api.removeTrainerAttendanceProof(record.trainerAttendanceId).subscribe({
       next: () => {
@@ -972,6 +1004,16 @@ ngOnInit(): void {
 
 
 
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    if (!allowedTypes.includes(file.type) && !/\.(jpe?g|png|webp|pdf)$/i.test(file.name)) {
+      this.errorMessage.set('نوع الملف غير مدعوم. اختاري صورة JPG أو PNG أو WEBP أو ملف PDF.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.errorMessage.set('حجم الإثبات كبير جدًا. الحد الأقصى المسموح 5 ميجابايت.');
+      return;
+    }
+
     const attendanceId = row.record.trainerAttendanceId;
 
     this.setSaving(row.trainer.trainerId, true);
@@ -1290,17 +1332,41 @@ ngOnInit(): void {
 
 
 
+  /** Display friendly Arabic messages instead of raw English API errors. */
   private showError(err: unknown, fallback: string): void {
-
     console.error(fallback, err);
+    const error = err as { status?: number; error?: unknown };
+    const payload = error?.error;
+    const raw = (typeof payload === 'string' ? payload :
+      (payload && typeof payload === 'object' ?
+        String((payload as { message?: string; title?: string; detail?: string }).message ??
+               (payload as { title?: string }).title ??
+               (payload as { detail?: string }).detail ?? '') : '')).toLowerCase();
 
-    const message = (err as { error?: { message?: string } })?.error?.message;
-
-    this.errorMessage.set(message || fallback);
-
+    let message = fallback;
+    if (raw.includes('storage path') || raw.includes('not configured')) {
+      message = 'تعذر رفع الإثبات لأن مسار حفظ الملفات غير مُعدّ في الخادم. تواصلي مع مسؤول النظام.';
+    } else if (raw.includes('5 mb') || raw.includes('5mb') || raw.includes('exceed') || error?.status === 413) {
+      message = 'حجم الإثبات كبير جدًا. الحد الأقصى المسموح 5 ميجابايت.';
+    } else if (raw.includes('file type') || raw.includes('invalid file') || raw.includes('only jpg') || raw.includes('extension')) {
+      message = 'نوع الملف غير مدعوم. اختاري صورة JPG أو PNG أو WEBP أو ملف PDF.';
+    } else if (raw.includes('proof file is required') || raw.includes('empty file')) {
+      message = 'يرجى اختيار صورة أو ملف PDF قبل الرفع.';
+    } else if (raw.includes('submission period') || raw.includes('week has ended')) {
+      message = 'انتهت فترة إضافة أو تعديل الإثبات لهذا الأسبوع.';
+    } else if (raw.includes('only allowed for') || raw.includes('present record')) {
+      message = 'يمكن إرفاق إثبات لحالات الغياب أو التأخير أو الانصراف المبكر فقط.';
+    } else if (error?.status === 401 || error?.status === 403) {
+      message = 'ليست لديك صلاحية رفع الإثبات. يرجى تسجيل الدخول أو مراجعة الصلاحيات.';
+    } else if (error?.status === 404) {
+      message = 'تعذر العثور على سجل الحضور المطلوب.';
+    } else if (error?.status === 0) {
+      message = 'تعذر الاتصال بالخادم. تأكدي من تشغيل الـ Backend والاتصال بالشبكة.';
+    } else if (error?.status === 500) {
+      message = 'حدث خطأ في الخادم أثناء معالجة الطلب. حاولي لاحقًا.';
+    }
+    this.errorMessage.set(message);
   }
-
-
 
   private recordKey(trainerId: number, date: string): string {
 
