@@ -352,4 +352,23 @@ export class AdminApi {
     const cleanPlanId = this.sanitizeId(planId);
     return this.http.put<any>(`${this.base}/CompanyCoursePlan/company/${cleanCompanyId}/plans/${cleanPlanId}/review`, dto);
   }
+
+  // 1. كل طلبات الانسحاب من الداتابيس
+  getWithdrawalRequests(status?: string): Observable<any[]> {
+    const params: any = status ? { status } : {};
+    return this.http.get<any[]>(`${this.base}/WithdrawalRequests`, { params });
+  }
+
+  // 2. مراجعة واعتماد أو رفض طلب الانسحاب
+  reviewWithdrawalRequest(id: number, status: number, adminNotes?: string): Observable<any> {
+    return this.http.put(`${this.base}/WithdrawalRequests/${id}/review`, {
+      status, // 1 = Approved, 2 = Rejected
+      adminNotes
+    });
+  }
+
+  // 3. تقديم طلب انسحاب جديد
+  createWithdrawalRequest(payload: { traineeId: number; reason: string }): Observable<any> {
+    return this.http.post(`${this.base}/WithdrawalRequests`, payload);
+  }
 }

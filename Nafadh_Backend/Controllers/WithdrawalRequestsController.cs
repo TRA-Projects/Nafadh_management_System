@@ -18,9 +18,9 @@ namespace Nafadh_Backend.Controllers
             _context = context;
         }
 
-        // 1. جلب كل طلبات الانسحاب (للأدمن) مع إمكانية الفلترة بحسب الحالة
+        // 1. جلب كل طلبات الانسحاب (للأدمن) مع الفلترة الاختيارية بالحالة
         // GET: api/WithdrawalRequests
-        // أو: api/WithdrawalRequests?status=Pending
+        // GET: api/WithdrawalRequests?status=Pending
         [HttpGet]
         public async Task<IActionResult> GetAllRequests([FromQuery] NFD_WithdrawalRequestStatus? status)
         {
@@ -37,6 +37,9 @@ namespace Nafadh_Backend.Controllers
                 {
                     Id = r.Id,
                     TraineeId = r.TraineeId,
+                    TraineeName = r.Trainee != null && r.Trainee.User != null
+                        ? r.Trainee.User.FullName
+                        : null,
                     Reason = r.Reason,
                     Status = r.Status,
                     CreatedAt = r.CreatedAt,
@@ -48,7 +51,7 @@ namespace Nafadh_Backend.Controllers
             return Ok(requests);
         }
 
-        // 2. جلب تفاصيل طلب واحد بواسطة الـ Id
+        // 2. جلب تفاصيل طلب واحد بواسطة Id
         // GET: api/WithdrawalRequests/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetRequestById(int id)
@@ -59,6 +62,9 @@ namespace Nafadh_Backend.Controllers
                 {
                     Id = r.Id,
                     TraineeId = r.TraineeId,
+                    TraineeName = r.Trainee != null && r.Trainee.User != null
+                        ? r.Trainee.User.FullName
+                        : null,
                     Reason = r.Reason,
                     Status = r.Status,
                     CreatedAt = r.CreatedAt,
@@ -87,6 +93,9 @@ namespace Nafadh_Backend.Controllers
                 {
                     Id = r.Id,
                     TraineeId = r.TraineeId,
+                    TraineeName = r.Trainee != null && r.Trainee.User != null
+                        ? r.Trainee.User.FullName
+                        : null,
                     Reason = r.Reason,
                     Status = r.Status,
                     CreatedAt = r.CreatedAt,
@@ -142,7 +151,7 @@ namespace Nafadh_Backend.Controllers
             });
         }
 
-        // 5. مراجعة الطلب بواسطة الأدمن (قبول أو رفض)
+        // 5. مراجعة الأدمن لطلب الانسحاب (قبول أو رفض) وتحديث حالة المتدرب تلقائياً
         // PUT: api/WithdrawalRequests/5/review
         [HttpPut("{id}/review")]
         public async Task<IActionResult> ReviewRequest(int id, [FromBody] ReviewWithdrawalRequestDto dto)
@@ -152,7 +161,15 @@ namespace Nafadh_Backend.Controllers
                 return BadRequest(ModelState);
             }
 
-            var request = await _context.NFD_WithdrawalRequests.FindAsync(id);
+            // التحقق من أن الحالة المرسلة إما قبول أو رفض فقط
+            if (dto.Status != NFD_WithdrawalRequestStatus.Approved && dto.Status != NFD_WithdrawalRequestStatus.Rejected)
+            {
+                return BadRequest(new { message = "يجب اختيار حالة صحيحة: Approved (مقبول) أو Rejected (مرفوض)." });
+            }
+
+            // جلب طلب الانسحاب
+            var request = await _context.NFD_WithdrawalRequests.FirstOrDefaultAsync(r => r.Id == id);
+
             if (request == null)
             {
                 return NotFound(new { message = "طلب الانسحاب غير موجود." });
@@ -163,14 +180,41 @@ namespace Nafadh_Backend.Controllers
                 return BadRequest(new { message = "تمت مراجعة هذا الطلب مسبقاً ولا يمكن تعديله مرة أخرى." });
             }
 
-            // تحديث بيانات الطلب مباشرة
+            // تحديث بيانات الطلب
             request.Status = dto.Status;
             request.AdminNotes = dto.AdminNotes;
             request.ReviewedAt = DateTime.UtcNow;
 
+            // في حال الموافقة (Approved) -> تحديث حالة المتدرب والتسجيل
+            if (dto.Status == NFD_WithdrawalRequestStatus.Approved)
+            {
+                var trainee = await _context.NFD_Trainees
+                    .FirstOrDefaultAsync(t => t.TraineeId == request.TraineeId);
+
+                if (trainee != null)
+                {
+                    trainee.Status = NFD_TraineeStatus.NotAssigned;
+                }
+
+                // تحديث حالة التدريب الحالي إلى Dropped
+                var activeEnrollment = await _context.NFD_Enrollments
+                    .Where(e => e.TraineeId == request.TraineeId && e.CompletionStatus == NFD_EnrollmentCompletionStatus.InProgress)
+                    .FirstOrDefaultAsync();
+
+                if (activeEnrollment != null)
+                {
+                    activeEnrollment.CompletionStatus = NFD_EnrollmentCompletionStatus.Dropped;
+                }
+            }
+
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "تمت مراجعة طلب الانسحاب وتحديث حالته بنجاح." });
+            return Ok(new
+            {
+                message = "تم تحديث حالة طلب الانسحاب بنجاح وتحديث بيانات المتدرب.",
+                requestId = request.Id,
+                newStatus = request.Status.ToString()
+            });
         }
     }
 }
