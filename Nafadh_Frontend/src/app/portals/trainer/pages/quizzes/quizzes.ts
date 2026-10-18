@@ -1310,7 +1310,7 @@ openQuizResults(quizId: number): void {
   // QUESTION DIFFICULTY LABEL
   // =====================================
 
-  getQuestionDifficultyLabel(difficulty: number | string): string {
+  getDifficultyLabel(difficulty: number | string): string {
     switch (String(difficulty).trim().toLowerCase()) {
       case '0':
       case 'easy':
