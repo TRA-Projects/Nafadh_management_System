@@ -96,7 +96,16 @@ namespace Nafadh_Backend.Services
             );
         }
 
-
+        public async Task<bool> IsBatchGroupMemberAsync(
+    int conversationId,
+    int userId
+)
+        {
+            return await _repository.IsBatchGroupMemberAsync(
+                conversationId,
+                userId
+            );
+        }
         // ============================================================
         // Create conversation
         // ============================================================

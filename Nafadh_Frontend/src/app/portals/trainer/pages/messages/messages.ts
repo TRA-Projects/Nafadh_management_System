@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -36,10 +36,11 @@ interface TrainerMessage {
 })
 export class TrainerMessages implements OnInit {
 
-  constructor(
-    private api: TrainerApi,
-    public auth: AuthService
-  ) {}
+ constructor(
+  private api: TrainerApi,
+  public auth: AuthService,
+  private cdr: ChangeDetectorRef
+) {}
 
   // =====================================================
   // INIT
@@ -83,7 +84,10 @@ export class TrainerMessages implements OnInit {
     this.api.getMyBatches(trainerId).subscribe({
       next: (batches) => {
 
-      
+         console.log('GROUP CREATION CHECK:', batches);
+      (batches ?? []).forEach(batch => {
+  this.createBatchGroup(batch.batchId, userId);
+});
 
 
         const requests = (batches ?? []).map(
@@ -93,10 +97,14 @@ export class TrainerMessages implements OnInit {
             )
         );
 
-        if (requests.length === 0) {
-          this.trainees = [];
-          return;
-        }
+       if (requests.length === 0) {
+  this.trainees = [];
+
+  // Load conversations even when no trainees are found.
+  this.loadTrainerConversations(userId);
+
+  return;
+}
 
         forkJoin(requests).subscribe({
           next: (results) => {
@@ -156,12 +164,10 @@ export class TrainerMessages implements OnInit {
               userId
             );
 
-            // اختيار أول متدرب
-            if (allTrainees.length > 0) {
-              this.selectedTraineeId.set(
-                allTrainees[0].traineeId
-              );
-            }
+           // اختيار أول متدرب وتحميل رسائله
+if (allTrainees.length > 0) {
+  this.selectTrainee(allTrainees[0].traineeId);
+}
           },
 
           error: (error) => {
@@ -208,6 +214,7 @@ export class TrainerMessages implements OnInit {
     );
 console.log('BATCH GROUPS:', this.batchGroups);
 
+
         // نحتاج فقط محادثات المدرب مع المتدرب
         const trainerConversations =
           (conversations ?? []).filter(
@@ -216,12 +223,12 @@ console.log('BATCH GROUPS:', this.batchGroups);
               'TrainerTrainee'
           );
 
-        if (
-          trainerConversations.length === 0
-        ) {
-          this.messages = [];
-          return;
-        }
+       if (trainerConversations.length === 0) {
+  if (!this.isBatchGroupSelected) {
+    this.messages = [];
+  }
+  return;
+}
 
         const requests =
           trainerConversations.map(
@@ -408,20 +415,27 @@ private formatMessageTime(
 
   unreadOnly = false;
   selectedBatchName = '';
-  get batchNames(): string[] {
+ get batchNames(): string[] {
+  const traineeBatchNames = this.trainees.map(
+    trainee => trainee.batchName
+  );
+
+  const groupBatchNames = this.batchGroups.map(
+    group => group.batchName
+  );
+
   return [
     ...new Set(
-      this.trainees
-        .map((trainee) => trainee.batchName)
-        .filter((name) => !!name)
+      [...traineeBatchNames, ...groupBatchNames]
+        .filter((name): name is string => !!name)
     )
   ];
 }
 get filteredBatchGroups(): any[] {
-  const search =
-    this.searchText
-      .trim()
-      .toLowerCase();
+ const search = this.searchText
+  .trim()
+  .toLowerCase()
+  .replace(/[أإآ]/g, 'ا');
 
   return this.batchGroups.filter(
     (group: any) => {
@@ -445,10 +459,15 @@ get filteredBatchGroups(): any[] {
         !this.selectedBatchName ||
         group.batchName === this.selectedBatchName;
 
-      return (
-        matchesSearch &&
-        matchesBatch
-      );
+    const matchesUnread =
+  !this.unreadOnly ||
+  Number(group.unreadCount ?? 0) > 0;
+
+return (
+  matchesSearch &&
+  matchesBatch &&
+  matchesUnread
+);
     }
   );
 }
@@ -668,7 +687,7 @@ this.selectedBatchGroupId = conversationId;
               message.sentDate
             )
         }));
-
+this.cdr.markForCheck();
     },
 
     error: (error) => {
@@ -705,6 +724,7 @@ sendMessage(): void {
     if (!userId) {
       return;
     }
+
 
     this.api.sendMessage(
       this.selectedBatchGroupId,

@@ -40,7 +40,7 @@ export class CompanyTrainees implements OnInit {
   statusFilter = signal('الكل');
   programFilter = signal('الكل');
   batchFilter = signal('الكل');
-  dateFilter = signal(''); // [جديد] فلتر التاريخ
+  dateFilter = signal('');
 
   ngOnInit() {
     this.loadTraineesData();
@@ -103,7 +103,6 @@ export class CompanyTrainees implements OnInit {
       if (this.batchFilter() !== 'الكل' && e.batchName !== this.batchFilter()) return false;
       if (q && !(e.traineeName?.includes(q) || e.programTitle?.includes(q))) return false;
       
-      // مطابقة التاريخ إن وجد في التسجيل
       if (d && e.enrollmentDate) {
         const enrollmentDateOnly = e.enrollmentDate.split('T')[0];
         if (enrollmentDateOnly !== d) return false;
@@ -118,7 +117,7 @@ export class CompanyTrainees implements OnInit {
     this.statusFilter.set('الكل');
     this.programFilter.set('الكل');
     this.batchFilter.set('الكل');
-    this.dateFilter.set(''); // مسح تاريخ التصفية أيضاً
+    this.dateFilter.set('');
     this.loadTraineesData();
   }
 
