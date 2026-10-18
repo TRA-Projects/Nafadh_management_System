@@ -2,12 +2,12 @@
 import {
   Component,
   OnDestroy,
+  ViewEncapsulation,
   effect,
   inject
 } from '@angular/core';
 
-import { driver, Driver } from 'driver.js';
-
+import { driver, Driver, DriveStep } from 'driver.js';
 
 import { GuideService } from '../../../services/guide.service';
 import { GuideStep } from '../../models/guide.models';
@@ -17,6 +17,7 @@ import { GuideStep } from '../../models/guide.models';
   standalone: true,
   templateUrl: './guided-tour.html',
   styleUrl: './guided-tour.scss',
+  encapsulation: ViewEncapsulation.None,
 })
 export class GuidedTour implements OnDestroy {
   readonly guideService = inject(GuideService);
@@ -39,26 +40,39 @@ export class GuidedTour implements OnDestroy {
   }
 
   private startDriver(steps: GuideStep[]): void {
+    console.log('Guided Tour STARTED', steps);
+
     this.stopDriver();
 
-    const validSteps = [...steps]
+    const validSteps: DriveStep[] = [...steps]
       .sort((a, b) => a.order - b.order)
-      .filter(step => {
-        if (!step.target) return false;
+      .map(step => {
+        let element: Element | undefined;
 
-        try {
-          return !!document.querySelector(step.target);
-        } catch {
-          console.warn(
-            'Guided Tour: Invalid selector:',
-            step.target
-          );
-          return false;
+        if (step.target) {
+          try {
+            element =
+              document.querySelector(step.target) ?? undefined;
+          } catch {
+            console.warn(
+              'Guided Tour: Invalid selector:',
+              step.target
+            );
+          }
         }
+
+        // إذا العنصر غير موجود، تظهر نافذة الشرح بدون تحديد عنصر
+        return {
+          ...(element ? { element } : {}),
+          popover: {
+            title: step.title,
+            description: step.description,
+          },
+        };
       });
 
     if (!validSteps.length) {
-      console.warn('Guided Tour: No valid steps found.');
+      console.warn('Guided Tour: No steps available.');
       this.guideService.stopTour();
       return;
     }
@@ -66,11 +80,30 @@ export class GuidedTour implements OnDestroy {
     const newTour = driver({
       showProgress: true,
       showButtons: ['previous', 'next', 'close'],
+
       nextBtnText: 'التالي',
       prevBtnText: 'السابق',
       doneBtnText: 'إنهاء',
       progressText: '{{current}} من {{total}}',
+
       allowClose: true,
+
+      popoverClass: 'nafadh-guided-popover',
+
+      // إضافة زر تخطي مستقل
+      onPopoverRender: (popover, { driver: tourDriver }) => {
+        const skipButton = document.createElement('button');
+
+        skipButton.type = 'button';
+        skipButton.textContent = 'تخطي';
+        skipButton.className = 'nafadh-tour-skip-btn';
+
+        skipButton.addEventListener('click', () => {
+          tourDriver.destroy();
+        });
+
+        popover.footerButtons.appendChild(skipButton);
+      },
 
       onDestroyed: () => {
         if (
@@ -82,13 +115,7 @@ export class GuidedTour implements OnDestroy {
         }
       },
 
-      steps: validSteps.map(step => ({
-        element: step.target,
-        popover: {
-          title: step.title,
-          description: step.description,
-        },
-      })),
+      steps: validSteps,
     });
 
     this.tour = newTour;
