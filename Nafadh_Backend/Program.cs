@@ -260,6 +260,9 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IAbsenceWarningService, AbsenceWarningService>();
 
+            // Company self-registration (public register + approval/rejection + login gate)
+            builder.Services.AddScoped<ICompanyRegistrationService, CompanyRegistrationService>();
+
             // ── Swagger with JWT support ───────────────────────────────────────
             builder.Services.AddEndpointsApiExplorer();
 
