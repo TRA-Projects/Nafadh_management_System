@@ -1,22 +1,18 @@
-
 <section class="results-page" dir="rtl">
 
-  
-<div class="results-header">
 
-  <h2>نتائج الاختبارات</h2>
+  <div class="results-header">
 
-  <button
-    type="button"
-    class="back-btn"
-    (click)="goBack()">
+    <h2>نتائج الاختبارات</h2>
 
-    <i class="fa-solid fa-arrow-right"></i>
-    العودة إلى الاختبارات
+    <button type="button" class="back-btn" (click)="goBack()">
 
-  </button>
+      <i class="fa-solid fa-arrow-right"></i>
+      العودة إلى الاختبارات
 
-</div>
+    </button>
+
+  </div>
 
 
   <p *ngIf="loading()">جاري تحميل النتائج...</p>
@@ -25,8 +21,7 @@
     {{ errorMessage() }}
   </p>
 
-  <div class="table-wrapper"
-       *ngIf="!loading() && !errorMessage()">
+  <div class="table-wrapper" *ngIf="!loading() && !errorMessage()">
 
     <table>
       <thead>
@@ -48,11 +43,11 @@
           <td>{{ result.attemptNumber }}</td>
           <td>{{ result.score }}</td>
           <td>{{ result.percentage }}%</td>
-          <td>{{ result.status }}</td>
+          <td>{{ getAttemptStatusLabel(result.status) }}</td>
           <td>
             {{ result.submittedAt
-              ? (result.submittedAt | date:'short')
-              : 'لم يُسلّم' }}
+            ? (result.submittedAt | date:'short')
+            : 'لم يُسلّم' }}
           </td>
         </tr>
       </tbody>
