@@ -5,7 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import {
   TrainerApi,
-  QuizResultDto
+  QuizResultDto,
+  QuizAttemptDetailsDto
 } from '../../services/trainer-api';
 
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -31,6 +32,9 @@ export class QuizResults implements OnInit {
   errorMessage = signal('');
   successMessage = signal('');
 
+  attemptDetails = signal<QuizAttemptDetailsDto | null>(null);
+  detailsLoading = signal(false);
+
   quizId: number | undefined;
   trainerId: number | null = null;
 
@@ -44,7 +48,7 @@ export class QuizResults implements OnInit {
     private auth: AuthService,
     private route: ActivatedRoute,
     private router: Router
-  ) {}
+  ) { }
 
 
   // =========================================
@@ -156,8 +160,95 @@ export class QuizResults implements OnInit {
     );
 
   }
+  // =========================================
+  // ATTEMPT DETAILS
+  // =========================================
 
+  viewAttemptDetails(result: QuizResultDto): void {
 
+    const userId =
+      this.auth.session()?.userId;
+
+    if (!userId) {
+
+      this.errorMessage.set(
+        'تعذر تحديد المستخدم الحالي.'
+      );
+
+      return;
+
+    }
+
+    this.detailsLoading.set(true);
+
+    this.errorMessage.set('');
+
+    this.api.getTrainerByUserId(userId).subscribe({
+
+      next: trainer => {
+
+        this.trainerId = trainer.trainerId;
+
+        this.api.getQuizAttemptDetails(
+          trainer.trainerId,
+          result.attemptId
+        ).subscribe({
+
+          next: details => {
+
+            console.log(
+              'Quiz Attempt Details:',
+              details
+            );
+
+            this.attemptDetails.set(details);
+
+            this.detailsLoading.set(false);
+
+          },
+
+          error: error => {
+
+            console.error(
+              'Quiz Attempt Details API Error:',
+              error
+            );
+
+            this.errorMessage.set(
+              'تعذر تحميل تفاصيل المحاولة.'
+            );
+
+            this.detailsLoading.set(false);
+
+          }
+
+        });
+
+      },
+
+      error: error => {
+
+        console.error(
+          'Trainer API Error:',
+          error
+        );
+
+        this.errorMessage.set(
+          'تعذر تحميل بيانات المدرب.'
+        );
+
+        this.detailsLoading.set(false);
+
+      }
+
+    });
+
+  }
+  closeAttemptDetails(): void {
+
+    this.attemptDetails.set(null);
+
+  }
   // =========================================
   // STATISTICS
   // =========================================
@@ -175,7 +266,7 @@ export class QuizResults implements OnInit {
   }
 
 
-  
+
 
 
   averagePercentage(): number {
@@ -212,131 +303,131 @@ export class QuizResults implements OnInit {
 
   inProgressCount(): number {
 
-  return this.results()
-    .filter(result =>
-      ['started', 'inprogress'].includes(
-        String(result.status).trim().toLowerCase()
+    return this.results()
+      .filter(result =>
+        ['started', 'inprogress'].includes(
+          String(result.status).trim().toLowerCase()
+        )
       )
-    )
-    .length;
+      .length;
 
-}
+  }
 
-gradingPendingCount(): number {
+  gradingPendingCount(): number {
 
-  return this.results()
-    .filter(result =>
+    return this.results()
+      .filter(result =>
+        result.status?.toLowerCase() === 'submitted' &&
+        !result.isGradingCompleted
+      )
+      .length;
+
+  }
+
+
+  passedCount(): number {
+
+    return this.results()
+      .filter(result =>
+        result.isGradingCompleted &&
+        result.isPassed === true
+      )
+      .length;
+
+  }
+
+
+  failedCount(): number {
+
+    return this.results()
+      .filter(result =>
+        result.isGradingCompleted &&
+        result.isPassed === false
+      )
+      .length;
+
+  }
+
+
+  getResultStatusLabel(result: QuizResultDto): string {
+
+    if (
       result.status?.toLowerCase() === 'submitted' &&
       !result.isGradingCompleted
-    )
-    .length;
+    ) {
+      return 'بانتظار التصحيح';
+    }
 
-}
-
-
-passedCount(): number {
-
-  return this.results()
-    .filter(result =>
+    if (
       result.isGradingCompleted &&
       result.isPassed === true
-    )
-    .length;
+    ) {
+      return 'ناجح';
+    }
 
-}
-
-
-failedCount(): number {
-
-  return this.results()
-    .filter(result =>
+    if (
       result.isGradingCompleted &&
       result.isPassed === false
-    )
-    .length;
+    ) {
+      return 'راسب';
+    }
 
-}
-
-
-getResultStatusLabel(result: QuizResultDto): string {
-
-  if (
-    result.status?.toLowerCase() === 'submitted' &&
-    !result.isGradingCompleted
-  ) {
-    return 'بانتظار التصحيح';
+    return this.getAttemptStatusLabel(result.status);
   }
 
-  if (
-    result.isGradingCompleted &&
-    result.isPassed === true
-  ) {
-    return 'ناجح';
+
+  getResultStatusClass(result: QuizResultDto): string {
+
+    if (
+      result.status?.toLowerCase() === 'submitted' &&
+      !result.isGradingCompleted
+    ) {
+      return 'status-pending';
+    }
+
+    if (
+      result.isGradingCompleted &&
+      result.isPassed === true
+    ) {
+      return 'status-passed';
+    }
+
+    if (
+      result.isGradingCompleted &&
+      result.isPassed === false
+    ) {
+      return 'status-failed';
+    }
+
+    return this.getStatusClass(result.status);
   }
 
-  if (
-    result.isGradingCompleted &&
-    result.isPassed === false
-  ) {
-    return 'راسب';
+
+  getResultStatusIcon(result: QuizResultDto): string {
+
+    if (
+      result.status?.toLowerCase() === 'submitted' &&
+      !result.isGradingCompleted
+    ) {
+      return 'fa-hourglass-half';
+    }
+
+    if (
+      result.isGradingCompleted &&
+      result.isPassed === true
+    ) {
+      return 'fa-circle-check';
+    }
+
+    if (
+      result.isGradingCompleted &&
+      result.isPassed === false
+    ) {
+      return 'fa-circle-xmark';
+    }
+
+    return this.getStatusIcon(result.status);
   }
-
-  return this.getAttemptStatusLabel(result.status);
-}
-
-
-getResultStatusClass(result: QuizResultDto): string {
-
-  if (
-    result.status?.toLowerCase() === 'submitted' &&
-    !result.isGradingCompleted
-  ) {
-    return 'status-pending';
-  }
-
-  if (
-    result.isGradingCompleted &&
-    result.isPassed === true
-  ) {
-    return 'status-passed';
-  }
-
-  if (
-    result.isGradingCompleted &&
-    result.isPassed === false
-  ) {
-    return 'status-failed';
-  }
-
-  return this.getStatusClass(result.status);
-}
-
-
-getResultStatusIcon(result: QuizResultDto): string {
-
-  if (
-    result.status?.toLowerCase() === 'submitted' &&
-    !result.isGradingCompleted
-  ) {
-    return 'fa-hourglass-half';
-  }
-
-  if (
-    result.isGradingCompleted &&
-    result.isPassed === true
-  ) {
-    return 'fa-circle-check';
-  }
-
-  if (
-    result.isGradingCompleted &&
-    result.isPassed === false
-  ) {
-    return 'fa-circle-xmark';
-  }
-
-  return this.getStatusIcon(result.status);
-}
 
   // =========================================
   // STATUS
@@ -347,9 +438,9 @@ getResultStatusIcon(result: QuizResultDto): string {
   ): string {
 
     switch (
-      String(status)
-        .trim()
-        .toLowerCase()
+    String(status)
+      .trim()
+      .toLowerCase()
     ) {
 
       case 'started':
@@ -386,9 +477,9 @@ getResultStatusIcon(result: QuizResultDto): string {
   ): string {
 
     switch (
-      String(status)
-        .trim()
-        .toLowerCase()
+    String(status)
+      .trim()
+      .toLowerCase()
     ) {
 
       case 'submitted':
@@ -425,9 +516,9 @@ getResultStatusIcon(result: QuizResultDto): string {
   ): string {
 
     switch (
-      String(status)
-        .trim()
-        .toLowerCase()
+    String(status)
+      .trim()
+      .toLowerCase()
     ) {
 
       case 'submitted':

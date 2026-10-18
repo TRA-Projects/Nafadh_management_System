@@ -67,6 +67,46 @@ export interface QuizResultDto {
   isPassed: boolean | null;
 
 }
+export interface AttemptAnswerDetailsDto {
+  attemptQuestionId: number;
+  questionId: number;
+  questionOrder: number;
+  questionText: string;
+  questionType: string;
+  points: number;
+
+  selectedOptionId?: number | null;
+  selectedOptionText?: string | null;
+
+  textAnswer?: string | null;
+
+  isCorrect?: boolean | null;
+
+  awardedPoints: number;
+
+  isManuallyGraded: boolean;
+
+  isMarkedForReview: boolean;
+}
+
+
+export interface QuizAttemptFullDetailsDto {
+  attemptId: number;
+  quizId: number;
+  quizTitle: string;
+
+  attemptNumber: number;
+
+  status: string;
+
+  score: number;
+  percentage: number;
+
+  startedAt: string;
+  submittedAt: string | null;
+
+  answers: AttemptAnswerDetailsDto[];
+}
 
 export interface CreateQuestionOptionDto {
   optionText: string;
@@ -1366,7 +1406,10 @@ export class TrainerApi {
       `${this.base}/quiz-results/trainer/${trainerId}`,
       { params }
     );
+    
   }
+
+  
 
 gradeEssayAnswer(dto: GradeQuizAnswerDto): Observable<{ message: string }> {
 

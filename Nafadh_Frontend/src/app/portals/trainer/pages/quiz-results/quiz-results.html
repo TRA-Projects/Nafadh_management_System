@@ -33,10 +33,7 @@
 
   </div>
 
-  <!-- RESULTS MESSAGES -->
-  <p *ngIf="loading()">
-    جاري تحميل النتائج...
-  </p>
+  
 
   <!-- ================================
        LOADING
@@ -286,6 +283,9 @@
                 تاريخ التسليم
               </th>
 
+              <th>
+  الإجراءات
+</th>
             </tr>
 
           </thead>
@@ -427,6 +427,24 @@
 
               </td>
 
+              <!-- Actions -->
+
+<td>
+
+  <button
+    type="button"
+    class="details-btn"
+    (click)="viewAttemptDetails(result)"
+  >
+
+    <i class="fa-solid fa-eye"></i>
+
+    عرض التفاصيل
+
+  </button>
+
+</td>
+
             </tr>
 
           </tbody>
@@ -440,3 +458,307 @@
   </ng-container>
 
 </section>
+
+<!-- =========================================
+     ATTEMPT DETAILS MODAL
+========================================= -->
+
+<div
+  class="details-overlay"
+  *ngIf="attemptDetails()"
+  (click)="closeAttemptDetails()"
+>
+
+  <div
+    class="details-modal"
+    dir="rtl"
+    (click)="$event.stopPropagation()"
+  >
+
+    <!-- Modal Header -->
+
+    <div class="details-modal-header">
+
+      <div>
+
+        <span class="details-eyebrow">
+          <i class="fa-solid fa-file-lines"></i>
+          تفاصيل المحاولة
+        </span>
+
+        <h2>
+          {{ attemptDetails()?.quizTitle }}
+        </h2>
+
+        <p>
+          المتدرب:
+          {{ attemptDetails()?.traineeName }}
+        </p>
+
+      </div>
+
+      <button
+        type="button"
+        class="close-details-btn"
+        (click)="closeAttemptDetails()"
+      >
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+    </div>
+
+
+    <!-- Summary -->
+
+    <div class="details-summary">
+
+      <div class="summary-item">
+
+        <span>المحاولة</span>
+
+        <strong>
+          {{ attemptDetails()?.attemptNumber }}
+        </strong>
+
+      </div>
+
+
+      <div class="summary-item">
+
+        <span>الدرجة</span>
+
+        <strong>
+          {{ attemptDetails()?.score }}
+        </strong>
+
+      </div>
+
+
+      <div class="summary-item">
+
+        <span>النسبة</span>
+
+        <strong>
+          {{ attemptDetails()?.percentage }}%
+        </strong>
+
+      </div>
+
+
+      <div class="summary-item">
+
+        <span>نسبة النجاح</span>
+
+        <strong>
+          {{ attemptDetails()?.passingPercentage }}%
+        </strong>
+
+      </div>
+
+    </div>
+
+
+    <!-- Grading Status -->
+
+    <div class="grading-status">
+
+      <span>حالة التصحيح</span>
+
+      <strong
+        *ngIf="attemptDetails()?.isGradingCompleted"
+        class="status-passed"
+      >
+        <i class="fa-solid fa-circle-check"></i>
+        تم التصحيح
+      </strong>
+
+      <strong
+        *ngIf="!attemptDetails()?.isGradingCompleted"
+        class="status-pending"
+      >
+        <i class="fa-solid fa-hourglass-half"></i>
+        بانتظار التصحيح
+      </strong>
+
+    </div>
+
+
+    <!-- Questions -->
+
+    <div class="details-questions">
+
+      <div
+        class="question-detail"
+        *ngFor="
+          let answer of attemptDetails()?.answers;
+          let i = index
+        "
+      >
+
+        <!-- Question Number -->
+
+        <div class="question-number">
+          {{ i + 1 }}
+        </div>
+
+
+        <div class="question-content">
+
+          <!-- Question -->
+
+          <h3>
+            {{ answer.questionText }}
+          </h3>
+
+
+          <!-- Question Info -->
+
+          <div class="question-meta">
+
+            <span>
+              نوع السؤال:
+              {{ answer.questionType }}
+            </span>
+
+            <span>
+              الدرجة:
+              {{ answer.awardedPoints }}
+              /
+              {{ answer.maxPoints }}
+            </span>
+
+          </div>
+
+
+          <!-- Trainee Answer -->
+
+          <div class="answer-box">
+
+            <span class="answer-label">
+              إجابة المتدرب
+            </span>
+
+            <p
+              *ngIf="answer.selectedOptionText"
+            >
+              {{ answer.selectedOptionText }}
+            </p>
+
+            <p
+              *ngIf="answer.textAnswer"
+            >
+              {{ answer.textAnswer }}
+            </p>
+
+            <p
+              *ngIf="
+                !answer.selectedOptionText &&
+                !answer.textAnswer
+              "
+              class="no-answer"
+            >
+              لم تتم الإجابة
+            </p>
+
+          </div>
+
+
+          
+
+
+          <!-- Result -->
+
+          <div
+            class="question-result"
+            *ngIf="answer.isCorrect === true"
+          >
+
+            <i class="fa-solid fa-circle-check"></i>
+
+            إجابة صحيحة
+
+          </div>
+
+
+          <div
+            class="question-result incorrect"
+            *ngIf="answer.isCorrect === false"
+          >
+
+            <i class="fa-solid fa-circle-xmark"></i>
+
+            إجابة غير صحيحة
+
+          </div>
+
+
+          <!-- Manual Grading -->
+
+          <div
+            class="manual-grading"
+            *ngIf="
+              answer.requiresManualGrading &&
+              !answer.isManuallyGraded
+            "
+          >
+
+            <i class="fa-solid fa-user-pen"></i>
+
+            تحتاج إلى تصحيح يدوي
+
+          </div>
+
+
+          <div
+            class="manual-grading completed"
+            *ngIf="answer.isManuallyGraded"
+          >
+
+            <i class="fa-solid fa-user-check"></i>
+
+            تم التصحيح يدويًا
+
+          </div>
+
+
+          <!-- Marked For Review -->
+
+          <div
+            class="review-badge"
+            *ngIf="answer.isMarkedForReview"
+          >
+
+            <i class="fa-solid fa-flag"></i>
+
+            معلّمة للمراجعة
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- Close -->
+
+    <div class="details-modal-footer">
+
+      <button
+        type="button"
+        class="close-modal-btn"
+        (click)="closeAttemptDetails()"
+      >
+
+        <i class="fa-solid fa-xmark"></i>
+
+        إغلاق
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
