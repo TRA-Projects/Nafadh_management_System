@@ -1135,43 +1135,6 @@ areAllQuestionsSelected(): boolean {
         }
       });
   }
-
-  // =====================================================
-  // QUESTION LABELS
-  // =====================================================
-
-  getQuestionTypeLabel(type: number): string {
-    switch (Number(type)) {
-      case 0:
-        return 'اختيار من متعدد';
-
-      case 1:
-        return 'صح أو خطأ';
-
-      case 2:
-        return 'مقالي';
-
-      default:
-        return 'غير محدد';
-    }
-  }
-
-  getDifficultyLabel(difficulty: number): string {
-    switch (Number(difficulty)) {
-      case 0:
-        return 'سهل';
-
-      case 1:
-        return 'متوسط';
-
-      case 2:
-        return 'صعب';
-
-      default:
-        return 'غير محدد';
-    }
-  }
-
   // =====================================================
   // EMPTY QUESTION FORM
   // =====================================================
@@ -1210,7 +1173,6 @@ areAllQuestionsSelected(): boolean {
     }
   }
 
- 
 getStatusLabel(status: number | string): string {
 
   switch (Number(status)) {
@@ -1234,11 +1196,12 @@ getStatusLabel(status: number | string): string {
   }
 }
 
-  getStatusClass(status: number): string {
-    return status === 0
-      ? 'draft'
-      : 'other';
-  }
+getStatusClass(status: number | string): string {
+  return String(status).toLowerCase() === 'draft' ||
+         String(status) === '0'
+    ? 'draft'
+    : 'other';
+}
 
   formatDate(value: string): string {
     if (!value) {
@@ -1319,5 +1282,51 @@ openQuizResults(quizId: number): void {
     }
   );
 }
+
+  // =====================================
+  // QUESTION TYPE LABEL
+  // =====================================
+
+  getQuestionTypeLabel(type: number | string): string {
+    switch (String(type).trim().toLowerCase()) {
+      case '0':
+      case 'multiplechoice':
+        return 'اختيار من متعدد';
+
+      case '1':
+      case 'truefalse':
+        return 'صح أو خطأ';
+
+      case '2':
+      case 'essay':
+        return 'سؤال مقالي';
+
+      default:
+        return 'غير معروف';
+    }
+  }
+
+  // =====================================
+  // QUESTION DIFFICULTY LABEL
+  // =====================================
+
+  getQuestionDifficultyLabel(difficulty: number | string): string {
+    switch (String(difficulty).trim().toLowerCase()) {
+      case '0':
+      case 'easy':
+        return 'سهل';
+
+      case '1':
+      case 'medium':
+        return 'متوسط';
+
+      case '2':
+      case 'hard':
+        return 'صعب';
+
+      default:
+        return 'غير معروف';
+    }
+  }
 
 }

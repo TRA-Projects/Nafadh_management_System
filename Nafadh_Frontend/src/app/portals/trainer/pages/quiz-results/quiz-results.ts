@@ -26,7 +26,7 @@ export class QuizResults implements OnInit {
     private auth: AuthService,
     private route: ActivatedRoute,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const id = this.route.snapshot.queryParamMap.get('quizId');
@@ -50,7 +50,10 @@ export class QuizResults implements OnInit {
           trainer.trainerId,
           this.quizId
         ).subscribe({
+
           next: data => {
+            console.log('Quiz Results from API:', data);
+
             this.results.set(data ?? []);
             this.loading.set(false);
           },
@@ -66,9 +69,30 @@ export class QuizResults implements OnInit {
       }
     });
   }
-  
-goBack(): void {
-  this.router.navigate(['/trainer/quizzes']);
-}
+
+  goBack(): void {
+    this.router.navigate(['/trainer/quizzes']);
+  }
+
+  getAttemptStatusLabel(status: string | number): string {
+
+    switch (String(status).trim().toLowerCase()) {
+
+      case 'started':
+        return 'بدأت المحاولة';
+
+      case 'inprogress':
+        return 'قيد التقدم';
+
+      case 'submitted':
+        return 'تم التسليم';
+
+      case 'expired':
+        return 'انتهت المدة';
+
+      default:
+        return 'غير معروف';
+    }
+  }
 
 }
