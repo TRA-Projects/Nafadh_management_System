@@ -1,5 +1,3 @@
-// src/app/features/trainee/user-manual/components/help-panel/help-panel.component.ts
-
 import {
   ChangeDetectionStrategy,
   Component,
@@ -11,16 +9,8 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { NfdIcon } from '../../../../../shared/ui/icon/icon';
-
 import { HelpPanelData } from '../../models/help-panel.models';
 
-/**
- * لوحة المساعدة التفاعلية.
- *
- * - تستقبل البيانات من المكوّن الأب (UserManualShell).
- * - لا تعرف مصدر البيانات، ولا تستدعي أي API.
- * - FAQ Accordion فقط.
- */
 @Component({
   selector: 'app-help-panel',
   standalone: true,
@@ -30,72 +20,46 @@ import { HelpPanelData } from '../../models/help-panel.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HelpPanelComponent {
-  // =========================================================
-  // Inputs
-  // =========================================================
-
-  /** هل اللوحة مفتوحة؟ */
   readonly isOpen = input<boolean>(false);
-
-  /** بيانات المساعدة القادمة من المكوّن الأب */
   readonly data = input<HelpPanelData | null>(null);
-
-  /** مفتاح الصفحة الحالية (للعرض فقط) */
   readonly pageKey = input<string>('');
-
-  // =========================================================
-  // Outputs
-  // =========================================================
-
-  /** يُصدر عند الضغط على زر الإغلاق */
   readonly close = output<void>();
 
-  // =========================================================
-  // Local UI State
-  // =========================================================
-
-  /** مجموعة معرّفات الأسئلة المفتوحة حالياً (Accordion) */
+  // ✅ هذا الـ Signal هو المسؤول عن فتح وإغلاق الأسئلة
   readonly openFaqIds = signal<Set<string>>(new Set());
 
-  // =========================================================
-  // Computed
-  // =========================================================
-
-  /** هل يوجد محتوى لعرضه؟ */
   readonly hasContent = computed<boolean>(() => {
     const d = this.data();
     if (!d) return false;
-
     return Boolean(
       d.pageTitle ||
       d.pageDescription ||
       (d.sections && d.sections.length > 0) ||
-      (d.faqs && d.faqs.length > 0),
+      (d.faqs && d.faqs.length > 0)
     );
   });
-
-  // =========================================================
-  // Handlers
-  // =========================================================
 
   onClose(): void {
     this.close.emit();
   }
-
-  /** Toggle سؤال في الـ FAQ */
-  toggleFaq(faqId: string): void {
+ toggleFaq(faqId: string): void {
     this.openFaqIds.update((current) => {
+      // 1. نأخذ نسخة من الحالة الحالية
       const next = new Set(current);
+      
+      // 2. نعدل النسخة
       if (next.has(faqId)) {
         next.delete(faqId);
       } else {
         next.add(faqId);
       }
-      return next;
+      
+      // 3. ✅ السر هنا: نرجع Set جديد تماماً لضمان تغيير المرجع (Reference)
+      return new Set(next); 
     });
   }
 
-  /** هل السؤال مفتوح؟ */
+  // ✅ دالة التحقق من الحالة
   isFaqOpen(faqId: string): boolean {
     return this.openFaqIds().has(faqId);
   }

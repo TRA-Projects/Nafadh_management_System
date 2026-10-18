@@ -138,9 +138,11 @@
                     class="help-faq-item"
                     [class.is-open]="isFaqOpen(faq.id)"
                   >
+                    <!-- أضفنا id هنا لربطه بالإجابة -->
                     <button
                       type="button"
                       class="help-faq-question"
+                      [id]="'faq-question-' + faq.id"
                       (click)="toggleFaq(faq.id)"
                       [attr.aria-expanded]="isFaqOpen(faq.id)"
                       [attr.aria-controls]="'faq-answer-' + faq.id"
@@ -158,9 +160,12 @@
                     </button>
 
                     @if (isFaqOpen(faq.id)) {
+                      <!-- أضفنا role و aria-labelledby لتحسين قارئات الشاشة -->
                       <div
                         class="help-faq-answer"
                         [id]="'faq-answer-' + faq.id"
+                        role="region"
+                        [attr.aria-labelledby]="'faq-question-' + faq.id"
                       >
                         {{ faq.answer }}
                       </div>

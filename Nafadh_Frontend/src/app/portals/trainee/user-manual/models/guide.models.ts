@@ -1,4 +1,3 @@
-
 export interface GuideFaq {
   question: string;
   answer: string;
@@ -9,6 +8,7 @@ export interface GuideStep {
   title: string;
   description: string;
   order: number;
+  steps?: string[];
 }
 
 export interface GuidePage {

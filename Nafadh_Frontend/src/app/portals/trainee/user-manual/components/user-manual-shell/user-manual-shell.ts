@@ -3,22 +3,22 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { GuideService } from '../../../services/guide.service';
 
-// =========================================================
-// Help Panel Components (المكوّنات الجديدة)
-// =========================================================
+// استيراد المكونات
 import { HelpButtonComponent } from '../../components/help-button/help-button.component';
-import { HelpPanelComponent } from '../help-panel/help-panel.component';
+import { HelpPanelComponent } from '../../components/help-panel/help-panel.component';
 import {
   HelpFaqItem,
   HelpPanelData,
   HelpSection,
 } from '../../models/help-panel.models';
 
+// ✅ استيراد البيانات مباشرة
+import { GUIDE_CONTENT } from '../../data/guide-content';
+
 @Component({
   selector: 'app-user-manual-shell',
   standalone: true,
   imports: [
-    // المكوّنات الجديدة
     HelpButtonComponent,
     HelpPanelComponent,
   ],
@@ -31,9 +31,6 @@ export class UserManualShell implements OnDestroy {
   private readonly router = inject(Router);
   private routeSubscription?: Subscription;
 
-  // =========================================================
-  // Page Keys (بدون تغيير)
-  // =========================================================
   private readonly pageKeys: Record<string, string> = {
     dashboard: 'dashboard',
     profile: 'profile',
@@ -46,27 +43,19 @@ export class UserManualShell implements OnDestroy {
   };
 
   // =========================================================
-  // Help Panel Data Mapping (جديد)
+  // ✅ الحل الجذري: نقرأ البيانات مباشرة من GUIDE_CONTENT
   // =========================================================
-  /**
-   * تحويل GuidePage → HelpPanelData.
-   *
-   * Mapping:
-   * - guide.title        → pageTitle
-   * - guide.description  → pageDescription
-   * - guide.steps[]      → sections[] (كل خطوة تصبح قسماً، مرتّبة حسب order)
-   * - guide.faqs[]       → faqs[] (مع توليد id)
-   */
   readonly helpPanelData = computed<HelpPanelData | null>(() => {
-    const guide = this.guideService.currentGuide();
+    // 1. نأخذ مفتاح الصفحة الحالية
+    const pageKey = this.guideService.currentPageKey();
+    
+    // 2. نقرأ الدليل مباشرة من الملف (بدون الاعتماد على currentGuide)
+    const guide = GUIDE_CONTENT[pageKey];
 
     if (!guide) {
       return null;
     }
 
-    // -------------------------------------------------------
-    // تحويل الخطوات إلى أقسام (مرتّبة حسب order)
-    // -------------------------------------------------------
     const sections: HelpSection[] = (guide.steps ?? [])
       .slice()
       .sort((a, b) => a.order - b.order)
@@ -77,18 +66,12 @@ export class UserManualShell implements OnDestroy {
         icon: 'clip',
       }));
 
-    // -------------------------------------------------------
-    // تحويل الأسئلة الشائعة (توليد id من index)
-    // -------------------------------------------------------
     const faqs: HelpFaqItem[] = (guide.faqs ?? []).map((faq, index) => ({
       id: `faq-${index}`,
       question: faq.question,
       answer: faq.answer,
     }));
 
-    // -------------------------------------------------------
-    // البيانات النهائية
-    // -------------------------------------------------------
     return {
       pageTitle: guide.title,
       pageDescription: guide.description,
@@ -97,9 +80,6 @@ export class UserManualShell implements OnDestroy {
     };
   });
 
-  // =========================================================
-  // Constructor (بدون تغيير)
-  // =========================================================
   constructor() {
     this.updateCurrentPage(this.router.url);
 
@@ -115,9 +95,6 @@ export class UserManualShell implements OnDestroy {
       });
   }
 
-  // =========================================================
-  // updateCurrentPage (بدون تغيير)
-  // =========================================================
   private updateCurrentPage(url: string): void {
     const cleanUrl = url.split('?')[0].split('#')[0];
     const segments = cleanUrl.split('/').filter(Boolean);
@@ -135,14 +112,12 @@ export class UserManualShell implements OnDestroy {
       return;
     }
 
+    // هذا السطر يحدث المفتاح في الـ Service (مهم جداً)
     this.guideService.setPage(pageKey);
-    this.guideService.setGuide(null);
+    
     this.guideService.stopTour();
   }
 
-  // =========================================================
-  // Help Actions (بدون تغيير)
-  // =========================================================
   toggleHelp(): void {
     if (this.guideService.isHelpOpen()) {
       this.guideService.closeHelp();
@@ -155,9 +130,6 @@ export class UserManualShell implements OnDestroy {
     this.guideService.closeHelp();
   }
 
-  // =========================================================
-  // OnDestroy (بدون تغيير)
-  // =========================================================
   ngOnDestroy(): void {
     this.routeSubscription?.unsubscribe();
   }
