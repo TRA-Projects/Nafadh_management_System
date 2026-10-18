@@ -325,4 +325,50 @@ export class AdminApi {
     const cleanId = this.sanitizeId(traineeId);
     return this.http.put<any>(`${this.base}/Trainee/${cleanId}/withdrawal-decision`, dto);
   }
+  // ==========================================================
+  // 🌟 خطط الدورات التدريبية (Course Plans - Admin Review)
+  // ==========================================================
+
+  // جلب كافة الخطط التدريبية الخاصة بالشركة
+  getCompanyCoursePlans(companyId: number): Observable<any> {
+    const cleanCompanyId = this.sanitizeId(companyId);
+    return this.http.get<any>(`${this.base}/CompanyCoursePlan/company/${cleanCompanyId}/plans`);
+  }
+
+  // جلب تفاصيل خطة معينة مع مراحلها ومدربيها وعناصرها
+  getCoursePlanDetails(companyId: number, planId: number): Observable<any> {
+    const cleanCompanyId = this.sanitizeId(companyId);
+    const cleanPlanId = this.sanitizeId(planId);
+    return this.http.get<any>(`${this.base}/CompanyCoursePlan/company/${cleanCompanyId}/plans/${cleanPlanId}`);
+  }
+
+  // اعتماد أو رفض خطة الدورة التدريبية (Authority Approval / Review)
+  reviewCoursePlan(
+    companyId: number,
+    planId: number,
+    dto: { decision: number; note?: string }
+  ): Observable<any> {
+    const cleanCompanyId = this.sanitizeId(companyId);
+    const cleanPlanId = this.sanitizeId(planId);
+    return this.http.put<any>(`${this.base}/CompanyCoursePlan/company/${cleanCompanyId}/plans/${cleanPlanId}/review`, dto);
+  }
+
+  // 1. كل طلبات الانسحاب من الداتابيس
+  getWithdrawalRequests(status?: string): Observable<any[]> {
+    const params: any = status ? { status } : {};
+    return this.http.get<any[]>(`${this.base}/WithdrawalRequests`, { params });
+  }
+
+  // 2. مراجعة واعتماد أو رفض طلب الانسحاب
+  reviewWithdrawalRequest(id: number, status: number, adminNotes?: string): Observable<any> {
+    return this.http.put(`${this.base}/WithdrawalRequests/${id}/review`, {
+      status, // 1 = Approved, 2 = Rejected
+      adminNotes
+    });
+  }
+
+  // 3. تقديم طلب انسحاب جديد
+  createWithdrawalRequest(payload: { traineeId: number; reason: string }): Observable<any> {
+    return this.http.post(`${this.base}/WithdrawalRequests`, payload);
+  }
 }

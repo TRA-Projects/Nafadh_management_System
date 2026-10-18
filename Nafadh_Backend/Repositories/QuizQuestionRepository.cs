@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Repositories
@@ -34,11 +35,52 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
         }
 
+        // عرض أسئلة اختبار معين
+        public async Task<List<NFD_QuizQuestion>>
+            GetQuizQuestionsAsync(int quizId)
+        {
+            return await _context.NFD_QuizQuestions
+                .AsNoTracking()
+                .Include(q => q.Question)
+                .Where(q => q.QuizId == quizId)
+                .OrderBy(q => q.QuestionOrder)
+                .ToListAsync();
+        }
+
+        // البحث عن سؤال مرتبط باختبار معين
+        public async Task<NFD_QuizQuestion?>
+            GetQuizQuestionByIdAsync(
+                int quizId,
+                int quizQuestionId)
+        {
+            return await _context.NFD_QuizQuestions
+                .FirstOrDefaultAsync(q =>
+                    q.QuizId == quizId &&
+                    q.QuizQuestionId == quizQuestionId);
+        }
+
+        // التحقق من وجود محاولات للاختبار
+        public async Task<bool> HasQuizAttemptsAsync(
+            int quizId)
+        {
+            return await _context.NFD_QuizAttempts
+                .AnyAsync(a => a.QuizId == quizId);
+        }
+
+        // إضافة أسئلة إلى الاختبار
         public async Task AddRangeAsync(
             List<NFD_QuizQuestion> quizQuestions)
         {
             await _context.NFD_QuizQuestions
                 .AddRangeAsync(quizQuestions);
+        }
+
+        // حذف ربط السؤال بالاختبار فقط
+        public void RemoveQuizQuestion(
+            NFD_QuizQuestion quizQuestion)
+        {
+            _context.NFD_QuizQuestions
+                .Remove(quizQuestion);
         }
 
         public async Task SaveChangesAsync()

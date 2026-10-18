@@ -128,5 +128,88 @@ namespace Nafadh_Backend.Controllers
                 });
             }
         }
+        // تصحيح الإجابة المقالية من المدرب
+        [HttpPost("grade-essay")]
+        public async Task<IActionResult> GradeEssayAnswer(
+            [FromBody] GradeQuizAnswerDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _service.GradeEssayAnswerAsync(dto);
+
+                return Ok(new
+                {
+                    message = "تم تصحيح الإجابة المقالية وتحديث درجة المتدرب بنجاح."
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+        // تسجيل مخالفة الخروج من صفحة الاختبار
+        [HttpPost("{attemptId:int}/violation")]
+        public async Task<IActionResult> RegisterViolation(int attemptId)
+        {
+            try
+            {
+                var violationCount =
+                    await _service.RegisterViolationAsync(attemptId);
+
+                var isTerminated = violationCount >= 2;
+
+                return Ok(new
+                {
+                    message = isTerminated
+                        ? "تم إنهاء الاختبار بسبب تكرار المخالفات."
+                        : "تم تسجيل المخالفة الأولى.",
+                    violationCount,
+                    isTerminated
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
     }
 }

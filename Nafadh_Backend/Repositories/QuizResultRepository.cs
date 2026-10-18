@@ -37,5 +37,26 @@ namespace Nafadh_Backend.Repositories
                 .ThenBy(a => a.Trainee.User.FullName)
                 .ToListAsync();
         }
+        // جلب نتائج المتدرب بعد اكتمال التصحيح
+        public async Task<List<NFD_QuizAttempt>>
+            GetTraineeResultsAsync(int traineeId)
+        {
+            return await _context.NFD_QuizAttempts
+                .AsNoTracking()
+                .Include(a => a.Quiz)
+                .Include(a => a.Trainee)
+                    .ThenInclude(t => t.User)
+                .Where(a =>
+                    a.TraineeId == traineeId &&
+                    (a.Status == "Submitted" ||
+                     a.Status == "Expired") &&
+                    !a.AttemptQuestions.Any(aq =>
+                        aq.Question.QuestionType ==
+                            Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay &&
+                        !aq.Answers.Any(answer =>
+                            answer.IsManuallyGraded)))
+                .OrderByDescending(a => a.SubmittedAt)
+                .ToListAsync();
+        }
     }
 }
