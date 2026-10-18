@@ -1,0 +1,35 @@
+
+@import 'driver.js/dist/driver.css';
+
+:host {
+  display: block;
+}
+
+.guided-tour-start {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  background-color: #167a55;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background-color: #105d40;
+  }
+
+  &:focus-visible {
+    outline: 3px solid #8ccbb2;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
