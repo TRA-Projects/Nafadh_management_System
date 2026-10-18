@@ -1,22 +1,19 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Nafadh_Backend.Migrations
 {
-    /// <inheritdoc />
     public partial class FixPendingModelChanges : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            
+            // Quiz tables already created by AddQuizModuleFoundation.
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            // No changes to revert.
         }
     }
 }

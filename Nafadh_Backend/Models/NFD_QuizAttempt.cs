@@ -20,6 +20,11 @@ namespace Nafadh_Backend.Models
         public decimal Score { get; set; }
 
         public decimal Percentage { get; set; }
+        // عدد مرات خروج المتدرب من صفحة الاختبار
+        public int ViolationCount { get; set; } = 0;
+
+        // هل انتهت المحاولة بسبب المخالفات؟
+        public bool IsTerminatedByViolation { get; set; } = false;
 
         // Started / InProgress / Submitted / Expired
         [MaxLength(30)]

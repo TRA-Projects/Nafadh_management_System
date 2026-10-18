@@ -7,5 +7,9 @@ namespace Nafadh_Backend.Repositories
         Task<List<NFD_QuizAttempt>> GetTrainerResultsAsync(
             int trainerId,
             int? quizId = null);
+
+        // جلب نتائج المتدرب
+        Task<List<NFD_QuizAttempt>> GetTraineeResultsAsync(
+            int traineeId);
     }
 }

@@ -1482,6 +1482,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<int>("MaxAttempts")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("PassingPercentage")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<bool>("RandomizeQuestions")
                         .HasColumnType("bit");
 
@@ -1528,6 +1531,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<bool?>("IsCorrect")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsManuallyGraded")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsMarkedForReview")
                         .HasColumnType("bit");
 
@@ -1560,6 +1566,9 @@ namespace Nafadh_Backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsTerminatedByViolation")
+                        .HasColumnType("bit");
+
                     b.Property<decimal>("Percentage")
                         .HasColumnType("decimal(18,2)");
 
@@ -1581,6 +1590,9 @@ namespace Nafadh_Backend.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<int>("TraineeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ViolationCount")
                         .HasColumnType("int");
 
                     b.HasKey("AttemptId");
@@ -2093,6 +2105,50 @@ namespace Nafadh_Backend.Migrations
                         .IsUnique();
 
                     b.ToTable("NFD_TraineeBadges", (string)null);
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_TraineeEvaluation", b =>
+                {
+                    b.Property<int>("EvaluationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EvaluationId"));
+
+                    b.Property<string>("AreasForImprovement")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("AttemptId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Recommendations")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Strengths")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("TrainerNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.HasKey("EvaluationId");
+
+                    b.HasIndex("AttemptId")
+                        .IsUnique();
+
+                    b.ToTable("NFD_TraineeEvaluations", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TraineeModuleProgress", b =>
@@ -3478,6 +3534,17 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("Badge");
 
                     b.Navigation("Trainee");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_TraineeEvaluation", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_QuizAttempt", "Attempt")
+                        .WithOne()
+                        .HasForeignKey("Nafadh_Backend.Models.NFD_TraineeEvaluation", "AttemptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Attempt");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_TraineeModuleProgress", b =>

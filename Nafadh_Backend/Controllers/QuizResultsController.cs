@@ -28,5 +28,15 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(results);
         }
+        // عرض نتائج اختبارات المتدرب
+        [HttpGet("trainee/{traineeId:int}")]
+        public async Task<IActionResult> GetTraineeResults(
+            int traineeId)
+        {
+            var results = await _service.GetTraineeResultsAsync(
+                traineeId);
+
+            return Ok(results);
+        }
     }
 }

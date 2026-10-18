@@ -1,4 +1,5 @@
-﻿using Nafadh_Backend.DTOs;
+﻿using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
 
@@ -15,18 +16,25 @@ namespace Nafadh_Backend.Services
         Task SubmitAttemptAsync(
             SubmitQuizDto dto);
 
+        Task GradeEssayAnswerAsync(
+ GradeQuizAnswerDto dto);
 
+        Task<int> RegisterViolationAsync(int attemptId);
     }
+
 
     public class QuizAttemptService
         : IQuizAttemptService
     {
         private readonly IQuizAttemptRepository _repository;
+        private readonly Nafadhcontext _context;
 
         public QuizAttemptService(
-            IQuizAttemptRepository repository)
+            IQuizAttemptRepository repository,
+            Nafadhcontext context)
         {
             _repository = repository;
+            _context = context;
         }
 
         public async Task<QuizAttemptDto> StartAttemptAsync(
@@ -40,6 +48,23 @@ namespace Nafadh_Backend.Services
             {
                 throw new KeyNotFoundException(
                     "الاختبار غير موجود.");
+            }
+
+            if (quiz.Status != Nafadh_Backend.Enums.NFD_QuizStatus.Open)
+            {
+                throw new InvalidOperationException(
+                    "الاختبار غير متاح حالياً.");
+            }
+
+            var isEnrolled =
+                await _repository.IsTraineeEnrolledInBatchAsync(
+                    dto.TraineeId,
+                    quiz.BatchId);
+
+            if (!isEnrolled)
+            {
+                throw new UnauthorizedAccessException(
+                    "المتدرب غير مسجل في دفعة هذا الاختبار.");
             }
 
             var now = DateTime.UtcNow;
@@ -117,17 +142,25 @@ namespace Nafadh_Backend.Services
             await _repository.AddAttemptAsync(attempt);
             await _repository.SaveChangesAsync();
 
+            // Reload the saved attempt with its question and option relationships.
+            var savedAttempt = await _repository.GetAttemptForAnswerAsync(attempt.AttemptId);
+            if (savedAttempt == null)
+            {
+                throw new InvalidOperationException("تعذر تحميل أسئلة محاولة الاختبار.");
+            }
+
             return new QuizAttemptDto
             {
-                AttemptId = attempt.AttemptId,
+                AttemptId = savedAttempt.AttemptId,
                 QuizId = quiz.QuizId,
                 QuizTitle = quiz.Title,
                 DurationMinutes = quiz.DurationMinutes,
+                CameraRequired = quiz.CameraRequired,
                 StartedAt = attempt.StartedAt,
                 ExpectedEndAt = attempt.StartedAt
                     .AddMinutes(quiz.DurationMinutes),
                 Status = attempt.Status,
-                Questions = attempt.AttemptQuestions
+                Questions = savedAttempt.AttemptQuestions
                     .OrderBy(x => x.QuestionOrder)
                     .Select(x => new AttemptQuestionDto
                     {
@@ -217,9 +250,39 @@ namespace Nafadh_Backend.Services
                 }
             }
 
-            var isCorrect = false;
+            bool? isCorrect = null;
             decimal awardedPoints = 0;
+            bool isManuallyGraded = false;
+            var questionType = attemptQuestion.Question.QuestionType;
 
+            if (questionType == Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay)
+            {
+                if (dto.SelectedOptionId.HasValue)
+                {
+                    throw new ArgumentException(
+                        "السؤال المقالي لا يقبل اختيار إجابة.");
+                }
+
+                if (string.IsNullOrWhiteSpace(dto.TextAnswer))
+                {
+                    throw new ArgumentException(
+                        "يجب كتابة إجابة للسؤال المقالي.");
+                }
+            }
+            else
+            {
+                if (!dto.SelectedOptionId.HasValue)
+                {
+                    throw new ArgumentException(
+                        "يجب اختيار إجابة لهذا السؤال.");
+                }
+
+                if (!string.IsNullOrWhiteSpace(dto.TextAnswer))
+                {
+                    throw new ArgumentException(
+                        "هذا السؤال لا يقبل إجابة نصية.");
+                }
+            }
             if (dto.SelectedOptionId.HasValue)
             {
                 var selectedOption = attemptQuestion.Question.Options
@@ -228,7 +291,7 @@ namespace Nafadh_Backend.Services
 
                 isCorrect = selectedOption.IsCorrect;
 
-                if (isCorrect)
+                if (isCorrect == true)
                 {
                     awardedPoints = attemptQuestion.Points;
                 }
@@ -253,6 +316,7 @@ namespace Nafadh_Backend.Services
             answer.TextAnswer = dto.TextAnswer?.Trim();
             answer.IsCorrect = isCorrect;
             answer.AwardedPoints = awardedPoints;
+            answer.IsManuallyGraded = isManuallyGraded;
             answer.IsMarkedForReview = dto.IsMarkedForReview;
             answer.AnsweredAt = now;
 
@@ -311,5 +375,125 @@ namespace Nafadh_Backend.Services
 
             await _repository.SaveChangesAsync();
         }
+        public async Task GradeEssayAnswerAsync(
+    GradeQuizAnswerDto dto)
+        {
+            var answer = await _repository.GetAnswerForGradingAsync(
+                dto.AnswerId);
+
+            if (answer == null)
+            {
+                throw new KeyNotFoundException(
+                    "الإجابة غير موجودة.");
+            }
+
+            var attemptQuestion = answer.AttemptQuestion;
+            var attempt = attemptQuestion.Attempt;
+
+            if (attempt.Quiz.TrainerId != dto.TrainerId)
+            {
+                throw new UnauthorizedAccessException(
+                    "هذا الاختبار لا يتبع للمدرب المحدد.");
+            }
+
+            if (attempt.Status != "Submitted" &&
+                attempt.Status != "Expired")
+            {
+                throw new InvalidOperationException(
+                    "لا يمكن تصحيح الإجابة قبل تسليم الاختبار.");
+            }
+
+            if (attemptQuestion.Question.QuestionType !=
+                Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay)
+            {
+                throw new InvalidOperationException(
+                    "التصحيح اليدوي متاح للأسئلة المقالية فقط.");
+            }
+
+            if (dto.AwardedPoints < 0 ||
+                dto.AwardedPoints > attemptQuestion.Points)
+            {
+                throw new ArgumentException(
+                    "الدرجة يجب أن تكون بين صفر والدرجة الكاملة للسؤال.");
+            }
+            var isEvaluationCompleted = await _context.NFD_TraineeEvaluations
+                .AnyAsync(e => e.AttemptId == attempt.AttemptId && e.IsCompleted);
+
+
+            if (isEvaluationCompleted)
+            {
+                throw new InvalidOperationException(
+                    "لا يمكن تعديل الدرجات بعد اعتماد تقييم المتدرب.");
+            }
+            answer.AwardedPoints = dto.AwardedPoints;
+            answer.IsManuallyGraded = true;
+            answer.IsCorrect = dto.AwardedPoints == attemptQuestion.Points;
+
+            await _repository.SaveChangesAsync();
+
+            var updatedAttempt = await _repository.GetAttemptForSubmissionAsync(
+                attempt.AttemptId);
+
+            if (updatedAttempt == null)
+            {
+                throw new KeyNotFoundException("المحاولة غير موجودة.");
+            }
+
+            var totalScore = updatedAttempt.AttemptQuestions
+                .Sum(q => q.Answers.Sum(a => a.AwardedPoints));
+
+            var totalPoints = updatedAttempt.AttemptQuestions
+                .Sum(q => q.Points);
+
+            updatedAttempt.Score = totalScore;
+
+            updatedAttempt.Percentage = totalPoints <= 0
+                ? 0
+                : Math.Round(totalScore / totalPoints * 100, 2);
+
+            await _repository.SaveChangesAsync();
+        }
+        public async Task<int> RegisterViolationAsync(int attemptId)
+        {
+            var attempt = await _repository
+                .GetAttemptForSubmissionAsync(attemptId);
+
+            if (attempt == null)
+            {
+                throw new KeyNotFoundException(
+                    "محاولة الاختبار غير موجودة.");
+            }
+
+            if (attempt.Status != "InProgress")
+            {
+                throw new InvalidOperationException(
+                    "لا يمكن تسجيل مخالفة لمحاولة منتهية.");
+            }
+
+            attempt.ViolationCount++;
+
+            if (attempt.ViolationCount >= 2)
+            {
+                attempt.IsTerminatedByViolation = true;
+                attempt.Status = "Terminated";
+                attempt.SubmittedAt = DateTime.UtcNow;
+
+                var totalScore = attempt.AttemptQuestions
+                    .Sum(q => q.Answers.Sum(a => a.AwardedPoints));
+
+                var totalPoints = attempt.AttemptQuestions
+                    .Sum(q => q.Points);
+
+                attempt.Score = totalScore;
+                attempt.Percentage = totalPoints <= 0
+                    ? 0
+                    : Math.Round(totalScore / totalPoints * 100, 2);
+            }
+
+            await _repository.SaveChangesAsync();
+
+            return attempt.ViolationCount;
+        }
     }
 }
+

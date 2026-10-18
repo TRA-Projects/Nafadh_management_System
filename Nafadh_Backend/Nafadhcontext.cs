@@ -69,7 +69,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_QuizQuestion> NFD_QuizQuestions { get; set; }
 
         public DbSet<NFD_QuizAttempt> NFD_QuizAttempts { get; set; }
-
+        public DbSet<NFD_TraineeEvaluation> NFD_TraineeEvaluations { get; set; }
         public DbSet<NFD_AttemptQuestion> NFD_AttemptQuestions { get; set; }
 
         public DbSet<NFD_QuizAnswer> NFD_QuizAnswers { get; set; }
@@ -915,7 +915,21 @@ namespace Nafadh_Backend
                     .HasForeignKey(e => e.TraineeId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+            // ---- NFD_TraineeEvaluation ----
+            modelBuilder.Entity<NFD_TraineeEvaluation>(entity =>
+            {
+                entity.ToTable("NFD_TraineeEvaluations");
 
+                entity.HasKey(e => e.EvaluationId);
+
+                entity.HasIndex(e => e.AttemptId)
+                    .IsUnique();
+
+                entity.HasOne(e => e.Attempt)
+                    .WithOne()
+                    .HasForeignKey<NFD_TraineeEvaluation>(e => e.AttemptId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
             modelBuilder.Entity<NFD_AttemptQuestion>(entity =>
             {
                 entity.ToTable("NFD_AttemptQuestions");
