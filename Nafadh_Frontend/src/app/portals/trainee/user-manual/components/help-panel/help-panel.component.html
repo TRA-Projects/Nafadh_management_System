@@ -1,7 +1,7 @@
 <!-- src/app/features/trainee/user-manual/components/help-panel/help-panel.component.html -->
 
 @if (isOpen()) {
-  <!-- Overlay (لإغلاق اللوحة عند الضغط خارجه) -->
+  <!-- Overlay -->
   <div
     class="help-panel-overlay"
     (click)="onClose()"
@@ -16,10 +16,7 @@
     aria-label="لوحة دليل الاستخدام"
     (click)="$event.stopPropagation()"
   >
-
-    <!-- =====================================================
-         Header
-         ===================================================== -->
+    <!-- Header -->
     <header class="help-panel-header">
       <div class="help-panel-header-text">
         <h2 class="help-panel-title">
@@ -48,42 +45,9 @@
       </button>
     </header>
 
-    <!-- =====================================================
-         Search
-         ===================================================== -->
-    <div class="help-panel-search">
-      <span class="help-search-icon" aria-hidden="true">
-        <nfd-icon name="search" size="sm" />
-      </span>
-
-      <input
-        type="text"
-        class="help-search-input"
-        placeholder="ابحث في دليل الاستخدام..."
-        [value]="searchQuery()"
-        (input)="onSearchInput($event)"
-        aria-label="بحث في دليل الاستخدام"
-      />
-
-      @if (searchQuery()) {
-        <button
-          type="button"
-          class="help-search-clear"
-          (click)="clearSearch()"
-          aria-label="مسح البحث"
-          title="مسح البحث"
-        >
-          <nfd-icon name="close" size="sm" />
-        </button>
-      }
-    </div>
-
-    <!-- =====================================================
-         Body
-         ===================================================== -->
+    <!-- Body -->
     <div class="help-panel-body">
-
-      <!-- ============ Empty Data ============ -->
+      <!-- Empty Data -->
       @if (!hasContent()) {
         <div class="help-empty">
           <div class="help-empty-icon">
@@ -92,53 +56,28 @@
           <strong>لا توجد معلومات لهذه الصفحة</strong>
           <span>لم يتم توفير دليل استخدام لهذه الصفحة حالياً.</span>
         </div>
-      }
-
-      <!-- ============ No Search Results ============ -->
-      @else if (!hasSearchResults()) {
-        <div class="help-empty">
-          <div class="help-empty-icon">
-            <nfd-icon name="search" />
-          </div>
-          <strong>لا توجد نتائج مطابقة</strong>
-          <span>
-            لم نجد أي نتيجة للبحث عن
-            "<span class="help-empty-query">{{ searchQuery() }}</span>"
-          </span>
-        </div>
-      }
-
-      <!-- ============ Content ============ -->
-      @else {
+      } @else {
         @let panelData = data();
 
         @if (panelData) {
+          <!-- Current Page Info -->
+          <section class="help-section help-section-current">
+            <div class="help-current-icon">
+              <nfd-icon name="chart" size="sm" />
+            </div>
 
-          <!-- =================================================
-               Current Page Info
-               ================================================= -->
-          @if (!isSearching() || pageHeaderMatches()) {
-            <section class="help-section help-section-current">
-              <div class="help-current-icon">
-                <nfd-icon name="chart" size="sm" />
-              </div>
+            <div class="help-current-text">
+              <h3 class="help-current-title">
+                {{ panelData.pageTitle }}
+              </h3>
+              <p class="help-current-description">
+                {{ panelData.pageDescription }}
+              </p>
+            </div>
+          </section>
 
-              <div class="help-current-text">
-                <h3 class="help-current-title">
-                  {{ panelData.pageTitle }}
-                </h3>
-
-                <p class="help-current-description">
-                  {{ panelData.pageDescription }}
-                </p>
-              </div>
-            </section>
-          }
-
-          <!-- =================================================
-               How to Use
-               ================================================= -->
-          @if (filteredSections().length > 0) {
+          <!-- How to Use -->
+          @if (panelData.sections && panelData.sections.length > 0) {
             <section class="help-section-group">
               <header class="help-section-group-header">
                 <span class="help-section-group-icon">
@@ -148,7 +87,7 @@
               </header>
 
               <div class="help-sections">
-                @for (section of filteredSections(); track section.id) {
+                @for (section of panelData.sections; track section.id) {
                   <article class="help-section-card">
                     @if (section.title) {
                       <header class="help-section-card-header">
@@ -157,7 +96,6 @@
                             <nfd-icon [name]="section.icon" size="sm" />
                           </span>
                         }
-
                         <h4>{{ section.title }}</h4>
                       </header>
                     }
@@ -184,10 +122,8 @@
             </section>
           }
 
-          <!-- =================================================
-               FAQ
-               ================================================= -->
-          @if (filteredFaqs().length > 0) {
+          <!-- FAQ -->
+          @if (panelData.faqs && panelData.faqs.length > 0) {
             <section class="help-section-group">
               <header class="help-section-group-header">
                 <span class="help-section-group-icon">
@@ -197,7 +133,7 @@
               </header>
 
               <div class="help-faq-list">
-                @for (faq of filteredFaqs(); track faq.id) {
+                @for (faq of panelData.faqs; track faq.id) {
                   <article
                     class="help-faq-item"
                     [class.is-open]="isFaqOpen(faq.id)"
@@ -212,7 +148,6 @@
                       <span class="help-faq-question-text">
                         {{ faq.question }}
                       </span>
-
                       <span
                         class="help-faq-chevron"
                         [class.is-open]="isFaqOpen(faq.id)"
@@ -236,23 +171,17 @@
             </section>
           }
 
-          <!-- =================================================
-               Extra Info
-               ================================================= -->
+          <!-- Extra Info -->
           @if (panelData.extraInfo) {
             <section class="help-extra-info">
               <span class="help-extra-icon">
                 <nfd-icon name="alert" size="sm" />
               </span>
-
               <p>{{ panelData.extraInfo }}</p>
             </section>
           }
-
         }
       }
-
     </div>
-
   </aside>
 }

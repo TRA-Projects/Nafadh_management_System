@@ -1,5 +1,3 @@
-/* src/app/features/trainee/user-manual/components/help-button/help-button.component.css */
-
 :host {
   display: contents;
 }
@@ -12,20 +10,21 @@
 
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
 
-  height: 44px;
-  padding: 0 18px;
+  width: 52px;
+  height: 52px;
+  padding: 0;
 
   border: none;
-  border-radius: 999px;
+  border-radius: 50%;
 
-  background: var(--color-navy);
+  background: var(--color-brand);
   color: #ffffff;
 
   font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 24px; 
+  font-weight: 700;
 
   cursor: pointer;
 
@@ -42,7 +41,7 @@
 }
 
 .help-button:hover {
-  background: var(--color-brand);
+  background: var(--color-navy);
   transform: translateY(-2px);
   box-shadow:
     0 12px 30px rgba(10, 17, 114, 0.32),
@@ -59,34 +58,26 @@
 }
 
 .help-button.is-open {
-  background: var(--color-brand);
+  background: var(--color-navy);
 }
 
-.help-button-icon {
-  width: 22px;
-  height: 22px;
 
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-
-  flex-shrink: 0;
-}
 
 .help-question-mark {
-  font-size: 14px;
-  font-weight: 800;
+  font-size: 26px;        
+  font-weight: 700;
   line-height: 1;
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
-.help-button-label {
-  white-space: nowrap;
-  letter-spacing: 0.2px;
+.help-button nfd-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @keyframes help-button-in {
@@ -116,22 +107,18 @@
     left: 12px;
     bottom: 68px;
 
-    height: 40px;
-    padding: 0 14px;
-
-    font-size: 12px;
+    width: 46px;
+    height: 46px;
   }
 
-  .help-button-label {
-    display: none;
-  }
-
-  .help-button-icon {
-    width: 26px;
-    height: 26px;
-  }
 
   .help-question-mark {
-    font-size: 16px;
+    font-size: 22px; 
+  }
+  
+  .help-button nfd-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
   }
 }

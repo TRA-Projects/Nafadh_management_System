@@ -1,5 +1,3 @@
-<!-- src/app/features/trainee/user-manual/components/help-button/help-button.component.html -->
-
 <button
   type="button"
   class="help-button"
@@ -9,15 +7,9 @@
   aria-label="فتح أو إغلاق دليل الاستخدام"
   title="دليل الاستخدام"
 >
-  <span class="help-button-icon">
-    @if (isOpen()) {
-      <nfd-icon name="close" size="sm" />
-    } @else {
-      <span class="help-question-mark" aria-hidden="true">?</span>
-    }
-  </span>
-
-  <span class="help-button-label">
-    دليل الاستخدام
-  </span>
+  @if (isOpen()) {
+    <nfd-icon name="close" size="sm" />
+  } @else {
+    <span class="help-question-mark" aria-hidden="true">?</span>
+  }
 </button>

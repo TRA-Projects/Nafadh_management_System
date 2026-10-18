@@ -7,7 +7,7 @@ import { GuideService } from '../../../services/guide.service';
 // Help Panel Components (المكوّنات الجديدة)
 // =========================================================
 import { HelpButtonComponent } from '../../components/help-button/help-button.component';
-import { HelpPanelComponent } from '../../components/help-panal/help-panel.component';
+import { HelpPanelComponent } from '../help-panel/help-panel.component';
 import {
   HelpFaqItem,
   HelpPanelData,

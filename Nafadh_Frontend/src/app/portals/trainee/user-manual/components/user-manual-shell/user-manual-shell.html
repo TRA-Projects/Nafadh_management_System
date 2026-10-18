@@ -1,20 +1,13 @@
 <section class="user-manual-host" aria-label="دليل استخدام بوابة المتدرب">
-  <button
-    type="button"
-    class="manual-help-button"
-    (click)="toggleHelp()"
-    [attr.aria-expanded]="guideService.isHelpOpen()"
-  >
-    <span aria-hidden="true">?</span>
-    <span>دليل الاستخدام</span>
-  </button>
+  <app-help-button
+    [isOpen]="guideService.isHelpOpen()"
+    (toggle)="toggleHelp()"
+  />
 
-  <!-- =========================================================
-       HELP PANEL (المكوّن الجديد)
-       ========================================================= -->
   <app-help-panel
     [isOpen]="guideService.isHelpOpen()"
     [pageKey]="guideService.currentPageKey()"
+    [data]="helpPanelData()"
     (close)="closeHelp()"
   />
 </section>
