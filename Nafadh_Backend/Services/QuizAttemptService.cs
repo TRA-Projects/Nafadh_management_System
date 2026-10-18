@@ -21,8 +21,64 @@ namespace Nafadh_Backend.Services
  GradeQuizAnswerDto dto);
 
         Task<int> RegisterViolationAsync(int attemptId);
+
+        Task<QuizAttemptFullDetailsDto> GetAttemptDetailsAsync(
+    int attemptId);
     }
 
+    public class QuizAttemptFullDetailsDto
+    { 
+        public int AttemptId { get; set; }
+
+        public int QuizId { get; set; }
+
+        public string QuizTitle { get; set; } = string.Empty;
+
+        public int AttemptNumber { get; set; }
+
+        public string Status { get; set; } = string.Empty;
+
+        public decimal Score { get; set; }
+
+        public decimal Percentage { get; set; }
+
+        public DateTime StartedAt { get; set; }
+
+        public DateTime? SubmittedAt { get; set; }
+
+        public List<AttemptAnswerDetailsDto> Answers { get; set; }
+            = new();
+    }
+
+
+    public class AttemptAnswerDetailsDto
+    {
+        public int AttemptQuestionId { get; set; }
+
+        public int QuestionId { get; set; }
+
+        public int QuestionOrder { get; set; }
+
+        public string QuestionText { get; set; } = string.Empty;
+
+        public string QuestionType { get; set; } = string.Empty;
+
+        public decimal Points { get; set; }
+
+        public int? SelectedOptionId { get; set; }
+
+        public string? SelectedOptionText { get; set; }
+
+        public string? TextAnswer { get; set; }
+
+        public bool? IsCorrect { get; set; }
+
+        public decimal AwardedPoints { get; set; }
+
+        public bool IsManuallyGraded { get; set; }
+
+        public bool IsMarkedForReview { get; set; }
+    }
 
     public class QuizAttemptService
         : IQuizAttemptService
@@ -478,6 +534,93 @@ namespace Nafadh_Backend.Services
 
             await _repository.SaveChangesAsync();
             return attempt.ViolationCount;
+        }
+
+        public async Task<QuizAttemptFullDetailsDto> GetAttemptDetailsAsync(
+    int attemptId)
+        {
+            var attempt =
+                await _repository.GetAttemptForSubmissionAsync(
+                    attemptId);
+
+            if (attempt == null)
+            {
+                throw new KeyNotFoundException(
+                    "محاولة الاختبار غير موجودة.");
+            }
+
+            var result = new QuizAttemptFullDetailsDto
+            {
+                AttemptId = attempt.AttemptId,
+                QuizId = attempt.QuizId,
+                QuizTitle = attempt.Quiz.Title,
+                AttemptNumber = attempt.AttemptNumber,
+                Status = attempt.Status,
+                Score = attempt.Score,
+                Percentage = attempt.Percentage,
+                StartedAt = attempt.StartedAt,
+                SubmittedAt = attempt.SubmittedAt
+            };
+
+            foreach (var attemptQuestion in
+                     attempt.AttemptQuestions
+                         .OrderBy(x => x.QuestionOrder))
+            {
+                var answer = attemptQuestion.Answers
+                    .OrderByDescending(x => x.AnsweredAt)
+                    .FirstOrDefault();
+
+                var selectedOption = answer?.SelectedOptionId == null
+                    ? null
+                    : attemptQuestion.Question.Options
+                        .FirstOrDefault(o =>
+                            o.OptionId == answer.SelectedOptionId);
+
+                result.Answers.Add(
+                    new AttemptAnswerDetailsDto
+                    {
+                        AttemptQuestionId =
+                            attemptQuestion.AttemptQuestionId,
+
+                        QuestionId =
+                            attemptQuestion.QuestionId,
+
+                        QuestionOrder =
+                            attemptQuestion.QuestionOrder,
+
+                        QuestionText =
+                            attemptQuestion.Question.QuestionText,
+
+                        QuestionType =
+                            attemptQuestion.Question.QuestionType.ToString(),
+
+                        Points =
+                            attemptQuestion.Points,
+
+                        SelectedOptionId =
+                            answer?.SelectedOptionId,
+
+                        SelectedOptionText =
+                            selectedOption?.OptionText,
+
+                        TextAnswer =
+                            answer?.TextAnswer,
+
+                        IsCorrect =
+                            answer?.IsCorrect,
+
+                        AwardedPoints =
+                            answer?.AwardedPoints ?? 0m,
+
+                        IsManuallyGraded =
+                            answer?.IsManuallyGraded ?? false,
+
+                        IsMarkedForReview =
+                            answer?.IsMarkedForReview ?? false
+                    });
+            }
+
+            return result;
         }
     }
 }
