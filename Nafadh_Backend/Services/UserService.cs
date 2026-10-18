@@ -16,13 +16,16 @@ namespace Nafadh_Backend.Services
         private readonly IRoleRepository _roleRepository;
         private readonly IJwtTokenService _jwtTokenService;
         private readonly ICompanySupervisorRepository _supervisorRepository;
+        private readonly ICompanyRegistrationService _companyRegistrationService;
 
         public UserService(
             IUserRepository repository,
             IRoleRepository roleRepository,
             IJwtTokenService jwtTokenService,
-            ICompanySupervisorRepository supervisorRepository)
+            ICompanySupervisorRepository supervisorRepository,
+            ICompanyRegistrationService companyRegistrationService)
         {
+            _companyRegistrationService = companyRegistrationService;
             _repository = repository;
             _roleRepository = roleRepository;
             _jwtTokenService = jwtTokenService;
@@ -69,6 +72,12 @@ namespace Nafadh_Backend.Services
                     throw new AuthenticationException("Invalid email or password.");
                 }
 
+                // Self-registered company waiting for approval / rejected: clear 403 (see ApiExceptionFilter).
+                if (user.Role?.RoleName == "CompanySupervisor")
+                {
+                    await _companyRegistrationService.EnsureCompanyLoginAllowedAsync(user);
+                }
+
                 if (user.Status != NFD_UserStatus.Active)
                 {
                     throw new AuthenticationException($"This account is {user.Status.ToString().ToLower()} and cannot sign in.");
@@ -100,6 +109,10 @@ namespace Nafadh_Backend.Services
                     CompanyId = companyId,
                     SupervisorId = supervisorId
                 };
+            }
+            catch (CompanyAccessDeniedException)
+            {
+                throw;
             }
             catch (Exception e)
             {
