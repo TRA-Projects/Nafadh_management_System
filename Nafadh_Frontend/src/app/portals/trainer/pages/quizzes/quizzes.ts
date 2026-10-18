@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { TrainerApi } from '../../services/trainer-api';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { Router } from '@angular/router';
 import {
   TrainerDto,
   TrainerBatchDto
@@ -214,7 +215,8 @@ export class TrainerQuizzes implements OnInit {
 
   constructor(
     private api: TrainerApi,
-    private auth: AuthService
+    private auth: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -1303,4 +1305,17 @@ areAllQuestionsSelected(): boolean {
 
     return local.toISOString().slice(0, 16);
   }
+
+  
+openQuizResults(quizId: number): void {
+  this.router.navigate(
+    ['/trainer/quiz-results'],
+    {
+      queryParams: {
+        quizId: quizId
+      }
+    }
+  );
+}
+
 }

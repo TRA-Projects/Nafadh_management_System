@@ -1,0 +1,44 @@
+
+.results-page {
+  padding: 24px;
+  direction: rtl;
+
+  h2 {
+    margin-bottom: 24px;
+    color: #243b53;
+  }
+}
+
+.table-wrapper {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: right;
+
+  th, td {
+    padding: 14px;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+  }
+
+  th {
+    background: #f8fafc;
+    color: #475569;
+  }
+
+  td {
+    color: #334155;
+  }
+}
+
+.error {
+  color: #dc2626;
+  margin-bottom: 16px;
+}
