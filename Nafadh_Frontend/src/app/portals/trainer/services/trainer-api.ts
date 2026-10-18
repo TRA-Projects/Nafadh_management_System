@@ -56,6 +56,15 @@ export interface QuizResultDto {
   score: number;
   percentage: number;
   status: string;
+// نتيجة التقييم
+  passingPercentage: number;
+
+  // هل اكتمل تصحيح جميع الأسئلة؟
+  isGradingCompleted: boolean;
+
+  // null عندما لم يكتمل التصحيح
+  isPassed: boolean | null;
+
 }
 
 export interface CreateQuestionOptionDto {

@@ -1,10 +1,14 @@
-
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { TrainerApi, QuizResultDto } from '../../services/trainer-api';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import {
+  TrainerApi,
+  QuizResultDto
+} from '../../services/trainer-api';
+
 import { AuthService } from '../../../../core/auth/auth.service';
-import { Router } from '@angular/router';
+
 
 @Component({
   selector: 'app-quiz-results',
@@ -15,11 +19,22 @@ import { Router } from '@angular/router';
 })
 export class QuizResults implements OnInit {
 
+  // =========================================
+  // DATA
+  // =========================================
+
   results = signal<QuizResultDto[]>([]);
+
   loading = signal(false);
+
   errorMessage = signal('');
 
   quizId: number | undefined;
+
+
+  // =========================================
+  // CONSTRUCTOR
+  // =========================================
 
   constructor(
     private api: TrainerApi,
@@ -28,71 +43,418 @@ export class QuizResults implements OnInit {
     private router: Router
   ) { }
 
+
+  // =========================================
+  // INIT
+  // =========================================
+
   ngOnInit(): void {
-    const id = this.route.snapshot.queryParamMap.get('quizId');
+
+    const id =
+      this.route.snapshot.queryParamMap.get('quizId');
+
 
     if (id !== null) {
+
       this.quizId = Number(id);
+
     }
 
-    const userId = this.auth.session()?.userId;
+
+    const userId =
+      this.auth.session()?.userId;
+
 
     if (!userId) {
-      this.errorMessage.set('تعذر تحديد المستخدم الحالي.');
+
+      this.errorMessage.set(
+        'تعذر تحديد المستخدم الحالي.'
+      );
+
       return;
+
     }
+
 
     this.loading.set(true);
 
+
     this.api.getTrainerByUserId(userId).subscribe({
+
       next: trainer => {
+
         this.api.getTrainerQuizResults(
           trainer.trainerId,
           this.quizId
         ).subscribe({
 
           next: data => {
-            console.log('Quiz Results from API:', data);
 
-            this.results.set(data ?? []);
+            console.log(
+              'Quiz Results from API:',
+              data
+            );
+
+            this.results.set(
+              data ?? []
+            );
+
             this.loading.set(false);
+
           },
-          error: () => {
-            this.errorMessage.set('تعذر تحميل نتائج الاختبار.');
+
+          error: error => {
+
+            console.error(
+              'Quiz Results API Error:',
+              error
+            );
+
+            this.errorMessage.set(
+              'تعذر تحميل نتائج الاختبار.'
+            );
+
             this.loading.set(false);
+
           }
+
         });
+
       },
-      error: () => {
-        this.errorMessage.set('تعذر تحميل بيانات المدرب.');
+
+      error: error => {
+
+        console.error(
+          'Trainer API Error:',
+          error
+        );
+
+        this.errorMessage.set(
+          'تعذر تحميل بيانات المدرب.'
+        );
+
         this.loading.set(false);
+
       }
+
     });
+
   }
+
+
+  // =========================================
+  // BACK
+  // =========================================
 
   goBack(): void {
-    this.router.navigate(['/trainer/quizzes']);
+
+    this.router.navigate(
+      ['/trainer/quizzes']
+    );
+
   }
 
-  getAttemptStatusLabel(status: string | number): string {
 
-    switch (String(status).trim().toLowerCase()) {
+  // =========================================
+  // STATISTICS
+  // =========================================
+
+  submittedCount(): number {
+
+    return this.results()
+      .filter(result =>
+        String(result.status)
+          .trim()
+          .toLowerCase() === 'submitted'
+      )
+      .length;
+
+  }
+
+
+  
+
+
+  averagePercentage(): number {
+
+    const submittedResults =
+      this.results()
+        .filter(result =>
+          result.percentage !== null &&
+          result.percentage !== undefined &&
+          !isNaN(Number(result.percentage))
+        );
+
+
+    if (submittedResults.length === 0) {
+
+      return 0;
+
+    }
+
+
+    const total =
+      submittedResults.reduce(
+        (sum, result) =>
+          sum + Number(result.percentage),
+        0
+      );
+
+
+    return Math.round(
+      (total / submittedResults.length) * 10
+    ) / 10;
+
+  }
+
+  inProgressCount(): number {
+
+  return this.results()
+    .filter(result =>
+      ['started', 'inprogress'].includes(
+        String(result.status).trim().toLowerCase()
+      )
+    )
+    .length;
+
+}
+
+gradingPendingCount(): number {
+
+  return this.results()
+    .filter(result =>
+      result.status?.toLowerCase() === 'submitted' &&
+      !result.isGradingCompleted
+    )
+    .length;
+
+}
+
+
+passedCount(): number {
+
+  return this.results()
+    .filter(result =>
+      result.isGradingCompleted &&
+      result.isPassed === true
+    )
+    .length;
+
+}
+
+
+failedCount(): number {
+
+  return this.results()
+    .filter(result =>
+      result.isGradingCompleted &&
+      result.isPassed === false
+    )
+    .length;
+
+}
+
+
+getResultStatusLabel(result: QuizResultDto): string {
+
+  if (
+    result.status?.toLowerCase() === 'submitted' &&
+    !result.isGradingCompleted
+  ) {
+    return 'بانتظار التصحيح';
+  }
+
+  if (
+    result.isGradingCompleted &&
+    result.isPassed === true
+  ) {
+    return 'ناجح';
+  }
+
+  if (
+    result.isGradingCompleted &&
+    result.isPassed === false
+  ) {
+    return 'راسب';
+  }
+
+  return this.getAttemptStatusLabel(result.status);
+}
+
+
+getResultStatusClass(result: QuizResultDto): string {
+
+  if (
+    result.status?.toLowerCase() === 'submitted' &&
+    !result.isGradingCompleted
+  ) {
+    return 'status-pending';
+  }
+
+  if (
+    result.isGradingCompleted &&
+    result.isPassed === true
+  ) {
+    return 'status-passed';
+  }
+
+  if (
+    result.isGradingCompleted &&
+    result.isPassed === false
+  ) {
+    return 'status-failed';
+  }
+
+  return this.getStatusClass(result.status);
+}
+
+
+getResultStatusIcon(result: QuizResultDto): string {
+
+  if (
+    result.status?.toLowerCase() === 'submitted' &&
+    !result.isGradingCompleted
+  ) {
+    return 'fa-hourglass-half';
+  }
+
+  if (
+    result.isGradingCompleted &&
+    result.isPassed === true
+  ) {
+    return 'fa-circle-check';
+  }
+
+  if (
+    result.isGradingCompleted &&
+    result.isPassed === false
+  ) {
+    return 'fa-circle-xmark';
+  }
+
+  return this.getStatusIcon(result.status);
+}
+
+  // =========================================
+  // STATUS
+  // =========================================
+
+  getAttemptStatusLabel(
+    status: string | number
+  ): string {
+
+    switch (
+      String(status)
+        .trim()
+        .toLowerCase()
+    ) {
 
       case 'started':
+
         return 'بدأت المحاولة';
 
+
       case 'inprogress':
+
         return 'قيد التقدم';
 
+
       case 'submitted':
+
         return 'تم التسليم';
 
+
       case 'expired':
+
         return 'انتهت المدة';
 
+
       default:
+
         return 'غير معروف';
+
     }
+
   }
+
+
+  getStatusClass(
+    status: string | number
+  ): string {
+
+    switch (
+      String(status)
+        .trim()
+        .toLowerCase()
+    ) {
+
+      case 'submitted':
+
+        return 'status-submitted';
+
+
+      case 'expired':
+
+        return 'status-expired';
+
+
+      case 'inprogress':
+
+        return 'status-progress';
+
+
+      case 'started':
+
+        return 'status-started';
+
+
+      default:
+
+        return 'status-unknown';
+
+    }
+
+  }
+
+
+  getStatusIcon(
+    status: string | number
+  ): string {
+
+    switch (
+      String(status)
+        .trim()
+        .toLowerCase()
+    ) {
+
+      case 'submitted':
+
+        return 'fa-circle-check';
+
+
+      case 'expired':
+
+        return 'fa-clock';
+
+
+      case 'inprogress':
+
+        return 'fa-spinner';
+
+
+      case 'started':
+
+        return 'fa-play';
+
+
+      default:
+
+        return 'fa-circle-question';
+
+    }
+
+  }
+
+
 
 }
