@@ -360,8 +360,7 @@ export class CompanyDailyAttendance implements OnInit {
       return date.startsWith(monthPrefix) && date <= this.todayKey && trainerIds.has(record.trainerId);
     });
     if (!monthRecords.length) return null;
-    const absent = monthRecords.filter(record => record.status === 'Absent').length;
-    return Math.round((monthRecords.length - absent) * 100 / monthRecords.length);
+    return Math.round(monthRecords.reduce((sum, record) => sum + this.commitmentPoints(record.status), 0) / monthRecords.length);
   });
 
 
@@ -380,25 +379,70 @@ export class CompanyDailyAttendance implements OnInit {
   weeklyExcuse = signal<TrainerAttendanceDto | null>(null);
   weeklyReason = '';
   weeklyExcuseSaving = signal(false);
+  weeklyExcuseEditing = signal(false);
+
+  /** Attendance contribution per recorded day. */
+  private commitmentPoints(status: TrainerAttendanceStatus): number {
+    return status === 'Present' ? 100 : status === 'Absent' ? 0 : 75;
+  }
+
+  /** Deadline: Friday 00:00, Asia/Muscat, for the Sunday–Thursday workweek. */
+  canEditWeeklyExcuse(record: TrainerAttendanceDto | null): boolean {
+    if (!record || !this.canManageAttendance()) return false;
+    if (!['Late', 'Absent', 'EarlyLeave'].includes(record.status)) return false;
+    const key = this.dateOf(record.date);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return false;
+    const [year, month, day] = key.split('-').map(Number);
+    const recordDate = new Date(Date.UTC(year, month - 1, day));
+    if (recordDate.getUTCFullYear() !== year || recordDate.getUTCMonth() !== month - 1 || recordDate.getUTCDate() !== day) return false;
+    const weekday = recordDate.getUTCDay();
+    if (weekday === 5 || weekday === 6) return false;
+    const thursday = new Date(recordDate);
+    thursday.setUTCDate(thursday.getUTCDate() + (4 - weekday));
+    const endKey = thursday.toISOString().slice(0, 10);
+    const omanToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Muscat', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    return key <= omanToday && omanToday <= endKey;
+  }
+
+  weeklyStatusLabel(status: TrainerAttendanceStatus): string {
+    return this.statusText(status);
+  }
 
   hasExcuse(record: TrainerAttendanceDto | null): boolean {
     return !!(record?.reason?.trim() || record?.excuseProofUrl);
   }
 
   openWeeklyExcuse(record: TrainerAttendanceDto): void {
-    if (record.status !== 'Absent') return;
+    if (this.view() !== 'week' || !['Absent', 'Late', 'EarlyLeave'].includes(record.status)) return;
     this.weeklyExcuse.set(record);
     this.weeklyReason = record.reason ?? '';
+    this.weeklyExcuseEditing.set(!this.hasExcuse(record) && this.canEditWeeklyExcuse(record));
   }
 
   closeWeeklyExcuse(): void {
-    if (!this.weeklyExcuseSaving()) this.weeklyExcuse.set(null);
+    if (!this.weeklyExcuseSaving()) {
+      this.weeklyExcuse.set(null);
+      this.weeklyExcuseEditing.set(false);
+    }
+  }
+
+  startWeeklyExcuseEdit(): void {
+    const record = this.weeklyExcuse();
+    if (record && this.canEditWeeklyExcuse(record) && !this.weeklyExcuseSaving()) {
+      this.weeklyReason = record.reason ?? '';
+      this.weeklyExcuseEditing.set(true);
+    }
+  }
+
+  cancelWeeklyExcuseEdit(): void {
+    this.weeklyReason = this.weeklyExcuse()?.reason ?? '';
+    this.weeklyExcuseEditing.set(false);
   }
 
   saveWeeklyReason(): void {
     if (!this.canManageAttendance()) return;
     const record = this.weeklyExcuse();
-    if (!record || record.isConfirmed || this.weeklyExcuseSaving()) return;
+    if (!record || !this.canEditWeeklyExcuse(record) || !this.weeklyExcuseEditing() || this.weeklyExcuseSaving()) return;
     this.weeklyExcuseSaving.set(true);
     this.api.saveTrainerAttendance({
       companyId: this.companyId,
@@ -413,10 +457,11 @@ export class CompanyDailyAttendance implements OnInit {
         this.upsertRecord(saved);
         this.weeklyExcuse.set(saved);
         this.weeklyReason = saved.reason ?? '';
+        this.weeklyExcuseEditing.set(false);
         this.weeklyExcuseSaving.set(false);
       },
       error: err => {
-        this.showError(err, 'تعذر حفظ سبب الغياب.');
+        this.showError(err, 'تعذر حفظ السبب أو الملاحظة.');
         this.weeklyExcuseSaving.set(false);
       }
     });
@@ -428,7 +473,7 @@ export class CompanyDailyAttendance implements OnInit {
     const file = input.files?.[0];
     input.value = '';
     const record = this.weeklyExcuse();
-    if (!file || !record || record.isConfirmed || this.weeklyExcuseSaving()) return;
+    if (!file || !record || !this.canEditWeeklyExcuse(record) || !this.weeklyExcuseEditing() || this.weeklyExcuseSaving()) return;
     this.weeklyExcuseSaving.set(true);
     this.api.uploadTrainerAttendanceProof(record.trainerAttendanceId, file).subscribe({
       next: response => {
@@ -447,7 +492,7 @@ export class CompanyDailyAttendance implements OnInit {
   removeWeeklyProof(): void {
     if (!this.canManageAttendance()) return;
     const record = this.weeklyExcuse();
-    if (!record || record.isConfirmed || this.weeklyExcuseSaving()) return;
+    if (!record || !this.canEditWeeklyExcuse(record) || !this.weeklyExcuseEditing() || this.weeklyExcuseSaving()) return;
     this.weeklyExcuseSaving.set(true);
     this.api.removeTrainerAttendanceProof(record.trainerAttendanceId).subscribe({
       next: () => {
@@ -539,7 +584,8 @@ export class CompanyDailyAttendance implements OnInit {
 
     const total = this.rows().length;
     if (!total) return null;
-    return Math.round(((total - this.counts().Absent) / total) * 100);
+    const c = this.counts();
+    return Math.round((c.Present * 100 + (c.Late + c.EarlyLeave) * 75) / total);
 
   });
 
@@ -669,9 +715,7 @@ export class CompanyDailyAttendance implements OnInit {
 
       const recorded = days.filter(day => day.record);
 
-      const absent = recorded.filter(day => day.record?.status === 'Absent').length;
-
-      const rate = recorded.length ? Math.round((recorded.length - absent) * 100 / recorded.length) : null;
+      const rate = recorded.length ? Math.round(recorded.reduce((sum, day) => sum + this.commitmentPoints(day.record!.status), 0) / recorded.length) : null;
 
       return { trainer, days, rate, color: AVATAR_COLORS[index % AVATAR_COLORS.length] };
 
@@ -713,7 +757,7 @@ export class CompanyDailyAttendance implements OnInit {
 
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
-    return { ...counts, rate: total ? Math.round((total - counts.Absent) * 100 / total) : null };
+    return { ...counts, rate: total ? Math.round((counts.Present * 100 + (counts.Late + counts.EarlyLeave) * 75) / total) : null };
 
   }
 
