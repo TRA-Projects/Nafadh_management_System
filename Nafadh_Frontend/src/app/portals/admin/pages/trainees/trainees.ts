@@ -31,9 +31,11 @@ export interface EnrichedTraineeItem {
   trackName: string | null;
   enrollmentId: number | null;
   completionStatus: string | null; // InProgress | Completed | Dropped | Failed
+  withdrawalRequestId?: number | null; // معرف طلب الانسحاب في جدول NFD_WithdrawalRequests
   withdrawalStatus: 'None' | 'Pending' | 'Approved' | 'Rejected';
   withdrawalReason: string | null;
   withdrawalDate: string | null;
+  adminNotes?: string | null;
   avatarBroken?: boolean;
 }
 
@@ -100,7 +102,7 @@ export class AdminTrainees implements OnInit {
   isSendingMessage = signal<boolean>(false);
   activeConversationId = signal<number | null>(null);
 
-  // حالة نافذة الانسحاب واعتماد الهيئة (من قاعدة البيانات فقط)
+  // حالة نافذة الانسحاب واعتماد الهيئة (من قاعدة البيانات حياً)
   withdrawalActionMode = signal<'CREATE_OR_APPROVE' | 'REVIEW'>('CREATE_OR_APPROVE');
   withdrawalReasonInput = signal<string>('');
   withdrawalAdminNotes = signal<string>('');
@@ -340,8 +342,8 @@ export class AdminTrainees implements OnInit {
   }
 
   /**
-   * جلب الإحصائيات الكاملة والدقيقة من قاعدة البيانات مباشرة لجميع المتدربين (533+)
-   * وفحص تذاكر الدعم المفتوحة (طلبات الانسحاب المرفوعة من بورتل المتدربين) والمحادثات
+   * جلب الإحصائيات الحقيقية والدقيقة من قاعدة البيانات مباشرة:
+   * يقرأ طلبات الانسحاب مباشرة من جدول NFD_WithdrawalRequests
    */
   loadDatabaseStats() {
     forkJoin({
@@ -349,9 +351,9 @@ export class AdminTrainees implements OnInit {
       notAssignedRes: this.api.getTrainees({ pageNumber: 1, pageSize: 1, status: 0 }).pipe(catchError(() => of(null))),
       inTrainingRes: this.api.getTrainees({ pageNumber: 1, pageSize: 1, status: 1 }).pipe(catchError(() => of(null))),
       completedRes: this.api.getTrainees({ pageNumber: 1, pageSize: 1, status: 2 }).pipe(catchError(() => of(null))),
-      complaints: this.api.getConversations('TraineeComplaint').pipe(catchError(() => of([]))),
-      openSupportTickets: this.api.getOpenSupportTickets().pipe(catchError(() => of([])))
-    }).subscribe(({ allRes, notAssignedRes, inTrainingRes, completedRes, complaints, openSupportTickets }: any) => {
+      withdrawalRequests: this.api.getWithdrawalRequests().pipe(catchError(() => of([]))),
+      complaints: this.api.getConversations('TraineeComplaint').pipe(catchError(() => of([])))
+    }).subscribe(({ allRes, notAssignedRes, inTrainingRes, completedRes, withdrawalRequests, complaints }: any) => {
       const allRaw: any[] = Array.isArray(allRes?.items)
         ? allRes.items
         : Array.isArray(allRes)
@@ -359,61 +361,32 @@ export class AdminTrainees implements OnInit {
         : [];
 
       const mappedAll = allRaw.map(r => this.mapRawTrainee(r));
+      const withdrawalsList: any[] = Array.isArray(withdrawalRequests) ? withdrawalRequests : [];
 
-      // 1. تذاكر الانسحاب من المحادثات
-      const withdrawalConvos = (complaints || []).filter((c: any) =>
-        (c.subject || '').includes('انسحاب') || (c.lastMessagePreview || '').includes('انسحاب')
-      );
-
-      // 2. تذاكر الانسحاب من جدول SupportTickets المرفوعة من بورتل المتدربين
-      const withdrawalSupportTickets = (openSupportTickets || []).filter((tk: any) => {
-        const text = `${tk.subject || tk.title || ''} ${tk.description || tk.message || ''}`;
-        return text.includes('انسحاب') || text.toLowerCase().includes('withdraw');
+      // ربط كل متدرب بطلب الانسحاب الحقيقي الخاص به من قاعدة البيانات
+      mappedAll.forEach(t => {
+        const req = withdrawalsList.find(w => w.traineeId === t.traineeId);
+        if (req) {
+          t.withdrawalRequestId = req.id;
+          t.withdrawalStatus = req.status; // 'Pending' | 'Approved' | 'Rejected'
+          t.withdrawalReason = req.reason;
+          t.withdrawalDate = req.createdAt;
+          t.adminNotes = req.adminNotes;
+          if (req.status === 'Approved') {
+            t.completionStatus = 'Dropped';
+          }
+        }
       });
 
+      // الكشف عن الردود غير المقروءة في المحادثات
       const detectedReplies: UnreadReplyNotification[] = [];
-
-      mappedAll.forEach(t => {
-        const matchedConvo = withdrawalConvos.find(
-          (c: any) => c.initiatorName === t.fullName || (c.subject && c.subject.includes(t.fullName))
-        );
-
-        const matchedSupportTicket = withdrawalSupportTickets.find((tk: any) => {
-          const text = `${tk.subject || tk.title || ''} ${tk.description || tk.message || ''}`;
-          return (
-            (t.userId && tk.userId === t.userId) ||
-            tk.traineeId === t.traineeId ||
-            (t.fullName && text.includes(t.fullName))
-          );
-        });
-
-        if ((matchedConvo || matchedSupportTicket) && t.withdrawalStatus !== 'Approved') {
-          t.withdrawalStatus = 'Pending';
-          t.withdrawalReason =
-            matchedSupportTicket?.description ||
-            matchedSupportTicket?.message ||
-            matchedSupportTicket?.subject ||
-            matchedConvo?.lastMessagePreview ||
-            matchedConvo?.subject ||
-            'طلب انسحاب مرفوع من بورتل المتدربين';
-          t.withdrawalDate = matchedSupportTicket?.createdAt || matchedConvo?.lastMessageDate || null;
-        }
-
-        // إذا كانت هناك محادثة عامة مع المتدرب وكان هناك رد غير مقروء
-        const replyConvo = (complaints || []).find(
-          (c: any) =>
-            (c.initiatorName === t.fullName || (c.subject && c.subject.includes(t.fullName))) &&
-            !(c.subject || '').includes('انسحاب') &&
-            c.unreadCount > 0
-        );
-        if (replyConvo) {
+      (complaints || []).forEach((c: any) => {
+        if (c.unreadCount > 0 && !(c.subject || '').includes('انسحاب')) {
           detectedReplies.push({
-            traineeId: t.traineeId,
-            traineeName: t.fullName,
-            lastReplyText: replyConvo.lastMessagePreview || 'رسالة جديدة من المتدرب',
-            repliedAt: replyConvo.lastMessageDate
-              ? new Date(replyConvo.lastMessageDate).toLocaleString('ar-OM')
-              : 'الآن'
+            traineeId: c.traineeId || 0,
+            traineeName: c.initiatorName || 'متدرب',
+            lastReplyText: c.lastMessagePreview || 'رسالة جديدة من المتدرب',
+            repliedAt: c.lastMessageDate ? new Date(c.lastMessageDate).toLocaleString('ar-OM') : 'الآن'
           });
         }
       });
@@ -422,9 +395,7 @@ export class AdminTrainees implements OnInit {
         this.unreadReplies.update(current => {
           const merged = [...current];
           detectedReplies.forEach(d => {
-            const exists = merged.some(
-              r => r.traineeId === d.traineeId || r.traineeName === d.traineeName
-            );
+            const exists = merged.some(r => r.traineeName === d.traineeName);
             if (!exists) merged.push(d);
           });
           this.saveUnreadReplies(merged);
@@ -440,25 +411,12 @@ export class AdminTrainees implements OnInit {
         res && typeof res.totalCount === 'number' ? res.totalCount : fallback;
 
       const total = extractTotal(allRes, mappedAll.length);
-      const notAssignedCount = extractTotal(
-        notAssignedRes,
-        mappedAll.filter(t => this.isNotAssigned(t)).length
-      );
-      const inTrainingCount = extractTotal(
-        inTrainingRes,
-        mappedAll.filter(t => this.isInTraining(t)).length
-      );
-      const completedCount = extractTotal(
-        completedRes,
-        mappedAll.filter(t => this.isCompleted(t)).length
-      );
+      const notAssignedCount = extractTotal(notAssignedRes, mappedAll.filter(t => this.isNotAssigned(t)).length);
+      const inTrainingCount = extractTotal(inTrainingRes, mappedAll.filter(t => this.isInTraining(t)).length);
+      const completedCount = extractTotal(completedRes, mappedAll.filter(t => this.isCompleted(t)).length);
 
-      const pendingFromMapped = mappedAll.filter(t => t.withdrawalStatus === 'Pending').length;
-      const pendingFromTickets =
-        withdrawalConvos.filter((c: any) => c.status !== 'Closed' && c.status !== 'Resolved').length +
-        withdrawalSupportTickets.length;
-
-      const pendingWithdrawalsCount = Math.max(pendingFromMapped, pendingFromTickets);
+      // حساب عدد طلبات الانسحاب المعلقة والمنسحبين من جدول NFD_WithdrawalRequests
+      const pendingWithdrawalsCount = withdrawalsList.filter(w => w.status === 'Pending').length;
       const droppedCount = mappedAll.filter(t => t.withdrawalStatus === 'Approved' || t.completionStatus === 'Dropped').length;
 
       this.dbStats.set({
@@ -506,7 +464,7 @@ export class AdminTrainees implements OnInit {
         this.totalCount.set(total);
         this.isLoading.set(false);
 
-        // إثراء البيانات تلقائياً من قاعدة البيانات فقط
+        // إثراء المتدربين ببيانات طلبات الانسحاب والبروفايل الحقيقية
         this.enrichTraineesWithProfiles(mappedList);
       },
       error: (err: any) => {
@@ -517,23 +475,13 @@ export class AdminTrainees implements OnInit {
   }
 
   /**
-   * يجلب تفاصيل البروفايل والتسجيل وتذاكر الانسحاب لكل متدرب في الصفحة الحالية من DB
+   * يجلب تفاصيل طلبات الانسحاب والتسجيل والبروفايل لكل متدرب في الصفحة الحالية
    */
   private enrichTraineesWithProfiles(list: EnrichedTraineeItem[]) {
     if (!list || list.length === 0) return;
 
-    forkJoin({
-      convos: this.api.getConversations('TraineeComplaint').pipe(catchError(() => of([]))),
-      openTickets: this.api.getOpenSupportTickets().pipe(catchError(() => of([])))
-    }).subscribe(({ convos, openTickets }: any) => {
-      const withdrawalConvos = (convos || []).filter((c: any) =>
-        (c.subject || '').includes('انسحاب') || (c.lastMessagePreview || '').includes('انسحاب')
-      );
-
-      const withdrawalSupportTickets = (openTickets || []).filter((tk: any) => {
-        const text = `${tk.subject || tk.title || ''} ${tk.description || tk.message || ''}`;
-        return text.includes('انسحاب') || text.toLowerCase().includes('withdraw');
-      });
+    this.api.getWithdrawalRequests().pipe(catchError(() => of([]))).subscribe((withdrawals: any[]) => {
+      const withdrawalsList = Array.isArray(withdrawals) ? withdrawals : [];
 
       list.forEach(item => {
         forkJoin({
@@ -548,40 +496,24 @@ export class AdminTrainees implements OnInit {
 
           const pUserId = profile?.userId || profile?.UserId || item.userId;
 
-          const matchedConvo = withdrawalConvos.find(
-            (c: any) =>
-              c.initiatorName === item.fullName ||
-              (c.subject && c.subject.includes(item.fullName))
-          );
-
-          const matchedSupportTicket = withdrawalSupportTickets.find((tk: any) => {
-            const text = `${tk.subject || tk.title || ''} ${tk.description || tk.message || ''}`;
-            return (
-              (pUserId && tk.userId === pUserId) ||
-              tk.traineeId === item.traineeId ||
-              (item.fullName && text.includes(item.fullName))
-            );
-          });
-
-          const isDroppedInDb = activeEnrollment?.completionStatus === 'Dropped';
+          // فحص طلب الانسحاب الخاص بهذا المتدرب
+          const req = withdrawalsList.find(w => w.traineeId === item.traineeId);
 
           let wStatus: 'None' | 'Pending' | 'Approved' | 'Rejected' = 'None';
           let wReason: string | null = null;
           let wDate: string | null = null;
+          let reqId: number | null = null;
+          let adminNotes: string | null = null;
 
-          if (isDroppedInDb) {
+          if (req) {
+            reqId = req.id;
+            wStatus = req.status;
+            wReason = req.reason;
+            wDate = req.createdAt;
+            adminNotes = req.adminNotes;
+          } else if (activeEnrollment?.completionStatus === 'Dropped') {
             wStatus = 'Approved';
             wReason = 'تم اعتماد الانسحاب في قاعدة البيانات';
-          } else if (matchedSupportTicket || matchedConvo) {
-            wStatus = 'Pending';
-            wReason =
-              matchedSupportTicket?.description ||
-              matchedSupportTicket?.message ||
-              matchedSupportTicket?.subject ||
-              matchedConvo?.lastMessagePreview ||
-              matchedConvo?.subject ||
-              'طلب انسحاب مرفوع من بورتل المتدربين';
-            wDate = matchedSupportTicket?.createdAt || matchedConvo?.lastMessageDate || new Date().toISOString();
           }
 
           this.trainees.update(current =>
@@ -606,11 +538,13 @@ export class AdminTrainees implements OnInit {
                 batchName: activeEnrollment?.batchName || row.batchName,
                 trackName: activeEnrollment?.trackName || activeEnrollment?.programTitle || row.trackName,
                 enrollmentId: p.enrollmentId || activeEnrollment?.enrollmentId || row.enrollmentId,
-                completionStatus: activeEnrollment?.completionStatus || row.completionStatus,
+                completionStatus: wStatus === 'Approved' ? 'Dropped' : (activeEnrollment?.completionStatus || row.completionStatus),
                 progress: progressObj?.percentage != null ? Math.round(progressObj.percentage) : row.progress,
+                withdrawalRequestId: reqId,
                 withdrawalStatus: wStatus,
                 withdrawalReason: wReason,
-                withdrawalDate: wDate
+                withdrawalDate: wDate,
+                adminNotes: adminNotes
               };
             })
           );
@@ -620,7 +554,140 @@ export class AdminTrainees implements OnInit {
   }
 
   // =========================================================================
-  // تصدير القوائم إلى ملف Excel (.xlsx) مباشرة من بيانات قاعدة البيانات
+  // نافذة إدارة الانسحاب واعتماد الهيئة (مربوطة بـ api/WithdrawalRequests/{id}/review)
+  // =========================================================================
+  openWithdrawalModal(item: EnrichedTraineeItem) {
+    this.activeTrainee.set(item);
+    if (item.withdrawalStatus === 'Pending') {
+      this.withdrawalActionMode.set('REVIEW');
+      this.withdrawalReasonInput.set(item.withdrawalReason || '');
+    } else {
+      this.withdrawalActionMode.set('CREATE_OR_APPROVE');
+      this.withdrawalReasonInput.set(item.withdrawalReason || '');
+    }
+    this.withdrawalAdminNotes.set(item.adminNotes || '');
+    this.showWithdrawalModal.set(true);
+  }
+
+  closeWithdrawalModal() {
+    this.showWithdrawalModal.set(false);
+    this.activeTrainee.set(null);
+  }
+
+  selectPresetReason(reason: string) {
+    this.withdrawalAdminNotes.set(reason);
+  }
+
+  processWithdrawalDecision(decision: 'SUBMIT_PENDING' | 'APPROVE_FINAL' | 'REJECT_REQUEST') {
+    const trainee = this.activeTrainee();
+    if (!trainee) return;
+
+    const reqId = trainee.withdrawalRequestId;
+    const adminNotes = this.withdrawalAdminNotes().trim() || this.withdrawalReasonInput().trim();
+
+    // 1. عند قيام الأدمن برفع طلب انسحاب جديد كـ Pending
+    if (decision === 'SUBMIT_PENDING') {
+      const reason = this.withdrawalReasonInput().trim();
+      if (!reason) {
+        this.showToast('يرجى كتابة سبب الانسحاب قبل المتابعة.', 'error');
+        return;
+      }
+      this.isProcessingWithdrawal.set(true);
+
+      this.api.createWithdrawalRequest({
+        traineeId: trainee.traineeId,
+        reason: reason
+      }).subscribe({
+        next: (res: any) => {
+          this.updateTraineeRowWithdrawal(trainee.traineeId, 'Pending', reason, new Date().toISOString(), res?.requestId);
+          this.isProcessingWithdrawal.set(false);
+          this.closeWithdrawalModal();
+          this.loadDatabaseStats();
+          this.loadTrainees();
+          this.showToast(`تم تقديم طلب الانسحاب بنجاح وهو الآن قيد المراجعة.`, 'info');
+        },
+        error: (err: any) => {
+          this.isProcessingWithdrawal.set(false);
+          this.showToast(err?.error?.message || 'تعذر حفظ طلب الانسحاب في قاعدة البيانات.', 'error');
+        }
+      });
+      return;
+    }
+
+    // 2. عند رفض طلب الانسحاب (Rejected = 2)
+    if (decision === 'REJECT_REQUEST') {
+      if (!adminNotes) {
+        this.showToast('يرجى اختيار أو كتابة سبب مقنع لرفض طلب الانسحاب.', 'error');
+        return;
+      }
+
+      this.isProcessingWithdrawal.set(true);
+      const targetId = reqId || trainee.traineeId;
+
+      this.api.reviewWithdrawalRequest(targetId, 2, adminNotes).subscribe({
+        next: (res: any) => {
+          this.updateTraineeRowWithdrawal(trainee.traineeId, 'Rejected', adminNotes, new Date().toISOString(), reqId);
+          this.isProcessingWithdrawal.set(false);
+          this.closeWithdrawalModal();
+          this.loadDatabaseStats();
+          this.loadTrainees();
+          this.showToast(res?.message || `تم رفض طلب الانسحاب وإبقاء المتدرب قيد التدريب.`, 'info');
+        },
+        error: (err: any) => {
+          this.isProcessingWithdrawal.set(false);
+          this.showToast(err?.error?.message || 'تعذر رفض طلب الانسحاب في قاعدة البيانات.', 'error');
+        }
+      });
+      return;
+    }
+
+    // 3. عند اعتماد الانسحاب النهائي من الهيئة (Approved = 1)
+    if (decision === 'APPROVE_FINAL') {
+      this.isProcessingWithdrawal.set(true);
+      const targetId = reqId || trainee.traineeId;
+
+      this.api.reviewWithdrawalRequest(targetId, 1, adminNotes).subscribe({
+        next: (res: any) => {
+          this.updateTraineeRowWithdrawal(trainee.traineeId, 'Approved', adminNotes, new Date().toISOString(), reqId);
+          this.isProcessingWithdrawal.set(false);
+          this.closeWithdrawalModal();
+          this.loadDatabaseStats();
+          this.loadTrainees();
+          this.showToast(res?.message || `تم اعتماد الانسحاب وتحديث حالة المتدرب تلقائياً في قاعدة البيانات!`, 'success');
+        },
+        error: (err: any) => {
+          this.isProcessingWithdrawal.set(false);
+          this.showToast(err?.error?.message || 'تعذر اعتماد الانسحاب في قاعدة البيانات.', 'error');
+        }
+      });
+    }
+  }
+
+  private updateTraineeRowWithdrawal(
+    traineeId: number,
+    status: 'None' | 'Pending' | 'Approved' | 'Rejected',
+    reason: string | null,
+    date: string | null,
+    requestId?: number | null
+  ) {
+    this.trainees.update(list =>
+      list.map(item =>
+        item.traineeId === traineeId
+          ? {
+              ...item,
+              withdrawalRequestId: requestId || item.withdrawalRequestId,
+              withdrawalStatus: status,
+              withdrawalReason: reason,
+              withdrawalDate: date,
+              completionStatus: status === 'Approved' ? 'Dropped' : item.completionStatus
+            }
+          : item
+      )
+    );
+  }
+
+  // =========================================================================
+  // تصدير القوائم إلى Excel (.xlsx)
   // =========================================================================
   exportToExcel() {
     this.isExporting.set(true);
@@ -638,12 +705,7 @@ export class AdminTrainees implements OnInit {
     }
 
     this.api.getTrainees(queryParams).pipe(catchError(() => of(null))).subscribe((res: any) => {
-      const rawList: any[] = Array.isArray(res?.items)
-        ? res.items
-        : Array.isArray(res)
-        ? res
-        : [];
-
+      const rawList: any[] = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : [];
       const sourceList = rawList.length > 0 ? rawList.map(r => this.mapRawTrainee(r)) : this.filtered();
 
       const q = this.searchQuery().trim().toLowerCase();
@@ -654,15 +716,7 @@ export class AdminTrainees implements OnInit {
 
       const finalList = sourceList.filter(item => {
         if (q) {
-          const hay = [
-            item.fullName,
-            item.email,
-            String(item.nationalId || ''),
-            item.university,
-            item.major,
-            item.companyName,
-            item.batchName
-          ]
+          const hay = [item.fullName, item.email, String(item.nationalId || ''), item.university, item.major, item.companyName, item.batchName]
             .filter(Boolean)
             .join(' ')
             .toLowerCase();
@@ -719,7 +773,6 @@ export class AdminTrainees implements OnInit {
       ...current,
       [field]: value
     }));
-
     this.touchedFields.update(t => ({ ...t, [field]: true }));
     this.validateSingleField(field);
   }
@@ -751,7 +804,6 @@ export class AdminTrainees implements OnInit {
         }
         break;
       }
-
       case 'email': {
         const val = (form.email || '').trim();
         if (!val) {
@@ -761,7 +813,6 @@ export class AdminTrainees implements OnInit {
         }
         break;
       }
-
       case 'nationalId': {
         const rawVal = form.nationalId;
         const idStr = rawVal !== null && rawVal !== undefined ? String(rawVal).trim() : '';
@@ -776,7 +827,6 @@ export class AdminTrainees implements OnInit {
         }
         break;
       }
-
       case 'phone': {
         const val = (form.phone || '').trim();
         if (val) {
@@ -788,32 +838,14 @@ export class AdminTrainees implements OnInit {
         }
         break;
       }
-
-      case 'university':
-      case 'major':
-      case 'academicLevel': {
-        const val = String(form[field as keyof typeof form] || '').trim();
-        if (val) {
-          if (/^\d+$/.test(val)) {
-            error = 'يجب إدخال نص صحيح وليس أرقاماً فقط.';
-          } else if (val.length < 2) {
-            error = 'النص المدخل قصير جداً.';
-          }
-        }
-        break;
-      }
-
       case 'profileImageUrl':
       case 'resumeUrl': {
         const urlVal = String(form[field as keyof typeof form] || '').trim();
-        if (urlVal) {
-          if (!urlRegex.test(urlVal) && !urlVal.startsWith('/') && !urlVal.startsWith('assets/') && !urlVal.startsWith('data:')) {
-            error = 'يرجى إدخال رابط صحيح يبدأ بـ https:// أو http://';
-          }
+        if (urlVal && !urlRegex.test(urlVal) && !urlVal.startsWith('/') && !urlVal.startsWith('assets/') && !urlVal.startsWith('data:')) {
+          error = 'يرجى إدخال رابط صحيح يبدأ بـ https:// أو http://';
         }
         break;
       }
-
       case 'linkedInUrl': {
         const urlVal = (form.linkedInUrl || '').trim();
         if (urlVal && !/^https?:\/\/(www\.)?linkedin\.com\/.+/i.test(urlVal)) {
@@ -821,7 +853,6 @@ export class AdminTrainees implements OnInit {
         }
         break;
       }
-
       case 'gitHubUrl': {
         const urlVal = (form.gitHubUrl || '').trim();
         if (urlVal && !/^https?:\/\/(www\.)?github\.com\/.+/i.test(urlVal)) {
@@ -843,26 +874,11 @@ export class AdminTrainees implements OnInit {
   }
 
   validateForm(): boolean {
-    const fields = [
-      'fullName',
-      'email',
-      'nationalId',
-      'phone',
-      'university',
-      'major',
-      'academicLevel',
-      'profileImageUrl',
-      'resumeUrl',
-      'gitHubUrl',
-      'linkedInUrl'
-    ];
-
+    const fields = ['fullName', 'email', 'nationalId', 'phone', 'profileImageUrl', 'resumeUrl', 'gitHubUrl', 'linkedInUrl'];
     const allTouched: Record<string, boolean> = {};
     fields.forEach(f => (allTouched[f] = true));
     this.touchedFields.set(allTouched);
-
     fields.forEach(f => this.validateSingleField(f));
-
     return Object.keys(this.formErrors()).length === 0;
   }
 
@@ -973,7 +989,7 @@ export class AdminTrainees implements OnInit {
   }
 
   // =========================================================================
-  // 1. نافذة المراسلة المباشرة مع المتدرب + إشعارات الردود (قراءة شاملة ومشتركة)
+  // المراسلة المباشرة مع المتدرب
   // =========================================================================
   private getStorageMessages(traineeId: number): { sender: string; text: string; date: string; isAdmin: boolean }[] {
     try {
@@ -1106,41 +1122,8 @@ export class AdminTrainees implements OnInit {
     this.messageHistory.set(localMsgs);
     this.showMessageModal.set(true);
 
-    const announcements$ = typeof (this.api as any).getAnnouncements === 'function'
-      ? (this.api as any).getAnnouncements().pipe(catchError(() => of([])))
-      : of([]);
-
-    const conversations$ = this.api.getConversations('TraineeComplaint').pipe(catchError(() => of([])));
-
-    forkJoin({
-      announcements: announcements$,
-      conversations: conversations$
-    }).subscribe(({ announcements, conversations }: any) => {
+    this.api.getConversations('TraineeComplaint').pipe(catchError(() => of([]))).subscribe((conversations: any) => {
       const dbMessages: { sender: string; text: string; date: string; isAdmin: boolean }[] = [];
-
-      const annList: any[] = Array.isArray(announcements?.items)
-        ? announcements.items
-        : Array.isArray(announcements)
-        ? announcements
-        : [];
-
-      annList
-        .filter((a: any) => {
-          const title = a.title || a.Title || '';
-          return title.includes(item.fullName);
-        })
-        .forEach((a: any) => {
-          const text = a.content || a.Content || a.body || '';
-          const rawDate = a.createdAt || a.CreatedAt || a.sentAt || a.publishDate;
-          if (text) {
-            dbMessages.push({
-              sender: 'إدارة البرنامج (الأدمن)',
-              text,
-              date: rawDate ? new Date(rawDate).toLocaleString('ar-OM') : 'سابقاً',
-              isAdmin: true
-            });
-          }
-        });
 
       const found = (conversations || []).find((c: any) =>
         c.initiatorName === item.fullName || (c.subject && c.subject.includes(item.fullName))
@@ -1175,9 +1158,7 @@ export class AdminTrainees implements OnInit {
     const combined = [...dbMsgs];
     localMsgs.forEach(lm => {
       const exists = combined.some(dm => dm.text === lm.text && dm.isAdmin === lm.isAdmin);
-      if (!exists) {
-        combined.push(lm);
-      }
+      if (!exists) combined.push(lm);
     });
     this.messageHistory.set(combined);
     this.saveStorageMessages(traineeId, combined);
@@ -1229,7 +1210,7 @@ export class AdminTrainees implements OnInit {
   }
 
   // =========================================================================
-  // 2. نافذة عرض وتحميل السيرة الذاتية (CV Modal)
+  // السيرة الذاتية (CV)
   // =========================================================================
   openCvModal(item: EnrichedTraineeItem) {
     this.activeTrainee.set(item);
@@ -1246,9 +1227,6 @@ export class AdminTrainees implements OnInit {
     window.open(normalized, '_blank', 'noopener');
   }
 
-  /**
-   * تنزيل السيرة الذاتية (CV) مباشرة إلى جهاز المستخدم
-   */
   downloadCv(item: EnrichedTraineeItem) {
     if (!item) return;
     const safeName = (item.fullName || 'Trainee').replace(/\s+/g, '_');
@@ -1352,146 +1330,7 @@ export class AdminTrainees implements OnInit {
   }
 
   // =========================================================================
-  // 3. نافذة إدارة الانسحاب واعتماد الهيئة (مربوطة بـ withdrawal-decision)
-  // =========================================================================
-  openWithdrawalModal(item: EnrichedTraineeItem) {
-    this.activeTrainee.set(item);
-    if (item.withdrawalStatus === 'Pending') {
-      this.withdrawalActionMode.set('REVIEW');
-      this.withdrawalReasonInput.set(item.withdrawalReason || '');
-    } else {
-      this.withdrawalActionMode.set('CREATE_OR_APPROVE');
-      this.withdrawalReasonInput.set(item.withdrawalReason || '');
-    }
-    this.withdrawalAdminNotes.set('');
-    this.showWithdrawalModal.set(true);
-  }
-
-  closeWithdrawalModal() {
-    this.showWithdrawalModal.set(false);
-    this.activeTrainee.set(null);
-  }
-
-  selectPresetReason(reason: string) {
-    this.withdrawalAdminNotes.set(reason);
-  }
-
-  processWithdrawalDecision(decision: 'SUBMIT_PENDING' | 'APPROVE_FINAL' | 'REJECT_REQUEST') {
-    const trainee = this.activeTrainee();
-    if (!trainee) return;
-
-    const reason = this.withdrawalReasonInput().trim();
-    const adminNotes = this.withdrawalAdminNotes().trim();
-
-    if (decision === 'SUBMIT_PENDING') {
-      if (!reason) {
-        this.showToast('يرجى كتابة سبب الانسحاب قبل المتابعة.', 'error');
-        return;
-      }
-      this.isProcessingWithdrawal.set(true);
-      this.api.createAnnouncement({
-        title: `طلب انسحاب متدرب: ${trainee.fullName}`,
-        content: reason,
-        scopeType: 'Platform',
-        createdByUserId: 1
-      }).subscribe({
-        next: () => {
-          this.updateTraineeRowWithdrawal(trainee.traineeId, 'Pending', reason, new Date().toISOString());
-          this.isProcessingWithdrawal.set(false);
-          this.closeWithdrawalModal();
-          this.loadDatabaseStats();
-          this.showToast(`تم تسجيل طلب الانسحاب للمتدرب "${trainee.fullName}" في قاعدة البيانات بانتظار اعتماد الهيئة.`, 'info');
-        },
-        error: () => {
-          this.isProcessingWithdrawal.set(false);
-          this.showToast('تعذر حفظ طلب الانسحاب في قاعدة البيانات.', 'error');
-        }
-      });
-      return;
-    }
-
-    if (decision === 'REJECT_REQUEST') {
-      if (!adminNotes && !reason) {
-        this.showToast('يرجى اختيار أو كتابة سبب مقنع لرفض طلب الانسحاب لإرساله للمتدرب.', 'error');
-        return;
-      }
-
-      this.isProcessingWithdrawal.set(true);
-      const rejectReason = adminNotes || reason;
-
-      this.api.submitWithdrawalDecision(trainee.traineeId, {
-        approved: false,
-        adminReason: rejectReason
-      }).subscribe({
-        next: (res: any) => {
-          this.updateTraineeRowWithdrawal(trainee.traineeId, 'None', null, null);
-          this.isProcessingWithdrawal.set(false);
-          this.closeWithdrawalModal();
-          this.loadDatabaseStats();
-          this.showToast(
-            res?.message || `تم رفض طلب انسحاب "${trainee.fullName}" وإرسال سبب الرفض لبريده الإلكتروني بنجاح.`,
-            'info'
-          );
-        },
-        error: () => {
-          this.isProcessingWithdrawal.set(false);
-          this.showToast('تعذر تنفيذ قرار الرفض في قاعدة البيانات.', 'error');
-        }
-      });
-      return;
-    }
-
-    // APPROVE_FINAL: اعتماد الانسحاب النهائي من الهيئة + إيقاف حساب المتدرب + إرسال الإيميل
-    const combinedReason = adminNotes
-      ? `${reason ? reason + ' — ' : ''}${adminNotes}`
-      : (reason || 'تم اعتماد طلب الانسحاب رسمياً من إدارة البرنامج.');
-
-    this.isProcessingWithdrawal.set(true);
-
-    this.api.submitWithdrawalDecision(trainee.traineeId, {
-      approved: true,
-      adminReason: combinedReason
-    }).subscribe({
-      next: (res: any) => {
-        this.updateTraineeRowWithdrawal(trainee.traineeId, 'Approved', combinedReason, new Date().toISOString());
-        this.isProcessingWithdrawal.set(false);
-        this.closeWithdrawalModal();
-        this.loadDatabaseStats();
-        this.showToast(
-          res?.message || `تم اعتماد انسحاب "${trainee.fullName}" وإيقاف صلاحية دخوله للمنصة وإرسال الإيميل بنجاح.`,
-          'success'
-        );
-      },
-      error: () => {
-        this.isProcessingWithdrawal.set(false);
-        this.showToast('تعذر اعتماد الانسحاب في قاعدة البيانات.', 'error');
-      }
-    });
-  }
-
-  private updateTraineeRowWithdrawal(
-    traineeId: number,
-    status: 'None' | 'Pending' | 'Approved' | 'Rejected',
-    reason: string | null,
-    date: string | null
-  ) {
-    this.trainees.update(list =>
-      list.map(item =>
-        item.traineeId === traineeId
-          ? {
-              ...item,
-              withdrawalStatus: status,
-              withdrawalReason: reason,
-              withdrawalDate: date,
-              completionStatus: status === 'Approved' ? 'Dropped' : item.completionStatus
-            }
-          : item
-      )
-    );
-  }
-
-  // =========================================================================
-  // 4. قراءة وفحص ملف الـ Excel واستيراده إلى DB
+  // قراءة وفحص ملف الـ Excel واستيراده إلى DB
   // =========================================================================
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -1501,7 +1340,7 @@ export class AdminTrainees implements OnInit {
     if (!input.files?.length) return;
 
     const file = input.files[0];
-    const maxSizeBytes = 5 * 1024 * 1024; // 5 MB
+    const maxSizeBytes = 5 * 1024 * 1024;
     const allowedExtensions = /(\.xlsx|\.xls)$/i;
 
     if (!allowedExtensions.exec(file.name)) {
@@ -1652,7 +1491,7 @@ export class AdminTrainees implements OnInit {
   }
 
   // =========================================================================
-  // 5. إضافة متدرب جديد وحفظه في DB
+  // إضافة متدرب جديد وحفظه في DB
   // =========================================================================
   submitNewTrainee() {
     if (!this.validateForm()) {
