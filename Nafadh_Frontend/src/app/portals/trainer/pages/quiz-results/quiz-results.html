@@ -694,19 +694,84 @@
 
           <!-- Manual Grading -->
 
-          <div
-            class="manual-grading"
-            *ngIf="
-              answer.requiresManualGrading &&
-              !answer.isManuallyGraded
-            "
-          >
+         <div
+  class="manual-grading"
+  *ngIf="
+    answer.requiresManualGrading &&
+    !answer.isManuallyGraded
+  "
+>
 
-            <i class="fa-solid fa-user-pen"></i>
+  <div class="manual-grading-header">
 
-            تحتاج إلى تصحيح يدوي
+    <div>
 
-          </div>
+      <i class="fa-solid fa-user-pen"></i>
+
+      <strong>
+        تحتاج إلى تصحيح يدوي
+      </strong>
+
+    </div>
+
+    <span>
+      الدرجة الكاملة:
+      {{ answer.maxPoints }}
+    </span>
+
+  </div>
+
+
+  <div class="grading-form">
+
+    <label>
+      الدرجة المستحقة
+    </label>
+
+   <div class="grading-input-row">
+
+  <input
+    type="number"
+    min="0"
+    [max]="answer.maxPoints"
+    step="0.5"
+    [(ngModel)]="gradingPoints[answer.answerId]"
+    placeholder="0"
+  />
+
+  <span>
+    / {{ answer.maxPoints }}
+  </span>
+
+  <button
+    type="button"
+    class="save-grading-btn"
+    [disabled]="gradingSaving()"
+    (click)="gradeEssayAnswer(answer)"
+  >
+
+    <i
+      class="fa-solid"
+      [ngClass]="
+        gradingSaving()
+          ? 'fa-spinner fa-spin'
+          : 'fa-check'
+      "
+    ></i>
+
+    {{
+      gradingSaving()
+        ? 'جاري الحفظ'
+        : 'حفظ الدرجة'
+    }}
+
+  </button>
+
+</div>
+
+  </div>
+
+</div>
 
 
           <div

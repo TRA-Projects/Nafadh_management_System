@@ -35,6 +35,9 @@ export class QuizResults implements OnInit {
   attemptDetails = signal<QuizAttemptDetailsDto | null>(null);
   detailsLoading = signal(false);
 
+  gradingPoints: { [answerId: number]: number } = {};
+  gradingSaving = signal(false);
+
   quizId: number | undefined;
   trainerId: number | null = null;
 
@@ -249,6 +252,113 @@ export class QuizResults implements OnInit {
     this.attemptDetails.set(null);
 
   }
+  // =========================================
+// MANUAL ESSAY GRADING
+// =========================================
+
+gradeEssayAnswer(answer: any): void {
+
+  if (!this.trainerId) {
+
+    this.errorMessage.set(
+      'تعذر تحديد المدرب الحالي.'
+    );
+
+    return;
+
+  }
+
+  const awardedPoints =
+    Number(this.gradingPoints[answer.answerId]);
+
+  if (
+    isNaN(awardedPoints) ||
+    awardedPoints < 0 ||
+    awardedPoints > Number(answer.maxPoints)
+  ) {
+
+    this.errorMessage.set(
+      `الدرجة يجب أن تكون بين 0 و ${answer.maxPoints}.`
+    );
+
+    return;
+
+  }
+
+  this.gradingSaving.set(true);
+
+  this.errorMessage.set('');
+  this.successMessage.set('');
+
+  this.api.gradeEssayAnswer({
+
+    answerId: answer.answerId,
+
+    trainerId: this.trainerId,
+
+    awardedPoints: awardedPoints
+
+  }).subscribe({
+
+    next: response => {
+
+      console.log(
+        'Essay grading success:',
+        response
+      );
+
+      this.successMessage.set(
+        'تم تصحيح الإجابة المقالية بنجاح.'
+      );
+
+      // إعادة تحميل تفاصيل المحاولة
+      this.api.getQuizAttemptDetails(
+        this.trainerId!,
+        this.attemptDetails()!.attemptId
+      ).subscribe({
+
+        next: details => {
+
+          this.attemptDetails.set(details);
+
+          this.gradingSaving.set(false);
+
+        },
+
+        error: error => {
+
+          console.error(
+            'Reload attempt details error:',
+            error
+          );
+
+          this.gradingSaving.set(false);
+
+        }
+
+      });
+
+    },
+
+    error: error => {
+
+      console.error(
+        'Essay grading error:',
+        error
+      );
+
+      this.errorMessage.set(
+        error?.error?.message ||
+        'تعذر حفظ تصحيح الإجابة.'
+      );
+
+      this.gradingSaving.set(false);
+
+    }
+
+  });
+
+}
   // =========================================
   // STATISTICS
   // =========================================

@@ -1333,36 +1333,170 @@ tbody tr:hover {
 /* =========================================================
    MANUAL GRADING
 ========================================================= */
+/* =========================================
+   MANUAL GRADING
+========================================= */
 
 .manual-grading {
+  margin-top: 20px;
+  padding: 20px 22px;
+  border: 1px solid #f2c48f;
+  border-radius: 14px;
+  background: #fffaf3;
+}
+
+
+/* Header */
+
+.manual-grading-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
 
-  margin-top: 12px;
-  padding: 11px 14px;
-
-  border-radius: 10px;
-
-  background: #fff7ed;
-
-  border: 1px solid #fed7aa;
-
+.manual-grading-header > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   color: #c2410c;
+}
 
-  font-size: 13px;
+.manual-grading-header i {
+  font-size: 18px;
+}
+
+.manual-grading-header strong {
+  font-size: 16px;
   font-weight: 700;
 }
 
-
-.manual-grading.completed {
-  background: #f0fdf4;
-
-  border-color: #bbf7d0;
-
-  color: #15803d;
+.manual-grading-header > span {
+  color: #64748b;
+  font-size: 14px;
 }
 
+
+/* Form */
+
+.grading-form {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #f1dfc7;
+}
+
+.grading-form label {
+  color: #475569;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+
+/* Input row */
+
+.grading-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+
+/* Input */
+
+.grading-input-row input {
+  width: 90px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.grading-input-row input:focus {
+  border-color: #0891b2;
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.12);
+}
+
+
+/* / Max points */
+
+.grading-input-row > span {
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+
+/* Save button */
+
+.save-grading-btn {
+  height: 42px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 10px;
+  background: #0891b2;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.save-grading-btn:hover:not(:disabled) {
+  background: #0e7490;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(8, 145, 178, 0.18);
+}
+
+.save-grading-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+
+/* =========================================
+   COMPLETED GRADING
+========================================= */
+
+.manual-grading.completed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 14px 18px;
+
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+
+  background: #f0fdf4;
+  color: #15803d;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.manual-grading.completed i {
+  font-size: 17px;
+}
 
 /* =========================================================
    REVIEW BADGE
