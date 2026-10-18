@@ -38,6 +38,15 @@ namespace Nafadh_Backend.Services
             _repository = repository;
         }
 
+        private static void EnsureQuizIsDraft(NFD_Quiz quiz)
+        {
+            if (quiz.Status != Nafadh_Backend.Enums.NFD_QuizStatus.Draft)
+            {
+                throw new InvalidOperationException(
+                    "لا يمكن تعديل أسئلة الاختبار بعد نشره. التعديل متاح للمسودة فقط.");
+            }
+        }
+
         // إضافة أسئلة إلى الاختبار
         public async Task AddQuestionsToQuizAsync(
             int quizId,
@@ -58,6 +67,7 @@ namespace Nafadh_Backend.Services
                 throw new UnauthorizedAccessException(
                     "لا تملكين صلاحية تعديل هذا الاختبار.");
             }
+            EnsureQuizIsDraft(quiz);
 
             if (await _repository.HasQuizAttemptsAsync(quizId))
             {
@@ -76,7 +86,8 @@ namespace Nafadh_Backend.Services
             }
 
             var questions =
-                await _repository.GetQuestionsByIdsAsync(questionIds);
+     await _repository.GetQuestionsByIdsAsync(
+         questionIds, trainerId);
 
             if (questions.Count != questionIds.Count)
             {
@@ -170,6 +181,7 @@ namespace Nafadh_Backend.Services
                 throw new UnauthorizedAccessException(
                     "لا تملكين صلاحية حذف أسئلة هذا الاختبار.");
             }
+            EnsureQuizIsDraft(quiz);
 
             if (await _repository.HasQuizAttemptsAsync(quizId))
             {
@@ -224,6 +236,7 @@ namespace Nafadh_Backend.Services
                 throw new UnauthorizedAccessException(
                     "لا تملكين صلاحية تعديل أسئلة هذا الاختبار.");
             }
+            EnsureQuizIsDraft(quiz);
 
             if (await _repository.HasQuizAttemptsAsync(quizId))
             {

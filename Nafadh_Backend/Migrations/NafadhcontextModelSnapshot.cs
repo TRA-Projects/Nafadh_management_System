@@ -1461,6 +1461,9 @@ namespace Nafadh_Backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("QuizId"));
 
+                    b.Property<bool>("AllowBackNavigation")
+                        .HasColumnType("bit");
+
                     b.Property<int>("BatchId")
                         .HasColumnType("int");
 
@@ -1479,13 +1482,37 @@ namespace Nafadh_Backend.Migrations
                     b.Property<DateTime>("EndDateTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("ExitLimitAction")
+                        .HasColumnType("int");
+
                     b.Property<int>("MaxAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaxExitAttempts")
                         .HasColumnType("int");
 
                     b.Property<decimal>("PassingPercentage")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<bool>("PreventCopyPaste")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("RandomizeOptions")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("RandomizeQuestions")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShowCorrectAnswers")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShowOneQuestionAtTime")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShowResultImmediately")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShowScoreToTrainee")
                         .HasColumnType("bit");
 
                     b.Property<DateTime>("StartDateTime")
