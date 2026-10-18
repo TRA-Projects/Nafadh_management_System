@@ -16,11 +16,15 @@ namespace Nafadh_Backend.Services
     public class CompanyService : ICompanyService
     {
         private readonly ICompanyRepository _repository;
+        private readonly ICompanyRegistrationService _registrationService;
 
         // Constructor - inject Company Repository
-        public CompanyService(ICompanyRepository repository)
+        public CompanyService(
+            ICompanyRepository repository,
+            ICompanyRegistrationService registrationService)
         {
             _repository = repository;
+            _registrationService = registrationService;
         }
 
         // Get Company by ID
@@ -180,6 +184,13 @@ namespace Nafadh_Backend.Services
             if (company == null)
                 return null;
 
+            // Self-registered company: approve + activate account + e-mail credentials.
+            if (await _registrationService.TryApproveRegisteredCompanyAsync(companyId))
+            {
+                var approved = await _repository.GetCompanyByIdAsync(companyId);
+                return approved == null ? null : MapToOutputDTO(approved);
+            }
+
             company.Status = NFD_CompanyStatus.Approved;
             company.ApprovalDate = DateTime.UtcNow;
 
@@ -221,10 +232,13 @@ namespace Nafadh_Backend.Services
             if (company == null)
                 return null;
 
-            company.Status = NFD_CompanyStatus.Suspended; // أو حالة الرفض لديك
+            company.Status = NFD_CompanyStatus.Rejected;
             company.RejectionReason = rejectionReason;
 
             await _repository.UpdateCompanyAsync(company);
+
+            // Self-registered company: tell them why (no-op for Admin-created companies).
+            await _registrationService.NotifyRejectionAsync(companyId, rejectionReason);
 
             return MapToOutputDTO(company);
         }
