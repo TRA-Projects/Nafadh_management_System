@@ -19,7 +19,7 @@ interface QuizDto {
   startDateTime: string;
   endDateTime: string;
   durationMinutes: number;
-  status: number;
+  status: number | string;
   randomizeQuestions: boolean;
   maxAttempts: number;
   cameraRequired: boolean;
@@ -138,9 +138,11 @@ export class TrainerQuizzes implements OnInit {
   questionForm: QuestionForm =
     this.emptyQuestionForm();
 
-  draftCount = computed(
-    () => this.quizzes().filter(q => q.status === 0).length
-  );
+  draftCount = computed(() => {
+    return this.quizzes().filter(
+      quiz => this.getStatusNumber(quiz.status) === 0
+    ).length;
+  });
 
   filteredQuizzes = computed(() => {
     const term = this.searchTerm()
@@ -157,9 +159,11 @@ export class TrainerQuizzes implements OnInit {
           .toLocaleLowerCase()
           .includes(term);
 
+
       const matchesStatus =
         filter === 'all' ||
-        (filter === 'draft' && quiz.status === 0);
+        (filter === 'draft' &&
+          this.getStatusNumber(quiz.status) === 0);
 
       return matchesTerm && matchesStatus;
     });
@@ -217,7 +221,7 @@ export class TrainerQuizzes implements OnInit {
     private api: TrainerApi,
     private auth: AuthService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const userId = this.auth.session()?.userId;
@@ -325,7 +329,7 @@ export class TrainerQuizzes implements OnInit {
       ),
 
       durationMinutes: quiz.durationMinutes,
-      status: quiz.status,
+      status: this.getStatusNumber(quiz.status),
       randomizeQuestions: quiz.randomizeQuestions,
       maxAttempts: quiz.maxAttempts,
       cameraRequired: quiz.cameraRequired,
@@ -438,7 +442,7 @@ export class TrainerQuizzes implements OnInit {
         this.form.durationMinutes
       ),
 
-      status: Number(this.form.status),
+      // status: Number(this.form.status),
 
       randomizeQuestions:
         this.form.randomizeQuestions,
@@ -608,36 +612,36 @@ export class TrainerQuizzes implements OnInit {
   }
 
   // =====================================================
-// QUESTION SELECTION HELPERS
-// =====================================================
+  // QUESTION SELECTION HELPERS
+  // =====================================================
 
-getSelectedQuestionsCount(): number {
-  return this.selectedQuestionIds().size;
-}
-
-selectAllQuestions(): void {
-  const questions = this.filteredQuestions()
-    .filter(question => question.isActive);
-
-  this.selectedQuestionIds.set(
-    new Set(
-      questions.map(question => question.questionId)
-    )
-  );
-}
-
-areAllQuestionsSelected(): boolean {
-  const questions = this.filteredQuestions()
-    .filter(question => question.isActive);
-
-  if (!questions.length) {
-    return false;
+  getSelectedQuestionsCount(): number {
+    return this.selectedQuestionIds().size;
   }
 
-  return questions.every(question =>
-    this.selectedQuestionIds().has(question.questionId)
-  );
-}
+  selectAllQuestions(): void {
+    const questions = this.filteredQuestions()
+      .filter(question => question.isActive);
+
+    this.selectedQuestionIds.set(
+      new Set(
+        questions.map(question => question.questionId)
+      )
+    );
+  }
+
+  areAllQuestionsSelected(): boolean {
+    const questions = this.filteredQuestions()
+      .filter(question => question.isActive);
+
+    if (!questions.length) {
+      return false;
+    }
+
+    return questions.every(question =>
+      this.selectedQuestionIds().has(question.questionId)
+    );
+  }
 
   // =====================================================
   // CREATE QUESTION
@@ -953,20 +957,20 @@ areAllQuestionsSelected(): boolean {
         form.questionType === 2
           ? []
           : form.options.map(
-              (option, index) => ({
-                optionText:
-                  option.optionText.trim(),
+            (option, index) => ({
+              optionText:
+                option.optionText.trim(),
 
-                optionCode:
-                  option.optionCode,
+              optionCode:
+                option.optionCode,
 
-                sortOrder:
-                  index,
+              sortOrder:
+                index,
 
-                isCorrect:
-                  option.isCorrect
-              })
-            )
+              isCorrect:
+                option.isCorrect
+            })
+          )
     };
 
     this.questionSaving.set(true);
@@ -979,14 +983,14 @@ areAllQuestionsSelected(): boolean {
     const request: Observable<any> =
       questionId === null
         ? this.api.createQuestion(
-            trainerId,
-            payload
-          )
+          trainerId,
+          payload
+        )
         : this.api.updateQuestion(
-            questionId,
-            trainerId,
-            payload
-          );
+          questionId,
+          trainerId,
+          payload
+        );
 
     request.subscribe({
       next: () => {
@@ -1173,55 +1177,75 @@ areAllQuestionsSelected(): boolean {
     }
   }
 
-getStatusLabel(status: number | string): string {
 
-  switch (Number(status)) {
-    case 0:
-      return 'مسودة';
+  getStatusLabel(status: number | string): string {
 
-    case 1:
-      return 'مجدول';
+    const value = String(status).trim().toLowerCase();
 
-    case 2:
-      return 'مفتوح';
+    switch (value) {
+      case '0':
+      case 'draft':
+        return 'مسودة';
 
-    case 3:
-      return 'مغلق';
+      case '1':
+      case 'scheduled':
+        return 'مجدول';
 
-    case 4:
-      return 'مؤرشف';
+      case '2':
+      case 'open':
+        return 'مفتوح';
 
-    default:
-      return 'غير معروف';
+      case '3':
+      case 'closed':
+        return 'مغلق';
+
+      case '4':
+      case 'archived':
+        return 'مؤرشف';
+
+      default:
+        console.log('Unknown quiz status:', status);
+        return 'غير معروف';
+    }
   }
-}
 
-getStatusClass(status: number | string): string {
-  return String(status).toLowerCase() === 'draft' ||
-         String(status) === '0'
-    ? 'draft'
-    : 'other';
-}
+
+  getStatusClass(status: number | string): string {
+    return String(status).toLowerCase() === 'draft' ||
+      String(status) === '0'
+      ? 'draft'
+      : 'other';
+  }
+
 
   formatDate(value: string): string {
+
     if (!value) {
       return 'غير محدد';
     }
 
-    const date = new Date(value);
+    // إذا جاء التاريخ بدون منطقة زمنية، نتعامل معه كـ UTC
+    const hasTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
+
+    const dateValue = hasTimezone ? value : value + 'Z';
+
+    const date = new Date(dateValue);
 
     if (Number.isNaN(date.getTime())) {
       return 'غير محدد';
     }
 
     return new Intl.DateTimeFormat('ar-OM', {
+      timeZone: 'Asia/Muscat',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true
     }).format(date);
   }
+
 
   private emptyForm(): QuizForm {
     const now = new Date();
@@ -1271,17 +1295,17 @@ getStatusClass(status: number | string): string {
     return local.toISOString().slice(0, 16);
   }
 
-  
-openQuizResults(quizId: number): void {
-  this.router.navigate(
-    ['/trainer/quiz-results'],
-    {
-      queryParams: {
-        quizId: quizId
+
+  openQuizResults(quizId: number): void {
+    this.router.navigate(
+      ['/trainer/quiz-results'],
+      {
+        queryParams: {
+          quizId: quizId
+        }
       }
-    }
-  );
-}
+    );
+  }
 
   // =====================================
   // QUESTION TYPE LABEL
@@ -1326,6 +1350,35 @@ openQuizResults(quizId: number): void {
 
       default:
         return 'غير معروف';
+    }
+  }
+
+  private getStatusNumber(status: number | string): number {
+    const value = String(status).trim().toLowerCase();
+
+    switch (value) {
+      case '0':
+      case 'draft':
+        return 0;
+
+      case '1':
+      case 'scheduled':
+        return 1;
+
+      case '2':
+      case 'open':
+        return 2;
+
+      case '3':
+      case 'closed':
+        return 3;
+
+      case '4':
+      case 'archived':
+        return 4;
+
+      default:
+        return -1;
     }
   }
 
