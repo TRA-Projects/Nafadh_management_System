@@ -1,12 +1,14 @@
-// src/app/features/trainee/user-manual/models/help-panel.models.ts
+// src/app/portals/trainee/user-manual/models/help-panel.models.ts
 
 /**
  * واجهات البيانات التي يستقبلها HelpPanelComponent من المكوّن الرئيسي.
  *
  * ملاحظة مهمة:
- * هذه الواجهات مستقلة عن GuidePage الموجودة في مشروع Dynamic User Manual،
- * وذلك لضمان أن HelpPanelComponent مكوّن Reusable تماماً.
- * المطور الرئيسي مسؤول عن تحويل GuidePage → HelpPanelData.
+ * هذه الواجهات مستقلة عن GuidePage، وذلك لضمان أن HelpPanelComponent
+ * مكوّن Reusable تماماً.
+ *
+ * المطور الرئيسي مسؤول عن تحويل GuidePage → HelpPanelData داخل
+ * UserManualShell.
  */
 
 export interface HelpFaqItem {

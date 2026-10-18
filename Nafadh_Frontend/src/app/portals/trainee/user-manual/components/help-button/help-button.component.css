@@ -1,0 +1,137 @@
+/* src/app/features/trainee/user-manual/components/help-button/help-button.component.css */
+
+:host {
+  display: contents;
+}
+
+.help-button {
+  position: fixed;
+  left: 28px;
+  bottom: 84px;
+  z-index: 1000;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  height: 44px;
+  padding: 0 18px;
+
+  border: none;
+  border-radius: 999px;
+
+  background: var(--color-navy);
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 10px 26px rgba(10, 17, 114, 0.28),
+    0 2px 6px rgba(10, 17, 114, 0.18);
+
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+
+  animation: help-button-in 0.22s ease-out;
+}
+
+.help-button:hover {
+  background: var(--color-brand);
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 30px rgba(10, 17, 114, 0.32),
+    0 3px 8px rgba(10, 17, 114, 0.2);
+}
+
+.help-button:active {
+  transform: translateY(0);
+}
+
+.help-button:focus-visible {
+  outline: 3px solid var(--color-cyan);
+  outline-offset: 3px;
+}
+
+.help-button.is-open {
+  background: var(--color-brand);
+}
+
+.help-button-icon {
+  width: 22px;
+  height: 22px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+
+  flex-shrink: 0;
+}
+
+.help-question-mark {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.help-button-label {
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+
+@keyframes help-button-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .help-button {
+    left: 16px;
+    bottom: 76px;
+  }
+}
+
+@media (max-width: 600px) {
+  .help-button {
+    left: 12px;
+    bottom: 68px;
+
+    height: 40px;
+    padding: 0 14px;
+
+    font-size: 12px;
+  }
+
+  .help-button-label {
+    display: none;
+  }
+
+  .help-button-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .help-question-mark {
+    font-size: 16px;
+  }
+}

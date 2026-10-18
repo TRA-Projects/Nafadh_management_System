@@ -1,4 +1,3 @@
-
 <section class="user-manual-host" aria-label="دليل استخدام بوابة المتدرب">
   <button
     type="button"
@@ -10,51 +9,12 @@
     <span>دليل الاستخدام</span>
   </button>
 
-  @if (guideService.isHelpOpen()) {
-    <section class="manual-help-panel" dir="rtl">
-      <header class="manual-help-header">
-        <div>
-          <h2>دليل الاستخدام</h2>
-          <p>بوابة المتدرب</p>
-        </div>
-
-        <button
-          type="button"
-          class="manual-close-button"
-          (click)="closeHelp()"
-          aria-label="إغلاق دليل الاستخدام"
-        >
-          ×
-        </button>
-      </header>
-
-   
-<div class="manual-help-content">
-  @if (guideService.currentGuide(); as guide) {
-    <h3>{{ guide.title }}</h3>
-    <p>{{ guide.description }}</p>
-
-    <h4>الأسئلة الشائعة</h4>
-
-    @for (faq of guide.faqs; track faq.question) {
-      <details>
-        <summary>{{ faq.question }}</summary>
-        <p>{{ faq.answer }}</p>
-      </details>
-    }
-
-    <button
-      type="button"
-      (click)="guideService.startTour()"
-      [disabled]="guide.steps.length === 0"
-    >
-      بدء الجولة الإرشادية
-    </button>
-  } @else {
-    <p>لا يتوفر محتوى إرشادي لهذه الصفحة حاليًا.</p>
-  }
-</div>
-
-    </section>
-  }
+  <!-- =========================================================
+       HELP PANEL (المكوّن الجديد)
+       ========================================================= -->
+  <app-help-panel
+    [isOpen]="guideService.isHelpOpen()"
+    [pageKey]="guideService.currentPageKey()"
+    (close)="closeHelp()"
+  />
 </section>
