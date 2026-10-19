@@ -1,4 +1,3 @@
-
 import {
   Component,
   OnInit,
@@ -86,6 +85,8 @@ export class TraineeProfile implements OnInit {
   selectedProfileImage: File | null = null;
 
   avatarViewerOpen = signal(false);
+
+  isUploadingAvatar = signal<boolean>(false); // [جديد] مؤشر رفع الصورة
 
 
   // =========================================================
@@ -1252,6 +1253,10 @@ export class TraineeProfile implements OnInit {
       file;
 
 
+    // -------------------------------------------------------
+    // [جديد] عرض الصورة فوراً (Optimistic UI) باستخدام Base64
+    // -------------------------------------------------------
+
     const reader =
       new FileReader();
 
@@ -1291,6 +1296,189 @@ export class TraineeProfile implements OnInit {
 
     );
 
+
+    // -------------------------------------------------------
+    // [جديد] رفع الصورة إلى السيرفر ليتم حفظها بشكل دائم
+    // -------------------------------------------------------
+
+    this.uploadAvatarToServer(file);
+
+  }
+
+
+  // =========================================================
+  // [جديد] رفع الصورة إلى السيرفر
+  // =========================================================
+
+  private uploadAvatarToServer(
+    file: File
+  ): void {
+
+    const traineeId =
+      this.trainee()?.traineeId;
+
+
+    if (!traineeId) {
+
+      console.error(
+        'Trainee ID not found. Cannot upload avatar.'
+      );
+
+      return;
+
+    }
+
+
+    this.isUploadingAvatar.set(true);
+
+
+    this.api
+
+      .uploadTraineeProfileImage(
+        traineeId,
+        file
+      )
+
+      .subscribe({
+
+        next: (response: any) => {
+
+          console.log(
+            'Avatar uploaded successfully:',
+            response
+          );
+
+
+          // -------------------------------------------------
+          // السيرفر يرجع { profileImageUrl: "..." }
+          // -------------------------------------------------
+
+          const serverUrl =
+            response?.profileImageUrl || null;
+
+
+          if (serverUrl) {
+
+            // تحديث الصورة المعروضة بالرابط الدائم من السيرفر
+            this.avatarUrl.set(
+              this.getProfileImageUrl(serverUrl)
+            );
+
+
+            // تحديث بيانات المتدرب بالرابط الجديد
+            this.trainee.update(
+              current => {
+
+                if (!current) {
+
+                  return current;
+
+                }
+
+                return {
+
+                  ...current,
+
+                  profileImageUrl:
+                    serverUrl
+
+                };
+
+              }
+            );
+
+          }
+
+
+          // -------------------------------------------------
+          // تحديث الـ Snapshot لتجنب إعادة الحفظ
+          // -------------------------------------------------
+
+          if (this.originalProfile) {
+
+            this.originalProfile = {
+
+              ...this.originalProfile
+
+            };
+
+          }
+
+
+          this.selectedProfileImage =
+            null;
+
+
+          this.isUploadingAvatar.set(false);
+
+
+          this.openPopup(
+            'تم رفع الصورة بنجاح.',
+            'success',
+            'تم الرفع'
+          );
+
+        },
+
+
+        error: (err) => {
+
+          console.error(
+            'فشل رفع الصورة:',
+            err
+          );
+
+
+          this.isUploadingAvatar.set(false);
+
+
+          this.openPopup(
+            err.error?.message ||
+            'حدث خطأ أثناء رفع الصورة.',
+            'error',
+            'فشل الرفع'
+          );
+
+        }
+
+      });
+
+  }
+
+
+  // =========================================================
+  // [جديد] التحقق من وجود صورة صالحة
+  // =========================================================
+
+  hasAvatar(): boolean {
+
+    const url =
+      this.avatarUrl();
+
+
+    return (
+      !!url &&
+      url.trim() !== '' &&
+      url !== 'null' &&
+      url !== 'undefined'
+    );
+
+  }
+
+
+  // =========================================================
+  // [جديد] معالجة فشل تحميل الصورة (لو حُذفت من السيرفر)
+  // =========================================================
+
+  onAvatarImageError(): void {
+
+    console.warn(
+      'فشل تحميل صورة البروفايل، سيتم عرض الحرف الأول.'
+    );
+
+
+    this.avatarUrl.set(null);
+
   }
 
 
@@ -1300,7 +1488,7 @@ export class TraineeProfile implements OnInit {
 
   openAvatarViewer(): void {
 
-    if (this.avatarUrl()) {
+    if (this.hasAvatar()) {
 
       this.avatarViewerOpen.set(
         true
@@ -1406,7 +1594,6 @@ export class TraineeProfile implements OnInit {
               };
 
             }
-
           );
 
 
@@ -2069,4 +2256,3 @@ removeSkill(
   }
 
 }
-
