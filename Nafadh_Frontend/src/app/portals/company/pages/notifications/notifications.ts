@@ -1,49 +1,22 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { finalize } from 'rxjs';
 import { NotificationDto, NotificationService } from '../../../../shared/services/notification.service';
 import { NotificationSummaryService } from '../../../../shared/services/notification-summary.service';
 
-type NotificationFilter = 'all' | 'unread';
-
-type NotificationCategory =
-  | 'task'
-  | 'message'
-  | 'warning'
-  | 'evaluation'
-  | 'attendance'
-  | 'announcement'
-  | 'payment'
-  | 'achievement'
-  | 'system';
-
-interface CategoryMeta {
-  key: NotificationCategory;
-  label: string;
-}
-
-interface NotificationGroup {
-  label: string;
-  items: NotificationDto[];
-}
-
-const CATEGORIES: CategoryMeta[] = [
-  { key: 'task', label: 'المهام' },
-  { key: 'message', label: 'المحادثات' },
-  { key: 'warning', label: 'التحذيرات' },
-  { key: 'evaluation', label: 'التقييمات' },
-  { key: 'attendance', label: 'الحضور' },
-  { key: 'announcement', label: 'الإعلانات' },
-  { key: 'payment', label: 'المدفوعات' },
-  { key: 'achievement', label: 'الإنجازات' },
+type Filter = 'all' | 'unread' | 'read';
+type Category = 'task' | 'message' | 'warning' | 'evaluation' | 'attendance' | 'announcement' | 'payment' | 'achievement' | 'system';
+type SortOrder = 'newest' | 'oldest';
+interface Group { label: string; items: NotificationDto[]; }
+const CATEGORIES: { key: Category; label: string }[] = [
+  { key: 'task', label: 'المهام' }, { key: 'message', label: 'المحادثات' },
+  { key: 'warning', label: 'التحذيرات' }, { key: 'evaluation', label: 'التقييمات' },
+  { key: 'attendance', label: 'الحضور' }, { key: 'announcement', label: 'الإعلانات' },
+  { key: 'payment', label: 'المدفوعات' }, { key: 'achievement', label: 'الإنجازات' },
   { key: 'system', label: 'عام' },
 ];
-
-// NotificationDto has no "type" field, so the category comes from `relatedEntity`
-// (the backend entity name, e.g. Task, SupportTicket, Warning). Matching it first is
-// more reliable than guessing from free text; the title is only a fallback.
-const ENTITY_RULES: { key: NotificationCategory; pattern: RegExp }[] = [
-  { key: 'warning', pattern: /warning/i },
-  { key: 'task', pattern: /task|submission|project/i },
+const ENTITY_RULES: { key: Category; pattern: RegExp }[] = [
+  { key: 'warning', pattern: /warning/i }, { key: 'task', pattern: /task|submission|project/i },
   { key: 'message', pattern: /conversation|message|ticket|support/i },
   { key: 'evaluation', pattern: /evaluation|feedback|rubric/i },
   { key: 'attendance', pattern: /attendance|session|excuse/i },
@@ -51,10 +24,8 @@ const ENTITY_RULES: { key: NotificationCategory; pattern: RegExp }[] = [
   { key: 'payment', pattern: /payment|schedule|invoice/i },
   { key: 'achievement', pattern: /badge|certificate/i },
 ];
-
-const TEXT_RULES: { key: NotificationCategory; pattern: RegExp }[] = [
-  { key: 'warning', pattern: /تحذير|إنذار|انذار/ },
-  { key: 'task', pattern: /مهمة|مهام|تسليم|مشروع/ },
+const TEXT_RULES: { key: Category; pattern: RegExp }[] = [
+  { key: 'warning', pattern: /تحذير|إنذار|انذار/ }, { key: 'task', pattern: /مهمة|مهام|تسليم|مشروع/ },
   { key: 'message', pattern: /محادثة|رسالة|رسائل|دعم|تذكرة/ },
   { key: 'evaluation', pattern: /تقييم|تقييمات/ },
   { key: 'attendance', pattern: /حضور|غياب|جلسة|عذر|أعذار/ },
@@ -65,6 +36,7 @@ const TEXT_RULES: { key: NotificationCategory; pattern: RegExp }[] = [
 
 @Component({
   selector: 'app-company-notifications',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './notifications.html',
   styleUrl: './notifications.scss',
@@ -72,36 +44,54 @@ const TEXT_RULES: { key: NotificationCategory; pattern: RegExp }[] = [
 export class CompanyNotifications implements OnInit {
   private readonly notificationService = inject(NotificationService);
   private readonly summaryService = inject(NotificationSummaryService);
-
   notifications = signal<NotificationDto[]>([]);
-  activeFilter = signal<NotificationFilter>('all');
-  activeCategory = signal<NotificationCategory | 'all'>('all');
+  activeFilter = signal<Filter>('all');
+  activeCategory = signal<Category | 'all'>('all');
+  search = signal('');
+  sortOrder = signal<SortOrder>('newest');
+  selectedDate = signal('');
   loading = signal(true);
+  refreshing = signal(false);
+  markingAll = signal(false);
+  pendingIds = signal<ReadonlySet<number>>(new Set<number>());
   error = signal<string | null>(null);
-
+  actionError = signal<string | null>(null);
   readonly skeletons = [1, 2, 3, 4];
-
-  unreadCount = computed(() => this.notifications().filter((n) => !n.isRead).length);
-
-  /** Categories that actually exist in the list, with counts, for the filter chips. */
-  categoryChips = computed(() => {
-    const counts = new Map<NotificationCategory, number>();
+  readonly totalCount = computed(() => this.notifications().length);
+  readonly unreadCount = computed(() => this.notifications().filter(n => !n.isRead).length);
+  readonly readCount = computed(() => this.totalCount() - this.unreadCount());
+  readonly todayCount = computed(() => this.notifications().filter(n => this.dayLabel(n.createdAt) === 'اليوم').length);
+  readonly warningCount = computed(() => this.notifications().filter(n => this.categoryOf(n) === 'warning').length);
+  readonly categoryChips = computed(() => {
+    const counts = new Map<Category, number>();
     for (const item of this.notifications()) {
-      const key = this.categoryOf(item);
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+      const category = this.categoryOf(item);
+      counts.set(category, (counts.get(category) ?? 0) + 1);
     }
-    return CATEGORIES.filter((c) => counts.has(c.key)).map((c) => ({ ...c, count: counts.get(c.key) ?? 0 }));
+    return CATEGORIES.filter(c => counts.has(c.key)).map(c => ({ ...c, count: counts.get(c.key) ?? 0 }));
   });
-
-  filteredNotifications = computed(() => {
-    let list = this.notifications();
-    if (this.activeFilter() === 'unread') list = list.filter((n) => !n.isRead);
+  readonly filteredNotifications = computed(() => {
+    const query = this.search().trim().toLocaleLowerCase();
     const category = this.activeCategory();
-    if (category !== 'all') list = list.filter((n) => this.categoryOf(n) === category);
-    return list;
+    const selectedDay = this.selectedDate();
+    return this.notifications().filter(n => {
+      if (selectedDay) {
+        const date = new Date(n.createdAt);
+        if (Number.isNaN(date.getTime())) return false;
+        const localDay = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        if (localDay !== selectedDay) return false;
+      }
+      if (this.activeFilter() === 'unread' && n.isRead) return false;
+      if (this.activeFilter() === 'read' && !n.isRead) return false;
+      if (category !== 'all' && this.categoryOf(n) !== category) return false;
+      return !query || `${n.title ?? ''} ${n.message ?? ''} ${n.relatedEntity ?? ''}`.toLocaleLowerCase().includes(query);
+    }).sort((a, b) => {
+      const left = new Date(a.createdAt).getTime() || 0;
+      const right = new Date(b.createdAt).getTime() || 0;
+      return this.sortOrder() === 'newest' ? right - left : left - right;
+    });
   });
-
-  groups = computed<NotificationGroup[]>(() => {
+  readonly groups = computed<Group[]>(() => {
     const buckets = new Map<string, NotificationDto[]>();
     for (const item of this.filteredNotifications()) {
       const label = this.dayLabel(item.createdAt);
@@ -110,108 +100,98 @@ export class CompanyNotifications implements OnInit {
     }
     return Array.from(buckets, ([label, items]) => ({ label, items }));
   });
+  readonly hasFilters = computed(() => this.search().trim() !== '' || this.activeFilter() !== 'all' || this.activeCategory() !== 'all' || !!this.selectedDate());
 
-  ngOnInit(): void {
-    this.load();
-  }
-
+  ngOnInit(): void { this.fetch(true); }
   load(): void {
-    this.loading.set(true);
+    if (this.loading() || this.refreshing()) return;
+    this.fetch(true);
+  }
+  private fetch(showSkeleton: boolean): void {
     this.error.set(null);
-    this.notificationService.getMine().subscribe({
-      next: (data) => {
-        this.notifications.set(data ?? []);
-        this.loading.set(false);
-      },
-      error: (err) => {
-        console.error('Failed to load notifications.', err);
-        this.error.set('تعذر تحميل الإشعارات.');
-        this.loading.set(false);
+    this.actionError.set(null);
+    if (showSkeleton) this.loading.set(true);
+    else this.refreshing.set(true);
+
+    const complete = () => {
+      this.loading.set(false);
+      this.refreshing.set(false);
+    };
+
+    this.notificationService.getMine().pipe(finalize(complete)).subscribe({
+      next: data => this.notifications.set(data ?? []),
+      error: err => {
+        console.error('Failed to load notifications', err);
+        if (showSkeleton) this.error.set('تعذر تحميل الإشعارات. يرجى المحاولة مرة أخرى.');
+        else this.actionError.set('تعذر تحديث الإشعارات. يرجى المحاولة مرة أخرى.');
       },
     });
   }
-
-  setFilter(filter: NotificationFilter): void {
-    this.activeFilter.set(filter);
-  }
-
-  setCategory(category: NotificationCategory | 'all'): void {
-    this.activeCategory.set(this.activeCategory() === category ? 'all' : category);
-  }
-
-  markRead(notification: NotificationDto): void {
-    if (notification.isRead) return;
-    this.notificationService.markAsRead(notification.notificationId).subscribe({
+  refresh(): void { if (!this.loading() && !this.refreshing()) this.fetch(false); }
+  retry(): void { if (!this.loading()) this.fetch(true); }
+  setFilter(value: Filter): void { this.activeFilter.set(value); }
+  setCategory(value: Category | 'all'): void { this.activeCategory.set(value); }
+  setSearch(value: string): void { this.search.set(value); }
+  setSort(value: string): void { this.sortOrder.set(value === 'oldest' ? 'oldest' : 'newest'); }
+  setSelectedDate(value: string): void { this.selectedDate.set(value); }
+  clearDate(): void { this.selectedDate.set(''); }
+  clearFilters(): void { this.activeFilter.set('all'); this.activeCategory.set('all'); this.search.set(''); this.clearDate(); }
+  isPending(id: number): boolean { return this.pendingIds().has(id); }
+  markRead(item: NotificationDto): void {
+    const id = item.notificationId;
+    if (item.isRead || this.isPending(id) || this.markingAll()) return;
+    this.actionError.set(null);
+    this.pendingIds.update(ids => new Set([...ids, id]));
+    this.notificationService.markAsRead(id).pipe(finalize(() => {
+      this.pendingIds.update(ids => { const next = new Set(ids); next.delete(id); return next; });
+    })).subscribe({
       next: () => {
-        this.notifications.update((list) =>
-          list.map((n) => (n.notificationId === notification.notificationId ? { ...n, isRead: true } : n)),
-        );
+        this.notifications.update(items => items.map(n => n.notificationId === id ? { ...n, isRead: true } : n));
         this.summaryService.refresh();
       },
-      error: (err) => console.error('Failed to mark notification as read.', err),
+      error: err => {
+        console.error('Failed to mark notification as read', err);
+        this.actionError.set('تعذر تعليم الإشعار كمقروء. يرجى المحاولة مرة أخرى.');
+      },
     });
   }
-
   markAllRead(): void {
-    if (!this.unreadCount()) return;
-    this.notificationService.markAllAsRead().subscribe({
+    if (!this.unreadCount() || this.markingAll() || this.pendingIds().size) return;
+    this.actionError.set(null);
+    this.markingAll.set(true);
+    this.notificationService.markAllAsRead().pipe(finalize(() => this.markingAll.set(false))).subscribe({
       next: () => {
-        this.notifications.update((list) => list.map((n) => ({ ...n, isRead: true })));
+        this.notifications.update(items => items.map(n => ({ ...n, isRead: true })));
         this.summaryService.refresh();
       },
-      error: (err) => console.error('Failed to mark all notifications as read.', err),
+      error: err => {
+        console.error('Failed to mark all notifications as read', err);
+        this.actionError.set('تعذر تعليم جميع الإشعارات كمقروءة. يرجى المحاولة مرة أخرى.');
+      },
     });
   }
-
-  trackById(_: number, item: NotificationDto): number {
-    return item.notificationId;
+  categoryOf(item: NotificationDto): Category {
+    const entity = (item.relatedEntity ?? '').trim();
+    const text = `${item.title ?? ''} ${item.message ?? ''}`;
+    return ENTITY_RULES.find(rule => rule.pattern.test(entity))?.key ??
+      TEXT_RULES.find(rule => rule.pattern.test(text))?.key ?? 'system';
   }
-
-  /**
-   * NotificationDto has no type field, so the category is read from `relatedEntity`
-   * (the backend entity the notification points to) first. Only when that is empty or
-   * unknown does it fall back to Arabic keywords in the title and message.
-   */
-  categoryOf(item: NotificationDto): NotificationCategory {
-    return (
-      this.matchCategory(item.relatedEntity, ENTITY_RULES) ??
-      this.matchCategory(`${item.title ?? ''} ${item.message ?? ''}`, TEXT_RULES) ??
-      'system'
-    );
-  }
-
-  private matchCategory(
-    text: string | null | undefined,
-    rules: { key: NotificationCategory; pattern: RegExp }[],
-  ): NotificationCategory | null {
-    const value = (text ?? '').trim();
-    if (!value) return null;
-    return rules.find((rule) => rule.pattern.test(value))?.key ?? null;
-  }
-
-  categoryLabel(key: NotificationCategory): string {
-    return CATEGORIES.find((c) => c.key === key)?.label ?? 'عام';
-  }
-
+  categoryLabel(key: Category): string { return CATEGORIES.find(c => c.key === key)?.label ?? 'عام'; }
   private dayLabel(value: string): string {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return 'سابقًا';
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const startOfDate = new Date(date);
-    startOfDate.setHours(0, 0, 0, 0);
-    const days = Math.round((startOfToday.getTime() - startOfDate.getTime()) / 86400000);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const day = new Date(date); day.setHours(0, 0, 0, 0);
+    const days = Math.round((today.getTime() - day.getTime()) / 86400000);
     if (days <= 0) return 'اليوم';
     if (days === 1) return 'أمس';
     if (days < 7) return 'هذا الأسبوع';
     return 'سابقًا';
   }
-
   timeAgo(value: string): string {
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    const diff = Math.max(0, Date.now() - date.getTime());
-    const minutes = Math.floor(diff / 60000);
+    if (Number.isNaN(date.getTime())) return 'تاريخ غير متوفر';
+    const minutes = Math.floor(Math.max(0, Date.now() - date.getTime()) / 60000);
     if (minutes < 1) return 'منذ لحظات';
     if (minutes < 60) return `منذ ${minutes} دقيقة`;
     const hours = Math.floor(minutes / 60);
@@ -220,5 +200,9 @@ export class CompanyNotifications implements OnInit {
     if (days === 1) return 'أمس';
     if (days < 30) return `منذ ${days} يوم`;
     return date.toLocaleDateString('ar-OM');
+  }
+  fullDate(value: string): string {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'تاريخ غير متوفر' : date.toLocaleString('ar-OM');
   }
 }

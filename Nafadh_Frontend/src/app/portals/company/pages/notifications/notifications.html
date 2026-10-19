@@ -1,70 +1,55 @@
-<section class="page" dir="rtl">
-  <!-- Page header (same style as company profile) -->
+<section class="page" dir="rtl" aria-label="مركز الإشعارات">
   <header class="page-header-wrap">
-    <div class="page-header-icon">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-    </div>
-    <div class="page-header-text">
-      <h2 class="nfd-page-title">الإشعارات</h2>
-      <p class="nfd-page-sub">مركز الإشعارات والتنبيهات الخاصة بحسابك.</p>
-    </div>
+    <div class="page-header-icon" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+    <div class="page-header-text"><h1 class="nfd-page-title">مركز الإشعارات</h1><p class="nfd-page-sub">تابعي جميع التحديثات والتنبيهات الخاصة ببوابة الشركة من مكان واحد.</p></div>
     <div class="header-actions">
-      <span class="unread-pill"><strong>{{ unreadCount() }}</strong> غير مقروءة</span>
-      <button type="button" class="mark-all" [disabled]="!unreadCount()" (click)="markAllRead()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L7 17l-5-5"/><path d="M22 10l-7.5 7.5L13 16"/></svg>
-        تعليم الكل كمقروء
-      </button>
+      <button type="button" class="btn btn-secondary" (click)="refresh()" [disabled]="loading() || refreshing()" aria-label="تحديث الإشعارات"><span aria-hidden="true">↻</span> {{ refreshing() ? 'جارٍ التحديث...' : 'تحديث' }}</button>
+      <button type="button" class="btn btn-primary" [disabled]="!unreadCount() || markingAll() || pendingIds().size > 0 || loading()" (click)="markAllRead()">✓✓ {{ markingAll() ? 'جارٍ التعليم...' : 'تعليم الكل كمقروء' }}</button>
     </div>
   </header>
 
-  <!-- Filters -->
-  <div class="toolbar">
-    <div class="tabs">
-      <button type="button" [class.active]="activeFilter() === 'all'" (click)="setFilter('all')">الكل <span>{{ notifications().length }}</span></button>
-      <button type="button" [class.active]="activeFilter() === 'unread'" (click)="setFilter('unread')">غير مقروءة <span>{{ unreadCount() }}</span></button>
-    </div>
-
-    @if (categoryChips().length > 1) {
-      <div class="chips">
-        @for (chip of categoryChips(); track chip.key) {
-          <button type="button" class="chip cat-{{ chip.key }}" [class.active]="activeCategory() === chip.key" (click)="setCategory(chip.key)">
-            <i class="dot"></i>{{ chip.label }}<span>{{ chip.count }}</span>
-          </button>
-        }
-      </div>
-    }
+  <div class="stats" aria-label="ملخص الإشعارات">
+    <div class="stat"><span class="stat-icon stat-blue" aria-hidden="true">▤</span><div><span class="stat-label">إجمالي الإشعارات</span><strong>{{ totalCount() }}</strong></div></div>
+    <div class="stat"><span class="stat-icon stat-indigo" aria-hidden="true">●</span><div><span class="stat-label">غير مقروءة</span><strong>{{ unreadCount() }}</strong></div></div>
+    <div class="stat"><span class="stat-icon stat-green" aria-hidden="true">▦</span><div><span class="stat-label">إشعارات اليوم</span><strong>{{ todayCount() }}</strong></div></div>
+    <div class="stat"><span class="stat-icon stat-red" aria-hidden="true">!</span><div><span class="stat-label">التحذيرات</span><strong>{{ warningCount() }}</strong></div></div>
   </div>
 
-  @if (loading()) {
-    <div class="notification-list">
-      @for (n of skeletons; track n) {
-        <div class="notification skeleton">
-          <div class="icon"></div>
-          <div class="body"><div class="line w40"></div><div class="line w80"></div><div class="line w25"></div></div>
+  @if (actionError()) { <div class="action-alert" role="alert"><span>{{ actionError() }}</span><button type="button" (click)="actionError.set(null)" aria-label="إغلاق رسالة الخطأ">×</button></div> }
+  <div class="content-panel">
+    <div class="filter-line" aria-label="فلاتر الإشعارات">
+      <label class="search-box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="search" aria-label="البحث في الإشعارات" placeholder="ابحثي في الإشعارات..." [value]="search()" (input)="setSearch($any($event.target).value)" /></label>
+      <label class="single-date"><span>التاريخ</span><input type="date" aria-label="تصفية حسب تاريخ محدد" [value]="selectedDate()" (change)="setSelectedDate($any($event.target).value)" /></label>
+      @if (selectedDate()) { <button type="button" class="clear-date-btn" (click)="clearDate()" aria-label="إلغاء فلتر التاريخ">×</button> }
+      <label class="sort-label">الترتيب <select aria-label="ترتيب الإشعارات" [value]="sortOrder()" (change)="setSort($any($event.target).value)"><option value="newest">الأحدث أولًا</option><option value="oldest">الأقدم أولًا</option></select></label>
+      <div class="tabs" role="group" aria-label="حالة القراءة">
+        <button type="button" [class.active]="activeFilter() === 'all'" [attr.aria-pressed]="activeFilter() === 'all'" (click)="setFilter('all')">الكل <span>{{ totalCount() }}</span></button>
+        <button type="button" [class.active]="activeFilter() === 'unread'" [attr.aria-pressed]="activeFilter() === 'unread'" (click)="setFilter('unread')">غير مقروءة <span>{{ unreadCount() }}</span></button>
+        <button type="button" [class.active]="activeFilter() === 'read'" [attr.aria-pressed]="activeFilter() === 'read'" (click)="setFilter('read')">مقروءة <span>{{ readCount() }}</span></button>
+      </div>
+    </div>
+    <div class="category-filter-row">
+      @if (categoryChips().length > 1) {
+        <div class="chips" aria-label="تصفية حسب النوع">
+          <button type="button" class="chip chip-all" [class.active]="activeCategory() === 'all'" [attr.aria-pressed]="activeCategory() === 'all'" (click)="setCategory('all')">الكل</button>
+          @for (chip of categoryChips(); track chip.key) { <button type="button" class="chip cat-{{ chip.key }}" [class.active]="activeCategory() === chip.key" [attr.aria-pressed]="activeCategory() === chip.key" (click)="setCategory(chip.key)"><i class="dot" aria-hidden="true"></i>{{ chip.label }} <span>{{ chip.count }}</span></button> }
         </div>
       }
     </div>
-  } @else if (error()) {
-    <div class="state error">
-      <span class="state-icon">!</span>
-      <strong>{{ error() }}</strong>
-      <button type="button" (click)="load()">إعادة المحاولة</button>
-    </div>
-  } @else if (!filteredNotifications().length) {
-    <div class="state empty">
-      <span class="state-icon">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      </span>
-      <strong>لا توجد إشعارات</strong>
-      <span>{{ activeFilter() === 'unread' ? 'لا توجد إشعارات غير مقروءة.' : 'ستظهر هنا الإشعارات الجديدة الخاصة بك.' }}</span>
-    </div>
-  } @else {
-    @for (group of groups(); track group.label) {
-      <div class="group-label"><span>{{ group.label }}</span><i></i></div>
-      <div class="notification-list">
-        @for (item of group.items; track trackById($index, item)) {
-          <article class="notification cat-{{ categoryOf(item) }}" [class.unread]="!item.isRead" (click)="markRead(item)">
-            <div class="icon">
+
+    @if (loading()) {
+      <div class="notification-list" aria-label="جارٍ تحميل الإشعارات" aria-busy="true">@for (n of skeletons; track n) { <div class="notification skeleton"><div class="icon"></div><div class="body"><div class="line w40"></div><div class="line w80"></div><div class="line w25"></div></div></div> }</div>
+    } @else if (error()) {
+      <div class="state error" role="alert"><span class="state-icon">!</span><strong>{{ error() }}</strong><button type="button" class="btn btn-primary" (click)="retry()">إعادة المحاولة</button></div>
+    } @else if (!filteredNotifications().length) {
+      <div class="state empty"><span class="state-icon">✉</span><strong>{{ hasFilters() ? 'لا توجد نتائج مطابقة' : 'لا توجد إشعارات حاليًا' }}</strong></div>
+    } @else {
+      @for (group of groups(); track group.label) {
+        <div class="group-label"><span>{{ group.label }}</span><i></i><small>{{ group.items.length }}</small></div>
+        <div class="notification-list">
+          @for (item of group.items; track item.notificationId) {
+            <article class="notification cat-{{ categoryOf(item) }}" [class.unread]="!item.isRead">
+              <div class="icon" aria-hidden="true">
               @switch (categoryOf(item)) {
                 @case ('task') {
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -94,27 +79,13 @@
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                 }
               }
-            </div>
-
-            <div class="body">
-              <div class="title-row">
-                <h2>{{ item.title }}</h2>
-                @if (!item.isRead) { <span class="new">جديد</span> }
               </div>
-              <p>{{ item.message }}</p>
-              <div class="meta">
-                <span class="tag">{{ categoryLabel(categoryOf(item)) }}</span>
-                @if (item.relatedEntity) { <small>{{ item.relatedEntity }}</small> }
-              </div>
-            </div>
-
-            <div class="side">
-              <time>{{ timeAgo(item.createdAt) }}</time>
-              @if (!item.isRead) { <i class="unread-dot"></i> }
-            </div>
-          </article>
-        }
-      </div>
+              <div class="body"><div class="title-row"><h3>{{ item.title }}</h3>@if (!item.isRead) { <span class="new">جديد</span> }</div><p>{{ item.message }}</p><div class="meta"><span class="tag">{{ categoryLabel(categoryOf(item)) }}</span></div></div>
+              <div class="side"><time [attr.datetime]="item.createdAt" [title]="fullDate(item.createdAt)">{{ timeAgo(item.createdAt) }}</time>@if (!item.isRead) { <button type="button" class="read-action" [disabled]="isPending(item.notificationId) || markingAll()" (click)="markRead(item)" [attr.aria-label]="'تعليم إشعار ' + item.title + ' كمقروء'">{{ isPending(item.notificationId) ? 'جارٍ التعليم...' : '✓ تعليم كمقروء' }}</button> } @else { <span class="read-status">✓ تمت القراءة</span> }</div>
+            </article>
+          }
+        </div>
+      }
     }
-  }
+  </div>
 </section>
