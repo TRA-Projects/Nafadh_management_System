@@ -1,8 +1,6 @@
 <div class="dashboard-container">
 
-  <!-- =========================================================================
-       1) صفحة معاينة المتدرب الكاملة (تظهر عند الضغط على زر العين لأي متدرب)
-       ========================================================================= -->
+  <!-- 1) صفحة معاينة المتدرب الكاملة -->
   @if (selectedTraineeProfile(); as tp) {
     <div class="trainee-full-page">
 
@@ -92,7 +90,7 @@
         <div class="stat-card">
           <div class="stat-icon icon-teal">⭐</div>
           <div class="stat-info">
-            <div class="stat-label">التقييم العام للمدرب</div>
+            <div class="stat-label"> التقييم بالمسار</div>
             <div class="stat-value">{{ tp.performancePercent }}%</div>
             <div class="stat-subtext">تقني: {{ tp.technicalScore }}% · سلوكي: {{ tp.behavioralScore }}%</div>
           </div>
@@ -252,9 +250,7 @@
     </div>
   }
 
-  <!-- =========================================================================
-       2) صفحة معاينة تفاصيل إنذار الشركة المستضيفة (تظهر عند الضغط على معاينة إنذار شركة)
-       ========================================================================= -->
+  <!-- 2) صفحة معاينة تفاصيل إنذار الشركة -->
   @if (selectedWarningDetail(); as wd) {
     <div class="trainee-full-page">
 
@@ -374,12 +370,16 @@
     </div>
   }
 
+<<<<<<< HEAD
   <!-- =========================================================================
        3) صفحة المتدربين المتميزين لهذا الشهر فقط (تظهر عند الضغط على عرض الكل)
        ========================================================================= -->
   <!-- =========================================================================
        3) صفحة المتدربين المتميزين لهذا الشهر فقط (تظهر عند الضغط على عرض الكل)
        ========================================================================= -->
+=======
+  <!-- 3) صفحة المتميزين -->
+>>>>>>> e50ccc42dedbda7f69e1a177077326de045f759f
   @if (showAllTopPerformersPage() && selectedTraineeProfile() === null && selectedWarningDetail() === null) {
     <div class="trainee-full-page">
 
@@ -565,9 +565,7 @@
     </div>
   }
 
-  <!-- =========================================================================
-       4) صفحة المتدربين المتعثرين فقط (تظهر عند الضغط على عرض الكل في المتعثرين)
-       ========================================================================= -->
+  <!-- 4) صفحة المتعثرين -->
   @if (showAllAtRiskPage() && selectedTraineeProfile() === null && selectedWarningDetail() === null) {
     <div class="trainee-full-page">
 
@@ -658,12 +656,16 @@
   }
 
 
+
   <!-- =========================================================================
        5) صفحة لوحة التحكم التنفيذية (تبقى محفوظة في الـ DOM لعدم ضياع الشارتات)
        ========================================================================= -->
+
+  <!-- 5) لوحة التحكم الرئيسية -->
+
   <div [hidden]="selectedTraineeProfile() !== null || selectedWarningDetail() !== null || showAllTopPerformersPage() || showAllAtRiskPage()">
 
-    <!-- 1. Hero Banner -->
+    <!-- Hero Banner -->
     <div class="hero-banner">
       <div class="hero-overlay"></div>
       <div class="hero-content">
@@ -684,7 +686,7 @@
       </div>
     </div>
 
-    <!-- 2. إعلانات الهيئة والمنصة -->
+    <!-- إعلانات المنصة -->
     @if (announcements().length > 0) {
       <div class="announcements-panel">
         <div class="announcements-header">
@@ -722,7 +724,7 @@
       </div>
     }
 
-    <!-- 3. الصف الأول: إحصائيات المنظومة الأساسية -->
+    <!-- إحصائيات المنظومة الأساسية -->
     <div class="stat-cards-grid four-cols">
       <div class="stat-card clickable-card" (click)="goToTraineesList()" role="button" tabindex="0">
         <div class="stat-icon icon-blue">
@@ -784,7 +786,7 @@
       </div>
     </div>
 
-    <!-- 4. الصف الثاني: مؤشرات الأداء والالتزام -->
+    <!-- مؤشرات الأداء -->
     <div class="stat-cards-grid four-cols">
       <div class="stat-card">
         <div class="stat-icon icon-indigo">
@@ -844,7 +846,7 @@
       </div>
     </div>
 
-    <!-- 5. قسم لوحة تشغيل الاستضافة والتدريب + شريط الطاقة الاستيعابية -->
+    <!-- لوحة تشغيل الاستضافة -->
     <div class="section-heading-row">
       <div>
         <h2 class="section-main-title">لوحة تشغيل الاستضافة والتدريب</h2>
@@ -894,7 +896,7 @@
       </div>
     </div>
 
-    <!-- 6. أشرطة التقدم الأفقية -->
+    <!-- أشرطة التقدم الأفقية -->
     <div class="horizontal-bars-grid">
       <div class="chart-card">
         <div class="chart-header">
@@ -943,7 +945,7 @@
       </div>
     </div>
 
-    <!-- 7. الرسوم البيانية (Bar + Donut) -->
+    <!-- الرسوم البيانية -->
     <div class="charts-grid">
       <div class="chart-card">
         <div class="chart-header">
@@ -963,7 +965,7 @@
             <h3 class="chart-title">تقسيم المسارات</h3>
             <p class="chart-subtitle">بناءً على السنة المختارة</p>
           </div>
-          <select class="batch-select" [value]="selectedYear()" (change)="onYearChange($event)">
+          <select class="batch-select" [value]="selectedYear()" (change)="onYearChange($event)" aria-label="اختر السنة">
             @for (year of availableYears(); track year) {
               <option [value]="year">{{ year }}</option>
             } @empty {
@@ -977,12 +979,9 @@
       </div>
     </div>
 
-    <!-- =========================================================================
-         8. القوائم الثلاثية التفصيلية في الأسفل
-         ========================================================================= -->
+    <!-- القوائم السفلية -->
     <div class="bottom-three-cols">
-
-      <!-- العمود 1: المتدربون المتميزون هذا الشهر -->
+      <!-- المتدربون المتميزون -->
       <div class="list-panel-card">
         <div class="list-panel-header">
           <h3 class="list-panel-title">⭐ المتدربون المتميزون هذا الشهر</h3>
@@ -1037,7 +1036,7 @@
         </div>
       </div>
 
-      <!-- العمود 2: المتدربون المتعثرون -->
+      <!-- المتدربون المتعثرون -->
       <div class="list-panel-card">
         <div class="list-panel-header">
           <h3 class="list-panel-title">⚠️ المتدربون المتعثرون</h3>
@@ -1088,7 +1087,7 @@
         </div>
       </div>
 
-      <!-- العمود 3: أحدث الإنذارات (بدون أيقونات GitHub و LinkedIn + معاينة ذكية للشركة أو المتدرب) -->
+      <!-- أحدث الإنذارات -->
       <div class="list-panel-card">
         <div class="list-panel-header">
           <h3 class="list-panel-title">🔔 أحدث الإنذارات</h3>
@@ -1123,12 +1122,9 @@
           }
         </div>
       </div>
-
     </div>
 
-    <!-- =========================================================================
-         9. سجل الأنشطة الأخيرة (مع زر عرض الكل الموحد + بدون ثواني + Pagination)
-         ========================================================================= -->
+    <!-- سجل الأنشطة الأخيرة -->
     <div class="activity-card">
       <div class="list-panel-header" style="margin-bottom: 14px;">
         <div style="display:flex; align-items:center; gap:10px;">
@@ -1160,7 +1156,6 @@
               </div>
             </div>
 
-            <!-- التاريخ والساعة والدقيقة فقط بدون ثوانٍ -->
             <div class="activity-time" dir="ltr">
               {{ (item.timestamp || item.createdAt) | date:'MMM d, y · h:mm a' }}
             </div>
@@ -1170,7 +1165,6 @@
         }
       </div>
 
-      <!-- شريط ترقيم الصفحات (Pagination) يظهر عند الضغط على "عرض الكل" -->
       @if (showAllActivity() && totalActivityPages() > 1) {
         <div class="activity-pagination">
           <div class="pagination-info">

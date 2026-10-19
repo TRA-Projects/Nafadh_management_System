@@ -220,7 +220,7 @@
 }
 
 /* =========================================
-   3 & 4. Metric Cards Grid (8 Cards)
+   3 & 4. Metric Cards Grid
    ========================================= */
 .stat-cards-grid {
   display: grid;
@@ -323,7 +323,7 @@
 .icon-red    { background-color: #fef2f2; color: #ef4444; }
 
 /* =========================================
-   5. Capacity Section (لوحة تشغيل الاستضافة)
+   5. Capacity Section
    ========================================= */
 .section-heading-row {
   display: flex;
@@ -505,6 +505,13 @@
   font-weight: 700;
 }
 
+.h-bar-inside-val {
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
 .h-bar-value {
   text-align: left;
   font-weight: 700;
@@ -512,7 +519,7 @@
 }
 
 /* =========================================
-   7. Charts Section (Bar + Donut)
+   7. Charts Section
    ========================================= */
 .charts-grid {
   display: grid;
@@ -560,6 +567,13 @@
   border: 1px solid #cbd5e1;
   background: #fff;
   font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.batch-select:focus {
+  border-color: #0a1172;
 }
 
 .chart-body {
@@ -567,8 +581,14 @@
   height: 250px;
 }
 
+.donut-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* =========================================
-   8. Bottom Three Columns (Top, Risk, Warnings)
+   8. Bottom Three Columns
    ========================================= */
 .bottom-three-cols {
   display: grid;
@@ -712,9 +732,6 @@
   color: #94a3b8;
 }
 
-/* =========================================
-   تكبير وتوضيح أيقونات (المعاينة + GitHub + LinkedIn)
-   ========================================= */
 .person-left-actions {
   display: flex;
   align-items: center;
@@ -783,7 +800,7 @@
 }
 
 /* =========================================
-   تنسيقات صفحة معاينة المتدرب الكاملة (Full-Page Profile)
+   تنسيقات صفحة معاينة المتدرب الكاملة
    ========================================= */
 .trainee-full-page {
   display: flex;
@@ -1277,12 +1294,9 @@
   font-size: 13px;
 }
 
-
 /* =========================================================
-   إصلاح وتجميل أزرار وأيقونات GitHub و LinkedIn (مضاد للانقصاص)
+   أزرار وأيقونات GitHub و LinkedIn
    ========================================================= */
-
-/* 1. الأزرار الكبيرة داخل صفحة معاينة المتدرب */
 .tp-social-buttons {
   display: flex !important;
   align-items: center !important;
@@ -1314,14 +1328,12 @@ a.tp-profile-link-btn:hover {
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.14) !important;
 }
 
-/* زر GitHub في ملف المتدرب */
 a.tp-btn-github {
   background: #0f172a !important;
   color: #ffffff !important;
   border: 1px solid #0f172a !important;
 }
 
-/* زر LinkedIn في ملف المتدرب */
 a.tp-btn-linkedin {
   background: #0a66c2 !important;
   color: #ffffff !important;
@@ -1346,7 +1358,6 @@ a.tp-btn-linkedin {
   opacity: 0.85 !important;
 }
 
-/* 2. الأيقونات الثلاث في القوائم السفلية للداشبورد (بحجم موحد وأنيق 38×38) */
 .person-left-actions .icon-action-btn {
   width: 38px !important;
   min-width: 38px !important;
@@ -1434,7 +1445,6 @@ a.tp-btn-linkedin {
   }
 }
 
-/* تنسيق شريط الـ Pagination لسجل الأنشطة الأخيرة */
 .activity-entity-pill {
   background: #f1f5f9;
   color: #475569;
@@ -1508,6 +1518,7 @@ a.tp-btn-linkedin {
 .page-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+
 }
 /* أزرار تحديد العدد السريع (أفضل 3 / 5 / 10..) */
 .tp-filter-pill {
