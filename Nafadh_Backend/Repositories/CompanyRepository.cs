@@ -95,8 +95,30 @@ namespace Nafadh_Backend.Repositories
         // Update Company
         public async Task UpdateCompanyAsync(NFD_Company company)
         {
+            // 🟢 إجبار Entity Framework على توثيق تعديل سبب الرفض والحالة في SQL Server
+            _context.Entry(company).Property(c => c.RejectionReason).IsModified = true;
+            _context.Entry(company).Property(c => c.Status).IsModified = true;
+            _context.Entry(company).Property(c => c.ApprovalDate).IsModified = true;
             _context.NFD_Companies.Update(company);
             await _context.SaveChangesAsync();
+        }
+
+        // دالة تحديث مباشر سريع تضمن إرسال NULL إلى SQL Server بدون تعقيد الـ 
+        public async Task UpdateCompanyStatusDirectAsync(int companyId, NFD_CompanyStatus status, string? rejectionReason)
+        {
+            var company = await _context.NFD_Companies.FindAsync(companyId);
+            if (company != null)
+            {
+                company.Status = status;
+                company.ApprovalDate = (status == NFD_CompanyStatus.Approved) ? DateTime.UtcNow : company.ApprovalDate;
+                company.RejectionReason = rejectionReason; 
+
+                _context.Entry(company).Property(c => c.Status).IsModified = true;
+                _context.Entry(company).Property(c => c.ApprovalDate).IsModified = true;
+                _context.Entry(company).Property(c => c.RejectionReason).IsModified = true;
+
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task<int> GetEnrollmentCountAsync(int companyId)

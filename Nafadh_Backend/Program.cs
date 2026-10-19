@@ -230,7 +230,8 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
             builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 
-
+            builder.Services.AddScoped<ITraineeEvaluationRepository, TraineeEvaluationRepository>();
+            builder.Services.AddScoped<ITraineeEvaluationService, TraineeEvaluationService>();
             //change by admin team
             builder.Services.AddScoped<IRemediationRepository, RemediationRepository>();
             builder.Services.AddScoped<IRemediationService, RemediationService>();

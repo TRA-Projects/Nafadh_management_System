@@ -19,6 +19,9 @@ namespace Nafadh_Backend.Models
 
         public decimal AwardedPoints { get; set; }
 
+        public bool IsManuallyGraded { get; set; } = false;
+
+
         public bool IsMarkedForReview { get; set; }
 
         public DateTime? AnsweredAt { get; set; }
