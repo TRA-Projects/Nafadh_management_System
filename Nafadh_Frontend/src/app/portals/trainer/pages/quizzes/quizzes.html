@@ -95,37 +95,33 @@
     </label>
 
 
-    <select
-  aria-label="تصفية حسب الحالة"
-  [ngModel]="statusFilter()"
-  (ngModelChange)="statusFilter.set($event)"
->
+    <select aria-label="تصفية حسب الحالة" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
 
-  <option value="all">
-    كل الاختبارات
-  </option>
+      <option value="all">
+        كل الاختبارات
+      </option>
 
-  <option value="draft">
-    المسودات
-  </option>
+      <option value="draft">
+        المسودات
+      </option>
 
-  <option value="scheduled">
-    المجدولة
-  </option>
+      <option value="scheduled">
+        المجدولة
+      </option>
 
-  <option value="open">
-    المفتوحة
-  </option>
+      <option value="open">
+        المفتوحة
+      </option>
 
-  <option value="closed">
-    المغلقة
-  </option>
+      <option value="closed">
+        المغلقة
+      </option>
 
-  <option value="archived">
-    المؤرشفة
-  </option>
+      <option value="archived">
+        المؤرشفة
+      </option>
 
-</select>
+    </select>
 
 
     <button type="button" class="refresh-btn" (click)="refresh()" [disabled]="loading()">
@@ -423,12 +419,16 @@
 
       <div class="quiz-actions">
 
+        @if (canManageQuestions(quiz.status)) {
+
         <button type="button" class="questions-btn" (click)="openQuestionBank(quiz)">
 
           <i class="fa-solid fa-list-check"></i>
           إدارة الأسئلة
 
         </button>
+
+        }
 
         <button type="button" class="btn-results" (click)="openQuizResults(quiz.quizId)">
 
@@ -437,12 +437,16 @@
 
         </button>
 
+        @if (canEditQuiz(quiz.status)) {
+
         <button type="button" class="edit-btn" (click)="openEditForm(quiz)">
 
           <i class="fa-regular fa-pen-to-square"></i>
           تعديل الاختبار
 
         </button>
+
+        }
 
       </div>
 

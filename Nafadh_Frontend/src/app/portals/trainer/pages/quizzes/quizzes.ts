@@ -1283,7 +1283,17 @@ loadQuizQuestions(quizId: number): void {
       return 'unknown';
   }
 }
+canEditQuiz(status: number | string): boolean {
+  const statusNumber = this.getStatusNumber(status);
 
+  return statusNumber === 0 || statusNumber === 1;
+}
+
+canManageQuestions(status: number | string): boolean {
+  const statusNumber = this.getStatusNumber(status);
+
+  return statusNumber === 0;
+}
 
   formatDate(value: string): string {
 
