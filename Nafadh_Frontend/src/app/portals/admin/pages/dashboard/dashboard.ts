@@ -142,20 +142,15 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   lastUpdated = signal<Date | null>(new Date());
   showRefreshToast = signal<boolean>(false);
 
-  // حالة عرض صفحة المتدرب التفصيلية الكاملة
   selectedTraineeProfile = signal<SelectedTraineeDetailView | null>(null);
-
-  // حالة عرض صفحة تفاصيل الإنذار للشركة المستضيفة
   selectedWarningDetail = signal<SelectedWarningDetailView | null>(null);
 
-  // قوائم المتميزين والمتعثرين الكاملة وحالة فتح صفحاتهم الخاصة
   allTopPerformers = signal<any[]>([]);
   showAllTopPerformersPage = signal<boolean>(false);
   allAtRiskTrainees = signal<any[]>([]);
   showAllAtRiskPage = signal<boolean>(false);
   isProfileLoading = signal<boolean>(false);
 
-  // سجل الأنشطة الأخيرة + نظام الـ Pagination
   recentActivity = signal<AuditLogDto[]>([]);
   allActivity = signal<AuditLogDto[]>([]);
   showAllActivity = signal<boolean>(false);
@@ -864,7 +859,6 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.showAnnouncements.update(v => !v);
   }
 
-  // دوال التحكم في عرض وترقيم صفحات سجل الأنشطة الأخيرة
   toggleShowAllActivity() {
     this.showAllActivity.update(val => !val);
     this.activityPage.set(1);
@@ -990,8 +984,8 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
             cornerRadius: 10,
             displayColors: false,
             callbacks: {
-              title: (tooltipItems: TooltipItem<'bar'>[]) => tooltipItems[0].label,
-              label: (context: TooltipItem<'bar'>) => `عدد الدفعات : ${context.raw || 0}`
+              title: (tooltipItems: any) => tooltipItems[0].label,
+              label: (context: any) => `عدد الدفعات : ${context.raw || 0}`
             }
           }
         },
@@ -1007,39 +1001,168 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     const ctx = document.getElementById('tracksDonutChart') as HTMLCanvasElement;
     if (!ctx) return;
 
+    let hoveredSlice: { label: string; value: number | string; color: string } | null = null;
+
+    // =========================================================================
+    // Plugin متطور لضبط الاسم من عدة كلمات على سطرين بخط أنيق (10px) والرقم تحته
+    // =========================================================================
+    const insideDonutCenterAndLabelsPlugin = {
+      id: 'insideDonutCenterAndLabelsPlugin',
+      beforeEvent: (chart: any, args: any) => {
+        const event = args.event;
+        if (event.type === 'mousemove') {
+          const elements = chart.getElementsAtEventForMode(
+            event.native,
+            'nearest',
+            { intersect: true },
+            false
+          );
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            const label = chart.data.labels[index] || '';
+            const value = chart.data.datasets[0].data[index] || 0;
+            const colors = chart.data.datasets[0].backgroundColor as string[];
+            const color = colors[index % colors.length] || '#0A1172';
+            hoveredSlice = { label, value, color };
+          } else {
+            hoveredSlice = null;
+          }
+          chart.draw();
+        } else if (event.type === 'mouseout') {
+          hoveredSlice = null;
+          chart.draw();
+        }
+      },
+      afterDatasetsDraw: (chart: any) => {
+        const { ctx, chartArea } = chart;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta || !meta.data || !meta.data.length) return;
+
+        const dataset = chart.data.datasets[0];
+        if (!dataset || !dataset.data) return;
+
+        // 1. رسم الأرقام باللون الأبيض داخل كل جزء ملون
+        meta.data.forEach((element: any, index: number) => {
+          const val = dataset.data[index];
+          if (val === undefined || val === null || Number(val) <= 0) return;
+
+          const { startAngle, endAngle, innerRadius, outerRadius, x, y } = element;
+          const angle = startAngle + (endAngle - startAngle) / 2;
+          const radius = innerRadius + (outerRadius - innerRadius) / 2;
+
+          const posX = x + Math.cos(angle) * radius;
+          const posY = y + Math.sin(angle) * radius;
+
+          if (endAngle - startAngle > 0.16) {
+            ctx.save();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px Cairo, Tajawal, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+            ctx.shadowBlur = 3;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 1;
+            ctx.fillText(String(val), posX, posY);
+            ctx.restore();
+          }
+        });
+
+        // 2. رسم (الكلام مع الرقم) في منتصف الدائرة بشكل مرتب وصغير ليتسع تماماً
+        const centerX = (chartArea.left + chartArea.right) / 2;
+        const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        if (hoveredSlice && hoveredSlice.label) {
+          const raw = hoveredSlice.label.trim();
+          const words = raw.split(/\s+/);
+
+          // إعداد لون وخط النص (10px أنيق وصغير ليناسب الدائرة)
+          ctx.font = 'bold 10px Cairo, Tajawal, system-ui, sans-serif';
+          ctx.fillStyle = hoveredSlice.color || '#0A1172';
+
+          if (words.length >= 3) {
+            // للمسارات الطويلة مثل: "Project Management Track"
+            // السطر الأول: Project Management
+            // السطر الثاني: Track
+            const line1 = words.slice(0, words.length - 1).join(' ');
+            const line2 = words[words.length - 1];
+
+            ctx.fillText(line1, centerX, centerY - 17);
+            ctx.fillText(line2, centerX, centerY - 5);
+
+            // الرقم في الأسفل
+            ctx.font = 'bold 20px Cairo, Tajawal, system-ui, sans-serif';
+            ctx.fillStyle = '#0f172a';
+            ctx.fillText(String(hoveredSlice.value), centerX, centerY + 15);
+          } else if (words.length === 2 && raw.length > 15) {
+            // مسار من كلمتين طويل
+            ctx.fillText(words[0], centerX, centerY - 17);
+            ctx.fillText(words[1], centerX, centerY - 5);
+
+            ctx.font = 'bold 20px Cairo, Tajawal, system-ui, sans-serif';
+            ctx.fillStyle = '#0f172a';
+            ctx.fillText(String(hoveredSlice.value), centerX, centerY + 15);
+          } else {
+            // المسارات القصيرة التي تتسع في سطر واحد براحة
+            ctx.fillText(raw, centerX, centerY - 12);
+
+            ctx.font = 'bold 22px Cairo, Tajawal, system-ui, sans-serif';
+            ctx.fillStyle = '#0f172a';
+            ctx.fillText(String(hoveredSlice.value), centerX, centerY + 12);
+          }
+        } else {
+          // الحالة العادية: إجمالي عدد المسارات
+          const total = (dataset.data as number[]).reduce((sum, n) => sum + (Number(n) || 0), 0);
+          ctx.font = '600 11px Cairo, Tajawal, system-ui, sans-serif';
+          ctx.fillStyle = '#64748b';
+          ctx.fillText('المسارات التدريبية', centerX, centerY - 10);
+
+          ctx.font = 'bold 20px Cairo, Tajawal, system-ui, sans-serif';
+          ctx.fillStyle = '#0A1172';
+          ctx.fillText(String(total), centerX, centerY + 12);
+        }
+
+        ctx.restore();
+      }
+    };
+
     this.donutChartInstance = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: [],
         datasets: [{
           data: [],
-          backgroundColor: ['#ef4444', '#3b82f6', '#eab308', '#10b981', '#1e293b', '#8b5cf6', '#ec4899']
+          backgroundColor: ['#ef4444', '#3b82f6', '#eab308', '#10b981', '#1e293b', '#8b5cf6', '#ec4899'],
+          borderWidth: 2,
+          borderColor: '#ffffff'
         }]
       },
+      plugins: [insideDonutCenterAndLabelsPlugin],
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16 } },
-          tooltip: {
-            enabled: true,
-            backgroundColor: '#ffffff',
-            borderColor: '#e2e8f0',
-            borderWidth: 1,
-            cornerRadius: 8,
-            padding: { top: 8, bottom: 8, left: 12, right: 12 },
-            displayColors: false,
-            callbacks: {
-              title: () => '',
-              label: (context: TooltipItem<'doughnut'>) => `${context.label || ''} : ${context.raw || 0}`,
-              labelTextColor: (context: TooltipItem<'doughnut'>) => {
-                const colors = context.dataset.backgroundColor as string[];
-                return colors[context.dataIndex % colors.length];
+          legend: { 
+            position: 'bottom', 
+            labels: { 
+              boxWidth: 12, 
+              padding: 16,
+              font: {
+                family: 'Cairo, Tajawal, sans-serif',
+                size: 12
               }
-            }
+            } 
+          },
+          tooltip: {
+            enabled: false
           }
         },
-        cutout: '70%'
+        // سماكة 66% تعطي اتساعاً داخلياً كافياً لراحة العين وعدم ملامسة الأطراف
+        cutout: '66%'
       }
     });
   }
