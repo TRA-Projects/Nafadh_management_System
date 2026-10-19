@@ -329,59 +329,93 @@
       </div>
     </div>
 
-    <!-- 1.4 تقرير نهاية الدفعة -->
+    <!-- 1.4 تقرير نهاية الدفعة (مطابق لتصميم الصورة تماماً) -->
     <div *ngIf="currentView === 'batch-report'">
-      <div class="top-nav-bar">
+
+      <!-- زر العودة الأنيق -->
+      <div class="top-nav-bar no-print" style="margin-bottom: 14px;">
         <button class="back-btn" (click)="currentView = 'programs'">
-          ← العودة إلى البرامج
+          ← العودة إلى البرامج والدفعات
         </button>
       </div>
 
-      <div class="report-header-card">
-        <div class="report-title-right">
-          <span class="badge-tag">نهاية الدفعة</span>
+      <!-- 1. رأس الصفحة وزري التصدير والطباعة (نفس الصورة تماماً) -->
+      <div class="header-section">
+        <div>
           <h2>تقرير نهاية الدفعة — الدفعة {{ selectedBatch?.id }}</h2>
-          <p>{{ selectedBatch?.programName }} · {{ selectedCompany?.name }}</p>
-          <small>{{ selectedBatch?.dates }} · تاريخ الانتهاء: {{ selectedBatch?.endDate }}</small>
+          <p>{{ selectedBatch?.programName }} · {{ selectedCompany?.name }} · تاريخ الانتهاء: {{ selectedBatch?.endDate
+            || '2026-10-01' }}</p>
         </div>
-        <div class="actions-left">
-          <button class="btn-pdf" (click)="exportToPDF()">تصدير PDF</button>
-          <button class="btn-excel" (click)="exportToExcel()">Excel</button>
+        <div class="actions-left" style="display: flex; gap: 8px;">
+          <button class="btn-excel" (click)="exportToExcel()">
+            تصدير Excel
+          </button>
+          <button class="btn-pdf" (click)="exportToPDF()">
+            طباعة PDF
+          </button>
         </div>
       </div>
 
+      <!-- 2. بطاقات الإحصائيات الـ 3 (مطابقة للصورة 100%) -->
       <div class="summary-metrics-grid">
+        <!-- البطاقة 1: عدد المتدربين بالدفعة -->
         <div class="metric-card">
-          <span class="metric-value">{{ selectedBatch?.traineesCount || 0 }}</span>
-          <span class="metric-label">عدد المتدربين</span>
+          <span class="metric-value">{{ selectedBatch?.traineesCount || (report()?.totalCount || 0) }}</span>
+          <span class="metric-label">إجمالي المتدربين المسجلين بالدفعة</span>
         </div>
+
+        <!-- البطاقة 2: متوسط الحضور (باللون الذهبي) -->
         <div class="metric-card">
-          <span class="metric-value green">89%</span>
-          <span class="metric-label">متوسط الحضور</span>
+          <span class="metric-value" style="color: #f59e0b;">
+            {{ selectedBatch?.attendanceAvg || 89 }}%
+          </span>
+          <span class="metric-label">متوسط الحضور العام للدفعة</span>
         </div>
+
+        <!-- البطاقة 3: نسبة النجاح (بالأخضر الزمردي) -->
         <div class="metric-card">
-          <span class="metric-value blue">100%</span>
-          <span class="metric-label">نسبة النجاح</span>
+          <span class="metric-value green">
+            +{{ selectedBatch?.passRate || 100 }}%
+          </span>
+          <span class="metric-label">نسبة النجاح والتأهل للاعتماد</span>
         </div>
       </div>
 
-      <div class="table-card">
-        <div class="filter-toolbar-card mini-toolbar" style="margin-bottom: 18px;">
-          <div class="search-input-wrap">
-            <input type="text" placeholder="ابحث باسم المتدرب أو التخصص في الدفعة..."
-              [(ngModel)]="batchTraineeSearch" />
-          </div>
-
-          <div class="filters-actions-wrap">
-            <select class="custom-select-filter" [(ngModel)]="batchLevelFilter">
-              <option value="ALL">جميع المستويات</option>
-              <option value="ممتاز">ممتاز</option>
-              <option value="جيد جدا">جيد جداً</option>
-              <option value="جيد">جيد</option>
-            </select>
-          </div>
+      <!-- 3. شريط البحث والفلترة (نفس ترتيب الصورة: البحث باليمين والمنسدلات باليسار) -->
+      <div class="filter-toolbar-card">
+        <div class="search-input-wrap">
+          <input type="text" placeholder="ابحث باسم المتدرب أو التخصص في الدفعة أو رقم المعرف..."
+            [(ngModel)]="batchTraineeSearch" />
+          <button class="clear-search-btn" *ngIf="batchTraineeSearch" (click)="batchTraineeSearch = ''">✕</button>
         </div>
 
+        <div class="filters-actions-wrap">
+          <!-- فلتر التخصصات -->
+          <!-- قائمة التخصصات القادمة مباشرة من قاعدة البيانات -->
+          <select class="custom-select-filter" [(ngModel)]="batchMajorFilter">
+            <option value="ALL">جميع التخصصات</option>
+            <option *ngFor="let major of uniqueBatchMajors" [value]="major">
+              {{ major }}
+            </option>
+          </select>
+
+          <!-- فلتر المستويات والتقييمات -->
+          <select class="custom-select-filter" [(ngModel)]="batchLevelFilter">
+            <option value="ALL">جميع التقييمات</option>
+            <option value="ممتاز">ممتاز (90%+)</option>
+            <option value="جيد جدا">جيد جداً (80%+)</option>
+            <option value="جيد">جيد (70%+)</option>
+          </select>
+
+          <button class="btn-reset-filters" (click)="batchTraineeSearch = ''; batchLevelFilter = 'ALL'"
+            *ngIf="batchTraineeSearch || batchLevelFilter !== 'ALL'">
+            إعادة ضبط ↺
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. جدول نتائج المتدربين والتقييم النهائي -->
+      <div class="table-card">
         <table class="custom-table" *ngIf="filteredBatchReportRows.length > 0">
           <thead>
             <tr>
@@ -395,7 +429,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let tr of filteredBatchReportRows">
-              <td class="bold">{{ tr.traineeName }}</td>
+              <td class="bold text-navy-strong">{{ tr.traineeName }}</td>
               <td>{{ tr.major }}</td>
               <td><strong style="color: #059669;">{{ tr.attendanceRate }}%</strong></td>
               <td><strong style="color: #0D1C8C;">{{ tr.technicalScore }}%</strong></td>
@@ -405,7 +439,12 @@
           </tbody>
         </table>
 
-        <div class="compact-pagination-wrapper">
+        <div class="no-results-box" *ngIf="filteredBatchReportRows.length === 0">
+          <h4>لا توجد نتائج مطابقة لبحثك في هذه الدفعة</h4>
+        </div>
+
+        <!-- أزرار الترقيم Pagination -->
+        <div class="compact-pagination-wrapper no-print" *ngIf="filteredBatchReportRows.length > 0">
           <div class="pagination-info">
             عرض الصفحة <strong>{{ report()?.pageNumber || 1 }}</strong> من <strong>{{ report()?.totalPages || 1
               }}</strong>
@@ -419,6 +458,7 @@
           </div>
         </div>
       </div>
+
     </div>
   </ng-container>
 

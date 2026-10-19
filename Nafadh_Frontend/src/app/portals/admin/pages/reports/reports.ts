@@ -37,7 +37,7 @@ export class AdminReports implements OnInit {
 
   programSearchTerm = '';
   programSortFilter = 'ALL';
-
+  batchMajorFilter = 'ALL';
   pageSize = 5;
   currentPageNumber = 1;
 
@@ -325,7 +325,18 @@ export class AdminReports implements OnInit {
       }
     });
   }
+  // استخراج جميع التخصصات الفعلية القادمة من الداتابيز تلقائياً بدون تكرار
+  get uniqueBatchMajors(): string[] {
+    const rows = this.report()?.rows || [];
+    let list = rows.map((t: any) => t.major).filter(Boolean);
 
+    // إذا كانت الدفعة جديدة، يقرأ التخصصات من قاعدة بيانات المتدربين العامة
+    if (list.length === 0 && this.allTraineesData) {
+      list = this.allTraineesData.map((t: any) => t.major).filter(Boolean);
+    }
+
+    return Array.from(new Set(list));
+  }
   get filteredBatchReportRows(): any[] {
     const rawRows = this.report()?.rows || [];
     return rawRows.filter(t => {
@@ -334,10 +345,11 @@ export class AdminReports implements OnInit {
         (t.major && t.major.toLowerCase().includes(this.batchTraineeSearch.toLowerCase().trim()));
 
       const matchLevel = this.batchLevelFilter === 'ALL' || (t.level && t.level.includes(this.batchLevelFilter));
-      return matchSearch && matchLevel;
+      const matchMajor = this.batchMajorFilter === 'ALL' || (t.major && t.major.includes(this.batchMajorFilter));
+
+      return matchSearch && matchLevel && matchMajor;
     });
   }
-
   nextPage() {
     const r = this.report();
     const totalPages = r?.totalPages || Math.ceil((r?.totalCount || 0) / this.pageSize);
@@ -718,7 +730,7 @@ export class AdminReports implements OnInit {
     this.cdr.detectChanges();
   }
 
-openMasterTranscript() {
+  openMasterTranscript() {
     this.traineeSubView = 'master_transcript';
     this.masterSearchTerm = '';
     this.masterCompanyFilter = 'ALL';
@@ -727,7 +739,7 @@ openMasterTranscript() {
     this.applyMasterTranscriptFilters();
     this.cdr.detectChanges();
   }
-    // دالة البحث الشامل في كل حقول كشف الدرجات
+  // دالة البحث الشامل في كل حقول كشف الدرجات
   applyMasterTranscriptFilters() {
     let list = [...this.allTraineesData];
 
@@ -745,13 +757,13 @@ openMasterTranscript() {
         const score = String(this.getTraineeFinalScore(t));
 
         return name.includes(q) ||
-               id.includes(q) ||
-               fullId.includes(q) ||
-               comp.includes(q) ||
-               major.includes(q) ||
-               trainer.includes(q) ||
-               level.includes(q) ||
-               score.includes(q);
+          id.includes(q) ||
+          fullId.includes(q) ||
+          comp.includes(q) ||
+          major.includes(q) ||
+          trainer.includes(q) ||
+          level.includes(q) ||
+          score.includes(q);
       });
     }
 
