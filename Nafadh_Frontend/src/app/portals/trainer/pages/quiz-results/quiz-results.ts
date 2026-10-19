@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+
 
 import {
   TrainerApi,
@@ -26,6 +27,64 @@ export class QuizResults implements OnInit {
   // =========================================
 
   results = signal<QuizResultDto[]>([]);
+  searchTerm = signal('');
+
+statusFilter = signal('all');
+
+filteredResults = computed(() => {
+
+  const search = this.searchTerm()
+    .trim()
+    .toLowerCase();
+
+  const status = this.statusFilter();
+
+  return this.results().filter(result => {
+
+    const matchesSearch =
+      !search ||
+      String(result.traineeName ?? '')
+        .toLowerCase()
+        .includes(search);
+
+    let matchesStatus = true;
+
+    if (status === 'pending') {
+
+      matchesStatus =
+        result.status?.toLowerCase() === 'submitted' &&
+        !result.isGradingCompleted;
+
+    }
+
+    else if (status === 'passed') {
+
+      matchesStatus =
+        result.isGradingCompleted &&
+        result.isPassed === true;
+
+    }
+
+    else if (status === 'failed') {
+
+      matchesStatus =
+        result.isGradingCompleted &&
+        result.isPassed === false;
+
+    }
+
+    else if (status === 'submitted') {
+
+      matchesStatus =
+        result.status?.toLowerCase() === 'submitted';
+
+    }
+
+    return matchesSearch && matchesStatus;
+
+  });
+
+});
 
   loading = signal(false);
 
@@ -252,6 +311,76 @@ export class QuizResults implements OnInit {
     this.attemptDetails.set(null);
 
   }
+
+  exportResults(): void {
+
+  const data = this.filteredResults();
+
+  if (data.length === 0) {
+    this.errorMessage.set(
+      'لا توجد نتائج متاحة للتصدير.'
+    );
+
+    return;
+  }
+
+  const headers = [
+    'اسم المتدرب',
+    'الاختبار',
+    'المحاولة',
+    'الدرجة',
+    'النسبة',
+    'الحالة',
+    'تاريخ التسليم'
+  ];
+
+  const rows = data.map(result => [
+    result.traineeName ?? '',
+    result.quizTitle ?? '',
+    result.attemptNumber ?? '',
+    result.score ?? '',
+    `${result.percentage ?? 0}%`,
+    this.getResultStatusLabel(result),
+    result.submittedAt
+      ? new Date(result.submittedAt).toLocaleString('ar-OM')
+      : 'لم يُسلّم'
+  ]);
+
+  const csv = [
+    headers,
+    ...rows
+  ]
+    .map(row =>
+      row
+        .map(value =>
+          `"${String(value).replace(/"/g, '""')}"`
+        )
+        .join(',')
+    )
+    .join('\n');
+
+  const blob = new Blob(
+    ['\uFEFF' + csv],
+    {
+      type: 'text/csv;charset=utf-8;'
+    }
+  );
+
+  const url =
+    window.URL.createObjectURL(blob);
+
+  const link =
+    document.createElement('a');
+
+  link.href = url;
+
+  link.download =
+    `quiz-results-${this.quizId ?? 'export'}.csv`;
+
+  link.click();
+
+  window.URL.revokeObjectURL(url);
+}
   // =========================================
 // MANUAL ESSAY GRADING
 // =========================================

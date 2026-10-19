@@ -1,0 +1,220 @@
+
+<section class="live-sessions-page" dir="rtl">
+  <div class="sessions-hero">
+    <div class="hero-info">
+      <span class="hero-eyebrow">إدارة المحتوى التدريبي</span>
+      <h1>الجلسات المباشرة</h1>
+      <p>جدولة اجتماعات Webex وإدارة الجلسات وتسجيلات المحاضرات.</p>
+    </div>
+
+    <button class="back-btn" type="button" (click)="goBack()">
+      <i class="fa-solid fa-arrow-right"></i>
+      العودة لإدارة المحتوى
+    </button>
+  </div>
+
+  <div class="toolbar">
+    <div class="batch-label">
+      <i class="fa-solid fa-layer-group"></i>
+      الدفعة المختارة: {{ batchId }}
+    </div>
+
+    <button class="primary-btn" type="button"
+            (click)="openCreateForm()">
+      <i class="fa-solid fa-plus"></i>
+      إنشاء جلسة جديدة
+    </button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <i class="fa-regular fa-calendar"></i>
+      <strong>{{ upcomingCount() }}</strong>
+      <span>الجلسات القادمة</span>
+    </div>
+
+    <div class="stat-card">
+      <i class="fa-solid fa-video"></i>
+      <strong>{{ ongoingCount() }}</strong>
+      <span>الجلسات الجارية</span>
+    </div>
+
+    <div class="stat-card">
+      <i class="fa-solid fa-circle-check"></i>
+      <strong>{{ pastCount() }}</strong>
+      <span>الجلسات السابقة</span>
+    </div>
+  </div>
+
+  @if (successMessage()) {
+    <p class="success-message">{{ successMessage() }}</p>
+  }
+
+  <div class="list-section">
+
+    <div class="list-toolbar">
+      <div class="tabs">
+        <button type="button"
+          [class.active]="activeTab() === 'upcoming'"
+          (click)="setTab('upcoming')">
+          القادمة
+        </button>
+
+        <button type="button"
+          [class.active]="activeTab() === 'ongoing'"
+          (click)="setTab('ongoing')">
+          الجارية
+        </button>
+
+        <button type="button"
+          [class.active]="activeTab() === 'past'"
+          (click)="setTab('past')">
+          السابقة
+        </button>
+      </div>
+
+      <input
+        type="search"
+        placeholder="ابحث عن جلسة..."
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+      />
+    </div>
+
+    <div class="session-list">
+      @for (session of filteredSessions(); track session.id) {
+        <article class="session-card">
+          <div class="session-details">
+            <h3>{{ session.title }}</h3>
+            <p>{{ session.description || 'بدون وصف' }}</p>
+
+            <div class="session-meta">
+              <span>
+                <i class="fa-regular fa-calendar"></i>
+                {{ session.startTime | date:'dd/MM/yyyy' }}
+              </span>
+              <span>
+                <i class="fa-regular fa-clock"></i>
+                {{ session.startTime | date:'shortTime' }}
+              </span>
+              <span>
+                <i class="fa-solid fa-hourglass-half"></i>
+                {{ session.durationMinutes }} دقيقة
+              </span>
+            </div>
+          </div>
+
+          <div class="session-actions">
+            @if (session.status === 'Scheduled') {
+              <button type="button"
+                (click)="editSession(session)">تعديل</button>
+              <button type="button"
+                (click)="startSession(session)">بدء الاجتماع</button>
+              <button type="button" class="danger-btn"
+                (click)="cancelSession(session)">إلغاء</button>
+            }
+
+            @if (session.status === 'InProgress') {
+              <button type="button"
+                (click)="joinMeeting(session)">Join Meeting</button>
+              <button type="button"
+                (click)="completeSession(session)">إنهاء الجلسة</button>
+            }
+
+            @if (session.status === 'Completed') {
+              <span class="status-label">منتهية</span>
+            }
+
+            @if (session.status === 'Cancelled') {
+              <span class="status-label cancelled">ملغية</span>
+            }
+          </div>
+        </article>
+      } @empty {
+        <div class="empty-state">
+          <i class="fa-solid fa-calendar-xmark"></i>
+          <h2>لا توجد جلسات في هذا القسم</h2>
+          <p>يمكنك إنشاء جلسة جديدة من الزر الموجود بالأعلى.</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (showForm()) {
+    <div class="modal-overlay" (click)="closeForm()">
+      <div class="modal-card" role="dialog" aria-modal="true"
+           aria-labelledby="session-form-title"
+           (click)="$event.stopPropagation()">
+
+        <div class="modal-header">
+          <h2 id="session-form-title">
+            {{ editingId() === null ? 'إنشاء جلسة جديدة' : 'تعديل الجلسة' }}
+          </h2>
+          <button type="button" class="close-btn"
+                  aria-label="إغلاق"
+                  (click)="closeForm()">×</button>
+        </div>
+
+        <form (ngSubmit)="saveSession()">
+
+          <label for="session-title">عنوان الجلسة *</label>
+          <input id="session-title" type="text"
+                 name="title" [(ngModel)]="form.title"
+                 required maxlength="150" />
+
+          <label for="session-description">الوصف</label>
+          <textarea id="session-description"
+                    name="description"
+                    [(ngModel)]="form.description"
+                    rows="3"></textarea>
+
+          <label>الدفعة</label>
+          <div class="readonly-field">الدفعة رقم {{ batchId }}</div>
+
+          <div class="form-row">
+            <div>
+              <label for="session-date">التاريخ *</label>
+              <input id="session-date" type="date"
+                     name="date" [(ngModel)]="form.date"
+                     required />
+            </div>
+
+            <div>
+              <label for="session-time">الوقت *</label>
+              <input id="session-time" type="time"
+                     name="time" [(ngModel)]="form.time"
+                     required />
+            </div>
+          </div>
+
+          <label for="session-duration">المدة بالدقائق *</label>
+          <input id="session-duration" type="number"
+                 name="duration"
+                 [(ngModel)]="form.durationMinutes"
+                 min="1" required />
+
+          <label for="session-url">رابط اجتماع Webex *</label>
+          <input id="session-url" type="url"
+                 name="meetingUrl"
+                 [(ngModel)]="form.meetingUrl"
+                 placeholder="https://..."
+                 required />
+
+          @if (errorMessage()) {
+            <p class="error-message">{{ errorMessage() }}</p>
+          }
+
+          <div class="form-actions">
+            <button type="button" class="back-btn"
+                    (click)="closeForm()">إلغاء</button>
+            <button type="submit" class="primary-btn">
+              حفظ الجلسة
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  }
+
+</section>

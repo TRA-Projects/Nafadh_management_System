@@ -60,7 +60,7 @@ namespace Nafadh_Backend.Enums
 
     public enum NFD_SessionStatus
     {
-        Scheduled, Completed, Cancelled, Postponed
+        Scheduled, Completed, Cancelled, Postponed, InProgress
     }
 
     public enum NFD_AttendanceStatus

@@ -265,7 +265,11 @@ namespace Nafadh_Backend
             // Email settings
             builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
             builder.Services.Configure<AbsenceWarningSettings>(builder.Configuration.GetSection("AbsenceWarnings"));
+            // Trainer live sessions
+            builder.Services.AddScoped<TrainerLiveSessionService>();
 
+            // Trainer session recordings
+            builder.Services.AddScoped<TrainerSessionRecordingService>();
             // Automatic absence warnings
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IAbsenceWarningService, AbsenceWarningService>();
