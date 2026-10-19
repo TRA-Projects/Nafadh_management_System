@@ -410,7 +410,56 @@
         </span>
 
       </div>
+      <!-- STATUS SUMMARY -->
 
+      <div class="quiz-status-summary">
+
+        @if (getStatusNumber(quiz.status) === 0) {
+
+        <span class="status-summary draft-summary">
+          <i class="fa-solid fa-file-pen"></i>
+          الاختبار محفوظ كمسودة ويمكن تعديله
+        </span>
+
+        }
+
+        @else if (getStatusNumber(quiz.status) === 1) {
+
+        <span class="status-summary scheduled-summary">
+          <i class="fa-solid fa-calendar-days"></i>
+          الاختبار مجدول وسيبدأ في موعده
+        </span>
+
+        }
+
+        @else if (getStatusNumber(quiz.status) === 2) {
+
+        <span class="status-summary open-summary">
+          <i class="fa-solid fa-circle-play"></i>
+          الاختبار مفتوح حاليًا للمتدربين
+        </span>
+
+        }
+
+        @else if (getStatusNumber(quiz.status) === 3) {
+
+        <span class="status-summary closed-summary">
+          <i class="fa-solid fa-lock"></i>
+          الاختبار مغلق ويمكن مراجعة نتائجه
+        </span>
+
+        }
+
+        @else if (getStatusNumber(quiz.status) === 4) {
+
+        <span class="status-summary archived-summary">
+          <i class="fa-solid fa-box-archive"></i>
+          الاختبار مؤرشف
+        </span>
+
+        }
+
+      </div>
 
       <!-- ================================================= -->
       <!-- QUIZ ACTIONS -->

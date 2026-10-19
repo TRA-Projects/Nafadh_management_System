@@ -1430,7 +1430,7 @@ canManageQuestions(status: number | string): boolean {
     }
   }
 
-  private getStatusNumber(status: number | string): number {
+  getStatusNumber(status: number | string): number {
     const value = String(status).trim().toLowerCase();
 
     switch (value) {
