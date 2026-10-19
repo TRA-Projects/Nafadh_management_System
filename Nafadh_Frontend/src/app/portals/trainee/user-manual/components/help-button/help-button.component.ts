@@ -1,0 +1,38 @@
+// src/app/features/trainee/user-manual/components/help-button/help-button.component.ts
+
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  output,
+} from '@angular/core';
+
+import { CommonModule } from '@angular/common';
+import { NfdIcon } from '../../../../../shared/ui/icon/icon';
+
+/**
+ * زر المساعدة العائم.
+ *
+ * - يستقبل حالة الفتح من المكوّن الأب.
+ * - يُصدر حدث toggle عند الضغط.
+ * - لا يعرف أي شيء عن GuideService.
+ */
+@Component({
+  selector: 'app-help-button',
+  standalone: true,
+  imports: [CommonModule, NfdIcon],
+  templateUrl: './help-button.component.html',
+  styleUrl: './help-button.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class HelpButtonComponent {
+  /** حالة فتح لوحة المساعدة */
+  readonly isOpen = input<boolean>(false);
+
+  /** يُصدر عند الضغط على الزر */
+  readonly toggle = output<void>();
+
+  onToggle(): void {
+    this.toggle.emit();
+  }
+}

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
-using Nafadh_Backend; // ✅ صحيح.Core.Interfaces;
+using Nafadh_Backend;
 using Nafadh_Backend.Filters;
 using Nafadh_Backend.Interfaces;
 using Nafadh_Backend.Repositories;
@@ -15,6 +15,7 @@ using Nafadh_Backend.Settings;
 using QuestPDF.Infrastructure;
 using System.Security.Claims;
 using System.Text;
+
 
 
 namespace Nafadh_Backend
@@ -154,6 +155,10 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ITrainingMaterialService, TrainingMaterialService>();
             builder.Services.AddScoped<ITraineeModuleProgressRepository, TraineeModuleProgressRepository>();
             builder.Services.AddScoped<ITraineeModuleProgressService, TraineeModuleProgressService>();
+
+            // User Guide Progress
+            builder.Services.AddScoped<IUserGuideProgressRepository, UserGuideProgressRepository>();
+            builder.Services.AddScoped<IUserGuideProgressService, UserGuideProgressService>();
             builder.Services.AddScoped<ISessionRepository, SessionRepository>();
             builder.Services.AddScoped<ISessionService, SessionService>();
             builder.Services.AddScoped<ISessionAttendanceRepository, SessionAttendanceRepository>();
@@ -213,21 +218,25 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ICompanyPaymentScheduleService, CompanyPaymentScheduleService>();
             builder.Services.AddScoped<IQuizRepository, QuizRepository>();
             builder.Services.AddScoped<IQuizService, QuizService>();
-            builder.Services.AddScoped<IQuestionBankRepository,QuestionBankRepository>();
+            builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
 
-            builder.Services.AddScoped<IQuestionBankService,QuestionBankService>();
-            builder.Services.AddScoped<IQuizQuestionRepository,QuizQuestionRepository>();
+            builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
+            builder.Services.AddScoped<IQuizQuestionRepository, QuizQuestionRepository>();
 
-            builder.Services.AddScoped<IQuizQuestionService,QuizQuestionService>();
-            builder.Services.AddScoped<IQuizAttemptRepository,QuizAttemptRepository>();
+            builder.Services.AddScoped<IQuizQuestionService, QuizQuestionService>();
+            builder.Services.AddScoped<IQuizAttemptRepository, QuizAttemptRepository>();
 
-            builder.Services.AddScoped<IQuizAttemptService,QuizAttemptService>();
+            builder.Services.AddScoped<IQuizAttemptService, QuizAttemptService>();
 
-            builder.Services.AddScoped<IQuizResultRepository,QuizResultRepository>();
+            builder.Services.AddScoped<IQuizResultRepository, QuizResultRepository>();
 
-            builder.Services.AddScoped<IQuizResultService,QuizResultService>();
+            builder.Services.AddScoped<IQuizResultService, QuizResultService>();
             builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
             builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
+
+            builder.Services.AddScoped<IQuizAccessService, QuizAccessService>();
+            builder.Services.AddScoped<IQuizProctoringService, QuizProctoringService>();
+            builder.Services.AddHostedService<ProctoringCleanupService>();
 
             builder.Services.AddScoped<ITraineeEvaluationRepository, TraineeEvaluationRepository>();
             builder.Services.AddScoped<ITraineeEvaluationService, TraineeEvaluationService>();
@@ -266,6 +275,9 @@ namespace Nafadh_Backend
             // Automatic absence warnings
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IAbsenceWarningService, AbsenceWarningService>();
+
+            // Company self-registration (public register + approval/rejection + login gate)
+            builder.Services.AddScoped<ICompanyRegistrationService, CompanyRegistrationService>();
 
             // ── Swagger with JWT support ───────────────────────────────────────
             builder.Services.AddEndpointsApiExplorer();
@@ -476,6 +488,26 @@ namespace Nafadh_Backend
                             excuseProofsRequestPath
                     }
                 );
+            }
+
+            // =====================================================
+            // EXTERNAL TRAINER ATTENDANCE PROOF FILES
+            // =====================================================
+            var trainerAttendanceProofsPath =
+                builder.Configuration["Storage:TrainerAttendanceProofsPath"];
+
+            var trainerAttendanceProofsRequestPath =
+                builder.Configuration["Storage:TrainerAttendanceProofsRequestPath"]
+                ?? "/uploads/trainer-attendance-proofs";
+
+            if (!string.IsNullOrWhiteSpace(trainerAttendanceProofsPath))
+            {
+                Directory.CreateDirectory(trainerAttendanceProofsPath);
+                app.UseStaticFiles(new StaticFileOptions
+                {
+                    FileProvider = new PhysicalFileProvider(trainerAttendanceProofsPath),
+                    RequestPath = trainerAttendanceProofsRequestPath
+                });
             }
 
             // Enable CORS middleware here

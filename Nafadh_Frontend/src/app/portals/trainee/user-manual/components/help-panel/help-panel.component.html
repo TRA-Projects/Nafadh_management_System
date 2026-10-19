@@ -1,0 +1,205 @@
+
+<!-- src/app/features/trainee/user-manual/components/help-panel/help-panel.component.html -->
+
+@if (isOpen()) {
+  <!-- Overlay -->
+  <div
+    class="help-panel-overlay"
+    (click)="onClose()"
+    aria-hidden="true"
+  ></div>
+
+  <!-- Panel -->
+  <aside
+    class="help-panel"
+    dir="rtl"
+    role="dialog"
+    aria-label="لوحة دليل الاستخدام"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Header -->
+    <header class="help-panel-header">
+      <div class="help-panel-header-text">
+        <h2 class="help-panel-title">
+          <nfd-icon name="book" size="sm" />
+          <span>دليل الاستخدام</span>
+        </h2>
+
+        <p class="help-panel-subtitle">
+          بوابة المتدرب
+          @if (pageKey()) {
+            <span class="help-panel-page-chip">
+              {{ pageKey() }}
+            </span>
+          }
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="help-panel-close"
+        (click)="onClose()"
+        aria-label="إغلاق دليل الاستخدام"
+        title="إغلاق"
+      >
+        <nfd-icon name="close" size="sm" />
+      </button>
+    </header>
+
+    <!-- Body -->
+    <div class="help-panel-body">
+      <!-- Empty Data -->
+      @if (!hasContent()) {
+        <div class="help-empty">
+          <div class="help-empty-icon">
+            <nfd-icon name="book" />
+          </div>
+          <strong>لا توجد معلومات لهذه الصفحة</strong>
+          <span>لم يتم توفير دليل استخدام لهذه الصفحة حالياً.</span>
+        </div>
+      } @else {
+        @let panelData = data();
+
+        @if (panelData) {
+          <!-- Current Page Info -->
+          <section class="help-section help-section-current">
+            <div class="help-current-icon">
+              <nfd-icon name="chart" size="sm" />
+            </div>
+
+            <div class="help-current-text">
+              <h3 class="help-current-title">
+                {{ panelData.pageTitle }}
+              </h3>
+              <p class="help-current-description">
+                {{ panelData.pageDescription }}
+              </p>
+            </div>
+          </section>
+
+          <!-- Guided Tour - الإضافة الجديدة فقط -->
+          <section class="help-section-group">
+            <button
+              type="button"
+              class="guided-tour-panel-button"
+              (click)="startTour.emit()"
+            >
+              <span>ابدأ الجولة الإرشادية</span>
+              <span aria-hidden="true">←</span>
+            </button>
+          </section>
+
+          <!-- How to Use -->
+          @if (panelData.sections && panelData.sections.length > 0) {
+            <section class="help-section-group">
+              <header class="help-section-group-header">
+                <span class="help-section-group-icon">
+                  <nfd-icon name="clip" size="sm" />
+                </span>
+                <h3>كيفية الاستخدام</h3>
+              </header>
+
+              <div class="help-sections">
+                @for (section of panelData.sections; track section.id) {
+                  <article class="help-section-card">
+                    @if (section.title) {
+                      <header class="help-section-card-header">
+                        @if (section.icon) {
+                          <span class="help-section-card-icon">
+                            <nfd-icon [name]="section.icon" size="sm" />
+                          </span>
+                        }
+                        <h4>{{ section.title }}</h4>
+                      </header>
+                    }
+
+                    @if (section.description) {
+                      <p class="help-section-card-description">
+                        {{ section.description }}
+                      </p>
+                    }
+
+                    @if (section.steps && section.steps.length > 0) {
+                      <ol class="help-steps">
+                        @for (step of section.steps; track step.id; let i = $index) {
+                          <li class="help-step">
+                            <span class="help-step-number">{{ i + 1 }}</span>
+                            <span class="help-step-text">{{ step.text }}</span>
+                          </li>
+                        }
+                      </ol>
+                    }
+                  </article>
+                }
+              </div>
+            </section>
+          }
+
+          <!-- FAQ -->
+          @if (panelData.faqs && panelData.faqs.length > 0) {
+            <section class="help-section-group">
+              <header class="help-section-group-header">
+                <span class="help-section-group-icon">
+                  <nfd-icon name="chat" size="sm" />
+                </span>
+                <h3>الأسئلة الشائعة</h3>
+              </header>
+
+              <div class="help-faq-list">
+                @for (faq of panelData.faqs; track faq.id) {
+                  <article
+                    class="help-faq-item"
+                    [class.is-open]="isFaqOpen(faq.id)"
+                  >
+                    <!-- أضفنا id هنا لربطه بالإجابة -->
+                    <button
+                      type="button"
+                      class="help-faq-question"
+                      [id]="'faq-question-' + faq.id"
+                      (click)="toggleFaq(faq.id)"
+                      [attr.aria-expanded]="isFaqOpen(faq.id)"
+                      [attr.aria-controls]="'faq-answer-' + faq.id"
+                    >
+                      <span class="help-faq-question-text">
+                        {{ faq.question }}
+                      </span>
+                      <span
+                        class="help-faq-chevron"
+                        [class.is-open]="isFaqOpen(faq.id)"
+                        aria-hidden="true"
+                      >
+                        <nfd-icon name="chevron-down" size="sm" />
+                      </span>
+                    </button>
+
+                    @if (isFaqOpen(faq.id)) {
+                      <!-- أضفنا role و aria-labelledby لتحسين قارئات الشاشة -->
+                      <div
+                        class="help-faq-answer"
+                        [id]="'faq-answer-' + faq.id"
+                        role="region"
+                        [attr.aria-labelledby]="'faq-question-' + faq.id"
+                      >
+                        {{ faq.answer }}
+                      </div>
+                    }
+                  </article>
+                }
+              </div>
+            </section>
+          }
+
+          <!-- Extra Info -->
+          @if (panelData.extraInfo) {
+            <section class="help-extra-info">
+              <span class="help-extra-icon">
+                <nfd-icon name="alert" size="sm" />
+              </span>
+              <p>{{ panelData.extraInfo }}</p>
+            </section>
+          }
+        }
+      }
+    </div>
+  </aside>
+}

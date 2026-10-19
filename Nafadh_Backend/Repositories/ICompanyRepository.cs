@@ -29,6 +29,8 @@ namespace Nafadh_Backend.Repositories
         Task UpdateCompanyAsync(
             NFD_Company company);
 
+        Task UpdateCompanyStatusDirectAsync(int companyId, NFD_CompanyStatus status, string? rejectionReason);
+
         // Delete Company
         Task DeleteCompanyAsync(
             int companyId);

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core'; // 1. استيراد ChangeDetectorRef
 import { FormsModule } from '@angular/forms';
 
 import { CompanyApi } from '../../services/company-api';
@@ -14,6 +14,7 @@ import { WarningDto } from '../../../../core/models/dtos';
 })
 export class WarningsComponent implements OnInit {
   private readonly companyApi = inject(CompanyApi);
+  private readonly cdr = inject(ChangeDetectorRef); // 2. حقن ChangeDetectorRef
 
   warnings: WarningDto[] = [];
   selectedWarning: WarningDto | null = null;
@@ -30,10 +31,6 @@ export class WarningsComponent implements OnInit {
     this.loadCompanyWarnings();
   }
 
-  /**
-   * جلب بيانات الشركة الحالية من الحساب المسجل،
-   * ثم جلب الإنذارات الخاصة بهذه الشركة فقط.
-   */
   loadCompanyWarnings(): void {
     this.loading = true;
     this.errorMessage = '';
@@ -42,17 +39,16 @@ export class WarningsComponent implements OnInit {
       next: (account) => {
         if (!account?.companyId) {
           this.loading = false;
-          this.errorMessage =
-            'تعذر تحديد الشركة المرتبطة بالحساب الحالي.';
+          this.errorMessage = 'تعذر تحديد الشركة المرتبطة بالحساب الحالي.';
+          this.cdr.detectChanges(); // تحديث الواجهة عند الخطأ
           return;
         }
 
         this.companyApi.getCompanyWarnings(account.companyId).subscribe({
           next: (data) => {
             this.warnings = data ?? [];
-              // فحص الإنذارات المستلمة من الـ Backend
-       console.log('Company warnings:', data);
-       console.log('Warnings count:', this.warnings.length);
+            console.log('Company warnings:', data);
+            console.log('Warnings count:', this.warnings.length);
             this.loading = false;
 
             if (this.selectedWarning) {
@@ -63,22 +59,25 @@ export class WarningsComponent implements OnInit {
                     this.selectedWarning?.warningId
                 ) ?? null;
             }
+
+            this.cdr.detectChanges(); // 3. إجبار Angular على تحديث الواجهة فور وصول البيانات
           },
           error: () => {
             this.loading = false;
-            this.errorMessage =
-              'تعذر تحميل الإنذارات. تحققي من اتصال الـ Backend ثم حاولي مجددًا.';
+            this.errorMessage = 'تعذر تحميل الإنذارات. تحققي من اتصال الـ Backend ثم حاولي مجددًا.';
+            this.cdr.detectChanges(); // تحديث الواجهة عند الخطأ
           }
         });
       },
       error: () => {
         this.loading = false;
-        this.errorMessage =
-          'تعذر تحميل بيانات الحساب الحالي. يرجى تسجيل الدخول مجددًا إذا استمرت المشكلة.';
+        this.errorMessage = 'تعذر تحميل بيانات الحساب الحالي. يرجى تسجيل الدخول مجددًا إذا استمرت المشكلة.';
+        this.cdr.detectChanges(); // تحديث الواجهة عند الخطأ
       }
     });
   }
 
+  // باقي الدوال تبقى كما هي...
   get filteredWarnings(): WarningDto[] {
     const query = this.searchText.trim().toLowerCase();
 
@@ -147,7 +146,6 @@ export class WarningsComponent implements OnInit {
       Behavioral: 'السلوك',
       Other: 'أخرى'
     };
-
     return labels[type] ?? type;
   }
 
@@ -158,7 +156,6 @@ export class WarningsComponent implements OnInit {
       High: 'مرتفع',
       Critical: 'حرج'
     };
-
     return labels[level] ?? level;
   }
 
@@ -169,7 +166,6 @@ export class WarningsComponent implements OnInit {
       Resolved: 'تم الحل',
       Escalated: 'تم التصعيد'
     };
-
     return labels[status] ?? status;
   }
 
@@ -180,7 +176,6 @@ export class WarningsComponent implements OnInit {
       High: 'level-high',
       Critical: 'level-critical'
     };
-
     return classes[level] ?? '';
   }
 
@@ -191,16 +186,11 @@ export class WarningsComponent implements OnInit {
       Resolved: 'status-resolved',
       Escalated: 'status-escalated'
     };
-
     return classes[status] ?? '';
   }
 
-  trackByWarningId(
-    index: number,
-    warning: WarningDto
-  ): number {
+  trackByWarningId(index: number, warning: WarningDto): number {
     return warning.warningId;
   }
-  
 }
 export const warningsModuleCheck = true;

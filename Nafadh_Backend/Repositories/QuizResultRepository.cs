@@ -56,13 +56,24 @@ namespace Nafadh_Backend.Repositories
                     .ThenInclude(t => t.User)
                 .Where(a =>
                     a.TraineeId == traineeId &&
-                    (a.Status == "Submitted" ||
-                     a.Status == "Expired") &&
-                    !a.AttemptQuestions.Any(aq =>
-                        aq.Question.QuestionType ==
-                            Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay &&
-                        aq.Answers.Any(answer =>
-                            !answer.IsManuallyGraded)))
+
+(
+    // إظهار المحاولات التي انتهت بسبب المخالفات
+    a.Status == "Terminated" ||
+
+    // إظهار المحاولات المسلّمة أو المنتهية
+    // بعد اكتمال التصحيح اليدوي للأسئلة المقالية
+    (
+        (a.Status == "Submitted" ||
+         a.Status == "Expired") &&
+        !a.AttemptQuestions.Any(aq =>
+            aq.Question.QuestionType ==
+                Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay &&
+            aq.Answers.Any(answer =>
+                !answer.IsManuallyGraded))
+    )
+)
+
                 .OrderByDescending(a => a.SubmittedAt)
                 .ToListAsync();
         }
