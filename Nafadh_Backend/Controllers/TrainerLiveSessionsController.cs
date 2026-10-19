@@ -264,5 +264,39 @@ namespace Nafadh_Backend.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpPut("{sessionId:int}/recording/visibility")]
+        public async Task<IActionResult> UpdateRecordingVisibility(
+    int sessionId,
+    [FromBody] UpdateTrainerRecordingVisibilityDto dto)
+        {
+            var trainerId = await GetCurrentTrainerIdAsync();
+
+            if (!trainerId.HasValue)
+                return Unauthorized();
+
+            try
+            {
+                var result = await _service
+    .UpdateRecordingVisibilityAsync(
+        trainerId.Value,
+        sessionId,
+        dto);
+
+                if (result == null)
+                    return NotFound(new
+                    {
+                        message = "Session not found."
+                    });
+
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
     }
 }

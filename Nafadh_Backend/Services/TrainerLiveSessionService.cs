@@ -70,7 +70,7 @@ namespace Nafadh_Backend.Services
 
                 // Not persisted in the current database schema.
                 IsLive = null,
-                IsRecordingVisibleToTrainees = null
+                IsRecordingVisibleToTrainees = session.IsRecordingVisibleToTrainees
             };
         }
 
@@ -449,6 +449,40 @@ namespace Nafadh_Backend.Services
                 TraineeId = attendance.TraineeId,
                 Status = attendance.Status,
                 Note = attendance.Note
+            };
+        }
+        // Control whether trainees can view the session recording.
+        public async Task<TrainerSessionRecordingDto?>
+            UpdateRecordingVisibilityAsync(
+                int trainerId,
+                int sessionId,
+                UpdateTrainerRecordingVisibilityDto dto)
+        {
+            var session = await FindOwnedSessionAsync(
+                trainerId, sessionId);
+
+            if (session == null)
+                return null;
+
+            if (session.Status == NFD_SessionStatus.Cancelled)
+                throw new InvalidOperationException(
+                    "Cannot change recording visibility for a cancelled session.");
+
+            if (string.IsNullOrWhiteSpace(session.RecordingUrl))
+                throw new InvalidOperationException(
+                    "Upload a recording before changing its visibility.");
+
+            session.IsRecordingVisibleToTrainees =
+                dto.IsVisibleToTrainees;
+
+            await _context.SaveChangesAsync();
+
+            return new TrainerSessionRecordingDto
+            {
+                SessionId = session.SessionId,
+                RecordingUrl = session.RecordingUrl,
+                IsVisibleToTrainees =
+                    session.IsRecordingVisibleToTrainees
             };
         }
     }

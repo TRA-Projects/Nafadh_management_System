@@ -137,6 +137,7 @@ namespace Nafadh_Backend.Services
                 }
 
                 session.RecordingUrl = newFileName;
+                session.IsRecordingVisibleToTrainees = false;
 
                 await _context.SaveChangesAsync();
             }
@@ -248,6 +249,8 @@ namespace Nafadh_Backend.Services
 
             // Remove the database reference first.
             session.RecordingUrl = null;
+            session.IsRecordingVisibleToTrainees = false;
+
             await _context.SaveChangesAsync();
 
             // Delete the physical file afterward.
@@ -268,6 +271,56 @@ namespace Nafadh_Backend.Services
             }
 
             return true;
+        }
+        // Allow a trainee to access a recording only when
+        // enrolled in the session batch and visibility is enabled.
+        public async Task<(string FilePath, string ContentType)?>
+            GetTraineeRecordingAsync(int userId, int sessionId)
+        {
+            var session = await _context.NFD_Sessions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s =>
+                    s.SessionId == sessionId &&
+                    s.IsRecordingVisibleToTrainees &&
+                    s.RecordingUrl != null &&
+                    _context.NFD_Enrollments.Any(e =>
+                        e.BatchId == s.BatchId &&
+                        e.Trainee.UserId == userId));
+
+            if (session == null)
+                return null;
+
+            var fileName = session.RecordingUrl!;
+
+            // Reject invalid or unexpected file references.
+            if (Path.GetFileName(fileName) != fileName ||
+                !Guid.TryParseExact(
+                    Path.GetFileNameWithoutExtension(fileName),
+                    "N",
+                    out _))
+            {
+                return null;
+            }
+
+            var extension = Path.GetExtension(fileName)
+                .ToLowerInvariant();
+
+            var contentType = extension switch
+            {
+                ".mp4" => "video/mp4",
+                ".webm" => "video/webm",
+                _ => null
+            };
+
+            if (contentType == null)
+                return null;
+
+            var filePath = Path.Combine(GetStoragePath(), fileName);
+
+            if (!File.Exists(filePath))
+                return null;
+
+            return (filePath, contentType);
         }
 
     }
