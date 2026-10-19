@@ -62,6 +62,7 @@ namespace Nafadh_Backend
         public DbSet<NFD_Evaluation> NFD_Evaluations { get; set; }
         public DbSet<NFD_Warning> NFD_Warnings { get; set; }
         public DbSet<NFD_SupportTicket> NFD_SupportTickets { get; set; }
+        public DbSet<NFD_QuizProctoringEvent> NFD_QuizProctoringEvents { get; set; }
         public DbSet<NFD_Notification> NFD_Notifications { get; set; }
         public DbSet<NFD_Announcement> NFD_Announcements { get; set; }
         public DbSet<NFD_Message> NFD_Messages { get; set; }
@@ -428,6 +429,9 @@ namespace Nafadh_Backend
                     .WithMany(t => t.LessonFeedbacks)
                     .HasForeignKey(e => e.TraineeId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+
+
             });
 
 
@@ -995,6 +999,20 @@ namespace Nafadh_Backend
                     .HasForeignKey(e => e.SelectedOptionId)
                     .OnDelete(DeleteBehavior.NoAction);
             });
+
+            // ---- NFD_QuizProctoringEvent ----
+            modelBuilder.Entity<NFD_QuizProctoringEvent>(entity =>
+            {
+                entity.ToTable("NFD_QuizProctoringEvents");
+                entity.HasKey(e => e.EventId);
+                entity.HasIndex(e => e.AttemptId);
+
+                entity.HasOne(e => e.Attempt)
+                    .WithMany()
+                    .HasForeignKey(e => e.AttemptId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
 
             // ---- Company Portal course plans ----
             modelBuilder.ConfigureCoursePlans();

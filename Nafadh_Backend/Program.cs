@@ -233,6 +233,10 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
             builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 
+            builder.Services.AddScoped<IQuizAccessService, QuizAccessService>();
+            builder.Services.AddScoped<IQuizProctoringService, QuizProctoringService>();
+            builder.Services.AddHostedService<ProctoringCleanupService>();
+
             builder.Services.AddScoped<ITraineeEvaluationRepository, TraineeEvaluationRepository>();
             builder.Services.AddScoped<ITraineeEvaluationService, TraineeEvaluationService>();
             //change by admin team

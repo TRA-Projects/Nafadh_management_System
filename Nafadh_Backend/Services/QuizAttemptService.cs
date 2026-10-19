@@ -20,6 +20,9 @@ namespace Nafadh_Backend.Services
  GradeQuizAnswerDto dto);
 
         Task<int> RegisterViolationAsync(int attemptId);
+
+        Task<TraineeQuizzesOverviewDto> GetTraineeQuizzesAsync(int traineeId);
+        Task<QuizAttemptDto> GetAttemptAsync(int attemptId, int traineeId);
     }
 
 
@@ -81,6 +84,32 @@ namespace Nafadh_Backend.Services
                     "انتهى وقت دخول الاختبار.");
             }
 
+            // الكاميرا إلزامية => لازم موافقة المتدرب
+            if (quiz.CameraRequired && !dto.CameraConsent)
+            {
+                throw new InvalidOperationException(
+                    "هذا الاختبار يتطلب تشغيل الكاميرا. يرجى الموافقة وتشغيلها للمتابعة.");
+            }
+
+            // استئناف محاولة جارية بدل إنشاء محاولة جديدة
+            var existing = await _context.NFD_QuizAttempts
+                .FirstOrDefaultAsync(a =>
+                    a.QuizId == dto.QuizId &&
+                    a.TraineeId == dto.TraineeId &&
+                    a.Status == "InProgress");
+
+            if (existing != null)
+            {
+                if (now <= existing.StartedAt.AddMinutes(quiz.DurationMinutes))
+                {
+                    return await GetAttemptAsync(existing.AttemptId, dto.TraineeId);
+                }
+
+                existing.Status = "Expired";
+                existing.SubmittedAt = now;
+                await _context.SaveChangesAsync();
+            }
+
             var attemptsCount =
                 await _repository.GetAttemptsCountAsync(
                     dto.QuizId,
@@ -122,7 +151,9 @@ namespace Nafadh_Backend.Services
                 AttemptNumber = attemptsCount + 1,
                 StartedAt = now,
                 Status = "InProgress",
-                CreatedAt = now
+                CreatedAt = now,
+                IdentityCheckStatus = quiz.CameraRequired ? dto.IdentityCheckStatus : null,
+                NeedsManualReview = quiz.CameraRequired && dto.IdentityCheckStatus != "Passed"
             };
 
             var order = 1;
@@ -375,6 +406,163 @@ namespace Nafadh_Backend.Services
 
             await _repository.SaveChangesAsync();
         }
+        public async Task<TraineeQuizzesOverviewDto> GetTraineeQuizzesAsync(int traineeId)
+        {
+            var batchIds = await _context.NFD_Enrollments
+                .Where(e => e.TraineeId == traineeId)
+                .Select(e => e.BatchId)
+                .ToListAsync();
+
+            var quizzes = await _context.NFD_Quizzes
+                .AsNoTracking()
+                .Include(q => q.Batch)
+                .Include(q => q.QuizQuestions)
+                .Where(q => batchIds.Contains(q.BatchId) &&
+                            (q.Status == Nafadh_Backend.Enums.NFD_QuizStatus.Open ||
+                             q.Status == Nafadh_Backend.Enums.NFD_QuizStatus.Scheduled ||
+                             q.Status == Nafadh_Backend.Enums.NFD_QuizStatus.Closed))
+                .OrderBy(q => q.StartDateTime)
+                .ToListAsync();
+
+            var quizIds = quizzes.Select(q => q.QuizId).ToList();
+
+            var attempts = await _context.NFD_QuizAttempts
+                .AsNoTracking()
+                .Include(a => a.AttemptQuestions).ThenInclude(aq => aq.Question)
+                .Include(a => a.AttemptQuestions).ThenInclude(aq => aq.Answers)
+                .Where(a => a.TraineeId == traineeId && quizIds.Contains(a.QuizId))
+                .ToListAsync();
+
+            var now = DateTime.UtcNow;
+
+            // محاولة مسلَّمة تحتوي سؤالاً مقالياً لم يُصحَّح بعد
+            static bool IsPendingGrading(NFD_QuizAttempt a) =>
+                (a.Status == "Submitted" || a.Status == "Expired") &&
+                a.AttemptQuestions.Any(aq =>
+                    aq.Question.QuestionType == Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay &&
+                    !aq.Answers.Any(x => x.IsManuallyGraded));
+
+            var items = quizzes.Select(q =>
+            {
+                var mine = attempts.Where(a => a.QuizId == q.QuizId).ToList();
+                var inProgress = mine.FirstOrDefault(a =>
+                    a.Status == "InProgress" &&
+                    now <= a.StartedAt.AddMinutes(q.DurationMinutes));
+
+                var used = mine.Count;
+                var remaining = Math.Max(0, q.MaxAttempts - used);
+
+                var finished = mine
+                    .Where(a => a.Status != "InProgress")
+                    .OrderByDescending(a => a.SubmittedAt)
+                    .ToList();
+                var latest = finished.FirstOrDefault();
+                var windowOpen = q.Status == Nafadh_Backend.Enums.NFD_QuizStatus.Open &&
+                                 now >= q.StartDateTime && now <= q.EndDateTime;
+
+                string state;
+                if (inProgress != null) state = "InProgress";
+                else if (latest != null && IsPendingGrading(latest)) state = "PendingGrading";
+                else if (latest != null && !(windowOpen && remaining > 0)) state = "Completed";
+                else if (windowOpen && remaining > 0) state = "Available";
+                else if (now < q.StartDateTime &&
+                         q.Status != Nafadh_Backend.Enums.NFD_QuizStatus.Closed) state = "Upcoming";
+                else state = "Missed";
+
+                // النتيجة تظهر فقط بعد اكتمال التصحيح
+                var showResult = latest != null && !IsPendingGrading(latest);
+
+                return new TraineeQuizListItemDto
+                {
+                    QuizId = q.QuizId,
+                    Title = q.Title,
+                    Description = q.Description,
+                    BatchName = q.Batch?.BatchName,
+                    StartDateTime = q.StartDateTime,
+                    EndDateTime = q.EndDateTime,
+                    DurationMinutes = q.DurationMinutes,
+                    QuestionCount = q.QuizQuestions.Count,
+                    MaxAttempts = q.MaxAttempts,
+                    CameraRequired = q.CameraRequired,
+                    PassingPercentage = q.PassingPercentage,
+                    AttemptsUsed = used,
+                    AttemptsRemaining = remaining,
+                    InProgressAttemptId = inProgress?.AttemptId,
+                    LatestAttemptId = showResult ? latest!.AttemptId : null,
+                    LatestPercentage = showResult ? latest!.Percentage : null,
+                    IsPassed = showResult ? latest!.Percentage >= q.PassingPercentage : null,
+                    State = state
+                };
+            }).ToList();
+
+            return new TraineeQuizzesOverviewDto
+            {
+                Available = items.Count(i => i.State == "Available" || i.State == "InProgress"),
+                Upcoming = items.Count(i => i.State == "Upcoming"),
+                PendingGrading = items.Count(i => i.State == "PendingGrading"),
+                Completed = items.Count(i => i.State == "Completed"),
+                Quizzes = items
+            };
+        }
+
+        public async Task<QuizAttemptDto> GetAttemptAsync(int attemptId, int traineeId)
+        {
+            var attempt = await _repository.GetAttemptForAnswerAsync(attemptId);
+
+            if (attempt == null)
+                throw new KeyNotFoundException("المحاولة غير موجودة.");
+
+            if (attempt.TraineeId != traineeId)
+                throw new UnauthorizedAccessException("هذه المحاولة لا تتبع لهذا المتدرب.");
+
+            if (attempt.Status != "InProgress")
+                throw new InvalidOperationException("هذه المحاولة منتهية.");
+
+            var endAt = attempt.StartedAt.AddMinutes(attempt.Quiz.DurationMinutes);
+            var remaining = (int)Math.Max(0, (endAt - DateTime.UtcNow).TotalSeconds);
+
+            return new QuizAttemptDto
+            {
+                AttemptId = attempt.AttemptId,
+                QuizId = attempt.QuizId,
+                QuizTitle = attempt.Quiz.Title,
+                DurationMinutes = attempt.Quiz.DurationMinutes,
+                CameraRequired = attempt.Quiz.CameraRequired,
+                StartedAt = attempt.StartedAt,
+                ExpectedEndAt = endAt,
+                Status = attempt.Status,
+                ViolationCount = attempt.ViolationCount,
+                RemainingSeconds = remaining,
+                Questions = attempt.AttemptQuestions
+                    .OrderBy(x => x.QuestionOrder)
+                    .Select(x =>
+                    {
+                        var ans = x.Answers.OrderByDescending(a => a.AnsweredAt).FirstOrDefault();
+                        return new AttemptQuestionDto
+                        {
+                            AttemptQuestionId = x.AttemptQuestionId,
+                            QuestionId = x.QuestionId,
+                            QuestionOrder = x.QuestionOrder,
+                            QuestionText = x.Question.QuestionText,
+                            QuestionType = x.Question.QuestionType,
+                            Points = x.Points,
+                            SelectedOptionId = ans?.SelectedOptionId,
+                            TextAnswer = ans?.TextAnswer,
+                            IsMarkedForReview = ans?.IsMarkedForReview ?? false,
+                            Options = x.Question.Options
+                                .OrderBy(o => o.SortOrder)
+                                .Select(o => new QuestionOptionDto
+                                {
+                                    OptionId = o.OptionId,
+                                    OptionText = o.OptionText,
+                                    OptionCode = o.OptionCode,
+                                    SortOrder = o.SortOrder
+                                }).ToList()
+                        };
+                    }).ToList()
+            };
+        }
+
         public async Task GradeEssayAnswerAsync(
     GradeQuizAnswerDto dto)
         {
@@ -496,4 +684,3 @@ namespace Nafadh_Backend.Services
         }
     }
 }
-
