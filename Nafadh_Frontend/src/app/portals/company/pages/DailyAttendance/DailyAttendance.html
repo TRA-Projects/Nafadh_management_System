@@ -602,13 +602,13 @@
 
                                     </span>
 
-                                    @if (view() === 'week' && day.record && (day.record.status === 'Absent' || day.record.status === 'Late' || day.record.status === 'EarlyLeave')) {
+                                    @if (day.record && (day.record.status === 'Absent' || day.record.status === 'Late' || day.record.status === 'EarlyLeave') && (view() === 'week' || hasExcuse(day.record))) {
 
                                     <button type="button" class="weekly-excuse-btn"
                                         [class.has-excuse]="hasExcuse(day.record)"
                                         (click)="openWeeklyExcuse(day.record!)">
 
-                                        {{ hasExcuse(day.record) ? 'عرض السبب / الإثبات' : '+ سبب / إثبات' }}
+                                        {{ view() === 'month' || hasExcuse(day.record) ? 'عرض السبب / الإثبات' : '+ سبب / إثبات' }}
 
                                     </button>
 
@@ -686,14 +686,13 @@
 
             <div class="weekly-excuse-proof">
                 @if (excuse.excuseProofUrl) {
-                <span>تم إرفاق إثبات</span>
                 <a [href]="fileUrl(excuse.excuseProofUrl)" target="_blank"
                     rel="noopener noreferrer">عرض الإثبات</a>
                 @if (weeklyExcuseEditing()) {
                 <button type="button" (click)="removeWeeklyProof()" [disabled]="weeklyExcuseSaving()">حذف الإثبات</button>
                 }
                 } @else {
-                <span>لم يُرفق إثبات بعد</span>
+                <span>لم يُرفق إثبات</span>
                 }
                 @if (weeklyExcuseEditing()) {
                 <label class="weekly-excuse-upload">
@@ -713,10 +712,8 @@
                     [disabled]="weeklyExcuseSaving()">إلغاء التعديل</button>
                 }
             </div>
-            } @else if (canEditWeeklyExcuse(excuse)) {
+            } @else if (view() === 'week' && canEditWeeklyExcuse(excuse)) {
             <button type="button" class="weekly-excuse-edit" (click)="startWeeklyExcuseEdit()">تعديل</button>
-            } @else {
-            <p class="weekly-excuse-readonly">انتهت مهلة التعديل لهذا الأسبوع، أو ليست لديك صلاحية التعديل. يمكن العرض فقط.</p>
             }
 
         </section>
