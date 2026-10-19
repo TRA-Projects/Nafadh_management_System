@@ -775,3 +775,99 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
     row-gap: 10px;
   }
 }
+
+/* Reset all notification filters */
+.content-panel > .filter-line .reset-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid #dce4ef;
+  border-radius: 11px;
+  background: #fff;
+  color: #475569;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, color .18s ease;
+}
+.content-panel > .filter-line .reset-filters-btn:not(:disabled):hover {
+  background: #eff5ff;
+  border-color: #a9c2f4;
+  color: #2558a5;
+}
+.content-panel > .filter-line .reset-filters-btn:focus-visible {
+  outline: 3px solid #b5cafa;
+  outline-offset: 2px;
+}
+.content-panel > .filter-line .reset-filters-btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+/* Responsive filter toolbar without horizontal scrolling */
+.content-panel > .filter-line {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 10px;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+  padding: 3px 0 12px;
+  scrollbar-width: none;
+}
+.content-panel > .filter-line > * { flex-shrink: 1; }
+.content-panel > .filter-line .search-box {
+  flex: 1 1 190px;
+  width: auto;
+  min-width: 160px;
+  max-width: 250px;
+  height: 44px;
+}
+.content-panel > .filter-line .single-date {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.content-panel > .filter-line .single-date input {
+  width: 135px;
+  min-width: 0;
+}
+.content-panel > .filter-line .sort-label { flex: 0 1 auto; }
+.content-panel > .filter-line .sort-label select { min-width: 105px; }
+.content-panel > .filter-line .tabs {
+  flex: 0 1 auto;
+  max-width: 100%;
+  overflow: visible;
+  height: 44px;
+  gap: 3px;
+  padding: 3px;
+}
+.content-panel > .filter-line .tabs button {
+  height: 38px;
+  padding: 6px 9px;
+  font-size: 13px;
+}
+.content-panel > .filter-line .tabs button span { font-size: 11px; }
+.content-panel > .filter-line .reset-filters-btn {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding-inline: 11px;
+}
+@media (max-width: 760px) {
+  .content-panel > .filter-line { column-gap: 10px; row-gap: 10px; }
+  .content-panel > .filter-line .search-box {
+    flex: 1 1 180px;
+    width: auto;
+    min-width: 160px;
+    max-width: none;
+  }
+  .content-panel > .filter-line .tabs { flex-wrap: wrap; height: auto; }
+}

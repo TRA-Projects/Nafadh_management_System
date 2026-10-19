@@ -100,7 +100,7 @@ export class CompanyNotifications implements OnInit {
     }
     return Array.from(buckets, ([label, items]) => ({ label, items }));
   });
-  readonly hasFilters = computed(() => this.search().trim() !== '' || this.activeFilter() !== 'all' || this.activeCategory() !== 'all' || !!this.selectedDate());
+  readonly hasFilters = computed(() => this.search().trim() !== '' || this.activeFilter() !== 'all' || this.activeCategory() !== 'all' || !!this.selectedDate() || this.sortOrder() !== 'newest');
 
   ngOnInit(): void { this.fetch(true); }
   load(): void {
@@ -135,7 +135,7 @@ export class CompanyNotifications implements OnInit {
   setSort(value: string): void { this.sortOrder.set(value === 'oldest' ? 'oldest' : 'newest'); }
   setSelectedDate(value: string): void { this.selectedDate.set(value); }
   clearDate(): void { this.selectedDate.set(''); }
-  clearFilters(): void { this.activeFilter.set('all'); this.activeCategory.set('all'); this.search.set(''); this.clearDate(); }
+  clearFilters(): void { this.activeFilter.set('all'); this.activeCategory.set('all'); this.search.set(''); this.clearDate(); this.sortOrder.set('newest'); }
   isPending(id: number): boolean { return this.pendingIds().has(id); }
   markRead(item: NotificationDto): void {
     const id = item.notificationId;
