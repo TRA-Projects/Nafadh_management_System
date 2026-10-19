@@ -45,38 +45,41 @@ namespace Nafadh_Backend.Repositories
 
         // الحفاظ على نتائج المتدرب الحالية
 
+
+        // عرض نتائج المتدرب:
+        // المحاولات المنتهية بسبب المخالفات،
+        // والمحاولات المسلّمة أو المنتهية بعد اكتمال التصحيح اليدوي.
         public async Task<List<NFD_QuizAttempt>> GetTraineeResultsAsync(
             int traineeId)
         {
             return await _context.NFD_QuizAttempts
                 .AsNoTracking()
                 .Include(a => a.Quiz)
-    .ThenInclude(q => q.Batch)
+                    .ThenInclude(q => q.Batch)
                 .Include(a => a.Trainee)
                     .ThenInclude(t => t.User)
                 .Where(a =>
                     a.TraineeId == traineeId &&
+                    (
+                        // المحاولات المنتهية بسبب المخالفات
+                        a.Status == "Terminated" ||
 
-(
-    // إظهار المحاولات التي انتهت بسبب المخالفات
-    a.Status == "Terminated" ||
-
-    // إظهار المحاولات المسلّمة أو المنتهية
-    // بعد اكتمال التصحيح اليدوي للأسئلة المقالية
-    (
-        (a.Status == "Submitted" ||
-         a.Status == "Expired") &&
-        !a.AttemptQuestions.Any(aq =>
-            aq.Question.QuestionType ==
-                Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay &&
-            aq.Answers.Any(answer =>
-                !answer.IsManuallyGraded))
-    )
-)
-
+                        // المحاولات المسلّمة أو المنتهية
+                        // بشرط اكتمال تصحيح الأسئلة المقالية
+                        (
+                            (a.Status == "Submitted" ||
+                             a.Status == "Expired") &&
+                            !a.AttemptQuestions.Any(aq =>
+                                aq.Question.QuestionType ==
+                                    Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay &&
+                                aq.Answers.Any(answer =>
+                                    !answer.IsManuallyGraded))
+                        )
+                    ))
                 .OrderByDescending(a => a.SubmittedAt)
                 .ToListAsync();
         }
+
 
 
         // تفاصيل محاولة المتدرب للمدرب المالك للاختبار
