@@ -180,9 +180,51 @@
 
 </div>
 
-    </div>
+
+<!-- Passed -->
+
+<div class="stat-card">
+
+  <div class="stat-icon green">
+    <i class="fa-solid fa-circle-check"></i>
+  </div>
+
+  <div class="stat-content">
+
+    <span class="stat-label">
+      الناجحون
+    </span>
+
+    <strong>
+      {{ passedCount() }}
+    </strong>
+
+  </div>
+
+</div>
 
 
+<!-- Failed -->
+
+<div class="stat-card">
+
+  <div class="stat-icon red">
+    <i class="fa-solid fa-circle-xmark"></i>
+  </div>
+
+  <div class="stat-content">
+
+    <span class="stat-label">
+      الراسبون
+    </span>
+
+    <strong>
+      {{ failedCount() }}
+    </strong>
+
+  </div>
+</div>
+</div>
     <!-- ==============================
          RESULTS TABLE
     =============================== -->

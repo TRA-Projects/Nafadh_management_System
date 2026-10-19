@@ -440,6 +440,8 @@ namespace Nafadh_Backend
             modelBuilder.Entity<NFD_Session>(entity =>
             {
                 entity.ToTable("NFD_Sessions");
+                entity.Property(e => e.IsRecordingVisibleToTrainees)
+    .HasDefaultValue(false);
                 entity.HasOne(e => e.Batch)
                     .WithMany(p => p.Sessions)
                     .HasForeignKey(e => e.BatchId)

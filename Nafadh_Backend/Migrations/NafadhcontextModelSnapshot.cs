@@ -1771,6 +1771,11 @@ namespace Nafadh_Backend.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<bool>("IsRecordingVisibleToTrainees")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("LearningObjectives")
                         .HasColumnType("nvarchar(max)");
 

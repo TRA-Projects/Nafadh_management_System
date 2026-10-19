@@ -1,0 +1,489 @@
+﻿
+using Microsoft.EntityFrameworkCore;
+using Nafadh_Backend.DTOs;
+using Nafadh_Backend.Enums;
+using Nafadh_Backend.Models;
+
+namespace Nafadh_Backend.Services
+{
+    public class TrainerLiveSessionService
+    {
+        private readonly Nafadhcontext _context;
+
+        public TrainerLiveSessionService(Nafadhcontext context)
+        {
+            _context = context;
+        }
+
+        // Identify the trainer from the authenticated user.
+        public async Task<int?> GetTrainerIdAsync(int userId)
+        {
+            return await _context.NFD_Trainers
+                .AsNoTracking()
+                .Where(t => t.UserId == userId)
+                .Select(t => (int?)t.TrainerId)
+                .FirstOrDefaultAsync();
+        }
+
+        // Check whether a trainer is assigned to a batch.
+        public async Task<bool> HasBatchAccessAsync(
+            int trainerId, int batchId)
+        {
+            return await _context.NFD_BatchTrainers
+                .AsNoTracking()
+                .AnyAsync(bt =>
+                    bt.TrainerId == trainerId &&
+                    bt.BatchId == batchId);
+        }
+
+        // Get a session only if it belongs to this trainer
+        // and the trainer is still assigned to its batch.
+        private async Task<NFD_Session?> FindOwnedSessionAsync(
+            int trainerId, int sessionId)
+        {
+            return await _context.NFD_Sessions
+                .FirstOrDefaultAsync(s =>
+                    s.SessionId == sessionId &&
+                    s.TrainerId == trainerId &&
+                    _context.NFD_BatchTrainers.Any(bt =>
+                        bt.BatchId == s.BatchId &&
+                        bt.TrainerId == trainerId));
+        }
+
+        private static TrainerLiveSessionDto MapSession(
+            NFD_Session session)
+        {
+            return new TrainerLiveSessionDto
+            {
+                SessionId = session.SessionId,
+                BatchId = session.BatchId,
+                TrainerId = session.TrainerId,
+                Topic = session.Topic,
+                SessionDate = session.SessionDate,
+                StartTime = session.StartTime,
+                EndTime = session.EndTime,
+                MeetingLink = session.MeetingLink,
+                LearningObjectives = session.LearningObjectives,
+                Summary = session.Summary,
+                RecordingUrl = session.RecordingUrl,
+                Status = session.Status,
+
+                // Not persisted in the current database schema.
+                IsLive = null,
+                IsRecordingVisibleToTrainees = session.IsRecordingVisibleToTrainees
+            };
+        }
+
+        private static bool IsValidWebexLink(string? link)
+        {
+            if (!Uri.TryCreate(
+                    link,
+                    UriKind.Absolute,
+                    out var uri))
+                return false;
+
+            return uri.Scheme == Uri.UriSchemeHttps &&
+                (uri.Host.Equals(
+                    "webex.com",
+                    StringComparison.OrdinalIgnoreCase)
+                 || uri.Host.EndsWith(
+                    ".webex.com",
+                    StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool IsValidTimeRange(
+            string? startTime,
+            string? endTime)
+        {
+            return TimeOnly.TryParse(startTime, out var start)
+                && TimeOnly.TryParse(endTime, out var end)
+                && end > start;
+        }
+
+        // Retrieve sessions with filters and pagination.
+        public async Task<TrainerLiveSessionPagedResultDto>
+            GetSessionsAsync(
+                int trainerId,
+                TrainerLiveSessionFilterDto filter)
+        {
+            var query = _context.NFD_Sessions
+                .AsNoTracking()
+                .Where(s =>
+                    s.TrainerId == trainerId &&
+                    _context.NFD_BatchTrainers.Any(bt =>
+                        bt.TrainerId == trainerId &&
+                        bt.BatchId == s.BatchId));
+
+            if (filter.BatchId.HasValue)
+                query = query.Where(s =>
+                    s.BatchId == filter.BatchId.Value);
+
+            if (filter.Status.HasValue)
+                query = query.Where(s =>
+                    s.Status == filter.Status.Value);
+
+            if (filter.FromDate.HasValue)
+                query = query.Where(s =>
+                    s.SessionDate >= filter.FromDate.Value);
+
+            if (filter.ToDate.HasValue)
+                query = query.Where(s =>
+                    s.SessionDate <= filter.ToDate.Value);
+
+            if (!string.IsNullOrWhiteSpace(filter.Search))
+            {
+                var search = filter.Search.Trim();
+
+                query = query.Where(s =>
+                    s.Topic != null &&
+                    s.Topic.Contains(search));
+            }
+
+            var page = Math.Max(1, filter.Page);
+            var pageSize = Math.Clamp(filter.PageSize, 1, 100);
+
+            var totalCount = await query.CountAsync();
+
+            var sessions = await query
+                .OrderByDescending(s => s.SessionDate)
+                .ThenByDescending(s => s.SessionId)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new TrainerLiveSessionPagedResultDto
+            {
+                Items = sessions.Select(MapSession).ToList(),
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
+
+        // Retrieve one authorized session.
+        public async Task<TrainerLiveSessionDto?> GetByIdAsync(
+            int trainerId,
+            int sessionId)
+        {
+            var session = await FindOwnedSessionAsync(
+                trainerId, sessionId);
+
+            return session == null
+                ? null
+                : MapSession(session);
+        }
+
+        // Create a new scheduled session.
+        public async Task<TrainerLiveSessionDto> CreateAsync(
+            int trainerId,
+            CreateTrainerLiveSessionDto dto)
+        {
+            if (!await HasBatchAccessAsync(
+                    trainerId, dto.BatchId))
+                throw new UnauthorizedAccessException(
+                    "Trainer is not assigned to this batch.");
+
+            if (string.IsNullOrWhiteSpace(dto.Topic))
+                throw new ArgumentException(
+                    "Session topic is required.");
+
+            if (dto.SessionDate == default)
+                throw new ArgumentException(
+                    "Session date is required.");
+
+            if (!IsValidTimeRange(
+                    dto.StartTime, dto.EndTime))
+                throw new ArgumentException(
+                    "Invalid session time range.");
+
+            if (!IsValidWebexLink(dto.MeetingLink))
+                throw new ArgumentException(
+                    "A valid HTTPS Webex link is required.");
+
+            var session = new NFD_Session
+            {
+                TrainerId = trainerId,
+                BatchId = dto.BatchId,
+                Topic = dto.Topic.Trim(),
+                SessionDate = dto.SessionDate,
+                StartTime = dto.StartTime,
+                EndTime = dto.EndTime,
+                MeetingLink = dto.MeetingLink.Trim(),
+                LearningObjectives = dto.LearningObjectives,
+                Status = NFD_SessionStatus.Scheduled
+            };
+
+            _context.NFD_Sessions.Add(session);
+            await _context.SaveChangesAsync();
+
+            return MapSession(session);
+        }
+
+        // Update a scheduled or postponed session.
+        public async Task<TrainerLiveSessionDto?> UpdateAsync(
+            int trainerId,
+            int sessionId,
+            UpdateTrainerLiveSessionDto dto)
+        {
+            var session = await FindOwnedSessionAsync(
+                trainerId, sessionId);
+
+            if (session == null)
+                return null;
+
+            if (session.Status == NFD_SessionStatus.Completed ||
+                session.Status == NFD_SessionStatus.Cancelled)
+                throw new InvalidOperationException(
+                    "Completed or cancelled sessions cannot be edited.");
+
+            if (dto.Topic != null)
+            {
+                if (string.IsNullOrWhiteSpace(dto.Topic))
+                    throw new ArgumentException(
+                        "Session topic cannot be empty.");
+
+                session.Topic = dto.Topic.Trim();
+            }
+
+            if (dto.SessionDate.HasValue)
+            {
+                if (dto.SessionDate.Value == default)
+                    throw new ArgumentException(
+                        "Invalid session date.");
+
+                session.SessionDate = dto.SessionDate.Value;
+            }
+
+            var startTime = dto.StartTime ?? session.StartTime;
+            var endTime = dto.EndTime ?? session.EndTime;
+
+            if (!IsValidTimeRange(startTime, endTime))
+                throw new ArgumentException(
+                    "Invalid session time range.");
+
+            session.StartTime = startTime;
+            session.EndTime = endTime;
+
+            if (dto.MeetingLink != null)
+            {
+                if (!IsValidWebexLink(dto.MeetingLink))
+                    throw new ArgumentException(
+                        "A valid HTTPS Webex link is required.");
+
+                session.MeetingLink = dto.MeetingLink.Trim();
+            }
+
+            if (dto.LearningObjectives != null)
+                session.LearningObjectives =
+                    dto.LearningObjectives;
+
+            if (dto.Summary != null)
+                session.Summary = dto.Summary;
+
+            await _context.SaveChangesAsync();
+
+            return MapSession(session);
+        }
+
+        // Postpone a session and set its new schedule.
+        public async Task<TrainerLiveSessionDto?> PostponeAsync(
+            int trainerId,
+            int sessionId,
+            PostponeTrainerLiveSessionDto dto)
+        {
+            var session = await FindOwnedSessionAsync(
+                trainerId, sessionId);
+
+            if (session == null)
+                return null;
+
+            if (session.Status != NFD_SessionStatus.Scheduled &&
+                session.Status != NFD_SessionStatus.Postponed)
+                throw new InvalidOperationException(
+                    "This session cannot be postponed.");
+
+            if (!dto.NewSessionDate.HasValue ||
+                dto.NewSessionDate.Value == default ||
+                !IsValidTimeRange(
+                    dto.NewStartTime, dto.NewEndTime))
+                throw new ArgumentException(
+                    "A valid new date and time are required.");
+
+            session.SessionDate = dto.NewSessionDate.Value;
+            session.StartTime = dto.NewStartTime;
+            session.EndTime = dto.NewEndTime;
+            session.Status = NFD_SessionStatus.Postponed;
+
+            // Reason is not stored because the current
+            // session model has no postponement reason field.
+
+            await _context.SaveChangesAsync();
+
+            return MapSession(session);
+        }
+
+        // Change session status using allowed transitions.
+        public async Task<TrainerLiveSessionDto?> ChangeStatusAsync(
+            int trainerId,
+            int sessionId,
+            ChangeTrainerLiveSessionStatusDto dto)
+        {
+            var session = await FindOwnedSessionAsync(
+                trainerId, sessionId);
+
+            if (session == null)
+                return null;
+
+            if (!dto.Status.HasValue ||
+                !Enum.IsDefined(typeof(NFD_SessionStatus),
+                    dto.Status.Value))
+                throw new ArgumentException(
+                    "Invalid session status.");
+
+            var nextStatus = dto.Status.Value;
+
+            if (session.Status == NFD_SessionStatus.Completed ||
+                session.Status == NFD_SessionStatus.Cancelled)
+                throw new InvalidOperationException(
+                    "This session has a final status.");
+
+            if (nextStatus != NFD_SessionStatus.Completed &&
+                nextStatus != NFD_SessionStatus.Cancelled)
+                throw new InvalidOperationException(
+                    "Use the postponement endpoint to reschedule.");
+
+            session.Status = nextStatus;
+
+            // Reason is not stored in the current schema.
+
+            await _context.SaveChangesAsync();
+
+            return MapSession(session);
+        }
+
+        // Save or update the session summary.
+        public async Task<TrainerLiveSessionDto?> UpdateSummaryAsync(
+            int trainerId,
+            int sessionId,
+            UpdateTrainerLiveSessionSummaryDto dto)
+        {
+            var session = await FindOwnedSessionAsync(
+                trainerId, sessionId);
+
+            if (session == null)
+                return null;
+
+            if (session.Status == NFD_SessionStatus.Cancelled)
+                throw new InvalidOperationException(
+                    "Cancelled sessions cannot have summaries.");
+
+            session.Summary = dto.Summary;
+
+            await _context.SaveChangesAsync();
+
+            return MapSession(session);
+        }
+
+        // List attendance records for an authorized session.
+        public async Task<List<TrainerSessionAttendanceDto>?>
+            GetAttendanceAsync(int trainerId, int sessionId)
+        {
+            var session = await FindOwnedSessionAsync(
+                trainerId, sessionId);
+
+            if (session == null)
+                return null;
+
+            return await _context.NFD_SessionAttendances
+                .AsNoTracking()
+                .Where(a => a.SessionId == sessionId)
+                .OrderBy(a => a.TraineeId)
+                .Select(a => new TrainerSessionAttendanceDto
+                {
+                    AttendanceId = a.AttendanceId,
+                    SessionId = a.SessionId,
+                    TraineeId = a.TraineeId,
+                    Status = a.Status,
+                    Note = a.Note
+                })
+                .ToListAsync();
+        }
+
+        // Update an existing attendance record.
+        public async Task<TrainerSessionAttendanceDto?>
+            UpdateAttendanceAsync(
+                int trainerId,
+                int sessionId,
+                int traineeId,
+                UpdateTrainerSessionAttendanceDto dto)
+        {
+            var session = await FindOwnedSessionAsync(
+                trainerId, sessionId);
+
+            if (session == null)
+                return null;
+
+            if (!dto.Status.HasValue ||
+                !Enum.IsDefined(typeof(NFD_AttendanceStatus),
+                    dto.Status.Value))
+                throw new ArgumentException(
+                    "Invalid attendance status.");
+
+            var attendance = await _context.NFD_SessionAttendances
+                .FirstOrDefaultAsync(a =>
+                    a.SessionId == sessionId &&
+                    a.TraineeId == traineeId);
+
+            if (attendance == null)
+                return null;
+
+            attendance.Status = dto.Status.Value;
+            attendance.Note = dto.Note;
+
+            await _context.SaveChangesAsync();
+
+            return new TrainerSessionAttendanceDto
+            {
+                AttendanceId = attendance.AttendanceId,
+                SessionId = attendance.SessionId,
+                TraineeId = attendance.TraineeId,
+                Status = attendance.Status,
+                Note = attendance.Note
+            };
+        }
+        // Control whether trainees can view the session recording.
+        public async Task<TrainerSessionRecordingDto?>
+            UpdateRecordingVisibilityAsync(
+                int trainerId,
+                int sessionId,
+                UpdateTrainerRecordingVisibilityDto dto)
+        {
+            var session = await FindOwnedSessionAsync(
+                trainerId, sessionId);
+
+            if (session == null)
+                return null;
+
+            if (session.Status == NFD_SessionStatus.Cancelled)
+                throw new InvalidOperationException(
+                    "Cannot change recording visibility for a cancelled session.");
+
+            if (string.IsNullOrWhiteSpace(session.RecordingUrl))
+                throw new InvalidOperationException(
+                    "Upload a recording before changing its visibility.");
+
+            session.IsRecordingVisibleToTrainees =
+                dto.IsVisibleToTrainees;
+
+            await _context.SaveChangesAsync();
+
+            return new TrainerSessionRecordingDto
+            {
+                SessionId = session.SessionId,
+                RecordingUrl = session.RecordingUrl,
+                IsVisibleToTrainees =
+                    session.IsRecordingVisibleToTrainees
+            };
+        }
+    }
+}
