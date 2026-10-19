@@ -198,6 +198,21 @@ export interface TrainerLiveSessionFormDto {
   learningObjectives: string;
 }
 
+export type TrainerAttendanceStatus = 0 | 1 | 2 | 3;
+
+export interface TrainerSessionAttendanceDto {
+  attendanceId: number;
+  sessionId: number;
+  traineeId: number;
+  status: TrainerAttendanceStatus | null;
+  note: string | null;
+}
+
+export interface UpdateTrainerSessionAttendanceDto {
+  status: TrainerAttendanceStatus;
+  note: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TrainerApi {
 
@@ -1557,6 +1572,25 @@ getQuizAttemptDetails(
       { status }
     );
   }
+
+getTrainerSessionAttendance(
+  sessionId: number
+): Observable<TrainerSessionAttendanceDto[]> {
+  return this.http.get<TrainerSessionAttendanceDto[]>(
+    `${this.base}/trainer/live-sessions/${sessionId}/attendance`
+  );
+}
+
+updateTrainerSessionAttendance(
+  sessionId: number,
+  traineeId: number,
+  dto: UpdateTrainerSessionAttendanceDto
+): Observable<TrainerSessionAttendanceDto> {
+  return this.http.put<TrainerSessionAttendanceDto>(
+    `${this.base}/trainer/live-sessions/${sessionId}/attendance/${traineeId}`,
+    dto
+  );
+}
 
 }
 

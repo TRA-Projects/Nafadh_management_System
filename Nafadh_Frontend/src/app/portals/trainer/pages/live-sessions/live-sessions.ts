@@ -14,7 +14,9 @@ import { finalize } from 'rxjs';
 import {
     TrainerApi,
     TrainerLiveSessionDto,
-    TrainerLiveSessionFormDto
+    TrainerLiveSessionFormDto,
+    TrainerSessionAttendanceDto,
+    TrainerAttendanceStatus
 } from '../../services/trainer-api';
 
 type SessionStatus =
@@ -67,6 +69,23 @@ export class TrainerLiveSessions implements OnInit {
     showForm = signal(false);
     showCancelModal = signal(false);
     sessionToCancel = signal<LiveSession | null>(null);
+    showAttendanceModal = signal(false);
+    attendanceSession = signal<LiveSession | null>(null);
+    attendanceRows = signal<TrainerSessionAttendanceDto[]>([]);
+    attendanceLoading = signal(false);
+    attendanceSavingId = signal<number | null>(null);
+    attendanceError = signal('');
+    attendanceSuccess = signal('');
+
+    attendanceOptions: {
+        value: TrainerAttendanceStatus;
+        label: string;
+    }[] = [
+            { value: 0, label: 'حاضر' },
+            { value: 1, label: 'غائب' },
+            { value: 2, label: 'متأخر' },
+            { value: 3, label: 'بعذر' }
+        ];
     cancelling = signal(false);
     editingId = signal<number | null>(null);
     errorMessage = signal('');
@@ -443,48 +462,48 @@ export class TrainerLiveSessions implements OnInit {
     }
 
 
-cancelSession(session: LiveSession): void {
-  this.sessionToCancel.set(session);
-  this.showCancelModal.set(true);
-}
-
-closeCancelModal(): void {
-  if (this.cancelling()) return;
-
-  this.showCancelModal.set(false);
-  this.sessionToCancel.set(null);
-}
-
-confirmCancelSession(): void {
-  const session = this.sessionToCancel();
-
-  if (!session || this.cancelling()) return;
-
-  this.cancelling.set(true);
-  this.errorMessage.set('');
-
-  this.api.changeTrainerLiveSessionStatus(
-    session.id,
-    STATUS.Cancelled
-  ).pipe(
-    finalize(() => this.cancelling.set(false))
-  ).subscribe({
-    next: () => {
-      this.showCancelModal.set(false);
-      this.sessionToCancel.set(null);
-      this.activeTab.set('past');
-      this.successMessage.set('تم إلغاء الجلسة بنجاح.');
-      this.loadSessions();
-    },
-    error: err => {
-      this.showCancelModal.set(false);
-      this.sessionToCancel.set(null);
-      this.errorMessage.set(
-        this.getApiError(err, 'تعذر إلغاء الجلسة.')
-      );
+    cancelSession(session: LiveSession): void {
+        this.sessionToCancel.set(session);
+        this.showCancelModal.set(true);
     }
-  });
-}
+
+    closeCancelModal(): void {
+        if (this.cancelling()) return;
+
+        this.showCancelModal.set(false);
+        this.sessionToCancel.set(null);
+    }
+
+    confirmCancelSession(): void {
+        const session = this.sessionToCancel();
+
+        if (!session || this.cancelling()) return;
+
+        this.cancelling.set(true);
+        this.errorMessage.set('');
+
+        this.api.changeTrainerLiveSessionStatus(
+            session.id,
+            STATUS.Cancelled
+        ).pipe(
+            finalize(() => this.cancelling.set(false))
+        ).subscribe({
+            next: () => {
+                this.showCancelModal.set(false);
+                this.sessionToCancel.set(null);
+                this.activeTab.set('past');
+                this.successMessage.set('تم إلغاء الجلسة بنجاح.');
+                this.loadSessions();
+            },
+            error: err => {
+                this.showCancelModal.set(false);
+                this.sessionToCancel.set(null);
+                this.errorMessage.set(
+                    this.getApiError(err, 'تعذر إلغاء الجلسة.')
+                );
+            }
+        });
+    }
 
     private changeStatus(
         session: LiveSession,
@@ -570,9 +589,114 @@ confirmCancelSession(): void {
         };
     }
 
+    openAttendance(session: LiveSession): void {
+  this.attendanceSession.set(session);
+  this.showAttendanceModal.set(true);
+  this.attendanceRows.set([]);
+  this.attendanceError.set('');
+  this.attendanceSuccess.set('');
+
+  this.attendanceLoading.set(true);
+
+  this.api.getTrainerSessionAttendance(session.id)
+    .pipe(finalize(() => this.attendanceLoading.set(false)))
+    .subscribe({
+      next: rows => {
+        this.attendanceRows.set(rows);
+      },
+      error: err => {
+        this.attendanceError.set(
+          this.getApiError(err, 'تعذر تحميل حضور المتدربين.')
+        );
+      }
+    });
+}
+
+    closeAttendance(): void {
+  if (this.attendanceSavingId() !== null) return;
+
+  this.showAttendanceModal.set(false);
+  this.attendanceSession.set(null);
+  this.attendanceRows.set([]);
+  this.attendanceError.set('');
+  this.attendanceSuccess.set('');
+}
+
     goBack(): void {
         this.router.navigate(['/trainer/content'], {
             queryParams: { batchId: this.batchId }
         });
     }
+
+    setAttendanceStatus(
+  traineeId: number,
+  status: TrainerAttendanceStatus
+): void {
+  this.attendanceRows.update(rows =>
+    rows.map(row =>
+      row.traineeId === traineeId
+        ? { ...row, status }
+        : row
+    )
+  );
+}
+
+setAttendanceNote(
+  traineeId: number,
+  note: string
+): void {
+  this.attendanceRows.update(rows =>
+    rows.map(row =>
+      row.traineeId === traineeId
+        ? { ...row, note }
+        : row
+    )
+  );
+}
+
+saveAttendance(row: TrainerSessionAttendanceDto): void {
+  const session = this.attendanceSession();
+
+  if (!session || row.status === null) {
+    this.attendanceError.set('يرجى تحديد حالة الحضور أولًا.');
+    return;
+  }
+
+  if (this.attendanceSavingId() !== null) return;
+
+  this.attendanceSavingId.set(row.traineeId);
+  this.attendanceError.set('');
+  this.attendanceSuccess.set('');
+
+  this.api.updateTrainerSessionAttendance(
+    session.id,
+    row.traineeId,
+    {
+      status: row.status,
+      note: row.note ?? null
+    }
+  )
+    .pipe(finalize(() => this.attendanceSavingId.set(null)))
+    .subscribe({
+      next: saved => {
+        this.attendanceRows.update(rows =>
+          rows.map(item =>
+            item.traineeId === row.traineeId
+              ? { ...item, attendanceId: saved.attendanceId }
+              : item
+          )
+        );
+
+        this.attendanceSuccess.set(
+          `تم حفظ حضور المتدرب رقم ${row.traineeId} بنجاح.`
+        );
+      },
+      error: err => {
+        this.attendanceError.set(
+          this.getApiError(err, 'تعذر حفظ الحضور.')
+        );
+      }
+    });
+}
+
 }
