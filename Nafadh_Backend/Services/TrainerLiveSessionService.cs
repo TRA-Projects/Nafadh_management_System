@@ -334,7 +334,9 @@ namespace Nafadh_Backend.Services
                 session.Status == NFD_SessionStatus.Cancelled)
                 throw new InvalidOperationException(
                     "Completed or cancelled sessions cannot be edited.");
-
+            var oldDate = session.SessionDate;
+            var oldStartTime = session.StartTime;
+            var oldEndTime = session.EndTime;
             if (dto.Topic != null)
             {
                 if (string.IsNullOrWhiteSpace(dto.Topic))
@@ -392,9 +394,24 @@ namespace Nafadh_Backend.Services
             }
 
 
+            var scheduleChanged =
+                oldDate != session.SessionDate ||
+                oldStartTime != session.StartTime ||
+                oldEndTime != session.EndTime;
+
             await _context.SaveChangesAsync();
 
+            if (scheduleChanged)
+            {
+                await NotifyBatchTraineesAsync(
+                    session.BatchId,
+                    "Live Session Schedule Updated",
+                    $"The schedule for '{session.Topic}' has been updated.",
+                    session.SessionId);
+            }
+
             return MapSession(session);
+
         }
 
         // Postpone a session and set its new schedule.
@@ -525,6 +542,7 @@ namespace Nafadh_Backend.Services
         }
 
         // List attendance records for an authorized session.
+
         public async Task<List<TrainerSessionAttendanceDto>?>
             GetAttendanceAsync(int trainerId, int sessionId)
         {
@@ -534,19 +552,33 @@ namespace Nafadh_Backend.Services
             if (session == null)
                 return null;
 
-            return await _context.NFD_SessionAttendances
+            var traineeIds = await _context.NFD_Enrollments
+                .AsNoTracking()
+                .Where(e => e.BatchId == session.BatchId)
+                .Select(e => e.TraineeId)
+                .Distinct()
+                .OrderBy(id => id)
+                .ToListAsync();
+
+            var attendanceRecords = await _context.NFD_SessionAttendances
                 .AsNoTracking()
                 .Where(a => a.SessionId == sessionId)
-                .OrderBy(a => a.TraineeId)
-                .Select(a => new TrainerSessionAttendanceDto
-                {
-                    AttendanceId = a.AttendanceId,
-                    SessionId = a.SessionId,
-                    TraineeId = a.TraineeId,
-                    Status = a.Status,
-                    Note = a.Note
-                })
                 .ToListAsync();
+
+            return traineeIds.Select(traineeId =>
+            {
+                var attendance = attendanceRecords
+                    .FirstOrDefault(a => a.TraineeId == traineeId);
+
+                return new TrainerSessionAttendanceDto
+                {
+                    AttendanceId = attendance?.AttendanceId ?? 0,
+                    SessionId = sessionId,
+                    TraineeId = traineeId,
+                    Status = attendance?.Status,
+                    Note = attendance?.Note
+                };
+            }).ToList();
         }
 
         // Create or update attendance for an enrolled trainee.
