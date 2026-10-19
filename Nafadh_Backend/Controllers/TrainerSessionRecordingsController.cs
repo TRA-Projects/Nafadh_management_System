@@ -38,9 +38,12 @@ namespace Nafadh_Backend.Controllers
         }
 
         // POST: api/trainer/live-sessions/5/recording
+        // Allow up to 500 MB for the video itself.
+        // Multipart requests include additional form overhead.
         [HttpPost("{sessionId:int}/recording")]
         [Consumes("multipart/form-data")]
-        [RequestSizeLimit(524288000)]
+        [RequestSizeLimit(525336576)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 524288000)]
         public async Task<IActionResult> UploadRecording(
             int sessionId,
             [FromForm] IFormFile file)
@@ -86,5 +89,63 @@ namespace Nafadh_Backend.Controllers
                 });
             }
         }
+
+        // GET: api/trainer/live-sessions/5/recording
+        // Stream a private recording to its trainer.
+        [HttpGet("{sessionId:int}/recording")]
+        public async Task<IActionResult> GetRecording(int sessionId)
+        {
+            var trainerId = await GetCurrentTrainerIdAsync();
+
+            if (!trainerId.HasValue)
+                return Unauthorized();
+
+            try
+            {
+                var recording = await _recordingService
+                    .GetRecordingAsync(trainerId.Value, sessionId);
+
+                if (!recording.HasValue)
+                    return NotFound(new
+                    {
+                        message = "Recording not found."
+                    });
+
+                var (filePath, contentType) = recording.Value;
+
+                var stream = new FileStream(
+                    filePath,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.Read);
+
+                return File(
+                    stream,
+                    contentType,
+                    enableRangeProcessing: true);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new
+                {
+                    message = "Session not found."
+                });
+            }
+            catch (InvalidOperationException)
+            {
+                return StatusCode(500, new
+                {
+                    message = "Recording is unavailable."
+                });
+            }
+            catch (IOException)
+            {
+                return NotFound(new
+                {
+                    message = "Recording file is unavailable."
+                });
+            }
+        }
+
     }
 }
