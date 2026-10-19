@@ -24,7 +24,9 @@ namespace Nafadh_Backend.Filters
                     title = "Company access denied",
                     code = denied.Code,
                     detail = denied.Message,
-                    reason = denied.Reason
+                    message = denied.Message,
+                    reason = denied.Reason,
+                    rejectionReason = denied.Reason
                 })
                 {
                     StatusCode = StatusCodes.Status403Forbidden
@@ -48,12 +50,20 @@ namespace Nafadh_Backend.Filters
                 return;
             }
 
-            context.Result = new ObjectResult(new ProblemDetails
+            var problem = new ProblemDetails
             {
                 Status = statusCode,
                 Title = title,
                 Detail = context.Exception.Message
-            })
+            };
+            // Additive extensions so the frontend gets a stable code + message.
+            problem.Extensions["message"] = context.Exception.Message;
+            if (context.Exception is ConflictException { Code: not null } conflict)
+            {
+                problem.Extensions["code"] = conflict.Code;
+            }
+
+            context.Result = new ObjectResult(problem)
             {
                 StatusCode = statusCode
             };
