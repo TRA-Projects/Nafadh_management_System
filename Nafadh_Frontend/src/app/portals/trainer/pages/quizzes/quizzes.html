@@ -95,17 +95,37 @@
     </label>
 
 
-    <select aria-label="تصفية حسب الحالة" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+    <select
+  aria-label="تصفية حسب الحالة"
+  [ngModel]="statusFilter()"
+  (ngModelChange)="statusFilter.set($event)"
+>
 
-      <option value="all">
-        كل الاختبارات
-      </option>
+  <option value="all">
+    كل الاختبارات
+  </option>
 
-      <option value="draft">
-        المسودات
-      </option>
+  <option value="draft">
+    المسودات
+  </option>
 
-    </select>
+  <option value="scheduled">
+    المجدولة
+  </option>
+
+  <option value="open">
+    المفتوحة
+  </option>
+
+  <option value="closed">
+    المغلقة
+  </option>
+
+  <option value="archived">
+    المؤرشفة
+  </option>
+
+</select>
 
 
     <button type="button" class="refresh-btn" (click)="refresh()" [disabled]="loading()">

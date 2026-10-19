@@ -177,10 +177,15 @@ export class TrainerQuizzes implements OnInit {
           .includes(term);
 
 
-      const matchesStatus =
-        filter === 'all' ||
-        (filter === 'draft' &&
-          this.getStatusNumber(quiz.status) === 0);
+      const statusNumber = this.getStatusNumber(quiz.status);
+
+const matchesStatus =
+  filter === 'all' ||
+  (filter === 'draft' && statusNumber === 0) ||
+  (filter === 'scheduled' && statusNumber === 1) ||
+  (filter === 'open' && statusNumber === 2) ||
+  (filter === 'closed' && statusNumber === 3) ||
+  (filter === 'archived' && statusNumber === 4);
 
       return matchesTerm && matchesStatus;
     });
@@ -1256,11 +1261,28 @@ loadQuizQuestions(quizId: number): void {
 
 
   getStatusClass(status: number | string): string {
-    return String(status).toLowerCase() === 'draft' ||
-      String(status) === '0'
-      ? 'draft'
-      : 'other';
+
+  switch (this.getStatusNumber(status)) {
+
+    case 0:
+      return 'draft';
+
+    case 1:
+      return 'scheduled';
+
+    case 2:
+      return 'open';
+
+    case 3:
+      return 'closed';
+
+    case 4:
+      return 'archived';
+
+    default:
+      return 'unknown';
   }
+}
 
 
   formatDate(value: string): string {
