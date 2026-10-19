@@ -1593,7 +1593,14 @@ namespace Nafadh_Backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("IdentityCheckStatus")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<bool>("IsTerminatedByViolation")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("NeedsManualReview")
                         .HasColumnType("bit");
 
                     b.Property<decimal>("Percentage")
@@ -1629,6 +1636,40 @@ namespace Nafadh_Backend.Migrations
                     b.HasIndex("TraineeId");
 
                     b.ToTable("NFD_QuizAttempts", (string)null);
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuizProctoringEvent", b =>
+                {
+                    b.Property<int>("EventId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EventId"));
+
+                    b.Property<int>("AttemptId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("SnapshotFileName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("EventId");
+
+                    b.HasIndex("AttemptId");
+
+                    b.ToTable("NFD_QuizProctoringEvents", (string)null);
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuizQuestion", b =>
@@ -2520,6 +2561,38 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("NFD_Users", (string)null);
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_UserGuideProgress", b =>
+                {
+                    b.Property<int>("ProgressId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProgressId"));
+
+                    b.Property<string>("GuideKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("TraineeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ProgressId");
+
+                    b.HasIndex("TraineeId", "GuideKey")
+                        .IsUnique();
+
+                    b.ToTable("NFD_UserGuideProgress", (string)null);
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Warning", b =>
                 {
                     b.Property<int>("WarningId")
@@ -3379,6 +3452,17 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("Trainee");
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuizProctoringEvent", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_QuizAttempt", "Attempt")
+                        .WithMany()
+                        .HasForeignKey("AttemptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Attempt");
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_QuizQuestion", b =>
                 {
                     b.HasOne("Nafadh_Backend.Models.NFD_QuestionBank", "Question")
@@ -3695,6 +3779,15 @@ namespace Nafadh_Backend.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_UserGuideProgress", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainee", null)
+                        .WithMany()
+                        .HasForeignKey("TraineeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Warning", b =>
