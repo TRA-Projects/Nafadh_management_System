@@ -472,6 +472,7 @@ downloadMyAccountPdf(): Observable<Blob> {
     );
   }
 
+ 
   // ============================================================
   // Warnings
   // ============================================================
@@ -482,6 +483,18 @@ downloadMyAccountPdf(): Observable<Blob> {
       dto
     );
   }
+
+  replyToCompanyWarning(
+    warningId: number,
+    companyId: number,
+    reply: string
+  ) {
+    return this.http.put(
+      `${this.base}/Warning/${warningId}/reply?companyId=${companyId}`,
+      { reply }
+    );
+  }
+
 
   // ============================================================
   // Feedback
