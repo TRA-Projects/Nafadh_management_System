@@ -2321,4 +2321,20 @@ getMaterialUrl(
 
 }
 
+openLiveSessions(): void {
+  if (!this.batchIdInput) {
+    this.errorMessage.set('اختر الدفعة أولاً.');
+    return;
+  }
+
+  this.router.navigate(
+    ['/trainer/live-sessions'],
+    {
+      queryParams: {
+        batchId: this.batchIdInput
+      }
+    }
+  );
+}
+
 }
