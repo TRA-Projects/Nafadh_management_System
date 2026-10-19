@@ -118,7 +118,8 @@ namespace Nafadh_Backend.Services
                 CanPublishData = isTrainer
             };
 
-            var expiresAtUtc = DateTime.UtcNow.AddMinutes(30);
+            // Trainer Portal - Keep join tokens valid for only five minutes.
+            var expiresAtUtc = DateTime.UtcNow.AddMinutes(5);
 
             // Trainer Portal - Sign a JWT using the API Secret.
             // Never send the API Secret to Angular.
@@ -126,7 +127,8 @@ namespace Nafadh_Backend.Services
             var token = new Livekit.Server.Sdk.Dotnet.AccessToken(_apiKey, _apiSecret).WithIdentity(identity)
                 .WithName(participantRole)
                 .WithGrants(grants)
-                .WithTtl(TimeSpan.FromMinutes(30));
+// Trainer Portal - Restrict the time available to initiate a connection.
+.WithTtl(TimeSpan.FromMinutes(5));
             var jwt = token.ToJwt();
 
 
