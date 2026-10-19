@@ -9,10 +9,57 @@ namespace Nafadh_Backend.Services
     public class TrainerLiveSessionService
     {
         private readonly Nafadhcontext _context;
+        private readonly INotificationService _notificationService;
 
-        public TrainerLiveSessionService(Nafadhcontext context)
+        public TrainerLiveSessionService(
+            Nafadhcontext context,
+            INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
+        }
+
+
+        private async Task NotifyBatchTraineesAsync(
+            int batchId,
+            string title,
+            string message,
+            int sessionId)
+        {
+            try
+            {
+                var userIds = await _context.NFD_Enrollments
+                    .AsNoTracking()
+                    .Where(e => e.BatchId == batchId)
+                    .Select(e => e.Trainee.UserId)
+                    .Distinct()
+                    .ToListAsync();
+
+                foreach (var userId in userIds)
+                {
+                    try
+                    {
+                        await _notificationService.CreateAsync(
+                            new CreateNotificationDTO
+                            {
+                                UserId = userId,
+                                Title = title,
+                                Message = message,
+                                RelatedEntity = $"Session:{sessionId}"
+                            });
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine(
+                            $"Failed to notify user {userId} for session {sessionId}: {ex}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(
+                    $"Failed to retrieve notification recipients for session {sessionId}: {ex}");
+            }
         }
 
         // Identify the trainer from the authenticated user.
@@ -216,6 +263,12 @@ namespace Nafadh_Backend.Services
             _context.NFD_Sessions.Add(session);
             await _context.SaveChangesAsync();
 
+            await NotifyBatchTraineesAsync(
+                session.BatchId,
+                "New Live Session",
+                $"A new live session has been scheduled: {session.Topic}.",
+                session.SessionId);
+
             return MapSession(session);
         }
 
@@ -319,6 +372,12 @@ namespace Nafadh_Backend.Services
 
             await _context.SaveChangesAsync();
 
+            await NotifyBatchTraineesAsync(
+                session.BatchId,
+                "Live Session Postponed",
+                $"The live session '{session.Topic}' has been rescheduled.",
+                session.SessionId);
+
             return MapSession(session);
         }
 
@@ -355,8 +414,16 @@ namespace Nafadh_Backend.Services
             session.Status = nextStatus;
 
             // Reason is not stored in the current schema.
-
             await _context.SaveChangesAsync();
+
+            if (nextStatus == NFD_SessionStatus.Cancelled)
+            {
+                await NotifyBatchTraineesAsync(
+                    session.BatchId,
+                    "Live Session Cancelled",
+                    $"The live session '{session.Topic}' has been cancelled.",
+                    session.SessionId);
+            }
 
             return MapSession(session);
         }
@@ -472,10 +539,21 @@ namespace Nafadh_Backend.Services
                 throw new InvalidOperationException(
                     "Upload a recording before changing its visibility.");
 
+            bool wasVisible = session.IsRecordingVisibleToTrainees;
+
             session.IsRecordingVisibleToTrainees =
                 dto.IsVisibleToTrainees;
 
             await _context.SaveChangesAsync();
+
+            if (!wasVisible && dto.IsVisibleToTrainees)
+            {
+                await NotifyBatchTraineesAsync(
+                    session.BatchId,
+                    "Session Recording Available",
+                    $"The recording for '{session.Topic}' is now available.",
+                    session.SessionId);
+            }
 
             return new TrainerSessionRecordingDto
             {
