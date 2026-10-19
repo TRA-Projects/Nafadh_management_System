@@ -218,6 +218,12 @@
     <!-- RESULTS FILTER -->
 
     <div class="results-toolbar">
+      <button type="button" class="export-results-btn" (click)="exportResults()"
+        [disabled]="filteredResults().length === 0">
+        <i class="fa-solid fa-file-export"></i>
+
+        تصدير النتائج
+      </button>
 
       <label class="search-box">
 

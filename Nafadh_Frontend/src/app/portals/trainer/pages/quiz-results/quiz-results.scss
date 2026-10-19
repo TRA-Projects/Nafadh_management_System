@@ -1771,3 +1771,51 @@ tbody tr:hover {
   }
 
 }
+
+/* =========================================
+   EXPORT RESULTS
+========================================= */
+
+.export-results-btn {
+  height: 44px;
+  min-width: 150px;
+  padding: 0 18px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #005baa;
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  white-space: nowrap;
+}
+
+.export-results-btn i {
+  font-size: 15px;
+}
+
+.export-results-btn:hover:not(:disabled) {
+  background: #004987;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 91, 170, 0.18);
+}
+
+.export-results-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.export-results-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

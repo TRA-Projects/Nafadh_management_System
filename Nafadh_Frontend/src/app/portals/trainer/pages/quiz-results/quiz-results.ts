@@ -311,6 +311,76 @@ filteredResults = computed(() => {
     this.attemptDetails.set(null);
 
   }
+
+  exportResults(): void {
+
+  const data = this.filteredResults();
+
+  if (data.length === 0) {
+    this.errorMessage.set(
+      'لا توجد نتائج متاحة للتصدير.'
+    );
+
+    return;
+  }
+
+  const headers = [
+    'اسم المتدرب',
+    'الاختبار',
+    'المحاولة',
+    'الدرجة',
+    'النسبة',
+    'الحالة',
+    'تاريخ التسليم'
+  ];
+
+  const rows = data.map(result => [
+    result.traineeName ?? '',
+    result.quizTitle ?? '',
+    result.attemptNumber ?? '',
+    result.score ?? '',
+    `${result.percentage ?? 0}%`,
+    this.getResultStatusLabel(result),
+    result.submittedAt
+      ? new Date(result.submittedAt).toLocaleString('ar-OM')
+      : 'لم يُسلّم'
+  ]);
+
+  const csv = [
+    headers,
+    ...rows
+  ]
+    .map(row =>
+      row
+        .map(value =>
+          `"${String(value).replace(/"/g, '""')}"`
+        )
+        .join(',')
+    )
+    .join('\n');
+
+  const blob = new Blob(
+    ['\uFEFF' + csv],
+    {
+      type: 'text/csv;charset=utf-8;'
+    }
+  );
+
+  const url =
+    window.URL.createObjectURL(blob);
+
+  const link =
+    document.createElement('a');
+
+  link.href = url;
+
+  link.download =
+    `quiz-results-${this.quizId ?? 'export'}.csv`;
+
+  link.click();
+
+  window.URL.revokeObjectURL(url);
+}
   // =========================================
 // MANUAL ESSAY GRADING
 // =========================================
