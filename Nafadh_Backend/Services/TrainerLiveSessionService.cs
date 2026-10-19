@@ -9,10 +9,57 @@ namespace Nafadh_Backend.Services
     public class TrainerLiveSessionService
     {
         private readonly Nafadhcontext _context;
+        private readonly INotificationService _notificationService;
 
-        public TrainerLiveSessionService(Nafadhcontext context)
+        public TrainerLiveSessionService(
+            Nafadhcontext context,
+            INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
+        }
+
+
+        private async Task NotifyBatchTraineesAsync(
+            int batchId,
+            string title,
+            string message,
+            int sessionId)
+        {
+            try
+            {
+                var userIds = await _context.NFD_Enrollments
+                    .AsNoTracking()
+                    .Where(e => e.BatchId == batchId)
+                    .Select(e => e.Trainee.UserId)
+                    .Distinct()
+                    .ToListAsync();
+
+                foreach (var userId in userIds)
+                {
+                    try
+                    {
+                        await _notificationService.CreateAsync(
+                            new CreateNotificationDTO
+                            {
+                                UserId = userId,
+                                Title = title,
+                                Message = message,
+                                RelatedEntity = $"Session:{sessionId}"
+                            });
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine(
+                            $"Failed to notify user {userId} for session {sessionId}: {ex}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(
+                    $"Failed to retrieve notification recipients for session {sessionId}: {ex}");
+            }
         }
 
         // Identify the trainer from the authenticated user.
@@ -98,6 +145,40 @@ namespace Nafadh_Backend.Services
             return TimeOnly.TryParse(startTime, out var start)
                 && TimeOnly.TryParse(endTime, out var end)
                 && end > start;
+        }
+
+        private async Task<bool> HasSessionConflictAsync(
+            int trainerId,
+            int batchId,
+            DateTime sessionDate,
+            string startTime,
+            string endTime,
+            int? excludeSessionId = null)
+        {
+            var sessions = await _context.NFD_Sessions
+                .AsNoTracking()
+                .Where(s =>
+                    (s.TrainerId == trainerId || s.BatchId == batchId) &&
+                    s.SessionDate.Date == sessionDate.Date &&
+                    (s.Status == NFD_SessionStatus.Scheduled ||
+                     s.Status == NFD_SessionStatus.Postponed) &&
+                    (!excludeSessionId.HasValue ||
+                     s.SessionId != excludeSessionId.Value))
+                .Select(s => new
+                {
+                    s.StartTime,
+                    s.EndTime
+                })
+                .ToListAsync();
+
+            var newStart = TimeOnly.Parse(startTime);
+            var newEnd = TimeOnly.Parse(endTime);
+
+            return sessions.Any(s =>
+                TimeOnly.TryParse(s.StartTime, out var existingStart) &&
+                TimeOnly.TryParse(s.EndTime, out var existingEnd) &&
+                newStart < existingEnd &&
+                newEnd > existingStart);
         }
 
         // Retrieve sessions with filters and pagination.
@@ -200,6 +281,18 @@ namespace Nafadh_Backend.Services
                 throw new ArgumentException(
                     "A valid HTTPS Webex link is required.");
 
+
+            if (await HasSessionConflictAsync(
+                trainerId,
+                dto.BatchId,
+                dto.SessionDate,
+                dto.StartTime!,
+                dto.EndTime!))
+            {
+                throw new InvalidOperationException(
+                    "The trainer or batch already has a session at this time.");
+            }
+
             var session = new NFD_Session
             {
                 TrainerId = trainerId,
@@ -215,6 +308,12 @@ namespace Nafadh_Backend.Services
 
             _context.NFD_Sessions.Add(session);
             await _context.SaveChangesAsync();
+
+            await NotifyBatchTraineesAsync(
+                session.BatchId,
+                "New Live Session",
+                $"A new live session has been scheduled: {session.Topic}.",
+                session.SessionId);
 
             return MapSession(session);
         }
@@ -280,6 +379,19 @@ namespace Nafadh_Backend.Services
             if (dto.Summary != null)
                 session.Summary = dto.Summary;
 
+            if (await HasSessionConflictAsync(
+                trainerId,
+                session.BatchId,
+                session.SessionDate,
+                session.StartTime!,
+                session.EndTime!,
+                session.SessionId))
+            {
+                throw new InvalidOperationException(
+                    "The updated session conflicts with another session.");
+            }
+
+
             await _context.SaveChangesAsync();
 
             return MapSession(session);
@@ -309,6 +421,20 @@ namespace Nafadh_Backend.Services
                 throw new ArgumentException(
                     "A valid new date and time are required.");
 
+
+            if (await HasSessionConflictAsync(
+                trainerId,
+                session.BatchId,
+                dto.NewSessionDate.Value,
+                dto.NewStartTime!,
+                dto.NewEndTime!,
+                session.SessionId))
+            {
+                throw new InvalidOperationException(
+                    "The new session schedule conflicts with another session.");
+            }
+
+
             session.SessionDate = dto.NewSessionDate.Value;
             session.StartTime = dto.NewStartTime;
             session.EndTime = dto.NewEndTime;
@@ -318,6 +444,12 @@ namespace Nafadh_Backend.Services
             // session model has no postponement reason field.
 
             await _context.SaveChangesAsync();
+
+            await NotifyBatchTraineesAsync(
+                session.BatchId,
+                "Live Session Postponed",
+                $"The live session '{session.Topic}' has been rescheduled.",
+                session.SessionId);
 
             return MapSession(session);
         }
@@ -355,8 +487,16 @@ namespace Nafadh_Backend.Services
             session.Status = nextStatus;
 
             // Reason is not stored in the current schema.
-
             await _context.SaveChangesAsync();
+
+            if (nextStatus == NFD_SessionStatus.Cancelled)
+            {
+                await NotifyBatchTraineesAsync(
+                    session.BatchId,
+                    "Live Session Cancelled",
+                    $"The live session '{session.Topic}' has been cancelled.",
+                    session.SessionId);
+            }
 
             return MapSession(session);
         }
@@ -472,10 +612,21 @@ namespace Nafadh_Backend.Services
                 throw new InvalidOperationException(
                     "Upload a recording before changing its visibility.");
 
+            bool wasVisible = session.IsRecordingVisibleToTrainees;
+
             session.IsRecordingVisibleToTrainees =
                 dto.IsVisibleToTrainees;
 
             await _context.SaveChangesAsync();
+
+            if (!wasVisible && dto.IsVisibleToTrainees)
+            {
+                await NotifyBatchTraineesAsync(
+                    session.BatchId,
+                    "Session Recording Available",
+                    $"The recording for '{session.Topic}' is now available.",
+                    session.SessionId);
+            }
 
             return new TrainerSessionRecordingDto
             {
