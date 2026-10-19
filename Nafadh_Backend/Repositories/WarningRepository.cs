@@ -153,5 +153,25 @@ namespace Nafadh_Backend.Repositories
                     w.Evidence != null &&
                     w.Evidence.StartsWith(marker));
         }
+        ///************///////
+        public async Task ReplyToCompanyWarningAsync(
+    int warningId,
+    int companyId,
+    string reply)
+        {
+            var warning = await _context.NFD_Warnings
+                .FirstOrDefaultAsync(w =>
+                    w.WarningId == warningId &&
+                    w.Scope == NFD_WarningScope.Company &&
+                    w.CompanyId == companyId);
+
+            if (warning == null)
+                throw new Exception(
+                    "Warning not found or does not belong to this company.");
+
+            warning.CompanyReply = reply;
+
+            await _context.SaveChangesAsync();
+        }
     }
 }

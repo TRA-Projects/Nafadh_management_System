@@ -6,6 +6,11 @@ export const routes: Routes = [
     path: 'login',
     loadComponent: () => import('./auth-pages/login/login').then((m) => m.Login),
   },
+  // أضيفي هذا المسار المباشر لصفحة تسجيل الشركة قبل الدخول:
+  {
+    path: 'register-company',
+    loadComponent: () => import('./pages/company-register/company-register').then((m) => m.CompanyRegister),
+  },
   {
     path: 'admin',
     loadChildren: () => import('./portals/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
@@ -22,7 +27,5 @@ export const routes: Routes = [
     path: 'trainee',
     loadChildren: () => import('./portals/trainee/trainee.routes').then((m) => m.TRAINEE_ROUTES),
   },
-
-  
   { path: '**', redirectTo: 'login' },
 ];

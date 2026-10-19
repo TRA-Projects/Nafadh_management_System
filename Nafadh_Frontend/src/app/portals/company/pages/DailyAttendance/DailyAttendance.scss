@@ -1077,3 +1077,126 @@ tbody tr.saving {
   color: rgb(44, 44, 44) !important;
   font-weight: 700;
 }
+
+/* Small confirmation popover anchored beside the attendance button. */
+.daily-confirm-actions {
+  position: relative;
+}
+
+.attendance-confirm-popover {
+  position: absolute;
+  z-index: 40;
+  inset-inline-end: 0;
+  top: calc(100% + 10px);
+  width: min(340px, calc(100vw - 32px));
+  padding: 18px;
+  background: #fff;
+  color: #17243b;
+  border: 1px solid #dce4ee;
+  border-radius: 14px;
+  box-shadow: 0 12px 35px rgba(20, 35, 65, .17);
+  text-align: right;
+  line-height: 1.6;
+}
+
+.attendance-confirm-popover strong {
+  display: block;
+  font-size: 15px;
+}
+
+.attendance-confirm-popover p {
+  margin: 6px 0 16px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.attendance-confirm-popover-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.attendance-confirm-popover-actions .btn {
+  min-height: 36px;
+}
+
+@media (max-width: 480px) {
+  .attendance-confirm-popover {
+    inset-inline-end: 0;
+    max-width: calc(100vw - 32px);
+  }
+}
+
+/* Weekly status details: consistent focus visibility and mobile sizing */
+.weekly-excuse-btn:focus-visible,
+.weekly-excuse-dialog button:focus-visible,
+.weekly-excuse-dialog textarea:focus-visible,
+.weekly-excuse-upload:focus-within {
+  outline: 2px solid #1b56fd;
+  outline-offset: 3px;
+}
+
+@media (max-width: 520px) {
+  .weekly-excuse-dialog {
+    padding: 16px;
+    max-height: 90dvh;
+    overflow-y: auto;
+  }
+
+  .weekly-excuse-btn {
+    white-space: normal;
+    max-width: 110px;
+  }
+}
+
+/* Read-only excuse preview with editing available only inside the dialog */
+.weekly-excuse-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.weekly-excuse-reason-text {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.weekly-excuse-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.weekly-excuse-footer .weekly-excuse-action {
+  flex: 1;
+}
+
+.weekly-excuse-edit {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: #1b56fd;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+}
+
+.weekly-excuse-cancel {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  padding: 10px 16px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.weekly-excuse-edit:focus-visible,
+.weekly-excuse-cancel:focus-visible {
+  outline: 2px solid #1b56fd;
+  outline-offset: 3px;
+}

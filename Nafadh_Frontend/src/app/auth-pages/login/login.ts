@@ -1,39 +1,47 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../core/auth/auth.service';
+import { LoginResponseDto } from '../../core/models/dtos';
+import { LoginNotice, describeLoginError } from '../../portals/company/services/registration-messages';
 
 @Component({
   selector: 'app-login',
-  imports: [CommonModule, FormsModule],
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './login.html',
-  styleUrl: './login.scss',
+  styleUrls: ['./login.scss']
 })
 export class Login {
   email = '';
   password = '';
-  loading = signal(false);
-  error = signal<string | null>(null);
+  
+  loading = signal<boolean>(false);
+  notice = signal<LoginNotice | null>(null);
 
-  constructor(private auth: AuthService, private router: Router) {}
+  private router = inject(Router);
+  private authService = inject(AuthService);
 
-  submit() {
-    this.error.set(null);
+  submit(): void {
+    if (this.loading()) return;
+
     this.loading.set(true);
-    this.auth.login(this.email, this.password).subscribe({
-      next: (res) => {
-        this.loading.set(false);
-        this.router.navigateByUrl(this.auth.homeRouteForRole(res.roleName));
-      },
-      error: (err) => {
-        this.loading.set(false);
-        this.error.set(
-          err?.status === 0
-            ? 'تعذر الاتصال بالخادم — تأكد أن الواجهة الخلفية تعمل على https://localhost:7082'
-            : 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
-        );
-      },
-    });
+    this.notice.set(null);
+
+    this.authService.login(this.email, this.password)
+      .pipe(
+        finalize(() => this.loading.set(false))
+      )
+      .subscribe({
+        next: (res: LoginResponseDto) => {
+          const targetRoute = this.authService.homeRouteForRole(res.roleName);
+          this.router.navigate([targetRoute]);
+        },
+        error: (err: unknown) => {
+          this.notice.set(describeLoginError(err));
+        }
+      });
   }
 }

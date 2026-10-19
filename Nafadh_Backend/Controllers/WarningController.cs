@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Services;
+using static Nafadh_Backend.Services.WarningService;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -159,5 +160,25 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(warnings);
         }
+
+        //==========================================/////
+        [HttpPut("{id}/reply")]
+        public async Task<IActionResult> ReplyToCompanyWarning(
+    int id,
+    [FromQuery] int companyId,
+    [FromBody] CompanyWarningReplyDTO dto)
+        {
+            await _service.ReplyToCompanyWarningAsync(
+                id,
+                companyId,
+                dto.Reply);
+
+            return Ok(new
+            {
+                message = "Company reply saved successfully"
+            });
+        }
+
+
     }
 }

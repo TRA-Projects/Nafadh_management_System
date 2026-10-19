@@ -1,0 +1,126 @@
+<div class="register-shell">
+  <main class="register-panel">
+    <div class="brand">
+      <img src="assets/logo.png" alt="نفاذ" class="brand-logo" />
+      <p>منظومة التدريب الموحدة</p>
+    </div>
+
+    @if (!submitted()) {
+      <h1>تسجيل شركة جديدة</h1>
+      <p class="sub">عبّئ بيانات شركتك لتنضم كجهة مستضيفة. يراجع الطلب فريق الهيئة قبل تفعيل الحساب.</p>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <fieldset>
+          <legend>بيانات الشركة</legend>
+
+          <div class="field full">
+            <label for="companyName">اسم الشركة</label>
+            <input id="companyName" class="nfd-input" type="text" formControlName="companyName"
+                   autocomplete="organization" [attr.aria-invalid]="errorOf('companyName') ? 'true' : null"
+                   aria-describedby="companyName-err" />
+            <span class="field-err" id="companyName-err" role="alert">{{ errorOf('companyName') }}</span>
+          </div>
+
+          <div class="field">
+            <label for="commercialRegister">رقم السجل التجاري</label>
+            <input id="commercialRegister" class="nfd-input ltr" type="text" formControlName="commercialRegister"
+                   placeholder="CR-100234" [attr.aria-invalid]="errorOf('commercialRegister') ? 'true' : null"
+                   aria-describedby="commercialRegister-err" />
+            <span class="field-err" id="commercialRegister-err" role="alert">{{ errorOf('commercialRegister') }}</span>
+          </div>
+
+          <div class="field">
+            <label for="workField">مجال العمل</label>
+            <input id="workField" class="nfd-input" type="text" formControlName="workField" list="work-fields"
+                   [attr.aria-invalid]="errorOf('workField') ? 'true' : null" aria-describedby="workField-err" />
+            <datalist id="work-fields">
+              @for (f of workFields; track f) { <option [value]="f"></option> }
+            </datalist>
+            <span class="field-err" id="workField-err" role="alert">{{ errorOf('workField') }}</span>
+          </div>
+
+          <div class="field">
+            <label for="city">المدينة</label>
+            <input id="city" class="nfd-input" type="text" formControlName="city" list="cities"
+                   autocomplete="address-level2" [attr.aria-invalid]="errorOf('city') ? 'true' : null"
+                   aria-describedby="city-err" />
+            <datalist id="cities">
+              @for (c of cities; track c) { <option [value]="c"></option> }
+            </datalist>
+            <span class="field-err" id="city-err" role="alert">{{ errorOf('city') }}</span>
+          </div>
+
+          <div class="field">
+            <label for="phone">هاتف الشركة</label>
+            <input id="phone" class="nfd-input ltr" type="tel" formControlName="phone" placeholder="+968 24123456"
+                   autocomplete="tel" [attr.aria-invalid]="errorOf('phone') ? 'true' : null"
+                   aria-describedby="phone-err" />
+            <span class="field-err" id="phone-err" role="alert">{{ errorOf('phone') }}</span>
+          </div>
+
+          <div class="field full">
+            <label for="address">العنوان</label>
+            <input id="address" class="nfd-input" type="text" formControlName="address"
+                   autocomplete="street-address" [attr.aria-invalid]="errorOf('address') ? 'true' : null"
+                   aria-describedby="address-err" />
+            <span class="field-err" id="address-err" role="alert">{{ errorOf('address') }}</span>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>مشرف الشركة</legend>
+          <p class="hint full">بريد المشرف هو بريد الدخول، وتصله عليه كلمة المرور بعد اعتماد الطلب.</p>
+
+          <div class="field">
+            <label for="supervisorName">الاسم الكامل</label>
+            <input id="supervisorName" class="nfd-input" type="text" formControlName="supervisorName"
+                   autocomplete="name" [attr.aria-invalid]="errorOf('supervisorName') ? 'true' : null"
+                   aria-describedby="supervisorName-err" />
+            <span class="field-err" id="supervisorName-err" role="alert">{{ errorOf('supervisorName') }}</span>
+          </div>
+
+          <div class="field">
+            <label for="email">البريد الإلكتروني</label>
+            <input id="email" class="nfd-input ltr" type="email" formControlName="email"
+                   placeholder="name@company.om" autocomplete="email"
+                   [attr.aria-invalid]="errorOf('email') ? 'true' : null" aria-describedby="email-err" />
+            <span class="field-err" id="email-err" role="alert">{{ errorOf('email') }}</span>
+          </div>
+        </fieldset>
+
+        @if (formError()) {
+          <div class="banner error" role="alert">{{ formError() }}</div>
+        }
+
+        <button class="nfd-btn primary submit-btn" type="submit" [disabled]="loading()">
+          {{ loading() ? 'جاري إرسال الطلب...' : 'إرسال طلب التسجيل' }}
+        </button>
+
+        <p class="login-link">لديك حساب؟ <a routerLink="/login">تسجيل الدخول</a></p>
+      </form>
+    } @else {
+      <section class="done" aria-live="polite">
+        <div class="done-icon" aria-hidden="true">✓</div>
+        <h1>تم إرسال طلبك إلى الهيئة للاعتماد</h1>
+        <p class="sub">
+          استلمنا طلب تسجيل شركتك بالبريد <strong class="ltr">{{ submittedEmail() }}</strong>.
+        </p>
+
+        <ol class="next-steps">
+          <li>تراجع الهيئة بيانات الطلب.</li>
+          <li>يصلك بريد إلكتروني بالنتيجة، وعند الموافقة يتضمن كلمة المرور.</li>
+          <li>تسجّل الدخول وتبدأ بإضافة المدربين.</li>
+        </ol>
+
+        <a routerLink="/login" class="nfd-btn primary back-btn">العودة إلى تسجيل الدخول</a>
+      </section>
+    }
+  </main>
+
+  <aside class="register-hero" aria-hidden="true">
+    <div class="hero-overlay">
+      <h2>بوابة الشركات المستضيفة</h2>
+      <p>إدارة البرامج التدريبية ومتابعة أداء المتدربين في مكان واحد، بعد اعتماد الهيئة لشركتك.</p>
+    </div>
+  </aside>
+</div>
