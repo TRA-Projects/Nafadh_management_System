@@ -165,6 +165,39 @@ export interface QuizAttemptDetailsDto {
   answers: QuizAnswerDetailsDto[];
 }
 
+export interface TrainerLiveSessionDto {
+  sessionId: number;
+  batchId: number;
+  trainerId: number;
+  topic: string | null;
+  sessionDate: string;
+  startTime: string | null;
+  endTime: string | null;
+  meetingLink: string | null;
+  learningObjectives: string | null;
+  summary: string | null;
+  recordingUrl: string | null;
+  status: number | string;
+  isLive: boolean | null;
+  isRecordingVisibleToTrainees: boolean;
+}
+
+export interface TrainerLiveSessionPageDto {
+  items: TrainerLiveSessionDto[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface TrainerLiveSessionFormDto {
+  topic: string;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  meetingLink: string;
+  learningObjectives: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TrainerApi {
 
@@ -265,6 +298,46 @@ export class TrainerApi {
       dto
     );
   }
+
+  
+  // ============================================
+  // LIVE SESSIONS - GET BY BATCH
+  // ============================================
+
+  getBatchLiveSessions(
+    batchId: number
+  ): Observable<SessionDto[]> {
+
+    const params = new HttpParams()
+      .set('batchId', batchId.toString());
+
+    return this.http.get<SessionDto[]>(
+      `${this.base}/Session`,
+      { params }
+    );
+  }
+
+  // ============================================
+  // LIVE SESSIONS - UPDATE
+  // ============================================
+
+  updateSession(
+    sessionId: number,
+    dto: {
+      topic?: string | null;
+      meetingLink?: string | null;
+      learningObjectives?: string | null;
+      recordingUrl?: string | null;
+      summary?: string | null;
+    }
+  ): Observable<void> {
+
+    return this.http.put<void>(
+      `${this.base}/Session/${sessionId}`,
+      dto
+    );
+  }
+
 
   /**
    * Retrieves trainees assigned to a specific batch.
@@ -1429,6 +1502,54 @@ getQuizAttemptDetails(
   );
 }
 
+  // ==========================================
+  // TRAINER LIVE SESSIONS
+  // ==========================================
+
+  getLiveSessionsByBatch(
+    batchId: number,
+    page = 1,
+    pageSize = 100
+  ): Observable<TrainerLiveSessionPageDto> {
+    const params = new HttpParams()
+      .set('batchId', String(batchId))
+      .set('page', String(page))
+      .set('pageSize', String(pageSize));
+
+    return this.http.get<TrainerLiveSessionPageDto>(
+      `${this.base}/trainer/live-sessions`,
+      { params }
+    );
+  }
+
+  createTrainerLiveSession(
+    dto: TrainerLiveSessionFormDto & { batchId: number }
+  ): Observable<TrainerLiveSessionDto> {
+    return this.http.post<TrainerLiveSessionDto>(
+      `${this.base}/trainer/live-sessions`,
+      dto
+    );
+  }
+
+  updateTrainerLiveSession(
+    sessionId: number,
+    dto: TrainerLiveSessionFormDto
+  ): Observable<TrainerLiveSessionDto> {
+    return this.http.put<TrainerLiveSessionDto>(
+      `${this.base}/trainer/live-sessions/${sessionId}`,
+      dto
+    );
+  }
+
+  changeTrainerLiveSessionStatus(
+    sessionId: number,
+    status: number
+  ): Observable<TrainerLiveSessionDto> {
+    return this.http.put<TrainerLiveSessionDto>(
+      `${this.base}/trainer/live-sessions/${sessionId}/status`,
+      { status }
+    );
+  }
 
 }
 
