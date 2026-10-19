@@ -147,6 +147,40 @@ namespace Nafadh_Backend.Services
                 && end > start;
         }
 
+        private async Task<bool> HasSessionConflictAsync(
+            int trainerId,
+            int batchId,
+            DateTime sessionDate,
+            string startTime,
+            string endTime,
+            int? excludeSessionId = null)
+        {
+            var sessions = await _context.NFD_Sessions
+                .AsNoTracking()
+                .Where(s =>
+                    (s.TrainerId == trainerId || s.BatchId == batchId) &&
+                    s.SessionDate.Date == sessionDate.Date &&
+                    (s.Status == NFD_SessionStatus.Scheduled ||
+                     s.Status == NFD_SessionStatus.Postponed) &&
+                    (!excludeSessionId.HasValue ||
+                     s.SessionId != excludeSessionId.Value))
+                .Select(s => new
+                {
+                    s.StartTime,
+                    s.EndTime
+                })
+                .ToListAsync();
+
+            var newStart = TimeOnly.Parse(startTime);
+            var newEnd = TimeOnly.Parse(endTime);
+
+            return sessions.Any(s =>
+                TimeOnly.TryParse(s.StartTime, out var existingStart) &&
+                TimeOnly.TryParse(s.EndTime, out var existingEnd) &&
+                newStart < existingEnd &&
+                newEnd > existingStart);
+        }
+
         // Retrieve sessions with filters and pagination.
         public async Task<TrainerLiveSessionPagedResultDto>
             GetSessionsAsync(
@@ -247,6 +281,18 @@ namespace Nafadh_Backend.Services
                 throw new ArgumentException(
                     "A valid HTTPS Webex link is required.");
 
+
+            if (await HasSessionConflictAsync(
+                trainerId,
+                dto.BatchId,
+                dto.SessionDate,
+                dto.StartTime!,
+                dto.EndTime!))
+            {
+                throw new InvalidOperationException(
+                    "The trainer or batch already has a session at this time.");
+            }
+
             var session = new NFD_Session
             {
                 TrainerId = trainerId,
@@ -333,6 +379,19 @@ namespace Nafadh_Backend.Services
             if (dto.Summary != null)
                 session.Summary = dto.Summary;
 
+            if (await HasSessionConflictAsync(
+                trainerId,
+                session.BatchId,
+                session.SessionDate,
+                session.StartTime!,
+                session.EndTime!,
+                session.SessionId))
+            {
+                throw new InvalidOperationException(
+                    "The updated session conflicts with another session.");
+            }
+
+
             await _context.SaveChangesAsync();
 
             return MapSession(session);
@@ -361,6 +420,20 @@ namespace Nafadh_Backend.Services
                     dto.NewStartTime, dto.NewEndTime))
                 throw new ArgumentException(
                     "A valid new date and time are required.");
+
+
+            if (await HasSessionConflictAsync(
+                trainerId,
+                session.BatchId,
+                dto.NewSessionDate.Value,
+                dto.NewStartTime!,
+                dto.NewEndTime!,
+                session.SessionId))
+            {
+                throw new InvalidOperationException(
+                    "The new session schedule conflicts with another session.");
+            }
+
 
             session.SessionDate = dto.NewSessionDate.Value;
             session.StartTime = dto.NewStartTime;
