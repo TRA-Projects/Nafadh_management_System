@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import * as XLSX from 'xlsx';
 import html2pdf from 'html2pdf.js';
-
+import { CompanyApi } from '../../services/company-api';
 
 type ReportTab =
   | 'att'
@@ -24,9 +24,20 @@ type ReportTab =
   templateUrl: './reports.html',
   styleUrls: ['./reports.scss']
 })
-export class ReportsComponent {
+export class ReportsComponent implements OnInit {
 
+  private readonly companyApi = inject(CompanyApi);
+  private readonly cdr = inject(ChangeDetectorRef);
+
+  companyId = 1;
   activeTab: ReportTab = 'att';
+
+  // مسميات البرامج الثلاثة الفعلية المطابقة للنظام لتصدير Excel
+  attendanceProgramsCards = [
+    { name: 'علم البيانات وتعلم الآلة 27', value: 96 },
+    { name: 'تطوير تطبيقات الويب', value: 94 },
+    { name: 'إدارة قواعد البيانات', value: 91 }
+  ];
 
   attendanceWeeks = [
     { label: 'الأسبوع 27', value: 95.1 },
@@ -77,48 +88,32 @@ export class ReportsComponent {
   ];
 
   achievementPrograms = [
-    { name: 'تطوير تطبيقات الويب', value: 88 },
-    { name: 'تحليل البيانات', value: 84 },
-    { name: 'الأمن السيبراني', value: 82 },
-    { name: 'الدعم الفني', value: 79 },
-    { name: 'التصميم الجرافيكي', value: 90 }
+    { name: 'علم البيانات وتعلم الآلة 27', value: 88 },
+    { name: 'تطوير تطبيقات الويب', value: 84 },
+    { name: 'إدارة قواعد البيانات', value: 82 }
   ];
 
   capacityPrograms = [
     {
-      name: 'تطوير تطبيقات الويب',
+      name: 'علم البيانات وتعلم الآلة 27',
       capacity: 60,
       used: 54,
       remaining: 6,
       percentage: 90
     },
     {
-      name: 'تحليل البيانات',
+      name: 'تطوير تطبيقات الويب',
       capacity: 40,
       used: 38,
       remaining: 2,
       percentage: 95
     },
     {
-      name: 'الأمن السيبراني',
+      name: 'إدارة قواعد البيانات',
       capacity: 25,
       used: 24,
       remaining: 1,
       percentage: 96
-    },
-    {
-      name: 'الدعم الفني',
-      capacity: 15,
-      used: 8,
-      remaining: 7,
-      percentage: 53
-    },
-    {
-      name: 'التصميم الجرافيكي',
-      capacity: 10,
-      used: 4,
-      remaining: 6,
-      percentage: 40
     }
   ];
 
@@ -233,32 +228,40 @@ export class ReportsComponent {
     { name: 'التسويق', value: 78 }
   ];
 
+  ngOnInit(): void {
+    this.loadAttendancePrograms();
+  }
+
+  loadAttendancePrograms(): void {
+    this.companyApi.getCompanyPrograms(this.companyId).subscribe({
+      next: (res: any) => {
+        const data = Array.isArray(res) ? res : (res?.items || res?.data || res?.programs || []);
+        if (Array.isArray(data) && data.length > 0) {
+          // جلب أو تحديث البرامج إن لزم
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading programs attendance', err);
+      }
+    });
+  }
+
   selectTab(tab: ReportTab): void {
     this.activeTab = tab;
   }
 
-  // =========================================================
-  // تصدير Excel
-  // =========================================================
-
   exportExcel(): void {
-
     let data: any[] = [];
     let fileName = 'Nafadh_Report';
 
     switch (this.activeTab) {
-
       case 'att':
-        data = this.attendanceDepartments.map(item => ({
-          'القسم': item.department,
-          'عدد المتدربين': item.trainees,
-          'معدل الحضور': `${item.attendance}%`,
-          'الغياب': item.absence,
-          'التأخر': item.late,
-          'التقييم': item.evaluation
+        data = this.attendanceProgramsCards.map(item => ({
+          'البرنامج': item.name,
+          'معدل الحضور': `${item.value}%`
         }));
-
-        fileName = 'Nafadh_Attendance_Report';
+        fileName = 'Nafadh_Programs_Attendance_Report';
         break;
 
       case 'achieve':
@@ -266,7 +269,6 @@ export class ReportsComponent {
           'البرنامج': item.name,
           'نسبة الإنجاز': `${item.value}%`
         }));
-
         fileName = 'Nafadh_Achievement_Report';
         break;
 
@@ -278,7 +280,6 @@ export class ReportsComponent {
           'المتبقي': item.remaining,
           'الاستغلال': `${item.percentage}%`
         }));
-
         fileName = 'Nafadh_Capacity_Report';
         break;
 
@@ -291,7 +292,6 @@ export class ReportsComponent {
           'آخر تقييم': item.lastEvaluation,
           'الحالة': item.status
         }));
-
         fileName = 'Nafadh_Evaluations_Report';
         break;
 
@@ -302,7 +302,6 @@ export class ReportsComponent {
           'الموعد': item.due,
           'الحالة': this.getTaskStatusText(item.status)
         }));
-
         fileName = 'Nafadh_Tasks_Report';
         break;
 
@@ -316,7 +315,6 @@ export class ReportsComponent {
           'تقييمات معلقة': item.pendingEvaluations,
           'الأداء العام': item.overall
         }));
-
         fileName = 'Nafadh_Supervisors_Comparison_Report';
         break;
     }
@@ -327,231 +325,129 @@ export class ReportsComponent {
     }
 
     const worksheet = XLSX.utils.json_to_sheet(data);
-
-    // ضبط عرض الأعمدة
     const columnWidths = Object.keys(data[0]).map(key => {
       const maxLength = Math.max(
         key.length,
         ...data.map(row => String(row[key] ?? '').length)
       );
-
-      return {
-        wch: Math.min(Math.max(maxLength + 3, 12), 35)
-      };
+      return { wch: Math.min(Math.max(maxLength + 3, 12), 35) };
     });
 
     worksheet['!cols'] = columnWidths;
-
     const workbook = XLSX.utils.book_new();
-
-    XLSX.utils.book_append_sheet(
-      workbook,
-      worksheet,
-      'التقرير'
-    );
-
-    XLSX.writeFile(
-      workbook,
-      `${fileName}.xlsx`
-    );
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'التقرير');
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
   }
 
-  // =========================================================
-// تصدير PDF عربي
-// =========================================================
-exportPdf(): void {
-  const source = document.querySelector('.reports-page') as HTMLElement | null;
+  exportPdf(): void {
+    const source = document.querySelector('.reports-page') as HTMLElement | null;
 
-  if (!source) {
-    alert('تعذر العثور على محتوى التقرير.');
-    return;
-  }
-
-  const clone = source.cloneNode(true) as HTMLElement;
-
-  // إزالة عناصر الواجهة التي لا نريدها داخل PDF
-  clone.querySelector('.page-head')?.remove();
-  clone.querySelector('.tabs')?.remove();
-
-  // إزالة جميع الأزرار من التقرير
-  clone.querySelectorAll('button').forEach(button => {
-    button.remove();
-  });
-
-  // إعداد الصفحة للغة العربية
-  clone.setAttribute('dir', 'rtl');
-
-  clone.style.direction = 'rtl';
-  clone.style.textAlign = 'right';
-  clone.style.background = '#ffffff';
-  clone.style.color = '#111827';
-  clone.style.width = '1120px';
-  clone.style.padding = '20px';
-  clone.style.boxSizing = 'border-box';
-
-  // ضمان اتجاه الجداول
-  clone.querySelectorAll('table').forEach(table => {
-    const element = table as HTMLElement;
-    element.style.direction = 'rtl';
-    element.style.width = '100%';
-  });
-
-  // اسم التقرير حسب التبويب الحالي
-  let reportName = 'تقرير نفاذ';
-
-  switch (this.activeTab) {
-    case 'att':
-      reportName = 'تقرير حضور الشركة';
-      break;
-
-    case 'achieve':
-      reportName = 'تقرير إنجاز المتدربين';
-      break;
-
-    case 'cap':
-      reportName = 'تقرير الطاقة الاستيعابية';
-      break;
-
-    case 'eval':
-      reportName = 'تقرير التقييمات';
-      break;
-
-    case 'tasks':
-      reportName = 'تقرير المهام';
-      break;
-
-    case 'compare':
-      reportName = 'تقرير مقارنة الأقسام والمشرفين';
-      break;
-  }
-
-  // عنوان التقرير
-  const title = document.createElement('div');
-
-  title.style.direction = 'rtl';
-  title.style.textAlign = 'center';
-  title.style.marginBottom = '25px';
-  title.style.paddingBottom = '15px';
-  title.style.borderBottom = '2px solid #00338d';
-
-  title.innerHTML = `
-    <h1 style="
-      margin: 0 0 8px 0;
-      font-size: 24px;
-      font-weight: 700;
-      color: #00338d;
-    ">
-      ${reportName}
-    </h1>
-
-    <div style="
-      font-size: 13px;
-      color: #64748b;
-    ">
-      نظام نفاذ لإدارة التدريب
-    </div>
-
-    <div style="
-      margin-top: 5px;
-      font-size: 12px;
-      color: #94a3b8;
-    ">
-      تاريخ التقرير: ${new Date().toLocaleDateString('ar-OM')}
-    </div>
-  `;
-
-  clone.insertBefore(title, clone.firstChild);
-
-  // إنشاء حاوية مؤقتة
-  const wrapper = document.createElement('div');
-
-  wrapper.style.position = 'absolute';
-  wrapper.style.left = '-10000px';
-  wrapper.style.top = '0';
-  wrapper.style.width = '1160px';
-  wrapper.style.background = '#ffffff';
-  wrapper.style.padding = '20px';
-  wrapper.style.boxSizing = 'border-box';
-
-  wrapper.appendChild(clone);
-  document.body.appendChild(wrapper);
-
-  const options = {
-    margin: 10,
-
-    filename: `${reportName}.pdf`,
-
-    image: {
-      type: 'jpeg' as const,
-      quality: 0.98
-    },
-
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false
-    },
-
-    jsPDF: {
-      unit: 'mm' as const,
-      format: 'a4' as const,
-      orientation: 'landscape' as const
-    },
-
-    pagebreak: {
-      mode: ['css', 'legacy'] as const
+    if (!source) {
+      alert('تعذر العثور على محتوى التقرير.');
+      return;
     }
-  };
 
-  html2pdf()
-    .set(options)
-    .from(clone)
-    .save()
-    .then(() => {
-      wrapper.remove();
-    })
-    .catch((error: unknown) => {
-      console.error('PDF export error:', error);
+    const clone = source.cloneNode(true) as HTMLElement;
 
-      wrapper.remove();
+    clone.querySelector('.page-head')?.remove();
+    clone.querySelector('.tabs')?.remove();
 
-      alert('حدث خطأ أثناء إنشاء ملف PDF.');
+    clone.querySelectorAll('button').forEach(button => {
+      button.remove();
     });
-}
-  // =========================================================
-  // حالة المهام
-  // =========================================================
+
+    clone.setAttribute('dir', 'rtl');
+    clone.style.direction = 'rtl';
+    clone.style.textAlign = 'right';
+    clone.style.background = '#ffffff';
+    clone.style.color = '#111827';
+    clone.style.width = '1120px';
+    clone.style.padding = '20px';
+    clone.style.boxSizing = 'border-box';
+
+    clone.querySelectorAll('table').forEach(table => {
+      const element = table as HTMLElement;
+      element.style.direction = 'rtl';
+      element.style.width = '100%';
+    });
+
+    let reportName = 'تقرير نفاذ';
+    switch (this.activeTab) {
+      case 'att': reportName = 'تقرير حضور المتدربين للبرامج'; break;
+      case 'achieve': reportName = 'تقرير إنجاز المتدربين'; break;
+      case 'cap': reportName = 'تقرير الطاقة الاستيعابية'; break;
+      case 'eval': reportName = 'تقرير التقييمات'; break;
+      case 'tasks': reportName = 'تقرير المهام'; break;
+      case 'compare': reportName = 'تقرير مقارنة الأقسام والمشرفين'; break;
+    }
+
+    const title = document.createElement('div');
+    title.style.direction = 'rtl';
+    title.style.textAlign = 'center';
+    title.style.marginBottom = '25px';
+    title.style.paddingBottom = '15px';
+    title.style.borderBottom = '2px solid #00338d';
+
+    title.innerHTML = `
+      <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700; color: #00338d;">
+        ${reportName}
+      </h1>
+      <div style="font-size: 13px; color: #64748b;">نظام نفاذ لإدارة التدريب</div>
+      <div style="margin-top: 5px; font-size: 12px; color: #94a3b8;">
+        تاريخ التقرير: ${new Date().toLocaleDateString('ar-OM')}
+      </div>
+    `;
+
+    clone.insertBefore(title, clone.firstChild);
+
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '-10000px';
+    wrapper.style.top = '0';
+    wrapper.style.width = '1160px';
+    wrapper.style.background = '#ffffff';
+    wrapper.style.padding = '20px';
+    wrapper.style.boxSizing = 'border-box';
+
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
+
+    const options = {
+      margin: 10,
+      filename: `${reportName}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
+      jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'landscape' as const },
+      pagebreak: { mode: ['css', 'legacy'] as const }
+    };
+
+    html2pdf()
+      .set(options)
+      .from(clone)
+      .save()
+      .then(() => { wrapper.remove(); })
+      .catch((error: unknown) => {
+        console.error('PDF export error:', error);
+        wrapper.remove();
+        alert('حدث خطأ أثناء إنشاء ملف PDF.');
+      });
+  }
 
   getTaskStatusClass(status: string): string {
     switch (status) {
-      case 'review':
-        return 'info';
-
-      case 'pending':
-        return 'warn';
-
-      case 'late':
-        return 'bad';
-
-      default:
-        return 'ok';
+      case 'review': return 'info';
+      case 'pending': return 'warn';
+      case 'late': return 'bad';
+      default: return 'ok';
     }
   }
 
   getTaskStatusText(status: string): string {
     switch (status) {
-      case 'review':
-        return 'قيد المراجعة';
-
-      case 'pending':
-        return 'بانتظار الاستلام';
-
-      case 'late':
-        return 'متأخرة';
-
-      default:
-        return 'مكتملة';
+      case 'review': return 'قيد المراجعة';
+      case 'pending': return 'بانتظار الاستلام';
+      case 'late': return 'متأخرة';
+      default: return 'مكتملة';
     }
   }
 }

@@ -1350,55 +1350,58 @@ export class CompanySupervisors implements OnInit {
 
   }
 
-
-  // =========================================================
+// =========================================================
   // حفظ التوزيع
   // =========================================================
-
-  saveDistribution(): void {
-
-    if (
-      !this.selectedSupervisor
-    ) {
-
+saveDistribution(): void {
+    if (!this.selectedSupervisor) {
       return;
-
     }
 
+    const currentId = this.selectedSupervisor.supervisorId ?? this.selectedSupervisor.id;
 
-    const supervisorId =
-      this.selectedSupervisor
-        .supervisorId;
+    const selectedTrainees = this.traineesList
+      .filter(trainee => trainee.assigned)
+      .map(trainee => trainee.id);
 
+    // 1. حفظ المحددات محلياً
+    this.distributionMap[currentId] = selectedTrainees;
 
-    const selectedTrainees =
-      this.traineesList
-        .filter(
-          trainee =>
-            trainee.assigned
-        )
-        .map(
-          trainee =>
-            trainee.id
-        );
+    // 2. البحث عن المشرف في المصفوفة الرئيسية وتحديث عدده مباشرة
+    const supervisorIndex = this.supervisors.findIndex(
+      s => (s.supervisorId ?? s.id) === currentId
+    );
 
+    if (supervisorIndex !== -1) {
+      if (!this.supervisors[supervisorIndex].stats) {
+        this.supervisors[supervisorIndex].stats = {
+          monthlyEvaluations: 0,
+          attendanceRate: 0,
+          assignedTrainees: 0
+        };
+      }
+      // تحديث الرقم بشكل صريح ومباشر
+      this.supervisors[supervisorIndex].stats.assignedTrainees = selectedTrainees.length;
+    }
 
-    this.distributionMap[
-      supervisorId
-    ] = selectedTrainees;
+    // 3. تحديث الكائن الحالي أيضاً للتأكد
+    if (this.selectedSupervisor.stats) {
+      this.selectedSupervisor.stats.assignedTrainees = selectedTrainees.length;
+    }
 
+    // 4. إعادة حساب الإحصائيات العامة بالصفحة
+    this.calculateStatistics();
 
     this.showToast(
       'success',
-      'تم حفظ توزيع المتدربين'
+      'تم حفظ توزيع المتدربين بنجاح'
     );
 
-
     this.closeDistributeModal();
-
+    
+    // فرض إعادة رسم الواجهة من خلال ChangeDetectorRef
+    this.cdr.detectChanges();
   }
-
-
   // =========================================================
   // الحضور
   // =========================================================
