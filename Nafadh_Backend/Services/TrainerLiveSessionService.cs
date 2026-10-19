@@ -277,9 +277,15 @@ namespace Nafadh_Backend.Services
                 throw new ArgumentException(
                     "Invalid session time range.");
 
-            if (!IsValidWebexLink(dto.MeetingLink))
+            // Trainer Portal - LiveKit sessions do not require a meeting link.
+            // Validate legacy Webex links only when a link is supplied.
+            if (!string.IsNullOrWhiteSpace(dto.MeetingLink) &&
+                !IsValidWebexLink(dto.MeetingLink))
+            {
                 throw new ArgumentException(
-                    "A valid HTTPS Webex link is required.");
+                    "MeetingLink must be a valid HTTPS Webex link when provided.");
+            }
+
 
 
             if (await HasSessionConflictAsync(
@@ -301,7 +307,9 @@ namespace Nafadh_Backend.Services
                 SessionDate = dto.SessionDate,
                 StartTime = dto.StartTime,
                 EndTime = dto.EndTime,
-                MeetingLink = dto.MeetingLink.Trim(),
+                MeetingLink = string.IsNullOrWhiteSpace(dto.MeetingLink)
+    ? null
+    : dto.MeetingLink.Trim(),
                 LearningObjectives = dto.LearningObjectives,
                 Status = NFD_SessionStatus.Scheduled
             };
@@ -365,14 +373,24 @@ namespace Nafadh_Backend.Services
             session.StartTime = startTime;
             session.EndTime = endTime;
 
+
+            // Trainer Portal - External meeting links are optional.
+            // Empty string clears a legacy link; null leaves it unchanged.
             if (dto.MeetingLink != null)
             {
-                if (!IsValidWebexLink(dto.MeetingLink))
+                if (!string.IsNullOrWhiteSpace(dto.MeetingLink) &&
+                    !IsValidWebexLink(dto.MeetingLink))
+                {
                     throw new ArgumentException(
-                        "A valid HTTPS Webex link is required.");
+                        "MeetingLink must be a valid HTTPS Webex link when provided.");
+                }
 
-                session.MeetingLink = dto.MeetingLink.Trim();
+                session.MeetingLink =
+                    string.IsNullOrWhiteSpace(dto.MeetingLink)
+                        ? null
+                        : dto.MeetingLink.Trim();
             }
+
 
             if (dto.LearningObjectives != null)
                 session.LearningObjectives =
