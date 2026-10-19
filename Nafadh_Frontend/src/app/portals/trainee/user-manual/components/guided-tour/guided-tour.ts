@@ -39,6 +39,61 @@ export class GuidedTour implements OnDestroy {
     });
   }
 
+  // إضافة جديدة: تحديد عناصر الجولة بدون تعديل ملفات الصفحات
+  private findTourElement(target: string): Element | undefined {
+    try {
+      // البحث أولاً عن Selector القادم من guide-content.ts
+      const element = document.querySelector(target);
+
+      if (element) {
+        return element;
+      }
+
+      // بدائل لعناصر Dashboard الموجودة في HTML
+      if (target === '[data-guide="dashboard-summary"]') {
+        return (
+          document.querySelector(
+            '.dashboard-viewport-container > div[style*="grid-template-columns: repeat(4, 1fr)"]'
+          ) ?? undefined
+        );
+      }
+
+      if (target === '[data-guide="dashboard-notifications"]') {
+        const heading = Array.from(
+          document.querySelectorAll(
+            '.dashboard-viewport-container h3'
+          )
+        ).find(el =>
+          el.textContent?.includes('التنبيهات الأخيرة')
+        );
+
+        // تحديد بطاقة التنبيهات كاملة بدلاً من العنوان فقط
+        return (
+          heading?.parentElement?.parentElement?.parentElement ??
+          undefined
+        );
+      }
+
+      // تحديد القائمة الجانبية في AppShell
+      if (target === '[data-guide="dashboard-menu"]') {
+        return (
+          document.querySelector(
+            'app-shell aside.sidebar nav .nav-item'
+          ) ?? undefined
+        );
+      }
+
+      return undefined;
+    } catch {
+      console.warn(
+        'Guided Tour: Invalid selector:',
+        target
+      );
+
+      return undefined;
+    }
+  }
+
   private startDriver(steps: GuideStep[]): void {
     console.log('Guided Tour STARTED', steps);
 
@@ -47,19 +102,10 @@ export class GuidedTour implements OnDestroy {
     const validSteps: DriveStep[] = [...steps]
       .sort((a, b) => a.order - b.order)
       .map(step => {
-        let element: Element | undefined;
-
-        if (step.target) {
-          try {
-            element =
-              document.querySelector(step.target) ?? undefined;
-          } catch {
-            console.warn(
-              'Guided Tour: Invalid selector:',
-              step.target
-            );
-          }
-        }
+        // استخدام الدالة الجديدة للعثور على العنصر
+        const element = step.target
+          ? this.findTourElement(step.target)
+          : undefined;
 
         // إذا العنصر غير موجود، تظهر نافذة الشرح بدون تحديد عنصر
         return {
@@ -67,6 +113,14 @@ export class GuidedTour implements OnDestroy {
           popover: {
             title: step.title,
             description: step.description,
+
+            // عرض نافذة شرح القائمة الجانبية على يسار القائمة
+            ...(step.target === '[data-guide="dashboard-menu"]'
+              ? {
+                  side: 'left' as const,
+                  align: 'start' as const,
+                }
+              : {}),
           },
         };
       });
