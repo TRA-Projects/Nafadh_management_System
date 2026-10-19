@@ -42,7 +42,10 @@
 
   <div class="details-kpis-grid-full">
     <div class="kpi-card-full">
-      <div class="kpi-card-header"><span class="kpi-label">المقاعد والإشغال</span><i class="fa-solid fa-users kpi-icon text-indigo"></i></div>
+      <div class="kpi-card-header">
+        <span class="kpi-label">المقاعد والإشغال</span>
+        <i class="fa-solid fa-users kpi-icon text-indigo"></i>
+      </div>
       <div class="kpi-val" dir="ltr">{{ selectedBatch?.totalTraineesCount || 0 }} / {{ selectedBatch?.capacity || 0 }}</div>
       <div class="nfd-progress-bar-bg" style="margin: 10px 0;">
         <div class="nfd-progress-bar-fill" [style.width.%]="getOccupancyPercentage(selectedBatch?.totalTraineesCount, selectedBatch?.capacity)"></div>
@@ -51,23 +54,38 @@
     </div>
 
     <div class="kpi-card-full">
-      <div class="kpi-card-header"><span class="kpi-label">نسبة الإنجاز</span><i class="fa-solid fa-chart-line kpi-icon text-cyan"></i></div>
-      <div class="kpi-val">{{ selectedBatch?.progressPercentage || 53 }}%</div>
-      <div class="kpi-bar-bg"><div class="kpi-bar-fill bg-cyan" [style.width.%]="selectedBatch?.progressPercentage || 53"></div></div>
+      <div class="kpi-card-header">
+        <span class="kpi-label">نسبة الإنجاز</span>
+        <i class="fa-solid fa-chart-line kpi-icon text-cyan"></i>
+      </div>
+      <div class="kpi-val">{{ selectedBatch?.progressPercentage ?? 0 }}%</div>
+      <div class="kpi-bar-bg">
+        <div class="kpi-bar-fill bg-cyan" [style.width.%]="selectedBatch?.progressPercentage || 50"></div>
+      </div>
       <div class="kpi-hint text-cyan">معدل إكمال المواد والدروس</div>
     </div>
 
     <div class="kpi-card-full">
-      <div class="kpi-card-header"><span class="kpi-label">معدل الحضور</span><i class="fa-solid fa-user-check kpi-icon text-emerald"></i></div>
-      <div class="kpi-val">{{ selectedBatch?.attendanceRate || 91 }}%</div>
-      <div class="kpi-bar-bg"><div class="kpi-bar-fill bg-emerald" [style.width.%]="selectedBatch?.attendanceRate || 91"></div></div>
+      <div class="kpi-card-header">
+        <span class="kpi-label">معدل الحضور</span>
+        <i class="fa-solid fa-user-check kpi-icon text-emerald"></i>
+      </div>
+      <div class="kpi-val">{{ selectedBatch?.attendanceRate ?? 0 }}%</div>
+      <div class="kpi-bar-bg">
+        <div class="kpi-bar-fill bg-emerald" [style.width.%]="selectedBatch?.attendanceRate || 90"></div>
+      </div>
       <div class="kpi-hint text-emerald">متوسط انضباط الجلسات</div>
     </div>
 
     <div class="kpi-card-full">
-      <div class="kpi-card-header"><span class="kpi-label">الشهادات الصادرة</span><i class="fa-solid fa-award kpi-icon text-amber"></i></div>
-      <div class="kpi-val">{{ selectedBatch?.issuedCertificatesCount || 4 }}</div>
-      <div class="kpi-bar-bg"><div class="kpi-bar-fill bg-amber" style="width: 35%;"></div></div>
+      <div class="kpi-card-header">
+        <span class="kpi-label">الشهادات الصادرة</span>
+        <i class="fa-solid fa-award kpi-icon text-amber"></i>
+      </div>
+      <div class="kpi-val">{{ selectedBatch?.issuedCertificatesCount ?? 0 }}</div>
+      <div class="kpi-bar-bg">
+        <div class="kpi-bar-fill bg-amber" style="width: 35%;"></div>
+      </div>
       <div class="kpi-hint text-amber">خريجون مؤهلون</div>
     </div>
   </div>
@@ -129,7 +147,7 @@
         <tr *ngFor="let t of selectedBatchTrainees()">
           <td>
             <div class="trainee-user-cell">
-              <img [src]="t.fileUrl || 'https://api.dicebear.com/7.x/initials/svg?seed=' + (t.fullName || t.name)" class="trainee-avatar" />
+              <img [src]="t.fileUrl || 'https://api.dicebear.com/7.x/initials/svg?seed=' + (t.fullName || t.name)" class="trainee-avatar" alt="Avatar" />
               <div>
                 <div class="trainee-name">{{ t.fullName || t.name }}</div>
                 <div class="trainee-email">#{{ t.traineeId || t.id }}</div>
@@ -146,6 +164,9 @@
             </button>
           </td>
         </tr>
+        <tr *ngIf="selectedBatchTrainees().length === 0">
+          <td colspan="5" class="trainees-empty-row">لا يوجد متدربون مسجلون في هذه الدفعة حالياً.</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -156,13 +177,12 @@
 <!-- ========================================================== -->
 <div *ngIf="!isDetailsPageOpen() && !isTraineesPageOpen()" dir="rtl">
 
-  <!-- عنوان الصفحة والشارة المفعلة -->
+  <!-- عنوان الصفحة -->
   <div class="header-banner-flex">
     <div>
       <h2 class="nfd-page-title">البرامج والدفعات</h2>
       <p class="nfd-page-sub">المسارات التدريبية والدفعات واعتماد خطط الشركات</p>
     </div>
-    
   </div>
 
   <!-- التنبيه الذهبي الذكي للخطط المعلقة -->
@@ -170,7 +190,7 @@
     <div class="alert-content-flex">
       <span class="pulsing-dot"></span>
       <i class="fa-regular fa-clock alert-clock-icon"></i>
-      <span>يوجد <strong>{{ pendingPlansCount() }}</strong> دفعات قامت الشركات برفع خطة دراسية لها بانتظار مراجعة وقرار الآدمن (قبول الخطة أو طلب تعديلات).</span>
+      <span>يوجد <strong>{{ pendingPlansCount() }}</strong> خطط تدريبية مقدمة من الشركات بانتظار قرار واعتماد الآدمن.</span>
     </div>
     <div class="alert-buttons-group">
       <button type="button" (click)="planFilter.set('بانتظار الاعتماد'); currentPage.set(1)" class="btn-amber-filter">
@@ -219,7 +239,7 @@
     </div>
   </div>
 
-  <!-- شريط البحث والتصفية المتقدم (مع خطة التدريب) -->
+  <!-- شريط البحث والتصفية المتقدم -->
   <div class="nfd-search-filter-card">
     <div class="filter-card-header">
       <div class="filter-card-presets">
@@ -238,7 +258,6 @@
       </div>
     </div>
 
-    <!-- شبكة الفلاتر -->
     <div class="filter-fields-grid-5">
       <div class="filter-col">
         <label class="filter-field-label">بحث عام</label>
@@ -259,7 +278,6 @@
         </div>
       </div>
 
-      <!-- 🌟 فلتر خطة التدريب (الشركة) 🌟 -->
       <div class="filter-col">
         <label class="filter-field-label">خطة التدريب (الشركة)</label>
         <div class="filter-input-wrapper">
@@ -295,7 +313,7 @@
     </div>
   </div>
 
-  <!-- جدول الدفعات والخطط التدريبية -->
+  <!-- جدول الدفعات والخطط -->
   <div class="nfd-table-container">
     <div class="nfd-table-wrapper">
       <table class="nfd-table">
@@ -330,7 +348,6 @@
             </td>
             <td>{{ batch.companyName || '-' }}</td>
 
-            <!-- شارة حالة خطة الدورة التدريبية -->
             <td class="text-center">
               <span class="plan-status-pill" [ngClass]="{
                 'plan-pending': getBatchPlanStatus(batch) === 'بانتظار الاعتماد',
@@ -353,8 +370,7 @@
 
             <td class="text-center">
               <div class="nfd-actions-wrapper">
-                <!-- زر مراجعة خطة الدورة -->
-                <button type="button" (click)="onViewPlan(batch)" title="مراجعة واعتماد خطة الدورة التدريبية" class="nfd-action-icon-btn action-plan-btn">
+                <button type="button" (click)="onViewPlan(batch)" title="مراجعة واعتماد خطة الدورة" class="nfd-action-icon-btn action-plan-btn">
                   <i class="fa-solid fa-file-circle-check"></i>
                 </button>
                 <button type="button" (click)="onViewTrainees(batch)" title="متدربو هذه الدفعة" class="nfd-action-icon-btn action-trainees-btn">
@@ -374,7 +390,7 @@
     </div>
   </div>
 
-  <!-- ترقيم الصفحات -->
+  <!-- Pagination -->
   <div *ngIf="totalPages() > 1" class="compact-pagination-wrapper">
     <div class="pagination-info">عرض الصفحة {{ currentPage() }} من {{ totalPages() }}</div>
     <div class="pagination-compact-controls">
@@ -386,28 +402,27 @@
 </div>
 
 <!-- ========================================================== -->
-<!-- 4. نافذة مراجعة واعتماد خطة الدورة (Course Plan Review Modal) -->
+<!-- 4. نافذة مراجعة واعتماد خطة الدورة (Review Modal) -->
 <!-- ========================================================== -->
 <div *ngIf="isPlanModalOpen()" (click)="closePlanModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container-plan-review">
     
-    <!-- Header -->
     <div class="plan-review-header">
       <div>
         <div class="plan-title-row">
           <h3 class="plan-title">مراجعة واعتماد خطة الدورة التدريبية</h3>
           <span class="plan-batch-pill">{{ selectedPlanBatch()?.batchName }}</span>
         </div>
-        <p class="plan-sub">الشركة المستضيفة: <strong>{{ selectedPlanBatch()?.companyName || 'شركة تقنية معتمدة' }}</strong> · البرنامج: <strong>{{ getProgramName(selectedPlanBatch()) }}</strong></p>
+        <p class="plan-sub">الشركة المستضيفة: <strong>{{ selectedPlanBatch()?.companyName || 'شركة معتمدة' }}</strong> · البرنامج: <strong>{{ getProgramName(selectedPlanBatch()) }}</strong></p>
       </div>
       <button type="button" (click)="closePlanModal()" class="modal-close-btn">&times;</button>
     </div>
 
-    <!-- التبويبات العلوية -->
+    <!-- التبويبات -->
     <div class="plan-tabs-bar">
       <button type="button" (click)="activePlanTab.set('curriculum')" [class.active]="activePlanTab() === 'curriculum'" class="plan-tab-btn">
         <i class="fa-solid fa-layer-group"></i>
-        <span>المنهج والمراحل ({{ selectedPlan()?.stages?.length || 0 }})</span>
+        <span>المنهج والمراحل ({{ selectedPlan()?.stages?.length || selectedPlan()?.stageCount || 0 }})</span>
       </button>
       <button type="button" (click)="activePlanTab.set('trainers')" [class.active]="activePlanTab() === 'trainers'" class="plan-tab-btn">
         <i class="fa-solid fa-chalkboard-user"></i>
@@ -419,13 +434,11 @@
       </button>
     </div>
 
-    <!-- محتوى التبويبات -->
+    <!-- Body -->
     <div class="plan-body-scroll">
-      
-      <!-- حالة التحميل أو الخطأ -->
       <div *ngIf="isLoadingPlan()" class="plan-loading-box">
         <i class="fa-solid fa-circle-notch fa-spin"></i>
-        <span>جاري تحميل بيانات ومراحل الخطة التدريبية من السيرفر...</span>
+        <span>جاري تحميل بيانات ومراحل الخطة من السيرفر...</span>
       </div>
 
       <div *ngIf="planErrorMessage()" class="plan-error-alert">
@@ -433,17 +446,16 @@
         <span>{{ planErrorMessage() }}</span>
       </div>
 
-      <!-- تبويب 1: المنهج والمراحل -->
+      <!-- تبويب 1: المراحل والمنهج -->
       <div *ngIf="!isLoadingPlan() && activePlanTab() === 'curriculum'" class="curriculum-view">
         <div *ngFor="let stage of selectedPlan()?.stages; let sIdx = index" class="stage-block-card">
           <div class="stage-header">
-            <span class="stage-num">المرحلة {{ stage.stageOrder || sIdx + 1 }}</span>
+            <span class="stage-num">المرحلة {{ stage.stageOrder || stage.orderIndex || sIdx + 1 }}</span>
             <h4 class="stage-title">{{ stage.title || stage.name }}</h4>
             <span class="stage-duration">{{ stage.durationHours || 40 }} ساعة تدريبية</span>
           </div>
           <p class="stage-desc">{{ stage.description || 'تغطية المفاهيم الأساسية والتطبيقات العملية.' }}</p>
 
-          <!-- قائمة عناصر ومواد المرحلة -->
           <div *ngIf="stage.items && stage.items.length > 0" class="stage-items-list">
             <div *ngFor="let itm of stage.items" class="stage-item-row">
               <i class="fa-regular fa-circle-check text-emerald"></i>
@@ -454,7 +466,8 @@
         </div>
 
         <div *ngIf="!selectedPlan()?.stages || selectedPlan()?.stages?.length === 0" class="empty-plan-box">
-          <p>لم تقم الشركة بإضافة مراحل تفصيلية بعد، عنوان الخطة المرفوعة: <strong>{{ selectedPlan()?.title || 'خطة أولية' }}</strong></p>
+          <p>عنوان الخطة المرفوعة من الشركة: <strong>{{ selectedPlan()?.title || 'خطة أولية' }}</strong></p>
+          <p *ngIf="selectedPlan()?.description" class="text-slate-500 mt-2">{{ selectedPlan()?.description }}</p>
         </div>
       </div>
 
@@ -466,35 +479,45 @@
           </div>
           <div class="trainer-info">
             <h4 class="trainer-name">{{ tr.trainerName || tr.fullName || 'المدرب المسجل' }}</h4>
-            <span class="trainer-role">{{ tr.role || 'مدرب تقني رئيسي' }}</span>
+            <span class="trainer-role">{{ tr.specialty || tr.role || 'مدرب تقني رئيسي' }}</span>
             <div class="trainer-contacts">
               <span *ngIf="tr.email"><i class="fa-regular fa-envelope"></i> {{ tr.email }}</span>
               <span *ngIf="tr.phone"><i class="fa-solid fa-phone"></i> {{ tr.phone }}</span>
             </div>
           </div>
         </div>
+        <div *ngIf="!selectedPlan()?.trainers || selectedPlan()?.trainers?.length === 0" class="empty-plan-box">
+          <p>لم يتم تسجيل مدربين في هذه الخطة حتى الآن.</p>
+        </div>
       </div>
 
-      <!-- تبويب 3: قرار الاعتماد أو الرفض -->
+      <!-- تبويب 3: القرار -->
       <div *ngIf="!isLoadingPlan() && activePlanTab() === 'decision'" class="decision-view">
+        <!-- تنبيه الخطأ الداخلي الأنيق -->
+        <div *ngIf="decisionErrorMessage()" class="decision-inline-error">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span>{{ decisionErrorMessage() }}</span>
+          <button type="button" (click)="decisionErrorMessage.set(null)" class="btn-close-inline">&times;</button>
+        </div>
         <div class="decision-grid">
-          
-          <!-- اعتماد الخطة -->
+          <!-- اعتماد -->
           <div class="decision-card approve-card">
             <div class="decision-card-top">
               <i class="fa-regular fa-circle-check approve-icon"></i>
               <div>
                 <h4 class="decision-title">اعتماد الخطة التدريبية</h4>
-                <p class="decision-sub">سيتم اعتماد الخطة رسمياً وإشعار الشركة بالبدء.</p>
+                <p class="decision-sub">سيتم اعتماد الخطة رسمياً وإشعار الشركة فوراً.</p>
               </div>
             </div>
-            <textarea [(ngModel)]="approvalNotes" placeholder="ملاحظات الاعتماد (اختياري)..." rows="3" class="decision-textarea"></textarea>
-            <button type="button" (click)="executeApproval()" [disabled]="isSubmittingDecision()" class="btn-decision-approve">
+            <textarea [(ngModel)]="approvalNotes" placeholder="ملاحظات الاعتماد (اختياري)..." rows="3"
+              class="decision-textarea"></textarea>
+            <button type="button" (click)="executeApproval()" [disabled]="isSubmittingDecision()"
+              class="btn-decision-approve">
               {{ isSubmittingDecision() ? 'جاري الاعتماد...' : 'اعتماد الخطة رسمياً' }}
             </button>
           </div>
-
-          <!-- إرجاع أو رفض الخطة بملاحظات -->
+      
+          <!-- رفض / طلب تعديل -->
           <div class="decision-card reject-card">
             <div class="decision-card-top">
               <i class="fa-solid fa-triangle-exclamation reject-icon"></i>
@@ -503,44 +526,40 @@
                 <p class="decision-sub">حدد الملاحظات المطلوبة لتعيد الشركة تعديل الخطة.</p>
               </div>
             </div>
-
-            <!-- قائمة التعديلات المقترحة الجاهزة -->
+      
             <div class="modifications-checklist">
               <label *ngFor="let mod of defaultModSuggestions" class="mod-checkbox-label">
                 <input type="checkbox" [checked]="selectedModifications.includes(mod)" (change)="toggleModification(mod)">
                 <span>{{ mod }}</span>
               </label>
             </div>
-
-            <!-- إضافة ملاحظة مخصصة -->
+      
             <div class="custom-mod-box">
               <input type="text" [(ngModel)]="customModText" placeholder="اكتب ملاحظة أخرى..." class="custom-mod-input">
               <button type="button" (click)="addCustomModification()" class="btn-add-mod">إضافة</button>
             </div>
-
-            <textarea [(ngModel)]="rejectionNotes" placeholder="شرح تفصيلي إضافي للشركة..." rows="2" class="decision-textarea"></textarea>
-            <button type="button" (click)="executeRejection()" [disabled]="isSubmittingDecision()" class="btn-decision-reject">
+      
+            <textarea [(ngModel)]="rejectionNotes" placeholder="شرح تفصيلي إضافي للشركة..." rows="2"
+              class="decision-textarea"></textarea>
+            <button type="button" (click)="executeRejection()" [disabled]="isSubmittingDecision()"
+              class="btn-decision-reject">
               {{ isSubmittingDecision() ? 'جاري الإرجاع...' : 'إرجاع الخطة للشركة مع الملاحظات' }}
             </button>
           </div>
-
         </div>
       </div>
+      </div>
 
-    </div>
-
-    <!-- Footer -->
     <div class="plan-modal-footer">
       <button type="button" (click)="closePlanModal()" class="btn-close-modal">إغلاق</button>
     </div>
-
   </div>
 </div>
 
-<!-- ========================================== -->
-<!-- 5. باقي الـ Modals (إنشاء دفعة، برنامج، تعديل) -->
-<!-- ========================================== -->
-<!-- Modal: إنشاء دفعة جديدة -->
+<!-- ========================================================== -->
+<!-- 5. Modals (مع كامل رسائل وحدود الفاليديشن) -->
+<!-- ========================================================== -->
+<!-- إنشاء دفعة جديدة -->
 <div *ngIf="isBatchModalOpen" (click)="onCloseBatchModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container">
     <div class="modal-header">
@@ -548,17 +567,33 @@
       <button type="button" (click)="onCloseBatchModal()" class="modal-close-btn">&times;</button>
     </div>
     <form [formGroup]="batchForm" (ngSubmit)="onSubmit()" class="modal-form">
+      
+      <!-- اسم الدفعة -->
       <div class="form-group">
         <label class="form-label">اسم الدفعة <span class="required-star">*</span></label>
-        <input type="text" formControlName="batchName" class="form-input text-right">
+        <input type="text" formControlName="batchName" 
+               [class.input-error]="bf['batchName'].invalid && (bf['batchName'].touched || batchFormSubmitted)"
+               class="form-input text-right">
+        <span *ngIf="bf['batchName'].invalid && (bf['batchName'].touched || batchFormSubmitted)" class="error-msg">
+          اسم الدفعة مطلوب
+        </span>
       </div>
+
+      <!-- البرنامج -->
       <div class="form-group">
         <label class="form-label">البرنامج <span class="required-star">*</span></label>
-        <select formControlName="programId" class="form-select text-right">
+        <select formControlName="programId" 
+                [class.input-error]="bf['programId'].invalid && (bf['programId'].touched || batchFormSubmitted)"
+                class="form-select text-right">
           <option value="" disabled selected>– اختر برنامجاً –</option>
           <option *ngFor="let prog of programs()" [value]="prog.programId">{{ prog.title || prog.name }}</option>
         </select>
+        <span *ngIf="bf['programId'].invalid && (bf['programId'].touched || batchFormSubmitted)" class="error-msg">
+          يرجى اختيار البرنامج
+        </span>
       </div>
+
+      <!-- الشركة -->
       <div class="form-group">
         <label class="form-label">الشركة المستضيفة</label>
         <select formControlName="companyId" class="form-select text-right">
@@ -566,20 +601,47 @@
           <option *ngFor="let comp of companies()" [value]="comp.companyId">{{ comp.companyName }}</option>
         </select>
       </div>
+
+      <!-- التواريخ -->
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">تاريخ البداية <span class="required-star">*</span></label>
-          <input type="date" formControlName="startDate" class="form-input">
+          <input type="date" formControlName="startDate" 
+                 [class.input-error]="bf['startDate'].invalid && (bf['startDate'].touched || batchFormSubmitted)"
+                 class="form-input">
+          <span *ngIf="bf['startDate'].invalid && (bf['startDate'].touched || batchFormSubmitted)" class="error-msg">
+            تاريخ البداية مطلوب
+          </span>
         </div>
         <div class="form-group">
           <label class="form-label">تاريخ النهاية <span class="required-star">*</span></label>
-          <input type="date" formControlName="endDate" class="form-input">
+          <input type="date" formControlName="endDate" 
+                 [class.input-error]="bf['endDate'].invalid && (bf['endDate'].touched || batchFormSubmitted)"
+                 class="form-input">
+          <span *ngIf="bf['endDate'].errors?.['required'] && (bf['endDate'].touched || batchFormSubmitted)" class="error-msg">
+            تاريخ النهاية مطلوب
+          </span>
+          <span *ngIf="bf['endDate'].errors?.['dateRangeInvalid'] && (bf['endDate'].touched || batchFormSubmitted)" class="error-msg">
+            تاريخ النهاية يجب أن يكون بعد البداية
+          </span>
         </div>
       </div>
+
+      <!-- السعة -->
       <div class="form-group">
         <label class="form-label">الطاقة الاستيعابية <span class="required-star">*</span></label>
-        <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="capacity" class="form-input text-right">
+        <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="capacity" 
+               [class.input-error]="bf['capacity'].invalid && (bf['capacity'].touched || batchFormSubmitted)"
+               class="form-input text-right">
+        <span *ngIf="bf['capacity'].invalid && (bf['capacity'].touched || batchFormSubmitted)" class="error-msg">
+          الطاقة الاستيعابية يجب أن تكون 1 على الأقل
+        </span>
       </div>
+
+      <div *ngIf="batchErrorMessage" class="error-msg" style="margin-top: 4px;">
+        {{ batchErrorMessage }}
+      </div>
+
       <div class="modal-footer-buttons">
         <button type="submit" [disabled]="isSubmittingBatch" class="btn-submit-batch">
           {{ isSubmittingBatch ? 'جاري الحفظ...' : 'إنشاء الدفعة' }}
@@ -590,27 +652,53 @@
   </div>
 </div>
 
-<!-- Modal: إنشاء برنامج جديد -->
+<!-- إنشاء برنامج جديد -->
 <div *ngIf="isProgramModalOpen" (click)="onCloseProgramModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container-program">
     <button type="button" (click)="onCloseProgramModal()" class="modal-close-absolute">&times;</button>
     <div class="modal-title-wrapper"><h3 class="modal-title">إنشاء برنامج جديد</h3></div>
     <form [formGroup]="programForm" (ngSubmit)="onSubmitProgram()" class="modal-form-program">
+      
+      <!-- اسم البرنامج -->
       <div class="form-group">
         <label class="form-label">اسم البرنامج <span class="required-star">*</span></label>
-        <input type="text" formControlName="title" class="form-input text-right">
+        <input type="text" formControlName="title" 
+               [class.input-error]="pf['title'].invalid && (pf['title'].touched || programFormSubmitted)"
+               class="form-input text-right">
+        <span *ngIf="pf['title'].invalid && (pf['title'].touched || programFormSubmitted)" class="error-msg">
+          اسم البرنامج مطلوب (حرفين على الأقل)
+        </span>
       </div>
+
+      <!-- المسار -->
       <div class="form-group">
         <label class="form-label">المسار <span class="required-star">*</span></label>
-        <select formControlName="trackId" class="form-select text-right">
+        <select formControlName="trackId" 
+                [class.input-error]="pf['trackId'].invalid && (pf['trackId'].touched || programFormSubmitted)"
+                class="form-select text-right">
           <option [ngValue]="null" disabled selected>– اختر مساراً –</option>
           <option *ngFor="let track of tracks()" [value]="track.trackId || track.id">{{ track.name || track.title }}</option>
         </select>
+        <span *ngIf="pf['trackId'].invalid && (pf['trackId'].touched || programFormSubmitted)" class="error-msg">
+          يرجى اختيار المسار
+        </span>
       </div>
+
+      <!-- المدة -->
       <div class="form-group">
         <label class="form-label">مدة البرنامج (بالأسابيع) <span class="required-star">*</span></label>
-        <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="durationWeeks" class="form-input text-right">
+        <input type="number" min="1" (keydown)="preventNegative($event)" formControlName="durationWeeks" 
+               [class.input-error]="pf['durationWeeks'].invalid && (pf['durationWeeks'].touched || programFormSubmitted)"
+               class="form-input text-right">
+        <span *ngIf="pf['durationWeeks'].invalid && (pf['durationWeeks'].touched || programFormSubmitted)" class="error-msg">
+          مدة البرنامج مطلوبة (أسبوع واحد على الأقل)
+        </span>
       </div>
+
+      <div *ngIf="programErrorMessage" class="error-msg" style="margin-top: 4px;">
+        {{ programErrorMessage }}
+      </div>
+
       <div class="modal-footer-buttons-program">
         <button type="submit" [disabled]="isSubmittingProgram" class="btn-submit-program">
           {{ isSubmittingProgram ? 'جاري الحفظ...' : 'إنشاء البرنامج' }}
@@ -621,7 +709,7 @@
   </div>
 </div>
 
-<!-- Modal: تعديل الدفعة -->
+<!-- تعديل الدفعة -->
 <div *ngIf="isEditModalOpen" (click)="onCloseEditModal()" class="modal-overlay" dir="rtl">
   <div (click)="$event.stopPropagation()" class="modal-container">
     <div class="modal-header">
@@ -631,7 +719,12 @@
     <form [formGroup]="editBatchForm" (ngSubmit)="onSaveBatch()" class="modal-form">
       <div class="form-group">
         <label class="form-label">اسم الدفعة <span class="required-star">*</span></label>
-        <input type="text" formControlName="batchName" class="form-input text-right">
+        <input type="text" formControlName="batchName" 
+               [class.input-error]="ebf['batchName'].invalid && (ebf['batchName'].touched || editBatchFormSubmitted)"
+               class="form-input text-right">
+        <span *ngIf="ebf['batchName'].invalid && (ebf['batchName'].touched || editBatchFormSubmitted)" class="error-msg">
+          اسم الدفعة مطلوب
+        </span>
       </div>
       <div class="form-group">
         <label class="form-label">البرنامج <span class="required-star">*</span></label>
@@ -647,6 +740,9 @@
         <div class="form-group">
           <label class="form-label">تاريخ النهاية <span class="required-star">*</span></label>
           <input type="date" formControlName="endDate" class="form-input">
+          <span *ngIf="ebf['endDate'].errors?.['dateRangeInvalid']" class="error-msg">
+            تاريخ النهاية يجب أن يكون بعد البداية
+          </span>
         </div>
       </div>
       <div class="form-group">
@@ -661,4 +757,15 @@
       </div>
     </form>
   </div>
+</div>
+
+<!-- الإشعار العائم الحديث (Toast Notification) -->
+<div *ngIf="toast()" class="nfd-toast-container" [ngClass]="'toast-' + toast()?.type" dir="rtl">
+  <div class="toast-content">
+    <i *ngIf="toast()?.type === 'success'" class="fa-solid fa-circle-check toast-icon"></i>
+    <i *ngIf="toast()?.type === 'warning'" class="fa-solid fa-triangle-exclamation toast-icon"></i>
+    <i *ngIf="toast()?.type === 'error'" class="fa-solid fa-circle-xmark toast-icon"></i>
+    <span class="toast-message">{{ toast()?.message }}</span>
+  </div>
+  <button type="button" (click)="toast.set(null)" class="toast-close-btn">&times;</button>
 </div>
