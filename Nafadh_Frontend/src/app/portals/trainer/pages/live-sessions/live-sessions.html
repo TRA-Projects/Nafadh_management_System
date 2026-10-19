@@ -217,4 +217,49 @@
     </div>
   }
 
+@if (showCancelModal()) {
+  <div class="cancel-modal-overlay"
+       (click)="closeCancelModal()">
+
+    <div class="cancel-modal"
+         role="alertdialog"
+         aria-modal="true"
+         aria-labelledby="cancel-modal-title"
+         aria-describedby="cancel-modal-description"
+         (click)="$event.stopPropagation()">
+
+      <div class="cancel-modal-icon">
+        <span>!</span>
+      </div>
+
+      <h3 id="cancel-modal-title">إلغاء الجلسة؟</h3>
+
+      <p id="cancel-modal-description">
+        هل أنتِ متأكدة من رغبتك في إلغاء جلسة
+        <strong>{{ sessionToCancel()?.title }}</strong>؟
+        سيتم إشعار المتدربين بإلغاء الجلسة.
+      </p>
+
+      <div class="cancel-modal-actions">
+        <button
+          type="button"
+          class="cancel-modal-confirm"
+          [disabled]="cancelling()"
+          (click)="confirmCancelSession()">
+          {{ cancelling() ? 'جاري الإلغاء...' : 'نعم، إلغاء الجلسة' }}
+        </button>
+
+        <button
+          type="button"
+          class="cancel-modal-back"
+          [disabled]="cancelling()"
+          (click)="closeCancelModal()">
+          العودة
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
 </section>

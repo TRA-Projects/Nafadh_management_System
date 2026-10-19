@@ -653,3 +653,126 @@ textarea:focus-visible {
     padding: 18px;
   }
 }
+
+.cancel-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(10, 22, 60, 0.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(3px);
+}
+
+.cancel-modal {
+  direction: rtl;
+  width: 100%;
+  max-width: 430px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px 28px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(10, 22, 60, 0.18);
+  animation: cancelModalAppear 0.2s ease-out;
+
+  h3 {
+    color: #142c65;
+    font-size: 22px;
+    font-weight: 700;
+    margin: 16px 0 10px;
+  }
+
+  p {
+    color: #71809a;
+    font-size: 14px;
+    line-height: 1.9;
+    margin: 0 0 26px;
+  }
+
+  p strong {
+    color: #142c65;
+    font-weight: 600;
+  }
+}
+
+.cancel-modal-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto;
+  background: #fff0f0;
+  color: #e34d4d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  span {
+    font-size: 34px;
+    font-weight: 700;
+  }
+}
+
+.cancel-modal-actions {
+  display: flex;
+  gap: 12px;
+
+  button {
+    flex: 1;
+    min-height: 45px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.cancel-modal-confirm {
+  border: 1px solid #e34d4d;
+  background: #e34d4d;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: #cc3838;
+  }
+}
+
+.cancel-modal-back {
+  border: 1px solid #dce5f0;
+  background: #fff;
+  color: #142c65;
+
+  &:hover:not(:disabled) {
+    background: #f3f7fc;
+  }
+}
+
+@keyframes cancelModalAppear {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 480px) {
+  .cancel-modal {
+    padding: 26px 20px;
+  }
+
+  .cancel-modal-actions {
+    flex-direction: column;
+  }
+}
+
