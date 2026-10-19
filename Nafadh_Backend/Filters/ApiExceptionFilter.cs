@@ -15,6 +15,24 @@ namespace Nafadh_Backend.Filters
     {
         public void OnException(ExceptionContext context)
         {
+            // Self-registered company that cannot sign in yet: 403 + stable code for the frontend.
+            if (context.Exception is CompanyAccessDeniedException denied)
+            {
+                context.Result = new ObjectResult(new
+                {
+                    status = StatusCodes.Status403Forbidden,
+                    title = "Company access denied",
+                    code = denied.Code,
+                    detail = denied.Message,
+                    reason = denied.Reason
+                })
+                {
+                    StatusCode = StatusCodes.Status403Forbidden
+                };
+                context.ExceptionHandled = true;
+                return;
+            }
+
             var (statusCode, title) = context.Exception switch
             {
                 NotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),

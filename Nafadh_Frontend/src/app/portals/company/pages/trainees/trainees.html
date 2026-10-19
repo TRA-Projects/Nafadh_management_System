@@ -1,134 +1,398 @@
-<div class="page-container">
-  <!-- رأس الصفحة -->
-  <div class="page-head">
+<section class="trainees-page" dir="rtl">
+
+  <header class="page-head">
     <div>
-      <h2 class="nfd-page-title">المتدربون</h2>
-      <p class="nfd-page-sub">المتدربون المقبولون والمربوطون بتخصص معتمد وخطة تدريب وقسم عمل داخل الشركة</p>
+      <h2>قائمة المتدربين</h2>
+      <p>إدارة المتدربين والبحث والتصفية حسب الدفعة والبرنامج والحالة والمشرف وتاريخ المباشرة</p>
     </div>
+
     <div class="actions">
-      <button class="btn btn-outline" (click)="exportList()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <path d="m7 10 5 5 5-5"/>
-          <path d="M12 15V3"/>
-        </svg>
-        تصدير القائمة
+      <button type="button" class="btn outline" (click)="exportExcel()">
+        تصدير Excel
+      </button>
+      <button type="button" class="btn primary" (click)="openAdd()">
+        + تسجيل متدرب جديد
       </button>
     </div>
-  </div>
+  </header>
 
-  <!-- شريط الفلاتر والبحث -->
+  <!-- البحث والتصفية -->
   <div class="filters">
-    <div class="search-box">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-      </svg>
-      <input [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="بحث بالاسم أو البرنامج…" />
+
+    <div class="filter-field search-field">
+      <label for="traineeSearch">بحث عن متدرب</label>
+      <input id="traineeSearch" type="text" placeholder="بحث بالاسم أو الرقم أو المشرف…" [(ngModel)]="search" />
     </div>
 
-    <select class="sel" [ngModel]="batchFilter()" (ngModelChange)="batchFilter.set($event)">
-      <option value="الكل">كل الدفعات</option>
-      @for (b of batches(); track b) { <option [value]="b">{{ b }}</option> }
-    </select>
-
-    <select class="sel" [ngModel]="programFilter()" (ngModelChange)="programFilter.set($event)">
-      <option value="الكل">كل البرامج</option>
-      @for (p of programs(); track p) { <option [value]="p">{{ p }}</option> }
-    </select>
-
-    <select class="sel" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
-      <option value="الكل">كل الحالات</option>
-      @for (s of statuses(); track s) { <option [value]="s">{{ statusLabel(s) }}</option> }
-    </select>
-
-    <!-- حقل فلتر التاريخ -->
-    <div class="date-filter-wrap">
-      <span class="date-label">التاريخ:</span>
-      <input type="date" class="sel date-input" [ngModel]="dateFilter()" (ngModelChange)="dateFilter.set($event)" />
+    <div class="filter-field">
+      <label for="cohortFilter">الدفعة</label>
+      <select id="cohortFilter" [(ngModel)]="cohort">
+        <option value="">كل الدفعات</option>
+        @for (x of cohorts; track x) {
+        <option [value]="x">{{ x }}</option>
+        }
+      </select>
     </div>
 
-    <button class="btn btn-outline btn-sm" (click)="clearFilters()">مسح التصفية</button>
-    <span class="f-count">{{ filtered().length }} متدرب</span>
+    <div class="filter-field">
+      <label for="programFilter">البرنامج</label>
+      <select id="programFilter" [(ngModel)]="program">
+        <option value="">كل البرامج</option>
+        @for (x of programs; track x) {
+        <option [value]="x">{{ x }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="statusFilter">الحالة</label>
+      <select id="statusFilter" [(ngModel)]="status">
+        <option value="">كل الحالات</option>
+        @for (x of statuses; track x.value) {
+        <option [value]="x.value">{{ x.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="supervisorFilter">المشرف</label>
+      <select id="supervisorFilter" [(ngModel)]="supervisor">
+        <option value="">كل المشرفين</option>
+        @for (x of supervisors; track x) {
+        <option [value]="x">{{ x }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-field date-filter">
+      <label for="fromDate">من تاريخ المباشرة</label>
+      <input id="fromDate" type="date" [(ngModel)]="fromDate" [max]="toDate || null" />
+    </div>
+
+    <div class="filter-field date-filter">
+      <label for="toDate">إلى تاريخ المباشرة</label>
+      <input id="toDate" type="date" [(ngModel)]="toDate" [min]="fromDate || null" />
+    </div>
+
+    <div class="filter-bottom">
+      <button type="button" class="btn outline" (click)="clearFilters()">
+        مسح التصفية
+      </button>
+      <span class="result-count">
+        عدد النتائج: {{ filteredTrainees.length }} متدرب
+      </span>
+    </div>
+
   </div>
 
   <!-- جدول المتدربين -->
-  <div class="card">
-    <div class="tbl-wrap">
-      <table class="tbl">
-        <thead>
-          <tr>
-            <th>المتدرب</th>
-            <th>الدفعة</th>
-            <th>البرامج</th>
-            <th>التخصص</th>
-            <th>الحالة</th>
-            <th style="width:1%"></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (e of filtered(); track e.enrollmentId) {
-            <tr>
-              <td>
-                <div class="cell-user">
-                  @if (e.profileImageUrl) {
-                    <img [src]="e.profileImageUrl" alt="{{ e.traineeName }}" class="trainee-img" />
-                  } @else {
-                    <div class="t-avatar" [style.background]="avatarColor(e.traineeName)">{{ initials(e.traineeName)}}</div>
-                  }
-                  <div>
-                    <b>{{ e.traineeName }}</b>
-                    <span>#{{ padId(e.enrollmentId) }}</span>
-                  </div>
-                </div>
-              </td>
-              <td>{{ e.batchName }}</td>
-              <td>
-                <b class="table-cell-title">{{ e.programTitle || '—' }}</b>
-                <span class="table-cell-sub">خطة تدريب عملية</span>
-              </td>
-              <td>
-                <b class="table-cell-title">{{ e.departmentName || '—' }}</b>
-                <span class="table-cell-sub-track">{{ e.trackName || '—' }}</span>
-              </td>
-              <td>
-                <span class="chip" [ngClass]="statusChipClassFor(e)">
-                  <span class="dot"></span>{{ statusLabelFor(e) }}
-                </span>
-              </td>
-              <td class="actions-cell">
-                <div class="row-actions-group">
-                  <!-- زر صفحة التقدم -->
-                  <a [routerLink]="['/company/trainees', e.enrollmentId, 'progress']" class="prog-btn" title="عرض صفحة التقدم">
-                    <nfd-icon name="eye" size="sm" />
-                  </a>
-                  
-                  <!-- حساب GitHub -->
-                  <a class="social-icon-btn github" [class.disabled]="!e.traineeGitHubUrl" [href]="ensureUrl(e.traineeGitHubUrl)" target="_blank" rel="noopener noreferrer" title="حساب GitHub للمتدرب">
-                    <nfd-icon name="github" size="sm" />
-                  </a>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>المتدرب</th>
+          <th>الدفعة</th>
+          <th>البرنامج</th>
+          <th>القسم / المشروع</th>
+          <th>المشرف المباشر</th>
+          <th>الحضور</th>
+          <th>الأداء</th>
+          <th>الحالة</th>
+          <th>تاريخ المباشرة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
 
-                  <!-- حساب LinkedIn -->
-                  <a class="social-icon-btn linkedin" [class.disabled]="!e.traineeLinkedInUrl" [href]="ensureUrl(e.traineeLinkedInUrl)" target="_blank" rel="noopener noreferrer" title="حساب LinkedIn للمتدرب">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14M8.3 18.5v-8.3H5.5v8.3h2.8ZM6.9 9.1a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4Zm12.1 9.4v-4.8c0-2.6-1.4-3.8-3.3-3.8-1.5 0-2.2.8-2.6 1.4v-1.1h-2.8v8.3h2.8v-4.6c0-1.2.2-2.3 1.7-2.3 1.5 0 1.5 1.4 1.5 2.4v4.5H19Z"/>
-                    </svg>
-                  </a>
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+      <tbody>
+        @for (t of filteredTrainees; track t.id) {
+        <tr>
+          <td>
+            <div class="user">
+              <span class="avatar">{{ initials(t.name) }}</span>
+              <div>
+                <b>{{ t.name }}</b>
+                <small>#{{ t.id.toString().padStart(4, '0') }}</small>
+              </div>
+            </div>
+          </td>
 
-    @if (!filtered().length) {
-      <div class="empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-        </svg>
-        <b>لا توجد نتائج مطابقة</b>
-        <span>جرّب تعديل كلمات البحث أو التصفية</span>
-      </div>
-    }
+          <td>{{ t.cohort }}</td>
+          <td>{{ t.program }}</td>
+
+          <td>
+            <b>{{ t.dept }}</b>
+            <small>{{ t.proj }}</small>
+          </td>
+
+          <td>{{ t.sup === '—' ? 'غير معين' : t.sup }}</td>
+
+          <td [class.low]="t.att < 80 && t.att > 0">
+            {{ t.att ? t.att + '%' : '—' }}
+          </td>
+
+          <td [class.low]="t.perf < 70 && t.perf > 0">
+            {{ t.perf ? t.perf + '%' : '—' }}
+          </td>
+
+          <td>
+            <span class="chip" [attr.data-status]="t.status">
+              {{ statusLabel(t.status) }}
+            </span>
+          </td>
+
+          <td>{{ t.start }}</td>
+
+          <td>
+            <div class="actions table-actions">
+
+              <!-- GitHub -->
+              <button type="button" class="icon-btn social-btn github-btn" title="فتح حساب GitHub"
+                aria-label="فتح حساب GitHub" (click)="openSocialLink(t.githubUrl, 'github')">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor"
+                    d="M12 .9a11.1 11.1 0 0 0-3.51 21.63c.55.1.76-.24.76-.53v-2.05c-3.1.67-3.76-1.32-3.76-1.32-.5-1.29-1.23-1.63-1.23-1.63-1.01-.69.08-.68.08-.68 1.12.08 1.71 1.15 1.71 1.15.99 1.7 2.6 1.21 3.23.93.1-.72.39-1.21.7-1.49-2.48-.28-5.09-1.24-5.09-5.5 0-1.22.44-2.21 1.15-2.99-.12-.28-.5-1.42.11-2.95 0 0 .94-.3 3.05 1.14a10.6 10.6 0 0 1 5.56 0c2.12-1.44 3.05-1.14 3.05-1.14.61 1.53.23 2.67.11 2.95.72.78 1.15 1.77 1.15 2.99 0 4.27-2.61 5.21-5.1 5.49.4.35.75 1.02.75 2.06V22c0 .29.2.63.77.53A11.1 11.1 0 0 0 12 .9Z" />
+                </svg>
+              </button>
+
+              <!-- LinkedIn -->
+              <button type="button" class="icon-btn social-btn linkedin-btn" title="فتح حساب LinkedIn"
+                aria-label="فتح حساب LinkedIn" (click)="openSocialLink(t.linkedinUrl, 'linkedin')">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor"
+                    d="M20.45 2H3.55C2.69 2 2 2.68 2 3.52v16.96c0 .84.69 1.52 1.55 1.52h16.9c.86 0 1.55-.68 1.55-1.52V3.52c0-.84-.69-1.52-1.55-1.52ZM7.93 18.7H4.98V9.2h2.95v9.5ZM6.46 7.9a1.71 1.71 0 1 1 0-3.42 1.71 1.71 0 0 1 0 3.42Zm12.25 10.8h-2.94v-4.62c0-1.1-.02-2.52-1.54-2.52-1.54 0-1.78 1.2-1.78 2.44v4.7H9.51V9.2h2.82v1.3h.04c.39-.75 1.35-1.54 2.78-1.54 2.97 0 3.56 1.95 3.56 4.48v5.26Z" />
+                </svg>
+              </button>
+
+              <!-- عرض تفاصيل وتقييمات المتدرب -->
+              <button type="button" class="icon-btn view-btn" title="عرض تفاصيل المتدرب" aria-label="عرض تفاصيل المتدرب"
+                (click)="openTraineeDetails(t)">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" fill="none" stroke="currentColor"
+                    stroke-width="1.8" />
+                  <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8" />
+                </svg>
+              </button>
+
+             
+            </div>
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td colspan="10" class="empty">
+            لا توجد نتائج مطابقة للبحث أو الفترة المحددة.
+            جرّبي تعديل التواريخ أو مسح التصفية.
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
   </div>
-</div>
+
+  <!-- النوافذ المنبثقة -->
+  @if (modal) {
+  <div class="backdrop" (click)="closeModal()">
+    <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+
+      <div class="modal-head">
+        <h3>
+          {{
+          modal === 'add'
+          ? 'تسجيل متدرب جديد'
+          : modal === 'profile'
+          ? 'الملف المختصر للمتدرب'
+          : modal === 'assign'
+          ? 'تعيين مشرف مباشر'
+          : 'تغيير حالة المتدرب'
+          }}
+        </h3>
+
+        <button type="button" class="icon-btn close-btn" aria-label="إغلاق" (click)="closeModal()">
+          ✕
+        </button>
+      </div>
+
+      <!-- الملف المختصر -->
+      @if (modal === 'profile' && selected) {
+      <div class="profile">
+        <div class="profile-heading">
+          <span class="avatar large-avatar">
+            {{ initials(selected.name) }}
+          </span>
+          <div>
+            <h3>{{ selected.name }}</h3>
+            <p>{{ selected.cohort }} — {{ selected.program }}</p>
+          </div>
+        </div>
+
+        <div class="details">
+          <div>الرقم: {{ selected.id }}</div>
+          <div>الحالة: {{ statusLabel(selected.status) }}</div>
+          <div>القسم: {{ selected.dept }}</div>
+          <div>المشروع: {{ selected.proj }}</div>
+          <div>المشرف: {{ selected.sup }}</div>
+          <div>الحضور: {{ selected.att }}%</div>
+          <div>الأداء: {{ selected.perf }}%</div>
+          <div>تقييمات معلقة: {{ selected.pend }}</div>
+          <div>الغياب: {{ selected.abs }}</div>
+          <div>التأخر: {{ selected.late }}</div>
+          <div>المباشرة: {{ selected.start }}</div>
+          <div>النهاية: {{ selected.end }}</div>
+        </div>
+
+        <div class="social-links-editor">
+          <h4>روابط الحسابات الشخصية</h4>
+
+          <label>
+            رابط GitHub
+            <input type="url" [(ngModel)]="selected.githubUrl" placeholder="https://github.com/username" dir="ltr" />
+          </label>
+
+          <label>
+            رابط LinkedIn
+            <input type="url" [(ngModel)]="selected.linkedinUrl" placeholder="https://www.linkedin.com/in/username"
+              dir="ltr" />
+          </label>
+
+          <button type="button" class="btn primary" (click)="saveProfileLinks()">
+            حفظ الروابط
+          </button>
+        </div>
+      </div>
+      }
+
+      <!-- إضافة متدرب -->
+      @if (modal === 'add') {
+      <div class="fields">
+        <label>
+          اسم المتدرب
+          <input [(ngModel)]="draft.name" />
+        </label>
+
+        <label>
+          الدفعة
+          <select [(ngModel)]="draft.cohort">
+            @for (x of cohorts; track x) {
+            <option [value]="x">{{ x }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          البرنامج
+          <select [(ngModel)]="draft.program">
+            @for (x of programs; track x) {
+            <option [value]="x">{{ x }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          القسم
+          <input [(ngModel)]="draft.dept" />
+        </label>
+
+        <label>
+          المشروع
+          <input [(ngModel)]="draft.proj" />
+        </label>
+
+        <label>
+          المشرف
+          <select [(ngModel)]="draft.sup">
+            <option value="—">غير معين</option>
+            @for (x of supervisors; track x) {
+            <option [value]="x">{{ x }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          تاريخ المباشرة
+          <input type="date" [(ngModel)]="draft.start" />
+        </label>
+
+        <label>
+          تاريخ النهاية
+          <input type="date" [(ngModel)]="draft.end" />
+        </label>
+
+        <label>
+          رابط GitHub (اختياري)
+          <input type="url" [(ngModel)]="draft.githubUrl" placeholder="https://github.com/username" dir="ltr" />
+        </label>
+
+        <label>
+          رابط LinkedIn (اختياري)
+          <input type="url" [(ngModel)]="draft.linkedinUrl" placeholder="https://www.linkedin.com/in/username"
+            dir="ltr" />
+        </label>
+      </div>
+      }
+
+      <!-- تعيين مشرف -->
+      @if (modal === 'assign' && selected) {
+      <div class="fields">
+        <label>
+          المتدرب
+          <input [value]="selected.name" disabled />
+        </label>
+
+        <label>
+          المشرف
+          <select [(ngModel)]="draft.sup">
+            <option value="—">غير معين</option>
+            @for (x of supervisors; track x) {
+            <option [value]="x">{{ x }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          القسم
+          <input [(ngModel)]="draft.dept" />
+        </label>
+
+        <label>
+          تاريخ المباشرة
+          <input type="date" [(ngModel)]="draft.start" />
+        </label>
+
+        <label>
+          تاريخ النهاية
+          <input type="date" [(ngModel)]="draft.end" />
+        </label>
+      </div>
+      }
+
+      <!-- تغيير الحالة -->
+      @if (modal === 'status' && selected) {
+      <div class="fields">
+        <label>
+          الحالة الجديدة
+          <select [(ngModel)]="draft.status">
+            @for (x of statuses; track x.value) {
+            <option [value]="x.value">{{ x.label }}</option>
+            }
+          </select>
+        </label>
+      </div>
+      }
+
+      <div class="modal-actions">
+        <button type="button" class="btn outline" (click)="closeModal()">
+          إغلاق
+        </button>
+
+        @if (modal !== 'profile') {
+        <button type="button" class="btn primary" (click)="save()">
+          حفظ
+        </button>
+        }
+      </div>
+
+    </div>
+  </div>
+  }
+
+</section>

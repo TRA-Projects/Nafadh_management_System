@@ -238,6 +238,61 @@
       </div>
     </div>
 
+    @if (plansOverview(); as plans) {
+      <div class="card card-pad plans-card">
+        <div class="card-title">
+          <span>خطط الكورسات (المهام والمشروعات)</span>
+          <button
+            class="btn btn-outline btn-sm"
+            type="button"
+            (click)="openPlans()">عرض الخطط</button>
+        </div>
+
+        <div class="plans-stats">
+          <div class="plans-stat">
+            <b>{{ plans.counts.pendingApproval }}</b>
+            <span>بانتظار اعتماد الهيئة</span>
+          </div>
+          <div class="plans-stat">
+            <b>{{ plans.counts.inProgress }}</b>
+            <span>قيد التنفيذ</span>
+          </div>
+          <div class="plans-stat" [class.plans-stat-alert]="plans.counts.delayedPlans > 0">
+            <b>{{ plans.counts.delayedPlans }}</b>
+            <span>متأخرة عن الجدول</span>
+          </div>
+          <div class="plans-stat" [class.plans-stat-alert]="plans.counts.rejected > 0">
+            <b>{{ plans.counts.rejected }}</b>
+            <span>مرفوضة وتحتاج تعديلًا</span>
+          </div>
+        </div>
+
+        @if (delayedPlans().length) {
+          <ul class="plans-delayed">
+            @for (plan of delayedPlans(); track plan.planId) {
+              <li>
+                <button
+                  type="button"
+                  class="plans-delayed-row"
+                  (click)="openPlan(plan.planId)">
+                  <span class="plans-delayed-title">{{ plan.title }}</span>
+                  <span class="plans-delayed-meta">
+                    الإنجاز {{ plan.progressPercentage | number:'1.0-0' }}%
+                    من المتوقع {{ plan.expectedProgressPercentage | number:'1.0-0' }}%
+                    @if (plan.delayedStages > 0) {
+                      · {{ plan.delayedStages }} مرحلة متأخرة
+                    }
+                  </span>
+                </button>
+              </li>
+            }
+          </ul>
+        } @else if (plans.counts.total === 0) {
+          <div class="empty">لا توجد خطط كورسات بعد</div>
+        }
+      </div>
+    }
+
     <div class="grid g2 g2-14 charts-row">
       <div class="card card-pad chart-card">
         <div class="card-title">

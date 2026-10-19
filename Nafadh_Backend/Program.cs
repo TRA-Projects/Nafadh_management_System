@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
-using Nafadh_Backend; // ✅ صحيح.Core.Interfaces;
+using Nafadh_Backend;
 using Nafadh_Backend.Filters;
 using Nafadh_Backend.Interfaces;
 using Nafadh_Backend.Repositories;
@@ -15,6 +15,7 @@ using Nafadh_Backend.Settings;
 using QuestPDF.Infrastructure;
 using System.Security.Claims;
 using System.Text;
+
 
 
 namespace Nafadh_Backend
@@ -269,6 +270,9 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IAbsenceWarningService, AbsenceWarningService>();
 
+            // Company self-registration (public register + approval/rejection + login gate)
+            builder.Services.AddScoped<ICompanyRegistrationService, CompanyRegistrationService>();
+
             // ── Swagger with JWT support ───────────────────────────────────────
             builder.Services.AddEndpointsApiExplorer();
 
@@ -478,6 +482,26 @@ namespace Nafadh_Backend
                             excuseProofsRequestPath
                     }
                 );
+            }
+
+            // =====================================================
+            // EXTERNAL TRAINER ATTENDANCE PROOF FILES
+            // =====================================================
+            var trainerAttendanceProofsPath =
+                builder.Configuration["Storage:TrainerAttendanceProofsPath"];
+
+            var trainerAttendanceProofsRequestPath =
+                builder.Configuration["Storage:TrainerAttendanceProofsRequestPath"]
+                ?? "/uploads/trainer-attendance-proofs";
+
+            if (!string.IsNullOrWhiteSpace(trainerAttendanceProofsPath))
+            {
+                Directory.CreateDirectory(trainerAttendanceProofsPath);
+                app.UseStaticFiles(new StaticFileOptions
+                {
+                    FileProvider = new PhysicalFileProvider(trainerAttendanceProofsPath),
+                    RequestPath = trainerAttendanceProofsRequestPath
+                });
             }
 
             // Enable CORS middleware here

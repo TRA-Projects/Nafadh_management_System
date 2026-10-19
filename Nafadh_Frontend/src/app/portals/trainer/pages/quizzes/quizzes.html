@@ -29,11 +29,7 @@
 
     </div>
 
-    <button
-      type="button"
-      class="primary-btn"
-      (click)="openCreateForm()"
-    >
+    <button type="button" class="primary-btn" (click)="openCreateForm()">
       <i class="fa-solid fa-plus"></i>
       <span>إنشاء اختبار</span>
     </button>
@@ -47,52 +43,38 @@
 
   @if (errorMessage()) {
 
-    <div
-      class="message error-message"
-      role="alert"
-    >
+  <div class="message error-message" role="alert">
 
-      <i class="fa-solid fa-circle-exclamation"></i>
+    <i class="fa-solid fa-circle-exclamation"></i>
 
-      <span>
-        {{ errorMessage() }}
-      </span>
+    <span>
+      {{ errorMessage() }}
+    </span>
 
-      <button
-        type="button"
-        aria-label="إغلاق"
-        (click)="errorMessage.set('')"
-      >
-        ×
-      </button>
+    <button type="button" aria-label="إغلاق" (click)="errorMessage.set('')">
+      ×
+    </button>
 
-    </div>
+  </div>
 
   }
 
 
   @if (successMessage()) {
 
-    <div
-      class="message success-message"
-      role="status"
-    >
+  <div class="message success-message" role="status">
 
-      <i class="fa-solid fa-circle-check"></i>
+    <i class="fa-solid fa-circle-check"></i>
 
-      <span>
-        {{ successMessage() }}
-      </span>
+    <span>
+      {{ successMessage() }}
+    </span>
 
-      <button
-        type="button"
-        aria-label="إغلاق"
-        (click)="successMessage.set('')"
-      >
-        ×
-      </button>
+    <button type="button" aria-label="إغلاق" (click)="successMessage.set('')">
+      ×
+    </button>
 
-    </div>
+  </div>
 
   }
 
@@ -107,21 +89,13 @@
 
       <i class="fa-solid fa-magnifying-glass"></i>
 
-      <input
-        type="search"
-        placeholder="ابحثي باسم الاختبار أو الدفعة..."
-        [ngModel]="searchTerm()"
-        (ngModelChange)="searchTerm.set($event)"
-      />
+      <input type="search" placeholder="ابحثي باسم الاختبار أو الدفعة..." [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)" />
 
     </label>
 
 
-    <select
-      aria-label="تصفية حسب الحالة"
-      [ngModel]="statusFilter()"
-      (ngModelChange)="statusFilter.set($event)"
-    >
+    <select aria-label="تصفية حسب الحالة" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
 
       <option value="all">
         كل الاختبارات
@@ -134,17 +108,9 @@
     </select>
 
 
-    <button
-      type="button"
-      class="refresh-btn"
-      (click)="refresh()"
-      [disabled]="loading()"
-    >
+    <button type="button" class="refresh-btn" (click)="refresh()" [disabled]="loading()">
 
-      <i
-        class="fa-solid fa-rotate"
-        [class.fa-spin]="loading()"
-      ></i>
+      <i class="fa-solid fa-rotate" [class.fa-spin]="loading()"></i>
 
       تحديث
 
@@ -230,312 +196,292 @@
 
   @if (loading()) {
 
-    <div class="loading-state">
+  <div class="loading-state">
 
-      <i class="fa-solid fa-spinner fa-spin"></i>
+    <i class="fa-solid fa-spinner fa-spin"></i>
 
-      <strong>
-        جاري تحميل الاختبارات
-      </strong>
+    <strong>
+      جاري تحميل الاختبارات
+    </strong>
 
-      <span>
-        لحظات من فضلك...
-      </span>
+    <span>
+      لحظات من فضلك...
+    </span>
 
-    </div>
+  </div>
 
   }
 
   @else {
 
-    <section class="quiz-grid">
+  <section class="quiz-grid">
 
-      @for (
-        quiz of filteredQuizzes();
-        track quiz.quizId
-      ) {
+    @for (
+    quiz of filteredQuizzes();
+    track quiz.quizId
+    ) {
 
-        <article class="quiz-card">
+    <article class="quiz-card">
 
 
-          <!-- TOP -->
+      <!-- TOP -->
 
-          <div class="quiz-card-top">
+      <div class="quiz-card-top">
 
-            <div class="quiz-icon">
+        <div class="quiz-icon">
 
-              <i
-                class="fa-solid fa-file-circle-question"
-              ></i>
-
-            </div>
-
-
-            <span
-              class="status-badge"
-              [ngClass]="getStatusClass(quiz.status)"
-            >
-
-              {{ getStatusLabel(quiz.status) }}
-
-            </span>
-
-          </div>
-
-
-          <!-- MAIN -->
-
-          <div class="quiz-main">
-
-            <h2>
-              {{ quiz.title }}
-            </h2>
-
-
-            <p class="description">
-
-              {{
-                quiz.description ||
-                'لا يوجد وصف للاختبار.'
-              }}
-
-            </p>
-
-
-            <div class="batch-line">
-
-              <i class="fa-solid fa-users"></i>
-
-              <span>
-
-                {{
-                  quiz.batchName ||
-                  ('الدفعة رقم ' + quiz.batchId)
-                }}
-
-              </span>
-
-            </div>
-
-          </div>
-
-
-          <!-- DETAILS -->
-
-          <div class="quiz-details">
-
-
-            <div class="detail-row">
-
-              <i
-                class="fa-regular fa-calendar"
-              ></i>
-
-              <span>
-                البداية
-              </span>
-
-              <strong>
-                {{ formatDate(quiz.startDateTime) }}
-              </strong>
-
-            </div>
-
-
-            <div class="detail-row">
-
-              <i
-                class="fa-regular fa-calendar-check"
-              ></i>
-
-              <span>
-                النهاية
-              </span>
-
-              <strong>
-                {{ formatDate(quiz.endDateTime) }}
-              </strong>
-
-            </div>
-
-
-            <div class="detail-row">
-
-              <i
-                class="fa-regular fa-clock"
-              ></i>
-
-              <span>
-                المدة
-              </span>
-
-              <strong>
-                {{ quiz.durationMinutes }} دقيقة
-              </strong>
-
-            </div>
-
-
-            <div class="detail-row">
-
-              <i
-                class="fa-solid fa-repeat"
-              ></i>
-
-              <span>
-                المحاولات
-              </span>
-
-              <strong>
-                {{ quiz.maxAttempts }}
-              </strong>
-
-            </div>
-
-          </div>
-
-
-          <!-- FLAGS -->
-
-          <div class="quiz-flags">
-
-            <span
-              [class.enabled]="quiz.randomizeQuestions"
-            >
-
-              <i
-                class="fa-solid"
-                [ngClass]="
-                  quiz.randomizeQuestions
-                    ? 'fa-check'
-                    : 'fa-xmark'
-                "
-              ></i>
-
-              عشوائية الأسئلة
-
-            </span>
-
-
-            <span
-              [class.enabled]="quiz.cameraRequired"
-            >
-
-              <i
-                class="fa-solid"
-                [ngClass]="
-                  quiz.cameraRequired
-                    ? 'fa-check'
-                    : 'fa-xmark'
-                "
-              ></i>
-
-              الكاميرا
-
-            </span>
-
-          </div>
-
-
-          <!-- ================================================= -->
-          <!-- QUIZ ACTIONS -->
-          <!-- ================================================= -->
-
-          <div class="quiz-actions">
-
-
-            <button
-              type="button"
-              class="questions-btn"
-              (click)="openQuestionBank(quiz)"
-            >
-
-              <i
-                class="fa-solid fa-list-check"
-              ></i>
-
-              إدارة الأسئلة
-
-            </button>
-
-
-            <button
-              type="button"
-              class="edit-btn"
-              (click)="openEditForm(quiz)"
-            >
-
-              <i
-                class="fa-regular fa-pen-to-square"
-              ></i>
-
-              تعديل الاختبار
-
-            </button>
-
-          </div>
-
-
-        </article>
-
-      }
-
-
-      <!-- EMPTY -->
-
-      @empty {
-
-        <div class="empty-state">
-
-          <div class="empty-icon">
-
-            <i
-              class="fa-regular fa-clipboard"
-            ></i>
-
-          </div>
-
-
-          <strong>
-
-            {{
-              searchTerm()
-                ? 'لا توجد نتائج مطابقة'
-                : 'لا توجد اختبارات حتى الآن'
-            }}
-
-          </strong>
-
-
-          <span>
-
-            يمكنك إنشاء اختبار جديد
-            وربطه بإحدى الدفعات المتاحة.
-
-          </span>
-
-
-          @if (!searchTerm()) {
-
-            <button
-              type="button"
-              class="primary-btn"
-              (click)="openCreateForm()"
-            >
-
-              <i class="fa-solid fa-plus"></i>
-
-              إنشاء أول اختبار
-
-            </button>
-
-          }
+          <i class="fa-solid fa-file-circle-question"></i>
 
         </div>
 
+
+        <span class="status-badge" [ngClass]="getStatusClass(quiz.status)">
+
+          {{ getStatusLabel(quiz.status) }}
+
+        </span>
+
+      </div>
+
+
+      <!-- MAIN -->
+
+      <div class="quiz-main">
+
+        <h2>
+          {{ quiz.title }}
+        </h2>
+
+
+        <p class="description">
+
+          {{
+          quiz.description ||
+          'لا يوجد وصف للاختبار.'
+          }}
+
+        </p>
+
+
+        <div class="batch-line">
+
+          <i class="fa-solid fa-users"></i>
+
+          <span>
+
+            {{
+            quiz.batchName ||
+            ('الدفعة رقم ' + quiz.batchId)
+            }}
+
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- DETAILS -->
+
+      <div class="quiz-details">
+
+
+        <div class="detail-row">
+
+          <i class="fa-regular fa-calendar"></i>
+
+          <span>
+            البداية
+          </span>
+
+          <strong>
+            {{ formatDate(quiz.startDateTime) }}
+          </strong>
+
+        </div>
+
+
+        <div class="detail-row">
+
+          <i class="fa-regular fa-calendar-check"></i>
+
+          <span>
+            النهاية
+          </span>
+
+          <strong>
+            {{ formatDate(quiz.endDateTime) }}
+          </strong>
+
+        </div>
+
+
+        <div class="detail-row">
+
+          <i class="fa-regular fa-clock"></i>
+
+          <span>
+            المدة
+          </span>
+
+          <strong>
+            {{ quiz.durationMinutes }} دقيقة
+          </strong>
+
+        </div>
+
+
+        <div class="detail-row">
+
+          <i class="fa-solid fa-repeat"></i>
+
+          <span>
+            المحاولات
+          </span>
+
+          <strong>
+            {{ quiz.maxAttempts }}
+          </strong>
+
+        </div>
+
+        <!-- PASSING PERCENTAGE -->
+
+        <div class="detail-row">
+
+          <i class="fa-solid fa-percent"></i>
+
+          <span>
+            نسبة النجاح
+          </span>
+
+          <strong>
+            {{ quiz.passingPercentage }}%
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <!-- FLAGS -->
+
+      <div class="quiz-flags">
+
+        <span [class.enabled]="quiz.randomizeQuestions">
+
+          <i class="fa-solid" [ngClass]="
+                  quiz.randomizeQuestions
+                    ? 'fa-check'
+                    : 'fa-xmark'
+                "></i>
+
+          عشوائية الأسئلة
+
+        </span>
+
+
+        <span [class.enabled]="quiz.cameraRequired">
+
+          <i class="fa-solid" [ngClass]="
+                  quiz.cameraRequired
+                    ? 'fa-check'
+                    : 'fa-xmark'
+                "></i>
+
+          الكاميرا
+
+        </span>
+
+      </div>
+
+
+      <!-- ================================================= -->
+      <!-- QUIZ ACTIONS -->
+      <!-- ================================================= -->
+
+
+      <div class="quiz-actions">
+
+        <button type="button" class="questions-btn" (click)="openQuestionBank(quiz)">
+
+          <i class="fa-solid fa-list-check"></i>
+          إدارة الأسئلة
+
+        </button>
+
+        <button type="button" class="btn-results" (click)="openQuizResults(quiz.quizId)">
+
+          <i class="fa-solid fa-chart-column"></i>
+          عرض النتائج
+
+        </button>
+
+        <button type="button" class="edit-btn" (click)="openEditForm(quiz)">
+
+          <i class="fa-regular fa-pen-to-square"></i>
+          تعديل الاختبار
+
+        </button>
+
+      </div>
+
+
+
+    </article>
+
+    }
+
+
+    <!-- EMPTY -->
+
+    @empty {
+
+    <div class="empty-state">
+
+      <div class="empty-icon">
+
+        <i class="fa-regular fa-clipboard"></i>
+
+      </div>
+
+
+      <strong>
+
+        {{
+        searchTerm()
+        ? 'لا توجد نتائج مطابقة'
+        : 'لا توجد اختبارات حتى الآن'
+        }}
+
+      </strong>
+
+
+      <span>
+
+        يمكنك إنشاء اختبار جديد
+        وربطه بإحدى الدفعات المتاحة.
+
+      </span>
+
+
+      @if (!searchTerm()) {
+
+      <button type="button" class="primary-btn" (click)="openCreateForm()">
+
+        <i class="fa-solid fa-plus"></i>
+
+        إنشاء أول اختبار
+
+      </button>
+
       }
 
-    </section>
+    </div>
+
+    }
+
+  </section>
 
   }
 
@@ -546,370 +492,304 @@
 
   @if (showForm()) {
 
-    <div
-      class="modal-backdrop"
-      (click)="closeForm()"
-    >
+  <div class="modal-backdrop" (click)="closeForm()">
 
-      <section
-        class="quiz-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="quiz-form-title"
-        (click)="$event.stopPropagation()"
-      >
+    <section class="quiz-modal" role="dialog" aria-modal="true" aria-labelledby="quiz-form-title"
+      (click)="$event.stopPropagation()">
 
 
-        <header class="modal-header">
+      <header class="modal-header">
 
-          <div>
+        <div>
 
-            <span class="page-kicker">
-              بيانات الاختبار
+          <span class="page-kicker">
+            بيانات الاختبار
+          </span>
+
+          <h2 id="quiz-form-title">
+
+            {{
+            editingQuizId() === null
+            ? 'إنشاء اختبار جديد'
+            : 'تعديل الاختبار'
+            }}
+
+          </h2>
+
+        </div>
+
+
+        <button type="button" class="close-btn" aria-label="إغلاق" (click)="closeForm()">
+          ×
+        </button>
+
+      </header>
+
+
+      <form (ngSubmit)="saveQuiz()">
+
+        <div class="form-grid">
+
+
+          <!-- TITLE -->
+
+          <label class="field full-width">
+
+            <span>
+              اسم الاختبار <b>*</b>
             </span>
 
-            <h2 id="quiz-form-title">
+            <input name="title" [(ngModel)]="form.title" maxlength="200" required
+              placeholder="مثال: اختبار الوحدة الأولى" />
 
-              {{
-                editingQuizId() === null
-                  ? 'إنشاء اختبار جديد'
-                  : 'تعديل الاختبار'
-              }}
-
-            </h2>
-
-          </div>
+          </label>
 
 
-          <button
-            type="button"
-            class="close-btn"
-            aria-label="إغلاق"
-            (click)="closeForm()"
-          >
-            ×
+          <!-- DESCRIPTION -->
+
+          <label class="field full-width">
+
+            <span>
+              وصف الاختبار
+            </span>
+
+            <textarea name="description" [(ngModel)]="form.description" rows="3"
+              placeholder="اكتبي وصفًا مختصرًا للاختبار"></textarea>
+
+          </label>
+
+
+          <!-- BATCH -->
+
+          <label class="field full-width">
+
+            <span>
+              الدفعة <b>*</b>
+            </span>
+
+            <select name="batchId" [(ngModel)]="form.batchId" required>
+
+              <option [ngValue]="null" disabled>
+                اختاري الدفعة
+              </option>
+
+
+              @for (
+              batch of batches();
+              track batch.batchId
+              ) {
+
+              <option [ngValue]="batch.batchId">
+
+                {{ batch.batchName }}
+                —
+                #{{ batch.batchId }}
+
+              </option>
+
+              }
+
+            </select>
+
+
+            @if (batches().length === 0) {
+
+            <small>
+              لم يتم العثور على دفعات مسندة للمدرب.
+            </small>
+
+            }
+
+          </label>
+
+
+          <!-- START -->
+
+          <label class="field">
+
+            <span>
+              تاريخ ووقت البداية <b>*</b>
+            </span>
+
+            <input type="datetime-local" name="startDateTime" [(ngModel)]="form.startDateTime" required />
+
+          </label>
+
+
+          <!-- END -->
+
+          <label class="field">
+
+            <span>
+              تاريخ ووقت النهاية <b>*</b>
+            </span>
+
+            <input type="datetime-local" name="endDateTime" [(ngModel)]="form.endDateTime" required />
+
+          </label>
+
+
+          <!-- DURATION -->
+
+          <label class="field">
+
+            <span>
+              مدة الاختبار (دقيقة) <b>*</b>
+            </span>
+
+            <input type="number" name="durationMinutes" [(ngModel)]="form.durationMinutes" min="1" max="600" required />
+
+          </label>
+
+          <!-- ATTEMPTS -->
+
+          <label class="field">
+
+            <span>
+              عدد المحاولات <b>*</b>
+            </span>
+
+            <input type="number" name="maxAttempts" [(ngModel)]="form.maxAttempts" min="1" max="10" required />
+
+          </label>
+
+
+          <!-- PASSING PERCENTAGE -->
+
+          <label class="field">
+
+            <span>
+              نسبة النجاح (%) <b>*</b>
+            </span>
+
+            <input type="number" name="passingPercentage" [(ngModel)]="form.passingPercentage" min="0" max="100"
+              step="1" required placeholder="مثال: 50" />
+
+          </label>
+
+        </div>
+
+
+
+
+        <!-- SETTINGS -->
+
+        <div class="settings-box">
+
+
+          <label class="toggle-row">
+
+            <span>
+
+              <strong>
+                ترتيب الأسئلة عشوائيًا
+              </strong>
+
+              <small>
+                تغيير ترتيب الأسئلة للمتدرب
+              </small>
+
+            </span>
+
+
+            <input type="checkbox" name="randomizeQuestions" [(ngModel)]="form.randomizeQuestions" />
+
+          </label>
+
+
+          <label class="toggle-row">
+
+            <span>
+
+              <strong>
+                اشتراط الكاميرا
+              </strong>
+
+              <small>
+                الخيار محفوظ في النظام،
+                وقد يحتاج إعدادًا إضافيًا
+                عند تطبيق المراقبة.
+              </small>
+
+            </span>
+
+
+            <input type="checkbox" name="cameraRequired" [(ngModel)]="form.cameraRequired" />
+
+          </label>
+
+
+        </div>
+
+
+        @if (editingQuizId() !== null) {
+
+        <p class="status-note">
+
+          حالة الاختبار الحالية:
+
+          {{ getStatusLabel(form.status) }}.
+
+        </p>
+
+        }
+
+
+        @if (errorMessage()) {
+
+        <div class="message error-message form-error" role="alert">
+
+          {{ errorMessage() }}
+
+        </div>
+
+        }
+
+
+        <!-- ACTIONS -->
+
+        <footer class="modal-actions">
+
+
+          <button type="button" class="secondary-btn" (click)="closeForm()" [disabled]="saving()">
+            إلغاء
           </button>
 
-        </header>
 
-
-        <form
-          (ngSubmit)="saveQuiz()"
-        >
-
-          <div class="form-grid">
-
-
-            <!-- TITLE -->
-
-            <label class="field full-width">
-
-              <span>
-                اسم الاختبار <b>*</b>
-              </span>
-
-              <input
-                name="title"
-                [(ngModel)]="form.title"
-                maxlength="200"
-                required
-                placeholder="مثال: اختبار الوحدة الأولى"
-              />
-
-            </label>
-
-
-            <!-- DESCRIPTION -->
-
-            <label class="field full-width">
-
-              <span>
-                وصف الاختبار
-              </span>
-
-              <textarea
-                name="description"
-                [(ngModel)]="form.description"
-                rows="3"
-                placeholder="اكتبي وصفًا مختصرًا للاختبار"
-              ></textarea>
-
-            </label>
-
-
-            <!-- BATCH -->
-
-            <label class="field full-width">
-
-              <span>
-                الدفعة <b>*</b>
-              </span>
-
-              <select
-                name="batchId"
-                [(ngModel)]="form.batchId"
-                required
-              >
-
-                <option
-                  [ngValue]="null"
-                  disabled
-                >
-                  اختاري الدفعة
-                </option>
-
-
-                @for (
-                  batch of batches();
-                  track batch.batchId
-                ) {
-
-                  <option
-                    [ngValue]="batch.batchId"
-                  >
-
-                    {{ batch.batchName }}
-                    —
-                    #{{ batch.batchId }}
-
-                  </option>
-
-                }
-
-              </select>
-
-
-              @if (batches().length === 0) {
-
-                <small>
-                  لم يتم العثور على دفعات مسندة للمدرب.
-                </small>
-
-              }
-
-            </label>
-
-
-            <!-- START -->
-
-            <label class="field">
-
-              <span>
-                تاريخ ووقت البداية <b>*</b>
-              </span>
-
-              <input
-                type="datetime-local"
-                name="startDateTime"
-                [(ngModel)]="form.startDateTime"
-                required
-              />
-
-            </label>
-
-
-            <!-- END -->
-
-            <label class="field">
-
-              <span>
-                تاريخ ووقت النهاية <b>*</b>
-              </span>
-
-              <input
-                type="datetime-local"
-                name="endDateTime"
-                [(ngModel)]="form.endDateTime"
-                required
-              />
-
-            </label>
-
-
-            <!-- DURATION -->
-
-            <label class="field">
-
-              <span>
-                مدة الاختبار (دقيقة) <b>*</b>
-              </span>
-
-              <input
-                type="number"
-                name="durationMinutes"
-                [(ngModel)]="form.durationMinutes"
-                min="1"
-                max="600"
-                required
-              />
-
-            </label>
-
-
-            <!-- ATTEMPTS -->
-
-            <label class="field">
-
-              <span>
-                عدد المحاولات <b>*</b>
-              </span>
-
-              <input
-                type="number"
-                name="maxAttempts"
-                [(ngModel)]="form.maxAttempts"
-                min="1"
-                max="10"
-                required
-              />
-
-            </label>
-
-          </div>
-
-
-          <!-- SETTINGS -->
-
-          <div class="settings-box">
-
-
-            <label class="toggle-row">
-
-              <span>
-
-                <strong>
-                  ترتيب الأسئلة عشوائيًا
-                </strong>
-
-                <small>
-                  تغيير ترتيب الأسئلة للمتدرب
-                </small>
-
-              </span>
-
-
-              <input
-                type="checkbox"
-                name="randomizeQuestions"
-                [(ngModel)]="form.randomizeQuestions"
-              />
-
-            </label>
-
-
-            <label class="toggle-row">
-
-              <span>
-
-                <strong>
-                  اشتراط الكاميرا
-                </strong>
-
-                <small>
-                  الخيار محفوظ في النظام،
-                  وقد يحتاج إعدادًا إضافيًا
-                  عند تطبيق المراقبة.
-                </small>
-
-              </span>
-
-
-              <input
-                type="checkbox"
-                name="cameraRequired"
-                [(ngModel)]="form.cameraRequired"
-              />
-
-            </label>
-
-
-          </div>
-
-
-          @if (editingQuizId() !== null) {
-
-            <p class="status-note">
-
-              حالة الاختبار الحالية:
-
-              {{ getStatusLabel(form.status) }}.
-
-            </p>
-
-          }
-
-
-          @if (errorMessage()) {
-
-            <div
-              class="message error-message form-error"
-              role="alert"
-            >
-
-              {{ errorMessage() }}
-
-            </div>
-
-          }
-
-
-          <!-- ACTIONS -->
-
-          <footer class="modal-actions">
-
-
-            <button
-              type="button"
-              class="secondary-btn"
-              (click)="closeForm()"
-              [disabled]="saving()"
-            >
-              إلغاء
-            </button>
-
-
-            <button
-              type="submit"
-              class="primary-btn"
-              [disabled]="
+          <button type="submit" class="primary-btn" [disabled]="
                 saving() ||
                 batches().length === 0
-              "
-            >
+              ">
 
-              @if (saving()) {
+            @if (saving()) {
 
-                <i
-                  class="fa-solid fa-spinner fa-spin"
-                ></i>
+            <i class="fa-solid fa-spinner fa-spin"></i>
 
-              }
+            }
 
-              @else {
+            @else {
 
-                <i
-                  class="fa-solid fa-floppy-disk"
-                ></i>
+            <i class="fa-solid fa-floppy-disk"></i>
 
-              }
+            }
 
 
-              {{
-                saving()
-                  ? 'جاري الحفظ...'
-                  : 'حفظ الاختبار'
-              }}
+            {{
+            saving()
+            ? 'جاري الحفظ...'
+            : 'حفظ الاختبار'
+            }}
 
-            </button>
+          </button>
 
-          </footer>
+        </footer>
 
 
-        </form>
+      </form>
 
-      </section>
+    </section>
 
-    </div>
+  </div>
 
   }
 
@@ -920,23 +800,102 @@
 
   @if (showQuestionBank()) {
 
-    <div
-      class="modal-backdrop question-bank-backdrop"
-      (click)="closeQuestionBank()"
-    >
+  <div class="modal-backdrop question-bank-backdrop" (click)="closeQuestionBank()">
 
-      <section
-        class="question-bank-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="question-bank-title"
-        (click)="$event.stopPropagation()"
-      >
+    <section class="question-bank-modal" role="dialog" aria-modal="true" aria-labelledby="question-bank-title"
+      (click)="$event.stopPropagation()">
 
 
-        <!-- QUESTION BANK HEADER -->
+      <!-- QUESTION BANK HEADER -->
 
-        <header class="modal-header">
+      <header class="modal-header">
+
+        <div>
+
+          <span class="page-kicker">
+            بنك الأسئلة
+          </span>
+
+
+          <h2 id="question-bank-title">
+
+            {{
+            selectedQuiz()?.title ||
+            'إدارة أسئلة الاختبار'
+            }}
+
+          </h2>
+
+
+          <div class="quiz-summary">
+            @if (quizQuestionsLoading()) {
+            <p>جاري حساب درجات الاختبار...</p>
+            } @else {
+            <p>عدد الأسئلة: {{ quizQuestions().length }}</p>
+            <p>مجموع الدرجات: {{ quizTotalPoints() }}</p>
+            }
+          </div>
+
+
+          <p class="question-bank-subtitle">
+
+            إدارة الأسئلة وإضافتها
+            إلى الاختبار الحالي.
+
+          </p>
+
+        </div>
+
+
+        <button type="button" class="close-btn" aria-label="إغلاق" (click)="closeQuestionBank()">
+          ×
+        </button>
+
+      </header>
+
+
+      <!-- QUESTION MESSAGES -->
+      <!-- QUESTION TOAST NOTIFICATIONS -->
+
+      @if (questionError()) {
+      <div class="question-toast question-toast-error" role="alert">
+        <i class="fa-solid fa-circle-exclamation"></i>
+
+        <span>
+          {{ questionError() }}
+        </span>
+
+        <button type="button" aria-label="إغلاق" (click)="questionError.set('')">
+          ×
+        </button>
+      </div>
+      }
+
+      @if (questionSuccess()) {
+      <div class="question-toast question-toast-success" role="status">
+        <i class="fa-solid fa-circle-check"></i>
+
+        <span>
+          {{ questionSuccess() }}
+        </span>
+
+        <button type="button" aria-label="إغلاق" (click)="questionSuccess.set('')">
+          ×
+        </button>
+      </div>
+      }
+
+
+      <!-- ================================================= -->
+      <!-- QUESTION FORM -->
+      <!-- ================================================= -->
+
+      @if (questionFormOpen()) {
+
+      <form class="question-form" (ngSubmit)="saveQuestion()">
+
+
+        <div class="question-form-header">
 
           <div>
 
@@ -944,1048 +903,793 @@
               بنك الأسئلة
             </span>
 
-            <h2 id="question-bank-title">
+            <h3>
 
               {{
-                selectedQuiz()?.title ||
-                'إدارة أسئلة الاختبار'
+              editingQuestionId() === null
+              ? 'إضافة سؤال جديد'
+              : 'تعديل السؤال'
               }}
 
-            </h2>
-
-            <p class="question-bank-subtitle">
-
-              إدارة الأسئلة وإضافتها
-              إلى الاختبار الحالي.
-
-            </p>
+            </h3>
 
           </div>
 
 
-          <button
-            type="button"
-            class="close-btn"
-            aria-label="إغلاق"
-            (click)="closeQuestionBank()"
-          >
+          <button type="button" class="close-btn" (click)="closeQuestionForm()">
             ×
           </button>
 
-        </header>
+        </div>
 
 
-        <!-- QUESTION MESSAGES -->
-<!-- QUESTION TOAST NOTIFICATIONS -->
+        <!-- QUESTION TEXT -->
 
-@if (questionError()) {
-  <div class="question-toast question-toast-error" role="alert">
-    <i class="fa-solid fa-circle-exclamation"></i>
+        <div class="form-grid">
 
-    <span>
-      {{ questionError() }}
-    </span>
+          <label class="field full-width">
 
-    <button
-      type="button"
-      aria-label="إغلاق"
-      (click)="questionError.set('')"
-    >
-      ×
-    </button>
-  </div>
-}
+            <span>
+              نص السؤال <b>*</b>
+            </span>
 
-@if (questionSuccess()) {
-  <div class="question-toast question-toast-success" role="status">
-    <i class="fa-solid fa-circle-check"></i>
-
-    <span>
-      {{ questionSuccess() }}
-    </span>
-
-    <button
-      type="button"
-      aria-label="إغلاق"
-      (click)="questionSuccess.set('')"
-    >
-      ×
-    </button>
-  </div>
-}
-
-
-        <!-- ================================================= -->
-        <!-- QUESTION FORM -->
-        <!-- ================================================= -->
-
-        @if (questionFormOpen()) {
-
-          <form
-            class="question-form"
-            (ngSubmit)="saveQuestion()"
-          >
-
-
-            <div class="question-form-header">
-
-              <div>
-
-                <span class="page-kicker">
-                  بنك الأسئلة
-                </span>
-
-                <h3>
-
-                  {{
-                    editingQuestionId() === null
-                      ? 'إضافة سؤال جديد'
-                      : 'تعديل السؤال'
-                  }}
-
-                </h3>
-
-              </div>
-
-
-              <button
-                type="button"
-                class="close-btn"
-                (click)="closeQuestionForm()"
-              >
-                ×
-              </button>
-
-            </div>
-
-
-            <!-- QUESTION TEXT -->
-
-            <div class="form-grid">
-
-              <label class="field full-width">
-
-                <span>
-                  نص السؤال <b>*</b>
-                </span>
-
-                <textarea
-                  name="questionText"
-                  [(ngModel)]="
+            <textarea name="questionText" [(ngModel)]="
                     questionForm.questionText
-                  "
-                  rows="4"
-                  maxlength="1000"
-                  required
-                  placeholder="اكتبي نص السؤال..."
-                ></textarea>
+                  " rows="4" maxlength="1000" required placeholder="اكتبي نص السؤال..."></textarea>
 
-              </label>
+          </label>
 
 
-              <!-- TYPE -->
+          <!-- TYPE -->
 
-              <label class="field">
+          <label class="field">
 
-                <span>
-                  نوع السؤال
-                </span>
+            <span>
+              نوع السؤال
+            </span>
 
-                <select
-                  name="questionType"
-                  [(ngModel)]="
+            <select name="questionType" [(ngModel)]="
                     questionForm.questionType
-                  "
-                  (ngModelChange)="
+                  " (ngModelChange)="
                     questionTypeChanged()
-                  "
-                >
+                  ">
 
-                  <option [ngValue]="0">
-                    اختيار من متعدد
-                  </option>
+              <option [ngValue]="0">
+                اختيار من متعدد
+              </option>
 
-                  <option [ngValue]="1">
-                    صح أو خطأ
-                  </option>
+              <option [ngValue]="1">
+                صح أو خطأ
+              </option>
 
-                  <option [ngValue]="2">
-                    مقالي
-                  </option>
+              <option [ngValue]="2">
+                مقالي
+              </option>
 
-                </select>
+            </select>
 
-              </label>
+          </label>
 
 
-              <!-- DIFFICULTY -->
+          <!-- DIFFICULTY -->
 
-              <label class="field">
+          <label class="field">
 
-                <span>
-                  مستوى الصعوبة
-                </span>
+            <span>
+              مستوى الصعوبة
+            </span>
 
-                <select
-                  name="difficulty"
-                  [(ngModel)]="
+            <select name="difficulty" [(ngModel)]="
                     questionForm.difficulty
-                  "
-                >
+                  ">
 
-                  <option [ngValue]="0">
-                    سهل
-                  </option>
+              <option [ngValue]="0">
+                سهل
+              </option>
 
-                  <option [ngValue]="1">
-                    متوسط
-                  </option>
+              <option [ngValue]="1">
+                متوسط
+              </option>
 
-                  <option [ngValue]="2">
-                    صعب
-                  </option>
+              <option [ngValue]="2">
+                صعب
+              </option>
 
-                </select>
+            </select>
 
-              </label>
+          </label>
 
 
-              <!-- POINTS -->
+          <!-- POINTS -->
 
-              <label class="field">
+          <label class="field">
 
-                <span>
-                  الدرجة
-                </span>
+            <span>
+              الدرجة
+            </span>
 
-                <input
-                  type="number"
-                  name="points"
-                  [(ngModel)]="
+            <input type="number" name="points" [(ngModel)]="
                     questionForm.points
-                  "
-                  min="0.1"
-                  max="100"
-                  step="0.1"
-                  required
-                />
+                  " min="0.1" max="100" step="0.1" required />
 
-              </label>
+          </label>
 
 
-              <!-- EXPLANATION -->
+          <!-- EXPLANATION -->
 
-              <label class="field full-width">
+          <label class="field full-width">
 
-                <span>
-                  شرح الإجابة
-                </span>
+            <span>
+              شرح الإجابة
+            </span>
 
-                <textarea
-                  name="explanation"
-                  [(ngModel)]="
+            <textarea name="explanation" [(ngModel)]="
                     questionForm.explanation
-                  "
-                  rows="3"
-                  placeholder="شرح اختياري للإجابة الصحيحة..."
-                ></textarea>
+                  " rows="3" placeholder="شرح اختياري للإجابة الصحيحة..."></textarea>
 
-              </label>
+          </label>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- OPTIONS -->
+        <!-- ================================================= -->
+
+        @if (
+        questionForm.questionType === 0 ||
+        questionForm.questionType === 1
+        ) {
+
+        <div class="options-section">
+
+
+          <div class="options-header">
+
+            <div>
+
+              <strong>
+                الخيارات
+              </strong>
+
+              <small>
+                حددي الإجابة الصحيحة
+              </small>
 
             </div>
 
-
-            <!-- ================================================= -->
-            <!-- OPTIONS -->
-            <!-- ================================================= -->
 
             @if (
-              questionForm.questionType === 0 ||
-              questionForm.questionType === 1
+            questionForm.questionType === 0
             ) {
 
-              <div class="options-section">
-
-
-                <div class="options-header">
-
-                  <div>
-
-                    <strong>
-                      الخيارات
-                    </strong>
-
-                    <small>
-                      حددي الإجابة الصحيحة
-                    </small>
-
-                  </div>
-
-
-                  @if (
-                    questionForm.questionType === 0
-                  ) {
-
-                    <button
-                      type="button"
-                      class="secondary-btn"
-                      (click)="addQuestionOption()"
-                      [disabled]="
+            <button type="button" class="secondary-btn" (click)="addQuestionOption()" [disabled]="
                         questionForm.options.length >= 6
-                      "
-                    >
+                      ">
 
-                      <i
-                        class="fa-solid fa-plus"
-                      ></i>
+              <i class="fa-solid fa-plus"></i>
 
-                      إضافة خيار
+              إضافة خيار
 
-                    </button>
+            </button>
 
-                  }
+            }
 
-                </div>
+          </div>
 
 
-                <div class="options-list">
+          <div class="options-list">
 
-                  @for (
-                    option of questionForm.options;
-                    track $index;
-                    let i = $index
-                  ) {
+            @for (
+            option of questionForm.options;
+            track $index;
+            let i = $index
+            ) {
 
-                    <div
-                      class="option-form-row"
-                    >
+            <div class="option-form-row">
 
 
-                      <span class="option-code">
-                        {{ option.optionCode }}
-                      </span>
+              <span class="option-code">
+                {{ option.optionCode }}
+              </span>
 
 
-                      <input
-                        type="text"
-                        [name]="'optionText' + i"
-                        [(ngModel)]="
+              <input type="text" [name]="'optionText' + i" [(ngModel)]="
                           option.optionText
-                        "
-                        maxlength="500"
-                        placeholder="اكتبي الخيار..."
-                        required
-                      />
+                        " maxlength="500" placeholder="اكتبي الخيار..." required />
 
 
-                      <label
-                        class="correct-option-toggle"
-                      >
+              <label class="correct-option-toggle">
 
-                        <input
-                          type="radio"
-                          name="correctOption"
-                          [checked]="
+                <input type="radio" name="correctOption" [checked]="
                             option.isCorrect
-                          "
-                          (change)="
+                          " (change)="
                             setCorrectOption(i)
-                          "
-                        />
+                          " />
 
-                        <span>
-                          الإجابة الصحيحة
-                        </span>
+                <span>
+                  الإجابة الصحيحة
+                </span>
 
-                      </label>
+              </label>
 
 
-                      @if (
-                        questionForm.questionType === 0 &&
-                        questionForm.options.length > 2
-                      ) {
+              @if (
+              questionForm.questionType === 0 &&
+              questionForm.options.length > 2
+              ) {
 
-                        <button
-                          type="button"
-                          class="remove-option-btn"
-                          (click)="
+              <button type="button" class="remove-option-btn" (click)="
                             removeQuestionOption(i)
-                          "
-                          aria-label="حذف الخيار"
-                        >
+                          " aria-label="حذف الخيار">
 
-                          <i
-                            class="fa-solid fa-xmark"
-                          ></i>
-
-                        </button>
-
-                      }
-
-                    </div>
-
-                  }
-
-                </div>
-
-              </div>
-
-            }
-
-
-            <!-- QUESTION ERROR -->
-
-            @if (questionError()) {
-
-              <div
-                class="message error-message form-error"
-                role="alert"
-              >
-
-                <i
-                  class="fa-solid fa-circle-exclamation"
-                ></i>
-
-                {{ questionError() }}
-
-              </div>
-
-            }
-
-
-            <!-- FORM ACTIONS -->
-
-            <footer class="modal-actions">
-
-              <button
-                type="button"
-                class="secondary-btn"
-                (click)="closeQuestionForm()"
-                [disabled]="questionSaving()"
-              >
-                إلغاء
-              </button>
-
-
-              <button
-                type="submit"
-                class="primary-btn"
-                [disabled]="questionSaving()"
-              >
-
-                @if (questionSaving()) {
-
-                  <i
-                    class="fa-solid fa-spinner fa-spin"
-                  ></i>
-
-                  جاري الحفظ...
-
-                }
-
-                @else {
-
-                  <i
-                    class="fa-solid fa-floppy-disk"
-                  ></i>
-
-                  {{
-                    editingQuestionId() === null
-                      ? 'إضافة السؤال'
-                      : 'حفظ التعديل'
-                  }}
-
-                }
+                <i class="fa-solid fa-xmark"></i>
 
               </button>
 
-            </footer>
+              }
 
-          </form>
+            </div>
+
+            }
+
+          </div>
+
+        </div>
 
         }
 
 
-        <!-- ================================================= -->
-        <!-- QUESTION LIST -->
-        <!-- ================================================= -->
+        <!-- QUESTION ERROR -->
 
-        @else {
+        @if (questionError()) {
 
-          <div class="question-bank-content">
+        <div class="message error-message form-error" role="alert">
 
+          <i class="fa-solid fa-circle-exclamation"></i>
 
-            <!-- TOOLBAR -->
+          {{ questionError() }}
 
-            <div class="question-toolbar">
+        </div>
 
-
-              <label class="search-box">
-
-                <i
-                  class="fa-solid fa-magnifying-glass"
-                ></i>
-
-                <input
-                  type="search"
-                  placeholder="ابحثي في بنك الأسئلة..."
-                  [ngModel]="questionSearch()"
-                  (ngModelChange)="
-                    questionSearch.set($event)
-                  "
-                />
-
-              </label>
+        }
 
 
-              <select
-                aria-label="نوع السؤال"
-                [ngModel]="questionTypeFilter()"
-                (ngModelChange)="
-                  questionTypeFilter.set($event)
-                "
-              >
+        <!-- FORM ACTIONS -->
 
-                <option value="all">
-                  كل الأنواع
-                </option>
+        <footer class="modal-actions">
 
-                <option value="0">
-                  اختيار من متعدد
-                </option>
-
-                <option value="1">
-                  صح أو خطأ
-                </option>
-
-                <option value="2">
-                  مقالي
-                </option>
-
-              </select>
+          <button type="button" class="secondary-btn" (click)="closeQuestionForm()" [disabled]="questionSaving()">
+            إلغاء
+          </button>
 
 
-              <select
-                aria-label="مستوى الصعوبة"
-                [ngModel]="questionDifficultyFilter()"
-                (ngModelChange)="
-                  questionDifficultyFilter.set($event)
-                "
-              >
+          <button type="submit" class="primary-btn" [disabled]="questionSaving()">
 
-                <option value="all">
-                  كل المستويات
-                </option>
+            @if (questionSaving()) {
 
-                <option value="0">
-                  سهل
-                </option>
+            <i class="fa-solid fa-spinner fa-spin"></i>
 
-                <option value="1">
-                  متوسط
-                </option>
-
-                <option value="2">
-                  صعب
-                </option>
-
-              </select>
-
-
-              <select
-                aria-label="حالة السؤال"
-                [ngModel]="questionStatusFilter()"
-                (ngModelChange)="
-                  questionStatusFilter.set($event)
-                "
-              >
-
-                <option value="active">
-                  الأسئلة النشطة
-                </option>
-
-                <option value="inactive">
-                  الأسئلة غير النشطة
-                </option>
-
-                <option value="all">
-                  الكل
-                </option>
-
-              </select>
-
-
-              <button
-                type="button"
-                class="primary-btn"
-                (click)="openCreateQuestion()"
-              >
-
-                <i
-                  class="fa-solid fa-plus"
-                ></i>
-
-                إضافة سؤال
-
-              </button>
-
-            </div>
-
-
-            <!-- LOADING -->
-
-            @if (questionLoading()) {
-
-              <div class="loading-state">
-
-                <i
-                  class="fa-solid fa-spinner fa-spin"
-                ></i>
-
-                <strong>
-                  جاري تحميل بنك الأسئلة
-                </strong>
-
-                <span>
-                  لحظات من فضلك...
-                </span>
-
-              </div>
+            جاري الحفظ...
 
             }
 
             @else {
 
-              <!-- QUESTIONS -->
+            <i class="fa-solid fa-floppy-disk"></i>
 
-              <div class="questions-list">
+            {{
+            editingQuestionId() === null
+            ? 'إضافة السؤال'
+            : 'حفظ التعديل'
+            }}
+
+            }
+
+          </button>
+
+        </footer>
+
+      </form>
+
+      }
 
 
-                @for (
-                  question of filteredQuestions();
-                  track question.questionId
-                ) {
+      <!-- ================================================= -->
+      <!-- QUESTION LIST -->
+      <!-- ================================================= -->
 
-                  <article
-                    class="question-card"
-                    [class.inactive-question]="
+      @else {
+
+      <div class="question-bank-content">
+
+
+        <!-- TOOLBAR -->
+
+        <div class="question-toolbar">
+
+
+          <label class="search-box">
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input type="search" placeholder="ابحثي في بنك الأسئلة..." [ngModel]="questionSearch()" (ngModelChange)="
+                    questionSearch.set($event)
+                  " />
+
+          </label>
+
+
+          <select aria-label="نوع السؤال" [ngModel]="questionTypeFilter()" (ngModelChange)="
+                  questionTypeFilter.set($event)
+                ">
+
+            <option value="all">
+              كل الأنواع
+            </option>
+
+            <option value="0">
+              اختيار من متعدد
+            </option>
+
+            <option value="1">
+              صح أو خطأ
+            </option>
+
+            <option value="2">
+              مقالي
+            </option>
+
+          </select>
+
+
+          <select aria-label="مستوى الصعوبة" [ngModel]="questionDifficultyFilter()" (ngModelChange)="
+                  questionDifficultyFilter.set($event)
+                ">
+
+            <option value="all">
+              كل المستويات
+            </option>
+
+            <option value="0">
+              سهل
+            </option>
+
+            <option value="1">
+              متوسط
+            </option>
+
+            <option value="2">
+              صعب
+            </option>
+
+          </select>
+
+
+          <select aria-label="حالة السؤال" [ngModel]="questionStatusFilter()" (ngModelChange)="
+                  questionStatusFilter.set($event)
+                ">
+
+            <option value="active">
+              الأسئلة النشطة
+            </option>
+
+            <option value="inactive">
+              الأسئلة غير النشطة
+            </option>
+
+            <option value="all">
+              الكل
+            </option>
+
+          </select>
+
+
+          <button type="button" class="primary-btn" (click)="openCreateQuestion()">
+
+            <i class="fa-solid fa-plus"></i>
+
+            إضافة سؤال
+
+          </button>
+
+        </div>
+        <!-- QUESTION SELECTION TOOLBAR -->
+
+        <div class="question-selection-toolbar">
+
+          <div class="selection-info">
+
+            <i class="fa-solid fa-list-check"></i>
+
+            <span>
+              الأسئلة المحددة
+            </span>
+
+            <strong>
+              {{ getSelectedQuestionsCount() }}
+            </strong>
+
+          </div>
+
+
+          <div class="selection-actions">
+
+            <button type="button" class="secondary-btn" (click)="selectAllQuestions()" [disabled]="
+        areAllQuestionsSelected() ||
+        filteredQuestions().length === 0
+      ">
+              <i class="fa-solid fa-check-double"></i>
+              تحديد الكل
+            </button>
+
+
+            <button type="button" class="secondary-btn" (click)="clearQuestionSelection()" [disabled]="
+        getSelectedQuestionsCount() === 0
+      ">
+              <i class="fa-solid fa-xmark"></i>
+              إلغاء التحديد
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- LOADING -->
+
+        @if (questionLoading()) {
+
+        <div class="loading-state">
+
+          <i class="fa-solid fa-spinner fa-spin"></i>
+
+          <strong>
+            جاري تحميل بنك الأسئلة
+          </strong>
+
+          <span>
+            لحظات من فضلك...
+          </span>
+
+        </div>
+
+        }
+
+        @else {
+
+        <!-- QUESTIONS -->
+
+        <div class="questions-list">
+
+
+          @for (
+          question of filteredQuestions();
+          track question.questionId
+          ) {
+
+          <article class="question-card" [class.inactive-question]="
                       !question.isActive
-                    "
-                  >
+                    ">
 
 
-                    <!-- SELECT -->
+            <!-- SELECT -->
 
-                    <div
-                      class="question-select"
-                    >
+            <div class="question-select">
 
-                      <input
-                        type="checkbox"
-                        [checked]="
+              <input type="checkbox" [checked]="
                           isQuestionSelected(
                             question.questionId
                           )
-                        "
-                        [disabled]="
+                        " [disabled]="
                           !question.isActive
-                        "
-                        (change)="
+                        " (change)="
                           toggleQuestionSelection(
                             question.questionId
                           )
-                        "
-                      />
+                        " />
 
-                    </div>
+            </div>
 
 
-                    <!-- CONTENT -->
+            <!-- CONTENT -->
 
-                    <div
-                      class="question-card-content"
-                    >
+            <div class="question-card-content">
 
 
-                      <!-- TOP -->
+              <!-- TOP -->
 
-                      <div
-                        class="question-card-top"
-                      >
+              <div class="question-card-top">
 
-                        <div
-                          class="question-badges"
-                        >
+                <div class="question-badges">
 
-                          <span
-                            class="question-type-badge"
-                          >
+                  <span class="question-type-badge">
 
-                            {{
-                              getQuestionTypeLabel(
-                                question.questionType
-                              )
-                            }}
+                    {{
+                    getQuestionTypeLabel(
+                    question.questionType
+                    )
+                    }}
 
-                          </span>
+                  </span>
 
 
-                          <span
-                            class="question-difficulty-badge"
-                          >
+                  <span class="question-difficulty-badge">
 
-                            {{
-                              getDifficultyLabel(
-                                question.difficulty
-                              )
-                            }}
+                    {{
+                    getDifficultyLabel(
+                    question.difficulty
+                    )
+                    }}
 
-                          </span>
+                  </span>
 
 
-                          <span
-                            class="question-points"
-                          >
+                  <span class="question-points">
 
-                            {{ question.points }}
+                    {{ question.points }}
 
-                            درجة
+                    درجة
 
-                          </span>
+                  </span>
 
-                        </div>
+                </div>
 
 
-                        @if (
-                          !question.isActive
-                        ) {
+                @if (
+                !question.isActive
+                ) {
 
-                          <span
-                            class="inactive-badge"
-                          >
-                            غير نشط
-                          </span>
-
-                        }
-
-                      </div>
-
-
-                      <!-- TEXT -->
-
-                      <h3>
-                        {{ question.questionText }}
-                      </h3>
-
-
-                      <!-- OPTIONS -->
-
-                      @if (
-                        question.options &&
-                        question.options.length > 0
-                      ) {
-
-                        <div
-                          class="question-options"
-                        >
-
-                          @for (
-                            option of question.options;
-                            track option.optionId
-                          ) {
-
-                            <div
-                              class="question-option"
-                              [class.correct-option]="
-                                option.isCorrect
-                              "
-                            >
-
-                              <span
-                                class="option-letter"
-                              >
-
-                                {{
-                                  option.optionCode
-                                }}
-
-                              </span>
-
-
-                              <span>
-
-                                {{
-                                  option.optionText
-                                }}
-
-                              </span>
-
-
-                              @if (
-                                option.isCorrect
-                              ) {
-
-                                <i
-                                  class="fa-solid fa-check"
-                                ></i>
-
-                              }
-
-                            </div>
-
-                          }
-
-                        </div>
-
-                      }
-
-
-                      <!-- EXPLANATION -->
-
-                      @if (
-                        question.explanation
-                      ) {
-
-                        <div
-                          class="question-explanation"
-                        >
-
-                          <i
-                            class="fa-regular fa-lightbulb"
-                          ></i>
-
-                          <span>
-
-                            {{
-                              question.explanation
-                            }}
-
-                          </span>
-
-                        </div>
-
-                      }
-
-
-                      <!-- ACTIONS -->
-
-                      <div
-                        class="question-card-actions"
-                      >
-
-                        <button
-                          type="button"
-                          class="question-edit-btn"
-                          (click)="
-                            openEditQuestion(
-                              question
-                            )
-                          "
-                        >
-
-                          <i
-                            class="fa-regular fa-pen-to-square"
-                          ></i>
-
-                          تعديل
-
-                        </button>
-
-
-                        @if (
-                          question.isActive
-                        ) {
-
-                          <button
-                            type="button"
-                            class="question-delete-btn"
-                            (click)="
-                              deactivateQuestion(
-                                question
-                              )
-                            "
-                          >
-
-                            <i
-                              class="fa-regular fa-trash-can"
-                            ></i>
-
-                            تعطيل
-
-                          </button>
-
-                        }
-
-                      </div>
-
-                    </div>
-
-                  </article>
-
-                }
-
-
-                <!-- EMPTY QUESTIONS -->
-
-                @empty {
-
-                  <div
-                    class="empty-state question-empty-state"
-                  >
-
-                    <div
-                      class="empty-icon"
-                    >
-
-                      <i
-                        class="fa-regular fa-circle-question"
-                      ></i>
-
-                    </div>
-
-
-                    <strong>
-                      لا توجد أسئلة
-                    </strong>
-
-
-                    <span>
-
-                      لم يتم العثور على أسئلة
-                      مطابقة للفلاتر الحالية.
-
-                    </span>
-
-
-                    <button
-                      type="button"
-                      class="primary-btn"
-                      (click)="openCreateQuestion()"
-                    >
-
-                      <i
-                        class="fa-solid fa-plus"
-                      ></i>
-
-                      إضافة أول سؤال
-
-                    </button>
-
-                  </div>
+                <span class="inactive-badge">
+                  غير نشط
+                </span>
 
                 }
 
               </div>
 
-            }
+
+              <!-- TEXT -->
+
+              <h3>
+                {{ question.questionText }}
+              </h3>
+
+
+              <!-- OPTIONS -->
+
+              @if (
+              question.options &&
+              question.options.length > 0
+              ) {
+
+              <div class="question-options">
+
+                @for (
+                option of question.options;
+                track option.optionId
+                ) {
+
+                <div class="question-option" [class.correct-option]="
+                                option.isCorrect
+                              ">
+
+                  <span class="option-letter">
+
+                    {{
+                    option.optionCode
+                    }}
+
+                  </span>
+
+
+                  <span>
+
+                    {{
+                    option.optionText
+                    }}
+
+                  </span>
+
+
+                  @if (
+                  option.isCorrect
+                  ) {
+
+                  <i class="fa-solid fa-check"></i>
+
+                  }
+
+                </div>
+
+                }
+
+              </div>
+
+              }
+
+
+              <!-- EXPLANATION -->
+
+              @if (
+              question.explanation
+              ) {
+
+              <div class="question-explanation">
+
+                <i class="fa-regular fa-lightbulb"></i>
+
+                <span>
+
+                  {{
+                  question.explanation
+                  }}
+
+                </span>
+
+              </div>
+
+              }
+
+
+              <!-- ACTIONS -->
+
+              <div class="question-card-actions">
+
+                <button type="button" class="question-edit-btn" (click)="
+                            openEditQuestion(
+                              question
+                            )
+                          ">
+
+                  <i class="fa-regular fa-pen-to-square"></i>
+
+                  تعديل
+
+                </button>
+
+
+                @if (
+                question.isActive
+                ) {
+
+                <button type="button" class="question-delete-btn" (click)="
+                              deactivateQuestion(
+                                question
+                              )
+                            ">
+
+                  <i class="fa-regular fa-trash-can"></i>
+
+                  تعطيل
+
+                </button>
+
+                }
+
+              </div>
+
+            </div>
+
+          </article>
+
+          }
+
+
+          <!-- EMPTY QUESTIONS -->
+
+          @empty {
+
+          <div class="empty-state question-empty-state">
+
+            <div class="empty-icon">
+
+              <i class="fa-regular fa-circle-question"></i>
+
+            </div>
+
+
+            <strong>
+              لا توجد أسئلة
+            </strong>
+
+
+            <span>
+
+              لم يتم العثور على أسئلة
+              مطابقة للفلاتر الحالية.
+
+            </span>
+
+
+            <button type="button" class="primary-btn" (click)="openCreateQuestion()">
+
+              <i class="fa-solid fa-plus"></i>
+
+              إضافة أول سؤال
+
+            </button>
 
           </div>
 
+          }
 
-          <!-- ================================================= -->
-          <!-- QUESTION BANK FOOTER -->
-          <!-- ================================================= -->
-
-          <footer
-            class="question-bank-footer"
-          >
-
-            <div
-              class="selected-question-info"
-            >
-
-              <i
-                class="fa-solid fa-list-check"
-              ></i>
-
-              <span>
-                تم اختيار
-              </span>
-
-              <strong>
-                {{ selectedQuestionIds().size }}
-              </strong>
-
-              <span>
-                سؤال
-              </span>
-
-            </div>
-
-
-            <div
-              class="modal-actions"
-            >
-
-              <button
-                type="button"
-                class="secondary-btn"
-                (click)="
-                  clearQuestionSelection()
-                "
-                [disabled]="
-                  selectedQuestionIds().size === 0 ||
-                  questionSaving()
-                "
-              >
-                إلغاء التحديد
-              </button>
-
-
-              <button
-                type="button"
-                class="primary-btn"
-                (click)="
-                  addSelectedQuestionsToQuiz()
-                "
-                [disabled]="
-                  selectedQuestionIds().size === 0 ||
-                  questionSaving()
-                "
-              >
-
-                @if (questionSaving()) {
-
-                  <i
-                    class="fa-solid fa-spinner fa-spin"
-                  ></i>
-
-                  جاري الإضافة...
-
-                }
-
-                @else {
-
-                  <i
-                    class="fa-solid fa-link"
-                  ></i>
-
-                  إضافة المحدد للاختبار
-
-                }
-
-              </button>
-
-
-              <button
-                type="button"
-                class="secondary-btn"
-                (click)="closeQuestionBank()"
-                [disabled]="questionSaving()"
-              >
-                إغلاق
-              </button>
-
-            </div>
-
-          </footer>
+        </div>
 
         }
 
+      </div>
 
-      </section>
 
-    </div>
+      <!-- ================================================= -->
+      <!-- QUESTION BANK FOOTER -->
+      <!-- ================================================= -->
+
+      <footer class="question-bank-footer">
+
+        <div class="selected-question-info">
+
+          <i class="fa-solid fa-list-check"></i>
+
+          <span>
+            تم اختيار
+          </span>
+
+          <strong>
+            {{ selectedQuestionIds().size }}
+          </strong>
+
+          <span>
+            سؤال
+          </span>
+
+        </div>
+
+        <div class="modal-actions">
+
+          <button type="button" class="primary-btn" (click)="
+      addSelectedQuestionsToQuiz()
+    " [disabled]="
+      selectedQuestionIds().size === 0 ||
+      questionSaving()
+    ">
+
+            @if (questionSaving()) {
+
+            <i class="fa-solid fa-spinner fa-spin"></i>
+
+            جاري الإضافة...
+
+            }
+
+            @else {
+
+            <i class="fa-solid fa-link"></i>
+
+            إضافة المحدد للاختبار
+
+            <span>
+              ({{ getSelectedQuestionsCount() }})
+            </span>
+
+            }
+
+          </button>
+
+
+          <button type="button" class="secondary-btn" (click)="closeQuestionBank()" [disabled]="questionSaving()">
+            إغلاق
+          </button>
+
+        </div>
+
+      </footer>
+
+      }
+
+
+    </section>
+
+  </div>
 
   }
 

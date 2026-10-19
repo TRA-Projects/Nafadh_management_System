@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
 import { catchError, forkJoin, of } from 'rxjs';
@@ -15,12 +15,20 @@ interface SpecialtyCard {
   duration: number;
   capacity: number;
   used: number;
+  /** Trainees of THIS company currently in the program. */
+  companyUsed: number;
   available: number;
   percent: number;
   approved: boolean;
   color: string;
   soft: string;
 }
+
+type StatusFilter = 'all' | 'available' | 'nearFull' | 'unpublished';
+type SortKey = 'default' | 'occupancy' | 'available' | 'name' | 'duration';
+
+/** A program at or above this occupancy is flagged as nearly full. */
+const NEAR_FULL_PERCENT = 90;
 
 @Component({
   selector: 'app-company-specialties',
@@ -39,6 +47,83 @@ export class CompanySpecialties implements OnInit {
   readonly cards = signal<SpecialtyCard[]>([]);
   readonly totalCapacity = signal(0);
   readonly usedCapacity = signal(0);
+
+  // ── List controls: search / department / status / sort ──
+  readonly search = signal('');
+  readonly departmentFilter = signal<string | null>(null);
+  readonly statusFilter = signal<StatusFilter>('all');
+  readonly sortKey = signal<SortKey>('default');
+
+  readonly statusOptions: { key: StatusFilter; label: string }[] = [
+    { key: 'all', label: 'الكل' },
+    { key: 'available', label: 'بها مقاعد متاحة' },
+    { key: 'nearFull', label: 'قاربت على الامتلاء' },
+    { key: 'unpublished', label: 'غير منشورة' },
+  ];
+
+  readonly sortOptions: { key: SortKey; label: string }[] = [
+    { key: 'default', label: 'الترتيب الافتراضي' },
+    { key: 'occupancy', label: 'الأعلى إشغالاً' },
+    { key: 'available', label: 'الأكثر مقاعد متاحة' },
+    { key: 'name', label: 'الاسم (أ – ي)' },
+    { key: 'duration', label: 'الأقصر مدة' },
+  ];
+
+  /** Cards after search + department + status filters, then sorting. */
+  readonly visibleCards = computed(() => {
+    const term = this.search().trim().toLowerCase();
+    const dept = this.departmentFilter();
+    const status = this.statusFilter();
+
+    const list = this.cards().filter((card) => {
+      if (term && !`${card.title} ${card.department}`.toLowerCase().includes(term)) {
+        return false;
+      }
+      if (dept && !(card.departments.length ? card.departments : ['غير محدد']).includes(dept)) {
+        return false;
+      }
+      return this.matchesStatus(card, status);
+    });
+
+    switch (this.sortKey()) {
+      case 'occupancy':
+        return [...list].sort((a, b) => b.percent - a.percent);
+      case 'available':
+        return [...list].sort((a, b) => b.available - a.available);
+      case 'name':
+        return [...list].sort((a, b) => a.title.localeCompare(b.title, 'ar'));
+      case 'duration':
+        return [...list].sort((a, b) => a.duration - b.duration);
+      default:
+        return list;
+    }
+  });
+
+  /** Chip counts always reflect search + department, so they explain the result. */
+  readonly statusCounts = computed(() => {
+    const term = this.search().trim().toLowerCase();
+    const dept = this.departmentFilter();
+    const base = this.cards().filter((card) => {
+      if (term && !`${card.title} ${card.department}`.toLowerCase().includes(term)) return false;
+      if (dept && !(card.departments.length ? card.departments : ['غير محدد']).includes(dept)) return false;
+      return true;
+    });
+    const count = (s: StatusFilter) => base.filter((c) => this.matchesStatus(c, s)).length;
+    return {
+      all: count('all'),
+      available: count('available'),
+      nearFull: count('nearFull'),
+      unpublished: count('unpublished'),
+    } as Record<StatusFilter, number>;
+  });
+
+  readonly hasActiveFilters = computed(
+    () =>
+      !!this.search().trim() ||
+      this.departmentFilter() !== null ||
+      this.statusFilter() !== 'all' ||
+      this.sortKey() !== 'default'
+  );
 
   private readonly palettes = [
     ['#00338d', '#e7eefb'],
@@ -104,7 +189,7 @@ export class CompanySpecialties implements OnInit {
 
   /** Published programs that currently have trainees from this company. */
   activePlans(): number {
-    return this.cards().filter((x) => x.approved && x.used > 0).length;
+    return this.cards().filter((x) => x.approved && x.companyUsed > 0).length;
   }
 
   occupancyPercent(): number {
@@ -136,6 +221,50 @@ export class CompanySpecialties implements OnInit {
       };
     });
   }
+
+  // ── List controls ──
+
+  onSearch(event: Event): void {
+    this.search.set((event.target as HTMLInputElement).value);
+  }
+
+  setStatus(key: StatusFilter): void {
+    this.statusFilter.set(key);
+  }
+
+  onSort(event: Event): void {
+    this.sortKey.set((event.target as HTMLSelectElement).value as SortKey);
+  }
+
+  /** Clicking a department in the chart legend filters the list; click again to clear. */
+  toggleDepartment(name: string): void {
+    this.departmentFilter.update((current) => (current === name ? null : name));
+  }
+
+  clearFilters(): void {
+    this.search.set('');
+    this.departmentFilter.set(null);
+    this.statusFilter.set('all');
+    this.sortKey.set('default');
+  }
+
+  isNearFull(card: SpecialtyCard): boolean {
+    return card.capacity > 0 && card.percent >= NEAR_FULL_PERCENT;
+  }
+
+  private matchesStatus(card: SpecialtyCard, status: StatusFilter): boolean {
+    switch (status) {
+      case 'available':
+        return card.available > 0;
+      case 'nearFull':
+        return this.isNearFull(card);
+      case 'unpublished':
+        return !card.approved;
+      default:
+        return true;
+    }
+  }
+
   openDetails(card: SpecialtyCard): void {
     this.router.navigate(['/company/specialties', card.programId]);
   }
@@ -178,6 +307,10 @@ export class CompanySpecialties implements OnInit {
       ? program.departments.join('، ')
       : 'غير محدد';
 
+    // Prefer the open-batch seat numbers (shared batch capacity versus every
+    // company's trainees). Fall back to the older fields for an older backend.
+    const hasOpenSeats = program.openSeatCapacity !== undefined && program.openSeatCapacity !== null;
+
     return {
       programId: program.programId,
       title: program.title,
@@ -185,10 +318,23 @@ export class CompanySpecialties implements OnInit {
       department,
       departments: program.departments ?? [],
       duration: this.hoursToWeeks(Number(program.durationHours ?? 0)),
-      capacity: Number(program.allocatedCapacity ?? 0),
-      used: Number(program.usedCapacity ?? 0),
-      available: Number(program.remainingCapacity ?? 0),
-      percent: Math.max(0, Math.min(100, Math.round(Number(program.utilizationPercentage ?? 0)))),
+      capacity: Number(hasOpenSeats ? program.openSeatCapacity : program.allocatedCapacity ?? 0),
+      used: Number(hasOpenSeats ? program.openSeatOccupied ?? 0 : program.usedCapacity ?? 0),
+      companyUsed: Number(program.usedCapacity ?? 0),
+      available: Number(hasOpenSeats ? program.openSeatRemaining ?? 0 : program.remainingCapacity ?? 0),
+      percent: Math.max(
+        0,
+        Math.min(
+          100,
+          Math.round(
+            Number(
+              hasOpenSeats
+                ? program.openSeatUtilizationPercentage ?? 0
+                : program.utilizationPercentage ?? 0
+            )
+          )
+        )
+      ),
       approved: !!program.approvedForCompany && program.status === 'Published',
       color,
       soft,

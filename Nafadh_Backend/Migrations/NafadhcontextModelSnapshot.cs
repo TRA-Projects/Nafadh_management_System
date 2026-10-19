@@ -1461,6 +1461,9 @@ namespace Nafadh_Backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("QuizId"));
 
+                    b.Property<bool>("AllowBackNavigation")
+                        .HasColumnType("bit");
+
                     b.Property<int>("BatchId")
                         .HasColumnType("int");
 
@@ -1479,13 +1482,37 @@ namespace Nafadh_Backend.Migrations
                     b.Property<DateTime>("EndDateTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("ExitLimitAction")
+                        .HasColumnType("int");
+
                     b.Property<int>("MaxAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaxExitAttempts")
                         .HasColumnType("int");
 
                     b.Property<decimal>("PassingPercentage")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<bool>("PreventCopyPaste")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("RandomizeOptions")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("RandomizeQuestions")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShowCorrectAnswers")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShowOneQuestionAtTime")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShowResultImmediately")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShowScoreToTrainee")
                         .HasColumnType("bit");
 
                     b.Property<DateTime>("StartDateTime")
@@ -2616,6 +2643,41 @@ namespace Nafadh_Backend.Migrations
                     b.HasIndex("RaisedByUserId");
 
                     b.ToTable("NFD_Warnings", (string)null);
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_WithdrawalRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AdminNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TraineeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TraineeId");
+
+                    b.ToTable("NFD_WithdrawalRequests");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.RemediationRequest", b =>
@@ -3751,6 +3813,17 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("Enrollment");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_WithdrawalRequest", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainee", "Trainee")
+                        .WithMany()
+                        .HasForeignKey("TraineeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Trainee");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.RemediationRequest", b =>

@@ -33,6 +33,12 @@ namespace Nafadh_Backend.Repositories
         // Get warnings by severity level
         Task<IEnumerable<NFD_Warning>> GetWarningsByLevelAsync(NFD_WarningLevel level);
 
-        Task<bool> AutoAbsenceWarningExistsAsync(int enrollmentId, int absenceNumber); //***
+        Task<bool> AutoAbsenceWarningExistsAsync(int enrollmentId, int absenceNumber);
+
+        Task ReplyToCompanyWarningAsync(
+       int warningId,
+       int companyId,
+       string reply);
+
     }
 }

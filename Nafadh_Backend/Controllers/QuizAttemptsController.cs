@@ -308,5 +308,35 @@ namespace Nafadh_Backend.Controllers
                 });
             }
         }
+
+
+        // عرض تفاصيل محاولة الاختبار
+        [HttpGet("{attemptId:int}/details")]
+        public async Task<IActionResult> GetAttemptDetails(
+            int attemptId)
+        {
+            try
+            {
+                var result =
+                    await _service.GetAttemptDetailsAsync(
+                        attemptId);
+
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
     }
 }
