@@ -87,6 +87,13 @@ export class AdminReports implements OnInit {
   masterTranscriptTotalPages = 1;
   pagedMasterTranscriptList: any[] = [];
 
+  // متغيرات البحث والفلترة الشاملة لكشف الدرجات العام
+  masterSearchTerm = '';
+  masterCompanyFilter = 'ALL';
+  masterLevelFilter = 'ALL';
+  masterScoreRangeFilter = 'ALL';
+  filteredMasterTranscriptList: any[] = [];
+
   constructor(
     private api: AdminApi,
     private cdr: ChangeDetectorRef,
@@ -711,15 +718,79 @@ export class AdminReports implements OnInit {
     this.cdr.detectChanges();
   }
 
-  openMasterTranscript() {
+openMasterTranscript() {
     this.traineeSubView = 'master_transcript';
-    this.masterTranscriptCurrentPage = 1;
-    this.updateMasterTranscriptPage();
+    this.masterSearchTerm = '';
+    this.masterCompanyFilter = 'ALL';
+    this.masterLevelFilter = 'ALL';
+    this.masterScoreRangeFilter = 'ALL';
+    this.applyMasterTranscriptFilters();
     this.cdr.detectChanges();
   }
+    // دالة البحث الشامل في كل حقول كشف الدرجات
+  applyMasterTranscriptFilters() {
+    let list = [...this.allTraineesData];
 
+    // 1. البحث الشامل بالاسم، الرقم الأكاديمي، الشركة، التخصص، أو المدرب
+    if (this.masterSearchTerm.trim()) {
+      const q = this.masterSearchTerm.toLowerCase().trim();
+      list = list.filter(t => {
+        const name = (t.traineeName || '').toLowerCase();
+        const id = String(t.traineeId || '').toLowerCase();
+        const fullId = `nfd-${id}`;
+        const comp = (t.companyName || '').toLowerCase();
+        const major = (t.major || '').toLowerCase();
+        const trainer = (t.assignedTrainer || '').toLowerCase();
+        const level = (t.level || '').toLowerCase();
+        const score = String(this.getTraineeFinalScore(t));
+
+        return name.includes(q) ||
+               id.includes(q) ||
+               fullId.includes(q) ||
+               comp.includes(q) ||
+               major.includes(q) ||
+               trainer.includes(q) ||
+               level.includes(q) ||
+               score.includes(q);
+      });
+    }
+
+    // 2. فلتر المنشأة المستضيفة
+    if (this.masterCompanyFilter !== 'ALL') {
+      list = list.filter(t => t.companyName === this.masterCompanyFilter);
+    }
+
+    // 3. فلتر التقدير
+    if (this.masterLevelFilter !== 'ALL') {
+      list = list.filter(t => t.level && t.level.includes(this.masterLevelFilter));
+    }
+
+    // 4. فلتر نطاق المجموع النهائي
+    if (this.masterScoreRangeFilter === '90_PLUS') {
+      list = list.filter(t => this.getTraineeFinalScore(t) >= 90);
+    } else if (this.masterScoreRangeFilter === '80_PLUS') {
+      list = list.filter(t => this.getTraineeFinalScore(t) >= 80);
+    } else if (this.masterScoreRangeFilter === '70_PLUS') {
+      list = list.filter(t => this.getTraineeFinalScore(t) >= 70);
+    }
+
+    this.filteredMasterTranscriptList = list;
+    this.masterTranscriptCurrentPage = 1;
+    this.updateMasterTranscriptPage();
+  }
+
+  // إعادة تعيين وتصفير فلاتر الكشف العام
+  resetMasterTranscriptFilters() {
+    this.masterSearchTerm = '';
+    this.masterCompanyFilter = 'ALL';
+    this.masterLevelFilter = 'ALL';
+    this.masterScoreRangeFilter = 'ALL';
+    this.applyMasterTranscriptFilters();
+  }
+
+  // تحديث الصفحة المعروضة في كشف الدرجات بعد الفلترة
   updateMasterTranscriptPage() {
-    const list = this.filteredTraineesList || [];
+    const list = this.filteredMasterTranscriptList || [];
     this.masterTranscriptTotalPages = Math.ceil(list.length / this.masterTranscriptPageSize) || 1;
     if (this.masterTranscriptCurrentPage > this.masterTranscriptTotalPages) {
       this.masterTranscriptCurrentPage = this.masterTranscriptTotalPages;
@@ -728,6 +799,7 @@ export class AdminReports implements OnInit {
     const endIndex = startIndex + this.masterTranscriptPageSize;
     this.pagedMasterTranscriptList = list.slice(startIndex, endIndex);
   }
+
 
   nextMasterTranscriptPage() {
     if (this.masterTranscriptCurrentPage < this.masterTranscriptTotalPages) {

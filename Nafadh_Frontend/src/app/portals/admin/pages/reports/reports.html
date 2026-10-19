@@ -64,8 +64,8 @@
       <!-- شريط البحث والفلترة الذكي (نفس شريط المدربين) -->
       <div class="filter-toolbar-card">
         <div class="search-input-wrap">
-          <input type="text" placeholder="ابحث باسم الشركة أو التخصص أو رقم المعرف..."
-            [(ngModel)]="companySearchTerm" (input)="applyCompanyFilters()" />
+          <input type="text" placeholder="ابحث باسم الشركة أو التخصص أو رقم المعرف..." [(ngModel)]="companySearchTerm"
+            (input)="applyCompanyFilters()" />
           <button class="clear-search-btn" *ngIf="companySearchTerm"
             (click)="companySearchTerm = ''; applyCompanyFilters()">✕</button>
         </div>
@@ -98,14 +98,14 @@
       <!-- شبكة كروت الشركات (مطابقة لكروت المدربين في صورتك) -->
       <div class="companies-grid" *ngIf="!isLoading() && companies.length > 0">
         <div class="company-card" *ngFor="let company of companies">
-          
+
           <!-- رأس الكرت: الاسم والمجال على اليمين، وأيقونة المنشأة النيلية على اليسار -->
           <div class="company-card-header" (click)="selectCompany(company)">
             <div class="company-text">
               <h3 class="company-name">{{ company.name }}</h3>
               <p class="company-field">{{ company.workField || 'تقنية المعلومات' }}</p>
             </div>
-            
+
             <div class="company-avatar-box">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
@@ -209,7 +209,8 @@
 
       <div class="summary-metrics-grid">
         <div class="metric-card">
-          <span class="metric-value star" style="color: #f59e0b;">{{ selectedCompany?.ratingScore || '4.9' }} / 5.0</span>
+          <span class="metric-value star" style="color: #f59e0b;">{{ selectedCompany?.ratingScore || '4.9' }} /
+            5.0</span>
           <span class="metric-label">تقييم المنشأة العام</span>
         </div>
         <div class="metric-card">
@@ -406,7 +407,8 @@
 
         <div class="compact-pagination-wrapper">
           <div class="pagination-info">
-            عرض الصفحة <strong>{{ report()?.pageNumber || 1 }}</strong> من <strong>{{ report()?.totalPages || 1 }}</strong>
+            عرض الصفحة <strong>{{ report()?.pageNumber || 1 }}</strong> من <strong>{{ report()?.totalPages || 1
+              }}</strong>
           </div>
           <div class="pagination-compact-controls">
             <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) <= 1"
@@ -563,7 +565,8 @@
 
       <div class="summary-metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));">
         <div class="metric-card">
-          <span class="metric-value star" style="color: #f59e0b;">{{ formatRating(selectedTrainer?.rating) }} / 5.0</span>
+          <span class="metric-value star" style="color: #f59e0b;">{{ formatRating(selectedTrainer?.rating) }} /
+            5.0</span>
           <span class="metric-label">متوسط تقييم المتدربين العام للمدرب</span>
         </div>
         <div class="metric-card">
@@ -817,19 +820,69 @@
       </div>
     </div>
 
-    <!-- 3.2 كشف الدرجات العام المعتمد لكافة المتدربين مع Pagination -->
+    <!-- 3.2 كشف الدرجات العام المعتمد لكافة المتدربين مع آلية بحث شاملة -->
     <div *ngIf="traineeSubView === 'master_transcript'">
-      <div class="no-print"
-        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <button class="back-btn" (click)="traineeSubView = 'roster'">
-          ← العودة إلى سجل المتدربين
-        </button>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn-excel" (click)="exportTraineesToExcel()">تصدير Excel المعتمد</button>
-          <button class="btn-pdf" (click)="exportToPDF()">🖨️ طباعة الكشف العام A4</button>
+
+      <!-- شريط الإجراءات والبحث (مخفي أثناء الطباعة no-print) -->
+      <div class="no-print" style="margin-bottom: 16px;">
+        <!-- الصف العلوي: أزرار العودة والتصدير والطباعة -->
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+          <button class="back-btn" (click)="traineeSubView = 'roster'">
+            ← العودة إلى سجل المتدربين
+          </button>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-excel" (click)="exportTraineesToExcel()">تصدير Excel المعتمد</button>
+            <button class="btn-pdf" (click)="exportToPDF()">🖨️ طباعة الكشف العام A4</button>
+          </div>
+        </div>
+
+        <!-- شريط البحث والفلترة الشامل لكل شيء في الكشف العام -->
+        <div class="filter-toolbar-card"
+          style="padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; margin-bottom: 14px;">
+          <div class="search-input-wrap" style="flex: 1;">
+            <input type="text" placeholder="ابحث باسم المتدرب، الرقم الأكاديمي، الشركة، التخصص، أو التقدير..."
+              [(ngModel)]="masterSearchTerm" (input)="applyMasterTranscriptFilters()" />
+            <button class="clear-search-btn" *ngIf="masterSearchTerm"
+              (click)="masterSearchTerm = ''; applyMasterTranscriptFilters()">✕</button>
+          </div>
+
+          <div class="filters-actions-wrap" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <!-- فلتر الشركات -->
+            <select class="custom-select-filter" [(ngModel)]="masterCompanyFilter"
+              (change)="applyMasterTranscriptFilters()">
+              <option value="ALL">جميع المنشآت المستضيفة</option>
+              <option *ngFor="let comp of uniqueTraineeCompanies" [value]="comp">{{ comp }}</option>
+            </select>
+
+            <!-- فلتر التقدير -->
+            <select class="custom-select-filter" [(ngModel)]="masterLevelFilter"
+              (change)="applyMasterTranscriptFilters()">
+              <option value="ALL">جميع التقديرات</option>
+              <option value="ممتاز">ممتاز</option>
+              <option value="جيد جدا">جيد جداً</option>
+              <option value="جيد">جيد</option>
+            </select>
+
+            <!-- فلتر نطاق المجموع النهائي -->
+            <select class="custom-select-filter" [(ngModel)]="masterScoreRangeFilter"
+              (change)="applyMasterTranscriptFilters()">
+              <option value="ALL">كافة الدرجات</option>
+              <option value="90_PLUS">درجة 90% فما فوق (امتياز)</option>
+              <option value="80_PLUS">درجة 80% فما فوق</option>
+              <option value="70_PLUS">درجة 70% فما فوق (ناجح)</option>
+            </select>
+
+            <!-- زر إعادة تعيين البحث -->
+            <button class="btn-reset-filters" (click)="resetMasterTranscriptFilters()"
+              *ngIf="masterSearchTerm || masterCompanyFilter !== 'ALL' || masterLevelFilter !== 'ALL' || masterScoreRangeFilter !== 'ALL'">
+              إعادة ضبط ↺
+            </button>
+          </div>
         </div>
       </div>
 
+      <!-- وثيقة كشف الدرجات العام الرسمية A4 -->
       <div class="table-card official-sheet-card"
         style="padding: 24px; border: 2px solid #0D1C8C; background: #ffffff;">
 
@@ -853,13 +906,16 @@
           </div>
         </div>
 
+        <!-- ملخص إحصائي سريع يتفاعل فورياً مع نتائج البحث -->
         <div
           style="display: flex; justify-content: space-between; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 20px; margin-bottom: 20px; font-size: 12px;">
-          <div>إجمالي المتدربين بالكشف: <strong>{{ filteredTraineesList.length }} متدرباً</strong></div>
-          <div>نسبة النجاح والاجتياز: <strong style="color: #15803d;">100%</strong></div>
+          <div>إجمالي المتدربين المطابقين بالكشف: <strong style="color: #0D1C8C; font-size: 13px;">{{
+              filteredMasterTranscriptList.length }} متدرباً</strong></div>
+          <div>نسبة الاجتياز: <strong style="color: #15803d;">100%</strong></div>
           <div>حالة الاعتماد الميداني: <strong style="color: #0D1C8C;">مؤهلون للتثبيت الوظيفي</strong></div>
         </div>
 
+        <!-- جدول الكشف العام مع Pagination عبر pagedMasterTranscriptList -->
         <table class="custom-table official-table" style="width: 100%; border-collapse: collapse;">
           <thead>
             <tr style="background-color: #0f172a; color: #ffffff;">
@@ -891,14 +947,17 @@
               <td style="padding: 8px;">{{ t.companyName }}</td>
               <td style="padding: 8px; font-size: 11px;">{{ t.major }}</td>
               <td style="text-align: center; font-family: monospace; color: #15803d; font-weight: bold; padding: 8px;">
-                {{ t.attendanceRate }}%</td>
+                {{ t.attendanceRate }}%
+              </td>
               <td style="text-align: center; font-family: monospace; color: #0D1C8C; font-weight: bold; padding: 8px;">
-                {{ t.technicalScore }}%</td>
+                {{ t.technicalScore }}%
+              </td>
               <td style="text-align: center; font-family: monospace; color: #2563eb; font-weight: bold; padding: 8px;">
                 {{ t.projectScore }}%
               </td>
               <td style="text-align: center; font-family: monospace; color: #475569; font-weight: bold; padding: 8px;">
-                {{ t.behavioralScore }}%</td>
+                {{ t.behavioralScore }}%
+              </td>
               <td
                 style="text-align: center; font-family: monospace; font-weight: 900; background-color: #eff6ff; color: #1e3a8a; padding: 8px; font-size: 13px;">
                 {{ getTraineeFinalScore(t) }}%
@@ -908,16 +967,23 @@
                 ✓ مؤهل للتثبيت
               </td>
             </tr>
+
+            <!-- حالة عدم وجود نتائج مطابقة للبحث داخل الكشف -->
+            <tr *ngIf="pagedMasterTranscriptList.length === 0">
+              <td colspan="12" style="text-align: center; padding: 32px; color: #94a3b8; font-size: 13px;">
+                لا توجد نتائج مطابقة لبحثك في كشف الدرجات العام.
+              </td>
+            </tr>
           </tbody>
         </table>
 
-        <!-- الترقيم والتنقل بين الصفحات -->
+        <!-- شريط الترقيم والتنقل بين الصفحات (Pagination Controls) -->
         <div class="compact-pagination-wrapper no-print"
           style="display: flex; justify-content: space-between; align-items: center; padding-top: 18px; border-top: 1px solid #e2e8f0; margin-top: 16px;">
           <div class="pagination-info" style="font-size: 12px; color: #64748b;">
             عرض الصفحة <strong style="color: #0f172a;">{{ masterTranscriptCurrentPage }}</strong> من <strong
               style="color: #0f172a;">{{ masterTranscriptTotalPages }}</strong>
-            (إجمالي <strong style="color: #0D1C8C;">{{ filteredTraineesList.length }}</strong> متدرباً بالكشف)
+            (إجمالي <strong style="color: #0D1C8C;">{{ filteredMasterTranscriptList.length }}</strong> متدرباً بالكشف)
           </div>
 
           <div style="display: flex; align-items: center; gap: 14px;">
@@ -973,7 +1039,6 @@
 
       </div>
     </div>
-
     <!-- 3.3 كشف درجات المتدرب الواحد الرسمي (View: Single Transcript) -->
     <div *ngIf="traineeSubView === 'single_transcript' && selectedTraineeForTranscript">
       <div class="no-print"
@@ -1056,7 +1121,8 @@
               <td style="text-align: center; font-family: monospace; font-weight: bold; color: #15803d; padding: 10px;">
                 {{ selectedTraineeForTranscript.attendanceRate }}%
               </td>
-              <td style="font-size: 11px; color: #64748b; padding: 10px;">التزام تام بمواعيد الحضور وساعات التدريب الميداني المقررة</td>
+              <td style="font-size: 11px; color: #64748b; padding: 10px;">التزام تام بمواعيد الحضور وساعات التدريب
+                الميداني المقررة</td>
             </tr>
             <tr>
               <td style="font-weight: bold; padding: 10px;">التقييم التقني والمهام العملية اليومية</td>
@@ -1064,7 +1130,8 @@
               <td style="text-align: center; font-family: monospace; font-weight: bold; color: #0D1C8C; padding: 10px;">
                 {{ selectedTraineeForTranscript.technicalScore }}%
               </td>
-              <td style="font-size: 11px; color: #64748b; padding: 10px;">إتقان المفاهيم والقدرة على تطبيقها في بيئة العمل الواقعية</td>
+              <td style="font-size: 11px; color: #64748b; padding: 10px;">إتقان المفاهيم والقدرة على تطبيقها في بيئة
+                العمل الواقعية</td>
             </tr>
             <tr>
               <td style="font-weight: bold; padding: 10px;">مشروع التخرج التطبيقي والتنفيذ العملي</td>
@@ -1072,7 +1139,8 @@
               <td style="text-align: center; font-family: monospace; font-weight: bold; color: #2563eb; padding: 10px;">
                 {{ selectedTraineeForTranscript.projectScore }}%
               </td>
-              <td style="font-size: 11px; color: #64748b; padding: 10px;">إنجاز وتسليم حلول برمجية مطابقة للمواصفات المعتمدة</td>
+              <td style="font-size: 11px; color: #64748b; padding: 10px;">إنجاز وتسليم حلول برمجية مطابقة للمواصفات
+                المعتمدة</td>
             </tr>
             <tr>
               <td style="font-weight: bold; padding: 10px;">السلوك المهني والعمل الجماعي والتواصل</td>
@@ -1080,7 +1148,8 @@
               <td style="text-align: center; font-family: monospace; font-weight: bold; color: #475569; padding: 10px;">
                 {{ selectedTraineeForTranscript.behavioralScore }}%
               </td>
-              <td style="font-size: 11px; color: #64748b; padding: 10px;">تفاعل إيجابي مع فريق العمل والالتزام بأخلاقيات المهنة</td>
+              <td style="font-size: 11px; color: #64748b; padding: 10px;">تفاعل إيجابي مع فريق العمل والالتزام بأخلاقيات
+                المهنة</td>
             </tr>
             <tr style="background-color: #eff6ff; font-weight: 900;">
               <td style="padding: 12px; font-size: 13px; color: #1e3a8a;">المجموع التراكمي الإجمالي النهائي</td>
