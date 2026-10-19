@@ -496,10 +496,30 @@ namespace Nafadh_Backend.Services
                 throw new InvalidOperationException(
                     "This session has a final status.");
 
-            if (nextStatus != NFD_SessionStatus.Completed &&
+
+            if (nextStatus != NFD_SessionStatus.InProgress &&
+                nextStatus != NFD_SessionStatus.Completed &&
                 nextStatus != NFD_SessionStatus.Cancelled)
+            {
                 throw new InvalidOperationException(
-                    "Use the postponement endpoint to reschedule.");
+                    "Invalid session status transition.");
+            }
+
+            bool validTransition =
+                ((session.Status == NFD_SessionStatus.Scheduled ||
+                  session.Status == NFD_SessionStatus.Postponed) &&
+                 (nextStatus == NFD_SessionStatus.InProgress ||
+                  nextStatus == NFD_SessionStatus.Cancelled))
+                ||
+                (session.Status == NFD_SessionStatus.InProgress &&
+                 (nextStatus == NFD_SessionStatus.Completed ||
+                  nextStatus == NFD_SessionStatus.Cancelled));
+
+            if (!validTransition)
+            {
+                throw new InvalidOperationException(
+                    "This status transition is not allowed.");
+            }
 
             session.Status = nextStatus;
 
