@@ -420,17 +420,16 @@ color: #0098aa;
 
   display: grid;
 
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
+  /* تعديل ليصبحوا 3 أعمدة متساوية لدائرة المحتوى، ودائرة الأيام، وعدد المتدربين */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 
   align-items: center;
 
-  gap: 8px;
+  gap: 6px;
 
   border-top: 1px solid #edf2f7;
   border-bottom: 1px solid #edf2f7;
 }
-
 
 .metric-item {
   min-width: 0;
@@ -459,16 +458,30 @@ color: #0098aa;
     font-size: 9px;
   }
 }
+.batch-metrics-4 {
+  width: 100%;
+  margin-top: auto;
+  margin-bottom: 16px;
+  padding: 14px 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  gap: 4px;
+  border-top: 1px solid #edf2f7;
+  border-bottom: 1px solid #edf2f7;
+}
 
+.progress-inner.cyan-text {
+  color: #0096a7;
+}
 
 .trainee-number {
   font-size: 15px !important;
 }
 
-
 .progress-circle {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
 
   display: flex;
   align-items: center;
@@ -477,10 +490,9 @@ color: #0098aa;
   border-radius: 50%;
 }
 
-
 .progress-inner {
-  width: 36px;
-  height: 36px;
+  width: 33px;
+  height: 33px;
 
   display: flex;
   align-items: center;
@@ -492,11 +504,9 @@ color: #0098aa;
 
   color: #003b82;
 
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 800;
 }
-
-
 /* =========================================================
    SELECT BUTTON
 ========================================================= */

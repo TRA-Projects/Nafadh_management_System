@@ -174,74 +174,58 @@
         </div>
 
 
-        <!-- METRICS -->
+<!-- METRICS -->
+        <div class="batch-metrics-4">
 
-        <div class="batch-metrics">
-
-          <!-- PROGRESS -->
-
+          <!-- 1. CONTENT PROGRESS -->
           <div class="metric-item">
+            <div class="progress-circle" [style.background]="
+                      'conic-gradient(#003b82 ' +
+                      (contentProgress()[b.batchId] ?? 0) +
+                      '%, #edf2f7 0)'
+                    ">
+              <div class="progress-inner">
+                {{ contentProgress()[b.batchId] ?? 0 }}%
+              </div>
+            </div>
+            <span>تقدم المحتوى</span>
+          </div>
 
+
+          <!-- 2. DAYS PROGRESS (SAME COLOR AS CONTENT) -->
+          <div class="metric-item">
             <div class="progress-circle" [style.background]="
                       'conic-gradient(#003b82 ' +
                       getTimeProgress(b) +
                       '%, #edf2f7 0)'
                     ">
-
               <div class="progress-inner">
-
-                {{ contentProgress()[b.batchId] ?? 0 }}%
-
+                {{ getTimeProgress(b) }}%
               </div>
-
             </div>
-
-
-            <span>
-              نسبة تقدم المحتوى
-            </span>
-
+            <span>التقدم الزمني</span>
           </div>
 
 
-          <!-- TIME -->
-
+          <!-- 3. DURATION IN MONTHS -->
           <div class="metric-item">
-
             <strong>
               {{ getBatchDurationInMonths(b) }}
               {{ getBatchDurationInMonths(b) === 1 ? 'شهر' : 'أشهر' }}
             </strong>
-
-            <span>
-              مدة الدفعة
-            </span>
-
+            <span>مدة الدفعة</span>
           </div>
 
 
-          <!-- TRAINEES -->
-
+          <!-- 4. TRAINEES -->
           <div class="metric-item">
-
             <strong class="trainee-number">
-
-              {{
-              traineeCounts()[
-              b.batchId
-              ] ?? 0
-              }}
-
+              {{ traineeCounts()[b.batchId] ?? 0 }}
             </strong>
-
-            <span>
-              متدرب
-            </span>
-
+            <span>متدرب</span>
           </div>
 
         </div>
-
 
         <button type="button" class="select-batch-btn" (click)="select(b)">
 

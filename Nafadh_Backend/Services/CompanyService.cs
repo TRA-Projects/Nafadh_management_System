@@ -16,11 +16,15 @@ namespace Nafadh_Backend.Services
     public class CompanyService : ICompanyService
     {
         private readonly ICompanyRepository _repository;
+        private readonly ICompanyRegistrationService _registrationService;
 
         // Constructor - inject Company Repository
-        public CompanyService(ICompanyRepository repository)
+        public CompanyService(
+            ICompanyRepository repository,
+            ICompanyRegistrationService registrationService)
         {
             _repository = repository;
+            _registrationService = registrationService;
         }
 
         // Get Company by ID
@@ -108,12 +112,13 @@ namespace Nafadh_Backend.Services
         public async Task<(NFD_CompanyOutputDTO? result, string? error)> AddCompanyAsync(
             NFD_CompanyInputDTO dto)
         {
-            // التحقق من وجود المستخدم فقط إذا تم إرساله ولم يكن فارغاً
-            if (dto.UserId.HasValue)
+            // 🟢 إذا لم يتم إرسال UserId، نحسب أعلى رقم موجود تلقائياً ونزيد عليه 1
+            int? assignedUserId = dto.UserId;
+            if (!assignedUserId.HasValue)
             {
-                var userExists = await _repository.UserExistsAsync(dto.UserId.Value);
-                if (!userExists)
-                    return (null, $"User with ID {dto.UserId} not found");
+                var allCompanies = await _repository.GetAllCompaniesAsync();
+                int maxId = allCompanies.Max(c => c.UserId ?? 72);
+                assignedUserId = maxId + 1; // 👈 يأخذ الرقم التالي تلقائياً (73 ثم 74 ثم 75...)
             }
 
             var company = new NFD_Company
@@ -128,7 +133,7 @@ namespace Nafadh_Backend.Services
                 Capacity = dto.Capacity,
                 Status = dto.Status,
                 ApprovalDate = dto.ApprovalDate,
-                UserId = dto.UserId // سيتم تخزينه كقيمة صحيحة أو null
+                UserId = assignedUserId // 👈 سيحفظ الرقم التسلسلي التلقائي ولن يكون NULL أبداً
             };
 
             await _repository.AddCompanyAsync(company);
@@ -172,20 +177,28 @@ namespace Nafadh_Backend.Services
         }
 
         // Approve a Company
-        public async Task<NFD_CompanyOutputDTO?> ApproveCompanyAsync(
-            int companyId)
+        public async Task<NFD_CompanyOutputDTO?> ApproveCompanyAsync(int companyId)
         {
             var company = await _repository.GetCompanyByIdAsync(companyId);
-
             if (company == null)
                 return null;
 
+            // Self-registered company: approve + activate account + e-mail credentials.
+            if (await _registrationService.TryApproveRegisteredCompanyAsync(companyId))
+            {
+                var approved = await _repository.GetCompanyByIdAsync(companyId);
+                return approved == null ? null : MapToOutputDTO(approved);
+            }
+
+            // 🟢 تحديث مباشر في SQL Server: يضع الحالة 1 وتاريخ اليوم ويمسح سبب الرفض 100%
             company.Status = NFD_CompanyStatus.Approved;
             company.ApprovalDate = DateTime.UtcNow;
+            company.RejectionReason = null;
 
-            await _repository.UpdateCompanyAsync(company);
+            await _repository.UpdateCompanyStatusDirectAsync(companyId, NFD_CompanyStatus.Approved, null);
 
-            return MapToOutputDTO(company);
+            var links = await _repository.GetEnrollmentLinksAsync();
+            return MapToOutputDTO(company, BuildEnrollmentLookup(links));
         }
 
         // Suspend or reactivate a Company
@@ -221,10 +234,13 @@ namespace Nafadh_Backend.Services
             if (company == null)
                 return null;
 
-            company.Status = NFD_CompanyStatus.Suspended; // أو حالة الرفض لديك
+            company.Status = NFD_CompanyStatus.Rejected;
             company.RejectionReason = rejectionReason;
 
             await _repository.UpdateCompanyAsync(company);
+
+            // Self-registered company: tell them why (no-op for Admin-created companies).
+            await _registrationService.NotifyRejectionAsync(companyId, rejectionReason);
 
             return MapToOutputDTO(company);
         }
@@ -318,7 +334,7 @@ namespace Nafadh_Backend.Services
                 Status = company.Status,
                 ApprovalDate = company.ApprovalDate,
                 UserId = company.UserId,
-
+                RejectionReason = company.RejectionReason,
                 // الأعداد الحقيقية — مبنية على تسجيلات (Enrollments) هذه الشركة فعلياً،
                 // وليست مساوية لعدد البرامج ولا صفراً ثابتاً   
                 ProgramsCount = company.CompanyPrograms?.Count ?? 0,

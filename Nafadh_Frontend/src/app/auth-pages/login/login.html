@@ -10,6 +10,7 @@
     <h2>تسجيل الدخول</h2>
     <p class="sub">أدخل بيانات حسابك للمتابعة إلى بوابتك</p>
 
+    <!-- نموذج تسجيل الدخول وحده فقط -->
     <form (ngSubmit)="submit()" #f="ngForm">
       <label>البريد الإلكتروني</label>
       <input class="nfd-input" type="email" name="email" [(ngModel)]="email" required placeholder="name@nafadh.om" />
@@ -17,14 +18,25 @@
       <label>كلمة المرور</label>
       <input class="nfd-input" type="password" name="password" [(ngModel)]="password" required placeholder="••••••••" />
 
-      @if (error()) {
-        <div class="error">{{ error() }}</div>
+      @if (notice(); as n) {
+        <div [class]="'notice ' + n.kind" role="alert">
+          @if (n.title) { <strong>{{ n.title }}</strong> }
+          <span>{{ n.text }}</span>
+          @if (n.canReapply) {
+            <a class="reapply" routerLink="/register-company" [queryParams]="{ email: email }">إعادة تقديم الطلب</a>
+          }
+        </div>
       }
 
       <button class="nfd-btn primary submit-btn" type="submit" [disabled]="loading() || !f.valid">
         {{ loading() ? 'جاري الدخول...' : 'تسجيل الدخول' }}
       </button>
     </form>
+
+    <div class="company-register-prompt">
+      <p>تود تسجيل شركتك كجهة مستضيفة؟</p>
+      <a routerLink="/register-company" class="nfd-btn secondary">تسجيل شركة جديدة</a>
+    </div>
   </div>
 
   <div class="login-hero">

@@ -602,13 +602,13 @@
 
                                     </span>
 
-                                    @if (day.record?.status === 'Absent') {
+                                    @if (day.record && (day.record.status === 'Absent' || day.record.status === 'Late' || day.record.status === 'EarlyLeave') && (view() === 'week' || hasExcuse(day.record))) {
 
                                     <button type="button" class="weekly-excuse-btn"
                                         [class.has-excuse]="hasExcuse(day.record)"
                                         (click)="openWeeklyExcuse(day.record!)">
 
-                                        {{ hasExcuse(day.record) ? 'تم إرفاق عذر · عرض' : '+ إضافة عذر' }}
+                                        {{ view() === 'month' || hasExcuse(day.record) ? 'عرض السبب / الإثبات' : '+ سبب / إثبات' }}
 
                                     </button>
 
@@ -662,80 +662,58 @@
 
     <div class="weekly-excuse-overlay" (click)="closeWeeklyExcuse()">
 
-        <section class="weekly-excuse-dialog" role="dialog" aria-modal="true" aria-label="عذر الغياب"
+        <section class="weekly-excuse-dialog" role="dialog" aria-modal="true" aria-label="سبب الحالة وإثباتها"
             (click)="$event.stopPropagation()">
 
             <div class="weekly-excuse-heading">
 
-                <h3>عذر الغياب — {{ excuse.date | date:'yyyy-MM-dd' }}</h3>
+                <h3>{{ weeklyStatusLabel(excuse.status) }} — {{ excuse.date | date:'yyyy-MM-dd' }}</h3>
 
                 <button type="button" (click)="closeWeeklyExcuse()" aria-label="إغلاق">×</button>
 
             </div>
 
-            <label for="weeklyReason">سبب الغياب</label>
-
-            <textarea id="weeklyReason" rows="3" maxlength="500" [(ngModel)]="weeklyReason"
-                [disabled]="!canManageAttendance() || excuse.isConfirmed || weeklyExcuseSaving()"
-                placeholder="اكتبي سبب الغياب..."></textarea>
-
-            <button type="button" class="weekly-excuse-action" (click)="saveWeeklyReason()"
-                [disabled]="!canManageAttendance() || excuse.isConfirmed || weeklyExcuseSaving()">
-
-                حفظ السبب
-
-            </button>
-
-            <div class="weekly-excuse-proof">
-
-                @if (excuse.excuseProofUrl) {
-
-                <span>تم إرفاق إثبات</span>
-
-                <a [href]="fileUrl(excuse.excuseProofUrl)" target="_blank"
-                    rel="noopener noreferrer">عرض الإثبات</a>
-
-                @if (canManageAttendance() && !excuse.isConfirmed) {
-
-                <button type="button" (click)="removeWeeklyProof()"
-                    [disabled]="!canManageAttendance() || weeklyExcuseSaving()">
-
-                    حذف الإثبات
-
-                </button>
-
-                }
-
+            <div class="weekly-excuse-detail">
+                <strong>السبب / الملاحظة</strong>
+                @if (weeklyExcuseEditing()) {
+                <textarea id="weeklyReason" rows="3" maxlength="500" [(ngModel)]="weeklyReason"
+                    [disabled]="weeklyExcuseSaving()" aria-label="السبب أو الملاحظة"
+                    placeholder="اكتبي السبب أو الملاحظة..."></textarea>
                 } @else {
-
-                <span>لم يُرفق إثبات بعد</span>
-
+                <p class="weekly-excuse-reason-text">{{ excuse.reason || 'لم تتم إضافة سبب بعد' }}</p>
                 }
-
-                @if (canManageAttendance() && !excuse.isConfirmed) {
-
-                <label class="weekly-excuse-upload">
-
-                    {{ excuse.excuseProofUrl ? 'استبدال الإثبات' : '+ رفع صورة أو PDF' }}
-
-                    <input type="file" hidden accept=".jpg,.jpeg,.png,.webp,.pdf"
-                        [disabled]="!canManageAttendance() || weeklyExcuseSaving()"
-                        (change)="uploadWeeklyProof($event)" />
-
-                </label>
-
-                }
-
             </div>
 
-            @if (excuse.isConfirmed) {
+            <div class="weekly-excuse-proof">
+                @if (excuse.excuseProofUrl) {
+                <a [href]="fileUrl(excuse.excuseProofUrl)" target="_blank"
+                    rel="noopener noreferrer">عرض الإثبات</a>
+                @if (weeklyExcuseEditing()) {
+                <button type="button" (click)="removeWeeklyProof()" [disabled]="weeklyExcuseSaving()">حذف الإثبات</button>
+                }
+                } @else {
+                <span>لم يُرفق إثبات</span>
+                }
+                @if (weeklyExcuseEditing()) {
+                <label class="weekly-excuse-upload">
+                    {{ excuse.excuseProofUrl ? 'استبدال الإثبات' : '+ رفع صورة أو PDF' }}
+                    <input type="file" hidden accept=".jpg,.jpeg,.png,.webp,.pdf"
+                        [disabled]="weeklyExcuseSaving()" (change)="uploadWeeklyProof($event)" />
+                </label>
+                }
+            </div>
 
-            <p class="weekly-excuse-readonly">
-
-                هذا السجل مؤكد، ويمكن عرض العذر فقط.
-
-            </p>
-
+            @if (weeklyExcuseEditing()) {
+            <div class="weekly-excuse-footer">
+                <button type="button" class="weekly-excuse-action" (click)="saveWeeklyReason()"
+                    [disabled]="weeklyExcuseSaving()">{{ weeklyExcuseSaving() ? 'جاري الحفظ...' : 'حفظ السبب' }}</button>
+                @if (hasExcuse(excuse)) {
+                <button type="button" class="weekly-excuse-cancel" (click)="cancelWeeklyExcuseEdit()"
+                    [disabled]="weeklyExcuseSaving()">إلغاء التعديل</button>
+                }
+            </div>
+            } @else if (view() === 'week' && canEditWeeklyExcuse(excuse)) {
+            <button type="button" class="weekly-excuse-edit" (click)="startWeeklyExcuseEdit()">تعديل</button>
             }
 
         </section>

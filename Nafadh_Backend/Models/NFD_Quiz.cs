@@ -38,6 +38,28 @@ namespace Nafadh_Backend.Models
         public bool CameraRequired { get; set; }
             = false;
 
+        // إعدادات حماية الاختبار
+        public bool PreventCopyPaste { get; set; } = false;
+
+        [Range(0, 100)]
+        public int MaxExitAttempts { get; set; } = 2;
+
+        public NFD_ExitLimitAction ExitLimitAction { get; set; }
+            = NFD_ExitLimitAction.Terminate;
+
+        // إعدادات عرض الأسئلة
+        public bool RandomizeOptions { get; set; } = false;
+
+        public bool ShowOneQuestionAtTime { get; set; } = false;
+
+        public bool AllowBackNavigation { get; set; } = true;
+
+        // إعدادات ظهور النتائج
+        public bool ShowResultImmediately { get; set; } = false;
+
+        public bool ShowCorrectAnswers { get; set; } = false;
+
+        public bool ShowScoreToTrainee { get; set; } = true;
         public DateTime CreatedAt { get; set; }
             = DateTime.UtcNow;
         public NFD_Batch Batch { get; set; } = null!;
@@ -49,6 +71,10 @@ namespace Nafadh_Backend.Models
 
         public ICollection<NFD_QuizAttempt> Attempts { get; set; }
             = new List<NFD_QuizAttempt>();
+
+        // نسبة النجاح التي يحددها المدرب
+        [Range(0, 100)]
+        public decimal PassingPercentage { get; set; } = 50;
 
     }
 }

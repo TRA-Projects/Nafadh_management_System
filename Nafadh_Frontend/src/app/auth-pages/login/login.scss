@@ -29,10 +29,20 @@ form { display: flex; flex-direction: column; gap: 6px;
 
 .submit-btn { margin-top: 24px; justify-content: center; height: 44px; }
 
-.error {
-  margin-top: 12px; padding: 10px 14px;
+.notice {
+  margin-top: 12px; padding: 10px 14px; display: flex; flex-direction: column; gap: 4px;
+  border-radius: var(--radius-md); font-size: 13px; line-height: 1.7;
   background: var(--status-cancelled-bg); color: var(--status-cancelled-fg);
-  border-radius: var(--radius-md); font-size: 13px;
+  &.pending { background: var(--status-review-bg); color: var(--status-review-fg); border: 1px solid currentColor; }
+  &.rejected, &.suspended { background: var(--status-cancelled-bg); color: var(--status-cancelled-fg); border: 1px solid currentColor; }
+  .reapply { align-self: flex-start; font-weight: 700; text-decoration: underline; color: inherit; }
+}
+
+.company-register-prompt {
+  margin-top: 24px; padding-top: 16px; text-align: center;
+  border-top: 1px solid var(--color-border-light, #E8EDF7);
+  p { font-size: 13px; color: var(--color-text-secondary); margin: 0 0 10px; }
+  .nfd-btn { text-decoration: none; justify-content: center; }
 }
 
 .login-hero {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { CompanyApi } from '../../services/company-api';
@@ -14,6 +14,7 @@ import { WarningDto } from '../../../../core/models/dtos';
 })
 export class WarningsComponent implements OnInit {
   private readonly companyApi = inject(CompanyApi);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   warnings: WarningDto[] = [];
   selectedWarning: WarningDto | null = null;
@@ -47,8 +48,8 @@ export class WarningsComponent implements OnInit {
       next: (account) => {
         if (account?.companyId == null) {
           this.loading = false;
-          this.errorMessage =
-            'تعذر تحديد الشركة المرتبطة بالحساب الحالي.';
+          this.errorMessage = 'تعذر تحديد الشركة المرتبطة بالحساب الحالي.';
+          this.cdr.detectChanges();
           return;
         }
 
@@ -72,18 +73,21 @@ export class WarningsComponent implements OnInit {
                     this.selectedWarning?.warningId
                 ) ?? null;
             }
+
+            this.cdr.detectChanges();
           },
           error: () => {
             this.loading = false;
             this.errorMessage =
               'تعذر تحميل الإنذارات. تحققي من اتصال Backend ثم حاولي مجددًا.';
+            this.cdr.detectChanges();
           }
         });
       },
       error: () => {
         this.loading = false;
-        this.errorMessage =
-          'تعذر تحميل بيانات الحساب الحالي. يرجى تسجيل الدخول مجددًا إذا استمرت المشكلة.';
+        this.errorMessage = 'تعذر تحميل بيانات الحساب الحالي. يرجى تسجيل الدخول مجددًا إذا استمرت المشكلة.';
+        this.cdr.detectChanges();
       }
     });
   }
@@ -125,7 +129,6 @@ export class WarningsComponent implements OnInit {
       .replyToCompanyWarning(warningId, this.companyId, reply)
       .subscribe({
         next: () => {
-          // تحديث الرد في تفاصيل الإنذار والقائمة محليًا.
           this.warnings = this.warnings.map(warning =>
             warning.warningId === warningId
               ? { ...warning, companyReply: reply }
@@ -224,7 +227,6 @@ export class WarningsComponent implements OnInit {
       Behavioral: 'السلوك',
       Other: 'أخرى'
     };
-
     return labels[type] ?? type;
   }
 
@@ -235,7 +237,6 @@ export class WarningsComponent implements OnInit {
       High: 'مرتفع',
       Critical: 'حرج'
     };
-
     return labels[level] ?? level;
   }
 
@@ -246,7 +247,6 @@ export class WarningsComponent implements OnInit {
       Resolved: 'تم الحل',
       Escalated: 'تم التصعيد'
     };
-
     return labels[status] ?? status;
   }
 
@@ -257,7 +257,6 @@ export class WarningsComponent implements OnInit {
       High: 'level-high',
       Critical: 'level-critical'
     };
-
     return classes[level] ?? '';
   }
 
@@ -268,7 +267,6 @@ export class WarningsComponent implements OnInit {
       Resolved: 'status-resolved',
       Escalated: 'status-escalated'
     };
-
     return classes[status] ?? '';
   }
 
