@@ -25,44 +25,59 @@
   </div>
 
   <!-- =========================================================
-       القسم الأول: تقارير الشركات
+       القسم الأول: تقارير الشركات (مطابقة لتصميم المدربين)
   ========================================================== -->
   <ng-container *ngIf="currentSubSection === 'company'">
 
-    <!-- 1.1 عرض قائمة الشركات من الداتابيز -->
+    <!-- 1.1 عرض قائمة الشركات بتصميم المدربين المعتمد -->
     <div *ngIf="currentView === 'companies'">
+      <!-- رأس القسم وزري التصدير والطباعة -->
       <div class="header-section">
         <div>
-          <h2>التقارير حسب الشركة</h2>
-          <p>اختر شركة لعرض برامجها وتقارير دفعاتها وتفاصيلها المعتمدة</p>
+          <h2>تقارير وتحليلات الشركات المعتمدة</h2>
+          <p>عرض مؤشرات وتقييمات جميع الشركات المستضيفة مع إمكانية البحث والفلترة الفورية</p>
         </div>
-        <div class="actions-left">
+        <div class="actions-left" style="display: flex; gap: 8px;">
           <button class="btn-excel" (click)="exportCompaniesToExcel()">تصدير Excel</button>
+          <button class="btn-pdf" (click)="exportToPDF()">طباعة PDF</button>
         </div>
       </div>
 
-      <!-- شريط البحث والفلترة -->
+      <!-- بطاقات الإحصائيات الـ 3 (نفس بطاقات المدربين تماماً) -->
+      <div class="summary-metrics-grid">
+        <div class="metric-card">
+          <span class="metric-value">{{ companies.length }}</span>
+          <span class="metric-label">إجمالي الشركات المطابقة للبحث</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value" style="color: #f59e0b;">
+            {{ avgCompanyRating }} <small style="color: #94a3b8; font-size: 1.1rem;">/ 5.0</small>
+          </span>
+          <span class="metric-label">متوسط التقييم العام للشركات</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value green">+{{ totalCompanyTrainees }}</span>
+          <span class="metric-label">إجمالي المتدربين المستضافين</span>
+        </div>
+      </div>
+
+      <!-- شريط البحث والفلترة الذكي (نفس شريط المدربين) -->
       <div class="filter-toolbar-card">
         <div class="search-input-wrap">
-          <input type="text" placeholder="ابحث باسم الشركة، السجل التجاري، المدينة، أو الهاتف..."
+          <input type="text" placeholder="ابحث باسم الشركة أو التخصص أو رقم المعرف..."
             [(ngModel)]="companySearchTerm" (input)="applyCompanyFilters()" />
           <button class="clear-search-btn" *ngIf="companySearchTerm"
             (click)="companySearchTerm = ''; applyCompanyFilters()">✕</button>
         </div>
 
         <div class="filters-actions-wrap">
-          <select class="custom-select-filter" [(ngModel)]="companyFilterCity" (change)="applyCompanyFilters()">
-            <option value="ALL">جميع المدن والمناطق</option>
-            <option *ngFor="let c of uniqueCompanyCities" [value]="c">{{ c }}</option>
-          </select>
-
           <select class="custom-select-filter" [(ngModel)]="companyFilterField" (change)="applyCompanyFilters()">
-            <option value="ALL">جميع مجالات العمل</option>
+            <option value="ALL">جميع التخصصات</option>
             <option *ngFor="let f of uniqueCompanyFields" [value]="f">{{ f }}</option>
           </select>
 
           <select class="custom-select-filter" [(ngModel)]="companyFilterSort" (change)="applyCompanyFilters()">
-            <option value="ALL">الترتيب الافتراضي</option>
+            <option value="ALL">جميع التقييمات والترتيب</option>
             <option value="TOP_TRAINEES">الأعلى في عدد المتدربين</option>
             <option value="TOP_PROGRAMS">الأعلى في عدد البرامج</option>
             <option value="TOP_BATCHES">الأعلى في عدد الدفعات</option>
@@ -80,14 +95,19 @@
         <span>جاري تحميل قائمة الشركات من قاعدة البيانات...</span>
       </div>
 
-      <!-- كروت الشركات -->
+      <!-- شبكة كروت الشركات (مطابقة لكروت المدربين في صورتك) -->
       <div class="companies-grid" *ngIf="!isLoading() && companies.length > 0">
         <div class="company-card" *ngFor="let company of companies">
-          <div class="company-info" (click)="selectCompany(company)">
-
-            <!-- أيقونة مبنى الشركة الاحترافية SVG بدلاً من الصورة المكسورة -->
-            <div class="logo-box">
-              <svg class="company-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          
+          <!-- رأس الكرت: الاسم والمجال على اليمين، وأيقونة المنشأة النيلية على اليسار -->
+          <div class="company-card-header" (click)="selectCompany(company)">
+            <div class="company-text">
+              <h3 class="company-name">{{ company.name }}</h3>
+              <p class="company-field">{{ company.workField || 'تقنية المعلومات' }}</p>
+            </div>
+            
+            <div class="company-avatar-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
                 <path d="M9 22v-4h6v4"></path>
@@ -102,25 +122,35 @@
                 <path d="M8 14h.01"></path>
               </svg>
             </div>
+          </div>
 
-            <div>
-              <h3>{{ company.name }}</h3>
-              <span class="sub-meta-text">{{ company.city || 'المركز الرئيسي' }} · السجل: {{ company.commercialRegister
-                || '—' }}</span>
+          <!-- صف الإحصائيات الأربعة السفلية: (التقييم | متدرب | دفعات | البرامج) -->
+          <div class="card-stats-row" (click)="selectCompany(company)">
+            <div class="stat-col">
+              <strong class="stat-num">{{ company.ratingScore || 4.9 }}</strong>
+              <span class="stat-lbl">التقييم</span>
+            </div>
+            <div class="stat-col">
+              <strong class="stat-num">{{ company.traineesCount || 0 }}</strong>
+              <span class="stat-lbl">متدرب</span>
+            </div>
+            <div class="stat-col">
+              <strong class="stat-num">{{ company.batchesCount || 0 }}</strong>
+              <span class="stat-lbl">دفعات</span>
+            </div>
+            <div class="stat-col">
+              <strong class="stat-num">{{ company.programsCount || 0 }}</strong>
+              <span class="stat-lbl">البرامج</span>
             </div>
           </div>
 
-          <div class="stats-row" (click)="selectCompany(company)">
-            <div class="stat-box"><strong>{{ company.traineesCount || 0 }}</strong><span>متدرب</span></div>
-            <div class="stat-box"><strong>{{ company.batchesCount || 0 }}</strong><span>دفعة</span></div>
-            <div class="stat-box"><strong>{{ company.programsCount || 0 }}</strong><span>برنامج</span></div>
-          </div>
-
+          <!-- شريط المشرف والهاتف إن وجد -->
           <div class="card-details-strip" *ngIf="company.supervisorName">
             <small>المشرف: <strong>{{ company.supervisorName }}</strong></small>
             <small *ngIf="company.phone">📞 {{ company.phone }}</small>
           </div>
 
+          <!-- أزرار الإجراءات السفلية -->
           <div class="card-footer-actions">
             <button class="btn-footer-details" (click)="openCompanyFullDetails(company); $event.stopPropagation()">
               👁️ التفاصيل الكاملة
@@ -179,8 +209,7 @@
 
       <div class="summary-metrics-grid">
         <div class="metric-card">
-          <span class="metric-value star" style="color: #f59e0b;">{{ selectedCompany?.ratingScore || '4.9' }} /
-            5.0</span>
+          <span class="metric-value star" style="color: #f59e0b;">{{ selectedCompany?.ratingScore || '4.9' }} / 5.0</span>
           <span class="metric-label">تقييم المنشأة العام</span>
         </div>
         <div class="metric-card">
@@ -377,8 +406,7 @@
 
         <div class="compact-pagination-wrapper">
           <div class="pagination-info">
-            عرض الصفحة <strong>{{ report()?.pageNumber || 1 }}</strong> من <strong>{{ report()?.totalPages || 1
-              }}</strong>
+            عرض الصفحة <strong>{{ report()?.pageNumber || 1 }}</strong> من <strong>{{ report()?.totalPages || 1 }}</strong>
           </div>
           <div class="pagination-compact-controls">
             <button class="compact-nav-btn" [disabled]="(report()?.pageNumber ?? 1) <= 1"
@@ -535,8 +563,7 @@
 
       <div class="summary-metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));">
         <div class="metric-card">
-          <span class="metric-value star" style="color: #f59e0b;">{{ formatRating(selectedTrainer?.rating) }} /
-            5.0</span>
+          <span class="metric-value star" style="color: #f59e0b;">{{ formatRating(selectedTrainer?.rating) }} / 5.0</span>
           <span class="metric-label">متوسط تقييم المتدربين العام للمدرب</span>
         </div>
         <div class="metric-card">
@@ -555,7 +582,6 @@
         </div>
       </div>
 
-      <!-- جدول تقييم المتدربين للمدرب -->
       <div class="table-card" style="margin-top: 24px;">
         <div class="section-badge-header"
           style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
@@ -711,7 +737,7 @@
         </div>
       </div>
 
-      <!-- جدول المتدربين المحدث مع زر فتح كشف الدرجات لكل متدرب -->
+      <!-- جدول المتدربين المحدث -->
       <div class="table-card">
         <div class="section-badge-header"
           style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
@@ -804,7 +830,6 @@
         </div>
       </div>
 
-      <!-- وثيقة كشف الدرجات العام الرسمية A4 -->
       <div class="table-card official-sheet-card"
         style="padding: 24px; border: 2px solid #0D1C8C; background: #ffffff;">
 
@@ -828,7 +853,6 @@
           </div>
         </div>
 
-        <!-- ملخص إحصائي سريع من الداتابيز -->
         <div
           style="display: flex; justify-content: space-between; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 20px; margin-bottom: 20px; font-size: 12px;">
           <div>إجمالي المتدربين بالكشف: <strong>{{ filteredTraineesList.length }} متدرباً</strong></div>
@@ -836,7 +860,6 @@
           <div>حالة الاعتماد الميداني: <strong style="color: #0D1C8C;">مؤهلون للتثبيت الوظيفي</strong></div>
         </div>
 
-        <!-- جدول الكشف العام مع Pagination عبر pagedMasterTranscriptList -->
         <table class="custom-table official-table" style="width: 100%; border-collapse: collapse;">
           <thead>
             <tr style="background-color: #0f172a; color: #ffffff;">
@@ -849,7 +872,6 @@
               <th style="padding: 10px; border: 1px solid #334155; text-align: center;">التقني (35%)</th>
               <th style="padding: 10px; border: 1px solid #334155; text-align: center;">المشروع (30%)</th>
               <th style="padding: 10px; border: 1px solid #334155; text-align: center;">السلوكي (20%)</th>
-              <!-- السطر الجديد المصحح: -->
               <th
                 style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: center; background-color: #eff6ff !important; color: #0D1C8C !important; font-weight: 900;">
                 <div>المجموع النهائي</div>
@@ -873,7 +895,8 @@
               <td style="text-align: center; font-family: monospace; color: #0D1C8C; font-weight: bold; padding: 8px;">
                 {{ t.technicalScore }}%</td>
               <td style="text-align: center; font-family: monospace; color: #2563eb; font-weight: bold; padding: 8px;">
-                {{ t.projectScore || t.technicalScore }}%</td>
+                {{ t.projectScore }}%
+              </td>
               <td style="text-align: center; font-family: monospace; color: #475569; font-weight: bold; padding: 8px;">
                 {{ t.behavioralScore }}%</td>
               <td
@@ -888,7 +911,7 @@
           </tbody>
         </table>
 
-        <!-- شريط الترقيم والتنقل بين الصفحات (Pagination Controls) -->
+        <!-- الترقيم والتنقل بين الصفحات -->
         <div class="compact-pagination-wrapper no-print"
           style="display: flex; justify-content: space-between; align-items: center; padding-top: 18px; border-top: 1px solid #e2e8f0; margin-top: 16px;">
           <div class="pagination-info" style="font-size: 12px; color: #64748b;">
@@ -898,7 +921,6 @@
           </div>
 
           <div style="display: flex; align-items: center; gap: 14px;">
-            <!-- اختيار عدد المتدربين في الصفحة -->
             <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #475569;">
               <span>عدد الصفوف:</span>
               <select [(ngModel)]="masterTranscriptPageSize" (change)="onMasterTranscriptPageSizeChange()"
@@ -910,7 +932,6 @@
               </select>
             </div>
 
-            <!-- أزرار السابق والتالي وأرقام الصفحات -->
             <div class="pagination-compact-controls" style="display: flex; gap: 6px;">
               <button class="compact-nav-btn" [disabled]="masterTranscriptCurrentPage <= 1"
                 (click)="prevMasterTranscriptPage()">
@@ -963,10 +984,8 @@
         <button class="btn-pdf" (click)="exportToPDF()">🖨️ طباعة كشف درجات المتدرب A4</button>
       </div>
 
-      <!-- وثيقة كشف الدرجات الفردي الرسمية A4 -->
       <div class="table-card official-sheet-card"
         style="padding: 28px; border: 2px solid #0D1C8C; background: #ffffff;">
-        <!-- الترويسة الرسمية -->
         <div
           style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 16px; margin-bottom: 24px;">
           <div>
@@ -987,7 +1006,6 @@
           </div>
         </div>
 
-        <!-- شبكة بيانات المتدرب من الداتابيز -->
         <div
           style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 24px; font-size: 12px;">
           <div>
@@ -1019,7 +1037,6 @@
           </div>
         </div>
 
-        <!-- تفصيل أوزان الدرجات والتحصيل الأكاديمي والميداني -->
         <h3 style="color: #0D1C8C; font-size: 14px; font-weight: 800; margin-bottom: 12px;">
           سجل الدرجات ومؤشرات التحصيل المعتمدة:
         </h3>
@@ -1039,8 +1056,7 @@
               <td style="text-align: center; font-family: monospace; font-weight: bold; color: #15803d; padding: 10px;">
                 {{ selectedTraineeForTranscript.attendanceRate }}%
               </td>
-              <td style="font-size: 11px; color: #64748b; padding: 10px;">التزام تام بمواعيد الحضور وساعات التدريب
-                الميداني المقررة</td>
+              <td style="font-size: 11px; color: #64748b; padding: 10px;">التزام تام بمواعيد الحضور وساعات التدريب الميداني المقررة</td>
             </tr>
             <tr>
               <td style="font-weight: bold; padding: 10px;">التقييم التقني والمهام العملية اليومية</td>
@@ -1048,17 +1064,15 @@
               <td style="text-align: center; font-family: monospace; font-weight: bold; color: #0D1C8C; padding: 10px;">
                 {{ selectedTraineeForTranscript.technicalScore }}%
               </td>
-              <td style="font-size: 11px; color: #64748b; padding: 10px;">إتقان المفاهيم والقدرة على تطبيقها في بيئة
-                العمل الواقعية</td>
+              <td style="font-size: 11px; color: #64748b; padding: 10px;">إتقان المفاهيم والقدرة على تطبيقها في بيئة العمل الواقعية</td>
             </tr>
             <tr>
               <td style="font-weight: bold; padding: 10px;">مشروع التخرج التطبيقي والتنفيذ العملي</td>
               <td style="text-align: center; font-family: monospace; padding: 10px;">30%</td>
               <td style="text-align: center; font-family: monospace; font-weight: bold; color: #2563eb; padding: 10px;">
-                {{ selectedTraineeForTranscript.projectScore || selectedTraineeForTranscript.technicalScore }}%
+                {{ selectedTraineeForTranscript.projectScore }}%
               </td>
-              <td style="font-size: 11px; color: #64748b; padding: 10px;">إنجاز وتسليم حلول برمجية مطابقة للمواصفات
-                المعتمدة</td>
+              <td style="font-size: 11px; color: #64748b; padding: 10px;">إنجاز وتسليم حلول برمجية مطابقة للمواصفات المعتمدة</td>
             </tr>
             <tr>
               <td style="font-weight: bold; padding: 10px;">السلوك المهني والعمل الجماعي والتواصل</td>
@@ -1066,8 +1080,7 @@
               <td style="text-align: center; font-family: monospace; font-weight: bold; color: #475569; padding: 10px;">
                 {{ selectedTraineeForTranscript.behavioralScore }}%
               </td>
-              <td style="font-size: 11px; color: #64748b; padding: 10px;">تفاعل إيجابي مع فريق العمل والالتزام بأخلاقيات
-                المهنة</td>
+              <td style="font-size: 11px; color: #64748b; padding: 10px;">تفاعل إيجابي مع فريق العمل والالتزام بأخلاقيات المهنة</td>
             </tr>
             <tr style="background-color: #eff6ff; font-weight: 900;">
               <td style="padding: 12px; font-size: 13px; color: #1e3a8a;">المجموع التراكمي الإجمالي النهائي</td>
@@ -1083,7 +1096,7 @@
           </tbody>
         </table>
 
-        <!-- صندوق رأي وتوصية المشرف الميداني المعتمد من الداتابيز -->
+        <!-- صندوق رأي وتوصية المشرف -->
         <div
           style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
           <div style="font-weight: 800; color: #166534; font-size: 13px; margin-bottom: 6px;">
@@ -1097,7 +1110,7 @@
           </div>
         </div>
 
-        <!-- التوقيعات والختم المعتمد والتحقق الإلكتروني -->
+        <!-- التوقيعات والختم المعتمد -->
         <div
           style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: center; border-top: 1px dashed #94a3b8; padding-top: 20px; font-size: 11px; align-items: center;">
           <div>

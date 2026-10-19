@@ -31,6 +31,20 @@ namespace Nafadh_Backend.Models
         public string? GitHubUrl { get; set; }
         [MaxLength(300)]
         public string? LinkedInUrl { get; set; }
+
+        public int? AttendanceRate { get; set; }
+        public int? TechnicalScore { get; set; }
+        public int? ProjectScore { get; set; }
+        public int? BehavioralScore { get; set; }
+        public string? TrainerNotes { get; set; }
+        public string? TrainerRecommendation { get; set; }
+
+
+        public string? AttendanceNotes { get; set; }
+        public string? TechnicalNotes { get; set; }
+        public string? ProjectNotes { get; set; }
+        public string? BehavioralNotes { get; set; }
+
         // =====================================================
         // TRAINEE PROFILE IMAGE
         // =====================================================
