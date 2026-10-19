@@ -22,6 +22,7 @@ export interface AdminDashboardSummary {
     used: number;
     remaining: number;
   };
+  
   attendanceWeeks: { label: string; value: number }[];
   companyDistribution: { label: string; value: number }[];
   programDistribution: { label: string; value: number }[];
@@ -141,6 +142,101 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
   isLoading = signal<boolean>(false);
   lastUpdated = signal<Date | null>(new Date());
   showRefreshToast = signal<boolean>(false);
+
+  // --- متغيرات فلترة صفحة المتميزين ---
+  topLimit = signal<number>(0); // 0 تعني عرض الكل
+  topSearchQuery = signal<string>('');
+  topSelectedProgram = signal<string>('all');
+  topSelectedCompany = signal<string>('all');
+  topSortBy = signal<string>('score_desc');
+
+  // استخراج البرامج الفريدة تلقائياً
+  availableTopPrograms = computed(() => {
+    const list = this.allTopPerformers().map(t => t.major).filter(Boolean);
+    return Array.from(new Set(list));
+  });
+
+  // استخراج الشركات الفريدة تلقائياً
+  availableTopCompanies = computed(() => {
+    const list = this.allTopPerformers().map(t => t.companyName).filter(Boolean);
+    return Array.from(new Set(list));
+  });
+
+  // التحقق هل الفلاتر مفعلة
+  hasTopActiveFilters = computed(() => {
+    return (
+      this.topLimit() !== 0 ||
+      this.topSearchQuery().trim() !== '' ||
+      this.topSelectedProgram() !== 'all' ||
+      this.topSelectedCompany() !== 'all' ||
+      this.topSortBy() !== 'score_desc'
+    );
+  });
+
+  // المتدربون المفلترون حسب الاختيارات
+  filteredTopPerformers = computed(() => {
+    let list = [...this.allTopPerformers()];
+
+    // 1. البحث النصي (اسم، برنامج، شركة)
+    const q = this.topSearchQuery().trim().toLowerCase();
+    if (q) {
+      list = list.filter(t => 
+        (t.fullName && t.fullName.toLowerCase().includes(q)) ||
+        (t.major && t.major.toLowerCase().includes(q)) ||
+        (t.companyName && t.companyName.toLowerCase().includes(q))
+      );
+    }
+
+    // 2. فلتر البرنامج
+    if (this.topSelectedProgram() !== 'all') {
+      list = list.filter(t => t.major === this.topSelectedProgram());
+    }
+
+    // 3. فلتر الشركة
+    if (this.topSelectedCompany() !== 'all') {
+      list = list.filter(t => t.companyName === this.topSelectedCompany());
+    }
+
+    // 4. الترتيب
+    const sort = this.topSortBy();
+    list.sort((a, b) => {
+      if (sort === 'score_desc') return (b.performancePercent || 0) - (a.performancePercent || 0);
+      if (sort === 'attendance_desc') return (b.attendancePercent || 0) - (a.attendancePercent || 0);
+      if (sort === 'name_asc') return (a.fullName || '').localeCompare(b.fullName || '', 'ar');
+      return 0;
+    });
+
+    // 5. تطبيق تحديد العدد (3 أو 5 أو 10 أو 20 أو الكل)
+    const limit = this.topLimit();
+    if (limit > 0) {
+      list = list.slice(0, limit);
+    }
+
+    return list;
+  });
+
+  // حساب متوسط الأداء للنتائج المفلترة
+  currentFilteredAvgScore = computed(() => {
+    const list = this.filteredTopPerformers();
+    if (list.length === 0) return 0;
+    const total = list.reduce((sum, item) => sum + (item.performancePercent || 0), 0);
+    return Math.round((total / list.length) * 10) / 10;
+  });
+
+  // دوال التحكم
+  setTopLimit(limit: number) { this.topLimit.set(limit); }
+  onTopSearchInput(e: Event) { this.topSearchQuery.set((e.target as HTMLInputElement).value); }
+  clearTopSearch() { this.topSearchQuery.set(''); }
+  onTopProgramChange(e: Event) { this.topSelectedProgram.set((e.target as HTMLSelectElement).value); }
+  onTopCompanyChange(e: Event) { this.topSelectedCompany.set((e.target as HTMLSelectElement).value); }
+  onTopSortChange(e: Event) { this.topSortBy.set((e.target as HTMLSelectElement).value); }
+  resetTopFilters() {
+    this.topLimit.set(0);
+    this.topSearchQuery.set('');
+    this.topSelectedProgram.set('all');
+    this.topSelectedCompany.set('all');
+    this.topSortBy.set('score_desc');
+  }
 
   // حالة عرض صفحة المتدرب التفصيلية الكاملة
   selectedTraineeProfile = signal<SelectedTraineeDetailView | null>(null);
