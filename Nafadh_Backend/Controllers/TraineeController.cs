@@ -96,7 +96,18 @@ namespace Nafadh_Backend.Controllers
                             t.Major
                         )
                         ? t.Major
-                        : "برنامج التدريب"
+                        : "برنامج التدريب",
+
+                    AttendanceRate = t.AttendanceRate,
+                    TechnicalScore = t.TechnicalScore,
+                    ProjectScore = t.ProjectScore,
+                    BehavioralScore = t.BehavioralScore,
+                    TrainerNotes = t.TrainerNotes,
+                    TrainerRecommendation = t.TrainerRecommendation,
+                    AttendanceNotes = t.AttendanceNotes,
+                    TechnicalNotes = t.TechnicalNotes,
+                    ProjectNotes = t.ProjectNotes,
+                    BehavioralNotes = t.BehavioralNotes,
 
                 }).ToList();
 
