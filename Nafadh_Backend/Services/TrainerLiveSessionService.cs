@@ -549,7 +549,8 @@ namespace Nafadh_Backend.Services
                 .ToListAsync();
         }
 
-        // Update an existing attendance record.
+        // Create or update attendance for an enrolled trainee.
+
         public async Task<TrainerSessionAttendanceDto?>
             UpdateAttendanceAsync(
                 int trainerId,
@@ -563,11 +564,24 @@ namespace Nafadh_Backend.Services
             if (session == null)
                 return null;
 
+            if (session.Status == NFD_SessionStatus.Cancelled)
+                throw new InvalidOperationException(
+                    "Cannot record attendance for a cancelled session.");
+
             if (!dto.Status.HasValue ||
-                !Enum.IsDefined(typeof(NFD_AttendanceStatus),
-                    dto.Status.Value))
+                !Enum.IsDefined(typeof(NFD_AttendanceStatus), dto.Status.Value))
                 throw new ArgumentException(
                     "Invalid attendance status.");
+
+            var isEnrolled = await _context.NFD_Enrollments
+                .AsNoTracking()
+                .AnyAsync(e =>
+                    e.BatchId == session.BatchId &&
+                    e.TraineeId == traineeId);
+
+            if (!isEnrolled)
+                throw new InvalidOperationException(
+                    "Trainee is not enrolled in this session batch.");
 
             var attendance = await _context.NFD_SessionAttendances
                 .FirstOrDefaultAsync(a =>
@@ -575,10 +589,22 @@ namespace Nafadh_Backend.Services
                     a.TraineeId == traineeId);
 
             if (attendance == null)
-                return null;
+            {
+                attendance = new NFD_SessionAttendance
+                {
+                    SessionId = sessionId,
+                    TraineeId = traineeId,
+                    Status = dto.Status.Value,
+                    Note = dto.Note
+                };
 
-            attendance.Status = dto.Status.Value;
-            attendance.Note = dto.Note;
+                _context.NFD_SessionAttendances.Add(attendance);
+            }
+            else
+            {
+                attendance.Status = dto.Status.Value;
+                attendance.Note = dto.Note;
+            }
 
             await _context.SaveChangesAsync();
 
@@ -591,6 +617,7 @@ namespace Nafadh_Backend.Services
                 Note = attendance.Note
             };
         }
+
         // Control whether trainees can view the session recording.
         public async Task<TrainerSessionRecordingDto?>
             UpdateRecordingVisibilityAsync(
