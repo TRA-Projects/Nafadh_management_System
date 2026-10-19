@@ -7,26 +7,33 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(15, 23, 42, 0.45);
+  background-color: rgba(15, 23, 42, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px);
   font-family: 'Cairo', sans-serif;
 }
 
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 
+/* ==========================================================
+   فاليديشن وتنبيهات أخطاء الإدخال (Form Validation Styles)
+   ========================================================== */
 .input-error {
-  border-color: #dc2626 !important;
+  border-color: #ef4444 !important;
   background-color: #fef2f2 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
 }
 
 .error-msg {
-  color: #dc2626;
-  font-weight: 500;
+  display: block;
+  color: #dc2626 !important;
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 4px;
 }
 
 /* ==========================================================
@@ -138,56 +145,45 @@
   border-color: #94a3b8;
 }
 
+.text-emerald-btn { color: #10b981; }
 .btn-icon { font-size: 16px; line-height: 1; }
 
 /* ==========================================================
-   3. Modal Styles
+   3. Modal Containers (مضبوطة بعرض متناسق بدون تمدد مفرط)
    ========================================================== */
 .modal-container,
-.modal-container-program,
-.modal-container-details,
-.modal-container-trainees {
+.modal-container-program {
   background-color: #ffffff;
-  flex-direction: column;
-  display: flex;
-  width: 92vw !important;
-  max-width: 1250px !important; 
-  max-height: 88vh !important; 
-  border-radius: 20px;
+  width: 90vw;
+  max-width: 520px;
+  border-radius: 18px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
-  padding: 24px;
+  padding: 24px 28px;
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
+  font-family: 'Cairo', sans-serif;
 }
 
-.modal-container { max-width: 450px; }
-.modal-container-program { max-width: 440px; padding-top: 28px; }
-.modal-container-details { max-width: 480px; }
-.modal-container-trainees { max-width: 720px; padding: 20px 24px; }
-
-.modal-header,
-.details-header {
+.modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
 
-.modal-title,
-.details-title {
+.modal-title {
   margin: 0;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 800;
   color: #0f172a;
 }
 
 .modal-close-btn,
-.details-close-btn,
 .modal-close-absolute {
   background: none;
   border: none;
-  font-size: 22px;
+  font-size: 24px;
   color: #94a3b8;
   cursor: pointer;
   padding: 4px;
@@ -198,7 +194,6 @@
   position: absolute;
   top: 20px;
   left: 20px;
-  font-size: 20px;
 }
 
 .modal-form,
@@ -219,7 +214,7 @@
 
 .form-label {
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 700;
   color: #334155;
   margin: 0;
 }
@@ -231,7 +226,7 @@
 .form-textarea {
   width: 100%;
   padding: 11px 14px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   border-radius: 10px;
   font-size: 14px;
   color: #1e293b;
@@ -242,14 +237,11 @@
   font-family: 'Cairo', sans-serif;
 }
 
-.form-select { color: #475569; }
-.form-textarea { resize: none; }
-
 .form-input:focus,
 .form-select:focus,
 .form-textarea:focus {
   border-color: #0D1C8C;
-  box-shadow: 0 0 0 3px rgba(13, 28, 140, 0.1);
+  box-shadow: 0 0 0 3px rgba(13, 28, 140, 0.12);
 }
 
 .modal-footer-buttons,
@@ -286,7 +278,7 @@
   font-weight: 700;
   color: #64748b;
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -294,7 +286,7 @@
 .btn-cancel-batch:hover,
 .btn-cancel-program:hover {
   background-color: #f8fafc;
-  border-color: #cbd5e1;
+  border-color: #94a3b8;
   color: #334155;
 }
 
@@ -320,7 +312,7 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
-.nfd-th {
+.nfd-tr-header th {
   padding: 14px 16px;
   font-size: 13px;
   font-weight: 700;
@@ -334,7 +326,7 @@
 
 .nfd-tbody .nfd-tr-row:hover { background-color: #f8fafc; }
 
-.nfd-td {
+.nfd-tbody td {
   padding: 14px 16px;
   font-size: 14px;
   color: #1e293b;
@@ -361,29 +353,7 @@
 }
 
 .track-label { color: #6366f1; font-weight: 600; }
-.track-name { color: #312e81; font-weight: 700; }
-
-.nfd-occupancy-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  min-width: 90px;
-  margin: 0 auto;
-}
-
-.occupancy-numbers-row { display: flex; align-items: center; gap: 6px; }
 .nfd-occupancy-text { font-size: 12.5px; font-weight: 600; color: #475569; }
-
-.badge-almost-full {
-  font-size: 10px;
-  font-weight: 700;
-  background-color: #fef3c7;
-  color: #b45309;
-  border: 1px solid #fde68a;
-  padding: 1px 5px;
-  border-radius: 4px;
-}
 
 .nfd-progress-bar-bg {
   width: 100%;
@@ -398,10 +368,6 @@
   background: linear-gradient(to left, #0D1C8C, #06b6d4);
   border-radius: 9999px;
   transition: width 0.3s ease;
-}
-
-.nfd-progress-bar-fill.fill-warning {
-  background: linear-gradient(to left, #f59e0b, #ef4444) !important;
 }
 
 .nfd-status-badge {
@@ -439,278 +405,27 @@
   border-color: #cbd5e1;
 }
 
+.action-plan-btn {
+  color: #0D1C8C !important;
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+}
+
+.action-plan-btn:hover {
+  color: #ffffff !important;
+  background-color: #0D1C8C !important;
+  border-color: #0D1C8C !important;
+  transform: translateY(-2px);
+}
+
 .action-trainees-btn:hover {
   background-color: #ecfdf5 !important;
   color: #059669 !important;
   border-color: #a7f3d0 !important;
 }
 
-.nfd-empty-state { text-align: center; padding: 40px 16px; color: #94a3b8; font-size: 14px; }
-.nfd-empty-state i { font-size: 28px; display: block; margin-bottom: 8px; color: #cbd5e1; }
-
 /* ==========================================================
-   5. Trainees Modal Styles
-   ========================================================== */
-.modal-title-with-pill { display: flex; align-items: center; gap: 10px; }
-
-.trainees-count-pill {
-  font-size: 11.5px;
-  font-weight: 700;
-  background-color: #e0e7ff;
-  color: #3730a3;
-  padding: 2px 8px;
-  border-radius: 20px;
-}
-
-.trainees-modal-subtext { font-size: 12.5px; color: #64748b; margin: 4px 0 0 0; }
-
-.trainees-features-banner {
-  background-color: #eef2ff;
-  border: 1px solid #e0e7ff;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 12px;
-  color: #312e81;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.trainees-table-scroll {
-   flex: 1;
-  max-height: 58vh;
-  overflow-y: auto;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  margin-top: 14px;
-}
-
-.trainees-modal-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: right;
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.trainees-modal-table thead tr {
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  color: #475569;
-  font-size: 12px;
-}
-
-.trainees-modal-table th,
-.trainees-modal-table td { padding: 14px 20px; vertical-align: middle; }
-.trainees-modal-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background-color 0.15s ease; }
-.trainees-modal-table tbody tr:hover { background-color: #f8fafc; }
-
-.trainee-user-cell { display: flex; align-items: center; gap: 10px; }
-
-.trainee-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #cbd5e1;
-}
-
-.trainee-name { font-weight: 700; color: #0f172a; font-size: 13px; }
-.trainee-email { font-size: 11px; color: #94a3b8; }
-.trainee-id-val { font-family: monospace; font-weight: 600; color: #334155; font-size: 12px; }
-.trainee-phone-val { font-size: 11px; color: #94a3b8; font-family: monospace; }
-
-.linkedin-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background-color: #eff6ff;
-  color: #0077b5;
-  border: 1px solid #bfdbfe;
-  transition: all 0.2s ease;
-}
-
-.linkedin-btn:hover { background-color: #0077b5; color: #ffffff; }
-
-.message-trainee-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #059669;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 11.5px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.message-trainee-btn:hover { background-color: #059669; color: #ffffff; }
-
-.trainee-attendance {
-  font-family: monospace;
-  font-weight: 700;
-  color: #1e293b;
-  font-size: 12px;
-}
-
-.trainee-status-pill {
-  display: inline-block;
-  background-color: #eff6ff;
-  color: #2563eb;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.trainees-empty-row { text-align: center; padding: 30px !important; color: #94a3b8; }
-
-.trainees-modal-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid #f1f5f9;
-}
-
-.footer-occupancy-note { font-size: 12.5px; color: #64748b; }
-
-.btn-close-trainees-modal {
-  padding: 8px 18px;
-  background-color: #0D1C8C;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.btn-close-trainees-modal:hover { background-color: #0B1770; }
-
-/* ==========================================================
-   6. Details Modal & Compact Pagination Styles
-   ========================================================== */
-.details-top-card,
-.details-progress-card {
-  background-color: #f8fafc;
-  border: 1px solid #f1f5f9;
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.details-progress-card { margin-bottom: 20px; }
-.details-batch-info { display: flex; flex-direction: column; gap: 6px; }
-
-.details-status-badge {
-  display: inline-block;
-  padding: 2px 10px;
-  font-size: 11.5px;
-  font-weight: 600;
-  border-radius: 9999px;
-  width: fit-content;
-}
-
-.details-batch-name { margin: 0; font-size: 17px; font-weight: 700; color: #0f172a; }
-.details-batch-subtext { margin: 0; font-size: 12.5px; color: #64748b; }
-
-.details-icon-box {
-  width: 48px;
-  height: 48px;
-  background-color: #e6f4f1;
-  color: #0d9488;
-  border-radius: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 20px;
-}
-
-.details-progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  font-size: 13.5px;
-}
-
-.details-progress-title { color: #64748b; }
-.details-progress-numbers { font-weight: 700; color: #0f172a; }
-
-.details-progress-bg {
-  width: 100%;
-  height: 8px;
-  background-color: #e2e8f0;
-  border-radius: 9999px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.details-progress-fill {
-  height: 100%;
-  background: linear-gradient(to left, #0D1C8C, #06b6d4);
-  border-radius: 9999px;
-  transition: width 0.3s ease;
-}
-
-.details-progress-hint { margin: 0; font-size: 12px; color: #64748b; text-align: left; }
-
-.compact-pagination-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  margin-top: 16px;
-  width: 100%;
-  box-sizing: border-box;
-  font-family: 'Cairo', sans-serif;
-}
-
-.pagination-info { font-size: 14px; color: #64748b; }
-.pagination-info strong { color: #1e293b; font-weight: 600; }
-.pagination-compact-controls { display: flex; align-items: center; gap: 10px; }
-
-.compact-nav-btn {
-  padding: 6px 14px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #334155;
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.compact-nav-btn:hover:not(:disabled) { background-color: #f8fafc; border-color: #94a3b8; color: #0f172a; }
-.compact-nav-btn:disabled { opacity: 0.5; cursor: not-allowed; background-color: #f1f5f9; border-color: #e2e8f0; color: #94a3b8; }
-
-.page-indicator {
-  padding: 6px 12px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #0f172a;
-  background-color: #f1f5f9;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-}
-
-/* ==========================================================
-   7. Search & Filter Card Styles
+   5. Search & Filter Cards
    ========================================================== */
 .nfd-search-filter-card {
   background-color: #ffffff;
@@ -782,8 +497,6 @@
   font-family: 'Cairo', sans-serif;
 }
 
-.btn-reset-filters:hover { background-color: #fee2e2; }
-
 .reset-count {
   background-color: #dc2626;
   color: #ffffff;
@@ -796,26 +509,17 @@
   font-size: 10px;
 }
 
-.filter-fields-grid {
+.filter-fields-grid-5 {
   display: grid;
-  grid-template-columns: 2.2fr 1.6fr 1fr 1.1fr 1.1fr;
+  grid-template-columns: 2fr 1.5fr 1.5fr 1fr 1.2fr;
   gap: 12px;
-  align-items: flex-end;
 }
 
-@media (max-width: 1024px) {
-  .filter-fields-grid { grid-template-columns: 1fr 1fr; }
-  .col-search { grid-column: span 2; }
-}
-
-@media (max-width: 640px) {
-  .filter-fields-grid { grid-template-columns: 1fr; }
-  .col-search { grid-column: span 1; }
-}
+@media (max-width: 1024px) { .filter-fields-grid-5 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px) { .filter-fields-grid-5 { grid-template-columns: 1fr; } }
 
 .filter-col { display: flex; flex-direction: column; gap: 6px; }
 .filter-field-label { font-size: 12.5px; font-weight: 700; color: #0D1C8C; margin: 0; }
-
 .filter-input-wrapper { position: relative; display: flex; align-items: center; }
 
 .filter-input-ctrl,
@@ -842,9 +546,6 @@
   box-shadow: 0 0 0 3px rgba(13, 28, 140, 0.12);
 }
 
-.filter-select-ctrl { appearance: none; cursor: pointer; padding-left: 28px; }
-.filter-date-ctrl { font-family: monospace, 'Cairo', sans-serif; cursor: pointer; }
-
 .filter-icon-left {
   position: absolute;
   left: 10px;
@@ -853,729 +554,8 @@
   pointer-events: none;
 }
 
-.clear-input-btn {
-  position: absolute;
-  left: 30px;
-  background: none;
-  border: none;
-  color: #94a3b8;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 0;
-}
-
-.clear-input-btn:hover { color: #475569; }
-
-.active-tags-strip {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px dashed #e2e8f0;
-}
-
-.active-tags-title { font-size: 11px; font-weight: 600; color: #64748b; }
-
-.filter-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1e40af;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
-}
-
-.tag-close-btn {
-  background: none;
-  border: none;
-  color: #3b82f6;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 0;
-  line-height: 1;
-}
-
-.tag-close-btn:hover { color: #dc2626; }
-/* نافذة التفاصيل المتطورة */
-.modal-container-details-pro {
-  background-color: #ffffff;
-  width: 92vw;
-  max-width: 750px;
-  border-radius: 20px;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
-  padding: 24px 28px;
-  box-sizing: border-box;
-  font-family: 'Cairo', sans-serif;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.details-pro-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-.header-title-block { display: flex; align-items: center; gap: 12px; }
-.details-pro-title { margin: 0; font-size: 20px; font-weight: 700; color: #0f172a; }
-.details-pro-close { background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; line-height: 1; }
-
-.details-pro-hero {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
-  border: 1px solid #dbeafe;
-  border-radius: 14px;
-  padding: 16px 20px;
-  margin-bottom: 20px;
-}
-
-.hero-icon-box {
-  width: 52px;
-  height: 52px;
-  background-color: #0D1C8C;
-  color: #ffffff;
-  border-radius: 14px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 22px;
-  flex-shrink: 0;
-}
-
-.hero-info { flex: 1; }
-.hero-batch-name { margin: 0 0 6px 0; font-size: 18px; font-weight: 700; color: #0f172a; }
-.hero-tags-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.hero-program-tag { font-size: 12px; font-weight: 600; background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; padding: 3px 10px; border-radius: 6px; }
-.hero-track-tag { font-size: 12px; font-weight: 600; background-color: #e0e7ff; color: #3730a3; padding: 3px 10px; border-radius: 6px; }
-.hero-duration-tag { font-size: 12px; font-weight: 600; color: #64748b; display: inline-flex; align-items: center; gap: 4px; }
-
-.details-kpis-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-@media (max-width: 680px) { .details-kpis-grid { grid-template-columns: repeat(2, 1fr); } }
-
-.kpi-card { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; }
-.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-.kpi-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.kpi-label { font-size: 11.5px; font-weight: 600; color: #64748b; }
-.kpi-icon { font-size: 14px; }
-.kpi-val { font-size: 19px; font-weight: 700; color: #0f172a; line-height: 1.2; }
-.kpi-bar-bg { width: 100%; height: 5px; background-color: #f1f5f9; border-radius: 9999px; overflow: hidden; margin: 8px 0; }
-.kpi-bar-fill { height: 100%; border-radius: 9999px; }
-
-.bg-cyan { background-color: #06b6d4; }
-.bg-emerald { background-color: #10b981; }
-.bg-amber { background-color: #f59e0b; }
-.kpi-hint { font-size: 11px; font-weight: 600; color: #64748b; }
-.text-indigo { color: #6366f1; }
-.text-cyan { color: #0891b2; }
-.text-emerald { color: #059669; }
-.text-amber { color: #d97706; }
-
-.details-org-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; margin-bottom: 22px; }
-.org-item { display: flex; flex-direction: column; gap: 4px; }
-.org-item.full-width { grid-column: span 2; }
-.org-label { font-size: 12px; font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 6px; }
-.org-label i { color: #0D1C8C; font-size: 13px; }
-.org-value { font-size: 13.5px; font-weight: 700; color: #1e293b; }
-
-.details-pro-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid #f1f5f9; }
-.footer-actions-right { display: flex; align-items: center; gap: 10px; }
-
-.btn-pro-trainees {
-  display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px;
-  background-color: #ecfdf5; border: 1px solid #a7f3d0; color: #059669;
-  border-radius: 8px; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
-}
-.btn-pro-trainees:hover { background-color: #059669; color: #ffffff; }
-
-.btn-pro-edit {
-  display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px;
-  background-color: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;
-  border-radius: 8px; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
-}
-.btn-pro-edit:hover { background-color: #e2e8f0; color: #0f172a; }
-
-.btn-pro-close {
-  padding: 9px 20px; background-color: #ffffff; border: 1px solid #e2e8f0;
-  color: #64748b; border-radius: 8px; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
-}
-.btn-pro-close:hover { background-color: #f8fafc; color: #0f172a; border-color: #cbd5e1; }
-
 /* ==========================================================
-   تنسيقات صفحة متدربي الدفعة الكاملة (Trainees Full Page View)
-   ========================================================== */
-.trainees-full-page-container {
-  max-width: 1300px;
-  margin: 10px auto 40px auto;
-  padding: 0 16px;
-  font-family: 'Cairo', sans-serif;
-  direction: rtl;
-}
-
-/* زر الرجوع للجدول */
-.btn-back-nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: none;
-  border: none;
-  color: #64748b;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 8px 14px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  transition: all 0.2s ease;
-  font-family: 'Cairo', sans-serif;
-}
-
-.btn-back-nav:hover {
-  color: #0D1C8C;
-  background-color: #eff6ff;
-}
-
-.back-arrow { font-size: 16px; }
-
-/* بطاقة ترويسة المتدربين */
-.trainees-page-header-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 20px 24px;
-  margin-bottom: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-}
-
-.title-with-pill {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 6px;
-}
-
-.trainees-main-title {
-  font-size: 22px;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0;
-}
-
-.trainees-count-pill {
-  font-size: 12px;
-  font-weight: 800;
-  background-color: #e0e7ff;
-  color: #3730a3;
-  padding: 3px 12px;
-  border-radius: 20px;
-}
-
-.trainees-subtext {
-  font-size: 13.5px;
-  color: #64748b;
-  margin: 0;
-}
-
-.header-capacity-badge {
-  font-size: 13px;
-  font-weight: 700;
-  color: #475569;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  padding: 6px 14px;
-  border-radius: 8px;
-}
-
-/* جدول المتدربين العريض */
-.trainees-full-table-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-}
-
-.trainees-full-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.trainees-full-table thead tr {
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.trainees-full-table th {
-  padding: 14px 18px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #475569;
-}
-
-.trainees-full-table tbody tr {
-  border-bottom: 1px solid #f1f5f9;
-  transition: background-color 0.15s ease;
-}
-
-.trainees-full-table tbody tr:hover {
-  background-color: #f8fafc;
-}
-
-.trainees-full-table td {
-  padding: 14px 18px;
-  font-size: 13.5px;
-  vertical-align: middle;
-}
-
-.trainee-univ { font-weight: 700; color: #1e293b; font-size: 13.5px; }
-.trainee-major { font-size: 12px; color: #64748b; margin-top: 2px; }
-.trainee-company { font-weight: 600; color: #334155; }
-
-/* ==========================================================
-   تنسيقات صفحة تفاصيل الدفعة الكاملة (Details Full Page View)
-   ========================================================== */
-.details-full-page-container {
-  max-width: 1250px;
-  margin: 16px auto 60px auto;
-  padding: 0 20px;
-  font-family: 'Cairo', sans-serif;
-  direction: rtl;
-}
-
-/* زر الرجوع */
-.btn-back-nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: none;
-  border: none;
-  color: #64748b;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 8px 14px;
-  border-radius: 8px;
-  margin-bottom: 18px;
-  transition: all 0.2s ease;
-  font-family: 'Cairo', sans-serif;
-}
-
-.btn-back-nav:hover {
-  color: #0D1C8C;
-  background-color: #eff6ff;
-}
-
-.back-arrow { font-size: 16px; }
-
-/* بطاقة الترويسة العلوية */
-.details-page-header-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 22px 28px;
-  margin-bottom: 22px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-}
-
-.header-title-flex {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.title-with-badge {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 6px;
-}
-
-.details-main-title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.details-main-subtext {
-  margin: 0;
-  font-size: 13.5px;
-  color: #64748b;
-}
-
-.details-quick-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.btn-pro-trainees {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 18px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #059669;
-  border-radius: 8px;
-  font-size: 13.5px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: 'Cairo', sans-serif;
-}
-
-.btn-pro-trainees:hover {
-  background-color: #059669;
-  color: #ffffff;
-}
-
-.btn-pro-edit {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 18px;
-  background-color: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #334155;
-  border-radius: 8px;
-  font-size: 13.5px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: 'Cairo', sans-serif;
-}
-
-.btn-pro-edit:hover {
-  background-color: #e2e8f0;
-  color: #0f172a;
-}
-
-/* ==========================================================
-   شبكة المؤشرات الأربعة (4 كروت بيضاء متناسقة بجانب بعضها)
-   ========================================================== */
-.details-kpis-grid-full {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 22px;
-}
-
-@media (max-width: 1024px) {
-  .details-kpis-grid-full { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 640px) {
-  .details-kpis-grid-full { grid-template-columns: 1fr; }
-}
-
-.kpi-card-full {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.kpi-card-full:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
-}
-
-.kpi-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.kpi-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: #64748b;
-}
-
-.kpi-icon {
-  font-size: 16px;
-}
-
-.text-indigo { color: #6366f1 !important; }
-.text-cyan { color: #0891b2 !important; }
-.text-emerald { color: #059669 !important; }
-.text-amber { color: #d97706 !important; }
-
-.kpi-val {
-  font-size: 22px;
-  font-weight: 800;
-  color: #0f172a;
-  line-height: 1.2;
-}
-
-/* أشرطة التقدم المحددة داخل كل كارد */
-.kpi-bar-bg {
-  width: 100%;
-  height: 7px;
-  background-color: #f1f5f9;
-  border-radius: 9999px;
-  overflow: hidden;
-  margin: 10px 0;
-}
-
-.kpi-bar-fill {
-  height: 100%;
-  border-radius: 9999px;
-  transition: width 0.4s ease;
-}
-
-.bg-cyan { background-color: #06b6d4 !important; }
-.bg-emerald { background-color: #10b981 !important; }
-.bg-amber { background-color: #f59e0b !important; }
-
-.kpi-hint {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-  margin: 0;
-}
-
-/* ==========================================================
-   بطاقة البيانات التنظيمية (صندوق بعمودين في الأسفل)
-   ========================================================== */
-.details-org-card-full {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 24px 28px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-}
-
-.org-section-title {
-  margin: 0 0 18px 0;
-  font-size: 16.5px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.org-grid-full {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-@media (max-width: 768px) {
-  .org-grid-full { grid-template-columns: 1fr; }
-}
-
-.org-item-box {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.org-label {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #64748b;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.org-value {
-  font-size: 14.5px;
-  font-weight: 800;
-  color: #1e293b;
-}
-
-/* ===================================================
-   تنسيق زر عرض خطة الدورة التدريبية (Action Plan Button)
-   =================================================== */
-.nfd-action-icon-btn.action-plan-btn {
-  color: #0D1C8C;
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
-  transition: all 0.2s ease-in-out;
-}
-
-/* عند تمرير الماوس فوق الزر (Hover) */
-.nfd-action-icon-btn.action-plan-btn:hover {
-  color: #ffffff;
-  background-color: #0D1C8C;
-  border-color: #0D1C8C;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px -1px rgba(13, 28, 140, 0.2);
-}
-
-/* عند الضغط على الزر (Active) */
-.nfd-action-icon-btn.action-plan-btn:active {
-  transform: translateY(0);
-  background-color: #09135e;
-}
-/* ==========================================================
-   Header Banner & Feature Badges
-   ========================================================== */
-.header-banner-flex {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.active-feature-badge {
-  background-color: #f0f9ff;
-  border: 1px solid #bae6fd;
-  color: #0369a1;
-  padding: 6px 14px;
-  border-radius: 10px;
-  font-size: 12.5px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* ==========================================================
-   Amber Alert Banner (شريط التنبيه الذهبي للخطط المعلقة)
-   ========================================================== */
-.amber-plans-alert-banner {
-  background-color: #fffbeb;
-  border: 1px solid #fde68a;
-  border-radius: 14px;
-  padding: 14px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.08);
-}
-
-.alert-content-flex {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #92400e;
-  font-size: 13.5px;
-  font-weight: 600;
-}
-
-.alert-clock-icon {
-  font-size: 16px;
-  color: #d97706;
-}
-
-.pulsing-dot {
-  width: 9px;
-  height: 9px;
-  background-color: #f59e0b;
-  border-radius: 50%;
-  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.25);
-  animation: pulse-dot 1.8s infinite;
-}
-
-@keyframes pulse-dot {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
-  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-}
-
-.alert-buttons-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.btn-amber-filter {
-  background-color: #d97706;
-  color: #ffffff;
-  border: none;
-  padding: 7px 16px;
-  border-radius: 8px;
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.btn-amber-filter:hover {
-  background-color: #b45309;
-}
-
-.btn-amber-clear {
-  background: none;
-  border: none;
-  color: #92400e;
-  text-decoration: underline;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-/* فلتر 5 أعمدة */
-.filter-fields-grid-5 {
-  display: grid;
-  grid-template-columns: 2fr 1.5fr 1.5fr 1fr 1.2fr;
-  gap: 12px;
-}
-
-@media (max-width: 1024px) {
-  .filter-fields-grid-5 { grid-template-columns: 1fr 1fr; }
-}
-
-/* شارات حالة خطة الدورة بالجدول */
-.plan-status-pill {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11.5px;
-  font-weight: 700;
-}
-
-.plan-pending {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
-}
-
-.plan-approved {
-  background-color: #ecfdf5;
-  color: #047857;
-  border: 1px solid #a7f3d0;
-}
-
-.plan-rejected {
-  background-color: #fff1f2;
-  color: #be123c;
-  border: 1px solid #fecdd3;
-}
-
-.plan-empty {
-  background-color: #f8fafc;
-  color: #94a3b8;
-  border: 1px solid #e2e8f0;
-}
-
-/* ==========================================================
-   Course Plan Review Modal Styles
+   6. Course Plan Review Modal Styles
    ========================================================== */
 .modal-container-plan-review {
   background-color: #ffffff;
@@ -1599,18 +579,8 @@
   border-bottom: 1px solid #f1f5f9;
 }
 
-.plan-title-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.plan-title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 800;
-  color: #0f172a;
-}
+.plan-title-row { display: flex; align-items: center; gap: 12px; }
+.plan-title { margin: 0; font-size: 20px; font-weight: 800; color: #0f172a; }
 
 .plan-batch-pill {
   background-color: #e0e7ff;
@@ -1621,11 +591,7 @@
   font-weight: 700;
 }
 
-.plan-sub {
-  margin: 4px 0 0 0;
-  font-size: 13px;
-  color: #64748b;
-}
+.plan-sub { margin: 4px 0 0 0; font-size: 13px; color: #64748b; }
 
 .plan-tabs-bar {
   display: flex;
@@ -1658,15 +624,8 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.plan-tab-btn.tab-decision.active {
-  color: #b45309;
-}
-
-.plan-body-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 22px 26px;
-}
+.plan-tab-btn.tab-decision.active { color: #b45309; }
+.plan-body-scroll { flex: 1; overflow-y: auto; padding: 22px 26px; }
 
 .stage-block-card {
   background-color: #ffffff;
@@ -1676,40 +635,11 @@
   margin-bottom: 14px;
 }
 
-.stage-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 6px;
-}
-
-.stage-num {
-  background-color: #e0e7ff;
-  color: #4338ca;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.stage-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.stage-duration {
-  font-size: 12px;
-  color: #64748b;
-  margin-right: auto;
-}
-
-.stage-desc {
-  margin: 0 0 10px 0;
-  font-size: 13px;
-  color: #64748b;
-}
+.stage-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.stage-num { background-color: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; }
+.stage-title { margin: 0; font-size: 16px; font-weight: 700; color: #0f172a; }
+.stage-duration { font-size: 12px; color: #64748b; margin-right: auto; }
+.stage-desc { margin: 0 0 10px 0; font-size: 13px; color: #64748b; }
 
 .stage-items-list {
   display: flex;
@@ -1719,86 +649,17 @@
   border-top: 1px dashed #e2e8f0;
 }
 
-.stage-item-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #334155;
-}
+.stage-item-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #334155; }
+.item-type-badge { font-size: 11px; background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px; margin-right: auto; color: #64748b; }
 
-.item-type-badge {
-  font-size: 11px;
-  background-color: #f1f5f9;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-right: auto;
-  color: #64748b;
-}
+.decision-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 18px; }
+@media (max-width: 800px) { .decision-grid { grid-template-columns: 1fr; } }
 
-/* المدربين */
-.trainer-card-pro {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 14px 18px;
-  margin-bottom: 10px;
-}
+.decision-card { border-radius: 14px; padding: 20px; display: flex; flex-direction: column; }
+.approve-card { background-color: #f0fdf4; border: 1px solid #bbf7d0; }
+.reject-card { background-color: #fff7ed; border: 1px solid #fed7aa; }
 
-.trainer-avatar-box {
-  width: 44px;
-  height: 44px;
-  background-color: #e0e7ff;
-  color: #0D1C8C;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-}
-
-.trainer-name { margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; }
-.trainer-role { font-size: 12px; color: #64748b; }
-.trainer-contacts { display: flex; gap: 14px; font-size: 12px; color: #475569; margin-top: 4px; }
-
-/* بطاقات اتخاذ القرار */
-.decision-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.2fr;
-  gap: 18px;
-}
-
-@media (max-width: 800px) {
-  .decision-grid { grid-template-columns: 1fr; }
-}
-
-.decision-card {
-  border-radius: 14px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-}
-
-.approve-card {
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
-}
-
-.reject-card {
-  background-color: #fff7ed;
-  border: 1px solid #fed7aa;
-}
-
-.decision-card-top {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
+.decision-card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .approve-icon { font-size: 26px; color: #16a34a; }
 .reject-icon { font-size: 24px; color: #ea580c; }
 .decision-title { margin: 0; font-size: 16px; font-weight: 800; color: #0f172a; }
@@ -1826,40 +687,10 @@
   overflow-y: auto;
 }
 
-.mod-checkbox-label {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 12.5px;
-  color: #334155;
-  cursor: pointer;
-}
-
-.custom-mod-box {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.custom-mod-input {
-  flex: 1;
-  padding: 6px 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 12px;
-  outline: none;
-  font-family: 'Cairo', sans-serif;
-}
-
-.btn-add-mod {
-  padding: 6px 12px;
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  font-weight: 700;
-}
+.mod-checkbox-label { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: #334155; cursor: pointer; }
+.custom-mod-box { display: flex; gap: 6px; margin-bottom: 8px; }
+.custom-mod-input { flex: 1; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; outline: none; }
+.btn-add-mod { padding: 6px 12px; background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 700; }
 
 .btn-decision-approve {
   width: 100%;
@@ -1905,16 +736,288 @@
   cursor: pointer;
 }
 
-.btn-pro-plan {
+/* ==========================================================
+   7. Full Page Views (Trainees & Details)
+   ========================================================== */
+.trainees-full-page-container,
+.details-full-page-container {
+  max-width: 1250px;
+  margin: 16px auto 60px auto;
+  padding: 0 20px;
+  font-family: 'Cairo', sans-serif;
+  direction: rtl;
+}
+
+.btn-back-nav {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 18px;
-  background-color: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #0D1C8C;
-  border-radius: 8px;
-  font-size: 13.5px;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+}
+
+.btn-back-nav:hover { color: #0D1C8C; background-color: #eff6ff; }
+.back-arrow { font-size: 16px; }
+
+.trainees-page-header-card,
+.details-page-header-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 22px 28px;
+  margin-bottom: 22px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.header-title-flex { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.title-with-badge, .title-with-pill { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.details-main-title, .trainees-main-title { margin: 0; font-size: 24px; font-weight: 800; color: #0f172a; }
+.details-main-subtext, .trainees-subtext { margin: 0; font-size: 13.5px; color: #64748b; }
+.trainees-count-pill { font-size: 12px; font-weight: 800; background-color: #e0e7ff; color: #3730a3; padding: 3px 12px; border-radius: 20px; }
+
+.details-quick-actions { display: flex; align-items: center; gap: 10px; }
+
+.btn-pro-plan {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px;
+  background-color: #eff6ff; border: 1px solid #bfdbfe; color: #0D1C8C;
+  border-radius: 8px; font-size: 13.5px; font-weight: 700; cursor: pointer;
+}
+
+.btn-pro-trainees {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px;
+  background-color: #ecfdf5; border: 1px solid #a7f3d0; color: #059669;
+  border-radius: 8px; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
+}
+.btn-pro-trainees:hover { background-color: #059669; color: #ffffff; }
+
+.btn-pro-edit {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px;
+  background-color: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;
+  border-radius: 8px; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
+}
+.btn-pro-edit:hover { background-color: #e2e8f0; color: #0f172a; }
+
+.details-kpis-grid-full {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+@media (max-width: 1024px) { .details-kpis-grid-full { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .details-kpis-grid-full { grid-template-columns: 1fr; } }
+
+.kpi-card-full {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.kpi-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.kpi-label { font-size: 13px; font-weight: 700; color: #64748b; }
+.kpi-val { font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.2; }
+.kpi-hint { font-size: 12px; font-weight: 600; color: #64748b; }
+
+.kpi-bar-bg { width: 100%; height: 7px; background-color: #f1f5f9; border-radius: 9999px; overflow: hidden; margin: 10px 0; }
+.kpi-bar-fill { height: 100%; border-radius: 9999px; }
+
+.bg-cyan { background-color: #06b6d4 !important; }
+.bg-emerald { background-color: #10b981 !important; }
+.bg-amber { background-color: #f59e0b !important; }
+
+.text-indigo { color: #6366f1 !important; }
+.text-cyan { color: #0891b2 !important; }
+.text-emerald { color: #059669 !important; }
+.text-amber { color: #d97706 !important; }
+
+.details-org-card-full {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.org-section-title { margin: 0 0 18px 0; font-size: 16.5px; font-weight: 800; color: #0f172a; }
+.org-grid-full { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+@media (max-width: 768px) { .org-grid-full { grid-template-columns: 1fr; } }
+
+.org-item-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.org-label { font-size: 12.5px; font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 6px; }
+.org-value { font-size: 14.5px; font-weight: 800; color: #1e293b; }
+
+.trainees-full-table-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.trainees-full-table { width: 100%; border-collapse: collapse; text-align: right; white-space: nowrap; }
+.trainees-full-table thead tr { background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+.trainees-full-table th, .trainees-full-table td { padding: 14px 18px; font-size: 13.5px; vertical-align: middle; }
+.trainees-full-table tbody tr { border-bottom: 1px solid #f1f5f9; }
+
+.trainee-user-cell { display: flex; align-items: center; gap: 10px; }
+.trainee-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1px solid #cbd5e1; }
+.trainee-name { font-weight: 700; color: #0f172a; font-size: 13px; }
+.trainee-email { font-size: 11px; color: #94a3b8; }
+.trainee-status-pill { display: inline-block; background-color: #eff6ff; color: #2563eb; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+
+.message-trainee-btn {
+  display: inline-flex; align-items: center; gap: 4px; background-color: #ecfdf5; border: 1px solid #a7f3d0;
+  color: #059669; padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer;
+}
+
+.message-trainee-btn:hover { background-color: #059669; color: #ffffff; }
+
+/* ==========================================================
+   8. Pagination & Alert Styles
+   ========================================================== */
+.compact-pagination-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-top: 16px;
+}
+
+.pagination-info { font-size: 14px; color: #64748b; }
+.pagination-compact-controls { display: flex; align-items: center; gap: 10px; }
+
+.compact-nav-btn {
+  padding: 6px 14px; font-size: 13.5px; font-weight: 600; color: #334155;
+  background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer;
+}
+
+.compact-nav-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.page-indicator { padding: 6px 12px; font-size: 13.5px; font-weight: 600; color: #0f172a; background-color: #f1f5f9; border-radius: 8px; border: 1px solid #e2e8f0; }
+
+.plan-loading-box { text-align: center; padding: 40px; color: #0D1C8C; font-weight: 700; }
+.plan-loading-box i { font-size: 24px; margin-left: 8px; }
+.plan-error-alert { background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px 16px; border-radius: 8px; margin-bottom: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.empty-plan-box { text-align: center; padding: 30px; color: #64748b; background-color: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; }
+
+/* ==========================================================
+   تنبيه الخطأ الداخلي بنافذة القرار (Inline Decision Error)
+   ========================================================== */
+.decision-inline-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  animation: shake 0.3s ease;
+}
+
+.btn-close-inline {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 18px;
+  cursor: pointer;
+  margin-right: auto;
+  line-height: 1;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* ==========================================================
+   الإشعار العائم الحديث (Floating Toast Notification)
+   ========================================================== */
+.nfd-toast-container {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 320px;
+  max-width: 500px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  font-family: 'Cairo', sans-serif;
+  animation: slide-down 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toast-icon { font-size: 18px; }
+.toast-message { font-size: 13.5px; font-weight: 700; }
+
+.toast-close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: currentColor;
+  opacity: 0.7;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.toast-close-btn:hover { opacity: 1; }
+
+/* ألوان التوست حسب الحالة */
+.toast-success {
+  background-color: #065f46;
+  color: #ffffff;
+  border: 1px solid #047857;
+}
+
+.toast-warning {
+  background-color: #9a3412;
+  color: #ffffff;
+  border: 1px solid #c2410c;
+}
+
+.toast-error {
+  background-color: #991b1b;
+  color: #ffffff;
+  border: 1px solid #b91c1c;
 }

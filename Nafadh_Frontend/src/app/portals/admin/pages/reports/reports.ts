@@ -77,6 +77,16 @@ export class AdminReports implements OnInit {
   traineesTotalCount = 0;
   traineesTotalPages = 1;
 
+  // 5. إدارة كشف الدرجات العام والفردي المعتمد مع Pagination
+  traineeSubView: 'roster' | 'master_transcript' | 'single_transcript' = 'roster';
+  selectedTraineeForTranscript: any = null;
+
+  // متغيرات الترقيم لكشف الدرجات العام
+  masterTranscriptCurrentPage = 1;
+  masterTranscriptPageSize = 10;
+  masterTranscriptTotalPages = 1;
+  pagedMasterTranscriptList: any[] = [];
+
   constructor(
     private api: AdminApi,
     private cdr: ChangeDetectorRef,
@@ -458,7 +468,6 @@ export class AdminReports implements OnInit {
     return pages;
   }
 
-  // فتح تفاصيل المدرب واستبيانات المتدربين (مطابق للصورة 2)
   openTrainerModal(trainer: any) {
     this.selectedTrainer = trainer;
     if (this.selectedTrainer) {
@@ -537,7 +546,7 @@ export class AdminReports implements OnInit {
   }
 
   // =========================================================
-  // دوال وفلاتر قسم المتدربين (مطابق للصورة 1)
+  // دوال وفلاتر قسم المتدربين
   // =========================================================
   loadTraineesData() {
     this.isLoading.set(true);
@@ -575,6 +584,7 @@ export class AdminReports implements OnInit {
           const techScore = t.technicalScore ?? (85 + (index % 10));
           const behavScore = t.behavioralScore ?? (88 + (index % 8));
           const attendRate = t.attendanceRate ?? (90 + (index % 8));
+          const projScore = t.projectScore ?? Math.min(100, Math.round(techScore * 1.02));
 
           return {
             traineeId: t.traineeId || t.id,
@@ -584,6 +594,7 @@ export class AdminReports implements OnInit {
             attendanceRate: attendRate,
             technicalScore: techScore,
             behavioralScore: behavScore,
+            projectScore: projScore,
             level: t.level || (techScore >= 90 ? 'ممتاز' : 'جيد جداً'),
             assignedTrainer: t.trainerName || t.trainer?.fullName || trainersNames[index % trainersNames.length],
             trainerNotes: t.trainerNotes || quotes[index % quotes.length],
@@ -642,6 +653,7 @@ export class AdminReports implements OnInit {
     this.traineesTotalPages = Math.ceil(this.traineesTotalCount / this.traineesPageSize) || 1;
     this.traineesCurrentPage = 1;
     this.updateTraineesPage();
+    this.updateMasterTranscriptPage();
   }
 
   resetTraineeFilters() {
@@ -674,9 +686,102 @@ export class AdminReports implements OnInit {
     }
   }
 
+  // =========================================================
+  // دوال كشف الدرجات العام والفردي المعتمد
+  // =========================================================
+  openTraineeTranscript(trainee: any) {
+    this.selectedTraineeForTranscript = trainee;
+    this.traineeSubView = 'single_transcript';
+    this.cdr.detectChanges();
+  }
+  closeTraineeTranscript() {
+    this.traineeSubView = 'roster';
+    this.selectedTraineeForTranscript = null;
+    this.cdr.detectChanges();
+  }
+
+  openMasterTranscript() {
+    this.traineeSubView = 'master_transcript';
+    this.masterTranscriptCurrentPage = 1;
+    this.updateMasterTranscriptPage();
+    this.cdr.detectChanges();
+  }
+  // تحديث الصفحة المعروضة في كشف الدرجات
+  updateMasterTranscriptPage() {
+    const list = this.filteredTraineesList || [];
+    this.masterTranscriptTotalPages = Math.ceil(list.length / this.masterTranscriptPageSize) || 1;
+    if (this.masterTranscriptCurrentPage > this.masterTranscriptTotalPages) {
+      this.masterTranscriptCurrentPage = this.masterTranscriptTotalPages;
+    }
+    const startIndex = (this.masterTranscriptCurrentPage - 1) * this.masterTranscriptPageSize;
+    const endIndex = startIndex + this.masterTranscriptPageSize;
+    this.pagedMasterTranscriptList = list.slice(startIndex, endIndex);
+  }
+  nextMasterTranscriptPage() {
+    if (this.masterTranscriptCurrentPage < this.masterTranscriptTotalPages) {
+      this.masterTranscriptCurrentPage++;
+      this.updateMasterTranscriptPage();
+      this.cdr.detectChanges();
+    }
+  }
+
+  prevMasterTranscriptPage() {
+    if (this.masterTranscriptCurrentPage > 1) {
+      this.masterTranscriptCurrentPage--;
+      this.updateMasterTranscriptPage();
+      this.cdr.detectChanges();
+    }
+  }
+  goToMasterTranscriptPage(page: number) {
+    if (page >= 1 && page <= this.masterTranscriptTotalPages) {
+      this.masterTranscriptCurrentPage = page;
+      this.updateMasterTranscriptPage();
+      this.cdr.detectChanges();
+    }
+  }
+
+  onMasterTranscriptPageSizeChange() {
+    this.masterTranscriptCurrentPage = 1;
+    this.updateMasterTranscriptPage();
+    this.cdr.detectChanges();
+  }
+
+  getMasterTranscriptPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(1, this.masterTranscriptCurrentPage - 2);
+    let end = Math.min(this.masterTranscriptTotalPages, start + maxVisible - 1);
+
+    if (end - start < maxVisible - 1) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+
+
+  getTraineeFinalScore(tr: any): number {
+    if (!tr) return 0;
+    const att = Number(tr.attendanceRate || 0) * 0.15;
+    const tech = Number(tr.technicalScore || 0) * 0.35;
+    const proj = Number(tr.projectScore ?? tr.technicalScore ?? 0) * 0.30;
+    const beh = Number(tr.behavioralScore || 0) * 0.20;
+    return Math.round(att + tech + proj + beh);
+  }
+
+  getTraineeGpa(tr: any): string {
+    const finalScore = this.getTraineeFinalScore(tr);
+    return ((finalScore / 100) * 4).toFixed(2);
+  }
+
   setSubSection(sub: 'company' | 'trainer' | 'trainee') {
     this.currentSubSection = sub;
     this.trainerView = 'grid';
+    this.traineeSubView = 'roster';
   }
 
   levelClass(level?: string): string {
@@ -689,7 +794,6 @@ export class AdminReports implements OnInit {
   }
 
   exportToPDF() {
-    // 1. إنشاء ستايل طباعة فوري وعام يتجاوز عزل Angular ويخفي السايدبار والنافبار 100%
     const styleId = 'nfd-print-override-style';
     let printStyle = document.getElementById(styleId) as HTMLStyleElement;
     if (!printStyle) {
@@ -700,12 +804,10 @@ export class AdminReports implements OnInit {
 
     printStyle.innerHTML = `
       @media print {
-        /* إخفاء كل شيء في الموقع بالكامل (السايد بار، الناف بار، البروفايل، الإشعارات) */
         body * {
           visibility: hidden !important;
         }
 
-        /* إظهار محتوى التقارير فقط وسحبه لأعلى وأول الصفحة ملء الورقة */
         .reports-container,
         .reports-container * {
           visibility: visible !important;
@@ -724,8 +826,8 @@ export class AdminReports implements OnInit {
           box-sizing: border-box !important;
         }
 
-        /* إخفاء التبويبات وأشرطة البحث والأزرار والتصفح */
         .subsections-tabs-bar,
+        .sub-view-nav-bar,
         .filter-toolbar-card,
         .actions-left,
         .card-footer,
@@ -733,17 +835,16 @@ export class AdminReports implements OnInit {
         .compact-pagination-wrapper,
         .back-btn,
         .btn-reset-filters,
+        .no-print,
         button {
           display: none !important;
         }
 
-        /* الحفاظ على ألوان وهوية المنصة في ملف الـ PDF */
         * {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
 
-        /* ترتيب كروت الإحصائيات (81، 4.9، 3200+) أفقياً في سطر واحد بعرض الورقة */
         .summary-metrics-grid {
           display: flex !important;
           flex-direction: row !important;
@@ -762,39 +863,19 @@ export class AdminReports implements OnInit {
           background: #ffffff !important;
         }
 
-        .metric-value {
-          font-size: 24px !important;
-        }
-
-        /* ترتيب كروت المدربين أو الشركات في صفوف متوازية مرتبة بعرض الورقة */
-        .companies-grid {
-          display: grid !important;
-          grid-template-columns: repeat(2, 1fr) !important;
-          gap: 16px !important;
+        .table-card, .official-sheet-card {
+          border: 1px solid #cbd5e1 !important;
+          box-shadow: none !important;
+          padding: 16px !important;
           width: 100% !important;
         }
 
-        .company-card {
-          border: 1px solid #cbd5e1 !important;
-          box-shadow: none !important;
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-        }
-
-        /* تنسيق الجداول لتملأ الصفحة بدقة */
-        .table-card {
-          border: 1px solid #cbd5e1 !important;
-          box-shadow: none !important;
-          padding: 0 !important;
-          width: 100% !important;
-        }
-
-        .custom-table {
+        .custom-table, .official-table {
           width: 100% !important;
           border-collapse: collapse !important;
         }
 
-        .custom-table th {
+        .custom-table th, .official-table th {
           background-color: #f8fafc !important;
           color: #0D1C8C !important;
           border: 1px solid #cbd5e1 !important;
@@ -802,14 +883,13 @@ export class AdminReports implements OnInit {
           font-size: 11px !important;
         }
 
-        .custom-table td {
+        .custom-table td, .official-table td {
           border: 1px solid #e2e8f0 !important;
           padding: 8px 10px !important;
           font-size: 10.5px !important;
           page-break-inside: avoid !important;
         }
 
-        /* ضبط حجم الورقة الرسمي A4 */
         @page {
           size: A4 portrait;
           margin: 8mm;
@@ -817,7 +897,6 @@ export class AdminReports implements OnInit {
       }
     `;
 
-    // استدعاء نافذة الطباعة بعد تطبيق الستايل
     setTimeout(() => {
       window.print();
     }, 150);
@@ -911,15 +990,18 @@ export class AdminReports implements OnInit {
       alert('لا توجد بيانات متدربين لتصديرها');
       return;
     }
-    const headers = ['اسم المتدرب', 'الشركة الراعية', 'التخصص', 'المدرب المشرف', 'الحضور', 'التقني', 'السلوكي', 'المستوى'];
+    const headers = ['الرقم الأكاديمي', 'اسم المتدرب', 'الشركة الراعية', 'التخصص', 'المدرب المشرف', 'الحضور (15%)', 'التقني (35%)', 'المشروع (30%)', 'السلوكي (20%)', 'المجموع الكلي (100%)', 'المستوى'];
     const dataRows = list.map(t => [
+      `"NFD-${t.traineeId || ''}"`,
       `"${t.traineeName || ''}"`,
       `"${t.companyName || ''}"`,
       `"${t.major || ''}"`,
       `"${t.assignedTrainer || ''}"`,
       (t.attendanceRate || 0) + '%',
       (t.technicalScore || 0) + '%',
+      (t.projectScore || t.technicalScore || 0) + '%',
       (t.behavioralScore || 0) + '%',
+      this.getTraineeFinalScore(t) + '%',
       `"${t.level || ''}"`
     ]);
     const csvContent = '\uFEFF' + [headers.join(','), ...dataRows.map(e => e.join(','))].join('\n');
@@ -927,7 +1009,7 @@ export class AdminReports implements OnInit {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `تقرير_المتدربين_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `كشف_درجات_المتدربين_المعتمد_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
