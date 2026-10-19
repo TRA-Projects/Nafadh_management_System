@@ -732,6 +732,7 @@ export interface WarningDto {
   evidence?: string;
   status: WarningStatus;
   resolution?: string;
+  companyReply?: string | null;
   issuedDate: string;
   raisedByUserId: number;
   raisedByName?: string;
