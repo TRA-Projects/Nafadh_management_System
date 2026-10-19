@@ -21,6 +21,7 @@ namespace Nafadh_Backend.Repositories
             var query = _context.NFD_QuizAttempts
                 .AsNoTracking()
                 .Include(a => a.Quiz)
+    .ThenInclude(q => q.Batch)
                 .Include(a => a.Trainee)
                     .ThenInclude(t => t.User)
                 .Include(a => a.AttemptQuestions)
@@ -50,6 +51,7 @@ namespace Nafadh_Backend.Repositories
             return await _context.NFD_QuizAttempts
                 .AsNoTracking()
                 .Include(a => a.Quiz)
+    .ThenInclude(q => q.Batch)
                 .Include(a => a.Trainee)
                     .ThenInclude(t => t.User)
                 .Where(a =>

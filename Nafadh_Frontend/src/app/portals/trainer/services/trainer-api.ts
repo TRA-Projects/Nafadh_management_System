@@ -1147,6 +1147,13 @@ export class TrainerApi {
     );
   }
   // =====================================================
+  // SESSIONS FOR BATCH
+  // =====================================================
+  getSessions(batchId: number): Observable<any[]> {
+    const params = new HttpParams().set('batchId', batchId.toString());
+    return this.http.get<any[]>(`${this.base}/Session`, { params });
+  }
+  // =====================================================
   // Messaging
   // =====================================================
 
