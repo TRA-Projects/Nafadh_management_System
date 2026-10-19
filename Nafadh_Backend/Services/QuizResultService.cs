@@ -69,6 +69,8 @@ namespace Nafadh_Backend.Services
                 AttemptId = attempt.AttemptId,
                 QuizId = attempt.QuizId,
                 QuizTitle = attempt.Quiz.Title,
+                BatchId = attempt.Quiz.BatchId,
+                BatchName = attempt.Quiz.Batch.BatchName,
                 TraineeId = attempt.TraineeId,
                 TraineeName = attempt.Trainee.User.FullName,
                 AttemptNumber = attempt.AttemptNumber,

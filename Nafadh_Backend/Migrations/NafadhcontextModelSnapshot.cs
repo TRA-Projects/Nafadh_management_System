@@ -1887,6 +1887,70 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("NFD_SessionAttendances", (string)null);
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_SessionSurvey", b =>
+                {
+                    b.Property<int>("SurveyId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SurveyId"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("SessionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("SurveyId");
+
+                    b.HasIndex("SessionId")
+                        .IsUnique();
+
+                    b.ToTable("NFD_SessionSurveys", (string)null);
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_SessionSurveyResponse", b =>
+                {
+                    b.Property<int>("ResponseId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ResponseId"));
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SubmittedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SurveyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TraineeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ResponseId");
+
+                    b.HasIndex("TraineeId");
+
+                    b.HasIndex("SurveyId", "TraineeId")
+                        .IsUnique();
+
+                    b.ToTable("NFD_SessionSurveyResponses", (string)null);
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Submission", b =>
                 {
                     b.Property<int>("SubmissionId")
@@ -3566,6 +3630,36 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("Trainee");
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_SessionSurvey", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Session", "Session")
+                        .WithMany()
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Session");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_SessionSurveyResponse", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_SessionSurvey", "Survey")
+                        .WithMany("Responses")
+                        .HasForeignKey("SurveyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainee", "Trainee")
+                        .WithMany()
+                        .HasForeignKey("TraineeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Survey");
+
+                    b.Navigation("Trainee");
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Submission", b =>
                 {
                     b.HasOne("Nafadh_Backend.Models.NFD_Task", "Task")
@@ -4041,6 +4135,11 @@ namespace Nafadh_Backend.Migrations
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Session", b =>
                 {
                     b.Navigation("SessionAttendances");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_SessionSurvey", b =>
+                {
+                    b.Navigation("Responses");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_SupportTicket", b =>

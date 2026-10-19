@@ -48,6 +48,11 @@ namespace Nafadh_Backend
         public DbSet<NFD_TraineeModuleProgress> NFD_TraineeModuleProgresses { get; set; }
         public DbSet<NFD_Session> NFD_Sessions { get; set; }
         public DbSet<NFD_SessionAttendance> NFD_SessionAttendances { get; set; }
+
+        // Trainer Portal - Post-session surveys and trainee responses.
+        public DbSet<NFD_SessionSurvey> NFD_SessionSurveys { get; set; }
+        public DbSet<NFD_SessionSurveyResponse> NFD_SessionSurveyResponses { get; set; }
+
         public DbSet<NFD_DailyAttendance> NFD_DailyAttendances { get; set; }
         public DbSet<NFD_TrainerAttendance> NFD_TrainerAttendances { get; set; }
         public DbSet<NFD_Excuse> NFD_Excuses { get; set; }
@@ -501,6 +506,39 @@ namespace Nafadh_Backend
                 entity.HasOne(e => e.Trainee)
                     .WithMany(p => p.SessionAttendances)
                     .HasForeignKey(e => e.TraineeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+            // Trainer Portal - Survey database relationships and constraints.
+            // One survey per session and one response per trainee.
+            modelBuilder.Entity<NFD_SessionSurvey>(entity =>
+            {
+                entity.ToTable("NFD_SessionSurveys");
+
+                entity.HasIndex(x => x.SessionId).IsUnique();
+
+                entity.HasOne(x => x.Session)
+                    .WithMany()
+                    .HasForeignKey(x => x.SessionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<NFD_SessionSurveyResponse>(entity =>
+            {
+                entity.ToTable("NFD_SessionSurveyResponses");
+
+                entity.HasIndex(x => new { x.SurveyId, x.TraineeId })
+                    .IsUnique();
+
+                entity.HasOne(x => x.Survey)
+                    .WithMany(x => x.Responses)
+                    .HasForeignKey(x => x.SurveyId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Trainee)
+                    .WithMany()
+                    .HasForeignKey(x => x.TraineeId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 

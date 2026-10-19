@@ -26,9 +26,9 @@ namespace Nafadh_Backend.DTOs
         [StringLength(20)]
         public string EndTime { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(300)]
-        public string MeetingLink { get; set; } = string.Empty;
+        
+        [MaxLength(300)]
+        public string? MeetingLink { get; set; }
 
         public string? LearningObjectives { get; set; }
     }

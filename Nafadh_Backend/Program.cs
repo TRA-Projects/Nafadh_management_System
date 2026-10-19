@@ -267,6 +267,8 @@ namespace Nafadh_Backend
             builder.Services.Configure<AbsenceWarningSettings>(builder.Configuration.GetSection("AbsenceWarnings"));
             // Trainer live sessions
             builder.Services.AddScoped<TrainerLiveSessionService>();
+            // Trainer Portal - Register LiveKit Cloud room service.
+            builder.Services.AddScoped<ILiveKitService, LiveKitService>();
 
             // Trainer session recordings
             builder.Services.AddScoped<TrainerSessionRecordingService>();

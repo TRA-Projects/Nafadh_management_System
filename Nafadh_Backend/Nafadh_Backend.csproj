@@ -14,7 +14,9 @@
 
   <ItemGroup>
 
-	 
+	  <PackageReference Include="Livekit.Server.Sdk.Dotnet" Version="1.2.3" />
+
+	  <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
 
 	  <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageReference Include="MailKit" Version="4.17.0" />
