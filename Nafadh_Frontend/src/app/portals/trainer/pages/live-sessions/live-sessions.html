@@ -1,16 +1,17 @@
 
 <section class="live-sessions-page" dir="rtl">
-
-  <header class="page-header">
-    <div>
+  <div class="sessions-hero">
+    <div class="hero-info">
+      <span class="hero-eyebrow">إدارة المحتوى التدريبي</span>
       <h1>الجلسات المباشرة</h1>
       <p>جدولة اجتماعات Webex وإدارة الجلسات وتسجيلات المحاضرات.</p>
     </div>
 
     <button class="back-btn" type="button" (click)="goBack()">
+      <i class="fa-solid fa-arrow-right"></i>
       العودة لإدارة المحتوى
     </button>
-  </header>
+  </div>
 
   <div class="toolbar">
     <div class="batch-label">
@@ -74,7 +75,7 @@
 
       <input
         type="search"
-        placeholder="ابحثي عن جلسة..."
+        placeholder="ابحث عن جلسة..."
         [ngModel]="searchTerm()"
         (ngModelChange)="searchTerm.set($event)"
       />

@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+
 
 import {
   TrainerApi,
@@ -26,6 +27,64 @@ export class QuizResults implements OnInit {
   // =========================================
 
   results = signal<QuizResultDto[]>([]);
+  searchTerm = signal('');
+
+statusFilter = signal('all');
+
+filteredResults = computed(() => {
+
+  const search = this.searchTerm()
+    .trim()
+    .toLowerCase();
+
+  const status = this.statusFilter();
+
+  return this.results().filter(result => {
+
+    const matchesSearch =
+      !search ||
+      String(result.traineeName ?? '')
+        .toLowerCase()
+        .includes(search);
+
+    let matchesStatus = true;
+
+    if (status === 'pending') {
+
+      matchesStatus =
+        result.status?.toLowerCase() === 'submitted' &&
+        !result.isGradingCompleted;
+
+    }
+
+    else if (status === 'passed') {
+
+      matchesStatus =
+        result.isGradingCompleted &&
+        result.isPassed === true;
+
+    }
+
+    else if (status === 'failed') {
+
+      matchesStatus =
+        result.isGradingCompleted &&
+        result.isPassed === false;
+
+    }
+
+    else if (status === 'submitted') {
+
+      matchesStatus =
+        result.status?.toLowerCase() === 'submitted';
+
+    }
+
+    return matchesSearch && matchesStatus;
+
+  });
+
+});
 
   loading = signal(false);
 
