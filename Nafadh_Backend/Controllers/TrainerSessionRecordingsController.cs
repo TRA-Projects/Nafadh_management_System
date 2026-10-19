@@ -147,5 +147,49 @@ namespace Nafadh_Backend.Controllers
             }
         }
 
+        // DELETE: api/trainer/live-sessions/5/recording
+        [HttpDelete("{sessionId:int}/recording")]
+        public async Task<IActionResult> DeleteRecording(int sessionId)
+        {
+            var trainerId = await GetCurrentTrainerIdAsync();
+
+            if (!trainerId.HasValue)
+                return Unauthorized();
+
+            try
+            {
+                var deleted = await _recordingService
+                    .DeleteRecordingAsync(
+                        trainerId.Value,
+                        sessionId);
+
+                if (!deleted)
+                    return NotFound(new
+                    {
+                        message = "Recording not found."
+                    });
+
+                return Ok(new
+                {
+                    message = "Recording deleted successfully.",
+                    sessionId
+                });
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new
+                {
+                    message = "Session not found."
+                });
+            }
+            catch (InvalidOperationException)
+            {
+                return StatusCode(500, new
+                {
+                    message = "Recording could not be deleted."
+                });
+            }
+        }
+
     }
 }
