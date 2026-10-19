@@ -1518,4 +1518,29 @@ a.tp-btn-linkedin {
 .page-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+
+}
+/* أزرار تحديد العدد السريع (أفضل 3 / 5 / 10..) */
+.tp-filter-pill {
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tp-filter-pill:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.tp-filter-pill.active {
+  background: #0a1172 !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(10, 17, 114, 0.2);
 }
