@@ -6,6 +6,9 @@ namespace Nafadh_Backend.DTOs
         public int AttemptId { get; set; }
         public int QuizId { get; set; }
         public string QuizTitle { get; set; } = string.Empty;
+
+        public int BatchId { get; set; }
+        public string BatchName { get; set; } = string.Empty;
         public int TraineeId { get; set; }
         public string TraineeName { get; set; } = string.Empty;
         public int AttemptNumber { get; set; }
@@ -57,6 +60,8 @@ namespace Nafadh_Backend.DTOs
         public bool IsManuallyGraded { get; set; }
         public bool IsMarkedForReview { get; set; }
         public bool RequiresManualGrading { get; set; }
+
+  
     }
 
     // الحفاظ على DTO التصحيح اليدوي الموجود
