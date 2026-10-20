@@ -138,7 +138,7 @@
         </div>
         <div class="kpi-info">
           <span class="kpi-label">المتدربون المتميزون</span>
-          <strong class="kpi-value">{{ topPerformers().length }}</strong>
+          <strong class="kpi-value">{{ kpiTopPerformers().length }}</strong>
           <small>هذا الشهر</small>
         </div>
       </article>
@@ -168,7 +168,7 @@
         </div>
         <div class="kpi-info">
           <span class="kpi-label">متعثرون بحاجة لمتابعة</span>
-          <strong class="kpi-value">{{ atRisk().length }}</strong>
+          <strong class="kpi-value">{{ kpiAtRisk().length }}</strong>
           <small>بيانات حقيقية من لوحة الشركة</small>
         </div>
       </article>
@@ -362,15 +362,23 @@
             <span class="icon-star">★</span>
             المتدربون المتميزون 
           </span>
-          <button
-            class="link-btn"
-            type="button"
-            (click)="openTrainees()">عرض الكل</button>
+          <label class="limit-picker">
+            <span>عدد المعروض</span>
+            <select
+              class="limit-select"
+              [value]="topLimit()"
+              (change)="setTopLimit($any($event.target).value)"
+              aria-label="عدد المتدربين المتميزين المعروضين">
+              @for (n of limitOptions; track n) {
+                <option [value]="n" [selected]="n === topLimit()">{{ n }}</option>
+              }
+            </select>
+          </label>
         </div>
 
         <div class="lower-list">
           @for (
-            trainee of topPerformers().slice(0, 5);
+            trainee of topPerformers().slice(0, topLimit());
             track trainee.enrollmentId
           ) {
             <div class="top-row">
@@ -425,11 +433,22 @@
             <span class="icon-warn">⚠️</span>
             المتدربون المتعثرون
           </span>
-          <span class="list-count">{{ atRisk().length }}</span>
+          <label class="limit-picker">
+            <span>عدد المعروض</span>
+            <select
+              class="limit-select"
+              [value]="riskLimit()"
+              (change)="setRiskLimit($any($event.target).value)"
+              aria-label="عدد المتدربين المتعثرين المعروضين">
+              @for (n of limitOptions; track n) {
+                <option [value]="n" [selected]="n === riskLimit()">{{ n }}</option>
+              }
+            </select>
+          </label>
         </div>
 
         <div class="trainee-list">
-          @for (trainee of atRisk(); track trainee.enrollmentId) {
+          @for (trainee of atRisk().slice(0, riskLimit()); track trainee.enrollmentId) {
             <div class="trainee-row" style="display: flex; align-items: center; justify-content: space-between;">
               
               <div style="display: flex; align-items: center; gap: 12px;">
@@ -499,15 +518,23 @@
             <span class="icon-bell">🔔</span>
             أحدث الإنذارات
           </span>
-          <button
-            class="link-btn"
-            type="button"
-            (click)="openWarnings()">عرض الكل</button>
+          <label class="limit-picker">
+            <span>عدد المعروض</span>
+            <select
+              class="limit-select"
+              [value]="warnLimit()"
+              (change)="setWarnLimit($any($event.target).value)"
+              aria-label="عدد الإنذارات المعروضة">
+              @for (n of limitOptions; track n) {
+                <option [value]="n" [selected]="n === warnLimit()">{{ n }}</option>
+              }
+            </select>
+          </label>
         </div>
 
         <div class="lower-list">
           @for (
-            warning of warnings().slice(0, 5);
+            warning of warnings().slice(0, warnLimit());
             track warning.warningId
           ) {
             <div class="warning-row">
