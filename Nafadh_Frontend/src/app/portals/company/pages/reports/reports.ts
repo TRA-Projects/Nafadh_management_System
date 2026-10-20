@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import * as XLSX from 'xlsx';
 import html2pdf from 'html2pdf.js';
@@ -28,11 +29,11 @@ export class ReportsComponent implements OnInit {
 
   private readonly companyApi = inject(CompanyApi);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
 
   companyId = 1;
   activeTab: ReportTab = 'att';
 
-  // مسميات البرامج الثلاثة الفعلية المطابقة للنظام لتصدير Excel
   attendanceProgramsCards = [
     { name: 'علم البيانات وتعلم الآلة 27', value: 96 },
     { name: 'تطوير تطبيقات الويب', value: 94 },
@@ -88,9 +89,9 @@ export class ReportsComponent implements OnInit {
   ];
 
   achievementPrograms = [
-    { name: 'علم البيانات وتعلم الآلة 27', value: 88 },
-    { name: 'تطوير تطبيقات الويب', value: 84 },
-    { name: 'إدارة قواعد البيانات', value: 82 }
+    { id: 1, name: 'علم البيانات وتعلم الآلة 27', value: 88 },
+    { id: 2, name: 'تطوير تطبيقات الويب', value: 84 },
+    { id: 3, name: 'إدارة قواعد البيانات', value: 82 }
   ];
 
   capacityPrograms = [
@@ -449,5 +450,18 @@ export class ReportsComponent implements OnInit {
       case 'late': return 'متأخرة';
       default: return 'مكتملة';
     }
+  }
+
+  // دالة الانتقال المانعة للخروج من النظام
+  // دالة الانتقال المحدثة بالمسار الدقيق تماماً للنظام
+  viewProgramOrTraineeDetails(program: any, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    
+    // الانتقال المباشر إلى مسار التقدم والتفاصيل الصحيح مع تمرير المعرف (id)
+    const traineeOrProgramId = program.id || 1;
+    this.router.navigate([`/company/trainees/${traineeOrProgramId}/progress`]);
   }
 }

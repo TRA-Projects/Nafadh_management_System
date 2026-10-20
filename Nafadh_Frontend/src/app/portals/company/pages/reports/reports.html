@@ -91,19 +91,15 @@
     </div>
   </div>
 
-
-  <!-- المنحنى البياني لحضور المتدربين للبرامج (مُنسق وفي المنتصف وخالي من الأخطاء) -->
+  <!-- المنحنى البياني لحضور المتدربين للبرامج -->
   <div class="card card-pad" style="margin-bottom: 25px; animation: fadeInUp 0.6s ease-out;">
 
-    <!-- رأس البطاقة والعنوان (مع محاذاة وتوزيع احترافي) -->
     <div
       style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; direction: rtl;">
 
-      <!-- العنوان في اليمين -->
       <div style="font-size: 16px; font-weight: 700; color: #0f172a;">
         حضور المتدربين للبرامج </div>
 
-      <!-- مفتاح الرسم البياني في المنتصف -->
       <div
         style="display: flex; gap: 20px; font-size: 13px; font-weight: 500; flex-wrap: wrap; direction: rtl; margin-right: auto; margin-left: auto;">
         <div style="display: flex; align-items: center; gap: 6px;">
@@ -125,7 +121,6 @@
 
     </div>
 
-    <!-- الرسم البياني الخطي (SVG Line Chart) -->
     <div style="width: 100%; overflow-x: auto; padding: 10px 0;">
       <svg viewBox="0 0 800 280" style="width: 100%; height: 260px; font-family: inherit;">
 
@@ -167,21 +162,18 @@
           </style>
         </defs>
 
-        <!-- شبكة الخلفية -->
         <line x1="30" y1="20" x2="750" y2="20" stroke="#f1f5f9" stroke-width="1"></line>
         <line x1="30" y1="70" x2="750" y2="70" stroke="#f1f5f9" stroke-width="1"></line>
         <line x1="30" y1="120" x2="750" y2="120" stroke="#f1f5f9" stroke-width="1"></line>
         <line x1="30" y1="170" x2="750" y2="170" stroke="#f1f5f9" stroke-width="1"></line>
         <line x1="30" y1="220" x2="750" y2="220" stroke="#cbd5e1" stroke-width="1.5"></line>
 
-        <!-- محور Y (النسب المئوية) -->
         <text x="770" y="25" font-size="11" fill="#64748b" text-anchor="start">100%</text>
         <text x="770" y="75" font-size="11" fill="#64748b" text-anchor="start">95%</text>
         <text x="770" y="125" font-size="11" fill="#64748b" text-anchor="start">90%</text>
         <text x="770" y="175" font-size="11" fill="#64748b" text-anchor="start">85%</text>
         <text x="770" y="225" font-size="11" fill="#64748b" text-anchor="start">80%</text>
 
-        <!-- خط البرنامج الأول: علم البيانات وتعلم الآلة 27 -->
         <polyline class="chart-line" fill="none" stroke="#00338d" stroke-width="3"
           points="700,70 584,90 468,30 352,100 236,70 120,60"></polyline>
         <g>
@@ -205,7 +197,6 @@
           </circle>
         </g>
 
-        <!-- خط البرنامج الثاني: تطوير تطبيقات الويب -->
         <polyline class="chart-line" fill="none" stroke="#0ea5e9" stroke-width="3"
           points="700,120 584,100 468,80 352,110 236,90 120,80" style="animation-delay: 0.2s;"></polyline>
         <g>
@@ -229,7 +220,6 @@
           </circle>
         </g>
 
-        <!-- خط البرنامج الثالث: إدارة قواعد البيانات -->
         <polyline class="chart-line" fill="none" stroke="#f59e0b" stroke-width="3"
           points="700,140 584,130 468,110 352,150 236,120 120,110" style="animation-delay: 0.4s;"></polyline>
         <g>
@@ -253,7 +243,6 @@
           </circle>
         </g>
 
-        <!-- أسماء المحور X (الأسابيع) -->
         <text x="700" y="248" font-size="12" fill="#64748b" text-anchor="middle">الأسبوع 27</text>
         <text x="584" y="248" font-size="12" fill="#64748b" text-anchor="middle">الأسبوع 28</text>
         <text x="468" y="248" font-size="12" fill="#64748b" text-anchor="middle">الأسبوع 29</text>
@@ -263,6 +252,7 @@
       </svg>
     </div>
   </div>
+
   <div class="reports-grid-split">
     <div class="card card-pad">
       <div class="card-title">
@@ -344,7 +334,9 @@
   </div>
   }
 
-  <!-- باقي التبويبات -->
+  <!-- ================================================= -->
+  <!-- 2. إنجاز المتدربين (محدث مع الحدث ومانع الانتشار) -->
+  <!-- ================================================= -->
   @if (activeTab === 'achieve') {
   <div class="achievement-stats-grid">
     <div class="achievement-card-mini">
@@ -387,15 +379,23 @@
 
     <div class="programs-grid">
       @for (program of achievementPrograms; track program.name) {
-      <div class="program-card">
+      <div class="program-card" style="position: relative; transition: all 0.2s ease;">
         <div class="program-header">
-          <h4 class="program-title">{{ program.name }}</h4>
-          <span class="program-badge" [class.high]="program.value >= 90">
-            {{ program.value }}%
-          </span>
+          <h4 class="program-title" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <span>{{ program.name }}</span>
+            <!-- تم وضع حدث النقر (click) مباشرة على زر العين لضمان الاستجابة الفورية -->
+            <span (click)="viewProgramOrTraineeDetails(program, $event)" 
+                  style="background: #f8faff; border: 1px solid #cbd5e1; color: #002b66; width: 34px; height: 34px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" 
+                  title="عرض تفاصيل المتدربين">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </span>
+          </h4>
         </div>
 
-        <div class="program-progress-section">
+        <div class="program-progress-section" style="margin-top: 12px;">
           <div class="prog-info-row">
             <span>مستوى الإنجاز الحالي</span>
             <b>{{ program.value }} من 100%</b>
@@ -410,6 +410,9 @@
   </div>
   }
 
+  <!-- ================================================= -->
+  <!-- 3. الطاقة الاستيعابية -->
+  <!-- ================================================= -->
   @if (activeTab === 'cap') {
   <div class="card card-pad capacity-card">
     <div class="card-title">
@@ -485,6 +488,9 @@
   </div>
   }
 
+  <!-- ================================================= -->
+  <!-- 4. التقييمات -->
+  <!-- ================================================= -->
   @if (activeTab === 'eval') {
   <div class="report-note">
     <span class="info-icon">i</span>
@@ -548,6 +554,9 @@
   </div>
   }
 
+  <!-- ================================================= -->
+  <!-- 5. المهام -->
+  <!-- ================================================= -->
   @if (activeTab === 'tasks') {
   <div class="stat-row">
     <div class="stat-mini">
@@ -606,6 +615,9 @@
   </div>
   }
 
+  <!-- ================================================= -->
+  <!-- 6. مقارنة الأقسام والمشرفين -->
+  <!-- ================================================= -->
   @if (activeTab === 'compare') {
   <div class="report-note">
     <span class="info-icon">i</span>
