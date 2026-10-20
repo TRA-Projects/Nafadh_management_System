@@ -229,7 +229,7 @@
 
         <i class="fa-solid fa-magnifying-glass"></i>
 
-        <input type="search" placeholder="ابحثي باسم المتدرب..." [ngModel]="searchTerm()"
+        <input type="search" placeholder="ابحثي باسم المتدرب أو الدفعة..." [ngModel]="searchTerm()"
           (ngModelChange)="searchTerm.set($event)" />
 
       </label>
@@ -337,6 +337,10 @@
               </th>
 
               <th>
+                الدفعة
+              </th>
+
+              <th>
                 الاختبار
               </th>
 
@@ -391,7 +395,13 @@
                 </div>
 
               </td>
+              <!-- Batch -->
 
+              <td>
+                <span class="batch-name">
+                  {{ result.batchName }}
+                </span>
+              </td>
 
               <!-- Quiz -->
 

@@ -42,10 +42,13 @@ filteredResults = computed(() => {
   return this.results().filter(result => {
 
     const matchesSearch =
-      !search ||
-      String(result.traineeName ?? '')
-        .toLowerCase()
-        .includes(search);
+  !search ||
+  String(result.traineeName ?? '')
+    .toLowerCase()
+    .includes(search) ||
+  String(result.batchName ?? '')
+    .toLowerCase()
+    .includes(search);
 
     let matchesStatus = true;
 
