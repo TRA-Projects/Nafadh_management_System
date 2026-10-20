@@ -469,6 +469,87 @@ startSession(session: LiveSession): void {
     });
 }
 
+completeSession(session: LiveSession): void {
+  this.changeStatus(
+    session,
+    STATUS.Completed,
+    'past',
+    'تم إنهاء الجلسة.'
+  );
+}
+
+cancelSession(session: LiveSession): void {
+  this.sessionToCancel.set(session);
+  this.showCancelModal.set(true);
+}
+
+closeCancelModal(): void {
+  if (this.cancelling()) return;
+
+  this.showCancelModal.set(false);
+  this.sessionToCancel.set(null);
+}
+
+confirmCancelSession(): void {
+  const session = this.sessionToCancel();
+
+  if (!session || this.cancelling()) return;
+
+  this.cancelling.set(true);
+  this.errorMessage.set('');
+
+  this.api.changeTrainerLiveSessionStatus(
+    session.id,
+    STATUS.Cancelled
+  )
+    .pipe(
+      finalize(() => this.cancelling.set(false))
+    )
+    .subscribe({
+      next: () => {
+        this.showCancelModal.set(false);
+        this.sessionToCancel.set(null);
+        this.activeTab.set('past');
+        this.successMessage.set('تم إلغاء الجلسة بنجاح.');
+        this.loadSessions();
+      },
+      error: err => {
+        this.errorMessage.set(
+          this.getApiError(err, 'تعذر إلغاء الجلسة.')
+        );
+      }
+    });
+}
+
+private changeStatus(
+  session: LiveSession,
+  status: number,
+  tab: SessionTab,
+  message: string
+): void {
+  this.errorMessage.set('');
+  this.successMessage.set('');
+
+  this.api.changeTrainerLiveSessionStatus(
+    session.id,
+    status
+  ).subscribe({
+    next: () => {
+      this.activeTab.set(tab);
+      this.successMessage.set(message);
+      this.loadSessions();
+    },
+    error: err => {
+      this.errorMessage.set(
+        this.getApiError(
+          err,
+          'تعذر تحديث حالة الجلسة.'
+        )
+      );
+    }
+  });
+}
+
     // ==========================================
     // WEBEX
     // ==========================================
