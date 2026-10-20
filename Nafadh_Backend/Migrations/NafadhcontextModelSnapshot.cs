@@ -2007,6 +2007,12 @@ namespace Nafadh_Backend.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("AttendanceNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("AttendanceRate")
+                        .HasColumnType("int");
+
                     b.Property<string>("BankBranch")
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
@@ -2014,6 +2020,12 @@ namespace Nafadh_Backend.Migrations
                     b.Property<string>("BankName")
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("BehavioralNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("BehavioralScore")
+                        .HasColumnType("int");
 
                     b.Property<int?>("CompanyId")
                         .HasColumnType("int");
@@ -2045,12 +2057,30 @@ namespace Nafadh_Backend.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
+                    b.Property<string>("ProjectNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ProjectScore")
+                        .HasColumnType("int");
+
                     b.Property<string>("ResumeUrl")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<string>("TechnicalNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("TechnicalScore")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TrainerNotes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TrainerRecommendation")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("University")
                         .HasMaxLength(150)

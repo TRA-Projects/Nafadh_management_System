@@ -128,6 +128,7 @@
           <span class="pill pill-status" [class.pill-withdrawn]="withdrawalStatus() === 'Approved'">
             <span class="status-dot"></span>{{ enrollmentStatusLabel() }}
           </span>
+
         </div>
 
         <!-- المهارات التقنية -->
@@ -206,6 +207,145 @@
         <div class="summary-value text-amber">{{ lateCount() }}</div>
         <span class="summary-sub">مرات التأخير</span>
       </div>
+    </div>
+
+    <!-- ✨ بوكس سجل ونتائج الاختبارات المطابق للصورة تماماً ✨ -->
+    <div class="nfd-card exam-record-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);">
+      <div class="exam-card-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9;">
+        <div class="exam-title-group" style="display: flex; align-items: flex-start; gap: 12px;">
+          <div class="exam-icon-box" style="width: 42px; height: 42px; background: #f0fdf4; color: #15803d; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #dcfce7;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+              <path d="M6 6h10"/>
+              <path d="M6 10h10"/>
+              <path d="M6 14h6"/>
+            </svg>
+          </div>
+          <div>
+            <div class="exam-main-title-row" style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+              <h3 class="exam-card-title" style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0;">سجل ونتائج الاختبارات</h3>
+              <span class="exam-count-badge" style="background: #dcfce7; color: #15803d; font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px;">{{ traineeExams().length }} اختبارات</span>
+            </div>
+            <p class="exam-card-subtitle" style="font-size: 13px; color: #64748b; margin: 0;">كشف درجات الاختبارات الدورية والنهائية والتقييمات الأكاديمية للمتدرب</p>
+          </div>
+        </div>
+
+        <div class="exam-top-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="exam-action-btn print-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; background: #f8fafc; color: #334155; border: 1px solid #cbd5e1;" (click)="printExamStatement()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9"/>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            طباعة الكشف
+          </button>
+          <button class="exam-action-btn modal-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;" (click)="openExamResultsModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            عرض كنافذة منبثقة (Modal)
+          </button>
+        </div>
+      </div>
+
+      <!-- شريط الفلترة والبحث -->
+      <div class="exam-filter-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+        <div class="filter-tabs" style="display: flex; background: #f8fafc; padding: 4px; border-radius: 10px; border: 1px solid #e2e8f0; gap: 4px;">
+          <button class="filter-tab" [class.active]="examFilter() === 'ALL'" (click)="examFilter.set('ALL')" style="background: transparent; border: none; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #64748b; border-radius: 8px; cursor: pointer;">
+            الكل ({{ traineeExams().length }})
+          </button>
+          <button class="filter-tab" [class.active]="examFilter() === 'COMPLETED'" (click)="examFilter.set('COMPLETED')" style="background: transparent; border: none; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #64748b; border-radius: 8px; cursor: pointer;">
+            مكتمل ({{ traineeExams().filter(e => e.status === 'مكتمل').length }})
+          </button>
+          <button class="filter-tab" [class.active]="examFilter() === 'PENDING'" (click)="examFilter.set('PENDING')" style="background: transparent; border: none; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #64748b; border-radius: 8px; cursor: pointer;">
+            قيد التصحيح ({{ traineeExams().filter(e => e.status === 'قيد التصحيح').length }})
+          </button>
+          <button class="filter-tab" [class.active]="examFilter() === 'FAILED'" (click)="examFilter.set('FAILED')" style="background: transparent; border: none; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #64748b; border-radius: 8px; cursor: pointer;">
+            لم يجتز ({{ traineeExams().filter(e => e.status === 'لم يجتز').length }})
+          </button>
+        </div>
+
+        <div class="exam-search-box" style="position: relative; min-width: 280px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-ico" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none;">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input 
+            type="text" 
+            placeholder="بحث باسم الاختبار أو الوحدة..." 
+            [ngModel]="examSearchQuery()" 
+            (ngModelChange)="examSearchQuery.set($event)"
+            style="width: 100%; padding: 8px 12px 8px 36px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; font-size: 13px; outline: none;"
+          />
+        </div>
+      </div>
+
+      <!-- جدول النتائج -->
+      @if (filteredExams().length === 0) {
+        <div class="empty-exams-state" style="text-align: center; padding: 30px; color: #64748b; font-size: 13.5px; background: #f8fafc; border-radius: 10px; border: 1px dashed #cbd5e1;">لا توجد اختبارات مطابقة لبحثك أو الفلتر المختار.</div>
+      } @else {
+        <div class="table-responsive" style="overflow-x: auto;">
+          <table class="exam-main-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                <th style="padding: 12px 14px; text-align: right; color: #475569; font-weight: 700;">اسم الاختبار / اسم الوحدة</th>
+                <th style="padding: 12px 14px; text-align: center; color: #475569; font-weight: 700;">الدرجة المستحقة</th>
+                <th style="padding: 12px 14px; text-align: center; color: #475569; font-weight: 700;">حالة الاختبار</th>
+                <th style="padding: 12px 14px; text-align: center; color: #475569; font-weight: 700;">تاريخ خوض الاختبار</th>
+                <th style="padding: 12px 14px; text-align: center; color: #475569; font-weight: 700;">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (exam of filteredExams(); track exam.id) {
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 14px; text-align: right;">
+                    <div style="font-weight: 700; color: #0f172a; margin-bottom: 3px;">{{ exam.examTitle }}</div>
+                    <div style="font-size: 12px; color: #64748b;">{{ exam.moduleName }}</div>
+                  </td>
+                  <td style="padding: 14px; text-align: center;">
+                    @if (exam.score !== null) {
+                      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                        <strong style="font-size: 14px; font-weight: 800; color: #047857;">{{ exam.score }}/{{ exam.maxScore }}</strong>
+                        <div style="width: 70px; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+                          <div style="height: 100%; background: #10b981; border-radius: 3px;" [style.width.%]="exam.score"></div>
+                        </div>
+                      </div>
+                    } @else {
+                      <span style="background: #fefce8; color: #a16207; border: 1px solid #fef08a; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700;">قيد التدقيق</span>
+                    }
+                  </td>
+                  <td style="padding: 14px; text-align: center;">
+                    @if (exam.status === 'مكتمل') {
+                      <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        مكتمل
+                      </span>
+                    } @else if (exam.status === 'قيد التصحيح') {
+                      <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #fefce8; color: #a16207; border: 1px solid #fef08a;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        قيد التصحيح
+                      </span>
+                    } @else {
+                      <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;">{{ exam.status }}</span>
+                    }
+                  </td>
+                  <td style="padding: 14px; text-align: center;">
+                    <span style="font-size: 12.5px; color: #475569; font-weight: 600;">{{ exam.examDate }}</span>
+                  </td>
+                  <td style="padding: 14px; text-align: center;">
+                    <button style="background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;" (click)="openExamDetails(exam)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      عرض التفاصيل
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </div>
 
     <!-- متوسط التقييم عبر وحدات البرنامج -->
@@ -361,7 +501,7 @@
     </div>
   }
 
-  <!-- نافذة مشاهدة السيرة الذاتية CV من داخل البروفايل (بدون المربع الأبيض الفارغ) -->
+  <!-- نافذة مشاهدة السيرة الذاتية CV -->
   @if (showCvModal()) {
     <div class="prof-modal-backdrop" (click)="showCvModal.set(false)">
       <div class="prof-modal-card lg" (click)="$event.stopPropagation()">
@@ -371,7 +511,6 @@
         </div>
 
         <div class="prof-modal-body" style="direction: rtl; text-align: right;">
-          <!-- بطاقة ملخص السيرة الذاتية الأنيقة -->
           <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; margin-bottom: 18px;">
             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; margin-bottom: 16px;">
               <div>
@@ -381,7 +520,6 @@
               <span class="pill pill-status">نسبة الإنجاز: {{ completionPercentage() }}%</span>
             </div>
 
-            <!-- شبكة البيانات الأكاديمية والمهنية -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 16px;">
               <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
                 <span style="display: block; font-size: 0.76rem; color: #64748b; margin-bottom: 3px;">الجامعة / الكلية</span>
@@ -401,7 +539,6 @@
               </div>
             </div>
 
-            <!-- المهارات المسجلة -->
             @if (skillsList().length > 0) {
               <div>
                 <span style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 8px;">المهارات التقنية المسجلة:</span>
@@ -414,7 +551,6 @@
             }
           </div>
 
-          <!-- أزرار عرض وتنزيل ملف الـ CV والروابط المهنية -->
           <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
             @if (resumeUrl()) {
               <button class="cv-btn" style="padding: 10px 18px; font-weight: 700;" (click)="openExternalUrl(resumeUrl())">
@@ -442,7 +578,7 @@
     </div>
   }
 
-  <!-- نافذة إدارة واعتماد الانسحاب من داخل البروفايل -->
+  <!-- نافذة إدارة واعتماد الانسحاب -->
   @if (showWithdrawalModal()) {
     <div class="prof-modal-backdrop">
       <div class="prof-modal-card lg">
@@ -460,7 +596,6 @@
             placeholder="سبب طلب الانسحاب..."
           ></textarea>
 
-          <!-- أسباب مقنعة جاهزة للرفض -->
           <div style="margin-top: 12px; margin-bottom: 10px;">
             <label style="display:block; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px;">
               أسباب مقنعة جاهزة (في حال رفض الطلب - اضغط لاختيار السبب وإرساله للمتدرب):
@@ -504,6 +639,84 @@
           >
             اعتماد الانسحاب النهائي (وإيقاف الحساب)
           </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- نافذة Modal تفاصيل الاختبار المحدد -->
+  @if (showExamResultsModal()) {
+    <div class="prof-modal-backdrop" (click)="showExamResultsModal.set(false)">
+      <div class="prof-modal-card lg" (click)="$event.stopPropagation()">
+        <div class="prof-modal-head">
+          <h3>سجل ونتائج الاختبارات التفصيلية — {{ fullName() }}</h3>
+          <button class="prof-close-btn" (click)="showExamResultsModal.set(false)">×</button>
+        </div>
+        <div class="prof-modal-body" style="direction: rtl; text-align: right;">
+          <p style="color: #64748b; font-size: 13.5px; margin-bottom: 16px;">هذا الكشف يوضح كافة درجات الاختبارات الدورية والنهائية والتقييمات الأكاديمية الخاصة بالمتدرب.</p>
+          
+          <div class="table-responsive" style="overflow-x: auto;">
+            <table class="exam-main-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <thead>
+                <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                  <th style="padding: 10px; text-align: right;">اسم الاختبار</th>
+                  <th style="padding: 10px; text-align: center;">الدرجة</th>
+                  <th style="padding: 10px; text-align: center;">الحالة</th>
+                  <th style="padding: 10px; text-align: center;">التاريخ</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (exam of traineeExams(); track exam.id) {
+                  <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 10px; font-weight: 700;">{{ exam.examTitle }}</td>
+                    <td style="padding: 10px; text-align: center; font-weight: 800; color: #047857;">{{ exam.score !== null ? (exam.score + '/' + exam.maxScore) : 'قيد التدقيق' }}</td>
+                    <td style="padding: 10px; text-align: center;">{{ exam.status }}</td>
+                    <td style="padding: 10px; text-align: center; color: #64748b;">{{ exam.examDate }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="prof-modal-foot">
+          <button class="back-btn" (click)="showExamResultsModal.set(false)">إغلاق</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- نافذة تفاصيل الأسئلة لاختبار معين -->
+  @if (showExamDetailsModal() && selectedExam()) {
+    <div class="prof-modal-backdrop" (click)="showExamDetailsModal.set(false)">
+      <div class="prof-modal-card lg" (click)="$event.stopPropagation()">
+        <div class="prof-modal-head">
+          <h3>تفاصيل: {{ selectedExam()?.examTitle }}</h3>
+          <button class="prof-close-btn" (click)="showExamDetailsModal.set(false)">×</button>
+        </div>
+        <div class="prof-modal-body" style="direction: rtl; text-align: right;">
+          <div style="background: #f8fafc; padding: 12px; border-radius: 10px; margin-bottom: 14px; font-size: 13px;">
+            <p style="margin: 0 0 6px 0;"><strong>الوحدة:</strong> {{ selectedExam()?.moduleName }}</p>
+            <p style="margin: 0 0 6px 0;"><strong>الدرجة النهائية:</strong> {{ selectedExam()?.score }}/{{ selectedExam()?.maxScore }}</p>
+            <p style="margin: 0;"><strong>الحالة:</strong> {{ selectedExam()?.status }}</p>
+          </div>
+
+          <h4 style="font-size: 14px; color: #0f172a; margin-bottom: 10px;">أسئلة الاختبار وإجابات المتدرب:</h4>
+          @if (!selectedExam()?.questions || selectedExam()?.questions.length === 0) {
+            <p class="empty-note">لا توجد تفاصيل تفصيلية مخزنة لهذا الاختبار.</p>
+          } @else {
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              @for (q of selectedExam()?.questions; track q.id) {
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+                  <p style="font-weight: 700; color: #1e293b; margin: 0 0 6px 0;">س{{ q.questionNumber }}: {{ q.text }}</p>
+                  <p style="color: #047857; margin: 0 0 4px 0; font-size: 12.5px;"><strong>إجابة المتدرب:</strong> {{ q.traineeAnswer }}</p>
+                  <p style="color: #475569; margin: 0; font-size: 12.5px;"><strong>الإجابة النموذجية:</strong> {{ q.correctAnswer }}</p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+        <div class="prof-modal-foot">
+          <button class="back-btn" (click)="showExamDetailsModal.set(false)">إغلاق</button>
         </div>
       </div>
     </div>

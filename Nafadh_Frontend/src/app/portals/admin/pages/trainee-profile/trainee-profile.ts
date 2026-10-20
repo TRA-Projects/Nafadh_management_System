@@ -59,7 +59,7 @@ export class AdminTraineeProfile implements OnInit {
   enrollment = signal<EnrollmentDto | null>(null);
   avatarBroken = signal<boolean>(false);
 
-  // النوافذ المنبثقة داخل البروفايل (المراسلة + السيرة الذاتية + الانسحاب)
+  // النوافذ المنبثقة داخل البروفايل
   showMessageModal = signal<boolean>(false);
   messageBody = signal<string>('');
   messageHistory = signal<{ sender: string; text: string; date: string; isAdmin: boolean }[]>([]);
@@ -72,6 +72,37 @@ export class AdminTraineeProfile implements OnInit {
   withdrawalNotes = signal<string>('');
   withdrawalStatus = signal<'None' | 'Pending' | 'Approved' | 'Rejected'>('None');
   isProcessingWithdrawal = signal<boolean>(false);
+
+  // إشارات (Signals) نظام سجل ونتائج الاختبارات الديناميكي
+  showExamResultsModal = signal<boolean>(false);
+  showExamDetailsModal = signal<boolean>(false);
+  selectedExam = signal<any | null>(null);
+
+  examFilter = signal<string>('ALL');
+  examSearchQuery = signal<string>('');
+
+  // 🔴 تبدأ بمصفوفة فارغة ويتم تعبئتها ديناميكياً من الباك إند
+  traineeExams = signal<any[]>([]);
+
+  // الفلترة الديناميكية بناءً على البيانات القادمة من قاعدة البيانات
+  filteredExams = computed(() => {
+    const query = this.examSearchQuery().toLowerCase().trim();
+    const filter = this.examFilter();
+    return this.traineeExams().filter((exam) => {
+      const title = (exam.examTitle || exam.title || '').toLowerCase();
+      const module = (exam.moduleName || exam.moduleTitle || '').toLowerCase();
+      const matchesSearch = !query || title.includes(query) || module.includes(query);
+
+      const status = exam.status || '';
+      const matchesFilter =
+        filter === 'ALL' ? true :
+        filter === 'COMPLETED' ? status === 'مكتمل' || status === 'Completed' :
+        filter === 'PENDING' ? status === 'قيد التصحيح' || status === 'Pending' :
+        filter === 'FAILED' ? status === 'لم يجتز' || status === 'Failed' : true;
+
+      return matchesSearch && matchesFilter;
+    });
+  });
 
   // أسباب مقنعة جاهزة لرفض طلب الانسحاب
   presetRejectionReasons: string[] = [
@@ -232,8 +263,22 @@ export class AdminTraineeProfile implements OnInit {
     this.openExternalUrl(this.linkedInUrl());
   }
 
+  // دوال التحكم بنوافذ وسجل الاختبارات
+  openExamResultsModal(): void {
+    this.showExamResultsModal.set(true);
+  }
+
+  openExamDetails(exam: any): void {
+    this.selectedExam.set(exam);
+    this.showExamDetailsModal.set(true);
+  }
+
+  printExamStatement(): void {
+    window.print();
+  }
+
   /**
-   * تنزيل السيرة الذاتية (CV) للمتدرب على الجهاز مباشرة
+   * تنزيل السيرة الذاتية (CV) للمتدرب
    */
   downloadProfileCv(): void {
     const safeName = (this.fullName() || 'Trainee').replace(/\s+/g, '_');
@@ -338,7 +383,6 @@ export class AdminTraineeProfile implements OnInit {
     return (this.evaluationTypeLabels as Record<string, string>)[type] ?? type;
   }
 
-  // -------------------- دوال مساعدة لمزامنة الرسائل مع صفحة الجدول --------------------
   private getUnifiedStorageMessages(traineeId: number): { sender: string; text: string; date: string; isAdmin: boolean }[] {
     try {
       const raw1 = localStorage.getItem(`nfd_dm_trainee_${traineeId}`);
@@ -378,7 +422,6 @@ export class AdminTraineeProfile implements OnInit {
     } catch {}
   }
 
-  // -------------------- المراسلة المباشرة من داخل البروفايل --------------------
   openDirectMessageModal(): void {
     const id = this.trainee()?.traineeId || this.trainee()?.id;
     const name = this.fullName();
@@ -503,7 +546,6 @@ export class AdminTraineeProfile implements OnInit {
       });
   }
 
-  // -------------------- اعتماد أو رفض الانسحاب من داخل البروفايل --------------------
   openWithdrawalModal(): void {
     this.showWithdrawalModal.set(true);
   }
@@ -598,7 +640,6 @@ export class AdminTraineeProfile implements OnInit {
       next: (profile) => {
         this.trainee.set(profile);
 
-        // فحص التذاكر المفتوحة لمعرفة إن كان المتدرب قد رفع طلب انسحاب من بورتل المتدربين
         this.api
           .getOpenSupportTickets()
           .pipe(catchError(() => of([])))
@@ -676,8 +717,10 @@ export class AdminTraineeProfile implements OnInit {
       evaluations: enrollmentId
         ? this.api.getEvaluationsForEnrollment(enrollmentId).pipe(catchError(() => of([])))
         : of([]),
+      // 🟢 استدعاء نتائج الاختبارات ديناميكياً من قاعدة البيانات
+      exams: this.api.getTraineeExams(traineeId).pipe(catchError(() => of([])))
     }).subscribe({
-      next: ({ attendance, progress, warnings, modules, moduleProgress, evaluations }: any) => {
+      next: ({ attendance, progress, warnings, modules, moduleProgress, evaluations, exams }: any) => {
         this.processAttendance(attendance as RawAttendanceRow[]);
         this.completionPercentage.set(Math.round(progress?.percentage ?? 0));
         this.warnings.set(warnings ?? []);
@@ -686,6 +729,10 @@ export class AdminTraineeProfile implements OnInit {
           moduleProgress as RawModuleProgressRow[],
           evaluations as EvaluationDto[]
         );
+
+        // تعبئة نتائج الاختبارات القادمة من الباك إند
+        this.traineeExams.set(exams ?? []);
+
         this.isLoading.set(false);
       },
       error: (err) => {
