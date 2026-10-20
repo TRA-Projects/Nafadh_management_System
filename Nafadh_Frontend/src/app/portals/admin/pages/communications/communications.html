@@ -21,7 +21,7 @@
     <button class="nfd-btn" [class.primary]="tab()==='warnings'" [class.ghost]="tab()!=='warnings'"
       (click)="tab.set('warnings')">إنذارات المتدربين</button>
     <button class="nfd-btn" [class.primary]="tab()==='groups'" [class.ghost]="tab()!=='groups'" (click)="showGroups()">
-      القروبات التدريبية
+      المجموعات التدريبية
     </button>
   </div>
 
@@ -152,16 +152,16 @@
     </p>
     } @else {
 
-    <!-- إحصائيات القروبات -->
+    <!-- إحصائيات المجموعات -->
     <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px">
 
       <div class="nfd-card" style="background:#f0f4ff;padding:18px;border-radius:12px">
-        <p class="nfd-muted">إجمالي القروبات</p>
+        <p class="nfd-muted">إجمالي المجموعات</p>
         <h2 style="color:#0D1C8C">{{ totalGroups() }}</h2>
       </div>
 
       <div class="nfd-card" style="background:#f0fdf4;padding:18px;border-radius:12px">
-        <p class="nfd-muted">القروبات المفتوحة</p>
+        <p class="nfd-muted">المجموعات المفتوحة</p>
         <h2 style="color:#166534">{{ openGroups() }}</h2>
       </div>
 
@@ -172,10 +172,10 @@
 
     </div>
 
-    <!-- البحث عن القروبات -->
+    <!-- البحث عن المجموعات -->
     <div style="margin-bottom:20px">
       <input class="nfd-input" style="max-width:420px" type="search"
-        placeholder="ابحث باسم القروب أو الدفعة أو المدرب..." [ngModel]="groupSearch()"
+        placeholder="ابحث باسم المجموعة أو الدفعة أو المدرب..." [ngModel]="groupSearch()"
         (ngModelChange)="groupSearch.set($event)" />
     </div>
 
@@ -183,8 +183,8 @@
     <table class="nfd-table">
       <thead>
         <tr>
-          <th>رقم القروب</th>
-          <th>اسم القروب</th>
+          <th>رقم المجموعة</th>
+          <th>اسم المجموعة</th>
           <th>الدفعة</th>
           <th>المدرب</th>
           <th>عدد الأعضاء</th>
