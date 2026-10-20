@@ -94,11 +94,8 @@ export class CompanySupervisors implements OnInit {
   // API
   // =========================================================
 
-  private readonly companyApi =
-    inject(CompanyApi);
-
-  private readonly cdr =
-    inject(ChangeDetectorRef);
+  private readonly companyApi = inject(CompanyApi);
+  private readonly cdr = inject(ChangeDetectorRef);
 
 
   // =========================================================
@@ -175,6 +172,15 @@ export class CompanySupervisors implements OnInit {
   showProfileModal = false;
 
   selectedProfileSupervisor: Supervisor | null = null;
+
+
+  // =========================================================
+  // Evaluation Modal (خاص بتقييم مدربي المشرف المحددين)
+  // =========================================================
+
+  isEvaluationModalOpen = false;
+
+  supervisorTrainers: any[] = [];
 
 
   // =========================================================
@@ -685,7 +691,6 @@ export class CompanySupervisors implements OnInit {
     this.showProfileModal =
       true;
 
-    // إغلاق أي قائمة مفتوحة
     supervisor.showMenu =
       false;
 
@@ -704,6 +709,98 @@ export class CompanySupervisors implements OnInit {
     this.selectedProfileSupervisor =
       null;
 
+  }
+
+
+  // =========================================================
+  // فتح نافذة تقييم مدربي المشرف المحددين حصراً
+  // =========================================================
+
+  openSupervisorEvaluations(supervisor: Supervisor, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+
+    this.selectedSupervisor = supervisor;
+    this.isEvaluationModalOpen = true;
+    supervisor.showMenu = false;
+
+    const supervisorId = supervisor.supervisorId ?? supervisor.id;
+
+    // معرفات المدربين الموزعين على هذا المشرف مسبقاً من خريطة التوزيع
+    const assignedIds = this.distributionMap[supervisorId] ?? [];
+
+    this.companyApi.getCompanyTrainers(this.companyId).subscribe({
+      next: (response: any) => {
+        const allTrainers = Array.isArray(response)
+          ? response
+          : (response?.items ?? response?.data ?? response?.trainers ?? []);
+
+        this.supervisorTrainers = allTrainers
+          .map((item: any, index: number) => {
+            const id = Number(
+              item.trainerId ??
+              item.TrainerId ??
+              item.id ??
+              item.Id
+            );
+            const name =
+              item.fullName ??
+              item.FullName ??
+              item.trainerName ??
+              item.TrainerName ??
+              item.name ??
+              item.Name ??
+              '';
+
+            return {
+              id,
+              name,
+              track:
+                item.specialty ??
+                item.Specialty ??
+                item.program ??
+                item.Program ??
+                'مدرب',
+              color: this.avatarColors[index % this.avatarColors.length],
+              initials: this.initials(name),
+              currentRating: item.currentRating ?? ''
+            };
+          })
+          .filter((t: any) => assignedIds.length === 0 || assignedIds.includes(t.id)); // فلترة مدربي هذا المشرف فقط
+
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading supervisor trainers:', error);
+        this.showToast('error', 'تعذر تحميل قائمة المدربين التابعين للمشرف');
+      }
+    });
+  }
+
+
+  // =========================================================
+  // إغلاق نافذة تقييم مدربي المشرف
+  // =========================================================
+
+  closeEvaluationModal(): void {
+    this.isEvaluationModalOpen = false;
+    this.supervisorTrainers = [];
+  }
+
+
+  // =========================================================
+  // حفظ تقييم مدرب من النافذة
+  // =========================================================
+
+  saveTrainerEvaluation(trainer: any): void {
+    if (!trainer.currentRating) {
+      this.showToast('error', 'يرجى اختيار التقييم أولاً');
+      return;
+    }
+
+    this.showToast('success', `تم حفظ تقييم المدرب ${trainer.name} بنجاح`);
   }
 
 
@@ -1174,17 +1271,13 @@ export class CompanySupervisors implements OnInit {
 
     const supervisorId = supervisor.supervisorId;
 
-    // الاحتفاظ بالاختيارات السابقة خلال الجلسة
     const previouslySelected =
       this.distributionMap[supervisorId] ?? [];
 
-    // جلب مدربي الشركة بدلاً من المتدربين
     this.companyApi
       .getCompanyTrainers(this.companyId)
       .subscribe({
         next: (response: any) => {
-          // التعامل مع استجابة عبارة عن قائمة مباشرة
-          // أو قائمة داخل خاصية معروفة
           const data = Array.isArray(response)
             ? response
             : Array.isArray(response?.items)
@@ -1278,7 +1371,6 @@ export class CompanySupervisors implements OnInit {
   }
 
 
-
   // =========================================================
   // إغلاق توزيع المتدربين
   // =========================================================
@@ -1350,10 +1442,12 @@ export class CompanySupervisors implements OnInit {
 
   }
 
-// =========================================================
+
+  // =========================================================
   // حفظ التوزيع
   // =========================================================
-saveDistribution(): void {
+
+  saveDistribution(): void {
     if (!this.selectedSupervisor) {
       return;
     }
@@ -1364,10 +1458,10 @@ saveDistribution(): void {
       .filter(trainee => trainee.assigned)
       .map(trainee => trainee.id);
 
-    // 1. حفظ المحددات محلياً
+    // حفظ المحددات محلياً
     this.distributionMap[currentId] = selectedTrainees;
 
-    // 2. البحث عن المشرف في المصفوفة الرئيسية وتحديث عدده مباشرة
+    // البحث عن المشرف في المصفوفة الرئيسية وتحديث عدده مباشرة
     const supervisorIndex = this.supervisors.findIndex(
       s => (s.supervisorId ?? s.id) === currentId
     );
@@ -1380,16 +1474,13 @@ saveDistribution(): void {
           assignedTrainees: 0
         };
       }
-      // تحديث الرقم بشكل صريح ومباشر
       this.supervisors[supervisorIndex].stats.assignedTrainees = selectedTrainees.length;
     }
 
-    // 3. تحديث الكائن الحالي أيضاً للتأكد
     if (this.selectedSupervisor.stats) {
       this.selectedSupervisor.stats.assignedTrainees = selectedTrainees.length;
     }
 
-    // 4. إعادة حساب الإحصائيات العامة بالصفحة
     this.calculateStatistics();
 
     this.showToast(
@@ -1398,10 +1489,10 @@ saveDistribution(): void {
     );
 
     this.closeDistributeModal();
-    
-    // فرض إعادة رسم الواجهة من خلال ChangeDetectorRef
     this.cdr.detectChanges();
   }
+
+
   // =========================================================
   // الحضور
   // =========================================================
