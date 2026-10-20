@@ -1,5 +1,8 @@
 import { ApiErrorBody } from '../models/company-registration.models';
 
+// الباك يرجع سبب الرفض في reason (و rejectionReason للتوافق).
+type BackendErrorBody = ApiErrorBody & { reason?: string; detail?: string };
+
 export type NoticeKind = 'pending' | 'rejected' | 'suspended' | 'error';
 
 export interface LoginNotice {
@@ -17,7 +20,8 @@ const GENERIC_LOGIN_ERROR = 'تعذّر تسجيل الدخول، تأكد من 
  * لو الباك ما أرسل code (السلوك القديم) نرجع للرسالة العامة.
  */
 export function describeLoginError(err: unknown): LoginNotice {
-  const body = ((err as { error?: ApiErrorBody } | null)?.error ?? {}) as ApiErrorBody;
+  const body = ((err as { error?: BackendErrorBody } | null)?.error ?? {}) as BackendErrorBody;
+  const rejectionReason = body.rejectionReason ?? body.reason;
 
   switch (body.code) {
     case 'COMPANY_PENDING_APPROVAL':
@@ -30,8 +34,8 @@ export function describeLoginError(err: unknown): LoginNotice {
       return {
         kind: 'rejected',
         title: 'تم رفض طلب تسجيل شركتك',
-        text: body.rejectionReason
-          ? `سبب الرفض: ${body.rejectionReason}`
+        text: rejectionReason
+          ? `سبب الرفض: ${rejectionReason}`
           : 'يمكنك تعديل بيانات الطلب وإعادة تقديمه.',
         canReapply: true,
       };
@@ -50,7 +54,7 @@ export function describeLoginError(err: unknown): LoginNotice {
 /** رسالة عامة لفشل تسجيل الشركة (غير أخطاء الحقول) */
 export function describeRegistrationError(err: unknown): { text: string; fieldErrors: Record<string, string> } {
   const status = (err as { status?: number } | null)?.status;
-  const body = ((err as { error?: ApiErrorBody } | null)?.error ?? {}) as ApiErrorBody;
+  const body = ((err as { error?: BackendErrorBody } | null)?.error ?? {}) as BackendErrorBody;
 
   switch (body.code) {
     case 'DUPLICATE_EMAIL':
@@ -61,6 +65,15 @@ export function describeRegistrationError(err: unknown): { text: string; fieldEr
       return { text: 'لديك طلب سابق ما زال قيد المراجعة، لا حاجة لتقديم طلب جديد.', fieldErrors: {} };
     case 'VALIDATION_FAILED':
       return { text: 'بعض البيانات غير صحيحة، راجع الحقول المحددة.', fieldErrors: body.errors ?? {} };
+  }
+  // أخطاء التحقق الافتراضية من ASP.NET: { errors: { ContactName: ['..'] } }
+  if (status === 400 && body.errors && typeof body.errors === 'object') {
+    const fieldErrors: Record<string, string> = {};
+    for (const [key, val] of Object.entries(body.errors as Record<string, string | string[]>)) {
+      const field = key.charAt(0).toLowerCase() + key.slice(1);
+      fieldErrors[field] = Array.isArray(val) ? val[0] : val;
+    }
+    return { text: 'بعض البيانات غير صحيحة، راجع الحقول المحددة.', fieldErrors };
   }
   if (status === 0) return { text: 'تعذّر الاتصال بالخادم. تحقق من الإنترنت وحاول مرة أخرى.', fieldErrors: {} };
   return { text: body.message || 'حدث خطأ أثناء إرسال الطلب. حاول مرة أخرى.', fieldErrors: {} };

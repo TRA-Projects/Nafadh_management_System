@@ -15,6 +15,9 @@ describe('describeLoginError', () => {
     expect(n.text).toContain('سجل منتهي');
     expect(n.canReapply).toBe(true);
   });
+  it('مرفوضة: السبب القادم من الباك في reason', () => {
+    expect(describeLoginError(err({ code: 'COMPANY_REJECTED', reason: 'بيانات ناقصة' }, 403)).text).toContain('بيانات ناقصة');
+  });
   it('موقوفة', () => {
     expect(describeLoginError(err({ code: 'COMPANY_SUSPENDED' }, 403)).kind).toBe('suspended');
   });
@@ -37,6 +40,10 @@ describe('describeRegistrationError', () => {
   it('أخطاء التحقق من السيرفر تمر كما هي', () => {
     const r = describeRegistrationError(err({ code: 'VALIDATION_FAILED', errors: { phone: 'غير صحيح' } }));
     expect(r.fieldErrors['phone']).toBe('غير صحيح');
+  });
+  it('أخطاء ASP.NET الافتراضية تتحول لأسماء حقول الفورم', () => {
+    const r = describeRegistrationError(err({ errors: { ContactName: ['مطلوب'] } }, 400));
+    expect(r.fieldErrors['contactName']).toBe('مطلوب');
   });
   it('انقطاع الاتصال', () => {
     expect(describeRegistrationError({ status: 0, error: null }).text).toContain('الاتصال');
