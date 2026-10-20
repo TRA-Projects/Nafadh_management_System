@@ -290,7 +290,7 @@ namespace Nafadh_Backend.Controllers
                 .ThenByDescending(x =>
                     x.Attendance)
 
-                .Take(5)
+                .Take(15)
 
                 .Select(x => new CompanyDashboardTraineeDTO
                 {
@@ -356,7 +356,7 @@ namespace Nafadh_Backend.Controllers
                 .ThenBy(x =>
                     x.Performance)
 
-                .Take(5)
+                .Take(15)
 
                 .ToList();
 
@@ -539,7 +539,7 @@ namespace Nafadh_Backend.Controllers
                     .OrderByDescending(w =>
                         w.IssuedDate)
 
-                    .Take(10)
+                    .Take(15)
 
                     .Select(w =>
                         new CompanyDashboardWarningDTO
