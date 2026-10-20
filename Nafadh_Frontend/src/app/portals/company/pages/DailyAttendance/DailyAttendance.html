@@ -238,13 +238,12 @@
 
                             <div class="person">
 
-                                @if ($any(row.trainer).profileImageUrl && $any(row.trainer).profileImageUrl.trim() !==
-                                '') {
-                                <img class="avatar img" [src]="fileUrl($any(row.trainer).profileImageUrl)"
-                                    [alt]="row.trainer.fullName" (error)="$any(row.trainer).profileImageUrl = ''" />
+                                @if (trainerImageUrl(row.trainer) && !failedTrainerImages().includes(row.trainer.trainerId)) {
+                                <img class="avatar img" [src]="trainerImageUrl(row.trainer)"
+                                    [alt]="'صورة ' + (row.trainer.fullName || 'المدرب')"
+                                    loading="lazy" (error)="markTrainerImageFailed(row.trainer.trainerId)" />
                                 } @else {
-                                <span class="avatar" [style.background]="row.color">{{ initials(row.trainer.fullName) }}
-                                </span>
+                                <span class="avatar" [style.background]="row.color">{{ initials(row.trainer.fullName) }}</span>
                                 }
 
                                 <div>
@@ -566,16 +565,12 @@
 
                                 <div class="person">
 
-                                    @if (row.trainer.profileImageUrl) {
-
-                                    <img class="avatar img" [src]="fileUrl(row.trainer.profileImageUrl)"
-                                        [alt]="row.trainer.fullName || 'مدرب'" />
-
+                                    @if (trainerImageUrl(row.trainer) && !failedTrainerImages().includes(row.trainer.trainerId)) {
+                                    <img class="avatar img" [src]="trainerImageUrl(row.trainer)"
+                                        [alt]="'صورة ' + (row.trainer.fullName || 'المدرب')"
+                                        loading="lazy" (error)="markTrainerImageFailed(row.trainer.trainerId)" />
                                     } @else {
-
-                                    <span class="avatar" [style.background]="row.color">{{
-                                        initials(row.trainer.fullName) }}</span>
-
+                                    <span class="avatar" [style.background]="row.color">{{ initials(row.trainer.fullName) }}</span>
                                     }
 
                                     <strong>{{ row.trainer.fullName || 'مدرب' }}</strong>
