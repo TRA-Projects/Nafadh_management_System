@@ -33,6 +33,15 @@ export class CompanyContact implements OnInit {
   showNew = signal(false);
 
   searchText = '';
+  filter = signal<'all' | 'unread'>('all');
+  sending = signal(false);
+  creating = signal(false);
+  successMessage = signal('');
+  readConversations = computed(() => this.conversations().filter(c => !c.unreadCount).length);
+
+  openNew(): void { this.errorMessage.set(''); this.successMessage.set(''); this.showNew.set(true); }
+  closeNew(): void { if (!this.creating()) this.showNew.set(false); }
+  resetFilters(): void { this.searchText = ''; this.filter.set('all'); }
 
   replyText = '';
 
@@ -132,11 +141,12 @@ export class CompanyContact implements OnInit {
 
     const search = this.searchText.trim().toLowerCase();
 
-    if (!search) {
+    if (!search && this.filter() === 'all') {
       return this.conversations();
     }
 
     return this.conversations().filter((conversation) => {
+      if (this.filter() === 'unread' && !(conversation.unreadCount > 0)) return false;
 
       const subject =
         conversation.subject?.toLowerCase() ?? '';
@@ -161,6 +171,7 @@ export class CompanyContact implements OnInit {
 
   open(id: number): void {
 
+    this.errorMessage.set('');
     this.api.getConversation(id).subscribe({
 
       next: (conversation) => {
@@ -222,6 +233,9 @@ export class CompanyContact implements OnInit {
       return;
     }
 
+    if (this.sending()) return;
+    this.sending.set(true);
+    this.errorMessage.set('');
     this.api
       .sendMessage(
         conversation.conversationId,
@@ -233,6 +247,7 @@ export class CompanyContact implements OnInit {
       .subscribe({
 
         next: (message) => {
+           this.sending.set(false);
 
           const messageWithSender = {
             ...message,
@@ -328,6 +343,9 @@ export class CompanyContact implements OnInit {
       return;
     }
 
+    if (this.creating()) return;
+    this.creating.set(true);
+    this.errorMessage.set('');
     const dto = {
       type: 'CompanyThread',
 
