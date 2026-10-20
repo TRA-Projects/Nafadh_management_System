@@ -37,6 +37,8 @@ import {
   LessonFeedbackCreateDto,
   LessonFeedbackUpdateDto,
   TraineeSkillDto,
+  WithdrawalRequestDto,       
+  CreateWithdrawalRequestDto  
 } from '../../../core/models/dtos';
 
 
@@ -1050,4 +1052,34 @@ uploadTraineeProfileImage(traineeId: number, file: File): Observable<any> {
     formData
   );
 }
+
+// =========================================================
+  // Withdrawal Requests
+  // =========================================================
+
+  createWithdrawalRequest(
+    dto: CreateWithdrawalRequestDto
+  ): Observable<{ message: string; requestId: number }> {
+    return this.http.post<{ message: string; requestId: number }>(
+      `${this.base}/WithdrawalRequests`,
+      dto
+    );
+  }
+
+   getTraineeWithdrawalRequests(
+    traineeId: number
+  ): Observable<WithdrawalRequestDto[]> {
+    return this.http.get<WithdrawalRequestDto[]>(
+      `${this.base}/WithdrawalRequests/trainee/${traineeId}`,
+      {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      }
+    );
+  }
+
+
+
 }

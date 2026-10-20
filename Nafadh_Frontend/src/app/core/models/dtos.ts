@@ -915,3 +915,25 @@ export interface TraineeSkillDto {
   serialNumber?: string | null;
   certificateUrl?: string | null;
 }
+
+export enum WithdrawalRequestStatus {
+  Pending = 0,
+  Approved = 1,
+  Rejected = 2
+}
+
+export interface WithdrawalRequestDto {
+  id: number;
+  traineeId: number;
+  traineeName?: string | null;
+  reason: string;
+  status: WithdrawalRequestStatus;
+  createdAt: string;
+  reviewedAt?: string | null;
+  adminNotes?: string | null;
+}
+
+export interface CreateWithdrawalRequestDto {
+  traineeId: number;
+  reason: string;
+}

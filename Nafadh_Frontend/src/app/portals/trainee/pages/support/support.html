@@ -106,15 +106,21 @@
                 </strong>
 
                 @if (isWithdrawalRequest(c)) {
-
-                  <span class="withdrawal-badge pending">
-
-                    <i class="fa-solid fa-clock"></i>
-
-                    قيد المراجعة
-
-                  </span>
-
+                  @let status = getWithdrawalStatus(c);
+                  
+                  @if (status === 'pending') {
+                    <span class="withdrawal-badge pending">
+                      <i class="fa-solid fa-clock"></i> قيد المراجعة
+                    </span>
+                  } @else if (status === 'approved') {
+                    <span class="withdrawal-badge approved">
+                      <i class="fa-solid fa-check"></i> مقبول
+                    </span>
+                  } @else if (status === 'rejected') {
+                    <span class="withdrawal-badge rejected">
+                      <i class="fa-solid fa-xmark"></i> مرفوض
+                    </span>
+                  }
                 }
 
               </div>
@@ -195,17 +201,22 @@
               <div class="conversation-meta">
 
                 @if (isWithdrawalRequest(conversation)) {
-
-                  <span class="withdrawal-badge pending">
-
-                    <i class="fa-solid fa-clock"></i>
-
-                    قيد المراجعة
-
-                  </span>
-
+                  @let status = getWithdrawalStatus(conversation);
+                  
+                  @if (status === 'pending') {
+                    <span class="withdrawal-badge pending">
+                      <i class="fa-solid fa-clock"></i> قيد المراجعة
+                    </span>
+                  } @else if (status === 'approved') {
+                    <span class="withdrawal-badge approved">
+                      <i class="fa-solid fa-check"></i> مقبول
+                    </span>
+                  } @else if (status === 'rejected') {
+                    <span class="withdrawal-badge rejected">
+                      <i class="fa-solid fa-xmark"></i> مرفوض
+                    </span>
+                  }
                 }
-
                 @else {
 
                   <span>
@@ -280,33 +291,38 @@
         </div>
 
 
-        <div class="reply-area">
+        <!-- إخفاء صندوق الرد إذا كان الطلب "طلب انسحاب" -->
+        @if (!conversation.isWithdrawal) {
 
-          <input
-            type="text"
-            class="reply-input"
-            [(ngModel)]="replyText"
-            placeholder="اكتب ردك هنا..."
-            (keydown.enter)="send()"
-          />
+          <div class="reply-area">
+
+            <input
+              type="text"
+              class="reply-input"
+              [(ngModel)]="replyText"
+              placeholder="اكتب ردك هنا..."
+              (keydown.enter)="send()"
+            />
 
 
-          <button
-            type="button"
-            class="reply-button"
-            [disabled]="!replyText.trim()"
-            (click)="send()"
-          >
+            <button
+              type="button"
+              class="reply-button"
+              [disabled]="!replyText.trim()"
+              (click)="send()"
+            >
 
-            <i class="fa-solid fa-paper-plane"></i>
+              <i class="fa-solid fa-paper-plane"></i>
 
-            <span>
-              إرسال
-            </span>
+              <span>
+                إرسال
+              </span>
 
-          </button>
+            </button>
 
-        </div>
+          </div>
+
+        }
 
       }
 
@@ -1207,6 +1223,18 @@
 
 .withdrawal-badge.pending i {
   font-size: 8px;
+}
+
+.withdrawal-badge.approved {
+  background: #eaf8f5;
+  color: #0d9488;
+  border: 1px solid #b8e6de;
+}
+
+.withdrawal-badge.rejected {
+  background: #fff1f1;
+  color: #dc2626;
+  border: 1px solid #fbd5d5;
 }
 
 .withdrawal-status-bar {
