@@ -13,6 +13,35 @@
   </div>
 
 
+  <!-- =====================================================
+       TABS
+       ===================================================== -->
+
+  <div class="support-tabs">
+
+    <button
+      type="button"
+      class="support-tab"
+      [class.active]="activeTab() === 'messages'"
+      (click)="setTab('messages')"
+    >
+      <i class="fa-solid fa-envelope"></i>
+      <span>المراسلات</span>
+    </button>
+
+    <button
+      type="button"
+      class="support-tab"
+      [class.active]="activeTab() === 'batch'"
+      (click)="setTab('batch')"
+    >
+      <i class="fa-solid fa-users"></i>
+      <span>المحادثات</span>
+    </button>
+
+  </div>
+
+
   @if (errorMessage()) {
 
     <div class="message error-message">
@@ -47,263 +76,919 @@
   }
 
 
-  <div class="support-main-layout">
+  <!-- =====================================================
+       TAB 1: MESSAGES (existing)
+       ===================================================== -->
+
+  @if (activeTab() === 'messages') {
+
+    <div class="support-main-layout">
 
 
-    <!-- =======================================================
-         CONVERSATION LIST
-         ======================================================= -->
+      <section class="conversation-list">
 
-    <section class="conversation-list">
+        <div class="list-header">
 
-      <div class="list-header">
+          <div>
 
-        <div>
+            <h3>
+              الشكاوى والاستفسارات
+            </h3>
 
-          <h3>
-            الشكاوى والاستفسارات
-          </h3>
+            <p>
+              المحادثات السابقة
+            </p>
 
-          <p>
-            المحادثات السابقة
-          </p>
+          </div>
+
+          <span class="conversation-count">
+            {{ conversations().length }}
+          </span>
 
         </div>
 
-        <span class="conversation-count">
-          {{ conversations().length }}
-        </span>
 
-      </div>
-
-
-      <div class="conversation-items">
-
-        @for (
-          c of conversations();
-          track c.conversationId
-        ) {
-
-          <button
-            type="button"
-            class="conversation-item"
-            [class.active]="active()?.conversationId === c.conversationId"
-            (click)="open(c.conversationId)"
-          >
-
-            <span
-              class="conversation-status"
-              [class.withdrawal-status-bar]="isWithdrawalRequest(c)"
-            ></span>
-
-
-            <div class="conversation-item-content">
-
-              <div class="conversation-subject-row">
-
-                <strong>
-                  {{ c.subject }}
-                </strong>
-
-                @if (isWithdrawalRequest(c)) {
-
-                  <span class="withdrawal-badge pending">
-
-                    <i class="fa-solid fa-clock"></i>
-
-                    قيد المراجعة
-
-                  </span>
-
-                }
-
-              </div>
-
-
-              <small>
-                {{ c.startedByName }}
-              </small>
-
-              <p>
-                {{ c.lastMessagePreview }}
-              </p>
-
-            </div>
-
-
-            <span class="conversation-arrow">
-              <i class="fa-solid fa-chevron-left"></i>
-            </span>
-
-          </button>
-
-        }
-
-        @empty {
-
-          <div class="empty-conversations">
-
-            <div class="empty-icon">
-              <i class="fa-solid fa-comments"></i>
-            </div>
-
-            <strong>
-              لا توجد محادثات سابقة
-            </strong>
-
-            <span>
-              يمكنك بدء محادثة جديدة من النموذج
-            </span>
-
-          </div>
-
-        }
-
-      </div>
-
-    </section>
-
-
-    <!-- =======================================================
-         ACTIVE CONVERSATION
-         ======================================================= -->
-
-    <section class="conversation-detail">
-
-
-      <!-- =====================================================
-           FIXED HEADER
-           ===================================================== -->
-
-      <div class="conversation-detail-header">
-
-        <div class="conversation-header-main">
-
-          <div class="conversation-header-icon">
-            <i class="fa-solid fa-comments"></i>
-          </div>
-
-
-          <div class="conversation-header-text">
-
-            @if (active(); as conversation) {
-
-              <h3>
-                {{ conversation.subject }}
-              </h3>
-
-              <div class="conversation-meta">
-
-                @if (isWithdrawalRequest(conversation)) {
-
-                  <span class="withdrawal-badge pending">
-
-                    <i class="fa-solid fa-clock"></i>
-
-                    قيد المراجعة
-
-                  </span>
-
-                }
-
-                @else {
-
-                  <span>
-                    شكوى أو استفسار
-                  </span>
-
-                }
-
-              </div>
-
-            }
-
-            @else {
-
-              <h3></h3>
-
-              <div class="conversation-meta">
-
-                <span>
-                  شكوى أو استفسار
-                </span>
-
-              </div>
-
-            }
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- =====================================================
-           CONVERSATION CONTENT
-           ===================================================== -->
-
-      @if (active(); as conversation) {
-
-        <div class="messages-container">
+        <div class="conversation-items">
 
           @for (
-            message of conversation.messages;
-            track message.messageId
+            c of conversations();
+            track c.conversationId
           ) {
 
-            <div
-              class="message-bubble"
-              [class.mine]="message.senderId === auth.userId"
+            <button
+              type="button"
+              class="conversation-item"
+              [class.active]="active()?.conversationId === c.conversationId"
+              (click)="open(c.conversationId)"
             >
 
-              <strong>
-                {{ message.senderName }}
-              </strong>
+              <span
+                class="conversation-status"
+                [class.withdrawal-status-bar]="isWithdrawalRequest(c)"
+              ></span>
 
-              <p>
-                {{ message.content }}
-              </p>
 
-            </div>
+              <div class="conversation-item-content">
+
+                <div class="conversation-subject-row">
+
+                  <strong>
+                    {{ c.subject }}
+                  </strong>
+
+                  @if (isWithdrawalRequest(c)) {
+
+                    <span class="withdrawal-badge pending">
+
+                      <i class="fa-solid fa-clock"></i>
+
+                      قيد المراجعة
+
+                    </span>
+
+                  }
+
+                </div>
+
+
+                <small>
+                  {{ c.startedByName }}
+                </small>
+
+                <p>
+                  {{ c.lastMessagePreview }}
+                </p>
+
+              </div>
+
+
+              <span class="conversation-arrow">
+                <i class="fa-solid fa-chevron-left"></i>
+              </span>
+
+            </button>
 
           }
 
           @empty {
 
-            <div class="no-messages">
-              لا توجد رسائل في هذه المحادثة
+            <div class="empty-conversations">
+
+              <div class="empty-icon">
+                <i class="fa-solid fa-comments"></i>
+              </div>
+
+              <strong>
+                لا توجد محادثات سابقة
+              </strong>
+
+              <span>
+                يمكنك بدء محادثة جديدة من النموذج
+              </span>
+
             </div>
 
           }
 
         </div>
 
+      </section>
 
-        <div class="reply-area">
 
-          <input
-            type="text"
-            class="reply-input"
-            [(ngModel)]="replyText"
-            placeholder="اكتب ردك هنا..."
-            (keydown.enter)="send()"
-          />
+      <section class="conversation-detail">
+
+        <div class="conversation-detail-header">
+
+          <div class="conversation-header-main">
+
+            <div class="conversation-header-icon">
+              <i class="fa-solid fa-comments"></i>
+            </div>
+
+
+            <div class="conversation-header-text">
+
+              @if (active(); as conversation) {
+
+                <h3>
+                  {{ conversation.subject }}
+                </h3>
+
+                <div class="conversation-meta">
+
+                  @if (isWithdrawalRequest(conversation)) {
+
+                    <span class="withdrawal-badge pending">
+
+                      <i class="fa-solid fa-clock"></i>
+
+                      قيد المراجعة
+
+                    </span>
+
+                  }
+
+                  @else {
+
+                    <span>
+                      شكوى أو استفسار
+                    </span>
+
+                  }
+
+                </div>
+
+              }
+
+              @else {
+
+                <h3></h3>
+
+                <div class="conversation-meta">
+
+                  <span>
+                    شكوى أو استفسار
+                  </span>
+
+                </div>
+
+              }
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        @if (active(); as conversation) {
+
+          <div class="messages-container">
+
+            @for (
+              message of conversation.messages;
+              track message.messageId
+            ) {
+
+              <div
+                class="message-bubble"
+                [class.mine]="message.senderId === auth.userId"
+              >
+
+                <strong>
+                  {{ message.senderName }}
+                </strong>
+
+                <p>
+                  {{ message.content }}
+                </p>
+
+              </div>
+
+            }
+
+            @empty {
+
+              <div class="no-messages">
+                لا توجد رسائل في هذه المحادثة
+              </div>
+
+            }
+
+          </div>
+
+
+          <div class="reply-area">
+
+            <input
+              type="text"
+              class="reply-input"
+              [(ngModel)]="replyText"
+              placeholder="اكتب ردك هنا..."
+              (keydown.enter)="send()"
+            />
+
+
+            <button
+              type="button"
+              class="reply-button"
+              [disabled]="!replyText.trim()"
+              (click)="send()"
+            >
+
+              <i class="fa-solid fa-paper-plane"></i>
+
+              <span>
+                إرسال
+              </span>
+
+            </button>
+
+          </div>
+
+        }
+
+        @else {
+
+          <div class="conversation-placeholder">
+
+            <div class="conversation-placeholder-content">
+
+              <div class="placeholder-icon">
+                <i class="fa-solid fa-comments"></i>
+              </div>
+
+              <h3>
+                اختر محادثة من القائمة
+              </h3>
+
+              <p>
+                اختر إحدى الشكاوى أو الاستفسارات لعرض تفاصيل المحادثة
+              </p>
+
+            </div>
+
+          </div>
+
+        }
+
+      </section>
+
+
+      <section
+        class="support-card"
+        [class.receiver-only]="!newConv.receiverType"
+      >
+
+        <div class="support-title-row">
+
+          <div>
+
+            <h3 class="support-title">
+              تقديم استفسار أو شكوى
+            </h3>
+
+            <p class="support-description">
+              أرسل استفسارك أو شكواك مباشرة للجهة المختصة
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- RECEIVER -->
+
+        <div class="form-group receiver-form-group">
+
+          <label>
+            الجهة المستلمة
+          </label>
+
+          <select
+            [(ngModel)]="newConv.receiverType"
+            (ngModelChange)="onReceiverChange()"
+            class="support-select receiver-select"
+            aria-label="الجهة المستلمة"
+          >
+
+            <option value="" disabled>
+              اختر الجهة المستلمة
+            </option>
+
+            <option value="Authority">
+              هيئة تنظيم الاتصالات
+            </option>
+
+            <option value="Trainer">
+              المدرب
+            </option>
+
+            <option
+              value="Company"
+              [disabled]="!companyName()"
+            >
+              الشركة - {{ companyName() || 'جاري التحميل...' }}
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <!-- TRAINER -->
+
+        @if (newConv.receiverType === 'Trainer') {
+
+          <div class="form-group">
+
+            <label>
+              اسم المدرب
+            </label>
+
+            <select
+              [(ngModel)]="newConv.trainerId"
+              class="support-select"
+            >
+
+              <option [ngValue]="null" disabled>
+                اختر المدرب
+              </option>
+
+              @if (loadingTrainers()) {
+
+                <option [ngValue]="null" disabled>
+                  جاري تحميل المدربين...
+                </option>
+
+              }
+
+              @else {
+
+                @for (
+                  trainer of trainers();
+                  track trainer.trainerId
+                ) {
+
+                  <option [ngValue]="trainer.trainerId">
+                    {{ trainer.fullName }}
+                  </option>
+
+                }
+
+                @empty {
+
+                  <option [ngValue]="null" disabled>
+                    لا يوجد مدربون مرتبطون بهذه الدفعة
+                  </option>
+
+                }
+
+              }
+
+            </select>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              نوع الطلب
+            </label>
+
+            <input
+              type="text"
+              [(ngModel)]="newConv.subject"
+              class="support-input"
+              placeholder="اكتب نوع الطلب هنا..."
+            />
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              المرفق
+            </label>
+
+            <input
+              type="file"
+              #trainerFileInput
+              hidden
+              accept=".pdf,.png,.jpg,.jpeg,image/png,image/jpeg,application/pdf"
+              (change)="onFileSelected($event)"
+            />
+
+            <div
+              class="attachment-box"
+              (click)="trainerFileInput.click()"
+            >
+
+              <div class="attachment-icon">
+
+                <i
+                  class="fa-solid"
+                  [class.fa-image]="selectedFile && selectedFile.type.startsWith('image/')"
+                  [class.fa-file-pdf]="selectedFile && selectedFile.type === 'application/pdf'"
+                  [class.fa-paperclip]="!selectedFile"
+                ></i>
+
+              </div>
+
+
+              <div class="attachment-text">
+
+                @if (selectedFile) {
+
+                  <strong>{{ selectedFile.name }}</strong>
+                  <span>{{ formatFileSize(selectedFile.size) }}</span>
+
+                }
+
+                @else {
+
+                  <strong>إرفاق صورة أو ملف</strong>
+                  <span>PNG, JPG, JPEG أو PDF</span>
+
+                }
+
+              </div>
+
+
+              @if (selectedFile) {
+
+                <button
+                  type="button"
+                  class="remove-attachment"
+                  aria-label="حذف المرفق"
+                  (click)="removeFile($event)"
+                >
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+
+              }
+
+            </div>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              الملاحظة
+            </label>
+
+            <textarea
+              [(ngModel)]="newConv.note"
+              class="support-textarea"
+              rows="4"
+              placeholder="اكتب ملاحظتك للمدرب هنا..."
+            ></textarea>
+
+          </div>
+
+        }
+
+
+        <!-- COMPANY -->
+
+        @else if (newConv.receiverType === 'Company') {
+
+          <div class="form-group">
+
+            <label>
+              نوع الطلب
+            </label>
+
+            <input
+              type="text"
+              [(ngModel)]="newConv.subject"
+              class="support-input"
+              placeholder="اكتب نوع الطلب هنا..."
+            />
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              المرفق
+            </label>
+
+            <input
+              type="file"
+              #companyFileInput
+              hidden
+              accept=".pdf,.png,.jpg,.jpeg,image/png,image/jpeg,application/pdf"
+              (change)="onFileSelected($event)"
+            />
+
+            <div
+              class="attachment-box"
+              (click)="companyFileInput.click()"
+            >
+
+              <div class="attachment-icon">
+
+                <i
+                  class="fa-solid"
+                  [class.fa-image]="selectedFile && selectedFile.type.startsWith('image/')"
+                  [class.fa-file-pdf]="selectedFile && selectedFile.type === 'application/pdf'"
+                  [class.fa-paperclip]="!selectedFile"
+                ></i>
+
+              </div>
+
+
+              <div class="attachment-text">
+
+                @if (selectedFile) {
+
+                  <strong>{{ selectedFile.name }}</strong>
+                  <span>{{ formatFileSize(selectedFile.size) }}</span>
+
+                }
+
+                @else {
+
+                  <strong>إرفاق صورة أو ملف</strong>
+                  <span>PNG, JPG, JPEG أو PDF</span>
+
+                }
+
+              </div>
+
+
+              @if (selectedFile) {
+
+                <button
+                  type="button"
+                  class="remove-attachment"
+                  aria-label="حذف المرفق"
+                  (click)="removeFile($event)"
+                >
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+
+              }
+
+            </div>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              الملاحظة
+            </label>
+
+            <textarea
+              [(ngModel)]="newConv.note"
+              class="support-textarea"
+              rows="4"
+              placeholder="اكتب ملاحظتك للشركة هنا..."
+            ></textarea>
+
+          </div>
+
+        }
+
+
+        <!-- AUTHORITY -->
+
+        @else if (newConv.receiverType === 'Authority') {
+
+          <div class="form-group">
+
+            <label>
+              الموضوع
+            </label>
+
+            <select
+              [(ngModel)]="newConv.subject"
+              class="support-select"
+            >
+
+              <option value="" disabled>
+                اختر موضوع الطلب
+              </option>
+
+              @for (s of subjects; track s) {
+
+                <option [value]="s">
+                  {{ s }}
+                </option>
+
+              }
+
+            </select>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              تفاصيل الطلب
+            </label>
+
+            <textarea
+              [(ngModel)]="newConv.firstMessage"
+              class="support-textarea"
+              rows="4"
+              placeholder="اكتب تفاصيل استفسارك أو شكواك هنا..."
+            ></textarea>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label>
+              إرفاق ملفات داعمة
+            </label>
+
+            <input
+              type="file"
+              #fileInput
+              hidden
+              accept=".pdf,.png,.jpg,.jpeg,image/png,image/jpeg,application/pdf"
+              (change)="onFileSelected($event)"
+            />
+
+            <div
+              class="file-upload"
+              (click)="fileInput.click()"
+            >
+
+              <div class="upload-icon">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+              </div>
+
+
+              <div class="upload-text">
+
+                @if (selectedFile) {
+
+                  <strong>{{ selectedFile.name }}</strong>
+                  <span>{{ formatFileSize(selectedFile.size) }}</span>
+
+                }
+
+                @else {
+
+                  <strong>اسحب وأفلت المستندات والصور هنا، أو</strong>
+                  <span>انقر للاختيار (اختياري)</span>
+
+                }
+
+              </div>
+
+
+              @if (selectedFile) {
+
+                <button
+                  type="button"
+                  class="remove-file"
+                  aria-label="حذف الملف"
+                  (click)="removeFile($event)"
+                >
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+
+              }
+
+            </div>
+
+
+            <p class="file-hint">
+              PDF, PNG, JPG, JPEG — Max 10MB
+            </p>
+
+          </div>
+
+        }
+
+
+        <!-- SUBMIT -->
+
+        <button
+          type="button"
+          class="submit-button"
+          [disabled]="
+            !newConv.receiverType ||
+            isSubmitting() ||
+            !canSubmit()
+          "
+          (click)="startConversation()"
+        >
+
+          @if (isSubmitting()) {
+
+            <span class="loader"></span>
+            <span>جاري الإرسال...</span>
+
+          }
+
+          @else {
+
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>إرسال الطلب</span>
+
+          }
+
+        </button>
+
+      </section>
+
+    </div>
+
+  }
+
+
+  <!-- =====================================================
+       TAB 2: BATCH GROUP (WhatsApp-style) + Private Chat
+       ===================================================== -->
+
+  @if (activeTab() === 'batch') {
+
+    <div class="batch-group-layout">
+
+      @if (loadingBatch()) {
+
+        <div class="batch-state-card">
+          <div class="batch-loader"></div>
+          <p>جاري تحميل جروب الدفعة...</p>
+        </div>
+
+      }
+
+      @else if (!enrollment()?.batchId) {
+
+        <div class="batch-state-card">
+
+          <div class="batch-state-icon">
+            <i class="fa-solid fa-user-slash"></i>
+          </div>
+
+          <h3>لم يتم تسجيلك في دفعة بعد</h3>
+
+          <p>
+            بعد قبول تسجيلك في برنامج تدريبي سيظهر هنا جروب دفعته
+            تلقائيًا مع المدرب والزملاء.
+          </p>
+
+        </div>
+
+      }
+
+      @else if (!batchGroupConversationId() && !privateChatOpen()) {
+
+        <!-- ============================================
+             NO GROUP YET — members list with private chat
+             ============================================ -->
+
+        <div class="batch-state-card batch-members-card">
+
+          <div class="batch-state-icon">
+            <i class="fa-solid fa-hourglass-half"></i>
+          </div>
+
+          <h3>بانتظار تفعيل جروب الدفعة</h3>
+
+          <p>
+            يمكنك مراسلة المدرب أو أي متدرب آخر في دفعتك بشكل خاص.
+          </p>
+
+
+          <div class="members-section">
+
+            @if (batchTrainers().length > 0) {
+
+              <h5 class="members-section-title">
+                المدربون
+              </h5>
+
+              @for (t of batchTrainers(); track t.trainerId) {
+
+                @if (!isMe($any(t).userId)) {
+
+                  <div class="member-row member-row-clickable">
+
+                    <div class="member-avatar trainer">
+                      {{ t.fullName ? t.fullName.charAt(0) : 'م' }}
+                    </div>
+
+                    <div class="member-info">
+
+                      <strong>
+                        {{ t.fullName }}
+                      </strong>
+
+                      <small class="member-badge trainer-badge">
+                        مدرب
+                      </small>
+
+                    </div>
+
+                    <button
+                      type="button"
+                      class="member-chat-btn"
+                      (click)="openPrivateChat(t, 'trainer')"
+                      title="محادثة خاصة"
+                    >
+                      <i class="fa-solid fa-comment-dots"></i>
+                    </button>
+
+                  </div>
+
+                }
+
+              }
+
+            }
+
+
+            @if (batchTrainees().length > 0) {
+
+              <h5 class="members-section-title">
+                المتدربون
+              </h5>
+
+              @for (t of batchTrainees(); track t.traineeId) {
+
+                @if (!isMe($any(t).userId)) {
+
+                  <div class="member-row member-row-clickable">
+
+                    <div class="member-avatar">
+                      {{ t.fullName ? t.fullName.charAt(0) : 'م' }}
+                    </div>
+
+                    <div class="member-info">
+
+                      <strong>
+                        {{ t.fullName }}
+                      </strong>
+
+                      <small class="member-badge">
+                        متدرب
+                      </small>
+
+                    </div>
+
+                    <button
+                      type="button"
+                      class="member-chat-btn"
+                      (click)="openPrivateChat(t, 'trainee')"
+                      title="محادثة خاصة"
+                    >
+                      <i class="fa-solid fa-comment-dots"></i>
+                    </button>
+
+                  </div>
+
+                }
+
+              }
+
+            }
+
+          </div>
 
 
           <button
             type="button"
-            class="reply-button"
-            [disabled]="!replyText.trim()"
-            (click)="send()"
+            class="batch-refresh-btn"
+            (click)="refreshBatchGroup()"
           >
-
-            <i class="fa-solid fa-paper-plane"></i>
-
-            <span>
-              إرسال
-            </span>
-
+            <i class="fa-solid fa-rotate"></i>
+            تحديث
           </button>
 
         </div>
@@ -312,1991 +997,411 @@
 
       @else {
 
-        <div class="conversation-placeholder">
-
-          <div class="conversation-placeholder-content">
-
-            <div class="placeholder-icon">
-              <i class="fa-solid fa-comments"></i>
-            </div>
-
-            <h3>
-              اختر محادثة من القائمة
-            </h3>
-
-            <p>
-              اختر إحدى الشكاوى أو الاستفسارات لعرض تفاصيل المحادثة
-            </p>
-
-          </div>
-
-        </div>
-
-      }
-
-    </section>
-
-
-    <!-- =======================================================
-         NEW REQUEST
-         ======================================================= -->
-
-    <section
-      class="support-card"
-      [class.receiver-only]="!newConv.receiverType"
-    >
-
-      <div class="support-title-row">
-
-        <div>
-
-          <h3 class="support-title">
-            تقديم استفسار أو شكوى
-          </h3>
-
-          <p class="support-description">
-            أرسل استفسارك أو شكواك مباشرة للجهة المختصة
-          </p>
-
-        </div>
-
-      </div>
-
-
-      <!-- =====================================================
-           RECEIVER
-           ===================================================== -->
-
-      <div class="form-group receiver-form-group">
-
-        <label>
-          الجهة المستلمة
-        </label>
-
-        <select
-          [(ngModel)]="newConv.receiverType"
-          (ngModelChange)="onReceiverChange()"
-          class="support-select receiver-select"
-          aria-label="الجهة المستلمة"
+        <div
+          class="chat-shell"
+          [class.members-open]="showMembersPanel"
         >
 
-          <option
-            value=""
-            disabled
-          >
-            اختر الجهة المستلمة
-          </option>
 
-          <option value="Authority">
-            هيئة تنظيم الاتصالات
-          </option>
+          <!-- =========================================
+               HEADER
+               ========================================= -->
 
-          <option value="Trainer">
-            المدرب
-          </option>
+          <header class="chat-shell-header">
 
-          <option
-            value="Company"
-            [disabled]="!companyName()"
-          >
-            الشركة - {{ companyName() || 'جاري التحميل...' }}
-          </option>
+            @if (privateChatOpen()) {
 
-        </select>
+              <div class="chat-shell-title">
 
-      </div>
+                <button
+                  type="button"
+                  class="chat-back-btn"
+                  (click)="closePrivateChat()"
+                  title="رجوع"
+                >
+                  <i class="fa-solid fa-arrow-right"></i>
+                </button>
 
+                <div class="chat-shell-avatar">
+                  {{ privateChatWith()?.name?.charAt(0) || 'م' }}
+                </div>
 
-      <!-- =====================================================
-           TRAINER
-           ===================================================== -->
+                <div class="chat-shell-title-text">
 
-      @if (newConv.receiverType === 'Trainer') {
+                  <h3>
+                    {{ privateChatWith()?.name }}
+                  </h3>
 
-        <div class="form-group">
+                  <p>
+                    @if (privateChatWith()?.role === 'trainer') {
+                      مدرب
+                    } @else {
+                      متدرب
+                    }
+                    <span class="dot-sep">•</span>
+                    محادثة خاصة
+                  </p>
 
-          <label>
-            اسم المدرب
-          </label>
+                </div>
 
-          <select
-            [(ngModel)]="newConv.trainerId"
-            class="support-select"
-          >
-
-            <option
-              [ngValue]="null"
-              disabled
-            >
-              اختر المدرب
-            </option>
-
-
-            @if (loadingTrainers()) {
-
-              <option
-                [ngValue]="null"
-                disabled
-              >
-                جاري تحميل المدربين...
-              </option>
+              </div>
 
             }
 
             @else {
 
-              @for (
-                trainer of trainers();
-                track trainer.trainerId
-              ) {
+              <div class="chat-shell-title">
 
-                <option
-                  [ngValue]="trainer.trainerId"
+                <div class="chat-shell-avatar">
+                  <i class="fa-solid fa-users"></i>
+                </div>
+
+                <div class="chat-shell-title-text">
+
+                  <h3>
+                    {{ batchName() || 'جروب الدفعة' }}
+                  </h3>
+
+                  <p>
+                    {{ batchMembersCount() }} عضو
+                    <span class="dot-sep">•</span>
+                    {{ batchTrainers().length }} مدرب
+                  </p>
+
+                </div>
+
+              </div>
+
+            }
+
+
+            @if (!privateChatOpen()) {
+
+              <button
+                type="button"
+                class="members-toggle-btn"
+                [class.active]="showMembersPanel"
+                (click)="toggleMembersPanel()"
+                title="أعضاء الجروب"
+              >
+                <i class="fa-solid fa-user-group"></i>
+                <span>الأعضاء</span>
+              </button>
+
+            }
+
+          </header>
+
+
+
+          <!-- =========================================
+               BODY (group or private)
+               ========================================= -->
+
+          <div class="chat-shell-body">
+
+            @if (privateChatOpen()) {
+
+              <div class="chat-shell-messages">
+
+                @if (loadingPrivate()) {
+
+                  <div class="chat-empty">
+                    <div class="batch-loader"></div>
+                  </div>
+
+                }
+
+                @else if (privateMessages().length === 0) {
+
+                  <div class="chat-empty">
+                    <p>لا توجد رسائل بعد — ابدأ المحادثة الآن 👋</p>
+                  </div>
+
+                }
+
+                @else {
+
+                  @for (
+                    message of privateMessages();
+                    track message.messageId
+                  ) {
+
+                    <div
+                      class="chat-bubble-row"
+                      [class.mine]="isMine(message)"
+                    >
+
+                      <div class="chat-bubble">
+
+                        @if (!isMine(message)) {
+
+                          <strong class="chat-bubble-name">
+                            {{ message.senderName || 'عضو' }}
+                          </strong>
+
+                        }
+
+                        <p class="chat-bubble-text">
+                          {{ message.content }}
+                        </p>
+
+                        <small class="chat-bubble-time">
+                          {{ formatTime(message.sentDate) }}
+                        </small>
+
+                      </div>
+
+                    </div>
+
+                  }
+
+                }
+
+              </div>
+
+
+              <div class="chat-shell-composer">
+
+                <input
+                  type="text"
+                  class="chat-input"
+                  [(ngModel)]="privateMessageText"
+                  placeholder="اكتب رسالتك الخاصة..."
+                  (keydown.enter)="$event.preventDefault(); sendPrivateMessage()"
+                />
+
+                <button
+                  type="button"
+                  class="chat-send-btn"
+                  [disabled]="!privateMessageText.trim()"
+                  (click)="sendPrivateMessage()"
                 >
-                  {{ trainer.fullName }}
-                </option>
+                  <i class="fa-solid fa-paper-plane"></i>
+                </button>
 
-              }
+              </div>
 
-              @empty {
+            }
 
-                <option
-                  [ngValue]="null"
-                  disabled
+            @else {
+
+              <div class="chat-shell-messages">
+
+                @if (batchGroupMessages().length === 0) {
+
+                  <div class="chat-empty">
+                    <p>لا توجد رسائل بعد — ابدأ المحادثة الآن👋 </p>
+                  </div>
+
+                }
+
+                @for (
+                  message of batchGroupMessages();
+                  track message.messageId
+                ) {
+
+                  <div
+                    class="chat-bubble-row"
+                    [class.mine]="isMine(message)"
+                  >
+
+                    <div class="chat-bubble">
+
+                      @if (!isMine(message)) {
+
+                        <strong class="chat-bubble-name">
+                          {{ message.senderName || 'عضو' }}
+                        </strong>
+
+                      }
+
+                      <p class="chat-bubble-text">
+                        {{ message.content }}
+                      </p>
+
+                      <small class="chat-bubble-time">
+                        {{ formatTime(message.sentDate) }}
+                      </small>
+
+                    </div>
+
+                  </div>
+
+                }
+
+              </div>
+
+
+              <div class="chat-shell-composer">
+
+                <input
+                  type="text"
+                  class="chat-input"
+                  [(ngModel)]="batchMessageText"
+                  placeholder="اكتب رسالتك للجروب..."
+                  (keydown.enter)="$event.preventDefault(); sendBatchMessage()"
+                />
+
+                <button
+                  type="button"
+                  class="chat-send-btn"
+                  [disabled]="!batchMessageText.trim()"
+                  (click)="sendBatchMessage()"
                 >
-                  لا يوجد مدربون مرتبطون بهذه الدفعة
-                </option>
+                  <i class="fa-solid fa-paper-plane"></i>
+                </button>
 
-              }
-
-            }
-
-          </select>
-
-        </div>
-
-
-        <div class="form-group">
-
-          <label>
-            نوع الطلب
-          </label>
-
-          <input
-            type="text"
-            [(ngModel)]="newConv.subject"
-            class="support-input"
-            placeholder="اكتب نوع الطلب هنا..."
-          />
-
-        </div>
-
-
-        <div class="form-group">
-
-          <label>
-            المرفق
-          </label>
-
-          <input
-            type="file"
-            #trainerFileInput
-            hidden
-            accept=".pdf,.png,.jpg,.jpeg,image/png,image/jpeg,application/pdf"
-            (change)="onFileSelected($event)"
-          />
-
-          <div
-            class="attachment-box"
-            (click)="trainerFileInput.click()"
-          >
-
-            <div class="attachment-icon">
-
-              <i
-                class="fa-solid"
-                [class.fa-image]="selectedFile && selectedFile.type.startsWith('image/')"
-                [class.fa-file-pdf]="selectedFile && selectedFile.type === 'application/pdf'"
-                [class.fa-paperclip]="!selectedFile"
-              ></i>
-
-            </div>
-
-
-            <div class="attachment-text">
-
-              @if (selectedFile) {
-
-                <strong>
-                  {{ selectedFile.name }}
-                </strong>
-
-                <span>
-                  {{ formatFileSize(selectedFile.size) }}
-                </span>
-
-              }
-
-              @else {
-
-                <strong>
-                  إرفاق صورة أو ملف
-                </strong>
-
-                <span>
-                  PNG, JPG, JPEG أو PDF
-                </span>
-
-              }
-
-            </div>
-
-
-            @if (selectedFile) {
-
-              <button
-                type="button"
-                class="remove-attachment"
-                aria-label="حذف المرفق"
-                (click)="removeFile($event)"
-              >
-                <i class="fa-solid fa-xmark"></i>
-              </button>
+              </div>
 
             }
 
           </div>
 
-        </div>
 
 
-        <div class="form-group">
+          <!-- =========================================
+               MEMBERS DRAWER (only when in group view)
+               ========================================= -->
 
-          <label>
-            الملاحظة
-          </label>
+          @if (!privateChatOpen()) {
 
-          <textarea
-            [(ngModel)]="newConv.note"
-            class="support-textarea"
-            rows="4"
-            placeholder="اكتب ملاحظتك للمدرب هنا..."
-          ></textarea>
+            <aside class="chat-members-panel">
 
-        </div>
+              <div class="members-panel-header">
 
-      }
+                <h4>أعضاء الجروب</h4>
 
+                <button
+                  type="button"
+                  class="members-close-btn"
+                  (click)="toggleMembersPanel()"
+                  aria-label="إغلاق"
+                >
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
 
-      <!-- =====================================================
-           COMPANY
-           ===================================================== -->
+              </div>
 
-      @else if (newConv.receiverType === 'Company') {
 
-        <div class="form-group">
+              <div class="members-panel-body">
 
-          <label>
-            نوع الطلب
-          </label>
+                <!-- Trainers -->
 
-          <input
-            type="text"
-            [(ngModel)]="newConv.subject"
-            class="support-input"
-            placeholder="اكتب نوع الطلب هنا..."
-          />
+                @if (batchTrainers().length > 0) {
 
-        </div>
+                  <div class="members-section">
 
+                    <h5 class="members-section-title">
+                      المدربون
+                    </h5>
 
-        <div class="form-group">
+                    @for (t of batchTrainers(); track t.trainerId) {
 
-          <label>
-            المرفق
-          </label>
+                      <div class="member-row">
 
-          <input
-            type="file"
-            #companyFileInput
-            hidden
-            accept=".pdf,.png,.jpg,.jpeg,image/png,image/jpeg,application/pdf"
-            (change)="onFileSelected($event)"
-          />
+                        <div class="member-avatar trainer">
+                          {{ t.fullName ? t.fullName.charAt(0) : 'م' }}
+                        </div>
 
-          <div
-            class="attachment-box"
-            (click)="companyFileInput.click()"
-          >
+                        <div class="member-info">
 
-            <div class="attachment-icon">
+                          <strong>
+                            {{ t.fullName }}
+                          </strong>
 
-              <i
-                class="fa-solid"
-                [class.fa-image]="selectedFile && selectedFile.type.startsWith('image/')"
-                [class.fa-file-pdf]="selectedFile && selectedFile.type === 'application/pdf'"
-                [class.fa-paperclip]="!selectedFile"
-              ></i>
+                          <small class="member-badge trainer-badge">
+                            مدرب
+                          </small>
 
-            </div>
+                        </div>
 
+                        @if (!isMe($any(t).userId)) {
 
-            <div class="attachment-text">
+                          <button
+                            type="button"
+                            class="member-chat-btn"
+                            (click)="openPrivateChat(t, 'trainer')"
+                            title="محادثة خاصة"
+                          >
+                            <i class="fa-solid fa-comment-dots"></i>
+                          </button>
 
-              @if (selectedFile) {
+                        }
 
-                <strong>
-                  {{ selectedFile.name }}
-                </strong>
+                      </div>
 
-                <span>
-                  {{ formatFileSize(selectedFile.size) }}
-                </span>
+                    }
 
-              }
+                  </div>
 
-              @else {
+                }
 
-                <strong>
-                  إرفاق صورة أو ملف
-                </strong>
 
-                <span>
-                  PNG, JPG, JPEG أو PDF
-                </span>
+                <!-- Trainees -->
 
-              }
+                @if (batchTrainees().length > 0) {
 
-            </div>
+                  <div class="members-section">
 
+                    <h5 class="members-section-title">
+                      المتدربون
+                    </h5>
 
-            @if (selectedFile) {
+                    @for (t of batchTrainees(); track t.traineeId) {
 
-              <button
-                type="button"
-                class="remove-attachment"
-                aria-label="حذف المرفق"
-                (click)="removeFile($event)"
-              >
-                <i class="fa-solid fa-xmark"></i>
-              </button>
+                      <div class="member-row">
 
-            }
+                        <div class="member-avatar">
+                          {{ t.fullName ? t.fullName.charAt(0) : 'م' }}
+                        </div>
 
-          </div>
+                        <div class="member-info">
 
-        </div>
+                          <strong>
+                            {{ t.fullName }}
+                          </strong>
 
+                          <small class="member-badge">
+                            متدرب
+                          </small>
 
-        <div class="form-group">
+                        </div>
 
-          <label>
-            الملاحظة
-          </label>
+                        @if (!isMe($any(t).userId)) {
 
-          <textarea
-            [(ngModel)]="newConv.note"
-            class="support-textarea"
-            rows="4"
-            placeholder="اكتب ملاحظتك للشركة هنا..."
-          ></textarea>
+                          <button
+                            type="button"
+                            class="member-chat-btn"
+                            (click)="openPrivateChat(t, 'trainee')"
+                            title="محادثة خاصة"
+                          >
+                            <i class="fa-solid fa-comment-dots"></i>
+                          </button>
 
-        </div>
+                        }
 
-      }
+                      </div>
 
+                    }
 
-      <!-- =====================================================
-           AUTHORITY
-           ===================================================== -->
+                  </div>
 
-      @else if (newConv.receiverType === 'Authority') {
+                }
 
-        <div class="form-group">
+              </div>
 
-          <label>
-            الموضوع
-          </label>
+            </aside>
 
-          <select
-            [(ngModel)]="newConv.subject"
-            class="support-select"
-          >
+          }
 
-            <option
-              value=""
-              disabled
-            >
-              اختر موضوع الطلب
-            </option>
-
-            @for (
-              s of subjects;
-              track s
-            ) {
-
-              <option [value]="s">
-                {{ s }}
-              </option>
-
-            }
-
-          </select>
-
-        </div>
-
-
-        <div class="form-group">
-
-          <label>
-            تفاصيل الطلب
-          </label>
-
-          <textarea
-            [(ngModel)]="newConv.firstMessage"
-            class="support-textarea"
-            rows="4"
-            placeholder="اكتب تفاصيل استفسارك أو شكواك هنا..."
-          ></textarea>
-
-        </div>
-
-
-        <div class="form-group">
-
-          <label>
-            إرفاق ملفات داعمة
-          </label>
-
-          <input
-            type="file"
-            #fileInput
-            hidden
-            accept=".pdf,.png,.jpg,.jpeg,image/png,image/jpeg,application/pdf"
-            (change)="onFileSelected($event)"
-          />
-
-          <div
-            class="file-upload"
-            (click)="fileInput.click()"
-          >
-
-            <div class="upload-icon">
-              <i class="fa-solid fa-cloud-arrow-up"></i>
-            </div>
-
-
-            <div class="upload-text">
-
-              @if (selectedFile) {
-
-                <strong>
-                  {{ selectedFile.name }}
-                </strong>
-
-                <span>
-                  {{ formatFileSize(selectedFile.size) }}
-                </span>
-
-              }
-
-              @else {
-
-                <strong>
-                  اسحب وأفلت المستندات والصور هنا، أو
-                </strong>
-
-                <span>
-                  انقر للاختيار (اختياري)
-                </span>
-
-              }
-
-            </div>
-
-
-            @if (selectedFile) {
-
-              <button
-                type="button"
-                class="remove-file"
-                aria-label="حذف الملف"
-                (click)="removeFile($event)"
-              >
-                <i class="fa-solid fa-xmark"></i>
-              </button>
-
-            }
-
-          </div>
-
-
-          <p class="file-hint">
-            PDF, PNG, JPG, JPEG — Max 10MB
-          </p>
 
         </div>
 
       }
 
+    </div>
 
-      <!-- =====================================================
-           SUBMIT
-           ===================================================== -->
-
-      <button
-        type="button"
-        class="submit-button"
-        [disabled]="
-          !newConv.receiverType ||
-          isSubmitting() ||
-          !canSubmit()
-        "
-        (click)="startConversation()"
-      >
-
-        @if (isSubmitting()) {
-
-          <span class="loader"></span>
-
-          <span>
-            جاري الإرسال...
-          </span>
-
-        }
-
-        @else {
-
-          <i class="fa-solid fa-paper-plane"></i>
-
-          <span>
-            إرسال الطلب
-          </span>
-
-        }
-
-      </button>
-
-    </section>
-
-  </div>
+  }
 
 </div>
-
-
-<style>
-
-.support-page {
-  width: 100%;
-  max-width: 1450px;
-  height: 100vh;
-  min-height: 0;
-  margin: 0 auto;
-  padding: 14px 28px 18px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.support-header {
-  flex-shrink: 0;
-  margin-bottom: 14px;
-}
-
-.nfd-page-title {
-  margin: 0 0 5px;
-  font-size: 30px;
-  font-weight: 700;
-  color: #172033;
-}
-
-.nfd-page-sub {
-  margin: 0;
-  font-size: 14px;
-  color: #8c98a5;
-}
-
-
-/* =========================================================
-   ALERT
-   ========================================================= */
-
-.message {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 11px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  font-size: 12px;
-}
-
-.message p {
-  margin: 0;
-}
-
-.message > span {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: 50%;
-}
-
-.error-message {
-  background: #fff1f1;
-  color: #dc2626;
-}
-
-.success-message {
-  background: #eaf8f5;
-  color: #0d9488;
-}
-
-
-/* =========================================================
-   MAIN LAYOUT
-   ========================================================= */
-
-.support-main-layout {
-  flex: 1;
-  min-height: 0;
-
-  display: grid;
-
-  grid-template-columns:
-    315px
-    minmax(300px, 1fr)
-    435px;
-
-  gap: 13px;
-
-  overflow: hidden;
-}
-
-
-/* =========================================================
-   COMMON CARDS
-   ========================================================= */
-
-.conversation-list,
-.conversation-detail,
-.support-card {
-  min-width: 0;
-  min-height: 0;
-
-  height: 600px;
-
-  background: #fff;
-
-  border: 1px solid #e7ebf0;
-
-  border-radius: 15px;
-
-  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
-
-  box-sizing: border-box;
-}
-
-
-/* =========================================================
-   CONVERSATION LIST
-   ========================================================= */
-
-.conversation-list {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.list-header {
-  flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  min-height: 66px;
-
-  padding: 12px 17px;
-
-  box-sizing: border-box;
-
-  background: #0066cc;
-
-  color: #fff;
-
-  border-radius: 15px 15px 0 0;
-}
-
-.list-header h3 {
-  margin: 0 0 3px;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.list-header p {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 10px;
-}
-
-.conversation-count {
-  min-width: 29px;
-  height: 29px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  flex-shrink: 0;
-
-  border-radius: 50%;
-
-  background: rgba(255, 255, 255, 0.18);
-
-  color: #fff;
-
-  font-size: 11px;
-  font-weight: 700;
-}
-
-
-/* =========================================================
-   CONVERSATION ITEMS
-   ========================================================= */
-
-.conversation-items {
-  position: relative;
-
-  flex: 1;
-  min-height: 0;
-
-  display: flex;
-  flex-direction: column;
-
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  padding: 8px;
-}
-
-.conversation-item {
-  width: 100%;
-
-  display: flex;
-  align-items: center;
-
-  gap: 9px;
-
-  padding: 12px 10px;
-
-  margin-bottom: 6px;
-
-  border: 1px solid #dbe7ff;
-
-  border-radius: 9px;
-
-  background: #eef5ff;
-
-  text-align: right;
-
-  font-family: inherit;
-
-  cursor: pointer;
-
-  box-sizing: border-box;
-
-  transition: 0.18s ease;
-}
-
-.conversation-item:last-child {
-  margin-bottom: 0;
-}
-
-.conversation-item:hover {
-  background: #eef5ff;
-  border-color: #dbe7ff;
-}
-
-.conversation-item.active,
-.conversation-item.active:hover,
-.conversation-item.active:focus,
-.conversation-item.active:active {
-  background: #eef5ff;
-  border-color: #dbe7ff;
-  outline: none;
-}
-
-
-/* =========================================================
-   STATUS
-   ========================================================= */
-
-.conversation-status {
-  width: 4px;
-  height: 34px;
-
-  flex: 0 0 4px;
-
-  border-radius: 5px;
-
-  background: #bcd4ff;
-
-  transition: 0.18s ease;
-}
-
-.conversation-item.active .conversation-status {
-  background: #0066cc;
-}
-
-
-/* =========================================================
-   WITHDRAWAL REQUEST STATUS
-   ========================================================= */
-
-.conversation-subject-row {
-  min-width: 0;
-
-  display: flex;
-  align-items: center;
-
-  gap: 6px;
-}
-
-.conversation-subject-row strong {
-  flex: 1;
-  min-width: 0;
-
-  margin-bottom: 0;
-}
-
-.withdrawal-badge {
-  flex-shrink: 0;
-
-  display: inline-flex;
-  align-items: center;
-
-  gap: 4px;
-
-  min-height: 21px;
-
-  padding: 2px 7px;
-
-  border-radius: 20px;
-
-  font-size: 8px;
-
-  font-weight: 700;
-
-  white-space: nowrap;
-}
-
-.withdrawal-badge.pending {
-  background: #fff7e6;
-
-  color: #d97706;
-
-  border: 1px solid #fde7b2;
-}
-
-.withdrawal-badge.pending i {
-  font-size: 8px;
-}
-
-.withdrawal-status-bar {
-  background: #f59e0b;
-}
-
-.conversation-item.active .withdrawal-status-bar {
-  background: #f59e0b;
-}
-
-
-/* =========================================================
-   CONTENT
-   ========================================================= */
-
-.conversation-item-content {
-  min-width: 0;
-  flex: 1;
-}
-
-.conversation-item strong {
-  display: block;
-
-  margin-bottom: 3px;
-
-  color: #172033;
-
-  font-size: 12px;
-
-  font-weight: 700;
-
-  line-height: 1.45;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-
-  white-space: nowrap;
-}
-
-.conversation-item small {
-  display: block;
-
-  margin-bottom: 3px;
-
-  color: #8c98a5;
-
-  font-size: 9px;
-
-  line-height: 1.4;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-
-  white-space: nowrap;
-}
-
-.conversation-item p {
-  margin: 0;
-
-  color: #64748b;
-
-  font-size: 9px;
-
-  line-height: 1.45;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-
-  white-space: nowrap;
-}
-
-
-/* =========================================================
-   ARROW
-   ========================================================= */
-
-.conversation-arrow {
-  width: 25px;
-  height: 25px;
-
-  flex: 0 0 25px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  background: #ffffff;
-
-  color: #0066cc;
-
-  font-size: 10px;
-
-  transition: 0.18s ease;
-}
-
-.conversation-item.active .conversation-arrow {
-  background: #0066cc;
-  color: #fff;
-}
-
-
-/* =========================================================
-   EMPTY LIST
-   ========================================================= */
-
-.empty-conversations {
-  position: absolute;
-
-  inset: 0;
-
-  display: flex;
-  flex-direction: column;
-
-  align-items: center;
-  justify-content: center;
-
-  gap: 5px;
-
-  padding: 20px;
-
-  box-sizing: border-box;
-
-  text-align: center;
-
-  color: #8c98a5;
-}
-
-.empty-icon {
-  width: 47px;
-  height: 47px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  margin-bottom: 7px;
-
-  border-radius: 50%;
-
-  background: #eef2ff;
-
-  color: #0066cc;
-}
-
-.empty-icon i {
-  font-size: 19px;
-}
-
-.empty-conversations strong {
-  font-size: 13px;
-  color: #64748b;
-}
-
-.empty-conversations span {
-  font-size: 10px;
-  line-height: 1.6;
-}
-
-
-/* =========================================================
-   CONVERSATION DETAIL
-   ========================================================= */
-
-.conversation-detail {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-
-/* =========================================================
-   FIXED HEADER
-   ========================================================= */
-
-.conversation-detail-header {
-  flex-shrink: 0;
-
-  height: 76px;
-  min-height: 76px;
-
-  display: flex;
-  align-items: center;
-
-  padding: 14px 16px;
-
-  box-sizing: border-box;
-
-  border-bottom: 1px solid #edf0f4;
-
-  background: #fff;
-}
-
-.conversation-header-main {
-  width: 100%;
-
-  display: flex;
-  align-items: center;
-
-  gap: 10px;
-
-  min-width: 0;
-}
-
-.conversation-header-icon {
-  width: 38px;
-  height: 38px;
-
-  flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 9px;
-
-  background: #eef2ff;
-
-  color: #0066cc;
-}
-
-.conversation-header-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.conversation-detail-header h3 {
-  margin: 0 0 5px;
-
-  color: #172033;
-
-  font-size: 15px;
-  font-weight: 700;
-
-  overflow: hidden;
-
-  text-overflow: ellipsis;
-
-  white-space: nowrap;
-}
-
-.conversation-meta {
-  display: flex;
-  align-items: center;
-
-  gap: 6px;
-
-  color: #8c98a5;
-
-  font-size: 10px;
-}
-
-
-/* =========================================================
-   MESSAGES
-   ========================================================= */
-
-.messages-container {
-  flex: 1;
-
-  min-height: 0;
-
-  display: flex;
-  flex-direction: column;
-
-  gap: 10px;
-
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  padding: 15px;
-}
-
-.message-bubble {
-  max-width: 78%;
-
-  flex-shrink: 0;
-
-  align-self: flex-start;
-
-  padding: 10px 12px;
-
-  border-radius: 10px 10px 10px 3px;
-
-  background: #eef2ff;
-
-  color: #334155;
-}
-
-.message-bubble.mine {
-  align-self: flex-end;
-
-  border-radius: 10px 10px 3px 10px;
-
-  background: #172033;
-
-  color: #fff;
-}
-
-.message-bubble strong {
-  display: block;
-
-  margin-bottom: 3px;
-
-  font-size: 10px;
-}
-
-.message-bubble p {
-  margin: 0;
-
-  font-size: 12px;
-
-  line-height: 1.7;
-
-  overflow-wrap: anywhere;
-}
-
-.no-messages {
-  margin: auto;
-
-  color: #94a3b8;
-
-  font-size: 12px;
-}
-
-
-/* =========================================================
-   REPLY
-   ========================================================= */
-
-.reply-area {
-  flex-shrink: 0;
-
-  display: flex;
-
-  gap: 7px;
-
-  padding: 11px 12px;
-
-  border-top: 1px solid #edf0f4;
-}
-
-.reply-input {
-  flex: 1;
-
-  min-width: 0;
-
-  height: 41px;
-
-  padding: 0 10px;
-
-  border: 1px solid #dfe5e8;
-
-  border-radius: 8px;
-
-  outline: none;
-
-  font-family: inherit;
-
-  font-size: 12px;
-
-  box-sizing: border-box;
-}
-
-.reply-input:focus {
-  border-color: #0066cc;
-
-  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.08);
-}
-
-.reply-button {
-  width: 78px;
-
-  flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 5px;
-
-  border: none;
-
-  border-radius: 8px;
-
-  background: #0066cc;
-
-  color: #fff;
-
-  font-family: inherit;
-
-  font-size: 11px;
-
-  font-weight: 700;
-
-  cursor: pointer;
-}
-
-.reply-button:disabled {
-  background: #b8c7d9;
-  cursor: not-allowed;
-}
-
-
-/* =========================================================
-   PLACEHOLDER
-   ========================================================= */
-
-.conversation-placeholder {
-  flex: 1;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-}
-
-.conversation-placeholder-content {
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-  justify-content: center;
-
-  padding: 20px;
-
-  text-align: center;
-}
-
-.placeholder-icon {
-  width: 52px;
-  height: 52px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  margin-bottom: 12px;
-
-  border-radius: 50%;
-
-  background: #eef2ff;
-
-  color: #0066cc;
-}
-
-.placeholder-icon i {
-  font-size: 20px;
-}
-
-.conversation-placeholder-content h3 {
-  margin: 0 0 7px;
-
-  color: #8c98a5;
-
-  font-size: 17px;
-
-  font-weight: 700;
-}
-
-.conversation-placeholder-content p {
-  max-width: 300px;
-
-  margin: 0;
-
-  color: #8c98a5;
-
-  font-size: 12px;
-
-  line-height: 1.6;
-}
-
-
-/* =========================================================
-   SUPPORT CARD
-   ========================================================= */
-
-.support-card {
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  padding: 20px 26px;
-}
-
-.support-title-row {
-  margin: -20px -26px 16px;
-
-  min-height: 66px;
-
-  display: flex;
-  align-items: center;
-
-  padding: 12px 20px;
-
-  box-sizing: border-box;
-
-  background: #0066cc;
-
-  border-radius: 15px 15px 0 0;
-}
-
-.support-title {
-  margin: 0 0 3px;
-
-  color: #fff;
-
-  font-size: 17px;
-
-  font-weight: 700;
-}
-
-.support-description {
-  margin: 0;
-
-  color: rgba(255, 255, 255, 0.78);
-
-  font-size: 10px;
-}
-
-
-/* =========================================================
-   FORM
-   ========================================================= */
-
-.form-group {
-  margin-bottom: 12px;
-}
-
-.form-group label {
-  display: block;
-
-  margin-bottom: 5px;
-
-  color: #475569;
-
-  font-size: 11px;
-
-  font-weight: 600;
-}
-
-.support-select,
-.support-input {
-  width: 100%;
-
-  height: 40px;
-
-  padding: 0 11px;
-
-  border: 1px solid #dfe5e8;
-
-  border-radius: 8px;
-
-  background: #fff;
-
-  color: #334155;
-
-  font-family: inherit;
-
-  font-size: 11px;
-
-  outline: none;
-
-  box-sizing: border-box;
-}
-
-.support-select:focus,
-.support-input:focus,
-.support-textarea:focus {
-  border-color: #0066cc;
-
-  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.08);
-}
-
-.support-textarea {
-  width: 100%;
-
-  height: 82px;
-
-  min-height: 82px;
-
-  padding: 9px 11px;
-
-  border: 1px solid #dfe5e8;
-
-  border-radius: 8px;
-
-  background: #fff;
-
-  color: #334155;
-
-  font-family: inherit;
-
-  font-size: 11px;
-
-  line-height: 1.6;
-
-  outline: none;
-
-  resize: none;
-
-  box-sizing: border-box;
-}
-
-
-/* =========================================================
-   RECEIVER
-   ========================================================= */
-
-.receiver-form-group {
-  padding: 10px;
-
-  background: #eef2ff;
-
-  border: 1px solid #dbe7ff;
-
-  border-radius: 9px;
-
-  box-sizing: border-box;
-}
-
-.receiver-form-group label {
-  color: #0066cc;
-
-  font-weight: 700;
-}
-
-.receiver-select {
-  background: #fff;
-
-  border: 1px solid #cfdcff;
-}
-
-
-/* =========================================================
-   ATTACHMENT
-   ========================================================= */
-
-.attachment-box {
-  width: 100%;
-
-  min-height: 58px;
-
-  position: relative;
-
-  display: flex;
-  align-items: center;
-
-  gap: 9px;
-
-  padding: 8px 10px;
-
-  border: 1px dashed #cbd6e5;
-
-  border-radius: 8px;
-
-  background: #fbfcff;
-
-  cursor: pointer;
-
-  box-sizing: border-box;
-}
-
-.attachment-box:hover {
-  border-color: #0066cc;
-
-  background: #f5f8ff;
-}
-
-.attachment-icon {
-  width: 33px;
-  height: 33px;
-
-  flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 7px;
-
-  background: #eef2ff;
-
-  color: #0066cc;
-}
-
-.attachment-text {
-  min-width: 0;
-
-  display: flex;
-  flex-direction: column;
-
-  gap: 2px;
-}
-
-.attachment-text strong {
-  overflow: hidden;
-
-  color: #475569;
-
-  font-size: 10px;
-
-  text-overflow: ellipsis;
-
-  white-space: nowrap;
-}
-
-.attachment-text span {
-  color: #8c98a5;
-
-  font-size: 9px;
-}
-
-.remove-attachment {
-  position: absolute;
-
-  left: 7px;
-  top: 7px;
-
-  width: 21px;
-  height: 21px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border: none;
-
-  border-radius: 50%;
-
-  background: #fff0f0;
-
-  color: #dc2626;
-
-  cursor: pointer;
-}
-
-
-/* =========================================================
-   FILE UPLOAD
-   ========================================================= */
-
-.file-upload {
-  min-height: 60px;
-
-  position: relative;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 9px;
-
-  padding: 8px 10px;
-
-  border: 1.5px dashed #cbd6e5;
-
-  border-radius: 8px;
-
-  background: #fbfcff;
-
-  cursor: pointer;
-
-  box-sizing: border-box;
-}
-
-.file-upload:hover {
-  border-color: #0066cc;
-
-  background: #f5f8ff;
-}
-
-.upload-icon {
-  width: 33px;
-  height: 33px;
-
-  flex-shrink: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 7px;
-
-  background: #eef2ff;
-
-  color: #0066cc;
-}
-
-.upload-text {
-  min-width: 0;
-
-  display: flex;
-  flex-direction: column;
-
-  gap: 2px;
-}
-
-.upload-text strong {
-  overflow: hidden;
-
-  color: #475569;
-
-  font-size: 10px;
-
-  text-overflow: ellipsis;
-
-  white-space: nowrap;
-}
-
-.upload-text span {
-  color: #0066cc;
-
-  font-size: 9px;
-}
-
-.remove-file {
-  position: absolute;
-
-  left: 7px;
-  top: 7px;
-
-  width: 21px;
-  height: 21px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border: none;
-
-  border-radius: 50%;
-
-  background: #fff0f0;
-
-  color: #dc2626;
-
-  cursor: pointer;
-}
-
-.file-hint {
-  margin: 4px 0 0;
-
-  color: #9aa5af;
-
-  font-size: 9px;
-}
-
-
-/* =========================================================
-   SUBMIT
-   ========================================================= */
-
-.submit-button {
-  width: 100%;
-
-  height: 40px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 7px;
-
-  margin-top: 4px;
-
-  border: none;
-
-  border-radius: 8px;
-
-  background: #0066cc;
-
-  color: #fff;
-
-  font-family: inherit;
-
-  font-size: 11px;
-
-  font-weight: 700;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-}
-
-.submit-button:hover:not(:disabled) {
-  background: #0052a3;
-
-  transform: translateY(-1px);
-}
-
-.submit-button:disabled {
-  background: #b8c7d9;
-
-  cursor: not-allowed;
-
-  opacity: .85;
-}
-
-
-/* =========================================================
-   LOADER
-   ========================================================= */
-
-.loader {
-  width: 13px;
-  height: 13px;
-
-  border: 2px solid rgba(255, 255, 255, .35);
-
-  border-top-color: #fff;
-
-  border-radius: 50%;
-
-  animation: spin .7s linear infinite;
-}
-
-@keyframes spin {
-
-  to {
-    transform: rotate(360deg);
-  }
-
-}
-
-
-/* =========================================================
-   INITIAL REQUEST
-   ========================================================= */
-
-.support-card.receiver-only .receiver-form-group {
-  margin-top: 2px;
-}
-
-.support-card.receiver-only .submit-button {
-  margin-top: 10px;
-}
-
-
-/* =========================================================
-   SCROLLBAR
-   ========================================================= */
-
-.conversation-items::-webkit-scrollbar,
-.messages-container::-webkit-scrollbar,
-.support-card::-webkit-scrollbar {
-  width: 5px;
-}
-
-.conversation-items::-webkit-scrollbar-track,
-.messages-container::-webkit-scrollbar-track,
-.support-card::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.conversation-items::-webkit-scrollbar-thumb,
-.messages-container::-webkit-scrollbar-thumb,
-.support-card::-webkit-scrollbar-thumb {
-  background: #d4dce8;
-
-  border-radius: 10px;
-}
-
-.conversation-items,
-.messages-container,
-.support-card {
-  scrollbar-width: thin;
-
-  scrollbar-color: #d4dce8 transparent;
-}
-
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-
-@media (min-width: 1500px) {
-
-  .support-page {
-    max-width: 1500px;
-
-    padding-left: 35px;
-
-    padding-right: 35px;
-  }
-
-  .support-main-layout {
-    grid-template-columns:
-      330px
-      minmax(320px, 1fr)
-      455px;
-  }
-
-}
-
-
-@media (max-width: 1180px) {
-
-  .support-main-layout {
-    grid-template-columns:
-      275px
-      minmax(260px, 1fr)
-      385px;
-
-    gap: 10px;
-  }
-
-  .conversation-list,
-  .conversation-detail,
-  .support-card {
-    height: 560px;
-  }
-
-}
-
-
-@media (max-width: 900px) {
-
-  .support-page {
-    height: auto;
-
-    min-height: 100vh;
-
-    overflow: visible;
-  }
-
-  .support-main-layout {
-    grid-template-columns: 1fr;
-
-    overflow: visible;
-  }
-
-  .conversation-list {
-    height: 300px;
-  }
-
-  .conversation-detail {
-    height: 460px;
-  }
-
-  .support-card {
-    height: auto;
-
-    min-height: 480px;
-  }
-
-}
-
-
-@media (max-width: 600px) {
-
-  .support-page {
-    padding: 10px 12px 20px;
-  }
-
-  .nfd-page-title {
-    font-size: 25px;
-  }
-
-  .nfd-page-sub {
-    font-size: 12px;
-  }
-
-  .conversation-list {
-    height: 280px;
-  }
-
-  .conversation-detail {
-    height: 430px;
-  }
-
-  .message-bubble {
-    max-width: 85%;
-  }
-
-  .conversation-subject-row {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 3px;
-  }
-
-  .withdrawal-badge {
-    font-size: 7px;
-  }
-
-}
-
-</style>

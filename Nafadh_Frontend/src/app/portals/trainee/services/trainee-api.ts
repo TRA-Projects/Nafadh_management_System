@@ -869,6 +869,31 @@ getSessionsByBatch(
     );
   }
 
+  getOrCreatePrivateConversation(
+    dto: {
+      startedByUserId: number;
+      receiverUserId: number;
+      subject: string;
+      firstMessage: string;
+      category?: string;
+    }
+  ): Observable<ConversationDetailDto> {
+
+    const formData = new FormData();
+
+    formData.append('Type', 'Other');
+    formData.append('Category', dto.category ?? 'TrainerTrainee');
+    formData.append('Subject', dto.subject);
+    formData.append('StartedByUserId', dto.startedByUserId.toString());
+    formData.append('FirstMessage', dto.firstMessage);
+    formData.append('ReceiverUserId', dto.receiverUserId.toString());
+
+    return this.http.post<ConversationDetailDto>(
+      `${this.base}/Conversation`,
+      formData
+    );
+  }
+
 
   // =========================================================
   // Achievements & Certificates
@@ -1037,17 +1062,72 @@ getSessionsByBatch(
   }
 
 
-// ابحث عن هذه الدالة في trainee-api.ts وعدلها لتصبح هكذا:
-uploadTraineeProfileImage(traineeId: number, file: File): Observable<any> {
-  const formData = new FormData();
-  
-  // ملاحظة مهمة: الـ Backend يتوقع اسم الحقل "File" (بحرف كبير) بناءً على DTO
-  formData.append('File', file); 
+  uploadTraineeProfileImage(traineeId: number, file: File): Observable<any> {
+    const formData = new FormData();
+    
+    // ملاحظة مهمة: الـ Backend يتوقع اسم الحقل "File" (بحرف كبير) بناءً على DTO
+    formData.append('File', file); 
 
-  // المسار الصحيح حسب كود الـ Backend
-  return this.http.post<any>(
-    `${this.base}/Trainee/${traineeId}/profile-image`, 
-    formData
-  );
-}
+    // المسار الصحيح حسب كود الـ Backend
+    return this.http.post<any>(
+      `${this.base}/Trainee/${traineeId}/profile-image`, 
+      formData
+    );
+  }
+
+  // =========================================================
+  // Batch Group (WhatsApp-style) — trainee side
+  // =========================================================
+
+  /**
+   * جلب كل المحادثات التي يشارك فيها المستخدم
+   * (بدون فلترة type حتى نلتقط BatchGroup)
+   */
+  getAllParticipantConversations(
+    userId: number
+  ): Observable<ConversationListItemDto[]> {
+
+    return this.http.get<ConversationListItemDto[]>(
+      `${this.base}/Conversation`,
+      {
+        params: {
+          participantUserId: userId.toString()
+        }
+      }
+    );
+  }
+
+
+  /**
+   * جلب أعضاء الدفعة (المتدربين)
+   */
+  getBatchTrainees(
+    batchId: number
+  ): Observable<TraineeProfileDto[]> {
+
+    return this.http.get<TraineeProfileDto[]>(
+      `${this.base}/Batch/${batchId}/trainees`
+    );
+  }
+
+
+  /**
+   * تعليم محادثة كمقروءة
+   */
+  markConversationAsRead(
+    conversationId: number,
+    userId: number
+  ): Observable<void> {
+
+    return this.http.put<void>(
+      `${this.base}/Conversation/${conversationId}/read`,
+      {},
+      {
+        params: {
+          userId: userId.toString()
+        }
+      }
+    );
+  }
+
 }
