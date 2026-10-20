@@ -194,7 +194,7 @@ export interface TrainerLiveSessionFormDto {
   sessionDate: string;
   startTime: string;
   endTime: string;
-  meetingLink: string;
+  meetingLink?: string | null;
   learningObjectives: string;
 }
 
@@ -211,6 +211,18 @@ export interface TrainerSessionAttendanceDto {
 export interface UpdateTrainerSessionAttendanceDto {
   status: TrainerAttendanceStatus;
   note: string | null;
+}
+export interface TrainerLiveRoomStartResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface TrainerLiveRoomJoinResponse {
+  sessionId: number;
+  roomName: string;
+  serverUrl: string;
+  participantToken: string;
+  tokenExpiresAtUtc: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -1591,6 +1603,22 @@ updateTrainerSessionAttendance(
     dto
   );
 }
+startTrainerLiveRoom(
+  sessionId: number
+): Observable<TrainerLiveRoomStartResponse> {
+  return this.http.post<TrainerLiveRoomStartResponse>(
+    `${this.base}/trainer/live-sessions/${sessionId}/room/start`,
+    {}
+  );
+}
 
+joinTrainerLiveRoom(
+  sessionId: number
+): Observable<TrainerLiveRoomJoinResponse> {
+  return this.http.post<TrainerLiveRoomJoinResponse>(
+    `${this.base}/trainer/live-sessions/${sessionId}/room/join`,
+    {}
+  );
+}
 }
 

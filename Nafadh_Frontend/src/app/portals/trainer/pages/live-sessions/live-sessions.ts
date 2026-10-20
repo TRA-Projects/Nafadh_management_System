@@ -9,7 +9,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, switchMap } from 'rxjs';
 
 import {
     TrainerApi,
@@ -305,152 +305,173 @@ export class TrainerLiveSessions implements OnInit {
     // ==========================================
     // CREATE / UPDATE
     // ==========================================
+   
+saveSession(): void {
+  if (this.saving()) return;
 
-    saveSession(): void {
-        if (this.saving()) return;
+  this.errorMessage.set('');
+  this.successMessage.set('');
 
-        this.errorMessage.set('');
-        this.successMessage.set('');
+  const title = this.form.title.trim();
+  const duration = Number(this.form.durationMinutes);
 
-        const title = this.form.title.trim();
-        const meetingLink = this.form.meetingUrl.trim();
-        const duration = Number(this.form.durationMinutes);
+  // التحقق من الحقول المطلوبة فقط
+  if (
+    !title ||
+    !this.form.date ||
+    !this.form.time
+  ) {
+    this.errorMessage.set(
+      'يرجى تعبئة جميع الحقول المطلوبة.'
+    );
+    return;
+  }
 
-        if (
-            !title ||
-            !this.form.date ||
-            !this.form.time ||
-            !meetingLink
-        ) {
-            this.errorMessage.set(
-                'يرجى تعبئة جميع الحقول المطلوبة.'
-            );
-            return;
-        }
+  if (this.batchId <= 0) {
+    this.errorMessage.set('لم يتم تحديد الدفعة.');
+    return;
+  }
 
-        if (this.batchId <= 0) {
-            this.errorMessage.set('لم يتم تحديد الدفعة.');
-            return;
-        }
+  if (
+    !Number.isInteger(duration) ||
+    duration <= 0
+  ) {
+    this.errorMessage.set(
+      'مدة الجلسة يجب أن تكون عدد دقائق أكبر من صفر.'
+    );
+    return;
+  }
 
-        if (
-            !Number.isInteger(duration) ||
-            duration <= 0
-        ) {
-            this.errorMessage.set(
-                'مدة الجلسة يجب أن تكون عدد دقائق أكبر من صفر.'
-            );
-            return;
-        }
+  const start = new Date(
+    `${this.form.date}T${this.form.time}:00`
+  );
 
-        const start = new Date(
-            `${this.form.date}T${this.form.time}:00`
+  if (Number.isNaN(start.getTime())) {
+    this.errorMessage.set(
+      'تاريخ أو وقت الجلسة غير صحيح.'
+    );
+    return;
+  }
+
+  // التحقق من الموعد المستقبلي عند إنشاء جلسة فقط
+  // حتى لا نمنع تعديل جلسة موجودة بسبب مرور موعدها
+  if (
+    this.editingId() === null &&
+    start.getTime() <= Date.now()
+  ) {
+    this.errorMessage.set(
+      'اختر موعدًا مستقبليًا للجلسة.'
+    );
+    return;
+  }
+
+  const [hours, minutes] =
+    this.form.time.split(':').map(Number);
+
+  const endMinutes =
+    hours * 60 + minutes + duration;
+
+  if (endMinutes >= 24 * 60) {
+    this.errorMessage.set(
+      'يجب أن تنتهي الجلسة في نفس اليوم.'
+    );
+    return;
+  }
+
+  // لا نحتاج رابط Webex لأن الاجتماع داخل نفاذ
+  const dto: TrainerLiveSessionFormDto = {
+    topic: title,
+    learningObjectives: this.form.description.trim(),
+    sessionDate: `${this.form.date}T00:00:00`,
+    startTime: this.form.time,
+    endTime: this.getEndTime(
+      this.form.time,
+      duration
+    ),
+    meetingLink: null
+  };
+
+  const editingId = this.editingId();
+
+  this.saving.set(true);
+
+  const request = editingId === null
+    ? this.api.createTrainerLiveSession({
+        batchId: this.batchId,
+        ...dto
+      })
+    : this.api.updateTrainerLiveSession(
+        editingId,
+        dto
+      );
+
+  request
+    .pipe(
+      finalize(() => this.saving.set(false))
+    )
+    .subscribe({
+      next: () => {
+        this.showForm.set(false);
+        this.editingId.set(null);
+        this.activeTab.set('upcoming');
+
+        this.successMessage.set(
+          editingId === null
+            ? 'تم إنشاء الجلسة وحفظها بنجاح.'
+            : 'تم تعديل الجلسة وحفظها بنجاح.'
         );
 
-        if (
-            Number.isNaN(start.getTime()) ||
-            start.getTime() <= Date.now()
-        ) {
-            this.errorMessage.set(
-                'اختاري موعدًا مستقبليًا للجلسة.'
-            );
-            return;
-        }
-
-        const endMinutes =
-            Number(this.form.time.split(':')[0]) * 60 +
-            Number(this.form.time.split(':')[1]) +
-            duration;
-
-        if (endMinutes >= 24 * 60) {
-            this.errorMessage.set(
-                'يجب أن تنتهي الجلسة في نفس اليوم.'
-            );
-            return;
-        }
-
-        try {
-            const url = new URL(meetingLink);
-
-            const isWebex =
-                url.hostname.toLowerCase() === 'webex.com' ||
-                url.hostname.toLowerCase().endsWith('.webex.com');
-
-            if (url.protocol !== 'https:' || !isWebex) {
-                throw new Error('Invalid Webex link');
-            }
-        } catch {
-            this.errorMessage.set(
-                'أدخلي رابط Webex صحيحًا يبدأ بـ HTTPS.'
-            );
-            return;
-        }
-
-        const dto: TrainerLiveSessionFormDto = {
-            topic: title,
-            learningObjectives: this.form.description.trim(),
-            sessionDate: `${this.form.date}T00:00:00`,
-            startTime: this.form.time,
-            endTime: this.getEndTime(
-                this.form.time,
-                duration
-            ),
-            meetingLink
-        };
-
-        const editingId = this.editingId();
-        this.saving.set(true);
-
-        const request = editingId === null
-            ? this.api.createTrainerLiveSession({
-                batchId: this.batchId,
-                ...dto
-            })
-            : this.api.updateTrainerLiveSession(
-                editingId,
-                dto
-            );
-
-        request
-            .pipe(finalize(() => this.saving.set(false)))
-            .subscribe({
-                next: () => {
-                    this.showForm.set(false);
-                    this.editingId.set(null);
-                    this.activeTab.set('upcoming');
-
-                    this.successMessage.set(
-                        editingId === null
-                            ? 'تم إنشاء الجلسة وحفظها بنجاح.'
-                            : 'تم تعديل الجلسة وحفظها بنجاح.'
-                    );
-
-                    this.loadSessions();
-                },
-                error: err => {
-                    this.errorMessage.set(
-                        this.getApiError(
-                            err,
-                            'تعذر حفظ الجلسة.'
-                        )
-                    );
-                }
-            });
-    }
-
+        this.loadSessions();
+      },
+      error: err => {
+        this.errorMessage.set(
+          this.getApiError(
+            err,
+            'تعذر حفظ الجلسة.'
+          )
+        );
+      }
+    });
+}
     // ==========================================
     // STATUS
     // ==========================================
 
-    startSession(session: LiveSession): void {
-        this.changeStatus(
-            session,
-            STATUS.InProgress,
-            'ongoing',
-            'تم بدء الجلسة.',
-            true
+   startSession(session: LiveSession): void {
+  if (this.loading()) return;
+
+  this.errorMessage.set('');
+  this.successMessage.set('');
+  this.loading.set(true);
+
+  this.api.startTrainerLiveRoom(session.id)
+    .pipe(
+      switchMap(() =>
+        this.api.joinTrainerLiveRoom(session.id)
+      ),
+      finalize(() => this.loading.set(false))
+    )
+    .subscribe({
+      next: connection => {
+        console.log('LiveKit connection:', {
+          serverUrl: connection.serverUrl,
+          hasToken: !!connection.participantToken
+        });
+
+        this.successMessage.set(
+          'تم بدء الاجتماع وتجهيز دخول المدرب.'
         );
-    }
+      },
+      error: err => {
+        this.errorMessage.set(
+          this.getApiError(
+            err,
+            'تعذر بدء الاجتماع .'
+          )
+        );
+      }
+    });
+}
 
     completeSession(session: LiveSession): void {
         this.changeStatus(
