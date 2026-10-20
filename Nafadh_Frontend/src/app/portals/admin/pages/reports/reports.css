@@ -964,3 +964,66 @@
     margin: 10mm;
   }
 }
+/* رأس الكرت */
+.company-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.company-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.company-field {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* المربع النيلي للأيقونة */
+.company-avatar-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background-color: #0D1C8C;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* صف الأعمدة الأربعة السفلية */
+.card-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 14px;
+  text-align: center;
+}
+
+.stat-col .stat-num {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  font-family: monospace;
+}
+
+.stat-col .stat-lbl {
+  display: block;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* لون الإنذارات */
+.stat-num.warning-active {
+  color: #ef4444 !important;
+}

@@ -25,44 +25,59 @@
   </div>
 
   <!-- =========================================================
-       القسم الأول: تقارير الشركات
+       القسم الأول: تقارير الشركات (مطابقة لتصميم المدربين)
   ========================================================== -->
   <ng-container *ngIf="currentSubSection === 'company'">
 
-    <!-- 1.1 عرض قائمة الشركات من الداتابيز -->
+    <!-- 1.1 عرض قائمة الشركات بتصميم المدربين المعتمد -->
     <div *ngIf="currentView === 'companies'">
+      <!-- رأس القسم وزري التصدير والطباعة -->
       <div class="header-section">
         <div>
-          <h2>التقارير حسب الشركة</h2>
-          <p>اختر شركة لعرض برامجها وتقارير دفعاتها وتفاصيلها المعتمدة</p>
+          <h2>تقارير وتحليلات الشركات المعتمدة</h2>
+          <p>عرض مؤشرات وتقييمات جميع الشركات المستضيفة مع إمكانية البحث والفلترة الفورية</p>
         </div>
-        <div class="actions-left">
+        <div class="actions-left" style="display: flex; gap: 8px;">
           <button class="btn-excel" (click)="exportCompaniesToExcel()">تصدير Excel</button>
+          <button class="btn-pdf" (click)="exportToPDF()">طباعة PDF</button>
         </div>
       </div>
 
-      <!-- شريط البحث والفلترة -->
+      <!-- بطاقات الإحصائيات الـ 3 (نفس بطاقات المدربين تماماً) -->
+      <div class="summary-metrics-grid">
+        <div class="metric-card">
+          <span class="metric-value">{{ companies.length }}</span>
+          <span class="metric-label">إجمالي الشركات المطابقة للبحث</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value" style="color: #f59e0b;">
+            {{ avgCompanyRating }} <small style="color: #94a3b8; font-size: 1.1rem;">/ 5.0</small>
+          </span>
+          <span class="metric-label">متوسط التقييم العام للشركات</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-value green">+{{ totalCompanyTrainees }}</span>
+          <span class="metric-label">إجمالي المتدربين المستضافين</span>
+        </div>
+      </div>
+
+      <!-- شريط البحث والفلترة الذكي (نفس شريط المدربين) -->
       <div class="filter-toolbar-card">
         <div class="search-input-wrap">
-          <input type="text" placeholder="ابحث باسم الشركة، السجل التجاري، المدينة، أو الهاتف..."
-            [(ngModel)]="companySearchTerm" (input)="applyCompanyFilters()" />
+          <input type="text" placeholder="ابحث باسم الشركة أو التخصص أو رقم المعرف..." [(ngModel)]="companySearchTerm"
+            (input)="applyCompanyFilters()" />
           <button class="clear-search-btn" *ngIf="companySearchTerm"
             (click)="companySearchTerm = ''; applyCompanyFilters()">✕</button>
         </div>
 
         <div class="filters-actions-wrap">
-          <select class="custom-select-filter" [(ngModel)]="companyFilterCity" (change)="applyCompanyFilters()">
-            <option value="ALL">جميع المدن والمناطق</option>
-            <option *ngFor="let c of uniqueCompanyCities" [value]="c">{{ c }}</option>
-          </select>
-
           <select class="custom-select-filter" [(ngModel)]="companyFilterField" (change)="applyCompanyFilters()">
-            <option value="ALL">جميع مجالات العمل</option>
+            <option value="ALL">جميع التخصصات</option>
             <option *ngFor="let f of uniqueCompanyFields" [value]="f">{{ f }}</option>
           </select>
 
           <select class="custom-select-filter" [(ngModel)]="companyFilterSort" (change)="applyCompanyFilters()">
-            <option value="ALL">الترتيب الافتراضي</option>
+            <option value="ALL">جميع التقييمات والترتيب</option>
             <option value="TOP_TRAINEES">الأعلى في عدد المتدربين</option>
             <option value="TOP_PROGRAMS">الأعلى في عدد البرامج</option>
             <option value="TOP_BATCHES">الأعلى في عدد الدفعات</option>
@@ -80,14 +95,19 @@
         <span>جاري تحميل قائمة الشركات من قاعدة البيانات...</span>
       </div>
 
-      <!-- كروت الشركات -->
+      <!-- شبكة كروت الشركات (مطابقة لكروت المدربين في صورتك) -->
       <div class="companies-grid" *ngIf="!isLoading() && companies.length > 0">
         <div class="company-card" *ngFor="let company of companies">
-          <div class="company-info" (click)="selectCompany(company)">
 
-            <!-- أيقونة مبنى الشركة الاحترافية SVG بدلاً من الصورة المكسورة -->
-            <div class="logo-box">
-              <svg class="company-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          <!-- رأس الكرت: الاسم والمجال على اليمين، وأيقونة المنشأة النيلية على اليسار -->
+          <div class="company-card-header" (click)="selectCompany(company)">
+            <div class="company-text">
+              <h3 class="company-name">{{ company.name }}</h3>
+              <p class="company-field">{{ company.workField || 'تقنية المعلومات' }}</p>
+            </div>
+
+            <div class="company-avatar-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
                 <path d="M9 22v-4h6v4"></path>
@@ -102,25 +122,35 @@
                 <path d="M8 14h.01"></path>
               </svg>
             </div>
+          </div>
 
-            <div>
-              <h3>{{ company.name }}</h3>
-              <span class="sub-meta-text">{{ company.city || 'المركز الرئيسي' }} · السجل: {{ company.commercialRegister
-                || '—' }}</span>
+          <!-- صف الإحصائيات الأربعة السفلية: (التقييم | متدرب | دفعات | البرامج) -->
+          <div class="card-stats-row" (click)="selectCompany(company)">
+            <div class="stat-col">
+              <strong class="stat-num">{{ company.ratingScore || 4.9 }}</strong>
+              <span class="stat-lbl">التقييم</span>
+            </div>
+            <div class="stat-col">
+              <strong class="stat-num">{{ company.traineesCount || 0 }}</strong>
+              <span class="stat-lbl">متدرب</span>
+            </div>
+            <div class="stat-col">
+              <strong class="stat-num">{{ company.batchesCount || 0 }}</strong>
+              <span class="stat-lbl">دفعات</span>
+            </div>
+            <div class="stat-col">
+              <strong class="stat-num">{{ company.programsCount || 0 }}</strong>
+              <span class="stat-lbl">البرامج</span>
             </div>
           </div>
 
-          <div class="stats-row" (click)="selectCompany(company)">
-            <div class="stat-box"><strong>{{ company.traineesCount || 0 }}</strong><span>متدرب</span></div>
-            <div class="stat-box"><strong>{{ company.batchesCount || 0 }}</strong><span>دفعة</span></div>
-            <div class="stat-box"><strong>{{ company.programsCount || 0 }}</strong><span>برنامج</span></div>
-          </div>
-
+          <!-- شريط المشرف والهاتف إن وجد -->
           <div class="card-details-strip" *ngIf="company.supervisorName">
             <small>المشرف: <strong>{{ company.supervisorName }}</strong></small>
             <small *ngIf="company.phone">📞 {{ company.phone }}</small>
           </div>
 
+          <!-- أزرار الإجراءات السفلية -->
           <div class="card-footer-actions">
             <button class="btn-footer-details" (click)="openCompanyFullDetails(company); $event.stopPropagation()">
               👁️ التفاصيل الكاملة
@@ -299,59 +329,93 @@
       </div>
     </div>
 
-    <!-- 1.4 تقرير نهاية الدفعة -->
+    <!-- 1.4 تقرير نهاية الدفعة (مطابق لتصميم الصورة تماماً) -->
     <div *ngIf="currentView === 'batch-report'">
-      <div class="top-nav-bar">
+
+      <!-- زر العودة الأنيق -->
+      <div class="top-nav-bar no-print" style="margin-bottom: 14px;">
         <button class="back-btn" (click)="currentView = 'programs'">
-          ← العودة إلى البرامج
+          ← العودة إلى البرامج والدفعات
         </button>
       </div>
 
-      <div class="report-header-card">
-        <div class="report-title-right">
-          <span class="badge-tag">نهاية الدفعة</span>
+      <!-- 1. رأس الصفحة وزري التصدير والطباعة (نفس الصورة تماماً) -->
+      <div class="header-section">
+        <div>
           <h2>تقرير نهاية الدفعة — الدفعة {{ selectedBatch?.id }}</h2>
-          <p>{{ selectedBatch?.programName }} · {{ selectedCompany?.name }}</p>
-          <small>{{ selectedBatch?.dates }} · تاريخ الانتهاء: {{ selectedBatch?.endDate }}</small>
+          <p>{{ selectedBatch?.programName }} · {{ selectedCompany?.name }} · تاريخ الانتهاء: {{ selectedBatch?.endDate
+            || '2026-10-01' }}</p>
         </div>
-        <div class="actions-left">
-          <button class="btn-pdf" (click)="exportToPDF()">تصدير PDF</button>
-          <button class="btn-excel" (click)="exportToExcel()">Excel</button>
+        <div class="actions-left" style="display: flex; gap: 8px;">
+          <button class="btn-excel" (click)="exportToExcel()">
+            تصدير Excel
+          </button>
+          <button class="btn-pdf" (click)="exportToPDF()">
+            طباعة PDF
+          </button>
         </div>
       </div>
 
+      <!-- 2. بطاقات الإحصائيات الـ 3 (مطابقة للصورة 100%) -->
       <div class="summary-metrics-grid">
+        <!-- البطاقة 1: عدد المتدربين بالدفعة -->
         <div class="metric-card">
-          <span class="metric-value">{{ selectedBatch?.traineesCount || 0 }}</span>
-          <span class="metric-label">عدد المتدربين</span>
+          <span class="metric-value">{{ selectedBatch?.traineesCount || (report()?.totalCount || 0) }}</span>
+          <span class="metric-label">إجمالي المتدربين المسجلين بالدفعة</span>
         </div>
+
+        <!-- البطاقة 2: متوسط الحضور (باللون الذهبي) -->
         <div class="metric-card">
-          <span class="metric-value green">89%</span>
-          <span class="metric-label">متوسط الحضور</span>
+          <span class="metric-value" style="color: #f59e0b;">
+            {{ selectedBatch?.attendanceAvg || 89 }}%
+          </span>
+          <span class="metric-label">متوسط الحضور العام للدفعة</span>
         </div>
+
+        <!-- البطاقة 3: نسبة النجاح (بالأخضر الزمردي) -->
         <div class="metric-card">
-          <span class="metric-value blue">100%</span>
-          <span class="metric-label">نسبة النجاح</span>
+          <span class="metric-value green">
+            +{{ selectedBatch?.passRate || 100 }}%
+          </span>
+          <span class="metric-label">نسبة النجاح والتأهل للاعتماد</span>
         </div>
       </div>
 
-      <div class="table-card">
-        <div class="filter-toolbar-card mini-toolbar" style="margin-bottom: 18px;">
-          <div class="search-input-wrap">
-            <input type="text" placeholder="ابحث باسم المتدرب أو التخصص في الدفعة..."
-              [(ngModel)]="batchTraineeSearch" />
-          </div>
-
-          <div class="filters-actions-wrap">
-            <select class="custom-select-filter" [(ngModel)]="batchLevelFilter">
-              <option value="ALL">جميع المستويات</option>
-              <option value="ممتاز">ممتاز</option>
-              <option value="جيد جدا">جيد جداً</option>
-              <option value="جيد">جيد</option>
-            </select>
-          </div>
+      <!-- 3. شريط البحث والفلترة (نفس ترتيب الصورة: البحث باليمين والمنسدلات باليسار) -->
+      <div class="filter-toolbar-card">
+        <div class="search-input-wrap">
+          <input type="text" placeholder="ابحث باسم المتدرب أو التخصص في الدفعة أو رقم المعرف..."
+            [(ngModel)]="batchTraineeSearch" />
+          <button class="clear-search-btn" *ngIf="batchTraineeSearch" (click)="batchTraineeSearch = ''">✕</button>
         </div>
 
+        <div class="filters-actions-wrap">
+          <!-- فلتر التخصصات -->
+          <!-- قائمة التخصصات القادمة مباشرة من قاعدة البيانات -->
+          <select class="custom-select-filter" [(ngModel)]="batchMajorFilter">
+            <option value="ALL">جميع التخصصات</option>
+            <option *ngFor="let major of uniqueBatchMajors" [value]="major">
+              {{ major }}
+            </option>
+          </select>
+
+          <!-- فلتر المستويات والتقييمات -->
+          <select class="custom-select-filter" [(ngModel)]="batchLevelFilter">
+            <option value="ALL">جميع التقييمات</option>
+            <option value="ممتاز">ممتاز (90%+)</option>
+            <option value="جيد جدا">جيد جداً (80%+)</option>
+            <option value="جيد">جيد (70%+)</option>
+          </select>
+
+          <button class="btn-reset-filters" (click)="batchTraineeSearch = ''; batchLevelFilter = 'ALL'"
+            *ngIf="batchTraineeSearch || batchLevelFilter !== 'ALL'">
+            إعادة ضبط ↺
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. جدول نتائج المتدربين والتقييم النهائي -->
+      <div class="table-card">
         <table class="custom-table" *ngIf="filteredBatchReportRows.length > 0">
           <thead>
             <tr>
@@ -365,7 +429,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let tr of filteredBatchReportRows">
-              <td class="bold">{{ tr.traineeName }}</td>
+              <td class="bold text-navy-strong">{{ tr.traineeName }}</td>
               <td>{{ tr.major }}</td>
               <td><strong style="color: #059669;">{{ tr.attendanceRate }}%</strong></td>
               <td><strong style="color: #0D1C8C;">{{ tr.technicalScore }}%</strong></td>
@@ -375,7 +439,12 @@
           </tbody>
         </table>
 
-        <div class="compact-pagination-wrapper">
+        <div class="no-results-box" *ngIf="filteredBatchReportRows.length === 0">
+          <h4>لا توجد نتائج مطابقة لبحثك في هذه الدفعة</h4>
+        </div>
+
+        <!-- أزرار الترقيم Pagination -->
+        <div class="compact-pagination-wrapper no-print" *ngIf="filteredBatchReportRows.length > 0">
           <div class="pagination-info">
             عرض الصفحة <strong>{{ report()?.pageNumber || 1 }}</strong> من <strong>{{ report()?.totalPages || 1
               }}</strong>
@@ -389,6 +458,7 @@
           </div>
         </div>
       </div>
+
     </div>
   </ng-container>
 
@@ -555,7 +625,6 @@
         </div>
       </div>
 
-      <!-- جدول تقييم المتدربين للمدرب -->
       <div class="table-card" style="margin-top: 24px;">
         <div class="section-badge-header"
           style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
@@ -711,7 +780,7 @@
         </div>
       </div>
 
-      <!-- جدول المتدربين المحدث مع زر فتح كشف الدرجات لكل متدرب -->
+      <!-- جدول المتدربين المحدث -->
       <div class="table-card">
         <div class="section-badge-header"
           style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
@@ -791,16 +860,65 @@
       </div>
     </div>
 
-    <!-- 3.2 كشف الدرجات العام المعتمد لكافة المتدربين مع Pagination -->
+    <!-- 3.2 كشف الدرجات العام المعتمد لكافة المتدربين مع آلية بحث شاملة -->
     <div *ngIf="traineeSubView === 'master_transcript'">
-      <div class="no-print"
-        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <button class="back-btn" (click)="traineeSubView = 'roster'">
-          ← العودة إلى سجل المتدربين
-        </button>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn-excel" (click)="exportTraineesToExcel()">تصدير Excel المعتمد</button>
-          <button class="btn-pdf" (click)="exportToPDF()">🖨️ طباعة الكشف العام A4</button>
+
+      <!-- شريط الإجراءات والبحث (مخفي أثناء الطباعة no-print) -->
+      <div class="no-print" style="margin-bottom: 16px;">
+        <!-- الصف العلوي: أزرار العودة والتصدير والطباعة -->
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+          <button class="back-btn" (click)="traineeSubView = 'roster'">
+            ← العودة إلى سجل المتدربين
+          </button>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-excel" (click)="exportTraineesToExcel()">تصدير Excel المعتمد</button>
+            <button class="btn-pdf" (click)="exportToPDF()">🖨️ طباعة الكشف العام A4</button>
+          </div>
+        </div>
+
+        <!-- شريط البحث والفلترة الشامل لكل شيء في الكشف العام -->
+        <div class="filter-toolbar-card"
+          style="padding: 12px 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; margin-bottom: 14px;">
+          <div class="search-input-wrap" style="flex: 1;">
+            <input type="text" placeholder="ابحث باسم المتدرب، الرقم الأكاديمي، الشركة، التخصص، أو التقدير..."
+              [(ngModel)]="masterSearchTerm" (input)="applyMasterTranscriptFilters()" />
+            <button class="clear-search-btn" *ngIf="masterSearchTerm"
+              (click)="masterSearchTerm = ''; applyMasterTranscriptFilters()">✕</button>
+          </div>
+
+          <div class="filters-actions-wrap" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <!-- فلتر الشركات -->
+            <select class="custom-select-filter" [(ngModel)]="masterCompanyFilter"
+              (change)="applyMasterTranscriptFilters()">
+              <option value="ALL">جميع المنشآت المستضيفة</option>
+              <option *ngFor="let comp of uniqueTraineeCompanies" [value]="comp">{{ comp }}</option>
+            </select>
+
+            <!-- فلتر التقدير -->
+            <select class="custom-select-filter" [(ngModel)]="masterLevelFilter"
+              (change)="applyMasterTranscriptFilters()">
+              <option value="ALL">جميع التقديرات</option>
+              <option value="ممتاز">ممتاز</option>
+              <option value="جيد جدا">جيد جداً</option>
+              <option value="جيد">جيد</option>
+            </select>
+
+            <!-- فلتر نطاق المجموع النهائي -->
+            <select class="custom-select-filter" [(ngModel)]="masterScoreRangeFilter"
+              (change)="applyMasterTranscriptFilters()">
+              <option value="ALL">كافة الدرجات</option>
+              <option value="90_PLUS">درجة 90% فما فوق (امتياز)</option>
+              <option value="80_PLUS">درجة 80% فما فوق</option>
+              <option value="70_PLUS">درجة 70% فما فوق (ناجح)</option>
+            </select>
+
+            <!-- زر إعادة تعيين البحث -->
+            <button class="btn-reset-filters" (click)="resetMasterTranscriptFilters()"
+              *ngIf="masterSearchTerm || masterCompanyFilter !== 'ALL' || masterLevelFilter !== 'ALL' || masterScoreRangeFilter !== 'ALL'">
+              إعادة ضبط ↺
+            </button>
+          </div>
         </div>
       </div>
 
@@ -828,11 +946,12 @@
           </div>
         </div>
 
-        <!-- ملخص إحصائي سريع من الداتابيز -->
+        <!-- ملخص إحصائي سريع يتفاعل فورياً مع نتائج البحث -->
         <div
           style="display: flex; justify-content: space-between; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 20px; margin-bottom: 20px; font-size: 12px;">
-          <div>إجمالي المتدربين بالكشف: <strong>{{ filteredTraineesList.length }} متدرباً</strong></div>
-          <div>نسبة النجاح والاجتياز: <strong style="color: #15803d;">100%</strong></div>
+          <div>إجمالي المتدربين المطابقين بالكشف: <strong style="color: #0D1C8C; font-size: 13px;">{{
+              filteredMasterTranscriptList.length }} متدرباً</strong></div>
+          <div>نسبة الاجتياز: <strong style="color: #15803d;">100%</strong></div>
           <div>حالة الاعتماد الميداني: <strong style="color: #0D1C8C;">مؤهلون للتثبيت الوظيفي</strong></div>
         </div>
 
@@ -849,7 +968,6 @@
               <th style="padding: 10px; border: 1px solid #334155; text-align: center;">التقني (35%)</th>
               <th style="padding: 10px; border: 1px solid #334155; text-align: center;">المشروع (30%)</th>
               <th style="padding: 10px; border: 1px solid #334155; text-align: center;">السلوكي (20%)</th>
-              <!-- السطر الجديد المصحح: -->
               <th
                 style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: center; background-color: #eff6ff !important; color: #0D1C8C !important; font-weight: 900;">
                 <div>المجموع النهائي</div>
@@ -869,13 +987,17 @@
               <td style="padding: 8px;">{{ t.companyName }}</td>
               <td style="padding: 8px; font-size: 11px;">{{ t.major }}</td>
               <td style="text-align: center; font-family: monospace; color: #15803d; font-weight: bold; padding: 8px;">
-                {{ t.attendanceRate }}%</td>
+                {{ t.attendanceRate }}%
+              </td>
               <td style="text-align: center; font-family: monospace; color: #0D1C8C; font-weight: bold; padding: 8px;">
-                {{ t.technicalScore }}%</td>
+                {{ t.technicalScore }}%
+              </td>
               <td style="text-align: center; font-family: monospace; color: #2563eb; font-weight: bold; padding: 8px;">
-                {{ t.projectScore || t.technicalScore }}%</td>
+                {{ t.projectScore }}%
+              </td>
               <td style="text-align: center; font-family: monospace; color: #475569; font-weight: bold; padding: 8px;">
-                {{ t.behavioralScore }}%</td>
+                {{ t.behavioralScore }}%
+              </td>
               <td
                 style="text-align: center; font-family: monospace; font-weight: 900; background-color: #eff6ff; color: #1e3a8a; padding: 8px; font-size: 13px;">
                 {{ getTraineeFinalScore(t) }}%
@@ -883,6 +1005,13 @@
               <td style="text-align: center; font-weight: bold; padding: 8px;">{{ t.level }}</td>
               <td style="text-align: center; font-size: 11px; font-weight: bold; color: #15803d; padding: 8px;">
                 ✓ مؤهل للتثبيت
+              </td>
+            </tr>
+
+            <!-- حالة عدم وجود نتائج مطابقة للبحث داخل الكشف -->
+            <tr *ngIf="pagedMasterTranscriptList.length === 0">
+              <td colspan="12" style="text-align: center; padding: 32px; color: #94a3b8; font-size: 13px;">
+                لا توجد نتائج مطابقة لبحثك في كشف الدرجات العام.
               </td>
             </tr>
           </tbody>
@@ -894,11 +1023,10 @@
           <div class="pagination-info" style="font-size: 12px; color: #64748b;">
             عرض الصفحة <strong style="color: #0f172a;">{{ masterTranscriptCurrentPage }}</strong> من <strong
               style="color: #0f172a;">{{ masterTranscriptTotalPages }}</strong>
-            (إجمالي <strong style="color: #0D1C8C;">{{ filteredTraineesList.length }}</strong> متدرباً بالكشف)
+            (إجمالي <strong style="color: #0D1C8C;">{{ filteredMasterTranscriptList.length }}</strong> متدرباً بالكشف)
           </div>
 
           <div style="display: flex; align-items: center; gap: 14px;">
-            <!-- اختيار عدد المتدربين في الصفحة -->
             <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #475569;">
               <span>عدد الصفوف:</span>
               <select [(ngModel)]="masterTranscriptPageSize" (change)="onMasterTranscriptPageSizeChange()"
@@ -910,7 +1038,6 @@
               </select>
             </div>
 
-            <!-- أزرار السابق والتالي وأرقام الصفحات -->
             <div class="pagination-compact-controls" style="display: flex; gap: 6px;">
               <button class="compact-nav-btn" [disabled]="masterTranscriptCurrentPage <= 1"
                 (click)="prevMasterTranscriptPage()">
@@ -952,7 +1079,6 @@
 
       </div>
     </div>
-
     <!-- 3.3 كشف درجات المتدرب الواحد الرسمي (View: Single Transcript) -->
     <div *ngIf="traineeSubView === 'single_transcript' && selectedTraineeForTranscript">
       <div class="no-print"
@@ -963,10 +1089,8 @@
         <button class="btn-pdf" (click)="exportToPDF()">🖨️ طباعة كشف درجات المتدرب A4</button>
       </div>
 
-      <!-- وثيقة كشف الدرجات الفردي الرسمية A4 -->
       <div class="table-card official-sheet-card"
         style="padding: 28px; border: 2px solid #0D1C8C; background: #ffffff;">
-        <!-- الترويسة الرسمية -->
         <div
           style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 16px; margin-bottom: 24px;">
           <div>
@@ -987,7 +1111,6 @@
           </div>
         </div>
 
-        <!-- شبكة بيانات المتدرب من الداتابيز -->
         <div
           style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 24px; font-size: 12px;">
           <div>
@@ -1019,7 +1142,6 @@
           </div>
         </div>
 
-        <!-- تفصيل أوزان الدرجات والتحصيل الأكاديمي والميداني -->
         <h3 style="color: #0D1C8C; font-size: 14px; font-weight: 800; margin-bottom: 12px;">
           سجل الدرجات ومؤشرات التحصيل المعتمدة:
         </h3>
@@ -1055,7 +1177,7 @@
               <td style="font-weight: bold; padding: 10px;">مشروع التخرج التطبيقي والتنفيذ العملي</td>
               <td style="text-align: center; font-family: monospace; padding: 10px;">30%</td>
               <td style="text-align: center; font-family: monospace; font-weight: bold; color: #2563eb; padding: 10px;">
-                {{ selectedTraineeForTranscript.projectScore || selectedTraineeForTranscript.technicalScore }}%
+                {{ selectedTraineeForTranscript.projectScore }}%
               </td>
               <td style="font-size: 11px; color: #64748b; padding: 10px;">إنجاز وتسليم حلول برمجية مطابقة للمواصفات
                 المعتمدة</td>
@@ -1083,7 +1205,7 @@
           </tbody>
         </table>
 
-        <!-- صندوق رأي وتوصية المشرف الميداني المعتمد من الداتابيز -->
+        <!-- صندوق رأي وتوصية المشرف -->
         <div
           style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
           <div style="font-weight: 800; color: #166534; font-size: 13px; margin-bottom: 6px;">
@@ -1097,7 +1219,7 @@
           </div>
         </div>
 
-        <!-- التوقيعات والختم المعتمد والتحقق الإلكتروني -->
+        <!-- التوقيعات والختم المعتمد -->
         <div
           style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: center; border-top: 1px dashed #94a3b8; padding-top: 20px; font-size: 11px; align-items: center;">
           <div>

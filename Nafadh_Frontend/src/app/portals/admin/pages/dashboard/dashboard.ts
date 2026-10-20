@@ -239,6 +239,115 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
     this.topSortBy.set('score_desc');
   }
 
+  // --- متغيرات فلترة صفحة المتعثرين ---
+  riskLimit = signal<number>(0); // 0 تعني عرض الكل
+  riskSearchQuery = signal<string>('');
+  riskSelectedProgram = signal<string>('all');
+  riskSelectedCompany = signal<string>('all');
+  riskSeverity = signal<string>('all');
+  riskSortBy = signal<string>('attendance_asc'); // الأكثر حرجاً أولاً
+
+  // استخراج البرامج والشركات الخاصة بالمتعثرين
+  availableRiskPrograms = computed(() => {
+    const list = this.allAtRiskTrainees().map(t => t.major).filter(Boolean);
+    return Array.from(new Set(list));
+  });
+
+  availableRiskCompanies = computed(() => {
+    const list = this.allAtRiskTrainees().map(t => t.companyName).filter(Boolean);
+    return Array.from(new Set(list));
+  });
+
+  // هل توجد فلاتر مفعلة في صفحة المتعثرين؟
+  hasRiskActiveFilters = computed(() => {
+    return (
+      this.riskLimit() !== 0 ||
+      this.riskSearchQuery().trim() !== '' ||
+      this.riskSelectedProgram() !== 'all' ||
+      this.riskSelectedCompany() !== 'all' ||
+      this.riskSeverity() !== 'all' ||
+      this.riskSortBy() !== 'attendance_asc'
+    );
+  });
+
+  // المتعثرون بعد تطبيق الفلترة
+  filteredAtRiskTrainees = computed(() => {
+    let list = [...this.allAtRiskTrainees()];
+
+    // 1. البحث النصي (اسم، تخصص، شركة)
+    const q = this.riskSearchQuery().trim().toLowerCase();
+    if (q) {
+      list = list.filter(t => 
+        (t.fullName && t.fullName.toLowerCase().includes(q)) ||
+        (t.major && t.major.toLowerCase().includes(q)) ||
+        (t.companyName && t.companyName.toLowerCase().includes(q))
+      );
+    }
+
+    // 2. فلتر شدة الخطورة (حضور < 60% أو 60-70% أو 70-79%)
+    if (this.riskSeverity() !== 'all') {
+      if (this.riskSeverity() === 'critical') {
+        list = list.filter(t => (t.attendancePercent || 0) < 60);
+      } else if (this.riskSeverity() === 'moderate') {
+        list = list.filter(t => (t.attendancePercent || 0) >= 60 && (t.attendancePercent || 0) < 70);
+      } else if (this.riskSeverity() === 'warning') {
+        list = list.filter(t => (t.attendancePercent || 0) >= 70 && (t.attendancePercent || 0) < 80);
+      }
+    }
+
+    // 3. فلتر البرنامج
+    if (this.riskSelectedProgram() !== 'all') {
+      list = list.filter(t => t.major === this.riskSelectedProgram());
+    }
+
+    // 4. فلتر الشركة
+    if (this.riskSelectedCompany() !== 'all') {
+      list = list.filter(t => t.companyName === this.riskSelectedCompany());
+    }
+
+    // 5. الترتيب
+    const sort = this.riskSortBy();
+    list.sort((a, b) => {
+      if (sort === 'attendance_asc') return (a.attendancePercent || 0) - (b.attendancePercent || 0);
+      if (sort === 'attendance_desc') return (b.attendancePercent || 0) - (a.attendancePercent || 0);
+      if (sort === 'name_asc') return (a.fullName || '').localeCompare(b.fullName || '', 'ar');
+      return 0;
+    });
+
+    // 6. تطبيق تحديد العدد (أول 3 أو 5 أو 10 أو الكل)
+    const limit = this.riskLimit();
+    if (limit > 0) {
+      list = list.slice(0, limit);
+    }
+
+    return list;
+  });
+
+  // حساب متوسط حضور المتعثرين المفلترين
+  currentFilteredRiskAvgAttendance = computed(() => {
+    const list = this.filteredAtRiskTrainees();
+    if (list.length === 0) return 0;
+    const total = list.reduce((sum, item) => sum + (item.attendancePercent || 0), 0);
+    return Math.round((total / list.length) * 10) / 10;
+  });
+
+  // دوال التحكم بالمتعثرين
+  setRiskLimit(limit: number) { this.riskLimit.set(limit); }
+  onRiskSearchInput(e: Event) { this.riskSearchQuery.set((e.target as HTMLInputElement).value); }
+  clearRiskSearch() { this.riskSearchQuery.set(''); }
+  onRiskSeverityChange(e: Event) { this.riskSeverity.set((e.target as HTMLSelectElement).value); }
+  onRiskProgramChange(e: Event) { this.riskSelectedProgram.set((e.target as HTMLSelectElement).value); }
+  onRiskCompanyChange(e: Event) { this.riskSelectedCompany.set((e.target as HTMLSelectElement).value); }
+  onRiskSortChange(e: Event) { this.riskSortBy.set((e.target as HTMLSelectElement).value); }
+  resetRiskFilters() {
+    this.riskLimit.set(0);
+    this.riskSearchQuery.set('');
+    this.riskSeverity.set('all');
+    this.riskSelectedProgram.set('all');
+    this.riskSelectedCompany.set('all');
+    this.riskSortBy.set('attendance_asc');
+  }
+
   // حالة عرض صفحة المتدرب التفصيلية الكاملة
 
 
@@ -1049,6 +1158,7 @@ export class AdminDashboard implements OnInit, AfterViewInit, OnDestroy {
         }
       }
     };
+    
 
     this.barChartInstance = new Chart(ctx, {
       type: 'bar',

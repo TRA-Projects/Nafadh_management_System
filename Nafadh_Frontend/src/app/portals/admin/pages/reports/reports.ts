@@ -37,7 +37,7 @@ export class AdminReports implements OnInit {
 
   programSearchTerm = '';
   programSortFilter = 'ALL';
-
+  batchMajorFilter = 'ALL';
   pageSize = 5;
   currentPageNumber = 1;
 
@@ -87,6 +87,13 @@ export class AdminReports implements OnInit {
   masterTranscriptTotalPages = 1;
   pagedMasterTranscriptList: any[] = [];
 
+  // متغيرات البحث والفلترة الشاملة لكشف الدرجات العام
+  masterSearchTerm = '';
+  masterCompanyFilter = 'ALL';
+  masterLevelFilter = 'ALL';
+  masterScoreRangeFilter = 'ALL';
+  filteredMasterTranscriptList: any[] = [];
+
   constructor(
     private api: AdminApi,
     private cdr: ChangeDetectorRef,
@@ -113,8 +120,22 @@ export class AdminReports implements OnInit {
   }
 
   // =========================================================
-  // دوال وفلاتر قسم الشركات
+  // دوال وفلاتر قسم الشركات (مع Getters لحساب بطاقات الإحصائيات)
   // =========================================================
+
+  // حساب متوسط تقييم الشركات للبطاقة العلوية
+  get avgCompanyRating(): string {
+    if (!this.companies || this.companies.length === 0) return '4.9';
+    const sum = this.companies.reduce((acc, c) => acc + (parseFloat(c.ratingScore) || 4.9), 0);
+    return (sum / this.companies.length).toFixed(1);
+  }
+
+  // حساب إجمالي المتدربين المستضافين للبطاقة العلوية
+  get totalCompanyTrainees(): number {
+    if (!this.companies) return 0;
+    return this.companies.reduce((acc, c) => acc + (c.traineesCount || 0), 0);
+  }
+
   loadCompaniesData() {
     this.isLoading.set(true);
     this.api.getCompanies().subscribe({
@@ -194,6 +215,7 @@ export class AdminReports implements OnInit {
         (c.name && c.name.toLowerCase().includes(q)) ||
         (c.commercialRegister && c.commercialRegister.includes(q)) ||
         (c.city && c.city.toLowerCase().includes(q)) ||
+        (c.workField && c.workField.toLowerCase().includes(q)) ||
         (c.phone && c.phone.includes(q))
       );
     }
@@ -303,7 +325,18 @@ export class AdminReports implements OnInit {
       }
     });
   }
+  // استخراج جميع التخصصات الفعلية القادمة من الداتابيز تلقائياً بدون تكرار
+  get uniqueBatchMajors(): string[] {
+    const rows = this.report()?.rows || [];
+    let list = rows.map((t: any) => t.major).filter(Boolean);
 
+    // إذا كانت الدفعة جديدة، يقرأ التخصصات من قاعدة بيانات المتدربين العامة
+    if (list.length === 0 && this.allTraineesData) {
+      list = this.allTraineesData.map((t: any) => t.major).filter(Boolean);
+    }
+
+    return Array.from(new Set(list));
+  }
   get filteredBatchReportRows(): any[] {
     const rawRows = this.report()?.rows || [];
     return rawRows.filter(t => {
@@ -312,10 +345,11 @@ export class AdminReports implements OnInit {
         (t.major && t.major.toLowerCase().includes(this.batchTraineeSearch.toLowerCase().trim()));
 
       const matchLevel = this.batchLevelFilter === 'ALL' || (t.level && t.level.includes(this.batchLevelFilter));
-      return matchSearch && matchLevel;
+      const matchMajor = this.batchMajorFilter === 'ALL' || (t.major && t.major.includes(this.batchMajorFilter));
+
+      return matchSearch && matchLevel && matchMajor;
     });
   }
-
   nextPage() {
     const r = this.report();
     const totalPages = r?.totalPages || Math.ceil((r?.totalCount || 0) / this.pageSize);
@@ -552,7 +586,9 @@ export class AdminReports implements OnInit {
     this.isLoading.set(true);
     const params = { pageNumber: 1, pageSize: 1000 };
     const apiRef = this.api as any;
-    const apiCall = apiRef.getTrainees ? apiRef.getTrainees(params) : (apiRef.getAllTrainees ? apiRef.getAllTrainees() : null);
+    const apiCall = apiRef.getTrainees
+      ? apiRef.getTrainees(params)
+      : (apiRef.getAllTrainees ? apiRef.getAllTrainees() : null);
 
     if (!apiCall) {
       this.isLoading.set(false);
@@ -563,46 +599,39 @@ export class AdminReports implements OnInit {
       next: (res: any) => {
         const raw = res.items || res.data || res.rows || (Array.isArray(res) ? res : []);
 
-        const quotes = [
-          'متدرب استثنائي ومتقن للمفاهيم التقنية، يمتلك مهارات تحليلية وسرعة بديهة في حل المشكلات البرمجية.',
-          'أظهر التزاماً عالياً في حضور المحاضرات وتسليم المشاريع في مواعيدها المحددة مع تفاعل ممتاز.',
-          'تطور مستواه التقني بشكل ملحوظ خلال فترة التدريب، ولديه شغف كبير بالتعلم الذاتي وتطبيق المهام.',
-          'مشارك فعال ومتميز في العمل الجماعي وحل التحديات المشتركة داخل الورش العملية.',
-          'يمتلك مهارات برمجية واعدة وقدرة سريعة على استيعاب أدوات التطوير المتقدمة.'
-        ];
+        this.allTraineesData = (raw || []).map((t: any) => {
+          const attendRate = t.attendanceRate ?? t.AttendanceRate ?? 0;
+          const techScore = t.technicalScore ?? t.TechnicalScore ?? 0;
+          const projScore = t.projectScore ?? t.ProjectScore ?? 0;
+          const behavScore = t.behavioralScore ?? t.BehavioralScore ?? 0;
 
-        const recs = [
-          'موصى به بقوة لمشاريع العمل المتقدمة',
-          'مؤهل للانتقال لسوق العمل الفعلي',
-          'مرشح للمسار التدريبي المتقدم',
-          'موصى به للتوظيف والتدريب التطبيقي'
-        ];
-
-        const trainersNames = ['فاطمة المذرية', 'محمد العامري', 'خلود الرواحي', 'غالية الحبسي', 'هلال الريامي'];
-
-        this.allTraineesData = (raw || []).map((t: any, index: number) => {
-          const techScore = t.technicalScore ?? (85 + (index % 10));
-          const behavScore = t.behavioralScore ?? (88 + (index % 8));
-          const attendRate = t.attendanceRate ?? (90 + (index % 8));
-          const projScore = t.projectScore ?? Math.min(100, Math.round(techScore * 1.02));
+          const calculatedLevel = techScore >= 90
+            ? 'ممتاز'
+            : (techScore >= 80 ? 'جيد جداً' : (techScore >= 70 ? 'جيد' : 'غير مجتاز'));
 
           return {
-            traineeId: t.traineeId || t.id,
-            traineeName: t.fullName || t.name || t.traineeName || 'متدرب',
-            companyName: t.companyName || t.company?.companyName || 'مجموعة أفق التقنية',
-            major: t.major || t.specialization || 'علوم الحاسوب',
+            traineeId: t.traineeId || t.TraineeId || t.id,
+            traineeName: t.fullName || t.FullName || t.traineeName || 'متدرب',
+            companyName: t.companyName || t.CompanyName || t.company?.companyName || '—',
+            major: t.major || t.Major || t.specialization || 'علوم الحاسوب',
+
             attendanceRate: attendRate,
             technicalScore: techScore,
-            behavioralScore: behavScore,
             projectScore: projScore,
-            level: t.level || (techScore >= 90 ? 'ممتاز' : 'جيد جداً'),
-            assignedTrainer: t.trainerName || t.trainer?.fullName || trainersNames[index % trainersNames.length],
-            trainerNotes: t.trainerNotes || quotes[index % quotes.length],
-            trainerRecommendation: t.trainerRecommendation || recs[index % recs.length]
+            behavioralScore: behavScore,
+            level: t.level || calculatedLevel,
+
+            assignedTrainer: t.trainerName || t.assignedTrainer || 'المشرف المعتمد',
+
+            trainerNotes: t.trainerNotes || t.TrainerNotes || 'لا توجد ملاحظات مسجلة',
+            trainerRecommendation: t.trainerRecommendation || t.TrainerRecommendation || 'قيد المراجعة والاعتماد'
           };
         });
 
         this.applyTraineeFilters();
+        if (this.updateMasterTranscriptPage) {
+          this.updateMasterTranscriptPage();
+        }
         this.isLoading.set(false);
         this.cdr.detectChanges();
       },
@@ -694,6 +723,7 @@ export class AdminReports implements OnInit {
     this.traineeSubView = 'single_transcript';
     this.cdr.detectChanges();
   }
+
   closeTraineeTranscript() {
     this.traineeSubView = 'roster';
     this.selectedTraineeForTranscript = null;
@@ -702,13 +732,77 @@ export class AdminReports implements OnInit {
 
   openMasterTranscript() {
     this.traineeSubView = 'master_transcript';
-    this.masterTranscriptCurrentPage = 1;
-    this.updateMasterTranscriptPage();
+    this.masterSearchTerm = '';
+    this.masterCompanyFilter = 'ALL';
+    this.masterLevelFilter = 'ALL';
+    this.masterScoreRangeFilter = 'ALL';
+    this.applyMasterTranscriptFilters();
     this.cdr.detectChanges();
   }
-  // تحديث الصفحة المعروضة في كشف الدرجات
+  // دالة البحث الشامل في كل حقول كشف الدرجات
+  applyMasterTranscriptFilters() {
+    let list = [...this.allTraineesData];
+
+    // 1. البحث الشامل بالاسم، الرقم الأكاديمي، الشركة، التخصص، أو المدرب
+    if (this.masterSearchTerm.trim()) {
+      const q = this.masterSearchTerm.toLowerCase().trim();
+      list = list.filter(t => {
+        const name = (t.traineeName || '').toLowerCase();
+        const id = String(t.traineeId || '').toLowerCase();
+        const fullId = `nfd-${id}`;
+        const comp = (t.companyName || '').toLowerCase();
+        const major = (t.major || '').toLowerCase();
+        const trainer = (t.assignedTrainer || '').toLowerCase();
+        const level = (t.level || '').toLowerCase();
+        const score = String(this.getTraineeFinalScore(t));
+
+        return name.includes(q) ||
+          id.includes(q) ||
+          fullId.includes(q) ||
+          comp.includes(q) ||
+          major.includes(q) ||
+          trainer.includes(q) ||
+          level.includes(q) ||
+          score.includes(q);
+      });
+    }
+
+    // 2. فلتر المنشأة المستضيفة
+    if (this.masterCompanyFilter !== 'ALL') {
+      list = list.filter(t => t.companyName === this.masterCompanyFilter);
+    }
+
+    // 3. فلتر التقدير
+    if (this.masterLevelFilter !== 'ALL') {
+      list = list.filter(t => t.level && t.level.includes(this.masterLevelFilter));
+    }
+
+    // 4. فلتر نطاق المجموع النهائي
+    if (this.masterScoreRangeFilter === '90_PLUS') {
+      list = list.filter(t => this.getTraineeFinalScore(t) >= 90);
+    } else if (this.masterScoreRangeFilter === '80_PLUS') {
+      list = list.filter(t => this.getTraineeFinalScore(t) >= 80);
+    } else if (this.masterScoreRangeFilter === '70_PLUS') {
+      list = list.filter(t => this.getTraineeFinalScore(t) >= 70);
+    }
+
+    this.filteredMasterTranscriptList = list;
+    this.masterTranscriptCurrentPage = 1;
+    this.updateMasterTranscriptPage();
+  }
+
+  // إعادة تعيين وتصفير فلاتر الكشف العام
+  resetMasterTranscriptFilters() {
+    this.masterSearchTerm = '';
+    this.masterCompanyFilter = 'ALL';
+    this.masterLevelFilter = 'ALL';
+    this.masterScoreRangeFilter = 'ALL';
+    this.applyMasterTranscriptFilters();
+  }
+
+  // تحديث الصفحة المعروضة في كشف الدرجات بعد الفلترة
   updateMasterTranscriptPage() {
-    const list = this.filteredTraineesList || [];
+    const list = this.filteredMasterTranscriptList || [];
     this.masterTranscriptTotalPages = Math.ceil(list.length / this.masterTranscriptPageSize) || 1;
     if (this.masterTranscriptCurrentPage > this.masterTranscriptTotalPages) {
       this.masterTranscriptCurrentPage = this.masterTranscriptTotalPages;
@@ -717,6 +811,8 @@ export class AdminReports implements OnInit {
     const endIndex = startIndex + this.masterTranscriptPageSize;
     this.pagedMasterTranscriptList = list.slice(startIndex, endIndex);
   }
+
+
   nextMasterTranscriptPage() {
     if (this.masterTranscriptCurrentPage < this.masterTranscriptTotalPages) {
       this.masterTranscriptCurrentPage++;
@@ -732,6 +828,7 @@ export class AdminReports implements OnInit {
       this.cdr.detectChanges();
     }
   }
+
   goToMasterTranscriptPage(page: number) {
     if (page >= 1 && page <= this.masterTranscriptTotalPages) {
       this.masterTranscriptCurrentPage = page;
@@ -761,8 +858,6 @@ export class AdminReports implements OnInit {
     }
     return pages;
   }
-
-
 
   getTraineeFinalScore(tr: any): number {
     if (!tr) return 0;
