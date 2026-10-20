@@ -437,7 +437,7 @@ saveSession(): void {
     // STATUS
     // ==========================================
 
-   startSession(session: LiveSession): void {
+startSession(session: LiveSession): void {
   if (this.loading()) return;
 
   this.errorMessage.set('');
@@ -452,113 +452,22 @@ saveSession(): void {
       finalize(() => this.loading.set(false))
     )
     .subscribe({
-      next: connection => {
-        console.log('LiveKit connection:', {
-          serverUrl: connection.serverUrl,
-          hasToken: !!connection.participantToken
-        });
-
-        this.successMessage.set(
-          'تم بدء الاجتماع وتجهيز دخول المدرب.'
-        );
+      next: () => {
+        this.router.navigate([
+          '/trainer/live-session-room',
+          session.id
+        ]);
       },
       error: err => {
         this.errorMessage.set(
           this.getApiError(
             err,
-            'تعذر بدء الاجتماع .'
+            'تعذر بدء المحاضرة المباشرة.'
           )
         );
       }
     });
 }
-
-    completeSession(session: LiveSession): void {
-        this.changeStatus(
-            session,
-            STATUS.Completed,
-            'past',
-            'تم إنهاء الجلسة.'
-        );
-    }
-
-
-    cancelSession(session: LiveSession): void {
-        this.sessionToCancel.set(session);
-        this.showCancelModal.set(true);
-    }
-
-    closeCancelModal(): void {
-        if (this.cancelling()) return;
-
-        this.showCancelModal.set(false);
-        this.sessionToCancel.set(null);
-    }
-
-    confirmCancelSession(): void {
-        const session = this.sessionToCancel();
-
-        if (!session || this.cancelling()) return;
-
-        this.cancelling.set(true);
-        this.errorMessage.set('');
-
-        this.api.changeTrainerLiveSessionStatus(
-            session.id,
-            STATUS.Cancelled
-        ).pipe(
-            finalize(() => this.cancelling.set(false))
-        ).subscribe({
-            next: () => {
-                this.showCancelModal.set(false);
-                this.sessionToCancel.set(null);
-                this.activeTab.set('past');
-                this.successMessage.set('تم إلغاء الجلسة بنجاح.');
-                this.loadSessions();
-            },
-            error: err => {
-                this.showCancelModal.set(false);
-                this.sessionToCancel.set(null);
-                this.errorMessage.set(
-                    this.getApiError(err, 'تعذر إلغاء الجلسة.')
-                );
-            }
-        });
-    }
-
-    private changeStatus(
-        session: LiveSession,
-        status: number,
-        tab: SessionTab,
-        message: string,
-        openMeeting = false
-    ): void {
-        this.errorMessage.set('');
-        this.successMessage.set('');
-
-        this.api.changeTrainerLiveSessionStatus(
-            session.id,
-            status
-        ).subscribe({
-            next: () => {
-                this.activeTab.set(tab);
-                this.successMessage.set(message);
-                this.loadSessions();
-
-                if (openMeeting) {
-                    this.joinMeeting(session);
-                }
-            },
-            error: err => {
-                this.errorMessage.set(
-                    this.getApiError(
-                        err,
-                        'تعذر تحديث حالة الجلسة.'
-                    )
-                );
-            }
-        });
-    }
 
     // ==========================================
     // WEBEX
