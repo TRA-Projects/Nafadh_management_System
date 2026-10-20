@@ -89,7 +89,10 @@ export class AdminApi {
     }
     return this.http.get<{ items: TraineeListItemDto[]; totalCount: number }>(`${this.base}/Trainee`, { params: httpParams });
   }
-
+getTraineeExams(traineeId: number): Observable<any[]> {
+  const cleanId = this.sanitizeId(traineeId);
+  return this.http.get<any[]>(`${this.base}/TraineeExam/trainee/${cleanId}`);
+}
   getTrainee(id: number): Observable<TraineeProfileDto> {
     return this.http.get<TraineeProfileDto>(`${this.base}/Trainee/${this.sanitizeId(id)}`);
   }
