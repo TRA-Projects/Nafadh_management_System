@@ -853,6 +853,35 @@
   color: var(--nfd-red);
 }
 
+.limit-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.limit-select {
+  min-width: 56px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid #d7e0ee;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--nfd-navy);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.limit-select:focus-visible {
+  outline: 2px solid var(--nfd-navy);
+  outline-offset: 2px;
+}
+
 .list-count {
   min-width: 22px;
   height: 22px;

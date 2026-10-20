@@ -86,6 +86,29 @@ export class CompanyDashboard implements OnInit {
   topPerformers =
     signal<CompanyDashboardTraineeDto[]>([]);
 
+  // How many rows each bottom card shows (user picks 5 / 10 / 15).
+  readonly limitOptions = [5, 10, 15];
+  topLimit = signal(5);
+  riskLimit = signal(5);
+  warnLimit = signal(5);
+
+  setTopLimit(value: string | number): void {
+    this.topLimit.set(this.toLimit(value));
+  }
+
+  setRiskLimit(value: string | number): void {
+    this.riskLimit.set(this.toLimit(value));
+  }
+
+  setWarnLimit(value: string | number): void {
+    this.warnLimit.set(this.toLimit(value));
+  }
+
+  private toLimit(value: string | number): number {
+    const n = Number(value);
+    return this.limitOptions.includes(n) ? n : 5;
+  }
+
   atRisk =
     signal<CompanyDashboardTraineeDto[]>([]);
 
@@ -192,8 +215,13 @@ export class CompanyDashboard implements OnInit {
    * This remains a presentation-only calculation.
    * It is NOT used to determine who is a top performer.
    */
+  // The KPI cards keep counting the first 5 only, so changing a card's
+  // dropdown never changes the KPI numbers or the average.
+  kpiTopPerformers = computed(() => this.topPerformers().slice(0, 5));
+  kpiAtRisk = computed(() => this.atRisk().slice(0, 5));
+
   topPerformersAverage = computed(() => {
-    const trainees = this.topPerformers();
+    const trainees = this.kpiTopPerformers();
 
     if (!trainees.length) {
       return 0;

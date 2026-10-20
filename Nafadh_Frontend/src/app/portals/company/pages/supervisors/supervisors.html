@@ -30,7 +30,7 @@
         </h1>
 
         <p>
-          إدارة المشرفين المعتمدين ومتابعة الأداء وتوزيع المتدربين
+          إدارة المشرفين المعتمدين ومتابعة الأداء وتوزيع المدربين
         </p>
 
       </div>
@@ -66,7 +66,7 @@
 
       </svg>
 
-      إضافة مشرف
+      إضافة مدرب
 
     </button>
 
@@ -136,7 +136,7 @@
       </span>
 
       <span class="stat-label">
-        إجمالي المتدربين الموزعين
+        إجمالي المدربين الموزعين
       </span>
 
     </div>
@@ -420,7 +420,7 @@
           <button type="button" (click)="openDistributeModal(s)">
 
             <span>⇄</span>
-            توزيع المتدربين
+            توزيع المدربين
 
           </button>
 
@@ -505,7 +505,7 @@
         </strong>
 
         <span>
-          متدرب موزع
+          مدرب موزع
         </span>
 
       </div>
@@ -557,7 +557,7 @@
 
         </svg>
 
-        توزيع المتدربين
+        توزيع المدربين
 
       </button>
 
@@ -639,7 +639,7 @@
         </span>
 
         <h2>
-          {{ editingSupervisor ? 'تعديل بيانات المشرف' : 'إضافة مشرف شركة' }}
+          {{ editingSupervisor ? 'تعديل بيانات المدرب' : 'إضافة مدرب' }}
         </h2>
 
       </div>
@@ -780,7 +780,7 @@
 
         <button type="submit" class="btn-save-modal" [disabled]="supervisorForm.invalid">
 
-          {{ editingSupervisor ? 'حفظ التعديلات' : 'إضافة المشرف' }}
+          {{ editingSupervisor ? 'حفظ التعديلات' : 'إضافة المدرب' }}
 
         </button>
 
@@ -1193,7 +1193,7 @@
           </strong>
 
           <span>
-            متدرب موزع
+            مدرب موزع
           </span>
 
         </div>
