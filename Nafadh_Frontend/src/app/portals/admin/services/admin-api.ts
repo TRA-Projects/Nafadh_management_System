@@ -74,7 +74,7 @@ export class AdminApi {
   resetPassword(id: number, dto: unknown) { return this.http.put(`${this.base}/User/${this.sanitizeId(id)}/reset-password`, dto); }
 
   // ==========================================================
-  // 4. Trainees Management
+  // 4. Trainees Management & Quiz Results
   // ==========================================================
   getTrainees(params?: Record<string, unknown>): Observable<{ items: TraineeListItemDto[]; totalCount: number }> {
     let httpParams = new HttpParams();
@@ -89,10 +89,13 @@ export class AdminApi {
     }
     return this.http.get<{ items: TraineeListItemDto[]; totalCount: number }>(`${this.base}/Trainee`, { params: httpParams });
   }
-getTraineeExams(traineeId: number): Observable<any[]> {
-  const cleanId = this.sanitizeId(traineeId);
-  return this.http.get<any[]>(`${this.base}/TraineeExam/trainee/${cleanId}`);
-}
+
+  // 🟢 دالة جلب سجل نتائج الاختبارات الخاصة بالمتدرب (مطابقة لـ QuizResultDto في الباك إند)
+  getTraineeExams(traineeId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(traineeId);
+    return this.http.get<any[]>(`${this.base}/QuizResult/trainee/${cleanId}`);
+  }
+
   getTrainee(id: number): Observable<TraineeProfileDto> {
     return this.http.get<TraineeProfileDto>(`${this.base}/Trainee/${this.sanitizeId(id)}`);
   }
@@ -177,27 +180,21 @@ getTraineeExams(traineeId: number): Observable<any[]> {
   // ==========================================================
   // 7. خطط تدريب الشركات واعتمادها (Course Plans Approval)
   // ==========================================================
-
-  // جلب قائمة خطط شركة معينة من بوابة الشركة
   getCompanyCoursePlans(companyId: number): Observable<any> {
     const cleanId = this.sanitizeId(companyId);
     return this.http.get<any>(`${this.base}/CompanyCoursePlan/company/${cleanId}/plans`);
   }
 
-  // جلب جميع الخطط المعلقة بانتظار اعتماد الآدمن
   getPendingCoursePlans(): Observable<any[]> {
     return this.http.get<any[]>(`${this.base}/CoursePlanApproval`);
   }
 
-  // جلب تفاصيل الخطة (يدعم استدعائه بـ planId فقط أو بـ companyId و planId)
   getCoursePlanDetails(param1: number, param2?: number): Observable<any> {
     const planId = param2 !== undefined ? this.sanitizeId(param2) : this.sanitizeId(param1);
     return this.http.get<any>(`${this.base}/CoursePlanApproval/${planId}`);
   }
 
-  // مراجعة واعتماد أو رفض الخطة التدريبية
   reviewCoursePlan(param1: number, param2: any, param3?: any): Observable<any> {
-    // إذا مررت (companyId, planId, decision) أو (planId, decision)
     let planId: number;
     let payload: any;
 
@@ -328,7 +325,7 @@ getTraineeExams(traineeId: number): Observable<any[]> {
 
   // ==========================================================
   // 11. Communications & Conversations
-  // ==========================================
+  // ==========================================================
   getConversations(type: string): Observable<ConversationListItemDto[]> {
     return this.http.get<ConversationListItemDto[]>(`${this.base}/Conversation`, { params: { type } });
   }
