@@ -1,7 +1,9 @@
 ﻿
 using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs;
+using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.Services;
+using Nafadh_Backend.Models;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -107,6 +109,30 @@ namespace Nafadh_Backend.Controllers
                     message = ex.Message
                 });
             }
+        }
+
+        [HttpGet("batch/{batchId:int}")]
+        public async Task<IActionResult> GetBatchQuizzes(int batchId, [FromServices] Nafadhcontext context)
+        {
+            var quizzes = await context.NFD_Quizzes
+                .Where(q => q.BatchId == batchId)
+                .Select(q => new {
+                    q.QuizId,
+                    q.Title,
+                    q.Description,
+                    q.BatchId,
+                    q.StartDateTime,
+                    q.EndDateTime,
+                    q.DurationMinutes,
+                    q.Status,
+                    q.PassingPercentage,
+                    TrainerName = q.Trainer != null && q.Trainer.User != null
+                        ? q.Trainer.User.FullName
+                        : "المدرب المسؤول"
+                })
+                .ToListAsync();
+
+            return Ok(quizzes);
         }
     }
 }
