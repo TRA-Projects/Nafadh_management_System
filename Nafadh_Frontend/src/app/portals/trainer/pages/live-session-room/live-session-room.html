@@ -1,99 +1,110 @@
-
 <section class="live-room-page" dir="rtl">
 
-  <header class="room-header">
-    <div>
-      <span class="eyebrow">منصة نفاذ التدريبية</span>
-      <h1>المحاضرة المباشرة</h1>
-      <p>الجلسة رقم {{ sessionId }}</p>
-    </div>
+    <header class="room-header">
+        <div>
+            <span class="eyebrow">منصة نفاذ التدريبية</span>
+            <h1>المحاضرة المباشرة</h1>
+            <p>الجلسة رقم {{ sessionId }}</p>
+        </div>
 
-    <div class="room-status">
-      @if (connected()) {
-        <span class="live-indicator">متصل</span>
-      } @else {
-        <span>غير متصل</span>
-      }
-    </div>
-  </header>
+        <div class="room-status">
+            @if (connected()) {
+            <span class="live-indicator">متصل</span>
+            } @else {
+            <span>غير متصل</span>
+            }
+        </div>
+    </header>
 
-  @if (errorMessage()) {
+    @if (errorMessage()) {
     <div class="room-error">
-      {{ errorMessage() }}
+        {{ errorMessage() }}
     </div>
-  }
+    }
 
-  @if (connecting()) {
+    @if (connecting()) {
     <div class="connecting-message">
-      جاري الاتصال بالمحاضرة...
+        جاري الاتصال بالمحاضرة...
     </div>
-  }
+    }
 
-  <div class="room-content">
+    <div class="room-content">
 
-    <main class="video-area">
-      <div class="video-container" #videoContainer>
-        @if (!cameraEnabled() && participantCount() <= 1) {
-          <div class="video-placeholder">
-            <i class="fa-solid fa-video-slash"></i>
-            <p>الكاميرا متوقفة</p>
-          </div>
-        }
-      </div>
+        <main class="video-area">
+            <div class="video-container" #videoContainer>
+                @if (!cameraEnabled() && participantCount() <= 1) { <div class="video-placeholder">
+                    <i class="fa-solid fa-video-slash"></i>
+                    <p>الكاميرا متوقفة</p>
+            </div>
+            }
+    </div>
 
-      <div class="room-controls">
-        <button
-          type="button"
-          [disabled]="!connected()"
-          (click)="toggleMic()">
-          <i
-            [class]="micEnabled()
+    <div class="room-controls">
+        <button type="button" [disabled]="!connected()" (click)="toggleMic()">
+            <i [class]="micEnabled()
               ? 'fa-solid fa-microphone'
               : 'fa-solid fa-microphone-slash'">
-          </i>
-          {{ micEnabled() ? 'إيقاف المايك' : 'تشغيل المايك' }}
+            </i>
+            {{ micEnabled() ? 'إيقاف المايك' : 'تشغيل المايك' }}
         </button>
 
-        <button
-          type="button"
-          [disabled]="!connected()"
-          (click)="toggleCamera()">
-          <i
-            [class]="cameraEnabled()
+        <button type="button" [disabled]="!connected()" (click)="toggleCamera()">
+            <i [class]="cameraEnabled()
               ? 'fa-solid fa-video'
               : 'fa-solid fa-video-slash'">
-          </i>
-          {{ cameraEnabled() ? 'إيقاف الكاميرا' : 'تشغيل الكاميرا' }}
+            </i>
+            {{ cameraEnabled() ? 'إيقاف الكاميرا' : 'تشغيل الكاميرا' }}
         </button>
+        <button type="button" [disabled]="!connected()" (click)="toggleScreenShare()">
 
-        <button
-          type="button"
-          class="leave-btn"
-          (click)="leaveSession()">
-          <i class="fa-solid fa-right-from-bracket"></i>
-          مغادرة المحاضرة
+            <i class="fa-solid fa-desktop"></i>
+
+            {{ screenSharing()
+            ? 'إيقاف مشاركة الشاشة'
+            : 'مشاركة الشاشة' }}
         </button>
-      </div>
+        <button type="button" class="leave-btn" (click)="leaveSession()">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            مغادرة المحاضرة
+        </button>
+    </div>
     </main>
 
     <aside class="participants-panel">
-      <h2>
-        <i class="fa-solid fa-users"></i>
-        المشاركون
-      </h2>
+        <h2>
+            <i class="fa-solid fa-users"></i>
+            المشاركون
+        </h2>
 
-      <p>عدد المتصلين: {{ participantCount() }}</p>
+        <p>عدد المتصلين: {{ participantCount() }}</p>
 
-      @if (connected()) {
+        @if (connected()) {
         <div class="participant-item">
-          <i class="fa-solid fa-user-tie"></i>
-          أنتِ (المدرب)
+            <i class="fa-solid fa-user-tie"></i>
+            أنتِ (المدرب)
         </div>
-      }
+        }
+        @for (participant of participants(); track participant.identity) {
+        <div class="participant-item">
+
+            <span>
+                <i class="fa-solid fa-user"></i>
+                {{ participant.name }}
+            </span>
+
+            <span>
+                <i [class]="participant.micEnabled
+          ? 'fa-solid fa-microphone'
+          : 'fa-solid fa-microphone-slash'">
+                </i>
+            </span>
+
+        </div>
+        }
     </aside>
 
-  </div>
+    </div>
 
-  <div #audioContainer class="audio-container"></div>
+    <div #audioContainer class="audio-container"></div>
 
 </section>
