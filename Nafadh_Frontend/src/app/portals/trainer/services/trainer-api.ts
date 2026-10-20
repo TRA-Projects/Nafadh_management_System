@@ -49,6 +49,8 @@ export interface QuizResultDto {
   attemptId: number;
   quizId: number;
   quizTitle: string;
+   batchId: number;
+  batchName: string;
   traineeId: number;
   traineeName: string;
   attemptNumber: number;
