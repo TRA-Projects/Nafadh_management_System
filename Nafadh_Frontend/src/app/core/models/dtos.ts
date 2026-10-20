@@ -906,3 +906,14 @@ export interface TraineeSkillDto {
   serialNumber?: string | null;
   certificateUrl?: string | null;
 }
+export interface AdminBatchGroupDto {
+  conversationId: number;
+  groupName: string;
+  batchId: number;
+  batchName: string;
+  trainerUserId: number;
+  trainerName: string;
+  membersCount: number;
+  status: string;
+  createdAt: string;
+}

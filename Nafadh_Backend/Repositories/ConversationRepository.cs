@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.DTOs.CompanyPayment;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
@@ -15,6 +16,7 @@ namespace Nafadh_Backend.Repositories
         {
             _context = context;
         }
+
 
 
         // ============================================================
@@ -77,6 +79,44 @@ namespace Nafadh_Backend.Repositories
                             : t.CreatedAt
                 )
                 .ToListAsync();
+        }
+
+        public async Task<List<AdminBatchGroupListDTO>> GetAdminBatchGroupsAsync()
+        {
+            var groups = await _context.NFD_SupportTickets
+                .AsNoTracking()
+                .Where(c => c.Category == "BatchGroup")
+                .Select(c => new AdminBatchGroupListDTO
+                {
+                    ConversationId = c.TicketId,
+                    GroupName = c.Subject,
+
+                    BatchId = _context.NFD_ConversationGroupMembers
+                        .Where(m => m.ConversationId == c.TicketId)
+                        .Select(m => m.BatchId)
+                        .FirstOrDefault(),
+
+                    BatchName = (
+                        from member in _context.NFD_ConversationGroupMembers
+                        join batch in _context.NFD_Batches
+                            on member.BatchId equals batch.BatchId
+                        where member.ConversationId == c.TicketId
+                        select batch.BatchName
+                    ).FirstOrDefault() ?? string.Empty,
+
+                    TrainerUserId = c.UserId,
+                    TrainerName = c.User.FullName,
+
+                    MembersCount = _context.NFD_ConversationGroupMembers
+                        .Count(m => m.ConversationId == c.TicketId),
+
+                    Status = c.Status.ToString(),
+                    CreatedAt = c.CreatedAt
+                })
+                .OrderByDescending(g => g.CreatedAt)
+                .ToListAsync();
+
+            return groups;
         }
 
 

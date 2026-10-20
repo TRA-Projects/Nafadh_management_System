@@ -1,4 +1,5 @@
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.DTOs.CompanyPayment;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Repositories;
@@ -94,6 +95,11 @@ namespace Nafadh_Backend.Services
                 conversation,
                 batchId
             );
+        }
+
+        public async Task<List<AdminBatchGroupListDTO>> GetAdminBatchGroupsAsync()
+        {
+            return await _repository.GetAdminBatchGroupsAsync();
         }
 
         public async Task<bool> IsBatchGroupMemberAsync(

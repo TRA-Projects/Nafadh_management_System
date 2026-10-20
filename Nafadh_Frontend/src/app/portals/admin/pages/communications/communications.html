@@ -2,98 +2,233 @@
 
   <!-- 🌟 زر الرجوع العلوي (يظهر فقط إذا أتينا من صفحة البرامج) 🌟 -->
   @if (fromPrograms()) {
-    <button (click)="goBackToPrograms()" class="nfd-btn ghost" style="margin-bottom: 12px; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: #0D1C8C; background: #eff6ff; border: 1px solid #bfdbfe; padding: 6px 14px; border-radius: 8px; cursor: pointer;">
-      <span style="font-size: 15px;">&#8594;</span>
-      <span>العودة إلى صفحة البرامج والدفعات</span>
-    </button>
+  <button (click)="goBackToPrograms()" class="nfd-btn ghost"
+    style="margin-bottom: 12px; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: #0D1C8C; background: #eff6ff; border: 1px solid #bfdbfe; padding: 6px 14px; border-radius: 8px; cursor: pointer;">
+    <span style="font-size: 15px;">&#8594;</span>
+    <span>العودة إلى صفحة البرامج والدفعات</span>
+  </button>
   }
 
   <h2 class="nfd-page-title">التواصل والمراسلات</h2>
-  <p class="nfd-page-sub">محادثات الشركات، شكاوى المتدربين، وإنذارات المتدربين</p>
+  <p class="nfd-page-sub">محادثات الشركات، شكاوى المتدربين، وإنذارات المتدربين و المجموعات التدريبية</p>
 
-  <div style="display:flex;gap:4px;background:var(--color-tint-indigo);padding:4px;border-radius:var(--radius-lg);width:fit-content;margin-bottom:16px">
-    <button class="nfd-btn" [class.primary]="tab()==='company'" [class.ghost]="tab()!=='company'" (click)="tab.set('company')">محادثات الشركات</button>
-    <button class="nfd-btn" [class.primary]="tab()==='complaints'" [class.ghost]="tab()!=='complaints'" (click)="tab.set('complaints')">شكاوى المتدربين</button>
-    <button class="nfd-btn" [class.primary]="tab()==='warnings'" [class.ghost]="tab()!=='warnings'" (click)="tab.set('warnings')">إنذارات المتدربين</button>
+  <div
+    style="display:flex;gap:4px;background:var(--color-tint-indigo);padding:4px;border-radius:var(--radius-lg);width:fit-content;margin-bottom:16px">
+    <button class="nfd-btn" [class.primary]="tab()==='company'" [class.ghost]="tab()!=='company'"
+      (click)="tab.set('company')">محادثات الشركات</button>
+    <button class="nfd-btn" [class.primary]="tab()==='complaints'" [class.ghost]="tab()!=='complaints'"
+      (click)="tab.set('complaints')">شكاوى المتدربين</button>
+    <button class="nfd-btn" [class.primary]="tab()==='warnings'" [class.ghost]="tab()!=='warnings'"
+      (click)="tab.set('warnings')">إنذارات المتدربين</button>
+    <button class="nfd-btn" [class.primary]="tab()==='groups'" [class.ghost]="tab()!=='groups'" (click)="showGroups()">
+      القروبات التدريبية
+    </button>
   </div>
 
   @if (tab() === 'company' || tab() === 'complaints') {
-    <div style="display:grid;grid-template-columns:300px 1fr;gap:16px;height:520px">
-      
-      <!-- قائمة المحادثات الجانبية -->
-      <div class="nfd-card" style="overflow-y:auto;padding:8px">
-        @for (c of (tab() === 'company' ? companyThreads() : complaintThreads()); track c.conversationId) {
-          <button (click)="open(c.conversationId)" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px;border-radius:var(--radius-md);text-align:right" onmouseover="this.style.background='var(--color-tint-indigo)'" onmouseout="this.style.background='transparent'">
-            <strong style="font-size:13px">{{ c.subject }}</strong>
-            <small class="nfd-muted">{{ c.startedByName }}</small>
-            <p style="margin:0;font-size:11px;color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%">{{ c.lastMessagePreview }}</p>
-          </button>
-        }
-        @empty { <p class="nfd-muted" style="padding:10px">لا توجد محادثات</p> }
-      </div>
+  <div style="display:grid;grid-template-columns:300px 1fr;gap:16px;height:520px">
 
-      <!-- منطقة الشات والمحادثة النشطة -->
-      <div class="nfd-card" style="display:flex;flex-direction:column;padding:0;overflow:hidden">
-        @if (activeConversation(); as conv) {
-          
-          <!-- 🌟 ترويسة الشات مع زر الرجوع الذكي 🌟 -->
-          <div style="padding:12px 18px;border-bottom:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <strong style="font-size: 14px;">{{ conv.subject }}</strong>
-              <small class="nfd-muted" style="display:block;margin-top:2px">{{ conv.category }}</small>
-            </div>
-
-            <!-- زر العودة يظهر أيضاً هنا بداخل الشات مباشرة -->
-            @if (fromPrograms()) {
-              <button (click)="goBackToPrograms()" class="nfd-btn" style="display:inline-flex;align-items:center;gap:6px;background:#eff6ff;color:#0D1C8C;border:1px solid #bfdbfe;padding:6px 14px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer">
-                <span>&#8594;</span>
-                <span>رجوع للدفعة</span>
-              </button>
-            }
-          </div>
-
-          <!-- الرسائل -->
-          <div style="flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:10px">
-            @for (m of conv.messages; track m.messageId) {
-              <div style="max-width:70%;padding:8px 12px;border-radius:var(--radius-md)" [style.background]="m.senderId === 1 ? 'var(--color-navy)' : 'var(--color-tint-indigo)'" [style.color]="m.senderId === 1 ? '#fff' : 'inherit'" [style.align-self]="m.senderId === 1 ? 'flex-end' : 'flex-start'">
-                <strong style="font-size:11px;display:block">{{ m.senderName }}</strong>
-                <p style="margin:0;font-size:13px">{{ m.content }}</p>
-              </div>
-            }
-          </div>
-
-          <!-- صندوق إرسال الرسالة -->
-          <div style="display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--color-border)">
-            <input class="nfd-input" [(ngModel)]="replyText" placeholder="اكتب ردك هنا..." (keydown.enter)="reply()" />
-            <button class="nfd-btn primary" (click)="reply()">إرسال</button>
-          </div>
-
-        } @else {
-          <div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--color-text-tertiary)">اختر محادثة من القائمة</div>
-        }
-      </div>
-
+    <!-- قائمة المحادثات الجانبية -->
+    <div class="nfd-card" style="overflow-y:auto;padding:8px">
+      @for (c of (tab() === 'company' ? companyThreads() : complaintThreads()); track c.conversationId) {
+      <button (click)="open(c.conversationId)"
+        style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px;border-radius:var(--radius-md);text-align:right"
+        onmouseover="this.style.background='var(--color-tint-indigo)'" onmouseout="this.style.background='transparent'">
+        <strong style="font-size:13px">{{ c.subject }}</strong>
+        <small class="nfd-muted">{{ c.startedByName }}</small>
+        <p
+          style="margin:0;font-size:11px;color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%">
+          {{ c.lastMessagePreview }}</p>
+      </button>
+      }
+      @empty { <p class="nfd-muted" style="padding:10px">لا توجد محادثات</p> }
     </div>
+
+    <!-- منطقة الشات والمحادثة النشطة -->
+    <div class="nfd-card" style="display:flex;flex-direction:column;padding:0;overflow:hidden">
+      @if (activeConversation(); as conv) {
+
+      <!-- 🌟 ترويسة الشات مع زر الرجوع الذكي 🌟 -->
+      <div
+        style="padding:12px 18px;border-bottom:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <strong style="font-size: 14px;">{{ conv.subject }}</strong>
+          <small class="nfd-muted" style="display:block;margin-top:2px">{{ conv.category }}</small>
+        </div>
+
+        <!-- زر العودة يظهر أيضاً هنا بداخل الشات مباشرة -->
+        @if (fromPrograms()) {
+        <button (click)="goBackToPrograms()" class="nfd-btn"
+          style="display:inline-flex;align-items:center;gap:6px;background:#eff6ff;color:#0D1C8C;border:1px solid #bfdbfe;padding:6px 14px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer">
+          <span>&#8594;</span>
+          <span>رجوع للدفعة</span>
+        </button>
+        }
+      </div>
+
+      <!-- الرسائل -->
+      <div style="flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:10px">
+        @for (m of conv.messages; track m.messageId) {
+        <div style="max-width:70%;padding:8px 12px;border-radius:var(--radius-md)"
+          [style.background]="m.senderId === 1 ? 'var(--color-navy)' : 'var(--color-tint-indigo)'"
+          [style.color]="m.senderId === 1 ? '#fff' : 'inherit'"
+          [style.align-self]="m.senderId === 1 ? 'flex-end' : 'flex-start'">
+          <strong style="font-size:11px;display:block">{{ m.senderName }}</strong>
+          <p style="margin:0;font-size:13px">{{ m.content }}</p>
+        </div>
+        }
+      </div>
+
+      <!-- صندوق إرسال الرسالة -->
+      <div style="display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--color-border)">
+        <input class="nfd-input" [(ngModel)]="replyText" placeholder="اكتب ردك هنا..." (keydown.enter)="reply()" />
+        <button class="nfd-btn primary" (click)="reply()">إرسال</button>
+      </div>
+
+      } @else {
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--color-text-tertiary)">اختر
+        محادثة من القائمة</div>
+      }
+    </div>
+
+  </div>
   }
 
   @if (tab() === 'warnings') {
-    <div class="nfd-card">
-      <table class="nfd-table">
-        <thead><tr><th>المتدرب</th><th>النوع</th><th>المستوى</th><th>الحالة</th><th>الجهة المُصدِرة</th><th>التاريخ</th></tr></thead>
-        <tbody>
-          @for (w of traineeWarnings(); track w.warningId) {
-            <tr>
-              <td>{{ w.targetName }}</td>
-              <td>{{ w.type }}</td>
-              <td><span class="nfd-badge" style="background:var(--status-review-bg);color:var(--status-review-fg)">{{ w.level }}</span></td>
-              <td>{{ w.status }}</td>
-              <td>{{ w.raisedByName }}</td>
-              <td>{{ w.issuedDate | date:'shortDate' }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+  <div class="nfd-card">
+    <table class="nfd-table">
+      <thead>
+        <tr>
+          <th>المتدرب</th>
+          <th>النوع</th>
+          <th>المستوى</th>
+          <th>الحالة</th>
+          <th>الجهة المُصدِرة</th>
+          <th>التاريخ</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (w of traineeWarnings(); track w.warningId) {
+        <tr>
+          <td>{{ w.targetName }}</td>
+          <td>{{ w.type }}</td>
+          <td><span class="nfd-badge" style="background:var(--status-review-bg);color:var(--status-review-fg)">{{
+              w.level }}</span></td>
+          <td>{{ w.status }}</td>
+          <td>{{ w.raisedByName }}</td>
+          <td>{{ w.issuedDate | date:'shortDate' }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+
+  <!-- Training Batch Groups -->
+  @if (tab() === 'groups') {
+
+  <div class="nfd-card">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div>
+        <h3 style="margin:0">المجموعات التدريبية</h3>
+        <p class="nfd-muted" style="margin-top:5px">
+          عرض المجموعات المرتبطة بالدفعات التدريبية
+        </p>
+        <!-- Group Statistics -->
+
+      </div>
+
+      <button class="nfd-btn ghost" (click)="loadBatchGroups()">
+        تحديث القائمة
+      </button>
     </div>
+
+    @if (groupsLoading()) {
+    <p class="nfd-muted">جاري تحميل المجموعات...</p>
+    } @else if (groupsError()) {
+    <p style="color:#b91c1c">
+      تعذر تحميل المجموعات. يرجى المحاولة مرة أخرى.
+    </p>
+    } @else {
+
+    <!-- إحصائيات القروبات -->
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px">
+
+      <div class="nfd-card" style="background:#f0f4ff;padding:18px;border-radius:12px">
+        <p class="nfd-muted">إجمالي القروبات</p>
+        <h2 style="color:#0D1C8C">{{ totalGroups() }}</h2>
+      </div>
+
+      <div class="nfd-card" style="background:#f0fdf4;padding:18px;border-radius:12px">
+        <p class="nfd-muted">القروبات المفتوحة</p>
+        <h2 style="color:#166534">{{ openGroups() }}</h2>
+      </div>
+
+      <div class="nfd-card" style="background:#f8fafc;padding:18px;border-radius:12px">
+        <p class="nfd-muted">إجمالي العضويات</p>
+        <h2 style="color:#334155">{{ totalMembers() }}</h2>
+      </div>
+
+    </div>
+
+    <!-- البحث عن القروبات -->
+    <div style="margin-bottom:20px">
+      <input class="nfd-input" style="max-width:420px" type="search"
+        placeholder="ابحث باسم القروب أو الدفعة أو المدرب..." [ngModel]="groupSearch()"
+        (ngModelChange)="groupSearch.set($event)" />
+    </div>
+
+
+    <table class="nfd-table">
+      <thead>
+        <tr>
+          <th>رقم القروب</th>
+          <th>اسم القروب</th>
+          <th>الدفعة</th>
+          <th>المدرب</th>
+          <th>عدد الأعضاء</th>
+          <th>الحالة</th>
+          <th>تاريخ الإنشاء</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for (group of filteredBatchGroups(); track group.conversationId) {
+        <tr>
+          <td>{{ group.conversationId }}</td>
+
+          <td>
+            <strong>{{ group.groupName }}</strong>
+          </td>
+
+          <td>{{ group.batchName }}</td>
+
+          <td>{{ group.trainerName }}</td>
+
+          <td>{{ group.membersCount }}</td>
+
+          <td>
+            <span class="nfd-badge">
+              {{ group.status === 'Open' ? 'مفتوح' : group.status }}
+            </span>
+          </td>
+
+          <td>{{ group.createdAt | date:'shortDate' }}</td>
+        </tr>
+        } @empty {
+        <tr>
+          <td colspan="7" style="text-align:center;padding:24px">
+            لا توجد مجموعات تدريبية حاليًا
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+
+    }
+  </div>
+
   }
 
 </div>

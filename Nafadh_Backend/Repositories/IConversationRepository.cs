@@ -1,4 +1,5 @@
 using Nafadh_Backend.DTOs;
+using Nafadh_Backend.DTOs.CompanyPayment;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 
@@ -15,6 +16,8 @@ namespace Nafadh_Backend.Repositories
         Task<NFD_SupportTicket?> GetByIdAsync(
             int conversationId
         );
+
+        Task<List<AdminBatchGroupListDTO>> GetAdminBatchGroupsAsync();
 
         Task<NFD_SupportTicket> CreateAsync(
             NFD_SupportTicket conversation,
