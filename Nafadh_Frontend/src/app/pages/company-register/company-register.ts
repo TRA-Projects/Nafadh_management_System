@@ -24,18 +24,14 @@ export class CompanyRegister {
     'تقنية المعلومات', 'التصنيع والصناعة', 'النفط والغاز والطاقة', 'المالية والمصرفية',
     'الاستشارات والأعمال', 'الإنشاءات والعقار', 'الصحة', 'التعليم', 'الخدمات اللوجستية',
   ];
-  readonly cities = [
-    'مسقط', 'صلالة', 'صحار', 'نزوى', 'صور', 'البريمي', 'عبري', 'الرستاق', 'إبراء', 'سمائل', 'خصب',
-  ];
-
   form = this.fb.nonNullable.group({
     companyName: ['', [Validators.required, Validators.maxLength(150)]],
     commercialRegister: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9-]{4,50}$/)]],
     workField: ['', [Validators.required, Validators.maxLength(100)]],
-    city: ['', [Validators.required, Validators.maxLength(100)]],
     address: ['', [Validators.required, Validators.maxLength(250)]],
     phone: ['', [Validators.required, Validators.pattern(/^(\+968\s?)?\d{8}$/)]],
-    supervisorName: ['', [Validators.required, Validators.maxLength(100)]],
+    capacity: [0, [Validators.min(0), Validators.max(100000)]],
+    contactName: ['', [Validators.required, Validators.maxLength(150)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
   });
 
@@ -50,7 +46,7 @@ export class CompanyRegister {
     if (email) this.form.controls.email.setValue(email);
 
     // نمسح خطأ السيرفر عن الحقل لما تعدّل المستخدمة قيمته
-    Object.values(this.form.controls).forEach((c) =>
+    (Object.values(this.form.controls) as AbstractControl[]).forEach((c) =>
       c.valueChanges.subscribe(() => {
         if (c.hasError('server')) {
           const { server, ...rest } = c.errors ?? {};
@@ -68,6 +64,7 @@ export class CompanyRegister {
     if (c.hasError('required')) return 'هذا الحقل مطلوب';
     if (c.hasError('email')) return 'اكتب بريدًا إلكترونيًا صحيحًا';
     if (c.hasError('maxlength')) return 'النص أطول من المسموح';
+    if (c.hasError('min') || c.hasError('max')) return 'اكتب عددًا بين 0 و 100000';
     if (c.hasError('pattern')) {
       if (name === 'phone') return 'رقم الهاتف 8 أرقام، ويمكن أن يبدأ بـ 968+';
       if (name === 'commercialRegister') return 'أحرف إنجليزية وأرقام وشرطة فقط، 4 خانات على الأقل';
@@ -93,10 +90,10 @@ export class CompanyRegister {
       companyName: v.companyName.trim(),
       commercialRegister: v.commercialRegister.trim(),
       workField: v.workField.trim(),
-      city: v.city.trim(),
       address: v.address.trim(),
+      capacity: Number(v.capacity) || 0,
       phone: v.phone.replace(/\s/g, ''),
-      supervisorName: v.supervisorName.trim(),
+      contactName: v.contactName.trim(),
       email: v.email.trim().toLowerCase(),
     };
 

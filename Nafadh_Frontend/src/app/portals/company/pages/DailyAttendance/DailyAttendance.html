@@ -105,12 +105,13 @@
 
             <div class="daily-confirm-actions">
                 @if (isConfirmed()) {
-                    <span class="hint">تم تأكيد السجل ولا يمكن تعديله</span>
+                <span class="hint">تم تأكيد السجل ولا يمكن تعديله</span>
                 }
 
                 <button type="button" class="btn primary confirm-day-btn" [disabled]="!canConfirm()"
                     [title]="'سيتم حفظ الحضور الافتراضي للمدربين غير المسجلين قبل التأكيد'"
-                    (click)="showConfirmPopover.set(!showConfirmPopover())" [attr.aria-expanded]="showConfirmPopover()" aria-controls="attendance-confirm-popover">
+                    (click)="showConfirmPopover.set(!showConfirmPopover())" [attr.aria-expanded]="showConfirmPopover()"
+                    aria-controls="attendance-confirm-popover">
 
                     {{ isConfirmed() ? 'تم تأكيد سجل اليوم' : 'تأكيد سجل اليوم' }}
 
@@ -125,14 +126,16 @@
 
                 </button>
                 @if (showConfirmPopover() && !isConfirmed()) {
-                    <div id="attendance-confirm-popover" class="attendance-confirm-popover" role="dialog" aria-modal="false" aria-labelledby="attendance-confirm-title" dir="rtl">
-                        <strong id="attendance-confirm-title">هل أنت متأكد من تأكيد الحضور؟</strong>
-                        <p>بعد التأكيد لن تتمكن من تعديل سجل اليوم.</p>
-                        <div class="attendance-confirm-popover-actions">
-                            <button type="button" class="btn ghost" (click)="showConfirmPopover.set(false)">إلغاء</button>
-                            <button type="button" class="btn primary" [disabled]="!canConfirm()" (click)="confirmDay()">نعم، تأكيد الحضور</button>
-                        </div>
+                <div id="attendance-confirm-popover" class="attendance-confirm-popover" role="dialog" aria-modal="false"
+                    aria-labelledby="attendance-confirm-title" dir="rtl">
+                    <strong id="attendance-confirm-title">هل أنت متأكد من تأكيد الحضور؟</strong>
+                    <p>بعد التأكيد لن تتمكن من تعديل سجل اليوم.</p>
+                    <div class="attendance-confirm-popover-actions">
+                        <button type="button" class="btn ghost" (click)="showConfirmPopover.set(false)">إلغاء</button>
+                        <button type="button" class="btn primary" [disabled]="!canConfirm()" (click)="confirmDay()">نعم،
+                            تأكيد الحضور</button>
                     </div>
+                </div>
                 }
             </div>
 
@@ -191,11 +194,9 @@
                                         }
                                     </summary>
                                     <div class="trainer-filter-panel" [style.top.px]="trainerFilterTop()"
-                                        [style.left.px]="trainerFilterLeft()"
-                                        (click)="$event.stopPropagation()">
-                                        <input type="search" class="trainer-filter-search"
-                                            placeholder="ابحث عن مدرب..." [ngModel]="trainerSearch()"
-                                            (ngModelChange)="trainerSearch.set($event)" />
+                                        [style.left.px]="trainerFilterLeft()" (click)="$event.stopPropagation()">
+                                        <input type="search" class="trainer-filter-search" placeholder="ابحث عن مدرب..."
+                                            [ngModel]="trainerSearch()" (ngModelChange)="trainerSearch.set($event)" />
                                         <div class="trainer-filter-options">
                                             <button type="button" class="all-trainers-option"
                                                 [class.selected]="selectedDayTrainerId() === null"
@@ -237,17 +238,13 @@
 
                             <div class="person">
 
-                                @if ($any(row.trainer).profileImageUrl) {
-
+                                @if ($any(row.trainer).profileImageUrl && $any(row.trainer).profileImageUrl.trim() !==
+                                '') {
                                 <img class="avatar img" [src]="fileUrl($any(row.trainer).profileImageUrl)"
-                                    [alt]="row.trainer.fullName" />
-
+                                    [alt]="row.trainer.fullName" (error)="$any(row.trainer).profileImageUrl = ''" />
                                 } @else {
-
                                 <span class="avatar" [style.background]="row.color">{{ initials(row.trainer.fullName) }}
-
                                 </span>
-
                                 }
 
                                 <div>
@@ -493,8 +490,7 @@
                                     <details class="trainer-filter-menu" #trainerFilterMenu>
 
                                         <summary class="trainer-filter-trigger" title="تصفية حسب اسم المدرب"
-                                            aria-label="تصفية حسب اسم المدرب"
-                                            (click)="positionTrainerFilter($event)">
+                                            aria-label="تصفية حسب اسم المدرب" (click)="positionTrainerFilter($event)">
 
                                             <svg viewBox="0 0 24 24" width="15" height="15" fill="none"
                                                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -511,8 +507,7 @@
                                         </summary>
 
                                         <div class="trainer-filter-panel" [style.top.px]="trainerFilterTop()"
-                                            [style.left.px]="trainerFilterLeft()"
-                                            (click)="$event.stopPropagation()">
+                                            [style.left.px]="trainerFilterLeft()" (click)="$event.stopPropagation()">
 
                                             <input type="search" class="trainer-filter-search"
                                                 placeholder="ابحث عن مدرب..." aria-label="البحث عن اسم المدرب"
@@ -602,13 +597,16 @@
 
                                     </span>
 
-                                    @if (day.record && (day.record.status === 'Absent' || day.record.status === 'Late' || day.record.status === 'EarlyLeave') && (view() === 'week' || hasExcuse(day.record))) {
+                                    @if (day.record && (day.record.status === 'Absent' || day.record.status === 'Late'
+                                    || day.record.status === 'EarlyLeave') && (view() === 'week' ||
+                                    hasExcuse(day.record))) {
 
                                     <button type="button" class="weekly-excuse-btn"
                                         [class.has-excuse]="hasExcuse(day.record)"
                                         (click)="openWeeklyExcuse(day.record!)">
 
-                                        {{ view() === 'month' || hasExcuse(day.record) ? 'عرض السبب / الإثبات' : '+ سبب / إثبات' }}
+                                        {{ view() === 'month' || hasExcuse(day.record) ? 'عرض السبب / الإثبات' : '+ سبب
+                                        / إثبات' }}
 
                                     </button>
 
@@ -622,8 +620,7 @@
 
                             <td class="num">
 
-                                <strong class="week-rate"
-                                    [class.low]="row.rate !== null && row.rate < 100">
+                                <strong class="week-rate" [class.low]="row.rate !== null && row.rate < 100">
 
                                     {{ row.rate === null ? '—' : row.rate + '%' }}
 
@@ -686,10 +683,10 @@
 
             <div class="weekly-excuse-proof">
                 @if (excuse.excuseProofUrl) {
-                <a [href]="fileUrl(excuse.excuseProofUrl)" target="_blank"
-                    rel="noopener noreferrer">عرض الإثبات</a>
+                <a [href]="fileUrl(excuse.excuseProofUrl)" target="_blank" rel="noopener noreferrer">عرض الإثبات</a>
                 @if (weeklyExcuseEditing()) {
-                <button type="button" (click)="removeWeeklyProof()" [disabled]="weeklyExcuseSaving()">حذف الإثبات</button>
+                <button type="button" (click)="removeWeeklyProof()" [disabled]="weeklyExcuseSaving()">حذف
+                    الإثبات</button>
                 }
                 } @else {
                 <span>لم يُرفق إثبات</span>
@@ -697,8 +694,8 @@
                 @if (weeklyExcuseEditing()) {
                 <label class="weekly-excuse-upload">
                     {{ excuse.excuseProofUrl ? 'استبدال الإثبات' : '+ رفع صورة أو PDF' }}
-                    <input type="file" hidden accept=".jpg,.jpeg,.png,.webp,.pdf"
-                        [disabled]="weeklyExcuseSaving()" (change)="uploadWeeklyProof($event)" />
+                    <input type="file" hidden accept=".jpg,.jpeg,.png,.webp,.pdf" [disabled]="weeklyExcuseSaving()"
+                        (change)="uploadWeeklyProof($event)" />
                 </label>
                 }
             </div>
@@ -706,7 +703,8 @@
             @if (weeklyExcuseEditing()) {
             <div class="weekly-excuse-footer">
                 <button type="button" class="weekly-excuse-action" (click)="saveWeeklyReason()"
-                    [disabled]="weeklyExcuseSaving()">{{ weeklyExcuseSaving() ? 'جاري الحفظ...' : 'حفظ السبب' }}</button>
+                    [disabled]="weeklyExcuseSaving()">{{ weeklyExcuseSaving() ? 'جاري الحفظ...' : 'حفظ السبب'
+                    }}</button>
                 @if (hasExcuse(excuse)) {
                 <button type="button" class="weekly-excuse-cancel" (click)="cancelWeeklyExcuseEdit()"
                     [disabled]="weeklyExcuseSaving()">إلغاء التعديل</button>
