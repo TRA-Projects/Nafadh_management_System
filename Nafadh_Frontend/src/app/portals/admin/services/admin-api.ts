@@ -6,7 +6,7 @@ import {
   AnnouncementDto, AuditLogDto, BatchDto, BatchPerformanceReportDto, CertificateDto, CompanyDto,
   ConversationDetailDto, ConversationListItemDto, ConversationMessageDto, EvaluationBucketRollupDto,
   EvaluationDto, NotificationDto, ProgramDto, TraineeListItemDto, TraineeProfileDto,
-  TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto, ModuleDto,AdminBatchGroupDto
+  TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto, ModuleDto,AdminBatchGroupDto,AdminBatchGroupMessageDto
 } from '../../../core/models/dtos';
 
 export interface TraineeCertificateStatusDto {
@@ -334,10 +334,19 @@ export class AdminApi {
     return this.http.get<ConversationDetailDto>(`${this.base}/Conversation/${this.sanitizeId(id)}`);
   }
 
-  // 🌟 NEW: Get all training batch groups for Admin
+  // Get all training batch groups for Admin
 getAdminBatchGroups(): Observable<AdminBatchGroupDto[]> {
   return this.http.get<AdminBatchGroupDto[]>(
     `${this.base}/admin/batch-groups`
+  );
+}
+
+// Get all training batch groups messages for Admin
+getAdminBatchGroupMessages(
+  conversationId: number
+): Observable<AdminBatchGroupMessageDto[]> {
+  return this.http.get<AdminBatchGroupMessageDto[]>(
+    `${this.base}/admin/batch-groups/${conversationId}/messages`
   );
 }
 

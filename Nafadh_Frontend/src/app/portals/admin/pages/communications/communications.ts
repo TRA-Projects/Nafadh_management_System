@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router'; // 👈 1. أضفنا Router هنا
 import { AdminApi } from '../../services/admin-api';
-import { ConversationDetailDto, ConversationListItemDto, WarningDto, AdminBatchGroupDto} from '../../../../core/models/dtos';
+import { ConversationDetailDto, ConversationListItemDto, WarningDto, AdminBatchGroupDto,AdminBatchGroupMessageDto} from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-admin-communications',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './communications.html',
+  styleUrl: './communications.css'
 })
 export class AdminCommunications implements OnInit {
   private api = inject(AdminApi);
@@ -24,9 +25,16 @@ export class AdminCommunications implements OnInit {
   complaintThreads = signal<ConversationListItemDto[]>([]);
   traineeWarnings = signal<WarningDto[]>([]);
   batchGroups = signal<AdminBatchGroupDto[]>([]);
+  selectedBatchGroup = signal<AdminBatchGroupDto | null>(null);
+
+ batchGroupMessages = signal<AdminBatchGroupMessageDto[]>([]);
+
+ groupMessagesLoading = signal(false);
+
+ groupMessagesError = signal(false);
   groupSearch = signal('');
 
-filteredBatchGroups = computed(() => {
+ filteredBatchGroups = computed(() => {
   const search = this.groupSearch().trim().toLowerCase();
 
   return this.batchGroups().filter(group =>
@@ -159,4 +167,37 @@ showGroups(): void {
       this.replyText = '';
     }
   }
+
+  openBatchGroup(group: AdminBatchGroupDto): void {
+  this.selectedBatchGroup.set(group);
+  this.batchGroupMessages.set([]);
+  this.groupMessagesLoading.set(true);
+  this.groupMessagesError.set(false);
+
+  this.api.getAdminBatchGroupMessages(group.conversationId).subscribe({
+    next: (messages) => {
+      if (this.selectedBatchGroup()?.conversationId !== group.conversationId) {
+        return;
+      }
+
+      this.batchGroupMessages.set(messages);
+      this.groupMessagesLoading.set(false);
+    },
+    error: () => {
+      if (this.selectedBatchGroup()?.conversationId !== group.conversationId) {
+        return;
+      }
+
+      this.groupMessagesError.set(true);
+      this.groupMessagesLoading.set(false);
+    }
+  });
+}
+
+closeBatchGroup(): void {
+  this.selectedBatchGroup.set(null);
+  this.batchGroupMessages.set([]);
+  this.groupMessagesLoading.set(false);
+  this.groupMessagesError.set(false);
+}
 }

@@ -917,3 +917,15 @@ export interface AdminBatchGroupDto {
   status: string;
   createdAt: string;
 }
+
+export interface AdminBatchGroupMessageDto {
+  messageId: number;
+  conversationId: number;
+  senderId: number;
+  senderName: string;
+  content: string;
+  sentDate: string;
+  status: string;
+  attachmentUrl: string | null;
+  attachmentFileName: string | null;
+}

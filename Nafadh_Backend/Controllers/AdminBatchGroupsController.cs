@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nafadh_Backend.DTOs.CompanyPayment;
 using Nafadh_Backend.Services;
+using Nafadh_Backend.DTOs;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -24,6 +25,24 @@ namespace Nafadh_Backend.Controllers
                 .GetAdminBatchGroupsAsync();
 
             return Ok(groups);
+        }
+
+        [HttpGet("{conversationId:int}/messages")]
+        public async Task<ActionResult<List<AdminBatchGroupMessageDTO>>>
+    GetBatchGroupMessages(int conversationId)
+        {
+            var messages = await _conversationService
+                .GetAdminBatchGroupMessagesAsync(conversationId);
+
+            if (messages == null)
+            {
+                return NotFound(new
+                {
+                    message = "Training batch group not found."
+                });
+            }
+
+            return Ok(messages);
         }
     }
 }

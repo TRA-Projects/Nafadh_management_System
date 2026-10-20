@@ -1,234 +1,643 @@
+
 <div dir="rtl">
 
-  <!-- 🌟 زر الرجوع العلوي (يظهر فقط إذا أتينا من صفحة البرامج) 🌟 -->
+  <!-- زر الرجوع إلى صفحة البرامج -->
   @if (fromPrograms()) {
-  <button (click)="goBackToPrograms()" class="nfd-btn ghost"
-    style="margin-bottom: 12px; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: #0D1C8C; background: #eff6ff; border: 1px solid #bfdbfe; padding: 6px 14px; border-radius: 8px; cursor: pointer;">
-    <span style="font-size: 15px;">&#8594;</span>
-    <span>العودة إلى صفحة البرامج والدفعات</span>
-  </button>
+    <button
+      (click)="goBackToPrograms()"
+      class="nfd-btn ghost"
+      style="margin-bottom:12px;display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#0D1C8C;background:#eff6ff;border:1px solid #bfdbfe;padding:6px 14px;border-radius:8px;cursor:pointer">
+      <span style="font-size:15px">&#8594;</span>
+      <span>العودة إلى صفحة البرامج والدفعات</span>
+    </button>
   }
 
   <h2 class="nfd-page-title">التواصل والمراسلات</h2>
-  <p class="nfd-page-sub">محادثات الشركات، شكاوى المتدربين، وإنذارات المتدربين و المجموعات التدريبية</p>
+  <p class="nfd-page-sub">
+    محادثات الشركات، شكاوى المتدربين، وإنذارات المتدربين والمجموعات التدريبية
+  </p>
 
+  <!-- التبويبات -->
   <div
     style="display:flex;gap:4px;background:var(--color-tint-indigo);padding:4px;border-radius:var(--radius-lg);width:fit-content;margin-bottom:16px">
-    <button class="nfd-btn" [class.primary]="tab()==='company'" [class.ghost]="tab()!=='company'"
-      (click)="tab.set('company')">محادثات الشركات</button>
-    <button class="nfd-btn" [class.primary]="tab()==='complaints'" [class.ghost]="tab()!=='complaints'"
-      (click)="tab.set('complaints')">شكاوى المتدربين</button>
-    <button class="nfd-btn" [class.primary]="tab()==='warnings'" [class.ghost]="tab()!=='warnings'"
-      (click)="tab.set('warnings')">إنذارات المتدربين</button>
-    <button class="nfd-btn" [class.primary]="tab()==='groups'" [class.ghost]="tab()!=='groups'" (click)="showGroups()">
+
+    <button
+      class="nfd-btn"
+      [class.primary]="tab()==='company'"
+      [class.ghost]="tab()!=='company'"
+      (click)="tab.set('company')">
+      محادثات الشركات
+    </button>
+
+    <button
+      class="nfd-btn"
+      [class.primary]="tab()==='complaints'"
+      [class.ghost]="tab()!=='complaints'"
+      (click)="tab.set('complaints')">
+      شكاوى المتدربين
+    </button>
+
+    <button
+      class="nfd-btn"
+      [class.primary]="tab()==='warnings'"
+      [class.ghost]="tab()!=='warnings'"
+      (click)="tab.set('warnings')">
+      إنذارات المتدربين
+    </button>
+
+    <button
+      class="nfd-btn"
+      [class.primary]="tab()==='groups'"
+      [class.ghost]="tab()!=='groups'"
+      (click)="showGroups()">
       المجموعات التدريبية
     </button>
+
   </div>
 
+  <!-- محادثات الشركات وشكاوى المتدربين -->
   @if (tab() === 'company' || tab() === 'complaints') {
-  <div style="display:grid;grid-template-columns:300px 1fr;gap:16px;height:520px">
 
-    <!-- قائمة المحادثات الجانبية -->
-    <div class="nfd-card" style="overflow-y:auto;padding:8px">
-      @for (c of (tab() === 'company' ? companyThreads() : complaintThreads()); track c.conversationId) {
-      <button (click)="open(c.conversationId)"
-        style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px;border-radius:var(--radius-md);text-align:right"
-        onmouseover="this.style.background='var(--color-tint-indigo)'" onmouseout="this.style.background='transparent'">
-        <strong style="font-size:13px">{{ c.subject }}</strong>
-        <small class="nfd-muted">{{ c.startedByName }}</small>
-        <p
-          style="margin:0;font-size:11px;color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%">
-          {{ c.lastMessagePreview }}</p>
-      </button>
-      }
-      @empty { <p class="nfd-muted" style="padding:10px">لا توجد محادثات</p> }
-    </div>
+    <div style="display:grid;grid-template-columns:300px 1fr;gap:16px;height:520px">
 
-    <!-- منطقة الشات والمحادثة النشطة -->
-    <div class="nfd-card" style="display:flex;flex-direction:column;padding:0;overflow:hidden">
-      @if (activeConversation(); as conv) {
+      <!-- قائمة المحادثات الجانبية -->
+      <div class="nfd-card" style="overflow-y:auto;padding:8px">
 
-      <!-- 🌟 ترويسة الشات مع زر الرجوع الذكي 🌟 -->
+        @for (c of (tab() === 'company' ? companyThreads() : complaintThreads()); track c.conversationId) {
+
+          <button
+            (click)="open(c.conversationId)"
+            style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px;border-radius:var(--radius-md);text-align:right"
+            onmouseover="this.style.background='var(--color-tint-indigo)'"
+            onmouseout="this.style.background='transparent'">
+
+            <strong style="font-size:13px">
+              {{ c.subject }}
+            </strong>
+
+            <small class="nfd-muted">
+              {{ c.startedByName }}
+            </small>
+
+            <p
+              style="margin:0;font-size:11px;color:var(--color-text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%">
+              {{ c.lastMessagePreview }}
+            </p>
+
+          </button>
+
+        } @empty {
+
+          <p class="nfd-muted" style="padding:10px">
+            لا توجد محادثات
+          </p>
+
+        }
+
+      </div>
+
+      <!-- منطقة المحادثة النشطة -->
       <div
-        style="padding:12px 18px;border-bottom:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <strong style="font-size: 14px;">{{ conv.subject }}</strong>
-          <small class="nfd-muted" style="display:block;margin-top:2px">{{ conv.category }}</small>
-        </div>
+        class="nfd-card"
+        style="display:flex;flex-direction:column;padding:0;overflow:hidden">
 
-        <!-- زر العودة يظهر أيضاً هنا بداخل الشات مباشرة -->
-        @if (fromPrograms()) {
-        <button (click)="goBackToPrograms()" class="nfd-btn"
-          style="display:inline-flex;align-items:center;gap:6px;background:#eff6ff;color:#0D1C8C;border:1px solid #bfdbfe;padding:6px 14px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer">
-          <span>&#8594;</span>
-          <span>رجوع للدفعة</span>
-        </button>
+        @if (activeConversation(); as conv) {
+
+          <!-- ترويسة المحادثة -->
+          <div
+            style="padding:12px 18px;border-bottom:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:center">
+
+            <div>
+              <strong style="font-size:14px">
+                {{ conv.subject }}
+              </strong>
+
+              <small class="nfd-muted" style="display:block;margin-top:2px">
+                {{ conv.category }}
+              </small>
+            </div>
+
+            @if (fromPrograms()) {
+              <button
+                (click)="goBackToPrograms()"
+                class="nfd-btn"
+                style="display:inline-flex;align-items:center;gap:6px;background:#eff6ff;color:#0D1C8C;border:1px solid #bfdbfe;padding:6px 14px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer">
+
+                <span>&#8594;</span>
+                <span>رجوع للدفعة</span>
+
+              </button>
+            }
+
+          </div>
+
+          <!-- الرسائل -->
+          <div
+            style="flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:10px">
+
+            @for (m of conv.messages; track m.messageId) {
+
+              <div
+                style="max-width:70%;padding:8px 12px;border-radius:var(--radius-md)"
+                [style.background]="m.senderId === 1 ? 'var(--color-navy)' : 'var(--color-tint-indigo)'"
+                [style.color]="m.senderId === 1 ? '#fff' : 'inherit'"
+                [style.align-self]="m.senderId === 1 ? 'flex-end' : 'flex-start'">
+
+                <strong style="font-size:11px;display:block">
+                  {{ m.senderName }}
+                </strong>
+
+                <p style="margin:0;font-size:13px">
+                  {{ m.content }}
+                </p>
+
+              </div>
+
+            }
+
+          </div>
+
+          <!-- إرسال الرسائل في المحادثات العادية -->
+          <div
+            style="display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--color-border)">
+
+            <input
+              class="nfd-input"
+              [(ngModel)]="replyText"
+              placeholder="اكتب ردك هنا..."
+              (keydown.enter)="reply()" />
+
+            <button
+              class="nfd-btn primary"
+              (click)="reply()">
+              إرسال
+            </button>
+
+          </div>
+
+        } @else {
+
+          <div
+            style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--color-text-tertiary)">
+            اختر محادثة من القائمة
+          </div>
+
         }
+
       </div>
 
-      <!-- الرسائل -->
-      <div style="flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:10px">
-        @for (m of conv.messages; track m.messageId) {
-        <div style="max-width:70%;padding:8px 12px;border-radius:var(--radius-md)"
-          [style.background]="m.senderId === 1 ? 'var(--color-navy)' : 'var(--color-tint-indigo)'"
-          [style.color]="m.senderId === 1 ? '#fff' : 'inherit'"
-          [style.align-self]="m.senderId === 1 ? 'flex-end' : 'flex-start'">
-          <strong style="font-size:11px;display:block">{{ m.senderName }}</strong>
-          <p style="margin:0;font-size:13px">{{ m.content }}</p>
-        </div>
-        }
-      </div>
-
-      <!-- صندوق إرسال الرسالة -->
-      <div style="display:flex;gap:8px;padding:14px 18px;border-top:1px solid var(--color-border)">
-        <input class="nfd-input" [(ngModel)]="replyText" placeholder="اكتب ردك هنا..." (keydown.enter)="reply()" />
-        <button class="nfd-btn primary" (click)="reply()">إرسال</button>
-      </div>
-
-      } @else {
-      <div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--color-text-tertiary)">اختر
-        محادثة من القائمة</div>
-      }
     </div>
 
-  </div>
   }
 
+  <!-- إنذارات المتدربين -->
   @if (tab() === 'warnings') {
-  <div class="nfd-card">
-    <table class="nfd-table">
-      <thead>
-        <tr>
-          <th>المتدرب</th>
-          <th>النوع</th>
-          <th>المستوى</th>
-          <th>الحالة</th>
-          <th>الجهة المُصدِرة</th>
-          <th>التاريخ</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (w of traineeWarnings(); track w.warningId) {
-        <tr>
-          <td>{{ w.targetName }}</td>
-          <td>{{ w.type }}</td>
-          <td><span class="nfd-badge" style="background:var(--status-review-bg);color:var(--status-review-fg)">{{
-              w.level }}</span></td>
-          <td>{{ w.status }}</td>
-          <td>{{ w.raisedByName }}</td>
-          <td>{{ w.issuedDate | date:'shortDate' }}</td>
-        </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+
+    <div class="nfd-card">
+
+      <table class="nfd-table">
+
+        <thead>
+          <tr>
+            <th>المتدرب</th>
+            <th>النوع</th>
+            <th>المستوى</th>
+            <th>الحالة</th>
+            <th>الجهة المُصدِرة</th>
+            <th>التاريخ</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          @for (w of traineeWarnings(); track w.warningId) {
+
+            <tr>
+              <td>{{ w.targetName }}</td>
+              <td>{{ w.type }}</td>
+
+              <td>
+                <span
+                  class="nfd-badge"
+                  style="background:var(--status-review-bg);color:var(--status-review-fg)">
+                  {{ w.level }}
+                </span>
+              </td>
+
+              <td>{{ w.status }}</td>
+              <td>{{ w.raisedByName }}</td>
+              <td>{{ w.issuedDate | date:'shortDate' }}</td>
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
   }
 
-  <!-- Training Batch Groups -->
+  <!-- المجموعات التدريبية -->
   @if (tab() === 'groups') {
 
-  <div class="nfd-card">
+    <div class="nfd-card">
 
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div>
-        <h3 style="margin:0">المجموعات التدريبية</h3>
-        <p class="nfd-muted" style="margin-top:5px">
-          عرض المجموعات المرتبطة بالدفعات التدريبية
+      <!-- عنوان القسم وزر التحديث -->
+      <div
+        style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+
+        <div>
+          <h3 style="margin:0">
+            المجموعات التدريبية
+          </h3>
+
+          <p class="nfd-muted" style="margin-top:5px">
+            عرض المجموعات المرتبطة بالدفعات التدريبية
+          </p>
+        </div>
+
+        <button
+          class="nfd-btn ghost"
+          (click)="loadBatchGroups()">
+          تحديث القائمة
+        </button>
+
+      </div>
+
+      @if (groupsLoading()) {
+
+        <p class="nfd-muted">
+          جاري تحميل المجموعات...
         </p>
-        <!-- Group Statistics -->
 
-      </div>
+      } @else if (groupsError()) {
 
-      <button class="nfd-btn ghost" (click)="loadBatchGroups()">
-        تحديث القائمة
-      </button>
+        <p style="color:#b91c1c">
+          تعذر تحميل المجموعات. يرجى المحاولة مرة أخرى.
+        </p>
+
+      } @else {
+
+        <!-- إحصائيات المجموعات -->
+        <div
+          style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px">
+
+          <div
+            class="nfd-card"
+            style="background:#f0f4ff;padding:18px;border-radius:12px">
+
+            <p class="nfd-muted">
+              إجمالي المجموعات
+            </p>
+
+            <h2 style="color:#0D1C8C">
+              {{ totalGroups() }}
+            </h2>
+
+          </div>
+
+          <div
+            class="nfd-card"
+            style="background:#f0fdf4;padding:18px;border-radius:12px">
+
+            <p class="nfd-muted">
+              المجموعات المفتوحة
+            </p>
+
+            <h2 style="color:#166534">
+              {{ openGroups() }}
+            </h2>
+
+          </div>
+
+          <div
+            class="nfd-card"
+            style="background:#f8fafc;padding:18px;border-radius:12px">
+
+            <p class="nfd-muted">
+              إجمالي العضويات
+            </p>
+
+            <h2 style="color:#334155">
+              {{ totalMembers() }}
+            </h2>
+
+          </div>
+
+        </div>
+
+        <!-- البحث عن المجموعات -->
+        <div style="margin-bottom:20px">
+
+          <input
+            class="nfd-input"
+            style="max-width:420px"
+            type="search"
+            placeholder="ابحث باسم المجموعة أو الدفعة أو المدرب..."
+            [ngModel]="groupSearch()"
+            (ngModelChange)="groupSearch.set($event)" />
+
+        </div>
+
+        <!-- جدول المجموعات -->
+        <table class="nfd-table">
+
+          <thead>
+            <tr>
+              <th>رقم المجموعة</th>
+              <th>اسم المجموعة</th>
+              <th>الدفعة</th>
+              <th>المدرب</th>
+              <th>عدد الأعضاء</th>
+              <th>الحالة</th>
+              <th>تاريخ الإنشاء</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            @for (group of filteredBatchGroups(); track group.conversationId) {
+
+              <tr>
+
+                <td>
+                  {{ group.conversationId }}
+                </td>
+
+                <!-- جديد: الضغط على اسم المجموعة لعرض رسائلها -->
+                <td>
+                  <button
+                    type="button"
+                    class="nfd-btn ghost"
+                    style="color:#0D1C8C;font-weight:700;text-align:right"
+                    (click)="openBatchGroup(group)">
+
+                    {{ group.groupName }}
+
+                  </button>
+                </td>
+
+                <td>
+                  {{ group.batchName }}
+                </td>
+
+                <td>
+                  {{ group.trainerName }}
+                </td>
+
+                <td>
+                  {{ group.membersCount }}
+                </td>
+
+                <td>
+                  <span class="nfd-badge">
+                    {{ group.status === 'Open' ? 'مفتوح' : group.status }}
+                  </span>
+                </td>
+
+                <td>
+                  {{ group.createdAt | date:'shortDate' }}
+                </td>
+
+              </tr>
+
+            } @empty {
+
+              <tr>
+                <td
+                  colspan="7"
+                  style="text-align:center;padding:24px">
+                  لا توجد مجموعات تدريبية حاليًا
+                </td>
+              </tr>
+
+            }
+
+          </tbody>
+
+        </table>
+
+      }
+
     </div>
-
-    @if (groupsLoading()) {
-    <p class="nfd-muted">جاري تحميل المجموعات...</p>
-    } @else if (groupsError()) {
-    <p style="color:#b91c1c">
-      تعذر تحميل المجموعات. يرجى المحاولة مرة أخرى.
-    </p>
-    } @else {
-
-    <!-- إحصائيات المجموعات -->
-    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px">
-
-      <div class="nfd-card" style="background:#f0f4ff;padding:18px;border-radius:12px">
-        <p class="nfd-muted">إجمالي المجموعات</p>
-        <h2 style="color:#0D1C8C">{{ totalGroups() }}</h2>
-      </div>
-
-      <div class="nfd-card" style="background:#f0fdf4;padding:18px;border-radius:12px">
-        <p class="nfd-muted">المجموعات المفتوحة</p>
-        <h2 style="color:#166534">{{ openGroups() }}</h2>
-      </div>
-
-      <div class="nfd-card" style="background:#f8fafc;padding:18px;border-radius:12px">
-        <p class="nfd-muted">إجمالي العضويات</p>
-        <h2 style="color:#334155">{{ totalMembers() }}</h2>
-      </div>
-
-    </div>
-
-    <!-- البحث عن المجموعات -->
-    <div style="margin-bottom:20px">
-      <input class="nfd-input" style="max-width:420px" type="search"
-        placeholder="ابحث باسم المجموعة أو الدفعة أو المدرب..." [ngModel]="groupSearch()"
-        (ngModelChange)="groupSearch.set($event)" />
-    </div>
-
-
-    <table class="nfd-table">
-      <thead>
-        <tr>
-          <th>رقم المجموعة</th>
-          <th>اسم المجموعة</th>
-          <th>الدفعة</th>
-          <th>المدرب</th>
-          <th>عدد الأعضاء</th>
-          <th>الحالة</th>
-          <th>تاريخ الإنشاء</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        @for (group of filteredBatchGroups(); track group.conversationId) {
-        <tr>
-          <td>{{ group.conversationId }}</td>
-
-          <td>
-            <strong>{{ group.groupName }}</strong>
-          </td>
-
-          <td>{{ group.batchName }}</td>
-
-          <td>{{ group.trainerName }}</td>
-
-          <td>{{ group.membersCount }}</td>
-
-          <td>
-            <span class="nfd-badge">
-              {{ group.status === 'Open' ? 'مفتوح' : group.status }}
-            </span>
-          </td>
-
-          <td>{{ group.createdAt | date:'shortDate' }}</td>
-        </tr>
-        } @empty {
-        <tr>
-          <td colspan="7" style="text-align:center;padding:24px">
-            لا توجد مجموعات تدريبية حاليًا
-          </td>
-        </tr>
-        }
-      </tbody>
-    </table>
-
-    }
-  </div>
 
   }
+
+  
+<!-- نافذة الإشراف على محادثة المجموعة -->
+@if (selectedBatchGroup(); as group) {
+
+  <div class="batch-chat-overlay">
+
+    <section
+      class="batch-chat-window"
+      role="dialog"
+      aria-modal="true"
+      aria-label="محادثة المجموعة التدريبية">
+
+      <!-- Header -->
+      <header class="batch-chat-header">
+
+        <div class="batch-chat-group-info">
+
+          <!-- أيقونة المجموعة -->
+          <div class="batch-chat-avatar">
+            <svg
+              width="25"
+              height="25"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+
+          <div>
+            <h3 class="batch-chat-title">
+              {{ group.groupName }}
+            </h3>
+
+            <p class="batch-chat-subtitle">
+              {{ group.membersCount }} أعضاء
+              • {{ group.batchName }}
+              • {{ group.trainerName }}
+            </p>
+          </div>
+
+        </div>
+
+        <!-- زر الإغلاق -->
+        <button
+          type="button"
+          class="batch-chat-close"
+          aria-label="إغلاق المحادثة"
+          (click)="closeBatchGroup()">
+
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+
+        </button>
+
+      </header>
+
+      <!-- Messages -->
+      <main class="batch-chat-messages">
+
+        @if (groupMessagesLoading()) {
+
+          <p class="batch-chat-state">
+            جاري تحميل الرسائل...
+          </p>
+
+        } @else if (groupMessagesError()) {
+
+          <div class="batch-chat-state">
+            <p>تعذر تحميل الرسائل.</p>
+
+            <button
+              type="button"
+              class="nfd-btn ghost"
+              (click)="openBatchGroup(group)">
+              إعادة المحاولة
+            </button>
+          </div>
+
+        } @else {
+
+          @for (message of batchGroupMessages(); track message.messageId) {
+
+            <article class="batch-chat-message">
+
+              <!-- اسم المرسل وأيقونته -->
+              <div class="batch-chat-sender">
+
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true">
+                  <circle cx="12" cy="8" r="4"/>
+                  <path d="M5 21v-2a7 7 0 0 1 14 0v2"/>
+                </svg>
+
+                <span>{{ message.senderName }}</span>
+
+              </div>
+
+              <!-- محتوى الرسالة -->
+              <p class="batch-chat-content">
+                {{ message.content }}
+              </p>
+
+              <!-- المرفقات -->
+              @if (message.attachmentFileName) {
+
+                <div class="batch-chat-attachment">
+
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true">
+                    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.2-9.19a4 4 0 0 1 5.65 5.65l-9.2 9.19a2 2 0 0 1-2.82-2.82l8.49-8.49"/>
+                  </svg>
+
+                  <span>{{ message.attachmentFileName }}</span>
+
+                </div>
+
+              }
+
+              <!-- وقت الرسالة -->
+              <time class="batch-chat-time">
+                {{ message.sentDate | date:'short' }}
+              </time>
+
+            </article>
+
+          } @empty {
+
+            <p class="batch-chat-state">
+              لا توجد رسائل في هذه المجموعة حتى الآن.
+            </p>
+
+          }
+
+        }
+
+      </main>
+
+      <!-- Footer: Read-only -->
+      <footer class="batch-chat-footer">
+
+        <!-- أيقونة العين -->
+        <svg
+          width="17"
+          height="17"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true">
+          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+
+        <span>وضع الإشراف — قراءة فقط</span>
+
+        <!-- أيقونة الحماية -->
+        <svg
+          width="17"
+          height="17"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+
+      </footer>
+
+    </section>
+
+  </div>
+
+}
+
 
 </div>

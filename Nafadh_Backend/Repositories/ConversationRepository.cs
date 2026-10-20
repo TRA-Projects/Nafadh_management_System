@@ -81,6 +81,9 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
         }
 
+        // ============================================================
+        // Get batch group conversations for admin
+        // ============================================================
         public async Task<List<AdminBatchGroupListDTO>> GetAdminBatchGroupsAsync()
         {
             var groups = await _context.NFD_SupportTickets
@@ -117,6 +120,45 @@ namespace Nafadh_Backend.Repositories
                 .ToListAsync();
 
             return groups;
+        }
+
+        // ============================================================
+        // Get batch group messages for admin
+        // ============================================================
+
+        public async Task<List<AdminBatchGroupMessageDTO>?>
+    GetAdminBatchGroupMessagesAsync(int conversationId)
+        {
+            // Verify this conversation is a training batch group
+            bool groupExists = await _context.NFD_SupportTickets
+                .AnyAsync(c =>
+                    c.TicketId == conversationId &&
+                    c.Category == "BatchGroup");
+
+            if (!groupExists)
+            {
+                return null;
+            }
+
+            // Retrieve messages belonging to this group
+            return await _context.NFD_Messages
+                .AsNoTracking()
+                .Where(m => m.TicketId == conversationId)
+                .OrderBy(m => m.SentDate)
+                .ThenBy(m => m.MessageId)
+                .Select(m => new AdminBatchGroupMessageDTO
+                {
+                    MessageId = m.MessageId,
+                    ConversationId = conversationId,
+                    SenderId = m.SenderId,
+                    SenderName = m.Sender.FullName,
+                    Content = m.Content,
+                    SentDate = m.SentDate,
+                    Status = m.Status.ToString(),
+                    AttachmentUrl = m.AttachmentUrl,
+                    AttachmentFileName = m.AttachmentFileName
+                })
+                .ToListAsync();
         }
 
 
