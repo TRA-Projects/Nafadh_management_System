@@ -189,6 +189,44 @@ namespace Nafadh_Backend.Services
         }
 
 
+        // Trainer Portal - Attendance:
+        // Retrieve trainees who are currently connected to this room.
+        // This does not modify the database or existing LiveKit logic.
+        public async Task<IReadOnlyList<string>> GetConnectedTraineeIdentitiesAsync(
+            int sessionId,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Check whether the LiveKit room exists.
+            var roomDetails = await GetRoomDetailsAsync(
+                sessionId, cancellationToken);
+
+            if (!roomDetails.IsLive)
+            {
+                return Array.Empty<string>();
+            }
+
+            // Retrieve participants from LiveKit Cloud.
+            var request = new ListParticipantsRequest
+            {
+                Room = GetRoomName(sessionId)
+            };
+
+            var response = await _roomClient.ListParticipants(request);
+
+            // Include only trainees, not the trainer.
+            return response.Participants
+                .Where(p =>
+                    p.Identity.StartsWith(
+                        "nafadh-trainee-",
+                        StringComparison.Ordinal))
+                .Select(p => p.Identity)
+                .ToList();
+        }
+
+
+
         // Trainer Portal - Room lifecycle implementation pending.
 
         // Trainer Portal - Create a LiveKit room for a session.

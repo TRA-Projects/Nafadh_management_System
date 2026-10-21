@@ -29,7 +29,7 @@ namespace Nafadh_Backend.Services
     }
 
     public class QuizAttemptFullDetailsDto
-    { 
+    {
         public int AttemptId { get; set; }
 
         public int QuizId { get; set; }

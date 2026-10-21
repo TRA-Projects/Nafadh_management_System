@@ -1124,6 +1124,96 @@ namespace Nafadh_Backend.Migrations
                     b.ToTable("NFD_LessonFeedbacks", (string)null);
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_LivePoll", b =>
+                {
+                    b.Property<int>("PollId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PollId"));
+
+                    b.Property<DateTime?>("ClosedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsOpen")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("SessionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("PollId");
+
+                    b.HasIndex("SessionId");
+
+                    b.ToTable("NFD_LivePolls", (string)null);
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_LivePollOption", b =>
+                {
+                    b.Property<int>("OptionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OptionId"));
+
+                    b.Property<string>("OptionText")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("PollId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("OptionId");
+
+                    b.HasIndex("PollId");
+
+                    b.ToTable("NFD_LivePollOptions", (string)null);
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_LivePollVote", b =>
+                {
+                    b.Property<int>("VoteId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VoteId"));
+
+                    b.Property<int>("OptionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PollId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SubmittedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TraineeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("VoteId");
+
+                    b.HasIndex("OptionId");
+
+                    b.HasIndex("TraineeId");
+
+                    b.HasIndex("PollId", "TraineeId")
+                        .IsUnique();
+
+                    b.ToTable("NFD_LivePollVotes", (string)null);
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Message", b =>
                 {
                     b.Property<int>("MessageId")
@@ -3348,6 +3438,55 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("Trainee");
                 });
 
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_LivePoll", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_Session", "Session")
+                        .WithMany()
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Session");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_LivePollOption", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_LivePoll", "Poll")
+                        .WithMany("Options")
+                        .HasForeignKey("PollId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Poll");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_LivePollVote", b =>
+                {
+                    b.HasOne("Nafadh_Backend.Models.NFD_LivePollOption", "Option")
+                        .WithMany("Votes")
+                        .HasForeignKey("OptionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_LivePoll", "Poll")
+                        .WithMany("Votes")
+                        .HasForeignKey("PollId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nafadh_Backend.Models.NFD_Trainee", "Trainee")
+                        .WithMany()
+                        .HasForeignKey("TraineeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Option");
+
+                    b.Navigation("Poll");
+
+                    b.Navigation("Trainee");
+                });
+
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Message", b =>
                 {
                     b.HasOne("Nafadh_Backend.Models.NFD_User", "Receiver")
@@ -4067,6 +4206,18 @@ namespace Nafadh_Backend.Migrations
                     b.Navigation("LessonFeedbacks");
 
                     b.Navigation("TrainingMaterials");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_LivePoll", b =>
+                {
+                    b.Navigation("Options");
+
+                    b.Navigation("Votes");
+                });
+
+            modelBuilder.Entity("Nafadh_Backend.Models.NFD_LivePollOption", b =>
+                {
+                    b.Navigation("Votes");
                 });
 
             modelBuilder.Entity("Nafadh_Backend.Models.NFD_Module", b =>

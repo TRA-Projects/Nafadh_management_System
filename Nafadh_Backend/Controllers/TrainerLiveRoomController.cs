@@ -10,6 +10,7 @@ using Nafadh_Backend.DTOs;
 using Nafadh_Backend.Enums;
 using Nafadh_Backend.Models;
 using Nafadh_Backend.Services;
+using System.Collections.Generic;
 
 namespace Nafadh_Backend.Controllers
 {
@@ -56,7 +57,8 @@ namespace Nafadh_Backend.Controllers
         // Trainer Portal - Ensure the session can go live.
         private static bool CanGoLive(NFD_Session session)
         {
-            return session.Status == NFD_SessionStatus.Scheduled;
+            return session.Status == NFD_SessionStatus.Scheduled
+                || session.Status == NFD_SessionStatus.InProgress;
         }
 
         // POST: api/trainer/live-sessions/5/room/start
@@ -104,6 +106,206 @@ namespace Nafadh_Backend.Controllers
 
             return Ok(room);
         }
+
+
+        // Trainer Portal - Live Attendance:
+        // Match connected LiveKit users to enrolled trainees in Nafadh.
+        // Read-only: no database changes or attendance updates.
+        [HttpGet("attendance/live")]
+        public async Task<IActionResult> GetLiveAttendance(int sessionId)
+        {
+            // Verify trainer access to this session.
+            var (session, _) =
+                await GetAuthorizedSessionAsync(sessionId);
+
+            if (session == null)
+            {
+                return NotFound(new
+                {
+                    message = "Session not found or access denied."
+                });
+            }
+
+            // Get trainees actually connected to LiveKit.
+            var identities =
+                await _liveKit.GetConnectedTraineeIdentitiesAsync(
+                    sessionId,
+                    HttpContext.RequestAborted);
+
+            // Extract UserId from identities such as:
+            // nafadh-trainee-4 -> UserId = 4
+            const string traineePrefix = "nafadh-trainee-";
+
+            var connectedUserIds = new List<int>();
+
+            foreach (var identity in identities)
+            {
+                if (!identity.StartsWith(
+                        traineePrefix,
+                        StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var userIdText =
+                    identity.Substring(traineePrefix.Length);
+
+                if (int.TryParse(userIdText, out var userId))
+                {
+                    connectedUserIds.Add(userId);
+                }
+            }
+
+            connectedUserIds = connectedUserIds
+                .Distinct()
+                .ToList();
+
+            // Match UserId to the correct TraineeId.
+            // Include only trainees enrolled in this session batch.
+            var enrolledTrainees = await _context.NFD_Trainees
+                .AsNoTracking()
+                .Where(t =>
+                    connectedUserIds.Contains(t.UserId) &&
+                    _context.NFD_Enrollments.Any(e =>
+                        e.TraineeId == t.TraineeId &&
+                        e.BatchId == session.BatchId))
+                .Select(t => new
+                {
+                    t.UserId,
+                    t.TraineeId
+                })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                SessionId = sessionId,
+
+                ConnectedTraineeCount = identities.Count,
+                ParticipantIdentities = identities,
+
+                // Connected trainees verified against Nafadh enrollments.
+                EnrolledConnectedTrainees = enrolledTrainees
+            });
+        }
+
+        // Trainer Portal - Live Attendance:
+        // Save newly connected trainees as Present.
+        // Uses the existing attendance table without a migration.
+        [HttpPost("attendance/sync")]
+        public async Task<IActionResult> SyncLiveAttendance(int sessionId)
+        {
+            // Verify trainer ownership and batch access.
+            var (session, _) =
+                await GetAuthorizedSessionAsync(sessionId);
+
+            if (session == null)
+            {
+                return NotFound(new
+                {
+                    message = "Session not found or access denied."
+                });
+            }
+
+            if (!CanGoLive(session))
+            {
+                return Conflict(new
+                {
+                    message = "This session is not available for live attendance."
+                });
+            }
+
+            // Ensure the LiveKit room exists.
+            var room = await _liveKit.GetRoomDetailsAsync(
+                sessionId,
+                HttpContext.RequestAborted);
+
+            if (!room.IsLive)
+            {
+                return Conflict(new
+                {
+                    message = "The LiveKit room is not active."
+                });
+            }
+
+            // Read connected trainees directly from LiveKit.
+            var identities =
+                await _liveKit.GetConnectedTraineeIdentitiesAsync(
+                    sessionId,
+                    HttpContext.RequestAborted);
+
+            const string prefix = "nafadh-trainee-";
+
+            var connectedUserIds = identities
+                .Where(identity =>
+                    identity.StartsWith(
+                        prefix,
+                        StringComparison.Ordinal))
+                .Select(identity =>
+                    identity.Substring(prefix.Length))
+                .Select(value =>
+                    int.TryParse(value, out var userId)
+                        ? (int?)userId
+                        : null)
+                .Where(userId =>
+                    userId.HasValue && userId.Value > 0)
+                .Select(userId => userId!.Value)
+                .Distinct()
+                .ToList();
+
+            // Find the matching enrolled trainees.
+            var traineeIds = await _context.NFD_Enrollments
+                .AsNoTracking()
+                .Where(e =>
+                    e.BatchId == session.BatchId &&
+                    connectedUserIds.Contains(e.Trainee.UserId))
+                .Select(e => e.TraineeId)
+                .Distinct()
+                .ToListAsync(HttpContext.RequestAborted);
+
+            // Retrieve existing records to prevent duplicates.
+            var existingTraineeIds =
+                await _context.NFD_SessionAttendances
+                    .AsNoTracking()
+                    .Where(a =>
+                        a.SessionId == sessionId &&
+                        traineeIds.Contains(a.TraineeId))
+                    .Select(a => a.TraineeId)
+                    .ToListAsync(HttpContext.RequestAborted);
+
+            var newTraineeIds = traineeIds
+                .Except(existingTraineeIds)
+                .ToList();
+
+            // Add attendance only when no record exists.
+            foreach (var traineeId in newTraineeIds)
+            {
+                _context.NFD_SessionAttendances.Add(
+                    new NFD_SessionAttendance
+                    {
+                        SessionId = sessionId,
+                        TraineeId = traineeId,
+                        Status = NFD_AttendanceStatus.Present,
+                        Note = "Detected through LiveKit attendance sync."
+                    });
+            }
+
+            if (newTraineeIds.Count > 0)
+            {
+                await _context.SaveChangesAsync(
+                    HttpContext.RequestAborted);
+            }
+
+            return Ok(new
+            {
+                SessionId = sessionId,
+                ConnectedTraineeCount = identities.Count,
+                EnrolledConnectedTraineeCount = traineeIds.Count,
+                NewlyRecordedPresentCount = newTraineeIds.Count,
+                AlreadyRecordedCount =
+                    traineeIds.Count - newTraineeIds.Count
+            });
+        }
+
 
         // POST: api/trainer/live-sessions/5/room/join
         // Trainer Portal - Issue a token to the session trainer.
