@@ -491,10 +491,15 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
       )
       .subscribe({
         next: () => {
+          const batchId =
+            session.batchId || Number(
+              this.route.snapshot.queryParamMap.get('batchId')
+            );
+
           this.router.navigate(
             ['/trainer/live-session-room', session.id],
             {
-              queryParams: { batchId: session.batchId }
+              queryParams: { batchId }
             }
           );
         },

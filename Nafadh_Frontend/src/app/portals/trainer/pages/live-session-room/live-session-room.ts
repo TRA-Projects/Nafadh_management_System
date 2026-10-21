@@ -331,6 +331,7 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
         await this.room?.disconnect();
 
         this.connected.set(false);
+        console.log('Leaving LiveKit room, batchId:', this.batchId);
         this.router.navigate(['/trainer/live-sessions'], {
             queryParams: { batchId: this.batchId }
         });
