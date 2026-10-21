@@ -3,30 +3,34 @@
   <header class="page-head">
     <div>
       <h2>قائمة المتدربين</h2>
-      <p>إدارة المتدربين والبحث والتصفية حسب الدفعة والبرنامج والحالة والمشرف وتاريخ المباشرة</p>
+      <p>إدارة المتدربين والبحث والتصفية حسب الدفعة والبرنامج والحالة والمشرف وتواريخ المباشرة والانتهاء</p>
     </div>
 
     <div class="actions">
-      <button type="button" class="btn outline" (click)="exportExcel()">
+      <button type="button" class="btn export-btn" (click)="exportExcel()" [disabled]="loading || !filteredTrainees.length">
         تصدير Excel
-      </button>
-      <button type="button" class="btn primary" (click)="openAdd()">
-        + تسجيل متدرب جديد
       </button>
     </div>
   </header>
 
+  <div class="trainee-overview" role="group" aria-label="ملخص المتدربين">
+    <div class="overview-card"><span class="overview-icon">◉</span><span class="overview-label">إجمالي المتدربين</span><strong>{{ trainees.length }}</strong><small>جميع المتدربين المسجلين</small></div>
+    <div class="overview-card"><span class="overview-icon">✓</span><span class="overview-label">المتدربون النشطون</span><strong>{{ activeCount }}</strong><small>قيد التدريب</small></div>
+    <div class="overview-card"><span class="overview-icon">!</span><span class="overview-label">يحتاجون متابعة</span><strong>{{ riskCount }}</strong><small>حالات التعثر</small></div>
+    <div class="overview-card"><span class="overview-icon">▥</span><span class="overview-label">متوسط الحضور</span><strong>{{ averageAttendance === null ? "—" : averageAttendance + "%" }}</strong><small>للمتدربين ذوي سجلات الحضور</small></div>
+  </div>
+
   <!-- البحث والتصفية -->
-  <div class="filters">
+  <div class="filters" role="search" aria-label="البحث وتصفية المتدربين">
 
     <div class="filter-field search-field">
       <label for="traineeSearch">بحث عن متدرب</label>
-      <input id="traineeSearch" type="text" placeholder="بحث بالاسم أو الرقم أو المشرف…" [(ngModel)]="search" />
+      <input id="traineeSearch" type="text" placeholder="بحث بالاسم أو الرقم أو المشرف…" [(ngModel)]="search" (ngModelChange)="resetPage()" />
     </div>
 
     <div class="filter-field">
       <label for="cohortFilter">الدفعة</label>
-      <select id="cohortFilter" [(ngModel)]="cohort">
+      <select id="cohortFilter" [(ngModel)]="cohort" (ngModelChange)="resetPage()">
         <option value="">كل الدفعات</option>
         @for (x of cohorts; track x) {
         <option [value]="x">{{ x }}</option>
@@ -36,7 +40,7 @@
 
     <div class="filter-field">
       <label for="programFilter">البرنامج</label>
-      <select id="programFilter" [(ngModel)]="program">
+      <select id="programFilter" [(ngModel)]="program" (ngModelChange)="resetPage()">
         <option value="">كل البرامج</option>
         @for (x of programs; track x) {
         <option [value]="x">{{ x }}</option>
@@ -46,7 +50,7 @@
 
     <div class="filter-field">
       <label for="statusFilter">الحالة</label>
-      <select id="statusFilter" [(ngModel)]="status">
+      <select id="statusFilter" [(ngModel)]="status" (ngModelChange)="resetPage()">
         <option value="">كل الحالات</option>
         @for (x of statuses; track x.value) {
         <option [value]="x.value">{{ x.label }}</option>
@@ -56,7 +60,7 @@
 
     <div class="filter-field">
       <label for="supervisorFilter">المشرف</label>
-      <select id="supervisorFilter" [(ngModel)]="supervisor">
+      <select id="supervisorFilter" [(ngModel)]="supervisor" (ngModelChange)="resetPage()">
         <option value="">كل المشرفين</option>
         @for (x of supervisors; track x) {
         <option [value]="x">{{ x }}</option>
@@ -66,12 +70,12 @@
 
     <div class="filter-field date-filter">
       <label for="fromDate">من تاريخ المباشرة</label>
-      <input id="fromDate" type="date" [(ngModel)]="fromDate" [max]="toDate || null" />
+      <input id="fromDate" type="date" [(ngModel)]="fromDate" (ngModelChange)="resetPage()" />
     </div>
 
     <div class="filter-field date-filter">
-      <label for="toDate">إلى تاريخ المباشرة</label>
-      <input id="toDate" type="date" [(ngModel)]="toDate" [min]="fromDate || null" />
+      <label for="toDate">إلى تاريخ الانتهاء</label>
+      <input id="toDate" type="date" [(ngModel)]="toDate" (ngModelChange)="resetPage()" />
     </div>
 
     <div class="filter-bottom">
@@ -85,30 +89,33 @@
 
   </div>
 
+  @if (loading) { <p class="load-message" role="status">جارٍ تحميل بيانات المتدربين...</p> }
+  @if (error) { <div class="load-message error-message" role="alert">{{ error }} <button type="button" class="btn outline" (click)="load()">إعادة المحاولة</button></div> }
+
   <!-- جدول المتدربين -->
-  <div class="table-wrap">
+  <div class="table-wrap" aria-label="جدول بيانات المتدربين">
     <table>
+      <caption class="sr-only">قائمة المتدربين وبيانات الدفعات والبرامج والحضور والحالات والتواريخ</caption>
       <thead>
         <tr>
-          <th>المتدرب</th>
-          <th>الدفعة</th>
-          <th>البرنامج</th>
-          <th>القسم / المشروع</th>
-          <th>المشرف المباشر</th>
-          <th>الحضور</th>
-          <th>الأداء</th>
-          <th>الحالة</th>
-          <th>تاريخ المباشرة</th>
-          <th>إجراءات</th>
+          <th scope="col">المتدرب</th>
+          <th scope="col">الدفعة</th>
+          <th scope="col">البرنامج</th>
+          <th scope="col">المشرف المباشر</th>
+          <th scope="col">الحضور</th>
+          <th scope="col">الحالة</th>
+          <th scope="col">تاريخ المباشرة</th>
+          <th scope="col">تاريخ الانتهاء</th>
+          <th scope="col">إجراءات</th>
         </tr>
       </thead>
 
       <tbody>
-        @for (t of filteredTrainees; track t.id) {
+        @for (t of paginatedTrainees; track t.enrollmentId) {
         <tr>
-          <td>
+          <td data-label="المتدرب" class="name-cell">
             <div class="user">
-              <span class="avatar">{{ initials(t.name) }}</span>
+              <span class="avatar">@if (t.profileImageUrl) { <img [src]="t.profileImageUrl" alt="" class="trainee-photo" (error)="$any($event.target).style.display='none'" /> } {{ initials(t.name) }}</span>
               <div>
                 <b>{{ t.name }}</b>
                 <small>#{{ t.id.toString().padStart(4, '0') }}</small>
@@ -116,37 +123,29 @@
             </div>
           </td>
 
-          <td>{{ t.cohort }}</td>
-          <td>{{ t.program }}</td>
+          <td data-label="الدفعة">{{ t.cohort }}</td>
+          <td data-label="البرنامج" class="program-cell">{{ t.program }}</td>
 
-          <td>
-            <b>{{ t.dept }}</b>
-            <small>{{ t.proj }}</small>
+          <td data-label="المشرف المباشر">{{ t.sup === '—' ? 'غير معين' : t.sup }}</td>
+
+          <td data-label="الحضور" class="attendance-cell" [class.low]="t.att !== null && t.att < 80">
+            {{ t.att === null ? '—' : t.att + '%' }}
           </td>
 
-          <td>{{ t.sup === '—' ? 'غير معين' : t.sup }}</td>
-
-          <td [class.low]="t.att < 80 && t.att > 0">
-            {{ t.att ? t.att + '%' : '—' }}
-          </td>
-
-          <td [class.low]="t.perf < 70 && t.perf > 0">
-            {{ t.perf ? t.perf + '%' : '—' }}
-          </td>
-
-          <td>
+          <td data-label="الحالة">
             <span class="chip" [attr.data-status]="t.status">
               {{ statusLabel(t.status) }}
             </span>
           </td>
 
-          <td>{{ t.start }}</td>
+          <td data-label="تاريخ المباشرة" class="date-cell">{{ t.start || "—" }}</td>
+          <td data-label="تاريخ الانتهاء" class="date-cell">{{ t.end && t.end !== "—" ? t.end : "—" }}</td>
 
-          <td>
+          <td data-label="إجراءات" class="action-cell">
             <div class="actions table-actions">
 
               <!-- GitHub -->
-              <button type="button" class="icon-btn social-btn github-btn" title="فتح حساب GitHub"
+              <button type="button" class="icon-btn social-btn github-btn" [disabled]="!t.githubUrl" title="فتح حساب GitHub"
                 aria-label="فتح حساب GitHub" (click)="openSocialLink(t.githubUrl, 'github')">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor"
@@ -155,7 +154,7 @@
               </button>
 
               <!-- LinkedIn -->
-              <button type="button" class="icon-btn social-btn linkedin-btn" title="فتح حساب LinkedIn"
+              <button type="button" class="icon-btn social-btn linkedin-btn" [disabled]="!t.linkedinUrl" title="فتح حساب LinkedIn"
                 aria-label="فتح حساب LinkedIn" (click)="openSocialLink(t.linkedinUrl, 'linkedin')">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path fill="currentColor"
@@ -179,7 +178,7 @@
         </tr>
         } @empty {
         <tr>
-          <td colspan="10" class="empty">
+          <td colspan="9" class="empty">
             لا توجد نتائج مطابقة للبحث أو الفترة المحددة.
             جرّبي تعديل التواريخ أو مسح التصفية.
           </td>
@@ -189,210 +188,28 @@
     </table>
   </div>
 
-  <!-- النوافذ المنبثقة -->
-  @if (modal) {
-  <div class="backdrop" (click)="closeModal()">
-    <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
-
-      <div class="modal-head">
-        <h3>
-          {{
-          modal === 'add'
-          ? 'تسجيل متدرب جديد'
-          : modal === 'profile'
-          ? 'الملف المختصر للمتدرب'
-          : modal === 'assign'
-          ? 'تعيين مشرف مباشر'
-          : 'تغيير حالة المتدرب'
-          }}
-        </h3>
-
-        <button type="button" class="icon-btn close-btn" aria-label="إغلاق" (click)="closeModal()">
-          ✕
-        </button>
-      </div>
-
-      <!-- الملف المختصر -->
-      @if (modal === 'profile' && selected) {
-      <div class="profile">
-        <div class="profile-heading">
-          <span class="avatar large-avatar">
-            {{ initials(selected.name) }}
-          </span>
-          <div>
-            <h3>{{ selected.name }}</h3>
-            <p>{{ selected.cohort }} — {{ selected.program }}</p>
-          </div>
-        </div>
-
-        <div class="details">
-          <div>الرقم: {{ selected.id }}</div>
-          <div>الحالة: {{ statusLabel(selected.status) }}</div>
-          <div>القسم: {{ selected.dept }}</div>
-          <div>المشروع: {{ selected.proj }}</div>
-          <div>المشرف: {{ selected.sup }}</div>
-          <div>الحضور: {{ selected.att }}%</div>
-          <div>الأداء: {{ selected.perf }}%</div>
-          <div>تقييمات معلقة: {{ selected.pend }}</div>
-          <div>الغياب: {{ selected.abs }}</div>
-          <div>التأخر: {{ selected.late }}</div>
-          <div>المباشرة: {{ selected.start }}</div>
-          <div>النهاية: {{ selected.end }}</div>
-        </div>
-
-        <div class="social-links-editor">
-          <h4>روابط الحسابات الشخصية</h4>
-
-          <label>
-            رابط GitHub
-            <input type="url" [(ngModel)]="selected.githubUrl" placeholder="https://github.com/username" dir="ltr" />
-          </label>
-
-          <label>
-            رابط LinkedIn
-            <input type="url" [(ngModel)]="selected.linkedinUrl" placeholder="https://www.linkedin.com/in/username"
-              dir="ltr" />
-          </label>
-
-          <button type="button" class="btn primary" (click)="saveProfileLinks()">
-            حفظ الروابط
-          </button>
-        </div>
-      </div>
-      }
-
-      <!-- إضافة متدرب -->
-      @if (modal === 'add') {
-      <div class="fields">
-        <label>
-          اسم المتدرب
-          <input [(ngModel)]="draft.name" />
-        </label>
-
-        <label>
-          الدفعة
-          <select [(ngModel)]="draft.cohort">
-            @for (x of cohorts; track x) {
-            <option [value]="x">{{ x }}</option>
-            }
-          </select>
-        </label>
-
-        <label>
-          البرنامج
-          <select [(ngModel)]="draft.program">
-            @for (x of programs; track x) {
-            <option [value]="x">{{ x }}</option>
-            }
-          </select>
-        </label>
-
-        <label>
-          القسم
-          <input [(ngModel)]="draft.dept" />
-        </label>
-
-        <label>
-          المشروع
-          <input [(ngModel)]="draft.proj" />
-        </label>
-
-        <label>
-          المشرف
-          <select [(ngModel)]="draft.sup">
-            <option value="—">غير معين</option>
-            @for (x of supervisors; track x) {
-            <option [value]="x">{{ x }}</option>
-            }
-          </select>
-        </label>
-
-        <label>
-          تاريخ المباشرة
-          <input type="date" [(ngModel)]="draft.start" />
-        </label>
-
-        <label>
-          تاريخ النهاية
-          <input type="date" [(ngModel)]="draft.end" />
-        </label>
-
-        <label>
-          رابط GitHub (اختياري)
-          <input type="url" [(ngModel)]="draft.githubUrl" placeholder="https://github.com/username" dir="ltr" />
-        </label>
-
-        <label>
-          رابط LinkedIn (اختياري)
-          <input type="url" [(ngModel)]="draft.linkedinUrl" placeholder="https://www.linkedin.com/in/username"
-            dir="ltr" />
-        </label>
-      </div>
-      }
-
-      <!-- تعيين مشرف -->
-      @if (modal === 'assign' && selected) {
-      <div class="fields">
-        <label>
-          المتدرب
-          <input [value]="selected.name" disabled />
-        </label>
-
-        <label>
-          المشرف
-          <select [(ngModel)]="draft.sup">
-            <option value="—">غير معين</option>
-            @for (x of supervisors; track x) {
-            <option [value]="x">{{ x }}</option>
-            }
-          </select>
-        </label>
-
-        <label>
-          القسم
-          <input [(ngModel)]="draft.dept" />
-        </label>
-
-        <label>
-          تاريخ المباشرة
-          <input type="date" [(ngModel)]="draft.start" />
-        </label>
-
-        <label>
-          تاريخ النهاية
-          <input type="date" [(ngModel)]="draft.end" />
-        </label>
-      </div>
-      }
-
-      <!-- تغيير الحالة -->
-      @if (modal === 'status' && selected) {
-      <div class="fields">
-        <label>
-          الحالة الجديدة
-          <select [(ngModel)]="draft.status">
-            @for (x of statuses; track x.value) {
-            <option [value]="x.value">{{ x.label }}</option>
-            }
-          </select>
-        </label>
-      </div>
-      }
-
-      <div class="modal-actions">
-        <button type="button" class="btn outline" (click)="closeModal()">
-          إغلاق
-        </button>
-
-        @if (modal !== 'profile') {
-        <button type="button" class="btn primary" (click)="save()">
-          حفظ
-        </button>
-        }
-      </div>
-
+  <nav class="trainees-pagination" aria-label="التنقل بين صفحات المتدربين">
+    <div class="pagination-size">
+      <label for="traineesPageSize">عدد المتدربين في الصفحة</label>
+      <select id="traineesPageSize" [ngModel]="pageSize" (ngModelChange)="changePageSize($event)">
+        <option [ngValue]="5">5</option>
+        <option [ngValue]="10">10</option>
+        <option [ngValue]="15">15</option>
+        <option [ngValue]="20">20</option>
+      </select>
     </div>
-  </div>
-  }
+    <span class="pagination-summary" aria-live="polite">
+      @if (filteredTrainees.length) {
+        عرض {{ pageStart + 1 }}–{{ pageEnd }} من {{ filteredTrainees.length }} متدرب
+      } @else {
+        لا توجد نتائج
+      }
+    </span>
+    <div class="pagination-controls">
+      <button type="button" class="page-arrow" (click)="previousPage()" [disabled]="currentPage <= 1" aria-label="الصفحة السابقة" title="الصفحة السابقة">‹</button>
+      <span class="page-indicator">{{ currentPage }} / {{ totalPages }}</span>
+      <button type="button" class="page-arrow" (click)="nextPage()" [disabled]="currentPage >= totalPages" aria-label="الصفحة التالية" title="الصفحة التالية">›</button>
+    </div>
+  </nav>
 
 </section>
