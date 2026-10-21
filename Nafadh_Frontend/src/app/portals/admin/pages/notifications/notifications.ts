@@ -7,6 +7,8 @@ import { AnnouncementDto } from '../../../../core/models/dtos';
 
 export type NotificationFilter = 'all' | 'unread' | 'announcement' | 'alert' | 'company';
 export type NotificationPriority = 'all' | 'urgent' | 'high' | 'normal';
+export type PriorityLevel = 'normal' | 'important' | 'urgent';
+export type MainAudienceType = 'all' | 'admins' | 'trainers' | 'companies' | 'trainees';
 
 export interface NotificationViewModel {
   notificationId: number;
@@ -33,7 +35,7 @@ export function normalizeArabic(text: string): string {
     .replace(/[ًٌٍَُِّْـ]/g, '');
 }
 
-// دالة تطبيع مستوى الأهمية للربط الدقيق مع قيم الباك إند (سواء نصوص، أرقام Enum 0,1,2، أو نصوص عربية)
+// دالة تطبيع مستوى الأهمية للربط الدقيق مع قيم الباك إند
 export function normalizePriority(val: any): 'urgent' | 'high' | 'normal' {
   if (val === null || val === undefined) return 'normal';
   const s = String(val).trim().toLowerCase();
@@ -76,14 +78,42 @@ export class AdminNotifications implements OnInit {
   loading = signal<boolean>(false);
   error = signal<string | null>(null);
 
-  // بيانات نافذة إعلان جديد
+  // ==========================================
+  // متغيرات النافذة المنبثقة (إعلان جديد)
+  // ==========================================
   showAnnounce = signal<boolean>(false);
-  announceTitle = '';
-  announceMsg = '';
-  announcePriority: 'normal' | 'high' | 'urgent' = 'normal';
-  announceScope: 'all' | 'companies' | 'trainers' | 'trainees' = 'all';
+  activeAnnounceTab: 'edit' | 'preview' = 'edit';
   posting = signal<boolean>(false);
   announceError = signal<string | null>(null);
+
+  // بيانات النموذج
+  newAnnounceData = {
+    title: '',
+    priority: 'normal' as PriorityLevel,
+    content: '',
+    mainAudience: 'all' as MainAudienceType,
+    companyScope: 'all_companies' as 'all_companies' | 'specific_companies',
+    selectedCompanyIds: [] as string[],
+    traineeScope: 'all_trainees' as 'all_trainees' | 'specific_trainees',
+    selectedTraineeIds: [] as string[],
+    trainerScope: 'all_trainers' as 'all_trainers' | 'specific_trainers',
+    selectedTrainerIds: [] as string[],
+  };
+
+  // بيانات وهمية للاختيار (يفضل جلبها من الـ API لاحقاً)
+  availableCompanies = [
+    { id: 'c1', name: 'شركة أرامكو السعودية', traineesCount: 500 },
+    { id: 'c2', name: 'شركة الاتصالات stc', traineesCount: 300 },
+    { id: 'c3', name: 'مستشفى الملك فهد', traineesCount: 120 },
+  ];
+  availableTrainees = [
+    { id: 't1', code: 'TRN-2026-104', name: 'عبدالله محمد', track: 'تطوير الويب', companyName: 'أرامكو' },
+    { id: 't2', code: 'TRN-2026-105', name: 'نورة سعد', track: 'تحليل البيانات', companyName: 'stc' },
+    { id: 't3', code: 'TRN-2026-106', name: 'سلطان فهد', track: 'الأمن السيبراني', companyName: 'أرامكو' },
+  ];
+  
+  companySearch = '';
+  traineeSearch = '';
 
   // نافذة التفاصيل ورسالة التنبيه
   selectedNotification = signal<NotificationViewModel | null>(null);
@@ -224,7 +254,6 @@ export class AdminNotifications implements OnInit {
     this.searchQuerySignal.set(this.searchQuery);
   }
 
-  // دالة تغيير مستوى الأهمية (عاجل / هام / عادي / الكل)
   onPriorityChange(newVal?: string): void {
     if (newVal) {
       this.priorityFilter = newVal as NotificationPriority;
@@ -292,92 +321,147 @@ export class AdminNotifications implements OnInit {
     this.selectedNotification.set(null);
   }
 
+  // =========================================================================
+  // إدارة النافذة المنبثقة (إعلان جديد)
+  // =========================================================================
   openAnnounceModal(): void {
-    this.announceTitle = '';
-    this.announceMsg = '';
-    this.announcePriority = 'normal';
-    this.announceScope = 'all';
+    this.newAnnounceData = {
+      title: '', priority: 'normal', content: '', mainAudience: 'all',
+      companyScope: 'all_companies', selectedCompanyIds: [],
+      traineeScope: 'all_trainees', selectedTraineeIds: [],
+      trainerScope: 'all_trainers', selectedTrainerIds: []
+    };
+    this.activeAnnounceTab = 'edit';
     this.announceError.set(null);
     this.showAnnounce.set(true);
   }
 
   closeAnnounceModal(): void {
+    if (this.posting()) return;
     this.showAnnounce.set(false);
   }
 
+  // حسابات الوصول المتوقع
+  expectedReach = computed(() => {
+    const fd = this.newAnnounceData;
+    if (fd.mainAudience === 'all') return 18500;
+    if (fd.mainAudience === 'admins') return 45;
+    if (fd.mainAudience === 'trainers') {
+      return fd.trainerScope === 'all_trainers' ? 120 : fd.selectedTrainerIds.length;
+    }
+    if (fd.mainAudience === 'companies') {
+      if (fd.companyScope === 'all_companies') return 450;
+      return this.availableCompanies
+        .filter(c => fd.selectedCompanyIds.includes(c.id))
+        .reduce((sum, c) => sum + c.traineesCount, 0);
+    }
+    if (fd.mainAudience === 'trainees') {
+      return fd.traineeScope === 'all_trainees' ? 5000 : fd.selectedTraineeIds.length;
+    }
+    return 0;
+  });
+
+  // تخصيص الجمهور
+  setAudience(aud: MainAudienceType) {
+    this.newAnnounceData.mainAudience = aud;
+    this.newAnnounceData.selectedCompanyIds = [];
+    this.newAnnounceData.selectedTraineeIds = [];
+    this.newAnnounceData.selectedTrainerIds = [];
+  }
+
+  // فلترة الشركات
+  getFilteredCompanies() {
+    if (!this.companySearch) return this.availableCompanies;
+    const term = this.companySearch.toLowerCase();
+    return this.availableCompanies.filter(c => c.name.toLowerCase().includes(term));
+  }
+
+  toggleCompany(id: string) {
+    const ids = this.newAnnounceData.selectedCompanyIds;
+    this.newAnnounceData.selectedCompanyIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id];
+  }
+
+  isCompanySelected(id: string) { return this.newAnnounceData.selectedCompanyIds.includes(id); }
+  
+  getSelectedCompanyObjects() {
+    return this.availableCompanies.filter(c => this.newAnnounceData.selectedCompanyIds.includes(c.id));
+  }
+
+  // فلترة المتدربين
+  getFilteredTrainees() {
+    if (!this.traineeSearch) return this.availableTrainees;
+    const term = this.traineeSearch.toLowerCase();
+    return this.availableTrainees.filter(t => t.name.toLowerCase().includes(term) || t.code.toLowerCase().includes(term));
+  }
+
+  toggleTrainee(id: string) {
+    const ids = this.newAnnounceData.selectedTraineeIds;
+    this.newAnnounceData.selectedTraineeIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id];
+  }
+
+  isTraineeSelected(id: string) { return this.newAnnounceData.selectedTraineeIds.includes(id); }
+  
+  getSelectedTraineeObjects() {
+    return this.availableTrainees.filter(t => this.newAnnounceData.selectedTraineeIds.includes(t.id));
+  }
+
   // =========================================================================
-  // نشر إعلان جديد في قاعدة البيانات (مع حل مشكلة النشر وخطأ Text/JSON Parsing)
+  // النشر
   // =========================================================================
   postAnnouncement(): void {
-    if (!this.announceMsg.trim() || this.posting()) return;
+    if (!this.newAnnounceData.title.trim() || !this.newAnnounceData.content.trim() || this.posting()) {
+      alert('يرجى تعبئة الحقول الإلزامية (العنوان، الرسالة)');
+      return;
+    }
 
-    const uid =
-      this.auth?.userId ||
-      (this.auth as any)?.currentUser?.id ||
-      (this.auth as any)?.user?.id ||
-      Number(localStorage.getItem('userId')) ||
-      1;
-
+    const uid = this.auth?.userId || (this.auth as any)?.currentUser?.id || 1;
     this.posting.set(true);
     this.announceError.set(null);
 
-    const titleValue = this.announceTitle.trim() || 'إعلان نظامي عام';
-    const msgValue = this.announceMsg.trim();
-    const scopeVal = this.announceScope === 'companies' ? 1 : this.announceScope === 'trainers' ? 2 : 0;
+    // ربط الحقول الجديدة مع الـ API (يجب تعديل الـ API لاستقبالها)
+    const scopeVal = this.newAnnounceData.mainAudience === 'companies' ? 1 : 
+                     this.newAnnounceData.mainAudience === 'trainers' ? 2 : 
+                     this.newAnnounceData.mainAudience === 'trainees' ? 3 : 0;
 
-    // تجهيز الـ Payload بدقة ليطابق كود الـ Backend DTO
     const payload = {
-      title: titleValue,
-      message: msgValue,
-      description: msgValue,
+      title: this.newAnnounceData.title.trim(),
+      message: this.newAnnounceData.content.trim(),
+      description: this.newAnnounceData.content.trim(),
       scopeType: scopeVal,
-      targetScope: this.announceScope,
-      scopeId: null,
+      targetScope: this.newAnnounceData.mainAudience,
       createdByUserId: uid,
-      priority: this.announcePriority, // إرسال الأهمية المحددة: normal / high / urgent
+      priority: this.newAnnounceData.priority, 
       createdAt: new Date().toISOString(),
+      // تفاصيل التخصيص (إذا كان الباك إند يدعمها)
+      companyIds: this.newAnnounceData.selectedCompanyIds,
+      traineeIds: this.newAnnounceData.selectedTraineeIds
     };
 
     this.api.createAnnouncement(payload as any).subscribe({
       next: () => {
         this.posting.set(false);
         this.showAnnounce.set(false);
-        this.announceTitle = '';
-        this.announceMsg = '';
         this.showToast('تم نشر الإعلان بنجاح في قاعدة البيانات.');
         this.load();
       },
       error: (err: any) => {
-        console.warn('Response info:', err);
-        // حل سبب مشكلة النشر في الباك إند:
-        // إذا كان السيرفر أرجع كود 200/201 ولكن الباك إند أعاد نصاً عادياً وليس JSON،
-        // يعتبر أنجولار ذلك Parse Error بينما هو في الواقع نجح وحفظ في الداتابيز!
         const isSuccessStatus = err?.status === 200 || err?.status === 201 || err?.status === 204;
         const isParsingError = typeof err?.message === 'string' && err.message.includes('Http failure during parsing');
-        const hasTextBody = err?.error && typeof err.error.text === 'string' && err.status === 200;
-
-        if (isSuccessStatus || isParsingError || hasTextBody) {
+        
+        if (isSuccessStatus || isParsingError) {
           this.posting.set(false);
           this.showAnnounce.set(false);
-          this.announceTitle = '';
-          this.announceMsg = '';
-          this.showToast('تم نشر الإعلان بنجاح في قاعدة البيانات.');
+          this.showToast('تم نشر الإعلان بنجاح.');
           this.load();
           return;
         }
 
         this.posting.set(false);
-        this.announceError.set(
-          err?.error?.message ||
-          err?.error?.title ||
-          err?.message ||
-          'تعذر نشر الإعلان، يرجى التحقق من الاتصال بالخادم.'
-        );
+        this.announceError.set(err?.error?.message || err?.message || 'تعذر نشر الإعلان.');
       },
     });
   }
 
-  // تصدير الإشعارات إلى CSV
   exportAll(): void {
     const rows = this.filteredNotifications();
     if (!rows.length) {
@@ -388,17 +472,10 @@ export class AdminNotifications implements OnInit {
     const header = ['رقم الإشعار', 'العنوان', 'الرسالة', 'التصنيف', 'الأهمية', 'الحالة', 'المصدر', 'التاريخ'];
     const lines = rows.map((n) =>
       [
-        n.notificationId,
-        n.title,
-        n.message,
-        this.getCategoryLabel(n.category),
+        n.notificationId, n.title, n.message, this.getCategoryLabel(n.category),
         n.priority === 'urgent' ? 'عاجل' : n.priority === 'high' ? 'هام' : 'عادي',
-        n.isRead ? 'مقروء' : 'غير مقروء',
-        n.source,
-        n.dateLabel,
-      ]
-        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
-        .join(',')
+        n.isRead ? 'مقروء' : 'غير مقروء', n.source, n.dateLabel,
+      ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')
     );
 
     const blob = new Blob(['\uFEFF' + [header.join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8;' });
