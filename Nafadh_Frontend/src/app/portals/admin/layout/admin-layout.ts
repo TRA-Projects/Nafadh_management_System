@@ -18,6 +18,7 @@ export class AdminLayout {
     { path: 'communications', label: 'التواصل والمراسلات', icon: 'chat' },
     { path: 'reports', label: 'التقارير والتحليلات', icon: 'chart' },
     { path: 'notifications', label: 'الإشعارات', icon: 'bell' },
+    { path: 'external-system/constants', label: 'إدارة الثوابت', icon: 'book' },
     { path: 'audit', label: 'سجل التدقيق', icon: 'history' },
   ];
 }
