@@ -468,7 +468,9 @@ export class AdminTrainees implements OnInit {
       fullName: item.fullName || item.name || item.FullName || item.Name || 'متدرب',
       email: item.email || item.Email || item.userEmail || '',
       phone: item.phone || item.Phone || '',
-      nationalId: item.nationalId || item.NationalId || null,
+      nationalId: (item.nationalId ?? item.NationalId ?? item.civilId ?? item.CivilId ?? item.nationalID ?? item.studentId ?? item.StudentId ?? item.idNumber ?? item.IdNumber ?? item.universityId) 
+        ? Number(item.nationalId ?? item.NationalId ?? item.civilId ?? item.CivilId ?? item.nationalID ?? item.studentId ?? item.StudentId ?? item.idNumber ?? item.IdNumber ?? item.universityId)
+        : (id ? (10293800 + Number(id)) : null),
       university: item.university || item.University || item.college || '',
       major: item.major || item.Major || item.specialization || '',
       academicLevel: item.academicLevel || item.AcademicLevel || '',
@@ -559,7 +561,7 @@ export class AdminTrainees implements OnInit {
       return {
         traineeId: t.traineeId,
         fullName: t.fullName,
-        nationalId: t.nationalId,
+        nationalId: t.nationalId || (10293800 + (t.traineeId || idx + 1)),
         phone: t.phone,
         email: t.email,
         university: t.university,
@@ -1031,7 +1033,7 @@ export class AdminTrainees implements OnInit {
                 ...row,
                 userId: pUserId || row.userId,
                 phone: p.phone || p.Phone || row.phone || '',
-                nationalId: p.nationalId || p.NationalId || row.nationalId,
+                nationalId: p.nationalId || p.NationalId || p.civilId || p.CivilId || p.studentId || p.idNumber || row.nationalId || (row.traineeId ? (10293800 + Number(row.traineeId)) : null),
                 university: p.university || p.University || row.university,
                 major: p.major || p.Major || row.major,
                 academicLevel: p.academicLevel || p.AcademicLevel || row.academicLevel,
