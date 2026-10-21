@@ -996,11 +996,7 @@ export interface QuizAttemptDto {
   questions: AttemptQuestionDto[];
 }
 
-export enum WithdrawalRequestStatus {
-  Pending = 0,
-  Approved = 1,
-  Rejected = 2
-}
+
 
 export interface WithdrawalRequestDto {
   id: number;

@@ -77,7 +77,7 @@
 
 
   <!-- =====================================================
-       TAB 1: MESSAGES (existing)
+       TAB 1: MESSAGES
        ===================================================== -->
 
   @if (activeTab() === 'messages') {
@@ -136,17 +136,23 @@
                     {{ c.subject }}
                   </strong>
 
-                @if (isWithdrawalRequest(c)) {
-
-                  <span class="withdrawal-badge pending">
-
-                    <i class="fa-solid fa-clock"></i>
-
-                    قيد المراجعة
-
-                  </span>
-
-                }
+                  @if (isWithdrawalRequest(c)) {
+                    @let status = getWithdrawalStatus(c);
+                    
+                    @if (status === 'pending') {
+                      <span class="withdrawal-badge pending">
+                        <i class="fa-solid fa-clock"></i> قيد المراجعة
+                      </span>
+                    } @else if (status === 'approved') {
+                      <span class="withdrawal-badge approved">
+                        <i class="fa-solid fa-check"></i> مقبول
+                      </span>
+                    } @else if (status === 'rejected') {
+                      <span class="withdrawal-badge rejected">
+                        <i class="fa-solid fa-xmark"></i> مرفوض
+                      </span>
+                    }
+                  }
 
                 </div>
 
@@ -216,19 +222,24 @@
 
                 <div class="conversation-meta">
 
-                @if (isWithdrawalRequest(conversation)) {
-
-                  <span class="withdrawal-badge pending">
-
-                    <i class="fa-solid fa-clock"></i>
-
-                    قيد المراجعة
-
-                  </span>
-
-                }
-
-                @else {
+                  @if (isWithdrawalRequest(conversation)) {
+                    @let status = getWithdrawalStatus(conversation);
+                    
+                    @if (status === 'pending') {
+                      <span class="withdrawal-badge pending">
+                        <i class="fa-solid fa-clock"></i> قيد المراجعة
+                      </span>
+                    } @else if (status === 'approved') {
+                      <span class="withdrawal-badge approved">
+                        <i class="fa-solid fa-check"></i> مقبول
+                      </span>
+                    } @else if (status === 'rejected') {
+                      <span class="withdrawal-badge rejected">
+                        <i class="fa-solid fa-xmark"></i> مرفوض
+                      </span>
+                    }
+                  }
+                  @else {
 
                     <span>
                       شكوى أو استفسار
@@ -298,7 +309,7 @@
           </div>
 
 
-        <div class="reply-area">
+          <div class="reply-area">
 
             <input
               type="text"
@@ -1050,9 +1061,7 @@
 
             @else {
 
-.withdrawal-status-bar {
-  background: #f59e0b;
-}
+              <div class="chat-shell-title">
 
                 <div class="chat-shell-avatar">
                   <i class="fa-solid fa-users"></i>

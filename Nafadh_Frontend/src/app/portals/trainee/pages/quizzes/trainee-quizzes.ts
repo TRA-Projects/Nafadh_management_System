@@ -262,12 +262,11 @@ export class TraineeQuizzes implements OnInit {
     this.loading.set(true);
     this.errorMessage.set('');
 
-    // جلب المحاولة السابقة مع الإجابات المحفوظة مسبقاً
     this.api.getQuizAttempt(attemptId, tId).subscribe({
       next: (res: QuizAttemptDto) => {
         this.loading.set(false);
         this.attempt.set(res);
-        this.setupQuestions(res); // هذه الدالة ستبدأ المؤقت وتنقلك لـ Step 3
+        this.setupQuestions(res);
       },
       error: (err: any) => {
         console.error('Resume error:', err);
@@ -323,7 +322,7 @@ export class TraineeQuizzes implements OnInit {
     this.currentStep.set(1);
     this.result.set(null);
     this.attempt.set(null);
-    this.refresh(); // تحديث القائمة
+    this.refresh();
   }
 
   async turnOnCamera() {
@@ -368,7 +367,6 @@ export class TraineeQuizzes implements OnInit {
 
     this.api.startQuizAttempt(dto).subscribe({
       next: (res: QuizAttemptDto) => {
-        // الباك اند يرجع الأسئلة بدون خيارات في البداية، لذا نستدعي getQuizAttempt لجلبها
         this.api.getQuizAttempt(res.attemptId, tId).subscribe({
           next: (fullAttempt) => {
             this.loading.set(false);
@@ -397,7 +395,6 @@ export class TraineeQuizzes implements OnInit {
   private setupQuestions(res: QuizAttemptDto) {
     this.questions.set(res.questions);
     
-    // تجهيز مصفوفة الإجابات الفارغة
     res.questions.forEach(q => {
       this.answers[q.attemptQuestionId] = {
         selectedOptionId: q.selectedOptionId || null,
@@ -405,7 +402,6 @@ export class TraineeQuizzes implements OnInit {
       };
     });
 
-    // بدء المؤقت (من الباك اند أو المدة الأساسية)
     const seconds = res.remainingSeconds > 0 ? res.remainingSeconds : res.durationMinutes * 60;
     this.startTimer(seconds);
     
@@ -420,7 +416,7 @@ export class TraineeQuizzes implements OnInit {
       const current = this.timeRemaining();
       if (current <= 1) {
         this.timeRemaining.set(0);
-        this.autoSubmit(); // تسليم تلقائي عند انتهاء الوقت
+        this.autoSubmit();
       } else {
         this.timeRemaining.set(current - 1);
       }
@@ -437,7 +433,6 @@ export class TraineeQuizzes implements OnInit {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   }
 
-  // حفظ الإجابة عند التغيير
   onSelectOption(qId: number, optId: number) {
     this.answers[qId].selectedOptionId = optId;
     this.saveAnswer(qId);
@@ -502,7 +497,7 @@ export class TraineeQuizzes implements OnInit {
         this.loading.set(false);
         this.stopCamera();
         this.showAutoSubmitModal.set(false);
-        this.loadResult(); // الانتقال للخطوة 4 وعرض النتيجة
+        this.loadResult();
       },
       error: (err) => {
         this.loading.set(false);
@@ -522,10 +517,8 @@ export class TraineeQuizzes implements OnInit {
 
     this.loading.set(true);
     
-    // جلب تفاصيل المحاولة
     this.api.getAttemptDetails(attemptId).subscribe({
       next: (details) => {
-        // جلب نتيجة المتدرب لمعرفة هل نجح أم لا (لأن التفاصيل لا تحتوي isPassed)
         this.api.getMyResults(tId).subscribe({
           next: (results) => {
             const myResult = results.find(r => r.attemptId === attemptId);
@@ -547,7 +540,6 @@ export class TraineeQuizzes implements OnInit {
     });
   }
 
-  // منع الخروج من الصفحة أثناء الاختبار
   @HostListener('window:beforeunload', ['$event'])
   onBeforeUnload(event: BeforeUnloadEvent) {
     if (this.currentStep() === 3) {
@@ -555,13 +547,12 @@ export class TraineeQuizzes implements OnInit {
       event.returnValue = '';
     }
   }
-    // حساب الدرجة الكاملة للاختبار من مجموع درجات الأسئلة
+
   totalPossiblePoints = computed(() => {
     const res = this.result();
     if (!res || !res.answers) return 0;
     
     return res.answers.reduce((total: number, ans: any) => {
-      // الباك اند يرسل الدرجة الكاملة للسؤال في حقل points أو maxPoints
       const points = ans.points !== undefined ? ans.points : ans.maxPoints;
       return total + (Number(points) || 0);
     }, 0);
