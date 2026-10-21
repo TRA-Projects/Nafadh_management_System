@@ -291,38 +291,34 @@
         </div>
 
 
-        <!-- إخفاء صندوق الرد إذا كان الطلب "طلب انسحاب" -->
-        @if (!conversation.isWithdrawal) {
+        <!-- صندوق الرد يعمل مع جميع المحادثات بما فيها الانسحاب -->
+        <div class="reply-area">
 
-          <div class="reply-area">
-
-            <input
-              type="text"
-              class="reply-input"
-              [(ngModel)]="replyText"
-              placeholder="اكتب ردك هنا..."
-              (keydown.enter)="send()"
-            />
+          <input
+            type="text"
+            class="reply-input"
+            [(ngModel)]="replyText"
+            placeholder="اكتب ردك هنا..."
+            (keydown.enter)="send()"
+          />
 
 
-            <button
-              type="button"
-              class="reply-button"
-              [disabled]="!replyText.trim()"
-              (click)="send()"
-            >
+          <button
+            type="button"
+            class="reply-button"
+            [disabled]="!replyText.trim()"
+            (click)="send()"
+          >
 
-              <i class="fa-solid fa-paper-plane"></i>
+            <i class="fa-solid fa-paper-plane"></i>
 
-              <span>
-                إرسال
-              </span>
+            <span>
+              إرسال
+            </span>
 
-            </button>
+          </button>
 
-          </div>
-
-        }
+        </div>
 
       }
 

@@ -134,7 +134,6 @@ export class TraineeSupport implements OnInit {
   getWithdrawalStatus(conversation: any): 'pending' | 'approved' | 'rejected' | null {
     if (!this.isWithdrawalRequest(conversation)) return null;
 
-    // جلب الطلب سواء كان من القائمة المدمجة أو المحادثات
     let req: any = conversation.originalRequest;
     
     if (!req) {
@@ -144,20 +143,11 @@ export class TraineeSupport implements OnInit {
 
     if (!req) return 'pending';
 
-    // تحويل الحالة إلى نص (String) لتفادي مشكلة اختلاف الحروف الكبيرة/الصغيرة أو الأرقام
     const statusStr = String(req.status).toLowerCase();
 
-    // فحص إذا كانت الحالة (1 أو Approved أو approved)
-    if (statusStr === '1' || statusStr === 'approved') {
-      return 'approved';
-    }
+    if (statusStr === '1' || statusStr === 'approved') return 'approved';
+    if (statusStr === '2' || statusStr === 'rejected') return 'rejected';
     
-    // فحص إذا كانت الحالة (2 أو Rejected أو rejected)
-    if (statusStr === '2' || statusStr === 'rejected') {
-      return 'rejected';
-    }
-
-    // إذا كانت (0 أو Pending أو pending) أو أي شيء آخر
     return 'pending';
   }
 
@@ -212,9 +202,8 @@ export class TraineeSupport implements OnInit {
           (c: any) => c.type === 'TraineeComplaint' || c.conversationType === 'TraineeComplaint'
         );
 
-        // تحويل طلبات الانسحاب لتبدو كمحادثات في القائمة
         const withdrawalItems = this.withdrawalRequests().map(w => ({
-          conversationId: w.id + 1000000, // ID مميز للانسحاب
+          conversationId: w.id + 1000000,
           subject: 'طلب انسحاب',
           startedByName: 'أنت',
           lastMessagePreview: w.reason,
@@ -222,7 +211,6 @@ export class TraineeSupport implements OnInit {
           originalRequest: w
         }));
 
-        // دمج القائمتين (الانسحاب تظهر أولاً)
         this.conversations.set([...withdrawalItems, ...complaints]);
 
         const current = this.active();
@@ -323,18 +311,30 @@ export class TraineeSupport implements OnInit {
       const req = this.withdrawalRequests().find(r => r.id === actualId);
       
       if (req) {
+        const messages: any[] = [
+          {
+            messageId: req.id,
+            senderName: 'أنت',
+            senderId: this.auth.userId,
+            content: req.reason
+          }
+        ];
+
+        // إضافة ملاحظة الأدمن (سبب الرفض أو القبول) كرسالة في المحادثة
+        if (req.adminNotes) {
+          messages.push({
+            messageId: req.id + 999,
+            senderName: 'الإدارة',
+            senderId: 0,
+            content: req.adminNotes
+          });
+        }
+
         this.active.set({
           conversationId: id,
           subject: 'طلب انسحاب',
           receiverType: 'Authority',
-          messages: [
-            {
-              messageId: req.id,
-              senderName: 'أنت',
-              senderId: this.auth.userId,
-              content: req.reason
-            }
-          ],
+          messages: messages,
           withdrawalStatus: this.getWithdrawalStatus({ originalRequest: req }),
           isWithdrawal: true
         } as any);
@@ -438,10 +438,28 @@ export class TraineeSupport implements OnInit {
 
   send(): void {
     const conversation = this.active();
-    if (!conversation || !this.replyText.trim() || conversation.isWithdrawal) return;
+    if (!conversation || !this.replyText.trim()) return;
 
     const uid = this.auth.userId;
     if (!uid) return;
+
+    // إرسال رسالة داخل طلب الانسحاب (تظهر محلياً في المحادثة)
+    if (conversation.isWithdrawal) {
+      const newMessage = {
+        messageId: Date.now(),
+        senderName: 'أنت',
+        senderId: uid,
+        content: this.replyText.trim()
+      };
+      
+      this.active.update((c: any) => ({
+        ...c,
+        messages: [...c.messages, newMessage]
+      }));
+      
+      this.replyText = '';
+      return;
+    }
 
     this.api.sendMessage(conversation.conversationId, {
       senderId: uid,
@@ -464,7 +482,6 @@ export class TraineeSupport implements OnInit {
     this.errorMessage.set('');
     this.successMessage.set('');
 
-    // التحقق من الحقول
     if (!this.newConv.receiverType) {
       this.errorMessage.set('يرجى اختيار الجهة المستلمة أولاً');
       return;
@@ -492,13 +509,11 @@ export class TraineeSupport implements OnInit {
       return;
     }
 
-    // مسار طلب الانسحاب
     if (this.newConv.receiverType === 'Authority' && this.newConv.subject.trim() === 'طلب انسحاب') {
       this.submitWithdrawalRequest();
       return;
     }
 
-    // مسار المحادثات العادية
     const selectedTrainer = this.getSelectedTrainer();
     const messageContent = (this.newConv.receiverType === 'Trainer' || this.newConv.receiverType === 'Company')
       ? this.newConv.note.trim()
@@ -540,9 +555,10 @@ export class TraineeSupport implements OnInit {
       return;
     }
 
-    const hasPending = this.withdrawalRequests().some(r => r.status === WithdrawalRequestStatus.Pending);
-    if (hasPending) {
-      this.errorMessage.set('لديك بالفعل طلب انسحاب معلق قيد المراجعة.');
+    // منع المتدرب من تقديم أي طلب انسحاب جديد إذا كان لديه طلب سابق (معلق، مقبول، أو مرفوض)
+    const hasAnyRequest = this.withdrawalRequests().length > 0;
+    if (hasAnyRequest) {
+      this.errorMessage.set('لا يمكنك تقديم طلب انسحاب جديد. لديك طلب انسحاب مسجل مسبقاً في النظام.');
       return;
     }
 
