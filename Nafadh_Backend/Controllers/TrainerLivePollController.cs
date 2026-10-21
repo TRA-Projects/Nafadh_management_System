@@ -61,7 +61,8 @@ namespace Nafadh_Backend.Controllers
             }
 
             // Follow the current LiveKit session status rule.
-            if (session.Status != NFD_SessionStatus.Scheduled)
+            if (session.Status != NFD_SessionStatus.Scheduled &&
+                session.Status != NFD_SessionStatus.InProgress)
             {
                 return Conflict(new
                 {
@@ -189,8 +190,8 @@ namespace Nafadh_Backend.Controllers
                     message = "Poll not found or access denied."
                 });
 
-            if (poll.Session.Status != NFD_SessionStatus.Scheduled)
-                return Conflict(new
+            if (poll.Session.Status != NFD_SessionStatus.Scheduled &&
+                poll.Session.Status != NFD_SessionStatus.InProgress) return Conflict(new
                 {
                     message = "The session is not available for live polls."
                 });

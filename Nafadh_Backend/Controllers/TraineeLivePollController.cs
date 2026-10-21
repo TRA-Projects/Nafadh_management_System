@@ -79,8 +79,8 @@ namespace Nafadh_Backend.Controllers
                 });
 
             // Match the current LiveKit session status rule.
-            if (poll.SessionStatus != NFD_SessionStatus.Scheduled)
-                return Conflict(new
+            if (poll.SessionStatus != NFD_SessionStatus.Scheduled &&
+                poll.SessionStatus != NFD_SessionStatus.InProgress) return Conflict(new
                 {
                     message = "The session is not available for voting."
                 });
@@ -197,8 +197,8 @@ namespace Nafadh_Backend.Controllers
                 .AsNoTracking()
                 .AnyAsync(s =>
                     s.SessionId == sessionId &&
-                    s.Status == NFD_SessionStatus.Scheduled &&
-                    _context.NFD_Enrollments.Any(e =>
+(s.Status == NFD_SessionStatus.Scheduled ||
+ s.Status == NFD_SessionStatus.InProgress) && _context.NFD_Enrollments.Any(e =>
                         e.BatchId == s.BatchId &&
                         e.TraineeId == traineeId.Value),
                     HttpContext.RequestAborted);
