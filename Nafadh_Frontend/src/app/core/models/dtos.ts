@@ -906,3 +906,56 @@ export interface TraineeSkillDto {
   serialNumber?: string | null;
   certificateUrl?: string | null;
 }
+export interface AdminBatchGroupDto {
+  conversationId: number;
+  groupName: string;
+  batchId: number;
+  batchName: string;
+  trainerUserId: number;
+  trainerName: string;
+  membersCount: number;
+  status: string;
+  createdAt: string;
+}
+
+export interface AdminBatchGroupMessageDto {
+  messageId: number;
+  conversationId: number;
+  senderId: number;
+  senderName: string;
+  content: string;
+  sentDate: string;
+  status: string;
+  attachmentUrl: string | null;
+  attachmentFileName: string | null;
+}
+
+export interface AdminBatchGroupMessageDto {
+  messageId: number;
+  conversationId: number;
+  senderId: number;
+  senderName: string;
+  content: string;
+  sentDate: string;
+  status: string;
+  attachmentUrl: string | null;
+  attachmentFileName: string | null;
+}
+
+
+ // =====================================================
+ // Admin Supervisor Reports
+ // =====================================================
+
+export interface AdminSupervisorReportDto {
+  supervisorId: number;
+  fullName: string | null;
+  department: string | null;
+  position: string | null;
+  companyName: string | null;
+  status: string | null;
+  assignedTraineesCount: number;
+  averageAttendanceRate: number | null;
+  monthlyEvaluationsCount: number;
+  traineesNeedingFollowUpCount: number | null;
+}

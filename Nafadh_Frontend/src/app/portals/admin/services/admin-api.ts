@@ -6,7 +6,8 @@ import {
   AnnouncementDto, AuditLogDto, BatchDto, BatchPerformanceReportDto, CertificateDto, CompanyDto,
   ConversationDetailDto, ConversationListItemDto, ConversationMessageDto, EvaluationBucketRollupDto,
   EvaluationDto, NotificationDto, ProgramDto, TraineeListItemDto, TraineeProfileDto,
-  TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto, ModuleDto,
+  TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto, ModuleDto,AdminBatchGroupDto,AdminBatchGroupMessageDto,
+  AdminSupervisorReportDto
 } from '../../../core/models/dtos';
 
 export interface TraineeCertificateStatusDto {
@@ -74,7 +75,7 @@ export class AdminApi {
   resetPassword(id: number, dto: unknown) { return this.http.put(`${this.base}/User/${this.sanitizeId(id)}/reset-password`, dto); }
 
   // ==========================================================
-  // 4. Trainees Management
+  // 4. Trainees Management & Quiz Results
   // ==========================================================
   getTrainees(params?: Record<string, unknown>): Observable<{ items: TraineeListItemDto[]; totalCount: number }> {
     let httpParams = new HttpParams();
@@ -88,6 +89,12 @@ export class AdminApi {
       }
     }
     return this.http.get<{ items: TraineeListItemDto[]; totalCount: number }>(`${this.base}/Trainee`, { params: httpParams });
+  }
+
+  // 🟢 دالة جلب سجل نتائج الاختبارات الخاصة بالمتدرب (مطابقة لـ QuizResultDto في الباك إند)
+  getTraineeExams(traineeId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(traineeId);
+    return this.http.get<any[]>(`${this.base}/QuizResult/trainee/${cleanId}`);
   }
 
   getTrainee(id: number): Observable<TraineeProfileDto> {
@@ -174,27 +181,21 @@ export class AdminApi {
   // ==========================================================
   // 7. خطط تدريب الشركات واعتمادها (Course Plans Approval)
   // ==========================================================
-
-  // جلب قائمة خطط شركة معينة من بوابة الشركة
   getCompanyCoursePlans(companyId: number): Observable<any> {
     const cleanId = this.sanitizeId(companyId);
     return this.http.get<any>(`${this.base}/CompanyCoursePlan/company/${cleanId}/plans`);
   }
 
-  // جلب جميع الخطط المعلقة بانتظار اعتماد الآدمن
   getPendingCoursePlans(): Observable<any[]> {
     return this.http.get<any[]>(`${this.base}/CoursePlanApproval`);
   }
 
-  // جلب تفاصيل الخطة (يدعم استدعائه بـ planId فقط أو بـ companyId و planId)
   getCoursePlanDetails(param1: number, param2?: number): Observable<any> {
     const planId = param2 !== undefined ? this.sanitizeId(param2) : this.sanitizeId(param1);
     return this.http.get<any>(`${this.base}/CoursePlanApproval/${planId}`);
   }
 
-  // مراجعة واعتماد أو رفض الخطة التدريبية
   reviewCoursePlan(param1: number, param2: any, param3?: any): Observable<any> {
-    // إذا مررت (companyId, planId, decision) أو (planId, decision)
     let planId: number;
     let payload: any;
 
@@ -325,7 +326,7 @@ export class AdminApi {
 
   // ==========================================================
   // 11. Communications & Conversations
-  // ==========================================
+  // ==========================================================
   getConversations(type: string): Observable<ConversationListItemDto[]> {
     return this.http.get<ConversationListItemDto[]>(`${this.base}/Conversation`, { params: { type } });
   }
@@ -334,6 +335,22 @@ export class AdminApi {
     return this.http.get<ConversationDetailDto>(`${this.base}/Conversation/${this.sanitizeId(id)}`);
   }
 
+  // Get all training batch groups for Admin
+getAdminBatchGroups(): Observable<AdminBatchGroupDto[]> {
+  return this.http.get<AdminBatchGroupDto[]>(
+    `${this.base}/admin/batch-groups`
+  );
+}
+
+// Get all training batch groups messages for Admin
+getAdminBatchGroupMessages(
+  conversationId: number
+): Observable<AdminBatchGroupMessageDto[]> {
+  return this.http.get<AdminBatchGroupMessageDto[]>(
+    `${this.base}/admin/batch-groups/${conversationId}/messages`
+  );
+}
+
   replyToConversation(id: number, dto: unknown): Observable<ConversationMessageDto> {
     return this.http.post<ConversationMessageDto>(`${this.base}/Conversation/${this.sanitizeId(id)}/messages`, dto);
   }
@@ -341,6 +358,30 @@ export class AdminApi {
   // ==========================================================
   // 12. Reports & Audit
   // ==========================================================
+
+  
+  // Get supervisor reports for Admin
+  getAdminSupervisorReports(
+    year?: number,
+    month?: number
+  ): Observable<AdminSupervisorReportDto[]> {
+
+    let params = new HttpParams();
+
+    if (year !== undefined) {
+      params = params.set('year', String(year));
+    }
+
+    if (month !== undefined) {
+      params = params.set('month', String(month));
+    }
+
+    return this.http.get<AdminSupervisorReportDto[]>(
+      `${this.base}/admin/reports/supervisors`,
+      { params }
+    );
+  }
+
   getBatchPerformanceReport(batchId: number, pageNumber: number = 1, pageSize: number = 15): Observable<BatchPerformanceReportDto> {
     const params = new HttpParams()
       .set('pageNumber', String(pageNumber))
