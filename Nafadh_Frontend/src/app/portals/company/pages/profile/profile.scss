@@ -1395,3 +1395,74 @@ h3.section-title {
     font-size: 12px !important;
   }
 }
+/* Read-only company information and capacity */
+.company-details-card {
+  padding: 22px 24px !important;
+  border-radius: 18px;
+}
+.company-details-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.company-details-heading h3 { margin: 0; }
+.company-details-subtitle { margin: 7px 0 0; font-size: 12px; color: var(--profile-text-muted); }
+.company-details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.company-detail-item { display: flex; flex-direction: column; gap: 9px; min-width: 0; padding: 16px 18px; border: 1px solid var(--profile-border-light); border-radius: 12px; background: var(--profile-soft); }
+.company-detail-label { font-size: 12px; color: var(--profile-text-muted); font-weight: 600; }
+.company-detail-value { font-size: 14px; color: var(--color-navy, #0a1172); font-weight: 700; overflow-wrap: anywhere; text-align: start; }
+.company-contact-edit { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 16px; margin-bottom: 16px; border: 1px solid var(--profile-border); border-radius: 14px; background: #f8faff; }
+.company-edit-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; font-size: 12px; font-weight: 700; color: var(--color-navy, #0a1172); }
+.company-edit-field input { width: 100%; box-sizing: border-box; }
+.company-edit-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
+.capacity-total-readonly { margin-top: 20px; padding: 14px 16px; border-radius: 12px; background: var(--profile-soft); color: var(--color-navy, #0a1172); font-size: 14px; font-weight: 600; }
+@media (max-width: 640px) { .company-details-card { padding: 16px !important; } .company-details-grid, .company-contact-edit { grid-template-columns: 1fr; } }
+
+/* Compact company information card */
+.company-profile-page .company-details-card {
+  padding: 16px 18px !important;
+  border-radius: 16px;
+}
+.company-profile-page .company-details-heading {
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.company-profile-page .company-details-subtitle { margin-top: 4px; }
+.company-profile-page .company-details-grid { gap: 8px 10px; }
+.company-profile-page .company-detail-item {
+  gap: 4px;
+  padding: 10px 14px;
+  min-height: 66px;
+  box-sizing: border-box;
+  justify-content: center;
+  border-radius: 10px;
+}
+.company-profile-page .company-detail-label { line-height: 1.4; }
+.company-profile-page .company-detail-value { line-height: 1.5; }
+.company-profile-page .company-contact-edit {
+  gap: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+@media (max-width: 640px) {
+  .company-profile-page .company-details-card { padding: 14px !important; }
+  .company-profile-page .company-detail-item { min-height: 58px; padding: 9px 12px; }
+}
+
+/* Compact two-column company details */
+.company-profile-page .company-details-card { padding: 14px 16px !important; }
+.company-profile-page .company-details-heading { margin-bottom: 10px; }
+.company-profile-page .company-details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.company-profile-page .company-detail-item {
+  display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+  gap: 12px; min-height: 48px; padding: 10px 14px; border-radius: 10px;
+}
+.company-profile-page .company-detail-label { flex: 0 0 auto; font-size: 12px; }
+.company-profile-page .company-detail-value { min-width: 0; font-size: 13px; text-align: end; }
+@media (max-width: 720px) {
+  .company-profile-page .company-details-grid { grid-template-columns: 1fr; }
+  .company-profile-page .company-detail-item { min-height: 44px; padding: 9px 12px; }
+}

@@ -58,7 +58,6 @@ export class CompanyProfile implements OnInit {
   supervisorsLoadError = signal(false);
   specialtiesLoadError = signal(false);
 
-  editingCapacity = signal(false);
   companyEditOpen = signal(false);
 
   uploadingCover = signal(false);
@@ -68,12 +67,9 @@ export class CompanyProfile implements OnInit {
   logoUploadError = signal(false);
   readonly maxImageSizeMb = 5;
   companyEditDraft = {
-    commercialRegister: '',
-    taxNumber: '',
     phone: '',
     email: '',
   };
-  capacityDraft = 0;
   newFieldDraft = '';
 
   branchFormOpen = signal(false);
@@ -112,7 +108,6 @@ export class CompanyProfile implements OnInit {
       next: (response) => {
         const normalizedCompany = this.normalizeCompany(response);
         this.company.set(normalizedCompany);
-        this.capacityDraft = normalizedCompany?.capacity ?? 0;
         this.companyLoadError.set(false);
       },
       error: () => this.companyLoadError.set(true),
@@ -228,31 +223,11 @@ export class CompanyProfile implements OnInit {
     } as CompanySupervisorProfileDto;
   }
 
-  saveCapacity() {
-    const c = this.company();
-    if (!c) return;
-
-    const payload = this.buildCompanyUpdatePayload(c, {
-      capacity: Math.max(0, Number(this.capacityDraft ?? 0)),
-    });
-
-    this.api.updateCompany(c.companyId, payload).subscribe({
-      next: (updated) => {
-        const merged = this.normalizeCompany({ ...c, ...(updated as Partial<CompanyProfileDto>), capacity: Number(this.capacityDraft ?? 0) });
-        if (merged) this.company.set(merged);
-        this.editingCapacity.set(false);
-      },
-      error: (error) => console.error('Failed to update company capacity:', error),
-    });
-  }
-
   startCompanyEdit() {
     const c = this.company();
     if (!c) return;
 
     this.companyEditDraft = {
-      commercialRegister: c.commercialRegister || '',
-      taxNumber: c.taxNumber || '',
       phone: c.phone || '',
       email: c.email || '',
     };
@@ -264,7 +239,6 @@ export class CompanyProfile implements OnInit {
     if (!c) return;
 
     const payload = this.buildCompanyUpdatePayload(c, {
-      commercialRegister: this.companyEditDraft.commercialRegister.trim() || null,
       phone: this.companyEditDraft.phone.trim() || null,
       email: this.companyEditDraft.email.trim() || null,
     });
@@ -274,7 +248,6 @@ export class CompanyProfile implements OnInit {
         const merged = this.normalizeCompany({
           ...c,
           ...(updated as Partial<CompanyProfileDto>),
-          commercialRegister: this.companyEditDraft.commercialRegister.trim(),
           phone: this.companyEditDraft.phone.trim(),
           email: this.companyEditDraft.email.trim(),
         });

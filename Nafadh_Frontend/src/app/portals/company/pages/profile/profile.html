@@ -103,49 +103,55 @@
       </div>
     </div>
 
-    <div class="company-profile-info-wrap" style="margin-top:16px;">
-      <div class="nfd-card company-profile-info-card" style="padding:18px 20px;">
-        <h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-          <span class="section-title">معلومات الشركة</span>
-          <button class="nfd-btn ghost" type="button" (click)="startCompanyEdit()">تعديل بيانات الشركة</button>
-        </h3>
+    <div class="company-profile-info-wrap">
+      <div class="nfd-card company-profile-info-card company-details-card">
+        <div class="company-details-heading">
+          <div>
+            <h3 class="section-title">معلومات الشركة</h3>
+            <p class="company-details-subtitle">البيانات الرسمية ووسائل التواصل الخاصة بالشركة</p>
+          </div>
+          @if (!companyEditOpen()) {
+            <button class="nfd-btn ghost" type="button" (click)="startCompanyEdit()">تعديل بيانات التواصل</button>
+          }
+        </div>
 
         @if (companyEditOpen()) {
-          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px;padding:12px;border:1px solid var(--color-border);border-radius:12px;background:#f8faff;">
-            <input class="nfd-input" placeholder="السجل التجاري" [(ngModel)]="companyEditDraft.commercialRegister" />
-            <input class="nfd-input" placeholder="الرقم الضريبي" [(ngModel)]="companyEditDraft.taxNumber" readonly title="غير قابل للتعديل: لا يوجد حقل مقابل له في قاعدة البيانات الحالية" />
-            <input class="nfd-input" placeholder="الهاتف" [(ngModel)]="companyEditDraft.phone" />
-            <input class="nfd-input" placeholder="البريد" [(ngModel)]="companyEditDraft.email" />
-            <div style="grid-column:1 / -1;display:flex;justify-content:flex-end;gap:8px;">
+          <div class="company-contact-edit">
+            <label class="company-edit-field">
+              <span>رقم الهاتف</span>
+              <input class="nfd-input" type="tel" autocomplete="tel" [(ngModel)]="companyEditDraft.phone" placeholder="أدخل رقم الهاتف" />
+            </label>
+            <label class="company-edit-field">
+              <span>البريد الإلكتروني</span>
+              <input class="nfd-input" type="email" autocomplete="email" [(ngModel)]="companyEditDraft.email" placeholder="أدخل البريد الإلكتروني" />
+            </label>
+            <div class="company-edit-actions">
               <button class="nfd-btn ghost" type="button" (click)="companyEditOpen.set(false)">إلغاء</button>
-              <button class="nfd-btn primary" type="button" (click)="saveCompanyEdit()">حفظ</button>
+              <button class="nfd-btn primary" type="button" (click)="saveCompanyEdit()">حفظ التغييرات</button>
             </div>
           </div>
         }
 
-        <div class="company-profile-info-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;">
-          <div class="nfd-row company-profile-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
-            <span>السجل التجاري</span><strong style="text-align:left;word-break:break-word;">{{ c.commercialRegister || '—' }}</strong>
+        <div class="company-details-grid">
+          <div class="company-detail-item">
+            <span class="company-detail-label">السجل التجاري</span>
+            <strong class="company-detail-value" dir="auto">{{ c.commercialRegister || '—' }}</strong>
           </div>
-          <div class="nfd-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
-            <span>الرقم الضريبي</span><strong style="text-align:left;word-break:break-word;">{{ c.taxNumber || '—' }}</strong>
+          <div class="company-detail-item">
+            <span class="company-detail-label">العنوان</span>
+            <strong class="company-detail-value" dir="auto">{{ c.address || 'لا يوجد عنوان مسجل' }}</strong>
           </div>
-          <div class="nfd-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
-            <span>الهاتف</span><strong style="text-align:left;word-break:break-word;">{{ c.phone || '—' }}</strong>
+          <div class="company-detail-item">
+            <span class="company-detail-label">رقم الهاتف</span>
+            <strong class="company-detail-value" dir="auto">{{ c.phone || '—' }}</strong>
           </div>
-          <div class="nfd-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
-            <span>البريد</span><strong style="text-align:left;word-break:break-word;">{{ c.email || '—' }}</strong>
-          </div>
-          <div class="nfd-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
-            <span>العنوان</span><strong style="text-align:left;word-break:break-word;">{{ c.address || 'لا يوجد عنوان مسجل' }}</strong>
-          </div>
-          <div class="nfd-row" style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;min-height:42px;">
-            <span>الحالة</span><strong [class.approved-word]="c.status === 'Approved'">{{ statusLabel(c.status) }}</strong>
+          <div class="company-detail-item">
+            <span class="company-detail-label">البريد الإلكتروني</span>
+            <strong class="company-detail-value" dir="auto">{{ c.email || '—' }}</strong>
           </div>
         </div>
       </div>
     </div>
-
 
     <div class="company-profile-sections">
       <div class="nfd-card">
@@ -272,22 +278,7 @@
           </div>
         </div>
 
-        <div style="margin-top:18px;">
-          @if (!editingCapacity()) {
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-              <span style="font-weight:700;color:var(--color-navy);">إجمالي الطاقة: {{ c.capacity || 0 }}</span>
-              <button class="nfd-btn ghost" type="button" (click)="editingCapacity.set(true)">تعديل</button>
-            </div>
-          } @else {
-            <div style="padding-top:4px;">
-              <input class="nfd-input" type="range" min="50" max="300" step="5" [(ngModel)]="capacityDraft" style="width:100%;" />
-              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;">
-                <strong style="font-size:16px;color:var(--color-navy);">{{ capacityDraft }}</strong>
-                <button class="nfd-btn primary" type="button" (click)="saveCapacity()">حفظ</button>
-              </div>
-            </div>
-          }
-        </div>
+        <div class="capacity-total-readonly">إجمالي الطاقة الاستيعابية: <strong>{{ c.capacity || 0 }}</strong> مقعد</div>
       </div>
     </div>
 
