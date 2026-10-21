@@ -224,7 +224,14 @@ export interface TrainerLiveRoomJoinResponse {
   participantToken: string;
   tokenExpiresAtUtc: string;
 }
-
+export interface TrainerLiveRoomDetailsResponse {
+  sessionId: number;
+  roomName: string;
+  topic: string;
+  isLive: boolean;
+  participantCount: number;
+  isRecording: boolean;
+}
 @Injectable({ providedIn: 'root' })
 export class TrainerApi {
 
@@ -1582,4 +1589,10 @@ joinTrainerLiveRoom(
     {}
   );
 }
+getTrainerLiveRoom(sessionId: number): Observable<TrainerLiveRoomDetailsResponse> {
+  return this.http.get<TrainerLiveRoomDetailsResponse>(
+    `${this.base}/trainer/live-sessions/${sessionId}/room`
+  );
+}
+
 }

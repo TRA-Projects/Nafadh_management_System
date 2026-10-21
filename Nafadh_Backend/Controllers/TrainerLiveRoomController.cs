@@ -57,7 +57,8 @@ namespace Nafadh_Backend.Controllers
         // Trainer Portal - Ensure the session can go live.
         private static bool CanGoLive(NFD_Session session)
         {
-            return session.Status == NFD_SessionStatus.Scheduled;
+            return session.Status == NFD_SessionStatus.Scheduled
+                || session.Status == NFD_SessionStatus.InProgress;
         }
 
         // POST: api/trainer/live-sessions/5/room/start
