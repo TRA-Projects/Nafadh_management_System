@@ -71,9 +71,9 @@ namespace Nafadh_Backend.Repositories
                 Nafadh_Backend.Enums.NFD_QuizQuestionType.Essay &&
             aq.Answers.Any(answer =>
                 !answer.IsManuallyGraded))
-    )
+     )
 )
-
+)
                 .OrderByDescending(a => a.SubmittedAt)
                 .ToListAsync();
         }
