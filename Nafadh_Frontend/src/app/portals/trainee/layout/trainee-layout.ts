@@ -1,4 +1,3 @@
-
 import { Component } from '@angular/core';
 import { AppShell, ShellNavItem } from '../../../shared/ui/app-shell/app-shell';
 import { UserManualShell } from '../user-manual/components/user-manual-shell/user-manual-shell';
@@ -22,6 +21,7 @@ export class TraineeLayout {
     { path: 'profile', label: 'الملف الشخصي', icon: 'user' },
     { path: 'program', label: 'البرنامج التدريبي', icon: 'book' },
     { path: 'tasks', label: 'المهام والمشاريع', icon: 'clip' },
+    { path: 'quizzes', label: 'الاختبارات', icon: 'clip' }, // 👈 السطر الجديد هنا
     { path: 'attendance', label: 'الحضور', icon: 'cal' },
     { path: 'notifications', label: 'التنبيهات', icon: 'bell' },
     { path: 'support', label: 'التواصل والمراسلات', icon: 'chat' },

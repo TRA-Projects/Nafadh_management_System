@@ -37,6 +37,10 @@ import {
   LessonFeedbackCreateDto,
   LessonFeedbackUpdateDto,
   TraineeSkillDto,
+  TraineeQuizzesOverviewDto,
+  TraineeQuizListItemDto,
+  QuizAttemptDto,
+  StartQuizAttemptDto,
 } from '../../../core/models/dtos';
 
 
@@ -1129,5 +1133,65 @@ getSessionsByBatch(
       }
     );
   }
+  // =========================================================
+  // Quizzes
+  // =========================================================
 
+  getTraineeQuizzesOverview(
+    traineeId: number
+  ): Observable<TraineeQuizzesOverviewDto> {
+
+    return this.http.get<TraineeQuizzesOverviewDto>(
+      `${this.base}/quiz-attempts/trainee/${traineeId}/quizzes`
+    );
+
+    
+  }
+  startQuizAttempt(
+  dto: StartQuizAttemptDto
+): Observable<QuizAttemptDto> {
+  return this.http.post<QuizAttemptDto>(
+    `${this.base}/quiz-attempts/start`, 
+    dto
+  );
+}
+
+  // =========================================================
+  // Quiz Attempt (Take Quiz)
+  // =========================================================
+
+  getQuizAttempt(attemptId: number, traineeId: number): Observable<QuizAttemptDto> {
+    return this.http.get<QuizAttemptDto>(
+      `${this.base}/quiz-attempts/${attemptId}?traineeId=${traineeId}`
+    );
+  }
+
+  saveQuizAnswer(attemptId: number, dto: any): Observable<any> {
+    return this.http.post<any>(
+      `${this.base}/quiz-attempts/${attemptId}/answers`, 
+      dto
+    );
+  }
+
+  submitQuizAttempt(dto: any): Observable<any> {
+    return this.http.post<any>(
+      `${this.base}/quiz-attempts/submit`, 
+      dto
+    );
+  }
+    // =========================================================
+  // Quiz Results & Details
+  // =========================================================
+
+  getAttemptDetails(attemptId: number): Observable<any> {
+    return this.http.get<any>(
+      `${this.base}/quiz-attempts/${attemptId}/details`
+    );
+  }
+
+  getMyResults(traineeId: number): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.base}/quiz-results/trainee/${traineeId}`
+    );
+  }
 }
