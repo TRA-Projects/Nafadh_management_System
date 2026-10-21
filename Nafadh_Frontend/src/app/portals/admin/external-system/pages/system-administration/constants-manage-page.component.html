@@ -239,8 +239,8 @@
   <div class="app-modal-backdrop z-[999] overflow-y-auto bg-[black]/60" (click.self)="closeModal()">
     <div class="flex min-h-screen items-center justify-center px-4">
       <div class="relative panel my-8 w-[90%] max-w-lg overflow-hidden rounded-lg border-0 p-0 md:w-full">
-        <app-modal-close extraClasses="absolute top-4 ltr:right-4 rtl:left-4" (close)="closeModal()" />
-        <h3 class="bg-[#f0f8ff] py-3 text-lg font-medium ltr:pl-5 ltr:pr-[50px] rtl:pr-5 rtl:pl-[50px] dark:bg-[#121c2c]">
+<app-modal-close extraClasses="absolute top-4 left-4 z-10" (close)="closeModal()" />
+<h3 class="bg-[#f0f8ff] py-4 pl-20 pr-5 text-lg font-medium dark:bg-[#121c2c]" dir="rtl">
           @if (editingId() == null) {
             <span i18n="@@jobseeker.admin.constants.modalAdd">Add constant value</span>
           } @else {
