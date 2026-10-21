@@ -52,6 +52,10 @@ namespace Nafadh_Backend
         // Trainer Portal - Post-session surveys and trainee responses.
         public DbSet<NFD_SessionSurvey> NFD_SessionSurveys { get; set; }
         public DbSet<NFD_SessionSurveyResponse> NFD_SessionSurveyResponses { get; set; }
+    
+        public DbSet<NFD_LivePoll> NFD_LivePolls { get; set; }
+        public DbSet<NFD_LivePollOption> NFD_LivePollOptions { get; set; }
+        public DbSet<NFD_LivePollVote> NFD_LivePollVotes { get; set; }
 
         public DbSet<NFD_DailyAttendance> NFD_DailyAttendances { get; set; }
         public DbSet<NFD_TrainerAttendance> NFD_TrainerAttendances { get; set; }
@@ -541,6 +545,81 @@ namespace Nafadh_Backend
                     .HasForeignKey(x => x.TraineeId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+
+            // =====================================================
+            // Trainer Portal - Live Polls
+            // Polls during LiveKit classroom sessions.
+            // Separate from post-session surveys.
+            // =====================================================
+
+            // Live poll linked to a classroom session.
+            modelBuilder.Entity<NFD_LivePoll>(entity =>
+            {
+                entity.ToTable("NFD_LivePolls");
+
+                entity.HasKey(p => p.PollId);
+
+                entity.Property(p => p.Question)
+                    .HasMaxLength(300)
+                    .IsRequired();
+
+                entity.HasIndex(p => p.SessionId);
+
+                entity.HasOne(p => p.Session)
+                    .WithMany()
+                    .HasForeignKey(p => p.SessionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Options belonging to a live poll.
+            modelBuilder.Entity<NFD_LivePollOption>(entity =>
+            {
+                entity.ToTable("NFD_LivePollOptions");
+
+                entity.HasKey(o => o.OptionId);
+
+                entity.Property(o => o.OptionText)
+                    .HasMaxLength(200)
+                    .IsRequired();
+
+                entity.HasOne(o => o.Poll)
+                    .WithMany(p => p.Options)
+                    .HasForeignKey(o => o.PollId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Trainee votes for live polls.
+            modelBuilder.Entity<NFD_LivePollVote>(entity =>
+            {
+                entity.ToTable("NFD_LivePollVotes");
+
+                entity.HasKey(v => v.VoteId);
+
+                // Prevent a trainee from voting twice
+                // in the same live poll.
+                entity.HasIndex(v => new
+                {
+                    v.PollId,
+                    v.TraineeId
+                })
+                .IsUnique();
+
+                entity.HasOne(v => v.Poll)
+                    .WithMany(p => p.Votes)
+                    .HasForeignKey(v => v.PollId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(v => v.Option)
+                    .WithMany(o => o.Votes)
+                    .HasForeignKey(v => v.OptionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(v => v.Trainee)
+                    .WithMany()
+                    .HasForeignKey(v => v.TraineeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
 
             // ---- NFD_DailyAttendance ----
             modelBuilder.Entity<NFD_DailyAttendance>(entity =>
