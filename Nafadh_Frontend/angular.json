@@ -30,9 +30,10 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.scss"
-            ]
+           "styles": [
+  "src/styles.scss",
+  "public/external-system/css/style.scoped.css"
+]
           },
           "configurations": {
             "production": {
@@ -63,9 +64,12 @@
           },
           "defaultConfiguration": "production"
         },
-        "serve": {
-          "builder": "@angular/build:dev-server",
-          "configurations": {
+       "serve": {
+  "builder": "@angular/build:dev-server",
+  "options": {
+    "proxyConfig": "proxy.conf.json"
+  },
+  "configurations": {
             "production": {
               "buildTarget": "nafadh-frontend-v2:build:production"
             },

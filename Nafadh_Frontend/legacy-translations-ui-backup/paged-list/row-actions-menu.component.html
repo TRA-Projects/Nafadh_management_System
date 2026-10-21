@@ -1,0 +1,31 @@
+<div
+  class="paged-list-actions-menu-wrap"
+  data-row-actions-menu
+  [class.paged-list-actions-menu-wrap--open]="open()"
+>
+  <button
+    type="button"
+    class="paged-list-actions-trigger"
+    [attr.aria-label]="ariaLabel()"
+    [attr.title]="ariaLabel()"
+    [attr.aria-expanded]="open()"
+    (click)="onTriggerClick($event)"
+  >
+    <!-- Vertical ⋮ (three dots) — explicit size so it stays visible inside AG Grid cells -->
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+      <circle cx="12" cy="5" r="1.75" />
+      <circle cx="12" cy="12" r="1.75" />
+      <circle cx="12" cy="19" r="1.75" />
+    </svg>
+  </button>
+  @if (open()) {
+    <div
+      #menuPanel
+      class="paged-list-actions-menu"
+      role="menu"
+      [ngStyle]="menuStyle()"
+    >
+      <ng-content />
+    </div>
+  }
+</div>

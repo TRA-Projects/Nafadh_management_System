@@ -16,7 +16,13 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'programs', loadComponent: () => import('./pages/programs/programs').then((m) => m.AdminPrograms) },
       { path: 'certificates', loadComponent: () => import('./pages/certificates/certificates').then((m) => m.AdminCertificates) },
       { path: 'warnings', loadComponent: () => import('./pages/warnings/warnings').then((m) => m.AdminWarnings) },
-      
+      // صفحات مشروع 1222
+{
+  path: 'external-system',
+  loadChildren: () =>
+    import('./external-system/external.routes')
+      .then((m) => m.EXTERNAL_ROUTES)
+},
       // 👈 المسار المحدث بناءً على مكون الـ CLI الجديد
      {
 

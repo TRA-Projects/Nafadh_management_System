@@ -1,0 +1,74 @@
+<button
+  #triggerButton
+  type="button"
+  class="table-column-filter__trigger"
+  data-table-column-filter-trigger
+  [attr.aria-label]="filterAriaLabel()"
+  [attr.title]="triggerTitle()"
+  [attr.aria-expanded]="open()"
+  [attr.aria-controls]="panelId"
+  [attr.aria-pressed]="active()"
+  aria-haspopup="dialog"
+  (click)="onTriggerClick($event)"
+>
+  <svg class="table-column-filter__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+    <path d="M4 6h16l-5.5 7.25V19l-5 2v-7.75L4 6Z" />
+  </svg>
+  @if (active()) {
+    <span class="table-column-filter__dot" aria-hidden="true"></span>
+  }
+</button>
+
+@if (open()) {
+  <div
+    #panel
+    [id]="panelId"
+    class="table-column-filter__panel"
+    data-table-column-filter-panel
+    role="dialog"
+    [attr.aria-label]="filterAriaLabel()"
+    [ngStyle]="panelStyle()"
+    (click)="$event.stopPropagation()"
+  >
+    @if (type() === 'text') {
+      <label class="table-column-filter__field">
+        <span class="sr-only">{{ searchLabel() }}</span>
+        <input
+          #textInput
+          type="search"
+          class="form-input table-column-filter__input"
+          [attr.placeholder]="placeholder() || searchLabel()"
+          [value]="draft()"
+          (input)="onTextInput($any($event.target).value)"
+          (keydown)="onTextKeydown($event)"
+        />
+      </label>
+    } @else {
+      <label class="table-column-filter__field">
+        <span class="sr-only">{{ filterAriaLabel() }}</span>
+        <select
+          class="form-select table-column-filter__select"
+          [value]="draft()"
+          (change)="onSelectChange($any($event.target).value)"
+        >
+          @for (option of options(); track option.value) {
+            <option [value]="option.value" [selected]="option.value === draft()">{{ option.label }}</option>
+          }
+        </select>
+      </label>
+    }
+    <div class="table-column-filter__actions">
+      @if (type() === 'text') {
+        <button type="button" class="btn btn-primary btn-sm" (click)="applyText()">{{ applyLabel() }}</button>
+      }
+      <button
+        type="button"
+        class="table-column-filter__clear text-danger"
+        data-table-column-filter-clear
+        (click)="clearFilter($event)"
+      >
+        {{ clearLabel() }}
+      </button>
+    </div>
+  </div>
+}

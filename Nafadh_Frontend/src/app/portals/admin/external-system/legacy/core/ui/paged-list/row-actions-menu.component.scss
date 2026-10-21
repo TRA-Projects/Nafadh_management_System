@@ -1,0 +1,113 @@
+.paged-list-actions-menu-wrap {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.paged-list-actions-menu-wrap--open {
+  z-index: 1100;
+}
+
+.paged-list-actions-trigger {
+  display: inline-flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #6b7280;
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
+  transition: color 0.15s ease;
+}
+
+.paged-list-actions-trigger:hover {
+  color: #4361ee;
+}
+
+:host-context(.dark) .paged-list-actions-trigger {
+  color: #9ca3af;
+}
+
+:host-context(.dark) .paged-list-actions-trigger:hover {
+  color: #93a5ff;
+}
+
+.paged-list-actions-menu {
+  /* Default absolute (cards / HTML tables). AG Grid overrides via [style] fixed coords. */
+  position: absolute;
+  inset-inline-end: 0;
+  top: calc(100% + 0.25rem);
+  z-index: 1100;
+  display: flex;
+  min-width: 12rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.125rem;
+  border-radius: 0.75rem;
+  border: 1px solid #ebedf2;
+  background-color: #fff;
+  padding: 0.25rem;
+  box-shadow: 0 10px 24px rgb(15 23 42 / 0.16);
+  isolation: isolate;
+}
+
+:host-context(.dark) .paged-list-actions-menu {
+  border-color: #191e3a;
+  background-color: #0e1726;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.35);
+}
+
+.paged-list-actions-menu__item {
+  display: flex;
+  width: 100%;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.625rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  padding: 0.625rem 0.75rem;
+  text-align: start;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #1f2937;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.paged-list-actions-menu__item:hover:not(:disabled) {
+  background: rgba(67, 97, 238, 0.08);
+  color: #4361ee;
+}
+
+.paged-list-actions-menu__item:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+:host-context(.dark) ::ng-deep .paged-list-actions-menu__item {
+  color: #e5e7eb;
+}
+
+:host-context(.dark) ::ng-deep .paged-list-actions-menu__item:hover:not(:disabled) {
+  background: rgba(67, 97, 238, 0.18);
+  color: #93a5ff;
+}
+
+.paged-list-actions-menu__icon {
+  display: inline-flex;
+  height: 1.25rem;
+  width: 1.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}

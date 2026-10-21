@@ -11,6 +11,8 @@ import {
   withInterceptors,
 } from '@angular/common/http';
 
+import { provideStore } from '@ngrx/store';
+
 import { routes } from './app.routes';
 
 import { authInterceptor } from './core/auth/auth.interceptor';
@@ -27,5 +29,8 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withInterceptors([authInterceptor])
     ),
+
+    // NgRx Store - required by pages imported from 1222
+    provideStore(),
   ],
 };

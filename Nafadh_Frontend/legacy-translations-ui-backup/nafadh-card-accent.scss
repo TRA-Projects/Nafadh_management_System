@@ -1,0 +1,22 @@
+/* Shared NAFADH card top accent — single source for dashboard content cards and listing cards.
+   Values are the existing KPI-family accent from dashboard-chart-panel (not redefined).
+   Height 2px; cyan → navy; dark-mode uses the same pair at reduced opacity. */
+
+.nafadh-card-accent {
+  position: relative;
+}
+
+.nafadh-card-accent::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  z-index: 1;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(90deg, #00e1f5 0%, #00338d 100%);
+}
+
+html.dark .nafadh-card-accent::before {
+  background: linear-gradient(90deg, rgb(0 225 245 / 0.45) 0%, rgb(143 187 232 / 0.75) 100%);
+}

@@ -30,7 +30,8 @@ namespace Nafadh_Backend.Repositories
                 .Include(b => b.BatchTrainers)
                 .ThenInclude(bt => bt.Trainer)
                 .ThenInclude(t => t.User)
-                .AsQueryable();
+.AsSplitQuery()
+.AsQueryable();
 
             if (programId.HasValue)
                 query = query.Where(b => b.ProgramId == programId.Value);

@@ -1,0 +1,31 @@
+<div class="mt-3 flex flex-wrap items-center justify-between gap-2">
+  <span class="text-sm text-white-dark">{{ footerLabel() }}</span>
+  <div class="flex items-center gap-2">
+    <select class="form-select w-auto py-1" [value]="pageSize()" (change)="onPageSizeChange($event)">
+      @for (s of pageSizeOptions(); track s) {
+        <option [value]="s">{{ s }}</option>
+      }
+    </select>
+    <button
+      type="button"
+      class="btn btn-outline-primary btn-sm"
+      [disabled]="!canPrev()"
+      (click)="prev.emit()"
+      aria-label="Prev"
+      i18n-aria-label="@@jobseeker.common.prev"
+    >
+      &lt;
+    </button>
+    <span class="min-w-8 text-center text-sm font-semibold text-white-dark">{{ pageNumber() }}</span>
+    <button
+      type="button"
+      class="btn btn-outline-primary btn-sm"
+      [disabled]="!canNext()"
+      (click)="next.emit()"
+      aria-label="Next"
+      i18n-aria-label="@@jobseeker.common.next"
+    >
+      &gt;
+    </button>
+  </div>
+</div>

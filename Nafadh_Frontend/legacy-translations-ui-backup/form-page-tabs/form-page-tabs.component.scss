@@ -1,0 +1,149 @@
+@import '../form-page-shell/form-page-shell.scss';
+
+$tabs-desktop-min: 1024px;
+
+:host {
+  display: block;
+}
+
+.irf-tabs-nav {
+  margin-bottom: 1.25rem;
+}
+
+/* Compact: same irf-tabs look, less padding, no trailing gap — for a catalog strip that is the
+   only content in an irf-card (Reports). Colors stay the shared form-page-shell tokens. */
+.irf-tabs-nav--compact {
+  margin-bottom: 0;
+}
+
+.irf-tabs-nav--compact .irf-tabs__btn {
+  padding: 0.5rem 0.75rem;
+}
+
+.irf-tabs__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.irf-tabs__icon {
+  display: inline-block;
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask-image: var(--irf-tab-icon);
+  mask-image: var(--irf-tab-icon);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  pointer-events: none;
+}
+
+.irf-tabs__label {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.irf-tabs {
+  margin-bottom: 0;
+}
+
+/* Only one strip visible: carousel below lg, full strip at lg+. */
+.irf-tabs-carousel {
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+  border-bottom: 1px solid #ebedf2;
+  padding-bottom: 0;
+
+  @media (min-width: $tabs-desktop-min) {
+    display: none;
+  }
+}
+
+.irf-tabs--desktop {
+  display: none;
+
+  @media (min-width: $tabs-desktop-min) {
+    display: flex;
+  }
+}
+
+.irf-tabs-carousel__arrow-icon {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+:host-context(.dark) .irf-tabs-carousel {
+  border-bottom-color: #191e3a;
+}
+
+.irf-tabs-carousel__arrow {
+  display: inline-flex;
+  height: 2.75rem;
+  width: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  border-radius: 0.5rem;
+  color: #4361ee;
+  transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.irf-tabs-carousel__arrow:hover:not(:disabled) {
+  background: rgba(67, 97, 238, 0.1);
+}
+
+.irf-tabs-carousel__arrow:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.irf-tabs-carousel__track {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.irf-tabs-carousel__item {
+  min-width: 0;
+  text-align: center;
+}
+
+.irf-tabs-carousel__btn {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  padding-inline: 0.35rem;
+  font-size: 0.8125rem;
+}
+
+.irf-tabs-carousel__btn .irf-tabs__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.irf-tabs-carousel__item--center .irf-tabs-carousel__btn {
+  font-weight: 700;
+}
+
+.irf-tabs-carousel__item--center .irf-tabs__btn--active {
+  border-color: #ebedf2;
+  border-bottom-color: #fff;
+}
+
+:host-context(.dark) .irf-tabs-carousel__item--center .irf-tabs__btn--active {
+  border-color: #191e3a;
+  border-bottom-color: #0e1726;
+}

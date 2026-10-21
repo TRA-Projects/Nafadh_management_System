@@ -1,0 +1,344 @@
+<div
+  class="rounded-xl border border-[#ebedf2] bg-white p-3 shadow-sm dark:border-[#191e3a] dark:bg-[#0e1726] sm:p-4 md:p-6"
+>
+  <h2 class="min-w-0 text-xl font-bold text-black dark:text-white-light sm:text-2xl" i18n="@@jobseeker.admin.constants.pageTitle">
+    Constants management
+  </h2>
+
+  <app-form-page-tabs class="mt-4" [tabs]="pageTabs" [activeId]="activeTab()" (tabSelect)="setTab($any($event))" />
+
+  <div class="relative z-50 flex flex-wrap items-center gap-3">
+    <div class="min-w-[16rem] flex-1 sm:max-w-md">
+      <app-searchable-multi-select
+        mode="single"
+        [allowAddCustom]="false"
+        [required]="false"
+        [options]="lookupSelectOptions()"
+        [selectedValues]="selectedLookupValues()"
+        [searchPlaceholder]="lookupGroupPlaceholder"
+        [emptyText]="lookupEmptyText"
+        (selectionChange)="onLookupSelectionChange($event)"
+      />
+    </div>
+
+    @if (activeTab() === 'sub') {
+      <div class="min-w-[16rem] flex-1 sm:max-w-md">
+        <app-searchable-multi-select
+          mode="single"
+          [allowAddCustom]="false"
+          [required]="false"
+          [options]="subParentReasonSelectOptions()"
+          [selectedValues]="selectedSubParentReasonValues()"
+          [searchPlaceholder]="parentMainValuePlaceholder"
+          [emptyText]="lookupEmptyText"
+          (selectionChange)="onSubParentReasonSelectionChange($event)"
+        />
+      </div>
+    }
+
+    @if (canManageSubRows()) {
+      <button
+        type="button"
+        class="btn btn-gradient inline-flex h-10 shrink-0 items-center gap-1 px-4 py-0 leading-none"
+        (click)="openAdd()"
+      >
+        <span aria-hidden="true">+</span>
+        <span i18n="@@jobseeker.admin.constants.addValue">Add value</span>
+      </button>
+    }
+  </div>
+
+  <div class="mt-4 rounded-xl border border-[#ebedf2] bg-white dark:border-[#191e3a] dark:bg-[#0e1726] md:overflow-hidden">
+    <!-- Mobile / tablet cards -->
+    <div class="p-3 lg:hidden">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        @for (row of rows(); track row.id; let i = $index) {
+          <article class="constants-card">
+            <div class="constants-card__header">
+              <div class="constants-card__identity">
+                <span class="constants-card__avatar" aria-hidden="true">
+                  <img [src]="'/images/nav/settings.svg' | assetUrl" alt="" class="constants-card__avatar-icon" />
+                </span>
+                <span class="min-w-0">
+                  <span class="constants-card__name">{{ rowTitle(row) }}</span>
+                </span>
+              </div>
+              <div class="constants-card__actions">
+                <ng-container *ngTemplateOutlet="rowActionsMenu; context: { $implicit: row }" />
+              </div>
+            </div>
+
+            <div class="constants-card__meta">
+              <div>
+                <div class="constants-card__label" i18n="@@jobseeker.admin.constants.valueCode">Code</div>
+                <div class="constants-card__value font-mono text-xs">{{ row.code || row.id }}</div>
+              </div>
+              <div>
+                <div class="constants-card__label" i18n="@@jobseeker.common.active">Active</div>
+                <div class="constants-card__value">
+                  <label class="app-toggle">
+                    <input type="checkbox" [checked]="row.IsActive" disabled />
+                    <span class="app-toggle__track"></span>
+                  </label>
+                </div>
+              </div>
+              <div>
+                <div class="constants-card__label" i18n="@@jobseeker.common.nameEn">Name (EN)</div>
+                <div class="constants-card__value">{{ row.label_en }}</div>
+              </div>
+              <div>
+                <div class="constants-card__label" i18n="@@jobseeker.common.nameAr">Name (AR)</div>
+                <div class="constants-card__value">{{ row.label_ar }}</div>
+              </div>
+              @if (showSubCatalogColumn()) {
+                <div class="col-span-2">
+                  <div class="constants-card__label" i18n="@@jobseeker.admin.constants.hasSubCatalog">Linked sub-menu</div>
+                  <div class="constants-card__value">{{ row.subReasonDropdown ? yesLabel : noLabel }}</div>
+                </div>
+              }
+            </div>
+          </article>
+        }
+      </div>
+
+      @if (rows().length === 0) {
+        <div
+          class="rounded-xl border border-dashed border-[#ebedf2] px-3 py-8 text-center text-sm text-white-dark dark:border-[#191e3a]"
+          i18n="@@jobseeker.admin.constants.noValues"
+        >
+          No values found for this constants group.
+        </div>
+      }
+    </div>
+
+    <!-- Desktop table -->
+    <div class="table-responsive hidden lg:block">
+      <table class="constants-table">
+        <thead>
+          <tr>
+            <th i18n="@@jobseeker.common.rowNumber">#</th>
+            <th i18n="@@jobseeker.admin.constants.valueCode">Code</th>
+            <th i18n="@@jobseeker.common.nameEn">Name (EN)</th>
+            <th i18n="@@jobseeker.common.nameAr">Name (AR)</th>
+            @if (showSubCatalogColumn()) {
+              <th i18n="@@jobseeker.admin.constants.hasSubCatalog">Linked sub-menu</th>
+            }
+            <th i18n="@@jobseeker.common.active">Active</th>
+            <th class="constants-actions-cell" i18n="@@jobseeker.common.actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (rows().length === 0) {
+            <tr>
+              <td [attr.colspan]="showSubCatalogColumn() ? 7 : 6" class="py-8 text-center text-sm text-white-dark" i18n="@@jobseeker.admin.constants.noValues">
+                No values found for this constants group.
+              </td>
+            </tr>
+          } @else {
+            @for (row of rows(); track row.id; let i = $index) {
+              <tr>
+                <td class="text-white-dark">{{ safePageIndex() * pageSize() + i + 1 }}</td>
+                <td class="whitespace-nowrap font-mono text-xs">{{ row.code || row.id }}</td>
+                <td class="whitespace-nowrap font-semibold text-black dark:text-white-light">{{ row.label_en }}</td>
+                <td class="text-white-dark">{{ row.label_ar }}</td>
+                @if (showSubCatalogColumn()) {
+                  <td class="text-white-dark">{{ row.subReasonDropdown ? yesLabel : noLabel }}</td>
+                }
+                <td>
+                  <label class="app-toggle">
+                    <input type="checkbox" [checked]="row.IsActive" disabled />
+                    <span class="app-toggle__track"></span>
+                  </label>
+                </td>
+                <td class="constants-actions-cell">
+                  <ng-container *ngTemplateOutlet="rowActionsMenu; context: { $implicit: row }" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="constants-pager">
+      <span class="constants-pager__summary">{{ pageFooterLabel() }}</span>
+      <div class="constants-pager__controls">
+        <label class="constants-pager__size">
+          <span i18n="@@jobseeker.jobsList.perPage">Per page</span>
+          <select
+            class="form-select constants-pager__select"
+            [value]="pageSize()"
+            (change)="setPageSize(+$any($event.target).value)"
+          >
+            @for (s of pageSizeOptions; track s) {
+              <option [value]="s">{{ s }}</option>
+            }
+          </select>
+        </label>
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm constants-pager__nav"
+          [disabled]="!canPrev()"
+          (click)="prevPage()"
+          aria-label="Prev"
+          i18n-aria-label="@@jobseeker.common.prev"
+        >
+          &lt;
+        </button>
+        <span class="constants-pager__page constants-pager__page--active">{{ safePageIndex() + 1 }}</span>
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm constants-pager__nav"
+          [disabled]="!canNext()"
+          (click)="nextPage()"
+          aria-label="Next"
+          i18n-aria-label="@@jobseeker.common.next"
+        >
+          &gt;
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #rowActionsMenu let-row>
+  <div class="constants-actions-menu-wrap" data-row-actions-menu>
+    <button
+      type="button"
+      class="constants-actions-trigger"
+      [attr.aria-label]="rowActionsMenuAria"
+      [attr.title]="rowActionsMenuAria"
+      [attr.aria-expanded]="actionsMenuRowId() === rowActionKey(row)"
+      (click)="toggleRowActionsMenu(rowActionKey(row), $event)"
+    >
+      <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true">
+        <circle cx="12" cy="5" r="1.75" />
+        <circle cx="12" cy="12" r="1.75" />
+        <circle cx="12" cy="19" r="1.75" />
+      </svg>
+    </button>
+    @if (actionsMenuRowId() === rowActionKey(row)) {
+      <div class="constants-actions-menu" role="menu">
+        <button
+          type="button"
+          class="constants-actions-menu__item"
+          role="menuitem"
+          (click)="closeRowActionsMenu(); openEdit(row)"
+        >
+          <span class="constants-actions-menu__icon">
+            <img [src]="'/images/general/edit.svg' | assetUrl" alt="" class="h-4 w-4" />
+          </span>
+          <span i18n="@@jobseeker.common.edit">Edit</span>
+        </button>
+      </div>
+    }
+  </div>
+</ng-template>
+
+@if (modalOpen()) {
+  <div class="app-modal-backdrop z-[999] overflow-y-auto bg-[black]/60" (click.self)="closeModal()">
+    <div class="flex min-h-screen items-center justify-center px-4">
+      <div class="relative panel my-8 w-[90%] max-w-lg overflow-hidden rounded-lg border-0 p-0 md:w-full">
+        <app-modal-close extraClasses="absolute top-4 ltr:right-4 rtl:left-4" (close)="closeModal()" />
+        <h3 class="bg-[#f0f8ff] py-3 text-lg font-medium ltr:pl-5 ltr:pr-[50px] rtl:pr-5 rtl:pl-[50px] dark:bg-[#121c2c]">
+          @if (editingId() == null) {
+            <span i18n="@@jobseeker.admin.constants.modalAdd">Add constant value</span>
+          } @else {
+            <span i18n="@@jobseeker.admin.constants.modalEdit">Edit constant value</span>
+          }
+          - {{ selectedLookupLabel() }}
+        </h3>
+        <div class="p-5">
+          <form [formGroup]="form" class="space-y-4" (ngSubmit)="save()">
+            @if (activeTab() === 'main') {
+              <div>
+                <label class="mb-1 block text-sm font-semibold text-black dark:text-white-light">
+                  <span i18n="@@jobseeker.admin.constants.valueCode">Code</span>
+                  @if (isRequired('code')) {
+                    <span class="text-danger">*</span>
+                  }
+                </label>
+                <input
+                  class="form-input uppercase"
+                  type="text"
+                  formControlName="code"
+                  maxlength="3"
+                  autocapitalize="characters"
+                  spellcheck="false"
+                  [placeholder]="codePlaceholder"
+                  (input)="onCodeInput($event)"
+                />
+                @if (editingId() == null) {
+                  <p class="mt-1 text-xs text-white-dark" i18n="@@jobseeker.admin.constants.codeHelp">
+                    3 uppercase letters (e.g. FLT for Full-Time).
+                  </p>
+                } @else {
+                  <p class="mt-1 text-xs text-white-dark" i18n="@@jobseeker.admin.constants.codeLocked">
+                    Code cannot be edited after creation.
+                  </p>
+                }
+                @if (form.controls.code.invalid && (form.controls.code.touched || form.controls.code.dirty)) {
+                  <span class="mt-1 block text-danger text-sm">{{ form.controls.code | validationMessage }}</span>
+                }
+              </div>
+            }
+
+            <div>
+              <label class="mb-1 block text-sm font-semibold text-black dark:text-white-light">
+                <span i18n="@@jobseeker.common.nameEn">Name (EN)</span>
+                @if (isRequired('label_en')) {
+                  <span class="text-danger">*</span>
+                }
+              </label>
+              <input class="form-input" type="text" formControlName="label_en" />
+              @if (form.controls.label_en.invalid && (form.controls.label_en.touched || form.controls.label_en.dirty)) {
+                <span class="mt-1 block text-danger text-sm">{{ form.controls.label_en | validationMessage }}</span>
+              }
+            </div>
+
+            <div>
+              <label class="mb-1 block text-sm font-semibold text-black dark:text-white-light">
+                <span i18n="@@jobseeker.common.nameAr">Name (AR)</span>
+                @if (isRequired('label_ar')) {
+                  <span class="text-danger">*</span>
+                }
+              </label>
+              <input class="form-input" type="text" formControlName="label_ar" dir="auto" />
+              @if (form.controls.label_ar.invalid && (form.controls.label_ar.touched || form.controls.label_ar.dirty)) {
+                <span class="mt-1 block text-danger text-sm">{{ form.controls.label_ar | validationMessage }}</span>
+              }
+            </div>
+
+            @if (isMainGroupWithSubCatalog()) {
+              <div class="flex items-center gap-2">
+                <input type="checkbox" class="form-checkbox" id="subReasonDropdown" formControlName="subReasonDropdown" />
+                <label for="subReasonDropdown" class="text-sm font-semibold text-black dark:text-white-light">{{
+                  hasSubCatalogLabel
+                }}</label>
+              </div>
+            }
+
+            <div class="flex items-center gap-2">
+              <span class="app-toggle">
+                <input type="checkbox" id="constantIsActive" formControlName="IsActive" />
+                <span class="app-toggle__track"></span>
+              </span>
+              <label for="constantIsActive" class="text-sm font-semibold text-black dark:text-white-light" i18n="@@jobseeker.common.active"
+                >Active</label
+              >
+            </div>
+
+            <div class="mt-6 flex justify-end gap-2">
+              <button type="button" class="btn btn-outline-danger" (click)="closeModal()">
+                <span i18n="@@jobseeker.common.cancel">Cancel</span>
+              </button>
+              <button type="submit" class="btn btn-gradient">
+                <span i18n="@@jobseeker.common.save">Save</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+}

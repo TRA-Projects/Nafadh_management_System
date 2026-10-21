@@ -1,0 +1,31 @@
+{
+  "translations": {
+    "jobseeker.showcase.title": "نماذج الواجهة",
+    "jobseeker.showcase.add": "سجل جديد",
+    "jobseeker.showcase.newTitle": "سجل جديد",
+    "jobseeker.showcase.backToList": "العودة إلى نماذج الواجهة",
+    "jobseeker.showcase.searchPlaceholder": "ابحث بالعنوان أو البريد الإلكتروني",
+    "jobseeker.showcase.category": "الفئة",
+    "jobseeker.showcase.categoryTraining": "تدريب",
+    "jobseeker.showcase.categoryEquipment": "معدات",
+    "jobseeker.showcase.categoryTravel": "سفر",
+    "jobseeker.showcase.status": "الحالة",
+    "jobseeker.showcase.statusDraft": "مسودة",
+    "jobseeker.showcase.statusSubmitted": "مقدّم",
+    "jobseeker.showcase.statusApproved": "معتمد",
+    "jobseeker.showcase.amount": "المبلغ",
+    "jobseeker.showcase.startDate": "تاريخ البدء",
+    "jobseeker.showcase.endDate": "تاريخ الانتهاء",
+    "jobseeker.showcase.contactEmail": "البريد الإلكتروني للتواصل",
+    "jobseeker.showcase.phoneNumber": "رقم الهاتف",
+    "jobseeker.showcase.urgent": "عاجل",
+    "jobseeker.showcase.sectionBasic": "المعلومات الأساسية",
+    "jobseeker.showcase.sectionContact": "التواصل",
+    "jobseeker.showcase.sectionAmountDates": "المبلغ والتواريخ",
+    "jobseeker.showcase.deleteTitle": "حذف السجل",
+    "jobseeker.showcase.deleteConfirm": "هل تريد حذف هذا السجل؟",
+    "jobseeker.showcase.deleting": "جارٍ الحذف…",
+    "jobseeker.showcase.deleted": "تم حذف السجل.",
+    "jobseeker.showcase.saved": "تم حفظ السجل."
+  }
+}
