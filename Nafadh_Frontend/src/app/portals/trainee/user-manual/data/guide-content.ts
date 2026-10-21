@@ -1,3 +1,4 @@
+
 import { GuidePage } from '../models/guide.models';
 
 export const GUIDE_CONTENT: Record<string, GuidePage> = {
@@ -51,6 +52,18 @@ export const GUIDE_CONTENT: Record<string, GuidePage> = {
           'اختاري الصفحة المطلوبة للانتقال إليها.',
         ],
       },
+      {
+        target: '.dashboard-viewport-container button[routerLink="/trainee/program"]',
+        title: 'تفاصيل البرنامج',
+        description: 'انتقلي إلى صفحة البرنامج التدريبي للاطلاع على تفاصيل تقدمك.',
+        order: 4,
+      },
+      {
+        target: '.dashboard-viewport-container button[title="الشهر التالي"]',
+        title: 'تقويم المهام',
+        description: 'استخدمي أسهم التقويم للتنقل بين الأشهر ومتابعة المواعيد.',
+        order: 5,
+      },
     ],
   },
 
@@ -95,6 +108,12 @@ export const GUIDE_CONTENT: Record<string, GuidePage> = {
           'احفظي التغييرات.',
         ],
       },
+      {
+        target: '.nfd-card:has(input[readonly])',
+        title: 'البيانات الثابتة',
+        description: 'بعض بيانات الحساب للعرض فقط ولا يمكن تعديلها.',
+        order: 3,
+      },
     ],
   },
 
@@ -137,6 +156,18 @@ export const GUIDE_CONTENT: Record<string, GuidePage> = {
           'تابعي الدروس المكتملة والمتبقية.',
         ],
       },
+      {
+        target: '.program-container .modules-container',
+        title: 'الوحدات والدروس',
+        description: 'استعرضي الوحدات والدروس المتاحة داخل البرنامج التدريبي.',
+        order: 3,
+      },
+      {
+        target: '.program-container .lesson-action-button.view-button',
+        title: 'مشاهدة الدرس',
+        description: 'افتحي الدرس المتاح لمتابعة محتواه.',
+        order: 4,
+      },
     ],
   },
 
@@ -172,12 +203,12 @@ export const GUIDE_CONTENT: Record<string, GuidePage> = {
       },
       {
         target: '[data-guide="tasks-filter"]',
-        title: 'تصفية المهام',
-        description: 'استخدمي الفلاتر لعرض المهام حسب الحالة.',
+        title: 'المهام والمشاريع',
+        description: 'تنقّلي بين تبويب المهام وتبويب المشاريع لعرض المحتوى المناسب.',
         order: 2,
         steps: [
-          'اختاري الحالة المطلوبة من الفلتر.',
-          'راجعي النتائج المصفّاة.',
+          'اختاري تبويب المهام أو المشاريع.',
+          'راجعي العناصر المعروضة في التبويب المحدد.',
         ],
       },
     ],
@@ -222,6 +253,18 @@ export const GUIDE_CONTENT: Record<string, GuidePage> = {
           'قارني مع أيام الغياب والتأخير.',
         ],
       },
+      {
+        target: '.attendance-page .attendance-filters',
+        title: 'تصفية سجلات الحضور',
+        description: 'اختاري الكل أو الحضور أو التأخير أو الغياب لعرض السجلات المناسبة.',
+        order: 3,
+      },
+      {
+        target: '.attendance-page .commitment-card',
+        title: 'نسبة الالتزام',
+        description: 'تابعي نسبة التزامك بالحضور في هذه البطاقة.',
+        order: 4,
+      },
     ],
   },
 
@@ -254,6 +297,12 @@ export const GUIDE_CONTENT: Record<string, GuidePage> = {
           'افتحي التنبيه لعرض تفاصيله.',
           'علّمي التنبيه كمقروء بعد المراجعة.',
         ],
+      },
+      {
+        target: '.page .filters-row',
+        title: 'تصفية الإشعارات',
+        description: 'استخدمي خيارات التصفية للوصول إلى الإشعارات المطلوبة.',
+        order: 2,
       },
     ],
   },
@@ -297,6 +346,12 @@ export const GUIDE_CONTENT: Record<string, GuidePage> = {
           'راجعي الردود الجديدة.',
         ],
       },
+      {
+        target: '.support-page .receiver-form-group',
+        title: 'الجهة المستلمة',
+        description: 'اختاري الجهة المناسبة قبل إرسال الاستفسار أو الطلب.',
+        order: 3,
+      },
     ],
   },
 
@@ -338,6 +393,18 @@ export const GUIDE_CONTENT: Record<string, GuidePage> = {
           'افتحي قسم الشهادات.',
           'راجعي الشهادات المتاحة وتفاصيلها.',
         ],
+      },
+      {
+        target: '.achievements-page .achievement-summary',
+        title: 'ملخص الإنجازات',
+        description: 'تابعي نسبة التقدم وملخص إنجازاتك التدريبية.',
+        order: 3,
+      },
+      {
+        target: '.achievements-page .feedback-strip',
+        title: 'التقييمات',
+        description: 'من هذا القسم يمكنك الوصول إلى التقييمات المتاحة لك.',
+        order: 4,
       },
     ],
   },
