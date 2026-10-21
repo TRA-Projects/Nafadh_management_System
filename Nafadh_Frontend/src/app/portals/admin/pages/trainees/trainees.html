@@ -1039,7 +1039,7 @@
                   type="text" 
                   [ngModel]="attendanceSearchQuery()" 
                   (ngModelChange)="onAttendanceSearchChange($event)"
-                  placeholder="ابحث باسم المتدرب، الرقم المدني، البريد...">
+                  placeholder="ابحث بإسم المتدرب">
               </div>
             </div>
 
@@ -1085,11 +1085,11 @@
                 <tr>
                   <th style="width: 48px;">#</th>
                   <th>المتدرب</th>
-                  <th>الرقم المدني / الجامعي</th>
+                  
                   <th>المسار التدريبي</th>
                   <th>الشركة المستضيفة</th>
                   <th style="width: 140px; text-align: center;">حالة الحضور (رصد المدرب)</th>
-                  <th style="width: 130px;">وقت الحضور</th>
+                 
                   <th>ملاحظات / عذر المدرب</th>
                 </tr>
               </thead>
@@ -1115,10 +1115,7 @@
                       </div>
                     </td>
 
-                    <!-- الرقم المدني / الجامعي -->
-                    <td>
-                      <span class="att-nid-badge">{{ record.nationalId || '—' }}</span>
-                    </td>
+                    
 
                     <!-- المسار التدريبي -->
                     <td>
@@ -1161,17 +1158,7 @@
                       }
                     </td>
 
-                    <!-- وقت الحضور المسجل كنص رسمي -->
-                    <td>
-                      <div class="att-time-display">
-                        @if (record.checkInTime && record.checkInTime !== '—') {
-                          <i class="fa-regular fa-clock time-icon"></i>
-                          <span>{{ record.checkInTime }}</span>
-                        } @else {
-                          <span class="text-muted">—</span>
-                        }
-                      </div>
-                    </td>
+                    
 
                     <!-- ملاحظات المدرب المسجلة كنص رسمي -->
                     <td>
