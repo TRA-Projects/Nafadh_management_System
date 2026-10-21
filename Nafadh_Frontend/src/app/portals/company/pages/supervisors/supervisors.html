@@ -558,8 +558,8 @@
       </button>
 
       <!-- زر تقييم مدربي هذا المشرف فقط -->
-      <button class="btn btn-primary" type="button" (click)="openSupervisorEvaluations(s, $event)" 
-              style="flex: 1; background-color: #00338d; color: #fff; display: inline-flex; align-items: center; justify-content: center; gap: 5px;">
+      <button class="btn btn-primary" type="button" (click)="openSupervisorEvaluations(s, $event)"
+        style="flex: 1; background-color: #00338d; color: #fff; display: inline-flex; align-items: center; justify-content: center; gap: 5px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -568,7 +568,8 @@
       </button>
 
       <!-- عرض الملف الشخصي -->
-      <button class="btn btn-outline" type="button" (click)="openSupervisorProfile(s)" style="width: 100%; margin-top: 4px;">
+      <button class="btn btn-outline" type="button" (click)="openSupervisorProfile(s)"
+        style="width: 100%; margin-top: 4px;">
         عرض الملف الشخصي
       </button>
 
@@ -802,185 +803,154 @@
 
 @if (isDistributeModalOpen && selectedSupervisor) {
 
-  <div class="modal-backdrop" (click)="closeDistributeModal()">
+<div class="modal-backdrop" (click)="closeDistributeModal()">
 
-    <div
-      class="modal-card large-modal"
-      (click)="$event.stopPropagation()"
-      dir="rtl"
-    >
+  <div class="modal-card large-modal" (click)="$event.stopPropagation()" dir="rtl">
 
-      <!-- رأس النافذة -->
-      <div class="modal-header">
+    <!-- رأس النافذة -->
+    <div class="modal-header">
 
-        <div>
-          <span class="modal-kicker">إدارة التوزيع</span>
-          <h2>توزيع المدربين</h2>
-        </div>
-
-        <button
-          class="close-btn"
-          type="button"
-          (click)="closeDistributeModal()"
-          aria-label="إغلاق"
-        >
-          ×
-        </button>
-
+      <div>
+        <span class="modal-kicker">إدارة التوزيع</span>
+        <h2>توزيع المدربين</h2>
       </div>
 
-      <!-- معلومات المشرف -->
-      <div class="modal-subtext">
+      <button class="close-btn" type="button" (click)="closeDistributeModal()" aria-label="إغلاق">
+        ×
+      </button>
 
-        تحديد المدربين للمشرف:
+    </div>
 
-        <strong>{{ selectedSupervisor.fullName }}</strong>
+    <!-- معلومات المشرف -->
+    <div class="modal-subtext">
 
-        <span>
-          — {{ selectedSupervisor.department || 'القسم العام' }}
-        </span>
+      تحديد المدربين للمشرف:
 
+      <strong>{{ selectedSupervisor.fullName }}</strong>
+
+      <span>
+        — {{ selectedSupervisor.department || 'القسم العام' }}
+      </span>
+
+    </div>
+
+    <!-- شريط التوزيع -->
+    <div class="distribution-toolbar">
+
+      <div>
+        <strong>{{ selectedAssignedCount }}</strong>
+        <span>مدرب محدد</span>
       </div>
 
-      <!-- شريط التوزيع -->
-      <div class="distribution-toolbar">
+      <button type="button" (click)="toggleAllTrainees()" [disabled]="distributionLoading || traineesList.length === 0">
+        {{ allTraineesSelected ? 'إلغاء تحديد الكل' : 'تحديد الكل' }}
+      </button>
 
-        <div>
-          <strong>{{ selectedAssignedCount }}</strong>
-          <span>مدرب محدد</span>
+    </div>
+
+    <!-- جاري التحميل -->
+    @if (distributionLoading) {
+
+    <div class="distribution-loading">
+      <span class="loading-spinner"></span>
+      <p>جارٍ تحميل قائمة المدربين...</p>
+    </div>
+
+    }
+
+    <!-- القائمة -->
+    @if (!distributionLoading && traineesList.length > 0) {
+
+    <div class="trainees-list">
+
+      @for (t of traineesList; track t.id) {
+
+      <label class="trainee-row" [class.selected]="t.assigned">
+
+        <div class="trainee-info">
+
+          <div class="avatar" [ngClass]="t.color">
+            {{ t.initials }}
+          </div>
+
+          <div class="trainee-details">
+
+            <span class="name">
+              {{ t.name }}
+            </span>
+
+            <span class="track">
+              {{ t.track }}
+              @if (t.batch) {
+              — {{ t.batch }}
+              }
+            </span>
+
+            @if (t.email) {
+            <span class="track">
+              {{ t.email }}
+            </span>
+            }
+
+          </div>
+
         </div>
 
-        <button
-          type="button"
-          (click)="toggleAllTrainees()"
-          [disabled]="distributionLoading || traineesList.length === 0"
-        >
-          {{ allTraineesSelected ? 'إلغاء تحديد الكل' : 'تحديد الكل' }}
-        </button>
+        <div class="assign-checkbox-label">
 
-      </div>
+          <span>
+            {{ t.assigned ? 'محدد' : 'تحديد' }}
+          </span>
 
-      <!-- جاري التحميل -->
-      @if (distributionLoading) {
+          <input type="checkbox" [(ngModel)]="t.assigned" [attr.aria-label]="'تحديد ' + t.name" />
 
-        <div class="distribution-loading">
-          <span class="loading-spinner"></span>
-          <p>جارٍ تحميل قائمة المدربين...</p>
         </div>
+
+      </label>
 
       }
 
-      <!-- القائمة -->
-      @if (!distributionLoading && traineesList.length > 0) {
+    </div>
 
-        <div class="trainees-list">
+    }
 
-          @for (t of traineesList; track t.id) {
+    <!-- القائمة فارغة -->
+    @if (!distributionLoading && traineesList.length === 0) {
 
-            <label
-              class="trainee-row"
-              [class.selected]="t.assigned"
-            >
+    <div class="distribution-empty">
 
-              <div class="trainee-info">
+      <h3>لا توجد أسماء مدربين</h3>
 
-                <div class="avatar" [ngClass]="t.color">
-                  {{ t.initials }}
-                </div>
+      <p>
+        لم يتم العثور على مدربين لعرضهم. تأكد من أن واجهة API
+        تعيد بيانات المدربين بالشكل المتوقع.
+      </p>
 
-                <div class="trainee-details">
+      <button type="button" (click)="openDistributeModal(selectedSupervisor)">
+        إعادة تحميل القائمة
+      </button>
 
-                  <span class="name">
-                    {{ t.name }}
-                  </span>
+    </div>
 
-                  <span class="track">
-                    {{ t.track }}
-                    @if (t.batch) {
-                      — {{ t.batch }}
-                    }
-                  </span>
+    }
 
-                  @if (t.email) {
-                    <span class="track">
-                      {{ t.email }}
-                    </span>
-                  }
+    <!-- أزرار الحفظ -->
+    <div class="modal-footer-actions">
 
-                </div>
+      <button type="button" class="btn-cancel-modal" (click)="closeDistributeModal()">
+        إلغاء
+      </button>
 
-              </div>
-
-              <div class="assign-checkbox-label">
-
-                <span>
-                  {{ t.assigned ? 'محدد' : 'تحديد' }}
-                </span>
-
-                <input
-                  type="checkbox"
-                  [(ngModel)]="t.assigned"
-                  [attr.aria-label]="'تحديد ' + t.name"
-                />
-
-              </div>
-
-            </label>
-
-          }
-
-        </div>
-
-      }
-
-      <!-- القائمة فارغة -->
-      @if (!distributionLoading && traineesList.length === 0) {
-
-        <div class="distribution-empty">
-
-          <h3>لا توجد أسماء مدربين</h3>
-
-          <p>
-            لم يتم العثور على مدربين لعرضهم. تأكد من أن واجهة API
-            تعيد بيانات المدربين بالشكل المتوقع.
-          </p>
-
-          <button
-            type="button"
-            (click)="openDistributeModal(selectedSupervisor)"
-          >
-            إعادة تحميل القائمة
-          </button>
-
-        </div>
-
-      }
-
-      <!-- أزرار الحفظ -->
-      <div class="modal-footer-actions">
-
-        <button
-          type="button"
-          class="btn-cancel-modal"
-          (click)="closeDistributeModal()"
-        >
-          إلغاء
-        </button>
-
-        <button
-          type="button"
-          class="btn-save-modal"
-          (click)="saveDistribution()"
-          [disabled]="distributionLoading || traineesList.length === 0"
-        >
-          حفظ التوزيع
-        </button>
-
-      </div>
+      <button type="button" class="btn-save-modal" (click)="saveDistribution()"
+        [disabled]="distributionLoading || traineesList.length === 0">
+        حفظ التوزيع
+      </button>
 
     </div>
 
   </div>
+
+</div>
 
 }
 
@@ -1279,91 +1249,82 @@
 ========================================================= -->
 @if (isEvaluationModalOpen && selectedSupervisor) {
 
-  <div class="modal-backdrop" (click)="closeEvaluationModal()">
+<div class="modal-backdrop" (click)="closeEvaluationModal()">
 
-    <div
-      class="modal-card large-modal"
-      (click)="$event.stopPropagation()"
-      dir="rtl"
-    >
+  <div class="modal-card large-modal" (click)="$event.stopPropagation()" dir="rtl">
 
-      <!-- رأس النافذة -->
-      <div class="modal-header">
+    <!-- رأس النافذة -->
+    <div class="modal-header">
 
-        <div>
-          <span class="modal-kicker">سجل التقييمات المخصص</span>
-          <h2>تقييم المدرب : {{ selectedSupervisor.fullName }}</h2>
-        </div>
-
-        <button
-          class="close-btn"
-          type="button"
-          (click)="closeEvaluationModal()"
-          aria-label="إغلاق"
-        >
-          ×
-        </button>
-
+      <div>
+        <span class="modal-kicker">سجل التقييمات المخصص</span>
+        <h2>تقييم المدرب : {{ selectedSupervisor.fullName }}</h2>
       </div>
 
-      <!-- معلومات توضيحية -->
-      <div class="modal-subtext">
-        عرض وتقييم المدربين الموزعين على هذا المشرف حصراً.
-      </div>
-
-      <!-- قائمة المدربين التابعين للمشرف -->
-      <div class="trainees-list" style="margin-top: 15px; max-height: 350px; overflow-y: auto;">
-
-        @if (supervisorTrainers.length > 0) {
-          @for (t of supervisorTrainers; track t.id) {
-            <div class="trainee-row" style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee;">
-              <div class="trainee-info" style="display: flex; align-items: center; gap: 10px;">
-                <div class="avatar" [ngClass]="t.color" style="width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
-                  {{ t.initials }}
-                </div>
-                <div>
-                  <span class="name" style="font-weight: bold; display: block;">{{ t.name }}</span>
-                  <span class="track" style="font-size: 12px; color: #666;">{{ t.track }}</span>
-                </div>
-              </div>
-
-              <!-- زر أو حقل تقييم سريع للمدرب -->
-              <div style="display: flex; gap: 10px; align-items: center;">
-                <select class="form-input" [(ngModel)]="t.currentRating" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
-                  <option value="">اختر التقييم</option>
-                  <option value="ممتاز">ممتاز</option>
-                  <option value="جيد جداً">جيد جداً</option>
-                  <option value="جيد">جيد</option>
-                  <option value="يحتاج تحسين">يحتاج تحسين</option>
-                </select>
-                <button type="button" class="btn btn-primary" style="padding: 6px 12px; font-size: 13px;" (click)="saveTrainerEvaluation(t)">
-                  حفظ التقييم
-                </button>
-              </div>
-            </div>
-          }
-        } @else {
-          <div style="text-align: center; padding: 20px; color: #777;">
-            لا توجد مدربون موزعون لهذا المشرف حالياً. يمكنك توزيع المدربين أولاً من زر "توزيع المدربين".
-          </div>
-        }
-
-      </div>
-
-      <!-- أزرار الإغلاق -->
-      <div class="modal-footer-actions" style="margin-top: 20px; display: flex; justify-content: flex-end;">
-        <button
-          type="button"
-          class="btn-cancel-modal"
-          (click)="closeEvaluationModal()"
-        >
-          إغلاق
-        </button>
-      </div>
+      <button class="close-btn" type="button" (click)="closeEvaluationModal()" aria-label="إغلاق">
+        ×
+      </button>
 
     </div>
 
+    <!-- معلومات توضيحية -->
+    <div class="modal-subtext">
+      عرض وتقييم المدربين الموزعين على هذا المشرف حصراً.
+    </div>
+
+    <!-- قائمة المدربين التابعين للمشرف -->
+    <div class="trainees-list" style="margin-top: 15px; max-height: 350px; overflow-y: auto;">
+
+      @if (supervisorTrainers.length > 0) {
+      @for (t of supervisorTrainers; track t.id) {
+      <div class="trainee-row"
+        style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee;">
+        <div class="trainee-info" style="display: flex; align-items: center; gap: 10px;">
+          <div class="avatar" [ngClass]="t.color"
+            style="width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+            {{ t.initials }}
+          </div>
+          <div>
+            <span class="name" style="font-weight: bold; display: block;">{{ t.name }}</span>
+            <span class="track" style="font-size: 12px; color: #666;">{{ t.track }}</span>
+          </div>
+        </div>
+
+        <!-- زر أو حقل تقييم سريع للمدرب -->
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <select class="form-input" [(ngModel)]="t.currentRating"
+            style="padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+            <option value="">اختر التقييم</option>
+            <option value="ممتاز">ممتاز</option>
+            <option value="جيد جداً">جيد جداً</option>
+            <option value="جيد">جيد</option>
+            <option value="يحتاج تحسين">يحتاج تحسين</option>
+          </select>
+          <button type="button" class="btn btn-primary" style="padding: 6px 12px; font-size: 13px;"
+            (click)="saveTrainerEvaluation(t)">
+            حفظ التقييم
+          </button>
+        </div>
+      </div>
+      }
+      } @else {
+      <div style="text-align: center; padding: 20px; color: #777;">
+        لا توجد مدربون موزعون لهذا المشرف حالياً. يمكنك توزيع المدربين أولاً من زر "توزيع المدربين".
+      </div>
+      }
+
+    </div>
+
+    <!-- أزرار الإغلاق -->
+    <div class="modal-footer-actions" style="margin-top: 20px; display: flex; justify-content: flex-end;">
+      <button type="button" class="btn-cancel-modal" (click)="closeEvaluationModal()">
+        إغلاق
+      </button>
+    </div>
+
   </div>
+
+</div>
 
 }
 <!-- =========================================================

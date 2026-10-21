@@ -8,6 +8,7 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { CompanyApi } from '../../services/company-api';
 
@@ -91,11 +92,12 @@ interface Toast {
 export class CompanySupervisors implements OnInit {
 
   // =========================================================
-  // API
+  // API & Router
   // =========================================================
 
   private readonly companyApi = inject(CompanyApi);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
 
 
   // =========================================================
@@ -728,7 +730,6 @@ export class CompanySupervisors implements OnInit {
 
     const supervisorId = supervisor.supervisorId ?? supervisor.id;
 
-    // معرفات المدربين الموزعين على هذا المشرف مسبقاً من خريطة التوزيع
     const assignedIds = this.distributionMap[supervisorId] ?? [];
 
     this.companyApi.getCompanyTrainers(this.companyId).subscribe({
@@ -768,7 +769,7 @@ export class CompanySupervisors implements OnInit {
               currentRating: item.currentRating ?? ''
             };
           })
-          .filter((t: any) => assignedIds.length === 0 || assignedIds.includes(t.id)); // فلترة مدربي هذا المشرف فقط
+          .filter((t: any) => assignedIds.length === 0 || assignedIds.includes(t.id));
 
         this.cdr.detectChanges();
       },
@@ -791,7 +792,7 @@ export class CompanySupervisors implements OnInit {
 
 
   // =========================================================
-  // حفظ تقييم مدرب من النافذة
+  // حفظ تقييم مدرب من النافذة وترحيله لسجل النشاطات والتوجيه لصفحة "حسابي"
   // =========================================================
 
   saveTrainerEvaluation(trainer: any): void {
@@ -800,7 +801,28 @@ export class CompanySupervisors implements OnInit {
       return;
     }
 
-    this.showToast('success', `تم حفظ تقييم المدرب ${trainer.name} بنجاح`);
+    // تجهيز نص النشاط الاحترافي
+    const activityMessage = `تم تقييم المدرب (${trainer.name}) بتقدير: [${trainer.currentRating}] بواسطة المشرف: (${this.selectedSupervisor?.fullName})`;
+    const timestamp = new Date().toLocaleString('ar-OM');
+
+    // حفظ النشاط في التخزين المحلي ليظهر في صفحة "حسابي"
+    const existingActivities = JSON.parse(localStorage.getItem('company_supervisor_activities') || '[]');
+    existingActivities.unshift({
+      message: activityMessage,
+      date: timestamp,
+      type: 'evaluation'
+    });
+    localStorage.setItem('company_supervisor_activities', JSON.stringify(existingActivities));
+
+    this.showToast('success', `تم حفظ تقييم المدرب ${trainer.name} وترحيله بنجاح!`);
+    
+    // إغلاق النافذة المنبثقة أولاً
+    this.closeEvaluationModal();
+
+    // التوجيه الصحيح بالمسار الكامل داخل بوابة الشركة مع تمرير بارامتر التبويب
+    this.router.navigate(['/company/my-account'], { 
+      queryParams: { tab: 'activity-log' } 
+    });
   }
 
 
@@ -1458,10 +1480,8 @@ export class CompanySupervisors implements OnInit {
       .filter(trainee => trainee.assigned)
       .map(trainee => trainee.id);
 
-    // حفظ المحددات محلياً
     this.distributionMap[currentId] = selectedTrainees;
 
-    // البحث عن المشرف في المصفوفة الرئيسية وتحديث عدده مباشرة
     const supervisorIndex = this.supervisors.findIndex(
       s => (s.supervisorId ?? s.id) === currentId
     );
@@ -1596,42 +1616,6 @@ export class CompanySupervisors implements OnInit {
 
     this.toast.visible =
       false;
-
-  }
-
-
-  // =========================================================
-  // إغلاق القوائم عند الضغط خارجها
-  // =========================================================
-
-  @HostListener(
-    'document:click',
-    ['$event']
-  )
-  onDocumentClick(
-    event: MouseEvent
-  ): void {
-
-    const target =
-      event.target as HTMLElement;
-
-
-    if (
-      !target.closest(
-        '.dropdown-container'
-      )
-    ) {
-
-      this.supervisors.forEach(
-        supervisor => {
-
-          supervisor.showMenu =
-            false;
-
-        }
-      );
-
-    }
 
   }
 
