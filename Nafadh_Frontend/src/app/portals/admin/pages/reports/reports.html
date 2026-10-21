@@ -512,23 +512,21 @@
             ? (supervisorAverageAttendance + '%')
             : '—' }}
       </span>
-      <span class="metric-label">متوسط حضور المشرفين</span>
+      <span class="metric-label">متوسط حضور المتدربين تحت الإشراف</span>
     </div>
 
     <div class="metric-card">
       <span class="metric-value blue">
-        {{ supervisorMonthlyEvaluations }}
+        {{ supervisorTrainerEvaluations }}
       </span>
-      <span class="metric-label">التقييمات الشهرية</span>
+      <span class="metric-label">تقييمات المدربين خلال الشهر</span>
     </div>
 
     <div class="metric-card">
-      <span class="metric-value">
-        {{ supervisorFollowUpCount !== null
-            ? supervisorFollowUpCount
-            : '—' }}
+      <span class="metric-value blue">
+        {{ supervisorActiveCount }}
       </span>
-      <span class="metric-label">متدربون يحتاجون متابعة</span>
+      <span class="metric-label">المشرفون النشطون</span>
     </div>
 
   </div>
@@ -690,9 +688,11 @@
             <th>القسم / الوظيفة</th>
             <th>الحالة</th>
             <th>المتدربون المسندون</th>
-            <th>متوسط الحضور</th>
-            <th>التقييمات الشهرية</th>
-            <th>حالات المتابعة</th>
+            <th>متوسط حضور المتدربين</th>
+            <th>تقييمات المدربين المنجزة</th>
+            <th>عدد المدربين الذين تم تقييمهم</th>
+            <th>آخر تقييم للمدربين</th>
+            <th>مراجعة أداء المشرف</th>
           </tr>
         </thead>
 
@@ -758,32 +758,38 @@
               </strong>
             </td>
 
-            <td>
-              <strong style="color: #0D1C8C;">
-                {{ supervisor.monthlyEvaluationsCount }}
-              </strong>
-            </td>
+           <td>
+  <strong style="color: #0D1C8C;">
+    {{ supervisor.trainerEvaluationsCount }}
+  </strong>
+</td>
 
-            <td>
-              
-<span
-  [style.color]="
-    (supervisor.traineesNeedingFollowUpCount ?? 0) > 0
-      ? '#dc2626'
-      : '#16a34a'
-  "
->
+<td>
+  <strong>
+    {{ supervisor.evaluatedTrainersCount }}
+  </strong>
+</td>
+
+<td>
   {{
-    supervisor.traineesNeedingFollowUpCount === null
-      ? 'غير محدد'
-      : supervisor.traineesNeedingFollowUpCount > 0
-        ? 'يحتاج متابعة'
-        : 'لا يحتاج متابعة'
+    supervisor.lastTrainerEvaluationDate
+      ? (supervisor.lastTrainerEvaluationDate | date:'yyyy-MM-dd')
+      : 'لا يوجد'
   }}
-</span>
+</td>
 
-            </td>
+<td>
+  {{
+    supervisor.needsFollowUp === null ||
+    supervisor.needsFollowUp === undefined
+      ? 'غير محدد'
+      : supervisor.needsFollowUp
+        ? 'يحتاج مراجعة'
+        : 'لا يحتاج مراجعة'
+  }}
+</td>
 
+           
           </tr>
         </tbody>
 

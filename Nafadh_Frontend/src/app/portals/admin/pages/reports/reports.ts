@@ -144,11 +144,17 @@ export class AdminReports implements OnInit {
     ) / 100;
   }
 
-  get supervisorMonthlyEvaluations(): number {
-    return this.allSupervisorsData.reduce(
-      (sum, s) => sum + s.monthlyEvaluationsCount, 0
-    );
-  }
+  get supervisorTrainerEvaluations(): number {
+  return this.allSupervisorsData.reduce(
+    (sum, s) => sum + (s.trainerEvaluationsCount ?? 0),
+    0
+  );
+ }
+ get supervisorActiveCount(): number {
+  return this.allSupervisorsData.filter(
+    s => s.status === 'Active'
+  ).length;
+}
 
   get supervisorFollowUpCount(): number | null {
     const counts = this.allSupervisorsData
@@ -179,7 +185,7 @@ export class AdminReports implements OnInit {
     this.loadCompaniesData();
     this.loadTrainersData();
     this.loadTraineesData();
-    
+
     if (this.currentSubSection === 'supervisor') {
     this.loadSupervisorsData();
     }
