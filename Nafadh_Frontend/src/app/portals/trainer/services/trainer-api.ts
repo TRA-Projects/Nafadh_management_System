@@ -1,3 +1,4 @@
+
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -43,7 +44,6 @@ export interface QuestionBankDto {
   createdAt: string;
   options: QuestionOptionDto[];
 }
-
 
 export interface QuizResultDto {
   attemptId: number;
@@ -91,7 +91,6 @@ export interface AttemptAnswerDetailsDto {
   isMarkedForReview: boolean;
 }
 
-
 export interface QuizAttemptFullDetailsDto {
   attemptId: number;
   quizId: number;
@@ -125,7 +124,6 @@ export interface CreateQuestionDto {
   explanation?: string | null;
   options: CreateQuestionOptionDto[];
 }
-
 
 export interface GradeQuizAnswerDto {
   answerId: number;
@@ -234,7 +232,6 @@ export class TrainerApi {
 
   constructor(private http: HttpClient) { }
 
-
   // =====================================================
   // Dashboard / Batches
   // =====================================================
@@ -252,7 +249,6 @@ export class TrainerApi {
     );
   }
 
-
   /**
    * Retrieves all batches assigned to a trainer.
    */
@@ -264,7 +260,6 @@ export class TrainerApi {
       `${this.base}/BatchTrainer/trainer/${trainerId}`
     );
   }
-
 
   /**
    * Retrieves full batch details.
@@ -278,7 +273,6 @@ export class TrainerApi {
     );
   }
 
-
   /**
    * Retrieves program details.
    */
@@ -290,7 +284,6 @@ export class TrainerApi {
       `${this.base}/Program/${programId}`
     );
   }
-
 
   /**
    * Retrieves all sessions assigned to a trainer.
@@ -367,7 +360,6 @@ export class TrainerApi {
     );
   }
 
-
   /**
    * Retrieves trainees assigned to a specific batch.
    */
@@ -379,7 +371,6 @@ export class TrainerApi {
       `${this.base}/Batch/${batchId}/trainees`
     );
   }
-
 
   /**
    * Creates a new announcement.
@@ -393,7 +384,6 @@ export class TrainerApi {
       dto
     );
   }
-
 
 
   // =====================================================
@@ -429,7 +419,6 @@ export class TrainerApi {
     );
   }
 
-
   getLessonsByModule(
     moduleId: number
   ): Observable<LessonDto[]> {
@@ -438,7 +427,6 @@ export class TrainerApi {
       `${this.base}/Lesson/module/${moduleId}`
     );
   }
-
 
   createModule(
     dto: {
@@ -495,7 +483,6 @@ export class TrainerApi {
     );
   }
 
-
   createMaterial(
     dto: {
       fileUrl: string;
@@ -517,7 +504,6 @@ export class TrainerApi {
     );
   }
 
-
   uploadTrainingMaterial(
     file: File,
     fileType:
@@ -533,37 +519,31 @@ export class TrainerApi {
     const formData =
       new FormData();
 
-
     formData.append(
       'File',
       file
     );
-
 
     formData.append(
       'FileType',
       fileType
     );
 
-
     formData.append(
       'LessonId',
       lessonId.toString()
     );
-
 
     formData.append(
       'UploadedByUserId',
       uploadedByUserId.toString()
     );
 
-
     return this.http.post(
       `${this.base}/TrainingMaterial/upload`,
       formData
     );
   }
-
 
   getTrainingMaterialsByLesson(
     lessonId: number
@@ -601,7 +581,6 @@ export class TrainerApi {
     );
   }
 
-
   checkIn(
     dto: unknown
   ) {
@@ -611,7 +590,6 @@ export class TrainerApi {
       dto
     );
   }
-
 
   updateAttendance(
     id: number,
@@ -624,14 +602,12 @@ export class TrainerApi {
     );
   }
 
-
   getPendingExcuses(): Observable<ExcuseDto[]> {
 
     return this.http.get<ExcuseDto[]>(
       `${this.base}/Excuse/pending`
     );
   }
-
 
   reviewExcuse(
     id: number,
@@ -644,7 +620,6 @@ export class TrainerApi {
     );
   }
 
-
   reportRepeatedAbsence(
     dto: unknown
   ) {
@@ -654,7 +629,6 @@ export class TrainerApi {
       dto
     );
   }
-
 
 
   // =====================================================
@@ -670,7 +644,6 @@ export class TrainerApi {
     );
   }
 
-
   createTask(
     dto: unknown
   ) {
@@ -680,7 +653,6 @@ export class TrainerApi {
       dto
     );
   }
-
 
   // Updates task information or status.
   updateTask(
@@ -694,7 +666,6 @@ export class TrainerApi {
     );
   }
 
-
   // Deletes a task.
   deleteTask(
     id: number
@@ -704,7 +675,6 @@ export class TrainerApi {
       `${this.base}/Task/${id}`
     );
   }
-
 
   gradeSubmission(
     id: number,
@@ -717,7 +687,6 @@ export class TrainerApi {
     );
   }
 
-
   reopenSubmission(
     id: number
   ) {
@@ -727,7 +696,6 @@ export class TrainerApi {
       {}
     );
   }
-
 
   getSubmissionsByTask(
     taskId: number
@@ -779,7 +747,6 @@ export class TrainerApi {
 
     let params = new HttpParams();
 
-
     if (companyId) {
 
       params = params.set(
@@ -788,7 +755,6 @@ export class TrainerApi {
       );
     }
 
-
     if (batchId) {
 
       params = params.set(
@@ -796,7 +762,6 @@ export class TrainerApi {
         batchId.toString()
       );
     }
-
 
     return this.http.get<EnrollmentDto[]>(
       `${this.base}/Enrollment`,
@@ -848,7 +813,6 @@ export class TrainerApi {
 
     let params = new HttpParams();
 
-
     if (moduleId) {
 
       params = params.set(
@@ -856,7 +820,6 @@ export class TrainerApi {
         moduleId.toString()
       );
     }
-
 
     if (stage) {
 
@@ -866,13 +829,11 @@ export class TrainerApi {
       );
     }
 
-
     return this.http.get<EvaluationTemplateDto[]>(
       `${this.base}/EvaluationTemplate/GetTemplates`,
       { params }
     );
   }
-
 
   getTemplateDetail(
     templateId: number
@@ -912,7 +873,6 @@ export class TrainerApi {
     );
   }
 
-
   createCriterion(
     dto: unknown
   ): Observable<string> {
@@ -949,7 +909,6 @@ export class TrainerApi {
 
   }
 
-
   // =====================================================
   // DELETE EVALUATION CRITERION
   // =====================================================
@@ -977,7 +936,6 @@ export class TrainerApi {
     );
   }
 
-
   getTrainerFeedback(
     trainerId: number
   ): Observable<FeedbackSummaryDto> {
@@ -986,7 +944,6 @@ export class TrainerApi {
       `${this.base}/Feedback/trainer/${trainerId}`
     );
   }
-
 
   // =====================================================
   // Reports
@@ -1000,7 +957,6 @@ export class TrainerApi {
       `${this.base}/Report/trainer-kpis/${trainerId}`
     );
   }
-
 
   // =====================================================
   // TRAINER REPORT HISTORY
@@ -1030,7 +986,6 @@ export class TrainerApi {
           userId.toString()
         );
 
-
     return this.http.get<{
       reportId: number;
       type:
@@ -1048,7 +1003,6 @@ export class TrainerApi {
       { params }
     );
   }
-
 
   // Shared report generator.
   // Keep this unchanged because other portals may use it.
@@ -1145,7 +1099,6 @@ export class TrainerApi {
   }
 
 
-
   downloadReport(
     reportId: number
   ): Observable<Blob> {
@@ -1206,7 +1159,6 @@ export class TrainerApi {
     );
   }
 
-
   getConversation(
     conversationId: number
   ): Observable<any> {
@@ -1216,18 +1168,31 @@ export class TrainerApi {
     );
   }
   createConversation(dto: {
-    type: string;
-    category: string;
-    subject: string;
-    startedByUserId: number;
-    firstMessage: string;
-    receiverUserId: number;
-  }): Observable<any> {
-    return this.http.post<any>(
-      `${this.base}/Conversation`,
-      dto
-    );
-  }
+  type: string;
+  category: string;
+  subject: string;
+  startedByUserId: number;
+  firstMessage: string;
+  receiverUserId: number;
+}): Observable<any> {
+  const formData = new FormData();
+
+  formData.append('Type', dto.type);
+  formData.append('Category', dto.category);
+  formData.append('Subject', dto.subject);
+  formData.append(
+    'StartedByUserId',
+    String(dto.startedByUserId)
+  );
+  formData.append('FirstMessage', dto.firstMessage);
+  formData.append('ReceiverUserId', String(dto.receiverUserId));
+
+  return this.http.post<any>(
+    `${this.base}/Conversation`,
+    formData
+  );
+}
+
   createBatchGroup(dto: {
     batchId: number;
     trainerUserId: number;
@@ -1253,7 +1218,6 @@ export class TrainerApi {
     );
   }
 
-
   markConversationAsRead(
     conversationId: number,
     userId: number
@@ -1276,7 +1240,6 @@ export class TrainerApi {
       `${this.base}/Trainer/${id}`
     );
   }
-
 
   updateTrainer(
     id: number,
@@ -1353,7 +1316,6 @@ export class TrainerApi {
       `${this.base}/TrainerCertificate/${certificateId}`
     );
   }
-
 
   // =====================================
   // QUIZZES - الاختبارات
@@ -1477,7 +1439,6 @@ export class TrainerApi {
     );
   }
 
-
   getQuizQuestions(
     quizId: number,
     trainerId: number
@@ -1491,7 +1452,6 @@ export class TrainerApi {
       { params }
     );
   }
-
 
   // =====================================
   // QUIZ RESULTS
@@ -1623,4 +1583,3 @@ joinTrainerLiveRoom(
   );
 }
 }
-
