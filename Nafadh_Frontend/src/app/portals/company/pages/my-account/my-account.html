@@ -632,81 +632,73 @@
         <section class="card-box full-width">
 
           <div class="card-title-bar">
-
             <h4>
-              سجل النشاطات
             </h4>
-
           </div>
 
+          <!-- عرض النشاطات المحلية (تقييمات المدربين المضافة حديثاً) -->
+          @if (localActivities().length > 0) {
+            <div style="margin-bottom: 1.5rem;">
+              <h5 style="font-size: 0.9rem; color: #2563eb; margin-bottom: 0.8rem; font-weight: 700;">التقييمات والأنشطة الأخيرة:</h5>
+              <ul class="timeline-list">
+                @for (localAct of localActivities(); track $index) {
+                  <li>
+                    <span class="dot" style="background-color: #2563eb;"></span>
+                    <div class="t-info">
+                      <strong style="color: #1e293b;">{{ localAct.message }}</strong>
+                      <small style="color: #64748b; display: block; margin-top: 4px;">{{ localAct.date }}</small>
+                    </div>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
 
+          <!-- نشاطات الخادم الأساسية -->
           @if (account.recentActivities.length > 0) {
-
+            <h5 style="font-size: 0.9rem; color: #475569; margin-bottom: 0.8rem; font-weight: 700;">سجل النظام:</h5>
           <ul class="timeline-list">
-
             @for (
             activity of account.recentActivities;
             track activity.entityId + activity.action + activity.timestamp
             ) {
-
             <li>
-
               <span class="dot"></span>
-
-
               <div class="t-info">
-
                 <strong>
                   {{ activity.action }}
                 </strong>
-
-
                 <small>
-
                   {{ activity.entityName }}
-
                   @if (activity.entityId) {
-
                   — رقم:
                   {{ activity.entityId }}
-
                   }
-
-
                   @if (activity.details) {
-
                   —
                   {{ activity.details }}
-
                   }
-
                   —
-
                   {{
                   activity.timestamp
                   | date:'yyyy-MM-dd HH:mm'
                   }}
-
                 </small>
-
               </div>
-
             </li>
-
             }
-
           </ul>
+          }
 
-          } @else {
-
+          @if (localActivities().length === 0 && account.recentActivities.length === 0) {
           <div class="empty-state">
             لا توجد نشاطات مسجلة لهذا الحساب.
           </div>
-
           }
 
         </section>
 
+        
         }
 
       </div>

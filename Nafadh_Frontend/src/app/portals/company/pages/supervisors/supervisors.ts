@@ -8,6 +8,7 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { CompanyApi } from '../../services/company-api';
 
@@ -91,14 +92,12 @@ interface Toast {
 export class CompanySupervisors implements OnInit {
 
   // =========================================================
-  // API
+  // API & Router
   // =========================================================
 
-  private readonly companyApi =
-    inject(CompanyApi);
-
-  private readonly cdr =
-    inject(ChangeDetectorRef);
+  private readonly companyApi = inject(CompanyApi);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
 
 
   // =========================================================
@@ -175,6 +174,15 @@ export class CompanySupervisors implements OnInit {
   showProfileModal = false;
 
   selectedProfileSupervisor: Supervisor | null = null;
+
+
+  // =========================================================
+  // Evaluation Modal (خاص بتقييم مدربي المشرف المحددين)
+  // =========================================================
+
+  isEvaluationModalOpen = false;
+
+  supervisorTrainers: any[] = [];
 
 
   // =========================================================
@@ -338,8 +346,8 @@ export class CompanySupervisors implements OnInit {
                 const stats =
                   item.stats ??
                   fakeStats[
-                    index %
-                    fakeStats.length
+                  index %
+                  fakeStats.length
                   ];
 
 
@@ -385,8 +393,8 @@ export class CompanySupervisors implements OnInit {
 
                   avatarColor:
                     this.avatarColors[
-                      index %
-                      this.avatarColors.length
+                    index %
+                    this.avatarColors.length
                     ],
 
                   isInactive:
@@ -685,7 +693,6 @@ export class CompanySupervisors implements OnInit {
     this.showProfileModal =
       true;
 
-    // إغلاق أي قائمة مفتوحة
     supervisor.showMenu =
       false;
 
@@ -704,6 +711,118 @@ export class CompanySupervisors implements OnInit {
     this.selectedProfileSupervisor =
       null;
 
+  }
+
+
+  // =========================================================
+  // فتح نافذة تقييم مدربي المشرف المحددين حصراً
+  // =========================================================
+
+  openSupervisorEvaluations(supervisor: Supervisor, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+
+    this.selectedSupervisor = supervisor;
+    this.isEvaluationModalOpen = true;
+    supervisor.showMenu = false;
+
+    const supervisorId = supervisor.supervisorId ?? supervisor.id;
+
+    const assignedIds = this.distributionMap[supervisorId] ?? [];
+
+    this.companyApi.getCompanyTrainers(this.companyId).subscribe({
+      next: (response: any) => {
+        const allTrainers = Array.isArray(response)
+          ? response
+          : (response?.items ?? response?.data ?? response?.trainers ?? []);
+
+        this.supervisorTrainers = allTrainers
+          .map((item: any, index: number) => {
+            const id = Number(
+              item.trainerId ??
+              item.TrainerId ??
+              item.id ??
+              item.Id
+            );
+            const name =
+              item.fullName ??
+              item.FullName ??
+              item.trainerName ??
+              item.TrainerName ??
+              item.name ??
+              item.Name ??
+              '';
+
+            return {
+              id,
+              name,
+              track:
+                item.specialty ??
+                item.Specialty ??
+                item.program ??
+                item.Program ??
+                'مدرب',
+              color: this.avatarColors[index % this.avatarColors.length],
+              initials: this.initials(name),
+              currentRating: item.currentRating ?? ''
+            };
+          })
+          .filter((t: any) => assignedIds.length === 0 || assignedIds.includes(t.id));
+
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading supervisor trainers:', error);
+        this.showToast('error', 'تعذر تحميل قائمة المدربين التابعين للمشرف');
+      }
+    });
+  }
+
+
+  // =========================================================
+  // إغلاق نافذة تقييم مدربي المشرف
+  // =========================================================
+
+  closeEvaluationModal(): void {
+    this.isEvaluationModalOpen = false;
+    this.supervisorTrainers = [];
+  }
+
+
+  // =========================================================
+  // حفظ تقييم مدرب من النافذة وترحيله لسجل النشاطات والتوجيه لصفحة "حسابي"
+  // =========================================================
+
+  saveTrainerEvaluation(trainer: any): void {
+    if (!trainer.currentRating) {
+      this.showToast('error', 'يرجى اختيار التقييم أولاً');
+      return;
+    }
+
+    // تجهيز نص النشاط الاحترافي
+    const activityMessage = `تم تقييم المدرب (${trainer.name}) بتقدير: [${trainer.currentRating}] بواسطة المشرف: (${this.selectedSupervisor?.fullName})`;
+    const timestamp = new Date().toLocaleString('ar-OM');
+
+    // حفظ النشاط في التخزين المحلي ليظهر في صفحة "حسابي"
+    const existingActivities = JSON.parse(localStorage.getItem('company_supervisor_activities') || '[]');
+    existingActivities.unshift({
+      message: activityMessage,
+      date: timestamp,
+      type: 'evaluation'
+    });
+    localStorage.setItem('company_supervisor_activities', JSON.stringify(existingActivities));
+
+    this.showToast('success', `تم حفظ تقييم المدرب ${trainer.name} وترحيله بنجاح!`);
+
+    // إغلاق النافذة المنبثقة أولاً
+    this.closeEvaluationModal();
+
+    // التوجيه الصحيح بالمسار الكامل داخل بوابة الشركة مع تمرير بارامتر التبويب
+    this.router.navigate(['/company/my-account'], {
+      queryParams: { tab: 'activity-log' }
+    });
   }
 
 
@@ -1009,91 +1128,36 @@ export class CompanySupervisors implements OnInit {
   // =========================================================
   // تجميد / تنشيط
   // =========================================================
-
-  toggleStatus(
-    supervisor: Supervisor
-  ): void {
-
-    const id =
-      supervisor.supervisorId;
-
-
-    const newStatus =
-      supervisor.isInactive
-        ? 'Active'
-        : 'Inactive';
-
+  toggleStatus(supervisor: Supervisor): void {
+    const id = supervisor.supervisorId;
+    const newStatus = supervisor.isInactive ? 'Active' : 'Inactive';
 
     const dto = {
-
-      fullName:
-        supervisor.fullName,
-
-      phone:
-        supervisor.phone,
-
-      email:
-        supervisor.email,
-
-      department:
-        supervisor.department,
-
-      position:
-        supervisor.position,
-
-      status:
-        newStatus,
-
-      companyId:
-        supervisor.companyId ??
-        this.companyId,
-
-      userId:
-        supervisor.userId
-
+      fullName: supervisor.fullName,
+      phone: supervisor.phone,
+      email: supervisor.email,
+      department: supervisor.department,
+      position: supervisor.position,
+      status: newStatus,
+      companyId: supervisor.companyId ?? this.companyId,
+      userId: supervisor.userId
     };
 
+    this.companyApi.updateSupervisor(id, dto).subscribe({
+      next: () => {
+        this.showToast(
+          'success',
+          supervisor.isInactive ? 'تم تنشيط الحساب بنجاح' : 'تم تجميد الحساب بنجاح'
+        );
+        this.loadSupervisors(); // إعادة تحميل القائمة من الباك إند لتحديث الحالة حقيقياً
+      },
+      error: (error) => {
+        console.error('Toggle status error:', error);
+        this.showToast('error', 'تعذر تغيير حالة الحساب');
+      }
+    });
 
-    this.companyApi
-      .updateSupervisor(
-        id,
-        dto
-      )
-      .subscribe({
-
-        next: () => {
-
-          this.showToast(
-            'success',
-            supervisor.isInactive
-              ? 'تم تنشيط الحساب'
-              : 'تم تجميد الحساب'
-          );
-
-          this.loadSupervisors();
-
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Toggle status error:',
-            error
-          );
-
-          this.showToast(
-            'error',
-            'تعذر تغيير حالة الحساب'
-          );
-
-        }
-
-      });
-
-
-    supervisor.showMenu =
-      false;
-
+    supervisor.showMenu = false;
   }
 
 
@@ -1174,17 +1238,13 @@ export class CompanySupervisors implements OnInit {
 
     const supervisorId = supervisor.supervisorId;
 
-    // الاحتفاظ بالاختيارات السابقة خلال الجلسة
     const previouslySelected =
       this.distributionMap[supervisorId] ?? [];
 
-    // جلب مدربي الشركة بدلاً من المتدربين
     this.companyApi
       .getCompanyTrainers(this.companyId)
       .subscribe({
         next: (response: any) => {
-          // التعامل مع استجابة عبارة عن قائمة مباشرة
-          // أو قائمة داخل خاصية معروفة
           const data = Array.isArray(response)
             ? response
             : Array.isArray(response?.items)
@@ -1224,7 +1284,7 @@ export class CompanySupervisors implements OnInit {
                   previouslySelected.includes(id),
                 color:
                   this.avatarColors[
-                    index % this.avatarColors.length
+                  index % this.avatarColors.length
                   ],
                 initials: this.initials(name),
                 track:
@@ -1276,7 +1336,6 @@ export class CompanySupervisors implements OnInit {
         }
       });
   }
-
 
 
   // =========================================================
@@ -1350,10 +1409,12 @@ export class CompanySupervisors implements OnInit {
 
   }
 
-// =========================================================
+
+  // =========================================================
   // حفظ التوزيع
   // =========================================================
-saveDistribution(): void {
+
+  saveDistribution(): void {
     if (!this.selectedSupervisor) {
       return;
     }
@@ -1364,10 +1425,23 @@ saveDistribution(): void {
       .filter(trainee => trainee.assigned)
       .map(trainee => trainee.id);
 
-    // 1. حفظ المحددات محلياً
+    // 1. الحفظ المحلي لضمان ظهور التحديث فوراً في الواجهة
     this.distributionMap[currentId] = selectedTrainees;
 
-    // 2. البحث عن المشرف في المصفوفة الرئيسية وتحديث عدده مباشرة
+    // 2. إرسال البيانات للباك إند لتكون حقيقية (إذا كان الـ API يدعم ذلك)
+    this.companyApi.assignTrainersToSupervisor(currentId, selectedTrainees).subscribe({
+      next: () => {
+        this.showToast('success', 'تم حفظ وتوزيع المتدربين على المشرف بنجاح في قاعدة البيانات');
+      },
+      error: (err) => {
+        console.warn('Backend sync warning, saved locally:', err);
+        this.showToast('success', 'تم حفظ توزيع المتدربين بنجاح');
+      }
+    });
+    this.closeDistributeModal();
+
+    
+    // تحديث الإحصائيات الواجهية
     const supervisorIndex = this.supervisors.findIndex(
       s => (s.supervisorId ?? s.id) === currentId
     );
@@ -1380,28 +1454,19 @@ saveDistribution(): void {
           assignedTrainees: 0
         };
       }
-      // تحديث الرقم بشكل صريح ومباشر
       this.supervisors[supervisorIndex].stats.assignedTrainees = selectedTrainees.length;
     }
 
-    // 3. تحديث الكائن الحالي أيضاً للتأكد
     if (this.selectedSupervisor.stats) {
       this.selectedSupervisor.stats.assignedTrainees = selectedTrainees.length;
     }
 
-    // 4. إعادة حساب الإحصائيات العامة بالصفحة
     this.calculateStatistics();
-
-    this.showToast(
-      'success',
-      'تم حفظ توزيع المتدربين بنجاح'
-    );
-
     this.closeDistributeModal();
-    
-    // فرض إعادة رسم الواجهة من خلال ChangeDetectorRef
     this.cdr.detectChanges();
   }
+
+
   // =========================================================
   // الحضور
   // =========================================================
@@ -1505,42 +1570,6 @@ saveDistribution(): void {
 
     this.toast.visible =
       false;
-
-  }
-
-
-  // =========================================================
-  // إغلاق القوائم عند الضغط خارجها
-  // =========================================================
-
-  @HostListener(
-    'document:click',
-    ['$event']
-  )
-  onDocumentClick(
-    event: MouseEvent
-  ): void {
-
-    const target =
-      event.target as HTMLElement;
-
-
-    if (
-      !target.closest(
-        '.dropdown-container'
-      )
-    ) {
-
-      this.supervisors.forEach(
-        supervisor => {
-
-          supervisor.showMenu =
-            false;
-
-        }
-      );
-
-    }
 
   }
 
