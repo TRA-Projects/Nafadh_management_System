@@ -958,4 +958,8 @@ export interface AdminSupervisorReportDto {
   averageAttendanceRate: number | null;
   monthlyEvaluationsCount: number;
   traineesNeedingFollowUpCount: number | null;
+  trainerEvaluationsCount: number;
+  evaluatedTrainersCount: number;
+  lastTrainerEvaluationDate: string | null;
+  needsFollowUp: boolean | null;
 }

@@ -88,6 +88,23 @@ namespace Nafadh_Backend.Repositories
                 })
                 .ToListAsync();
 
+            var trainerEvaluations = await _context
+    .Set<NFD_Evaluation>()
+    .AsNoTracking()
+    .Where(e =>
+        e.TrainerId.HasValue &&
+        e.EvaluationTemplate.Type ==
+            NFD_EvaluationType.TrainerPerformance &&
+        e.EvaluationDate >= monthStart &&
+        e.EvaluationDate < nextMonthStart)
+    .Select(e => new
+    {
+        e.EvaluatorUserId,
+        e.TrainerId,
+        e.EvaluationDate
+    })
+    .ToListAsync();
+
 
             var pendingWarnings = await _context
                 .Set<NFD_Warning>()
@@ -131,12 +148,32 @@ namespace Nafadh_Backend.Repositories
                     e.EnrollmentId.HasValue &&
                     assignedIds.Contains(e.EnrollmentId.Value));
 
+                var completedTrainerEvaluations = trainerEvaluations
+    .Where(e => e.EvaluatorUserId == s.UserId)
+    .ToList();
+
+                var trainerEvaluationsCount =
+                    completedTrainerEvaluations.Count;
+
+                var evaluatedTrainersCount = completedTrainerEvaluations
+                    .Where(e => e.TrainerId.HasValue)
+                    .Select(e => e.TrainerId!.Value)
+                    .Distinct()
+                    .Count();
+
+                DateTime? lastTrainerEvaluationDate =
+                    completedTrainerEvaluations.Count > 0
+                        ? completedTrainerEvaluations.Max(e => e.EvaluationDate)
+                        : null;
+
 
                 var traineesNeedingFollowUp = assigned
                     .Where(e => pendingWarnings.Contains(e.EnrollmentId))
                     .Select(e => e.TraineeId)
                     .Distinct()
                     .Count();
+
+                
 
 
 
@@ -148,6 +185,7 @@ namespace Nafadh_Backend.Repositories
                     Position = s.Position,
                     CompanyName = s.CompanyName,
                     Status = s.Status.ToString(),
+                    NeedsFollowUp = null,
                     AssignedTraineesCount = assigned
                         .Select(e => e.TraineeId)
                         .Distinct()
@@ -157,6 +195,7 @@ namespace Nafadh_Backend.Repositories
                     TraineesNeedingFollowUpCount = traineesNeedingFollowUp
                 };
             }).ToList();
+
         }
     }
 }
