@@ -437,6 +437,7 @@
 
 .badge-priority.urgent { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 .badge-priority.high { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.badge-priority.normal { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
 
 .notification-message {
     color: #475569;
@@ -533,7 +534,9 @@
     animation: spin 0.8s linear infinite;
 }
 
-/* 6. النوافذ المنبثقة الأصلية (لتفاصيل الإشعار) */
+/* =========================================================
+   6. النوافذ المنبثقة الأساسية (Modal)
+========================================================= */
 .modal-backdrop {
     position: fixed;
     inset: 0;
@@ -583,7 +586,6 @@
 
 .form-group { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
 .form-group label { font-size: 12.5px; font-weight: 700; color: #334155; }
 
 .form-group input,
@@ -927,7 +929,79 @@
 .preview-header h3 { margin: 0; font-size: 18px; color: #0f172a; font-weight: 800; }
 .preview-content { font-size: 14px; color: #475569; line-height: 1.7; white-space: pre-wrap; }
 
-/* ذيل النافذة الجديدة */
+/* =========================================================
+   9. خيارات النشر والقنوات المتزامنة (Publishing Options)
+========================================================= */
+.publishing-options-section {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.pub-title {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.pub-cards-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.pub-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pub-card:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+.pub-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pub-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pub-desc {
+    font-size: 11px;
+    color: #64748b;
+}
+
+/* تنسيق الـ Checkbox المخصص */
+.custom-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #0D1C8C; /* اللون الأزرق الداكن للمنصة */
+    border-radius: 4px;
+}
+
+/* =========================================================
+   10. ذيل النافذة الجديدة
+========================================================= */
 .modal-footer-new {
     display: flex; justify-content: space-between; align-items: center;
     padding: 16px 24px; background: #ffffff; border-top: 1px solid #e2e8f0;
@@ -944,20 +1018,3 @@
 .nfd-btn.secondary-btn:hover { background: #f8fafc; }
 .nfd-btn.primary-btn { background: #10b981; color: #ffffff; }
 .nfd-btn.primary-btn:hover { background: #059669; }
-.nfd-btn.publish-btn { padding: 0 24px; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
-
-/* التجاوب مع الشاشات */
-@media (max-width: 900px) {
-    .audience-cards { grid-template-columns: repeat(2, 1fr); }
-    .form-row-top { flex-direction: column; }
-    .modal-header-new { flex-direction: column; align-items: flex-start; gap: 12px; }
-    .modal-header-new .header-left { width: 100%; justify-content: space-between; }
-    .modal-footer-new { flex-direction: column; gap: 16px; align-items: flex-start; }
-    .footer-actions { width: 100%; justify-content: flex-end; }
-}
-@media (max-width: 768px) {
-    .notifications-page { padding: 16px; }
-    .notification-card { grid-template-columns: 40px 1fr; }
-    .card-actions { grid-column: 2; justify-self: start; }
-    .audience-cards { grid-template-columns: 1fr; }
-}

@@ -277,6 +277,30 @@
               </div>
             </div>
           </div>
+
+          <!-- إعدادات التخصيص للمدربين -->
+          <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'trainers'">
+            <div class="radio-group">
+              <label><input type="radio" [(ngModel)]="newAnnounceData.trainerScope" value="all_trainers"> كافة المدربين</label>
+              <label><input type="radio" [(ngModel)]="newAnnounceData.trainerScope" value="specific_trainers"> تحديد مدربين معينين</label>
+            </div>
+            <div class="search-select" *ngIf="newAnnounceData.trainerScope === 'specific_trainers'">
+              <div class="dropdown-list">
+                <div class="dropdown-item" *ngFor="let t of availableTrainers" (click)="toggleTrainer(t.id)">
+                  <input type="checkbox" [checked]="isTrainerSelected(t.id)">
+                  <div>
+                    <div class="d-title">{{ t.name }}</div>
+                    <div class="d-sub">{{ t.specialty }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="tags-container" *ngIf="newAnnounceData.selectedTrainerIds.length > 0">
+                <span class="tag" *ngFor="let t of getSelectedTrainerObjects()">
+                  {{ t.name }} <button (click)="toggleTrainer(t.id)">×</button>
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- محتوى الإعلان -->
@@ -289,13 +313,43 @@
             <span style="border-left: 1px solid #cbd5e1; margin: 0 4px;"></span>
             <select style="padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; font-family: 'Cairo', sans-serif; font-size: 12px;">
               <option>إدراج متغير...</option>
-              <!-- تم استخدام HTML Entities هنا لتجنب خطأ Angular ICU -->
               <option>&#123;اسم_المستلم&#125;</option>
               <option>&#123;رقم_المتدرب&#125;</option>
               <option>&#123;اسم_الشركة&#125;</option>
             </select>
           </div>
           <textarea rows="5" [(ngModel)]="newAnnounceData.content" placeholder="اكتب تفاصيل الإعلان هنا..."></textarea>
+        </div>
+
+        <!-- قسم خيارات النشر والقنوات المتزامنة -->
+        <div class="publishing-options-section">
+          <h4 class="pub-title">خيارات النشر والقنوات المتزامنة:</h4>
+          
+          <div class="pub-cards-container">
+            <label class="pub-card">
+              <div class="pub-info">
+                <span class="pub-name">البوابة الإلكترونية</span>
+                <span class="pub-desc">إشعار فوري داخل نظام نفاذ</span>
+              </div>
+              <input type="checkbox" [(ngModel)]="newAnnounceData.channels.inApp" class="custom-checkbox">
+            </label>
+
+            <label class="pub-card">
+              <div class="pub-info">
+                <span class="pub-name">البريد الإلكتروني</span>
+                <span class="pub-desc">نسخة رسمية للبريد المسجل</span>
+              </div>
+              <input type="checkbox" [(ngModel)]="newAnnounceData.channels.email" class="custom-checkbox">
+            </label>
+
+            <label class="pub-card">
+              <div class="pub-info">
+                <span class="pub-name">📌 تثبيت في أعلى البوابة</span>
+                <span class="pub-desc">يبقى ظاهراً في صدارة الإعلانات</span>
+              </div>
+              <input type="checkbox" [(ngModel)]="newAnnounceData.isPinned" class="custom-checkbox">
+            </label>
+          </div>
         </div>
 
       </div>
