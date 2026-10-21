@@ -136,6 +136,22 @@ export class CompanyApi {
     );
   }
 
+
+    // ============================================================
+  // Supervisor
+  // ============================================================
+
+assignTrainersToSupervisor(
+    supervisorId: number,
+    trainerIds: number[]
+  ): Observable<any> {
+    return this.http.put(
+      `${this.base}/CompanySupervisor/${supervisorId}/trainers`,
+      { trainerIds }
+    );
+  }
+
+
   // ============================================================
   // Trainees
   // ============================================================

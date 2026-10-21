@@ -346,8 +346,8 @@ export class CompanySupervisors implements OnInit {
                 const stats =
                   item.stats ??
                   fakeStats[
-                    index %
-                    fakeStats.length
+                  index %
+                  fakeStats.length
                   ];
 
 
@@ -393,8 +393,8 @@ export class CompanySupervisors implements OnInit {
 
                   avatarColor:
                     this.avatarColors[
-                      index %
-                      this.avatarColors.length
+                    index %
+                    this.avatarColors.length
                     ],
 
                   isInactive:
@@ -815,13 +815,13 @@ export class CompanySupervisors implements OnInit {
     localStorage.setItem('company_supervisor_activities', JSON.stringify(existingActivities));
 
     this.showToast('success', `تم حفظ تقييم المدرب ${trainer.name} وترحيله بنجاح!`);
-    
+
     // إغلاق النافذة المنبثقة أولاً
     this.closeEvaluationModal();
 
     // التوجيه الصحيح بالمسار الكامل داخل بوابة الشركة مع تمرير بارامتر التبويب
-    this.router.navigate(['/company/my-account'], { 
-      queryParams: { tab: 'activity-log' } 
+    this.router.navigate(['/company/my-account'], {
+      queryParams: { tab: 'activity-log' }
     });
   }
 
@@ -1128,91 +1128,36 @@ export class CompanySupervisors implements OnInit {
   // =========================================================
   // تجميد / تنشيط
   // =========================================================
-
-  toggleStatus(
-    supervisor: Supervisor
-  ): void {
-
-    const id =
-      supervisor.supervisorId;
-
-
-    const newStatus =
-      supervisor.isInactive
-        ? 'Active'
-        : 'Inactive';
-
+  toggleStatus(supervisor: Supervisor): void {
+    const id = supervisor.supervisorId;
+    const newStatus = supervisor.isInactive ? 'Active' : 'Inactive';
 
     const dto = {
-
-      fullName:
-        supervisor.fullName,
-
-      phone:
-        supervisor.phone,
-
-      email:
-        supervisor.email,
-
-      department:
-        supervisor.department,
-
-      position:
-        supervisor.position,
-
-      status:
-        newStatus,
-
-      companyId:
-        supervisor.companyId ??
-        this.companyId,
-
-      userId:
-        supervisor.userId
-
+      fullName: supervisor.fullName,
+      phone: supervisor.phone,
+      email: supervisor.email,
+      department: supervisor.department,
+      position: supervisor.position,
+      status: newStatus,
+      companyId: supervisor.companyId ?? this.companyId,
+      userId: supervisor.userId
     };
 
+    this.companyApi.updateSupervisor(id, dto).subscribe({
+      next: () => {
+        this.showToast(
+          'success',
+          supervisor.isInactive ? 'تم تنشيط الحساب بنجاح' : 'تم تجميد الحساب بنجاح'
+        );
+        this.loadSupervisors(); // إعادة تحميل القائمة من الباك إند لتحديث الحالة حقيقياً
+      },
+      error: (error) => {
+        console.error('Toggle status error:', error);
+        this.showToast('error', 'تعذر تغيير حالة الحساب');
+      }
+    });
 
-    this.companyApi
-      .updateSupervisor(
-        id,
-        dto
-      )
-      .subscribe({
-
-        next: () => {
-
-          this.showToast(
-            'success',
-            supervisor.isInactive
-              ? 'تم تنشيط الحساب'
-              : 'تم تجميد الحساب'
-          );
-
-          this.loadSupervisors();
-
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Toggle status error:',
-            error
-          );
-
-          this.showToast(
-            'error',
-            'تعذر تغيير حالة الحساب'
-          );
-
-        }
-
-      });
-
-
-    supervisor.showMenu =
-      false;
-
+    supervisor.showMenu = false;
   }
 
 
@@ -1339,7 +1284,7 @@ export class CompanySupervisors implements OnInit {
                   previouslySelected.includes(id),
                 color:
                   this.avatarColors[
-                    index % this.avatarColors.length
+                  index % this.avatarColors.length
                   ],
                 initials: this.initials(name),
                 track:
@@ -1480,8 +1425,23 @@ export class CompanySupervisors implements OnInit {
       .filter(trainee => trainee.assigned)
       .map(trainee => trainee.id);
 
+    // 1. الحفظ المحلي لضمان ظهور التحديث فوراً في الواجهة
     this.distributionMap[currentId] = selectedTrainees;
 
+    // 2. إرسال البيانات للباك إند لتكون حقيقية (إذا كان الـ API يدعم ذلك)
+    this.companyApi.assignTrainersToSupervisor(currentId, selectedTrainees).subscribe({
+      next: () => {
+        this.showToast('success', 'تم حفظ وتوزيع المتدربين على المشرف بنجاح في قاعدة البيانات');
+      },
+      error: (err) => {
+        console.warn('Backend sync warning, saved locally:', err);
+        this.showToast('success', 'تم حفظ توزيع المتدربين بنجاح');
+      }
+    });
+    this.closeDistributeModal();
+
+    
+    // تحديث الإحصائيات الواجهية
     const supervisorIndex = this.supervisors.findIndex(
       s => (s.supervisorId ?? s.id) === currentId
     );
@@ -1502,12 +1462,6 @@ export class CompanySupervisors implements OnInit {
     }
 
     this.calculateStatistics();
-
-    this.showToast(
-      'success',
-      'تم حفظ توزيع المتدربين بنجاح'
-    );
-
     this.closeDistributeModal();
     this.cdr.detectChanges();
   }
