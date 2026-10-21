@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Nafadh_Backend.DTOs;
+using System.Collections.Generic;
 
 namespace Nafadh_Backend.Services
 {
@@ -23,6 +24,14 @@ namespace Nafadh_Backend.Services
         Task<LiveRoomDetailsDto> GetRoomDetailsAsync(
             int sessionId,
             CancellationToken cancellationToken = default);
+
+
+        // Trainer Portal - Attendance:
+        // Get the identities of trainees currently connected to LiveKit.
+        Task<IReadOnlyList<string>> GetConnectedTraineeIdentitiesAsync(
+            int sessionId,
+            CancellationToken cancellationToken = default);
+
 
         // Trainer Portal - Start a live classroom.
         Task<LiveRoomActionResultDto> StartRoomAsync(

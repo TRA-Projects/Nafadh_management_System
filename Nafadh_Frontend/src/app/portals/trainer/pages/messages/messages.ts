@@ -1,3 +1,4 @@
+
 import { Component, OnInit, computed, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -25,7 +26,13 @@ export interface MeetingNotification {
   startDate: string;
   time: string;
   durationMinutes: number;
-  status: 'Upcoming' | 'Ongoing' | 'Completed' | 'Cancelled';
+ status:
+  | 'Upcoming'
+  | 'Ongoing'
+  | 'Completed'
+  | 'Cancelled'
+  | 'Postponed';
+
   joinUrl?: string;
   recordingUrl?: string;
   isHostStarted?: boolean;
@@ -78,14 +85,16 @@ export class TrainerMessages implements OnInit {
   }
 
   getMeetingStatusLabel(status: MeetingNotification['status']): string {
-    switch (status) {
-      case 'Upcoming': return 'قادم';
-      case 'Ongoing': return 'جارٍ الآن';
-      case 'Completed': return 'منتهٍ';
-      case 'Cancelled': return 'ملغي';
-      default: return '';
-    }
+  switch (status) {
+    case 'Upcoming': return 'قادم';
+    case 'Ongoing': return 'جارٍ الآن';
+    case 'Completed': return 'منتهٍ';
+    case 'Cancelled': return 'ملغي';
+    case 'Postponed': return 'مؤجل';
+    default: return '';
   }
+}
+
 
   ngOnInit(): void {
     const userId = this.auth.userId;
@@ -146,16 +155,92 @@ export class TrainerMessages implements OnInit {
   }
 
   private loadTrainerConversations(userId: number): void {
-    this.api.getConversations(userId).subscribe({
-      next: (conversations) => {
-        this.batchGroups = (conversations ?? [])
-          .filter((conversation: any) => conversation.category === 'BatchGroup')
-          .filter((group: any, index: number, groups: any[]) =>
-            index === groups.findIndex((item: any) => item.batchId === group.batchId)
-          );
+  this.api.getConversations(userId).subscribe({
+    next: (conversations) => {
+      const allConversations = conversations ?? [];
+
+      // احتفظ بمحادثات المجموعات كما هي
+      this.batchGroups = allConversations
+        .filter((conversation: any) =>
+          conversation.category === 'BatchGroup'
+        )
+        .filter((group: any, index: number, groups: any[]) =>
+          index === groups.findIndex(
+            (item: any) => item.batchId === group.batchId
+          )
+        );
+
+      // المحادثات غير الجماعية هي المرشحة للمحادثات الفردية
+      const individualConversations = allConversations.filter(
+        (conversation: any) =>
+          conversation.category !== 'BatchGroup'
+      );
+
+      // نحتاج تفاصيل كل محادثة لمعرفة معرّف المتدرب من الرسائل
+      if (individualConversations.length === 0) {
+        return;
       }
-    });
-  }
+
+      forkJoin(
+        individualConversations.map((conversation: any) =>
+          this.api.getConversation(conversation.conversationId)
+        )
+      ).subscribe({
+        next: (details: any[]) => {
+          for (const detail of details) {
+            const conversationMessages = detail?.messages ?? [];
+
+            for (const trainee of this.trainees) {
+              // الرسالة تحتوي senderId وreceiverId؛ نطابق بها userId
+              const belongsToTrainee = conversationMessages.some(
+                (message: any) =>
+                  Number(message.senderId) === Number(trainee.userId) ||
+                  Number(message.receiverId) === Number(trainee.userId)
+              );
+
+              if (!belongsToTrainee) {
+                continue;
+              }
+
+              trainee.conversationId = detail.conversationId;
+
+              this.messagesByTrainee[trainee.traineeId] =
+                conversationMessages.map((message: any) => ({
+                  sender:
+                    Number(message.senderId) === Number(userId)
+                      ? 'trainer'
+                      : 'trainee',
+                  text: message.content ?? '',
+                  time: this.formatMessageTime(message.sentDate)
+                }));
+
+              // إذا كان هذا المتدرب هو المحدد حاليًا، أظهر الرسائل
+              if (
+                this.selectedTraineeId() === trainee.traineeId
+              ) {
+                this.messages =
+                  this.messagesByTrainee[trainee.traineeId];
+              }
+
+              break;
+            }
+          }
+
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error(
+            'Failed to load individual conversations:',
+            error
+          );
+        }
+      });
+    },
+    error: (error) => {
+      console.error('Failed to load trainer conversations:', error);
+    }
+  });
+}
 
   private formatMessageTime(dateValue: string | Date | undefined): string {
     if (!dateValue) return '';
@@ -241,158 +326,271 @@ export class TrainerMessages implements OnInit {
       this.api.markConversationAsRead(trainee.conversationId, userId).subscribe();
     }
   }
-
 selectBatchGroup(conversationId: number): void {
-    this.isBatchGroupSelected = true;
-    this.selectedBatchGroupId = conversationId;
-    if (!conversationId) {
-      return;
-    }
+  this.isBatchGroupSelected = true;
+  this.selectedBatchGroupId = conversationId;
 
-    this.selectedTraineeId.set(null);
-    this.messages = [];
+  if (!conversationId) {
+    return;
+  }
 
-    const currentGroup = this.selectedBatchGroup();
-    const batchId = currentGroup?.batchId;
+  this.selectedTraineeId.set(null);
+  this.messages = [];
 
-    // 1. جلب المحادثة والرسائل العادية أولاً
-    this.api.getConversation(conversationId).subscribe({
-      next: (conversation) => {
-        const rawMessages = conversation?.messages ?? [];
-        let loadedMessages = rawMessages
-          .sort((a: any, b: any) => new Date(a.sentDate).getTime() - new Date(b.sentDate).getTime())
-          .map((message: any) => ({
-            sender: message.senderId === this.auth.userId ? 'trainer' : 'trainee',
-            text: message.content ?? '',
-            time: this.formatMessageTime(message.sentDate)
-          }));
+  const currentGroup = this.selectedBatchGroup();
+  const batchId = currentGroup?.batchId;
 
-        // 2. جلب الجلسات الحقيقية الخاصة بهذه الدفعة من جدول NFD_Session في الباكند
-        if (batchId) {
-          this.api.getSessions(batchId).subscribe({
-            next: (sessions: any[]) => {
-              const batchSessions = (sessions ?? []).filter((s: any) => Number(s.batchId) === Number(batchId));
+  this.api.getConversation(conversationId).subscribe({
+    next: (conversation) => {
+      const rawMessages = conversation?.messages ?? [];
 
-              if (batchSessions.length > 0) {
-                const latestSession = batchSessions[batchSessions.length - 1];
+      // الرسائل العادية في المجموعة
+      let loadedMessages: TrainerMessage[] = [...rawMessages]
+        .sort(
+          (a: any, b: any) =>
+            new Date(a.sentDate).getTime() -
+            new Date(b.sentDate).getTime()
+        )
+        .map((message: any) => ({
+          sender:
+            Number(message.senderId) === Number(this.auth.userId)
+              ? 'trainer'
+              : 'trainee',
+          text: message.content ?? '',
+          time: this.formatMessageTime(message.sentDate)
+        }));
 
-                // ---------------------------------------------------------
-                // الاعتماد على حالة الباكند المباشرة (Status) أو مطابقتها بأمان
-                // ---------------------------------------------------------
-                let apiStatus: 'Upcoming' | 'Ongoing' | 'Completed' | 'Cancelled' = 'Upcoming';
-                
-                // إذا كان الباكند يرسل الحالة كأرقام (Enum) أو نصوص
-                if (latestSession.status === 1 || latestSession.status === 'Ongoing') {
-                  apiStatus = 'Ongoing';
-                } else if (latestSession.status === 2 || latestSession.status === 'Completed') {
-                  apiStatus = 'Completed';
-                } else if (latestSession.status === 3 || latestSession.status === 'Cancelled') {
-                  apiStatus = 'Cancelled';
-                } else {
-                  apiStatus = 'Upcoming';
-                }
+      // لا يوجد batchId؟ أظهر الرسائل العادية على الأقل
+      if (!batchId) {
+        this.messages = loadedMessages;
+        this.cdr.markForCheck();
+        return;
+      }
 
-          const sessionDateFormatted = latestSession.sessionDate 
-              ? new Date(latestSession.sessionDate).toLocaleDateString('ar-OM', { year: 'numeric', month: 'short', day: 'numeric' })
-              : 'تاريخ غير محدد';
+      // جلب اجتماعات الدفعة
+      this.api.getSessions(batchId).subscribe({
+        next: (sessions: any[]) => {
+          const batchSessions = (sessions ?? [])
+            .filter(
+              (session: any) =>
+                Number(session.batchId) === Number(batchId)
+            )
+            .sort(
+              (a: any, b: any) =>
+                new Date(a.sessionDate).getTime() -
+                new Date(b.sessionDate).getTime()
+            );
 
-            const sessionMessage: TrainerMessage = {
-              sender: 'system' as any,
-              time: this.formatMessageTime(new Date()),
-              isMeetingNotification: true,
-              meeting: {
-                meetingId: latestSession.sessionId,
-                batchId: latestSession.batchId,
-                title: latestSession.topic ?? 'محاضرة تدريبية',
-                startDate: sessionDateFormatted, // التاريخ الحقيقي من الباكند
-                time: latestSession.startTime ?? 'وقت غير محدد', // الوقت الحقيقي
-                durationMinutes: latestSession.durationMinutes ?? 60,
-                status: apiStatus,
-                joinUrl: latestSession.meetingLink ?? latestSession.joinUrl,
-                recordingUrl: latestSession.recordingUrl,
-                isHostStarted: true // لتفعيل الانضمام بسهولة
+          // قيم NFD_SessionStatus في الباكند:
+          // Scheduled=0, Completed=1, Cancelled=2,
+          // Postponed=3, InProgress=4
+          const meetingMessages: TrainerMessage[] =
+            batchSessions.map((session: any) => {
+              const numericStatus = Number(session.status);
+              let meetingStatus: MeetingNotification['status'];
+
+              if (
+                session.status === 'InProgress' ||
+                numericStatus === 4
+              ) {
+                meetingStatus = 'Ongoing';
+              } else if (
+                session.status === 'Completed' ||
+                numericStatus === 1
+              ) {
+                meetingStatus = 'Completed';
+              } else if (
+                session.status === 'Cancelled' ||
+                numericStatus === 2
+              ) {
+                meetingStatus = 'Cancelled';
+              } else if (
+                session.status === 'Postponed' ||
+                numericStatus === 3
+              ) {
+                meetingStatus = 'Postponed';
+              } else {
+                meetingStatus = 'Upcoming';
               }
-            };
-                if (!loadedMessages.some((m: any) => m.isMeetingNotification && m.meeting?.meetingId === latestSession.sessionId)) {
-                  loadedMessages = [sessionMessage, ...loadedMessages];
-                }
-              }
 
-              this.messages = loadedMessages;
-              this.cdr.markForCheck();
-            },
-            error: () => {
-              this.messages = loadedMessages;
-              this.cdr.markForCheck();
-            }
-          });
-        } else {
+              const sessionDateFormatted = session.sessionDate
+                ? new Date(session.sessionDate).toLocaleDateString(
+                    'ar-OM',
+                    {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    }
+                  )
+                : 'تاريخ غير محدد';
+
+              const meeting: MeetingNotification = {
+                meetingId: session.sessionId,
+                batchId: session.batchId,
+                title: session.topic ?? 'محاضرة تدريبية',
+                startDate: sessionDateFormatted,
+                time: session.startTime ?? 'وقت غير محدد',
+                durationMinutes: session.durationMinutes ?? 60,
+                status: meetingStatus,
+                joinUrl: session.meetingLink ?? session.joinUrl,
+                recordingUrl: session.recordingUrl,
+                isHostStarted: meetingStatus === 'Ongoing'
+              };
+
+              return {
+                sender: 'system',
+                time: this.formatMessageTime(
+                  session.sessionDate
+                    ? new Date(session.sessionDate)
+                    : new Date()
+                ),
+                isMeetingNotification: true,
+                meeting
+              };
+            });
+
+          // أظهر إشعارات الاجتماعات مع رسائل المجموعة
+          loadedMessages = [...meetingMessages, ...loadedMessages];
+          this.messages = loadedMessages;
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error('تعذر تحميل اجتماعات الدفعة:', error);
+
+          // إذا فشل جلب الاجتماعات، لا نخفي الرسائل العادية
           this.messages = loadedMessages;
           this.cdr.markForCheck();
         }
-      }
-    });
-  }
+      });
+    },
+    error: (error) => {
+      console.error('تعذر تحميل محادثة المجموعة:', error);
+      this.messages = [];
+      this.cdr.markForCheck();
+    }
+  });
+}
 
   selectedBatchGroup(): any | undefined {
     return this.batchGroups.find((group: any) => group.conversationId === this.selectedBatchGroupId);
   }
 
   sendMessage(): void {
-    const text = this.messageText.trim();
-    if (!text) return;
+  const text = this.messageText.trim();
+  if (!text) return;
 
-    if (this.isBatchGroupSelected && this.selectedBatchGroupId) {
-      const userId = this.auth.userId;
-      if (!userId) return;
-
-      this.api.sendMessage(this.selectedBatchGroupId, {
-        senderId: userId,
-        receiverUserId: null,
-        content: text
-      }).subscribe({
-        next: (savedMessage) => {
-          this.messages.push({
-            sender: 'trainer',
-            text: savedMessage?.content ?? text,
-            time: this.formatMessageTime(savedMessage?.sentDate) || this.formatMessageTime(new Date())
-          });
-          this.messageText = '';
-        }
-      });
-      return;
-    }
-
+  // إرسال إلى مجموعة الدفعة — اترك هذا المسار كما هو
+  if (this.isBatchGroupSelected && this.selectedBatchGroupId) {
     const userId = this.auth.userId;
-    const trainee = this.selectedTrainee();
-    if (!userId || !trainee) return;
+    if (!userId) return;
 
-    if (trainee.conversationId) {
-      this.api.sendMessage(trainee.conversationId, {
-        senderId: userId,
-        receiverUserId: trainee.userId,
-        content: text
-      }).subscribe({
-        next: (savedMessage) => {
-          const newMessage: TrainerMessage = {
-            sender: 'trainer',
-            text: savedMessage?.content ?? text,
-            time: this.formatMessageTime(savedMessage?.sentDate) || this.formatMessageTime(new Date())
-          };
+    this.api.sendMessage(this.selectedBatchGroupId, {
+      senderId: userId,
+      receiverUserId: null,
+      content: text
+    }).subscribe({
+      next: (savedMessage) => {
+        this.messages.push({
+          sender: 'trainer',
+          text: savedMessage?.content ?? text,
+          time:
+            this.formatMessageTime(savedMessage?.sentDate) ||
+            this.formatMessageTime(new Date())
+        });
+        this.messageText = '';
+      },
+      error: (error) => {
+        console.error('فشل إرسال رسالة المجموعة:', error);
+      }
+    });
 
-          if (!this.messagesByTrainee[trainee.traineeId]) {
-            this.messagesByTrainee[trainee.traineeId] = [];
-          }
-          this.messagesByTrainee[trainee.traineeId].push(newMessage);
-          this.messages = this.messagesByTrainee[trainee.traineeId];
-          trainee.lastMessage = text;
-          trainee.time = newMessage.time;
-          trainee.unread = false;
-          this.messageText = '';
-        }
-      });
-    }
+    return;
   }
+
+  // إرسال إلى متدرب واحد
+  const userId = this.auth.userId;
+  const trainee = this.selectedTrainee();
+  if (!userId || !trainee) return;
+
+  // لا توجد محادثة: أنشئها والرسالة تكون أول رسالة فيها
+  if (!trainee.conversationId) {
+    this.api.createConversation({
+      type: 'Other',
+      category: 'TrainerTrainee',
+      subject: `محادثة ${trainee.name}`,
+      startedByUserId: userId,
+      firstMessage: text,
+      receiverUserId: trainee.userId
+    }).subscribe({
+      next: (createdConversation) => {
+        const conversationId = createdConversation?.conversationId;
+
+        if (!conversationId) {
+          console.error(
+            'لم يرجع الخادم conversationId:',
+            createdConversation
+          );
+          return;
+        }
+
+        trainee.conversationId = conversationId;
+
+        const newMessage: TrainerMessage = {
+          sender: 'trainer',
+          text,
+          time: this.formatMessageTime(new Date())
+        };
+
+        this.messagesByTrainee[trainee.traineeId] = [newMessage];
+        this.messages = this.messagesByTrainee[trainee.traineeId];
+        trainee.lastMessage = text;
+        trainee.time = newMessage.time;
+        trainee.unread = false;
+        this.messageText = '';
+
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('فشل إنشاء المحادثة الفردية:', error);
+      }
+    });
+
+    return;
+  }
+
+  // المحادثة موجودة: أرسل الرسالة فيها
+  this.api.sendMessage(trainee.conversationId, {
+    senderId: userId,
+    receiverUserId: trainee.userId,
+    content: text
+  }).subscribe({
+    next: (savedMessage) => {
+      const newMessage: TrainerMessage = {
+        sender: 'trainer',
+        text: savedMessage?.content ?? text,
+        time:
+          this.formatMessageTime(savedMessage?.sentDate) ||
+          this.formatMessageTime(new Date())
+      };
+
+      if (!this.messagesByTrainee[trainee.traineeId]) {
+        this.messagesByTrainee[trainee.traineeId] = [];
+      }
+
+      this.messagesByTrainee[trainee.traineeId].push(newMessage);
+      this.messages = this.messagesByTrainee[trainee.traineeId];
+      trainee.lastMessage = text;
+      trainee.time = newMessage.time;
+      trainee.unread = false;
+      this.messageText = '';
+
+      this.cdr.markForCheck();
+    },
+    error: (error) => {
+      console.error('فشل إرسال الرسالة الفردية:', error);
+    }
+  });
+}
 
   newMessage(): void {
     this.isNewMessage = true;
