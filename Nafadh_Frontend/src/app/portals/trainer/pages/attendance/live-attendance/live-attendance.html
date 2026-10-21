@@ -1,0 +1,35 @@
+<section dir="rtl">
+  <h2>الحضور المباشر</h2>
+
+  @if (connectionError()) {
+    <p role="alert">{{ connectionError() }}</p>
+  }
+
+  <table>
+    <thead>
+      <tr>
+        <th>المتدرب</th>
+        <th>الحالة</th>
+        <th>وقت الدخول</th>
+        <th>وقت الخروج</th>
+        <th>إجمالي الدقائق</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      @for (row of rows(); track row.traineeId) {
+        <tr>
+          <td>{{ row.traineeName }}</td>
+          <td>{{ row.status === 'Connected' ? 'متصل' : 'منقطع' }}</td>
+          <td>{{ row.checkInUtc ? (row.checkInUtc | date:'shortTime') : '—' }}</td>
+          <td>{{ row.checkOutUtc ? (row.checkOutUtc | date:'shortTime') : '—' }}</td>
+          <td>{{ row.totalMinutes }}</td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="5">لا توجد بيانات حضور مباشرة بعد.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>
