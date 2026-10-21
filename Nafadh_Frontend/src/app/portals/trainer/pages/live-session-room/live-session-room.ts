@@ -36,7 +36,7 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
     audioContainer?: ElementRef<HTMLDivElement>;
 
     sessionId = 0;
-
+    batchId = 0;
     connecting = signal(true);
     connected = signal(false);
     errorMessage = signal('');
@@ -63,6 +63,9 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.sessionId = Number(
             this.route.snapshot.paramMap.get('sessionId')
+        );
+        this.batchId = Number(
+            this.route.snapshot.queryParamMap.get('batchId')
         );
 
         if (!Number.isInteger(this.sessionId) || this.sessionId <= 0) {
@@ -328,7 +331,9 @@ export class LiveSessionRoom implements OnInit, OnDestroy {
         await this.room?.disconnect();
 
         this.connected.set(false);
-        this.router.navigate(['/trainer/live-sessions']);
+        this.router.navigate(['/trainer/live-sessions'], {
+            queryParams: { batchId: this.batchId }
+        });
     }
 
     ngOnDestroy(): void {

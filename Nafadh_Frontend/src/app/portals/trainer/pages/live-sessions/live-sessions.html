@@ -103,16 +103,28 @@
                     </button>
                     }
                     @if (session.status === 'Scheduled') {
-                    <button type="button" (click)="editSession(session)">تعديل</button>
-                    <button type="button" [disabled]="loading()" (click)="startSession(session)">
-                        {{ loading() ? 'جاري بدء الاجتماع...' : 'بدء الجلسة' }}
+                    <button type="button" (click)="editSession(session)">
+                        تعديل
                     </button>
-                    <button type="button" class="danger-btn" (click)="cancelSession(session)">إلغاء</button>
+
+                    <button type="button" class="danger-btn" (click)="cancelSession(session)">
+                        إلغاء
+                    </button>
+                    }
+
+                    @if (
+                    activeTab() === 'ongoing' &&
+                    (session.status === 'Scheduled' || session.status === 'InProgress')
+                    ) {
+                    <button type="button" [disabled]="loading()" (click)="startSession(session)">
+                        {{ loading() ? 'جاري الدخول...' : 'Join Meeting' }}
+                    </button>
                     }
 
                     @if (session.status === 'InProgress') {
-                    <button type="button" (click)="joinMeeting(session)">Join Meeting</button>
-                    <button type="button" (click)="completeSession(session)">إنهاء الجلسة</button>
+                    <button type="button" (click)="completeSession(session)">
+                        إنهاء الجلسة
+                    </button>
                     }
 
                     @if (session.status === 'Completed') {
