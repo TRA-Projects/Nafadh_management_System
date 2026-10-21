@@ -6,7 +6,8 @@ import {
   AnnouncementDto, AuditLogDto, BatchDto, BatchPerformanceReportDto, CertificateDto, CompanyDto,
   ConversationDetailDto, ConversationListItemDto, ConversationMessageDto, EvaluationBucketRollupDto,
   EvaluationDto, NotificationDto, ProgramDto, TraineeListItemDto, TraineeProfileDto,
-  TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto, ModuleDto,AdminBatchGroupDto,AdminBatchGroupMessageDto
+  TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto, ModuleDto,AdminBatchGroupDto,AdminBatchGroupMessageDto,
+  AdminSupervisorReportDto
 } from '../../../core/models/dtos';
 
 export interface TraineeCertificateStatusDto {
@@ -357,6 +358,30 @@ getAdminBatchGroupMessages(
   // ==========================================================
   // 12. Reports & Audit
   // ==========================================================
+
+  
+  // Get supervisor reports for Admin
+  getAdminSupervisorReports(
+    year?: number,
+    month?: number
+  ): Observable<AdminSupervisorReportDto[]> {
+
+    let params = new HttpParams();
+
+    if (year !== undefined) {
+      params = params.set('year', String(year));
+    }
+
+    if (month !== undefined) {
+      params = params.set('month', String(month));
+    }
+
+    return this.http.get<AdminSupervisorReportDto[]>(
+      `${this.base}/admin/reports/supervisors`,
+      { params }
+    );
+  }
+
   getBatchPerformanceReport(batchId: number, pageNumber: number = 1, pageSize: number = 15): Observable<BatchPerformanceReportDto> {
     const params = new HttpParams()
       .set('pageNumber', String(pageNumber))
