@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -30,6 +30,13 @@ export class AdminWarnings implements OnInit {
   selectedMonth: string = 'ALL';
   selectedStatus: string = 'ALL';
   selectedLevel: string = 'ALL';
+
+  // ==========================================
+  // إعدادات التنقل (Pagination)
+  // ==========================================
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
+  gotoPageInput = signal<number | null>(null);
 
   // قائمة الأشهر
   monthsList = [
@@ -128,6 +135,9 @@ export class AdminWarnings implements OnInit {
     if (type === 'MONTH') this.selectedMonth = value;
     if (type === 'STATUS') this.selectedStatus = value;
     if (type === 'LEVEL') this.selectedLevel = value;
+    
+    // العودة للصفحة الأولى عند الفلترة
+    this.currentPage.set(1);
   }
 
   applyPreset(preset: 'THIS_MONTH' | 'CURRENT_QUARTER' | 'THIS_YEAR'): void {
@@ -145,6 +155,7 @@ export class AdminWarnings implements OnInit {
     } else if (preset === 'CURRENT_QUARTER') {
       this.selectedYear = currentYear;
     }
+    this.currentPage.set(1);
   }
 
   resetAllFilters(): void {
@@ -153,6 +164,7 @@ export class AdminWarnings implements OnInit {
     this.selectedStatus = 'ALL';
     this.selectedLevel = 'ALL';
     this.searchTerm = '';
+    this.currentPage.set(1);
   }
 
   hasActiveFilters(): boolean {
@@ -209,7 +221,7 @@ export class AdminWarnings implements OnInit {
       if (this.selectedStatus === 'Open') matchesStatus = st === '0' || st === 'Open';
       else if (this.selectedStatus === 'UnderReview') matchesStatus = st === '1' || st === 'UnderReview';
       else if (this.selectedStatus === 'Resolved') matchesStatus = st === '2' || st === 'Resolved';
-      else if (this.selectedStatus === 'Escalated') matchesStatus = st === '3' || st === 'Escalated'; // 👈 دعم حالة التصعيد
+      else if (this.selectedStatus === 'Escalated') matchesStatus = st === '3' || st === 'Escalated'; 
 
       const lvl = String(w.level);
       let matchesLevel = true;
@@ -232,6 +244,78 @@ export class AdminWarnings implements OnInit {
       return matchesSearch && matchesStatus && matchesLevel && matchesYear && matchesMonth;
     });
   }
+
+  // ==========================================
+  // حسابات التنقل (Pagination Computed)
+  // ==========================================
+  totalPages = computed(() => {
+    const total = this.filteredWarnings().length;
+    return Math.ceil(total / this.pageSize()) || 1;
+  });
+
+  startRecord = computed(() => {
+    if (this.filteredWarnings().length === 0) return 0;
+    return (this.currentPage() - 1) * this.pageSize() + 1;
+  });
+
+  endRecord = computed(() => {
+    const end = this.currentPage() * this.pageSize();
+    return Math.min(end, this.filteredWarnings().length);
+  });
+
+  paginatedWarnings = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    const end = start + this.pageSize();
+    return this.filteredWarnings().slice(start, end);
+  });
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+      this.gotoPageInput.set(null); 
+    }
+  }
+
+  changePageSize(newSize: number): void {
+    this.pageSize.set(Number(newSize));
+    this.currentPage.set(1);
+  }
+
+  onGotoPage(): void {
+    const targetPage = this.gotoPageInput();
+    if (targetPage === null || isNaN(targetPage)) return;
+
+    if (targetPage < 1) {
+      this.goToPage(1);
+    } else if (targetPage > this.totalPages()) {
+      this.goToPage(this.totalPages());
+    } else {
+      this.goToPage(targetPage);
+    }
+  }
+
+  getPagesArray(): number[] {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const maxVisible = 5;
+    
+    let start = Math.max(1, current - Math.floor(maxVisible / 2));
+    let end = Math.min(total, start + maxVisible - 1);
+    
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+    
+    const pages = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  // ==========================================
+  // الدوال الأصلية
+  // ==========================================
 
   load(): void {
     this.api.getWarnings({ scope: 'Company' } as any).subscribe((d: any) => {
@@ -388,14 +472,13 @@ export class AdminWarnings implements OnInit {
     window.print();
   }
 
-  // 👈 تحديث الدالة لتشمل الحالات الأربعة للباك إند
   getCountByStatus(statusKey: string): number {
     return this.warnings().filter(w => {
       const st = String(w.status);
       if (statusKey === 'Open') return st === '0' || st === 'Open';
       if (statusKey === 'UnderReview') return st === '1' || st === 'UnderReview';
       if (statusKey === 'Resolved') return st === '2' || st === 'Resolved';
-      if (statusKey === 'Escalated') return st === '3' || st === 'Escalated'; // 👈 حالة التصعيد
+      if (statusKey === 'Escalated') return st === '3' || st === 'Escalated';
       return false;
     }).length;
   }
@@ -449,23 +532,21 @@ export class AdminWarnings implements OnInit {
     return 'lvl-medium';
   }
 
-  // 👈 تسمية الكروت بالعربي
   getStatusLabel(status?: any): string {
     const val = String(status);
     if (val === '0' || val === 'Open') return 'نشط';
     if (val === '1' || val === 'UnderReview') return 'قيد المراجعة';
     if (val === '2' || val === 'Resolved') return 'مكتمل';
-    if (val === '3' || val === 'Escalated') return 'مُصعّد'; // 👈 الحالة الرابعة
+    if (val === '3' || val === 'Escalated') return 'مُصعّد';
     return status ?? 'نشط';
   }
 
-  // 👈 كلاسات التنسيق المحدثة
   getStatusClass(status?: any): string {
     const val = String(status);
     if (val === '0' || val === 'Open') return 'st-open';
     if (val === '1' || val === 'UnderReview') return 'st-review';
     if (val === '2' || val === 'Resolved') return 'st-resolved';
-    if (val === '3' || val === 'Escalated') return 'st-escalated'; // 👈 كلاس حالة التصعيد
+    if (val === '3' || val === 'Escalated') return 'st-escalated';
     return 'st-open';
   }
 }

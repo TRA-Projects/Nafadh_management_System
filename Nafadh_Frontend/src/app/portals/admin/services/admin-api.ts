@@ -90,10 +90,16 @@ export class AdminApi {
     return this.http.get<{ items: TraineeListItemDto[]; totalCount: number }>(`${this.base}/Trainee`, { params: httpParams });
   }
 
-  // 🟢 دالة جلب سجل نتائج الاختبارات الخاصة بالمتدرب (مطابقة لـ QuizResultDto في الباك إند)
+  // 🟢 تم تصحيح المسار ليتطابق مع Swagger
   getTraineeExams(traineeId: number): Observable<any[]> {
     const cleanId = this.sanitizeId(traineeId);
-    return this.http.get<any[]>(`${this.base}/QuizResult/trainee/${cleanId}`);
+    return this.http.get<any>(`${this.base}/quiz-results/trainee/${cleanId}`).pipe(
+      map(res => {
+        // حماية إضافية في حال كان الباك إند يرجع البيانات داخل items أو data
+        if (Array.isArray(res)) return res;
+        return res?.items || res?.data || res?.results || [];
+      })
+    );
   }
 
   getTrainee(id: number): Observable<TraineeProfileDto> {
@@ -335,11 +341,11 @@ export class AdminApi {
   }
 
   // 🌟 NEW: Get all training batch groups for Admin
-getAdminBatchGroups(): Observable<AdminBatchGroupDto[]> {
-  return this.http.get<AdminBatchGroupDto[]>(
-    `${this.base}/admin/batch-groups`
-  );
-}
+  getAdminBatchGroups(): Observable<AdminBatchGroupDto[]> {
+    return this.http.get<AdminBatchGroupDto[]>(
+      `${this.base}/admin/batch-groups`
+    );
+  }
 
   replyToConversation(id: number, dto: unknown): Observable<ConversationMessageDto> {
     return this.http.post<ConversationMessageDto>(`${this.base}/Conversation/${this.sanitizeId(id)}/messages`, dto);

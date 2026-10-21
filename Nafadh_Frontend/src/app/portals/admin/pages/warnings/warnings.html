@@ -57,7 +57,7 @@
   <div class="filter-toolbar">
     <div class="search-box">
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" [(ngModel)]="searchTerm" placeholder="ابحث باسم الشركة أو كود الإنذار (CW-X)...">
+      <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="currentPage.set(1)" placeholder="ابحث باسم الشركة أو كود الإنذار (CW-X)...">
     </div>
 
     <button class="nfd-btn filter-toggle-btn" [class.active]="isFilterDropdownOpen || hasActiveFilters()" (click)="toggleFilterMenu()">
@@ -147,7 +147,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let warning of filteredWarnings()">
+        <!-- تم استخدام paginatedWarnings() هنا -->
+        <tr *ngFor="let warning of paginatedWarnings()">
           <td class="code-cell">CW-{{ warning.warningId }}</td>
           <td>
             <div class="company-info">
@@ -183,7 +184,73 @@
     </table>
   </div>
 
-  <!-- 5️⃣ Modal إصدار إنذار جديد -->
+  <!-- 5️⃣ شريط التنقل بين الصفحات (Pagination) مطابق للصورة -->
+  <div class="pagination-container" *ngIf="filteredWarnings().length > 0">
+    
+    <!-- تفاصيل السجلات -->
+    <div class="pagination-info">
+      <span class="records-text">
+        عرض <strong>{{ startRecord() }} - {{ endRecord() }}</strong> من إجمالي <strong>{{ filteredWarnings().length }}</strong> إنذار
+      </span>
+      
+      <div class="items-per-page">
+        <label>عدد السجلات في الصفحة:</label>
+        <select [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+          <option [ngValue]="5">5 سجلات</option>
+          <option [ngValue]="10">10 سجلات</option>
+          <option [ngValue]="20">20 سجلات</option>
+          <option [ngValue]="50">50 سجلات</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- أزرار التنقل -->
+    <div class="pagination-controls">
+      
+      <div class="page-buttons">
+        <button class="page-btn nav-btn" [disabled]="currentPage() === 1" (click)="goToPage(1)" title="الصفحة الأولى">
+          الأولى <<
+        </button>
+        <button class="page-btn nav-btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)" title="الصفحة السابقة">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+
+        <!-- أرقام الصفحات -->
+        <ng-container *ngFor="let page of getPagesArray()">
+          <button class="page-btn" [class.active]="page === currentPage()" (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        </ng-container>
+
+        <button class="page-btn nav-btn" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)" title="الصفحة التالية">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <button class="page-btn nav-btn" [disabled]="currentPage() === totalPages()" (click)="goToPage(totalPages())" title="الصفحة الأخيرة">
+          الأخيرة >>
+        </button>
+      </div>
+
+      <!-- الذهاب المباشر لصفحة -->
+      <div class="goto-page">
+        <label>الذهاب إلى صفحة:</label>
+        <input 
+          type="number" 
+          min="1" 
+          [max]="totalPages()" 
+          [ngModel]="gotoPageInput()" 
+          (ngModelChange)="gotoPageInput.set($event)"
+          (keyup.enter)="onGotoPage()"
+          placeholder="#">
+        <button class="go-btn" (click)="onGotoPage()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 4px; transform: scaleX(-1);"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          انتقال
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 6️⃣ Modal إصدار إنذار جديد -->
   <div class="modal-overlay" *ngIf="showIssue()">
     <div class="modal-card">
       <div class="modal-header">
@@ -268,7 +335,7 @@
     </div>
   </div>
 
-  <!-- 6️⃣ Modal تفاصيل البلاغ والإنذار المحدد -->
+  <!-- 7️⃣ Modal تفاصيل البلاغ والإنذار المحدد -->
   <div class="modal-overlay" *ngIf="selectedWarning()">
     <div class="modal-card wide-modal">
       <div class="modal-header">
