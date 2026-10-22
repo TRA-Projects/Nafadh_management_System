@@ -206,6 +206,52 @@ namespace Nafadh_Backend.Services
             await SendAsync(email, subject, body);
         }
 
+
+        public async Task SendWithdrawalApprovedAsync(string email, string traineeName)
+        {
+            string safeName = WebUtility.HtmlEncode(traineeName);
+
+            string subject = "تم اعتماد طلب الانسحاب - نظام نفاذ";
+
+            string body = $@"
+            <div dir='rtl'
+                 style='font-family: Arial, sans-serif;
+                        line-height: 1.8;
+                        max-width: 650px;
+                        margin: auto;'>
+
+                <h2>تم اعتماد طلب الانسحاب</h2>
+
+                <p>
+                    عزيزي/عزيزتي <strong>{safeName}</strong>،
+                </p>
+
+                <p>
+                    نود إبلاغك بأنه تم الموافقة على طلب الانسحاب الخاص بك من
+                    <strong>نظام نفاذ</strong>.
+                </p>
+
+                <p>
+                    بناءً على ذلك، تم إلغاء ارتباطك بالبرامج التدريبية التابعة للمنصة،
+                    ولن تتمكن من تسجيل الدخول إلى حسابك بعد الآن.
+                </p>
+
+                <p>
+                    نتمنى لك التوفيق في مسيرتك القادمة.
+                </p>
+
+                <p>
+                    مع التحية،<br/>
+                    نظام نفاذ
+                </p>
+
+            </div>";
+
+            await SendAsync(email, subject, body);
+        }
+
+
+
         private async Task SendAsync(
             string toEmail,
             string subject,

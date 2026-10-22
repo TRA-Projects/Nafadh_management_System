@@ -72,6 +72,9 @@ export class TraineeSupport implements OnInit {
 
   traineeId =
     signal<number | null>(null);
+    
+  traineeName =
+    signal<string>('المتدرب');
 
   enrollment =
     signal<EnrollmentDto | null>(null);
@@ -280,6 +283,11 @@ export class TraineeSupport implements OnInit {
         if (!traineeId || Number.isNaN(traineeId)) return;
 
         this.traineeId.set(traineeId);
+        
+        if (trainee.fullName) {
+          this.traineeName.set(trainee.fullName);
+        }
+
         this.loadTraineeEnrollment(traineeId);
         this.loadWithdrawalRequests(traineeId);
       },
@@ -323,7 +331,7 @@ export class TraineeSupport implements OnInit {
         const withdrawalItems = this.withdrawalRequests().map(w => ({
           conversationId: w.id + 1000000,
           subject: 'طلب انسحاب',
-          startedByName: 'أنت',
+          startedByName: this.traineeName(),
           lastMessagePreview: w.reason,
           isWithdrawal: true,
           originalRequest: w
@@ -491,16 +499,18 @@ export class TraineeSupport implements OnInit {
         const messages: any[] = [
           {
             messageId: req.id,
-            senderName: 'أنت',
+            senderName: this.traineeName(), 
             senderId: this.auth.userId,
             content: req.reason
           }
         ];
 
-        if (req.adminNotes) {
+        // إظهار رد الإدارة فقط إذا كان مختلفاً عن سبب المتدرب (تجنب التكرار)
+        // وتم تثبيت الاسم هنا ليكون "مدير النظام"
+        if (req.adminNotes && req.adminNotes.trim() !== req.reason.trim()) {
           messages.push({
             messageId: req.id + 999,
-            senderName: 'الإدارة',
+            senderName: 'مدير النظام',
             senderId: 0,
             content: req.adminNotes
           });
@@ -1072,7 +1082,7 @@ export class TraineeSupport implements OnInit {
     if ((conversation as any).isWithdrawal) {
       const newMessage = {
         messageId: Date.now(),
-        senderName: 'أنت',
+        senderName: this.traineeName(), 
         senderId: uid,
         content: this.replyText.trim()
       };
