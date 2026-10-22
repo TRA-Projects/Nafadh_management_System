@@ -1,344 +1,349 @@
 
 import {
-    Component,
-    ElementRef,
-    OnDestroy,
-    OnInit,
-    ViewChild,
-    signal
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
-    Room,
-    RoomEvent,
-    Track,
-    RemoteTrack,
-    RemoteTrackPublication,
-    RemoteParticipant
+  Room,
+  RoomEvent,
+  Track,
+  RemoteTrack,
+  RemoteTrackPublication,
+  RemoteParticipant
 } from 'livekit-client';
 
 import { TrainerApi } from '../../services/trainer-api';
 
 @Component({
-    selector: 'app-live-session-room',
-    standalone: true,
-    imports: [CommonModule],
-    templateUrl: './live-session-room.html',
-    styleUrl: './live-session-room.scss'
+  selector: 'app-live-session-room',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './live-session-room.html',
+  styleUrl: './live-session-room.scss'
 })
 export class LiveSessionRoom implements OnInit, OnDestroy {
+  @ViewChild('videoContainer')
+  videoContainer?: ElementRef<HTMLDivElement>;
 
-    @ViewChild('videoContainer')
-    videoContainer?: ElementRef<HTMLDivElement>;
+  @ViewChild('audioContainer')
+  audioContainer?: ElementRef<HTMLDivElement>;
 
-    @ViewChild('audioContainer')
-    audioContainer?: ElementRef<HTMLDivElement>;
+  sessionId = 0;
+  batchId = 0;
 
-    sessionId = 0;
-    batchId = 0;
-    connecting = signal(true);
-    connected = signal(false);
-    errorMessage = signal('');
-    micEnabled = signal(false);
-    cameraEnabled = signal(false);
-    participantCount = signal(0);
-    screenSharing = signal(false);
+  connecting = signal(true);
+  connected = signal(false);
+  errorMessage = signal('');
+  micEnabled = signal(false);
+  cameraEnabled = signal(false);
+  participantCount = signal(0);
+  screenSharing = signal(false);
 
-    participants = signal<{
-        identity: string;
-        name: string;
-        micEnabled: boolean;
-    }[]>([]);
+  participants = signal<{
+    identity: string;
+    name: string;
+    micEnabled: boolean;
+  }[]>([]);
 
-    private room: Room | null = null;
-    private destroyed = false;
+  private room: Room | null = null;
+  private destroyed = false;
 
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private api: TrainerApi
-    ) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private api: TrainerApi
+  ) {}
 
-    ngOnInit(): void {
-        this.sessionId = Number(
-            this.route.snapshot.paramMap.get('sessionId')
-        );
-        this.batchId = Number(
-            this.route.snapshot.queryParamMap.get('batchId')
-        );
+  ngOnInit(): void {
+    this.sessionId = Number(
+      this.route.snapshot.paramMap.get('sessionId')
+    );
 
-        if (!Number.isInteger(this.sessionId) || this.sessionId <= 0) {
-            this.errorMessage.set('رقم الجلسة غير صحيح.');
-            this.connecting.set(false);
-            return;
-        }
+    this.batchId = Number(
+      this.route.snapshot.queryParamMap.get('batchId')
+    );
 
-        this.connectToSession();
+    if (!Number.isInteger(this.sessionId) || this.sessionId <= 0) {
+      this.errorMessage.set('رقم الجلسة غير صحيح.');
+      this.connecting.set(false);
+      return;
     }
 
-    private connectToSession(): void {
-        this.connecting.set(true);
-        this.errorMessage.set('');
+    this.connectToSession();
+  }
 
-        // نطلب رمز دخول جديدًا، ولا نخزنه في المتصفح.
-        this.api.joinTrainerLiveRoom(this.sessionId).subscribe({
-            next: async (connection) => {
-                if (this.destroyed) return;
+  private connectToSession(): void {
+    this.connecting.set(true);
+    this.errorMessage.set('');
 
-                try {
-                    const room = new Room({
-                        adaptiveStream: true,
-                        dynacast: true
-                    });
+    this.api.joinTrainerLiveRoom(this.sessionId).subscribe({
+      next: async connection => {
+        if (this.destroyed) return;
 
-                    this.room = room;
-                    room.on(RoomEvent.LocalTrackUnpublished, () => {
-                        const screenTrack = room.localParticipant
-                            .getTrackPublication(Track.Source.ScreenShare);
+        try {
+          const room = new Room({
+            adaptiveStream: true,
+            dynacast: true
+          });
 
-                        if (!screenTrack) {
-                            this.screenSharing.set(false);
-                        }
-                    });
+          this.room = room;
 
-                    room.on(
-                        RoomEvent.TrackSubscribed,
-                        (
-                            track: RemoteTrack,
-                            _publication: RemoteTrackPublication,
-                            participant: RemoteParticipant
-                        ) => {
-                            this.attachRemoteTrack(track, participant.identity);
-                        }
-                    );
+          room.on(RoomEvent.LocalTrackUnpublished, () => {
+            const screenTrack = room.localParticipant
+              .getTrackPublication(Track.Source.ScreenShare);
 
-                    room.on(RoomEvent.TrackUnsubscribed, (track) => {
-                        track.detach().forEach(element => element.remove());
-                    });
-
-                    room.on(RoomEvent.ParticipantConnected, () => {
-                        this.updateParticipants();
-                    });
-
-                    room.on(RoomEvent.ParticipantDisconnected, () => {
-                        this.updateParticipants();
-                    });
-
-                    room.on(RoomEvent.TrackMuted, () => {
-                        this.updateParticipants();
-                    });
-
-                    room.on(RoomEvent.TrackUnmuted, () => {
-                        this.updateParticipants();
-                    });
-                    room.on(RoomEvent.TrackPublished, () => {
-                        this.updateParticipants();
-                    });
-
-                    room.on(RoomEvent.TrackUnpublished, () => {
-                        this.updateParticipants();
-                    });
-                    room.on(RoomEvent.Disconnected, () => {
-                        this.connected.set(false);
-                        this.micEnabled.set(false);
-                        this.cameraEnabled.set(false);
-                        this.screenSharing.set(false);
-                        this.updateParticipants();
-                    });
-
-                    await room.connect(
-                        connection.serverUrl,
-                        connection.participantToken
-                    );
-
-                    if (this.destroyed) {
-                        await room.disconnect();
-                        return;
-                    }
-
-                    this.connected.set(true);
-                    this.updateParticipantCount();
-                    this.updateParticipants();
-
-                    // عرض مسارات المشاركين الموجودة عند الاتصال.
-                    room.remoteParticipants.forEach(participant => {
-                        participant.trackPublications.forEach(publication => {
-                            if (publication.track) {
-                                this.attachRemoteTrack(
-                                    publication.track,
-                                    participant.identity
-                                );
-                            }
-                        });
-                    });
-
-                } catch (error) {
-                    console.error('LiveKit connection failed:', error);
-                    this.errorMessage.set(
-                        'تعذر الاتصال بالمحاضرة المباشرة.'
-                    );
-                } finally {
-                    this.connecting.set(false);
-                }
-            },
-            error: () => {
-                this.errorMessage.set(
-                    'تعذر الحصول على صلاحية دخول المحاضرة.'
-                );
-                this.connecting.set(false);
+            if (!screenTrack) {
+              this.screenSharing.set(false);
             }
-        });
-    }
+          });
 
-    private attachRemoteTrack(
-        track: RemoteTrack,
-        identity: string
-    ): void {
-        const container =
-            track.kind === Track.Kind.Video
-                ? this.videoContainer?.nativeElement
-                : this.audioContainer?.nativeElement;
+          room.on(
+            RoomEvent.TrackSubscribed,
+            (
+              track: RemoteTrack,
+              _publication: RemoteTrackPublication,
+              participant: RemoteParticipant
+            ) => {
+              this.attachRemoteTrack(track, participant.identity);
+            }
+          );
 
-        if (!container) return;
+          room.on(RoomEvent.TrackUnsubscribed, track => {
+            track.detach().forEach(element => element.remove());
+          });
 
-        const element = track.attach();
-        element.setAttribute('data-participant', identity);
+          room.on(RoomEvent.ParticipantConnected, () => {
+            this.updateParticipants();
+          });
 
-        if (track.kind === Track.Kind.Video) {
-            element.classList.add('participant-video');
-        }
+          room.on(RoomEvent.ParticipantDisconnected, () => {
+            this.updateParticipants();
+          });
 
-        container.appendChild(element);
-    }
+          room.on(RoomEvent.TrackMuted, () => {
+            this.updateParticipants();
+          });
 
-    private updateParticipantCount(): void {
-        if (!this.room || !this.connected()) {
-            this.participantCount.set(0);
+          room.on(RoomEvent.TrackUnmuted, () => {
+            this.updateParticipants();
+          });
+
+          room.on(RoomEvent.TrackPublished, () => {
+            this.updateParticipants();
+          });
+
+          room.on(RoomEvent.TrackUnpublished, () => {
+            this.updateParticipants();
+          });
+
+          room.on(RoomEvent.Disconnected, () => {
+            this.connected.set(false);
+            this.micEnabled.set(false);
+            this.cameraEnabled.set(false);
+            this.screenSharing.set(false);
+            this.updateParticipants();
+          });
+
+          await room.connect(
+            connection.serverUrl,
+            connection.participantToken
+          );
+
+          if (this.destroyed) {
+            await room.disconnect();
             return;
-        }
+          }
 
-        this.participantCount.set(
-            this.room.remoteParticipants.size + 1
-        );
-    }
-    private updateParticipants(): void {
-        if (!this.room || !this.connected()) {
-            this.participants.set([]);
-            this.participantCount.set(0);
-            return;
-        }
+          this.connected.set(true);
+          this.updateParticipantCount();
+          this.updateParticipants();
 
-        const remoteParticipants = Array.from(
-            this.room.remoteParticipants.values()
-        );
-
-        this.participants.set(
-            remoteParticipants.map(participant => {
-                const microphone = participant.getTrackPublication(
-                    Track.Source.Microphone
+          room.remoteParticipants.forEach(participant => {
+            participant.trackPublications.forEach(publication => {
+              if (publication.track) {
+                this.attachRemoteTrack(
+                  publication.track,
+                  participant.identity
                 );
+              }
+            });
+          });
+        } catch (error) {
+          console.error('LiveKit connection failed:', error);
+          this.errorMessage.set(
+            'تعذر الاتصال بالمحاضرة المباشرة.'
+          );
+        } finally {
+          this.connecting.set(false);
+        }
+      },
+      error: () => {
+        this.errorMessage.set(
+          'تعذر الحصول على صلاحية دخول المحاضرة.'
+        );
+        this.connecting.set(false);
+      }
+    });
+  }
 
-                return {
-                    identity: participant.identity,
-                    name: participant.name || participant.identity,
-                    micEnabled: !!microphone && !microphone.isMuted
-                };
-            })
+  private attachRemoteTrack(
+    track: RemoteTrack,
+    identity: string
+  ): void {
+    const container =
+      track.kind === Track.Kind.Video
+        ? this.videoContainer?.nativeElement
+        : this.audioContainer?.nativeElement;
+
+    if (!container) return;
+
+    const element = track.attach();
+    element.setAttribute('data-participant', identity);
+
+    if (track.kind === Track.Kind.Video) {
+      element.classList.add('participant-video');
+    }
+
+    container.appendChild(element);
+  }
+
+  private updateParticipantCount(): void {
+    if (!this.room || !this.connected()) {
+      this.participantCount.set(0);
+      return;
+    }
+
+    this.participantCount.set(
+      this.room.remoteParticipants.size + 1
+    );
+  }
+
+  private updateParticipants(): void {
+    if (!this.room || !this.connected()) {
+      this.participants.set([]);
+      this.participantCount.set(0);
+      return;
+    }
+
+    const remoteParticipants = Array.from(
+      this.room.remoteParticipants.values()
+    );
+
+    this.participants.set(
+      remoteParticipants.map(participant => {
+        const microphone = participant.getTrackPublication(
+          Track.Source.Microphone
         );
 
-        this.updateParticipantCount();
+        return {
+          identity: participant.identity,
+          name: participant.name || participant.identity,
+          micEnabled: !!microphone && !microphone.isMuted
+        };
+      })
+    );
+
+    this.updateParticipantCount();
+  }
+
+  async toggleMic(): Promise<void> {
+    if (!this.room || !this.connected()) return;
+
+    try {
+      const next = !this.micEnabled();
+
+      await this.room.localParticipant
+        .setMicrophoneEnabled(next);
+
+      this.micEnabled.set(next);
+    } catch {
+      this.errorMessage.set(
+        'تعذر تشغيل المايك. تأكدي من صلاحيات المتصفح.'
+      );
     }
+  }
 
-    async toggleMic(): Promise<void> {
-        if (!this.room || !this.connected()) return;
+  async toggleCamera(): Promise<void> {
+    if (!this.room || !this.connected()) return;
 
-        try {
-            const next = !this.micEnabled();
+    try {
+      const next = !this.cameraEnabled();
 
-            await this.room.localParticipant
-                .setMicrophoneEnabled(next);
+      await this.room.localParticipant
+        .setCameraEnabled(next);
 
-            this.micEnabled.set(next);
-        } catch {
-            this.errorMessage.set(
-                'تعذر تشغيل المايك. تأكدي من صلاحيات المتصفح.'
-            );
-        }
+      this.cameraEnabled.set(next);
+      this.renderLocalVideo();
+    } catch {
+      this.errorMessage.set(
+        'تعذر تشغيل الكاميرا. تأكدي من صلاحيات المتصفح.'
+      );
     }
+  }
 
-    async toggleCamera(): Promise<void> {
-        if (!this.room || !this.connected()) return;
+  async toggleScreenShare(): Promise<void> {
+    if (!this.room || !this.connected()) return;
 
-        try {
-            const next = !this.cameraEnabled();
+    try {
+      const next = !this.screenSharing();
 
-            await this.room.localParticipant
-                .setCameraEnabled(next);
+      await this.room.localParticipant
+        .setScreenShareEnabled(next);
 
-            this.cameraEnabled.set(next);
+      this.screenSharing.set(next);
+    } catch (error) {
+      console.error('Screen sharing failed:', error);
 
-            this.renderLocalVideo();
-        } catch {
-            this.errorMessage.set(
-                'تعذر تشغيل الكاميرا. تأكدي من صلاحيات المتصفح.'
-            );
-        }
+      this.errorMessage.set(
+        'تعذرت مشاركة الشاشة أو تم إلغاء اختيار الشاشة.'
+      );
     }
+  }
 
-    async toggleScreenShare(): Promise<void> {
-        if (!this.room || !this.connected()) return;
+  private renderLocalVideo(): void {
+    const container = this.videoContainer?.nativeElement;
 
-        try {
-            const next = !this.screenSharing();
+    if (!container || !this.room) return;
 
-            await this.room.localParticipant
-                .setScreenShareEnabled(next);
+    container
+      .querySelectorAll('[data-local-video]')
+      .forEach(element => element.remove());
 
-            this.screenSharing.set(next);
-        } catch (error) {
-            console.error('Screen sharing failed:', error);
+    const publication = this.room.localParticipant
+      .getTrackPublication(Track.Source.Camera);
 
-            this.errorMessage.set(
-                'تعذرت مشاركة الشاشة أو تم إلغاء اختيار الشاشة.'
-            );
-        }
-    }
+    const track = publication?.videoTrack;
 
-    private renderLocalVideo(): void {
-        const container = this.videoContainer?.nativeElement;
-        if (!container || !this.room) return;
+    if (!track || !this.cameraEnabled()) return;
 
-        container
-            .querySelectorAll('[data-local-video]')
-            .forEach(element => element.remove());
+    const element = track.attach();
+    element.setAttribute('data-local-video', 'true');
+    element.classList.add('participant-video');
 
-        const publication = this.room.localParticipant
-            .getTrackPublication(Track.Source.Camera);
+    container.appendChild(element);
+  }
 
-        const track = publication?.videoTrack;
+  async leaveSession(): Promise<void> {
+    await this.room?.disconnect();
 
-        if (!track || !this.cameraEnabled()) return;
+    this.connected.set(false);
 
-        const element = track.attach();
-        element.setAttribute('data-local-video', 'true');
-        element.classList.add('participant-video');
+    this.router.navigate(['/trainer/live-sessions'], {
+      queryParams:
+        this.batchId > 0
+          ? { batchId: this.batchId }
+          : {}
+    });
+  }
 
-        container.appendChild(element);
-    }
-
-    async leaveSession(): Promise<void> {
-        await this.room?.disconnect();
-
-        this.connected.set(false);
-        console.log('Leaving LiveKit room, batchId:', this.batchId);
-        this.router.navigate(['/trainer/live-sessions'], {
-            queryParams: { batchId: this.batchId }
-        });
-    }
-
-    ngOnDestroy(): void {
-        this.destroyed = true;
-        void this.room?.disconnect();
-    }
+  ngOnDestroy(): void {
+    this.destroyed = true;
+    void this.room?.disconnect();
+  }
 }
