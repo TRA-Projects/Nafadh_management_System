@@ -6,7 +6,7 @@ import {
   AnnouncementDto, AuditLogDto, BatchDto, BatchPerformanceReportDto, CertificateDto, CompanyDto,
   ConversationDetailDto, ConversationListItemDto, ConversationMessageDto, EvaluationBucketRollupDto,
   EvaluationDto, NotificationDto, ProgramDto, TraineeListItemDto, TraineeProfileDto,
-  TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto, ModuleDto,AdminBatchGroupDto,AdminBatchGroupMessageDto,
+  TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto, ModuleDto, AdminBatchGroupDto, AdminBatchGroupMessageDto,
   AdminSupervisorReportDto
 } from '../../../core/models/dtos';
 
@@ -91,7 +91,7 @@ export class AdminApi {
     return this.http.get<{ items: TraineeListItemDto[]; totalCount: number }>(`${this.base}/Trainee`, { params: httpParams });
   }
 
-  // 🟢 دالة جلب سجل نتائج الاختبارات الخاصة بالمتدرب (مطابقة لـ QuizResultDto في الباك إند)
+  // 🟢 دالة جلب سجل نتائج الاختبارات الخاصة بالمتدرب
   getTraineeExams(traineeId: number): Observable<any[]> {
     const cleanId = this.sanitizeId(traineeId);
     return this.http.get<any[]>(`${this.base}/QuizResult/trainee/${cleanId}`);
@@ -342,20 +342,20 @@ export class AdminApi {
   }
 
   // Get all training batch groups for Admin
-getAdminBatchGroups(): Observable<AdminBatchGroupDto[]> {
-  return this.http.get<AdminBatchGroupDto[]>(
-    `${this.base}/admin/batch-groups`
-  );
-}
+  getAdminBatchGroups(): Observable<AdminBatchGroupDto[]> {
+    return this.http.get<AdminBatchGroupDto[]>(
+      `${this.base}/admin/batch-groups`
+    );
+  }
 
-// Get all training batch groups messages for Admin
-getAdminBatchGroupMessages(
-  conversationId: number
-): Observable<AdminBatchGroupMessageDto[]> {
-  return this.http.get<AdminBatchGroupMessageDto[]>(
-    `${this.base}/admin/batch-groups/${conversationId}/messages`
-  );
-}
+  // Get all training batch groups messages for Admin
+  getAdminBatchGroupMessages(
+    conversationId: number
+  ): Observable<AdminBatchGroupMessageDto[]> {
+    return this.http.get<AdminBatchGroupMessageDto[]>(
+      `${this.base}/admin/batch-groups/${conversationId}/messages`
+    );
+  }
 
   replyToConversation(id: number, dto: unknown): Observable<ConversationMessageDto> {
     return this.http.post<ConversationMessageDto>(`${this.base}/Conversation/${this.sanitizeId(id)}/messages`, dto);
@@ -364,8 +364,6 @@ getAdminBatchGroupMessages(
   // ==========================================================
   // 12. Reports & Audit
   // ==========================================================
-
-  
   // Get supervisor reports for Admin
   getAdminSupervisorReports(
     year?: number,

@@ -90,24 +90,23 @@ export class AdminNotifications implements OnInit {
     isPinned: false
   };
 
-  // بيانات وهمية للاختيار
-  availableCompanies = [
-    { id: 'c1', name: 'شركة أرامكو السعودية', traineesCount: 500 },
-    { id: 'c2', name: 'شركة الاتصالات stc', traineesCount: 300 },
-    { id: 'c3', name: 'مستشفى الملك فهد', traineesCount: 120 },
-  ];
-  availableTrainees = [
-    { id: 't1', code: 'TRN-2026-104', name: 'عبدالله محمد', track: 'تطوير الويب', companyName: 'أرامكو' },
-    { id: 't2', code: 'TRN-2026-105', name: 'نورة سعد', track: 'تحليل البيانات', companyName: 'stc' },
-    { id: 't3', code: 'TRN-2026-106', name: 'سلطان فهد', track: 'الأمن السيبراني', companyName: 'أرامكو' },
-  ];
-  availableTrainers = [
-    { id: 'tr1', name: 'م. فيصل العتيبي', specialty: 'البرمجة' },
-    { id: 'tr2', name: 'د. منى خالد', specialty: 'البيانات' },
-  ];
-  
+  // ==========================================
+  // 🌟 البيانات التي تأتي من قاعدة البيانات
+  // ==========================================
+  dbCompanies = signal<any[]>([]);
+  dbTrainees = signal<any[]>([]);
+  dbTrainers = signal<any[]>([]);
+  isLoadingData = signal<boolean>(false);
+
+  // متغيرات التصفية
   companySearch = '';
   traineeSearch = '';
+  trainerSearch = '';
+  
+  // متغيرات التصفية الذكية للمتدربين
+  traineeFilterTrack = '';
+  traineeFilterBatch = '';
+  traineeFilterCompany = '';
 
   selectedNotification = signal<NotificationViewModel | null>(null);
   toastMessage = signal<string | null>(null);
@@ -237,6 +236,8 @@ export class AdminNotifications implements OnInit {
 
   deleteNotification(id: number, event?: Event): void {
     event?.stopPropagation();
+    // يفضل هنا استدعاء API الحذف إذا كان متاحاً
+    // this.api.deleteAnnouncement(id).subscribe(...)
     this.rawNotifications.update((list) => list.filter((n) => Number(n.announcementId ?? (n as any).id) !== id));
     if (this.selectedNotification()?.notificationId === id) this.selectedNotification.set(null);
     this.showToast('تم حذف الإشعار بنجاح.');
@@ -250,6 +251,63 @@ export class AdminNotifications implements OnInit {
   closeDetails(): void { this.selectedNotification.set(null); }
 
   // =========================================================================
+  // 🌟 جلب البيانات من قاعدة البيانات (الداتا بيز)
+  // =========================================================================
+  fetchTargetAudienceData(): void {
+    this.isLoadingData.set(true);
+    
+    // 1. جلب الشركات
+    this.api.getCompanies().subscribe({
+      next: (res: any) => {
+        const items = Array.isArray(res) ? res : (res?.items || res?.data || []);
+        // توحيد أسماء الحقول (Mapping)
+        const mappedCompanies = items.map((c: any) => ({
+          id: String(c.companyId || c.id || c.CompanyId),
+          name: c.companyName || c.name || c.CompanyName,
+          traineesCount: c.traineesCount || c.TraineesCount || 0
+        }));
+        this.dbCompanies.set(mappedCompanies);
+      },
+      error: () => this.dbCompanies.set([])
+    });
+
+    // 2. جلب المتدربين
+    this.api.getTrainees({ pageSize: 10000 }).subscribe({
+      next: (res: any) => {
+        const items = Array.isArray(res) ? res : (res?.items || res?.data || []);
+        const mappedTrainees = items.map((t: any) => ({
+          id: String(t.traineeId || t.id || t.TraineeId),
+          name: t.fullName || t.name || t.FullName || 'اسم غير متوفر',
+          code: t.registrationNumber || t.code || t.RegistrationNumber || 'N/A',
+          track: t.trackName || t.track || t.TrackName || 'غير محدد',
+          companyName: t.companyName || t.CompanyName || 'بدون شركة',
+          batch: t.batchName || t.batch || t.BatchName || 'غير محدد'
+        }));
+        this.dbTrainees.set(mappedTrainees);
+      },
+      error: () => this.dbTrainees.set([])
+    });
+
+    // 3. جلب المدربين
+    this.api.getTrainers({ pageSize: 10000 }).subscribe({
+      next: (res: any) => {
+        const items = Array.isArray(res) ? res : (res?.items || res?.data || []);
+        const mappedTrainers = items.map((tr: any) => ({
+          id: String(tr.trainerId || tr.id || tr.TrainerId),
+          name: tr.fullName || tr.name || tr.FullName || 'اسم غير متوفر',
+          specialty: tr.specialty || tr.Specialty || tr.trackName || 'غير محدد'
+        }));
+        this.dbTrainers.set(mappedTrainers);
+        this.isLoadingData.set(false);
+      },
+      error: () => {
+        this.dbTrainers.set([]);
+        this.isLoadingData.set(false);
+      }
+    });
+  }
+
+  // =========================================================================
   // منطق النافذة المنبثقة (إعلان جديد)
   // =========================================================================
   openAnnounceModal(): void {
@@ -261,8 +319,15 @@ export class AdminNotifications implements OnInit {
       channels: { inApp: true, email: true, sms: false },
       isPinned: false
     };
+    this.resetTraineeFilters();
+    this.companySearch = '';
+    this.trainerSearch = '';
     this.activeAnnounceTab = 'edit';
     this.announceError.set(null);
+    
+    // جلب البيانات عند فتح النافذة
+    this.fetchTargetAudienceData(); 
+    
     this.showAnnounce.set(true);
   }
 
@@ -275,12 +340,12 @@ export class AdminNotifications implements OnInit {
     const fd = this.newAnnounceData;
     if (fd.mainAudience === 'all') return 18500;
     if (fd.mainAudience === 'admins') return 45;
-    if (fd.mainAudience === 'trainers') return fd.trainerScope === 'all_trainers' ? 120 : fd.selectedTrainerIds.length;
+    if (fd.mainAudience === 'trainers') return fd.trainerScope === 'all_trainers' ? this.dbTrainers().length : fd.selectedTrainerIds.length;
     if (fd.mainAudience === 'companies') {
-      if (fd.companyScope === 'all_companies') return 450;
-      return this.availableCompanies.filter(c => fd.selectedCompanyIds.includes(c.id)).reduce((sum, c) => sum + c.traineesCount, 0);
+      if (fd.companyScope === 'all_companies') return this.dbCompanies().length;
+      return this.dbCompanies().filter(c => fd.selectedCompanyIds.includes(c.id)).reduce((sum, c) => sum + (c.traineesCount || 0), 0);
     }
-    if (fd.mainAudience === 'trainees') return fd.traineeScope === 'all_trainees' ? 5000 : fd.selectedTraineeIds.length;
+    if (fd.mainAudience === 'trainees') return fd.traineeScope === 'all_trainees' ? this.dbTrainees().length : fd.selectedTraineeIds.length;
     return 0;
   });
 
@@ -291,37 +356,113 @@ export class AdminNotifications implements OnInit {
     this.newAnnounceData.selectedTrainerIds = [];
   }
 
+  // =========================================================================
+  // 🌟 دوال التصفية الذكية والاختيار
+  // =========================================================================
+
+  // --- الشركات ---
   getFilteredCompanies() {
-    if (!this.companySearch) return this.availableCompanies;
+    const list = this.dbCompanies();
+    if (!this.companySearch) return list;
     const term = this.companySearch.toLowerCase();
-    return this.availableCompanies.filter(c => c.name.toLowerCase().includes(term));
+    return list.filter(c => c.name.toLowerCase().includes(term));
   }
   toggleCompany(id: string) {
     const ids = this.newAnnounceData.selectedCompanyIds;
     this.newAnnounceData.selectedCompanyIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id];
   }
   isCompanySelected(id: string) { return this.newAnnounceData.selectedCompanyIds.includes(id); }
-  getSelectedCompanyObjects() { return this.availableCompanies.filter(c => this.newAnnounceData.selectedCompanyIds.includes(c.id)); }
-
-  getFilteredTrainees() {
-    if (!this.traineeSearch) return this.availableTrainees;
-    const term = this.traineeSearch.toLowerCase();
-    return this.availableTrainees.filter(t => t.name.toLowerCase().includes(term) || t.code.toLowerCase().includes(term));
+  getSelectedCompanyObjects() { return this.dbCompanies().filter(c => this.newAnnounceData.selectedCompanyIds.includes(c.id)); }
+  
+  selectAllCompanies(event: any) {
+    const filtered = this.getFilteredCompanies();
+    if (event.target.checked) {
+      const newIds = new Set([...this.newAnnounceData.selectedCompanyIds, ...filtered.map(c => c.id)]);
+      this.newAnnounceData.selectedCompanyIds = Array.from(newIds);
+    } else {
+      const filteredIds = filtered.map(c => c.id);
+      this.newAnnounceData.selectedCompanyIds = this.newAnnounceData.selectedCompanyIds.filter(id => !filteredIds.includes(id));
+    }
   }
+
+  // --- المتدربين (التصفية الذكية) ---
+  getFilteredTrainees() {
+    return this.dbTrainees().filter(t => {
+      const term = this.traineeSearch.toLowerCase();
+      const matchesSearch = !term || 
+        t.name.toLowerCase().includes(term) || 
+        t.code.toLowerCase().includes(term) ||
+        t.track.toLowerCase().includes(term) ||
+        t.companyName.toLowerCase().includes(term);
+
+      const matchesTrack = !this.traineeFilterTrack || t.track === this.traineeFilterTrack;
+      const matchesBatch = !this.traineeFilterBatch || t.batch === this.traineeFilterBatch;
+      const matchesCompany = !this.traineeFilterCompany || t.companyName === this.traineeFilterCompany;
+
+      return matchesSearch && matchesTrack && matchesBatch && matchesCompany;
+    });
+  }
+
   toggleTrainee(id: string) {
     const ids = this.newAnnounceData.selectedTraineeIds;
     this.newAnnounceData.selectedTraineeIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id];
   }
   isTraineeSelected(id: string) { return this.newAnnounceData.selectedTraineeIds.includes(id); }
-  getSelectedTraineeObjects() { return this.availableTrainees.filter(t => this.newAnnounceData.selectedTraineeIds.includes(t.id)); }
+  getSelectedTraineeObjects() { return this.dbTrainees().filter(t => this.newAnnounceData.selectedTraineeIds.includes(t.id)); }
 
+  selectAllTrainees(event: any) {
+    const filtered = this.getFilteredTrainees();
+    if (event.target.checked) {
+      const newIds = new Set([...this.newAnnounceData.selectedTraineeIds, ...filtered.map(t => t.id)]);
+      this.newAnnounceData.selectedTraineeIds = Array.from(newIds);
+    } else {
+      const filteredIds = filtered.map(t => t.id);
+      this.newAnnounceData.selectedTraineeIds = this.newAnnounceData.selectedTraineeIds.filter(id => !filteredIds.includes(id));
+    }
+  }
+
+  resetTraineeFilters() {
+    this.traineeSearch = '';
+    this.traineeFilterTrack = '';
+    this.traineeFilterBatch = '';
+    this.traineeFilterCompany = '';
+  }
+
+  getUniqueTracks() { return [...new Set(this.dbTrainees().map(t => t.track))].filter(Boolean); }
+  getUniqueBatches() { return [...new Set(this.dbTrainees().map(t => t.batch))].filter(Boolean); }
+  getUniqueTraineeCompanies() { return [...new Set(this.dbTrainees().map(t => t.companyName))].filter(Boolean); }
+
+  // --- المدربين ---
+  getFilteredTrainers() {
+    const list = this.dbTrainers();
+    if (!this.trainerSearch) return list;
+    const term = this.trainerSearch.toLowerCase();
+    return list.filter(t => 
+      t.name.toLowerCase().includes(term) || 
+      t.specialty.toLowerCase().includes(term)
+    );
+  }
   toggleTrainer(id: string) {
     const ids = this.newAnnounceData.selectedTrainerIds;
     this.newAnnounceData.selectedTrainerIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id];
   }
   isTrainerSelected(id: string) { return this.newAnnounceData.selectedTrainerIds.includes(id); }
-  getSelectedTrainerObjects() { return this.availableTrainers.filter(t => this.newAnnounceData.selectedTrainerIds.includes(t.id)); }
+  getSelectedTrainerObjects() { return this.dbTrainers().filter(t => this.newAnnounceData.selectedTrainerIds.includes(t.id)); }
 
+  selectAllTrainers(event: any) {
+    const filtered = this.getFilteredTrainers();
+    if (event.target.checked) {
+      const newIds = new Set([...this.newAnnounceData.selectedTrainerIds, ...filtered.map(t => t.id)]);
+      this.newAnnounceData.selectedTrainerIds = Array.from(newIds);
+    } else {
+      const filteredIds = filtered.map(t => t.id);
+      this.newAnnounceData.selectedTrainerIds = this.newAnnounceData.selectedTrainerIds.filter(id => !filteredIds.includes(id));
+    }
+  }
+
+  // =========================================================================
+  // نشر الإعلان وتصدير البيانات
+  // =========================================================================
   postAnnouncement(): void {
     if (!this.newAnnounceData.title.trim() || !this.newAnnounceData.content.trim() || this.posting()) {
       alert('يرجى تعبئة الحقول الإلزامية (العنوان، الرسالة)');
@@ -345,9 +486,9 @@ export class AdminNotifications implements OnInit {
       createdByUserId: uid,
       priority: this.newAnnounceData.priority, 
       createdAt: new Date().toISOString(),
-      companyIds: this.newAnnounceData.selectedCompanyIds,
-      traineeIds: this.newAnnounceData.selectedTraineeIds,
-      trainerIds: this.newAnnounceData.selectedTrainerIds,
+      companyIds: this.newAnnounceData.selectedCompanyIds.map(id => Number(id)),
+      traineeIds: this.newAnnounceData.selectedTraineeIds.map(id => Number(id)),
+      trainerIds: this.newAnnounceData.selectedTrainerIds.map(id => Number(id)),
       channels: this.newAnnounceData.channels,
       isPinned: this.newAnnounceData.isPinned
     };
