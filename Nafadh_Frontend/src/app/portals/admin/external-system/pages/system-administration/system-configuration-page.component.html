@@ -1,0 +1,306 @@
+<div
+  class="rounded-xl border border-[#ebedf2] bg-white p-3 shadow-sm dark:border-[#191e3a] dark:bg-[#0e1726] sm:p-4 md:p-6"
+>
+  <h2 class="min-w-0 text-xl font-bold text-black dark:text-white-light sm:text-2xl" i18n="@@jobseeker.admin.systemConfig.pageTitle">
+    System configuration
+  </h2>
+
+  <div class="mt-4 flex flex-wrap items-center gap-3">
+    <label class="flex min-w-0 flex-wrap items-center gap-2">
+      <span class="shrink-0 whitespace-nowrap text-sm text-white-dark" i18n="@@jobseeker.admin.systemConfig.search">Search</span>
+      <input
+        class="form-input w-72 max-w-full"
+        type="search"
+        [value]="searchQuery()"
+        (input)="setSearchQuery(($any($event.target).value ?? '').toString())"
+        i18n-placeholder="@@jobseeker.admin.systemConfig.searchPlaceholder"
+        placeholder="Filter by key, name, type, value, or description"
+      />
+    </label>
+  </div>
+
+  <div class="mt-4 rounded-xl border border-[#ebedf2] bg-white dark:border-[#191e3a] dark:bg-[#0e1726] md:overflow-hidden">
+    <!-- Mobile / tablet cards -->
+    <div class="p-3 lg:hidden">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        @for (row of rows(); track row.Code; let i = $index) {
+          <article class="sys-config-card">
+            <div class="sys-config-card__header">
+              <div class="sys-config-card__identity">
+                <span class="sys-config-card__avatar" aria-hidden="true">
+                  <img [src]="'/images/nav/settings.svg' | assetUrl" alt="" class="sys-config-card__avatar-icon" />
+                </span>
+                <span class="min-w-0">
+                  <span class="sys-config-card__name-row">
+                    <span class="sys-config-card__index">#{{ safePageIndex() * pageSize() + i + 1 }}</span>
+                    <span class="sys-config-card__name">{{ variableName(row) }}</span>
+                  </span>
+                  <span class="sys-config-card__type-badge">{{ row.ValueType }}</span>
+                </span>
+              </div>
+              <div class="sys-config-card__actions">
+                <ng-container *ngTemplateOutlet="rowActionsMenu; context: { $implicit: row }" />
+              </div>
+            </div>
+
+            <div class="sys-config-card__meta">
+              <div>
+                <div class="sys-config-card__label" i18n="@@jobseeker.common.key">Key</div>
+                <div class="sys-config-card__value font-mono text-xs">{{ row.Code }}</div>
+              </div>
+              <div>
+                <div class="sys-config-card__label" i18n="@@jobseeker.common.type">Type</div>
+                <div class="sys-config-card__value">{{ row.ValueType }}</div>
+              </div>
+              <div class="col-span-2">
+                <div class="sys-config-card__label" i18n="@@jobseeker.common.value">Value</div>
+                <div class="sys-config-card__value">
+                  @if (isToggleSystemVariable(row)) {
+                    <span class="yn-switch yn-switch--disabled" [attr.aria-label]="variableName(row)">
+                      <input
+                        type="checkbox"
+                        class="yn-switch-input"
+                        [checked]="ynEnabledFromValue(row.Value)"
+                        disabled
+                        tabindex="-1"
+                      />
+                      <span class="yn-switch-track" aria-hidden="true"></span>
+                    </span>
+                  } @else if (isEducationDegreeRanksVariable(row) || isNafathValidityCheckVariable(row)) {
+                    <span>{{ displayValue(row) }}</span>
+                  } @else {
+                    <span class="line-clamp-3 tabular-nums" [attr.dir]="row.ValueType === 'Time' ? 'ltr' : null">{{
+                      row.Value
+                    }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+
+      @if (totalCount() > 0 && rows().length === 0) {
+        <div
+          class="rounded-xl border border-dashed border-[#ebedf2] px-3 py-8 text-center text-sm text-white-dark dark:border-[#191e3a]"
+          i18n="@@jobseeker.admin.systemConfig.noMatches"
+        >
+          No variables match your search.
+        </div>
+      } @else if (totalCount() === 0) {
+        <div
+          class="rounded-xl border border-dashed border-[#ebedf2] px-3 py-8 text-center text-sm text-white-dark dark:border-[#191e3a]"
+          i18n="@@jobseeker.admin.systemConfig.empty"
+        >
+          No system variables found.
+        </div>
+      }
+    </div>
+
+    <!-- Desktop table -->
+    <div class="table-responsive hidden lg:block">
+      <table class="sys-config-table">
+        <thead>
+          <tr>
+            <th i18n="@@jobseeker.common.rowNumber">#</th>
+            <th i18n="@@jobseeker.common.key">Key</th>
+            <th i18n="@@jobseeker.common.name">Name</th>
+            <th i18n="@@jobseeker.common.type">Type</th>
+            <th i18n="@@jobseeker.common.value">Value</th>
+            <th class="sys-config-actions-cell" i18n="@@jobseeker.common.actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (totalCount() > 0 && rows().length === 0) {
+            <tr>
+              <td colspan="6" class="py-8 text-center text-sm text-white-dark" i18n="@@jobseeker.admin.systemConfig.noMatches">
+                No variables match your search.
+              </td>
+            </tr>
+          } @else if (totalCount() === 0) {
+            <tr>
+              <td colspan="6" class="py-8 text-center text-sm text-white-dark" i18n="@@jobseeker.admin.systemConfig.empty">
+                No system variables found.
+              </td>
+            </tr>
+          } @else {
+            @for (row of rows(); track row.Code; let i = $index) {
+              <tr>
+                <td class="text-white-dark">{{ safePageIndex() * pageSize() + i + 1 }}</td>
+                <td class="whitespace-nowrap font-mono text-xs">{{ row.Code }}</td>
+                <td class="font-semibold text-black dark:text-white-light">{{ variableName(row) }}</td>
+                <td class="text-white-dark">{{ row.ValueType }}</td>
+                <td class="max-w-xs truncate align-middle text-white-dark">
+                  @if (isToggleSystemVariable(row)) {
+                    <span class="yn-switch yn-switch--disabled" [attr.aria-label]="variableName(row)">
+                      <input
+                        type="checkbox"
+                        class="yn-switch-input"
+                        [checked]="ynEnabledFromValue(row.Value)"
+                        disabled
+                        tabindex="-1"
+                      />
+                      <span class="yn-switch-track" aria-hidden="true"></span>
+                    </span>
+                  } @else if (isEducationDegreeRanksVariable(row) || isNafathValidityCheckVariable(row)) {
+                    <span>{{ displayValue(row) }}</span>
+                  } @else {
+                    <span class="tabular-nums" [attr.dir]="row.ValueType === 'Time' ? 'ltr' : null">{{ row.Value }}</span>
+                  }
+                </td>
+                <td class="sys-config-actions-cell">
+                  <ng-container *ngTemplateOutlet="rowActionsMenu; context: { $implicit: row }" />
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sys-config-pager">
+      <span class="sys-config-pager__summary">{{ pageFooterLabel() }}</span>
+      <div class="sys-config-pager__controls">
+        <label class="sys-config-pager__size">
+          <span i18n="@@jobseeker.jobsList.perPage">Per page</span>
+          <select
+            class="form-select sys-config-pager__select"
+            [value]="pageSize()"
+            (change)="setPageSize(+$any($event.target).value)"
+          >
+            @for (s of pageSizeOptions; track s) {
+              <option [value]="s">{{ s }}</option>
+            }
+          </select>
+        </label>
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm sys-config-pager__nav"
+          [disabled]="!canPrev()"
+          (click)="prevPage()"
+          aria-label="Prev"
+          i18n-aria-label="@@jobseeker.common.prev"
+        >
+          &lt;
+        </button>
+        <span class="sys-config-pager__page sys-config-pager__page--active">{{ safePageIndex() + 1 }}</span>
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm sys-config-pager__nav"
+          [disabled]="!canNext()"
+          (click)="nextPage()"
+          aria-label="Next"
+          i18n-aria-label="@@jobseeker.common.next"
+        >
+          &gt;
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #rowActionsMenu let-row>
+  <div class="sys-config-actions-menu-wrap" data-row-actions-menu>
+    <button
+      type="button"
+      class="sys-config-actions-trigger"
+      [attr.aria-label]="rowActionsMenuAria"
+      [attr.title]="rowActionsMenuAria"
+      [attr.aria-expanded]="actionsMenuRowId() === row.Code"
+      (click)="toggleRowActionsMenu(row.Code, $event)"
+    >
+      <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true">
+        <circle cx="12" cy="5" r="1.75" />
+        <circle cx="12" cy="12" r="1.75" />
+        <circle cx="12" cy="19" r="1.75" />
+      </svg>
+    </button>
+    @if (actionsMenuRowId() === row.Code) {
+      <div class="sys-config-actions-menu" role="menu">
+        <button
+          type="button"
+          class="sys-config-actions-menu__item"
+          role="menuitem"
+          (click)="closeRowActionsMenu(); openEdit(row)"
+        >
+          <span class="sys-config-actions-menu__icon">
+            <img [src]="'/images/general/edit.svg' | assetUrl" alt="" class="h-4 w-4" />
+          </span>
+          <span i18n="@@jobseeker.admin.systemConfig.editValue">Edit value</span>
+        </button>
+      </div>
+    }
+  </div>
+</ng-template>
+
+@if (modalOpen() && editing()) {
+  <div class="app-modal-backdrop z-[999] overflow-y-auto bg-[black]/60" (click.self)="closeModal()">
+    <div class="flex min-h-screen items-center justify-center px-4">
+      <div
+        class="relative panel my-8 w-[90%] overflow-hidden rounded-lg border-0 p-0 md:w-full"
+        [class.max-w-lg]="!isEducationDegreeRanksVariable(editing()!)"
+        [class.max-w-2xl]="isEducationDegreeRanksVariable(editing()!)"
+      >
+        <app-modal-close extraClasses="absolute top-4 ltr:right-4 rtl:left-4" (close)="closeModal()" />
+        <h3 class="bg-[#f0f8ff] py-3 text-lg font-medium ltr:pl-5 ltr:pr-[50px] rtl:pr-5 rtl:pl-[50px] dark:bg-[#121c2c]" i18n="@@jobseeker.admin.systemConfig.editValue">
+          Edit value
+        </h3>
+        <div class="p-5">
+          @if (!isToggleSystemVariable(editing()!) && variableDescription(editing()!)) {
+            <p class="mb-3 text-sm text-white-dark">{{ variableDescription(editing()!) }}</p>
+          }
+          <form [formGroup]="valueForm" class="space-y-4" (ngSubmit)="save()">
+            @if (isToggleSystemVariable(editing()!)) {
+              <div class="flex items-center justify-between gap-4">
+                <span class="font-semibold">{{ variableName(editing()!) }}</span>
+                <label class="yn-switch cursor-pointer">
+                  <input type="checkbox" class="yn-switch-input" formControlName="ValueYn" />
+                  <span class="yn-switch-track" aria-hidden="true"></span>
+                </label>
+              </div>
+            } @else if (editing()!.ValueType === 'Integer') {
+              <div>
+                <label class="mb-1 block" i18n="@@jobseeker.common.value">Value</label>
+                <input class="form-input" type="number" formControlName="ValueInt" />
+              </div>
+            } @else if (editing()!.ValueType === 'Time') {
+              <div>
+                <label class="mb-1 block" i18n="@@jobseeker.admin.systemConfig.timeValue">Time</label>
+                <input
+                  class="form-input w-44 max-w-full tabular-nums tracking-wide"
+                  type="time"
+                  formControlName="ValueText"
+                  step="60"
+                  dir="ltr"
+                />
+              </div>
+            } @else if (isNafathValidityCheckVariable(editing()!)) {
+              <div>
+                <label class="mb-1 block" i18n="@@jobseeker.common.value">Value</label>
+                <select class="form-select w-full" formControlName="ValueText">
+                  @for (code of validityCheckCodes; track code) {
+                    <option [value]="code">{{ validityCheckLabel(code) }}</option>
+                  }
+                </select>
+              </div>
+            } @else if (isEducationDegreeRanksVariable(editing()!)) {
+              <app-education-degree-ranks-editor [json]="ranksEditorJson(editing()!)" />
+            } @else {
+              <div>
+                <label class="mb-1 block" i18n="@@jobseeker.common.value">Value</label>
+                @if (isMultilineSystemVariable(editing()!)) {
+                  <textarea class="form-textarea min-h-36 w-full" rows="7" formControlName="ValueText"></textarea>
+                } @else {
+                  <input class="form-input" type="text" formControlName="ValueText" />
+                }
+              </div>
+            }
+            <div class="mt-6 flex justify-end">
+              <button type="submit" class="btn btn-gradient"><span i18n="@@jobseeker.common.save">Save</span></button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+}
