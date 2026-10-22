@@ -102,13 +102,12 @@ export class MeetingSessionWatcher {
 
       const elapsed = now.getTime() - startDate.getTime();
 
-      // Show notification during the first minute
-      // after the scheduled start time.
-      return elapsed >= 0 && elapsed < 60000;
+      // Show notification after the scheduled start time.
+      // Allow five minutes for delayed API responses.
+      return elapsed >= 0 && elapsed < 300000;
     });
 
     if (upcoming) {
-      this.markAsNotified(upcoming.sessionId);
       this.activeMeeting.set(upcoming);
     }
   }

@@ -66,10 +66,19 @@ export class MeetingNotificationToast implements OnChanges {
         await context.resume();
       }
 
-      const start = context.currentTime;
+      if (context.state !== 'running') {
+        console.warn('Notification sound blocked by browser');
+        return;
+      }
 
-      this.playTone(context, 660, start, 0.13);
-      this.playTone(context, 880, start + 0.16, 0.2);
+      const start = context.currentTime + 0.02;
+
+      // Teams-style notification: two short pairs of tones.
+      this.playTone(context, 660, start, 0.18);
+      this.playTone(context, 880, start + 0.22, 0.24);
+
+      this.playTone(context, 660, start + 0.65, 0.18);
+      this.playTone(context, 880, start + 0.87, 0.28);
 
     } catch (error) {
       console.warn('Notification sound unavailable:', error);
@@ -90,8 +99,8 @@ export class MeetingNotificationToast implements OnChanges {
 
     gain.gain.setValueAtTime(0.0001, startTime);
     gain.gain.exponentialRampToValueAtTime(
-      0.08,
-      startTime + 0.02
+      0.12,
+      startTime + 0.03
     );
     gain.gain.exponentialRampToValueAtTime(
       0.0001,
@@ -103,5 +112,10 @@ export class MeetingNotificationToast implements OnChanges {
 
     oscillator.start(startTime);
     oscillator.stop(startTime + duration);
+
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      gain.disconnect();
+    };
   }
 }
