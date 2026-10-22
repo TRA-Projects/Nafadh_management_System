@@ -9,6 +9,17 @@ import { AppShell, ShellNavItem } from '../../../shared/ui/app-shell/app-shell';
 export class AdminLayout {
   navItems: ShellNavItem[] = [
     { path: 'dashboard', label: 'لوحة التحكم التنفيذية', icon: 'home' },
+    {
+      path: '',
+      label: 'الهوية والصلاحيات',
+      icon: 'shield',
+      children: [
+        { path: 'external-system/identity/users', label: 'المستخدمون', icon: 'user' },
+        { path: 'external-system/identity/template-roles', label: 'قوالب الأدوار', icon: 'shield' },
+        { path: 'external-system/identity/roles', label: 'الأدوار المخصصة', icon: 'shield' },
+        { path: 'external-system/identity/groups', label: 'المجموعات', icon: 'folder' },
+      ],
+    },
     { path: 'users', label: 'المستخدمون والصلاحيات', icon: 'shield' },
     { path: 'trainees', label: 'إدارة المتدربين', icon: 'graduation' },
     { path: 'companies', label: 'الشركات المستضيفة', icon: 'building' },
@@ -20,5 +31,6 @@ export class AdminLayout {
     { path: 'notifications', label: 'الإشعارات', icon: 'bell' },
     { path: 'external-system/constants', label: 'إدارة الثوابت', icon: 'book' },
     { path: 'audit', label: 'سجل التدقيق', icon: 'history' },
+    
   ];
 }

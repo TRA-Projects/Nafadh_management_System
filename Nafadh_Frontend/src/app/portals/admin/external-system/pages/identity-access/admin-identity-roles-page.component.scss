@@ -1,0 +1,330 @@
+:host {
+  display: block;
+}
+
+.ia-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.ia-table thead tr {
+  background: rgba(67, 97, 238, 0.08);
+}
+
+:host-context(.dark) .ia-table thead tr {
+  background: rgba(67, 97, 238, 0.16);
+}
+
+.ia-table thead th {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #6b7280;
+  border-bottom: 1px solid #ebedf2;
+  padding: 0.875rem 1rem;
+  white-space: nowrap;
+}
+
+:host-context(.dark) .ia-table thead th {
+  color: #9ca3af;
+  border-bottom-color: #191e3a;
+}
+
+.ia-table tbody td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #f0f1f5;
+  vertical-align: middle;
+}
+
+:host-context(.dark) .ia-table tbody td {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.ia-pager {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: 1px solid #ebedf2;
+  background: rgba(67, 97, 238, 0.06);
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+}
+
+:host-context(.dark) .ia-pager {
+  border-top-color: #191e3a;
+  background: rgba(67, 97, 238, 0.12);
+}
+
+.ia-pager__summary {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+:host-context(.dark) .ia-pager__summary {
+  color: #9ca3af;
+}
+
+.ia-pager__controls {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.ia-pager__size {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.ia-pager__select {
+  width: auto;
+}
+
+.ia-pager__page {
+  min-width: 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.ia-card {
+  border: 1px solid #ebedf2;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+:host-context(.dark) .ia-card {
+  border-color: #191e3a;
+}
+
+.ia-card__name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.ia-card__index {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.ia-card__name {
+  font-weight: 600;
+}
+
+.ia-card__meta {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.ia-card__label {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.ia-card__value {
+  color: #4361ee;
+}
+
+.ia-actions-cell {
+  text-align: center !important;
+  vertical-align: middle;
+}
+
+.ia-actions-cell .ia-actions-menu-wrap {
+  margin-inline: auto;
+}
+
+.ia-actions-menu-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ia-actions-trigger {
+  display: inline-flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: color 0.15s ease;
+}
+
+.ia-actions-trigger:hover {
+  color: #4361ee;
+}
+
+:host-context(.dark) .ia-actions-trigger {
+  color: #9ca3af;
+}
+
+:host-context(.dark) .ia-actions-trigger:hover {
+  color: #93a5ff;
+}
+
+.ia-actions-menu {
+  position: absolute;
+  inset-inline-end: 0;
+  top: calc(100% + 0.25rem);
+  z-index: 40;
+  min-width: 11.5rem;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid #ebedf2;
+  background: #fff;
+  padding: 0.25rem;
+  box-shadow: 0 10px 24px rgb(15 23 42 / 0.12);
+}
+
+:host-context(.dark) .ia-actions-menu {
+  border-color: #191e3a;
+  background: #0e1726;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 0.35);
+}
+
+.ia-actions-menu__item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.625rem;
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  text-align: start;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.ia-actions-menu__item:hover:not(:disabled) {
+  background: rgba(67, 97, 238, 0.08);
+  color: #4361ee;
+}
+
+.ia-actions-menu__item:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.ia-actions-menu__item--danger:hover:not(:disabled) {
+  background: rgba(231, 81, 90, 0.08);
+  color: #e7515a;
+}
+
+:host-context(.dark) .ia-actions-menu__item {
+  color: #e5e7eb;
+}
+
+:host-context(.dark) .ia-actions-menu__item:hover:not(:disabled) {
+  background: rgba(67, 97, 238, 0.18);
+  color: #93a5ff;
+}
+
+:host-context(.dark) .ia-actions-menu__item--danger:hover:not(:disabled) {
+  background: rgba(231, 81, 90, 0.18);
+  color: #f87171;
+}
+
+.ia-actions-menu__icon {
+  display: inline-flex;
+  height: 1.25rem;
+  width: 1.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.ia-clear-btn {
+  display: inline-flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid #ebedf2;
+  color: #6b7280;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.ia-clear-btn:hover:not(:disabled) {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+.ia-clear-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+:host-context(.dark) .ia-clear-btn {
+  border-color: #191e3a;
+  color: #9ca3af;
+}
+
+:host-context(.dark) .ia-clear-btn:hover:not(:disabled) {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
+
+.ia-add-btn {
+  border: 1px solid #00ab55;
+  background-color: #00ab55;
+  color: #fff;
+  box-shadow: 0 1px 2px rgb(0 171 85 / 0.25);
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.ia-add-btn:hover {
+  border-color: #009247;
+  background-color: #009247;
+  color: #fff;
+  box-shadow: 0 4px 10px rgb(0 171 85 / 0.3);
+  transform: translateY(-1px);
+}
+
+.ia-add-btn:active {
+  border-color: #007a3d;
+  background-color: #007a3d;
+  color: #fff;
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgb(0 171 85 / 0.2);
+}
+
+.ia-adv-section-title {
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+:host-context(.dark) .ia-adv-section-title {
+  color: #e5e7eb;
+}
+
+.ia-adv-section-title__bar {
+  display: inline-block;
+  height: 1rem;
+  width: 0.25rem;
+  border-radius: 9999px;
+  background: #4361ee;
+}

@@ -1,0 +1,81 @@
+<div class="rounded-xl border border-[#ebedf2] bg-white p-3 shadow-sm dark:border-[#191e3a] dark:bg-[#0e1726] sm:p-4 md:p-6">
+  <div class="flex flex-wrap items-center gap-3">
+    <app-back-arrow-button
+      class="shrink-0"
+      [to]="backToList"
+      [iconOnly]="true"
+      [ariaLabel]="backToListAria"
+    />
+    <h2 class="min-w-0 text-xl font-bold text-black dark:text-white-light sm:text-2xl" i18n="@@jobseeker.identityAccess.createGroup">
+      Create group
+    </h2>
+  </div>
+
+  @if (loadError()) {
+    <div class="mt-4 rounded border border-danger/40 bg-danger/10 px-3 py-2 text-danger">{{ loadError() }}</div>
+  }
+
+  @if (loadState() === 'ready') {
+    <form class="mt-4 max-w-3xl space-y-4" [formGroup]="form" (ngSubmit)="save()">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label class="mb-1 block text-sm" for="ia-group-create-en">
+            <span i18n="@@jobseeker.identityAccess.nameEn">Name (EN)</span>
+            @if (form.controls.nameEn.hasValidator(requiredValidator)) {
+              <span class="text-danger"> *</span>
+            }
+          </label>
+          <input id="ia-group-create-en" class="form-input w-full" type="text" formControlName="nameEn" />
+          @if (form.controls.nameEn.touched) {
+            <div class="mt-1 text-sm text-danger">{{ form.controls.nameEn | validationMessage }}</div>
+          }
+        </div>
+        <div>
+          <label class="mb-1 block text-sm" for="ia-group-create-ar">
+            <span i18n="@@jobseeker.identityAccess.nameAr">Name (AR)</span>
+            @if (form.controls.nameAr.hasValidator(requiredValidator)) {
+              <span class="text-danger"> *</span>
+            }
+          </label>
+          <input id="ia-group-create-ar" class="form-input w-full" type="text" formControlName="nameAr" />
+          @if (form.controls.nameAr.touched) {
+            <div class="mt-1 text-sm text-danger">{{ form.controls.nameAr | validationMessage }}</div>
+          }
+        </div>
+        <div>
+          <label class="mb-1 block text-sm" for="ia-group-create-type">
+            <span i18n="@@jobseeker.identityAccess.colType">Type</span>
+            @if (form.controls.userTypeId.hasValidator(requiredValidator)) {
+              <span class="text-danger"> *</span>
+            }
+          </label>
+          <select id="ia-group-create-type" class="form-select w-full" formControlName="userTypeId">
+            <option [ngValue]="0"></option>
+            @for (type of types(); track type.Id) {
+              <option [ngValue]="type.Id">{{ typeLabel(type) }}</option>
+            }
+          </select>
+          @if (form.controls.userTypeId.touched) {
+            <div class="mt-1 text-sm text-danger">{{ form.controls.userTypeId | validationMessage }}</div>
+          }
+        </div>
+        <div>
+          <label class="mb-1 block text-sm" for="ia-group-create-code">
+            <span i18n="@@jobseeker.identityAccess.colCode">Code</span>
+            @if (form.controls.code.hasValidator(requiredValidator)) {
+              <span class="text-danger"> *</span>
+            }
+          </label>
+          <input id="ia-group-create-code" class="form-input w-full" type="text" formControlName="code" />
+          @if (form.controls.code.touched) {
+            <div class="mt-1 text-sm text-danger">{{ form.controls.code | validationMessage }}</div>
+          }
+        </div>
+      </div>
+      <div class="flex flex-wrap justify-start gap-2 rtl:flex-row-reverse">
+        <button type="submit" class="btn btn-primary" i18n="@@jobseeker.common.save">Save</button>
+        <button type="button" class="btn btn-outline-primary" (click)="cancel()" i18n="@@jobseeker.common.cancel">Cancel</button>
+      </div>
+    </form>
+  }
+</div>

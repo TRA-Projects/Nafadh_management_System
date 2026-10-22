@@ -23,6 +23,7 @@ export interface ShellNavItem {
   path: string;
   label: string;
   icon: string;
+  children?: ShellNavItem[];
 }
 
 type BellSource = 'notifications' | 'communication' | 'messages';
@@ -68,6 +69,8 @@ export class AppShell {
   portalTitle = input.required<string>();
   accountLabel = input.required<string>();
   navItems = input.required<ShellNavItem[]>();
+
+  readonly openSubMenus = signal<Record<string, boolean>>({ 'الهوية والصلاحيات': true });
 
   dark = signal(false);
   lang = signal<'ar' | 'en'>('ar');
@@ -172,6 +175,16 @@ export class AppShell {
     if (this.notifOpen()) {
       this.notificationSummaryService.refresh();
     }
+  }
+  toggleSubMenu(label: string): void {
+    this.openSubMenus.update((state) => ({
+      ...state,
+      [label]: !state[label],
+    }));
+  }
+
+  isSubMenuOpen(label: string): boolean {
+    return !!this.openSubMenus()[label];
   }
 
   /** Navigate using only routes available in the current portal. */

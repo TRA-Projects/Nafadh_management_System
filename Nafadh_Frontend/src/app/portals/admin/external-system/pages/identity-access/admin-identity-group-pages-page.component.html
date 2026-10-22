@@ -1,0 +1,140 @@
+<div class="rounded-xl border border-[#ebedf2] bg-white p-3 shadow-sm dark:border-[#191e3a] dark:bg-[#0e1726] sm:p-4 md:p-6">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="flex min-w-0 flex-wrap items-center gap-3">
+      <app-back-arrow-button
+        class="shrink-0"
+        [to]="backToList()"
+        [iconOnly]="true"
+        [ariaLabel]="backToListAria()"
+      />
+      <div class="min-w-0">
+        <h2 class="min-w-0 text-xl font-bold text-black dark:text-white-light sm:text-2xl">
+          <span i18n="@@jobseeker.identityAccess.editPages">Pages</span>
+          @if (pageTitle()) {
+            <span> — {{ pageTitle() }}</span>
+          }
+        </h2>
+        @if (source() === 'groups' && roleName()) {
+          <p class="mt-1 text-sm text-white-dark">{{ roleName() }}</p>
+        }
+      </div>
+    </div>
+    @if (loadState() === 'ready') {
+      <div class="flex flex-wrap justify-start gap-2 rtl:flex-row-reverse">
+        <button type="button" class="btn btn-primary" (click)="save()" i18n="@@jobseeker.common.save">Save</button>
+        <button type="button" class="btn btn-outline-primary" (click)="cancel()" i18n="@@jobseeker.common.cancel">Cancel</button>
+      </div>
+    }
+  </div>
+
+  @if (loadError()) {
+    <div class="mt-4 rounded border border-danger/40 bg-danger/10 px-3 py-2 text-danger">{{ loadError() }}</div>
+  }
+
+  @if (loadState() === 'ready') {
+    <div class="mt-4 space-y-6">
+      @for (system of pageGroups(); track system.systemCode) {
+        <section>
+          <h3 class="mb-3 text-base font-semibold text-black dark:text-white-light">{{ system.systemCode }}</h3>
+          <div class="table-responsive rounded-xl border border-[#ebedf2] dark:border-[#191e3a]">
+            <table class="ia-pages-table">
+              <thead>
+                <tr>
+                  <th class="ia-pages-table__check">
+                    <input
+                      type="checkbox"
+                      class="form-checkbox"
+                      [checked]="systemChecked(system.systemCode)"
+                      (change)="toggleSystem(system.systemCode, $any($event.target).checked)"
+                      [attr.aria-label]="system.systemCode"
+                    />
+                  </th>
+                  <th i18n="@@jobseeker.identityAccess.colName">Name</th>
+                  <th i18n="@@jobseeker.identityAccess.actionView">View</th>
+                  <th i18n="@@jobseeker.identityAccess.actionCreate">Create</th>
+                  <th i18n="@@jobseeker.identityAccess.actionUpdate">Update</th>
+                  <th i18n="@@jobseeker.identityAccess.actionApprove">Approve</th>
+                  <th i18n="@@jobseeker.identityAccess.actionAward">Award</th>
+                  <th i18n="@@jobseeker.identityAccess.dataScope">Scope</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (page of system.pages; track page.Id) {
+                  <tr [class.ia-pages-table__row--off]="!isPageSelected(page.Id)">
+                    <td class="ia-pages-table__check">
+                      <input
+                        type="checkbox"
+                        class="form-checkbox"
+                        [checked]="isPageSelected(page.Id)"
+                        (change)="togglePage(page.Id, $any($event.target).checked)"
+                        [attr.aria-label]="pageName(page)"
+                      />
+                    </td>
+                    <td class="ia-pages-table__name">{{ pageName(page) }}</td>
+                    <td>
+                      <input
+                        type="checkbox"
+                        class="form-checkbox"
+                        [checked]="hasAction(page.Id, actionFlags.View)"
+                        [disabled]="!claimsEnabled(page.Id)"
+                        (change)="toggleAction(page.Id, actionFlags.View, $any($event.target).checked)"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="checkbox"
+                        class="form-checkbox"
+                        [checked]="hasAction(page.Id, actionFlags.Create)"
+                        [disabled]="!claimsEnabled(page.Id)"
+                        (change)="toggleAction(page.Id, actionFlags.Create, $any($event.target).checked)"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="checkbox"
+                        class="form-checkbox"
+                        [checked]="hasAction(page.Id, actionFlags.Update)"
+                        [disabled]="!claimsEnabled(page.Id)"
+                        (change)="toggleAction(page.Id, actionFlags.Update, $any($event.target).checked)"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="checkbox"
+                        class="form-checkbox"
+                        [checked]="hasAction(page.Id, actionFlags.Approve)"
+                        [disabled]="!claimsEnabled(page.Id)"
+                        (change)="toggleAction(page.Id, actionFlags.Approve, $any($event.target).checked)"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="checkbox"
+                        class="form-checkbox"
+                        [checked]="hasAction(page.Id, actionFlags.Award)"
+                        [disabled]="!claimsEnabled(page.Id)"
+                        (change)="toggleAction(page.Id, actionFlags.Award, $any($event.target).checked)"
+                      />
+                    </td>
+                    <td>
+                      <select
+                        class="form-select ia-pages-table__scope"
+                        [disabled]="!claimsEnabled(page.Id)"
+                        [value]="pageGrants()[page.Id]?.DataScope || 'mine'"
+                        (change)="setScope(page.Id, $any($event.target).value)"
+                      >
+                        @for (scope of dataScopes; track scope) {
+                          <option [value]="scope">{{ scope }}</option>
+                        }
+                      </select>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+    </div>
+  }
+</div>
