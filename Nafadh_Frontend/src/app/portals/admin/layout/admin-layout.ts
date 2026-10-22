@@ -19,11 +19,17 @@ export class AdminLayout {
     { path: 'reports', label: 'التقارير والتحليلات', icon: 'chart' },
     { path: 'notifications', label: 'الإشعارات', icon: 'bell' },
   
+
 {
   path: 'external-system/system-configuration',
-  label: 'إعدادات النظام',
+ label: 'إدارة النظام',
   icon: 'settings',
   children: [
+    {
+      path: 'external-system/system-configuration',
+      label: 'إعدادات النظام',
+      icon: 'settings',
+    },
     {
       path: 'external-system/constants',
       label: 'إدارة الثوابت',
@@ -31,6 +37,7 @@ export class AdminLayout {
     },
   ],
 },
+
 
     { path: 'audit', label: 'سجل التدقيق', icon: 'history' },
   ];

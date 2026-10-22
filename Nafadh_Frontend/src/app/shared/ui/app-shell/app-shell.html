@@ -203,48 +203,50 @@
   <aside class="sidebar">
     <nav>
     
+
 @for (item of navItems(); track item.path) {
-  <a
-    [routerLink]="item.path"
-    routerLinkActive="active"
-    [routerLinkActiveOptions]="{ exact: true }"
-    class="nav-item"
-  >
-    <nfd-icon [name]="item.icon" />
-    <span>{{ item.label }}</span>
-  </a>
+  @if (item.children?.length) {
+    <button
+      type="button"
+      class="nav-item nav-group-toggle"
+      (click)="toggleSubmenu(item.path)"
+      [attr.aria-expanded]="expandedMenus().includes(item.path)"
+    >
+      <nfd-icon [name]="item.icon" />
+      <span>{{ item.label }}</span>
+      <span
+        class="nav-submenu-arrow"
+        [class.is-open]="expandedMenus().includes(item.path)"
+        aria-hidden="true"
+      >⌄</span>
+    </button>
 
-
-@if (item.children?.length) {
-  <button
-    type="button"
-    class="nav-submenu-toggle"
-    (click)="toggleSubmenu(item.path)"
-    [attr.aria-expanded]="expandedMenus().includes(item.path)"
-    [attr.aria-label]="'فتح أو إغلاق قائمة ' + item.label"
-  >
-    <span>الصفحات الفرعية</span>
-    <span
-      class="nav-submenu-arrow"
-      [class.is-open]="expandedMenus().includes(item.path)"
-    >⌄</span>
-  </button>
-
-  @if (expandedMenus().includes(item.path)) {
-    <div class="nav-submenu">
-      @for (child of item.children; track child.path) {
-        <a
-          [routerLink]="child.path"
-          routerLinkActive="active"
-          class="nav-item nav-subitem"
-        >
-          <nfd-icon [name]="child.icon" />
-          <span>{{ child.label }}</span>
-        </a>
-      }
-    </div>
+    @if (expandedMenus().includes(item.path)) {
+      <div class="nav-submenu">
+        @for (child of item.children; track child.path) {
+          <a
+            [routerLink]="child.path"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="nav-item nav-subitem"
+          >
+            <nfd-icon [name]="child.icon" />
+            <span>{{ child.label }}</span>
+          </a>
+        }
+      </div>
+    }
+  } @else {
+    <a
+      [routerLink]="item.path"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="nav-item"
+    >
+      <nfd-icon [name]="item.icon" />
+      <span>{{ item.label }}</span>
+    </a>
   }
-}
 }
 
     </nav>
