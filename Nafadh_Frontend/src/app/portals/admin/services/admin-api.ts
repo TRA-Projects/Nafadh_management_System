@@ -3,10 +3,30 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
-  AnnouncementDto, AuditLogDto, BatchDto, BatchPerformanceReportDto, CertificateDto, CompanyDto,
-  ConversationDetailDto, ConversationListItemDto, ConversationMessageDto, EvaluationBucketRollupDto,
-  EvaluationDto, NotificationDto, ProgramDto, TraineeListItemDto, TraineeProfileDto,
-  TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto, ModuleDto,AdminBatchGroupDto,AdminSupervisorReportDto
+ AnnouncementDto,
+  AuditLogDto,
+  BatchDto,
+  BatchPerformanceReportDto,
+  CertificateDto,
+  CompanyDto,
+  ConversationDetailDto,
+  ConversationListItemDto,
+  ConversationMessageDto,
+  EvaluationBucketRollupDto,
+  EvaluationDto,
+  NotificationDto,
+  ProgramDto,
+  TraineeListItemDto,
+  TraineeProfileDto,
+  TraineeDashboardSummaryDto,
+  UserResponseDto,
+  WarningDto,
+  RoleDto,
+  DashboardChartsDto,
+  ModuleDto,
+  AdminBatchGroupDto,
+  AdminBatchGroupMessageDto,
+  AdminSupervisorReportDto
 } from '../../../core/models/dtos';
 
 export interface TraineeCertificateStatusDto {
@@ -90,16 +110,10 @@ export class AdminApi {
     return this.http.get<{ items: TraineeListItemDto[]; totalCount: number }>(`${this.base}/Trainee`, { params: httpParams });
   }
 
-  // 🟢 تم تصحيح المسار ليتطابق مع Swagger
+  // 🟢 دالة جلب سجل نتائج الاختبارات الخاصة بالمتدرب
   getTraineeExams(traineeId: number): Observable<any[]> {
     const cleanId = this.sanitizeId(traineeId);
-    return this.http.get<any>(`${this.base}/quiz-results/trainee/${cleanId}`).pipe(
-      map(res => {
-        // حماية إضافية في حال كان الباك إند يرجع البيانات داخل items أو data
-        if (Array.isArray(res)) return res;
-        return res?.items || res?.data || res?.results || [];
-      })
-    );
+    return this.http.get<any[]>(`${this.base}/QuizResult/trainee/${cleanId}`);
   }
 
   getTrainee(id: number): Observable<TraineeProfileDto> {
@@ -181,6 +195,12 @@ export class AdminApi {
 
   getTrainers(params?: any): Observable<any> {
     return this.http.get(`${this.base}/Trainer`, { params });
+  }
+
+  // دفعات مدرب معيّن (تُستخدم لمعرفة المدرب الراصد لكل دفعة)
+  getTrainerBatches(trainerId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(trainerId);
+    return this.http.get<any[]>(`${this.base}/Trainer/${cleanId}/batches`);
   }
 
   // ==========================================================
@@ -340,10 +360,19 @@ export class AdminApi {
     return this.http.get<ConversationDetailDto>(`${this.base}/Conversation/${this.sanitizeId(id)}`);
   }
 
-  // 🌟 NEW: Get all training batch groups for Admin
+  // Get all training batch groups for Admin
   getAdminBatchGroups(): Observable<AdminBatchGroupDto[]> {
     return this.http.get<AdminBatchGroupDto[]>(
       `${this.base}/admin/batch-groups`
+    );
+  }
+
+  // Get all training batch groups messages for Admin
+  getAdminBatchGroupMessages(
+    conversationId: number
+  ): Observable<AdminBatchGroupMessageDto[]> {
+    return this.http.get<AdminBatchGroupMessageDto[]>(
+      `${this.base}/admin/batch-groups/${conversationId}/messages`
     );
   }
 
@@ -355,7 +384,6 @@ export class AdminApi {
   // 12. Reports & Audit
   // ==========================================================
 
-  
   // Get supervisor reports for Admin
   getAdminSupervisorReports(
     year?: number,
@@ -378,7 +406,7 @@ export class AdminApi {
     );
   }
 
-  
+
   getBatchPerformanceReport(batchId: number, pageNumber: number = 1, pageSize: number = 15): Observable<BatchPerformanceReportDto> {
     const params = new HttpParams()
       .set('pageNumber', String(pageNumber))

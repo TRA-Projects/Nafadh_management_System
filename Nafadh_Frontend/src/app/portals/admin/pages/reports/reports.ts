@@ -95,7 +95,9 @@ export class AdminReports implements OnInit {
   filteredMasterTranscriptList: any[] = [];
 
   
-  // Supervisor Reports
+  // =========================================================
+  // Supervisor Reports - تقارير المشرفين
+  // =========================================================
   allSupervisorsData: AdminSupervisorReportDto[] = [];
   filteredSupervisorsList: AdminSupervisorReportDto[] = [];
 
@@ -142,7 +144,7 @@ export class AdminReports implements OnInit {
     ) / 100;
   }
 
-  get supervisorTrainerEvaluations(): number {
+   get supervisorTrainerEvaluations(): number {
     return this.allSupervisorsData.reduce(
       (sum, s) => sum + (s.trainerEvaluationsCount ?? 0), 0
     );
@@ -183,6 +185,7 @@ export class AdminReports implements OnInit {
     this.loadCompaniesData();
     this.loadTrainersData();
     this.loadTraineesData();
+
     if (this.currentSubSection === 'supervisor') {
     this.loadSupervisorsData();
     }
@@ -957,10 +960,9 @@ export class AdminReports implements OnInit {
   if (sub === 'supervisor' && !this.supervisorDataLoaded) {
     this.loadSupervisorsData();
   }
-}
+ }
 
-
-  
+ 
   // Load Supervisor Reports
   loadSupervisorsData(): void {
     this.supervisorLoading = true;
@@ -1020,6 +1022,13 @@ export class AdminReports implements OnInit {
     this.supervisorStatusFilter = 'ALL';
     this.applySupervisorFilters();
   }
+
+
+
+ 
+  
+
+ 
 
 
   levelClass(level?: string): string {

@@ -102,6 +102,12 @@ namespace Nafadh_Backend.Services
             return await _repository.GetAdminBatchGroupsAsync();
         }
 
+        public async Task<List<AdminBatchGroupMessageDTO>?>
+    GetAdminBatchGroupMessagesAsync(int conversationId)
+        {
+            return await _repository.GetAdminBatchGroupMessagesAsync(conversationId);
+        }
+
         public async Task<bool> IsBatchGroupMemberAsync(
     int conversationId,
     int userId

@@ -231,20 +231,101 @@
             </div>
           </div>
 
-          <!-- إعدادات التخصيص للشركات -->
+          <!-- إعدادات التخصيص للشركات (التصميم الجديد) -->
           <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'companies'">
-            <div class="radio-group">
+            <div class="radio-group" style="margin-bottom: 16px;">
               <label><input type="radio" [(ngModel)]="newAnnounceData.companyScope" value="all_companies"> كافة الشركات</label>
               <label><input type="radio" [(ngModel)]="newAnnounceData.companyScope" value="specific_companies"> تحديد شركات معينة</label>
             </div>
-            <div class="search-select" *ngIf="newAnnounceData.companyScope === 'specific_companies'">
-              <input type="text" [(ngModel)]="companySearch" placeholder="ابحث باسم الشركة أو الكود...">
-              <div class="dropdown-list">
-                <div class="dropdown-item" *ngFor="let c of getFilteredCompanies()" (click)="toggleCompany(c.id)">
-                  <input type="checkbox" [checked]="isCompanySelected(c.id)">
-                  <span>{{ c.name }}</span>
+
+            <div class="smart-selector-wrapper" *ngIf="newAnnounceData.companyScope === 'specific_companies'">
+              
+              <!-- شريط البحث الذكي -->
+              <div class="smart-search-bar">
+                <button class="smart-filter-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                  التصفية الذكية
+                </button>
+                <div class="search-input-container">
+                  <input type="text" [(ngModel)]="companySearch" placeholder="ابحث باسم الشركة أو السجل التجاري...">
+                  <svg class="search-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </div>
               </div>
+
+              <!-- فلاتر الشركات (مجال العمل والسعة) -->
+              <div class="smart-filters-grid">
+                <div class="filter-header">
+                  <span>تصفية حسب مجال العمل أو السعة:</span>
+                  <button class="reset-filters-btn" (click)="resetCompanyFilters()">إعادة ضبط المرشحات</button>
+                </div>
+                <div class="filters-row" style="grid-template-columns: 1fr 1fr;">
+                  <div class="filter-select">
+                    <label>مجال العمل:</label>
+                    <div class="custom-select-wrapper">
+                      <select class="custom-select" [(ngModel)]="companyFilterWorkField">
+                        <option value="">كافة المجالات ({{ dbCompanies().length }})</option>
+                        <option *ngFor="let wf of getUniqueCompanyWorkFields()" [value]="wf">{{ wf }}</option>
+                      </select>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                  </div>
+                  
+                  <div class="filter-select">
+                    <label>السعة الاستيعابية:</label>
+                    <div class="custom-select-wrapper">
+                      <select class="custom-select" [(ngModel)]="companyFilterCapacity">
+                        <option value="">كافة السعات</option>
+                        <option value="high">سعة عالية (100 متدرب فأكثر)</option>
+                        <option value="medium">سعة متوسطة (50 - 99 متدرب)</option>
+                        <option value="low">سعة منخفضة (أقل من 50 متدرب)</option>
+                      </select>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- شاشة التحميل -->
+              <div *ngIf="isLoadingData()" style="text-align: center; padding: 20px;">
+                <div class="spinner" style="margin: 0 auto; width: 24px; height: 24px;"></div>
+                <p style="color: #64748b; font-size: 12px; margin-top: 8px;">جاري جلب الشركات...</p>
+              </div>
+
+              <!-- شريط الحالة والقائمة -->
+              <ng-container *ngIf="!isLoadingData()">
+                <div class="selection-status-bar">
+                  <div class="status-right">
+                    <span class="dot-indicator"></span>
+                    <span>تم تحديد <strong>{{ newAnnounceData.selectedCompanyIds.length }}</strong> من أصل <strong>{{ getFilteredCompanies().length }}</strong></span>
+                    <div class="progress-bar-bg">
+                      <div class="progress-bar-fill" [style.width.%]="(newAnnounceData.selectedCompanyIds.length / (getFilteredCompanies().length || 1)) * 100"></div>
+                    </div>
+                  </div>
+                  <label class="select-all-label">
+                    <input type="checkbox" (change)="selectAllCompanies($event)" [checked]="newAnnounceData.selectedCompanyIds.length > 0 && newAnnounceData.selectedCompanyIds.length === getFilteredCompanies().length">
+                    <span>تحديد الكل ({{ getFilteredCompanies().length }})</span>
+                  </label>
+                </div>
+
+                <div class="smart-dropdown-list">
+                  <div class="smart-dropdown-item" *ngFor="let c of getFilteredCompanies()" (click)="toggleCompany(c.id)">
+                    <div class="checkbox-wrapper">
+                      <input type="checkbox" [checked]="isCompanySelected(c.id)" (click)="$event.stopPropagation(); toggleCompany(c.id)">
+                    </div>
+                    <div class="avatar-circle" style="background: #e0e7ff; color: #3730a3;">🏢</div>
+                    <div class="item-info">
+                      <div class="item-title-row">
+                        <span class="d-title">{{ c.name }}</span>
+                        <span class="d-code" style="background: #f1f5f9; color: #475569; border-color: #cbd5e1;">{{ c.commercialRegister }}</span>
+                      </div>
+                      <div class="d-sub">مجال العمل: {{ c.workField }} • السعة: {{ c.capacity }} متدرب</div>
+                    </div>
+                  </div>
+                  <div *ngIf="getFilteredCompanies().length === 0" class="no-results">لا توجد نتائج مطابقة لبحثك.</div>
+                </div>
+              </ng-container>
+
+              <!-- الوسوم المحددة -->
               <div class="tags-container" *ngIf="newAnnounceData.selectedCompanyIds.length > 0">
                 <span class="tag" *ngFor="let c of getSelectedCompanyObjects()">
                   {{ c.name }} <button (click)="toggleCompany(c.id)">×</button>
@@ -255,21 +336,102 @@
 
           <!-- إعدادات التخصيص للمتدربين -->
           <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'trainees'">
-            <div class="radio-group">
+            <div class="radio-group" style="margin-bottom: 16px;">
               <label><input type="radio" [(ngModel)]="newAnnounceData.traineeScope" value="all_trainees"> كافة المتدربين</label>
-              <label><input type="radio" [(ngModel)]="newAnnounceData.traineeScope" value="specific_trainees"> تحديد متدربين معينين</label>
+              <label><input type="radio" [(ngModel)]="newAnnounceData.traineeScope" value="specific_trainees"> تحديد متدربين معينين بالاسم</label>
             </div>
-            <div class="search-select" *ngIf="newAnnounceData.traineeScope === 'specific_trainees'">
-              <input type="text" [(ngModel)]="traineeSearch" placeholder="ابحث بالاسم أو الرقم التعريفي (TRN-...)...">
-              <div class="dropdown-list">
-                <div class="dropdown-item" *ngFor="let t of getFilteredTrainees()" (click)="toggleTrainee(t.id)">
-                  <input type="checkbox" [checked]="isTraineeSelected(t.id)">
-                  <div>
-                    <div class="d-title">{{ t.name }} - {{ t.code }}</div>
-                    <div class="d-sub">{{ t.track }} | {{ t.companyName }}</div>
+
+            <div class="smart-selector-wrapper" *ngIf="newAnnounceData.traineeScope === 'specific_trainees'">
+              <div class="smart-search-bar">
+                <button class="smart-filter-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                  التصفية الذكية
+                </button>
+                <div class="search-input-container">
+                  <input type="text" [(ngModel)]="traineeSearch" placeholder="ابحث بالاسم الكامل، الرقم التعريفي (TRN-2026-104)، المسار، أو الشركة...">
+                  <svg class="search-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+              </div>
+
+              <div class="smart-filters-grid">
+                <div class="filter-header">
+                  <span>تصفية المجموعات والمسارات التدريبية:</span>
+                  <button class="reset-filters-btn" (click)="resetTraineeFilters()">إعادة ضبط المرشحات</button>
+                </div>
+                <div class="filters-row">
+                  <div class="filter-select">
+                    <label>المسار / التخصص:</label>
+                    <div class="custom-select-wrapper">
+                      <select class="custom-select" [(ngModel)]="traineeFilterTrack">
+                        <option value="">كافة التخصصات ({{ dbTrainees().length }})</option>
+                        <option *ngFor="let tr of getUniqueTracks()" [value]="tr">{{ tr }}</option>
+                      </select>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                  </div>
+                  <div class="filter-select">
+                    <label>الدفعة (Batch):</label>
+                    <div class="custom-select-wrapper">
+                      <select class="custom-select" [(ngModel)]="traineeFilterBatch">
+                        <option value="">كافة الدفعات</option>
+                        <option *ngFor="let b of getUniqueBatches()" [value]="b">{{ b }}</option>
+                      </select>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                  </div>
+                  <div class="filter-select">
+                    <label>الشركة المستضيفة:</label>
+                    <div class="custom-select-wrapper">
+                      <select class="custom-select" [(ngModel)]="traineeFilterCompany">
+                        <option value="">كافة المنشآت الشريكة</option>
+                        <option *ngFor="let c of getUniqueTraineeCompanies()" [value]="c">{{ c }}</option>
+                      </select>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <div *ngIf="isLoadingData()" style="text-align: center; padding: 20px;">
+                <div class="spinner" style="margin: 0 auto; width: 24px; height: 24px;"></div>
+                <p style="color: #64748b; font-size: 12px; margin-top: 8px;">جاري جلب المتدربين...</p>
+              </div>
+
+              <ng-container *ngIf="!isLoadingData()">
+                <div class="selection-status-bar">
+                  <div class="status-right">
+                    <span class="dot-indicator"></span>
+                    <span>تم تحديد <strong>{{ newAnnounceData.selectedTraineeIds.length }}</strong> من أصل <strong>{{ getFilteredTrainees().length }}</strong></span>
+                    <div class="progress-bar-bg">
+                      <div class="progress-bar-fill" [style.width.%]="(newAnnounceData.selectedTraineeIds.length / (getFilteredTrainees().length || 1)) * 100"></div>
+                    </div>
+                    <span class="percentage">{{ (newAnnounceData.selectedTraineeIds.length / (getFilteredTrainees().length || 1)) * 100 | number:'1.0-0' }}%</span>
+                  </div>
+                  <label class="select-all-label">
+                    <input type="checkbox" (change)="selectAllTrainees($event)" [checked]="newAnnounceData.selectedTraineeIds.length > 0 && newAnnounceData.selectedTraineeIds.length === getFilteredTrainees().length">
+                    <span>تحديد الكل في هذه النتائج ({{ getFilteredTrainees().length }})</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </label>
+                </div>
+
+                <div class="smart-dropdown-list">
+                  <div class="smart-dropdown-item" *ngFor="let t of getFilteredTrainees()" (click)="toggleTrainee(t.id)">
+                    <div class="checkbox-wrapper">
+                      <input type="checkbox" [checked]="isTraineeSelected(t.id)" (click)="$event.stopPropagation(); toggleTrainee(t.id)">
+                    </div>
+                    <div class="avatar-circle">{{ t.name.charAt(0) }}</div>
+                    <div class="item-info">
+                      <div class="item-title-row">
+                        <span class="d-title">{{ t.name }}</span>
+                        <span class="d-code">{{ t.code }}</span>
+                      </div>
+                      <div class="d-sub">{{ t.track }} • {{ t.companyName }} • {{ t.batch }}</div>
+                    </div>
+                  </div>
+                  <div *ngIf="getFilteredTrainees().length === 0" class="no-results">لا توجد نتائج مطابقة لبحثك أو لا يوجد متدربين في النظام.</div>
+                </div>
+              </ng-container>
+
               <div class="tags-container" *ngIf="newAnnounceData.selectedTraineeIds.length > 0">
                 <span class="tag" *ngFor="let t of getSelectedTraineeObjects()">
                   {{ t.name }} <button (click)="toggleTrainee(t.id)">×</button>
@@ -278,22 +440,100 @@
             </div>
           </div>
 
-          <!-- إعدادات التخصيص للمدربين -->
+          <!-- إعدادات التخصيص للمدربين (التصميم الجديد) -->
           <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'trainers'">
-            <div class="radio-group">
+            <div class="radio-group" style="margin-bottom: 16px;">
               <label><input type="radio" [(ngModel)]="newAnnounceData.trainerScope" value="all_trainers"> كافة المدربين</label>
-              <label><input type="radio" [(ngModel)]="newAnnounceData.trainerScope" value="specific_trainers"> تحديد مدربين معينين</label>
+              <label><input type="radio" [(ngModel)]="newAnnounceData.trainerScope" value="specific_trainers"> تحديد مدربين معينين بالاسم</label>
             </div>
-            <div class="search-select" *ngIf="newAnnounceData.trainerScope === 'specific_trainers'">
-              <div class="dropdown-list">
-                <div class="dropdown-item" *ngFor="let t of availableTrainers" (click)="toggleTrainer(t.id)">
-                  <input type="checkbox" [checked]="isTrainerSelected(t.id)">
-                  <div>
-                    <div class="d-title">{{ t.name }}</div>
-                    <div class="d-sub">{{ t.specialty }}</div>
+
+            <div class="smart-selector-wrapper" *ngIf="newAnnounceData.trainerScope === 'specific_trainers'">
+              
+              <!-- شريط البحث الذكي -->
+              <div class="smart-search-bar">
+                <button class="smart-filter-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                  التصفية الذكية
+                </button>
+                <div class="search-input-container">
+                  <input type="text" [(ngModel)]="trainerSearch" placeholder="ابحث باسم المدرب أو التخصص...">
+                  <svg class="search-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+              </div>
+
+              <!-- فلاتر المدربين (التخصص والخبرة) -->
+              <div class="smart-filters-grid">
+                <div class="filter-header">
+                  <span>تصفية حسب التخصص أو الخبرة:</span>
+                  <button class="reset-filters-btn" (click)="resetTrainerFilters()">إعادة ضبط المرشحات</button>
+                </div>
+                <div class="filters-row" style="grid-template-columns: 1fr 1fr;">
+                  <div class="filter-select">
+                    <label>التخصص:</label>
+                    <div class="custom-select-wrapper">
+                      <select class="custom-select" [(ngModel)]="trainerFilterSpecialty">
+                        <option value="">كافة التخصصات ({{ dbTrainers().length }})</option>
+                        <option *ngFor="let sp of getUniqueTrainerSpecialties()" [value]="sp">{{ sp }}</option>
+                      </select>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                  </div>
+                  
+                  <div class="filter-select">
+                    <label>سنوات الخبرة:</label>
+                    <div class="custom-select-wrapper">
+                      <select class="custom-select" [(ngModel)]="trainerFilterExperience">
+                        <option value="">كافة المستويات</option>
+                        <option value="high">خبرة عالية (5 سنوات فأكثر)</option>
+                        <option value="medium">خبرة متوسطة (2 - 4 سنوات)</option>
+                        <option value="low">خبرة مبتدئة (أقل من سنتين)</option>
+                      </select>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <!-- شاشة التحميل -->
+              <div *ngIf="isLoadingData()" style="text-align: center; padding: 20px;">
+                <div class="spinner" style="margin: 0 auto; width: 24px; height: 24px;"></div>
+                <p style="color: #64748b; font-size: 12px; margin-top: 8px;">جاري جلب المدربين...</p>
+              </div>
+
+              <!-- شريط الحالة والقائمة -->
+              <ng-container *ngIf="!isLoadingData()">
+                <div class="selection-status-bar">
+                  <div class="status-right">
+                    <span class="dot-indicator"></span>
+                    <span>تم تحديد <strong>{{ newAnnounceData.selectedTrainerIds.length }}</strong> من أصل <strong>{{ getFilteredTrainers().length }}</strong></span>
+                    <div class="progress-bar-bg">
+                      <div class="progress-bar-fill" [style.width.%]="(newAnnounceData.selectedTrainerIds.length / (getFilteredTrainers().length || 1)) * 100"></div>
+                    </div>
+                  </div>
+                  <label class="select-all-label">
+                    <input type="checkbox" (change)="selectAllTrainers($event)" [checked]="newAnnounceData.selectedTrainerIds.length > 0 && newAnnounceData.selectedTrainerIds.length === getFilteredTrainers().length">
+                    <span>تحديد الكل ({{ getFilteredTrainers().length }})</span>
+                  </label>
+                </div>
+
+                <div class="smart-dropdown-list">
+                  <div class="smart-dropdown-item" *ngFor="let t of getFilteredTrainers()" (click)="toggleTrainer(t.id)">
+                    <div class="checkbox-wrapper">
+                      <input type="checkbox" [checked]="isTrainerSelected(t.id)" (click)="$event.stopPropagation(); toggleTrainer(t.id)">
+                    </div>
+                    <div class="avatar-circle" style="background: #fef3c7; color: #b45309;">🎓</div>
+                    <div class="item-info">
+                      <div class="item-title-row">
+                        <span class="d-title">{{ t.name }}</span>
+                      </div>
+                      <div class="d-sub">التخصص: {{ t.specialty }} • الخبرة: {{ t.experienceYears }} سنوات</div>
+                    </div>
+                  </div>
+                  <div *ngIf="getFilteredTrainers().length === 0" class="no-results">لا توجد نتائج مطابقة لبحثك.</div>
+                </div>
+              </ng-container>
+
+              <!-- الوسوم المحددة -->
               <div class="tags-container" *ngIf="newAnnounceData.selectedTrainerIds.length > 0">
                 <span class="tag" *ngFor="let t of getSelectedTrainerObjects()">
                   {{ t.name }} <button (click)="toggleTrainer(t.id)">×</button>

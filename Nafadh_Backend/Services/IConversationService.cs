@@ -17,6 +17,9 @@ namespace Nafadh_Backend.Services
         );
 
         Task<List<AdminBatchGroupListDTO>> GetAdminBatchGroupsAsync();
+        Task<List<AdminBatchGroupMessageDTO>?> GetAdminBatchGroupMessagesAsync(
+    int conversationId
+);
 
         Task<ConversationDetailDTO> CreateAsync(
             CreateConversationDTO dto
