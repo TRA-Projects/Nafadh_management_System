@@ -919,7 +919,7 @@
 
                 <!-- شريط المشرف ورقم التواصل -->
                 <div class="portal-supervisor-bar">
-                  <span class="supervisor-text">إشراف الدفعة: <strong>إدارة برنامج نفاذ</strong></span>
+                  <span class="supervisor-text">المدرب الراصد: <strong>{{ trainerFor(batch) }}</strong></span>
                   <a href="tel:+96824000000" class="supervisor-phone">
                     <i class="fa-solid fa-phone"></i> +968 24000000
                   </a>
@@ -1002,10 +1002,12 @@
                 
               </div>
             </div>
+
+            <!-- 👈 المدرب الراصد: يظهر تلقائياً حسب الدفعة المحددة -->
             <div class="notice-left">
               <span class="trainer-tag">
-                <i class="fa-solid fa-chalkboard-user"></i> المدرب الراصد: 
-                <strong>{{ selectedAttendanceBatch()?.supervisor || 'إدارة برنامج نفاذ' }}</strong>
+                <i class="fa-solid fa-chalkboard-user"></i> المدرب الراصد:
+                <strong>{{ isLoadingTrainers() ? 'جاري التحميل...' : currentBatchTrainer() }}</strong>
               </span>
             </div>
           </div>
@@ -1089,7 +1091,6 @@
                   <th>المسار التدريبي</th>
                   <th>الشركة المستضيفة</th>
                   <th style="width: 140px; text-align: center;">حالة الحضور (رصد المدرب)</th>
-                 
                   <th>ملاحظات / عذر المدرب</th>
                 </tr>
               </thead>
@@ -1158,8 +1159,6 @@
                       }
                     </td>
 
-                    
-
                     <!-- ملاحظات المدرب المسجلة كنص رسمي -->
                     <td>
                       <span class="att-notes-display" [class.empty]="!record.notes">
@@ -1170,7 +1169,7 @@
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="8" class="att-empty-row">
+                    <td colspan="6" class="att-empty-row">
                       <i class="fa-solid fa-user-slash"></i>
                       <p>لا توجد بيانات متدربين مطابقة للفلتر المحدد في هذه الدفعة</p>
                     </td>

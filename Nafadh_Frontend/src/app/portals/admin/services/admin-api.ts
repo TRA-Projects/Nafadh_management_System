@@ -178,6 +178,12 @@ export class AdminApi {
     return this.http.get(`${this.base}/Trainer`, { params });
   }
 
+  // دفعات مدرب معيّن (تُستخدم لمعرفة المدرب الراصد لكل دفعة)
+  getTrainerBatches(trainerId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(trainerId);
+    return this.http.get<any[]>(`${this.base}/Trainer/${cleanId}/batches`);
+  }
+
   // ==========================================================
   // 7. خطط تدريب الشركات واعتمادها (Course Plans Approval)
   // ==========================================================

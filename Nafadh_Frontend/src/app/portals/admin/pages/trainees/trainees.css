@@ -1489,21 +1489,6 @@
   border: 1px solid #cbd5e1;
 }
 
-/* وقت الحضور المعروض */
-.att-time-display {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.att-time-display .time-icon {
-  color: #0284c7;
-  font-size: 0.95rem;
-}
-
 /* الملاحظات المعروضة */
 .att-notes-display {
   font-size: 0.85rem;
@@ -1744,3 +1729,83 @@
   font-size: 0.85rem;
   color: #64748b;
 }
+
+/* ==========================================================================
+   🌟 10. اختيار المدرب الراصد (القائمة + نافذة الاختيار)
+   ========================================================================== */
+.notice-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.trainer-select {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #0066c4;
+  cursor: pointer;
+  outline: none;
+  max-width: 220px;
+}
+
+.btn-add-trainer {
+  background: #0a1172;
+  color: #ffffff;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(10, 17, 114, 0.2);
+}
+
+.btn-add-trainer:hover {
+  background: #1520a6;
+  transform: translateY(-1px);
+}
+
+.trainer-list { margin-top: 4px; }
+
+.trainer-list-title {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.trainer-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.trainer-use-btn {
+  background: #eff6ff;
+  color: #0066c4;
+  border: 1px solid #bfdbfe;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.trainer-use-btn:hover { background: #dbeafe; }

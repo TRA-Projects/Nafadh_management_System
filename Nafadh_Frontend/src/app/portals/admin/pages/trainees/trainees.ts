@@ -194,6 +194,12 @@ export class AdminTrainees implements OnInit {
   attendanceRecords = signal<TraineeAttendanceRecord[]>([]);
   isSavingAttendance = signal<boolean>(false);
 
+  // ===== المدرب الراصد لكل دفعة (تلقائي من الباك اند) =====
+  isLoadingTrainers = signal<boolean>(false);
+  trainerByBatch = signal<Record<string, string>>({});
+  readonly NO_TRAINER = 'لم يُعيَّن مدرب بعد';
+  currentBatchTrainer = computed(() => this.trainerFor(this.selectedAttendanceBatch()));
+
   // 👈 نظام الترقيم (Pagination)
   batchCurrentPage = signal<number>(1);
   batchPageSize = signal<number>(9); // 9 بطاقات في الصفحة لتظهر الدفعات كاملة وواضحة
@@ -281,7 +287,8 @@ export class AdminTrainees implements OnInit {
           count: b.traineesCount || b.count || 0,
           companies: b.companiesCount || 1,
           rating: '4.9',
-          programs: 1
+          programs: 1,
+          trainerName: b.trainerName || b.supervisorName || null
         });
       }
     });
@@ -431,6 +438,7 @@ export class AdminTrainees implements OnInit {
 
   ngOnInit() {
     this.loadSavedUnreadReplies();
+    this.loadTrainers();
     this.loadDatabaseStats();
     this.loadTrainees();
     this.loadDropdownData();
@@ -536,7 +544,8 @@ export class AdminTrainees implements OnInit {
       if (match.length > 0) batchTrainees = match;
     }
 
-    const assignedTrainer = batch.supervisor || 'المدرب: م. فهد الشحي (مشرف المسار)';
+    // المدرب الراصد: مدرب الدفعة من الباك اند إن وُجد، وإلا المدرب المختار من القائمة
+    const assignedTrainer = this.trainerFor(batch);
 
     const records: TraineeAttendanceRecord[] = batchTrainees.map((t, idx) => {
       // رصد الحضور المسجل رسمياً من قبل المدرب
@@ -638,6 +647,66 @@ export class AdminTrainees implements OnInit {
     this.attendanceCurrentPage.set(1);
   }
 
+  // =========================================================================
+  // المدرب الراصد لكل دفعة (GET api/Trainer + GET api/Trainer/{id}/batches)
+  // =========================================================================
+  private normBatch(n: any): string {
+    return String(n ?? '').trim().toLowerCase();
+  }
+
+  trainerFor(batch: any): string {
+    if (!batch) return this.NO_TRAINER;
+    if (batch.trainerName) return batch.trainerName;
+    return this.trainerByBatch()[this.normBatch(batch.name)] || this.NO_TRAINER;
+  }
+
+  loadTrainers() {
+    this.isLoadingTrainers.set(true);
+
+    this.api.getTrainers().pipe(catchError(() => of(null))).subscribe((res: any) => {
+      const raw: any[] = Array.isArray(res?.items) ? res.items
+                       : Array.isArray(res?.Items) ? res.Items
+                       : Array.isArray(res) ? res : [];
+
+      const trainers = raw
+        .map(t => ({
+          id: t.trainerId ?? t.TrainerId ?? t.id ?? null,
+          name: (t.fullName || t.FullName || t.userFullName || t.name || t.Name || t.user?.fullName || '').toString().trim()
+        }))
+        .filter(t => t.id != null && !!t.name);
+
+      if (trainers.length === 0) {
+        this.isLoadingTrainers.set(false);
+        return;
+      }
+
+      forkJoin(
+        trainers.map(t => this.api.getTrainerBatches(t.id as number).pipe(catchError(() => of([]))))
+      ).subscribe((results: any[]) => {
+        const map: Record<string, string[]> = {};
+
+        results.forEach((batchesRes, i) => {
+          const list: any[] = Array.isArray(batchesRes) ? batchesRes
+                            : Array.isArray(batchesRes?.items) ? batchesRes.items
+                            : Array.isArray(batchesRes?.Items) ? batchesRes.Items : [];
+
+          list.forEach(b => {
+            const key = this.normBatch(b.batchName ?? b.BatchName ?? b.name ?? b.Name ?? b.title ?? b.Title);
+            if (!key) return;
+            if (!map[key]) map[key] = [];
+            if (!map[key].includes(trainers[i].name)) map[key].push(trainers[i].name);
+          });
+        });
+
+        const joined: Record<string, string> = {};
+        Object.keys(map).forEach(k => (joined[k] = map[k].join('، ')));
+
+        this.trainerByBatch.set(joined);
+        this.isLoadingTrainers.set(false);
+      });
+    });
+  }
+
   scrollToTop() {
     const el = document.getElementById('attendanceModalBody');
     if (el) {
@@ -702,9 +771,9 @@ export class AdminTrainees implements OnInit {
       'المسار التدريبي',
       'الشركة المستضيفة',
       'حالة الحضور (رصد المدرب)',
-      'وقت الحضور',
       'ملاحظات / عذر المدرب',
-      'تاريخ الرصد'
+      'تاريخ الرصد',
+      'المدرب الراصد'
     ];
 
     const getStatusArabic = (status: string) => {
@@ -736,9 +805,9 @@ export class AdminTrainees implements OnInit {
         clean(r.track || 'برنامج التدريب التقني'),
         clean(r.companyName || 'مجموعة أفق التقنية'),
         clean(getStatusArabic(r.status)),
-        clean(r.checkInTime || '—'),
         clean(r.notes || '—'),
-        clean(dateStr)
+        clean(dateStr),
+        clean(r.recordedByTrainer || this.currentBatchTrainer())
       ];
 
       csvRows.push(row.join(','));
@@ -766,6 +835,7 @@ export class AdminTrainees implements OnInit {
     const batchName = this.selectedAttendanceBatch()?.name || 'دفعة عامة';
     const dateStr = this.attendanceDate();
     const summary = this.attendanceSummary();
+    const trainerName = this.currentBatchTrainer();
 
     const getStatusLabel = (s: string) => {
       if (s === 'Present') return '<span style="color:#059669;font-weight:bold;">✓ حاضر</span>';
@@ -782,7 +852,6 @@ export class AdminTrainees implements OnInit {
         <td style="padding:8px;border:1px solid #cbd5e1;">${r.track || '—'}</td>
         <td style="padding:8px;border:1px solid #cbd5e1;">${r.companyName || '—'}</td>
         <td style="padding:8px;border:1px solid #cbd5e1;text-align:center;">${getStatusLabel(r.status)}</td>
-        <td style="padding:8px;border:1px solid #cbd5e1;text-align:center;">${r.checkInTime || '—'}</td>
         <td style="padding:8px;border:1px solid #cbd5e1;">${r.notes || '—'}</td>
       </tr>
     `).join('');
@@ -806,7 +875,7 @@ export class AdminTrainees implements OnInit {
   <div class="header">
     <div>
       <h1>كشف متابعة حضور وغياب المتدربين — منصة نفاذ الوطنية</h1>
-      <div class="meta">الدفعة: <strong>${batchName}</strong> | تاريخ الحضور: <strong>${dateStr}</strong></div>
+      <div class="meta">الدفعة: <strong>${batchName}</strong> | تاريخ الحضور: <strong>${dateStr}</strong> | المدرب الراصد: <strong>${trainerName}</strong></div>
     </div>
     <div style="font-size:12px;color:#64748b;">تاريخ الطباعة: ${new Date().toLocaleDateString('ar-OM')}</div>
   </div>
@@ -827,7 +896,6 @@ export class AdminTrainees implements OnInit {
         <th>المسار</th>
         <th>الشركة المستضيفة</th>
         <th>حالة الحضور</th>
-        <th>وقت الحضور</th>
         <th>ملاحظات المدرب</th>
       </tr>
     </thead>
