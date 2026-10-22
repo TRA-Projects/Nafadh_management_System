@@ -195,6 +195,7 @@
     "jobseeker.admin.notificationTransactions.resend": "إعادة الإرسال",
     "jobseeker.admin.notificationTransactions.resending": "جارٍ إعادة الإرسال…",
     "jobseeker.admin.notificationTransactions.resendSuccess": "تمت إعادة إرسال الإشعار.",
-    "jobseeker.admin.notificationTransactions.failureDetails": "تفاصيل الفشل"
+    "jobseeker.admin.notificationTransactions.failureDetails": "تفاصيل الفشل",
+    "jobseeker.admin.constants.managementReferenceNote": "هذه القيم مرجعية وتُقرأ من قاعدة تدريب نفاذ؛ لا يمكن تغيير مفاتيح حالات سير العمل من شاشة الثوابت."
   }
 }
