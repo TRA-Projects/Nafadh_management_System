@@ -1,20 +1,19 @@
 import {
   Component,
   Input,
-  OnDestroy,
-  OnInit,
+  OnChanges,
+  SimpleChanges,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SessionEventsService } from '../../../services/session-events.service';
+import { forkJoin } from 'rxjs';
 
-export interface LiveAttendanceRow {
+import { TrainerApi } from '../../../services/trainer-api';
+
+interface LiveAttendanceRow {
   traineeId: number;
   traineeName: string;
-  status: 'Connected' | 'Disconnected';
-  checkInUtc: string | null;
-  checkOutUtc: string | null;
-  totalMinutes: number;
+  isConnected: boolean;
 }
 
 @Component({
@@ -22,53 +21,65 @@ export interface LiveAttendanceRow {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './live-attendance.html',
+  styleUrl: './live-attendance.scss',
 })
-export class LiveAttendanceComponent implements OnInit, OnDestroy {
+export class LiveAttendanceComponent implements OnChanges {
+  // يمررهما المكوّن الأب عند ربط صفحة الحضور لاحقًا.
   @Input({ required: true }) sessionId!: number;
+  @Input({ required: true }) batchId!: number;
 
   rows = signal<LiveAttendanceRow[]>([]);
-  connectionError = signal('');
+  loading = signal(false);
+  errorMessage = signal('');
 
-  constructor(private events: SessionEventsService) {}
+  constructor(private trainerApi: TrainerApi) {}
 
-  async ngOnInit(): Promise<void> {
-    try {
-      await this.events.connect(this.sessionId);
-
-      this.events.listen<LiveAttendanceRow>(
-        'TraineeConnected',
-        (row) => this.updateRow({ ...row, status: 'Connected' }),
-      );
-
-      this.events.listen<LiveAttendanceRow>(
-        'TraineeDisconnected',
-        (row) => this.updateRow({ ...row, status: 'Disconnected' }),
-      );
-
-      this.events.listen<LiveAttendanceRow>(
-        'AttendanceUpdated',
-        (row) => this.updateRow(row),
-      );
-    } catch {
-      this.connectionError.set('تعذر الاتصال بالتحديثات المباشرة.');
+  ngOnChanges(changes: SimpleChanges): void {
+    if (
+      (changes['sessionId'] || changes['batchId']) &&
+      this.sessionId > 0 &&
+      this.batchId > 0
+    ) {
+      this.loadAttendance();
     }
   }
 
-  private updateRow(row: LiveAttendanceRow): void {
-    this.rows.update((current) => {
-      const index = current.findIndex((x) => x.traineeId === row.traineeId);
+  private loadAttendance(): void {
+    this.loading.set(true);
+    this.errorMessage.set('');
 
-      if (index === -1) {
-        return [...current, row];
-      }
+    forkJoin({
+      trainees: this.trainerApi.getEnrollments(undefined, this.batchId),
+      live: this.trainerApi.getLiveAttendance(this.sessionId),
+    }).subscribe({
+      next: ({ trainees, live }) => {
+        const connectedIds = new Set(
+          live.enrolledConnectedTrainees.map((item) => item.traineeId),
+        );
 
-      const copy = [...current];
-      copy[index] = { ...copy[index], ...row };
-      return copy;
+        const attendanceRows: LiveAttendanceRow[] = trainees.map((trainee) => ({
+          traineeId: trainee.traineeId,
+          traineeName: trainee.traineeName,
+          isConnected: connectedIds.has(trainee.traineeId),
+        }));
+
+        this.rows.set(attendanceRows);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Failed to load live attendance:', error);
+        this.errorMessage.set('تعذر تحميل بيانات الحضور من النظام.');
+        this.rows.set([]);
+        this.loading.set(false);
+      },
     });
   }
 
-  ngOnDestroy(): void {
-    void this.events.leave(this.sessionId);
+  get connectedCount(): number {
+    return this.rows().filter((row) => row.isConnected).length;
+  }
+
+  get disconnectedCount(): number {
+    return this.rows().filter((row) => !row.isConnected).length;
   }
 }
