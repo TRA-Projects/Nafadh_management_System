@@ -27,6 +27,14 @@ let handlingUnauthorized = false;
 let handlingEmailNotVerified = false;
 let handlingProfileNotCompleted = false;
 
+/**
+ * This copy lives inside the management admin portal (`external-system`).
+ * A failed Bidding_API call must NOT clear the session, log the admin out or redirect to
+ * `/login`, `/verify-email` or `/complete-profile` (those flows belong to the legacy app).
+ * The page shows the normalized error itself.
+ */
+const EMBEDDED_IN_ADMIN_PORTAL = true;
+
 function isPublicAuthRequest(url: string): boolean {
   const path = url.toLowerCase();
   return (
@@ -174,6 +182,7 @@ export const httpErrorInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: unknown) => {
       if (error instanceof HttpErrorResponse) {
         if (
+          !EMBEDDED_IN_ADMIN_PORTAL &&
           error.status === 401 &&
           !isFullMockBackend() &&
           !isPublicAuthRequest(req.url) &&
@@ -191,7 +200,7 @@ export const httpErrorInterceptor: HttpInterceptorFn = (req, next) => {
           occurredAtUtc: buildOccurredAtUtc(error),
         };
 
-        if (error.status === 403 && !isFullMockBackend() && auth.isLoggedIn()) {
+        if (!EMBEDDED_IN_ADMIN_PORTAL && error.status === 403 && !isFullMockBackend() && auth.isLoggedIn()) {
           if (isEmailNotVerifiedApiError(normalizedError)) {
             redirectToVerifyEmail(auth, router, store);
           } else if (isProfileNotCompletedApiError(normalizedError)) {

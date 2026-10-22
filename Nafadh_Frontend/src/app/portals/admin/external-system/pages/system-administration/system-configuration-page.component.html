@@ -6,7 +6,7 @@
   </h2>
 
   <div class="mt-4 flex flex-wrap items-center gap-3">
-    <label class="flex min-w-0 flex-wrap items-center gap-2">
+   <label class="system-config-search">
       <span class="shrink-0 whitespace-nowrap text-sm text-white-dark" i18n="@@jobseeker.admin.systemConfig.search">Search</span>
       <input
         class="form-input w-72 max-w-full"
@@ -28,14 +28,14 @@
             <div class="sys-config-card__header">
               <div class="sys-config-card__identity">
                 <span class="sys-config-card__avatar" aria-hidden="true">
-                  <img [src]="'/images/nav/settings.svg' | assetUrl" alt="" class="sys-config-card__avatar-icon" />
+               <img [src]="'/external-system/images/nav/settings.svg' | assetUrl" alt="" class="sys-config-card__avatar-icon" />
                 </span>
                 <span class="min-w-0">
                   <span class="sys-config-card__name-row">
                     <span class="sys-config-card__index">#{{ safePageIndex() * pageSize() + i + 1 }}</span>
                     <span class="sys-config-card__name">{{ variableName(row) }}</span>
                   </span>
-                  <span class="sys-config-card__type-badge">{{ row.ValueType }}</span>
+                  <span class="sys-config-card__type-badge">{{ row.ValueType === 'String' ? 'نصي' : row.ValueType === 'Integer' ? 'عدد صحيح' : row.ValueType }}</span>
                 </span>
               </div>
               <div class="sys-config-card__actions">
@@ -50,7 +50,7 @@
               </div>
               <div>
                 <div class="sys-config-card__label" i18n="@@jobseeker.common.type">Type</div>
-                <div class="sys-config-card__value">{{ row.ValueType }}</div>
+                <div class="sys-config-card__value">{{ row.ValueType === 'String' ? 'نصي' : row.ValueType === 'Integer' ? 'عدد صحيح' : row.ValueType }}</div>
               </div>
               <div class="col-span-2">
                 <div class="sys-config-card__label" i18n="@@jobseeker.common.value">Value</div>
@@ -129,7 +129,7 @@
                 <td class="text-white-dark">{{ safePageIndex() * pageSize() + i + 1 }}</td>
                 <td class="whitespace-nowrap font-mono text-xs">{{ row.Code }}</td>
                 <td class="font-semibold text-black dark:text-white-light">{{ variableName(row) }}</td>
-                <td class="text-white-dark">{{ row.ValueType }}</td>
+                <td class="text-white-dark">{{ row.ValueType === 'String' ? 'نصي' : row.ValueType === 'Integer' ? 'عدد صحيح' : row.ValueType }}</td>
                 <td class="max-w-xs truncate align-middle text-white-dark">
                   @if (isToggleSystemVariable(row)) {
                     <span class="yn-switch yn-switch--disabled" [attr.aria-label]="variableName(row)">
@@ -224,7 +224,7 @@
           (click)="closeRowActionsMenu(); openEdit(row)"
         >
           <span class="sys-config-actions-menu__icon">
-            <img [src]="'/images/general/edit.svg' | assetUrl" alt="" class="h-4 w-4" />
+           <img [src]="'/external-system/images/general/edit.svg' | assetUrl" alt="" class="h-4 w-4" />
           </span>
           <span i18n="@@jobseeker.admin.systemConfig.editValue">Edit value</span>
         </button>
