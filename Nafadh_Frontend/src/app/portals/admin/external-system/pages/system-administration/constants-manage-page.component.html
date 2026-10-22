@@ -48,6 +48,12 @@
     }
   </div>
 
+  @if (isReadOnlyManagementGroup()) {
+    <p class="mt-3 text-sm text-white-dark" i18n="@@jobseeker.admin.constants.managementReferenceNote">
+      These are read-only reference values from Nafadh Training. Workflow state keys cannot be edited here.
+    </p>
+  }
+
   <div class="mt-4 rounded-xl border border-[#ebedf2] bg-white dark:border-[#191e3a] dark:bg-[#0e1726] md:overflow-hidden">
     <!-- Mobile / tablet cards -->
     <div class="p-3 lg:hidden">
@@ -64,7 +70,9 @@
                 </span>
               </div>
               <div class="constants-card__actions">
-                <ng-container *ngTemplateOutlet="rowActionsMenu; context: { $implicit: row }" />
+                @if (!isReadOnlyManagementGroup()) {
+                  <ng-container *ngTemplateOutlet="rowActionsMenu; context: { $implicit: row }" />
+                }
               </div>
             </div>
 
@@ -151,7 +159,9 @@
                   </label>
                 </td>
                 <td class="constants-actions-cell">
-                  <ng-container *ngTemplateOutlet="rowActionsMenu; context: { $implicit: row }" />
+                  @if (!isReadOnlyManagementGroup()) {
+                    <ng-container *ngTemplateOutlet="rowActionsMenu; context: { $implicit: row }" />
+                  }
                 </td>
               </tr>
             }
