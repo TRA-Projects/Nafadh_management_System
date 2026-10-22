@@ -201,6 +201,14 @@ namespace Nafadh_Backend
             builder.Services.AddScoped<ITrainerCertificateService, TrainerCertificateService>();
             builder.Services.AddScoped<IReportRepository, ReportRepository>();
             builder.Services.AddScoped<IReportService, ReportService>();
+            // Admin Supervisor Reports
+            builder.Services.AddScoped<
+                IAdminSupervisorReportsRepository,
+                AdminSupervisorReportsRepository>();
+
+            builder.Services.AddScoped<
+                IAdminSupervisorReportsService,
+                AdminSupervisorReportsService>();
             builder.Services.AddScoped<ISystemSettingRepository, SystemSettingRepository>();
             builder.Services.AddScoped<ISystemSettingService, SystemSettingService>();
             builder.Services.AddScoped<ITraineePaymentRepository, TraineePaymentRepository>();
