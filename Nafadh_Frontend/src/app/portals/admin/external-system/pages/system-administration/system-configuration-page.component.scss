@@ -408,3 +408,72 @@
 :host-context(.dark) .yn-switch-track::after {
   background-color: #e0e6ed;
 }
+
+/* System configuration edit modal */
+.app-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.app-modal-backdrop > div {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-modal-backdrop .panel {
+  width: 100%;
+  max-width: 34rem;
+  background: #fff;
+  color: #1f2937;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.app-modal-backdrop .btn-gradient {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.app-modal-backdrop .btn-gradient:hover {
+  background: #1e40af;
+}
+
+.app-modal-backdrop .panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.app-modal-backdrop .panel > .p-5 {
+  padding: 24px;
+}
+
+.app-modal-backdrop .panel > h3 {
+  padding: 20px 24px;
+  margin: 0;
+}
+
+.app-modal-backdrop .panel form {
+  width: 100%;
+}
+
+.app-modal-backdrop .panel .mt-6 {
+  margin-top: 24px;
+}

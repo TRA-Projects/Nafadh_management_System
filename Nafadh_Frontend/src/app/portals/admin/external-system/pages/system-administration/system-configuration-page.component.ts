@@ -107,9 +107,19 @@ export class SystemConfigurationPageComponent implements OnInit {
     this.destroyRef.onDestroy(() => document.removeEventListener('click', onDocClick, true));
   }
 
+ 
+
   variableName(row: SystemVariableDto): string {
-    return systemVariableName(row, this.locale.locale());
+    const translations: Record<string, string> = {
+      ALLOW_USER_RATING: 'السماح للمستخدم بالتقييم الذاتي للمهارات',
+    };
+
+    const key = row.Code || row.VariableKey;
+
+    return translations[key] ?? systemVariableName(row, 'ar');
   }
+
+
 
   variableDescription(row: SystemVariableDto): string {
     return systemVariableDescription(row, this.locale.locale());
