@@ -98,15 +98,19 @@ export class AdminNotifications implements OnInit {
   dbTrainers = signal<any[]>([]);
   isLoadingData = signal<boolean>(false);
 
-  // متغيرات التصفية
+  // متغيرات التصفية للشركات
   companySearch = '';
+  companyFilterWorkField = '';
+  companyFilterCapacity = '';
+
+  // متغيرات التصفية للمتدربين
   traineeSearch = '';
-  trainerSearch = '';
-  
-  // متغيرات التصفية الذكية للمتدربين
   traineeFilterTrack = '';
   traineeFilterBatch = '';
   traineeFilterCompany = '';
+
+  // متغيرات التصفية للمدربين
+  trainerSearch = '';
 
   selectedNotification = signal<NotificationViewModel | null>(null);
   toastMessage = signal<string | null>(null);
@@ -261,14 +265,16 @@ export class AdminNotifications implements OnInit {
         const mappedCompanies = items.map((c: any) => ({
           id: String(c.companyId || c.id || c.CompanyId || c.Id),
           name: c.companyName || c.name || c.CompanyName || c.Name || 'شركة غير مسماة',
-          traineesCount: c.traineesCount || c.TraineesCount || 0
+          workField: c.workField || c.WorkField || 'غير محدد',
+          capacity: c.capacity || c.Capacity || 0,
+          commercialRegister: c.commercialRegister || c.CommercialRegister || 'غير متوفر'
         }));
         this.dbCompanies.set(mappedCompanies);
       },
       error: () => this.dbCompanies.set([])
     });
 
-    // 2. جلب المتدربين (معالجة كافة الاحتمالات للحقول)
+    // 2. جلب المتدربين
     this.api.getTrainees({ pageSize: 10000 }).subscribe({
       next: (res: any) => {
         const items = Array.isArray(res) ? res : (res?.items || res?.data || []);
@@ -276,27 +282,9 @@ export class AdminNotifications implements OnInit {
           const name = t.fullName || t.FullName || t.name || t.Name || 'اسم غير متوفر';
           const code = t.registrationNumber || t.RegistrationNumber || t.code || t.Code || 'N/A';
           
-          let track = 'غير محدد';
-          if (t.trackName) track = t.trackName;
-          else if (t.TrackName) track = t.TrackName;
-          else if (t.track && typeof t.track === 'string') track = t.track;
-          else if (t.track && t.track.name) track = t.track.name;
-          else if (t.Track && t.Track.Name) track = t.Track.Name;
-          else if (t.specialty) track = t.specialty;
-          else if (t.programName) track = t.programName;
-
-          let companyName = 'غير محدد';
-          if (t.companyName) companyName = t.companyName;
-          else if (t.CompanyName) companyName = t.CompanyName;
-          else if (t.company && typeof t.company === 'string') companyName = t.company;
-          else if (t.company && t.company.name) companyName = t.company.name;
-          
-          let batch = 'غير محدد';
-          if (t.batchName) batch = t.batchName;
-          else if (t.BatchName) batch = t.BatchName;
-          else if (t.batch && typeof t.batch === 'string') batch = t.batch;
-          else if (t.batch && t.batch.name) batch = t.batch.name;
-          else if (t.Batch && t.Batch.Name) batch = t.Batch.Name;
+          let track = t.trackName || t.TrackName || t.track?.name || t.Track?.Name || t.specialty || t.programName || 'غير محدد';
+          let companyName = t.companyName || t.CompanyName || t.company?.name || t.Company?.Name || 'غير محدد';
+          let batch = t.batchName || t.BatchName || t.batch?.name || t.Batch?.Name || 'غير محدد';
 
           return {
             id: String(t.traineeId || t.id || t.TraineeId || t.Id),
@@ -343,8 +331,8 @@ export class AdminNotifications implements OnInit {
       channels: { inApp: true, email: true, sms: false },
       isPinned: false
     };
+    this.resetCompanyFilters();
     this.resetTraineeFilters();
-    this.companySearch = '';
     this.trainerSearch = '';
     this.activeAnnounceTab = 'edit';
     this.announceError.set(null);
@@ -366,7 +354,7 @@ export class AdminNotifications implements OnInit {
     if (fd.mainAudience === 'trainers') return fd.trainerScope === 'all_trainers' ? this.dbTrainers().length : fd.selectedTrainerIds.length;
     if (fd.mainAudience === 'companies') {
       if (fd.companyScope === 'all_companies') return this.dbCompanies().length;
-      return this.dbCompanies().filter(c => fd.selectedCompanyIds.includes(c.id)).reduce((sum, c) => sum + (c.traineesCount || 0), 0);
+      return this.dbCompanies().filter(c => fd.selectedCompanyIds.includes(c.id)).reduce((sum, c) => sum + (c.capacity || 0), 0);
     }
     if (fd.mainAudience === 'trainees') return fd.traineeScope === 'all_trainees' ? this.dbTrainees().length : fd.selectedTraineeIds.length;
     return 0;
@@ -385,11 +373,25 @@ export class AdminNotifications implements OnInit {
 
   // --- الشركات ---
   getFilteredCompanies() {
-    const list = this.dbCompanies();
-    if (!this.companySearch) return list;
-    const term = this.companySearch.toLowerCase();
-    return list.filter(c => c.name.toLowerCase().includes(term));
+    return this.dbCompanies().filter(c => {
+      const term = this.companySearch.toLowerCase();
+      const matchesSearch = !term || 
+        c.name.toLowerCase().includes(term) || 
+        c.commercialRegister.toLowerCase().includes(term);
+
+      const matchesWorkField = !this.companyFilterWorkField || c.workField === this.companyFilterWorkField;
+
+      let matchesCapacity = true;
+      if (this.companyFilterCapacity === 'high') matchesCapacity = c.capacity >= 100;
+      else if (this.companyFilterCapacity === 'medium') matchesCapacity = c.capacity >= 50 && c.capacity < 100;
+      else if (this.companyFilterCapacity === 'low') matchesCapacity = c.capacity < 50;
+
+      return matchesSearch && matchesWorkField && matchesCapacity;
+    });
   }
+  getUniqueCompanyWorkFields() { return [...new Set(this.dbCompanies().map(c => c.workField))].filter(Boolean); }
+  resetCompanyFilters() { this.companySearch = ''; this.companyFilterWorkField = ''; this.companyFilterCapacity = ''; }
+  
   toggleCompany(id: string) {
     const ids = this.newAnnounceData.selectedCompanyIds;
     this.newAnnounceData.selectedCompanyIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id];
@@ -408,7 +410,7 @@ export class AdminNotifications implements OnInit {
     }
   }
 
-  // --- المتدربين (التصفية الذكية) ---
+  // --- المتدربين ---
   getFilteredTrainees() {
     return this.dbTrainees().filter(t => {
       const term = this.traineeSearch.toLowerCase();
@@ -425,14 +427,12 @@ export class AdminNotifications implements OnInit {
       return matchesSearch && matchesTrack && matchesBatch && matchesCompany;
     });
   }
-
   toggleTrainee(id: string) {
     const ids = this.newAnnounceData.selectedTraineeIds;
     this.newAnnounceData.selectedTraineeIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id];
   }
   isTraineeSelected(id: string) { return this.newAnnounceData.selectedTraineeIds.includes(id); }
   getSelectedTraineeObjects() { return this.dbTrainees().filter(t => this.newAnnounceData.selectedTraineeIds.includes(t.id)); }
-
   selectAllTrainees(event: any) {
     const filtered = this.getFilteredTrainees();
     if (event.target.checked) {
@@ -443,14 +443,7 @@ export class AdminNotifications implements OnInit {
       this.newAnnounceData.selectedTraineeIds = this.newAnnounceData.selectedTraineeIds.filter(id => !filteredIds.includes(id));
     }
   }
-
-  resetTraineeFilters() {
-    this.traineeSearch = '';
-    this.traineeFilterTrack = '';
-    this.traineeFilterBatch = '';
-    this.traineeFilterCompany = '';
-  }
-
+  resetTraineeFilters() { this.traineeSearch = ''; this.traineeFilterTrack = ''; this.traineeFilterBatch = ''; this.traineeFilterCompany = ''; }
   getUniqueTracks() { return [...new Set(this.dbTrainees().map(t => t.track))].filter(Boolean); }
   getUniqueBatches() { return [...new Set(this.dbTrainees().map(t => t.batch))].filter(Boolean); }
   getUniqueTraineeCompanies() { return [...new Set(this.dbTrainees().map(t => t.companyName))].filter(Boolean); }
@@ -460,10 +453,7 @@ export class AdminNotifications implements OnInit {
     const list = this.dbTrainers();
     if (!this.trainerSearch) return list;
     const term = this.trainerSearch.toLowerCase();
-    return list.filter(t => 
-      t.name.toLowerCase().includes(term) || 
-      t.specialty.toLowerCase().includes(term)
-    );
+    return list.filter(t => t.name.toLowerCase().includes(term) || t.specialty.toLowerCase().includes(term));
   }
   toggleTrainer(id: string) {
     const ids = this.newAnnounceData.selectedTrainerIds;
@@ -471,7 +461,6 @@ export class AdminNotifications implements OnInit {
   }
   isTrainerSelected(id: string) { return this.newAnnounceData.selectedTrainerIds.includes(id); }
   getSelectedTrainerObjects() { return this.dbTrainers().filter(t => this.newAnnounceData.selectedTrainerIds.includes(t.id)); }
-
   selectAllTrainers(event: any) {
     const filtered = this.getFilteredTrainers();
     if (event.target.checked) {

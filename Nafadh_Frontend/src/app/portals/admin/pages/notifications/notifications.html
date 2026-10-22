@@ -231,7 +231,7 @@
             </div>
           </div>
 
-          <!-- إعدادات التخصيص للشركات -->
+          <!-- إعدادات التخصيص للشركات (التصميم الجديد) -->
           <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'companies'">
             <div class="radio-group" style="margin-bottom: 16px;">
               <label><input type="radio" [(ngModel)]="newAnnounceData.companyScope" value="all_companies"> كافة الشركات</label>
@@ -239,43 +239,93 @@
             </div>
 
             <div class="smart-selector-wrapper" *ngIf="newAnnounceData.companyScope === 'specific_companies'">
-              <div class="smart-search-bar" style="padding: 8px;">
-                <div class="search-input-container" style="width: 100%;">
-                  <input type="text" [(ngModel)]="companySearch" placeholder="ابحث باسم الشركة أو الكود...">
+              
+              <!-- شريط البحث الذكي -->
+              <div class="smart-search-bar">
+                <button class="smart-filter-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                  التصفية الذكية
+                </button>
+                <div class="search-input-container">
+                  <input type="text" [(ngModel)]="companySearch" placeholder="ابحث باسم الشركة أو السجل التجاري...">
                   <svg class="search-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </div>
               </div>
 
-              <div class="selection-status-bar">
-                <div class="status-right">
-                  <span class="dot-indicator"></span>
-                  <span>تم تحديد <strong>{{ newAnnounceData.selectedCompanyIds.length }}</strong> من أصل <strong>{{ getFilteredCompanies().length }}</strong></span>
+              <!-- فلاتر الشركات (مجال العمل والسعة) -->
+              <div class="smart-filters-grid">
+                <div class="filter-header">
+                  <span>تصفية حسب مجال العمل أو السعة:</span>
+                  <button class="reset-filters-btn" (click)="resetCompanyFilters()">إعادة ضبط المرشحات</button>
                 </div>
-                <label class="select-all-label">
-                  <input type="checkbox" (change)="selectAllCompanies($event)" [checked]="newAnnounceData.selectedCompanyIds.length > 0 && newAnnounceData.selectedCompanyIds.length === getFilteredCompanies().length">
-                  <span>تحديد الكل</span>
-                </label>
+                <div class="filters-row" style="grid-template-columns: 1fr 1fr;">
+                  <div class="filter-select">
+                    <label>مجال العمل:</label>
+                    <div class="custom-select-wrapper">
+                      <select class="custom-select" [(ngModel)]="companyFilterWorkField">
+                        <option value="">كافة المجالات ({{ dbCompanies().length }})</option>
+                        <option *ngFor="let wf of getUniqueCompanyWorkFields()" [value]="wf">{{ wf }}</option>
+                      </select>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                  </div>
+                  
+                  <div class="filter-select">
+                    <label>السعة الاستيعابية:</label>
+                    <div class="custom-select-wrapper">
+                      <select class="custom-select" [(ngModel)]="companyFilterCapacity">
+                        <option value="">كافة السعات</option>
+                        <option value="high">سعة عالية (100 متدرب فأكثر)</option>
+                        <option value="medium">سعة متوسطة (50 - 99 متدرب)</option>
+                        <option value="low">سعة منخفضة (أقل من 50 متدرب)</option>
+                      </select>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                  </div>
+                </div>
               </div>
 
+              <!-- شاشة التحميل -->
               <div *ngIf="isLoadingData()" style="text-align: center; padding: 20px;">
                 <div class="spinner" style="margin: 0 auto; width: 24px; height: 24px;"></div>
                 <p style="color: #64748b; font-size: 12px; margin-top: 8px;">جاري جلب الشركات...</p>
               </div>
 
-              <div class="smart-dropdown-list" *ngIf="!isLoadingData()">
-                <div class="smart-dropdown-item" *ngFor="let c of getFilteredCompanies()" (click)="toggleCompany(c.id)">
-                  <div class="checkbox-wrapper">
-                    <input type="checkbox" [checked]="isCompanySelected(c.id)" (click)="$event.stopPropagation(); toggleCompany(c.id)">
-                  </div>
-                  <div class="item-info">
-                    <div class="item-title-row">
-                      <span class="d-title">{{ c.name }}</span>
+              <!-- شريط الحالة والقائمة -->
+              <ng-container *ngIf="!isLoadingData()">
+                <div class="selection-status-bar">
+                  <div class="status-right">
+                    <span class="dot-indicator"></span>
+                    <span>تم تحديد <strong>{{ newAnnounceData.selectedCompanyIds.length }}</strong> من أصل <strong>{{ getFilteredCompanies().length }}</strong></span>
+                    <div class="progress-bar-bg">
+                      <div class="progress-bar-fill" [style.width.%]="(newAnnounceData.selectedCompanyIds.length / (getFilteredCompanies().length || 1)) * 100"></div>
                     </div>
                   </div>
+                  <label class="select-all-label">
+                    <input type="checkbox" (change)="selectAllCompanies($event)" [checked]="newAnnounceData.selectedCompanyIds.length > 0 && newAnnounceData.selectedCompanyIds.length === getFilteredCompanies().length">
+                    <span>تحديد الكل ({{ getFilteredCompanies().length }})</span>
+                  </label>
                 </div>
-                <div *ngIf="getFilteredCompanies().length === 0" class="no-results">لا توجد نتائج مطابقة.</div>
-              </div>
 
+                <div class="smart-dropdown-list">
+                  <div class="smart-dropdown-item" *ngFor="let c of getFilteredCompanies()" (click)="toggleCompany(c.id)">
+                    <div class="checkbox-wrapper">
+                      <input type="checkbox" [checked]="isCompanySelected(c.id)" (click)="$event.stopPropagation(); toggleCompany(c.id)">
+                    </div>
+                    <div class="avatar-circle" style="background: #e0e7ff; color: #3730a3;">🏢</div>
+                    <div class="item-info">
+                      <div class="item-title-row">
+                        <span class="d-title">{{ c.name }}</span>
+                        <span class="d-code" style="background: #f1f5f9; color: #475569; border-color: #cbd5e1;">{{ c.commercialRegister }}</span>
+                      </div>
+                      <div class="d-sub">مجال العمل: {{ c.workField }} • السعة: {{ c.capacity }} متدرب</div>
+                    </div>
+                  </div>
+                  <div *ngIf="getFilteredCompanies().length === 0" class="no-results">لا توجد نتائج مطابقة لبحثك.</div>
+                </div>
+              </ng-container>
+
+              <!-- الوسوم المحددة -->
               <div class="tags-container" *ngIf="newAnnounceData.selectedCompanyIds.length > 0">
                 <span class="tag" *ngFor="let c of getSelectedCompanyObjects()">
                   {{ c.name }} <button (click)="toggleCompany(c.id)">×</button>
@@ -284,7 +334,7 @@
             </div>
           </div>
 
-          <!-- إعدادات التخصيص للمتدربين (التصميم الجديد المطابق للصور) -->
+          <!-- إعدادات التخصيص للمتدربين -->
           <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'trainees'">
             <div class="radio-group" style="margin-bottom: 16px;">
               <label><input type="radio" [(ngModel)]="newAnnounceData.traineeScope" value="all_trainees"> كافة المتدربين</label>
