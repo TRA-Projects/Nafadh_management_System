@@ -1,35 +1,78 @@
-<section dir="rtl">
-  <h2>الحضور المباشر</h2>
+<section class="live-page" dir="rtl">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">متابعة الجلسة</p>
+      <h1>الحضور المباشر</h1>
+      <p class="subtitle">حالة اتصال المتدربين المسجلين في الدفعة</p>
+    </div>
 
-  @if (connectionError()) {
-    <p role="alert">{{ connectionError() }}</p>
+    <span class="live-badge">
+      <span class="live-dot"></span>
+      اتصال مباشر
+    </span>
+  </header>
+
+  @if (loading()) {
+    <p>جاري تحميل بيانات الحضور...</p>
+  } @else if (errorMessage()) {
+    <p role="alert">{{ errorMessage() }}</p>
+  } @else {
+    <section class="summary">
+      <article class="summary-card">
+        <span class="summary-label">إجمالي المتدربين</span>
+        <strong>{{ rows().length }}</strong>
+      </article>
+
+      <article class="summary-card connected-card">
+        <span class="summary-label">متصلون</span>
+        <strong>{{ connectedCount }}</strong>
+      </article>
+
+      <article class="summary-card disconnected-card">
+        <span class="summary-label">غير متصلين حاليًا</span>
+        <strong>{{ disconnectedCount }}</strong>
+      </article>
+    </section>
+
+    <section class="table-card">
+      <div class="table-heading">
+        <div>
+          <h2>قائمة المتدربين</h2>
+          <p>المصدر: بيانات التسجيل وحالة غرفة الجلسة في النظام</p>
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>المتدرب</th>
+              <th>حالة الاتصال</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (row of rows(); track row.traineeId) {
+              <tr>
+                <td class="trainee-name">{{ row.traineeName }}</td>
+                <td>
+                  @if (row.isConnected) {
+                    <span class="status status-connected">متصل</span>
+                  } @else {
+                    <span class="status status-disconnected">
+                      غير متصل حاليًا
+                    </span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="2">لا توجد تسجيلات لهذه الدفعة.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
   }
-
-  <table>
-    <thead>
-      <tr>
-        <th>المتدرب</th>
-        <th>الحالة</th>
-        <th>وقت الدخول</th>
-        <th>وقت الخروج</th>
-        <th>إجمالي الدقائق</th>
-      </tr>
-    </thead>
-
-    <tbody>
-      @for (row of rows(); track row.traineeId) {
-        <tr>
-          <td>{{ row.traineeName }}</td>
-          <td>{{ row.status === 'Connected' ? 'متصل' : 'منقطع' }}</td>
-          <td>{{ row.checkInUtc ? (row.checkInUtc | date:'shortTime') : '—' }}</td>
-          <td>{{ row.checkOutUtc ? (row.checkOutUtc | date:'shortTime') : '—' }}</td>
-          <td>{{ row.totalMinutes }}</td>
-        </tr>
-      } @empty {
-        <tr>
-          <td colspan="5">لا توجد بيانات حضور مباشرة بعد.</td>
-        </tr>
-      }
-    </tbody>
-  </table>
 </section>

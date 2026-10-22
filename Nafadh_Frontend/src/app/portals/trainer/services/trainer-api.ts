@@ -235,6 +235,52 @@ export interface TrainerLiveRoomDetailsResponse {
   isRecording: boolean;
 }
 
+export interface LiveAttendanceResponse {
+  sessionId: number;
+  connectedTraineeCount: number;
+  participantIdentities: string[];
+  enrolledConnectedTrainees: Array<{
+    userId: number;
+    traineeId: number;
+  }>;
+}
+export interface TrainerLivePollOption {
+  optionId: number;
+  optionText: string;
+  sortOrder: number;
+}
+
+export interface TrainerLivePoll {
+  pollId: number;
+  sessionId: number;
+  question: string;
+  isOpen: boolean;
+  createdAtUtc: string;
+  closedAtUtc: string | null;
+  totalVotes: number;
+  options: TrainerLivePollOption[];
+}
+
+export interface TrainerLivePollListResponse {
+  sessionId: number;
+  polls: TrainerLivePoll[];
+}
+
+export interface TrainerLivePollResultsResponse {
+  pollId: number;
+  sessionId: number;
+  question: string;
+  isOpen: boolean;
+  closedAtUtc: string | null;
+  totalVotes: number;
+  results: Array<{
+    optionId: number;
+    optionText: string;
+    sortOrder: number;
+    voteCount: number;
+    percentage: number;
+  }>;
+}
 @Injectable({ providedIn: 'root' })
 export class TrainerApi {
 
@@ -1564,6 +1610,13 @@ export class TrainerApi {
       `${this.base}/trainer/live-sessions/${sessionId}/attendance`
     );
   }
+getLiveAttendance(
+  sessionId: number
+): Observable<LiveAttendanceResponse> {
+  return this.http.get<LiveAttendanceResponse>(
+    `${this.base}/trainer/live-sessions/${sessionId}/room/attendance/live`
+  );
+}
 
   updateTrainerSessionAttendance(
     sessionId: number,
@@ -1601,5 +1654,51 @@ export class TrainerApi {
       `${this.base}/trainer/live-sessions/${sessionId}/room`
     );
   }
+getTrainerLivePolls(
+  sessionId: number
+): Observable<TrainerLivePollListResponse> {
+  return this.http.get<TrainerLivePollListResponse>(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls`
+  );
+}
+
+createTrainerLivePoll(
+  sessionId: number,
+  dto: { question: string; options: string[] }
+): Observable<TrainerLivePoll> {
+  return this.http.post<TrainerLivePoll>(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls`,
+    dto
+  );
+}
+
+openTrainerLivePoll(
+  sessionId: number,
+  pollId: number
+): Observable<unknown> {
+  return this.http.post(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/open`,
+    {}
+  );
+}
+
+closeTrainerLivePoll(
+  sessionId: number,
+  pollId: number
+): Observable<unknown> {
+  return this.http.post(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/close`,
+    {}
+  );
+}
+
+getTrainerLivePollResults(
+  sessionId: number,
+  pollId: number
+): Observable<TrainerLivePollResultsResponse> {
+  return this.http.get<TrainerLivePollResultsResponse>(
+    `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/results`
+  );
+}
 
 }
