@@ -115,7 +115,9 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
   ): SessionTab {
     if (
       session.status === 'Completed' ||
-      session.status === 'Cancelled'
+      session.status === 'Cancelled' ||
+      session.status === 'Postponed'
+
     ) {
       return 'past';
     }
@@ -137,6 +139,74 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
     if (now >= end) return 'past';
 
     return 'ongoing';
+  }
+
+  
+  // هل انتهى موعد الجلسة دون تغيير حالتها إلى منتهية؟
+  isMissedSession(session: LiveSession): boolean {
+    const start = new Date(session.startTime).getTime();
+
+    if (!Number.isFinite(start)) return false;
+
+    const end = start + session.durationMinutes * 60_000;
+
+    return (
+      session.status === 'Scheduled' &&
+      !session.isLive &&
+      this.currentTime() >= end
+    );
+  }
+
+  // وصف الحالة الذي يظهر أسفل عنوان الجلسة
+  getSessionDescription(session: LiveSession): string {
+    if (session.status === 'Completed') {
+      return 'تم إنهاء هذه المحاضرة.';
+    }
+
+    if (session.status === 'Cancelled') {
+      return 'تم إلغاء هذه المحاضرة.';
+    }
+
+    if (session.status === 'Postponed') {
+      return 'تم تأجيل هذه المحاضرة.';
+    }
+
+    if (this.isMissedSession(session)) {
+      return 'انتهى موعد المحاضرة ولم يتم تسجيل اكتمالها. يمكنك إعادة جدولتها.';
+    }
+
+    if (session.isLive) {
+      return 'المحاضرة المباشرة نشطة الآن.';
+    }
+
+    if (this.getSessionTab(session, this.currentTime()) === 'ongoing') {
+      return 'حان موعد المحاضرة، ويمكنك الدخول إليها.';
+    }
+
+    return 'المحاضرة مجدولة في الموعد الموضح أدناه.';
+  }
+
+  getSessionStatusLabel(session: LiveSession): string {
+    if (session.status === 'Completed') return 'منتهية';
+    if (session.status === 'Cancelled') return 'ملغية';
+    if (session.status === 'Postponed') return 'مؤجلة';
+    if (this.isMissedSession(session)) return 'فات موعدها';
+    if (session.isLive) return 'جارية';
+
+    return this.getSessionTab(session, this.currentTime()) === 'ongoing'
+      ? 'حان موعدها'
+      : 'قادمة';
+  }
+
+  // إعادة استخدام نموذج تعديل الجلسة الحالي
+  rescheduleSession(session: LiveSession): void {
+    if (!this.isMissedSession(session)) return;
+
+    this.editSession(session);
+
+    // نمسح الموعد القديم حتى تختار المدربة موعدًا جديدًا.
+    this.form.date = '';
+    this.form.time = '';
   }
 
   upcomingCount = computed(() => {
@@ -386,10 +456,7 @@ export class TrainerLiveSessions implements OnInit, OnDestroy {
       return;
     }
 
-    if (
-      this.editingId() === null &&
-      start.getTime() <= Date.now()
-    ) {
+    if (start.getTime() <= Date.now()) {
       this.errorMessage.set(
         'اختر موعدًا مستقبليًا للجلسة.'
       );
