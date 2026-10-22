@@ -20,6 +20,9 @@
         <button class="tab-btn" [class.active]="currentSubSection === 'trainee'" (click)="setSubSection('trainee')">
           تقارير المتدربين
         </button>
+        <button class="tab-btn" [class.active]="currentSubSection === 'supervisor'" (click)="setSubSection('supervisor')">
+          تقارير المشرفين
+        </button>
       </div>
     </div>
   </div>
@@ -461,6 +464,363 @@
 
     </div>
   </ng-container>
+
+  
+<!-- =========================================================
+     القسم الرابع: تقارير المشرفين
+========================================================== -->
+<ng-container *ngIf="currentSubSection === 'supervisor'">
+
+  <!-- عنوان القسم -->
+  <div class="header-section">
+    <div>
+      <h2>تقارير وتحليلات المشرفين</h2>
+      <p>
+        متابعة المشرفين في الشركات، والمتدربين المسندين إليهم،
+        والحضور والتقييمات الشهرية من قاعدة البيانات
+      </p>
+    </div>
+
+    <div class="actions-left" style="display: flex; gap: 8px;">
+      <button class="btn-pdf" (click)="exportToPDF()">
+        طباعة PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- بطاقات الإحصائيات -->
+  <div class="summary-metrics-grid"
+       style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+
+    <div class="metric-card">
+      <span class="metric-value">
+        {{ supervisorTotalCount }}
+      </span>
+      <span class="metric-label">إجمالي المشرفين</span>
+    </div>
+
+    <div class="metric-card">
+      <span class="metric-value green">
+        {{ supervisorAssignedTrainees }}
+      </span>
+      <span class="metric-label">المتدربون المسندون</span>
+    </div>
+
+    <div class="metric-card">
+      <span class="metric-value" style="color: #f59e0b;">
+        {{ supervisorAverageAttendance !== null
+            ? (supervisorAverageAttendance + '%')
+            : '—' }}
+      </span>
+      <span class="metric-label">متوسط حضور المتدربين تحت الإشراف</span>
+    </div>
+
+    <div class="metric-card">
+      <span class="metric-value blue">
+        {{ supervisorTrainerEvaluations }}
+      </span>
+      <span class="metric-label">تقييمات المدربين خلال الشهر</span>
+    </div>
+
+    <div class="metric-card">
+      <span class="metric-value blue">
+        {{ supervisorActiveCount }}
+      </span>
+      <span class="metric-label">المشرفون النشطون</span>
+    </div>
+
+  </div>
+
+  <!-- البحث والفلترة -->
+  <div class="filter-toolbar-card">
+
+    <div class="search-input-wrap">
+      <input
+        type="text"
+        placeholder="ابحث باسم المشرف أو القسم أو الشركة أو رقم المعرف..."
+        [(ngModel)]="supervisorSearchTerm"
+        (input)="applySupervisorFilters()"
+      />
+
+      <button
+        class="clear-search-btn"
+        *ngIf="supervisorSearchTerm"
+        (click)="supervisorSearchTerm = ''; applySupervisorFilters()">
+        ✕
+      </button>
+    </div>
+
+    <div class="filters-actions-wrap">
+
+      <select
+        class="custom-select-filter"
+        [(ngModel)]="supervisorCompanyFilter"
+        (change)="applySupervisorFilters()">
+
+        <option value="ALL">جميع الشركات</option>
+        <option
+          *ngFor="let company of supervisorCompanies"
+          [value]="company">
+          {{ company }}
+        </option>
+      </select>
+
+      <select
+        class="custom-select-filter"
+        [(ngModel)]="supervisorStatusFilter"
+        (change)="applySupervisorFilters()">
+
+        <option value="ALL">جميع الحالات</option>
+        <option value="Active">نشط</option>
+        <option value="Inactive">غير نشط</option>
+        <option value="Suspended">موقوف</option>
+      </select>
+
+      <button
+        class="btn-reset-filters"
+        *ngIf="supervisorSearchTerm ||
+               supervisorCompanyFilter !== 'ALL' ||
+               supervisorStatusFilter !== 'ALL'"
+        (click)="resetSupervisorFilters()">
+        إعادة تعيين ↺
+      </button>
+
+    </div>
+  </div>
+
+  <!-- اختيار فترة التقرير -->
+  <div class="filter-toolbar-card"
+       style="margin-bottom: 20px;">
+
+    <div class="filters-actions-wrap">
+
+      <label for="supervisor-report-month">الشهر:</label>
+
+      <select
+        id="supervisor-report-month"
+        class="custom-select-filter"
+        [(ngModel)]="supervisorMonth">
+
+        <option [ngValue]="1">يناير</option>
+        <option [ngValue]="2">فبراير</option>
+        <option [ngValue]="3">مارس</option>
+        <option [ngValue]="4">أبريل</option>
+        <option [ngValue]="5">مايو</option>
+        <option [ngValue]="6">يونيو</option>
+        <option [ngValue]="7">يوليو</option>
+        <option [ngValue]="8">أغسطس</option>
+        <option [ngValue]="9">سبتمبر</option>
+        <option [ngValue]="10">أكتوبر</option>
+        <option [ngValue]="11">نوفمبر</option>
+        <option [ngValue]="12">ديسمبر</option>
+      </select>
+
+      <label for="supervisor-report-year">السنة:</label>
+
+      <input
+        id="supervisor-report-year"
+        type="number"
+        min="2000"
+        max="9998"
+        [(ngModel)]="supervisorYear"
+        class="custom-select-filter"
+        style="width: 110px;"
+      />
+
+      <button
+        class="btn-reset-filters"
+        [disabled]="supervisorLoading"
+        (click)="loadSupervisorsData()">
+        تحديث التقرير ↻
+      </button>
+
+    </div>
+  </div>
+
+  <!-- التحميل -->
+  <div *ngIf="supervisorLoading" class="loading-state">
+    <div class="custom-spinner"></div>
+    <span>جاري تحميل تقارير المشرفين من قاعدة البيانات...</span>
+  </div>
+
+  <!-- الخطأ -->
+  <div *ngIf="!supervisorLoading && supervisorError"
+       class="no-results-box">
+
+    <h4>{{ supervisorError }}</h4>
+
+    <button
+      class="btn-reset-filters"
+      (click)="loadSupervisorsData()">
+      إعادة المحاولة
+    </button>
+  </div>
+
+  <!-- جدول المشرفين -->
+  <div
+    class="table-card"
+    *ngIf="!supervisorLoading && !supervisorError">
+
+    <div class="section-badge-header"
+         style="display: flex; justify-content: space-between;
+                align-items: center; margin-bottom: 20px;">
+
+      <span class="badge-total-results">
+        نتائج البحث: {{ filteredSupervisorsList.length }} مشرف
+      </span>
+
+      <h3 class="section-card-title">
+        سجل أداء ومتابعة المشرفين
+      </h3>
+
+    </div>
+
+    <div style="overflow-x: auto;">
+
+      <table
+        class="custom-table"
+        *ngIf="filteredSupervisorsList.length > 0">
+
+        <thead>
+          <tr>
+            <th>المشرف</th>
+            <th>الشركة</th>
+            <th>القسم / الوظيفة</th>
+            <th>الحالة</th>
+            <th>المتدربون المسندون</th>
+            <th>متوسط حضور المتدربين</th>
+            <th>تقييمات المدربين المنجزة</th>
+            <th>عدد المدربين الذين تم تقييمهم</th>
+            <th>آخر تقييم للمدربين</th>
+            <th>مراجعة أداء المشرف</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let supervisor of filteredSupervisorsList">
+
+            <td class="bold text-navy-strong">
+              <div>{{ supervisor.fullName || '—' }}</div>
+              <small style="color: #64748b;">
+                #{{ supervisor.supervisorId }}
+              </small>
+            </td>
+
+            <td>
+              {{ supervisor.companyName || '—' }}
+            </td>
+
+            <td>
+              <div class="major-title">
+                {{ supervisor.department || '—' }}
+              </div>
+              <small class="company-sub-title">
+                {{ supervisor.position || '—' }}
+              </small>
+            </td>
+
+            <td>
+              <span
+                class="status-pill"
+                [style.color]="
+                  supervisor.status === 'Active'
+                    ? '#15803d'
+                    : supervisor.status === 'Suspended'
+                    ? '#dc2626'
+                    : '#64748b'">
+
+                {{
+                  supervisor.status === 'Active'
+                    ? 'نشط'
+                    : supervisor.status === 'Inactive'
+                    ? 'غير نشط'
+                    : supervisor.status === 'Suspended'
+                    ? 'موقوف'
+                    : (supervisor.status || '—')
+                }}
+
+              </span>
+            </td>
+
+            <td>
+              <strong>
+                {{ supervisor.assignedTraineesCount }}
+              </strong>
+            </td>
+
+            <td>
+              <strong style="color: #059669;">
+                {{
+                  supervisor.averageAttendanceRate !== null
+                    ? (supervisor.averageAttendanceRate + '%')
+                    : '—'
+                }}
+              </strong>
+            </td>
+
+           <td>
+  <strong style="color: #0D1C8C;">
+    {{ supervisor.trainerEvaluationsCount }}
+  </strong>
+</td>
+
+<td>
+  <strong>
+    {{ supervisor.evaluatedTrainersCount }}
+  </strong>
+</td>
+
+<td>
+  {{
+    supervisor.lastTrainerEvaluationDate
+      ? (supervisor.lastTrainerEvaluationDate | date:'yyyy-MM-dd')
+      : 'لا يوجد'
+  }}
+</td>
+
+<td>
+  {{
+    supervisor.needsFollowUp === null ||
+    supervisor.needsFollowUp === undefined
+      ? 'غير محدد'
+      : supervisor.needsFollowUp
+        ? 'يحتاج مراجعة'
+        : 'لا يحتاج مراجعة'
+  }}
+</td>
+
+           
+          </tr>
+        </tbody>
+
+      </table>
+
+    </div>
+
+    <!-- لا توجد نتائج -->
+    <div
+      class="no-results-box"
+      *ngIf="filteredSupervisorsList.length === 0">
+
+      <h4>لا توجد تقارير مشرفين مطابقة للبحث</h4>
+
+      <button
+        class="btn-reset-filters"
+        (click)="resetSupervisorFilters()">
+        إعادة تعيين الفلاتر
+      </button>
+
+    </div>
+
+  </div>
+
+  <p style="font-size: 12px; color: #64748b; margin-top: 12px;">
+    ملاحظة: علامة (—) تعني عدم توفر بيانات كافية.
+    حالات المتابعة ستظهر عند اعتماد قاعدة احتسابها في النظام.
+  </p>
+
+</ng-container>
+
 
   <!-- =========================================================
        القسم الثاني: تقارير المدربين
@@ -1250,5 +1610,357 @@
     </div>
 
   </ng-container>
+
+  <ng-container *ngIf="currentSubSection === 'supervisor'">
+
+  <!-- عنوان القسم -->
+  <div class="header-section">
+    <div>
+      <h2>تقارير وتحليلات المشرفين</h2>
+      <p>
+        متابعة المشرفين في الشركات، والمتدربين المسندين إليهم،
+        والحضور والتقييمات الشهرية من قاعدة البيانات
+      </p>
+    </div>
+
+    <div class="actions-left" style="display: flex; gap: 8px;">
+      <button class="btn-pdf" (click)="exportToPDF()">
+        طباعة PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- بطاقات الإحصائيات -->
+  <div class="summary-metrics-grid"
+       style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+
+    <div class="metric-card">
+      <span class="metric-value">
+        {{ supervisorTotalCount }}
+      </span>
+      <span class="metric-label">إجمالي المشرفين</span>
+    </div>
+
+    <div class="metric-card">
+      <span class="metric-value green">
+        {{ supervisorAssignedTrainees }}
+      </span>
+      <span class="metric-label">المتدربون المسندون</span>
+    </div>
+
+    <div class="metric-card">
+      <span class="metric-value" style="color: #f59e0b;">
+        {{ supervisorAverageAttendance !== null
+            ? (supervisorAverageAttendance + '%')
+            : '—' }}
+      </span>
+      <span class="metric-label">متوسط حضور المتدربين تحت الإشراف</span>
+    </div>
+
+    <div class="metric-card">
+      <span class="metric-value blue">
+        {{ supervisorTrainerEvaluations }}
+      </span>
+      <span class="metric-label">تقييمات المدربين خلال الشهر</span>
+    </div>
+
+    <div class="metric-card">
+      <span class="metric-value blue">
+        {{ supervisorActiveCount }}
+      </span>
+      <span class="metric-label">المشرفون النشطون</span>
+    </div>
+
+  </div>
+
+  <!-- البحث والفلترة -->
+  <div class="filter-toolbar-card">
+
+    <div class="search-input-wrap">
+      <input
+        type="text"
+        placeholder="ابحث باسم المشرف أو القسم أو الشركة أو رقم المعرف..."
+        [(ngModel)]="supervisorSearchTerm"
+        (input)="applySupervisorFilters()"
+      />
+
+      <button
+        class="clear-search-btn"
+        *ngIf="supervisorSearchTerm"
+        (click)="supervisorSearchTerm = ''; applySupervisorFilters()">
+        ✕
+      </button>
+    </div>
+
+    <div class="filters-actions-wrap">
+
+      <select
+        class="custom-select-filter"
+        [(ngModel)]="supervisorCompanyFilter"
+        (change)="applySupervisorFilters()">
+
+        <option value="ALL">جميع الشركات</option>
+        <option
+          *ngFor="let company of supervisorCompanies"
+          [value]="company">
+          {{ company }}
+        </option>
+      </select>
+
+      <select
+        class="custom-select-filter"
+        [(ngModel)]="supervisorStatusFilter"
+        (change)="applySupervisorFilters()">
+
+        <option value="ALL">جميع الحالات</option>
+        <option value="Active">نشط</option>
+        <option value="Inactive">غير نشط</option>
+        <option value="Suspended">موقوف</option>
+      </select>
+
+      <button
+        class="btn-reset-filters"
+        *ngIf="supervisorSearchTerm ||
+               supervisorCompanyFilter !== 'ALL' ||
+               supervisorStatusFilter !== 'ALL'"
+        (click)="resetSupervisorFilters()">
+        إعادة تعيين ↺
+      </button>
+
+    </div>
+  </div>
+
+  <!-- اختيار فترة التقرير -->
+  <div class="filter-toolbar-card"
+       style="margin-bottom: 20px;">
+
+    <div class="filters-actions-wrap">
+
+      <label for="supervisor-report-month">الشهر:</label>
+
+      <select
+        id="supervisor-report-month"
+        class="custom-select-filter"
+        [(ngModel)]="supervisorMonth">
+
+        <option [ngValue]="1">يناير</option>
+        <option [ngValue]="2">فبراير</option>
+        <option [ngValue]="3">مارس</option>
+        <option [ngValue]="4">أبريل</option>
+        <option [ngValue]="5">مايو</option>
+        <option [ngValue]="6">يونيو</option>
+        <option [ngValue]="7">يوليو</option>
+        <option [ngValue]="8">أغسطس</option>
+        <option [ngValue]="9">سبتمبر</option>
+        <option [ngValue]="10">أكتوبر</option>
+        <option [ngValue]="11">نوفمبر</option>
+        <option [ngValue]="12">ديسمبر</option>
+      </select>
+
+      <label for="supervisor-report-year">السنة:</label>
+
+      <input
+        id="supervisor-report-year"
+        type="number"
+        min="2000"
+        max="9998"
+        [(ngModel)]="supervisorYear"
+        class="custom-select-filter"
+        style="width: 110px;"
+      />
+
+      <button
+        class="btn-reset-filters"
+        [disabled]="supervisorLoading"
+        (click)="loadSupervisorsData()">
+        تحديث التقرير ↻
+      </button>
+
+    </div>
+  </div>
+
+  <!-- التحميل -->
+  <div *ngIf="supervisorLoading" class="loading-state">
+    <div class="custom-spinner"></div>
+    <span>جاري تحميل تقارير المشرفين من قاعدة البيانات...</span>
+  </div>
+
+  <!-- الخطأ -->
+  <div *ngIf="!supervisorLoading && supervisorError"
+       class="no-results-box">
+
+    <h4>{{ supervisorError }}</h4>
+
+    <button
+      class="btn-reset-filters"
+      (click)="loadSupervisorsData()">
+      إعادة المحاولة
+    </button>
+  </div>
+
+  <!-- جدول المشرفين -->
+  <div
+    class="table-card"
+    *ngIf="!supervisorLoading && !supervisorError">
+
+    <div class="section-badge-header"
+         style="display: flex; justify-content: space-between;
+                align-items: center; margin-bottom: 20px;">
+
+      <span class="badge-total-results">
+        نتائج البحث: {{ filteredSupervisorsList.length }} مشرف
+      </span>
+
+      <h3 class="section-card-title">
+        سجل أداء ومتابعة المشرفين
+      </h3>
+
+    </div>
+
+    <div style="overflow-x: auto;">
+
+      <table
+        class="custom-table"
+        *ngIf="filteredSupervisorsList.length > 0">
+
+        <thead>
+          <tr>
+            <th>المشرف</th>
+            <th>الشركة</th>
+            <th>القسم / الوظيفة</th>
+            <th>الحالة</th>
+            <th>المتدربون المسندون</th>
+            <th>متوسط حضور المتدربين</th>
+            <th>تقييمات المدربين المنجزة</th>
+            <th>عدد المدربين الذين تم تقييمهم</th>
+            <th>آخر تقييم للمدربين</th>
+            <th>مراجعة أداء المشرف</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let supervisor of filteredSupervisorsList">
+
+            <td class="bold text-navy-strong">
+              <div>{{ supervisor.fullName || '—' }}</div>
+              <small style="color: #64748b;">
+                #{{ supervisor.supervisorId }}
+              </small>
+            </td>
+
+            <td>
+              {{ supervisor.companyName || '—' }}
+            </td>
+
+            <td>
+              <div class="major-title">
+                {{ supervisor.department || '—' }}
+              </div>
+              <small class="company-sub-title">
+                {{ supervisor.position || '—' }}
+              </small>
+            </td>
+
+            <td>
+              <span
+                class="status-pill"
+                [style.color]="
+                  supervisor.status === 'Active'
+                    ? '#15803d'
+                    : supervisor.status === 'Suspended'
+                    ? '#dc2626'
+                    : '#64748b'">
+
+                {{
+                  supervisor.status === 'Active'
+                    ? 'نشط'
+                    : supervisor.status === 'Inactive'
+                    ? 'غير نشط'
+                    : supervisor.status === 'Suspended'
+                    ? 'موقوف'
+                    : (supervisor.status || '—')
+                }}
+
+              </span>
+            </td>
+
+            <td>
+              <strong>
+                {{ supervisor.assignedTraineesCount }}
+              </strong>
+            </td>
+
+            <td>
+              <strong style="color: #059669;">
+                {{
+                  supervisor.averageAttendanceRate !== null
+                    ? (supervisor.averageAttendanceRate + '%')
+                    : '—'
+                }}
+              </strong>
+            </td>
+
+           <td>
+  <strong style="color: #0D1C8C;">
+    {{ supervisor.trainerEvaluationsCount }}
+  </strong>
+</td>
+
+<td>
+  <strong>
+    {{ supervisor.evaluatedTrainersCount }}
+  </strong>
+</td>
+
+<td>
+  {{
+    supervisor.lastTrainerEvaluationDate
+      ? (supervisor.lastTrainerEvaluationDate | date:'yyyy-MM-dd')
+      : 'لا يوجد'
+  }}
+</td>
+
+<td>
+  {{
+    supervisor.needsFollowUp === null ||
+    supervisor.needsFollowUp === undefined
+      ? 'غير محدد'
+      : supervisor.needsFollowUp
+        ? 'يحتاج مراجعة'
+        : 'لا يحتاج مراجعة'
+  }}
+</td>
+
+           
+          </tr>
+        </tbody>
+
+      </table>
+
+    </div>
+
+    <!-- لا توجد نتائج -->
+    <div
+      class="no-results-box"
+      *ngIf="filteredSupervisorsList.length === 0">
+
+      <h4>لا توجد تقارير مشرفين مطابقة للبحث</h4>
+
+      <button
+        class="btn-reset-filters"
+        (click)="resetSupervisorFilters()">
+        إعادة تعيين الفلاتر
+      </button>
+
+    </div>
+
+  </div>
+
+  <p style="font-size: 12px; color: #64748b; margin-top: 12px;">
+    ملاحظة: علامة (—) تعني عدم توفر بيانات كافية.
+    حالات المتابعة ستظهر عند اعتماد قاعدة احتسابها في النظام.
+  </p>
+
+</ng-container>
 
 </div>

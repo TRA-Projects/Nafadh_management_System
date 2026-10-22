@@ -3,10 +3,30 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
-  AnnouncementDto, AuditLogDto, BatchDto, BatchPerformanceReportDto, CertificateDto, CompanyDto,
-  ConversationDetailDto, ConversationListItemDto, ConversationMessageDto, EvaluationBucketRollupDto,
-  EvaluationDto, NotificationDto, ProgramDto, TraineeListItemDto, TraineeProfileDto,
-  TraineeDashboardSummaryDto, UserResponseDto, WarningDto, RoleDto, DashboardChartsDto, ModuleDto,
+ AnnouncementDto,
+  AuditLogDto,
+  BatchDto,
+  BatchPerformanceReportDto,
+  CertificateDto,
+  CompanyDto,
+  ConversationDetailDto,
+  ConversationListItemDto,
+  ConversationMessageDto,
+  EvaluationBucketRollupDto,
+  EvaluationDto,
+  NotificationDto,
+  ProgramDto,
+  TraineeListItemDto,
+  TraineeProfileDto,
+  TraineeDashboardSummaryDto,
+  UserResponseDto,
+  WarningDto,
+  RoleDto,
+  DashboardChartsDto,
+  ModuleDto,
+  AdminBatchGroupDto,
+  AdminBatchGroupMessageDto,
+  AdminSupervisorReportDto
 } from '../../../core/models/dtos';
 
 export interface TraineeCertificateStatusDto {
@@ -90,7 +110,7 @@ export class AdminApi {
     return this.http.get<{ items: TraineeListItemDto[]; totalCount: number }>(`${this.base}/Trainee`, { params: httpParams });
   }
 
-  // 🟢 دالة جلب سجل نتائج الاختبارات الخاصة بالمتدرب (مطابقة لـ QuizResultDto في الباك إند)
+  // 🟢 دالة جلب سجل نتائج الاختبارات الخاصة بالمتدرب
   getTraineeExams(traineeId: number): Observable<any[]> {
     const cleanId = this.sanitizeId(traineeId);
     return this.http.get<any[]>(`${this.base}/QuizResult/trainee/${cleanId}`);
@@ -173,8 +193,15 @@ export class AdminApi {
     return this.http.get<any[]>(`${this.base}/Track`);
   }
 
+  // جلب المدربين (تم استخدامها في صفحة الإشعارات)
   getTrainers(params?: any): Observable<any> {
     return this.http.get(`${this.base}/Trainer`, { params });
+  }
+
+  // دفعات مدرب معيّن (تُستخدم لمعرفة المدرب الراصد لكل دفعة)
+  getTrainerBatches(trainerId: number): Observable<any[]> {
+    const cleanId = this.sanitizeId(trainerId);
+    return this.http.get<any[]>(`${this.base}/Trainer/${cleanId}/batches`);
   }
 
   // ==========================================================
@@ -334,6 +361,22 @@ export class AdminApi {
     return this.http.get<ConversationDetailDto>(`${this.base}/Conversation/${this.sanitizeId(id)}`);
   }
 
+  // Get all training batch groups for Admin
+  getAdminBatchGroups(): Observable<AdminBatchGroupDto[]> {
+    return this.http.get<AdminBatchGroupDto[]>(
+      `${this.base}/admin/batch-groups`
+    );
+  }
+
+  // Get all training batch groups messages for Admin
+  getAdminBatchGroupMessages(
+    conversationId: number
+  ): Observable<AdminBatchGroupMessageDto[]> {
+    return this.http.get<AdminBatchGroupMessageDto[]>(
+      `${this.base}/admin/batch-groups/${conversationId}/messages`
+    );
+  }
+
   replyToConversation(id: number, dto: unknown): Observable<ConversationMessageDto> {
     return this.http.post<ConversationMessageDto>(`${this.base}/Conversation/${this.sanitizeId(id)}/messages`, dto);
   }
@@ -341,6 +384,30 @@ export class AdminApi {
   // ==========================================================
   // 12. Reports & Audit
   // ==========================================================
+
+  // Get supervisor reports for Admin
+  getAdminSupervisorReports(
+    year?: number,
+    month?: number
+  ): Observable<AdminSupervisorReportDto[]> {
+
+    let params = new HttpParams();
+
+    if (year !== undefined) {
+      params = params.set('year', String(year));
+    }
+
+    if (month !== undefined) {
+      params = params.set('month', String(month));
+    }
+
+    return this.http.get<AdminSupervisorReportDto[]>(
+      `${this.base}/admin/reports/supervisors`,
+      { params }
+    );
+  }
+
+
   getBatchPerformanceReport(batchId: number, pageNumber: number = 1, pageSize: number = 15): Observable<BatchPerformanceReportDto> {
     const params = new HttpParams()
       .set('pageNumber', String(pageNumber))
