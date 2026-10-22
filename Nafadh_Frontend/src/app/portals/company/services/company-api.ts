@@ -404,7 +404,17 @@ downloadMyAccountPdf(): Observable<Blob> {
       `${this.base}/Evaluation/enrollment/${enrollmentId}`
     );
   }
+getEvaluationBuckets(enrollmentId: number): Observable<Record<string, number | null>> {
+  return this.http.get<Record<string, number | null>>(
+    `${this.base}/Evaluation/enrollment/${enrollmentId}/by-bucket`
+  );
+}
 
+uploadTraineeImage(traineeId: number, file: File): Observable<unknown> {
+  const form = new FormData();
+  form.append('file', file);
+  return this.http.post(`${this.base}/Enrollment/trainee/${traineeId}/upload-image`, form);
+}
   // ============================================================
   // Reports
   // ============================================================
