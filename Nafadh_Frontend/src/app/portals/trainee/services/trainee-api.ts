@@ -1226,4 +1226,11 @@ getSessionsByBatch(
       `${this.base}/quiz-results/trainee/${traineeId}`
     );
   }
+    registerViolation(attemptId: number): Observable<any> {
+    return this.http.post<any>(`${this.base}/quiz-attempts/${attemptId}/violation`, {});
+  }
+
+  sendProctoringEvent(attemptId: number, data: FormData): Observable<any> {
+    return this.http.post<any>(`${this.base}/quiz-proctoring/attempts/${attemptId}/events`, data);
+  }
 }
