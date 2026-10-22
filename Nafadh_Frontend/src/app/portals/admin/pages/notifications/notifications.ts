@@ -111,6 +111,8 @@ export class AdminNotifications implements OnInit {
 
   // متغيرات التصفية للمدربين
   trainerSearch = '';
+  trainerFilterSpecialty = '';
+  trainerFilterExperience = '';
 
   selectedNotification = signal<NotificationViewModel | null>(null);
   toastMessage = signal<string | null>(null);
@@ -281,33 +283,26 @@ export class AdminNotifications implements OnInit {
         const mappedTrainees = items.map((t: any) => {
           const name = t.fullName || t.FullName || t.name || t.Name || 'اسم غير متوفر';
           const code = t.registrationNumber || t.RegistrationNumber || t.code || t.Code || 'N/A';
-          
           let track = t.trackName || t.TrackName || t.track?.name || t.Track?.Name || t.specialty || t.programName || 'غير محدد';
           let companyName = t.companyName || t.CompanyName || t.company?.name || t.Company?.Name || 'غير محدد';
           let batch = t.batchName || t.BatchName || t.batch?.name || t.Batch?.Name || 'غير محدد';
 
-          return {
-            id: String(t.traineeId || t.id || t.TraineeId || t.Id),
-            name: name,
-            code: code,
-            track: track,
-            companyName: companyName,
-            batch: batch
-          };
+          return { id: String(t.traineeId || t.id || t.TraineeId || t.Id), name, code, track, companyName, batch };
         });
         this.dbTrainees.set(mappedTrainees);
       },
       error: () => this.dbTrainees.set([])
     });
 
-    // 3. جلب المدربين
+    // 3. جلب المدربين (مع التخصص وسنوات الخبرة)
     this.api.getTrainers({ pageSize: 10000 }).subscribe({
       next: (res: any) => {
         const items = Array.isArray(res) ? res : (res?.items || res?.data || []);
         const mappedTrainers = items.map((tr: any) => ({
           id: String(tr.trainerId || tr.id || tr.TrainerId || tr.Id),
           name: tr.fullName || tr.name || tr.FullName || tr.Name || 'اسم غير متوفر',
-          specialty: tr.specialty || tr.Specialty || tr.trackName || 'غير محدد'
+          specialty: tr.specialty || tr.Specialty || 'غير محدد',
+          experienceYears: tr.experienceYears || tr.ExperienceYears || 0
         }));
         this.dbTrainers.set(mappedTrainers);
         this.isLoadingData.set(false);
@@ -333,7 +328,7 @@ export class AdminNotifications implements OnInit {
     };
     this.resetCompanyFilters();
     this.resetTraineeFilters();
-    this.trainerSearch = '';
+    this.resetTrainerFilters();
     this.activeAnnounceTab = 'edit';
     this.announceError.set(null);
     
@@ -375,10 +370,7 @@ export class AdminNotifications implements OnInit {
   getFilteredCompanies() {
     return this.dbCompanies().filter(c => {
       const term = this.companySearch.toLowerCase();
-      const matchesSearch = !term || 
-        c.name.toLowerCase().includes(term) || 
-        c.commercialRegister.toLowerCase().includes(term);
-
+      const matchesSearch = !term || c.name.toLowerCase().includes(term) || c.commercialRegister.toLowerCase().includes(term);
       const matchesWorkField = !this.companyFilterWorkField || c.workField === this.companyFilterWorkField;
 
       let matchesCapacity = true;
@@ -391,14 +383,12 @@ export class AdminNotifications implements OnInit {
   }
   getUniqueCompanyWorkFields() { return [...new Set(this.dbCompanies().map(c => c.workField))].filter(Boolean); }
   resetCompanyFilters() { this.companySearch = ''; this.companyFilterWorkField = ''; this.companyFilterCapacity = ''; }
-  
   toggleCompany(id: string) {
     const ids = this.newAnnounceData.selectedCompanyIds;
     this.newAnnounceData.selectedCompanyIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id];
   }
   isCompanySelected(id: string) { return this.newAnnounceData.selectedCompanyIds.includes(id); }
   getSelectedCompanyObjects() { return this.dbCompanies().filter(c => this.newAnnounceData.selectedCompanyIds.includes(c.id)); }
-  
   selectAllCompanies(event: any) {
     const filtered = this.getFilteredCompanies();
     if (event.target.checked) {
@@ -414,12 +404,7 @@ export class AdminNotifications implements OnInit {
   getFilteredTrainees() {
     return this.dbTrainees().filter(t => {
       const term = this.traineeSearch.toLowerCase();
-      const matchesSearch = !term || 
-        t.name.toLowerCase().includes(term) || 
-        t.code.toLowerCase().includes(term) ||
-        t.track.toLowerCase().includes(term) ||
-        t.companyName.toLowerCase().includes(term);
-
+      const matchesSearch = !term || t.name.toLowerCase().includes(term) || t.code.toLowerCase().includes(term) || t.track.toLowerCase().includes(term) || t.companyName.toLowerCase().includes(term);
       const matchesTrack = !this.traineeFilterTrack || t.track === this.traineeFilterTrack;
       const matchesBatch = !this.traineeFilterBatch || t.batch === this.traineeFilterBatch;
       const matchesCompany = !this.traineeFilterCompany || t.companyName === this.traineeFilterCompany;
@@ -448,13 +433,24 @@ export class AdminNotifications implements OnInit {
   getUniqueBatches() { return [...new Set(this.dbTrainees().map(t => t.batch))].filter(Boolean); }
   getUniqueTraineeCompanies() { return [...new Set(this.dbTrainees().map(t => t.companyName))].filter(Boolean); }
 
-  // --- المدربين ---
+  // --- المدربين (التصفية الذكية) ---
   getFilteredTrainers() {
-    const list = this.dbTrainers();
-    if (!this.trainerSearch) return list;
-    const term = this.trainerSearch.toLowerCase();
-    return list.filter(t => t.name.toLowerCase().includes(term) || t.specialty.toLowerCase().includes(term));
+    return this.dbTrainers().filter(t => {
+      const term = this.trainerSearch.toLowerCase();
+      const matchesSearch = !term || t.name.toLowerCase().includes(term) || t.specialty.toLowerCase().includes(term);
+      const matchesSpecialty = !this.trainerFilterSpecialty || t.specialty === this.trainerFilterSpecialty;
+
+      let matchesExperience = true;
+      if (this.trainerFilterExperience === 'high') matchesExperience = t.experienceYears >= 5;
+      else if (this.trainerFilterExperience === 'medium') matchesExperience = t.experienceYears >= 2 && t.experienceYears < 5;
+      else if (this.trainerFilterExperience === 'low') matchesExperience = t.experienceYears < 2;
+
+      return matchesSearch && matchesSpecialty && matchesExperience;
+    });
   }
+  getUniqueTrainerSpecialties() { return [...new Set(this.dbTrainers().map(t => t.specialty))].filter(Boolean); }
+  resetTrainerFilters() { this.trainerSearch = ''; this.trainerFilterSpecialty = ''; this.trainerFilterExperience = ''; }
+  
   toggleTrainer(id: string) {
     const ids = this.newAnnounceData.selectedTrainerIds;
     this.newAnnounceData.selectedTrainerIds = ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id];

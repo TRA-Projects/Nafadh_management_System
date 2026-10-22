@@ -1254,7 +1254,7 @@
     cursor: pointer;
 }
 
-/* 4. القائمة المنسدلة للمتدربين/الشركات */
+/* 4. القائمة المنسدلة للمتدربين/الشركات/المدربين */
 .smart-dropdown-list {
     max-height: 350px;
     overflow-y: auto;
