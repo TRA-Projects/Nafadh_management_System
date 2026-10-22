@@ -125,7 +125,7 @@ export const EXTERNAL_ROUTES: Routes = [
     ],
   },
   {
-    path: 'notification-templates',
+    path: 'notification-templates/:id',
     providers: [
       provideState(adminSystemFeature),
       provideState(localeFeature),
