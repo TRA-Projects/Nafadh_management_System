@@ -236,8 +236,6 @@ export class AdminNotifications implements OnInit {
 
   deleteNotification(id: number, event?: Event): void {
     event?.stopPropagation();
-    // يفضل هنا استدعاء API الحذف إذا كان متاحاً
-    // this.api.deleteAnnouncement(id).subscribe(...)
     this.rawNotifications.update((list) => list.filter((n) => Number(n.announcementId ?? (n as any).id) !== id));
     if (this.selectedNotification()?.notificationId === id) this.selectedNotification.set(null);
     this.showToast('تم حذف الإشعار بنجاح.');
@@ -260,10 +258,9 @@ export class AdminNotifications implements OnInit {
     this.api.getCompanies().subscribe({
       next: (res: any) => {
         const items = Array.isArray(res) ? res : (res?.items || res?.data || []);
-        // توحيد أسماء الحقول (Mapping)
         const mappedCompanies = items.map((c: any) => ({
-          id: String(c.companyId || c.id || c.CompanyId),
-          name: c.companyName || c.name || c.CompanyName,
+          id: String(c.companyId || c.id || c.CompanyId || c.Id),
+          name: c.companyName || c.name || c.CompanyName || c.Name || 'شركة غير مسماة',
           traineesCount: c.traineesCount || c.TraineesCount || 0
         }));
         this.dbCompanies.set(mappedCompanies);
@@ -271,18 +268,45 @@ export class AdminNotifications implements OnInit {
       error: () => this.dbCompanies.set([])
     });
 
-    // 2. جلب المتدربين
+    // 2. جلب المتدربين (معالجة كافة الاحتمالات للحقول)
     this.api.getTrainees({ pageSize: 10000 }).subscribe({
       next: (res: any) => {
         const items = Array.isArray(res) ? res : (res?.items || res?.data || []);
-        const mappedTrainees = items.map((t: any) => ({
-          id: String(t.traineeId || t.id || t.TraineeId),
-          name: t.fullName || t.name || t.FullName || 'اسم غير متوفر',
-          code: t.registrationNumber || t.code || t.RegistrationNumber || 'N/A',
-          track: t.trackName || t.track || t.TrackName || 'غير محدد',
-          companyName: t.companyName || t.CompanyName || 'بدون شركة',
-          batch: t.batchName || t.batch || t.BatchName || 'غير محدد'
-        }));
+        const mappedTrainees = items.map((t: any) => {
+          const name = t.fullName || t.FullName || t.name || t.Name || 'اسم غير متوفر';
+          const code = t.registrationNumber || t.RegistrationNumber || t.code || t.Code || 'N/A';
+          
+          let track = 'غير محدد';
+          if (t.trackName) track = t.trackName;
+          else if (t.TrackName) track = t.TrackName;
+          else if (t.track && typeof t.track === 'string') track = t.track;
+          else if (t.track && t.track.name) track = t.track.name;
+          else if (t.Track && t.Track.Name) track = t.Track.Name;
+          else if (t.specialty) track = t.specialty;
+          else if (t.programName) track = t.programName;
+
+          let companyName = 'غير محدد';
+          if (t.companyName) companyName = t.companyName;
+          else if (t.CompanyName) companyName = t.CompanyName;
+          else if (t.company && typeof t.company === 'string') companyName = t.company;
+          else if (t.company && t.company.name) companyName = t.company.name;
+          
+          let batch = 'غير محدد';
+          if (t.batchName) batch = t.batchName;
+          else if (t.BatchName) batch = t.BatchName;
+          else if (t.batch && typeof t.batch === 'string') batch = t.batch;
+          else if (t.batch && t.batch.name) batch = t.batch.name;
+          else if (t.Batch && t.Batch.Name) batch = t.Batch.Name;
+
+          return {
+            id: String(t.traineeId || t.id || t.TraineeId || t.Id),
+            name: name,
+            code: code,
+            track: track,
+            companyName: companyName,
+            batch: batch
+          };
+        });
         this.dbTrainees.set(mappedTrainees);
       },
       error: () => this.dbTrainees.set([])
@@ -293,8 +317,8 @@ export class AdminNotifications implements OnInit {
       next: (res: any) => {
         const items = Array.isArray(res) ? res : (res?.items || res?.data || []);
         const mappedTrainers = items.map((tr: any) => ({
-          id: String(tr.trainerId || tr.id || tr.TrainerId),
-          name: tr.fullName || tr.name || tr.FullName || 'اسم غير متوفر',
+          id: String(tr.trainerId || tr.id || tr.TrainerId || tr.Id),
+          name: tr.fullName || tr.name || tr.FullName || tr.Name || 'اسم غير متوفر',
           specialty: tr.specialty || tr.Specialty || tr.trackName || 'غير محدد'
         }));
         this.dbTrainers.set(mappedTrainers);
@@ -325,7 +349,6 @@ export class AdminNotifications implements OnInit {
     this.activeAnnounceTab = 'edit';
     this.announceError.set(null);
     
-    // جلب البيانات عند فتح النافذة
     this.fetchTargetAudienceData(); 
     
     this.showAnnounce.set(true);

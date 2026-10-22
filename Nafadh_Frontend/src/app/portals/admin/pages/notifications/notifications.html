@@ -257,7 +257,6 @@
                 </label>
               </div>
 
-              <!-- شاشة تحميل البيانات -->
               <div *ngIf="isLoadingData()" style="text-align: center; padding: 20px;">
                 <div class="spinner" style="margin: 0 auto; width: 24px; height: 24px;"></div>
                 <p style="color: #64748b; font-size: 12px; margin-top: 8px;">جاري جلب الشركات...</p>
@@ -285,7 +284,7 @@
             </div>
           </div>
 
-          <!-- إعدادات التخصيص للمتدربين (التصميم الجديد) -->
+          <!-- إعدادات التخصيص للمتدربين (التصميم الجديد المطابق للصور) -->
           <div class="sub-targeting" *ngIf="newAnnounceData.mainAudience === 'trainees'">
             <div class="radio-group" style="margin-bottom: 16px;">
               <label><input type="radio" [(ngModel)]="newAnnounceData.traineeScope" value="all_trainees"> كافة المتدربين</label>
@@ -312,29 +311,37 @@
                 <div class="filters-row">
                   <div class="filter-select">
                     <label>المسار / التخصص:</label>
-                    <select [(ngModel)]="traineeFilterTrack">
-                      <option value="">كافة التخصصات ({{ dbTrainees().length }})</option>
-                      <option *ngFor="let tr of getUniqueTracks()" [value]="tr">{{ tr }}</option>
-                    </select>
+                    <div class="custom-select-wrapper">
+                      <select class="custom-select" [(ngModel)]="traineeFilterTrack">
+                        <option value="">كافة التخصصات ({{ dbTrainees().length }})</option>
+                        <option *ngFor="let tr of getUniqueTracks()" [value]="tr">{{ tr }}</option>
+                      </select>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
                   </div>
                   <div class="filter-select">
                     <label>الدفعة (Batch):</label>
-                    <select [(ngModel)]="traineeFilterBatch">
-                      <option value="">كافة الدفعات</option>
-                      <option *ngFor="let b of getUniqueBatches()" [value]="b">{{ b }}</option>
-                    </select>
+                    <div class="custom-select-wrapper">
+                      <select class="custom-select" [(ngModel)]="traineeFilterBatch">
+                        <option value="">كافة الدفعات</option>
+                        <option *ngFor="let b of getUniqueBatches()" [value]="b">{{ b }}</option>
+                      </select>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
                   </div>
                   <div class="filter-select">
                     <label>الشركة المستضيفة:</label>
-                    <select [(ngModel)]="traineeFilterCompany">
-                      <option value="">كافة المنشآت الشريكة</option>
-                      <option *ngFor="let c of getUniqueTraineeCompanies()" [value]="c">{{ c }}</option>
-                    </select>
+                    <div class="custom-select-wrapper">
+                      <select class="custom-select" [(ngModel)]="traineeFilterCompany">
+                        <option value="">كافة المنشآت الشريكة</option>
+                        <option *ngFor="let c of getUniqueTraineeCompanies()" [value]="c">{{ c }}</option>
+                      </select>
+                      <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <!-- شاشة تحميل البيانات -->
               <div *ngIf="isLoadingData()" style="text-align: center; padding: 20px;">
                 <div class="spinner" style="margin: 0 auto; width: 24px; height: 24px;"></div>
                 <p style="color: #64748b; font-size: 12px; margin-top: 8px;">جاري جلب المتدربين...</p>
@@ -398,7 +405,6 @@
                 </div>
               </div>
 
-              <!-- شاشة تحميل البيانات -->
               <div *ngIf="isLoadingData()" style="text-align: center; padding: 20px;">
                 <div class="spinner" style="margin: 0 auto; width: 24px; height: 24px;"></div>
                 <p style="color: #64748b; font-size: 12px; margin-top: 8px;">جاري جلب المدربين...</p>

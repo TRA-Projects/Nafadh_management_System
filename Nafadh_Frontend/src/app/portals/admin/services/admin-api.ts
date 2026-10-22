@@ -174,6 +174,7 @@ export class AdminApi {
     return this.http.get<any[]>(`${this.base}/Track`);
   }
 
+  // جلب المدربين (تم استخدامها في صفحة الإشعارات)
   getTrainers(params?: any): Observable<any> {
     return this.http.get(`${this.base}/Trainer`, { params });
   }
