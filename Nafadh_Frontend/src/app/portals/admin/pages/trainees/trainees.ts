@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, computed, ViewEncapsulation } from '@angular/core';
 import { CommonModule, NgClass, NgStyle } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { forkJoin, of } from 'rxjs';
@@ -70,7 +70,7 @@ export interface TraineeAttendanceRecord {
 @Component({
   selector: 'app-admin-trainees',
   standalone: true,
-  imports: [CommonModule, NgClass, NgStyle, RouterLink, FormsModule],
+  imports: [CommonModule, NgClass, NgStyle, FormsModule],
   templateUrl: './trainees.html',
   styleUrls: ['./trainees.css'],
   encapsulation: ViewEncapsulation.None
