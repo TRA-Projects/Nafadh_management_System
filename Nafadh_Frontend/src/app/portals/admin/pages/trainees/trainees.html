@@ -1015,23 +1015,7 @@
           <!-- شريط الفلاتر: يحتوي على قائمة المسارات المطلوبة + البحث + تبويبات الحالة + زر تصدير سريع -->
           <div class="attendance-filter-row">
             
-            <!-- 👈 القائمة المنسدلة للبرامج والمسارات -->
-            <div class="track-dropdown-group">
-              <label class="track-dropdown-label">البرنامج التدريبي</label>
-              <div class="track-select-box">
-                <select 
-                  class="track-select-control"
-                  [ngModel]="attendanceTrackFilter()" 
-                  (ngModelChange)="onTrackFilterChange($event)">
-                  <option value="">كل البرامج والمسارات</option>
-                  @for (trk of availableAttendanceTracks(); track trk) {
-                    <option [value]="trk">{{ trk }}</option>
-                  }
-                </select>
-                <i class="fa-solid fa-chevron-down select-chevron"></i>
-              </div>
-            </div>
-
+            
             <!-- حقل البحث بالاسم أو الرقم المدني -->
             <div class="trainee-search-group">
               <label class="track-dropdown-label">بحث في المتدربين</label>
