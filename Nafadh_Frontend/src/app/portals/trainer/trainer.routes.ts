@@ -17,6 +17,7 @@ export const TRAINER_ROUTES: Routes = [
       { path: 'tasks', loadComponent: () => import('./pages/tasks/tasks').then((m) => m.TrainerTasks) },
       { path: 'trainees', loadComponent: () => import('./pages/trainees/trainees').then((m) => m.TrainerTrainees) },
       { path: 'reports', loadComponent: () => import('./pages/reports/reports').then((m) => m.TrainerReports) },
+      {path: 'session-report/:sessionId',loadComponent: () =>import('./pages/session-report/session-report').then((m) => m.TrainerSessionReportComponent),},
       { path: 'messages', loadComponent: () => import('./pages/messages/messages').then((m) => m.TrainerMessages) },
       { path: 'profile', loadComponent: () => import('./pages/profile/profile').then((m) => m.TrainerProfile) },
       { path: 'notifications', loadComponent: () => import('./pages/notifications/notifications').then((m) => m.TrainerNotifications) },

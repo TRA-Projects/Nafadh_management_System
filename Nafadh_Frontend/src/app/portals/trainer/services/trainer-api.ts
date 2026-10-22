@@ -278,6 +278,34 @@ export interface TrainerLivePollResultsResponse {
     percentage: number;
   }>;
 }
+export interface TrainerLiveSessionReport {
+  sessionId: number;
+  topic: string | null;
+  status: number | string;
+  attendance: {
+    totalEnrolled: number;
+    recordedCount: number;
+    presentCount: number;
+    absentCount: number;
+    lateCount: number;
+    excusedCount: number;
+    notRecordedCount: number;
+    presentPercentage: number;
+  };
+  totalPolls: number;
+  polls: Array<{
+    pollId: number;
+    question: string;
+    isOpen: boolean;
+    closedAtUtc: string | null;
+    totalVotes: number;
+    options: Array<{
+      optionId: number;
+      optionText: string;
+      voteCount: number;
+    }>;
+  }>;
+}
 @Injectable({ providedIn: 'root' })
 export class TrainerApi {
 
@@ -1693,5 +1721,11 @@ getTrainerLivePollResults(
     `${this.base}/trainer/live-sessions/${sessionId}/polls/${pollId}/results`
   );
 }
-
+getTrainerLiveSessionReport(
+  sessionId: number
+): Observable<TrainerLiveSessionReport> {
+  return this.http.get<TrainerLiveSessionReport>(
+    `${this.base}/trainer/live-sessions/${sessionId}/report`
+  );
+}
 }
