@@ -488,40 +488,61 @@
   </div>
   }
 
-  <!-- ================================================= -->
-  <!-- 4. التقييمات -->
-  <!-- ================================================= -->
-  @if (activeTab === 'eval') {
-  <div class="report-note">
-    <span class="info-icon">i</span>
-    توجد 9 تقييمات مطلوب استكمالها، منها 4 متأخرة عن الموعد المحدد.
-  </div>
-
-  <div class="stat-row">
-    <div class="stat-mini">
-      <span>تقييمات مكتملة هذا الشهر</span>
-      <b class="success-text">118</b>
-    </div>
-    <div class="stat-mini">
-      <span>تقييمات قيد الإعداد</span>
-      <b class="warning-text">9</b>
-    </div>
-    <div class="stat-mini">
-      <span>تقييمات متأخرة</span>
-      <b class="danger-text">4</b>
-    </div>
-    <div class="stat-mini">
-      <span>متوسط التقييم الشهري</span>
-      <b class="primary-text">4.2/5</b>
+<!-- ================================================= -->
+<!-- 4. التقييمات -->
+<!-- ================================================= -->
+@if (activeTab === 'eval') {
+  
+  <!-- شريط التنبيه -->
+  <div class="custom-alert">
+    <span class="custom-alert-icon">i</span>
+    <div class="custom-alert-text">
+      توجد <strong>9 تقييمات</strong> مطلوب استكمالها، منها <span class="text-danger">4 تقييمات متأخرة</span> عن الموعد المحدد.
     </div>
   </div>
 
-  <div class="card card-pad">
-    <div class="card-title">
-      التقييمات غير المكتملة حسب المشرف
+  <!-- شبكة المؤشرات الإحصائية -->
+  <div class="custom-stats-grid">
+    <div class="custom-stat-card">
+      <div>
+        <p>تقييمات مكتملة هذا الشهر</p>
+        <h3 class="success-val">118</h3>
+      </div>
+      <div class="icon-box success-bg"><i class="fas fa-check-circle"></i></div>
     </div>
-    <div class="tbl-wrap">
-      <table class="tbl">
+
+    <div class="custom-stat-card">
+      <div>
+        <p>تقييمات قيد الإعداد</p>
+        <h3 class="warning-val">9</h3>
+      </div>
+      <div class="icon-box warning-bg"><i class="fas fa-clock"></i></div>
+    </div>
+
+    <div class="custom-stat-card">
+      <div>
+        <p>تقييمات متأخرة</p>
+        <h3 class="danger-val">4</h3>
+      </div>
+      <div class="icon-box danger-bg"><i class="fas fa-exclamation-triangle"></i></div>
+    </div>
+
+    <div class="custom-stat-card">
+      <div>
+        <p>متوسط التقييم الشهري</p>
+        <h3 class="primary-val">4.2<span>/5</span></h3>
+      </div>
+      <div class="icon-box primary-bg"><i class="fas fa-star"></i></div>
+    </div>
+  </div>
+
+  <!-- جدول البيانات -->
+  <div class="custom-card">
+    <div class="custom-card-header">
+      <h3>التقييمات غير المكتملة حسب المشرف</h3>
+    </div>
+    <div class="custom-tbl-wrap">
+      <table class="custom-tbl">
         <thead>
           <tr>
             <th>المشرف</th>
@@ -535,11 +556,20 @@
         <tbody>
           @for (evaluation of evaluations; track evaluation.supervisor) {
           <tr>
-            <td><b>{{ evaluation.supervisor }}</b></td>
+            <td>
+              <div class="supervisor-info">
+                <span class="avatar-circle">{{ evaluation.supervisor.charAt(0) }}</span>
+                <b>{{ evaluation.supervisor }}</b>
+              </div>
+            </td>
             <td>{{ evaluation.department }}</td>
             <td>{{ evaluation.required }}</td>
-            <td>{{ evaluation.late }}</td>
-            <td>{{ evaluation.lastEvaluation }}</td>
+            <td>
+              <span [ngClass]="{'badge-danger-num': evaluation.late > 0}">
+                {{ evaluation.late }}
+              </span>
+            </td>
+            <td class="date-text">{{ evaluation.lastEvaluation }}</td>
             <td>
               <span class="chip" [ngClass]="evaluation.statusClass">
                 <span class="dot"></span>
@@ -552,8 +582,7 @@
       </table>
     </div>
   </div>
-  }
-
+}
   <!-- ================================================= -->
   <!-- 5. المهام -->
   <!-- ================================================= -->

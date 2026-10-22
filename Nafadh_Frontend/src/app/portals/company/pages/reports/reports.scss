@@ -1069,3 +1069,176 @@
   background: #00338d;
   border-radius: 4px;
 }
+
+/* تنسيقات شريط التنبيه */
+.custom-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  background-color: #f0f7ff;
+  border: 1px solid #d0e3fc;
+  border-radius: 12px;
+  color: #0c4a6e;
+  font-size: 14px;
+
+  .custom-alert-icon {
+    width: 28px;
+    height: 28px;
+    background-color: #0284c7;
+    color: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+
+  .text-danger {
+    color: #dc2626;
+    font-weight: bold;
+  }
+}
+
+/* شبكة الإحصائيات */
+.custom-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+
+  .custom-stat-card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+
+    p {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+
+    h3 {
+      font-size: 22px;
+      font-weight: 800;
+      margin: 0;
+      
+      span {
+        font-size: 12px;
+        font-weight: normal;
+        color: #9ca3af;
+      }
+    }
+
+    .success-val { color: #059669; }
+    .warning-val { color: #d97706; }
+    .danger-val { color: #dc2626; }
+    .primary-val { color: #4f46e5; }
+
+    .icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+
+      &.success-bg { background: #ecfdf5; color: #059669; }
+      &.warning-bg { background: #fffbeb; color: #d97706; }
+      &.danger-bg { background: #fef2f2; color: #dc2626; }
+      &.primary-bg { background: #eef2ff; color: #4f46e5; }
+    }
+  }
+}
+
+/* البطاقة والجدول */
+.custom-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+
+  .custom-card-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid #f3f4f6;
+
+    h3 {
+      font-size: 15px;
+      font-weight: bold;
+      color: #1f2937;
+      margin: 0;
+    }
+  }
+
+  .custom-tbl-wrap {
+    overflow-x: auto;
+
+    .custom-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: right;
+
+      th {
+        background-color: #f9fafb;
+        color: #6b7280;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      td {
+        padding: 14px 20px;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 14px;
+        color: #374151;
+      }
+
+      tr:hover td {
+        background-color: #fcfcfc;
+      }
+
+      .supervisor-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .avatar-circle {
+          width: 32px;
+          height: 32px;
+          background-color: #e0e7ff;
+          color: #3730a3;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+          font-size: 12px;
+        }
+      }
+
+      .badge-danger-num {
+        background-color: #fee2e2;
+        color: #991b1b;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-weight: bold;
+      }
+
+      .date-text {
+        font-family: monospace;
+        color: #6b7280;
+        font-size: 12px;
+      }
+    }
+  }
+}
