@@ -1086,20 +1086,17 @@
             }
 
 
-            @if (!privateChatOpen()) {
-
-              <button
-                type="button"
-                class="members-toggle-btn"
-                [class.active]="showMembersPanel"
-                (click)="toggleMembersPanel()"
-                title="أعضاء الجروب"
-              >
-                <i class="fa-solid fa-user-group"></i>
-                <span>الأعضاء</span>
-              </button>
-
-            }
+            <!-- تم إزالة شرط الإخفاء ليظهر زر الأعضاء في المحادثة الخاصة أيضاً -->
+            <button
+              type="button"
+              class="members-toggle-btn"
+              [class.active]="showMembersPanel"
+              (click)="toggleMembersPanel()"
+              title="أعضاء الجروب"
+            >
+              <i class="fa-solid fa-user-group"></i>
+              <span>الأعضاء</span>
+            </button>
 
           </header>
 
@@ -1272,139 +1269,152 @@
 
 
           <!-- =========================================
-               MEMBERS DRAWER (only when in group view)
+               MEMBERS DRAWER
                ========================================= -->
 
-          @if (!privateChatOpen()) {
+          <!-- تم إزالة شرط الإخفاء ليظهر القائمة الجانبية في المحادثة الخاصة أيضاً -->
+          <aside class="chat-members-panel">
 
-            <aside class="chat-members-panel">
+            <div class="members-panel-header">
 
-              <div class="members-panel-header">
+              <h4>أعضاء الجروب</h4>
 
-                <h4>أعضاء الجروب</h4>
+              <button
+                type="button"
+                class="members-close-btn"
+                (click)="toggleMembersPanel()"
+                aria-label="إغلاق"
+              >
+                <i class="fa-solid fa-xmark"></i>
+              </button>
 
-                <button
-                  type="button"
-                  class="members-close-btn"
-                  (click)="toggleMembersPanel()"
-                  aria-label="إغلاق"
-                >
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
-
-              </div>
+            </div>
 
 
-              <div class="members-panel-body">
+            <div class="members-panel-body">
 
-                <!-- Trainers -->
+              <!-- إضافة رابط العودة للجروب يظهر فقط إذا كان في محادثة خاصة -->
+              @if (privateChatOpen()) {
+                <div class="members-section" style="border-bottom: 1px solid #edf0f4; padding-bottom: 8px; margin-bottom: 8px;">
+                  <h5 class="members-section-title">المحادثات</h5>
+                  <div class="member-row member-row-clickable" (click)="closePrivateChat()">
+                    <div class="member-avatar" style="background: linear-gradient(135deg, #0066cc, #2b8ac9);">
+                      <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div class="member-info">
+                      <strong>جروب الدفعة</strong>
+                      <small class="member-badge">انقر للعودة</small>
+                    </div>
+                  </div>
+                </div>
+              }
 
-                @if (batchTrainers().length > 0) {
+              <!-- Trainers -->
 
-                  <div class="members-section">
+              @if (batchTrainers().length > 0) {
 
-                    <h5 class="members-section-title">
-                      المدربون
-                    </h5>
+                <div class="members-section">
 
-                    @for (t of batchTrainers(); track t.trainerId) {
+                  <h5 class="members-section-title">
+                    المدربون
+                  </h5>
 
-                      <div class="member-row">
+                  @for (t of batchTrainers(); track t.trainerId) {
 
-                        <div class="member-avatar trainer">
-                          {{ t.fullName ? t.fullName.charAt(0) : 'م' }}
-                        </div>
+                    <div class="member-row">
 
-                        <div class="member-info">
+                      <div class="member-avatar trainer">
+                        {{ t.fullName ? t.fullName.charAt(0) : 'م' }}
+                      </div>
 
-                          <strong>
-                            {{ t.fullName }}
-                          </strong>
+                      <div class="member-info">
 
-                          <small class="member-badge trainer-badge">
-                            مدرب
-                          </small>
+                        <strong>
+                          {{ t.fullName }}
+                        </strong>
 
-                        </div>
-
-                        @if (!isMe($any(t).userId)) {
-
-                          <button
-                            type="button"
-                            class="member-chat-btn"
-                            (click)="openPrivateChat(t, 'trainer')"
-                            title="محادثة خاصة"
-                          >
-                            <i class="fa-solid fa-comment-dots"></i>
-                          </button>
-
-                        }
+                        <small class="member-badge trainer-badge">
+                          مدرب
+                        </small>
 
                       </div>
 
-                    }
+                      @if (!isMe($any(t).userId)) {
 
-                  </div>
+                        <button
+                          type="button"
+                          class="member-chat-btn"
+                          (click)="openPrivateChat(t, 'trainer')"
+                          title="محادثة خاصة"
+                        >
+                          <i class="fa-solid fa-comment-dots"></i>
+                        </button>
 
-                }
+                      }
+
+                    </div>
+
+                  }
+
+                </div>
+
+              }
 
 
-                <!-- Trainees -->
+              <!-- Trainees -->
 
-                @if (batchTrainees().length > 0) {
+              @if (batchTrainees().length > 0) {
 
-                  <div class="members-section">
+                <div class="members-section">
 
-                    <h5 class="members-section-title">
-                      المتدربون
-                    </h5>
+                  <h5 class="members-section-title">
+                    المتدربون
+                  </h5>
 
-                    @for (t of batchTrainees(); track t.traineeId) {
+                  @for (t of batchTrainees(); track t.traineeId) {
 
-                      <div class="member-row">
+                    <div class="member-row">
 
-                        <div class="member-avatar">
-                          {{ t.fullName ? t.fullName.charAt(0) : 'م' }}
-                        </div>
+                      <div class="member-avatar">
+                        {{ t.fullName ? t.fullName.charAt(0) : 'م' }}
+                      </div>
 
-                        <div class="member-info">
+                      <div class="member-info">
 
-                          <strong>
-                            {{ t.fullName }}
-                          </strong>
+                        <strong>
+                          {{ t.fullName }}
+                        </strong>
 
-                          <small class="member-badge">
-                            متدرب
-                          </small>
-
-                        </div>
-
-                        @if (!isMe($any(t).userId)) {
-
-                          <button
-                            type="button"
-                            class="member-chat-btn"
-                            (click)="openPrivateChat(t, 'trainee')"
-                            title="محادثة خاصة"
-                          >
-                            <i class="fa-solid fa-comment-dots"></i>
-                          </button>
-
-                        }
+                        <small class="member-badge">
+                          متدرب
+                        </small>
 
                       </div>
 
-                    }
+                      @if (!isMe($any(t).userId)) {
 
-                  </div>
+                        <button
+                          type="button"
+                          class="member-chat-btn"
+                          (click)="openPrivateChat(t, 'trainee')"
+                          title="محادثة خاصة"
+                        >
+                          <i class="fa-solid fa-comment-dots"></i>
+                        </button>
 
-                }
+                      }
 
-              </div>
+                    </div>
 
-            </aside>
+                  }
 
-          }
+                </div>
+
+              }
+
+            </div>
+
+          </aside>
 
 
         </div>

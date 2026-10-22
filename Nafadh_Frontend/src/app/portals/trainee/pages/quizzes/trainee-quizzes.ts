@@ -547,4 +547,62 @@ export class TraineeQuizzes implements OnInit, OnDestroy {
       error: (err) => console.error('Violation error', err)
     });
   }
+    // في قسم State (أسفل المتغيرات)
+  showAttemptsModal = signal(false);
+  quizAttempts = signal<any[]>([]);
+  selectedQuizForAttempts = signal<TraineeQuizListItemDto | null>(null);
+
+  // دالة لجلب المحاولات
+  openAttemptsModal(quiz: TraineeQuizListItemDto) {
+    const tId = this.traineeId();
+    if (!tId) return;
+
+    this.selectedQuizForAttempts.set(quiz);
+    this.loading.set(true);
+
+    // جلب كل النتائج ثم فلترتها لهذا الاختبار
+    this.api.getMyResults(tId).subscribe({
+      next: (results) => {
+        const filtered = results.filter(r => r.quizId === quiz.quizId)
+          .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
+        this.quizAttempts.set(filtered);
+        this.loading.set(false);
+        this.showAttemptsModal.set(true);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.errorMessage.set('تعذر تحميل سجل المحاولات');
+      }
+    });
+  }
+
+  // دالة لعرض تفاصيل محاولة محددة
+  viewSpecificAttempt(attemptId: number) {
+    this.showAttemptsModal.set(false);
+    const tId = this.traineeId();
+    if (!tId) return;
+    
+    this.loading.set(true);
+    this.api.getAttemptDetails(attemptId).subscribe({
+      next: (details) => {
+        this.api.getMyResults(tId).subscribe({
+          next: (results) => {
+            const myResult = results.find(r => r.attemptId === attemptId);
+            this.result.set({ ...details, ...myResult });
+            this.loading.set(false);
+            this.currentStep.set(4);
+          },
+          error: () => {
+            this.result.set(details);
+            this.loading.set(false);
+            this.currentStep.set(4);
+          }
+        });
+      },
+      error: () => {
+        this.loading.set(false);
+        this.errorMessage.set('تعذر تحميل تفاصيل المحاولة');
+      }
+    });
+  }
 }

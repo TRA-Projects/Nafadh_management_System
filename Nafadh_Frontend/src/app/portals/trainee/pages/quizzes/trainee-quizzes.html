@@ -111,7 +111,8 @@
                   <button type="button" class="secondary-btn full-width" disabled><i class="fa-solid fa-hourglass-half"></i> بانتظار التصحيح</button>
                 }
                 @case ('Completed') {
-                  <button type="button" class="primary-btn full-width" (click)="onViewResult(quiz)"><i class="fa-solid fa-chart-column"></i> عرض النتيجة</button>
+                  <!-- تم التعديل: يفتح سجل المحاولات -->
+                  <button type="button" class="primary-btn full-width" (click)="openAttemptsModal(quiz)"><i class="fa-solid fa-chart-column"></i> عرض النتائج</button>
                   @if (quiz.attemptsRemaining > 0) {
                     <button type="button" class="secondary-btn full-width" (click)="onRetryQuiz(quiz)"><i class="fa-solid fa-rotate-right"></i> إعادة المحاولة</button>
                   }
@@ -353,6 +354,53 @@
         <p>لقد قمت بالخروج من صفحة الاختبار. تم تسجيل هذه المخالفة، وقد يتم إنهاء الاختبار إذا تكرر ذلك.</p>
         <div class="modal-actions center">
           <button class="primary-btn" (click)="showViolationModal.set(false)">حسناً، فهمت</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================== -->
+  <!-- ATTEMPTS HISTORY MODAL -->
+  <!-- ========================================== -->
+  @if (showAttemptsModal()) {
+    <div class="modal-backdrop">
+      <div class="attempts-modal">
+        <div class="attempts-modal-header">
+          <div>
+            <h3>سجل المحاولات</h3>
+            <p>{{ selectedQuizForAttempts()?.title }}</p>
+          </div>
+          <button class="close-btn" (click)="showAttemptsModal.set(false)">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        
+        <div class="attempts-modal-body">
+          @if (quizAttempts().length === 0) {
+            <div class="empty-state">لا توجد محاولات سابقة.</div>
+          } @else {
+            @for (attempt of quizAttempts(); track attempt.attemptId; let i = $index) {
+              <div class="attempt-item" [class.passed]="attempt.isPassed" [class.failed]="attempt.isPassed === false">
+                <div class="attempt-info">
+                  <strong>المحاولة {{ attempt.attemptNumber }}</strong>
+                  <span>{{ formatDate(attempt.startedAt) }}</span>
+                </div>
+                <div class="attempt-stats">
+                  <span>النسبة: <strong>{{ attempt.percentage }}%</strong></span>
+                  <span>الحالة: 
+                    @if(attempt.isGradingCompleted) {
+                      {{ attempt.isPassed ? 'ناجح' : 'راسب' }}
+                    } @else {
+                      بانتظار التصحيح
+                    }
+                  </span>
+                </div>
+                <button class="secondary-btn" (click)="viewSpecificAttempt(attempt.attemptId)">
+                  <i class="fa-solid fa-eye"></i> عرض
+                </button>
+              </div>
+            }
+          }
         </div>
       </div>
     </div>
