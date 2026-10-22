@@ -1,0 +1,150 @@
+<div class="notification-templates-container" dir="rtl">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-title">
+      <h1>قوالب الإشعارات</h1>
+      <p>
+        إدارة وتعديل قوالب الرسائل النصية، البريد الإلكتروني،
+        وإشعارات التطبيق في النظام
+      </p>
+    </div>
+
+    <button type="button" (click)="openAddModal()" class="btn-primary">
+      <span>＋ إضافة قالب جديد</span>
+    </button>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="filter-card">
+    <div class="filter-grid">
+
+      <div class="filter-group">
+        <label for="templateSearch">بحث</label>
+        <input
+          id="templateSearch"
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="بحث بالاسم أو الكود..."
+          class="form-control"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label for="templateType">نوع الإشعار</label>
+        <select
+          id="templateType"
+          [(ngModel)]="selectedType"
+          class="form-control"
+        >
+          <option value="">جميع الأنواع</option>
+          <option value="SMS">رسالة نصية (SMS)</option>
+          <option value="Email">بريد إلكتروني (Email)</option>
+          <option value="Push">إشعار تطبيق (Push)</option>
+        </select>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Templates Table -->
+  <div class="table-card">
+    <div class="table-responsive">
+      <table class="data-table">
+
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>اسم القالب</th>
+            <th>الكود (Code)</th>
+            <th>نوع الإشعار</th>
+            <th>الحالة</th>
+            <th class="text-center">الإجراءات</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            *ngFor="let template of filteredTemplates(); let i = index"
+          >
+            <td class="col-index">{{ i + 1 }}</td>
+
+            <td class="col-name">{{ template.name }}</td>
+
+            <td>
+              <span class="code-badge">{{ template.code }}</span>
+            </td>
+
+            <td>
+              <span
+                class="type-badge"
+                [ngClass]="{
+                  'type-email': template.type === 'Email',
+                  'type-sms': template.type === 'SMS',
+                  'type-push': template.type === 'Push'
+                }"
+              >
+                {{
+                  template.type === 'Email'
+                    ? 'بريد إلكتروني'
+                    : template.type === 'SMS'
+                      ? 'رسالة نصية'
+                      : 'إشعار تطبيق'
+                }}
+              </span>
+            </td>
+
+            <td>
+              <span
+                class="status-badge"
+                [class.active]="template.isActive"
+                [class.inactive]="!template.isActive"
+              >
+                {{ template.isActive ? 'نشط' : 'غير نشط' }}
+              </span>
+            </td>
+
+            <td class="text-center">
+              <div class="actions-wrapper">
+                <button
+                  type="button"
+                  class="btn-action"
+                  aria-label="الإجراءات"
+                  aria-haspopup="menu"
+                  [attr.aria-expanded]="openMenuId === template.id"
+                  (click)="toggleMenu(template.id, $event)"
+                >
+                  ⋮
+                </button>
+
+                <div
+                  class="actions-menu"
+                  *ngIf="openMenuId === template.id"
+                  role="menu"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="menu-item"
+                    (click)="editTemplate(template)"
+                  >
+                    <span>تعديل</span>
+                    <span aria-hidden="true">✎</span>
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredTemplates().length === 0">
+            <td colspan="6" class="no-data">
+              لا توجد قوالب مطابقة للبحث
+            </td>
+          </tr>
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+
+</div>

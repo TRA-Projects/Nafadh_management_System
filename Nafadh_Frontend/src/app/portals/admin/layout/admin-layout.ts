@@ -20,6 +20,7 @@ export class AdminLayout {
     { path: 'notifications', label: 'الإشعارات', icon: 'bell' },
     { path: 'external-system/system-configuration', label: 'إعدادات النظام', icon: 'settings' },
     { path: 'external-system/constants', label: 'إدارة الثوابت', icon: 'book' },
+    { path: 'external-system/notification-templates', label: 'قوالب الإشعارات', icon: 'bell' },
     { path: 'audit', label: 'سجل التدقيق', icon: 'history' },
   ];
 }

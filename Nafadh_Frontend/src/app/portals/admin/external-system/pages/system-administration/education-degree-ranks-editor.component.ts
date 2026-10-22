@@ -1,16 +1,21 @@
-/// <reference types="@angular/localize" />
-
-import { CommonModule } from '@angular/common';
-import { Component, effect, input, signal } from '@angular/core';
 
 import {
+  Component,
+  Input,
+  OnChanges,
+  SimpleChanges,
+  signal,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+import {
+  DEFAULT_EDUCATION_DEGREE_RANKS,
+  EducationDegreeRankLevel,
   parseEducationDegreeRanks,
   serializeEducationDegreeRanks,
-  type EducationDegreeRankLevel,
-}  from '../../legacy/core/system/education-degree-ranks.util';
+} from '../../legacy/core/system/education-degree-ranks.util';
 
-interface RankDraft {
-  labels: string[];
+interface EducationDegreeRankEditorLevel extends EducationDegreeRankLevel {
   draft: string;
 }
 
@@ -21,145 +26,243 @@ interface RankDraft {
   templateUrl: './education-degree-ranks-editor.component.html',
   styleUrl: './education-degree-ranks-editor.component.scss',
 })
-export class EducationDegreeRanksEditorComponent {
-  readonly json = input('');
+export class EducationDegreeRanksEditorComponent implements OnChanges {
+  @Input() json = '';
 
-  readonly levels = signal<RankDraft[]>([]);
+  readonly levels = signal<EducationDegreeRankEditorLevel[]>([]);
   readonly error = signal('');
 
-  readonly addRankLabel = $localize`:@@jobseeker.admin.systemConfig.degreeRanks.addRank:Add rank`;
-  readonly addLabelLabel = $localize`:@@jobseeker.admin.systemConfig.degreeRanks.addLabel:Add`;
-  readonly removeRankLabel = $localize`:@@jobseeker.admin.systemConfig.degreeRanks.removeRank:Remove`;
-  readonly moveUpLabel = $localize`:@@jobseeker.admin.systemConfig.degreeRanks.moveUp:Up`;
-  readonly moveDownLabel = $localize`:@@jobseeker.admin.systemConfig.degreeRanks.moveDown:Down`;
-  readonly removeLabelAria = $localize`:@@jobseeker.admin.systemConfig.degreeRanks.removeLabel:Remove label`;
-  readonly labelPlaceholder = $localize`:@@jobseeker.admin.systemConfig.degreeRanks.labelPlaceholder:Label`;
-  readonly emptyRanksError = $localize`:@@jobseeker.admin.systemConfig.degreeRanks.emptyRanks:Add at least one rank.`;
-  readonly emptyLabelsError = $localize`:@@jobseeker.admin.systemConfig.degreeRanks.emptyLabels:Each rank needs at least one label.`;
-  readonly invalidJsonError = $localize`:@@jobseeker.admin.systemConfig.degreeRanks.invalidJson:Could not load ranks.`;
+  readonly moveUpLabel = 'تحريك للأعلى';
+  readonly moveDownLabel = 'تحريك للأسفل';
+  readonly removeRankLabel = 'حذف المستوى';
+  readonly removeLabelAria = 'حذف التسمية';
+  readonly labelPlaceholder = 'أدخلي تسمية جديدة';
+  readonly addLabelLabel = 'إضافة تسمية';
+  readonly addRankLabel = 'إضافة مستوى جديد';
 
-  constructor() {
-    effect(() => {
-      this.load(this.json());
-    });
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['json']) {
+      this.loadLevels(this.json);
+    }
+  }
+
+  private loadLevels(json: string | null | undefined): void {
+    this.error.set('');
+
+    const raw = (json ?? '').trim();
+
+    if (!raw) {
+      this.levels.set(
+        DEFAULT_EDUCATION_DEGREE_RANKS.map((level) => ({
+          rank: level.rank,
+          labels: [...level.labels],
+          draft: '',
+        })),
+      );
+      return;
+    }
+
+    const parsed = parseEducationDegreeRanks(raw);
+
+    if (parsed === null) {
+      this.levels.set([]);
+      this.error.set(
+        'تعذر قراءة بيانات درجات المؤهل التعليمي. تحققي من صيغة البيانات.',
+      );
+      return;
+    }
+
+    this.levels.set(
+      parsed.map((level) => ({
+        rank: level.rank,
+        labels: [...level.labels],
+        draft: '',
+      })),
+    );
   }
 
   rankHeading(index: number): string {
-    const n = index + 1;
-    return $localize`:@@jobseeker.admin.systemConfig.degreeRanks.rankHeading:Rank ${n}:RANK:`;
+    return `المستوى ${index + 1}`;
   }
 
-  load(json: string): void {
-    const parsed = parseEducationDegreeRanks(json);
-    if (parsed == null) {
-      this.levels.set([]);
-      this.error.set(this.invalidJsonError);
+  setDraft(index: number, value: string): void {
+    this.levels.update((levels) =>
+      levels.map((level, i) =>
+        i === index ? { ...level, draft: value } : level,
+      ),
+    );
+
+    this.error.set('');
+  }
+
+  addLabel(index: number): void {
+    const level = this.levels()[index];
+
+    if (!level) {
       return;
     }
-    this.levels.set(
-      parsed.map((row) => ({
-        labels: [...row.labels],
-        draft: '',
-      }))
+
+    const label = level.draft.trim();
+
+    if (!label) {
+      this.error.set('أدخلي التسمية قبل إضافتها.');
+      return;
+    }
+
+    const duplicate = level.labels.some(
+      (existing) =>
+        existing.trim().toLocaleLowerCase() ===
+        label.toLocaleLowerCase(),
     );
+
+    if (duplicate) {
+      this.error.set('هذه التسمية موجودة بالفعل في المستوى نفسه.');
+      return;
+    }
+
+    this.levels.update((levels) =>
+      levels.map((item, i) =>
+        i === index
+          ? {
+              ...item,
+              labels: [...item.labels, label],
+              draft: '',
+            }
+          : item,
+      ),
+    );
+
     this.error.set('');
   }
 
-  serialize(): string {
-    return serializeEducationDegreeRanks(this.toLevels());
-  }
+  removeLabel(levelIndex: number, labelIndex: number): void {
+    this.levels.update((levels) =>
+      levels.map((level, i) =>
+        i === levelIndex
+          ? {
+              ...level,
+              labels: level.labels.filter((_, j) => j !== labelIndex),
+            }
+          : level,
+      ),
+    );
 
-  isValid(): boolean {
-    const rows = this.levels();
-    if (rows.length === 0) {
-      this.error.set(this.emptyRanksError);
-      return false;
-    }
-    if (rows.some((row) => row.labels.length === 0)) {
-      this.error.set(this.emptyLabelsError);
-      return false;
-    }
     this.error.set('');
-    return true;
   }
 
   addRank(): void {
-    this.levels.update((rows) => [...rows, { labels: [], draft: '' }]);
+    this.levels.update((levels) => [
+      ...levels,
+      {
+        rank: levels.length + 1,
+        labels: [],
+        draft: '',
+      },
+    ]);
+
     this.error.set('');
   }
 
   removeRank(index: number): void {
-    this.levels.update((rows) => rows.filter((_, i) => i !== index));
+    this.levels.update((levels) =>
+      levels
+        .filter((_, i) => i !== index)
+        .map((level, i) => ({
+          ...level,
+          rank: i + 1,
+        })),
+    );
+
+    this.error.set('');
   }
 
   moveUp(index: number): void {
     if (index <= 0) {
       return;
     }
-    this.swap(index, index - 1);
+
+    this.moveRank(index, index - 1);
   }
 
   moveDown(index: number): void {
     if (index >= this.levels().length - 1) {
       return;
     }
-    this.swap(index, index + 1);
+
+    this.moveRank(index, index + 1);
   }
 
-  setDraft(index: number, value: string): void {
-    this.levels.update((rows) =>
-      rows.map((row, i) => (i === index ? { ...row, draft: value } : row))
-    );
-  }
+  private moveRank(from: number, to: number): void {
+    this.levels.update((levels) => {
+      const reordered = [...levels];
+      const [moved] = reordered.splice(from, 1);
 
-  addLabel(index: number): void {
-    const row = this.levels()[index];
-    if (!row) {
-      return;
-    }
-    const next = row.draft.trim();
-    if (!next) {
-      return;
-    }
-    const exists = row.labels.some((label) => label.toLowerCase() === next.toLowerCase());
-    this.levels.update((rows) =>
-      rows.map((item, i) => {
-        if (i !== index) {
-          return item;
-        }
-        return {
-          labels: exists ? item.labels : [...item.labels, next],
-          draft: '',
-        };
-      })
-    );
+      if (!moved) {
+        return levels;
+      }
+
+      reordered.splice(to, 0, moved);
+
+      return reordered.map((level, index) => ({
+        ...level,
+        rank: index + 1,
+      }));
+    });
+
     this.error.set('');
   }
 
-  removeLabel(rankIndex: number, labelIndex: number): void {
-    this.levels.update((rows) =>
-      rows.map((row, i) =>
-        i === rankIndex
-          ? { ...row, labels: row.labels.filter((_, j) => j !== labelIndex) }
-          : row
-      )
+  isValid(): boolean {
+    if (this.error()) {
+      return false;
+    }
+
+    const levels = this.levels();
+
+    if (levels.length === 0) {
+      this.error.set('أضيفي مستوى واحدًا على الأقل.');
+      return false;
+    }
+
+    for (let i = 0; i < levels.length; i++) {
+      const level = levels[i];
+
+      if (level.draft.trim()) {
+        this.error.set(
+          `أضيفي التسمية المكتوبة في ${this.rankHeading(i)} أو امسحيها قبل الحفظ.`,
+        );
+        return false;
+      }
+
+      if (level.labels.length === 0) {
+        this.error.set(
+          `أضيفي تسمية واحدة على الأقل إلى ${this.rankHeading(i)} أو احذفي المستوى.`,
+        );
+        return false;
+      }
+
+      const uniqueLabels = new Set(
+        level.labels.map((label) => label.trim().toLocaleLowerCase()),
+      );
+
+      if (uniqueLabels.size !== level.labels.length) {
+        this.error.set(
+          `توجد تسميات مكررة في ${this.rankHeading(i)}.`,
+        );
+        return false;
+      }
+    }
+
+    this.error.set('');
+    return true;
+  }
+
+  serialize(): string {
+    return serializeEducationDegreeRanks(
+      this.levels().map((level) => ({
+        rank: level.rank,
+        labels: level.labels,
+      })),
     );
-  }
-
-  private swap(a: number, b: number): void {
-    this.levels.update((rows) => {
-      const next = [...rows];
-      const tmp = next[a];
-      next[a] = next[b];
-      next[b] = tmp;
-      return next;
-    });
-  }
-
-  private toLevels(): EducationDegreeRankLevel[] {
-    return this.levels().map((row, i) => ({
-      rank: i + 1,
-      labels: row.labels,
-    }));
   }
 }

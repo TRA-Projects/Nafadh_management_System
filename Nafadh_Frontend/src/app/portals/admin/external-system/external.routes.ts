@@ -1,4 +1,3 @@
-
 import { Routes } from '@angular/router';
 import { provideState } from '@ngrx/store';
 
@@ -25,5 +24,15 @@ export const EXTERNAL_ROUTES: Routes = [
     loadComponent: () =>
       import('./pages/system-administration/system-configuration-page.component')
         .then((m) => m.SystemConfigurationPageComponent),
+  },
+  {
+    path: 'notification-templates',
+    providers: [
+      provideState(adminSystemFeature),
+      provideState(localeFeature),
+    ],
+    loadComponent: () =>
+      import('./pages/system-administration/notification-templates-page.component')
+        .then((m) => m.NotificationTemplatesPageComponent),
   },
 ];
