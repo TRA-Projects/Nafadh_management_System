@@ -917,3 +917,20 @@ export interface AdminBatchGroupDto {
   status: string;
   createdAt: string;
 }
+
+export interface AdminSupervisorReportDto {
+  supervisorId: number;
+  fullName: string | null;
+  department: string | null;
+  position: string | null;
+  companyName: string | null;
+  status: string | null;
+  assignedTraineesCount: number;
+  averageAttendanceRate: number | null;
+  monthlyEvaluationsCount: number;
+  traineesNeedingFollowUpCount: number | null;
+  trainerEvaluationsCount: number;
+  evaluatedTrainersCount: number;
+  lastTrainerEvaluationDate: string | null;
+  needsFollowUp: boolean | null;
+}

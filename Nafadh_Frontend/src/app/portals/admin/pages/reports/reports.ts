@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { AdminApi } from '../../services/admin-api';
-import { BatchPerformanceReportDto } from '../../../../core/models/dtos';
+import { BatchPerformanceReportDto, AdminSupervisorReportDto } from '../../../../core/models/dtos';
 
 @Component({
   selector: 'app-admin-reports',
@@ -14,7 +14,7 @@ import { BatchPerformanceReportDto } from '../../../../core/models/dtos';
 })
 export class AdminReports implements OnInit {
   // 1. التحكم في الأقسام والشاشات
-  currentSubSection: 'company' | 'trainer' | 'trainee' = 'company';
+  currentSubSection: 'company' | 'trainer' | 'trainee' | 'supervisor' = 'company';
   currentView: 'companies' | 'programs' | 'batch-report' | 'company-details' = 'companies';
 
   selectedCompany: any = null;
@@ -94,6 +94,78 @@ export class AdminReports implements OnInit {
   masterScoreRangeFilter = 'ALL';
   filteredMasterTranscriptList: any[] = [];
 
+  
+  // Supervisor Reports
+  allSupervisorsData: AdminSupervisorReportDto[] = [];
+  filteredSupervisorsList: AdminSupervisorReportDto[] = [];
+
+  supervisorSearchTerm = '';
+  supervisorCompanyFilter = 'ALL';
+  supervisorStatusFilter = 'ALL';
+
+  supervisorYear = new Date().getFullYear();
+  supervisorMonth = new Date().getMonth() + 1;
+
+  supervisorLoading = false;
+  supervisorError = '';
+  supervisorDataLoaded = false;
+
+  get supervisorCompanies(): string[] {
+    return Array.from(
+      new Set(
+        this.allSupervisorsData
+          .map(s => s.companyName)
+          .filter((name): name is string => !!name)
+      )
+    ).sort();
+  }
+
+  get supervisorTotalCount(): number {
+    return this.allSupervisorsData.length;
+  }
+
+  get supervisorAssignedTrainees(): number {
+    return this.allSupervisorsData.reduce(
+      (sum, s) => sum + s.assignedTraineesCount, 0
+    );
+  }
+
+  get supervisorAverageAttendance(): number | null {
+    const rates = this.allSupervisorsData
+      .map(s => s.averageAttendanceRate)
+      .filter((rate): rate is number => rate !== null);
+
+    if (rates.length === 0) return null;
+
+    return Math.round(
+      (rates.reduce((sum, rate) => sum + rate, 0) / rates.length) * 100
+    ) / 100;
+  }
+
+  get supervisorTrainerEvaluations(): number {
+    return this.allSupervisorsData.reduce(
+      (sum, s) => sum + (s.trainerEvaluationsCount ?? 0), 0
+    );
+  }
+
+  get supervisorActiveCount(): number {
+    return this.allSupervisorsData.filter(
+      s => s.status === 'Active'
+    ).length;
+  }
+
+  get supervisorFollowUpCount(): number | null {
+    const counts = this.allSupervisorsData
+      .map(s => s.traineesNeedingFollowUpCount);
+
+    if (counts.some(count => count === null)) return null;
+
+    return counts.reduce(
+      (sum: number, count) => sum + (count ?? 0), 0
+    );
+  }
+
+
   constructor(
     private api: AdminApi,
     private cdr: ChangeDetectorRef,
@@ -102,7 +174,7 @@ export class AdminReports implements OnInit {
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      if (params['sub'] && ['company', 'trainer', 'trainee'].includes(params['sub'])) {
+      if (params['sub'] && ['company', 'trainer', 'trainee', 'supervisor'].includes(params['sub'])) {
         this.currentSubSection = params['sub'];
         this.cdr.detectChanges();
       }
@@ -111,6 +183,9 @@ export class AdminReports implements OnInit {
     this.loadCompaniesData();
     this.loadTrainersData();
     this.loadTraineesData();
+    if (this.currentSubSection === 'supervisor') {
+    this.loadSupervisorsData();
+    }
   }
 
   formatRating(val: any): string {
@@ -873,11 +948,79 @@ export class AdminReports implements OnInit {
     return ((finalScore / 100) * 4).toFixed(2);
   }
 
-  setSubSection(sub: 'company' | 'trainer' | 'trainee') {
-    this.currentSubSection = sub;
-    this.trainerView = 'grid';
-    this.traineeSubView = 'roster';
+  
+  setSubSection(sub: 'company' | 'trainer' | 'trainee' | 'supervisor') {
+  this.currentSubSection = sub;
+  this.trainerView = 'grid';
+  this.traineeSubView = 'roster';
+
+  if (sub === 'supervisor' && !this.supervisorDataLoaded) {
+    this.loadSupervisorsData();
   }
+}
+
+
+  
+  // Load Supervisor Reports
+  loadSupervisorsData(): void {
+    this.supervisorLoading = true;
+    this.supervisorError = '';
+
+    this.api.getAdminSupervisorReports(
+      this.supervisorYear,
+      this.supervisorMonth
+    ).subscribe({
+      next: (data) => {
+        this.allSupervisorsData = data;
+        this.applySupervisorFilters();
+
+        this.supervisorLoading = false;
+        this.supervisorDataLoaded = true;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading supervisor reports:', err);
+
+        this.allSupervisorsData = [];
+        this.filteredSupervisorsList = [];
+        this.supervisorError = 'تعذر تحميل تقارير المشرفين. حاول مرة أخرى.';
+        this.supervisorLoading = false;
+        this.supervisorDataLoaded = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  applySupervisorFilters(): void {
+    const search = this.supervisorSearchTerm.trim().toLowerCase();
+
+    this.filteredSupervisorsList = this.allSupervisorsData.filter(s => {
+      const matchesSearch =
+        !search ||
+        (s.fullName ?? '').toLowerCase().includes(search) ||
+        (s.department ?? '').toLowerCase().includes(search) ||
+        (s.companyName ?? '').toLowerCase().includes(search) ||
+        String(s.supervisorId).includes(search);
+
+      const matchesCompany =
+        this.supervisorCompanyFilter === 'ALL' ||
+        s.companyName === this.supervisorCompanyFilter;
+
+      const matchesStatus =
+        this.supervisorStatusFilter === 'ALL' ||
+        s.status === this.supervisorStatusFilter;
+
+      return matchesSearch && matchesCompany && matchesStatus;
+    });
+  }
+
+  resetSupervisorFilters(): void {
+    this.supervisorSearchTerm = '';
+    this.supervisorCompanyFilter = 'ALL';
+    this.supervisorStatusFilter = 'ALL';
+    this.applySupervisorFilters();
+  }
+
 
   levelClass(level?: string): string {
     if (!level) return 'level-default';
