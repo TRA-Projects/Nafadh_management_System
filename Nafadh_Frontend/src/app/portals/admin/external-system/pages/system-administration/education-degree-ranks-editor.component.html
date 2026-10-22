@@ -1,0 +1,63 @@
+<div class="degree-ranks-editor space-y-3">
+  @for (level of levels(); track $index; let i = $index) {
+    <div class="degree-ranks-editor__rank">
+      <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <span class="font-semibold text-black dark:text-white-light">{{ rankHeading(i) }}</span>
+        <div class="flex flex-wrap items-center gap-1">
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-sm"
+            [disabled]="i === 0"
+            (click)="moveUp(i)"
+          >
+            {{ moveUpLabel }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-sm"
+            [disabled]="i === levels().length - 1"
+            (click)="moveDown(i)"
+          >
+            {{ moveDownLabel }}
+          </button>
+          <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeRank(i)">
+            {{ removeRankLabel }}
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        @for (label of level.labels; track label; let j = $index) {
+          <span class="degree-ranks-editor__chip">
+            <span>{{ label }}</span>
+            <button type="button" class="degree-ranks-editor__chip-remove" [attr.aria-label]="removeLabelAria" (click)="removeLabel(i, j)">
+              ×
+            </button>
+          </span>
+        }
+      </div>
+
+      <div class="mt-2 flex w-full max-w-full flex-wrap items-center gap-2">
+        <input
+          class="form-input min-w-0 flex-1"
+          type="text"
+          [value]="level.draft"
+          [placeholder]="labelPlaceholder"
+          (input)="setDraft(i, ($any($event.target).value ?? '').toString())"
+          (keydown.enter)="$event.preventDefault(); addLabel(i)"
+        />
+        <button type="button" class="btn btn-outline-primary btn-sm" (click)="addLabel(i)">
+          {{ addLabelLabel }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <button type="button" class="btn btn-outline-primary btn-sm" (click)="addRank()">
+    {{ addRankLabel }}
+  </button>
+
+  @if (error()) {
+    <p class="text-sm text-danger">{{ error() }}</p>
+  }
+</div>

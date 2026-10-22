@@ -31,15 +31,19 @@ const groupEditPage = () =>
 const groupPagesPage = () =>
   import('./pages/identity-access/admin-identity-group-pages-page.component').then((m) => m.AdminIdentityGroupPagesPageComponent);
 
+
 export const EXTERNAL_ROUTES: Routes = [
   {
     path: '',
     component: ExternalSystemHostComponent,
-    // A dedicated HttpClient for the legacy (Bidding_API) pages: base URL + legacy bearer token + legacy error handling.
-    // The portal's own authInterceptor (Nafadh_Backend JWT) is NOT part of this chain.
-    // The legacy services are `providedIn: 'root'`, so they are re-provided here to pick up this HttpClient.
     providers: [
-      provideHttpClient(withInterceptors([apiBaseUrlInterceptor, authBearerInterceptor, httpErrorInterceptor])),
+      provideHttpClient(
+        withInterceptors([
+          apiBaseUrlInterceptor,
+          authBearerInterceptor,
+          httpErrorInterceptor,
+        ]),
+      ),
       AdminSystemApiService,
       IdentityAccessApiService,
       AsyncExecutorService,
@@ -54,18 +58,69 @@ export const EXTERNAL_ROUTES: Routes = [
       {
         path: 'constants',
         loadComponent: () =>
-          import('./pages/system-administration/constants-manage-page.component').then((m) => m.ConstantsManagePageComponent),
+          import('./pages/system-administration/constants-manage-page.component')
+            .then((m) => m.ConstantsManagePageComponent),
+      },
+      {
+        path: 'system-configuration',
+        loadComponent: () =>
+          import('./pages/system-administration/system-configuration-page.component')
+            .then((m) => m.SystemConfigurationPageComponent),
       },
       { path: 'identity', pathMatch: 'full', redirectTo: 'identity/users' },
-      { path: 'identity/users', loadComponent: usersPage, data: { title: 'Users', titleAr: 'المستخدمون' } },
-      { path: 'identity/roles', loadComponent: rolesPage, data: { title: 'Custom roles', titleAr: 'الأدوار المخصصة', rolesMode: 'custom' } },
-      { path: 'identity/template-roles', loadComponent: rolesPage, data: { title: 'Template roles', titleAr: 'قوالب الأدوار', rolesMode: 'template' } },
-      { path: 'identity/roles/create', loadComponent: roleCreatePage, data: { title: 'Create role', titleAr: 'إنشاء دور' } },
-      { path: 'identity/roles/pages', loadComponent: groupPagesPage, data: { title: 'Role pages', titleAr: 'صفحات الدور' } },
-      { path: 'identity/groups', loadComponent: groupsPage, data: { title: 'Groups', titleAr: 'المجموعات' } },
-      { path: 'identity/groups/create', loadComponent: groupCreatePage, data: { title: 'Create group', titleAr: 'إنشاء مجموعة' } },
-      { path: 'identity/groups/edit', loadComponent: groupEditPage, data: { title: 'Edit group', titleAr: 'تعديل المجموعة' } },
-      { path: 'identity/groups/pages', loadComponent: groupPagesPage, data: { title: 'Group pages', titleAr: 'صفحات المجموعة' } },
+      {
+        path: 'identity/users',
+        loadComponent: usersPage,
+        data: { title: 'Users', titleAr: 'المستخدمون' },
+      },
+      {
+        path: 'identity/roles',
+        loadComponent: rolesPage,
+        data: {
+          title: 'Custom roles',
+          titleAr: 'الأدوار المخصصة',
+          rolesMode: 'custom',
+        },
+      },
+      {
+        path: 'identity/template-roles',
+        loadComponent: rolesPage,
+        data: {
+          title: 'Template roles',
+          titleAr: 'قوالب الأدوار',
+          rolesMode: 'template',
+        },
+      },
+      {
+        path: 'identity/roles/create',
+        loadComponent: roleCreatePage,
+        data: { title: 'Create role', titleAr: 'إنشاء دور' },
+      },
+      {
+        path: 'identity/roles/pages',
+        loadComponent: groupPagesPage,
+        data: { title: 'Role pages', titleAr: 'صفحات الدور' },
+      },
+      {
+        path: 'identity/groups',
+        loadComponent: groupsPage,
+        data: { title: 'Groups', titleAr: 'المجموعات' },
+      },
+      {
+        path: 'identity/groups/create',
+        loadComponent: groupCreatePage,
+        data: { title: 'Create group', titleAr: 'إنشاء مجموعة' },
+      },
+      {
+        path: 'identity/groups/edit',
+        loadComponent: groupEditPage,
+        data: { title: 'Edit group', titleAr: 'تعديل المجموعة' },
+      },
+      {
+        path: 'identity/groups/pages',
+        loadComponent: groupPagesPage,
+        data: { title: 'Group pages', titleAr: 'صفحات المجموعة' },
+      },
     ],
   },
 ];

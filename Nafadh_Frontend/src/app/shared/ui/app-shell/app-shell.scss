@@ -469,7 +469,8 @@ nav {
   gap: 8px;
 }
 
-/* --- تصميم مطابق لصورة الهوية والصلاحيات بالضبط --- */
+
+/* --- تصميم الهوية والصلاحيات --- */
 .custom-iam-group {
   margin: 6px 0;
   direction: rtl;
@@ -507,7 +508,6 @@ nav {
       font-size: 18px;
     }
 
-    /* سهم الـ Chevron الرفيع جهة اليسار */
     .custom-arrow {
       width: 15px;
       height: 15px;
@@ -528,11 +528,11 @@ nav {
 
     .custom-sub-link {
       display: flex;
-      flex-direction: row; // من اليمين لليسار
+      flex-direction: row;
       align-items: center;
       justify-content: flex-start;
       gap: 8px;
-      direction: rtl; // 👈 يضمن أن تبدأ الشرطة من اليمين تماماً
+      direction: rtl;
       padding: 9px 18px;
       border-radius: 8px;
       color: #ffffff;
@@ -541,7 +541,7 @@ nav {
       font-weight: 600;
 
       .custom-dash {
-        color: #6482e4; // اللون البنفسجي/الأزرق للشرطة كما في صورتك
+        color: #6482e4;
         font-size: 16px;
         font-weight: 900;
         line-height: 1;
@@ -551,7 +551,6 @@ nav {
         background: rgba(255, 255, 255, 0.06);
       }
 
-      /* العنصر النشط (Active) مطابق للصورة الأولى والثانية بالضبط */
       &.is-active {
         background-color: #124cb4 !important;
         color: #ffffff !important;
@@ -561,5 +560,47 @@ nav {
         }
       }
     }
+  }
+}
+
+/* Submenu navigation */
+.nav-submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 20px;
+}
+
+.nav-subitem {
+  font-size: 13px;
+  padding: 8px 12px;
+}
+
+/* Submenu expand/collapse button */
+.nav-submenu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 12px 4px 20px;
+  background: transparent;
+  border: 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+  text-align: right;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-cyan);
+  }
+}
+
+.nav-submenu-arrow {
+  display: inline-block;
+  font-size: 18px;
+  transition: transform 0.2s ease;
+
+  &.is-open {
+    transform: rotate(180deg);
   }
 }

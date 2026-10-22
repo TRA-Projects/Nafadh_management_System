@@ -160,47 +160,65 @@
   <!-- Shared sidebar -->
   <aside class="sidebar">
     <nav>
-      @for (item of navItems(); track item.label) {
-      <!-- إذا كان العنصر يحتوي على قائمة فرعية (الهوية والصلاحيات) -->
-      @if (item.children && item.children.length > 0) {
-      <div class="custom-iam-group">
-        <!-- الزر الرئيسي المطابق للصورة -->
-        <button type="button" class="custom-iam-header" (click)="toggleSubMenu(item.label)">
-          <!-- السهم جهة اليسار -->
-          <svg class="custom-arrow" [class.open]="isSubMenuOpen(item.label)" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-          </svg>
 
-          <!-- العنوان في الوسط -->
-          <span class="custom-title">{{ item.label }}</span>
+@for (item of navItems(); track item.label) {
+  @if (item.children && item.children.length > 0) {
+    <div class="custom-iam-group">
+      <button
+        type="button"
+        class="custom-iam-header"
+        (click)="toggleSubMenu(item.label)"
+      >
+        <svg
+          class="custom-arrow"
+          [class.open]="isSubMenuOpen(item.label)"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2.5"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
 
-          <!-- أيقونة المستخدم جهة اليمين -->
-          <nfd-icon [name]="item.icon" class="custom-user-icon" />
-        </button>
+        <span class="custom-title">{{ item.label }}</span>
 
-        <!-- العناصر الأربعة المنسدلة بالشرطة (-) -->
-        @if (isSubMenuOpen(item.label)) {
+        <nfd-icon
+          [name]="item.icon"
+          class="custom-user-icon"
+        />
+      </button>
+
+      @if (isSubMenuOpen(item.label)) {
         <div class="custom-sub-list">
           @for (child of item.children; track child.path) {
-          <a [routerLink]="child.path" routerLinkActive="is-active" class="custom-sub-link">
-            <!-- الشرطة أولاً لتكون في أقصى اليمين -->
-            <span class="custom-dash">-</span>
-            <!-- النص بعدها -->
-            <span>{{ child.label }}</span>
-          </a>
+            <a
+              [routerLink]="child.path"
+              routerLinkActive="is-active"
+              class="custom-sub-link"
+            >
+              <span class="custom-dash">-</span>
+              <span>{{ child.label }}</span>
+            </a>
           }
         </div>
-        }
-      </div>
-      } @else {
-      <!-- باقي الروابط العادية في السايدبار -->
-      <a [routerLink]="item.path" routerLinkActive="active" class="nav-item">
-        <nfd-icon [name]="item.icon" />
-        <span>{{ item.label }}</span>
-      </a>
       }
-      }
+    </div>
+  } @else {
+    <a
+      [routerLink]="item.path"
+      routerLinkActive="active"
+      class="nav-item"
+    >
+      <nfd-icon [name]="item.icon" />
+      <span>{{ item.label }}</span>
+    </a>
+  }
+}
+
     </nav>
 
     <div class="sidebar-foot">
