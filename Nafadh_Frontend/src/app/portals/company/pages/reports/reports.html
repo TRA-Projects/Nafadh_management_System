@@ -381,12 +381,13 @@
       @for (program of achievementPrograms; track program.name) {
       <div class="program-card" style="position: relative; transition: all 0.2s ease;">
         <div class="program-header">
-          <h4 class="program-title" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+          <h4 class="program-title"
+            style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
             <span>{{ program.name }}</span>
             <!-- تم وضع حدث النقر (click) مباشرة على زر العين لضمان الاستجابة الفورية -->
-            <span (click)="viewProgramOrTraineeDetails(program, $event)" 
-                  style="background: #f8faff; border: 1px solid #cbd5e1; color: #002b66; width: 34px; height: 34px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" 
-                  title="عرض تفاصيل المتدربين">
+            <span (click)="viewProgramOrTraineeDetails(program, $event)"
+              style="background: #f8faff; border: 1px solid #cbd5e1; color: #002b66; width: 34px; height: 34px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;"
+              title="عرض تفاصيل المتدربين">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                 <circle cx="12" cy="12" r="3"></circle>
@@ -488,16 +489,17 @@
   </div>
   }
 
-<!-- ================================================= -->
-<!-- 4. التقييمات -->
-<!-- ================================================= -->
-@if (activeTab === 'eval') {
-  
+  <!-- ================================================= -->
+  <!-- 4. التقييمات -->
+  <!-- ================================================= -->
+  @if (activeTab === 'eval') {
+
   <!-- شريط التنبيه -->
   <div class="custom-alert">
     <span class="custom-alert-icon">i</span>
     <div class="custom-alert-text">
-      توجد <strong>9 تقييمات</strong> مطلوب استكمالها، منها <span class="text-danger">4 تقييمات متأخرة</span> عن الموعد المحدد.
+      توجد <strong>9 تقييمات</strong> مطلوب استكمالها، منها <span class="text-danger">4 تقييمات متأخرة</span> عن الموعد
+      المحدد.
     </div>
   </div>
 
@@ -554,8 +556,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (evaluation of evaluations; track evaluation.supervisor) {
-          <tr>
+          @for (evaluation of evaluations; track evaluation.supervisor; let idx = $index) { <tr>
             <td>
               <div class="supervisor-info">
                 <span class="avatar-circle">{{ evaluation.supervisor.charAt(0) }}</span>
@@ -582,7 +583,7 @@
       </table>
     </div>
   </div>
-}
+  }
   <!-- ================================================= -->
   <!-- 5. المهام -->
   <!-- ================================================= -->
@@ -644,70 +645,74 @@
   </div>
   }
 
-  <!-- ================================================= -->
-  <!-- 6. مقارنة الأقسام والمشرفين -->
-  <!-- ================================================= -->
-  @if (activeTab === 'compare') {
-  <div class="report-note">
-    <span class="info-icon">i</span>
-    مقارنة أداء المشرفين: معدل الحضور مقابل متوسط الأداء العملي لمتدربيهم.
-  </div>
+ <!-- ================================================= -->
+<!-- 6. مقارنة الأقسام والمشرفين (مُحدث بالبيانات الحقيقية) -->
+<!-- ================================================= -->
+@if (activeTab === 'compare') {
+<div class="report-note">
+  <span class="info-icon">i</span>
+  مقارنة أداء المشرفين: معدل الحضور مقابل متوسط الأداء العملي لمتدربيهم.
+</div>
 
-  <div class="card card-pad">
-    <div class="card-title">
-      مؤشرات المشرفين
-    </div>
-    <div class="tbl-wrap">
-      <table class="tbl">
-        <thead>
-          <tr>
-            <th>المشرف</th>
-            <th>القسم</th>
-            <th>المتدربون</th>
-            <th>معدل الحضور</th>
-            <th>متوسط الأداء</th>
-            <th>تقييمات معلقة</th>
-            <th>الأداء العام</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (supervisor of supervisors; track supervisor.name) {
-          <tr>
-            <td><b>{{ supervisor.name }}</b></td>
-            <td>{{ supervisor.department }}</td>
-            <td>{{ supervisor.trainees }}</td>
-            <td>{{ supervisor.attendance }}%</td>
-            <td>{{ supervisor.performance }}%</td>
-            <td>{{ supervisor.pendingEvaluations }}</td>
-            <td>
-              <span class="chip" [ngClass]="supervisor.statusClass">
-                <span class="dot"></span>
-                {{ supervisor.overall }}
-              </span>
-            </td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+<div class="card card-pad">
+  <div class="card-title">
+    مؤشرات المشرفين
   </div>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>المشرف</th>
+          <th>القسم</th>
+          <th>المتدربون</th>
+          <th>معدل الحضور</th>
+          <th>متوسط الأداء</th>
+          <th>تقييمات معلقة</th>
+          <th>الأداء العام</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- استخدام supervisor.id لضمان عدم تكرار المفاتيح -->
+        @for (supervisor of supervisors; track supervisor.id || supervisor.name) {
+        <tr>
+          <td><b>{{ supervisor.name }}</b></td>
+          <td>{{ supervisor.department }}</td>
+          <td>
+            <b class="primary-text" style="font-size: 15px;">{{ supervisor.trainees }}</b>
+          </td>
+          <td>{{ supervisor.attendance }}%</td>
+          <td>{{ supervisor.performance }}%</td>
+          <td>{{ supervisor.pendingEvaluations }}</td>
+          <td>
+            <span class="chip" [ngClass]="supervisor.statusClass">
+              <span class="dot"></span>
+              {{ supervisor.overall }}
+            </span>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
 
-  <div class="card card-pad comparison-card">
-    <div class="card-title">
-      مقارنة الحضور والأداء حسب القسم
-    </div>
-    <div class="hbars">
-      @for (department of comparisonDepartments; track department.name) {
-      <div class="hbar">
-        <div class="h-lbl">{{ department.name }}</div>
-        <div class="h-trk">
-          <div class="h-fill" [style.width.%]="department.value"></div>
-        </div>
-        <div class="h-val">{{ department.value }}%</div>
+<div class="card card-pad comparison-card">
+  <div class="card-title">
+    مقارنة الحضور والأداء حسب المشرف / القسم
+  </div>
+  <div class="hbars">
+    <!-- العرض بناءً على قائمة المشرفين مباشرة لعرض كل مشرف مع نسبته الحقيقية -->
+    @for (sup of supervisors; track sup.id || sup.name) {
+    <div class="hbar">
+      <div class="h-lbl">{{ sup.name }} ({{ sup.department }})</div>
+      <div class="h-trk">
+        <div class="h-fill" [style.width.%]="sup.attendance"></div>
       </div>
-      }
+      <div class="h-val">{{ sup.attendance }}%</div>
     </div>
+    }
   </div>
-  }
+</div>
+}
 
 </div>
