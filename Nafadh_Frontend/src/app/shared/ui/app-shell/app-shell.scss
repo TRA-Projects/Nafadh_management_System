@@ -259,3 +259,45 @@ nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 4px;
   justify-content: center;
   gap: 8px;
 }
+
+/* Submenu navigation */
+.nav-submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 20px;
+}
+
+.nav-subitem {
+  font-size: 13px;
+  padding: 8px 12px;
+}
+
+/* Submenu expand/collapse button */
+.nav-submenu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 12px 4px 20px;
+  background: transparent;
+  border: 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+  text-align: right;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-cyan);
+  }
+}
+
+.nav-submenu-arrow {
+  display: inline-block;
+  font-size: 18px;
+  transition: transform 0.2s ease;
+
+  &.is-open {
+    transform: rotate(180deg);
+  }
+}
