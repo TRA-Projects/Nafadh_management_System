@@ -1,0 +1,236 @@
+
+<div class="notification-templates-container" dir="rtl">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-title">
+      <div class="breadcrumb">
+        الرئيسية / الإدارة / <span>قوالب الإشعارات</span>
+      </div>
+
+      <h1>قوالب الإشعارات</h1>
+      <p>عرض وإدارة قوالب الإشعارات وطرق إرسالها.</p>
+    </div>
+
+    <button
+      type="button"
+      class="btn-primary"
+      (click)="openAddModal()"
+    >
+      <span aria-hidden="true">＋</span>
+      إضافة قالب جديد
+    </button>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="filter-card">
+    <div class="filter-grid">
+
+      <div class="filter-group">
+        <label for="templateSearch">بحث</label>
+
+        <input
+          id="templateSearch"
+          type="text"
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="ابحث برمز الإجراء أو التسمية..."
+          class="form-control"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label for="templateType">نوع الإشعار</label>
+
+        <select
+          id="templateType"
+          class="form-control"
+          [ngModel]="selectedType()"
+          (ngModelChange)="onTypeChange($event)"
+        >
+          <option value="">جميع الأنواع</option>
+          <option value="Email">البريد الإلكتروني</option>
+          <option value="SMS">رسالة نصية</option>
+          <option value="Push">إشعار فوري</option>
+        </select>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Templates Table -->
+  <div class="table-card">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>رمز الإجراء</th>
+            <th>التسمية</th>
+            <th class="text-center">نشط</th>
+            <th class="text-center">البريد</th>
+            <th class="text-center">رسالة نصية</th>
+            <th class="text-center">إجراءات</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            *ngFor="
+              let template of paginatedTemplates();
+              let i = index
+            "
+          >
+            <td class="col-index">
+              {{ safePageIndex() * pageSize() + i + 1 }}
+            </td>
+
+            <td>
+              <span class="code-badge">
+                {{ template.code }}
+              </span>
+            </td>
+
+            <td class="col-name">
+              {{ template.name }}
+            </td>
+
+            <td class="text-center">
+              <span
+                class="status-badge"
+                [class.active]="template.isActive"
+                [class.inactive]="!template.isActive"
+              >
+                {{ template.isActive ? 'نعم' : 'لا' }}
+              </span>
+            </td>
+
+            <td class="text-center">
+              <span class="text-value">
+                {{ template.hasEmail ? 'نعم' : 'لا' }}
+              </span>
+            </td>
+
+            <td class="text-center">
+              <span class="text-value">
+                {{ template.hasSms ? 'نعم' : 'لا' }}
+              </span>
+            </td>
+
+            <td class="text-center">
+              <div class="actions-wrapper">
+                <button
+                  type="button"
+                  class="btn-action"
+                  aria-label="الإجراءات"
+                  aria-haspopup="menu"
+                  [attr.aria-expanded]="openMenuId === template.id"
+                  (click)="toggleMenu(template.id, $event)"
+                >
+                  ⋮
+                </button>
+
+                <div
+                  class="actions-menu"
+                  *ngIf="openMenuId === template.id"
+                  role="menu"
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="menu-item"
+                    (click)="editTemplate(template)"
+                  >
+                    <span>تعديل</span>
+                    <span aria-hidden="true">✎</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="menu-item text-danger"
+                    (click)="deleteTemplate(template.id)"
+                  >
+                    <span>حذف</span>
+                    <span aria-hidden="true">🗑</span>
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="paginatedTemplates().length === 0">
+            <td colspan="7" class="no-data">
+              لا توجد قوالب مطابقة للبحث
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div class="pagination-footer">
+      <div class="pagination-info">
+        عرض
+        {{ totalCount() === 0 ? 0 : safePageIndex() * pageSize() + 1 }}
+        -{{ getEndIndex() }}
+        من {{ totalCount() }}
+      </div>
+
+      <div class="pagination-controls">
+        <button
+          type="button"
+          class="page-btn"
+          (click)="prevPage()"
+          [disabled]="!canPrev()"
+          aria-label="الصفحة السابقة"
+        >
+          &lt;
+        </button>
+
+        <button
+          type="button"
+          *ngFor="let page of pageNumbers()"
+          class="page-number-btn"
+          [class.active]="safePageIndex() === page"
+          [attr.aria-current]="
+            safePageIndex() === page ? 'page' : null
+          "
+          [attr.aria-label]="'الصفحة ' + (page + 1)"
+          (click)="setPage(page)"
+        >
+          {{ page + 1 }}
+        </button>
+
+        <button
+          type="button"
+          class="page-btn"
+          (click)="nextPage()"
+          [disabled]="!canNext()"
+          aria-label="الصفحة التالية"
+        >
+          &gt;
+        </button>
+
+        <div class="page-size-selector">
+          <select
+            class="form-control-sm"
+            [value]="pageSize()"
+            (change)="onPageSizeChange($event)"
+            aria-label="عدد العناصر في الصفحة"
+          >
+            <option
+              *ngFor="let size of pageSizeOptions"
+              [value]="size"
+            >
+              {{ size }}
+            </option>
+          </select>
+
+          <span class="page-size-label">في الصفحة</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

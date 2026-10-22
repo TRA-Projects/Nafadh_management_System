@@ -1,3 +1,4 @@
+
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { Routes } from '@angular/router';
 import { provideState } from '@ngrx/store';
@@ -122,5 +123,15 @@ export const EXTERNAL_ROUTES: Routes = [
         data: { title: 'Group pages', titleAr: 'صفحات المجموعة' },
       },
     ],
+  },
+  {
+    path: 'notification-templates/:id',
+    providers: [
+      provideState(adminSystemFeature),
+      provideState(localeFeature),
+    ],
+    loadComponent: () =>
+      import('./pages/system-administration/notification-templates-page.component')
+        .then((m) => m.NotificationTemplatesPageComponent),
   },
 ];
