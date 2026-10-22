@@ -10,6 +10,7 @@ import { firstValueFrom } from 'rxjs';
 import { AdminSystemApiService, type SystemConfigValueDto } from '../../legacy/core/api/services/admin-system-api.service';
 import { LocaleService } from '../../legacy/core/locale/locale.service';
 import { SYSTEM_CONFIG_CODES } from '../../legacy/core/profile/system-config-codes';
+import { MANAGEMENT_SYSTEM_LOOKUP_TYPES } from '../../legacy/core/profile/management-system-config-codes';
 import {
   isSubConfigCode,
   mainConfigCodesWithSubCatalog,
@@ -71,6 +72,10 @@ export class ConstantsManagePageComponent {
   private readonly host = inject(ElementRef<HTMLElement>);
 
   private readonly allLookupTypes: LookupTypeOption[] = [
+    ...MANAGEMENT_SYSTEM_LOOKUP_TYPES.map((item) => ({
+      code: item.code,
+      label: this.locale.isRtl() ? item.labelAr : item.labelEn,
+    })),
     { code: SYSTEM_CONFIG_CODES.QUALIFICATION_DEGREES, label: $localize`:@@jobseeker.admin.constants.lookup.qualificationDegrees:Qualification degrees` },
     { code: SYSTEM_CONFIG_CODES.NATIONALITY, label: $localize`:@@jobseeker.admin.constants.lookup.nationalities:Nationalities` },
     { code: SYSTEM_CONFIG_CODES.PRIMARY_SPECIFICATION, label: $localize`:@@jobseeker.admin.constants.lookup.primarySpecifications:Primary specifications` },
@@ -214,7 +219,10 @@ export class ConstantsManagePageComponent {
     return code ? [code] : [];
   });
 
+  readonly isReadOnlyManagementGroup = computed(() => this.selectedLookupCode().startsWith('NFD_'));
+
   readonly canManageSubRows = computed(() => {
+    if (this.isReadOnlyManagementGroup()) return false;
     if (this.activeTab() === 'main') {
       return !!this.selectedMainLookupCode().trim();
     }
@@ -481,6 +489,7 @@ export class ConstantsManagePageComponent {
   }
 
   openEdit(row: SystemConfigValueDto): void {
+    if (this.isReadOnlyManagementGroup()) return;
     this.editingId.set(row.id);
     this.form.reset({
       code: row.code ?? String(row.id),
@@ -499,6 +508,7 @@ export class ConstantsManagePageComponent {
   }
 
   async save(): Promise<void> {
+    if (this.isReadOnlyManagementGroup()) return;
     const id = this.editingId();
     const isSubTab = this.activeTab() === 'sub';
     const result = await this.formPipeline.run({
