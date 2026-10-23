@@ -1,123 +1,101 @@
 <div class="template-edit-container" dir="rtl">
 
-  <!-- Breadcrumb & Header -->
-  <div class="mb-6">
-    <div class="breadcrumb">
-      الرئيسية / الإدارة / <span>قالب إشعار</span>
-    </div>
-    <div class="flex items-center gap-2 mt-1">
-      <button type="button" (click)="goBack()" class="back-arrow-btn">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-        </svg>
-      </button>
-      <h1 class="text-2xl font-bold text-slate-900">{{ templateName || 'دعوة للتقديم' }}</h1>
-    </div>
-  </div>
+  <!-- Breadcrumb & Header -->
+  <div class="page-head">
+    <div class="breadcrumb">
+      <a>الرئيسية</a><i>/</i><a>الإدارة</a><i>/</i><span>قالب إشعار</span>
+    </div>
+    <div class="title-row">
+      <h1 class="page-title">{{ templateName || 'دعوة للتقديم' }}</h1>
+      <button type="button" (click)="goBack()" class="back-arrow-btn" aria-label="رجوع">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
 
-  <!-- Main Card -->
-  <div class="main-card">
-    <!-- Card Header Banner -->
-    <div class="card-banner">
-      <div class="flex items-center gap-2 text-white font-semibold">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
-        </svg>
-        <span>قوالب الإشعارات</span>
-      </div>
-    </div>
+  <!-- Main Card -->
+  <div class="main-card">
+    <!-- Card Banner -->
+    <div class="card-banner">
+      <div class="banner-icon">
+        <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <rect x="4" y="4" width="16" height="13" rx="2" stroke-width="1.8"></rect>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 9h8M8 13h5M9 21l3-4"></path>
+        </svg>
+      </div>
+      <span class="banner-title">قوالب الإشعارات</span>
+    </div>
 
-    <!-- Tabs Navigation -->
-    <div class="tabs-header">
-      <button
-        type="button"
-        class="tab-item"
-        [class.active]="activeTab === 'main'"
-        (click)="activeTab = 'main'">
-        التفاصيل الرئيسية
-      </button>
-      <button
-        type="button"
-        class="tab-item"
-        [class.active]="activeTab === 'ar'"
-        (click)="activeTab = 'ar'">
-        العربية
-      </button>
-      <button
-        type="button"
-        class="tab-item"
-        [class.active]="activeTab === 'en'"
-        (click)="activeTab = 'en'">
-        الإنجليزية
-      </button>
-    </div>
+    <div class="card-body">
+      <!-- Tabs -->
+      <div class="tabs-header">
+        <button type="button" class="tab-item" [class.active]="activeTab === 'main'" (click)="activeTab = 'main'">
+          التفاصيل الرئيسية
+        </button>
+        <button type="button" class="tab-item" [class.active]="activeTab === 'ar'" (click)="activeTab = 'ar'">
+          العربية
+        </button>
+        <button type="button" class="tab-item" [class.active]="activeTab === 'en'" (click)="activeTab = 'en'">
+          الإنجليزية
+        </button>
+      </div>
 
-    <!-- Form Content -->
-    <div class="p-6">
-      <form [formGroup]="editForm" (ngSubmit)="save()">
+      <form [formGroup]="editForm" (ngSubmit)="save()">
 
-        <!-- Action Code -->
-        <div class="form-row mb-6">
-          <label class="form-label">رمز الإجراء</label>
-          <input
-            type="text"
-            formControlName="code"
-            readonly
-            class="form-control bg-slate-50 text-slate-500 cursor-not-allowed"
-          />
-        </div>
+        <div *ngIf="activeTab === 'main'">
+          <!-- Action Code -->
+          <div class="form-group">
+            <label class="form-label">رمز الإجراء</label>
+            <input type="text" formControlName="code" readonly class="form-control readonly" />
+          </div>
 
-        <!-- Names Row (Arabic & English) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div class="form-group">
-            <label class="form-label">التسمية (عربي) <span class="text-red-500">*</span></label>
-            <input
-              type="text"
-              formControlName="nameAr"
-              class="form-control"
-            />
-          </div>
-          <div class="form-group">
-            <label class="form-label">التسمية (إنجليزي) <span class="text-red-500">*</span></label>
-            <input
-              type="text"
-              formControlName="nameEn"
-              class="form-control text-left"
-              dir="ltr"
-            />
-          </div>
-        </div>
+          <!-- Names: English (right) / Arabic (left) -->
+          <div class="names-row">
+            <div class="form-group">
+              <label class="form-label">التسمية (إنجليزي)<span class="req">*</span></label>
+              <input type="text" formControlName="nameEn" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">التسمية (عربي)<span class="req">*</span></label>
+              <input type="text" formControlName="nameAr" class="form-control" />
+            </div>
+          </div>
 
-        <!-- Status Checkboxes -->
-        <div class="form-row mb-8">
-          <label class="form-label mb-3 block">الحالة</label>
-          <div class="flex flex-wrap items-center gap-8">
-            <label class="checkbox-label">
-              <input type="checkbox" formControlName="isActive" class="custom-checkbox" />
-              <span>نشط <span class="text-red-500">*</span></span>
-            </label>
-            <label class="checkbox-label">
-              <input type="checkbox" formControlName="hasEmail" class="custom-checkbox" />
-              <span>تفعيل البريد <span class="text-red-500">*</span></span>
-            </label>
-            <label class="checkbox-label">
-              <input type="checkbox" formControlName="hasSms" class="custom-checkbox" />
-              <span>تفعيل الرسائل النصية <span class="text-red-500">*</span></span>
-            </label>
-          </div>
-        </div>
+          <hr class="divider" />
 
-        <!-- Action Buttons -->
-        <div class="flex items-center gap-3 pt-4 border-t border-slate-100">
-          <button type="button" (click)="preview()" class="btn-secondary">
-            معاينة
-          </button>
-          <button type="submit" class="btn-primary">
-            حفظ
-          </button>
-        </div>
+          <!-- Status -->
+          <div class="status-block">
+            <label class="form-label">الحالة</label>
+            <div class="checks">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="isActive" class="custom-checkbox" />
+                <span>نشط</span><span class="req">*</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="hasEmail" class="custom-checkbox" />
+                <span>تفعيل البريد</span><span class="req">*</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="hasSms" class="custom-checkbox" />
+                <span>تفعيل الرسائل النصية</span><span class="req">*</span>
+              </label>
+            </div>
+          </div>
+        </div>
 
-      </form>
-    </div>
-  </div>
+        <div *ngIf="activeTab === 'ar'" class="tab-placeholder"></div>
+        <div *ngIf="activeTab === 'en'" class="tab-placeholder"></div>
+
+        <hr class="divider" />
+
+        <!-- Actions -->
+        <div class="actions">
+          <button type="button" (click)="preview()" class="btn-secondary">معاينة</button>
+          <button type="submit" class="btn-primary">حفظ</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
