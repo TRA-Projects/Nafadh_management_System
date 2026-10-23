@@ -11,7 +11,7 @@
 .breadcrumb i { font-style: normal; color: #9ca3af; margin: 0 0.3rem; }
 .breadcrumb span { color: #111827; font-weight: 500; }
 
-/* Title row: title on the right, back button to its left */
+/* Title row */
 .title-row { display: flex; align-items: center; gap: 1rem; margin: 2.25rem 0 2.1rem; }
 .page-title { margin: 0; font-size: 1.6rem; font-weight: 700; color: #111827; }
 .back-arrow-btn {
@@ -61,18 +61,12 @@
 .form-control {
   width: 100%; height: 3.1rem; padding: 0 1.4rem;
   border: 1px solid #E5E7EB; border-radius: 0.5rem; background: #fff;
-  font-size: 1rem; color: #111827; text-align: right; outline: none;
+  font-family: inherit; font-size: 1rem; color: #111827; text-align: right; outline: none;
 }
 .form-control:focus { border-color: #4361ee; box-shadow: 0 0 0 3px rgb(67 97 238 / 12%); }
-.form-control.readonly {
-  background: #EEF8FA; border-color: #D9EEF2; cursor: default;
-}
+.form-control.readonly { background: #EEF8FA; border-color: #D9EEF2; cursor: default; }
 
-.names-row {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem;
-  margin: 1.6rem 0 1.4rem;
-}
-
+.names-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; margin: 1.6rem 0 1.4rem; }
 .divider { border: 0; border-top: 1px solid #E5E7EB; margin: 0; }
 
 /* Status */
@@ -93,9 +87,37 @@
 }
 .custom-checkbox:focus-visible { outline: 2px solid #4361ee; outline-offset: 2px; }
 
-.tab-placeholder { min-height: 8rem; }
+/* ===== تبويبا العربية / الإنجليزية ===== */
+.section-title { margin: 0 0 1rem; font-size: 1.05rem; font-weight: 600; color: #111827; }
 
-/* Buttons: preview on the right, save on its left */
+.vars { margin-bottom: 1.4rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.chip {
+  padding: 0.5rem 0.9rem; background: #fff; color: #0a3a8f;
+  border: 1px solid #0a3a8f; border-radius: 0.5rem;
+  font-family: inherit; font-size: 0.875rem; cursor: pointer;
+}
+.chip:hover { background: #eef3ff; }
+
+.cols { display: grid; grid-template-columns: 2fr 1fr; gap: 1.4rem; align-items: start; padding-bottom: 2rem; }
+.content-label { margin-top: 1.4rem; }
+
+.sms-area {
+  height: 15rem; padding: 0.9rem 1.4rem; line-height: 1.7; resize: vertical;
+}
+.counter { margin-top: 0.6rem; font-size: 1rem; color: #9ca3af; text-align: right; }
+
+/* محرر Quill */
+.editor-wrap { border-radius: 0.5rem; overflow: hidden; }
+:host ::ng-deep .editor-wrap quill-editor { display: block; }
+:host ::ng-deep .editor-wrap .ql-toolbar.ql-snow {
+  border: 0; border-bottom: 1px solid #E5E7EB; background: #F6F7F9; padding: 0.9rem 1rem;
+}
+:host ::ng-deep .editor-wrap .ql-container.ql-snow { border: 0; font-family: inherit; font-size: 1rem; }
+:host ::ng-deep .editor-wrap .ql-editor { min-height: 20rem; padding: 1.2rem 1.2rem; line-height: 1.9; text-align: right; }
+:host ::ng-deep .editor-wrap .ql-editor a { color: #3b6fd4; }
+
+/* Buttons */
 .actions { display: flex; gap: 0.75rem; padding-top: 1.6rem; }
 .btn-secondary, .btn-primary {
   height: 3.1rem; padding: 0 1.75rem; border-radius: 0.5rem;
@@ -106,8 +128,8 @@
 .btn-primary { background: #EEF8FA; color: #003a8c; border: 1px solid #D9EEF2; }
 .btn-primary:hover { background: #e0f1f5; }
 
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .template-edit-container { padding: 0.75rem 0.9rem 2rem; }
-  .names-row { grid-template-columns: 1fr; }
+  .names-row, .cols { grid-template-columns: 1fr; }
   .card-body { padding: 1.1rem; }
 }
