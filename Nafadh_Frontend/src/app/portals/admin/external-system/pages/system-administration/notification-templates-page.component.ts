@@ -225,7 +225,10 @@ export class NotificationTemplatesPageComponent {
     this.closeMenu();
 
     this.router.navigate(
-      ['/admin/notification-templates', template.id],
+      [
+        '/admin/external-system/notification-templates',
+        template.id,
+      ],
       {
         state: {
           template: {
