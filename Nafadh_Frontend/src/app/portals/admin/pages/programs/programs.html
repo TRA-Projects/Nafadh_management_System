@@ -25,19 +25,21 @@
       </div>
 
       <div class="details-quick-actions">
-        <button type="button" (click)="onViewPlan(selectedBatch)" class="btn-pro-plan">
-          <i class="fa-solid fa-file-signature"></i>
-          <span>خطة الدورة التدريبية</span>
+        <!-- زر تعديل أصبح Outline ثانوي -->
+        <button type="button" (click)="onEditFromDetails()" class="btn-pro-edit">
+          <i class="fa-regular fa-pen-to-square"></i>
+          <span>تعديل</span>
         </button>
 
+        <!-- أزرار الإجراءات الرئيسية أصبحت البؤرة البصرية Focal Point -->
         <button type="button" (click)="onViewTraineesFromDetails()" class="btn-pro-trainees">
           <i class="fa-solid fa-users"></i>
           <span>متدربو الدفعة ({{ selectedBatch?.totalTraineesCount || 0 }})</span>
         </button>
 
-        <button type="button" (click)="onEditFromDetails()" class="btn-pro-edit">
-          <i class="fa-regular fa-pen-to-square"></i>
-          <span>تعديل</span>
+        <button type="button" (click)="onViewPlan(selectedBatch)" class="btn-pro-plan">
+          <i class="fa-solid fa-file-signature"></i>
+          <span>خطة الدورة التدريبية</span>
         </button>
       </div>
     </div>
@@ -616,11 +618,10 @@
               </span>
             </td>
 
-            <td class="text-center">{{ batch.startDate ? (batch.startDate | date:'dd/MM/yyyy') : '-' }}</td>
-            <td class="text-center">{{ batch.endDate ? (batch.endDate | date:'dd/MM/yyyy') : '-' }}</td>
-            <td class="text-center">
-              <span class="nfd-occupancy-text" dir="ltr">{{ batch.totalTraineesCount || 0 }} / {{ batch.capacity
-                }}</span>
+            <td class="text-center" dir="ltr">{{ batch.startDate ? (batch.startDate | date:'dd/MM/yyyy') : '-' }}</td>
+            <td class="text-center" dir="ltr">{{ batch.endDate ? (batch.endDate | date:'dd/MM/yyyy') : '-' }}</td>
+            <td class="text-center" dir="ltr">
+              <span class="nfd-occupancy-text">{{ batch.totalTraineesCount || 0 }} / {{ batch.capacity }}</span>
             </td>
             <td class="text-center">
               <span class="nfd-status-badge" [ngClass]="getStatusBadgeClass(batch.status)">{{
@@ -652,11 +653,18 @@
   </div>
 
   <div class="compact-pagination-wrapper">
-    <div class="pagination-left-group">
+    <!-- جهة اليمين: إجمالي السجلات + الصفحة الحالية من الإجمالي -->
+    <div class="pagination-right-group" style="display: flex; align-items: center; gap: 20px;">
       <div class="pagination-info">
-        إجمالي السجلات في النظام: <strong>{{ totalBatchesCount() }}</strong> | الصفحة <strong>{{ currentPage()
-          }}</strong> من <strong>{{ totalPages() }}</strong>
+        إجمالي السجلات في النظام: <strong>{{ totalBatchesCount() }}</strong>
       </div>
+      <div class="pagination-info">
+        الصفحة <strong>{{ currentPage() }}</strong> من <strong>{{ totalPages() }}</strong>
+      </div>
+    </div>
+
+    <!-- جهة اليسار: أزرار الباجينيشن فقط (السابق / التالي) -->
+    <div class="pagination-left-group">
       <div class="pagination-compact-controls">
         <button type="button" class="compact-nav-btn" [disabled]="currentPage() === 1"
           (click)="onPageChange(currentPage() - 1)">
@@ -1088,11 +1096,6 @@
                   متغيب
                 </span>
 
-                <button *ngIf="row.excuseStatus === 'Approved'" type="button" (click)="onScheduleRetake(row)"
-                  class="btn-retake-exam" title="جدولة اختبار تعويضي للمتدرب">
-                  <i class="fa-solid fa-rotate-right"></i>
-                  <span>إعادة اختبار</span>
-                </button>
               </div>
             </td>
           </tr>
@@ -1341,20 +1344,18 @@
     </div>
   </div>
 
-  <!-- جدول التسليمات البرمجية الكامل -->
+  <!-- جدول التسليمات البرمجية الكامل بعد إزالة الازدحام -->
   <div class="quiz-audit-table-card">
     <table class="quiz-audit-table project-table">
       <thead>
         <tr class="audit-table-header-row">
-          <th style="min-width: 220px;">المتدرب</th>
-          <th style="min-width: 240px;">مستودع GitHub للكود</th>
-          <th style="min-width: 170px;">الفرع والـ Commit</th>
-          <th class="text-center" style="min-width: 120px;">المعاينة الحية</th>
-          <th style="min-width: 240px;">معايير التقييم البرمجي</th>
-          <th class="text-center" style="min-width: 120px;">الدرجة</th>
-          <th class="text-center" style="min-width: 130px;">الحالة</th>
-          <th style="min-width: 230px;">ملاحظات المقيم</th>
-          <th class="text-center" style="min-width: 120px;">الإجراء</th>
+          <th style="min-width: 200px;">المتدرب</th>
+          <th style="min-width: 260px;">رابط المشروع والكود (GitHub / Swagger)</th>
+          <th style="min-width: 220px;">معايير التقييم البرمجي</th>
+          <th class="text-center" style="min-width: 100px;">الدرجة</th>
+          <th class="text-center" style="min-width: 110px;">الحالة</th>
+          <th style="min-width: 260px;">ملاحظات المقيم</th>
+          <th class="text-center" style="min-width: 110px;">الإجراء</th>
         </tr>
       </thead>
       <tbody>
@@ -1375,71 +1376,47 @@
             </div>
           </td>
 
-          <!-- 2. مستودع GitHub للكود: تصميم عصري وواضح جداً وبطاقة أنيقة دون اقتطاع للنص -->
+          <!-- 2. رابط المشروع والكود (GitHub + Swagger مباشر ومريح بدون ازدحام) -->
           <td>
-            <div class="repo-badge-card">
-              <a [href]="item.repoUrl" target="_blank" rel="noopener noreferrer" class="repo-badge-link" dir="ltr"
-                [title]="item.repoUrl">
-                <span class="repo-badge-icon">
-                  <i class="fa-brands fa-github"></i>
-                </span>
-                <span class="repo-badge-text">{{ item.repoName }}</span>
-                <i class="fa-solid fa-arrow-up-right-from-square repo-badge-ext"></i>
+            <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-start;">
+              <!-- رابط GitHub ينقل فوراً لصفحة المستودع -->
+              <a [href]="item.repoUrl" target="_blank" rel="noopener noreferrer" class="github-repo-link-pill"
+                title="فتح مستودع GitHub">
+                <i class="fa-brands fa-github" style="font-size: 15px; color: #1e293b;"></i>
+                <span>{{ item.repoName }}</span>
+                <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px; color: #64748b;"></i>
               </a>
-              <button type="button" (click)="copyGitHubUrl(item.repoUrl)" class="repo-badge-copy-btn"
-                title="نسخ رابط المستودع">
-                <i class="fa-regular fa-copy"></i>
-              </button>
+
+              <!-- رابط Swagger / المعاينة الحية إذا كان متوفراً -->
+              <a *ngIf="item.liveDemoUrl" [href]="item.liveDemoUrl" target="_blank" rel="noopener noreferrer"
+                style="display: inline-flex; align-items: center; gap: 6px; color: #2563eb; text-decoration: none; font-size: 11.5px; font-weight: 600; padding: 2px 4px;"
+                title="فتح واجهة Swagger">
+                <i class="fa-solid fa-globe" style="font-size: 11px;"></i>
+                <span dir="ltr">Swagger / Live Demo</span>
+                <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 9px;"></i>
+              </a>
             </div>
           </td>
 
-          <!-- 3. الفرع والكوميت -->
-          <td>
-            <div class="branch-commit-cell">
-              <span class="branch-pill">
-                <i class="fa-solid fa-code-branch"></i>
-                <span>{{ item.branch || 'main' }}</span>
-              </span>
-              <span class="commit-hash-pill" [title]="item.commitMessage">
-                <i class="fa-solid fa-code-commit"></i>
-                <span>{{ item.commitHash }}</span>
-              </span>
-            </div>
-            <div class="commit-message-text" [title]="item.commitMessage">
-              {{ item.commitMessage }}
-            </div>
-          </td>
-
-          <!-- 4. المعاينة الحية -->
-          <td class="text-center">
-            <a *ngIf="item.liveDemoUrl" [href]="item.liveDemoUrl" target="_blank" rel="noopener noreferrer"
-              class="live-demo-btn-pro" title="معاينة التطبيق المباشر واختبار الـ Endpoints">
-              <i class="fa-solid fa-globe"></i>
-              <span>معاينة حية</span>
-              <i class="fa-solid fa-arrow-up-right-from-square mini-ext"></i>
-            </a>
-            <span *ngIf="!item.liveDemoUrl" class="no-demo-badge" title="لا يوجد رابط معاينة حية منشور">-</span>
-          </td>
-
-          <!-- 5. معايير التقييم البرمجي -->
+          <!-- 3. معايير التقييم البرمجي -->
           <td>
             <div *ngIf="item.criteria" class="evaluation-rubric-chips">
-              <div class="rubric-chip" *ngIf="item.criteria.architecture" title="Clean Architecture & المعمارية">
+              <div class="rubric-chip" *ngIf="item.criteria.architecture">
                 <span class="rubric-name">المعمارية</span>
                 <strong class="rubric-score" dir="ltr">{{ item.criteria.architecture.score }}/{{
                   item.criteria.architecture.max }}</strong>
               </div>
-              <div class="rubric-chip" *ngIf="item.criteria.apiDocs" title="توثيق Swagger & Endpoints">
+              <div class="rubric-chip" *ngIf="item.criteria.apiDocs">
                 <span class="rubric-name">Swagger</span>
                 <strong class="rubric-score" dir="ltr">{{ item.criteria.apiDocs.score }}/{{ item.criteria.apiDocs.max
                   }}</strong>
               </div>
-              <div class="rubric-chip" *ngIf="item.criteria.database" title="قواعد البيانات EF Core">
+              <div class="rubric-chip" *ngIf="item.criteria.database">
                 <span class="rubric-name">EF Core</span>
                 <strong class="rubric-score" dir="ltr">{{ item.criteria.database.score }}/{{ item.criteria.database.max
                   }}</strong>
               </div>
-              <div class="rubric-chip" *ngIf="item.criteria.codeQuality" title="جودة ونظافة الكود">
+              <div class="rubric-chip" *ngIf="item.criteria.codeQuality">
                 <span class="rubric-name">جودة الكود</span>
                 <strong class="rubric-score" dir="ltr">{{ item.criteria.codeQuality.score }}/{{
                   item.criteria.codeQuality.max }}</strong>
@@ -1448,7 +1425,7 @@
             <span *ngIf="!item.criteria" class="pending-eval-tag">قيد الفحص</span>
           </td>
 
-          <!-- 6. الدرجة -->
+          <!-- 4. الدرجة -->
           <td class="text-center">
             <div *ngIf="item.score !== null && item.score !== undefined" class="project-score-pill"
               [ngClass]="item.score >= 60 ? 'score-pass-pill' : 'score-fail-pill'">
@@ -1457,14 +1434,11 @@
                 <span class="score-divider">/</span>
                 <span class="score-target">{{ item.maxScore || 100 }}</span>
               </div>
-              <div class="score-mini-progress">
-                <div class="score-mini-progress-bar" [style.width.%]="item.score"></div>
-              </div>
             </div>
             <span *ngIf="item.score === null || item.score === undefined" class="pending-eval-tag">قيد التقييم</span>
           </td>
 
-          <!-- 7. الحالة -->
+          <!-- 5. الحالة -->
           <td class="text-center">
             <span class="excuse-badge" [ngClass]="{
               'excuse-approved': item.status === 'مكتمل ومعتمد',
@@ -1475,16 +1449,16 @@
             </span>
           </td>
 
-          <!-- 8. ملاحظات المقيم -->
-          <td>
-            <div *ngIf="item.reviewerFeedback" class="direct-note-cell" [title]="item.reviewerFeedback">
-              <i class="fa-regular fa-comment-dots"></i>
-              <span>{{ item.reviewerFeedback }}</span>
+          <!-- 6. ملاحظات المقيم كاملة بدون اقتطاع -->
+          <td style="min-width: 260px; max-width: 340px;">
+            <div *ngIf="item.reviewerFeedback" class="full-feedback-cell">
+              <i class="fa-regular fa-comment-dots feedback-icon"></i>
+              <span class="feedback-text">{{ item.reviewerFeedback }}</span>
             </div>
             <span *ngIf="!item.reviewerFeedback" class="text-muted-dash">-</span>
           </td>
 
-          <!-- 9. الإجراء: استعراض كشف التقييم المعتمد كصفحة كاملة -->
+          <!-- 7. الإجراء -->
           <td class="text-center">
             <button type="button" (click)="onOpenProjectEvaluation(item)" class="btn-view-evaluation-dossier"
               title="استعراض كشف التقييم البرمجي كصفحة كاملة">
@@ -1496,7 +1470,7 @@
         </tr>
 
         <tr *ngIf="filteredProjectSubmissions().length === 0">
-          <td colspan="9" class="audit-empty-row">لا توجد تسليمات مسجلة ضمن هذا التصنيف حالياً.</td>
+          <td colspan="7" class="audit-empty-row">لا توجد تسليمات مسجلة ضمن هذا التصنيف حالياً.</td>
         </tr>
       </tbody>
     </table>
@@ -1616,26 +1590,14 @@
         <i class="fa-brands fa-github text-dark"></i>
         <span>مستودع الكود المصدري على GitHub</span>
       </div>
-      <div class="tech-card-pro-body">
+      <div class="tech-card-pro-body" style="width: 100%;">
         <a [href]="(selectedProjectForView || selectedProjectForGrading)?.repoUrl" target="_blank"
-          rel="noopener noreferrer" class="tech-repo-link-pro" dir="ltr">
+          rel="noopener noreferrer" class="github-repo-link-pill"
+          style="padding: 10px 14px; font-size: 13px; width: fit-content; max-width: 100%;" dir="ltr">
+          <i class="fa-brands fa-github" style="font-size: 16px; color: #1e293b;"></i>
           <span>{{ (selectedProjectForView || selectedProjectForGrading)?.repoUrl }}</span>
-          <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 11px; color: #64748b;"></i>
         </a>
-        <div class="tech-meta-row" dir="ltr">
-          <span class="branch-pill">
-            <i class="fa-solid fa-code-branch"></i>
-            <span>{{ (selectedProjectForView || selectedProjectForGrading)?.branch || 'main' }}</span>
-          </span>
-          <span class="commit-hash-pill" [title]="(selectedProjectForView || selectedProjectForGrading)?.commitMessage">
-            <i class="fa-solid fa-code-commit"></i>
-            <span>{{ (selectedProjectForView || selectedProjectForGrading)?.commitHash }}</span>
-          </span>
-          <span class="commit-msg-preview"
-            [title]="(selectedProjectForView || selectedProjectForGrading)?.commitMessage">
-            {{ (selectedProjectForView || selectedProjectForGrading)?.commitMessage }}
-          </span>
-        </div>
       </div>
     </div>
 

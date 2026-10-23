@@ -783,9 +783,7 @@ export class AdminPrograms implements OnInit {
     this.selectedExcuseRow = null;
   }
 
-  onScheduleRetake(row: any): void {
-    this.showToast(`تم فتح صلاحية الاختبار التعويضي للمتدرب: ${row?.traineeName}`, 'success');
-  }
+ 
 
   onViewSubmissionNote(row: any): void {
     this.selectedNoteRow = row;
